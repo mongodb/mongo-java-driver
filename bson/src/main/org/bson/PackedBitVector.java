@@ -57,7 +57,6 @@ public final class PackedBitVector extends Vector {
      * @return the underlying byte array representing this {@link PackedBitVector} vector.
      * @see #getPadding()
      */
-    @Beta(Reason.SERVER)
     public byte[] getData() {
         return assertNotNull(data);
     }
