@@ -27,34 +27,34 @@ import static org.bson.assertions.Assertions.assertNotNull;
 /**
  * Represents a packed bit vector, where each element of the vector is represented by a single bit (0 or 1).
  * <p>
- * The {@link PackedBitVector} is used to store data efficiently using the BSON Binary Subtype 9 format.
+ * The {@link PackedBitBinaryVector} is used to store data efficiently using the BSON Binary Subtype 9 format.
  *
  * @mongodb.server.release 6.0
- * @see Vector#packedBitVector(byte[], byte)
- * @see BsonBinary#BsonBinary(Vector)
+ * @see BinaryVector#packedBitVector(byte[], byte)
+ * @see BsonBinary#BsonBinary(BinaryVector)
  * @see BsonBinary#asVector()
  * @since 5.3
  */
 @Beta(Reason.SERVER)
-public final class PackedBitVector extends Vector {
+public final class PackedBitBinaryVector extends BinaryVector {
 
     private final byte padding;
     private final byte[] data;
 
-    PackedBitVector(final byte[] data, final byte padding) {
+    PackedBitBinaryVector(final byte[] data, final byte padding) {
         super(DataType.PACKED_BIT);
         this.data = assertNotNull(data);
         this.padding = padding;
     }
 
     /**
-     * Retrieve the underlying byte array representing this {@link PackedBitVector} vector, where
+     * Retrieve the underlying byte array representing this {@link PackedBitBinaryVector} vector, where
      * each bit represents an element of the vector (either 0 or 1).
      * <p>
      * Note that the {@linkplain #getPadding() padding value} should be considered when interpreting the final byte of the array,
      * as it indicates how many least-significant bits are to be ignored.
      *
-     * @return the underlying byte array representing this {@link PackedBitVector} vector.
+     * @return the underlying byte array representing this {@link PackedBitBinaryVector} vector.
      * @see #getPadding()
      */
     public byte[] getData() {
@@ -85,7 +85,7 @@ public final class PackedBitVector extends Vector {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        PackedBitVector that = (PackedBitVector) o;
+        PackedBitBinaryVector that = (PackedBitBinaryVector) o;
         return padding == that.padding && Arrays.equals(data, that.data);
     }
 

@@ -24,30 +24,30 @@ import static org.bson.assertions.Assertions.assertNotNull;
 /**
  * Represents a vector of 8-bit signed integers, where each element in the vector is a byte.
  * <p>
- * The {@link Int8Vector} is used to store and retrieve data efficiently using the BSON Binary Subtype 9 format.
+ * The {@link Int8BinaryVector} is used to store and retrieve data efficiently using the BSON Binary Subtype 9 format.
  *
  * @mongodb.server.release 6.0
- * @see Vector#int8Vector(byte[])
- * @see BsonBinary#BsonBinary(Vector)
+ * @see BinaryVector#int8Vector(byte[])
+ * @see BsonBinary#BsonBinary(BinaryVector)
  * @see BsonBinary#asVector()
  * @since 5.3
  */
-public final class Int8Vector extends Vector {
+public final class Int8BinaryVector extends BinaryVector {
 
     private byte[] data;
 
-    Int8Vector(final byte[] data) {
+    Int8BinaryVector(final byte[] data) {
         super(DataType.INT8);
         this.data = assertNotNull(data);
     }
 
     /**
-     * Retrieve the underlying byte array representing this {@link Int8Vector} vector, where each byte represents
+     * Retrieve the underlying byte array representing this {@link Int8BinaryVector} vector, where each byte represents
      * an element of a vector.
      * <p>
      * NOTE: The underlying byte array is not copied; changes to the returned array will be reflected in this instance.
      *
-     * @return the underlying byte array representing this {@link Int8Vector} vector.
+     * @return the underlying byte array representing this {@link Int8BinaryVector} vector.
      */
     public byte[] getData() {
         return assertNotNull(data);
@@ -61,7 +61,7 @@ public final class Int8Vector extends Vector {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        Int8Vector that = (Int8Vector) o;
+        Int8BinaryVector that = (Int8BinaryVector) o;
         return Objects.deepEquals(data, that.data);
     }
 

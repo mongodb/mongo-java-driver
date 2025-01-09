@@ -18,11 +18,11 @@ package com.mongodb.reactivestreams.client.vector;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
-import com.mongodb.client.vector.AbstractVectorFunctionalTest;
+import com.mongodb.client.vector.AbstractBinaryVectorFunctionalTest;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 
-public class VectorFunctionalTest extends AbstractVectorFunctionalTest {
+public class BinaryVectorFunctionalTest extends AbstractBinaryVectorFunctionalTest {
     @Override
     protected MongoClient getMongoClient(final MongoClientSettings settings) {
         return new SyncMongoClient(MongoClients.create(settings));

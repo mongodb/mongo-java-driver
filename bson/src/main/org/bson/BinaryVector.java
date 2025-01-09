@@ -23,12 +23,8 @@ import static org.bson.assertions.Assertions.isTrueArgument;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
- * Represents a vector that is stored and retrieved using the BSON Binary Subtype 9 format.
- * This class supports multiple vector {@link DataType}'s and provides static methods to create
- * vectors.
- * <p>
- * Vectors are densely packed arrays of numbers, all the same type, which are stored efficiently
- * in BSON using a binary format.
+ * Binary Vectors are densely packed arrays of numbers, all the same type, which are stored and retrieved efficiently using the BSON Binary
+ * Subtype 9 format. This class supports multiple vector {@link DataType}'s and provides static methods to create vectors.
  * <p>
  * <b>NOTE:</b> This class should be treated as <b>sealed</b>: it must not be extended or implemented by consumers of the library.
  *
@@ -36,10 +32,10 @@ import static org.bson.assertions.Assertions.notNull;
  * @see BsonBinary
  * @since 5.3
  */
-public abstract class Vector {
+public abstract class BinaryVector {
     private final DataType dataType;
 
-    Vector(final DataType dataType) {
+    BinaryVector(final DataType dataType) {
         this.dataType = dataType;
     }
 
@@ -59,19 +55,19 @@ public abstract class Vector {
      * </pre>
      * <p>
      * NOTE: The byte array `data` is not copied; changes to the provided array will be reflected
-     * in the created {@link PackedBitVector} instance.
+     * in the created {@link PackedBitBinaryVector} instance.
      *
      * @param data The byte array representing the packed bit vector data. Each byte can store 8 bits.
      * @param padding    The number of least-significant bits (0 to 7) to ignore in the final byte of the vector data.
-     * @return A {@link PackedBitVector} instance with the {@link DataType#PACKED_BIT} data type.
+     * @return A {@link PackedBitBinaryVector} instance with the {@link DataType#PACKED_BIT} data type.
      * @throws IllegalArgumentException If the padding value is greater than 7.
      */
     @Beta(Reason.SERVER)
-    public static PackedBitVector packedBitVector(final byte[] data, final byte padding) {
+    public static PackedBitBinaryVector packedBitVector(final byte[] data, final byte padding) {
         notNull("data", data);
         isTrueArgument("Padding must be between 0 and 7 bits. Provided padding: " + padding, padding >= 0 && padding <= 7);
         isTrueArgument("Padding must be 0 if vector is empty. Provided padding: " + padding, padding == 0 || data.length > 0);
-        return new PackedBitVector(data, padding);
+        return new PackedBitBinaryVector(data, padding);
     }
 
     /**
@@ -81,14 +77,14 @@ public abstract class Vector {
      * with values in the range [-128, 127].</p>
      * <p>
      * NOTE: The byte array `data` is not copied; changes to the provided array will be reflected
-     * in the created {@link Int8Vector} instance.
+     * in the created {@link Int8BinaryVector} instance.
      *
      * @param data The byte array representing the {@link DataType#INT8} vector data.
-     * @return A {@link Int8Vector} instance with the {@link DataType#INT8} data type.
+     * @return A {@link Int8BinaryVector} instance with the {@link DataType#INT8} data type.
      */
-    public static Int8Vector int8Vector(final byte[] data) {
+    public static Int8BinaryVector int8Vector(final byte[] data) {
         notNull("data", data);
-        return new Int8Vector(data);
+        return new Int8BinaryVector(data);
     }
 
     /**
@@ -97,50 +93,50 @@ public abstract class Vector {
      * A {@link DataType#FLOAT32} vector is a vector of floating-point numbers, where each element in the vector is a float.</p>
      * <p>
      * NOTE: The float array `data` is not copied; changes to the provided array will be reflected
-     * in the created {@link Float32Vector} instance.
+     * in the created {@link Float32BinaryVector} instance.
      *
      * @param data The float array representing the {@link DataType#FLOAT32} vector data.
-     * @return A {@link Float32Vector} instance with the {@link DataType#FLOAT32} data type.
+     * @return A {@link Float32BinaryVector} instance with the {@link DataType#FLOAT32} data type.
      */
-    public static Float32Vector floatVector(final float[] data) {
+    public static Float32BinaryVector floatVector(final float[] data) {
         notNull("data", data);
-        return new Float32Vector(data);
+        return new Float32BinaryVector(data);
     }
 
     /**
-     * Returns the {@link PackedBitVector}.
+     * Returns the {@link PackedBitBinaryVector}.
      *
-     * @return {@link PackedBitVector}.
+     * @return {@link PackedBitBinaryVector}.
      * @throws IllegalStateException if this vector is not of type {@link DataType#PACKED_BIT}. Use {@link #getDataType()} to check the vector
      *                                   type before calling this method.
      */
-    public PackedBitVector asPackedBitVector() {
+    public PackedBitBinaryVector asPackedBitVector() {
         ensureType(DataType.PACKED_BIT);
-        return (PackedBitVector) this;
+        return (PackedBitBinaryVector) this;
     }
 
     /**
-     * Returns the {@link Int8Vector}.
+     * Returns the {@link Int8BinaryVector}.
      *
-     * @return {@link Int8Vector}.
+     * @return {@link Int8BinaryVector}.
      * @throws IllegalStateException if this vector is not of type {@link DataType#INT8}. Use {@link #getDataType()} to check the vector
      *                               type before calling this method.
      */
-    public Int8Vector asInt8Vector() {
+    public Int8BinaryVector asInt8Vector() {
         ensureType(DataType.INT8);
-        return (Int8Vector) this;
+        return (Int8BinaryVector) this;
     }
 
     /**
-     * Returns the {@link Float32Vector}.
+     * Returns the {@link Float32BinaryVector}.
      *
-     * @return {@link Float32Vector}.
+     * @return {@link Float32BinaryVector}.
      * @throws IllegalStateException if this vector is not of type {@link DataType#FLOAT32}. Use {@link #getDataType()} to check the vector
      *                               type before calling this method.
      */
-    public Float32Vector asFloat32Vector() {
+    public Float32BinaryVector asFloat32Vector() {
         ensureType(DataType.FLOAT32);
-        return (Float32Vector) this;
+        return (Float32BinaryVector) this;
     }
 
     /**
