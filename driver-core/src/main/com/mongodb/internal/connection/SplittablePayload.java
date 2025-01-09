@@ -270,6 +270,11 @@ public final class SplittablePayload {
                 } else if (update.getHintString() != null) {
                     writer.writeString("hint", update.getHintString());
                 }
+                if (update.getSort() != null) {
+                    writer.writeName("sort");
+                    getCodec(assertNotNull(update.getSort())).encode(writer, assertNotNull(update.getSort()),
+                            EncoderContext.builder().build());
+                }
                 writer.writeEndDocument();
             } else {
                 DeleteRequest deleteRequest = (DeleteRequest) writeRequestWithIndex.getWriteRequest();

@@ -37,6 +37,7 @@ public class ReplaceOptions {
     private String hintString;
     private BsonValue comment;
     private Bson variables;
+    private Bson sort;
 
     /**
      * Returns true if a new document should be inserted if there are no matches to the query filter.  The default is false.
@@ -221,6 +222,43 @@ public class ReplaceOptions {
         return this;
     }
 
+    /**
+     * Gets the sort criteria to apply to the operation.
+     *
+     * <p>
+     * The sort criteria determines which document the operation replaces if the query matches multiple documents.
+     * The first document matched by the sort criteria will be replaced.
+     * The default is null, which means no specific sort criteria is applied.
+     *
+     * @return a document describing the sort criteria, or null if no sort is specified.
+     * @mongodb.driver.manual reference/method/db.collection.replaceOne/ Sort
+     * @mongodb.server.release 8.0
+     * @since 5.3
+     * @see #sort(Bson)
+     */
+    @Nullable
+    public Bson getSort() {
+        return sort;
+    }
+
+    /**
+     * Sets the sort criteria to apply to the operation. A null value means no sort criteria is set.
+     *
+     * <p>
+     * The sort criteria determines which document the operation replaces if the query matches multiple documents.
+     * The first document matched by the specified sort criteria will be replaced.
+     *
+     * @param sort the sort criteria, which may be null.
+     * @return this
+     * @mongodb.driver.manual reference/method/db.collection.replaceOne/ Sort
+     * @mongodb.server.release 8.0
+     * @since 5.3
+     */
+    public ReplaceOptions sort(@Nullable final Bson sort) {
+        this.sort = sort;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "ReplaceOptions{"
@@ -231,6 +269,7 @@ public class ReplaceOptions {
                 + ", hintString=" + hintString
                 + ", comment=" + comment
                 + ", let=" + variables
+                + ", sort=" + sort
                 + '}';
     }
 }
