@@ -27,7 +27,7 @@ import org.bson.conversions.Bson;
  * @since 5.3
  */
 @Sealed
-public interface ClientReplaceOneOptions {
+public interface ClientReplaceOneOptions extends BaseClientWriteModelOptions, BaseClientUpsertableWriteModelOptions {
     /**
      * Creates the default options.
      *
@@ -43,6 +43,7 @@ public interface ClientReplaceOneOptions {
      * @param collation The collation. {@code null} represents the server default.
      * @return {@code this}.
      */
+    @Override
     ClientReplaceOneOptions collation(@Nullable Collation collation);
 
     /**
@@ -52,6 +53,7 @@ public interface ClientReplaceOneOptions {
      * @param hint The index specification. {@code null} represents the server default.
      * @return {@code this}.
      */
+    @Override
     ClientReplaceOneOptions hint(@Nullable Bson hint);
 
     /**
@@ -61,6 +63,7 @@ public interface ClientReplaceOneOptions {
      * @param hintString The index name. {@code null} represents the server default.
      * @return {@code this}.
      */
+    @Override
     ClientReplaceOneOptions hintString(@Nullable String hintString);
 
     /**
@@ -69,5 +72,6 @@ public interface ClientReplaceOneOptions {
      * @param upsert The upsert flag. {@code null} represents the server default.
      * @return {@code this}.
      */
+    @Override
     ClientReplaceOneOptions upsert(@Nullable Boolean upsert);
 }
