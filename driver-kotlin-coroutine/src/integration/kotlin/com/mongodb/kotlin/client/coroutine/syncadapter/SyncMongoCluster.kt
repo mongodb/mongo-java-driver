@@ -25,6 +25,9 @@ import com.mongodb.client.ListDatabasesIterable
 import com.mongodb.client.MongoCluster as JMongoCluster
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.MongoIterable
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions
+import com.mongodb.client.model.bulk.ClientBulkWriteResult
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel
 import com.mongodb.kotlin.client.coroutine.MongoCluster
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
@@ -110,6 +113,26 @@ internal open class SyncMongoCluster(open val wrapped: MongoCluster) : JMongoClu
         resultClass: Class<T>
     ): ChangeStreamIterable<T> =
         SyncChangeStreamIterable(wrapped.watch(clientSession.unwrapped(), pipeline, resultClass))
+
+    override fun bulkWrite(models: MutableList<out ClientNamespacedWriteModel>): ClientBulkWriteResult = runBlocking {
+        wrapped.bulkWrite(models)
+    }
+
+    override fun bulkWrite(
+        models: MutableList<out ClientNamespacedWriteModel>,
+        options: ClientBulkWriteOptions
+    ): ClientBulkWriteResult = runBlocking { wrapped.bulkWrite(models, options) }
+
+    override fun bulkWrite(
+        clientSession: ClientSession,
+        models: MutableList<out ClientNamespacedWriteModel>
+    ): ClientBulkWriteResult = runBlocking { wrapped.bulkWrite(clientSession.unwrapped(), models) }
+
+    override fun bulkWrite(
+        clientSession: ClientSession,
+        models: MutableList<out ClientNamespacedWriteModel>,
+        options: ClientBulkWriteOptions
+    ): ClientBulkWriteResult = runBlocking { wrapped.bulkWrite(clientSession.unwrapped(), models, options) }
 
     private fun ClientSession.unwrapped() = (this as SyncClientSession).wrapped
 }

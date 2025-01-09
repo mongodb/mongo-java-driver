@@ -54,6 +54,8 @@ import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.internal.bulk.DeleteRequest;
@@ -725,6 +727,12 @@ final class Operations<TDocument> {
                 .startAfter(startAfter)
                 .showExpandedEvents(showExpandedEvents)
                 .retryReads(retryReads);
+    }
+
+    ClientBulkWriteOperation clientBulkWriteOperation(
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
+            @Nullable final ClientBulkWriteOptions options) {
+        return new ClientBulkWriteOperation(clientWriteModels, options, writeConcern, retryWrites, codecRegistry);
     }
 
     private Codec<TDocument> getCodec() {

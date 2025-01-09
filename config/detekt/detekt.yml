@@ -159,7 +159,7 @@ complexity:
     active: true
     excludes: ['**/test/**']
     thresholdInFiles: 25
-    thresholdInClasses: 25
+    thresholdInClasses: 27
     thresholdInInterfaces: 25
     thresholdInObjects: 25
     thresholdInEnums: 25
