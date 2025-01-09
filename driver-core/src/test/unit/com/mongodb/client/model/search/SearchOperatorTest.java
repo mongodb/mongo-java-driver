@@ -583,8 +583,6 @@ final class SearchOperatorTest {
 
     @Test
     void moreLikeThis() {
-        BsonDocument doc = new BsonDocument("like", new BsonDocument("fieldName", new BsonString("fieldValue"))
-                .append("fieldName2", new BsonString("fieldValue2")));
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () ->
                         // likes must not be empty
