@@ -45,7 +45,6 @@ public final class UnifiedTestModifications {
                 .directory("atlas-data-lake-testing");
 
         // change-streams
-
         def.skipNoncompliantReactive("error required from change stream initialization") // TODO reason?
                 .test("change-streams", "change-streams", "Test with document comment - pre 4.4");
         def.skipNoncompliantReactive("event sensitive tests. We can't guarantee the amount of GetMore commands sent in the reactive driver")
@@ -135,15 +134,6 @@ public final class UnifiedTestModifications {
                 .test("crud", "findOneAndUpdate-hint-unacknowledged", "Unacknowledged findOneAndUpdate with hint document on 4.4+ server")
                 .test("crud", "findOneAndDelete-hint-unacknowledged", "Unacknowledged findOneAndDelete with hint string on 4.4+ server")
                 .test("crud", "findOneAndDelete-hint-unacknowledged", "Unacknowledged findOneAndDelete with hint document on 4.4+ server");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5622")
-                .test("crud", "updateOne-sort", "UpdateOne with sort option")
-                .test("crud", "updateOne-sort", "updateOne with sort option unsupported (server-side error)")
-                .test("crud", "replaceOne-sort", "ReplaceOne with sort option")
-                .test("crud", "replaceOne-sort", "replaceOne with sort option unsupported (server-side error)")
-                .test("crud", "BulkWrite updateOne-sort", "BulkWrite updateOne with sort option")
-                .test("crud", "BulkWrite updateOne-sort", "BulkWrite updateOne with sort option unsupported (server-side error)")
-                .test("crud", "BulkWrite replaceOne-sort", "BulkWrite replaceOne with sort option")
-                .test("crud", "BulkWrite replaceOne-sort", "BulkWrite replaceOne with sort option unsupported (server-side error)");
 
         // gridfs
 
@@ -198,24 +188,11 @@ public final class UnifiedTestModifications {
                 .test("retryable-writes", "findOneAndDelete-errorLabels", "FindOneAndDelete succeeds after WriteConcernError ShutdownInProgress")
                 .test("retryable-writes", "findOneAndReplace-errorLabels", "FindOneAndReplace succeeds after WriteConcernError ShutdownInProgress")
                 //.testContains("retryable-writes", "succeeds after retryable writeConcernError")
-                .test("retryable-writes", "client bulkWrite retryable writes", "client bulkWrite with no multi: true operations succeeds after retryable writeConcernError")
                 .test("retryable-writes", "retryable-writes insertOne serverErrors", "InsertOne succeeds after retryable writeConcernError")
                 .test("retryable-writes", "retryable-writes bulkWrite serverErrors", "BulkWrite succeeds after retryable writeConcernError in first batch");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5341")
                 .when(() -> isDiscoverableReplicaSet() && serverVersionLessThan(4, 4))
                 .test("retryable-writes", "retryable-writes insertOne serverErrors", "RetryableWriteError label is added based on writeConcernError in pre-4.4 mongod response");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-4586")
-                //.testContains("retryable-writes", "client bulkWrite")
-                .test("retryable-writes", "client bulkWrite retryable writes", "client bulkWrite with no multi: true operations succeeds after retryable top-level error")
-                .test("retryable-writes", "client bulkWrite retryable writes", "client bulkWrite with multi: true operations fails after retryable top-level error")
-                .test("retryable-writes", "client bulkWrite retryable writes", "client bulkWrite with no multi: true operations succeeds after retryable writeConcernError")
-                .test("retryable-writes", "client bulkWrite retryable writes", "client bulkWrite with multi: true operations fails after retryable writeConcernError")
-                .test("retryable-writes", "client bulkWrite retryable writes", "client bulkWrite with retryWrites: false does not retry")
-                .test("retryable-writes", "client bulkWrite retryable writes with client errors", "client bulkWrite with one network error succeeds after retry")
-                .test("retryable-writes", "client bulkWrite retryable writes with client errors", "client bulkWrite with two network errors fails after retry")
-                //.testContains("retryable-writes", "client.clientBulkWrite")
-                .test("retryable-writes", "retryable writes handshake failures", "client.clientBulkWrite succeeds after retryable handshake network error")
-                .test("retryable-writes", "retryable writes handshake failures", "client.clientBulkWrite succeeds after retryable handshake server error (ShutdownInProgress)");
 
         // server-discovery-and-monitoring (SDAM)
 
@@ -247,6 +224,9 @@ public final class UnifiedTestModifications {
                 .test("transactions", "read-concern", "only first distinct includes readConcern")
                 .test("transactions", "read-concern", "distinct ignores collection readConcern")
                 .test("transactions", "reads", "distinct");
+        def.skipNoncompliant("`MongoCluster.getWriteConcern`/`MongoCollection.getWriteConcern` are silently ignored in a transaction")
+                .test("transactions", "client bulkWrite transactions",
+                        "client bulkWrite with writeConcern in a transaction causes a transaction error");
 
         // valid-pass
 

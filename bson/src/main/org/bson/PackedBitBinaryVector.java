@@ -16,6 +16,9 @@
 
 package org.bson;
 
+import org.bson.annotations.Beta;
+import org.bson.annotations.Reason;
+
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -32,6 +35,7 @@ import static org.bson.assertions.Assertions.assertNotNull;
  * @see BsonBinary#asVector()
  * @since 5.3
  */
+@Beta(Reason.SERVER)
 public final class PackedBitBinaryVector extends BinaryVector {
 
     private final byte padding;

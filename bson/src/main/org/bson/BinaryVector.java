@@ -16,6 +16,9 @@
 
 package org.bson;
 
+import org.bson.annotations.Beta;
+import org.bson.annotations.Reason;
+
 import static org.bson.assertions.Assertions.isTrueArgument;
 import static org.bson.assertions.Assertions.notNull;
 
@@ -59,6 +62,7 @@ public abstract class BinaryVector {
      * @return A {@link PackedBitBinaryVector} instance with the {@link DataType#PACKED_BIT} data type.
      * @throws IllegalArgumentException If the padding value is greater than 7.
      */
+    @Beta(Reason.SERVER)
     public static PackedBitBinaryVector packedBitVector(final byte[] data, final byte padding) {
         notNull("data", data);
         isTrueArgument("Padding must be between 0 and 7 bits. Provided padding: " + padding, padding >= 0 && padding <= 7);
