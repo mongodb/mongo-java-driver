@@ -17,35 +17,25 @@ package com.mongodb.client.model.bulk;
 
 import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.Filters;
-import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOptions;
+import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteOneOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 /**
- * The options to apply when updating documents.
+ * The options to apply when deleting a document.
  *
  * @since 5.3
  */
 @Sealed
-public interface ClientUpdateOptions {
+public interface ClientDeleteOneOptions extends BaseClientDeleteOptions {
     /**
      * Creates the default options.
      *
      * @return The default options.
      */
-    static ClientUpdateOptions clientUpdateOptions() {
-        return new ConcreteClientUpdateOptions();
+    static ClientDeleteOneOptions clientDeleteOneOptions() {
+        return new ConcreteClientDeleteOneOptions();
     }
-
-    /**
-     * Sets the filters specifying to which array elements an update should apply.
-     *
-     * @param arrayFilters The array filters. {@code null} represents the server default.
-     * @return {@code this}.
-     * @see Filters
-     */
-    ClientUpdateOptions arrayFilters(@Nullable Iterable<? extends Bson> arrayFilters);
 
     /**
      * Sets the collation.
@@ -53,7 +43,8 @@ public interface ClientUpdateOptions {
      * @param collation The collation. {@code null} represents the server default.
      * @return {@code this}.
      */
-    ClientUpdateOptions collation(@Nullable Collation collation);
+    @Override
+    ClientDeleteOneOptions collation(@Nullable Collation collation);
 
     /**
      * Sets the index specification,
@@ -62,7 +53,8 @@ public interface ClientUpdateOptions {
      * @param hint The index specification. {@code null} represents the server default.
      * @return {@code this}.
      */
-    ClientUpdateOptions hint(@Nullable Bson hint);
+    @Override
+    ClientDeleteOneOptions hint(@Nullable Bson hint);
 
     /**
      * Sets the index name,
@@ -71,13 +63,6 @@ public interface ClientUpdateOptions {
      * @param hintString The index name. {@code null} represents the server default.
      * @return {@code this}.
      */
-    ClientUpdateOptions hintString(@Nullable String hintString);
-
-    /**
-     * Enables or disables creation of a document if no documents match the filter.
-     *
-     * @param upsert The upsert flag. {@code null} represents the server default.
-     * @return {@code this}.
-     */
-    ClientUpdateOptions upsert(@Nullable Boolean upsert);
+    @Override
+    ClientDeleteOneOptions hintString(@Nullable String hintString);
 }

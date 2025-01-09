@@ -15,20 +15,23 @@
  */
 package com.mongodb.internal.client.model.bulk;
 
-import com.mongodb.client.model.bulk.ClientDeleteOptions;
+import com.mongodb.client.model.bulk.ClientDeleteOneOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ConcreteClientDeleteOneModel extends AbstractClientDeleteModel implements ClientWriteModel {
-    public ConcreteClientDeleteOneModel(final Bson filter, @Nullable final ClientDeleteOptions options) {
-        super(filter, options);
+public final class ConcreteClientDeleteOneModel extends AbstractClientDeleteModel<ConcreteClientDeleteOneOptions> implements ClientWriteModel {
+    public ConcreteClientDeleteOneModel(final Bson filter, @Nullable final ClientDeleteOneOptions options) {
+        super(filter, options == null ? ConcreteClientDeleteOneOptions.MUTABLE_EMPTY : (ConcreteClientDeleteOneOptions) options);
     }
 
     @Override
-    String getToStringDescription() {
-        return "ClientDeleteOneModel";
+    public String toString() {
+        return "ClientDeleteOneModel{"
+                + "filter=" + getFilter()
+                + ", options=" + getOptions()
+                + '}';
     }
 }

@@ -13,27 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.internal.client.model.bulk;
+package com.mongodb.client.model.bulk;
 
+import com.mongodb.client.model.Collation;
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 /**
- * This class is not part of the public API and may be removed or changed at any time.
+ * The methods declared in this interface are part of the public API of subclasses or sub-interfaces.
  */
-public abstract class AbstractClientDeleteModel<O extends AbstractClientDeleteOptions> implements ClientWriteModel {
-    private final Bson filter;
-    private final O options;
+interface BaseClientUpdateOptions {
 
-    AbstractClientDeleteModel(final Bson filter, final O options) {
-        this.filter = filter;
-        this.options = options;
-    }
+    BaseClientUpdateOptions arrayFilters(@Nullable Iterable<? extends Bson> arrayFilters);
 
-    public final Bson getFilter() {
-        return filter;
-    }
+    BaseClientUpdateOptions collation(@Nullable Collation collation);
 
-    public final O getOptions() {
-        return options;
-    }
+    BaseClientUpdateOptions hint(@Nullable Bson hint);
+
+    BaseClientUpdateOptions hintString(@Nullable String hintString);
+
+    BaseClientUpdateOptions upsert(@Nullable Boolean upsert);
 }

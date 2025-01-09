@@ -77,10 +77,14 @@ import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
-import com.mongodb.client.model.bulk.ClientDeleteOptions;
-import com.mongodb.client.model.bulk.ClientReplaceOptions;
-import com.mongodb.client.model.bulk.ClientUpdateOptions;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
+import com.mongodb.client.model.bulk.ClientDeleteManyOptions;
+import com.mongodb.client.model.bulk.ClientDeleteOneOptions;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
+import com.mongodb.client.model.bulk.ClientReplaceOneOptions;
+import com.mongodb.client.model.bulk.ClientUpdateManyOptions;
+import com.mongodb.client.model.bulk.ClientUpdateOneOptions;
+import com.mongodb.client.model.bulk.ClientUpdateResult;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
@@ -88,8 +92,12 @@ import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
-import com.mongodb.client.model.bulk.ClientBulkWriteResult;
-import com.mongodb.client.model.bulk.ClientUpdateResult;
+import com.mongodb.internal.client.model.bulk.AbstractClientDeleteOptions;
+import com.mongodb.internal.client.model.bulk.AbstractClientUpdateOptions;
+import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteManyOptions;
+import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteOneOptions;
+import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateManyOptions;
+import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOneOptions;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -121,9 +129,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static com.mongodb.client.model.bulk.ClientBulkWriteOptions.clientBulkWriteOptions;
-import static com.mongodb.client.model.bulk.ClientDeleteOptions.clientDeleteOptions;
-import static com.mongodb.client.model.bulk.ClientReplaceOptions.clientReplaceOptions;
-import static com.mongodb.client.model.bulk.ClientUpdateOptions.clientUpdateOptions;
+import static com.mongodb.client.model.bulk.ClientReplaceOneOptions.clientReplaceOneOptions;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
@@ -1857,48 +1863,48 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                         namespace,
                         arguments.getDocument("filter"),
                         arguments.getDocument("replacement"),
-                        getClientReplaceOptions(arguments));
+                        getClientReplaceOneOptions(arguments));
             case "updateOne":
                 return arguments.isDocument("update")
                         ? ClientNamespacedWriteModel.updateOne(
                                 namespace,
                                 arguments.getDocument("filter"),
                                 arguments.getDocument("update"),
-                                getClientUpdateOptions(arguments))
+                                getClientUpdateOneOptions(arguments))
                         : ClientNamespacedWriteModel.updateOne(
                                 namespace,
                                 arguments.getDocument("filter"),
                                 arguments.getArray("update").stream().map(BsonValue::asDocument).collect(toList()),
-                                getClientUpdateOptions(arguments));
+                                getClientUpdateOneOptions(arguments));
             case "updateMany":
                 return arguments.isDocument("update")
                         ? ClientNamespacedWriteModel.updateMany(
                                 namespace,
                                 arguments.getDocument("filter"),
                                 arguments.getDocument("update"),
-                                getClientUpdateOptions(arguments))
+                                getClientUpdateManyOptions(arguments))
                         : ClientNamespacedWriteModel.updateMany(
                                 namespace,
                                 arguments.getDocument("filter"),
                                 arguments.getArray("update").stream().map(BsonValue::asDocument).collect(toList()),
-                                getClientUpdateOptions(arguments));
+                                getClientUpdateManyOptions(arguments));
             case "deleteOne":
                 return ClientNamespacedWriteModel.deleteOne(
                         namespace,
                         arguments.getDocument("filter"),
-                        getClientDeleteOptions(arguments));
+                        getClientDeleteOneOptions(arguments));
             case "deleteMany":
                 return ClientNamespacedWriteModel.deleteMany(
                         namespace,
                         arguments.getDocument("filter"),
-                        getClientDeleteOptions(arguments));
+                        getClientDeleteManyOptions(arguments));
             default:
                 throw new UnsupportedOperationException("Unsupported client write model type: " + modelType);
         }
     }
 
-    private static ClientReplaceOptions getClientReplaceOptions(final BsonDocument arguments) {
-        ClientReplaceOptions options = clientReplaceOptions();
+    private static ClientReplaceOneOptions getClientReplaceOneOptions(final BsonDocument arguments) {
+        ClientReplaceOneOptions options = clientReplaceOneOptions();
         arguments.forEach((key, argument) -> {
             switch (key) {
                 case "namespace":
@@ -1925,8 +1931,17 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         return options;
     }
 
-    private static ClientUpdateOptions getClientUpdateOptions(final BsonDocument arguments) {
-        ClientUpdateOptions options = clientUpdateOptions();
+    private static ClientUpdateOneOptions getClientUpdateOneOptions(final BsonDocument arguments) {
+        return fillAbstractClientUpdateOptions(new ConcreteClientUpdateOneOptions(), arguments);
+    }
+
+    private static ClientUpdateManyOptions getClientUpdateManyOptions(final BsonDocument arguments) {
+        return fillAbstractClientUpdateOptions(new ConcreteClientUpdateManyOptions(), arguments);
+    }
+
+    private static <T extends AbstractClientUpdateOptions> T fillAbstractClientUpdateOptions(
+            final T options,
+            final BsonDocument arguments) {
         arguments.forEach((key, argument) -> {
             switch (key) {
                 case "namespace":
@@ -1956,8 +1971,17 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         return options;
     }
 
-    private static ClientDeleteOptions getClientDeleteOptions(final BsonDocument arguments) {
-        ClientDeleteOptions options = clientDeleteOptions();
+    private static ClientDeleteOneOptions getClientDeleteOneOptions(final BsonDocument arguments) {
+        return fillAbstractClientDeleteOptions(new ConcreteClientDeleteOneOptions(), arguments);
+    }
+
+    private static ClientDeleteManyOptions getClientDeleteManyOptions(final BsonDocument arguments) {
+        return fillAbstractClientDeleteOptions(new ConcreteClientDeleteManyOptions(), arguments);
+    }
+
+    private static <T extends AbstractClientDeleteOptions> T fillAbstractClientDeleteOptions(
+            final T options,
+            final BsonDocument arguments) {
         arguments.forEach((key, argument) -> {
             switch (key) {
                 case "namespace":

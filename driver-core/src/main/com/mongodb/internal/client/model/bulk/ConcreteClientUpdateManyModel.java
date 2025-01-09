@@ -15,26 +15,33 @@
  */
 package com.mongodb.internal.client.model.bulk;
 
-import com.mongodb.client.model.bulk.ClientUpdateOptions;
+import com.mongodb.assertions.Assertions;
+import com.mongodb.client.model.bulk.ClientUpdateManyOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ConcreteClientUpdateManyModel extends AbstractClientUpdateModel implements ClientWriteModel {
+public final class ConcreteClientUpdateManyModel extends AbstractClientUpdateModel<ConcreteClientUpdateManyOptions> implements ClientWriteModel {
     public ConcreteClientUpdateManyModel(
             final Bson filter,
             @Nullable
             final Bson update,
             @Nullable
             final Iterable<? extends Bson> updatePipeline,
-            @Nullable final ClientUpdateOptions options) {
-        super(filter, update, updatePipeline, options);
+            @Nullable final ClientUpdateManyOptions options) {
+        super(filter, update, updatePipeline,
+                options == null ? ConcreteClientUpdateManyOptions.MUTABLE_EMPTY : (ConcreteClientUpdateManyOptions) options);
     }
 
     @Override
-    String getToStringDescription() {
-        return "ClientUpdateManyModel";
+    public String toString() {
+        return "ClientUpdateManyModel{"
+                + "filter=" + getFilter()
+                + ", update=" + getUpdate().map(Object::toString).orElseGet(() ->
+                        getUpdatePipeline().map(Object::toString).orElseThrow(Assertions::fail))
+                + ", options=" + getOptions()
+                + '}';
     }
 }

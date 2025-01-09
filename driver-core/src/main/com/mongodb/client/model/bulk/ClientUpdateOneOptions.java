@@ -17,25 +17,36 @@ package com.mongodb.client.model.bulk;
 
 import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.client.model.bulk.ConcreteClientReplaceOptions;
+import com.mongodb.client.model.Filters;
+import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOneOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 /**
- * The options to apply when replacing documents.
+ * The options to apply when updating a document.
  *
  * @since 5.3
  */
 @Sealed
-public interface ClientReplaceOptions {
+public interface ClientUpdateOneOptions extends BaseClientUpdateOptions{
     /**
      * Creates the default options.
      *
      * @return The default options.
      */
-    static ClientReplaceOptions clientReplaceOptions() {
-        return new ConcreteClientReplaceOptions();
+    static ClientUpdateOneOptions clientUpdateOneOptions() {
+        return new ConcreteClientUpdateOneOptions();
     }
+
+    /**
+     * Sets the filters specifying to which array elements an update should apply.
+     *
+     * @param arrayFilters The array filters. {@code null} represents the server default.
+     * @return {@code this}.
+     * @see Filters
+     */
+    @Override
+    ClientUpdateOneOptions arrayFilters(@Nullable Iterable<? extends Bson> arrayFilters);
 
     /**
      * Sets the collation.
@@ -43,7 +54,8 @@ public interface ClientReplaceOptions {
      * @param collation The collation. {@code null} represents the server default.
      * @return {@code this}.
      */
-    ClientReplaceOptions collation(@Nullable Collation collation);
+    @Override
+    ClientUpdateOneOptions collation(@Nullable Collation collation);
 
     /**
      * Sets the index specification,
@@ -52,7 +64,8 @@ public interface ClientReplaceOptions {
      * @param hint The index specification. {@code null} represents the server default.
      * @return {@code this}.
      */
-    ClientReplaceOptions hint(@Nullable Bson hint);
+    @Override
+    ClientUpdateOneOptions hint(@Nullable Bson hint);
 
     /**
      * Sets the index name,
@@ -61,7 +74,8 @@ public interface ClientReplaceOptions {
      * @param hintString The index name. {@code null} represents the server default.
      * @return {@code this}.
      */
-    ClientReplaceOptions hintString(@Nullable String hintString);
+    @Override
+    ClientUpdateOneOptions hintString(@Nullable String hintString);
 
     /**
      * Enables or disables creation of a document if no documents match the filter.
@@ -69,5 +83,6 @@ public interface ClientReplaceOptions {
      * @param upsert The upsert flag. {@code null} represents the server default.
      * @return {@code this}.
      */
-    ClientReplaceOptions upsert(@Nullable Boolean upsert);
+    @Override
+    ClientUpdateOneOptions upsert(@Nullable Boolean upsert);
 }

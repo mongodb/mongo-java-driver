@@ -17,24 +17,24 @@ package com.mongodb.client.model.bulk;
 
 import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteOptions;
+import com.mongodb.internal.client.model.bulk.ConcreteClientReplaceOneOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 /**
- * The options to apply when deleting documents.
+ * The options to apply when replacing a document.
  *
  * @since 5.3
  */
 @Sealed
-public interface ClientDeleteOptions {
+public interface ClientReplaceOneOptions {
     /**
      * Creates the default options.
      *
      * @return The default options.
      */
-    static ClientDeleteOptions clientDeleteOptions() {
-        return new ConcreteClientDeleteOptions();
+    static ClientReplaceOneOptions clientReplaceOneOptions() {
+        return new ConcreteClientReplaceOneOptions();
     }
 
     /**
@@ -43,7 +43,7 @@ public interface ClientDeleteOptions {
      * @param collation The collation. {@code null} represents the server default.
      * @return {@code this}.
      */
-    ClientDeleteOptions collation(@Nullable Collation collation);
+    ClientReplaceOneOptions collation(@Nullable Collation collation);
 
     /**
      * Sets the index specification,
@@ -52,7 +52,7 @@ public interface ClientDeleteOptions {
      * @param hint The index specification. {@code null} represents the server default.
      * @return {@code this}.
      */
-    ClientDeleteOptions hint(@Nullable Bson hint);
+    ClientReplaceOneOptions hint(@Nullable Bson hint);
 
     /**
      * Sets the index name,
@@ -61,5 +61,13 @@ public interface ClientDeleteOptions {
      * @param hintString The index name. {@code null} represents the server default.
      * @return {@code this}.
      */
-    ClientDeleteOptions hintString(@Nullable String hintString);
+    ClientReplaceOneOptions hintString(@Nullable String hintString);
+
+    /**
+     * Enables or disables creation of a document if no documents match the filter.
+     *
+     * @param upsert The upsert flag. {@code null} represents the server default.
+     * @return {@code this}.
+     */
+    ClientReplaceOneOptions upsert(@Nullable Boolean upsert);
 }

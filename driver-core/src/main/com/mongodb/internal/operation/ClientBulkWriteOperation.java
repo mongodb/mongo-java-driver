@@ -52,15 +52,16 @@ import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.client.model.bulk.AbstractClientDeleteModel;
+import com.mongodb.internal.client.model.bulk.AbstractClientDeleteOptions;
 import com.mongodb.internal.client.model.bulk.AbstractClientNamespacedWriteModel;
 import com.mongodb.internal.client.model.bulk.AbstractClientUpdateModel;
+import com.mongodb.internal.client.model.bulk.AbstractClientUpdateOptions;
 import com.mongodb.internal.client.model.bulk.AcknowledgedSummaryClientBulkWriteResult;
 import com.mongodb.internal.client.model.bulk.AcknowledgedVerboseClientBulkWriteResult;
 import com.mongodb.internal.client.model.bulk.ClientWriteModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientBulkWriteOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteManyModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteOneModel;
-import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteResult;
 import com.mongodb.internal.client.model.bulk.ConcreteClientInsertOneModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientInsertOneResult;
@@ -71,10 +72,9 @@ import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedReplaceOne
 import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedUpdateManyModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedUpdateOneModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientReplaceOneModel;
-import com.mongodb.internal.client.model.bulk.ConcreteClientReplaceOptions;
+import com.mongodb.internal.client.model.bulk.ConcreteClientReplaceOneOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateManyModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOneModel;
-import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateResult;
 import com.mongodb.internal.client.model.bulk.UnacknowledgedClientBulkWriteResult;
 import com.mongodb.internal.connection.AsyncConnection;
@@ -1247,7 +1247,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             });
         }
 
-        private void encodeWriteModelInternals(final BsonWriter writer, final AbstractClientUpdateModel model) {
+        private void encodeWriteModelInternals(final BsonWriter writer, final AbstractClientUpdateModel<?> model) {
             writer.writeName("filter");
             encodeUsingRegistry(writer, model.getFilter());
             model.getUpdate().ifPresent(value -> {
@@ -1259,7 +1259,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 value.forEach(pipelineStage -> encodeUsingRegistry(writer, pipelineStage));
                 writer.writeEndArray();
             });
-            ConcreteClientUpdateOptions options = model.getOptions();
+            AbstractClientUpdateOptions options = model.getOptions();
             options.getArrayFilters().ifPresent(value -> {
                 writer.writeStartArray("arrayFilters");
                 value.forEach(filter -> encodeUsingRegistry(writer, filter));
@@ -1283,7 +1283,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             encodeUsingRegistry(writer, model.getFilter());
             writer.writeName("updateMods");
             encodeUsingRegistry(writer, model.getReplacement(), COLLECTIBLE_DOCUMENT_ENCODER_CONTEXT);
-            ConcreteClientReplaceOptions options = model.getOptions();
+            ConcreteClientReplaceOneOptions options = model.getOptions();
             options.getCollation().ifPresent(value -> {
                 writer.writeName("collation");
                 encodeUsingRegistry(writer, value.asDocument());
@@ -1296,10 +1296,10 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             options.isUpsert().ifPresent(value -> writer.writeBoolean("upsert", value));
         }
 
-        private void encodeWriteModelInternals(final BsonWriter writer, final AbstractClientDeleteModel model) {
+        private void encodeWriteModelInternals(final BsonWriter writer, final AbstractClientDeleteModel<?> model) {
             writer.writeName("filter");
             encodeUsingRegistry(writer, model.getFilter());
-            ConcreteClientDeleteOptions options = model.getOptions();
+            AbstractClientDeleteOptions options = model.getOptions();
             options.getCollation().ifPresent(value -> {
                 writer.writeName("collation");
                 encodeUsingRegistry(writer, value.asDocument());

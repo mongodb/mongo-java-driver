@@ -16,7 +16,8 @@
 package com.mongodb.internal.client.model.bulk;
 
 import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.bulk.ClientReplaceOptions;
+import com.mongodb.client.model.bulk.ClientUpdateManyOptions;
+import com.mongodb.client.model.bulk.ClientUpdateOneOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
@@ -27,9 +28,9 @@ import static java.util.Optional.ofNullable;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ConcreteClientReplaceOptions implements ClientReplaceOptions {
-    static final ConcreteClientReplaceOptions MUTABLE_EMPTY = new ConcreteClientReplaceOptions();
-
+public abstract class AbstractClientUpdateOptions {
+    @Nullable
+    private Iterable<? extends Bson> arrayFilters;
     @Nullable
     private Collation collation;
     @Nullable
@@ -39,70 +40,73 @@ public final class ConcreteClientReplaceOptions implements ClientReplaceOptions 
     @Nullable
     private Boolean upsert;
 
-    public ConcreteClientReplaceOptions() {
+    AbstractClientUpdateOptions() {
     }
 
-    @Override
-    public ClientReplaceOptions collation(@Nullable final Collation collation) {
+    public AbstractClientUpdateOptions arrayFilters(@Nullable final Iterable<? extends Bson> arrayFilters) {
+        this.arrayFilters = arrayFilters;
+        return this;
+    }
+
+    /**
+     * @see ClientUpdateOneOptions#arrayFilters(Iterable)
+     * @see ClientUpdateManyOptions#arrayFilters(Iterable)
+     */
+    public Optional<Iterable<? extends Bson>> getArrayFilters() {
+        return ofNullable(arrayFilters);
+    }
+
+    public AbstractClientUpdateOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
 
     /**
-     * @see #collation(Collation)
+     * @see ClientUpdateOneOptions#collation(Collation)
+     * @see ClientUpdateManyOptions#collation(Collation)
      */
     public Optional<Collation> getCollation() {
         return ofNullable(collation);
     }
 
-    @Override
-    public ClientReplaceOptions hint(@Nullable final Bson hint) {
+    public AbstractClientUpdateOptions hint(@Nullable final Bson hint) {
         this.hint = hint;
         this.hintString = null;
         return this;
     }
 
     /**
-     * @see #hint(Bson)
+     * @see ClientUpdateOneOptions#hint(Bson)
+     * @see ClientUpdateManyOptions#hint(Bson)
      */
     public Optional<Bson> getHint() {
         return ofNullable(hint);
     }
 
-    @Override
-    public ClientReplaceOptions hintString(@Nullable final String hintString) {
+    public AbstractClientUpdateOptions hintString(@Nullable final String hintString) {
         this.hintString = hintString;
         this.hint = null;
         return this;
     }
 
     /**
-     * @see #hintString(String)
+     * @see ClientUpdateOneOptions#hintString(String)
+     * @see ClientUpdateManyOptions#hintString(String)
      */
     public Optional<String> getHintString() {
         return ofNullable(hintString);
     }
 
-    @Override
-    public ClientReplaceOptions upsert(@Nullable final Boolean upsert) {
+    public AbstractClientUpdateOptions upsert(@Nullable final Boolean upsert) {
         this.upsert = upsert;
         return this;
     }
 
     /**
-     * @see #upsert(Boolean)
+     * @see ClientUpdateOneOptions#upsert(Boolean)
+     * @see ClientUpdateManyOptions#upsert(Boolean)
      */
     public Optional<Boolean> isUpsert() {
         return ofNullable(upsert);
-    }
-
-    @Override
-    public String toString() {
-        return "ClientReplaceOptions{"
-                + "collation=" + collation
-                + ", hint=" + hint
-                + ", hintString='" + hintString + '\''
-                + ", upsert=" + upsert
-                + '}';
     }
 }

@@ -60,6 +60,7 @@ dependencies {
 
     testImplementation project(':bson').sourceSets.test.output
     testImplementation('org.junit.jupiter:junit-jupiter-api')
+    testImplementation("org.reflections:reflections:$reflectionsVersion")
     testRuntimeOnly "io.netty:netty-tcnative-boringssl-static"
 
     classifiers.forEach {

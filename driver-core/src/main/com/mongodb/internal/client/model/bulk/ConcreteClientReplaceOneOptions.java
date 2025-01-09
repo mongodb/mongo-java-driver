@@ -16,7 +16,7 @@
 package com.mongodb.internal.client.model.bulk;
 
 import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.bulk.ClientDeleteOptions;
+import com.mongodb.client.model.bulk.ClientReplaceOneOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
@@ -27,8 +27,8 @@ import static java.util.Optional.ofNullable;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ConcreteClientDeleteOptions implements ClientDeleteOptions {
-    static final ConcreteClientDeleteOptions MUTABLE_EMPTY = new ConcreteClientDeleteOptions();
+public final class ConcreteClientReplaceOneOptions implements ClientReplaceOneOptions {
+    static final ConcreteClientReplaceOneOptions MUTABLE_EMPTY = new ConcreteClientReplaceOneOptions();
 
     @Nullable
     private Collation collation;
@@ -36,12 +36,14 @@ public final class ConcreteClientDeleteOptions implements ClientDeleteOptions {
     private Bson hint;
     @Nullable
     private String hintString;
+    @Nullable
+    private Boolean upsert;
 
-    public ConcreteClientDeleteOptions() {
+    public ConcreteClientReplaceOneOptions() {
     }
 
     @Override
-    public ClientDeleteOptions collation(@Nullable final Collation collation) {
+    public ClientReplaceOneOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
@@ -54,7 +56,7 @@ public final class ConcreteClientDeleteOptions implements ClientDeleteOptions {
     }
 
     @Override
-    public ClientDeleteOptions hint(@Nullable final Bson hint) {
+    public ClientReplaceOneOptions hint(@Nullable final Bson hint) {
         this.hint = hint;
         this.hintString = null;
         return this;
@@ -68,7 +70,7 @@ public final class ConcreteClientDeleteOptions implements ClientDeleteOptions {
     }
 
     @Override
-    public ClientDeleteOptions hintString(@Nullable final String hintString) {
+    public ClientReplaceOneOptions hintString(@Nullable final String hintString) {
         this.hintString = hintString;
         this.hint = null;
         return this;
@@ -82,11 +84,25 @@ public final class ConcreteClientDeleteOptions implements ClientDeleteOptions {
     }
 
     @Override
+    public ClientReplaceOneOptions upsert(@Nullable final Boolean upsert) {
+        this.upsert = upsert;
+        return this;
+    }
+
+    /**
+     * @see #upsert(Boolean)
+     */
+    public Optional<Boolean> isUpsert() {
+        return ofNullable(upsert);
+    }
+
+    @Override
     public String toString() {
-        return "ClientDeleteOptions{"
+        return "ClientReplaceOneOptions{"
                 + "collation=" + collation
                 + ", hint=" + hint
                 + ", hintString='" + hintString + '\''
+                + ", upsert=" + upsert
                 + '}';
     }
 }
