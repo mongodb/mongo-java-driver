@@ -23,6 +23,6 @@ class BaseClientDeleteOptionsTest {
 
     @Test
     void testAllSubInterfacesOverrideMethods() {
-        MongoBaseInterfaceAssertions.assertSubtypeReturn("com.mongodb", BaseClientDeleteOptions.class);
+        MongoBaseInterfaceAssertions.assertSubtypeReturn(BaseClientDeleteOptions.class);
     }
 }

@@ -32,9 +32,8 @@ public final class MongoBaseInterfaceAssertions {
         //NOP
     }
 
-    public static <T> void assertSubtypeReturn(final String packageName,
-                                               final Class<T> baseClass) {
-        Reflections reflections = new Reflections(packageName);
+    public static <T> void assertSubtypeReturn(final Class<T> baseClass) {
+        Reflections reflections = new Reflections("com.mongodb");
         Set<Class<? extends T>> subtypes = reflections.getSubTypesOf(baseClass).stream()
                 .filter(aClass -> Modifier.isPublic(aClass.getModifiers()))
                 .filter(aClass -> !aClass.getPackage().getName().contains(".internal"))

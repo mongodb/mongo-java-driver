@@ -23,6 +23,6 @@ class BaseClientUpdateOptionsTest {
 
     @Test
     void testAllSubInterfacesOverrideMethods() {
-        MongoBaseInterfaceAssertions.assertSubtypeReturn("com.mongodb", BaseClientUpdateOptions.class);
+        MongoBaseInterfaceAssertions.assertSubtypeReturn(BaseClientUpdateOptions.class);
     }
 }
