@@ -26,7 +26,7 @@ import static java.util.Optional.ofNullable;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public abstract class AbstractClientUpdateModel<O extends AbstractClientUpdateOptions> {
+public abstract class AbstractClientUpdateModel<O extends AbstractClientUpdateOptions> implements ClientWriteModel {
     private final Bson filter;
     @Nullable
     private final Bson update;
