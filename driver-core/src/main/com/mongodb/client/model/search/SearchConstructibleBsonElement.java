@@ -119,11 +119,6 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
     }
 
     @Override
-    public WildcardSearchOperator allowAnalyzedField() {
-        return newWithAppendedValue("allowAnalyzedField", false);
-    }
-
-    @Override
     public WildcardSearchOperator allowAnalyzedField(final boolean allowAnalyzedField) {
         return newWithAppendedValue("allowAnalyzedField", allowAnalyzedField);
     }

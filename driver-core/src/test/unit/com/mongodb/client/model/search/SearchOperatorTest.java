@@ -625,18 +625,6 @@ final class SearchOperatorTest {
                         new BsonDocument("wildcard",
                                 new BsonDocument("query", new BsonString("term"))
                                         .append("path", fieldPath("fieldName").toBsonValue())
-                                        .append("allowAnalyzedField", new BsonBoolean(false))
-                        ),
-                        SearchOperator.wildcard(
-                                        singleton("term"),
-                                        singleton(fieldPath("fieldName")))
-                                .allowAnalyzedField()
-                                .toBsonDocument()
-                ),
-                () -> assertEquals(
-                        new BsonDocument("wildcard",
-                                new BsonDocument("query", new BsonString("term"))
-                                        .append("path", fieldPath("fieldName").toBsonValue())
                                         .append("allowAnalyzedField", new BsonBoolean(true))
                         ),
                         SearchOperator.wildcard(

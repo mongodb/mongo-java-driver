@@ -31,15 +31,6 @@ public interface WildcardSearchOperator extends SearchOperator {
     WildcardSearchOperator score(SearchScore modifier);
 
     /**
-     * Creates a new {@link WildcardSearchOperator} that runs against an analyzed field.
-     *
-     * <p> Must be set to true if the query is run against an analyzed field. </p>
-     *
-     * @return A new {@link WildcardSearchOperator}.
-     */
-    WildcardSearchOperator allowAnalyzedField();
-
-    /**
      * Creates a new {@link WildcardSearchOperator} that runs against an analyzed field. The default value is false.
      *
      * <p> Must be set to true if the query is run against an analyzed field. </p>
