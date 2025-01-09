@@ -33,7 +33,7 @@ public interface ClientReplaceOneOptions {
      *
      * @return The default options.
      */
-    static ClientReplaceOneOptions clientReplaceOptions() {
+    static ClientReplaceOneOptions clientReplaceOneOptions() {
         return new ConcreteClientReplaceOneOptions();
     }
 

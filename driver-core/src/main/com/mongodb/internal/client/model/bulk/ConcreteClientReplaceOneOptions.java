@@ -98,7 +98,7 @@ public final class ConcreteClientReplaceOneOptions implements ClientReplaceOneOp
 
     @Override
     public String toString() {
-        return "ClientReplaceOptions{"
+        return "ClientReplaceOneOptions{"
                 + "collation=" + collation
                 + ", hint=" + hint
                 + ", hintString='" + hintString + '\''

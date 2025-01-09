@@ -129,7 +129,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static com.mongodb.client.model.bulk.ClientBulkWriteOptions.clientBulkWriteOptions;
-import static com.mongodb.client.model.bulk.ClientReplaceOneOptions.clientReplaceOptions;
+import static com.mongodb.client.model.bulk.ClientReplaceOneOptions.clientReplaceOneOptions;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
@@ -1856,7 +1856,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                         namespace,
                         arguments.getDocument("filter"),
                         arguments.getDocument("replacement"),
-                        getClientReplaceOptions(arguments));
+                        getClientReplaceOneOptions(arguments));
             case "updateOne":
                 return arguments.isDocument("update")
                         ? ClientNamespacedWriteModel.updateOne(
@@ -1896,8 +1896,8 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         }
     }
 
-    private static ClientReplaceOneOptions getClientReplaceOptions(final BsonDocument arguments) {
-        ClientReplaceOneOptions options = clientReplaceOptions();
+    private static ClientReplaceOneOptions getClientReplaceOneOptions(final BsonDocument arguments) {
+        ClientReplaceOneOptions options = clientReplaceOneOptions();
         arguments.forEach((key, argument) -> {
             switch (key) {
                 case "namespace":

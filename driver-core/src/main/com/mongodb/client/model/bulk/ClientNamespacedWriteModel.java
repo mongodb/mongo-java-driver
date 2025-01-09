@@ -221,7 +221,7 @@ public interface ClientNamespacedWriteModel {
     /**
      * Creates a model for replacing at most one document in the {@code namespace} matching the {@code filter}.
      * This method is functionally equivalent to {@link #replaceOne(MongoNamespace, Bson, Object, ClientReplaceOneOptions)}
-     * with the {@linkplain ClientReplaceOneOptions#clientReplaceOptions() default options}.
+     * with the {@linkplain ClientReplaceOneOptions#clientReplaceOneOptions() default options}.
      *
      * @param namespace The namespace.
      * @param filter The filter.
