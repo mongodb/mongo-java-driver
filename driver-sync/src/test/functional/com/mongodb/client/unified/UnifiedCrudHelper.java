@@ -510,6 +510,13 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 case "comment":
                     iterable.comment(cur.getValue());
                     break;
+                case "hint":
+                    if (cur.getValue().isString()) {
+                        iterable.hintString(cur.getValue().asString().getValue());
+                    } else {
+                        iterable.hint(cur.getValue().asDocument());
+                    }
+                    break;
                 case "filter":
                     iterable.filter(cur.getValue().asDocument());
                     break;

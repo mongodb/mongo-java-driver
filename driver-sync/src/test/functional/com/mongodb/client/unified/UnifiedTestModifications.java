@@ -47,7 +47,7 @@ public final class UnifiedTestModifications {
         // change-streams
         def.skipNoncompliantReactive("error required from change stream initialization") // TODO reason?
                 .test("change-streams", "change-streams", "Test with document comment - pre 4.4");
-        def.skipNoncompliantReactive("event sensitive tests") // TODO reason?
+        def.skipNoncompliantReactive("event sensitive tests. We can't guarantee the amount of GetMore commands sent in the reactive driver")
                 .test("change-streams", "change-streams", "Test that comment is set on getMore")
                 .test("change-streams", "change-streams", "Test that comment is not set on getMore - pre 4.4");
         def.modify(IGNORE_EXTRA_EVENTS)
@@ -270,9 +270,9 @@ public final class UnifiedTestModifications {
         private final List<Modifier> modifiers = new ArrayList<>();
 
         private TestDef(final String dir, final String file, final String test, final boolean reactive) {
-            this.dir = dir;
-            this.file = file;
-            this.test = test;
+            this.dir = assertNotNull(dir);
+            this.file = assertNotNull(file);
+            this.test = assertNotNull(test);
             this.reactive = reactive;
         }
 

@@ -29,6 +29,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.LongConsumer;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
@@ -198,7 +199,7 @@ public class TimeoutContext {
             runWithFixedTimeout(timeoutSettings.getMaxTimeMS(), onRemaining);
             return;
         }
-        timeout.shortenBy(minRoundTripTimeMS, MILLISECONDS)
+        assertNotNull(timeoutIncludingRoundTrip())
                 .run(MILLISECONDS,
                         () -> {},
                         onRemaining,

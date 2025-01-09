@@ -32,15 +32,15 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 class BsonBinaryTest {
 
-    private static final byte FLOAT32_DTYPE = Vector.DataType.FLOAT32.getValue();
-    private static final byte INT8_DTYPE = Vector.DataType.INT8.getValue();
-    private static final byte PACKED_BIT_DTYPE = Vector.DataType.PACKED_BIT.getValue();
+    private static final byte FLOAT32_DTYPE = BinaryVector.DataType.FLOAT32.getValue();
+    private static final byte INT8_DTYPE = BinaryVector.DataType.INT8.getValue();
+    private static final byte PACKED_BIT_DTYPE = BinaryVector.DataType.PACKED_BIT.getValue();
     public static final int ZERO_PADDING = 0;
 
     @Test
     void shouldThrowExceptionWhenCreatingBsonBinaryWithNullVector() {
         // given
-        Vector vector = null;
+        BinaryVector vector = null;
 
         // when & then
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> new BsonBinary(vector));
@@ -61,7 +61,7 @@ class BsonBinaryTest {
 
     @ParameterizedTest(name = "{index}: {0}")
     @MethodSource("provideFloatVectors")
-    void shouldEncodeFloatVector(final Vector actualFloat32Vector, final byte[] expectedBsonEncodedVector) {
+    void shouldEncodeFloatVector(final BinaryVector actualFloat32Vector, final byte[] expectedBsonEncodedVector) {
         // when
         BsonBinary actualBsonBinary = new BsonBinary(actualFloat32Vector);
         byte[] actualBsonEncodedVector = actualBsonBinary.getData();
@@ -73,9 +73,9 @@ class BsonBinaryTest {
 
     @ParameterizedTest(name = "{index}: {0}")
     @MethodSource("provideFloatVectors")
-    void shouldDecodeFloatVector(final Float32Vector expectedFloatVector, final byte[] bsonEncodedVector) {
+    void shouldDecodeFloatVector(final Float32BinaryVector expectedFloatVector, final byte[] bsonEncodedVector) {
         // when
-        Float32Vector decodedVector = (Float32Vector) new BsonBinary(BsonBinarySubType.VECTOR, bsonEncodedVector).asVector();
+        Float32BinaryVector decodedVector = (Float32BinaryVector) new BsonBinary(BsonBinarySubType.VECTOR, bsonEncodedVector).asVector();
 
         // then
         assertEquals(expectedFloatVector, decodedVector);
@@ -84,7 +84,7 @@ class BsonBinaryTest {
     private static Stream<Arguments> provideFloatVectors() {
         return Stream.of(
                 arguments(
-                        Vector.floatVector(new float[]{1.1f, 2.2f, 3.3f, -1.0f, Float.MAX_VALUE, Float.MIN_VALUE, Float.POSITIVE_INFINITY,
+                        BinaryVector.floatVector(new float[]{1.1f, 2.2f, 3.3f, -1.0f, Float.MAX_VALUE, Float.MIN_VALUE, Float.POSITIVE_INFINITY,
                                 Float.NEGATIVE_INFINITY}),
                         new byte[]{FLOAT32_DTYPE, ZERO_PADDING,
                                 (byte) 205, (byte) 204, (byte) 140, (byte) 63, // 1.1f in little-endian
@@ -98,13 +98,13 @@ class BsonBinaryTest {
                         }
                 ),
                 arguments(
-                        Vector.floatVector(new float[]{0.0f}),
+                        BinaryVector.floatVector(new float[]{0.0f}),
                         new byte[]{FLOAT32_DTYPE, ZERO_PADDING,
                                 (byte) 0, (byte) 0, (byte) 0, (byte) 0  // 0.0f in little-endian
                         }
                 ),
                 arguments(
-                        Vector.floatVector(new float[]{}),
+                        BinaryVector.floatVector(new float[]{}),
                         new byte[]{FLOAT32_DTYPE, ZERO_PADDING}
                 )
         );
@@ -112,7 +112,7 @@ class BsonBinaryTest {
 
     @ParameterizedTest(name = "{index}: {0}")
     @MethodSource("provideInt8Vectors")
-    void shouldEncodeInt8Vector(final Vector actualInt8Vector, final byte[] expectedBsonEncodedVector) {
+    void shouldEncodeInt8Vector(final BinaryVector actualInt8Vector, final byte[] expectedBsonEncodedVector) {
         // when
         BsonBinary actualBsonBinary = new BsonBinary(actualInt8Vector);
         byte[] actualBsonEncodedVector = actualBsonBinary.getData();
@@ -124,9 +124,9 @@ class BsonBinaryTest {
 
     @ParameterizedTest(name = "{index}: {0}")
     @MethodSource("provideInt8Vectors")
-    void shouldDecodeInt8Vector(final Int8Vector expectedInt8Vector, final byte[] bsonEncodedVector) {
+    void shouldDecodeInt8Vector(final Int8BinaryVector expectedInt8Vector, final byte[] bsonEncodedVector) {
         // when
-        Int8Vector decodedVector = (Int8Vector) new BsonBinary(BsonBinarySubType.VECTOR, bsonEncodedVector).asVector();
+        Int8BinaryVector decodedVector = (Int8BinaryVector) new BsonBinary(BsonBinarySubType.VECTOR, bsonEncodedVector).asVector();
 
         // then
         assertEquals(expectedInt8Vector, decodedVector);
@@ -135,10 +135,10 @@ class BsonBinaryTest {
     private static Stream<Arguments> provideInt8Vectors() {
         return Stream.of(
                 arguments(
-                        Vector.int8Vector(new byte[]{Byte.MAX_VALUE, 1, 2, 3, 4, Byte.MIN_VALUE}),
+                        BinaryVector.int8Vector(new byte[]{Byte.MAX_VALUE, 1, 2, 3, 4, Byte.MIN_VALUE}),
                         new byte[]{INT8_DTYPE, ZERO_PADDING, Byte.MAX_VALUE, 1, 2, 3, 4, Byte.MIN_VALUE
                         }),
-                arguments(Vector.int8Vector(new byte[]{}),
+                arguments(BinaryVector.int8Vector(new byte[]{}),
                         new byte[]{INT8_DTYPE, ZERO_PADDING}
                 )
         );
@@ -146,7 +146,7 @@ class BsonBinaryTest {
 
     @ParameterizedTest
     @MethodSource("providePackedBitVectors")
-    void shouldEncodePackedBitVector(final Vector actualPackedBitVector, final byte[] expectedBsonEncodedVector) {
+    void shouldEncodePackedBitVector(final BinaryVector actualPackedBitVector, final byte[] expectedBsonEncodedVector) {
         // when
         BsonBinary actualBsonBinary = new BsonBinary(actualPackedBitVector);
         byte[] actualBsonEncodedVector = actualBsonBinary.getData();
@@ -158,9 +158,9 @@ class BsonBinaryTest {
 
     @ParameterizedTest
     @MethodSource("providePackedBitVectors")
-    void shouldDecodePackedBitVector(final PackedBitVector expectedPackedBitVector, final byte[] bsonEncodedVector) {
+    void shouldDecodePackedBitVector(final PackedBitBinaryVector expectedPackedBitVector, final byte[] bsonEncodedVector) {
         // when
-        PackedBitVector decodedVector = (PackedBitVector) new BsonBinary(BsonBinarySubType.VECTOR, bsonEncodedVector).asVector();
+        PackedBitBinaryVector decodedVector = (PackedBitBinaryVector) new BsonBinary(BsonBinarySubType.VECTOR, bsonEncodedVector).asVector();
 
         // then
         assertEquals(expectedPackedBitVector, decodedVector);
@@ -169,11 +169,11 @@ class BsonBinaryTest {
     private static Stream<Arguments> providePackedBitVectors() {
         return Stream.of(
                 arguments(
-                        Vector.packedBitVector(new byte[]{(byte) 0, (byte) 255, (byte) 10}, (byte) 2),
+                        BinaryVector.packedBitVector(new byte[]{(byte) 0, (byte) 255, (byte) 10}, (byte) 2),
                         new byte[]{PACKED_BIT_DTYPE, 2, (byte) 0, (byte) 255, (byte) 10}
                 ),
                 arguments(
-                        Vector.packedBitVector(new byte[0], (byte) 0),
+                        BinaryVector.packedBitVector(new byte[0], (byte) 0),
                         new byte[]{PACKED_BIT_DTYPE, 0}
                 ));
     }

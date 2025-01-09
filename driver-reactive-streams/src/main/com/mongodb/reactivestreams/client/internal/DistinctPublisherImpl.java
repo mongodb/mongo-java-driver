@@ -41,6 +41,8 @@ final class DistinctPublisherImpl<T> extends BatchCursorPublisher<T> implements 
     private long maxTimeMS;
     private Collation collation;
     private BsonValue comment;
+    private Bson hint;
+    private String hintString;
 
     DistinctPublisherImpl(
             @Nullable final ClientSession clientSession,
@@ -89,6 +91,18 @@ final class DistinctPublisherImpl<T> extends BatchCursorPublisher<T> implements 
     }
 
     @Override
+    public DistinctPublisher<T> hint(@Nullable final Bson hint) {
+        this.hint = hint;
+        return this;
+    }
+
+    @Override
+    public DistinctPublisher<T> hintString(@Nullable final String hint) {
+        this.hintString = hint;
+        return this;
+    }
+
+    @Override
     public DistinctPublisher<T> timeoutMode(final TimeoutMode timeoutMode) {
         super.timeoutMode(timeoutMode);
         return this;
@@ -97,7 +111,7 @@ final class DistinctPublisherImpl<T> extends BatchCursorPublisher<T> implements 
     @Override
     AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
         // initialBatchSize is ignored for distinct operations.
-        return getOperations().distinct(fieldName, filter, getDocumentClass(), collation, comment);
+        return getOperations().distinct(fieldName, filter, getDocumentClass(), collation, comment, hint, hintString);
     }
 
     @Override

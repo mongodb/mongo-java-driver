@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class VectorTest {
+class BinaryVectorTest {
 
     @Test
     void shouldCreateInt8Vector() {
@@ -33,11 +33,11 @@ class VectorTest {
         byte[] data = {1, 2, 3, 4, 5};
 
         // when
-        Int8Vector vector = Vector.int8Vector(data);
+        Int8BinaryVector vector = BinaryVector.int8Vector(data);
 
         // then
         assertNotNull(vector);
-        assertEquals(Vector.DataType.INT8, vector.getDataType());
+        assertEquals(BinaryVector.DataType.INT8, vector.getDataType());
         assertArrayEquals(data, vector.getData());
     }
 
@@ -47,7 +47,7 @@ class VectorTest {
         byte[] data = null;
 
         // when & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> Vector.int8Vector(data));
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> BinaryVector.int8Vector(data));
         assertEquals("data can not be null", exception.getMessage());
     }
 
@@ -57,11 +57,11 @@ class VectorTest {
         float[] data = {1.0f, 2.0f, 3.0f};
 
         // when
-        Float32Vector vector = Vector.floatVector(data);
+        Float32BinaryVector vector = BinaryVector.floatVector(data);
 
         // then
         assertNotNull(vector);
-        assertEquals(Vector.DataType.FLOAT32, vector.getDataType());
+        assertEquals(BinaryVector.DataType.FLOAT32, vector.getDataType());
         assertArrayEquals(data, vector.getData());
     }
 
@@ -71,7 +71,7 @@ class VectorTest {
         float[] data = null;
 
         // when & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> Vector.floatVector(data));
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> BinaryVector.floatVector(data));
         assertEquals("data can not be null", exception.getMessage());
     }
 
@@ -83,11 +83,11 @@ class VectorTest {
         byte[] data = {(byte) 0b10101010, (byte) 0b01010101};
 
         // when
-        PackedBitVector vector = Vector.packedBitVector(data, validPadding);
+        PackedBitBinaryVector vector = BinaryVector.packedBitVector(data, validPadding);
 
         // then
         assertNotNull(vector);
-        assertEquals(Vector.DataType.PACKED_BIT, vector.getDataType());
+        assertEquals(BinaryVector.DataType.PACKED_BIT, vector.getDataType());
         assertArrayEquals(data, vector.getData());
         assertEquals(validPadding, vector.getPadding());
     }
@@ -100,7 +100,7 @@ class VectorTest {
 
         // when & Then
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                Vector.packedBitVector(data, invalidPadding));
+                BinaryVector.packedBitVector(data, invalidPadding));
         assertEquals("state should be: Padding must be between 0 and 7 bits. Provided padding: " + invalidPadding, exception.getMessage());
     }
 
@@ -112,7 +112,7 @@ class VectorTest {
 
         // when & Then
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                Vector.packedBitVector(data, padding));
+                BinaryVector.packedBitVector(data, padding));
         assertEquals("data can not be null", exception.getMessage());
     }
 
@@ -123,11 +123,11 @@ class VectorTest {
         byte padding = 0;
 
         // when
-        PackedBitVector vector = Vector.packedBitVector(data, padding);
+        PackedBitBinaryVector vector = BinaryVector.packedBitVector(data, padding);
 
         // then
         assertNotNull(vector);
-        assertEquals(Vector.DataType.PACKED_BIT, vector.getDataType());
+        assertEquals(BinaryVector.DataType.PACKED_BIT, vector.getDataType());
         assertArrayEquals(data, vector.getData());
         assertEquals(padding, vector.getPadding());
     }
@@ -140,7 +140,7 @@ class VectorTest {
 
         // when & Then
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                Vector.packedBitVector(data, padding));
+                BinaryVector.packedBitVector(data, padding));
         assertEquals("state should be: Padding must be 0 if vector is empty. Provided padding: " + padding, exception.getMessage());
     }
 
@@ -148,7 +148,7 @@ class VectorTest {
     void shouldThrowExceptionWhenRetrievingInt8DataFromNonInt8Vector() {
         // given
         float[] data = {1.0f, 2.0f};
-        Vector vector = Vector.floatVector(data);
+        BinaryVector vector = BinaryVector.floatVector(data);
 
         // when & Then
         IllegalStateException exception = assertThrows(IllegalStateException.class, vector::asInt8Vector);
@@ -159,7 +159,7 @@ class VectorTest {
     void shouldThrowExceptionWhenRetrievingFloat32DataFromNonFloat32Vector() {
         // given
         byte[] data = {1, 2, 3};
-        Vector vector = Vector.int8Vector(data);
+        BinaryVector vector = BinaryVector.int8Vector(data);
 
         // when & Then
         IllegalStateException exception = assertThrows(IllegalStateException.class, vector::asFloat32Vector);
@@ -170,7 +170,7 @@ class VectorTest {
     void shouldThrowExceptionWhenRetrievingPackedBitDataFromNonPackedBitVector() {
         // given
         float[] data = {1.0f, 2.0f};
-        Vector vector = Vector.floatVector(data);
+        BinaryVector vector = BinaryVector.floatVector(data);
 
         // when & Then
         IllegalStateException exception = assertThrows(IllegalStateException.class, vector::asPackedBitVector);

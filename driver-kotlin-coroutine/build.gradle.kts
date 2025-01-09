@@ -156,15 +156,6 @@ val integrationTest =
         classpath = sourceSets["integrationTest"].runtimeClasspath
     }
 
-tasks.create("kotlinCheck") {
-    description = "Runs all the kotlin checks"
-    group = "verification"
-
-    dependsOn("clean", "check", integrationTest)
-    tasks.findByName("check")?.mustRunAfter("clean")
-    tasks.findByName("integrationTest")?.mustRunAfter("check")
-}
-
 tasks.test { useJUnitPlatform() }
 
 // ===========================

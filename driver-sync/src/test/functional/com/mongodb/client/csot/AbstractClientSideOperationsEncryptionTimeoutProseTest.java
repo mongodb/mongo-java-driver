@@ -71,7 +71,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * See
- * <a href="https://github.com/mongodb/specifications/blob/master/source/client-side-operations-timeout/tests/README.rst#clientencryption">Prose Tests</a>.
+ * <a href="https://github.com/mongodb/specifications/blob/master/source/client-side-operations-timeout/tests/README.md#3-clientencryption">Prose Tests</a>.
  */
 public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
 

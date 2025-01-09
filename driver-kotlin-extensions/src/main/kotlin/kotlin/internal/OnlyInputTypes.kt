@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package kotlin.internal
 
-package com.mongodb.reactivestreams.client.vector;
-
-import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.vector.AbstractVectorFunctionalTest;
-import com.mongodb.reactivestreams.client.MongoClients;
-import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
-
-public class VectorFunctionalTest extends AbstractVectorFunctionalTest {
-    @Override
-    protected MongoClient getMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
-    }
-}
+/**
+ * Work around to expose `kotlin.internal` OnlyInputTypes
+ *
+ * Enables compile time type checking, so that captured types cannot be expanded.
+ *
+ * See: https://youtrack.jetbrains.com/issue/KT-13198/
+ */
+@Target(AnnotationTarget.TYPE_PARAMETER)
+@Retention(AnnotationRetention.BINARY)
+internal annotation class OnlyInputTypes
