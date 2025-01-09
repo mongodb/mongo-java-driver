@@ -37,8 +37,8 @@ public final class ConcreteClientUpdateManyModel extends AbstractClientUpdateMod
 
     @Override
     public String toString() {
-        return "ClientUpdateManyModel"
-                + "{filter=" + getFilter()
+        return "ClientUpdateManyModel{"
+                + "filter=" + getFilter()
                 + ", update=" + (getUpdate().isPresent() ? getUpdate() : getUpdatePipeline().orElseThrow(Assertions::fail))
                 + ", options=" + getOptions()
                 + '}';

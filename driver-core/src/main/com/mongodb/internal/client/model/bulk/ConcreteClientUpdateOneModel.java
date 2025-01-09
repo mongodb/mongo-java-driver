@@ -37,8 +37,8 @@ public final class ConcreteClientUpdateOneModel extends AbstractClientUpdateMode
 
     @Override
     public String toString() {
-        return "ClientUpdateOneModel"
-                + "{filter=" + getFilter()
+        return "ClientUpdateOneModel{"
+                + "filter=" + getFilter()
                 + ", update=" + (getUpdate().isPresent() ? getUpdate() : getUpdatePipeline().orElseThrow(Assertions::fail))
                 + ", options=" + getOptions()
                 + '}';
