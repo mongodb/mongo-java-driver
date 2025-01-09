@@ -74,7 +74,6 @@ public final class PackedBitVector extends Vector {
      *
      * @return the padding value (between 0 and 7).
      */
-    @Beta(Reason.SERVER)
     public byte getPadding() {
         return this.padding;
     }
