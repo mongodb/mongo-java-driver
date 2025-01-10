@@ -34,10 +34,10 @@ public interface RegexSearchOperator extends SearchOperator {
     /**
      * Creates a new {@link RegexSearchOperator} that uses allowAnalyzedField.
      *
-     * @param isAllowed The boolean to run the query against an analyzed field.
+     * @param allowAnalyzedField Must be set to true if the query is run against an analyzed field.
      * @return A new {@link RegexSearchOperator}.
      *
      * @mongodb.atlas.manual atlas-search/allowAnalyzedField/ allowAnalyzedField mappings
      */
-    RegexSearchOperator allowAnalyzedField(boolean isAllowed);
+    RegexSearchOperator allowAnalyzedField(boolean allowAnalyzedField);
 }

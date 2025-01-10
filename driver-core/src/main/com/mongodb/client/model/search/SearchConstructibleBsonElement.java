@@ -89,8 +89,8 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
     }
 
     @Override
-    public RegexSearchOperator allowAnalyzedField(final boolean isAllowed) {
-        return newWithAppendedValue("allowAnalyzedField", notNull("isAllowed", isAllowed));
+    public RegexSearchOperator allowAnalyzedField(final boolean allowAnalyzedField) {
+        return newWithAppendedValue("allowAnalyzedField", allowAnalyzedField);
     }
 
     @Override
