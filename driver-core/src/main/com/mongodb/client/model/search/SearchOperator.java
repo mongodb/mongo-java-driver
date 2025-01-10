@@ -300,7 +300,7 @@ public interface SearchOperator extends Bson {
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/queryString/ queryString operator
      */
-    static QueryStringSearchOperator queryString(final SearchPath defaultPath, final String query) {
+    static QueryStringSearchOperator queryString(final FieldSearchPath defaultPath, final String query) {
         isTrueArgument("path must not be empty", defaultPath != null);
         isTrueArgument("query must not be empty", query != null);
 

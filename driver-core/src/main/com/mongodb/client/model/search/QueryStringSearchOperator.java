@@ -20,7 +20,7 @@ import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 
 /**
- * @see SearchOperator#queryString(SearchPath, String)
+ * @see SearchOperator#queryString(FieldSearchPath, String)
  * @since 5.3
  */
 @Sealed

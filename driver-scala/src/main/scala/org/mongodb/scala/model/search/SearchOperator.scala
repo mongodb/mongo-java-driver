@@ -236,7 +236,7 @@ object SearchOperator {
    * @return The requested `SearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/queryString/ queryString operator]]
    */
-  def queryString(defaultPath: SearchPath, query: String): QueryStringSearchOperator =
+  def queryString(defaultPath: FieldSearchPath, query: String): QueryStringSearchOperator =
     JSearchOperator.queryString(defaultPath, query)
 
   /**
