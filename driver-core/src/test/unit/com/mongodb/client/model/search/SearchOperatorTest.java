@@ -594,7 +594,7 @@ final class SearchOperatorTest {
                         SearchOperator.regex(emptyList(), singleton("term"))
                 ),
                 () -> assertEquals(
-                        new BsonDocument("phrase",
+                        new BsonDocument("regex",
                                 new BsonDocument("path", fieldPath("fieldName").toBsonValue())
                                         .append("query", new BsonString("term"))
                         ),
@@ -604,7 +604,7 @@ final class SearchOperatorTest {
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
-                        new BsonDocument("phrase",
+                        new BsonDocument("regex",
                                 new BsonDocument("path", new BsonArray(asList(
                                         fieldPath("fieldName").toBsonValue(),
                                         wildcardPath("wildc*rd").toBsonValue())))
@@ -622,7 +622,7 @@ final class SearchOperatorTest {
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
-                        new BsonDocument("phrase",
+                        new BsonDocument("regex",
                                 new BsonDocument("path", fieldPath("fieldName").toBsonValue())
                                         .append("query", new BsonString("term"))
                                         .append("allowAnalyzedField", new BsonBoolean(true))
@@ -634,7 +634,7 @@ final class SearchOperatorTest {
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
-                        new BsonDocument("phrase",
+                        new BsonDocument("regex",
                                 new BsonDocument("path", fieldPath("fieldName").toBsonValue())
                                         .append("query", new BsonString("term"))
                                         .append("allowAnalyzedField", new BsonBoolean(false))

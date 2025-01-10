@@ -318,7 +318,7 @@ public interface SearchOperator extends Bson {
         Iterator<String> queryIterator = notNull("queries", queries).iterator();
         isTrueArgument("queries must not be empty", queryIterator.hasNext());
         String firstQuery = queryIterator.next();
-        return new SearchConstructibleBsonElement("phrase", new Document("path", combineToBsonValue(pathIterator, false))
+        return new SearchConstructibleBsonElement("regex", new Document("path", combineToBsonValue(pathIterator, false))
                 .append("query", queryIterator.hasNext() ? queries : firstQuery));
     }
 
