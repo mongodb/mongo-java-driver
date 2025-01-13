@@ -16,12 +16,14 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ClientBulkWriteException;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
 import com.mongodb.CursorType;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCredential;
+import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketReadTimeoutException;
@@ -34,6 +36,7 @@ import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSDownloadStream;
 import com.mongodb.client.gridfs.GridFSUploadStream;
 import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.test.CollectionHelper;
@@ -48,8 +51,11 @@ import com.mongodb.internal.connection.ServerHelper;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.test.FlakyTest;
+import org.bson.BsonArray;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.bson.BsonTimestamp;
 import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
@@ -81,7 +87,9 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.sleep;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getPrimary;
+import static java.lang.String.join;
 import static java.util.Arrays.asList;
+import static java.util.Collections.nCopies;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -282,7 +290,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     }
 
     @DisplayName("6. GridFS Upload - uploads via openUploadStream can be timed out")
-    @Test
+    @FlakyTest(maxAttempts = 3)
     public void testGridFSUploadViaOpenUploadStreamTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
@@ -461,7 +469,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
     @SuppressWarnings("try")
     @DisplayName("9. End Session. The timeout specified via the MongoClient timeoutMS option")
-    @Test
+    @FlakyTest(maxAttempts = 3)
     public void test9EndSessionClientTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeFalse(isStandalone());
@@ -697,6 +705,40 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                         })
                 );
             }
+        }
+    }
+
+    @DisplayName("11. Multi-batch bulkWrites")
+    @Test
+    @SuppressWarnings("try")
+    protected void test11MultiBatchBulkWrites() throws InterruptedException {
+        assumeTrue(serverVersionAtLeast(8, 0));
+        assumeFalse(isServerlessTest());
+        try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder())) {
+            // a workaround for https://jira.mongodb.org/browse/DRIVERS-2997, remove this block when the aforementioned bug is fixed
+            client.getDatabase(namespace.getDatabaseName()).drop();
+        }
+        BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
+                .append("mode", new BsonDocument("times", new BsonInt32(2)))
+                .append("data", new BsonDocument("failCommands", new BsonArray(singletonList(new BsonString("bulkWrite"))))
+                        .append("blockConnection", BsonBoolean.TRUE)
+                        .append("blockTimeMS", new BsonInt32(2020)));
+        try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder().timeout(4000, TimeUnit.MILLISECONDS));
+             FailPoint ignored = FailPoint.enable(failPointDocument, getPrimary())) {
+            MongoDatabase db = client.getDatabase(namespace.getDatabaseName());
+            db.drop();
+            Document helloResponse = db.runCommand(new Document("hello", 1));
+            int maxBsonObjectSize = helloResponse.getInteger("maxBsonObjectSize");
+            int maxMessageSizeBytes = helloResponse.getInteger("maxMessageSizeBytes");
+            ClientNamespacedWriteModel model = ClientNamespacedWriteModel.insertOne(
+                    namespace,
+                    new Document("a", join("", nCopies(maxBsonObjectSize - 500, "b"))));
+            MongoException topLevelError = assertThrows(ClientBulkWriteException.class, () ->
+                    client.bulkWrite(nCopies(maxMessageSizeBytes / maxBsonObjectSize + 1, model)))
+                    .getCause();
+            assertNotNull(topLevelError);
+            assertInstanceOf(MongoOperationTimeoutException.class, topLevelError);
+            assertEquals(2, commandListener.getCommandStartedEvents("bulkWrite").size());
         }
     }
 

@@ -18,7 +18,10 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
+import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
+
+import java.nio.channels.AsynchronousChannelGroup;
 
 /**
  * A {@code StreamFactoryFactory} implementation for AsynchronousSocketChannel-based streams.
@@ -27,17 +30,30 @@ import com.mongodb.spi.dns.InetAddressResolver;
  */
 public final class AsynchronousSocketChannelStreamFactoryFactory implements StreamFactoryFactory {
     private final InetAddressResolver inetAddressResolver;
+    @Nullable
+    private final AsynchronousChannelGroup group;
 
     public AsynchronousSocketChannelStreamFactoryFactory(final InetAddressResolver inetAddressResolver) {
+        this(inetAddressResolver, null);
+    }
+
+    AsynchronousSocketChannelStreamFactoryFactory(
+            final InetAddressResolver inetAddressResolver,
+            @Nullable final AsynchronousChannelGroup group) {
         this.inetAddressResolver = inetAddressResolver;
+        this.group = group;
     }
 
     @Override
     public StreamFactory create(final SocketSettings socketSettings, final SslSettings sslSettings) {
-        return new AsynchronousSocketChannelStreamFactory(inetAddressResolver, socketSettings, sslSettings);
+        return new AsynchronousSocketChannelStreamFactory(
+                inetAddressResolver, socketSettings, sslSettings, group);
     }
 
     @Override
     public void close() {
+        if (group != null) {
+            group.shutdown();
+        }
     }
 }

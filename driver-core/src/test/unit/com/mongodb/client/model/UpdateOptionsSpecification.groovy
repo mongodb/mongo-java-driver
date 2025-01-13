@@ -78,4 +78,12 @@ class UpdateOptionsSpecification extends Specification {
         where:
         hint << [null, '_id_']
     }
+
+    def 'should set sort'() {
+        expect:
+        new UpdateOptions().sort(sort).getSort() == sort
+
+        where:
+        sort << [null, new BsonDocument('_id', new BsonInt32(1))]
+    }
 }

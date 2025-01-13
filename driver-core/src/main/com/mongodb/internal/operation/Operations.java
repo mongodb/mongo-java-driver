@@ -54,6 +54,8 @@ import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.internal.bulk.DeleteRequest;
@@ -217,13 +219,20 @@ final class Operations<TDocument> {
     }
 
     <TResult> DistinctOperation<TResult> distinct(final String fieldName, @Nullable final Bson filter, final Class<TResult> resultClass,
-            final Collation collation, final BsonValue comment) {
-        return new DistinctOperation<>(assertNotNull(namespace),
+            final Collation collation, final BsonValue comment, @Nullable final Bson hint, @Nullable final String hintString) {
+        DistinctOperation<TResult> operation = new DistinctOperation<>(assertNotNull(namespace),
                 fieldName, codecRegistry.get(resultClass))
                 .retryReads(retryReads)
                 .filter(filter == null ? null : filter.toBsonDocument(documentClass, codecRegistry))
                 .collation(collation)
                 .comment(comment);
+
+        if (hint != null) {
+            operation.hint(toBsonDocument(hint));
+        } else if (hintString != null) {
+            operation.hint(new BsonString(hintString));
+        }
+        return operation;
     }
 
     <TResult> AggregateOperation<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass,
@@ -457,7 +466,8 @@ final class Operations<TDocument> {
                         .upsert(replaceOneModel.getReplaceOptions().isUpsert())
                         .collation(replaceOneModel.getReplaceOptions().getCollation())
                         .hint(toBsonDocument(replaceOneModel.getReplaceOptions().getHint()))
-                        .hintString(replaceOneModel.getReplaceOptions().getHintString());
+                        .hintString(replaceOneModel.getReplaceOptions().getHintString())
+                        .sort(toBsonDocument(replaceOneModel.getReplaceOptions().getSort()));
             } else if (writeModel instanceof UpdateOneModel) {
                 UpdateOneModel<TDocument> updateOneModel = (UpdateOneModel<TDocument>) writeModel;
                 BsonValue update = updateOneModel.getUpdate() != null ? toBsonDocument(updateOneModel.getUpdate())
@@ -468,7 +478,8 @@ final class Operations<TDocument> {
                         .collation(updateOneModel.getOptions().getCollation())
                         .arrayFilters(toBsonDocumentList(updateOneModel.getOptions().getArrayFilters()))
                         .hint(toBsonDocument(updateOneModel.getOptions().getHint()))
-                        .hintString(updateOneModel.getOptions().getHintString());
+                        .hintString(updateOneModel.getOptions().getHintString())
+                        .sort(toBsonDocument(updateOneModel.getOptions().getSort()));
             } else if (writeModel instanceof UpdateManyModel) {
                 UpdateManyModel<TDocument> updateManyModel = (UpdateManyModel<TDocument>) writeModel;
                 BsonValue update = updateManyModel.getUpdate() != null ? toBsonDocument(updateManyModel.getUpdate())
@@ -716,6 +727,12 @@ final class Operations<TDocument> {
                 .startAfter(startAfter)
                 .showExpandedEvents(showExpandedEvents)
                 .retryReads(retryReads);
+    }
+
+    ClientBulkWriteOperation clientBulkWriteOperation(
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
+            @Nullable final ClientBulkWriteOptions options) {
+        return new ClientBulkWriteOperation(clientWriteModels, options, writeConcern, retryWrites, codecRegistry);
     }
 
     private Codec<TDocument> getCodec() {

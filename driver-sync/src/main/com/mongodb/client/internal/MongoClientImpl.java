@@ -17,6 +17,7 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.AutoEncryptionSettings;
+import com.mongodb.ClientBulkWriteException;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
@@ -31,14 +32,15 @@ import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.SynchronousContextProvider;
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.SocketSettings;
-import com.mongodb.connection.TransportSettings;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
 import com.mongodb.internal.connection.InternalConnectionPoolSettings;
-import com.mongodb.internal.connection.SocketStreamFactory;
 import com.mongodb.internal.connection.StreamFactory;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
@@ -58,7 +60,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.internal.Crypts.createCrypt;
 import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
 import static com.mongodb.internal.connection.ServerAddressHelper.getInetAddressResolver;
-import static com.mongodb.internal.connection.StreamFactoryHelper.getStreamFactoryFactoryFromSettings;
+import static com.mongodb.internal.connection.StreamFactoryHelper.getSyncStreamFactory;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
 import static java.lang.String.format;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
@@ -256,6 +258,34 @@ public final class MongoClientImpl implements MongoClient {
         return delegate.watch(clientSession, pipeline, resultClass);
     }
 
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
+        return delegate.bulkWrite(clientWriteModels);
+    }
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
+            final ClientBulkWriteOptions options) throws ClientBulkWriteException {
+        return delegate.bulkWrite(clientWriteModels, options);
+    }
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final ClientSession clientSession,
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
+        return delegate.bulkWrite(clientSession, clientWriteModels);
+    }
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final ClientSession clientSession,
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
+            final ClientBulkWriteOptions options) throws ClientBulkWriteException {
+        return delegate.bulkWrite(clientSession, clientWriteModels, options);
+    }
+
     private static Cluster createCluster(final MongoClientSettings settings,
                                          @Nullable final MongoDriverInformation mongoDriverInformation) {
         notNull("settings", settings);
@@ -270,14 +300,8 @@ public final class MongoClientImpl implements MongoClient {
 
     private static StreamFactory getStreamFactory(final MongoClientSettings settings, final boolean isHeartbeat) {
         SocketSettings socketSettings = isHeartbeat ? settings.getHeartbeatSocketSettings() : settings.getSocketSettings();
-        TransportSettings transportSettings = settings.getTransportSettings();
         InetAddressResolver inetAddressResolver = getInetAddressResolver(settings);
-        if (transportSettings == null) {
-            return new SocketStreamFactory(inetAddressResolver, socketSettings, settings.getSslSettings());
-        } else {
-            return getStreamFactoryFactoryFromSettings(transportSettings, inetAddressResolver)
-                    .create(socketSettings, settings.getSslSettings());
-        }
+        return getSyncStreamFactory(settings, inetAddressResolver, socketSettings);
     }
 
     public Cluster getCluster() {

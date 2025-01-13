@@ -38,6 +38,7 @@ final class UnifiedTestFailureValidator extends UnifiedSyncTest {
     public void setUp(
             @Nullable final String fileDescription,
             @Nullable final String testDescription,
+            final String directoryName,
             final String schemaVersion,
             @Nullable final BsonArray runOnRequirements,
             final BsonArray entitiesArray,
@@ -47,6 +48,7 @@ final class UnifiedTestFailureValidator extends UnifiedSyncTest {
             super.setUp(
                     fileDescription,
                     testDescription,
+                    directoryName,
                     schemaVersion,
                     runOnRequirements,
                     entitiesArray,
@@ -63,6 +65,7 @@ final class UnifiedTestFailureValidator extends UnifiedSyncTest {
     public void shouldPassAllOutcomes(
             @Nullable final String fileDescription,
             @Nullable final String testDescription,
+            @Nullable final String directoryName,
             final String schemaVersion,
             @Nullable final BsonArray runOnRequirements,
             final BsonArray entitiesArray,
@@ -73,6 +76,7 @@ final class UnifiedTestFailureValidator extends UnifiedSyncTest {
                 super.shouldPassAllOutcomes(
                         fileDescription,
                         testDescription,
+                        directoryName,
                         schemaVersion,
                         runOnRequirements,
                         entitiesArray,

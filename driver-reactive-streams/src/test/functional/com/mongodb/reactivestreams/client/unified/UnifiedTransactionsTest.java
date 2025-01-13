@@ -22,22 +22,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static com.mongodb.ClusterFixture.isSharded;
-import static com.mongodb.ClusterFixture.serverVersionLessThan;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
-
 final class UnifiedTransactionsTest extends UnifiedReactiveStreamsTest {
-    @Override
-    protected void skips(final String fileDescription, final String testDescription) {
-        assumeFalse(fileDescription.equals("count"));
-        if (serverVersionLessThan(4, 4) && isSharded()) {
-            assumeFalse(fileDescription.equals("pin-mongos") && testDescription.equals("distinct"));
-            assumeFalse(fileDescription.equals("read-concern") && testDescription.equals("only first distinct includes readConcern"));
-            assumeFalse(fileDescription.equals("read-concern") && testDescription.equals("distinct ignores collection readConcern"));
-            assumeFalse(fileDescription.equals("reads") && testDescription.equals("distinct"));
-        }
-    }
-
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/transactions");
     }

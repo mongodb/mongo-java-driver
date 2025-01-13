@@ -322,7 +322,7 @@ final class AsyncOperationHelper {
     static <R> AsyncCallbackSupplier<R> decorateWriteWithRetriesAsync(final RetryState retryState, final OperationContext operationContext,
             final AsyncCallbackSupplier<R> asyncWriteFunction) {
         return new RetryingAsyncCallbackSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext),
-                CommandOperationHelper::shouldAttemptToRetryWrite, callback -> {
+                CommandOperationHelper::loggingShouldAttemptToRetryWriteAndAddRetryableLabel, callback -> {
             logRetryExecute(retryState, operationContext);
             asyncWriteFunction.get(callback);
         });
@@ -344,7 +344,7 @@ final class AsyncOperationHelper {
     }
 
     static <T> AsyncBatchCursor<T> cursorDocumentToAsyncBatchCursor(final TimeoutMode timeoutMode, final BsonDocument cursorDocument,
-            final int batchSize, final Decoder<T> decoder, final BsonValue comment, final AsyncConnectionSource source,
+            final int batchSize, final Decoder<T> decoder, @Nullable final BsonValue comment, final AsyncConnectionSource source,
             final AsyncConnection connection) {
         return new AsyncCommandBatchCursor<>(timeoutMode, cursorDocument, batchSize, 0, decoder, comment, source, connection);
     }

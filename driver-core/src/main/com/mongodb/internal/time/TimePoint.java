@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
@@ -234,10 +235,10 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
     public String toString() {
         String remainingMs = isInfinite()
                 ? "infinite"
-                : "" + TimeUnit.MILLISECONDS.convert(currentNanos() - assertNotNull(nanos), NANOSECONDS);
+                : "" + remaining(MILLISECONDS);
         return "TimePoint{"
                 + "nanos=" + nanos
-                + "remainingMs=" + remainingMs
+                + ", remainingMs=" + remainingMs
                 + '}';
     }
 }

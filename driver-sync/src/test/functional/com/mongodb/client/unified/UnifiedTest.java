@@ -21,9 +21,6 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.UnixServerAddress;
-import com.mongodb.event.TestServerMonitorListener;
-import com.mongodb.internal.logging.LogMessage;
-import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
@@ -31,16 +28,20 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.test.CollectionHelper;
+import com.mongodb.client.unified.UnifiedTestModifications.TestDef;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.event.TestServerMonitorListener;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
+import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
+import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.test.AfterBeforeParameterResolver;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -80,6 +81,7 @@ import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.test.CollectionHelper.getCurrentClusterTime;
 import static com.mongodb.client.test.CollectionHelper.killAllSessions;
 import static com.mongodb.client.unified.RunOnRequirementsMatcher.runOnRequirementsMet;
+import static com.mongodb.client.unified.UnifiedTestModifications.testDef;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -89,6 +91,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static util.JsonPoweredTestHelper.getTestDocument;
 import static util.JsonPoweredTestHelper.getTestFiles;
@@ -114,6 +117,8 @@ public abstract class UnifiedTest {
     private UnifiedTestContext rootContext;
     private boolean ignoreExtraEvents;
     private BsonDocument startingClusterTime;
+    @Nullable
+    private TestDef testDef;
 
     private class UnifiedTestContext {
         private final AssertionContext context = new AssertionContext();
@@ -157,17 +162,19 @@ public abstract class UnifiedTest {
             BsonDocument fileDocument = getTestDocument(file);
 
             for (BsonValue cur : fileDocument.getArray("tests")) {
-                data.add(UnifiedTest.createTestData(fileDocument, cur.asDocument()));
+                data.add(UnifiedTest.createTestData(directory, fileDocument, cur.asDocument()));
             }
         }
         return data;
     }
 
     @NonNull
-    private static Arguments createTestData(final BsonDocument fileDocument, final BsonDocument testDocument) {
+    private static Arguments createTestData(
+            final String directory, final BsonDocument fileDocument, final BsonDocument testDocument) {
         return Arguments.of(
                 fileDocument.getString("description").getValue(),
                 testDocument.getString("description").getValue(),
+                directory,
                 fileDocument.getString("schemaVersion").getValue(),
                 fileDocument.getArray("runOnRequirements", null),
                 fileDocument.getArray("createEntities", new BsonArray()),
@@ -189,6 +196,7 @@ public abstract class UnifiedTest {
     public void setUp(
             @Nullable final String fileDescription,
             @Nullable final String testDescription,
+            @Nullable final String directoryName,
             final String schemaVersion,
             @Nullable final BsonArray runOnRequirements,
             final BsonArray entitiesArray,
@@ -208,7 +216,15 @@ public abstract class UnifiedTest {
         rootContext = new UnifiedTestContext();
         rootContext.getAssertionContext().push(ContextElement.ofTest(definition));
         ignoreExtraEvents = false;
+        if (directoryName != null && fileDescription != null && testDescription != null) {
+            testDef = testDef(directoryName, fileDescription, testDescription, isReactive());
+            UnifiedTestModifications.doSkips(testDef);
+
+            boolean skip = testDef.wasAssignedModifier(UnifiedTestModifications.Modifier.SKIP);
+            assumeFalse(skip, "Skipping test");
+        }
         skips(fileDescription, testDescription);
+
         assertTrue(
                 schemaVersion.equals("1.0")
                         || schemaVersion.equals("1.1")
@@ -229,7 +245,8 @@ public abstract class UnifiedTest {
                         || schemaVersion.equals("1.16")
                         || schemaVersion.equals("1.17")
                         || schemaVersion.equals("1.18")
-                        || schemaVersion.equals("1.19"),
+                        || schemaVersion.equals("1.19")
+                        || schemaVersion.equals("1.21"),
                 String.format("Unsupported schema version %s", schemaVersion));
         if (runOnRequirements != null) {
             assumeTrue(runOnRequirementsMet(runOnRequirements, getMongoClientSettings(), getServerVersion()),
@@ -255,6 +272,12 @@ public abstract class UnifiedTest {
                 this::createMongoClient,
                 this::createGridFSBucket,
                 this::createClientEncryption);
+        if (testDef != null) {
+            postSetUp(testDef);
+        }
+    }
+
+    protected void postSetUp(final TestDef def) {
     }
 
     @AfterEach
@@ -263,13 +286,23 @@ public abstract class UnifiedTest {
             failPoint.disableFailPoint();
         }
         entities.close();
+        if (testDef != null) {
+            postCleanUp(testDef);
+        }
+    }
+
+    protected void postCleanUp(final TestDef testDef) {
     }
 
     /**
-     * This method is called once per {@link #setUp(String, String, String, BsonArray, BsonArray, BsonArray, BsonDocument)},
-     * unless {@link #setUp(String, String, String, BsonArray, BsonArray, BsonArray, BsonDocument)} fails unexpectedly.
+     * This method is called once per {@link #setUp(String, String, String, String, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonDocument)},
+     * unless {@link #setUp(String, String, String, String, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonDocument)} fails unexpectedly.
      */
     protected void skips(final String fileDescription, final String testDescription) {
+    }
+
+    protected boolean isReactive() {
+        return false;
     }
 
     @ParameterizedTest(name = "{0}: {1}")
@@ -277,6 +310,7 @@ public abstract class UnifiedTest {
     public void shouldPassAllOutcomes(
             @Nullable final String fileDescription,
             @Nullable final String testDescription,
+            @Nullable final String directoryName,
             final String schemaVersion,
             @Nullable final BsonArray runOnRequirements,
             final BsonArray entitiesArray,
@@ -538,6 +572,8 @@ public abstract class UnifiedTest {
                     return crudHelper.createFindCursor(operation);
                 case "createChangeStream":
                     return crudHelper.createChangeStreamCursor(operation);
+                case "clientBulkWrite":
+                    return crudHelper.clientBulkWrite(operation);
                 case "close":
                     return crudHelper.close(operation);
                 case "iterateUntilDocumentOrError":

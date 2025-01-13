@@ -46,6 +46,7 @@ import java.nio.channels.SocketChannel;
 import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -71,11 +72,16 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
     /**
      * Construct a new instance
      */
-    public TlsChannelStreamFactoryFactory(final InetAddressResolver inetAddressResolver) {
+    TlsChannelStreamFactoryFactory(final InetAddressResolver inetAddressResolver,
+            @Nullable final ExecutorService executorService) {
         this.inetAddressResolver = inetAddressResolver;
-        this.group = new AsynchronousTlsChannelGroup();
+        this.group = new AsynchronousTlsChannelGroup(executorService);
         selectorMonitor = new SelectorMonitor();
         selectorMonitor.start();
+    }
+
+    public TlsChannelStreamFactoryFactory(final InetAddressResolver inetAddressResolver) {
+        this(inetAddressResolver, null);
     }
 
     @Override

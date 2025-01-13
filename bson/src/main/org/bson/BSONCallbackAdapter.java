@@ -40,11 +40,6 @@ class BSONCallbackAdapter extends AbstractBsonWriter {
     }
 
     @Override
-    public void flush() {
-        //Looks like should be no-op?
-    }
-
-    @Override
     public void doWriteStartDocument() {
         BsonContextType contextType = getState() == State.SCOPE_DOCUMENT
                 ? BsonContextType.SCOPE_DOCUMENT

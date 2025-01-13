@@ -41,6 +41,9 @@
         <rule-config name='HashtableIsObsolete'>
             <property name='doNotApplyToFileNames' value='MongoClientFactorySpecification.groovy'/>
         </rule-config>
+        <rule-config name='VectorIsObsolete'>
+            <property name='doNotApplyToFileNames' value='AggregatesSpecification.groovy'/>
+        </rule-config>
         <exclude name="TrailingComma"/>
         <exclude name="CouldBeSwitchStatement"/>
         <exclude name="NoDef"/>

@@ -98,6 +98,24 @@ public interface DistinctPublisher<TResult> extends Publisher<TResult> {
     DistinctPublisher<TResult> comment(@Nullable BsonValue comment);
 
     /**
+     * Sets the hint for which index to use. A null value means no hint is set.
+     *
+     * @param hint the hint
+     * @return this
+     * @since 5.3
+     */
+    DistinctPublisher<TResult> hint(@Nullable Bson hint);
+
+    /**
+     * Sets the hint for which index to use. A null value means no hint is set.
+     *
+     * @param hint the name of the index which should be used for the operation
+     * @return this
+     * @since 5.3
+     */
+    DistinctPublisher<TResult> hintString(@Nullable String hint);
+
+    /**
      * Sets the timeoutMode for the cursor.
      *
      * <p>

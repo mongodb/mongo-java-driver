@@ -25,6 +25,7 @@ import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
+import com.mongodb.WriteConcern;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
@@ -33,20 +34,40 @@ import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.OperationHelper.ResourceSupplierInternalException;
 import com.mongodb.internal.operation.retry.AttachmentKeys;
+import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
 @SuppressWarnings("overloads")
 final class CommandOperationHelper {
+    static WriteConcern validateAndGetEffectiveWriteConcern(final WriteConcern writeConcernSetting, final SessionContext sessionContext)
+            throws MongoClientException {
+        boolean activeTransaction = sessionContext.hasActiveTransaction();
+        WriteConcern effectiveWriteConcern = activeTransaction
+                ? WriteConcern.ACKNOWLEDGED
+                : writeConcernSetting;
+        if (sessionContext.hasSession() && !sessionContext.isImplicitSession() && !activeTransaction && !effectiveWriteConcern.isAcknowledged()) {
+            throw new MongoClientException("Unacknowledged writes are not supported when using an explicit session");
+        }
+        return effectiveWriteConcern;
+    }
+
+    static Optional<WriteConcern> commandWriteConcern(final WriteConcern effectiveWriteConcern, final SessionContext sessionContext) {
+        return effectiveWriteConcern.isServerDefault() || sessionContext.hasActiveTransaction()
+                ? Optional.empty()
+                : Optional.of(effectiveWriteConcern);
+    }
 
     interface CommandCreator {
         BsonDocument create(
@@ -153,7 +174,26 @@ final class CommandOperationHelper {
         return decision;
     }
 
-    static boolean shouldAttemptToRetryWrite(final RetryState retryState, final Throwable attemptFailure) {
+    static boolean loggingShouldAttemptToRetryWriteAndAddRetryableLabel(final RetryState retryState, final Throwable attemptFailure) {
+        Throwable attemptFailureNotToBeRetried = getAttemptFailureNotToRetryOrAddRetryableLabel(retryState, attemptFailure);
+        boolean decision = attemptFailureNotToBeRetried == null;
+        if (!decision && retryState.attachment(AttachmentKeys.retryableCommandFlag()).orElse(false)) {
+            logUnableToRetry(
+                    retryState.attachment(AttachmentKeys.commandDescriptionSupplier()).orElse(null),
+                    assertNotNull(attemptFailureNotToBeRetried));
+        }
+        return decision;
+    }
+
+    static boolean shouldAttemptToRetryWriteAndAddRetryableLabel(final RetryState retryState, final Throwable attemptFailure) {
+        return getAttemptFailureNotToRetryOrAddRetryableLabel(retryState, attemptFailure) != null;
+    }
+
+    /**
+     * @return {@code null} if the decision is {@code true}. Otherwise, returns the {@link Throwable} that must not be retried.
+     */
+    @Nullable
+    private static Throwable getAttemptFailureNotToRetryOrAddRetryableLabel(final RetryState retryState, final Throwable attemptFailure) {
         Throwable failure = attemptFailure instanceof ResourceSupplierInternalException ? attemptFailure.getCause() : attemptFailure;
         boolean decision = false;
         MongoException exceptionRetryableRegardlessOfCommand = null;
@@ -170,11 +210,9 @@ final class CommandOperationHelper {
             } else if (decideRetryableAndAddRetryableWriteErrorLabel(failure, retryState.attachment(AttachmentKeys.maxWireVersion())
                     .orElse(null))) {
                 decision = true;
-            } else {
-                logUnableToRetry(retryState.attachment(AttachmentKeys.commandDescriptionSupplier()).orElse(null), failure);
             }
         }
-        return decision;
+        return decision ? null : assertNotNull(failure);
     }
 
     static boolean isRetryWritesEnabled(@Nullable final BsonDocument command) {

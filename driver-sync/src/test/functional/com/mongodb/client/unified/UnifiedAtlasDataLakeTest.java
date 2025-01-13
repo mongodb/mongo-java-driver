@@ -22,15 +22,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static com.mongodb.ClusterFixture.isDataLakeTest;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
-
 final class UnifiedAtlasDataLakeTest extends UnifiedSyncTest {
-    @Override
-    protected void skips(final String fileDescription, final String testDescription) {
-        assumeTrue(isDataLakeTest());
-    }
-
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/atlas-data-lake-testing");
     }

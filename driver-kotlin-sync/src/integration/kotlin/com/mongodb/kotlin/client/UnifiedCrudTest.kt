@@ -15,17 +15,11 @@
  */
 package com.mongodb.kotlin.client
 
-import com.mongodb.client.unified.UnifiedCrudTest.doSkips
 import java.io.IOException
 import java.net.URISyntaxException
 import org.junit.jupiter.params.provider.Arguments
 
 internal class UnifiedCrudTest() : UnifiedTest() {
-
-    override fun skips(fileDescription: String, testDescription: String) {
-        doSkips(fileDescription, testDescription)
-    }
-
     companion object {
         @JvmStatic
         @Throws(URISyntaxException::class, IOException::class)

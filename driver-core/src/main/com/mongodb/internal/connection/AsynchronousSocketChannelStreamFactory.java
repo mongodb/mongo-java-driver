@@ -19,7 +19,10 @@ package com.mongodb.internal.connection;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
+import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
+
+import java.nio.channels.AsynchronousChannelGroup;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -31,6 +34,8 @@ public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
     private final PowerOfTwoBufferPool bufferProvider = PowerOfTwoBufferPool.DEFAULT;
     private final SocketSettings settings;
     private final InetAddressResolver inetAddressResolver;
+    @Nullable
+    private final AsynchronousChannelGroup group;
 
     /**
      * Create a new factory with the default {@code BufferProvider} and {@code AsynchronousChannelGroup}.
@@ -38,16 +43,25 @@ public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
      * @param settings    the settings for the connection to a MongoDB server
      * @param sslSettings the settings for connecting via SSL
      */
-    public AsynchronousSocketChannelStreamFactory(final InetAddressResolver inetAddressResolver, final SocketSettings settings,
+    public AsynchronousSocketChannelStreamFactory(
+            final InetAddressResolver inetAddressResolver, final SocketSettings settings,
             final SslSettings sslSettings) {
+        this(inetAddressResolver, settings, sslSettings, null);
+    }
+
+    AsynchronousSocketChannelStreamFactory(
+            final InetAddressResolver inetAddressResolver, final SocketSettings settings,
+            final SslSettings sslSettings, @Nullable final AsynchronousChannelGroup group) {
         assertFalse(sslSettings.isEnabled());
         this.inetAddressResolver = inetAddressResolver;
         this.settings = notNull("settings", settings);
+        this.group = group;
     }
 
     @Override
     public Stream create(final ServerAddress serverAddress) {
-        return new AsynchronousSocketChannelStream(serverAddress, inetAddressResolver, settings, bufferProvider);
+        return new AsynchronousSocketChannelStream(
+                serverAddress, inetAddressResolver, settings, bufferProvider, group);
     }
 
 }

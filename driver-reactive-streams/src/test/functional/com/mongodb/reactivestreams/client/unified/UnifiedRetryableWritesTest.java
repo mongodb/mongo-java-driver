@@ -22,15 +22,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static com.mongodb.client.unified.UnifiedRetryableWritesTest.doSkips;
-import static com.mongodb.client.unified.UnifiedTestSkips.testDef;
-
 final class UnifiedRetryableWritesTest extends UnifiedReactiveStreamsTest {
-    @Override
-    protected void skips(final String fileDescription, final String testDescription) {
-        doSkips(testDef("unified-test-format/retryable-writes", fileDescription, testDescription));
-    }
-
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/retryable-writes");
     }

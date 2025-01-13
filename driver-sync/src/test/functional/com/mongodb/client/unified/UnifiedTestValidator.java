@@ -22,24 +22,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static com.mongodb.ClusterFixture.serverVersionLessThan;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
-
 final class UnifiedTestValidator extends UnifiedSyncTest {
-    @Override
-    protected void skips(final String fileDescription, final String testDescription) {
-        assumeFalse(testDescription.equals("InsertOne fails after multiple retryable writeConcernErrors") && serverVersionLessThan(4, 4),
-                "MongoDB releases prior to 4.4 incorrectly add errorLabels as a field within the writeConcernError document "
-                        + "instead of as a top-level field.  Rather than handle that in code, we skip the test on older server versions.");
-        // Feature to be implemented in scope of JAVA-5389
-        assumeFalse(fileDescription.equals("expectedEventsForClient-topologyDescriptionChangedEvent"));
-        // Feature to be implemented in scope JAVA-4862
-        assumeFalse(fileDescription.equals("entity-commandCursor"));
-        // To be investigated in JAVA-5631
-        assumeFalse(fileDescription.equals("kmsProviders-explicit_kms_credentials"));
-        assumeFalse(fileDescription.equals("kmsProviders-mixed_kms_credential_fields"));
-    }
-
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/valid-pass");
     }

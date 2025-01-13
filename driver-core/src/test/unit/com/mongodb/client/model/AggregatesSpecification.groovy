@@ -23,7 +23,7 @@ import com.mongodb.client.model.search.SearchOperator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document
-import org.bson.Vector
+import org.bson.BinaryVector
 import org.bson.conversions.Bson
 import spock.lang.IgnoreIf
 import spock.lang.Specification
@@ -879,9 +879,9 @@ class AggregatesSpecification extends Specification {
 
         where:
         vector                                               | queryVector
-        Vector.int8Vector(new byte[]{127, 7})                | '{"$binary": {"base64": "AwB/Bw==", "subType": "09"}}'
-        Vector.floatVector(new float[]{127.0f, 7.0f})        | '{"$binary": {"base64": "JwAAAP5CAADgQA==", "subType": "09"}}'
-        Vector.packedBitVector(new byte[]{127, 7}, (byte) 0) | '{"$binary": {"base64": "EAB/Bw==", "subType": "09"}}'
+        BinaryVector.int8Vector([127, 7] as byte[])                | '{"$binary": {"base64": "AwB/Bw==", "subType": "09"}}'
+        BinaryVector.floatVector([127.0f, 7.0f] as float[])        | '{"$binary": {"base64": "JwAAAP5CAADgQA==", "subType": "09"}}'
+        BinaryVector.packedBitVector([127, 7] as byte[], (byte) 0) | '{"$binary": {"base64": "EAB/Bw==", "subType": "09"}}'
         [1.0d, 2.0d]                                         | "[1.0, 2.0]"
     }
 
@@ -913,8 +913,8 @@ class AggregatesSpecification extends Specification {
 
         where:
         vector                                        | queryVector
-        Vector.int8Vector(new byte[]{127, 7})         | '{"$binary": {"base64": "AwB/Bw==", "subType": "09"}}'
-        Vector.floatVector(new float[]{127.0f, 7.0f}) | '{"$binary": {"base64": "JwAAAP5CAADgQA==", "subType": "09"}}'
+        BinaryVector.int8Vector([127, 7] as byte[])         | '{"$binary": {"base64": "AwB/Bw==", "subType": "09"}}'
+        BinaryVector.floatVector([127.0f, 7.0f] as float[]) | '{"$binary": {"base64": "JwAAAP5CAADgQA==", "subType": "09"}}'
         [1.0d, 2.0d]                                  | "[1.0, 2.0]"
     }
 

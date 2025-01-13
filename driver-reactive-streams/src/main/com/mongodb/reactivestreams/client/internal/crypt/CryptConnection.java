@@ -23,6 +23,8 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.MessageSettings;
+import com.mongodb.internal.connection.MessageSequences;
+import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.SplittablePayload;
 import com.mongodb.internal.connection.SplittablePayloadBsonWriter;
@@ -51,6 +53,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotTwo;
 import static com.mongodb.reactivestreams.client.internal.MongoOperationPublisher.sinkToCallback;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -93,14 +96,13 @@ class CryptConnection implements AsyncConnection {
                                  @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
                                  final OperationContext operationContext, final SingleResultCallback<T> callback) {
         commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder,
-                operationContext, true, null, null, callback);
+                operationContext, true, EmptyMessageSequences.INSTANCE, callback);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                                  @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final OperationContext operationContext, final boolean responseExpected,
-                                 @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator,
+                                 final OperationContext operationContext, final boolean responseExpected, final MessageSequences sequences,
                                  final SingleResultCallback<T> callback) {
 
         if (serverIsLessThanVersionFourDotTwo(wrapped.getDescription())) {
@@ -109,6 +111,14 @@ class CryptConnection implements AsyncConnection {
         }
 
         try {
+            SplittablePayload payload = null;
+            FieldNameValidator payloadFieldNameValidator = null;
+            if (sequences instanceof SplittablePayload) {
+                payload = (SplittablePayload) sequences;
+                payloadFieldNameValidator = payload.getFieldNameValidator();
+            } else if (!(sequences instanceof EmptyMessageSequences)) {
+                fail(sequences.toString());
+            }
             BasicOutputBuffer bsonOutput = new BasicOutputBuffer();
             BsonBinaryWriter bsonBinaryWriter = new BsonBinaryWriter(
                     new BsonWriterSettings(), new BsonBinaryWriterSettings(getDescription().getMaxDocumentSize()),
@@ -124,7 +134,7 @@ class CryptConnection implements AsyncConnection {
             crypt.encrypt(database, new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()), operationTimeout)
                     .flatMap((Function<RawBsonDocument, Mono<RawBsonDocument>>) encryptedCommand ->
                             Mono.create(sink -> wrapped.commandAsync(database, encryptedCommand, commandFieldNameValidator, readPreference,
-                                    new RawBsonDocumentCodec(), operationContext, responseExpected, null, null, sinkToCallback(sink))))
+                                    new RawBsonDocumentCodec(), operationContext, responseExpected, EmptyMessageSequences.INSTANCE, sinkToCallback(sink))))
                     .flatMap(rawBsonDocument -> crypt.decrypt(rawBsonDocument, operationTimeout))
                     .map(decryptedResponse ->
                         commandResultDecoder.decode(new BsonBinaryReader(decryptedResponse.getByteBuffer().asNIO()),

@@ -21,7 +21,7 @@ import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.Transformer;
 import org.bson.UuidRepresentation;
-import org.bson.Vector;
+import org.bson.BinaryVector;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -68,7 +68,7 @@ final class ContainerCodecHelper {
                                                   final Codec<?> binaryTypeCodec) {
 
         if (binarySubType == BsonBinarySubType.VECTOR.getValue()) {
-            Codec<Vector> vectorCodec = registry.get(Vector.class, registry);
+            Codec<BinaryVector> vectorCodec = registry.get(BinaryVector.class, registry);
             if (vectorCodec != null) {
                 return vectorCodec;
             }
