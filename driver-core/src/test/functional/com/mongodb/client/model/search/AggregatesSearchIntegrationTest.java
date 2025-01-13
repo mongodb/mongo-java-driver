@@ -80,6 +80,8 @@ import static com.mongodb.client.model.search.SearchOperator.autocomplete;
 import static com.mongodb.client.model.search.SearchOperator.compound;
 import static com.mongodb.client.model.search.SearchOperator.dateRange;
 import static com.mongodb.client.model.search.SearchOperator.exists;
+import static com.mongodb.client.model.search.SearchOperator.in;
+import static com.mongodb.client.model.search.SearchOperator.inNull;
 import static com.mongodb.client.model.search.SearchOperator.near;
 import static com.mongodb.client.model.search.SearchOperator.numberRange;
 import static com.mongodb.client.model.search.SearchOperator.text;
@@ -608,7 +610,10 @@ final class AggregatesSearchIntegrationTest {
                                         dateRange(fieldPath("fieldName6"))
                                                 .lte(Instant.ofEpochMilli(1)),
                                         near(0, 1.5, fieldPath("fieldName7"), fieldPath("fieldName8")),
-                                        near(Instant.ofEpochMilli(1), Duration.ofMillis(3), fieldPath("fieldName9"))
+                                        near(Instant.ofEpochMilli(1), Duration.ofMillis(3), fieldPath("fieldName9")),
+                                        in(fieldPath("fieldName10"), true),
+                                        in(fieldPath("fieldName11"), "term4", "term5"),
+                                        inNull(fieldPath("fieldName12"))
                                 ))
                                 .minimumShouldMatch(1)
                                 .mustNot(singleton(

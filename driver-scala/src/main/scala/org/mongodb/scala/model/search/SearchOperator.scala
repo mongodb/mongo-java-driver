@@ -17,10 +17,18 @@ package org.mongodb.scala.model.search
 
 import com.mongodb.annotations.{ Beta, Reason }
 import com.mongodb.client.model.search.{ SearchOperator => JSearchOperator }
+
+import java.lang.Boolean
+
+import java.util.UUID;
+
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.geojson.Point
 
 import java.time.{ Duration, Instant }
+
+import org.bson.types.ObjectId;
+
 import collection.JavaConverters._
 
 /**
@@ -227,6 +235,106 @@ object SearchOperator {
    */
   def near(origin: Point, pivot: Number, paths: Iterable[_ <: FieldSearchPath]): GeoNearSearchOperator =
     JSearchOperator.near(origin, pivot, paths.asJava)
+
+  /**
+   * Returns a `SearchOperator` that searches for an array of values at the given path and returns documents where the value of
+   * the field equals any value in the specified array.
+   *
+   * @param path The indexed field to be searched.
+   * @param value The boolean value to search for.
+   * @param values More fields to be searched.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/in/ in operator]]
+   */
+  def in(path: FieldSearchPath, value: Boolean, values: Boolean*): InSearchOperator =
+    JSearchOperator.in(path, value, values: _*)
+
+  /**
+   * Returns a `SearchOperator` that searches for an array of values at the given path and returns documents where the value of
+   * the field equals any value in the specified array.
+   *
+   * @param path The indexed field to be searched.
+   * @param value The objectId value to search for.
+   * @param values More fields to be searched.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/in/ in operator]]
+   */
+  def in(path: FieldSearchPath, value: ObjectId, values: ObjectId*): InSearchOperator =
+    JSearchOperator.in(path, value, values: _*)
+
+  /**
+   * Returns a `SearchOperator` that searches for an array of values at the given path and returns documents where the value of
+   * the field equals any value in the specified array.
+   *
+   * @param path The indexed field to be searched.
+   * @param value The number value to search for.
+   * @param values More fields to be searched.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/in/ in operator]]
+   */
+  def in(path: FieldSearchPath, value: Number, values: Number*): InSearchOperator =
+    JSearchOperator.in(path, value, values: _*)
+
+  /**
+   * Returns a `SearchOperator` that searches for an array of values at the given path and returns documents where the value of
+   * the field equals any value in the specified array.
+   *
+   * @param path The indexed field to be searched.
+   * @param value The instant date value to search for.
+   * @param values More fields to be searched.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/in/ in operator]]
+   */
+  def in(path: FieldSearchPath, value: Instant, values: Instant*): InSearchOperator =
+    JSearchOperator.in(path, value, values: _*)
+
+  /**
+   * Returns a `SearchOperator` that searches for an array of values at the given path and returns documents where the value of
+   * the field equals any value in the specified array.
+   *
+   * @param path The indexed field to be searched.
+   * @param value The uuid value to search for.
+   * @param values More fields to be searched.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/in/ in operator]]
+   */
+  def in(path: FieldSearchPath, value: UUID, values: UUID*): InSearchOperator =
+    JSearchOperator.in(path, value, values: _*)
+
+  /**
+   * Returns a `SearchOperator` that searches for an array of values at the given path and returns documents where the value of
+   * the field equals any value in the specified array.
+   *
+   * @param path The indexed field to be searched.
+   * @param value The string value to search for.
+   * @param values More fields to be searched.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/in/ in operator]]
+   */
+  def in(path: FieldSearchPath, value: String, values: String*): InSearchOperator =
+    JSearchOperator.in(path, value, values: _*)
+
+  /**
+   * Returns a `SearchOperator` that searches for an array of values at the given path and returns documents where the value of
+   * the field equals null.
+   *
+   * @param path The indexed field to be searched.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/in/ in operator]]
+   */
+  def inNull(path: FieldSearchPath): InSearchOperator = JSearchOperator.inNull(path)
+
+  /**
+   * Returns a `SearchOperator` that searches for an array of values at the given path and returns documents where the value of
+   * the field equals any value in the specified array.
+   *
+   * @param path The indexed field to be searched.
+   * @param values The non-empty values to search for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/in/ in operator]]
+   */
+  def in[T](path: FieldSearchPath, values: Iterable[_ <: T]): InSearchOperator =
+    JSearchOperator.in(path, values.asJava)
 
   /**
    * Creates a `SearchOperator` from a `Bson` in situations when there is no builder method that better satisfies your needs.
