@@ -19,9 +19,6 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
 
-import java.util.Date;
-import java.util.Optional;
-
 import java.util.UUID;
 
 import org.bson.BsonArray;
@@ -596,10 +593,9 @@ final class SearchOperatorTest {
     void equals() {
         ObjectId id = new ObjectId();
         UUID uuid = UUID.randomUUID();
-        Optional<String> optionalValue = Optional.ofNullable(null);
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () ->
-                        // paths must not be empty
+                        // path must not be empty
                         SearchOperator.equals(null, "term")
                 ),
                 () -> assertEquals(
@@ -637,10 +633,10 @@ final class SearchOperatorTest {
                 () -> assertEquals(
                         new BsonDocument("equals",
                                 new BsonDocument("path", fieldPath("fieldName").toBsonValue())
-                                        .append("value", new BsonDouble(1.0))
+                                        .append("value", new BsonDouble(Double.MAX_VALUE))
                         ),
                         SearchOperator.equals(
-                                fieldPath("fieldName"), 1.0).toBsonDocument()
+                                fieldPath("fieldName"), Double.MAX_VALUE).toBsonDocument()
                 ),
                 () -> assertEquals(
                         new BsonDocument("equals",
@@ -671,8 +667,7 @@ final class SearchOperatorTest {
                                 new BsonDocument("path", fieldPath("fieldName").toBsonValue())
                                         .append("value", BsonNull.VALUE)
                         ),
-                        SearchOperator.equals(
-                                fieldPath("fieldName"), optionalValue.orElse(null)).toBsonDocument()
+                        SearchOperator.equalsNull(fieldPath("fieldName")).toBsonDocument()
                 )
         );
     }

@@ -21,9 +21,6 @@ import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.geojson.Point;
 
-import com.mongodb.lang.Nullable;
-
-import java.util.Date;
 import java.util.UUID;
 
 import org.bson.BsonBinary;
@@ -323,13 +320,9 @@ public interface SearchOperator extends Bson {
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/equals/ equals operator
      */
-    static EqualsSearchOperator equals(final FieldSearchPath path, @Nullable final ObjectId value) {
-        if (value == null) {
-            return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
-                    .append("value", BsonNull.VALUE));
-        }
+    static EqualsSearchOperator equals(final FieldSearchPath path, final ObjectId value) {
         return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
-                .append("value", value));
+                .append("value", notNull("value", value)));
     }
 
     /**
@@ -340,13 +333,9 @@ public interface SearchOperator extends Bson {
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/equals/ equals operator
      */
-    static EqualsSearchOperator equals(final FieldSearchPath path, @Nullable final Number value) {
-        if (value == null) {
-            return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
-                    .append("value", BsonNull.VALUE));
-        }
+    static EqualsSearchOperator equals(final FieldSearchPath path, final Number value) {
         return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
-                .append("value", value));
+                .append("value", notNull("value", value)));
     }
 
     /**
@@ -357,13 +346,9 @@ public interface SearchOperator extends Bson {
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/equals/ equals operator
      */
-    static EqualsSearchOperator equals(final FieldSearchPath path, @Nullable final Instant value) {
-        if (value == null) {
-            return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
-                    .append("value", BsonNull.VALUE));
-        }
+    static EqualsSearchOperator equals(final FieldSearchPath path, final Instant value) {
         return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
-                .append("value", value));
+                .append("value", notNull("value", value)));
     }
 
     /**
@@ -374,13 +359,9 @@ public interface SearchOperator extends Bson {
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/equals/ equals operator
      */
-    static EqualsSearchOperator equals(final FieldSearchPath path, @Nullable final String value) {
-        if (value == null) {
-            return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
-                    .append("value", BsonNull.VALUE));
-        }
+    static EqualsSearchOperator equals(final FieldSearchPath path, final String value) {
         return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
-                .append("value", value));
+                .append("value", notNull("value", value)));
     }
 
     /**
@@ -391,13 +372,21 @@ public interface SearchOperator extends Bson {
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/equals/ equals operator
      */
-    static EqualsSearchOperator equals(final FieldSearchPath path, @Nullable final UUID value) {
-        if (value == null) {
-            return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
-                    .append("value", BsonNull.VALUE));
-        }
+    static EqualsSearchOperator equals(final FieldSearchPath path, final UUID value) {
         return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
                 .append("value", new BsonBinary(value)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that performs a search for documents containing an ordered sequence of terms.
+     *
+     * @param path The indexed field to be searched.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/equals/ equals operator
+     */
+    static EqualsSearchOperator equalsNull(final FieldSearchPath path) {
+        return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
+                .append("value", BsonNull.VALUE));
     }
 
     /**

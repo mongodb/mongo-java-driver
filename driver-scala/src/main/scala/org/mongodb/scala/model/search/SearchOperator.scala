@@ -298,6 +298,17 @@ object SearchOperator {
     JSearchOperator.equals(path, value)
 
   /**
+   * Returns a `SearchOperator` that performs a search for documents containing an ordered sequence of terms.
+   *
+   * @param path The indexed field to be searched.
+   * @param value The uuid value to query for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/equals/ equals operator]]
+   */
+  def equalsNull(path: FieldSearchPath): EqualsSearchOperator =
+    JSearchOperator.equalsNull(path)
+
+  /**
    * Creates a `SearchOperator` from a `Bson` in situations when there is no builder method that better satisfies your needs.
    * This method cannot be used to validate the syntax.
    *

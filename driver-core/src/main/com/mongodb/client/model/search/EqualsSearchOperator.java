@@ -19,8 +19,20 @@ import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 
+import java.util.UUID;
+
+import java.time.Instant;
+
+import org.bson.types.ObjectId;
+
 /**
+ * @see SearchOperator#equals(FieldSearchPath, boolean)
+ * @see SearchOperator#equals(FieldSearchPath, ObjectId)
+ * @see SearchOperator#equals(FieldSearchPath, Number)
+ * @see SearchOperator#equals(FieldSearchPath, Instant)
  * @see SearchOperator#equals(FieldSearchPath, String)
+ * @see SearchOperator#equals(FieldSearchPath, UUID)
+ * @see SearchOperator#equalsNull(FieldSearchPath)
  * @since 5.3
  */
 @Sealed
