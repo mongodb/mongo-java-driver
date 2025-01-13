@@ -15,9 +15,10 @@
  */
 package org.bson.codecs.kotlinx.utils
 
-import java.util.*
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.elementNames
 import kotlinx.serialization.json.JsonNamingStrategy
 import kotlinx.serialization.modules.SerializersModule
 import org.bson.AbstractBsonReader
@@ -61,6 +62,8 @@ internal object BsonCodecUtils {
             false
         }
     }
+
+    private val cachedElementNamesByDescriptor: MutableMap<String, Map<String, String>> = mutableMapOf()
 
     internal fun createBsonEncoder(
         writer: BsonWriter,
@@ -120,11 +123,65 @@ internal object BsonCodecUtils {
         else BsonMapDecoder(descriptor, reader, serializersModule, configuration)
     }
 
-    internal val String.toSnakeCase
-        get() = replace(Regex("([A-Z])"), "_$1").lowercase(Locale.getDefault()).replace(Regex("^_"), "")
+    internal fun cacheElementNamesByDescriptor(descriptor: SerialDescriptor, configuration: BsonConfiguration) {
+        val convertedNameMap =
+            when (configuration.bsonNamingStrategy) {
+                BsonNamingStrategy.SNAKE_CASE -> {
+                    val snakeCasedNames = descriptor.elementNames.associateWith { name -> convertCamelCase(name, '_') }
 
-    internal val String.toCamelCase
-        get() = replace(Regex("_([a-z])")) { it.value[1].uppercaseChar().toString() }
+                    snakeCasedNames.entries
+                        .groupBy { entry -> entry.value }
+                        .filter { group -> group.value.size > 1 }
+                        .entries
+                        .forEach { group ->
+                            val keys = group.value.joinToString(", ") { entry -> entry.key }
+                            throw SerializationException(
+                                "$keys in ${descriptor.serialName} generate same name: ${group.key}.")
+                        }
+
+                    snakeCasedNames.entries.associate { it.value to it.key }
+                }
+                else -> emptyMap()
+            }
+
+        cachedElementNamesByDescriptor[descriptor.serialName] = convertedNameMap
+    }
+
+    internal fun getCachedElementNamesByDescriptor(descriptor: SerialDescriptor): Map<String, String> {
+        return cachedElementNamesByDescriptor[descriptor.serialName] ?: emptyMap()
+    }
+
+    // https://github.com/Kotlin/kotlinx.serialization/blob/f9f160a680da9f92c3bb121ae3644c96e57ba42e/formats/json/commonMain/src/kotlinx/serialization/json/JsonNamingStrategy.kt#L142-L174
+    internal fun convertCamelCase(value: String, delimiter: Char) =
+        buildString(value.length * 2) {
+            var bufferedChar: Char? = null
+            var previousUpperCharsCount = 0
+
+            value.forEach { c ->
+                if (c.isUpperCase()) {
+                    if (previousUpperCharsCount == 0 && isNotEmpty() && last() != delimiter) append(delimiter)
+
+                    bufferedChar?.let(::append)
+
+                    previousUpperCharsCount++
+                    bufferedChar = c.lowercaseChar()
+                } else {
+                    if (bufferedChar != null) {
+                        if (previousUpperCharsCount > 1 && c.isLetter()) {
+                            append(delimiter)
+                        }
+                        append(bufferedChar)
+                        previousUpperCharsCount = 0
+                        bufferedChar = null
+                    }
+                    append(c)
+                }
+            }
+
+            if (bufferedChar != null) {
+                append(bufferedChar)
+            }
+        }
 
     internal fun BsonNamingStrategy?.toJsonNamingStrategy(): JsonNamingStrategy? {
         return when (this) {

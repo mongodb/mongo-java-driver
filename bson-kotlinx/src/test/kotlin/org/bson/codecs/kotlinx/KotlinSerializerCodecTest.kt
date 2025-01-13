@@ -1064,8 +1064,33 @@ class KotlinSerializerCodecTest {
 
     @Test
     fun testSnakeCaseNamingStrategy() {
-        val expected = """{"camel_case_key": "snake_case_value", "a_b_cd": "camelCaseValue"}"""
-        val dataClass = DataClassWithCamelCase("snake_case_value", "camelCaseValue")
+        val expected =
+            """{"two_words": "", "my_property": "", "camel_case_underscores": "", "url_mapping": "",
+            | "my_http_auth": "", "my_http2_api_key": "", "my_http2fast_api_key": ""}"""
+                .trimMargin()
+        val dataClass = DataClassWithCamelCase()
+        assertRoundTrips(expected, dataClass, BsonConfiguration(bsonNamingStrategy = BsonNamingStrategy.SNAKE_CASE))
+    }
+
+    @Test
+    fun testSameSnakeCaseName() {
+        val expected = """{"my_http_auth": ""}"""
+        val dataClass = DataClassWithSameSnakeCaseName()
+        val exception =
+            assertThrows<SerializationException> {
+                assertRoundTrips(
+                    expected, dataClass, BsonConfiguration(bsonNamingStrategy = BsonNamingStrategy.SNAKE_CASE))
+            }
+        assertEquals(
+            "myHTTPAuth, myHttpAuth in org.bson.codecs.kotlinx.samples.DataClassWithSameSnakeCaseName " +
+                "generate same name: my_http_auth.",
+            exception.message)
+    }
+
+    @Test
+    fun testKotlinAllowedName() {
+        val expected = """{"имя_переменной": "", "variable _name": ""}"""
+        val dataClass = DataClassWithKotlinAllowedName()
         assertRoundTrips(expected, dataClass, BsonConfiguration(bsonNamingStrategy = BsonNamingStrategy.SNAKE_CASE))
     }
 

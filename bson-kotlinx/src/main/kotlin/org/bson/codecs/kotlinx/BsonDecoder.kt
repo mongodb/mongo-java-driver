@@ -37,12 +37,13 @@ import org.bson.BsonType
 import org.bson.BsonValue
 import org.bson.codecs.BsonValueCodec
 import org.bson.codecs.DecoderContext
+import org.bson.codecs.kotlinx.utils.BsonCodecUtils.cacheElementNamesByDescriptor
 import org.bson.codecs.kotlinx.utils.BsonCodecUtils.createBsonArrayDecoder
 import org.bson.codecs.kotlinx.utils.BsonCodecUtils.createBsonDecoder
 import org.bson.codecs.kotlinx.utils.BsonCodecUtils.createBsonDocumentDecoder
 import org.bson.codecs.kotlinx.utils.BsonCodecUtils.createBsonMapDecoder
 import org.bson.codecs.kotlinx.utils.BsonCodecUtils.createBsonPolymorphicDecoder
-import org.bson.codecs.kotlinx.utils.BsonCodecUtils.toCamelCase
+import org.bson.codecs.kotlinx.utils.BsonCodecUtils.getCachedElementNamesByDescriptor
 import org.bson.internal.NumberCodecHelper
 import org.bson.internal.StringCodecHelper
 import org.bson.types.ObjectId
@@ -103,6 +104,7 @@ internal sealed class AbstractBsonDecoder(
                     elementDescriptor.serialName, elementDescriptor.isNullable && !descriptor.isElementOptional(it))
             }
         this.elementsMetadata = elementsMetadata
+        cacheElementNamesByDescriptor(descriptor, configuration)
     }
 
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int {
@@ -117,14 +119,7 @@ internal sealed class AbstractBsonDecoder(
         val elementMetadata = elementsMetadata ?: error("elementsMetadata may not be null.")
         val name: String? =
             when (reader.state ?: error("State of reader may not be null.")) {
-                AbstractBsonReader.State.NAME ->
-                    reader.readName().let {
-                        if (configuration.bsonNamingStrategy == BsonNamingStrategy.SNAKE_CASE) {
-                            it.toCamelCase
-                        } else {
-                            it
-                        }
-                    }
+                AbstractBsonReader.State.NAME -> reader.readName()
                 AbstractBsonReader.State.VALUE -> reader.currentName
                 AbstractBsonReader.State.TYPE -> {
                     reader.readBsonType()
@@ -137,7 +132,13 @@ internal sealed class AbstractBsonDecoder(
             }
 
         return name?.let {
-            val index = descriptor.getElementIndex(it)
+            val index =
+                if (configuration.bsonNamingStrategy == BsonNamingStrategy.SNAKE_CASE) {
+                    getCachedElementNamesByDescriptor(descriptor)[it]?.let { name -> descriptor.getElementIndex(name) }
+                        ?: UNKNOWN_NAME
+                } else {
+                    descriptor.getElementIndex(it)
+                }
             return if (index == UNKNOWN_NAME) {
                 reader.skipValue()
                 decodeElementIndexImpl(descriptor)

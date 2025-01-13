@@ -31,7 +31,7 @@ import org.bson.BsonValue
 import org.bson.BsonWriter
 import org.bson.codecs.BsonValueCodec
 import org.bson.codecs.EncoderContext
-import org.bson.codecs.kotlinx.utils.BsonCodecUtils.toSnakeCase
+import org.bson.codecs.kotlinx.utils.BsonCodecUtils.convertCamelCase
 import org.bson.types.ObjectId
 
 /**
@@ -207,7 +207,7 @@ internal open class BsonEncoderImpl(
         val name =
             value.toString().let {
                 if (configuration.bsonNamingStrategy == BsonNamingStrategy.SNAKE_CASE) {
-                    it.toSnakeCase
+                    convertCamelCase(it, '_')
                 } else {
                     it
                 }
