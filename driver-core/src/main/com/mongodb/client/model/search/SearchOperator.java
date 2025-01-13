@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.UUID;
 
 import org.bson.BsonBinary;
-import org.bson.BsonNull;
 import org.bson.BsonType;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -390,19 +389,6 @@ public interface SearchOperator extends Bson {
      */
     static InSearchOperator in(final FieldSearchPath path, final String value, final String... values) {
         return in(notNull("path", path), concat(notNull("value", value), values));
-    }
-
-    /**
-     * Returns a {@link SearchOperator} that searches for an array of values at the given path and returns documents where the value of
-     * the field equals null.
-     *
-     * @param path The indexed field to be searched.
-     * @return The requested {@link SearchOperator}.
-     * @mongodb.atlas.manual atlas-search/in/ in operator
-     */
-    static InSearchOperator inNull(final FieldSearchPath path) {
-        return new SearchConstructibleBsonElement("in", new Document("path", notNull("path", path).toValue())
-                .append("value", BsonNull.VALUE));
     }
 
     /**

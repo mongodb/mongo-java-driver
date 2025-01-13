@@ -316,16 +316,6 @@ object SearchOperator {
 
   /**
    * Returns a `SearchOperator` that searches for an array of values at the given path and returns documents where the value of
-   * the field equals null.
-   *
-   * @param path The indexed field to be searched.
-   * @return The requested `SearchOperator`.
-   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/in/ in operator]]
-   */
-  def inNull(path: FieldSearchPath): InSearchOperator = JSearchOperator.inNull(path)
-
-  /**
-   * Returns a `SearchOperator` that searches for an array of values at the given path and returns documents where the value of
    * the field equals any value in the specified array.
    *
    * @param path The indexed field to be searched.

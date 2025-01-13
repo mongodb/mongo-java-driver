@@ -32,7 +32,6 @@ import org.bson.types.ObjectId;
  * @see SearchOperator#in(FieldSearchPath, Instant, Instant...)
  * @see SearchOperator#in(FieldSearchPath, UUID, UUID...)
  * @see SearchOperator#in(FieldSearchPath, String, String...)
- * @see SearchOperator#inNull(FieldSearchPath)
  * @see SearchOperator#in(FieldSearchPath, Iterable)
  * @since 5.3
  */

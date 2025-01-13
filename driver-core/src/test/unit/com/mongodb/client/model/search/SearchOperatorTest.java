@@ -29,7 +29,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
-import org.bson.BsonNull;
 import org.bson.BsonObjectId;
 import org.bson.BsonString;
 import org.bson.Document;
@@ -672,14 +671,6 @@ final class SearchOperatorTest {
                                         .append("value", new BsonString("value"))
                         ),
                         SearchOperator.in(fieldPath("fieldName1"), "value")
-                                .toBsonDocument()
-                ),
-                () -> assertEquals(
-                        new BsonDocument("in",
-                                new BsonDocument("path", fieldPath("fieldName1").toBsonValue())
-                                        .append("value", BsonNull.VALUE)
-                        ),
-                        SearchOperator.inNull(fieldPath("fieldName1"))
                                 .toBsonDocument()
                 )
         );
