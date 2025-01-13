@@ -23,7 +23,7 @@ import org.bson.BsonInt32;
 import org.bson.BsonObjectId;
 import org.bson.ByteBufNIO;
 import org.bson.Document;
-import org.bson.Vector;
+import org.bson.BinaryVector;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.BsonInput;
 import org.bson.io.ByteBufferBsonInput;
@@ -81,9 +81,9 @@ public class DocumentCodecTest {
         doc.put("code", new Code("var i = 0"));
         doc.put("minkey", new MinKey());
         doc.put("maxkey", new MaxKey());
-        doc.put("vectorFloat", Vector.floatVector(new float[]{1.1f, 2.2f, 3.3f}));
-        doc.put("vectorInt8", Vector.int8Vector(new byte[]{10, 20, 30, 40}));
-        doc.put("vectorPackedBit", Vector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3));
+        doc.put("vectorFloat", BinaryVector.floatVector(new float[]{1.1f, 2.2f, 3.3f}));
+        doc.put("vectorInt8", BinaryVector.int8Vector(new byte[]{10, 20, 30, 40}));
+        doc.put("vectorPackedBit", BinaryVector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3));
         //        doc.put("pattern", Pattern.compile("^hello"));  // TODO: Pattern doesn't override equals method!
         doc.put("null", null);
 

@@ -16,7 +16,10 @@
 package com.mongodb.kotlin.client
 
 import com.mongodb.ClientSessionOptions
+import com.mongodb.MongoNamespace
 import com.mongodb.client.MongoClient as JMongoClient
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel
 import kotlin.reflect.full.declaredFunctions
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.test.assertEquals
@@ -166,6 +169,29 @@ class MongoClientTest {
         verify(wrapped, times(1)).watch(clientSession.wrapped, pipeline, Document::class.java)
         verify(wrapped, times(2)).watch(pipeline, BsonDocument::class.java)
         verify(wrapped, times(2)).watch(clientSession.wrapped, pipeline, BsonDocument::class.java)
+        verifyNoMoreInteractions(wrapped)
+    }
+
+    @Test
+    fun shouldCallTheUnderlyingBulkWrite() {
+        val mongoClient = MongoClient(wrapped)
+        val requests = listOf(ClientNamespacedWriteModel.insertOne(MongoNamespace("test.test"), Document()))
+        val options = ClientBulkWriteOptions.clientBulkWriteOptions().bypassDocumentValidation(true)
+
+        whenever(wrapped.bulkWrite(requests)).doReturn(mock())
+        whenever(wrapped.bulkWrite(requests, options)).doReturn(mock())
+        whenever(wrapped.bulkWrite(clientSession.wrapped, requests)).doReturn(mock())
+        whenever(wrapped.bulkWrite(clientSession.wrapped, requests, options)).doReturn(mock())
+
+        mongoClient.bulkWrite(requests)
+        mongoClient.bulkWrite(requests, options)
+        mongoClient.bulkWrite(clientSession, requests)
+        mongoClient.bulkWrite(clientSession, requests, options)
+
+        verify(wrapped).bulkWrite(requests)
+        verify(wrapped).bulkWrite(requests, options)
+        verify(wrapped).bulkWrite(clientSession.wrapped, requests)
+        verify(wrapped).bulkWrite(clientSession.wrapped, requests, options)
         verifyNoMoreInteractions(wrapped)
     }
 }
