@@ -316,7 +316,7 @@ class MongoCluster(private val wrapped: JMongoCluster) {
    *           [[ClientBulkWriteException ClientBulkWriteException#getWriteErrors]],
    *           [[ClientBulkWriteException ClientBulkWriteException#getPartialResult]].
    *         - [[MongoException]]: Only if the operation is unsuccessful.
-   * @since 5.3
+   * @since 5.4
    * @note Requires MongoDB 8.0 or greater.
    */
   def bulkWrite(models: List[_ <: ClientNamespacedWriteModel]): SingleObservable[ClientBulkWriteResult] =
@@ -344,7 +344,7 @@ class MongoCluster(private val wrapped: JMongoCluster) {
    *           [[ClientBulkWriteException ClientBulkWriteException#getWriteErrors]],
    *           [[ClientBulkWriteException ClientBulkWriteException#getPartialResult]].
    *         - [[MongoException]]: Only if the operation is unsuccessful.
-   * @since 5.3
+   * @since 5.4
    * @note Requires MongoDB 8.0 or greater.
    */
   def bulkWrite(
@@ -376,7 +376,7 @@ class MongoCluster(private val wrapped: JMongoCluster) {
    *           [[ClientBulkWriteException ClientBulkWriteException#getWriteErrors]],
    *           [[ClientBulkWriteException ClientBulkWriteException#getPartialResult]].
    *         - [[MongoException]]: Only if the operation is unsuccessful.
-   * @since 5.3
+   * @since 5.4
    * @note Requires MongoDB 8.0 or greater.
    */
   def bulkWrite(
@@ -405,7 +405,7 @@ class MongoCluster(private val wrapped: JMongoCluster) {
    *           [[ClientBulkWriteException ClientBulkWriteException#getWriteErrors]],
    *           [[ClientBulkWriteException ClientBulkWriteException#getPartialResult]].
    *         - [[MongoException]]: Only if the operation is unsuccessful.
-   * @since 5.3
+   * @since 5.4
    * @note Requires MongoDB 8.0 or greater.
    */
   def bulkWrite(

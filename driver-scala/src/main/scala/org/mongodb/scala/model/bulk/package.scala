@@ -8,49 +8,49 @@ import scala.collection.JavaConverters._
 /**
  * Models, options, results for the client-level bulk write operation.
  *
- * @since 5.3
+ * @since 5.4
  */
 package object bulk {
 
   /**
    * A model for inserting a document.
    *
-   * @since 5.3
+   * @since 5.4
    */
   type ClientNamespacedInsertOneModel = com.mongodb.client.model.bulk.ClientNamespacedInsertOneModel
 
   /**
    * A model for updating at most one document matching a filter.
    *
-   * @since 5.3
+   * @since 5.4
    */
   type ClientNamespacedUpdateOneModel = com.mongodb.client.model.bulk.ClientNamespacedUpdateOneModel
 
   /**
    * A model for updating all documents matching a filter.
    *
-   * @since 5.3
+   * @since 5.4
    */
   type ClientNamespacedUpdateManyModel = com.mongodb.client.model.bulk.ClientNamespacedUpdateManyModel
 
   /**
    * A model for replacing at most one document matching a filter.
    *
-   * @since 5.3
+   * @since 5.4
    */
   type ClientNamespacedReplaceOneModel = com.mongodb.client.model.bulk.ClientNamespacedReplaceOneModel
 
   /**
    * A model for deleting at most one document matching a filter.
    *
-   * @since 5.3
+   * @since 5.4
    */
   type ClientNamespacedDeleteOneModel = com.mongodb.client.model.bulk.ClientNamespacedDeleteOneModel
 
   /**
    * A model for deleting all documents matching a filter.
    *
-   * @since 5.3
+   * @since 5.4
    */
   type ClientNamespacedDeleteManyModel = com.mongodb.client.model.bulk.ClientNamespacedDeleteManyModel
 
@@ -58,7 +58,7 @@ package object bulk {
    * A combination of an individual write operation and a [[MongoNamespace]]
    * the operation is targeted at.
    *
-   * @since 5.3
+   * @since 5.4
    */
   type ClientNamespacedWriteModel = com.mongodb.client.model.bulk.ClientNamespacedWriteModel
 
@@ -168,7 +168,7 @@ package object bulk {
   /**
    * The options to apply when executing a client-level bulk write operation.
    *
-   * @since 5.3
+   * @since 5.4
    */
   type ClientBulkWriteOptions = com.mongodb.client.model.bulk.ClientBulkWriteOptions
 
@@ -180,7 +180,7 @@ package object bulk {
   /**
    * The options to apply when updating a document.
    *
-   * @since 5.3
+   * @since 5.4
    */
   type ClientUpdateOneOptions = com.mongodb.client.model.bulk.ClientUpdateOneOptions
 
@@ -192,7 +192,7 @@ package object bulk {
   /**
    * The options to apply when updating documents.
    *
-   * @since 5.3
+   * @since 5.4
    */
   type ClientUpdateManyOptions = com.mongodb.client.model.bulk.ClientUpdateManyOptions
 
@@ -204,7 +204,7 @@ package object bulk {
   /**
    * The options to apply when replacing a document.
    *
-   * @since 5.3
+   * @since 5.4
    */
   type ClientReplaceOneOptions = com.mongodb.client.model.bulk.ClientReplaceOneOptions
 
@@ -216,7 +216,7 @@ package object bulk {
   /**
    * The options to apply when deleting a document.
    *
-   * @since 5.3
+   * @since 5.4
    */
   type ClientDeleteOneOptions = com.mongodb.client.model.bulk.ClientDeleteOneOptions
 
@@ -228,7 +228,7 @@ package object bulk {
   /**
    * The options to apply when deleting documents.
    *
-   * @since 5.3
+   * @since 5.4
    */
   type ClientDeleteManyOptions = com.mongodb.client.model.bulk.ClientDeleteManyOptions
 
