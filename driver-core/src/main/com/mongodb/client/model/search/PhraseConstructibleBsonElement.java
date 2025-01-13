@@ -38,10 +38,7 @@ final class PhraseConstructibleBsonElement extends AbstractConstructibleBsonElem
 
     @Override
     public PhraseSearchOperator synonyms(final String name) {
-        return newWithMutatedValue(doc -> {
-            doc.remove("fuzzy");
-            doc.append("synonyms", notNull("name", name));
-        });
+        return newWithAppendedValue("synonyms", notNull("name", name));
     }
 
     @Override
