@@ -235,6 +235,11 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
   type MongoBulkWriteException = com.mongodb.MongoBulkWriteException
 
   /**
+   * The result of an unsuccessful or partially unsuccessful client-level bulk write operation.
+   */
+  type ClientBulkWriteException = com.mongodb.ClientBulkWriteException
+
+  /**
    * An exception indicating that a failure occurred when running a `\$changeStream`.
    * @since 2.2
    */

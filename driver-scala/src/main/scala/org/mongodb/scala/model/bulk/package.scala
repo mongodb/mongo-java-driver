@@ -13,14 +13,6 @@ import scala.collection.JavaConverters._
 package object bulk {
 
   /**
-   * A combination of an individual write operation and a [[MongoNamespace]]
-   * the operation is targeted at.
-   *
-   * @since 5.3
-   */
-  type ClientNamespacedWriteModel = com.mongodb.client.model.bulk.ClientNamespacedWriteModel
-
-  /**
    * A model for inserting a document.
    *
    * @since 5.3
@@ -61,6 +53,14 @@ package object bulk {
    * @since 5.3
    */
   type ClientNamespacedDeleteManyModel = com.mongodb.client.model.bulk.ClientNamespacedDeleteManyModel
+
+  /**
+   * A combination of an individual write operation and a [[MongoNamespace]]
+   * the operation is targeted at.
+   *
+   * @since 5.3
+   */
+  type ClientNamespacedWriteModel = com.mongodb.client.model.bulk.ClientNamespacedWriteModel
 
   object ClientNamespacedWriteModel {
 

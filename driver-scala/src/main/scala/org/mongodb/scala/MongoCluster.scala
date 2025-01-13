@@ -19,13 +19,11 @@ package org.mongodb.scala
 import com.mongodb.annotations.{ Alpha, Reason }
 import com.mongodb.{ ReadConcern, ReadPreference, WriteConcern }
 import com.mongodb.reactivestreams.client.{ MongoCluster => JMongoCluster }
-import com.mongodb.ClientBulkWriteException
 import org.bson.codecs.configuration.CodecRegistry
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.bulk.ClientNamespacedUpdateManyModel
 import org.mongodb.scala.model.bulk.ClientNamespacedDeleteManyModel
-import org.mongodb.scala.model.bulk.ClientNamespacedWriteModel
 import org.mongodb.scala.model.bulk.{ ClientBulkWriteOptions, ClientBulkWriteResult, ClientNamespacedWriteModel }
 
 import scala.collection.JavaConverters._
@@ -312,10 +310,11 @@ class MongoCluster(private val wrapped: JMongoCluster) {
    * @param models The [[ClientNamespacedWriteModel]] individual write operations.
    * @return The [[SingleObservable]] signalling at most one element [[ClientBulkWriteResult]] if the operation is successful,
    *         or the following errors:
-   *         - [[com.mongodb.ClientBulkWriteException]]: If and only if the operation is unsuccessful or partially unsuccessful,
+   *         - [[ClientBulkWriteException]]: If and only if the operation is unsuccessful or partially unsuccessful,
    *           and there is at least one of the following pieces of information to report:
-   *           [[ClientBulkWriteException.getWriteConcernErrors]], [[ClientBulkWriteException.getWriteErrors]],
-   *           [[ClientBulkWriteException.getPartialResult]].
+   *           [[ClientBulkWriteException ClientBulkWriteException#getWriteConcernErrors]],
+   *           [[ClientBulkWriteException ClientBulkWriteException#getWriteErrors]],
+   *           [[ClientBulkWriteException ClientBulkWriteException#getPartialResult]].
    *         - [[MongoException]]: Only if the operation is unsuccessful.
    * @since 5.3
    * @note Requires MongoDB 8.0 or greater.
@@ -339,10 +338,11 @@ class MongoCluster(private val wrapped: JMongoCluster) {
    * @param options The options.
    * @return The [[SingleObservable]] signalling at most one element [[ClientBulkWriteResult]] if the operation is successful,
    *         or the following errors:
-   *         - [[com.mongodb.ClientBulkWriteException]]: If and only if the operation is unsuccessful or partially unsuccessful,
+   *         - [[ClientBulkWriteException]]: If and only if the operation is unsuccessful or partially unsuccessful,
    *           and there is at least one of the following pieces of information to report:
-   *           [[ClientBulkWriteException.getWriteConcernErrors]], [[ClientBulkWriteException.getWriteErrors]],
-   *           [[ClientBulkWriteException.getPartialResult]].
+   *           [[ClientBulkWriteException ClientBulkWriteException#getWriteConcernErrors]],
+   *           [[ClientBulkWriteException ClientBulkWriteException#getWriteErrors]],
+   *           [[ClientBulkWriteException ClientBulkWriteException#getPartialResult]].
    *         - [[MongoException]]: Only if the operation is unsuccessful.
    * @since 5.3
    * @note Requires MongoDB 8.0 or greater.
@@ -366,14 +366,15 @@ class MongoCluster(private val wrapped: JMongoCluster) {
    * This operation is not supported by MongoDB Atlas Serverless instances.
    *
    * [[https://www.mongodb.com/docs/manual/reference/command/bulkWrite/ bulkWrite]]
-   * @param clientSession The {@linkplain ClientSession client session} with which to associate this operation.
+   * @param clientSession [[ClientSession client session]] with which to associate this operation.
    * @param models The [[ClientNamespacedWriteModel]] individual write operations.
    * @return The [[SingleObservable]] signalling at most one element [[ClientBulkWriteResult]] if the operation is successful,
    *         or the following errors:
-   *         - [[com.mongodb.ClientBulkWriteException]]: If and only if the operation is unsuccessful or partially unsuccessful,
+   *         - [[ClientBulkWriteException]]: If and only if the operation is unsuccessful or partially unsuccessful,
    *           and there is at least one of the following pieces of information to report:
-   *           [[ClientBulkWriteException.getWriteConcernErrors]], [[ClientBulkWriteException.getWriteErrors]],
-   *           [[ClientBulkWriteException.getPartialResult]].
+   *           [[ClientBulkWriteException ClientBulkWriteException#getWriteConcernErrors]],
+   *           [[ClientBulkWriteException ClientBulkWriteException#getWriteErrors]],
+   *           [[ClientBulkWriteException ClientBulkWriteException#getPartialResult]].
    *         - [[MongoException]]: Only if the operation is unsuccessful.
    * @since 5.3
    * @note Requires MongoDB 8.0 or greater.
@@ -398,10 +399,11 @@ class MongoCluster(private val wrapped: JMongoCluster) {
    * @param options The options.
    * @return The [[SingleObservable]] signalling at most one element [[ClientBulkWriteResult]] if the operation is successful,
    *         or the following errors:
-   *         - [[com.mongodb.ClientBulkWriteException]]: If and only if the operation is unsuccessful or partially unsuccessful,
+   *         - [[ClientBulkWriteException]]: If and only if the operation is unsuccessful or partially unsuccessful,
    *           and there is at least one of the following pieces of information to report:
-   *           [[ClientBulkWriteException.getWriteConcernErrors]], [[ClientBulkWriteException.getWriteErrors]],
-   *           [[ClientBulkWriteException.getPartialResult]].
+   *           [[ClientBulkWriteException ClientBulkWriteException#getWriteConcernErrors]],
+   *           [[ClientBulkWriteException ClientBulkWriteException#getWriteErrors]],
+   *           [[ClientBulkWriteException ClientBulkWriteException#getPartialResult]].
    *         - [[MongoException]]: Only if the operation is unsuccessful.
    * @since 5.3
    * @note Requires MongoDB 8.0 or greater.
