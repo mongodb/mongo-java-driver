@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>Projections</title>
+    <link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../../";</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async="async"></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
+</head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+            <a href="../../../index.html">
+                    <span>mongodb-driver-kotlin-extensions</span>
+            </a>
+    </div>
+    <div>
+5.3.0    </div>
+    <div class="pull-right d-flex">
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":driver-kotlin-extensions:dokkaHtml/main">jvm</button>
+        </div>
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageIds="mongodb-driver-kotlin-extensions::com.mongodb.kotlin.client.model/Projections///PointingToDeclaration//-1274903326">
+  <div class="breadcrumbs"><a href="../../../index.html">mongodb-driver-kotlin-extensions</a><span class="delimiter">/</span><a href="../index.html">com.mongodb.kotlin.client.model</a><span class="delimiter">/</span><span class="current">Projections</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span><span>Projections</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="index.html">Projections</a></div><p class="paragraph">Projection extension methods to improve Kotlin interop</p><span class="kdoc-tag"><h4 class="">Since</h4><p class="paragraph">5.3</p></span></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,FUNCTION,PROPERTY">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="-1011757472%2FFunctions%2F-1274903326" anchor-label="computed" id="-1011757472%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="computed.html"><span><span>computed</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1011757472%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="computed.html"><span class="token function">computed</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">expression<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates a projection of a String whose value is computed from the given expression. Projection with an expression can be used in the following contexts:</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="computed.html">T</a><span class="token operator">&gt; </span><a href="computed.html"><span class="token function">computed</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="computed.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">expression<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates a projection of a property whose value is computed from the given expression. Projection with an expression can be used in the following contexts:</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1357459522%2FFunctions%2F-1274903326" anchor-label="computed" id="-1357459522%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="computed.html"><span><span>computed</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1357459522%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;computedFromExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">infix </span><span class="token keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">.</span><a href="computed.html"><span class="token function">computed</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">expression<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates a projection of a String whose value is computed from the given expression. Projection with an expression can be used in the following contexts:</p></div><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;computedFromExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">infix </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="computed.html">T</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="computed.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="computed.html"><span class="token function">computed</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">expression<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates a projection of a property whose value is computed from the given expression. Projection with an expression can be used in the following contexts:</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="602919901%2FFunctions%2F-1274903326" anchor-label="computedSearchMeta" id="602919901%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="computed-search-meta.html"><span>computed</span><wbr></wbr><span>Search</span><wbr></wbr><span><span>Meta</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="602919901%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="computed-search-meta.html">T</a><span class="token operator">&gt; </span><a href="computed-search-meta.html"><span class="token function">computedSearchMeta</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="computed-search-meta.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates a projection of a property whose value is equal to the {@code $$SEARCH_META} variable. for use with {@link Aggregates#search(SearchOperator, SearchOptions)} / {@link Aggregates#search(SearchCollector, SearchOptions)}. Calling this method is equivalent to calling {@link #computed(String, Object)} with {@code &quot;$$SEARCH_META&quot;} as the second argument.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="537448603%2FFunctions%2F-1274903326" anchor-label="computedSearchMeta" id="537448603%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="computed-search-meta.html"><span>computed</span><wbr></wbr><span>Search</span><wbr></wbr><span><span>Meta</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="537448603%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;computedSearchMetaExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="computed-search-meta.html">T</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="computed-search-meta.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="computed-search-meta.html"><span class="token function">computedSearchMeta</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates a projection of a property whose value is equal to the {@code $$SEARCH_META} variable. for use with {@link Aggregates#search(SearchOperator, SearchOptions)} / {@link Aggregates#search(SearchCollector, SearchOptions)}. Calling this method is equivalent to calling {@link #computed(String, Object)} with {@code &quot;$$SEARCH_META&quot;} as the second argument.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="109284359%2FFunctions%2F-1274903326" anchor-label="elemMatch" id="109284359%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="elem-match.html"><span>elem</span><wbr></wbr><span><span>Match</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="109284359%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="elem-match.html">T</a><span class="token operator">&gt; </span><a href="elem-match.html"><span class="token function">elemMatch</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="elem-match.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">filter<span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates a projection that includes for the given property only the first element of the array value of that field that matches the given query filter.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="822997782%2FFunctions%2F-1274903326" anchor-label="elemMatch" id="822997782%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="elem-match.html"><span>elem</span><wbr></wbr><span><span>Match</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="822997782%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;elemMatchProjExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">infix </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="elem-match.html">T</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="elem-match.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="elem-match.html"><span class="token function">elemMatch</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">filter<span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates a projection that includes for the given property only the first element of the array value of that field that matches the given query filter.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1737807070%2FFunctions%2F-1274903326" anchor-label="exclude" id="-1737807070%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="exclude.html"><span><span>exclude</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1737807070%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="exclude.html"><span class="token function">exclude</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">vararg </span>properties<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="exclude.html"><span class="token function">exclude</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">properties<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-iterable/index.html">Iterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates a projection that excludes all of the given properties.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1167781592%2FFunctions%2F-1274903326" anchor-label="excludeId" id="1167781592%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="exclude-id.html"><span>exclude</span><wbr></wbr><span><span>Id</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1167781592%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="exclude-id.html"><span class="token function">excludeId</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates a projection that excludes the _id field. This suppresses the automatic inclusion of _id that is the default, even when other fields are explicitly included.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1837122934%2FFunctions%2F-1274903326" anchor-label="fields" id="-1837122934%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="fields.html"><span><span>fields</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1837122934%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="fields.html"><span class="token function">fields</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">vararg </span>projections<span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="fields.html"><span class="token function">fields</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">projections<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates a projection that combines the list of projections into a single one. If there are duplicate keys, the last one takes precedence.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2035045090%2FFunctions%2F-1274903326" anchor-label="include" id="2035045090%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="include.html"><span><span>include</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2035045090%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="include.html"><span class="token function">include</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">vararg </span>properties<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="include.html"><span class="token function">include</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">properties<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-iterable/index.html">Iterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates a projection that includes all of the given properties.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1640869555%2FFunctions%2F-1274903326" anchor-label="meta" id="-1640869555%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="meta.html"><span><span>meta</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1640869555%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="meta.html">T</a><span class="token operator">&gt; </span><a href="meta.html"><span class="token function">meta</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="meta.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">metaFieldName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates a $meta projection for the given property</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2074581918%2FFunctions%2F-1274903326" anchor-label="meta" id="2074581918%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="meta.html"><span><span>meta</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2074581918%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;metaExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">infix </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="meta.html">T</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="meta.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="meta.html"><span class="token function">meta</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">metaFieldName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates a $meta projection for the given property</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-793427059%2FFunctions%2F-1274903326" anchor-label="metaSearchHighlights" id="-793427059%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="meta-search-highlights.html"><span>meta</span><wbr></wbr><span>Search</span><wbr></wbr><span><span>Highlights</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-793427059%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="meta-search-highlights.html">T</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="meta-search-highlights.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="meta-search-highlights.html"><span class="token function">metaSearchHighlights</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates a searchHighlights projection for the given property, for use with {@link Aggregates#search(SearchOperator, SearchOptions)} / {@link Aggregates#search(SearchCollector, SearchOptions)}. Calling this method is equivalent to calling {@link #meta(String, String)} with {@code &quot;searchHighlights&quot;} as the argument.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1923067270%2FFunctions%2F-1274903326" anchor-label="metaSearchScore" id="1923067270%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="meta-search-score.html"><span>meta</span><wbr></wbr><span>Search</span><wbr></wbr><span><span>Score</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1923067270%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="meta-search-score.html">T</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="meta-search-score.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="meta-search-score.html"><span class="token function">metaSearchScore</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates a searchScore projection for the given property, for use with {@link Aggregates#search(SearchOperator, SearchOptions)} / {@link Aggregates#search(SearchCollector, SearchOptions)}. Calling this method is equivalent to calling {@link #meta(String, String)} with {@code &quot;searchScore&quot;} as the argument.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1765723937%2FFunctions%2F-1274903326" anchor-label="metaTextScore" id="1765723937%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="meta-text-score.html"><span>meta</span><wbr></wbr><span>Text</span><wbr></wbr><span><span>Score</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1765723937%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="meta-text-score.html">T</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="meta-text-score.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="meta-text-score.html"><span class="token function">metaTextScore</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates a textScore projection for the given property, for use with text queries. Calling this method is equivalent to calling {@link #meta(String)} with {@code &quot;textScore&quot;} as the argument.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1751286467%2FFunctions%2F-1274903326" anchor-label="metaVectorSearchScore" id="1751286467%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="meta-vector-search-score.html"><span>meta</span><wbr></wbr><span>Vector</span><wbr></wbr><span>Search</span><wbr></wbr><span><span>Score</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1751286467%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><span data-unresolved-link="com.mongodb.annotations/Beta///PointingToDeclaration/"><span class="token annotation builtin">Beta</span></span><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="token punctuation">[</span><span><span data-unresolved-link="com.mongodb.annotations/Reason.SERVER///PointingToDeclaration/">Reason.SERVER</span></span><wbr></wbr><span class="token punctuation">]</span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="meta-vector-search-score.html">T</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="meta-vector-search-score.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="meta-vector-search-score.html"><span class="token function">metaVectorSearchScore</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates a vectorSearchScore projection for the given property, for use with {@link Aggregates#vectorSearch(FieldSearchPath, Iterable, String, long, VectorSearchOptions)} . Calling this method is equivalent to calling {@link #meta(String, String)} with {@code &quot;vectorSearchScore&quot;} as the argument.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-165280238%2FFunctions%2F-1274903326" anchor-label="projectionWith" id="-165280238%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="projection-with.html"><span>projection</span><wbr></wbr><span><span>With</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-165280238%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">infix </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="projection-with.html">T0</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="projection-with.html">T1</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property1/index.html">KProperty1</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="projection-with.html">T0</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="projection-with.html">T1</a><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="projection-with.html"><span class="token function">projectionWith</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">p2<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">In order to write <code class="lang-kotlin">$p.p2</code></p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1821209393%2FFunctions%2F-1274903326" anchor-label="slice" id="1821209393%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="slice.html"><span><span>slice</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1821209393%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">infix </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="slice.html">T</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="slice.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="slice.html"><span class="token function">slice</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">limit<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="slice.html">T</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="slice.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="slice.html"><span class="token function">slice</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">skip<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">limit<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates a projection to the given property of a slice of the array value of that field.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="EXTENSION_PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="27156535%2FProperties%2F-1274903326" anchor-label="elemMatch" id="27156535%2FProperties%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_PROPERTY" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="elem-match.html"><span>elem</span><wbr></wbr><span><span>Match</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="27156535%2FProperties%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="elem-match.html">T</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="elem-match.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="elem-match.html">elemMatch</a><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates a projection that includes for the given property only the first element of an array that matches the query filter. This is referred to as the positional $ operator.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1184520704%2FProperties%2F-1274903326" anchor-label="projection" id="-1184520704%2FProperties%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_PROPERTY" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="projection.html"><span><span>projection</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1184520704%2FProperties%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">.</span><a href="projection.html">projection</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">The projection of the property.</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="projection.html">T</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="projection.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="projection.html">projection</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">The projection of the property. This is used in an aggregation pipeline to reference a property from a path.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2025 Copyright</span><span
+                class="pull-right"><span>Generated by </span><a
+                href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+    </div>
+</div>
+</body>
+</html>
