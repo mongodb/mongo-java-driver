@@ -32,13 +32,6 @@ public interface PhraseSearchOperator extends SearchOperator {
     PhraseSearchOperator score(SearchScore modifier);
 
     /**
-     * Creates a new {@link PhraseSearchOperator} that uses slop.
-     *
-     * @return A new {@link PhraseSearchOperator}.
-     */
-    PhraseSearchOperator slop();
-
-    /**
      * Creates a new {@link PhraseSearchOperator} that uses slop. The default value is 0.
      *
      * @param slop The allowable distance between words in the query phrase.

@@ -637,20 +637,6 @@ final class SearchOperatorTest {
                                 new BsonDocument("path", fieldPath("fieldName").toBsonValue())
                                         .append("query", new BsonString("term"))
                                         .append("synonyms", new BsonString("synonymMappingName"))
-                                        .append("slop", new BsonInt32(0))
-                        ),
-                        SearchOperator.phrase(
-                                singleton(fieldPath("fieldName")),
-                                singleton("term"))
-                                .synonyms("synonymMappingName")
-                                .slop()
-                                .toBsonDocument()
-                ),
-                () -> assertEquals(
-                        new BsonDocument("phrase",
-                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
-                                        .append("query", new BsonString("term"))
-                                        .append("synonyms", new BsonString("synonymMappingName"))
                                         .append("slop", new BsonInt32(5))
                         ),
                         SearchOperator.phrase(
