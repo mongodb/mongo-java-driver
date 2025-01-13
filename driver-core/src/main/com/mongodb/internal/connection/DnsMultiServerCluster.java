@@ -59,31 +59,27 @@ public final class DnsMultiServerCluster extends AbstractMultiServerCluster {
                 }
             }
 
-            private Collection<ServerAddress> applySrvMaxHosts(final Collection<ServerAddress> hosts) {
-                Collection<ServerAddress> newHosts = new ArrayList<>(hosts);
-                List<ServerAddress> existingHostList = DnsMultiServerCluster.this.getCurrentDescription().getServerDescriptions()
-                        .stream().map(ServerDescription::getAddress).collect(Collectors.toList());
-                Integer numCurrentEndPoints = existingHostList.size();
-                Integer numRemovedEndPoints = 0;
-                Iterator<ServerAddress> iterator = existingHostList.iterator();
-                while (iterator.hasNext()) {
-                    ServerAddress host = iterator.next();
-                    if (!hosts.contains(host)) {
-                        iterator.remove();
-                        numRemovedEndPoints++;
-                    }
-                }
+            private Collection<ServerAddress> applySrvMaxHosts(final Collection<ServerAddress> newHosts) {
                 Integer srvMaxHosts = getSettings().getSrvMaxHosts();
-                if (srvMaxHosts != null && srvMaxHosts > 0) {
-                    if (srvMaxHosts < hosts.size()) {
-                        List<ServerAddress> newHostsList = new ArrayList<>(hosts);
-                        newHostsList.removeAll(existingHostList);
-                        Collections.shuffle(newHostsList, ThreadLocalRandom.current());
-                        newHosts = existingHostList;
-                        newHosts.addAll(newHostsList.subList(0, srvMaxHosts - numCurrentEndPoints + numRemovedEndPoints));
-                    }
+                if (srvMaxHosts == null || srvMaxHosts <= 0 || newHosts.size() <= srvMaxHosts) {
+                    return new ArrayList<>(newHosts);
                 }
-                return newHosts;
+                // prior hosts
+                List<ServerAddress> result = DnsMultiServerCluster.this.getCurrentDescription().getServerDescriptions().stream()
+                        .map(ServerDescription::getAddress).collect(Collectors.toList());
+                int numPriorHosts = result.size();
+
+                result.removeIf(host -> !newHosts.contains(host));
+                int numRemovedHosts = numPriorHosts - result.size();
+                int numNewHostsToAdd = srvMaxHosts - numPriorHosts + numRemovedHosts;
+
+                List<ServerAddress> addedHosts = new ArrayList<>(newHosts);
+                addedHosts.removeAll(result);
+                Collections.shuffle(addedHosts, ThreadLocalRandom.current());
+                // add the select shuffled list to the priorHosts that are a part of the newHosts
+                result.addAll(addedHosts.subList(0, numNewHostsToAdd));
+
+                return result;
             }
 
             @Override
