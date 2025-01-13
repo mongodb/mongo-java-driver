@@ -43,7 +43,7 @@ final class PhraseConstructibleBsonElement extends AbstractConstructibleBsonElem
 
     @Override
     public PhraseSearchOperator slop(final int slop) {
-        return newWithAppendedValue("slop", notNull("slop", slop));
+        return newWithAppendedValue("slop", slop);
     }
 
     @Override
