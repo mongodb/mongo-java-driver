@@ -37,12 +37,7 @@ class MongoClientSpec extends BaseSpec with MockitoSugar {
 
     wrapped.foreach((name: String) => {
       val cleanedName = name.stripPrefix("get")
-
-      if (!cleanedName.contains("bulkWrite")) {
-        // TODO-JAVA-5531 remove this whole `if` block
-        assert(local.contains(name) | local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
-      }
-      // TODO-JAVA-5531 uncomment: assert(local.contains(name) | local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
+      assert(local.contains(name) | local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
     })
   }
 
