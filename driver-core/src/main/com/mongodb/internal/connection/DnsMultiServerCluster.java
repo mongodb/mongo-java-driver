@@ -59,27 +59,35 @@ public final class DnsMultiServerCluster extends AbstractMultiServerCluster {
                 }
             }
 
-            private Collection<ServerAddress> applySrvMaxHosts(final Collection<ServerAddress> newHosts) {
+            private Collection<ServerAddress> applySrvMaxHosts(final Collection<ServerAddress> latestSrvHosts) {
                 Integer srvMaxHosts = getSettings().getSrvMaxHosts();
-                if (srvMaxHosts == null || srvMaxHosts <= 0 || newHosts.size() <= srvMaxHosts) {
-                    return new ArrayList<>(newHosts);
+                if (srvMaxHosts == null || srvMaxHosts <= 0 || latestSrvHosts.size() <= srvMaxHosts) {
+                    return new ArrayList<>(latestSrvHosts);
                 }
-                // prior hosts
-                List<ServerAddress> result = DnsMultiServerCluster.this.getCurrentDescription().getServerDescriptions().stream()
-                        .map(ServerDescription::getAddress).collect(Collectors.toList());
-                int numPriorHosts = result.size();
-
-                result.removeIf(host -> !newHosts.contains(host));
-                int numRemovedHosts = numPriorHosts - result.size();
-                int numNewHostsToAdd = srvMaxHosts - numPriorHosts + numRemovedHosts;
-
-                List<ServerAddress> addedHosts = new ArrayList<>(newHosts);
-                addedHosts.removeAll(result);
-                Collections.shuffle(addedHosts, ThreadLocalRandom.current());
-                // add the select shuffled list to the priorHosts that are a part of the newHosts
-                result.addAll(addedHosts.subList(0, numNewHostsToAdd));
+                List<ServerAddress> activePriorHosts = getActivePriorHosts(latestSrvHosts);
+                int numNewHostsToAdd = srvMaxHosts - activePriorHosts.size();
+                List<ServerAddress> result = getShuffledLatestSrvHosts(latestSrvHosts, activePriorHosts, numNewHostsToAdd);
 
                 return result;
+            }
+
+            private List<ServerAddress> getActivePriorHosts(Collection<ServerAddress> latestSrvHosts) {
+                List<ServerAddress> priorHosts = DnsMultiServerCluster.this.getCurrentDescription().getServerDescriptions().stream()
+                        .map(ServerDescription::getAddress).collect(Collectors.toList());
+                priorHosts.removeIf(host -> !latestSrvHosts.contains(host));
+
+                return priorHosts;
+            }
+
+            private List<ServerAddress> getShuffledLatestSrvHosts(final Collection<ServerAddress> latestSrvHosts,
+                    List<ServerAddress> activePriorHosts, int numNewHostsToAdd) {
+                List<ServerAddress> addedHosts = new ArrayList<>(latestSrvHosts);
+                addedHosts.removeAll(activePriorHosts);
+                Collections.shuffle(addedHosts, ThreadLocalRandom.current());
+                // add the shuffled latestSrvHosts to the activePriorHosts
+                activePriorHosts.addAll(addedHosts.subList(0, numNewHostsToAdd));
+
+                return activePriorHosts;
             }
 
             @Override
