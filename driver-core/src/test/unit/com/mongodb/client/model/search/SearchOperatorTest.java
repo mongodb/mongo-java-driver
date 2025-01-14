@@ -18,22 +18,14 @@ package com.mongodb.client.model.search;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
-
-import java.util.UUID;
-
 import org.bson.BsonArray;
-import org.bson.BsonBinary;
-import org.bson.BsonBoolean;
 import org.bson.BsonDateTime;
 import org.bson.BsonDocument;
 import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
-import org.bson.BsonNull;
-import org.bson.BsonObjectId;
 import org.bson.BsonString;
 import org.bson.Document;
-import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -585,89 +577,6 @@ final class SearchOperatorTest {
                                         fieldPath("fieldName1"),
                                         fieldPath("fieldName2")))
                                 .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry())
-                )
-        );
-    }
-
-    @Test
-    void equals() {
-        ObjectId id = new ObjectId();
-        UUID uuid = UUID.randomUUID();
-        assertAll(
-                () -> assertThrows(IllegalArgumentException.class, () ->
-                        // path must not be empty
-                        SearchOperator.equals(null, "term")
-                ),
-                () -> assertEquals(
-                        new BsonDocument("equals",
-                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
-                                        .append("value", new BsonBoolean(true))
-                        ),
-                        SearchOperator.equals(
-                                fieldPath("fieldName"), true).toBsonDocument()
-                ),
-                () -> assertEquals(
-                        new BsonDocument("equals",
-                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
-                                        .append("value", new BsonObjectId(id))
-                        ),
-                        SearchOperator.equals(
-                                fieldPath("fieldName"), id).toBsonDocument()
-                ),
-                () -> assertEquals(
-                        new BsonDocument("equals",
-                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
-                                        .append("value", new BsonInt32(1))
-                        ),
-                        SearchOperator.equals(
-                                        fieldPath("fieldName"), 1).toBsonDocument()
-                ),
-                () -> assertEquals(
-                        new BsonDocument("equals",
-                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
-                                        .append("value", new BsonInt64(Long.MAX_VALUE))
-                        ),
-                        SearchOperator.equals(
-                                fieldPath("fieldName"), Long.MAX_VALUE).toBsonDocument()
-                ),
-                () -> assertEquals(
-                        new BsonDocument("equals",
-                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
-                                        .append("value", new BsonDouble(Double.MAX_VALUE))
-                        ),
-                        SearchOperator.equals(
-                                fieldPath("fieldName"), Double.MAX_VALUE).toBsonDocument()
-                ),
-                () -> assertEquals(
-                        new BsonDocument("equals",
-                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
-                                        .append("value", new BsonDateTime(Instant.EPOCH.toEpochMilli()))
-                        ),
-                        SearchOperator.equals(
-                                fieldPath("fieldName"), Instant.EPOCH).toBsonDocument()
-                ),
-                () -> assertEquals(
-                        new BsonDocument("equals",
-                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
-                                        .append("value", new BsonString("term"))
-                        ),
-                        SearchOperator.equals(
-                                fieldPath("fieldName"), "term").toBsonDocument()
-                ),
-                () -> assertEquals(
-                        new BsonDocument("equals",
-                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
-                                        .append("value", new BsonBinary(uuid))
-                        ),
-                        SearchOperator.equals(
-                                fieldPath("fieldName"), uuid).toBsonDocument()
-                ),
-                () -> assertEquals(
-                        new BsonDocument("equals",
-                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
-                                        .append("value", BsonNull.VALUE)
-                        ),
-                        SearchOperator.equalsNull(fieldPath("fieldName")).toBsonDocument()
                 )
         );
     }
