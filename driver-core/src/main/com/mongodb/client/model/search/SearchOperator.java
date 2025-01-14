@@ -293,7 +293,7 @@ public interface SearchOperator extends Bson {
     }
 
     /**
-     * Returns a {@link SearchOperator} that enables queries which use special characters in the search string that can match any character.
+     * Returns a {@link SearchOperator} that performs a search using a special characters in the search string that can match any character.
      *
      * @param query The string to search for.
      * @param path The indexed field to be searched.
