@@ -229,6 +229,17 @@ object SearchOperator {
     JSearchOperator.near(origin, pivot, paths.asJava)
 
   /**
+   * Returns a `SearchOperator` that supports querying a combination of indexed fields and values.
+   *
+   * @param defaultPath The field to be searched by default.
+   * @param query One or more indexed fields and values to search.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/queryString/ queryString operator]]
+   */
+  def queryString(defaultPath: FieldSearchPath, query: String): QueryStringSearchOperator =
+    JSearchOperator.queryString(defaultPath, query)
+
+  /**
    * Creates a `SearchOperator` from a `Bson` in situations when there is no builder method that better satisfies your needs.
    * This method cannot be used to validate the syntax.
    *

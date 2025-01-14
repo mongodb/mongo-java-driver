@@ -293,6 +293,23 @@ public interface SearchOperator extends Bson {
     }
 
     /**
+     * Returns a {@link SearchOperator} that supports querying a combination of indexed fields and values.
+     *
+     * @param defaultPath The field to be searched by default.
+     * @param query One or more indexed fields and values to search.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/queryString/ queryString operator
+     */
+    static QueryStringSearchOperator queryString(final FieldSearchPath defaultPath, final String query) {
+        isTrueArgument("path must not be empty", defaultPath != null);
+        isTrueArgument("query must not be empty", query != null);
+
+        return new SearchConstructibleBsonElement("queryString",
+                new Document("defaultPath", defaultPath.toBsonValue())
+                .append("query", query));
+    }
+
+    /**
      * Creates a {@link SearchOperator} from a {@link Bson} in situations when there is no builder method that better satisfies your needs.
      * This method cannot be used to validate the syntax.
      * <p>
