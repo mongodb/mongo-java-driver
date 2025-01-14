@@ -16,7 +16,7 @@
 package org.bson.codecs.kotlinx
 
 import java.math.BigDecimal
-import java.util.*
+import java.util.Base64
 import java.util.stream.Stream
 import kotlin.test.assertEquals
 import kotlinx.datetime.Instant
