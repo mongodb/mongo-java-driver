@@ -309,7 +309,7 @@ object SearchOperator {
     JSearchOperator.equalsNull(path)
 
   /**
-   * Returns a {@link SearchOperator} that performs a search for documents containing an ordered sequence of terms.
+   * Returns a `SearchOperator` that performs a search for documents containing an ordered sequence of terms.
    *
    * @param path The field to be searched.
    * @param query The string to search for.
@@ -319,7 +319,7 @@ object SearchOperator {
   def phrase(path: SearchPath, query: String): PhraseSearchOperator = JSearchOperator.phrase(path, query)
 
   /**
-   * Returns a {@link SearchOperator} that performs a search for documents containing an ordered sequence of terms.
+   * Returns a `SearchOperator` that performs a search for documents containing an ordered sequence of terms.
    *
    * @param paths The non-empty fields to be searched.
    * @param queries The non-empty strings to search for.
