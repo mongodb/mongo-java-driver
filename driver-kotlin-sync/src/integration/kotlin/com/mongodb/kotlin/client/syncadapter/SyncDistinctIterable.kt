@@ -36,4 +36,6 @@ internal class SyncDistinctIterable<T : Any>(val wrapped: DistinctIterable<T>) :
     override fun collation(collation: Collation?): SyncDistinctIterable<T> = apply { wrapped.collation(collation) }
     override fun comment(comment: String?): SyncDistinctIterable<T> = apply { wrapped.comment(comment) }
     override fun comment(comment: BsonValue?): SyncDistinctIterable<T> = apply { wrapped.comment(comment) }
+    override fun hint(hint: Bson?): SyncDistinctIterable<T> = apply { wrapped.hint(hint) }
+    override fun hintString(hint: String?): SyncDistinctIterable<T> = apply { wrapped.hintString(hint) }
 }

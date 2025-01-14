@@ -50,6 +50,9 @@ import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
@@ -80,6 +83,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Collections.singletonList;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
@@ -91,6 +95,7 @@ public final class MongoOperationPublisher<T> {
 
     private final AsyncOperations<T> operations;
     private final UuidRepresentation uuidRepresentation;
+    @Nullable
     private final AutoEncryptionSettings autoEncryptionSettings;
     private final OperationExecutor executor;
 
@@ -287,6 +292,16 @@ public final class MongoOperationPublisher<T> {
         return createWriteOperationMono(
                 operations::getTimeoutSettings,
                 () -> operations.bulkWrite(notNull("requests", requests), notNull("options", options)), clientSession);
+    }
+
+    Publisher<ClientBulkWriteResult> clientBulkWrite(
+            @Nullable final ClientSession clientSession,
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
+            @Nullable final ClientBulkWriteOptions options) {
+        isTrue("`autoEncryptionSettings` is null, as bulkWrite does not currently support automatic encryption", autoEncryptionSettings == null);
+        return createWriteOperationMono(
+                operations::getTimeoutSettings,
+                () -> operations.clientBulkWriteOperation(clientWriteModels, options), clientSession);
     }
 
     Publisher<InsertOneResult> insertOne(@Nullable final ClientSession clientSession, final T document, final InsertOneOptions options) {

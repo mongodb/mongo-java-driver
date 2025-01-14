@@ -47,6 +47,8 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
     private long maxTimeMS;
     private Collation collation;
     private BsonValue comment;
+    private Bson hint;
+    private String hintString;
 
     DistinctIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                          final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
@@ -103,10 +105,21 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
     }
 
     @Override
-    public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return operations.distinct(fieldName, filter, resultClass, collation, comment);
+    public DistinctIterable<TResult> hint(@Nullable final Bson hint) {
+        this.hint = hint;
+        return this;
     }
 
+    @Override
+    public DistinctIterable<TResult> hintString(@Nullable final String hint) {
+        this.hintString = hint;
+        return this;
+    }
+
+    @Override
+    public ReadOperation<BatchCursor<TResult>> asReadOperation() {
+        return operations.distinct(fieldName, filter, resultClass, collation, comment, hint, hintString);
+    }
 
     protected OperationExecutor getExecutor() {
         return getExecutor(operations.createTimeoutSettings(maxTimeMS));

@@ -103,7 +103,7 @@ public class ServerAddress implements Serializable {
         if (hostToUse.startsWith("[")) {
             int idx = host.indexOf("]");
             if (idx == -1) {
-                throw new IllegalArgumentException("an IPV6 address must be encosed with '[' and ']'"
+                throw new IllegalArgumentException("an IPV6 address must be enclosed with '[' and ']'"
                                                    + " according to RFC 2732.");
             }
 
