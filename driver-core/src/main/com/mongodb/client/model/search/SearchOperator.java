@@ -310,6 +310,36 @@ public interface SearchOperator extends Bson {
     }
 
     /**
+     * Returns a {@link SearchOperator} that performs a search for documents containing an ordered sequence of terms.
+     *
+     * @param path The field to be searched.
+     * @param query The string to search for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/phrase/ phrase operator
+     */
+    static PhraseSearchOperator phrase(final SearchPath path, final String query) {
+        return phrase(singleton(notNull("path", path)), singleton(notNull("query", query)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that performs a search for documents containing an ordered sequence of terms.
+     *
+     * @param paths The non-empty fields to be searched.
+     * @param queries The non-empty strings to search for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/phrase/ phrase operator
+     */
+    static PhraseSearchOperator phrase(final Iterable<? extends SearchPath> paths, final Iterable<String> queries) {
+        Iterator<? extends SearchPath> pathIterator = notNull("paths", paths).iterator();
+        isTrueArgument("paths must not be empty", pathIterator.hasNext());
+        Iterator<String> queryIterator = notNull("queries", queries).iterator();
+        isTrueArgument("queries must not be empty", queryIterator.hasNext());
+        String firstQuery = queryIterator.next();
+        return new PhraseConstructibleBsonElement("phrase", new Document("path", combineToBsonValue(pathIterator, false))
+                .append("query", queryIterator.hasNext() ? queries : firstQuery));
+    }
+
+    /**
      * Creates a {@link SearchOperator} from a {@link Bson} in situations when there is no builder method that better satisfies your needs.
      * This method cannot be used to validate the syntax.
      * <p>

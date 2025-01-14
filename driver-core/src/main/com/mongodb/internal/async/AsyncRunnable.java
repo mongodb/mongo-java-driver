@@ -17,9 +17,12 @@
 package com.mongodb.internal.async;
 
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.async.function.AsyncCallbackLoop;
+import com.mongodb.internal.async.function.LoopState;
 import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.async.function.RetryingAsyncCallbackSupplier;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -118,49 +121,6 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
 
     static AsyncRunnable beginAsync() {
         return (c) -> c.complete(c);
-    }
-
-    /**
-     * Must be invoked at end of async chain
-     * @param runnable the sync code to invoke (under non-exceptional flow)
-     *                 prior to the callback
-     * @param callback the callback provided by the method the chain is used in
-     */
-    default void thenRunAndFinish(final Runnable runnable, final SingleResultCallback<Void> callback) {
-        this.finish((r, e) -> {
-            if (e != null) {
-                callback.completeExceptionally(e);
-                return;
-            }
-            try {
-                runnable.run();
-            } catch (Throwable t) {
-                callback.completeExceptionally(t);
-                return;
-            }
-            callback.complete(callback);
-        });
-    }
-
-    /**
-     * See {@link #thenRunAndFinish(Runnable, SingleResultCallback)}, but the runnable
-     * will always be executed, including on the exceptional path.
-     * @param runnable the runnable
-     * @param callback the callback
-     */
-    default void thenAlwaysRunAndFinish(final Runnable runnable, final SingleResultCallback<Void> callback) {
-        this.finish((r, e) -> {
-            try {
-                runnable.run();
-            } catch (Throwable t) {
-                if (e != null) {
-                    t.addSuppressed(e);
-                }
-                callback.completeExceptionally(t);
-                return;
-            }
-            callback.onResult(r, e);
-        });
     }
 
     /**
@@ -280,6 +240,35 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
                     // `AsyncCallbackSupplier.get`, which we implement here
                     cb -> runnable.finish(cb)
             ).get(callback);
+        });
+    }
+
+    /**
+     * This method is equivalent to a do-while loop, where the loop body is executed first and
+     * then the condition is checked to determine whether the loop should continue.
+     *
+     * @param loopBodyRunnable the asynchronous task to be executed in each iteration of the loop
+     * @param whileCheck a condition to check after each iteration; the loop continues as long as this condition returns true
+     * @return the composition of this and the looping branch
+     * @see AsyncCallbackLoop
+     */
+    default AsyncRunnable thenRunDoWhileLoop(final AsyncRunnable loopBodyRunnable, final BooleanSupplier whileCheck) {
+        return thenRun(finalCallback -> {
+            LoopState loopState = new LoopState();
+            new AsyncCallbackLoop(loopState, iterationCallback -> {
+
+                loopBodyRunnable.finish((result, t) -> {
+                    if (t != null) {
+                        iterationCallback.completeExceptionally(t);
+                        return;
+                    }
+                    if (loopState.breakAndCompleteIf(() -> !whileCheck.getAsBoolean(), iterationCallback)) {
+                        return;
+                    }
+                    iterationCallback.complete(iterationCallback);
+                });
+
+            }).run(finalCallback);
         });
     }
 }

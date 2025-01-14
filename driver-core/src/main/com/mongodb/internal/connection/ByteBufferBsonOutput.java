@@ -25,6 +25,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -50,6 +51,19 @@ public class ByteBufferBsonOutput extends OutputBuffer {
      */
     public ByteBufferBsonOutput(final BufferProvider bufferProvider) {
         this.bufferProvider = notNull("bufferProvider", bufferProvider);
+    }
+
+    /**
+     * Creates a new empty {@link ByteBufferBsonOutput.Branch},
+     * which gets merged into this {@link ByteBufferBsonOutput} on {@link ByteBufferBsonOutput.Branch#close()}
+     * by appending its data without copying it.
+     * If multiple branches are created, they are merged in the order they are {@linkplain ByteBufferBsonOutput.Branch#close() closed}.
+     * {@linkplain #close() Closing} this {@link ByteBufferBsonOutput} does not {@linkplain ByteBufferBsonOutput.Branch#close() close} the branch.
+     *
+     * @return A new {@link ByteBufferBsonOutput.Branch}.
+     */
+    public ByteBufferBsonOutput.Branch branch() {
+        return new ByteBufferBsonOutput.Branch(this);
     }
 
     @Override
@@ -156,7 +170,9 @@ public class ByteBufferBsonOutput extends OutputBuffer {
     @Override
     public void truncateToPosition(final int newPosition) {
         ensureOpen();
-
+        if (newPosition == position) {
+            return;
+        }
         if (newPosition > position || newPosition < 0) {
             throw new IllegalArgumentException();
         }
@@ -174,33 +190,86 @@ public class ByteBufferBsonOutput extends OutputBuffer {
         position = newPosition;
     }
 
+    /**
+     * The {@link #flush()} method of {@link ByteBufferBsonOutput} and of its subclasses does nothing.</p>
+     */
+    @Override
+    public final void flush() throws IOException {
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Idempotent.</p>
+     */
     @Override
     public void close() {
-        for (final ByteBuf cur : bufferList) {
-            cur.release();
+        if (isOpen()) {
+            for (final ByteBuf cur : bufferList) {
+                cur.release();
+            }
+            bufferList.clear();
+            closed = true;
         }
-        bufferList.clear();
-        closed = true;
     }
 
     private BufferPositionPair getBufferPositionPair(final int absolutePosition) {
         int positionInBuffer = absolutePosition;
         int bufferIndex = 0;
-        int bufferSize = INITIAL_BUFFER_SIZE;
+        int bufferSize = bufferList.get(bufferIndex).position();
         int startPositionOfBuffer = 0;
         while (startPositionOfBuffer + bufferSize <= absolutePosition) {
             bufferIndex++;
             startPositionOfBuffer += bufferSize;
             positionInBuffer -= bufferSize;
-            bufferSize = bufferList.get(bufferIndex).limit();
+            bufferSize = bufferList.get(bufferIndex).position();
         }
 
         return new BufferPositionPair(bufferIndex, positionInBuffer);
     }
 
     private void ensureOpen() {
-        if (closed) {
+        if (!isOpen()) {
             throw new IllegalStateException("The output is closed");
+        }
+    }
+
+    boolean isOpen() {
+        return !closed;
+    }
+
+    /**
+     * @see #branch()
+     */
+    private void merge(final ByteBufferBsonOutput branch) {
+        assertTrue(branch instanceof ByteBufferBsonOutput.Branch);
+        branch.bufferList.forEach(ByteBuf::retain);
+        bufferList.addAll(branch.bufferList);
+        curBufferIndex += branch.curBufferIndex + 1;
+        position += branch.position;
+    }
+
+    public static final class Branch extends ByteBufferBsonOutput {
+        private final ByteBufferBsonOutput parent;
+
+        private Branch(final ByteBufferBsonOutput parent) {
+            super(parent.bufferProvider);
+            this.parent = parent;
+        }
+
+        /**
+         * @see #branch()
+         */
+        @Override
+        public void close() {
+            if (isOpen()) {
+                try {
+                    assertTrue(parent.isOpen());
+                    parent.merge(this);
+                } finally {
+                    super.close();
+                }
+            }
         }
     }
 

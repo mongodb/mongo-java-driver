@@ -15,7 +15,7 @@
  */
 package com.mongodb.internal.async.function;
 
-import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.internal.async.MutableValue;
 import com.mongodb.internal.async.SingleResultCallback;
 
 import java.util.function.Supplier;
@@ -68,16 +68,12 @@ public interface AsyncCallbackSupplier<R> {
      * This is a price we have to pay to provide a guarantee similar to that of the {@code finally} block.
      */
     default AsyncCallbackSupplier<R> whenComplete(final Runnable after) {
-        @NotThreadSafe
-        final class MutableBoolean {
-            private boolean value;
-        }
-        MutableBoolean afterExecuted = new MutableBoolean();
+        MutableValue<Boolean> afterExecuted = new MutableValue<>(false);
         Runnable trackableAfter = () -> {
             try {
                 after.run();
             } finally {
-                afterExecuted.value = true;
+                afterExecuted.set(true);
             }
         };
         return callback -> {
@@ -103,7 +99,7 @@ public interface AsyncCallbackSupplier<R> {
                 primaryUnexpectedException = unexpectedException;
                 throw unexpectedException;
             } finally {
-                if (primaryUnexpectedException != null && !afterExecuted.value) {
+                if (primaryUnexpectedException != null && !afterExecuted.get()) {
                     try {
                         trackableAfter.run();
                     } catch (Throwable afterException) {

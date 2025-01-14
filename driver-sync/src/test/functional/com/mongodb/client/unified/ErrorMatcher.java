@@ -16,6 +16,7 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.ClientBulkWriteException;
 import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
@@ -27,23 +28,33 @@ import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.MongoWriteException;
+import com.mongodb.WriteError;
+import com.mongodb.bulk.WriteConcernError;
 import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
+import static java.lang.Integer.parseInt;
 import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.spockframework.util.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 final class ErrorMatcher {
     private static final Set<String> EXPECTED_ERROR_FIELDS = new HashSet<>(
             asList("isError", "expectError", "isClientError", "errorCode", "errorCodeName", "errorContains", "errorResponse",
-                    "isClientError", "isTimeoutError", "errorLabelsOmit", "errorLabelsContain", "expectResult"));
+                    "isClientError", "isTimeoutError", "errorLabelsOmit", "errorLabelsContain",
+                    "writeErrors", "writeConcernErrors", "expectResult"));
 
     private final AssertionContext context;
     private final ValueMatcher valueMatcher;
@@ -134,13 +145,55 @@ final class ErrorMatcher {
                         mongoException.hasErrorLabel(cur.asString().getValue()));
             }
         }
+        if (expectedError.containsKey("writeErrors")) {
+            assertTrue(context.getMessage("Exception must be of type ClientBulkWriteException when checking for write errors"),
+                    e instanceof ClientBulkWriteException);
+            BsonDocument writeErrors = expectedError.getDocument("writeErrors");
+            ClientBulkWriteException actualException = (ClientBulkWriteException) e;
+            Map<Integer, WriteError> actualWriteErrors = actualException.getWriteErrors();
+            assertEquals("The number of write errors must match", writeErrors.size(), actualWriteErrors.size());
+            writeErrors.forEach((index, writeError) -> {
+                WriteError actualWriteError = actualWriteErrors.get(parseInt(index));
+                assertNotNull("Expected a write error with index " + index, actualWriteError);
+                valueMatcher.assertValuesMatch(writeError, toMatchableValue(actualWriteError));
+            });
+        }
+        if (expectedError.containsKey("writeConcernErrors")) {
+            assertTrue(context.getMessage("Exception must be of type ClientBulkWriteException when checking for write errors"),
+                    e instanceof ClientBulkWriteException);
+            List<BsonDocument> writeConcernErrors = expectedError.getArray("writeConcernErrors").stream()
+                    .map(BsonValue::asDocument).collect(toList());
+            ClientBulkWriteException actualException = (ClientBulkWriteException) e;
+            List<WriteConcernError> actualWriteConcernErrors = actualException.getWriteConcernErrors();
+            assertEquals("The number of write concern errors must match", writeConcernErrors.size(), actualWriteConcernErrors.size());
+            for (int index = 0; index < writeConcernErrors.size(); index++) {
+                BsonDocument writeConcernError = writeConcernErrors.get(index);
+                WriteConcernError actualWriteConcernError = actualWriteConcernErrors.get(index);
+                valueMatcher.assertValuesMatch(writeConcernError, toMatchableValue(actualWriteConcernError));
+            }
+        }
         if (expectedError.containsKey("expectResult")) {
-            // Neither MongoBulkWriteException nor MongoSocketException includes information about the successful writes, so this
-            // is the only check that can currently be done
-            assertTrue(context.getMessage("Exception must be of type MongoBulkWriteException or MongoSocketException "
-                            + "when checking for results, but actual type is " + e.getClass().getSimpleName()),
-                    e instanceof MongoBulkWriteException || e instanceof MongoSocketException);
+            assertTrue(context.getMessage("Exception must be of type"
+                            + " MongoBulkWriteException, or MongoSocketException, or ClientBulkWriteException"
+                            + " when checking for results, but actual type is " + e.getClass().getSimpleName()),
+                    e instanceof MongoBulkWriteException || e instanceof ClientBulkWriteException || e instanceof MongoSocketException);
+            // neither `MongoBulkWriteException` nor `MongoSocketException` includes information about the successful individual operations
+            if (e instanceof ClientBulkWriteException) {
+                BsonDocument actualPartialResult = ((ClientBulkWriteException) e).getPartialResult()
+                        .map(UnifiedCrudHelper::toMatchableValue)
+                        .orElse(new BsonDocument());
+                valueMatcher.assertValuesMatch(expectedError.getDocument("expectResult"), actualPartialResult);
+            }
         }
         context.pop();
+    }
+
+    private static BsonDocument toMatchableValue(final WriteError writeError) {
+        return new BsonDocument("code", new BsonInt32(writeError.getCode()));
+    }
+
+    private static BsonDocument toMatchableValue(final WriteConcernError writeConcernError) {
+        return new BsonDocument("code", new BsonInt32(writeConcernError.getCode()))
+                .append("message", new BsonString(writeConcernError.getMessage()));
     }
 }
