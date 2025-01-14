@@ -83,6 +83,7 @@ import static com.mongodb.client.model.search.SearchOperator.exists;
 import static com.mongodb.client.model.search.SearchOperator.near;
 import static com.mongodb.client.model.search.SearchOperator.numberRange;
 import static com.mongodb.client.model.search.SearchOperator.regex;
+import static com.mongodb.client.model.search.SearchOperator.phrase;
 import static com.mongodb.client.model.search.SearchOperator.text;
 import static com.mongodb.client.model.search.SearchOptions.searchOptions;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
@@ -610,6 +611,7 @@ final class AggregatesSearchIntegrationTest {
                                                 .lte(Instant.ofEpochMilli(1)),
                                         near(0, 1.5, fieldPath("fieldName7"), fieldPath("fieldName8")),
                                         near(Instant.ofEpochMilli(1), Duration.ofMillis(3), fieldPath("fieldName9")),
+                                        phrase(fieldPath("fieldName10"), "term6"),
                                         regex(fieldPath("fieldName11"), "term7")
                                 ))
                                 .minimumShouldMatch(1)

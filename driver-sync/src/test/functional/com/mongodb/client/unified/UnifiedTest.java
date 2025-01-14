@@ -21,10 +21,6 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.UnixServerAddress;
-import com.mongodb.client.unified.UnifiedTestModifications.TestDef;
-import com.mongodb.event.TestServerMonitorListener;
-import com.mongodb.internal.logging.LogMessage;
-import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
@@ -32,16 +28,20 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.test.CollectionHelper;
+import com.mongodb.client.unified.UnifiedTestModifications.TestDef;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.event.TestServerMonitorListener;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
+import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
+import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.test.AfterBeforeParameterResolver;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -245,7 +245,8 @@ public abstract class UnifiedTest {
                         || schemaVersion.equals("1.16")
                         || schemaVersion.equals("1.17")
                         || schemaVersion.equals("1.18")
-                        || schemaVersion.equals("1.19"),
+                        || schemaVersion.equals("1.19")
+                        || schemaVersion.equals("1.21"),
                 String.format("Unsupported schema version %s", schemaVersion));
         if (runOnRequirements != null) {
             assumeTrue(runOnRequirementsMet(runOnRequirements, getMongoClientSettings(), getServerVersion()),
@@ -571,6 +572,8 @@ public abstract class UnifiedTest {
                     return crudHelper.createFindCursor(operation);
                 case "createChangeStream":
                     return crudHelper.createChangeStreamCursor(operation);
+                case "clientBulkWrite":
+                    return crudHelper.clientBulkWrite(operation);
                 case "close":
                     return crudHelper.close(operation);
                 case "iterateUntilDocumentOrError":

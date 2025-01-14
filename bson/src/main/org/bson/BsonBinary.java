@@ -18,12 +18,12 @@ package org.bson;
 
 import org.bson.assertions.Assertions;
 import org.bson.internal.UuidHelper;
-import org.bson.internal.vector.VectorHelper;
+import org.bson.internal.vector.BinaryVectorHelper;
 
 import java.util.Arrays;
 import java.util.UUID;
 
-import static org.bson.internal.vector.VectorHelper.encodeVectorToBinary;
+import static org.bson.internal.vector.BinaryVectorHelper.encodeVectorToBinary;
 
 /**
  * A representation of the BSON Binary type.  Note that for performance reasons instances of this class are not immutable,
@@ -93,12 +93,12 @@ public class BsonBinary extends BsonValue {
     }
 
     /**
-     * Constructs a {@linkplain BsonBinarySubType#VECTOR subtype 9} {@link BsonBinary} from the given {@link Vector}.
+     * Constructs a {@linkplain BsonBinarySubType#VECTOR subtype 9} {@link BsonBinary} from the given {@link BinaryVector}.
      *
-     * @param vector the {@link Vector}
+     * @param vector the {@link BinaryVector}
      * @since 5.3
      */
-    public BsonBinary(final Vector vector) {
+    public BsonBinary(final BinaryVector vector) {
         if (vector == null) {
             throw new IllegalArgumentException("Vector must not be null");
         }
@@ -145,18 +145,18 @@ public class BsonBinary extends BsonValue {
     }
 
     /**
-     * Returns the binary as a {@link Vector}. The {@linkplain #getType() subtype} must be {@linkplain BsonBinarySubType#VECTOR 9}.
+     * Returns the binary as a {@link BinaryVector}. The {@linkplain #getType() subtype} must be {@linkplain BsonBinarySubType#VECTOR 9}.
      *
      * @return the vector
      * @throws BsonInvalidOperationException if the binary subtype is not {@link BsonBinarySubType#VECTOR}.
      * @since 5.3
      */
-    public Vector asVector() {
+    public BinaryVector asVector() {
         if (type != BsonBinarySubType.VECTOR.getValue()) {
             throw new BsonInvalidOperationException("type must be a Vector subtype.");
         }
 
-        return VectorHelper.decodeBinaryToVector(this.data);
+        return BinaryVectorHelper.decodeBinaryToVector(this.data);
     }
 
     /**

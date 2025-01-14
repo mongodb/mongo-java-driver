@@ -229,6 +229,27 @@ object SearchOperator {
     JSearchOperator.near(origin, pivot, paths.asJava)
 
   /**
+   * Returns a `SearchOperator` that performs a search for documents containing an ordered sequence of terms.
+   *
+   * @param path The field to be searched.
+   * @param query The string to search for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/phrase/ phrase operator]]
+   */
+  def phrase(path: SearchPath, query: String): PhraseSearchOperator = JSearchOperator.phrase(path, query)
+
+  /**
+   * Returns a `SearchOperator` that performs a search for documents containing an ordered sequence of terms.
+   *
+   * @param paths The non-empty fields to be searched.
+   * @param queries The non-empty strings to search for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/phrase/ phrase operator]]
+   */
+  def phrase(paths: Iterable[_ <: SearchPath], queries: Iterable[String]): PhraseSearchOperator =
+    JSearchOperator.phrase(paths.asJava, queries.asJava)
+
+  /**
    * Returns a `SearchOperator` that performs a search using a regular expression.
    *
    * @param path The field to be searched.
