@@ -17,6 +17,7 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.AutoEncryptionSettings;
+import com.mongodb.ClientBulkWriteException;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
@@ -31,6 +32,9 @@ import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.SynchronousContextProvider;
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.internal.TimeoutSettings;
@@ -252,6 +256,34 @@ public final class MongoClientImpl implements MongoClient {
     public <TResult> ChangeStreamIterable<TResult> watch(
             final ClientSession clientSession, final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
         return delegate.watch(clientSession, pipeline, resultClass);
+    }
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
+        return delegate.bulkWrite(clientWriteModels);
+    }
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
+            final ClientBulkWriteOptions options) throws ClientBulkWriteException {
+        return delegate.bulkWrite(clientWriteModels, options);
+    }
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final ClientSession clientSession,
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
+        return delegate.bulkWrite(clientSession, clientWriteModels);
+    }
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final ClientSession clientSession,
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
+            final ClientBulkWriteOptions options) throws ClientBulkWriteException {
+        return delegate.bulkWrite(clientSession, clientWriteModels, options);
     }
 
     private static Cluster createCluster(final MongoClientSettings settings,

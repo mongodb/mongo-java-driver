@@ -37,7 +37,7 @@ import org.bson.BsonString;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.Document;
-import org.bson.Vector;
+import org.bson.BinaryVector;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -972,7 +972,7 @@ public final class Aggregates {
      * You may use the {@code $meta: "vectorSearchScore"} expression, e.g., via {@link Projections#metaVectorSearchScore(String)},
      * to extract the relevance score assigned to each found document.
      *
-     * @param queryVector The {@linkplain Vector query vector}. The number of dimensions must match that of the {@code index}.
+     * @param queryVector The {@linkplain BinaryVector query vector}. The number of dimensions must match that of the {@code index}.
      * @param path        The field to be searched.
      * @param index       The name of the index to use.
      * @param limit       The limit on the number of documents produced by the pipeline stage.
@@ -981,12 +981,12 @@ public final class Aggregates {
      * @mongodb.atlas.manual atlas-vector-search/vector-search-stage/ $vectorSearch
      * @mongodb.atlas.manual atlas-search/scoring/ Scoring
      * @mongodb.server.release 6.0
-     * @see Vector
+     * @see BinaryVector
      * @since 5.3
      */
     public static Bson vectorSearch(
             final FieldSearchPath path,
-            final Vector queryVector,
+            final BinaryVector queryVector,
             final String index,
             final long limit,
             final VectorSearchOptions options) {

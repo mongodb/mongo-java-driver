@@ -33,6 +33,7 @@ import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
+import com.mongodb.internal.operation.OperationHelper;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.ReactiveContextProvider;
@@ -96,8 +97,9 @@ public class OperationExecutorImpl implements OperationExecutor {
                                         sinkToCallback(sink).onResult(result, t);
                                     }
                                 })).doOnError((t) -> {
-                                    labelException(session, t);
-                                    unpinServerAddressOnTransientTransactionError(session, t);
+                                    Throwable exceptionToHandle = t instanceof MongoException ? OperationHelper.unwrap((MongoException) t) : t;
+                                    labelException(session, exceptionToHandle);
+                                    unpinServerAddressOnTransientTransactionError(session, exceptionToHandle);
                                 });
                             }
                         }).subscribe(subscriber)
@@ -126,8 +128,9 @@ public class OperationExecutorImpl implements OperationExecutor {
                                         sinkToCallback(sink).onResult(result, t);
                                     }
                                 })).doOnError((t) -> {
-                                    labelException(session, t);
-                                    unpinServerAddressOnTransientTransactionError(session, t);
+                                    Throwable exceptionToHandle = t instanceof MongoException ? OperationHelper.unwrap((MongoException) t) : t;
+                                    labelException(session, exceptionToHandle);
+                                    unpinServerAddressOnTransientTransactionError(session, exceptionToHandle);
                                 })
                         ).subscribe(subscriber)
         );
