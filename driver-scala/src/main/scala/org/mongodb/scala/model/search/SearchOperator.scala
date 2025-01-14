@@ -232,7 +232,7 @@ object SearchOperator {
     JSearchOperator.near(origin, pivot, paths.asJava)
 
   /**
-   * Returns a `SearchOperator` that performs a search for documents containing an ordered sequence of terms.
+   * Returns a `SearchOperator` that checks whether a field matches a value you specify.
    *
    * @param path The indexed field to be searched.
    * @param value The boolean value to query for.
@@ -243,7 +243,7 @@ object SearchOperator {
     JSearchOperator.equals(path, value)
 
   /**
-   * Returns a `SearchOperator` that performs a search for documents containing an ordered sequence of terms.
+   * Returns a `SearchOperator` that checks whether a field matches a value you specify.
    *
    * @param path The indexed field to be searched.
    * @param value The object id value to query for.
@@ -254,7 +254,7 @@ object SearchOperator {
     JSearchOperator.equals(path, value)
 
   /**
-   * Returns a `SearchOperator` that performs a search for documents containing an ordered sequence of terms.
+   * Returns a `SearchOperator` that checks whether a field matches a value you specify.
    *
    * @param path The indexed field to be searched.
    * @param value The number value to query for.
@@ -265,7 +265,7 @@ object SearchOperator {
     JSearchOperator.equals(path, value)
 
   /**
-   * Returns a `SearchOperator` that performs a search for documents containing an ordered sequence of terms.
+   * Returns a `SearchOperator` that checks whether a field matches a value you specify.
    *
    * @param path The indexed field to be searched.
    * @param value The instant date value to query for.
@@ -276,7 +276,7 @@ object SearchOperator {
     JSearchOperator.equals(path, value)
 
   /**
-   * Returns a `SearchOperator` that performs a search for documents containing an ordered sequence of terms.
+   * Returns a `SearchOperator` that checks whether a field matches a value you specify.
    *
    * @param path The indexed field to be searched.
    * @param value The string value to query for.
@@ -287,7 +287,7 @@ object SearchOperator {
     JSearchOperator.equals(path, value)
 
   /**
-   * Returns a `SearchOperator` that performs a search for documents containing an ordered sequence of terms.
+   * Returns a `SearchOperator` that checks whether a field matches a value you specify.
    *
    * @param path The indexed field to be searched.
    * @param value The uuid value to query for.
@@ -298,7 +298,7 @@ object SearchOperator {
     JSearchOperator.equals(path, value)
 
   /**
-   * Returns a `SearchOperator` that performs a search for documents containing an ordered sequence of terms.
+   * Returns a `SearchOperator` that checks whether a field matches null.
    *
    * @param path The indexed field to be searched.
    * @param value The uuid value to query for.
@@ -309,6 +309,8 @@ object SearchOperator {
     JSearchOperator.equalsNull(path)
 
   /**
+   * Returns a {@link SearchOperator} that performs a search for documents containing an ordered sequence of terms.
+   *
    * @param path The field to be searched.
    * @param query The string to search for.
    * @return The requested `SearchOperator`.
@@ -317,6 +319,7 @@ object SearchOperator {
   def phrase(path: SearchPath, query: String): PhraseSearchOperator = JSearchOperator.phrase(path, query)
 
   /**
+   * Returns a {@link SearchOperator} that performs a search for documents containing an ordered sequence of terms.
    * @param paths The non-empty fields to be searched.
    * @param queries The non-empty strings to search for.
    * @return The requested `SearchOperator`.
