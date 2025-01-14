@@ -39,5 +39,5 @@ import org.bson.types.ObjectId;
 @Beta(Reason.CLIENT)
 public interface EqualsSearchOperator extends SearchOperator {
     @Override
-    TextSearchOperator score(SearchScore modifier);
+    EqualsSearchOperator score(SearchScore modifier);
 }
