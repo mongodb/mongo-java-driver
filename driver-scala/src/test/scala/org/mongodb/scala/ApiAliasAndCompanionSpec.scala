@@ -90,7 +90,10 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "SyncMongoCluster",
       "SyncGridFSBucket",
       "SyncMongoDatabase",
-      "SyncClientEncryption"
+      "SyncClientEncryption",
+      "BaseClientUpdateOptions",
+      "BaseClientDeleteOptions",
+      "MongoBaseInterfaceAssertions"
     )
     val scalaExclusions = Set(
       "BuildInfo",
@@ -150,7 +153,9 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       .asScala
       .map(_.getSimpleName)
       .toSet +
-      "MongoException" - "MongoGridFSException" - "MongoConfigurationException" - "MongoWriteConcernWithResponseException"
+      "MongoException" - "MongoGridFSException" - "MongoConfigurationException" - "MongoWriteConcernWithResponseException" -
+      // TODO-JAVA-5531 remove the `"ClientBulkWriteException"` exclusion
+      "ClientBulkWriteException"
 
     val objects = new Reflections(
       new ConfigurationBuilder()
