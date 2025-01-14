@@ -78,7 +78,7 @@ public enum BsonBinarySubType {
      *
      * @mongodb.server.release 6.0
      * @since 5.3
-     * @see Vector
+     * @see BinaryVector
      */
     VECTOR((byte) 0x09),
 

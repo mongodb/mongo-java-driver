@@ -118,11 +118,6 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
         return newCombined("filter", clauses);
     }
 
-    @Override
-    public WildcardSearchOperator allowAnalyzedField(final boolean allowAnalyzedField) {
-        return newWithAppendedValue("allowAnalyzedField", allowAnalyzedField);
-    }
-
     private SearchConstructibleBsonElement newCombined(final String ruleName, final Iterable<? extends SearchOperator> clauses) {
         notNull("clauses", clauses);
         isTrueArgument("clauses must not be empty", sizeAtLeast(clauses, 1));
