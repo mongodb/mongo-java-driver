@@ -403,6 +403,7 @@ public interface SearchOperator extends Bson {
 
     /**
      * Returns a {@link SearchOperator} that performs a search for documents containing an ordered sequence of terms.
+     *
      * @param paths The non-empty fields to be searched.
      * @param queries The non-empty strings to search for.
      * @return The requested {@link SearchOperator}.
