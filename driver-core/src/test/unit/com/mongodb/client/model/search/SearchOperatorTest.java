@@ -604,7 +604,7 @@ final class SearchOperatorTest {
                 )
         );
     }
-                  
+
     @Test
     void phrase() {
         assertAll(
