@@ -165,4 +165,6 @@ tasks.javadocJar.configure {
 // ===========================
 tasks.sourcesJar { from(project.sourceSets.main.map { it.kotlin }) }
 
-afterEvaluate { tasks.jar { manifest { attributes["Automatic-Module-Name"] = "org.mongodb.driver.kotlin.extensions" } } }
+afterEvaluate {
+    tasks.jar { manifest { attributes["Automatic-Module-Name"] = "org.mongodb.driver.kotlin.extensions" } }
+}
