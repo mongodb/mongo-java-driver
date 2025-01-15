@@ -319,7 +319,7 @@ object SearchOperator {
    * the field equals any value in the specified array.
    *
    * @param path The indexed field to be searched.
-   * @param values The non-empty values to search for.
+   * @param values The non-empty values to search for. Value can be either a single value or an array of values of only one of the supported BSON types and can't be a mix of different types.
    * @return The requested `SearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/in/ in operator]]
    */

@@ -393,10 +393,10 @@ public interface SearchOperator extends Bson {
 
     /**
      * Returns a {@link SearchOperator} that searches for an array of values at the given path and returns documents where the value of
-     *      * the field equals any value in the specified array.
+     * the field equals any value in the specified array.
      *
      * @param path The indexed field to be searched.
-     * @param values The non-empty values to search for.
+     * @param values The non-empty values to search for. Value can be either a single value or an array of values of only one of the supported BSON types and can't be a mix of different types.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/in/ in operator
      */
