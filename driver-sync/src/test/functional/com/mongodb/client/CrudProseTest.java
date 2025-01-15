@@ -34,6 +34,7 @@ import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
 import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
+import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonArray;
@@ -47,6 +48,7 @@ import org.bson.Document;
 import org.bson.RawBsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -612,5 +614,10 @@ public class CrudProseTest {
             session.abortTransaction();
             throw throwable;
         }
+    }
+
+    @AfterAll
+    public static void cleanUp() {
+        CollectionHelper.drop(NAMESPACE);
     }
 }
