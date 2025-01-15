@@ -616,6 +616,7 @@ final class SearchOperatorTest {
                                 new BsonDocument("fieldName", new BsonString("fieldValue"))
                                         .append("fieldName2", new BsonString("fieldValue2")),
                                 new BsonDocument("fieldName3", new BsonString("fieldValue3"))))
+                                .toBsonDocument()
                 )
         );
     }
