@@ -27,7 +27,6 @@ import com.mongodb.lang.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
@@ -71,7 +70,7 @@ public final class DnsMultiServerCluster extends AbstractMultiServerCluster {
                 return activeHosts;
             }
 
-            private List<ServerAddress> getActivePriorHosts(Collection<ServerAddress> latestSrvHosts) {
+            private List<ServerAddress> getActivePriorHosts(final Collection<ServerAddress> latestSrvHosts) {
                 List<ServerAddress> priorHosts = DnsMultiServerCluster.this.getCurrentDescription().getServerDescriptions().stream()
                         .map(ServerDescription::getAddress).collect(Collectors.toList());
                 priorHosts.removeIf(host -> !latestSrvHosts.contains(host));
@@ -80,7 +79,7 @@ public final class DnsMultiServerCluster extends AbstractMultiServerCluster {
             }
 
             private List<ServerAddress> addShuffledHosts(final Collection<ServerAddress> latestSrvHosts,
-                    List<ServerAddress> activePriorHosts, int numNewHostsToAdd) {
+                    final List<ServerAddress> activePriorHosts, final int numNewHostsToAdd) {
                 List<ServerAddress> addedHosts = new ArrayList<>(latestSrvHosts);
                 addedHosts.removeAll(activePriorHosts);
                 Collections.shuffle(addedHosts, ThreadLocalRandom.current());
