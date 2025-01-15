@@ -16,7 +16,9 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.ClientBulkWriteException;
 import com.mongodb.MongoClientException;
+import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
@@ -47,7 +49,10 @@ import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessTha
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotTwo;
 import static java.lang.String.format;
 
-final class OperationHelper {
+/**
+ * This class is not part of the public API and may be removed or changed at any time.
+ */
+public final class OperationHelper {
     public static final Logger LOGGER = Loggers.getLogger("operation");
 
     static void validateCollationAndWriteConcern(@Nullable final Collation collation, final WriteConcern writeConcern) {
@@ -201,6 +206,21 @@ final class OperationHelper {
             operationContext.getTimeoutContext().disableMaxTimeOverride();
         }
     }
+
+    /**
+     * Returns the {@link MongoException} that carries or should carry
+     * the {@linkplain MongoException#getCode() error code} and {@linkplain MongoException#getErrorLabels() error labels}.
+     * This method is needed because exceptions like {@link ClientBulkWriteException} do not carry that data themselves.
+     */
+    public static MongoException unwrap(final MongoException exception) {
+        MongoException result = exception;
+        if (exception instanceof ClientBulkWriteException) {
+            MongoException topLevelError = ((ClientBulkWriteException) exception).getCause();
+            result = topLevelError == null ? exception : topLevelError;
+        }
+        return result;
+    }
+
 
     /**
      * This internal exception is used to

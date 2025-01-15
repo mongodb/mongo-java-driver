@@ -125,4 +125,13 @@ class UpdateRequestSpecification extends Specification {
         where:
         arrayFilters << [null, [], [new BsonDocument('a.b', new BsonInt32(42))]]
     }
+
+    def 'should set sort property'() {
+        expect:
+        new UpdateRequest(new BsonDocument(), new BsonDocument(), type).sort(sort).getSort() == sort
+
+        where:
+        type << [WriteRequest.Type.UPDATE, WriteRequest.Type.REPLACE]
+        sort << [null, new BsonDocument('_id', new BsonInt32(1))]
+    }
 }
