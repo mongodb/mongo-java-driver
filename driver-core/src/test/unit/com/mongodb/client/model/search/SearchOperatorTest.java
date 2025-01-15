@@ -598,8 +598,8 @@ final class SearchOperatorTest {
                                         .append("query", new BsonString("term"))
                         ),
                         SearchOperator.phrase(
-                                        fieldPath("fieldName"),
-                                        "term")
+                                fieldPath("fieldName"),
+                                "term")
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(
@@ -627,8 +627,8 @@ final class SearchOperatorTest {
                                         .append("synonyms", new BsonString("synonymMappingName"))
                         ),
                         SearchOperator.phrase(
-                                        singleton(fieldPath("fieldName")),
-                                        singleton("term"))
+                                singleton(fieldPath("fieldName")),
+                                singleton("term"))
                                 .synonyms("synonymMappingName")
                                 .toBsonDocument()
                 ),
@@ -640,8 +640,8 @@ final class SearchOperatorTest {
                                         .append("slop", new BsonInt32(5))
                         ),
                         SearchOperator.phrase(
-                                        singleton(fieldPath("fieldName")),
-                                        singleton("term"))
+                                singleton(fieldPath("fieldName")),
+                                singleton("term"))
                                 .synonyms("synonymMappingName")
                                 .slop(5)
                                 .toBsonDocument()
