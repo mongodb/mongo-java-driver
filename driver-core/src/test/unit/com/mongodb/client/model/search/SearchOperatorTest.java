@@ -676,6 +676,72 @@ final class SearchOperatorTest {
         );
     }
 
+    void phrase() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // queries must not be empty
+                        SearchOperator.phrase(singleton(fieldPath("fieldName")), emptyList())
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // paths must not be empty
+                        SearchOperator.phrase(emptyList(), singleton("term"))
+                ),
+                () -> assertEquals(
+                        new BsonDocument("phrase",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
+                        ),
+                        SearchOperator.phrase(
+                                        fieldPath("fieldName"),
+                                        "term")
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("phrase",
+                                new BsonDocument("path", new BsonArray(asList(
+                                        fieldPath("fieldName").toBsonValue(),
+                                        wildcardPath("wildc*rd").toBsonValue())))
+                                        .append("query", new BsonArray(asList(
+                                                new BsonString("term1"),
+                                                new BsonString("term2"))))
+                        ),
+                        SearchOperator.phrase(
+                                        asList(
+                                                fieldPath("fieldName"),
+                                                wildcardPath("wildc*rd")),
+                                        asList(
+                                                "term1",
+                                                "term2"))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("phrase",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
+                                        .append("synonyms", new BsonString("synonymMappingName"))
+                        ),
+                        SearchOperator.phrase(
+                                        singleton(fieldPath("fieldName")),
+                                        singleton("term"))
+                                .synonyms("synonymMappingName")
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("phrase",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
+                                        .append("synonyms", new BsonString("synonymMappingName"))
+                                        .append("slop", new BsonInt32(5))
+                        ),
+                        SearchOperator.phrase(
+                                        singleton(fieldPath("fieldName")),
+                                        singleton("term"))
+                                .synonyms("synonymMappingName")
+                                .slop(5)
+                                .toBsonDocument()
+                )
+        );
+    }
     private static SearchOperator docExamplePredefined() {
         return SearchOperator.exists(
                 fieldPath("fieldName"));
