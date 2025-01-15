@@ -676,6 +676,7 @@ final class SearchOperatorTest {
         );
     }
 
+    @Test
     void phrase() {
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () ->
@@ -742,6 +743,7 @@ final class SearchOperatorTest {
                 )
         );
     }
+
     private static SearchOperator docExamplePredefined() {
         return SearchOperator.exists(
                 fieldPath("fieldName"));
