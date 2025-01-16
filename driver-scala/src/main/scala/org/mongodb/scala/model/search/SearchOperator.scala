@@ -261,6 +261,27 @@ object SearchOperator {
     JSearchOperator.phrase(paths.asJava, queries.asJava)
 
   /**
+   * Returns a `SearchOperator` that performs a search using a regular expression.
+   *
+   * @param path The field to be searched.
+   * @param query The string to search for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/regex/ regex operator]]
+   */
+  def regex(path: SearchPath, query: String): RegexSearchOperator = JSearchOperator.regex(path, query)
+
+  /**
+   * Returns a `SearchOperator` that performs a search using a regular expression.
+   *
+   * @param paths The non-empty fields to be searched.
+   * @param queries The non-empty strings to search for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/regex/ regex operator]]
+   */
+  def regex(paths: Iterable[_ <: SearchPath], queries: Iterable[String]): RegexSearchOperator =
+    JSearchOperator.regex(paths.asJava, queries.asJava)
+
+  /**
    * Creates a `SearchOperator` from a `Bson` in situations when there is no builder method that better satisfies your needs.
    * This method cannot be used to validate the syntax.
    *

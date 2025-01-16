@@ -160,9 +160,10 @@ public class SrvPollingProseTests {
     public void shouldUseSrvMaxHostsWhenSrvMaxHostsIsLessThanNumSrvRecords() {
         int srvMaxHosts = 2;
         List<String> updatedHosts = asList(firstHost, thirdHost, fourthHost);
-
         initCluster(updatedHosts, srvMaxHosts);
+
         assertEquals(srvMaxHosts, clusterHostsSet().size());
+        assertTrue(updatedHosts.contains(firstHost));
         assertTrue(updatedHosts.containsAll(clusterHostsSet()));
     }
 

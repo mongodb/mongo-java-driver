@@ -340,6 +340,36 @@ public interface SearchOperator extends Bson {
     }
 
     /**
+     * Returns a {@link SearchOperator} that performs a search using a regular expression.
+     *
+     * @param path The field to be searched.
+     * @param query The string to search for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/regex/ regex operator
+     */
+    static RegexSearchOperator regex(final SearchPath path, final String query) {
+        return regex(singleton(notNull("path", path)), singleton(notNull("query", query)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that performs a search using a regular expression.
+     *
+     * @param paths The non-empty fields to be searched.
+     * @param queries The non-empty strings to search for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/regex/ regex operator
+     */
+    static RegexSearchOperator regex(final Iterable<? extends SearchPath> paths, final Iterable<String> queries) {
+        Iterator<? extends SearchPath> pathIterator = notNull("paths", paths).iterator();
+        isTrueArgument("paths must not be empty", pathIterator.hasNext());
+        Iterator<String> queryIterator = notNull("queries", queries).iterator();
+        isTrueArgument("queries must not be empty", queryIterator.hasNext());
+        String firstQuery = queryIterator.next();
+        return new SearchConstructibleBsonElement("regex", new Document("path", combineToBsonValue(pathIterator, false))
+                .append("query", queryIterator.hasNext() ? queries : firstQuery));
+    }
+
+    /**
      * Creates a {@link SearchOperator} from a {@link Bson} in situations when there is no builder method that better satisfies your needs.
      * This method cannot be used to validate the syntax.
      * <p>
