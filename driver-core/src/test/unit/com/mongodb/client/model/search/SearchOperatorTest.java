@@ -32,6 +32,9 @@ import org.bson.BsonInt64;
 import org.bson.BsonObjectId;
 import org.bson.BsonString;
 import org.bson.Document;
+import org.bson.UuidRepresentation;
+import org.bson.codecs.configuration.CodecRegistries;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Test;
 
@@ -663,7 +666,9 @@ final class SearchOperatorTest {
                                         .append("value", new BsonBinary(uuid))
                         ),
                         SearchOperator.in(fieldPath("fieldName1"), uuid)
-                                .toBsonDocument()
+                                .toBsonDocument(
+                                        Document.class,
+                                        CodecRegistries.withUuidRepresentation(Bson.DEFAULT_CODEC_REGISTRY, UuidRepresentation.STANDARD))
                 ),
                 () -> assertEquals(
                         new BsonDocument("in",

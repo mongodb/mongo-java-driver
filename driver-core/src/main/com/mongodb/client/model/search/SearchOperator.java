@@ -21,11 +21,8 @@ import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.geojson.Point;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
-import org.bson.BsonBinary;
 import org.bson.BsonType;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -367,14 +364,7 @@ public interface SearchOperator extends Bson {
      * @mongodb.atlas.manual atlas-search/in/ in operator
      */
     static InSearchOperator in(final FieldSearchPath path, final UUID value, final UUID... values) {
-        List<BsonBinary> bsonValues = new ArrayList<>();
-        bsonValues.add(new BsonBinary(value));
-        if (values != null) {
-            for (UUID uuid : values) {
-                bsonValues.add(new BsonBinary(uuid));
-            }
-        }
-        return in(notNull("path", path), notNull("value", bsonValues));
+        return in(notNull("path", path), concat(notNull("value", value), values));
     }
 
     /**
