@@ -250,6 +250,17 @@ object SearchOperator {
     JSearchOperator.wildcard(queries.asJava, paths.asJava)
 
   /**
+   * Returns a `SearchOperator` that supports querying a combination of indexed fields and values.
+   *
+   * @param defaultPath The field to be searched by default.
+   * @param query One or more indexed fields and values to search.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/queryString/ queryString operator]]
+   */
+  def queryString(defaultPath: FieldSearchPath, query: String): QueryStringSearchOperator =
+    JSearchOperator.queryString(defaultPath, query)
+
+  /**
    * Returns a `SearchOperator` that performs a search for documents containing an ordered sequence of terms.
    *
    * @param path The field to be searched.
@@ -269,6 +280,27 @@ object SearchOperator {
    */
   def phrase(paths: Iterable[_ <: SearchPath], queries: Iterable[String]): PhraseSearchOperator =
     JSearchOperator.phrase(paths.asJava, queries.asJava)
+
+  /**
+   * Returns a `SearchOperator` that performs a search using a regular expression.
+   *
+   * @param path The field to be searched.
+   * @param query The string to search for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/regex/ regex operator]]
+   */
+  def regex(path: SearchPath, query: String): RegexSearchOperator = JSearchOperator.regex(path, query)
+
+  /**
+   * Returns a `SearchOperator` that performs a search using a regular expression.
+   *
+   * @param paths The non-empty fields to be searched.
+   * @param queries The non-empty strings to search for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/regex/ regex operator]]
+   */
+  def regex(paths: Iterable[_ <: SearchPath], queries: Iterable[String]): RegexSearchOperator =
+    JSearchOperator.regex(paths.asJava, queries.asJava)
 
   /**
    * Creates a `SearchOperator` from a `Bson` in situations when there is no builder method that better satisfies your needs.

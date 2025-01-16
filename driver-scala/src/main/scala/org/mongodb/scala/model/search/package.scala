@@ -136,6 +136,14 @@ package object search {
   type AutocompleteSearchOperator = com.mongodb.client.model.search.AutocompleteSearchOperator
 
   /**
+   * @see `SearchOperator.regex(String, SearchPath)`
+   * @see `SearchOperator.regex(Iterable, Iterable)`
+   */
+  @Sealed
+  @Beta(Array(Reason.CLIENT))
+  type RegexSearchOperator = com.mongodb.client.model.search.RegexSearchOperator
+
+  /**
    * A base for a [[NumberRangeSearchOperatorBase]] which allows creating instances of this operator.
    * This interface is a technicality and does not represent a meaningful element of the full-text search query syntax.
    *
@@ -197,6 +205,13 @@ package object search {
   @Sealed
   @Beta(Array(Reason.CLIENT))
   type WildcardSearchOperator = com.mongodb.client.model.search.WildcardSearchOperator
+
+  /**
+   * @see `SearchOperator.queryString`
+   */
+  @Sealed
+  @Beta(Array(Reason.CLIENT))
+  type QueryStringSearchOperator = com.mongodb.client.model.search.QueryStringSearchOperator
 
   /**
    * Fuzzy search options that may be used with some [[SearchOperator]]s.

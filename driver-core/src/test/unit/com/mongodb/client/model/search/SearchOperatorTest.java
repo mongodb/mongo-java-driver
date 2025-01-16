@@ -624,6 +624,30 @@ final class SearchOperatorTest {
     }
 
     @Test
+    void queryString() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // queries must not be empty
+                        SearchOperator.queryString(fieldPath("fieldName"), null)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // paths must not be empty
+                        SearchOperator.queryString(null, "term1 AND (term2 OR term3)")
+                ),
+                () -> assertEquals(
+                        new BsonDocument("queryString",
+                                new BsonDocument("defaultPath", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term1 AND (term2 OR term3)"))
+                        ),
+                        SearchOperator.queryString(
+                                        fieldPath("fieldName"),
+                                        "term1 AND (term2 OR term3)")
+                                .toBsonDocument()
+                )
+        );
+    }
+
+    @Test
     void phrase() {
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () ->
@@ -686,6 +710,58 @@ final class SearchOperatorTest {
                                 singleton("term"))
                                 .synonyms("synonymMappingName")
                                 .slop(5)
+                                .toBsonDocument()
+                )
+        );
+    }
+
+    @Test
+    void regex() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // queries must not be empty
+                        SearchOperator.regex(singleton(fieldPath("fieldName")), emptyList())
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // paths must not be empty
+                        SearchOperator.regex(emptyList(), singleton("term"))
+                ),
+                () -> assertEquals(
+                        new BsonDocument("regex",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
+                        ),
+                        SearchOperator.regex(
+                                        fieldPath("fieldName"),
+                                        "term")
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("regex",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
+                        ),
+                        SearchOperator.regex(
+                                        singleton(fieldPath("fieldName")),
+                                        singleton("term"))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("regex",
+                                new BsonDocument("path", new BsonArray(asList(
+                                        fieldPath("fieldName").toBsonValue(),
+                                        wildcardPath("wildc*rd").toBsonValue())))
+                                        .append("query", new BsonArray(asList(
+                                                new BsonString("term1"),
+                                                new BsonString("term2"))))
+                        ),
+                        SearchOperator.regex(
+                                        asList(
+                                                fieldPath("fieldName"),
+                                                wildcardPath("wildc*rd")),
+                                        asList(
+                                                "term1",
+                                                "term2"))
                                 .toBsonDocument()
                 )
         );
