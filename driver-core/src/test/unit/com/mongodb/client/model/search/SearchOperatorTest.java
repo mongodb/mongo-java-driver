@@ -582,6 +582,30 @@ final class SearchOperatorTest {
     }
 
     @Test
+    void queryString() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // queries must not be empty
+                        SearchOperator.queryString(fieldPath("fieldName"), null)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // paths must not be empty
+                        SearchOperator.queryString(null, "term1 AND (term2 OR term3)")
+                ),
+                () -> assertEquals(
+                        new BsonDocument("queryString",
+                                new BsonDocument("defaultPath", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term1 AND (term2 OR term3)"))
+                        ),
+                        SearchOperator.queryString(
+                                        fieldPath("fieldName"),
+                                        "term1 AND (term2 OR term3)")
+                                .toBsonDocument()
+                )
+        );
+    }
+
+    @Test
     void phrase() {
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () ->
