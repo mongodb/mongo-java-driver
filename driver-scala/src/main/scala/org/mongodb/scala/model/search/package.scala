@@ -199,6 +199,21 @@ package object search {
   type GeoNearSearchOperator = com.mongodb.client.model.search.GeoNearSearchOperator
 
   /**
+   * @see `SearchOperator.wildcard(String, SearchPath)`
+   * @see `SearchOperator.wildcard(Iterable, Iterable)`
+   */
+  @Sealed
+  @Beta(Array(Reason.CLIENT))
+  type WildcardSearchOperator = com.mongodb.client.model.search.WildcardSearchOperator
+
+  /**
+   * @see `SearchOperator.queryString`
+   */
+  @Sealed
+  @Beta(Array(Reason.CLIENT))
+  type QueryStringSearchOperator = com.mongodb.client.model.search.QueryStringSearchOperator
+
+  /**
    * Fuzzy search options that may be used with some [[SearchOperator]]s.
    *
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/autocomplete/ autocomplete operator]]
