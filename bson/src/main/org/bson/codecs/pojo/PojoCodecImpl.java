@@ -76,13 +76,10 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
             writer.writeStartDocument();
 
             encodeIdProperty(writer, value, encoderContext, classModel.getIdPropertyModelHolder());
-
-            if (classModel.useDiscriminator()) {
-                writer.writeString(classModel.getDiscriminatorKey(), classModel.getDiscriminator());
-            }
+            encodeDiscriminatorProperty(writer);
 
             for (PropertyModel<?> propertyModel : classModel.getPropertyModels()) {
-                if (propertyModel.equals(classModel.getIdPropertyModel())) {
+                if (idProperty(propertyModel) || discriminatorProperty(propertyModel)) {
                     continue;
                 }
                 encodeProperty(writer, value, encoderContext, propertyModel);
@@ -138,6 +135,23 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
                 encodeValue(writer, encoderContext, propertyModelHolder.getPropertyModel(), id);
             }
         }
+    }
+
+    private boolean idProperty(final PropertyModel<?> propertyModel) {
+        return propertyModel.equals(classModel.getIdPropertyModel());
+    }
+
+    private void encodeDiscriminatorProperty(final BsonWriter writer) {
+        if (classModel.useDiscriminator()) {
+            writer.writeString(classModel.getDiscriminatorKey(), classModel.getDiscriminator());
+        }
+    }
+
+    private boolean discriminatorProperty(final PropertyModel<?> propertyModel) {
+        if (classModel.useDiscriminator()) {
+            return propertyModel.getReadName().equals(classModel.getDiscriminatorKey());
+        }
+        return false;
     }
 
     private <S> void encodeProperty(final BsonWriter writer, final T instance, final EncoderContext encoderContext,
