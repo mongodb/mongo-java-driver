@@ -582,6 +582,48 @@ final class SearchOperatorTest {
     }
 
     @Test
+    void wildcard() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // queries must not be empty
+                        SearchOperator.wildcard(emptyList(), singleton(fieldPath("fieldName")))
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // paths must not be empty
+                        SearchOperator.wildcard(singleton("term"), emptyList())
+                ),
+                () -> assertEquals(
+                        new BsonDocument("wildcard",
+                                new BsonDocument("query", new BsonString("term"))
+                                        .append("path", fieldPath("fieldName").toBsonValue())
+                        ),
+                        SearchOperator.wildcard(
+                                        "term",
+                                        fieldPath("fieldName"))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("wildcard",
+                                new BsonDocument("query", new BsonArray(asList(
+                                        new BsonString("term1"),
+                                        new BsonString("term2"))))
+                                        .append("path", new BsonArray(asList(
+                                                fieldPath("fieldName").toBsonValue(),
+                                                wildcardPath("wildc*rd").toBsonValue())))
+                        ),
+                        SearchOperator.wildcard(
+                                        asList(
+                                                "term1",
+                                                "term2"),
+                                        asList(
+                                                fieldPath("fieldName"),
+                                                wildcardPath("wildc*rd")))
+                                .toBsonDocument()
+                )
+        );
+    }
+
+    @Test
     void queryString() {
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () ->

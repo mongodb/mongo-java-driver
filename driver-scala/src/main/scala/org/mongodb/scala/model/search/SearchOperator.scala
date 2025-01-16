@@ -229,6 +229,27 @@ object SearchOperator {
     JSearchOperator.near(origin, pivot, paths.asJava)
 
   /**
+   * Returns a `SearchOperator` that enables queries which use special characters in the search string that can match any character.
+   *
+   * @param query The string to search for.
+   * @param path The indexed field to be searched.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/wildcard/ wildcard operator]]
+   */
+  def wildcard(query: String, path: SearchPath): WildcardSearchOperator = JSearchOperator.wildcard(query, path)
+
+  /**
+   * Returns a `SearchOperator` that enables queries which use special characters in the search string that can match any character.
+   *
+   * @param queries The non-empty strings to search for.
+   * @param paths The non-empty indexed fields to be searched.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/wildcard/ wildcard operator]]
+   */
+  def wildcard(queries: Iterable[String], paths: Iterable[_ <: SearchPath]): WildcardSearchOperator =
+    JSearchOperator.wildcard(queries.asJava, paths.asJava)
+
+  /**
    * Returns a `SearchOperator` that supports querying a combination of indexed fields and values.
    *
    * @param defaultPath The field to be searched by default.

@@ -86,6 +86,7 @@ import static com.mongodb.client.model.search.SearchOperator.queryString;
 import static com.mongodb.client.model.search.SearchOperator.regex;
 import static com.mongodb.client.model.search.SearchOperator.phrase;
 import static com.mongodb.client.model.search.SearchOperator.text;
+import static com.mongodb.client.model.search.SearchOperator.wildcard;
 import static com.mongodb.client.model.search.SearchOptions.searchOptions;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.SearchPath.wildcardPath;
@@ -614,7 +615,8 @@ final class AggregatesSearchIntegrationTest {
                                         near(Instant.ofEpochMilli(1), Duration.ofMillis(3), fieldPath("fieldName9")),
                                         phrase(fieldPath("fieldName10"), "term6"),
                                         regex(fieldPath("fieldName11"), "term7"),
-                                        queryString(fieldPath("fieldName12"), "term8")
+                                        queryString(fieldPath("fieldName12"), "term8"),
+                                        wildcard(asList("term10", "term11"), asList(wildcardPath("wildc*rd"), fieldPath("fieldName14")))
                                 ))
                                 .minimumShouldMatch(1)
                                 .mustNot(singleton(

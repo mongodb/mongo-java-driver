@@ -340,6 +340,36 @@ public interface SearchOperator extends Bson {
     }
 
     /**
+     * Returns a {@link SearchOperator} that performs a search using a special characters in the search string that can match any character.
+     *
+     * @param query The string to search for.
+     * @param path The indexed field to be searched.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/wildcard/ wildcard operator
+     */
+    static WildcardSearchOperator wildcard(final String query, final SearchPath path) {
+        return wildcard(singleton(notNull("query", query)), singleton(notNull("path", path)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that performs a search using a special characters in the search string that can match any character.
+     *
+     * @param queries The non-empty strings to search for.
+     * @param paths The non-empty index fields to be searched.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/wildcard/ wildcard operator
+     */
+    static WildcardSearchOperator wildcard(final Iterable<String> queries, final Iterable<? extends SearchPath> paths) {
+        Iterator<String> queryIterator = notNull("queries", queries).iterator();
+        isTrueArgument("queries must not be empty", queryIterator.hasNext());
+        String firstQuery = queryIterator.next();
+        Iterator<? extends SearchPath> pathIterator = notNull("paths", paths).iterator();
+        isTrueArgument("paths must not be empty", pathIterator.hasNext());
+        return new SearchConstructibleBsonElement("wildcard", new Document("query", queryIterator.hasNext() ? queries : firstQuery)
+                .append("path", combineToBsonValue(pathIterator, false)));
+    }
+
+    /**
      * Returns a {@link SearchOperator} that performs a search using a regular expression.
      *
      * @param path The field to be searched.
