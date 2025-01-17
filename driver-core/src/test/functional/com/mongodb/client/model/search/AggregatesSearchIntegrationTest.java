@@ -614,9 +614,10 @@ final class AggregatesSearchIntegrationTest {
                                         near(0, 1.5, fieldPath("fieldName7"), fieldPath("fieldName8")),
                                         near(Instant.ofEpochMilli(1), Duration.ofMillis(3), fieldPath("fieldName9")),
                                         phrase(fieldPath("fieldName10"), "term6"),
-                                        regex(fieldPath("fieldName11"), "term7"),
+                                        regex(fieldPath("title").multi("keyword"), "term7"),
                                         queryString(fieldPath("fieldName12"), "term8"),
-                                        wildcard(asList("term10", "term11"), asList(wildcardPath("wildc*rd"), fieldPath("fieldName14")))
+                                        wildcard(asList("term10", "term11"), asList(wildcardPath("wildc*rd"), fieldPath("title").multi(
+                                                "keyword")))
                                 ))
                                 .minimumShouldMatch(1)
                                 .mustNot(singleton(
