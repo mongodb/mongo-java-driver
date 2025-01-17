@@ -98,7 +98,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
  * <a href="https://github.com/mongodb/specifications/blob/master/source/crud/tests/README.md#prose-tests">CRUD Prose Tests</a>.
  */
 public class CrudProseTest {
-    private static final MongoNamespace NAMESPACE = new MongoNamespace("db", CrudProseTest.class.getName());
+    private static final MongoNamespace NAMESPACE = new MongoNamespace("db", "coll");
 
     @DisplayName("1. WriteConcernError.details exposes writeConcernError.errInfo")
     @Test
