@@ -230,7 +230,7 @@ object SearchOperator {
     JSearchOperator.near(origin, pivot, paths.asJava)
 
   /**
-   * Returns a `SearchOperator` that returns documents similar to input documents.
+   * Returns a `SearchOperator` that returns documents similar to input document.
    *
    * @param like The BSON document that is used to extract representative terms to query for.
    * @return The requested `SearchOperator`.
