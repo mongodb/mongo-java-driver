@@ -32,6 +32,7 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
         MustCompoundSearchOperator, MustNotCompoundSearchOperator, ShouldCompoundSearchOperator, FilterCompoundSearchOperator,
         ExistsSearchOperator, TextSearchOperator, AutocompleteSearchOperator,
         NumberNearSearchOperator, DateNearSearchOperator, GeoNearSearchOperator, RegexSearchOperator, QueryStringSearchOperator, WildcardSearchOperator,
+        MoreLikeThisSearchOperator,
         ValueBoostSearchScore, PathBoostSearchScore, ConstantSearchScore, FunctionSearchScore,
         GaussSearchScoreExpression, PathSearchScoreExpression,
         FacetSearchCollector,

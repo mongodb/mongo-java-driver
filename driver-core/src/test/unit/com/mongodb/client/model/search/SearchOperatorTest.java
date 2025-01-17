@@ -582,6 +582,46 @@ final class SearchOperatorTest {
     }
 
     @Test
+    void moreLikeThis() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // likes must not be empty
+                        SearchOperator.moreLikeThis(emptyList())
+                ),
+                () -> assertEquals(
+                        new BsonDocument("moreLikeThis",
+                                new BsonDocument("like", new BsonDocument("fieldName", new BsonString("fieldValue")))
+                        ),
+                        SearchOperator.moreLikeThis(new BsonDocument("fieldName", new BsonString("fieldValue")))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("moreLikeThis",
+                                new BsonDocument("like", new BsonDocument("fieldName", new BsonString("fieldValue"))
+                                        .append("fieldName2", new BsonString("fieldValue2")))
+                        ),
+                        SearchOperator.moreLikeThis(new BsonDocument("fieldName", new BsonString("fieldValue"))
+                                        .append("fieldName2", new BsonString("fieldValue2")))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("moreLikeThis",
+                                new BsonDocument("like", new BsonArray(asList(
+                                        new BsonDocument("fieldName", new BsonString("fieldValue"))
+                                                .append("fieldName2", new BsonString("fieldValue2")),
+                                        new BsonDocument("fieldName3", new BsonString("fieldValue3"))
+                                )))
+                        ),
+                        SearchOperator.moreLikeThis(asList(
+                                new BsonDocument("fieldName", new BsonString("fieldValue"))
+                                        .append("fieldName2", new BsonString("fieldValue2")),
+                                new BsonDocument("fieldName3", new BsonString("fieldValue3"))))
+                                .toBsonDocument()
+                )
+        );
+    }
+
+    @Test
     void wildcard() {
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () ->

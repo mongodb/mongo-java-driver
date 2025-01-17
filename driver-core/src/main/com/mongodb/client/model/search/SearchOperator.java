@@ -20,6 +20,7 @@ import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.geojson.Point;
+import org.bson.BsonDocument;
 import org.bson.BsonType;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -290,6 +291,31 @@ public interface SearchOperator extends Bson {
         return new SearchConstructibleBsonElement("near", new Document("origin", notNull("origin", origin))
                 .append("path", combineToBsonValue(pathIterator, true))
                 .append("pivot", notNull("pivot", pivot)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that returns documents similar to input document.
+     *
+     * @param like The BSON document that is used to extract representative terms to query for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/morelikethis/ moreLikeThis operator
+     */
+    static MoreLikeThisSearchOperator moreLikeThis(final BsonDocument like) {
+        return moreLikeThis(singleton(notNull("like", like)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that returns documents similar to input documents.
+     *
+     * @param likes The BSON documents that are used to extract representative terms to query for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/morelikethis/ moreLikeThis operator
+     */
+    static MoreLikeThisSearchOperator moreLikeThis(final Iterable<BsonDocument> likes) {
+        Iterator<? extends BsonDocument> likesIterator = notNull("likes", likes).iterator();
+        isTrueArgument("likes must not be empty", likesIterator.hasNext());
+        BsonDocument firstLike = likesIterator.next();
+        return new SearchConstructibleBsonElement("moreLikeThis", new Document("like", likesIterator.hasNext() ? likes : firstLike));
     }
 
     /**
