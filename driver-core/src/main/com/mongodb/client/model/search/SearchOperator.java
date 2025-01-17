@@ -294,7 +294,7 @@ public interface SearchOperator extends Bson {
     }
 
     /**
-     * Returns a {@link SearchOperator} that returns documents similar to input documents.
+     * Returns a {@link SearchOperator} that returns documents similar to input document.
      *
      * @param like The BSON document that is used to extract representative terms to query for.
      * @return The requested {@link SearchOperator}.
@@ -305,7 +305,7 @@ public interface SearchOperator extends Bson {
     }
 
     /**
-     * Returns a {@link SearchOperator} that returns documents similar to input document.
+     * Returns a {@link SearchOperator} that returns documents similar to input documents.
      *
      * @param likes The BSON documents that are used to extract representative terms to query for.
      * @return The requested {@link SearchOperator}.
