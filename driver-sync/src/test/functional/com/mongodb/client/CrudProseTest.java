@@ -98,7 +98,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
  * <a href="https://github.com/mongodb/specifications/blob/master/source/crud/tests/README.md#prose-tests">CRUD Prose Tests</a>.
  */
 public class CrudProseTest {
-    private static final MongoNamespace NAMESPACE = new MongoNamespace("db", "coll");
+    private static final MongoNamespace NAMESPACE = new MongoNamespace("db", CrudProseTest.class.getName());
 
     @DisplayName("1. WriteConcernError.details exposes writeConcernError.errInfo")
     @Test
@@ -369,7 +369,8 @@ public class CrudProseTest {
             Document helloResponse = droppedDatabase(client).runCommand(new Document("hello", 1));
             int maxBsonObjectSize = helloResponse.getInteger("maxBsonObjectSize");
             int maxMessageSizeBytes = helloResponse.getInteger("maxMessageSizeBytes");
-            int opsBytes = maxMessageSizeBytes - 1122;
+            // By the spec test, we have to subtract only 1122, however, we have different collection name.
+            int opsBytes = maxMessageSizeBytes - 1118 - NAMESPACE.getCollectionName().length();
             int numModels = opsBytes / maxBsonObjectSize;
             int remainderBytes = opsBytes % maxBsonObjectSize;
             List<ClientNamespacedWriteModel> models = new ArrayList<>(nCopies(
