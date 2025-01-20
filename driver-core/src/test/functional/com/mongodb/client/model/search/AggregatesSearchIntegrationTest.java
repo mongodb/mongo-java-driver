@@ -23,6 +23,7 @@ import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
 import com.mongodb.client.test.CollectionHelper;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.conversions.Bson;
 import org.bson.json.JsonWriterSettings;
@@ -80,9 +81,14 @@ import static com.mongodb.client.model.search.SearchOperator.autocomplete;
 import static com.mongodb.client.model.search.SearchOperator.compound;
 import static com.mongodb.client.model.search.SearchOperator.dateRange;
 import static com.mongodb.client.model.search.SearchOperator.exists;
+import static com.mongodb.client.model.search.SearchOperator.moreLikeThis;
 import static com.mongodb.client.model.search.SearchOperator.near;
 import static com.mongodb.client.model.search.SearchOperator.numberRange;
+import static com.mongodb.client.model.search.SearchOperator.queryString;
+import static com.mongodb.client.model.search.SearchOperator.regex;
+import static com.mongodb.client.model.search.SearchOperator.phrase;
 import static com.mongodb.client.model.search.SearchOperator.text;
+import static com.mongodb.client.model.search.SearchOperator.wildcard;
 import static com.mongodb.client.model.search.SearchOptions.searchOptions;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.SearchPath.wildcardPath;
@@ -608,7 +614,14 @@ final class AggregatesSearchIntegrationTest {
                                         dateRange(fieldPath("fieldName6"))
                                                 .lte(Instant.ofEpochMilli(1)),
                                         near(0, 1.5, fieldPath("fieldName7"), fieldPath("fieldName8")),
-                                        near(Instant.ofEpochMilli(1), Duration.ofMillis(3), fieldPath("fieldName9"))
+                                        near(Instant.ofEpochMilli(1), Duration.ofMillis(3), fieldPath("fieldName9")),
+                                        phrase(fieldPath("fieldName10"), "term6"),
+                                        regex(fieldPath("title").multi("keyword"), "term7"),
+                                        queryString(fieldPath("fieldName12"), "term8"),
+                                        moreLikeThis(new BsonDocument("like", new BsonDocument("fieldName10",
+                                                new BsonString("term6")))),
+                                        wildcard(asList("term10", "term11"), asList(wildcardPath("wildc*rd"), fieldPath("title").multi(
+                                                "keyword")))
                                 ))
                                 .minimumShouldMatch(1)
                                 .mustNot(singleton(

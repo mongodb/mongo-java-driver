@@ -120,12 +120,28 @@ package object search {
   type TextSearchOperator = com.mongodb.client.model.search.TextSearchOperator
 
   /**
+   * @see `SearchOperator.phrase(String, SearchPath)`
+   * @see `SearchOperator.phrase(Iterable, Iterable)`
+   */
+  @Sealed
+  @Beta(Array(Reason.CLIENT))
+  type PhraseSearchOperator = com.mongodb.client.model.search.PhraseSearchOperator
+
+  /**
    * @see `SearchOperator.autocomplete(String, FieldSearchPath)`
    * @see `SearchOperator.autocomplete(Iterable, FieldSearchPath)`
    */
   @Sealed
   @Beta(Array(Reason.CLIENT))
   type AutocompleteSearchOperator = com.mongodb.client.model.search.AutocompleteSearchOperator
+
+  /**
+   * @see `SearchOperator.regex(String, SearchPath)`
+   * @see `SearchOperator.regex(Iterable, Iterable)`
+   */
+  @Sealed
+  @Beta(Array(Reason.CLIENT))
+  type RegexSearchOperator = com.mongodb.client.model.search.RegexSearchOperator
 
   /**
    * A base for a [[NumberRangeSearchOperatorBase]] which allows creating instances of this operator.
@@ -181,6 +197,28 @@ package object search {
   @Sealed
   @Beta(Array(Reason.CLIENT))
   type GeoNearSearchOperator = com.mongodb.client.model.search.GeoNearSearchOperator
+
+  /**
+   * @see `SearchOperator.moreLikeThis`
+   */
+  @Sealed
+  @Beta(Array(Reason.CLIENT))
+  type MoreLikeThisSearchOperator = com.mongodb.client.model.search.MoreLikeThisSearchOperator
+
+  /**
+   * @see `SearchOperator.wildcard(String, SearchPath)`
+   * @see `SearchOperator.wildcard(Iterable, Iterable)`
+   */
+  @Sealed
+  @Beta(Array(Reason.CLIENT))
+  type WildcardSearchOperator = com.mongodb.client.model.search.WildcardSearchOperator
+
+  /**
+   * @see `SearchOperator.queryString`
+   */
+  @Sealed
+  @Beta(Array(Reason.CLIENT))
+  type QueryStringSearchOperator = com.mongodb.client.model.search.QueryStringSearchOperator
 
   /**
    * Fuzzy search options that may be used with some [[SearchOperator]]s.

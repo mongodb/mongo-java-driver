@@ -20,6 +20,7 @@ import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.geojson.Point;
+import org.bson.BsonDocument;
 import org.bson.BsonType;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -290,6 +291,138 @@ public interface SearchOperator extends Bson {
         return new SearchConstructibleBsonElement("near", new Document("origin", notNull("origin", origin))
                 .append("path", combineToBsonValue(pathIterator, true))
                 .append("pivot", notNull("pivot", pivot)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that returns documents similar to input document.
+     *
+     * @param like The BSON document that is used to extract representative terms to query for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/morelikethis/ moreLikeThis operator
+     */
+    static MoreLikeThisSearchOperator moreLikeThis(final BsonDocument like) {
+        return moreLikeThis(singleton(notNull("like", like)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that returns documents similar to input documents.
+     *
+     * @param likes The BSON documents that are used to extract representative terms to query for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/morelikethis/ moreLikeThis operator
+     */
+    static MoreLikeThisSearchOperator moreLikeThis(final Iterable<BsonDocument> likes) {
+        Iterator<? extends BsonDocument> likesIterator = notNull("likes", likes).iterator();
+        isTrueArgument("likes must not be empty", likesIterator.hasNext());
+        BsonDocument firstLike = likesIterator.next();
+        return new SearchConstructibleBsonElement("moreLikeThis", new Document("like", likesIterator.hasNext() ? likes : firstLike));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that supports querying a combination of indexed fields and values.
+     *
+     * @param defaultPath The field to be searched by default.
+     * @param query One or more indexed fields and values to search.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/queryString/ queryString operator
+     */
+    static QueryStringSearchOperator queryString(final FieldSearchPath defaultPath, final String query) {
+        isTrueArgument("path must not be empty", defaultPath != null);
+        isTrueArgument("query must not be empty", query != null);
+
+        return new SearchConstructibleBsonElement("queryString",
+                new Document("defaultPath", defaultPath.toBsonValue())
+                .append("query", query));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that performs a search for documents containing an ordered sequence of terms.
+     *
+     * @param path The field to be searched.
+     * @param query The string to search for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/phrase/ phrase operator
+     */
+    static PhraseSearchOperator phrase(final SearchPath path, final String query) {
+        return phrase(singleton(notNull("path", path)), singleton(notNull("query", query)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that performs a search for documents containing an ordered sequence of terms.
+     *
+     * @param paths The non-empty fields to be searched.
+     * @param queries The non-empty strings to search for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/phrase/ phrase operator
+     */
+    static PhraseSearchOperator phrase(final Iterable<? extends SearchPath> paths, final Iterable<String> queries) {
+        Iterator<? extends SearchPath> pathIterator = notNull("paths", paths).iterator();
+        isTrueArgument("paths must not be empty", pathIterator.hasNext());
+        Iterator<String> queryIterator = notNull("queries", queries).iterator();
+        isTrueArgument("queries must not be empty", queryIterator.hasNext());
+        String firstQuery = queryIterator.next();
+        return new PhraseConstructibleBsonElement("phrase", new Document("path", combineToBsonValue(pathIterator, false))
+                .append("query", queryIterator.hasNext() ? queries : firstQuery));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that performs a search using a special characters in the search string that can match any character.
+     *
+     * @param query The string to search for.
+     * @param path The indexed field to be searched.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/wildcard/ wildcard operator
+     */
+    static WildcardSearchOperator wildcard(final String query, final SearchPath path) {
+        return wildcard(singleton(notNull("query", query)), singleton(notNull("path", path)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that performs a search using a special characters in the search string that can match any character.
+     *
+     * @param queries The non-empty strings to search for.
+     * @param paths The non-empty index fields to be searched.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/wildcard/ wildcard operator
+     */
+    static WildcardSearchOperator wildcard(final Iterable<String> queries, final Iterable<? extends SearchPath> paths) {
+        Iterator<String> queryIterator = notNull("queries", queries).iterator();
+        isTrueArgument("queries must not be empty", queryIterator.hasNext());
+        String firstQuery = queryIterator.next();
+        Iterator<? extends SearchPath> pathIterator = notNull("paths", paths).iterator();
+        isTrueArgument("paths must not be empty", pathIterator.hasNext());
+        return new SearchConstructibleBsonElement("wildcard", new Document("query", queryIterator.hasNext() ? queries : firstQuery)
+                .append("path", combineToBsonValue(pathIterator, false)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that performs a search using a regular expression.
+     *
+     * @param path The field to be searched.
+     * @param query The string to search for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/regex/ regex operator
+     */
+    static RegexSearchOperator regex(final SearchPath path, final String query) {
+        return regex(singleton(notNull("path", path)), singleton(notNull("query", query)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that performs a search using a regular expression.
+     *
+     * @param paths The non-empty fields to be searched.
+     * @param queries The non-empty strings to search for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/regex/ regex operator
+     */
+    static RegexSearchOperator regex(final Iterable<? extends SearchPath> paths, final Iterable<String> queries) {
+        Iterator<? extends SearchPath> pathIterator = notNull("paths", paths).iterator();
+        isTrueArgument("paths must not be empty", pathIterator.hasNext());
+        Iterator<String> queryIterator = notNull("queries", queries).iterator();
+        isTrueArgument("queries must not be empty", queryIterator.hasNext());
+        String firstQuery = queryIterator.next();
+        return new SearchConstructibleBsonElement("regex", new Document("path", combineToBsonValue(pathIterator, false))
+                .append("query", queryIterator.hasNext() ? queries : firstQuery));
     }
 
     /**
