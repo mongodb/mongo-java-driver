@@ -18,6 +18,8 @@ package org.bson.codecs.pojo.entities;
 
 import org.bson.codecs.pojo.annotations.BsonDiscriminator;
 
+import java.util.Objects;
+
 @BsonDiscriminator(key = "discriminatorKey", value = "discriminatorValue")
 public class DiscriminatorWithGetterModel {
 
@@ -26,6 +28,18 @@ public class DiscriminatorWithGetterModel {
 
     public String getDiscriminatorKey() {
         return "discriminatorValue";
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        final DiscriminatorWithGetterModel that = (DiscriminatorWithGetterModel) o;
+        return Objects.equals(getDiscriminatorKey(), that.getDiscriminatorKey());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getDiscriminatorKey());
     }
 
     @Override
