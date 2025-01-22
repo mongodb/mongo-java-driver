@@ -23,9 +23,4 @@ public class DiscriminatorModel {
 
     public DiscriminatorModel() {
     }
-
-    @Override
-    public String toString() {
-        return "DiscriminatorWithoutGetterModel{}";
-    }
 }
