@@ -40,9 +40,8 @@ public final class PojoCodecDiscriminatorTest extends PojoTestCase {
     }
 
     @Test
-    public void testDiscriminatorEncodingWhenItIsAlsoAGetter() {
-        encodesTo(
-                getCodec(DiscriminatorWithGetterModel.class),
+    public void testDiscriminatorRoundTripWhenItIsAlsoAGetter() {
+        roundTrip(
                 new DiscriminatorWithGetterModel(),
                 "{discriminatorKey:'discriminatorValue'}"
         );
