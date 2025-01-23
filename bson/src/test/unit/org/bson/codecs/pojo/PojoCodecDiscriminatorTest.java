@@ -18,6 +18,7 @@ package org.bson.codecs.pojo;
 
 import org.bson.codecs.pojo.entities.DiscriminatorModel;
 import org.bson.codecs.pojo.entities.DiscriminatorWithGetterModel;
+import org.bson.codecs.pojo.entities.DiscriminatorWithProperty;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -26,7 +27,7 @@ public final class PojoCodecDiscriminatorTest extends PojoTestCase {
 
     @Test
     public void testDiscriminatorEncodedOnceWhenItIsAlsoAGetter() {
-        byte[] encodedDiscriminatorWithoutGetter = encode(
+        byte[] encodedDiscriminatorModel = encode(
                 getCodec(DiscriminatorModel.class),
                 new DiscriminatorModel(),
                 false
@@ -36,13 +37,36 @@ public final class PojoCodecDiscriminatorTest extends PojoTestCase {
                 new DiscriminatorWithGetterModel(),
                 false
         ).toByteArray();
-        assertArrayEquals(encodedDiscriminatorWithoutGetter, encodedDiscriminatorWithGetter);
+        assertArrayEquals(encodedDiscriminatorModel, encodedDiscriminatorWithGetter);
     }
 
     @Test
     public void testDiscriminatorRoundTripWhenItIsAlsoAGetter() {
         roundTrip(
                 new DiscriminatorWithGetterModel(),
+                "{discriminatorKey:'discriminatorValue'}"
+        );
+    }
+
+    @Test
+    public void testDiscriminatorEncodedOnceWhenItIsAlsoAProperty() {
+        byte[] encodedDiscriminatorModel = encode(
+                getCodec(DiscriminatorModel.class),
+                new DiscriminatorModel(),
+                false
+        ).toByteArray();
+        byte[] encodedDiscriminatorWithProperty = encode(
+                getCodec(DiscriminatorWithProperty.class),
+                new DiscriminatorWithProperty(),
+                false
+        ).toByteArray();
+        assertArrayEquals(encodedDiscriminatorModel, encodedDiscriminatorWithProperty);
+    }
+
+    @Test
+    public void testDiscriminatorRoundTripWhenItIsAlsoAProperty() {
+        roundTrip(
+                new DiscriminatorWithProperty(),
                 "{discriminatorKey:'discriminatorValue'}"
         );
     }
