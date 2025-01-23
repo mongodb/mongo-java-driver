@@ -75,6 +75,7 @@ import com.mongodb.internal.client.model.bulk.ConcreteClientReplaceOneModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientReplaceOneOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateManyModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOneModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOneOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateResult;
 import com.mongodb.internal.client.model.bulk.UnacknowledgedClientBulkWriteResult;
 import com.mongodb.internal.connection.AsyncConnection;
@@ -1247,6 +1248,15 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             });
         }
 
+        private void encodeWriteModelInternals(final BsonWriter writer, final ConcreteClientUpdateOneModel model) {
+            encodeWriteModelInternals(writer, (AbstractClientUpdateModel<?>) model);
+            ConcreteClientUpdateOneOptions options = model.getOptions();
+            options.getSort().ifPresent(value -> {
+                writer.writeName("sort");
+                encodeUsingRegistry(writer, value);
+            });
+        }
+
         private void encodeWriteModelInternals(final BsonWriter writer, final AbstractClientUpdateModel<?> model) {
             writer.writeName("filter");
             encodeUsingRegistry(writer, model.getFilter());
@@ -1294,6 +1304,10 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             });
             options.getHintString().ifPresent(value -> writer.writeString("hint", value));
             options.isUpsert().ifPresent(value -> writer.writeBoolean("upsert", value));
+            options.getSort().ifPresent(value -> {
+                writer.writeName("sort");
+                encodeUsingRegistry(writer, value);
+            });
         }
 
         private void encodeWriteModelInternals(final BsonWriter writer, final AbstractClientDeleteModel<?> model) {

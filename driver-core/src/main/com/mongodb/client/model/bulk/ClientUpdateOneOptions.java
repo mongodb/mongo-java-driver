@@ -85,4 +85,19 @@ public interface ClientUpdateOneOptions extends BaseClientUpdateOptions {
      */
     @Override
     ClientUpdateOneOptions upsert(@Nullable Boolean upsert);
+
+    /**
+     * Sets the sort criteria to apply to the operation. A null value means no sort criteria is set.
+     *
+     * <p>
+     * The sort criteria determines which document the operation updates if the query matches multiple documents.
+     * The first document matched by the specified sort criteria will be updated.
+     *
+     * @param sort The sort criteria. {@code null} represents the server default.
+     * @return this
+     * @mongodb.driver.manual reference/method/db.collection.updateOne/ Sort
+     * @mongodb.server.release 8.0
+     * @since 5.4
+     */
+    ClientUpdateOneOptions sort(@Nullable Bson sort);
 }
