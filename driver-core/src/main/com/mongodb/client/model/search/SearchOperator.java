@@ -301,7 +301,7 @@ public interface SearchOperator extends Bson {
     }
 
     /**
-     * Returns a {@link SearchOperator} that checks whether a field matches a value you specify.
+     * Returns a {@link SearchOperator} that searches for documents where a field matches the specified value.
      *
      * @param path The indexed field to be searched.
      * @param value The boolean value to query for.
@@ -314,7 +314,7 @@ public interface SearchOperator extends Bson {
     }
 
     /**
-     * Returns a {@link SearchOperator} that checks whether a field matches a value you specify.
+     * Returns a {@link SearchOperator} that searches for documents where a field matches the specified value.
      *
      * @param path The indexed field to be searched.
      * @param value The object id value to query for.
@@ -327,7 +327,7 @@ public interface SearchOperator extends Bson {
     }
 
     /**
-     * Returns a {@link SearchOperator} that checks whether a field matches a value you specify.
+     * Returns a {@link SearchOperator} that searches for documents where a field matches the specified value.
      *
      * @param path The indexed field to be searched.
      * @param value The number value to query for.
@@ -340,7 +340,7 @@ public interface SearchOperator extends Bson {
     }
 
     /**
-     * Returns a {@link SearchOperator} that checks whether a field matches a value you specify.
+     * Returns a {@link SearchOperator} that searches for documents where a field matches the specified value.
      *
      * @param path The indexed field to be searched.
      * @param value The instant date value to query for.
@@ -353,7 +353,7 @@ public interface SearchOperator extends Bson {
     }
 
     /**
-     * Returns a {@link SearchOperator} that checks whether a field matches a value you specify.
+     * Returns a {@link SearchOperator} that searches for documents where a field matches the specified value.
      *
      * @param path The indexed field to be searched.
      * @param value The string value to query for.
@@ -366,7 +366,7 @@ public interface SearchOperator extends Bson {
     }
 
     /**
-     * Returns a {@link SearchOperator} that checks whether a field matches a value you specify.
+     * Returns a {@link SearchOperator} that searches for documents where a field matches the specified value.
      *
      * @param path The indexed field to be searched.
      * @param value The uuid value to query for.
@@ -379,7 +379,7 @@ public interface SearchOperator extends Bson {
     }
 
     /**
-     * Returns a {@link SearchOperator} that checks whether a field matches null.
+     * Returns a {@link SearchOperator} that searches for documents where a field matches null.
      *
      * @param path The indexed field to be searched.
      * @return The requested {@link SearchOperator}.
