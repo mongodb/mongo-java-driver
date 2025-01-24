@@ -237,8 +237,8 @@ object SearchOperator {
     JSearchOperator.near(origin, pivot, paths.asJava)
 
   /**
-   * Returns a `SearchOperator` that searches for an array of values at the given path and returns documents where the value of
-   * the field equals any value in the specified array.
+   * Returns a `SearchOperator` that searches for documents where the value
+   * or array of values at a given path contains any of the specified values
    *
    * @param path The indexed field to be searched.
    * @param value The boolean value to search for.
@@ -250,8 +250,8 @@ object SearchOperator {
     JSearchOperator.in(path, value, values: _*)
 
   /**
-   * Returns a `SearchOperator` that searches for an array of values at the given path and returns documents where the value of
-   * the field equals any value in the specified array.
+   * Returns a `SearchOperator` that searches for documents where the value
+   * or array of values at a given path contains any of the specified values
    *
    * @param path The indexed field to be searched.
    * @param value The objectId value to search for.
@@ -263,8 +263,8 @@ object SearchOperator {
     JSearchOperator.in(path, value, values: _*)
 
   /**
-   * Returns a `SearchOperator` that searches for an array of values at the given path and returns documents where the value of
-   * the field equals any value in the specified array.
+   * Returns a `SearchOperator` that searches for documents where the value
+   * or array of values at a given path contains any of the specified values
    *
    * @param path The indexed field to be searched.
    * @param value The number value to search for.
@@ -276,8 +276,8 @@ object SearchOperator {
     JSearchOperator.in(path, value, values: _*)
 
   /**
-   * Returns a `SearchOperator` that searches for an array of values at the given path and returns documents where the value of
-   * the field equals any value in the specified array.
+   * Returns a `SearchOperator` that searches for documents where the value
+   * or array of values at a given path contains any of the specified values
    *
    * @param path The indexed field to be searched.
    * @param value The instant date value to search for.
@@ -289,8 +289,8 @@ object SearchOperator {
     JSearchOperator.in(path, value, values: _*)
 
   /**
-   * Returns a `SearchOperator` that searches for an array of values at the given path and returns documents where the value of
-   * the field equals any value in the specified array.
+   * Returns a `SearchOperator` that searches for documents where the value
+   * or array of values at a given path contains any of the specified values
    *
    * @param path The indexed field to be searched.
    * @param value The uuid value to search for.
@@ -302,8 +302,8 @@ object SearchOperator {
     JSearchOperator.in(path, value, values: _*)
 
   /**
-   * Returns a `SearchOperator` that searches for an array of values at the given path and returns documents where the value of
-   * the field equals any value in the specified array.
+   * Returns a `SearchOperator` that searches for documents where the value
+   * or array of values at a given path contains any of the specified values
    *
    * @param path The indexed field to be searched.
    * @param value The string value to search for.
@@ -315,8 +315,8 @@ object SearchOperator {
     JSearchOperator.in(path, value, values: _*)
 
   /**
-   * Returns a `SearchOperator` that searches for an array of values at the given path and returns documents where the value of
-   * the field equals any value in the specified array.
+   * Returns a `SearchOperator` that searches for documents where the value
+   * or array of values at a given path contains any of the specified values
    *
    * @param path The indexed field to be searched.
    * @param values The non-empty values to search for. Value can be either a single value or an array of values of only one of the supported BSON types and can't be a mix of different types.
