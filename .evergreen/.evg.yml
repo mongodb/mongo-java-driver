@@ -509,6 +509,19 @@ functions:
           mongo --nodb setup.js aws_e2e_ecs.js
           cd -
 
+  run-atlas-connectivity-test-func:
+    - command: shell.exec
+      type: test
+      params:
+        silent: true
+        working_dir: "src"
+        script: |
+          # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
+          # The connection strings are pipe-delimited
+          MONGODB_URIS="${atlas_free_tier_uri}|${atlas_replica_set_uri}|${atlas_sharded_uri}|${atlas_tls_v11_uri}|${atlas_tls_v12_uri}|${atlas_free_tier_uri_srv}|${atlas_replica_set_uri_srv}|${atlas_sharded_uri_srv}|${atlas_tls_v11_uri_srv}|${atlas_tls_v12_uri_srv}|${atlas_serverless_uri}|${atlas_serverless_uri_srv}" \
+          JAVA_VERSION="8" \
+          .evergreen/run-connectivity-tests.sh
+
   "run atlas data lake test":
     - command: shell.exec
       type: test
@@ -626,19 +639,6 @@ functions:
         script: |
           ${PREPARE_SHELL}
           PROJECT_DIRECTORY=${PROJECT_DIRECTORY} JAVA_VERSION=${JAVA_VERSION} TOPOLOGY=${TOPOLOGY} STORAGE_ENGINE=${STORAGE_ENGINE} MONGODB_URI="${MONGODB_URI}" .evergreen/run-mmapv1-storage-test.sh
-
-  "run atlas test":
-    - command: shell.exec
-      type: test
-      params:
-        silent: true
-        working_dir: "src"
-        script: |
-          # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
-          # The connection strings are pipe-delimited
-          JAVA_VERSION="8" \
-          MONGODB_URIS="${atlas_free_tier_uri}|${atlas_replica_set_uri}|${atlas_sharded_uri}|${atlas_tls_v11_uri}|${atlas_tls_v12_uri}|${atlas_free_tier_uri_srv}|${atlas_replica_set_uri_srv}|${atlas_sharded_uri_srv}|${atlas_tls_v11_uri_srv}|${atlas_tls_v12_uri_srv}|${atlas_serverless_uri}|${atlas_serverless_uri_srv}" \
-          .evergreen/run-connectivity-tests.sh
 
   run socks5 tests:
     - command: shell.exec
@@ -1471,6 +1471,20 @@ tasks:
       commands:
         - func: "run atlas search test"
 
+    - name: "atlas-test-task"
+      commands:
+        - func: run-atlas-connectivity-test-func
+
+    - name: "test-atlas-search-index-helpers"
+      commands:
+        - command: subprocess.exec
+          params:
+            working_dir: src
+            binary: bash
+            add_expansions_to_env: true
+            args:
+              - .evergreen/run-atlas-search-index-management-tests.sh
+
     - name: "gssapi-auth-test"
       commands:
         - func: "run gssapi auth test"
@@ -1489,20 +1503,6 @@ tasks:
       commands:
         - func: "bootstrap mongo-orchestration"
         - func: "run netty tests"
-
-    - name: "atlas-test"
-      commands:
-        - func: "run atlas test"
-
-    - name: "test-atlas-search-index-helpers"
-      commands:
-        - command: subprocess.exec
-          params:
-            working_dir: src
-            binary: bash
-            add_expansions_to_env: true
-            args:
-              - .evergreen/run-atlas-search-index-management-tests.sh
 
     - name: publish-snapshot
       depends_on:
@@ -1630,7 +1630,6 @@ tasks:
               echo "Untarring file ... begin"
               GCPKMS_CMD="tar xf mongo-java-driver.tgz" $DRIVERS_TOOLS/.evergreen/csfle/gcpkms/run-command.sh
               echo "Untarring file ... end"
-
         - command: shell.exec
           type: test
           params:
@@ -1918,7 +1917,7 @@ axes:
         batchtime: 10080  # 7 days
 
 task_groups:
-  - name: test_atlas_task_group_search_indexes
+  - name: test-atlas-search-task-group
     setup_group:
       - func: fetch source
       - func: prepare resources
@@ -1944,6 +1943,7 @@ task_groups:
     setup_group_timeout_secs: 1800
     tasks:
       - test-atlas-search-index-helpers
+
   - name: testgcpkms_task_group
     setup_group_can_fail_task: true
     setup_group_timeout_secs: 1800 # 30 minutes
@@ -1979,6 +1979,7 @@ task_groups:
             $DRIVERS_TOOLS/.evergreen/csfle/gcpkms/delete-instance.sh
     tasks:
       - testgcpkms-task
+
   - name: testazurekms_task_group
     setup_group_can_fail_task: true
     setup_group_timeout_secs: 1800 # 30 minutes
@@ -2023,6 +2024,7 @@ task_groups:
             $DRIVERS_TOOLS/.evergreen/csfle/azurekms/delete-vm.sh
     tasks:
       - testazurekms-task
+
   - name: test_atlas_task_group
     setup_group:
       - func: fetch source
@@ -2295,12 +2297,6 @@ buildvariants:
   tasks:
     - name: "plain-auth-test"
 
-- name: rhel80-test-search-indexes
-  display_name: Atlas Search Index Management Tests
-  run_on: rhel80-small
-  tasks:
-    - name: "test_atlas_task_group_search_indexes"
-
 - name: "oidc-auth-test"
   display_name: "OIDC Auth"
   run_on: ubuntu2204-small
@@ -2361,17 +2357,23 @@ buildvariants:
   tasks:
     - name: "atlas-data-lake-test"
 
-- name: atlas-test
+- name: atlas-test-variant
   display_name: "Atlas test"
   run_on: rhel80-small
   tasks:
-    - name: "atlas-test"
+    - name: atlas-test-task
 
 - name: atlas-search-test
   display_name: "Atlas Search test"
   run_on: rhel80-small
   tasks:
     - name: "atlas-search-test"
+
+- name: atlas-search-variant
+  display_name: "Atlas Search Tests"
+  run_on: rhel80-small
+  tasks:
+    - name: "test-atlas-search-task-group"
 
 - name: "reactive-streams-tck-test"
   display_name: "Reactive Streams TCK tests"
