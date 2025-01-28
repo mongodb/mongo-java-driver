@@ -1944,9 +1944,12 @@ final class UnifiedCrudHelper extends UnifiedHelper {
     private static ClientUpdateOneOptions getClientUpdateOneOptions(final BsonDocument arguments) {
         ConcreteClientUpdateOneOptions options = new ConcreteClientUpdateOneOptions();
 
-        ofNullable(arguments.remove("sort"))
-                .map(BsonValue::asDocument)
-                .ifPresent(options::sort);
+        if (arguments.containsKey("sort")) {
+            BsonDocument sort = arguments
+                    .remove("sort")
+                    .asDocument();
+            options.sort(sort);
+        }
 
         return fillAbstractClientUpdateOptions(options, arguments);
     }
