@@ -1250,8 +1250,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
 
         private void encodeWriteModelInternals(final BsonWriter writer, final ConcreteClientUpdateOneModel model) {
             encodeWriteModelInternals(writer, (AbstractClientUpdateModel<?>) model);
-            ConcreteClientUpdateOneOptions options = model.getOptions();
-            options.getSort().ifPresent(value -> {
+            model.getOptions().getSort().ifPresent(value -> {
                 writer.writeName("sort");
                 encodeUsingRegistry(writer, value);
             });
