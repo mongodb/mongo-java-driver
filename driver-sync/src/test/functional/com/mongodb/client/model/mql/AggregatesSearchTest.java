@@ -177,7 +177,7 @@ public class AggregatesSearchTest {
     @Test
     public void testWildcard() {
         List<Bson> pipeline = Arrays.asList(
-                search(SearchOperator.wildcard("desc*", fieldPath("description")),
+                search(SearchOperator.wildcard(fieldPath("description"), "desc*"),
                         searchOptions().index(searchIndexName)));
         assertResults(pipeline, "[\n"
                                 + "   { _id: 6, description: 'desc 1' },\n"

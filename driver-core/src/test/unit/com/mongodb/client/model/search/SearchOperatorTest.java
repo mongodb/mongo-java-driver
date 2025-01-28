@@ -746,8 +746,8 @@ final class SearchOperatorTest {
                                         .append("path", fieldPath("fieldName").toBsonValue())
                         ),
                         SearchOperator.wildcard(
-                                        "term",
-                                        fieldPath("fieldName"))
+                                        fieldPath("fieldName"), "term"
+                                )
                                 .toBsonDocument()
                 ),
                 () -> assertEquals(

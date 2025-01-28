@@ -20,27 +20,24 @@ import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.geojson.Point;
-
-import java.util.UUID;
-
 import org.bson.BsonBinary;
-import org.bson.BsonNull;
 import org.bson.BsonDocument;
+import org.bson.BsonNull;
 import org.bson.BsonType;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Iterator;
-
-import org.bson.types.ObjectId;
+import java.util.UUID;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.Iterables.concat;
 import static com.mongodb.internal.client.model.Util.combineToBsonValue;
 import static java.util.Collections.singleton;
-import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * The core part of the {@link Aggregates#search(SearchOperator, SearchOptions) $search} pipeline stage of an aggregation pipeline.
@@ -463,14 +460,15 @@ public interface SearchOperator extends Bson {
     }
 
     /**
-     * Returns a {@link SearchOperator} that performs a search using a special characters in the search string that can match any character.
+     * Returns a {@link SearchOperator} that performs a search using a special
+     * characters in the search string that can match any character.
      *
+     * @param path  The indexed field to be searched.
      * @param query The string to search for.
-     * @param path The indexed field to be searched.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/wildcard/ wildcard operator
      */
-    static WildcardSearchOperator wildcard(final String query, final SearchPath path) {
+    static WildcardSearchOperator wildcard(final SearchPath path, final String query) {
         return wildcard(singleton(notNull("query", query)), singleton(notNull("path", path)));
     }
 

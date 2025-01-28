@@ -336,7 +336,7 @@ object SearchOperator {
    * @return The requested `SearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/wildcard/ wildcard operator]]
    */
-  def wildcard(query: String, path: SearchPath): WildcardSearchOperator = JSearchOperator.wildcard(query, path)
+  def wildcard(query: String, path: SearchPath): WildcardSearchOperator = JSearchOperator.wildcard(path, query)
 
   /**
    * Returns a `SearchOperator` that enables queries which use special characters in the search string that can match any character.
