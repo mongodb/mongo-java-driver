@@ -20,6 +20,11 @@ import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.geojson.Point;
+
+import java.util.UUID;
+
+import org.bson.BsonBinary;
+import org.bson.BsonNull;
 import org.bson.BsonDocument;
 import org.bson.BsonType;
 import org.bson.Document;
@@ -28,6 +33,8 @@ import org.bson.conversions.Bson;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Iterator;
+
+import org.bson.types.ObjectId;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.internal.Iterables.concat;
@@ -291,6 +298,96 @@ public interface SearchOperator extends Bson {
         return new SearchConstructibleBsonElement("near", new Document("origin", notNull("origin", origin))
                 .append("path", combineToBsonValue(pathIterator, true))
                 .append("pivot", notNull("pivot", pivot)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that searches for documents where a field matches the specified value.
+     *
+     * @param path The indexed field to be searched.
+     * @param value The boolean value to query for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/equals/ equals operator
+     */
+    static EqualsSearchOperator equals(final FieldSearchPath path, final boolean value) {
+        return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
+                .append("value", value));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that searches for documents where a field matches the specified value.
+     *
+     * @param path The indexed field to be searched.
+     * @param value The object id value to query for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/equals/ equals operator
+     */
+    static EqualsSearchOperator equals(final FieldSearchPath path, final ObjectId value) {
+        return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
+                .append("value", notNull("value", value)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that searches for documents where a field matches the specified value.
+     *
+     * @param path The indexed field to be searched.
+     * @param value The number value to query for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/equals/ equals operator
+     */
+    static EqualsSearchOperator equals(final FieldSearchPath path, final Number value) {
+        return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
+                .append("value", notNull("value", value)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that searches for documents where a field matches the specified value.
+     *
+     * @param path The indexed field to be searched.
+     * @param value The instant date value to query for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/equals/ equals operator
+     */
+    static EqualsSearchOperator equals(final FieldSearchPath path, final Instant value) {
+        return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
+                .append("value", notNull("value", value)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that searches for documents where a field matches the specified value.
+     *
+     * @param path The indexed field to be searched.
+     * @param value The string value to query for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/equals/ equals operator
+     */
+    static EqualsSearchOperator equals(final FieldSearchPath path, final String value) {
+        return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
+                .append("value", notNull("value", value)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that searches for documents where a field matches the specified value.
+     *
+     * @param path The indexed field to be searched.
+     * @param value The uuid value to query for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/equals/ equals operator
+     */
+    static EqualsSearchOperator equals(final FieldSearchPath path, final UUID value) {
+        return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
+                .append("value", notNull("value", new BsonBinary(value))));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that searches for documents where a field matches null.
+     *
+     * @param path The indexed field to be searched.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/equals/ equals operator
+     */
+    static EqualsSearchOperator equalsNull(final FieldSearchPath path) {
+        return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
+                .append("value", BsonNull.VALUE));
     }
 
     /**

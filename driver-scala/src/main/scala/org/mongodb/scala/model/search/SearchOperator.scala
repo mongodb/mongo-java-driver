@@ -21,7 +21,10 @@ import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.geojson.Point
 
+import org.bson.types.ObjectId;
+
 import java.time.{ Duration, Instant }
+import java.util.UUID
 import collection.JavaConverters._
 
 /**
@@ -228,6 +231,83 @@ object SearchOperator {
    */
   def near(origin: Point, pivot: Number, paths: Iterable[_ <: FieldSearchPath]): GeoNearSearchOperator =
     JSearchOperator.near(origin, pivot, paths.asJava)
+
+  /**
+   * Returns a `SearchOperator` that searches for documents where a field matches the specified value.
+   *
+   * @param path The indexed field to be searched.
+   * @param value The boolean value to query for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/equals/ equals operator]]
+   */
+  def equals(path: FieldSearchPath, value: Boolean): EqualsSearchOperator =
+    JSearchOperator.equals(path, value)
+
+  /**
+   * Returns a `SearchOperator` that searches for documents where a field matches the specified value.
+   *
+   * @param path The indexed field to be searched.
+   * @param value The object id value to query for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/equals/ equals operator]]
+   */
+  def equals(path: FieldSearchPath, value: ObjectId): EqualsSearchOperator =
+    JSearchOperator.equals(path, value)
+
+  /**
+   * Returns a `SearchOperator` that searches for documents where a field matches the specified value.
+   *
+   * @param path The indexed field to be searched.
+   * @param value The number value to query for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/equals/ equals operator]]
+   */
+  def equals(path: FieldSearchPath, value: Number): EqualsSearchOperator =
+    JSearchOperator.equals(path, value)
+
+  /**
+   * Returns a `SearchOperator` that searches for documents where a field matches the specified value.
+   *
+   * @param path The indexed field to be searched.
+   * @param value The instant date value to query for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/equals/ equals operator]]
+   */
+  def equals(path: FieldSearchPath, value: Instant): EqualsSearchOperator =
+    JSearchOperator.equals(path, value)
+
+  /**
+   * Returns a `SearchOperator` that searches for documents where a field matches the specified value.
+   *
+   * @param path The indexed field to be searched.
+   * @param value The string value to query for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/equals/ equals operator]]
+   */
+  def equals(path: FieldSearchPath, value: String): EqualsSearchOperator =
+    JSearchOperator.equals(path, value)
+
+  /**
+   * Returns a `SearchOperator` that searches for documents where a field matches the specified value.
+   *
+   * @param path The indexed field to be searched.
+   * @param value The uuid value to query for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/equals/ equals operator]]
+   */
+  def equals(path: FieldSearchPath, value: UUID): EqualsSearchOperator =
+    JSearchOperator.equals(path, value)
+
+  /**
+   * Returns a `SearchOperator` that searches for documents where a field matches null.
+   *
+   * @param path The indexed field to be searched.
+   * @param value The uuid value to query for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/equals/ equals operator]]
+   */
+  def equalsNull(path: FieldSearchPath): EqualsSearchOperator =
+    JSearchOperator.equalsNull(path)
 
   /**
    * Returns a `SearchOperator` that returns documents similar to input document.

@@ -80,6 +80,7 @@ import static com.mongodb.client.model.search.SearchHighlight.paths;
 import static com.mongodb.client.model.search.SearchOperator.autocomplete;
 import static com.mongodb.client.model.search.SearchOperator.compound;
 import static com.mongodb.client.model.search.SearchOperator.dateRange;
+import static com.mongodb.client.model.search.SearchOperator.equalsNull;
 import static com.mongodb.client.model.search.SearchOperator.exists;
 import static com.mongodb.client.model.search.SearchOperator.moreLikeThis;
 import static com.mongodb.client.model.search.SearchOperator.near;
@@ -621,7 +622,9 @@ final class AggregatesSearchIntegrationTest {
                                         moreLikeThis(new BsonDocument("like", new BsonDocument("fieldName10",
                                                 new BsonString("term6")))),
                                         wildcard(asList("term10", "term11"), asList(wildcardPath("wildc*rd"), fieldPath("title").multi(
-                                                "keyword")))
+                                                "keyword"))),
+                                        SearchOperator.equals(fieldPath("fieldName11"), "term7"),
+                                        equalsNull(fieldPath("fieldName12"))
                                 ))
                                 .minimumShouldMatch(1)
                                 .mustNot(singleton(
