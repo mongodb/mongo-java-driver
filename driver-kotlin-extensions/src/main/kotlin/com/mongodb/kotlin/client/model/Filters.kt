@@ -434,7 +434,7 @@ public object Filters {
      */
     @JvmSynthetic
     @JvmName("regexExt")
-    public infix fun KProperty<String?>.regex(pattern: String): Bson = Filters.regex(path(), pattern)
+    public infix fun <T> KProperty<T?>.regex(pattern: String): Bson = Filters.regex(path(), pattern)
 
     /**
      * Creates a filter that matches all documents where the value of the property matches the given regular expression
@@ -444,7 +444,7 @@ public object Filters {
      * @param pattern the pattern
      * @return the filter
      */
-    public fun regex(property: KProperty<String?>, pattern: String): Bson = property.regex(pattern)
+    public fun <T> regex(property: KProperty<T?>, pattern: String): Bson = property.regex(pattern)
 
     /**
      * Creates a filter that matches all documents where the value of the property matches the given regular expression
@@ -455,7 +455,7 @@ public object Filters {
      */
     @JvmSynthetic
     @JvmName("regexExt")
-    public infix fun KProperty<String?>.regex(pattern: Pattern): Bson = Filters.regex(path(), pattern)
+    public infix fun <T>  KProperty<T?>.regex(pattern: Pattern): Bson = Filters.regex(path(), pattern)
 
     /**
      * Creates a filter that matches all documents where the value of the property matches the given regular expression
@@ -465,7 +465,7 @@ public object Filters {
      * @param pattern the pattern
      * @return the filter
      */
-    public fun regex(property: KProperty<String?>, pattern: Pattern): Bson = property.regex(pattern)
+    public fun <T> regex(property: KProperty<T?>, pattern: Pattern): Bson = property.regex(pattern)
 
     /**
      * Creates a filter that matches all documents where the value of the option matches the given regular expression
@@ -477,7 +477,7 @@ public object Filters {
      */
     @JvmSynthetic
     @JvmName("regexExt")
-    public fun KProperty<String?>.regex(pattern: String, options: String): Bson =
+    public fun <T> KProperty<T?>.regex(pattern: String, options: String): Bson =
         Filters.regex(path(), pattern, options)
 
     /**
@@ -489,7 +489,7 @@ public object Filters {
      * @param options the options
      * @return the filter
      */
-    public fun regex(property: KProperty<String?>, pattern: String, options: String): Bson =
+    public fun <T> regex(property: KProperty<T?>, pattern: String, options: String): Bson =
         property.regex(pattern, options)
 
     /**
@@ -501,7 +501,7 @@ public object Filters {
      */
     @JvmSynthetic
     @JvmName("regexExt")
-    public infix fun KProperty<String?>.regex(regex: Regex): Bson = Filters.regex(path(), regex.toPattern())
+    public infix fun <T> KProperty<T?>.regex(regex: Regex): Bson = Filters.regex(path(), regex.toPattern())
 
     /**
      * Creates a filter that matches all documents where the value of the property matches the given regular expression
@@ -511,7 +511,7 @@ public object Filters {
      * @param regex the regex
      * @return the filter
      */
-    public fun regex(property: KProperty<String?>, regex: Regex): Bson = property.regex(regex.toPattern())
+    public fun <T> regex(property: KProperty<T?>, regex: Regex): Bson = property.regex(regex.toPattern())
 
     /**
      * Creates a filter that matches all documents where the value of the property matches the given regular expression
@@ -522,7 +522,7 @@ public object Filters {
      */
     @JvmSynthetic
     @JvmName("regexIterableExt")
-    public infix fun KProperty<Iterable<String?>>.regex(pattern: String): Bson = Filters.regex(path(), pattern)
+    public infix fun <T> KProperty<Iterable<T?>>.regex(pattern: String): Bson = Filters.regex(path(), pattern)
 
     /**
      * Creates a filter that matches all documents where the value of the property matches the given regular expression
@@ -534,7 +534,7 @@ public object Filters {
      */
     @JvmSynthetic
     @JvmName("regexIterable")
-    public fun regex(property: KProperty<Iterable<String?>>, pattern: String): Bson = property.regex(pattern)
+    public fun <T> regex(property: KProperty<Iterable<T?>>, pattern: String): Bson = property.regex(pattern)
 
     /**
      * Creates a filter that matches all documents where the value of the property matches the given regular expression
@@ -545,7 +545,7 @@ public object Filters {
      */
     @JvmSynthetic
     @JvmName("regexIterableExt")
-    public infix fun KProperty<Iterable<String?>>.regex(pattern: Pattern): Bson = Filters.regex(path(), pattern)
+    public infix fun <T> KProperty<Iterable<T?>>.regex(pattern: Pattern): Bson = Filters.regex(path(), pattern)
 
     /**
      * Creates a filter that matches all documents where the value of the property matches the given regular expression
@@ -557,7 +557,7 @@ public object Filters {
      */
     @JvmSynthetic
     @JvmName("regexIterable")
-    public fun regex(property: KProperty<Iterable<String?>>, pattern: Pattern): Bson = property.regex(pattern)
+    public fun <T> regex(property: KProperty<Iterable<T?>>, pattern: Pattern): Bson = property.regex(pattern)
 
     /**
      * Creates a filter that matches all documents where the value of the option matches the given regular expression
@@ -569,7 +569,7 @@ public object Filters {
      */
     @JvmSynthetic
     @JvmName("regexIterableExt")
-    public fun KProperty<Iterable<String?>>.regex(regex: String, options: String): Bson =
+    public fun <T> KProperty<Iterable<T?>>.regex(regex: String, options: String): Bson =
         Filters.regex(path(), regex, options)
 
     /**
@@ -583,7 +583,7 @@ public object Filters {
      */
     @JvmSynthetic
     @JvmName("regexIterable")
-    public fun regex(property: KProperty<Iterable<String?>>, regex: String, options: String): Bson =
+    public fun <T> regex(property: KProperty<Iterable<T?>>, regex: String, options: String): Bson =
         property.regex(regex, options)
 
     /**
@@ -595,7 +595,7 @@ public object Filters {
      */
     @JvmSynthetic
     @JvmName("regexIterableExt")
-    public infix fun KProperty<Iterable<String?>>.regex(regex: Regex): Bson = Filters.regex(path(), regex.toPattern())
+    public infix fun <T> KProperty<Iterable<T?>>.regex(regex: Regex): Bson = Filters.regex(path(), regex.toPattern())
 
     /**
      * Creates a filter that matches all documents where the value of the property matches the given regular expression
@@ -607,7 +607,7 @@ public object Filters {
      */
     @JvmSynthetic
     @JvmName("regexIterable")
-    public fun regex(property: KProperty<Iterable<String?>>, regex: Regex): Bson = property.regex(regex.toPattern())
+    public fun <T> regex(property: KProperty<Iterable<T?>>, regex: Regex): Bson = property.regex(regex.toPattern())
 
     /**
      * Creates a filter that matches all documents matching the given the search term with the given text search
