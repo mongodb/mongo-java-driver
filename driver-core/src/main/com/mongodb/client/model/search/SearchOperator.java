@@ -402,7 +402,7 @@ public interface SearchOperator extends Bson {
      */
     static <T> InSearchOperator in(final FieldSearchPath path, final Iterable<? extends T> values) {
         notNull("path", path);
-        Iterator<T> valueIterator = (Iterator<T>) notNull("values", values).iterator();
+        Iterator<? extends T> valueIterator = notNull("values", values).iterator();
         isTrueArgument("values must not be empty", valueIterator.hasNext());
         T firstValue = valueIterator.next();
         boolean hasMore = valueIterator.hasNext();
