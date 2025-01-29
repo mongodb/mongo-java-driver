@@ -24,11 +24,12 @@ import com.mongodb.client.model.Filters
 import com.mongodb.client.model.TextSearchOptions
 import com.mongodb.client.model.geojson.Geometry
 import com.mongodb.client.model.geojson.Point
+import org.bson.BsonDocument
+import org.bson.BsonType
+import org.bson.conversions.Bson
 import java.util.regex.Pattern
 import kotlin.internal.OnlyInputTypes
 import kotlin.reflect.KProperty
-import org.bson.BsonType
-import org.bson.conversions.Bson
 
 /**
  * Filters extension methods to improve Kotlin interop
@@ -288,7 +289,7 @@ public object Filters {
      * @param filters the list of filters to and together
      * @return the filter
      */
-    public fun and(filters: Iterable<Bson?>): Bson = Filters.and(filters.filterNotNull())
+    public fun and(filters: Iterable<Bson?>): Bson = combineFilters(Filters::and, filters)
 
     /**
      * Creates a filter that performs a logical AND of the provided list of filters. Note that this will only generate
@@ -309,7 +310,7 @@ public object Filters {
      * @param filters the list of filters to and together
      * @return the filter
      */
-    public fun or(filters: Iterable<Bson?>): Bson = Filters.or(filters.filterNotNull())
+    public fun or(filters: Iterable<Bson?>): Bson = combineFilters(Filters::or, filters)
 
     /**
      * Creates a filter that preforms a logical OR of the provided list of filters.
@@ -352,7 +353,9 @@ public object Filters {
      *
      * @return the filter
      */
-    @JvmSynthetic @JvmName("existsExt") public fun <T> KProperty<T?>.exists(): Bson = Filters.exists(path())
+    @JvmSynthetic
+    @JvmName("existsExt")
+    public fun <T> KProperty<T?>.exists(): Bson = Filters.exists(path())
 
     /**
      * Creates a filter that matches all documents that contain the given property.
@@ -1216,4 +1219,18 @@ public object Filters {
      * @return the filter
      */
     public fun jsonSchema(schema: Bson): Bson = Filters.jsonSchema(schema)
+
+    private fun combineFilters(
+        combine: (List<Bson>) -> Bson,
+        filters: Iterable<Bson?>
+    ): Bson = filters
+        .filterNotNull()
+        .filterNot { bson -> bson is Map<*, *> && bson.isEmpty() }
+        .let { list ->
+            when (list.size) {
+                0 -> BsonDocument()
+                1 -> list.first()
+                else -> combine(list)
+            }
+        }
 }
