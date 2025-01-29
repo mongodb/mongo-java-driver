@@ -18,15 +18,13 @@ package com.mongodb.client.model.search;
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
-
-import java.util.UUID;
-
-import java.time.Instant;
-
 import org.bson.types.ObjectId;
 
+import java.time.Instant;
+import java.util.UUID;
+
 /**
- * @see SearchOperator#in(FieldSearchPath, Boolean, Boolean...)
+ * @see SearchOperator#in(FieldSearchPath, boolean, boolean...)
  * @see SearchOperator#in(FieldSearchPath, ObjectId, ObjectId...)
  * @see SearchOperator#in(FieldSearchPath, Number, Number...)
  * @see SearchOperator#in(FieldSearchPath, Instant, Instant...)
