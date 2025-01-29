@@ -167,8 +167,6 @@ public final class UnifiedTestModifications {
                 .file("retryable-reads", "listDatabaseObjects-serverErrors")
                 .file("retryable-reads", "listCollectionObjects")
                 .file("retryable-reads", "listCollectionObjects-serverErrors");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5224")
-                .test("retryable-reads", "ReadConcernMajorityNotAvailableYet is a retryable read", "Find succeeds on second attempt after ReadConcernMajorityNotAvailableYet");
 
         // retryable-writes
 
