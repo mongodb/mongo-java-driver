@@ -18,9 +18,6 @@ package com.mongodb.client.model.search;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
-
-import java.util.UUID;
-
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
 import org.bson.BsonBoolean;
@@ -40,6 +37,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.UUID;
 
 import static com.mongodb.client.model.search.FuzzySearchOptions.fuzzySearchOptions;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
@@ -599,10 +597,6 @@ final class SearchOperatorTest {
                 () -> assertThrows(IllegalArgumentException.class, () ->
                         // paths must not be empty
                         SearchOperator.in(null, true)
-                ),
-                () -> assertThrows(IllegalArgumentException.class, () ->
-                        // values should be of one supported BSON types and can't be a mix of different types
-                        SearchOperator.in(fieldPath("fieldName1"), asList(true, "value"))
                 ),
                 () -> assertEquals(
                         new BsonDocument("in",

@@ -74,11 +74,11 @@ public final class MqlValues {
      */
     public static MqlArray<MqlBoolean> ofBooleanArray(final boolean... array) {
         Assertions.notNull("array", array);
-        List<BsonValue> list = new ArrayList<>();
+        BsonArray bsonArray = new BsonArray();
         for (boolean b : array) {
-            list.add(new BsonBoolean(b));
+            bsonArray.add(new BsonBoolean(b));
         }
-        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(list)));
+        return new MqlExpression<>((cr) -> new AstPlaceholder(bsonArray));
     }
 
     /**
@@ -102,11 +102,11 @@ public final class MqlValues {
      */
     public static MqlArray<MqlInteger> ofIntegerArray(final int... array) {
         Assertions.notNull("array", array);
-        List<BsonValue> list = new ArrayList<>();
+        BsonArray bsonArray = new BsonArray();
         for (int i : array) {
-            list.add(new BsonInt32(i));
+            bsonArray.add(new BsonInt32(i));
         }
-        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(list)));
+        return new MqlExpression<>((cr) -> new AstPlaceholder(bsonArray));
     }
 
     /**
@@ -130,11 +130,11 @@ public final class MqlValues {
      */
     public static MqlArray<MqlInteger> ofIntegerArray(final long... array) {
         Assertions.notNull("array", array);
-        List<BsonValue> list = new ArrayList<>();
+        BsonArray bsonArray = new BsonArray();
         for (long i : array) {
-            list.add(new BsonInt64(i));
+            bsonArray.add(new BsonInt64(i));
         }
-        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(list)));
+        return new MqlExpression<>((cr) -> new AstPlaceholder(bsonArray));
     }
 
     /**
@@ -158,11 +158,11 @@ public final class MqlValues {
      */
     public static MqlArray<MqlNumber> ofNumberArray(final double... array) {
         Assertions.notNull("array", array);
-        List<BsonValue> list = new ArrayList<>();
+        BsonArray bsonArray = new BsonArray();
         for (double n : array) {
-            list.add(new BsonDouble(n));
+            bsonArray.add(new BsonDouble(n));
         }
-        return new MqlExpression<>((cr) -> new AstPlaceholder(new BsonArray(list)));
+        return new MqlExpression<>((cr) -> new AstPlaceholder(bsonArray));
     }
 
     /**
@@ -310,12 +310,12 @@ public final class MqlValues {
     public static <T extends MqlValue> MqlArray<T> ofArray(final T... array) {
         Assertions.notNull("array", array);
         return new MqlExpression<>((cr) -> {
-            List<BsonValue> list = new ArrayList<>();
+            BsonArray bsonArray = new BsonArray();
             for (T v : array) {
                 Assertions.notNull("elements of array", v);
-                list.add(((MqlExpression<?>) v).toBsonValue(cr));
+                bsonArray.add(((MqlExpression<?>) v).toBsonValue(cr));
             }
-            return new AstPlaceholder(new BsonArray(list));
+            return new AstPlaceholder(bsonArray);
         });
     }
 

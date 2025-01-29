@@ -18,22 +18,18 @@ package com.mongodb.client.model.search;
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
-import com.mongodb.assertions.Assertions;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.geojson.Point;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonType;
-import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.UUID;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
@@ -311,13 +307,12 @@ public interface SearchOperator extends Bson {
      * @mongodb.atlas.manual atlas-search/in/ in operator
      */
     static InSearchOperator in(final FieldSearchPath path, final boolean value, final boolean... values) {
-        Assertions.notNull("values", values);
-        List<BsonValue> list = new ArrayList<>();
-        list.add(new BsonBoolean(value));
-        for (boolean n : values) {
-            list.add(new BsonBoolean(n));
+        notNull("values", values);
+        BsonArray bsonArray = new BsonArray();
+        bsonArray.add(new BsonBoolean(value));
+        for (boolean v : values) {
+            bsonArray.add(new BsonBoolean(v));
         }
-        BsonArray bsonArray = new BsonArray(list);
         return in(notNull("path", path), bsonArray);
     }
 
