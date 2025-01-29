@@ -288,7 +288,7 @@ public object Filters {
      * @param filters the list of filters to and together
      * @return the filter
      */
-    public fun and(filters: Iterable<Bson?>): Bson = Filters.and(filters)
+    public fun and(filters: Iterable<Bson?>): Bson = Filters.and(filters.filterNotNull())
 
     /**
      * Creates a filter that performs a logical AND of the provided list of filters. Note that this will only generate
@@ -309,7 +309,7 @@ public object Filters {
      * @param filters the list of filters to and together
      * @return the filter
      */
-    public fun or(filters: Iterable<Bson?>): Bson = Filters.or(filters)
+    public fun or(filters: Iterable<Bson?>): Bson = Filters.or(filters.filterNotNull())
 
     /**
      * Creates a filter that preforms a logical OR of the provided list of filters.
