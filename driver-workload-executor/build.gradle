@@ -14,17 +14,11 @@
  * limitations under the License.
  */
 
-buildscript {
-    repositories {
-        maven { url "https://plugins.gradle.org/m2/" }
-    }
-    dependencies {
-        classpath 'com.github.jengelman.gradle.plugins:shadow:6.1.0'
-    }
+plugins {
+    id("java")
+    id("application")
+    alias(libs.plugins.shadow)
 }
-
-apply plugin: 'application'
-apply plugin: 'com.github.johnrengelman.shadow'
 
 mainClassName = "com.mongodb.workload.WorkloadExecutor"
 
@@ -43,10 +37,8 @@ dependencies {
     implementation project(':driver-sync')
     implementation project(':driver-core').sourceSets.test.output
     implementation project(':driver-sync').sourceSets.test.output
-    implementation "ch.qos.logback:logback-classic:$logbackVersion"
-    implementation(platform("org.junit:junit-bom:$junitBomVersion"))
-    implementation('org.junit.jupiter:junit-jupiter')
-    implementation('org.junit.vintage:junit-vintage-engine')
+    implementation(platform(libs.junit.bom))
+    implementation(libs.bundles.junit.vintage)
 }
 
 javadoc {

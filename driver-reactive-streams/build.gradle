@@ -21,20 +21,21 @@ dependencies {
     api project(path: ':bson', configuration: 'default')
     api project(path: ':driver-core', configuration: 'default')
 
-    api 'org.reactivestreams:reactive-streams:1.0.4'
-    implementation platform("io.projectreactor:reactor-bom:$projectReactorVersion")
-    implementation 'io.projectreactor:reactor-core'
+    api(libs.reactive.streams)
+    implementation(platform(libs.project.reactor.bom))
+    implementation(libs.project.reactor.core)
 
     testImplementation project(':bson').sourceSets.test.output
     testImplementation project(':driver-sync')
     testImplementation project(':driver-sync').sourceSets.test.output
     testImplementation project(':driver-core').sourceSets.test.output
-    testImplementation 'org.reactivestreams:reactive-streams-tck:1.0.4'
-    testImplementation 'io.projectreactor:reactor-test'
+    testImplementation(libs.reactive.streams.tck)
+
+    testImplementation(libs.project.reactor.test)
     if ('8'.equals(findProperty("javaVersion"))) {
-        testImplementation 'org.mockito:mockito-junit-jupiter:4.6.1'
+        testImplementation(libs.bundles.mockito.java8)
     } else {
-        testImplementation 'org.mockito:mockito-junit-jupiter:5.11.0'
+        testImplementation(libs.bundles.mockito)
     }
 
     testRuntimeOnly project(path: ':driver-core', configuration: 'consumableTestRuntimeOnly')

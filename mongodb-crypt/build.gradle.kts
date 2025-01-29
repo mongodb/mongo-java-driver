@@ -17,19 +17,8 @@
 
 import de.undercouch.gradle.tasks.download.Download
 
-buildscript {
-    repositories {
-        mavenCentral()
-        google()
-    }
-    dependencies {
-        "classpath"(group = "net.java.dev.jna", name = "jna", version = "5.11.0")
-    }
-}
-
 plugins {
-    // Needed to download libmongocrypt from s3.
-    id("de.undercouch.download") version "5.6.0"
+    alias(libs.plugins.download)
 }
 
 group = "org.mongodb"
@@ -44,10 +33,10 @@ java {
 
 dependencies {
     api(project(path = ":bson", configuration = "default"))
-    api("net.java.dev.jna:jna:5.11.0")
+    api(libs.jna)
 
     // Tests
-    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation(libs.bundles.junit)
 }
 
 /*
