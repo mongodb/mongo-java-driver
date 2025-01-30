@@ -16,7 +16,7 @@
 
 
 plugins {
-    id 'com.github.gmazzo.buildconfig' version '3.0.3'
+    alias(libs.plugins.build.config)
 }
 
 archivesBaseName = 'mongodb-driver-core'
@@ -33,7 +33,6 @@ configurations {
     }
 }
 
-def classifiers = ["linux-x86_64", "linux-aarch_64", "osx-x86_64", "osx-aarch_64", "windows-x86_64"]
 dependencies {
     api project(path: ':bson', configuration: 'default')
     implementation project(path: ':bson-record-codec', configuration: 'default')
@@ -41,30 +40,26 @@ dependencies {
     implementation project(path: ':bson-kotlinx', configuration: 'default'), optional
     implementation project(path: ':mongodb-crypt', configuration: 'default'), optional
 
-    implementation "com.github.jnr:jnr-unixsocket:$jnrUnixsocketVersion", optional
-    api platform("io.netty:netty-bom:$nettyVersion")
-    api "io.netty:netty-buffer", optional
-    api "io.netty:netty-transport", optional
-    api "io.netty:netty-handler", optional
-    compileOnly "org.graalvm.sdk:graal-sdk:$graalSdkVersion"
+    implementation(libs.jnr.unixsocket, optional)
+    api(platform(libs.netty.bom), optional)
+    api(libs.bundles.netty, optional)
+    compileOnly(libs.graal.sdk)
 
-    // Optionally depend on both AWS SDK v2 and v1.  The driver will use v2 is present, v1 if present, or built-in functionality if
-    // neither are present
-    implementation "software.amazon.awssdk:auth:$awsSdkV2Version", optional
-    implementation "software.amazon.awssdk:sts:$awsSdkV2Version", optional
-    implementation "com.amazonaws:aws-java-sdk-core:$awsSdkV1Version", optional
-    implementation "com.amazonaws:aws-java-sdk-sts:$awsSdkV1Version", optional
+    // Optionally depend on both AWS SDK v2 and v1.
+    // The driver will use v2 is present, v1 if present, or built-in functionality if neither are present
+    implementation(libs.bundles.aws.java.sdk.v1, optional)
+    implementation(libs.bundles.aws.java.sdk.v2, optional)
 
-    implementation "org.xerial.snappy:snappy-java:$snappyVersion", optional
-    implementation "com.github.luben:zstd-jni:$zstdVersion", optional
+    implementation(libs.snappy.java, optional)
+    implementation(libs.zstd.jni, optional)
 
     testImplementation project(':bson').sourceSets.test.output
-    testImplementation('org.junit.jupiter:junit-jupiter-api')
-    testImplementation("org.reflections:reflections:$reflectionsVersion")
-    testRuntimeOnly "io.netty:netty-tcnative-boringssl-static"
+    testImplementation(libs.bundles.junit)
+    testImplementation(libs.reflections)
 
-    classifiers.forEach {
-        testRuntimeOnly "io.netty:netty-tcnative-boringssl-static::$it"
+    testRuntimeOnly(libs.netty.boringssl)
+    ["linux-x86_64", "linux-aarch_64", "osx-x86_64", "osx-aarch_64", "windows-x86_64"].each { arch ->
+        testRuntimeOnly(variantOf(libs.netty.boringssl) { classifier(arch) })
     }
 }
 

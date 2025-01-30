@@ -17,8 +17,8 @@
 // Note requires a Gradle project flag `-PincludeGraalvm` (see settings.gradle).
 
 plugins {
-    id 'application'
-    id 'org.graalvm.buildtools.native' version '0.9.23'
+    id("application")
+    alias(libs.plugins.graalvm.buildtools)
 }
 
 application {
@@ -113,9 +113,10 @@ dependencies {
     implementation project(':driver-sync').sourceSets.test.output
     implementation project(':driver-legacy').sourceSets.test.output
     implementation project(':driver-reactive-streams').sourceSets.test.output
-    implementation 'org.slf4j:slf4j-api:2.0.12'
-    implementation "ch.qos.logback:logback-classic:$logbackVersion"
-    implementation platform("io.projectreactor:reactor-bom:$projectReactorVersion")
-    implementation 'io.projectreactor:reactor-core'
-    implementation "org.graalvm.sdk:nativeimage:$graalSdkVersion"
+
+    implementation(libs.slf4j)
+    implementation(libs.logback)
+    implementation(platform(libs.reactor.bom))
+    implementation(libs.reactor.core)
+    implementation(libs.graal.sdk.native)
 }

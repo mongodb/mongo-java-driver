@@ -18,12 +18,12 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("org.jetbrains.kotlin.jvm")
-    `java-library`
+    id("java-library")
 
     // Test based plugins
-    id("com.diffplug.spotless")
-    id("org.jetbrains.dokka")
-    id("io.gitlab.arturbosch.detekt")
+    alias(libs.plugins.spotless)
+    alias(libs.plugins.dokka)
+    alias(libs.plugins.detekt)
 }
 
 repositories {
@@ -56,26 +56,25 @@ val integrationTestImplementation: Configuration by
 
 dependencies {
     // Align versions of all Kotlin components
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation(platform(libs.kotlin.bom))
+    implementation(libs.kotlin.stdlib.jdk8)
 
-    implementation(platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.6.4"))
-    api("org.jetbrains.kotlinx:kotlinx-coroutines-core")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive")
+    implementation(platform(libs.kotlinx.coroutines.bom))
+    api(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.reactive)
 
     api(project(path = ":bson", configuration = "default"))
     api(project(path = ":driver-reactive-streams", configuration = "default"))
     implementation(project(path = ":bson-kotlin", configuration = "default"))
 
-    testImplementation("org.jetbrains.kotlin:kotlin-reflect")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
-    testImplementation("org.mockito:mockito-junit-jupiter:4.11.0")
-    testImplementation("org.assertj:assertj-core:3.24.2")
-    testImplementation("io.github.classgraph:classgraph:4.8.154")
+    testImplementation(libs.kotlin.reflect)
+    testImplementation(libs.junit.kotlin)
+    testImplementation(libs.bundles.mockito.kotlin)
+    testImplementation(libs.assertj)
+    testImplementation(libs.classgraph)
 
-    integrationTestImplementation("org.jetbrains.kotlin:kotlin-test-junit")
-    integrationTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
+    integrationTestImplementation(libs.junit.kotlin)
+    integrationTestImplementation(libs.kotlinx.coroutines.test)
     integrationTestImplementation(project(path = ":driver-sync"))
     integrationTestImplementation(project(path = ":driver-core"))
     integrationTestImplementation(project(path = ":bson"))

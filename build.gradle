@@ -14,33 +14,21 @@
  * limitations under the License.
  */
 
-apply plugin: 'eclipse'
-apply plugin: 'idea'
+plugins {
+    id("eclipse")
+    id("idea")
 
-buildscript {
-    repositories {
-        mavenLocal()
-        mavenCentral()
-        maven { url "https://plugins.gradle.org/m2/" }
-    }
-    dependencies {
-        classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:7.0.0'
-        classpath "com.github.spotbugs.snom:spotbugs-gradle-plugin:6.0.15"
-        classpath 'biz.aQute.bnd:biz.aQute.bnd.gradle:5.1.2'
-
-        // Scala plugins
-        classpath "com.adtran:scala-multiversion-plugin:2.0.4"
-        classpath "com.diffplug.spotless:spotless-plugin-gradle:6.14.0"
-
-        // kotlin plugins
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.10"
-        classpath "org.jetbrains.kotlin:kotlin-serialization:1.8.10"
-        classpath "org.jetbrains.dokka:dokka-gradle-plugin:1.8.10"
-        classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.21.0"
-
-        // Test logging plugin
-        classpath 'com.adarshr:gradle-test-logger-plugin:2.1.0'
-    }
+    alias(libs.plugins.bnd) apply false
+    alias(libs.plugins.detekt) apply false
+    alias(libs.plugins.dokka) apply false
+    alias(libs.plugins.download) apply false
+    alias(libs.plugins.kotlin) apply false
+    alias(libs.plugins.kotlin.serialization) apply false
+    alias(libs.plugins.optional) apply false
+    alias(libs.plugins.scala.multiversion) apply false
+    alias(libs.plugins.spotbugs) apply false
+    alias(libs.plugins.spotless) apply false
+    alias(libs.plugins.test.logger) apply false
 }
 
 //////////////////////////////////////////
@@ -49,17 +37,6 @@ buildscript {
 
 ext {
     configDir = new File(rootDir, 'config')
-    jnrUnixsocketVersion = '0.38.17'
-    nettyVersion = '4.1.87.Final'
-    snappyVersion = '1.1.10.3'
-    zstdVersion = '1.5.5-3'
-    awsSdkV2Version = '2.18.9'
-    awsSdkV1Version = '1.12.337'
-    projectReactorVersion = '2022.0.0'
-    junitBomVersion = '5.10.2'
-    logbackVersion = '1.3.14'
-    graalSdkVersion = '24.0.0'
-    reflectionsVersion = '0.9.10'
     gitVersion = getGitVersion()
 }
 
@@ -109,27 +86,21 @@ configure(javaProjects) {
 }
 
 configure(scalaProjects) {
-    apply plugin: 'scala'
-    apply plugin: 'java-library'
-    apply plugin: 'idea'
+    apply plugin: "java-library"
+    apply plugin: "scala"
     apply plugin: "com.adtran.scala-multiversion-plugin"
     apply plugin: "com.diffplug.spotless"
 
     group = 'org.mongodb.scala'
 
     dependencies {
-        api ('org.scala-lang:scala-library:%scala-version%')
-        api ('org.scala-lang:scala-reflect:%scala-version%')
+        api(libs.scala.library)
+        api(libs.scala.reflect)
 
-        testImplementation(platform("org.junit:junit-bom:$junitBomVersion"))
-        testImplementation("org.junit.vintage:junit-vintage-engine")
-
-        testImplementation('org.scalatest:scalatest-flatspec_%%:3.2.9')
-        testImplementation('org.scalatest:scalatest-shouldmatchers_%%:3.2.9')
-        testImplementation('org.scalatestplus:junit-4-13_%%:3.2.9.0')
-        testImplementation('org.scalatestplus:mockito-3-12_%%:3.2.10.0')
-        testImplementation("ch.qos.logback:logback-classic:$logbackVersion")
-        testImplementation("org.reflections:reflections:$reflectionsVersion")
+        testImplementation(platform(libs.junit.bom))
+        testImplementation(libs.bundles.junit.vintage)
+        testImplementation(libs.bundles.scalatest)
+        testImplementation(libs.reflections)
     }
 
     test{
@@ -177,12 +148,12 @@ configure(javaMainProjects) {
     apply plugin: 'java-library'
 
     dependencies {
-        compileOnly 'com.google.code.findbugs:jsr305:1.3.9'
-        api 'org.slf4j:slf4j-api:1.7.6', optional
-        testImplementation 'com.google.code.findbugs:jsr305:1.3.9'
+        compileOnly(libs.findbugs.jsr)
+        api(libs.slf4j, optional)
 
+        testImplementation(libs.findbugs.jsr)
         // https://issues.apache.org/jira/browse/GROOVY-10194
-        testImplementation 'org.codehaus.groovy:groovy-all:3.0.9'
+        testImplementation(libs.groovy)
     }
 
     /* Compiling */
@@ -251,25 +222,19 @@ configure(javaCodeCheckedProjects) {
     apply plugin: 'com.adarshr.test-logger'
 
     dependencies {
-        testImplementation(platform("org.junit:junit-bom:$junitBomVersion"))
-        testImplementation('org.junit.jupiter:junit-jupiter')
-        testImplementation('org.junit.jupiter:junit-jupiter-params')
-        testImplementation('org.junit.jupiter:junit-jupiter-engine')
-        testImplementation('org.junit.vintage:junit-vintage-engine')
+        testImplementation(platform(libs.junit.bom))
+        testImplementation(libs.bundles.junit.vintage)
 
-        testImplementation platform('org.spockframework:spock-bom:2.1-groovy-3.0')
-        testImplementation 'org.spockframework:spock-core'
-        testImplementation 'org.spockframework:spock-junit4'
+        testImplementation(platform(libs.spock.bom))
+        testImplementation(libs.bundles.spock)
+
         if ('8'.equals(findProperty("javaVersion"))) {
-            testImplementation("org.mockito:mockito-core:4.6.1")
-            testImplementation("org.mockito:mockito-inline:4.6.1")
+            testImplementation(libs.bundles.mockito.java8)
         } else {
-            testImplementation("org.mockito:mockito-core:5.11.0")
+            testImplementation(libs.bundles.mockito)
         }
-        testImplementation 'cglib:cglib-nodep:2.2.2'
-        testImplementation 'org.objenesis:objenesis:1.3'
-        testImplementation 'org.hamcrest:hamcrest-all:1.3'
-        testImplementation "ch.qos.logback:logback-classic:$logbackVersion"
+        testImplementation(libs.cglib)
+        testImplementation(libs.objenesis)
         testImplementation project(':util:spock') //Adding categories to classpath
     }
 
