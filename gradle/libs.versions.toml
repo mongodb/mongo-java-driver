@@ -1,0 +1,178 @@
+# Copyright 2008-present MongoDB, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[versions]
+aws-sdk-v1 = "1.12.337"
+aws-sdk-v2 = "2.18.9"
+graal-sdk = "24.0.0"
+jna = "5.11.0"
+jnr-unixsocket = "0.38.17"
+netty-bom = "4.1.87.Final"
+project-reactor-bom = "2022.0.0"
+reactive-streams = "1.0.4"
+snappy = "1.1.10.3"
+zstd = "1.5.5-3"
+
+kotlin = "1.8.10"
+kotlinx-coroutines-bom = "1.6.4"
+kotlinx-datetime = "0.4.0"
+kotlinx-serialization = "1.5.0"
+
+scala = "%scala-version%" # Handled by the scala multiversion plugin
+
+# Test
+assertj = "3.24.2"
+aws-lambda-core = "1.2.2"
+aws-lambda-events = "3.11.1"
+cglib = "2.2.2"
+classgraph = "4.8.154"
+findbugs-jsr = "1.3.9"
+groovy = "3.0.9"
+hamcrest = "1.3"
+junit-bom = "5.10.2"
+logback = "1.3.14"
+mockito = "5.11.0"
+mockito-java8 = "4.6.1"
+mockito-kotlin = "4.1.0"
+objenesis = "1.3"
+reflections = "0.9.10"
+scalatest = "3.2.9"
+scalatest-plus = "3.2.10.0"
+slf4j = "1.7.6"
+spock-bom = "2.1-groovy-3.0"
+
+# Plugins
+plugin-bnd = "5.1.2"
+plugin-build-config = "3.0.3"
+plugin-detekt = "1.21.0"
+plugin-dokka = "1.8.10"
+plugin-download = "5.6.0"
+plugin-graalvm = "0.9.23"
+plugin-optional-base = "7.0.0"
+plugin-scala-multiversion = "2.0.4"
+plugin-shadow = "6.1.0"
+plugin-spotbugs = "6.0.15"
+plugin-spotless = "6.14.0"
+plugin-test-logger = "2.1.0"
+
+[libraries]
+aws-java-sdk-v1-core = { module = "com.amazonaws:aws-java-sdk-core", version.ref = "aws-sdk-v1" }
+aws-java-sdk-v1-sts = { module = "com.amazonaws:aws-java-sdk-sts", version.ref = "aws-sdk-v1" }
+aws-java-sdk-v2-auth = { module = "software.amazon.awssdk:auth", version.ref = "aws-sdk-v2" }
+aws-java-sdk-v2-sts = { module = "software.amazon.awssdk:sts", version.ref = "aws-sdk-v2" }
+
+jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
+jnr-unixsocket = { module = "com.github.jnr:jnr-unixsocket", version.ref = "jnr-unixsocket" }
+
+netty-bom = { module = "io.netty:netty-bom", version.ref = "netty-bom" }
+netty-buffer = { module = "io.netty:netty-buffer" }
+netty-handler = { module = "io.netty:netty-handler" }
+netty-transport = { module = "io.netty:netty-transport" }
+
+project-reactor-bom = { module = "io.projectreactor:reactor-bom", version.ref = "project-reactor-bom" }
+project-reactor-core = { module = "io.projectreactor:reactor-core" }
+reactive-streams = { module = " org.reactivestreams:reactive-streams", version.ref = "reactive-streams" }
+
+slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+snappy-java = { module = "org.xerial.snappy:snappy-java", version.ref = "snappy" }
+zstd-jni = { module = "com.github.luben:zstd-jni", version.ref = "zstd" }
+
+graal-sdk = { module = "org.graalvm.sdk:graal-sdk", version.ref = "graal-sdk" }
+graal-sdk-native = { module = "org.graalvm.sdk:native", version.ref = "graal-sdk" }
+
+kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom" }
+kotlin-stdlib-jdk8 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
+kotlinx-coroutines-bom = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-bom", version.ref = "kotlinx-coroutines-bom" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core" }
+kotlinx-coroutines-reactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
+kotlinx-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-bom", version.ref = "kotlinx-serialization" }
+kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json" }
+kotlinx-serialization-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+
+scala-library = {module = "org.scala-lang:scala-library", version.ref = "scala" }
+scala-reflect = {module = "org.scala-lang:scala-reflect", version.ref = "scala" }
+
+# Test
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params" }
+junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
+junit-vintage-engine = { module = "org.junit.vintage:junit-vintage-engine" }
+junit-kotlin = { module = "org.jetbrains.kotlin:kotlin-test-junit" }
+
+spock-bom = { module = "org.spockframework:spock-bom", version.ref = "spock-bom" }
+spock-core = { module = "org.spockframework:spock-core" }
+spock-junit4 = { module = "org.spockframework:spock-junit4" }
+
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
+mockito-junit-jupiter-java8 = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito-java8" }
+mockito-core-java8 = { module = "org.mockito:mockito-core", version.ref = "mockito-java8" }
+mockito-inline-java8 = { module = "org.mockito:mockito-inline", version.ref = "mockito-java8" }
+mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockito-kotlin" }
+
+scalatest-flatspec = { module = "org.scalatest:scalatest-flatspec_%%", version.ref = "scalatest" }
+scalatest-should-matchers = { module = "org.scalatest:scalatest-shouldmatchers_%%", version.ref = "scalatest" }
+scalatest-plus-junit4 = { module = "org.scalatestplus:junit-4-13_%%", version.ref = "scalatest-plus" }
+scalatest-plus-mockito = { module = "org.scalatestplus:mockito-3-12_%%", version.ref = "scalatest-plus" }
+
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test" }
+
+assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+aws-lambda-core = { module = " com.amazonaws:aws-lambda-java-core", version.ref = "aws-lambda-core" }
+aws-lambda-events = { module = " com.amazonaws:aws-lambda-java-events", version.ref = "aws-lambda-events" }
+cglib = { module = "cglib:cglib-nodep", version.ref = "cglib" }
+classgraph = { module = "io.github.classgraph:classgraph", version.ref = "classgraph" }
+findbugs-jsr = { module = "com.google.code.findbugs:jsr305", version.ref = "findbugs-jsr" }
+groovy = { module = "org.codehaus.groovy:groovy-all", version.ref = "groovy" }
+hamcrest-all = { module = "org.hamcrest:hamcrest-all", version.ref = "hamcrest" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+netty-boringssl = { module = "io.netty:netty-tcnative-boringssl-static" }
+objenesis = { module = "org.objenesis:objenesis", version.ref = "objenesis" }
+project-reactor-test = { module = "io.projectreactor:reactor-test" }
+reactive-streams-tck = { module = " org.reactivestreams:reactive-streams-tck", version.ref = "reactive-streams" }
+reflections = { module = "org.reflections:reflections", version.ref = "reflections" }
+
+[bundles]
+aws-java-sdk-v1 = ["aws-java-sdk-v1-core", "aws-java-sdk-v1-sts"]
+aws-java-sdk-v2 = ["aws-java-sdk-v2-auth", "aws-java-sdk-v2-sts"]
+netty = ["netty-buffer", "netty-handler", "netty-transport"]
+
+# Test
+junit = ["junit-jupiter", "junit-jupiter-params", "junit-jupiter-engine", "junit-jupiter", "logback-classic", "hamcrest-all"]
+junit-vintage = ["junit-vintage-engine", "junit-jupiter-params", "junit-jupiter-engine", "junit-jupiter", "logback-classic", "hamcrest-all"]
+scalatest = ["scalatest-flatspec", "scalatest-should-matchers", "scalatest-plus-junit4", "scalatest-plus-mockito"]
+spock = ["spock-core", "spock-junit4"]
+
+mockito = ["mockito-junit-jupiter", "mockito-core"]
+mockito-java8 = ["mockito-junit-jupiter-java8", "mockito-core-java8", "mockito-inline-java8"]
+mockito-kotlin = ["mockito-kotlin", "mockito-junit-jupiter-java8"]
+
+[plugins]
+bnd = { id = "biz.aQute.bnd", version.ref = "plugin-bnd" }
+build-config = { id = "com.github.gmazzo.buildconfig", version.ref = "plugin-build-config" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "plugin-detekt" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "plugin-dokka" }
+download = { id = "de.undercouch.download", version.ref = "plugin-download" }
+graalvm-buildtools = { id = "org.graalvm.buildtools.native", version.ref = "plugin-graalvm" }
+kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+optional = { id = "nebula.optional-base", version.ref = "plugin-optional-base" }
+scala-multiversion = { id = "com.adtran.scala-multiversion-plugin", version.ref = "plugin-scala-multiversion" }
+shadow = { id = "com.github.johnrengelman.shadow", version.ref = "plugin-shadow" }
+spotbugs = { id = "com.github.spotbugs", version.ref = "plugin-spotbugs" }
+spotless = { id = "com.diffplug.spotless", version.ref = "plugin-spotless" }
+test-logger = { id = "com.adarshr.test-logger", version.ref = "plugin-test-logger" }

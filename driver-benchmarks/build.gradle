@@ -32,7 +32,7 @@ sourceSets {
 dependencies {
     api project(':driver-sync')
     api project(':mongodb-crypt')
-    implementation "ch.qos.logback:logback-classic:$logbackVersion"
+    implementation(libs.logback.classic)
 }
 
 javadoc {

@@ -28,7 +28,7 @@ dependencies {
     testImplementation project(':driver-core').sourceSets.test.output
     testRuntimeOnly project(path: ':driver-core', configuration: 'consumableTestRuntimeOnly')
 
-    testImplementation('com.amazonaws:aws-lambda-java-core:1.2.1')
+    testImplementation(libs.aws.lambda.core)
 }
 
 sourceSets {

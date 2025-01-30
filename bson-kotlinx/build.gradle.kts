@@ -19,12 +19,12 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     id("org.jetbrains.kotlin.jvm")
     kotlin("plugin.serialization")
-    `java-library`
+    id("java-library")
 
     // Test based plugins
-    id("com.diffplug.spotless")
-    id("org.jetbrains.dokka")
-    id("io.gitlab.arturbosch.detekt")
+    alias(libs.plugins.spotless)
+    alias(libs.plugins.dokka)
+    alias(libs.plugins.detekt)
 }
 
 repositories {
@@ -38,10 +38,6 @@ description = "Bson Kotlinx Codecs"
 
 ext.set("pomName", "Bson Kotlinx")
 
-ext.set("kotlinxDatetimeVersion", "0.4.0")
-
-val kotlinxDatetimeVersion: String by ext
-
 java {
     registerFeature("dateTimeSupport") { usingSourceSet(sourceSets["main"]) }
     registerFeature("jsonSupport") { usingSourceSet(sourceSets["main"]) }
@@ -49,21 +45,21 @@ java {
 
 dependencies {
     // Align versions of all Kotlin components
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation(platform(libs.kotlin.bom))
+    implementation(libs.kotlin.stdlib.jdk8)
 
-    implementation(platform("org.jetbrains.kotlinx:kotlinx-serialization-bom:1.5.0"))
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core")
-    "dateTimeSupportImplementation"("org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetimeVersion")
-    "jsonSupportImplementation"("org.jetbrains.kotlinx:kotlinx-serialization-json")
+    implementation(platform(libs.kotlinx.serialization))
+    implementation(libs.kotlinx.serialization.core)
+    "dateTimeSupportImplementation"(libs.kotlinx.serialization.datetime)
+    "jsonSupportImplementation"(libs.kotlinx.serialization.json)
 
     api(project(path = ":bson", configuration = "default"))
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation(libs.kotlin.reflect)
 
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
     testImplementation(project(path = ":driver-core", configuration = "default"))
-    testImplementation("org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetimeVersion")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json")
+    testImplementation(libs.junit.kotlin)
+    testImplementation(libs.kotlinx.serialization.datetime)
+    testImplementation(libs.kotlinx.serialization.json)
 }
 
 kotlin { explicitApi() }
