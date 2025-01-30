@@ -75,7 +75,6 @@ import com.mongodb.internal.client.model.bulk.ConcreteClientReplaceOneModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientReplaceOneOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateManyModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOneModel;
-import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOneOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateResult;
 import com.mongodb.internal.client.model.bulk.UnacknowledgedClientBulkWriteResult;
 import com.mongodb.internal.connection.AsyncConnection;
