@@ -16,6 +16,9 @@
 package com.mongodb.kotlin.client.coroutine
 
 import com.mongodb.ClientSessionOptions
+import com.mongodb.MongoNamespace
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel
 import com.mongodb.reactivestreams.client.MongoClient as JMongoClient
 import kotlin.reflect.full.declaredFunctions
 import kotlin.test.assertEquals
@@ -164,6 +167,31 @@ class MongoClientTest {
         verify(wrapped, times(1)).watch(clientSession.wrapped, pipeline, Document::class.java)
         verify(wrapped, times(2)).watch(pipeline, BsonDocument::class.java)
         verify(wrapped, times(2)).watch(clientSession.wrapped, pipeline, BsonDocument::class.java)
+        verifyNoMoreInteractions(wrapped)
+    }
+
+    @Test
+    fun shouldCallTheUnderlyingBulkWrite() {
+        val mongoClient = MongoClient(wrapped)
+        val requests = listOf(ClientNamespacedWriteModel.insertOne(MongoNamespace("test.test"), Document()))
+        val options = ClientBulkWriteOptions.clientBulkWriteOptions().bypassDocumentValidation(true)
+
+        whenever(wrapped.bulkWrite(requests)).doReturn(Mono.fromCallable { mock() })
+        whenever(wrapped.bulkWrite(requests, options)).doReturn(Mono.fromCallable { mock() })
+        whenever(wrapped.bulkWrite(clientSession.wrapped, requests)).doReturn(Mono.fromCallable { mock() })
+        whenever(wrapped.bulkWrite(clientSession.wrapped, requests, options)).doReturn(Mono.fromCallable { mock() })
+
+        runBlocking {
+            mongoClient.bulkWrite(requests)
+            mongoClient.bulkWrite(requests, options)
+            mongoClient.bulkWrite(clientSession, requests)
+            mongoClient.bulkWrite(clientSession, requests, options)
+        }
+
+        verify(wrapped).bulkWrite(requests)
+        verify(wrapped).bulkWrite(requests, options)
+        verify(wrapped).bulkWrite(clientSession.wrapped, requests)
+        verify(wrapped).bulkWrite(clientSession.wrapped, requests, options)
         verifyNoMoreInteractions(wrapped)
     }
 }

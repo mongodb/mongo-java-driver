@@ -1,5 +1,6 @@
 package org.mongodb.scala.syncadapter
 
+import com.mongodb.client.model.bulk.{ ClientBulkWriteOptions, ClientBulkWriteResult, ClientNamespacedWriteModel }
 import com.mongodb.{ ClientSessionOptions, ReadConcern, ReadPreference, WriteConcern }
 import com.mongodb.client.{ ClientSession, MongoCluster => JMongoCluster, MongoDatabase => JMongoDatabase }
 import org.bson.Document
@@ -8,6 +9,7 @@ import org.bson.conversions.Bson
 import org.mongodb.scala.MongoCluster
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 
+import java.util
 import java.util.concurrent.TimeUnit
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
@@ -123,4 +125,24 @@ class SyncMongoCluster(wrapped: MongoCluster) extends JMongoCluster {
 
   private def unwrap(clientSession: ClientSession): org.mongodb.scala.ClientSession =
     clientSession.asInstanceOf[SyncClientSession].wrapped
+
+  override def bulkWrite(
+      models: util.List[_ <: ClientNamespacedWriteModel]
+  ): ClientBulkWriteResult = wrapped.bulkWrite(models.asScala.toList).toFuture().get()
+
+  override def bulkWrite(
+      models: util.List[_ <: ClientNamespacedWriteModel],
+      options: ClientBulkWriteOptions
+  ): ClientBulkWriteResult = wrapped.bulkWrite(models.asScala.toList, options).toFuture().get()
+
+  override def bulkWrite(
+      clientSession: ClientSession,
+      models: util.List[_ <: ClientNamespacedWriteModel]
+  ): ClientBulkWriteResult = wrapped.bulkWrite(unwrap(clientSession), models.asScala.toList).toFuture().get()
+
+  override def bulkWrite(
+      clientSession: ClientSession,
+      models: util.List[_ <: ClientNamespacedWriteModel],
+      options: ClientBulkWriteOptions
+  ): ClientBulkWriteResult = wrapped.bulkWrite(unwrap(clientSession), models.asScala.toList, options).toFuture().get()
 }

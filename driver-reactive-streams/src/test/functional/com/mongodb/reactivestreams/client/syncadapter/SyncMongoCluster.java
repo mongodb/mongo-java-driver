@@ -16,6 +16,7 @@
 
 package com.mongodb.reactivestreams.client.syncadapter;
 
+import com.mongodb.ClientBulkWriteException;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
@@ -26,6 +27,9 @@ import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -276,6 +280,36 @@ public class SyncMongoCluster implements MongoCluster {
     public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final List<? extends Bson> pipeline,
                                                          final Class<TResult> resultClass) {
         return new SyncChangeStreamIterable<>(wrapped.watch(unwrap(clientSession), pipeline, resultClass));
+    }
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
+        return requireNonNull(Mono.from(wrapped.bulkWrite(clientWriteModels)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
+            final ClientBulkWriteOptions options) throws ClientBulkWriteException {
+        return requireNonNull(Mono.from(wrapped.bulkWrite(clientWriteModels, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final ClientSession clientSession,
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
+        return requireNonNull(
+                Mono.from(wrapped.bulkWrite(unwrap(clientSession), clientWriteModels)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final ClientSession clientSession,
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
+            final ClientBulkWriteOptions options) throws ClientBulkWriteException {
+        return requireNonNull(Mono.from(wrapped.bulkWrite(unwrap(clientSession), clientWriteModels, options)).contextWrite(CONTEXT)
+                .block(TIMEOUT_DURATION));
     }
 
     private com.mongodb.reactivestreams.client.ClientSession unwrap(final ClientSession clientSession) {

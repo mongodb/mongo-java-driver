@@ -18,14 +18,22 @@ package com.mongodb.client.model.search;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
+
+import java.util.UUID;
+
 import org.bson.BsonArray;
+import org.bson.BsonBinary;
+import org.bson.BsonBoolean;
 import org.bson.BsonDateTime;
 import org.bson.BsonDocument;
 import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
+import org.bson.BsonNull;
+import org.bson.BsonObjectId;
 import org.bson.BsonString;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -577,6 +585,332 @@ final class SearchOperatorTest {
                                         fieldPath("fieldName1"),
                                         fieldPath("fieldName2")))
                                 .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry())
+                )
+        );
+    }
+
+    @Test
+    void equals() {
+        ObjectId objectId = new ObjectId();
+        UUID uuid = UUID.randomUUID();
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // path must not be null
+                        SearchOperator.equals(null, "term")
+                ),
+                () -> assertEquals(
+                        new BsonDocument("equals",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("value", new BsonBoolean(true))
+                        ),
+                        SearchOperator.equals(
+                                        fieldPath("fieldName"),
+                                        true)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                new BsonDocument("equals",
+                        new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                .append("value", new BsonObjectId(objectId))
+                ),
+                SearchOperator.equals(
+                                fieldPath("fieldName"),
+                                objectId)
+                        .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("equals",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("value", new BsonInt32(1))
+                        ),
+                        SearchOperator.equals(
+                                        fieldPath("fieldName"),
+                                        1)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("equals",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("value", new BsonInt64(Long.MAX_VALUE))
+                        ),
+                        SearchOperator.equals(
+                                        fieldPath("fieldName"),
+                                        Long.MAX_VALUE)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("equals",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("value", new BsonDouble(Double.MAX_VALUE))
+                        ),
+                        SearchOperator.equals(
+                                        fieldPath("fieldName"),
+                                        Double.MAX_VALUE)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("equals",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("value", new BsonDateTime(Instant.EPOCH.toEpochMilli()))
+                        ),
+                        SearchOperator.equals(
+                                        fieldPath("fieldName"),
+                                        Instant.EPOCH)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("equals",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("value", new BsonString("term"))
+                        ),
+                        SearchOperator.equals(
+                                        fieldPath("fieldName"),
+                                        "term")
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("equals",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("value", new BsonBinary(uuid))
+                        ),
+                        SearchOperator.equals(
+                                        fieldPath("fieldName"),
+                                        uuid)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("equals",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("value", BsonNull.VALUE)
+                        ),
+                        SearchOperator.equalsNull(fieldPath("fieldName"))
+                                .toBsonDocument()
+                )
+        );
+    }
+
+    @Test
+    void moreLikeThis() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // likes must not be empty
+                        SearchOperator.moreLikeThis(emptyList())
+                ),
+                () -> assertEquals(
+                        new BsonDocument("moreLikeThis",
+                                new BsonDocument("like", new BsonDocument("fieldName", new BsonString("fieldValue")))
+                        ),
+                        SearchOperator.moreLikeThis(new BsonDocument("fieldName", new BsonString("fieldValue")))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("moreLikeThis",
+                                new BsonDocument("like", new BsonDocument("fieldName", new BsonString("fieldValue"))
+                                        .append("fieldName2", new BsonString("fieldValue2")))
+                        ),
+                        SearchOperator.moreLikeThis(new BsonDocument("fieldName", new BsonString("fieldValue"))
+                                        .append("fieldName2", new BsonString("fieldValue2")))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("moreLikeThis",
+                                new BsonDocument("like", new BsonArray(asList(
+                                        new BsonDocument("fieldName", new BsonString("fieldValue"))
+                                                .append("fieldName2", new BsonString("fieldValue2")),
+                                        new BsonDocument("fieldName3", new BsonString("fieldValue3"))
+                                )))
+                        ),
+                        SearchOperator.moreLikeThis(asList(
+                                new BsonDocument("fieldName", new BsonString("fieldValue"))
+                                        .append("fieldName2", new BsonString("fieldValue2")),
+                                new BsonDocument("fieldName3", new BsonString("fieldValue3"))))
+                                .toBsonDocument()
+                )
+        );
+    }
+
+    @Test
+    void wildcard() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // queries must not be empty
+                        SearchOperator.wildcard(emptyList(), singleton(fieldPath("fieldName")))
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // paths must not be empty
+                        SearchOperator.wildcard(singleton("term"), emptyList())
+                ),
+                () -> assertEquals(
+                        new BsonDocument("wildcard",
+                                new BsonDocument("query", new BsonString("term"))
+                                        .append("path", fieldPath("fieldName").toBsonValue())
+                        ),
+                        SearchOperator.wildcard(
+                                        "term",
+                                        fieldPath("fieldName"))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("wildcard",
+                                new BsonDocument("query", new BsonArray(asList(
+                                        new BsonString("term1"),
+                                        new BsonString("term2"))))
+                                        .append("path", new BsonArray(asList(
+                                                fieldPath("fieldName").toBsonValue(),
+                                                wildcardPath("wildc*rd").toBsonValue())))
+                        ),
+                        SearchOperator.wildcard(
+                                        asList(
+                                                "term1",
+                                                "term2"),
+                                        asList(
+                                                fieldPath("fieldName"),
+                                                wildcardPath("wildc*rd")))
+                                .toBsonDocument()
+                )
+        );
+    }
+
+    @Test
+    void queryString() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // queries must not be empty
+                        SearchOperator.queryString(fieldPath("fieldName"), null)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // paths must not be empty
+                        SearchOperator.queryString(null, "term1 AND (term2 OR term3)")
+                ),
+                () -> assertEquals(
+                        new BsonDocument("queryString",
+                                new BsonDocument("defaultPath", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term1 AND (term2 OR term3)"))
+                        ),
+                        SearchOperator.queryString(
+                                        fieldPath("fieldName"),
+                                        "term1 AND (term2 OR term3)")
+                                .toBsonDocument()
+                )
+        );
+    }
+
+    @Test
+    void phrase() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // queries must not be empty
+                        SearchOperator.phrase(singleton(fieldPath("fieldName")), emptyList())
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // paths must not be empty
+                        SearchOperator.phrase(emptyList(), singleton("term"))
+                ),
+                () -> assertEquals(
+                        new BsonDocument("phrase",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
+                        ),
+                        SearchOperator.phrase(
+                                fieldPath("fieldName"),
+                                "term")
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("phrase",
+                                new BsonDocument("path", new BsonArray(asList(
+                                        fieldPath("fieldName").toBsonValue(),
+                                        wildcardPath("wildc*rd").toBsonValue())))
+                                        .append("query", new BsonArray(asList(
+                                                new BsonString("term1"),
+                                                new BsonString("term2"))))
+                        ),
+                        SearchOperator.phrase(
+                                        asList(
+                                                fieldPath("fieldName"),
+                                                wildcardPath("wildc*rd")),
+                                        asList(
+                                                "term1",
+                                                "term2"))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("phrase",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
+                                        .append("synonyms", new BsonString("synonymMappingName"))
+                        ),
+                        SearchOperator.phrase(
+                                singleton(fieldPath("fieldName")),
+                                singleton("term"))
+                                .synonyms("synonymMappingName")
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("phrase",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
+                                        .append("synonyms", new BsonString("synonymMappingName"))
+                                        .append("slop", new BsonInt32(5))
+                        ),
+                        SearchOperator.phrase(
+                                singleton(fieldPath("fieldName")),
+                                singleton("term"))
+                                .synonyms("synonymMappingName")
+                                .slop(5)
+                                .toBsonDocument()
+                )
+        );
+    }
+
+    @Test
+    void regex() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // queries must not be empty
+                        SearchOperator.regex(singleton(fieldPath("fieldName")), emptyList())
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // paths must not be empty
+                        SearchOperator.regex(emptyList(), singleton("term"))
+                ),
+                () -> assertEquals(
+                        new BsonDocument("regex",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
+                        ),
+                        SearchOperator.regex(
+                                        fieldPath("fieldName"),
+                                        "term")
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("regex",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
+                        ),
+                        SearchOperator.regex(
+                                        singleton(fieldPath("fieldName")),
+                                        singleton("term"))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("regex",
+                                new BsonDocument("path", new BsonArray(asList(
+                                        fieldPath("fieldName").toBsonValue(),
+                                        wildcardPath("wildc*rd").toBsonValue())))
+                                        .append("query", new BsonArray(asList(
+                                                new BsonString("term1"),
+                                                new BsonString("term2"))))
+                        ),
+                        SearchOperator.regex(
+                                        asList(
+                                                fieldPath("fieldName"),
+                                                wildcardPath("wildc*rd")),
+                                        asList(
+                                                "term1",
+                                                "term2"))
+                                .toBsonDocument()
                 )
         );
     }
