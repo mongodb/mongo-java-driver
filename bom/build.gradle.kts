@@ -19,6 +19,5 @@ dependencies {
 
         api(project(":bson-scala"))
         api(project(":driver-scala"))
-
     }
 }

@@ -176,11 +176,56 @@ configure(bomProjects) { project ->
     apply plugin: 'signing'
     apply plugin: 'java-platform'
 
+    // Get the Scala versions from the project property. Only major.minor versions.
+    def scalaVersions = project.findProperty("scalaVersions")?.split(",")
+            ?.collect { it.split("\\.")[0] + "." + it.split("\\.")[1] }
+
+    assert scalaVersions != null && !scalaVersions.isEmpty() : "Scala versions must be provided as a comma-separated list" +
+            " in the 'scalaVersions' project property"
+
     publishing {
         publications {
             mavenJava(MavenPublication) {
                 artifactId = "bom".equals(project.archivesBaseName) ? "mongodb-driver-bom" : project.archivesBaseName
                 from components.javaPlatform
+
+                // Modify the generated POM to add multiple compile versions of driver-scala or bson-scala.
+                // Scala multi-version support generates only one for BOM.
+                pom.withXml {
+                    def pomXml = asNode()
+
+                    def dependencyManagementNode = pomXml.get("dependencyManagement")?.getAt(0)
+                    assert dependencyManagementNode : "<dependencyManagement> node not found in the generated BOM POM"
+
+                    def dependenciesNode = dependencyManagementNode.get("dependencies")?.getAt(0)
+                    assert dependenciesNode : "<dependencies> node not found inside <dependencyManagement>"
+
+                    // Check if scala dependencies are present in the BOM.
+                    def existingScalaDeps = dependenciesNode.children().findAll {
+                        it.artifactId.text().contains("scala")
+                    }
+
+                    existingScalaDeps.each { existingDep ->
+                        String groupId = existingDep.groupId.text()
+                        String originalArtifactId = existingDep.artifactId.text()
+                        String artifactVersion = existingDep.version.text()
+
+                        // Add multiple versions with Scala suffixes for each Scala-related dependency.
+                        scalaVersions.each { scalaVersion ->
+                            // Remove existing Scala version suffix (_2.12, _2.13, etc.)
+                            String baseArtifactId = originalArtifactId.replaceAll("_\\d+\\.\\d+(\\.\\d+)?\$", "")
+                            String newArtifactId = "${baseArtifactId}_${scalaVersion}"
+
+                            // Skip if Scala dependency with this scalaVersion already exists in BOM.
+                            if(newArtifactId != originalArtifactId) {
+                                def dependencyNode = dependenciesNode.appendNode("dependency")
+                                dependencyNode.appendNode("groupId", groupId)
+                                dependencyNode.appendNode("artifactId", newArtifactId)
+                                dependencyNode.appendNode("version", artifactVersion)
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -195,7 +240,6 @@ configure(bomProjects) { project ->
         }
     }
 
-    //TODO do we need to generate Gradle module metadata for the BOM?
     tasks.withType(GenerateModuleMetadata) {
         enabled = false
     }
