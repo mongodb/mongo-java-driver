@@ -82,8 +82,8 @@ public class AggregatesSearchTest {
                         + "   { _id: 5, title: 'not test' },\n"
                         + "   { _id: 6, description: 'desc 1' },\n"
                         + "   { _id: 7, description: 'desc 8' },\n"
-                        + "   { _id: 8, summary: 'summary 1' },\n"
-                        + "   { _id: 9, summary: 'summary 2' },\n"
+                        + "   { _id: 8, summary: 'summary 1 one five' },\n"
+                        + "   { _id: 9, summary: 'summary 2 one two three four five' },\n"
                         + "]");
 
         searchIndexName = "not_default";
@@ -159,8 +159,8 @@ public class AggregatesSearchTest {
                 search(SearchOperator.moreLikeThis(Document.parse("{ summary: 'summary' }").toBsonDocument()),
                         searchOptions().index(searchIndexName)));
         assertResults(pipeline, "[\n"
-                                + "   { _id: 8, summary: 'summary 1' },\n"
-                                + "   { _id: 9, summary: 'summary 2' },\n"
+                                + "   { _id: 8, summary: 'summary 1 one five' },\n"
+                                + "   { _id: 9, summary: 'summary 2 one two three four five' },\n"
                                 + "]");
     }
 
@@ -182,6 +182,26 @@ public class AggregatesSearchTest {
         assertResults(pipeline, "[\n"
                                 + "   { _id: 6, description: 'desc 1' },\n"
                                 + "   { _id: 7, description: 'desc 8' },\n"
+                                + "]");
+    }
+
+    @Test
+    public void testPhrase() {
+        List<Bson> pipeline = Arrays.asList(
+                search(SearchOperator.phrase(fieldPath("summary"), "one five").slop(2),
+                        searchOptions().index(searchIndexName)));
+        assertResults(pipeline, "[\n"
+                                + "   { _id: 8, summary: 'summary 1 one five' },\n"
+                                + "]");
+    }
+
+    @Test
+    public void testQueryString() {
+        List<Bson> pipeline = Arrays.asList(
+                search(SearchOperator.queryString(fieldPath("summary"), "summary: one AND summary: three"),
+                        searchOptions().index(searchIndexName)));
+        assertResults(pipeline, "[\n"
+                                + "   { _id: 9, summary: 'summary 2 one two three four five' },\n"
                                 + "]");
     }
 
