@@ -121,9 +121,6 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 /**
- * Use this class when needing to test against MFLIX specifically. Otherwise,
- * see AggregatesSearchTest.
- * <p>
  * These tests require the <a href="https://www.mongodb.com/docs/atlas/sample-data/">sample data</a>
  * and the following Atlas Search indices:
  * <table>
@@ -231,6 +228,9 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
  *      </tr>
  *  </tbody>
  * </table>
+ * <p>
+ * Use this class when needing to test against MFLIX specifically. Otherwise,
+ * see AggregatesSearchTest.
  */
 final class AggregatesSearchIntegrationTest {
     private static final MongoNamespace MFLIX_MOVIES_NS = new MongoNamespace("sample_mflix", "movies");

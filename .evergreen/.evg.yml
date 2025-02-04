@@ -509,37 +509,6 @@ functions:
           mongo --nodb setup.js aws_e2e_ecs.js
           cd -
 
-  run-atlas-connectivity-test-func:
-    - command: shell.exec
-      type: test
-      params:
-        silent: true
-        working_dir: "src"
-        script: |
-          # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
-          # The connection strings are pipe-delimited
-          MONGODB_URIS="${atlas_free_tier_uri}|${atlas_replica_set_uri}|${atlas_sharded_uri}|${atlas_tls_v11_uri}|${atlas_tls_v12_uri}|${atlas_free_tier_uri_srv}|${atlas_replica_set_uri_srv}|${atlas_sharded_uri_srv}|${atlas_tls_v11_uri_srv}|${atlas_tls_v12_uri_srv}|${atlas_serverless_uri}|${atlas_serverless_uri_srv}" \
-          JAVA_VERSION="8" \
-          .evergreen/run-connectivity-tests.sh
-
-  "run atlas data lake test":
-    - command: shell.exec
-      type: test
-      params:
-        working_dir: "src"
-        script: |
-          ${PREPARE_SHELL}
-          JAVA_VERSION=${JAVA_VERSION} .evergreen/run-atlas-data-lake-test.sh
-
-  "run atlas search test":
-    - command: shell.exec
-      type: test
-      params:
-        working_dir: "src"
-        script: |
-          ${PREPARE_SHELL}
-          MONGODB_URI="${atlas_search_uri}" .evergreen/run-atlas-search-tests.sh
-
   "run-ocsp-test":
     - command: shell.exec
       type: test
@@ -1462,20 +1431,42 @@ tasks:
             OCSP_MUST_STAPLE: "false"
             OCSP_TLS_SHOULD_SUCCEED: "0"
 
-    - name: "atlas-data-lake-test"
+    - name: "atlas-data-lake-task"
       commands:
         - func: "bootstrap mongohoused"
-        - func: "run atlas data lake test"
+        - command: shell.exec
+          type: test
+          params:
+            working_dir: "src"
+            script: |
+              ${PREPARE_SHELL}
+              JAVA_VERSION=${JAVA_VERSION} .evergreen/run-atlas-data-lake-test.sh
 
-    - name: "atlas-search-test"
+    - name: "atlas-search-task"
       commands:
-        - func: "run atlas search test"
+        - command: shell.exec
+          type: test
+          params:
+            working_dir: "src"
+            script: |
+              ${PREPARE_SHELL}
+              MONGODB_URI="${atlas_search_uri}" .evergreen/run-atlas-search-tests.sh
 
-    - name: "atlas-test-task"
+    - name: "atlas-connectivity-task"
       commands:
-        - func: run-atlas-connectivity-test-func
+        - command: shell.exec
+          type: test
+          params:
+            silent: true
+            working_dir: "src"
+            script: |
+              # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
+              # The connection strings are pipe-delimited
+              MONGODB_URIS="${atlas_free_tier_uri}|${atlas_replica_set_uri}|${atlas_sharded_uri}|${atlas_tls_v11_uri}|${atlas_tls_v12_uri}|${atlas_free_tier_uri_srv}|${atlas_replica_set_uri_srv}|${atlas_sharded_uri_srv}|${atlas_tls_v11_uri_srv}|${atlas_tls_v12_uri_srv}|${atlas_serverless_uri}|${atlas_serverless_uri_srv}" \
+              JAVA_VERSION="8" \
+              .evergreen/run-connectivity-tests.sh
 
-    - name: "test-atlas-search-index-helpers"
+    - name: "atlas-search-index-management-task"
       commands:
         - command: subprocess.exec
           params:
@@ -1536,7 +1527,7 @@ tasks:
         - func: "run perf tests"
         - func: "send dashboard data"
 
-    - name: "test-aws-lambda-deployed"
+    - name: "aws-lambda-deployed-task"
       commands:
         - command: ec2.assume_role
           params:
@@ -1917,11 +1908,12 @@ axes:
         batchtime: 10080  # 7 days
 
 task_groups:
-  - name: test-atlas-search-task-group
+  - name: "atlas-deployed-task-group"
     setup_group:
       - func: fetch source
       - func: prepare resources
       - command: subprocess.exec
+        type: setup
         params:
           working_dir: src
           binary: bash
@@ -1933,6 +1925,7 @@ task_groups:
           file: src/atlas-expansion.yml
     teardown_group:
       - command: subprocess.exec
+        type: setup
         params:
           working_dir: src
           binary: bash
@@ -1942,7 +1935,8 @@ task_groups:
     setup_group_can_fail_task: true
     setup_group_timeout_secs: 1800
     tasks:
-      - test-atlas-search-index-helpers
+      - "atlas-search-index-management-task"
+      - "aws-lambda-deployed-task"
 
   - name: testgcpkms_task_group
     setup_group_can_fail_task: true
@@ -2024,33 +2018,6 @@ task_groups:
             $DRIVERS_TOOLS/.evergreen/csfle/azurekms/delete-vm.sh
     tasks:
       - testazurekms-task
-
-  - name: test_atlas_task_group
-    setup_group:
-      - func: fetch source
-      - func: prepare resources
-      - command: subprocess.exec
-        params:
-          working_dir: src
-          binary: bash
-          add_expansions_to_env: true
-          args:
-            - ${DRIVERS_TOOLS}/.evergreen/atlas/setup-atlas-cluster.sh
-      - command: expansions.update
-        params:
-          file: src/atlas-expansion.yml
-    teardown_group:
-      - command: subprocess.exec
-        params:
-          working_dir: src
-          binary: bash
-          add_expansions_to_env: true
-          args:
-            - ${DRIVERS_TOOLS}/.evergreen/atlas/teardown-atlas-cluster.sh
-    setup_group_can_fail_task: true
-    setup_group_timeout_secs: 1800
-    tasks:
-      - test-aws-lambda-deployed
 
   - name: testoidc_task_group
     setup_group:
@@ -2285,12 +2252,6 @@ buildvariants:
   tasks:
     - name: "perf"
 
-- name: rhel8-test-atlas
-  display_name: Atlas Cluster Tests
-  run_on: rhel80-large
-  tasks:
-    - test_atlas_task_group
-
 - name: plain-auth-test
   display_name: "PLAIN (LDAP) Auth test"
   run_on: rhel80-small
@@ -2351,29 +2312,19 @@ buildvariants:
   tasks:
     - name: ".ocsp"
 
+- name: "atlas-search-variant"
+  display_name: "Atlas Tests"
+  run_on: rhel80-small
+  tasks:
+    - name: "atlas-deployed-task-group"
+    - name: "atlas-search-task"
+    - name: "atlas-connectivity-task"
+
 - name: atlas-data-lake-test
   display_name: "Atlas Data Lake test"
   run_on: ubuntu2004-small
   tasks:
-    - name: "atlas-data-lake-test"
-
-- name: atlas-test-variant
-  display_name: "Atlas test"
-  run_on: rhel80-small
-  tasks:
-    - name: atlas-test-task
-
-- name: atlas-search-test
-  display_name: "Atlas Search test"
-  run_on: rhel80-small
-  tasks:
-    - name: "atlas-search-test"
-
-- name: atlas-search-variant
-  display_name: "Atlas Search Tests"
-  run_on: rhel80-small
-  tasks:
-    - name: "test-atlas-search-task-group"
+    - name: "atlas-data-lake-task"
 
 - name: "reactive-streams-tck-test"
   display_name: "Reactive Streams TCK tests"

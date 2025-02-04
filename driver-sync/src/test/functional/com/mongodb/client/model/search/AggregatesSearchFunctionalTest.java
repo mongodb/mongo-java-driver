@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package com.mongodb.client.model.mql;
+package com.mongodb.client.model.search;
 
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.SearchIndexModel;
-import com.mongodb.client.model.search.SearchOperator;
 import com.mongodb.internal.connection.ServerHelper;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -53,7 +52,7 @@ import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-public class AggregatesSearchTest {
+public class AggregatesSearchFunctionalTest {
     public static final String ATLAS_SEARCH_DATABASE = "javaVectorSearchTest";
     private static MongoClient client;
     private static MongoDatabase database;
@@ -67,7 +66,7 @@ public class AggregatesSearchTest {
 
         client = getMongoClient();
         database = client.getDatabase(ATLAS_SEARCH_DATABASE);
-        String collectionName = AggregatesSearchTest.class.getName();
+        String collectionName = AggregatesSearchFunctionalTest.class.getName();
         collection = database.getCollection(collectionName);
         collection.drop();
 
@@ -237,7 +236,7 @@ public class AggregatesSearchTest {
     }
 
     @Nullable
-    private static Document indexRecord(
+    private static Document fetchIndexRecord(
             final MongoCollection<Document> collection, final String indexName) {
         return StreamSupport.stream(collection.listSearchIndexes().spliterator(), false)
                 .filter(index -> indexName.equals(index.getString("name")))
@@ -246,9 +245,9 @@ public class AggregatesSearchTest {
 
     static void waitForIndex(final MongoCollection<Document> collection, final String indexName) {
         long startTime = System.nanoTime();
-        long timeoutNanos = TimeUnit.SECONDS.toNanos(20);
+        long timeoutNanos = TimeUnit.SECONDS.toNanos(60);
         while (System.nanoTime() - startTime < timeoutNanos) {
-            Document indexRecord = indexRecord(collection, indexName);
+            Document indexRecord = fetchIndexRecord(collection, indexName);
             if (indexRecord != null) {
                 if ("FAILED".equals(indexRecord.getString("status"))) {
                     throw new RuntimeException("Search index has failed status.");
