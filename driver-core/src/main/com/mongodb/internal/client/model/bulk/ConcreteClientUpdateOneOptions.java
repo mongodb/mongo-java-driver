@@ -20,11 +20,18 @@ import com.mongodb.client.model.bulk.ClientUpdateOneOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
+import java.util.Optional;
+
+import static java.util.Optional.ofNullable;
+
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
 public final class ConcreteClientUpdateOneOptions extends AbstractClientUpdateOptions implements ClientUpdateOneOptions {
     static final ConcreteClientUpdateOneOptions MUTABLE_EMPTY = new ConcreteClientUpdateOneOptions();
+
+    @Nullable
+    private Bson sort;
 
     public ConcreteClientUpdateOneOptions() {
     }
@@ -54,6 +61,21 @@ public final class ConcreteClientUpdateOneOptions extends AbstractClientUpdateOp
         return (ConcreteClientUpdateOneOptions) super.upsert(upsert);
     }
 
+    /**
+     * @see ClientUpdateOneOptions#sort(Bson)
+     */
+    public ConcreteClientUpdateOneOptions sort(final Bson sort) {
+        this.sort = sort;
+        return this;
+    }
+
+    /**
+     * @see ClientUpdateOneOptions#sort(Bson)
+     */
+    public Optional<Bson> getSort() {
+        return ofNullable(sort);
+    }
+
     @Override
     public String toString() {
         return "ClientUpdateOneOptions{"
@@ -62,6 +84,7 @@ public final class ConcreteClientUpdateOneOptions extends AbstractClientUpdateOp
                 + ", hint=" + getHint().orElse(null)
                 + ", hintString=" + getHintString().map(s -> '\'' + s + '\'') .orElse(null)
                 + ", upsert=" + isUpsert().orElse(null)
+                + ", sort=" + getSort().orElse(null)
                 + '}';
     }
 }
