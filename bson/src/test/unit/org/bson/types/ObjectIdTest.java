@@ -196,7 +196,7 @@ public class ObjectIdTest {
     /**
      * MethodSource for valid ByteBuffers containing an ObjectID at the current position.
      */
-    public static List<ByteBuffer> inputBuffers() {
+    public static List<ByteBuffer> validInputBuffers() {
         byte[] data = new byte[12];
         for (byte i = 0; i < data.length; ++i) {
             data[i] = i;
