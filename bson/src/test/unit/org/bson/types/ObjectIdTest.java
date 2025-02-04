@@ -55,7 +55,7 @@ public class ObjectIdTest {
     /**
      * MethodSource for valid ByteBuffers that can hold an ObjectID
      */
-    public static List<ByteBuffer> outputBuffers() {
+    public static List<ByteBuffer> validOutputBuffers() {
         List<ByteBuffer> result = new ArrayList<>();
         result.add(ByteBuffer.allocate(12));
         result.add(ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN));
