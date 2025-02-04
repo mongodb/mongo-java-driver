@@ -82,6 +82,7 @@ import static com.mongodb.client.model.search.SearchOperator.compound;
 import static com.mongodb.client.model.search.SearchOperator.dateRange;
 import static com.mongodb.client.model.search.SearchOperator.equalsNull;
 import static com.mongodb.client.model.search.SearchOperator.exists;
+import static com.mongodb.client.model.search.SearchOperator.in;
 import static com.mongodb.client.model.search.SearchOperator.moreLikeThis;
 import static com.mongodb.client.model.search.SearchOperator.near;
 import static com.mongodb.client.model.search.SearchOperator.numberRange;
@@ -617,6 +618,8 @@ final class AggregatesSearchIntegrationTest {
                                         near(0, 1.5, fieldPath("fieldName7"), fieldPath("fieldName8")),
                                         near(Instant.ofEpochMilli(1), Duration.ofMillis(3), fieldPath("fieldName9")),
                                         phrase(fieldPath("fieldName10"), "term6"),
+                                        in(fieldPath("fieldName10"), true),
+                                        in(fieldPath("fieldName11"), "term4", "term5"),
                                         regex(fieldPath("title").multi("keyword"), "term7"),
                                         queryString(fieldPath("fieldName12"), "term8"),
                                         moreLikeThis(new BsonDocument("like", new BsonDocument("fieldName10",
