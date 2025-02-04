@@ -794,7 +794,7 @@ functions:
         shell: bash
         script: |
           ${PREPARE_SHELL}
-          sh ${DRIVERS_TOOLS}/.evergreen/stop-orchestration.sh || true
+          bash ${DRIVERS_TOOLS}/.evergreen/stop-orchestration.sh || true
           rm -rf $DRIVERS_TOOLS || true
 
   "fix absolute paths":
