@@ -231,7 +231,10 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
      */
     public byte[] toByteArray() {
         // using .allocate ensures there is a backing array that can be returned
-        return ByteBuffer.allocate(OBJECT_ID_LENGTH).putInt(this.timestamp).putLong(this.nonce).array();
+        return ByteBuffer.allocate(OBJECT_ID_LENGTH)
+                .putInt(this.timestamp)
+                .putLong(this.nonce)
+                .array();
     }
 
     /**
