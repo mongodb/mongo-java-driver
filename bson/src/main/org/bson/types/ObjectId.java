@@ -250,7 +250,7 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
         isTrueArgument("buffer.remaining() >=12", buffer.remaining() >= OBJECT_ID_LENGTH);
 
        ByteOrder originalOrder = buffer.order();
-        try{
+        try {
             buffer.order(ByteOrder.BIG_ENDIAN);
             buffer.putInt(this.timestamp);
             buffer.putLong(this.nonce);
