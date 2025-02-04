@@ -18,9 +18,6 @@ package com.mongodb.client.model.search;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
-
-import java.util.UUID;
-
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
 import org.bson.BsonBoolean;
@@ -33,11 +30,15 @@ import org.bson.BsonNull;
 import org.bson.BsonObjectId;
 import org.bson.BsonString;
 import org.bson.Document;
+import org.bson.UuidRepresentation;
+import org.bson.codecs.configuration.CodecRegistries;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.UUID;
 
 import static com.mongodb.client.model.search.FuzzySearchOptions.fuzzySearchOptions;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
@@ -585,6 +586,92 @@ final class SearchOperatorTest {
                                         fieldPath("fieldName1"),
                                         fieldPath("fieldName2")))
                                 .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry())
+                )
+        );
+    }
+
+    @Test
+    void in() {
+        ObjectId objectId = new ObjectId();
+        UUID uuid = UUID.randomUUID();
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // paths must not be empty
+                        SearchOperator.in(null, true)
+                ),
+                () -> assertEquals(
+                        new BsonDocument("in",
+                                new BsonDocument("path", fieldPath("fieldName1").toBsonValue())
+                                        .append("value", new BsonBoolean(true))
+                        ),
+                        SearchOperator.in(fieldPath("fieldName1"), true)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("in",
+                                new BsonDocument("path", fieldPath("fieldName1").toBsonValue())
+                                        .append("value", new BsonArray(asList(new BsonBoolean(true), new BsonBoolean(false))))
+                        ),
+                        SearchOperator.in(fieldPath("fieldName1"), asList(true, false))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("in",
+                                new BsonDocument("path", fieldPath("fieldName1").toBsonValue())
+                                        .append("value", new BsonObjectId(objectId))
+                        ),
+                        SearchOperator.in(fieldPath("fieldName1"), objectId)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("in",
+                                new BsonDocument("path", fieldPath("fieldName1").toBsonValue())
+                                        .append("value", new BsonInt32(1))
+                        ),
+                        SearchOperator.in(fieldPath("fieldName1"), 1)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("in",
+                                new BsonDocument("path", fieldPath("fieldName1").toBsonValue())
+                                        .append("value", new BsonInt64(Long.MAX_VALUE))
+                        ),
+                        SearchOperator.in(fieldPath("fieldName1"), Long.MAX_VALUE)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("in",
+                                new BsonDocument("path", fieldPath("fieldName1").toBsonValue())
+                                        .append("value", new BsonDouble(Double.MAX_VALUE))
+                        ),
+                        SearchOperator.in(fieldPath("fieldName1"), Double.MAX_VALUE)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("in",
+                                new BsonDocument("path", fieldPath("fieldName1").toBsonValue())
+                                        .append("value", new BsonDateTime(Instant.EPOCH.toEpochMilli()))
+                        ),
+                        SearchOperator.in(fieldPath("fieldName1"), Instant.EPOCH)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("in",
+                                new BsonDocument("path", fieldPath("fieldName1").toBsonValue())
+                                        .append("value", new BsonBinary(uuid))
+                        ),
+                        SearchOperator.in(fieldPath("fieldName1"), uuid)
+                                .toBsonDocument(
+                                        Document.class,
+                                        CodecRegistries.withUuidRepresentation(Bson.DEFAULT_CODEC_REGISTRY, UuidRepresentation.STANDARD))
+                ),
+                () -> assertEquals(
+                        new BsonDocument("in",
+                                new BsonDocument("path", fieldPath("fieldName1").toBsonValue())
+                                        .append("value", new BsonString("value"))
+                        ),
+                        SearchOperator.in(fieldPath("fieldName1"), "value")
+                                .toBsonDocument()
                 )
         );
     }

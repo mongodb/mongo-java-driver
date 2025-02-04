@@ -134,6 +134,7 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static java.util.Objects.requireNonNull;
+import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 
 @SuppressWarnings("deprecation")
@@ -1607,7 +1608,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         BsonDocument model = bsonValue.asDocument();
         BsonDocument definition = model.getDocument("definition");
         SearchIndexType type = model.containsKey("type") ? getSearchIndexType(model.getString("type")) : null;
-        String name = Optional.ofNullable(model.getString("name", null))
+        String name = ofNullable(model.getString("name", null))
                 .map(BsonString::getValue).
                 orElse(null);
         return new SearchIndexModel(name, definition, type);
@@ -1616,7 +1617,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
 
     OperationResult executeListSearchIndexes(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = getMongoCollection(operation);
-        Optional<BsonDocument> arguments = Optional.ofNullable(operation.getOrDefault("arguments", null)).map(BsonValue::asDocument);
+        Optional<BsonDocument> arguments = ofNullable(operation.getOrDefault("arguments", null)).map(BsonValue::asDocument);
 
         if (arguments.isPresent()) {
             ListSearchIndexesIterable<BsonDocument> iterable = createListSearchIndexesIterable(collection, arguments.get());
@@ -1634,7 +1635,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
 
     private ListSearchIndexesIterable<BsonDocument> createListSearchIndexesIterable(final MongoCollection<BsonDocument> collection,
             final BsonDocument arguments) {
-        Optional<String> name = Optional.ofNullable(arguments.getOrDefault("name", null))
+        Optional<String> name = ofNullable(arguments.getOrDefault("name", null))
                 .map(BsonValue::asString).map(BsonString::getValue);
 
         ListSearchIndexesIterable<BsonDocument> iterable = collection.listSearchIndexes(BsonDocument.class);
@@ -1930,6 +1931,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 case "upsert":
                     options.upsert(argument.asBoolean().getValue());
                     break;
+                case "sort":
+                    options.sort(argument.asDocument());
+                    break;
                 default:
                     throw new UnsupportedOperationException(format("Unsupported argument: key=%s, argument=%s", key, argument));
             }
@@ -1938,7 +1942,16 @@ final class UnifiedCrudHelper extends UnifiedHelper {
     }
 
     private static ClientUpdateOneOptions getClientUpdateOneOptions(final BsonDocument arguments) {
-        return fillAbstractClientUpdateOptions(new ConcreteClientUpdateOneOptions(), arguments);
+        ConcreteClientUpdateOneOptions options = new ConcreteClientUpdateOneOptions();
+
+        if (arguments.containsKey("sort")) {
+            BsonDocument sort = arguments
+                    .remove("sort")
+                    .asDocument();
+            options.sort(sort);
+        }
+
+        return fillAbstractClientUpdateOptions(options, arguments);
     }
 
     private static ClientUpdateManyOptions getClientUpdateManyOptions(final BsonDocument arguments) {
