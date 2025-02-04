@@ -214,11 +214,14 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
         notNull("buffer", buffer);
         isTrueArgument("buffer.remaining() >=12", buffer.remaining() >= OBJECT_ID_LENGTH);
 
-        ByteOrder originalOrder = buffer.order();
-        buffer.order(ByteOrder.BIG_ENDIAN);
-        this.timestamp = buffer.getInt();
-        this.nonce = buffer.getLong();
-        buffer.order(originalOrder);
+       ByteOrder originalOrder = buffer.order();
+        try {
+            buffer.order(ByteOrder.BIG_ENDIAN);
+            this.timestamp = buffer.getInt();
+            this.nonce = buffer.getLong();
+        } finally {
+            buffer.order(originalOrder);
+        }
     }
 
     /**
