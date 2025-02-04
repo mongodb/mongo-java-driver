@@ -65,7 +65,7 @@ public class ObjectIdTest {
         return result;
     }
 
-    @MethodSource("outputBuffers")
+    @MethodSource("validOutputBuffers")
     @ParameterizedTest
     public void testToBytes(final ByteBuffer output) {
         int originalPosition = output.position();
@@ -172,25 +172,26 @@ public class ObjectIdTest {
     }
 
     @Test
-    public void testDateCons() {
+    public void testDateConstructor() {
         assertEquals(new Date().getTime() / 1000, new ObjectId(new Date()).getDate().getTime() / 1000);
+        assertNotEquals(new ObjectId(new Date(1_000)), new ObjectId(new Date(1_000)));
+        assertEquals("00000001", new ObjectId(new Date(1_000)).toHexString().substring(0, 8));
     }
 
     @Test
-    public void testRandomConstructors() {
-        assertNotEquals(new ObjectId(new Date(1_000)), new ObjectId(new Date(1_000)));
+    public void testDateConstructorWithCounter() {
         assertEquals(new ObjectId(new Date(1_000), 1), new ObjectId(new Date(1_000), 1));
-        assertEquals(new ObjectId(1_000, 1), new ObjectId(1_000, 1));
-
-        assertEquals("00000001", new ObjectId(new Date(1_000)).toHexString().substring(0, 8));
         assertEquals("00000001", new ObjectId(new Date(1_000), 1).toHexString().substring(0, 8));
-        assertEquals("7fffffff", new ObjectId(Integer.MAX_VALUE, 1).toHexString().substring(0, 8));
-
         assertThrows(NullPointerException.class, () -> new ObjectId(null, Integer.MAX_VALUE));
         assertThrows(IllegalArgumentException.class, () -> new ObjectId(new Date(1_000), Integer.MAX_VALUE));
+    }
+
+    @Test
+    public void testTimestampConstructor() {
+        assertEquals(1_000, new ObjectId(1_000, 1).getTimestamp());
+        assertEquals(new ObjectId(1_000, 1), new ObjectId(1_000, 1));
+        assertEquals("7fffffff", new ObjectId(Integer.MAX_VALUE, 1).toHexString().substring(0, 8));
         assertThrows(IllegalArgumentException.class, () -> new ObjectId(Integer.MAX_VALUE, Integer.MAX_VALUE));
-        assertThrows(IllegalArgumentException.class, () -> new ObjectId((ByteBuffer) null));
-        assertThrows(IllegalArgumentException.class, () -> new ObjectId(ByteBuffer.allocate(11)));
     }
 
     /**
@@ -213,7 +214,7 @@ public class ObjectIdTest {
     }
 
     @ParameterizedTest
-    @MethodSource(value = "inputBuffers")
+    @MethodSource(value = "validInputBuffers")
     public void testByteBufferConstructor(final ByteBuffer input) {
         ByteOrder order = input.order();
         int position = input.position();
@@ -223,6 +224,12 @@ public class ObjectIdTest {
         assertArrayEquals(new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, result);
         assertEquals(order, input.order());
         assertEquals(position + 12, input.position());
+    }
+
+    @Test
+    public void testInvalidByteBufferConstructor() {
+        assertThrows(IllegalArgumentException.class, () -> new ObjectId((ByteBuffer) null));
+        assertThrows(IllegalArgumentException.class, () -> new ObjectId(ByteBuffer.allocate(11)));
     }
 
     @Test
