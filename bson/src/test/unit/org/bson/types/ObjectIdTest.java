@@ -214,7 +214,7 @@ public class ObjectIdTest {
 
     @ParameterizedTest
     @MethodSource(value = "inputBuffers")
-    public void testByteBufferCons(final ByteBuffer input) {
+    public void testByteBufferConstructor(final ByteBuffer input) {
         ByteOrder order = input.order();
         int position = input.position();
 
