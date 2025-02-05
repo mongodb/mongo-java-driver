@@ -22,7 +22,6 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.internal.connection.ServerHelper;
-import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -235,34 +234,29 @@ public class AggregatesSearchFunctionalTest {
         return getDefaultCodecRegistry().get(BsonDocument.class).decode(bsonDocument.asBsonReader(), DecoderContext.builder().build());
     }
 
-    @Nullable
-    private static Document fetchIndexRecord(
-            final MongoCollection<Document> collection, final String indexName) {
-        return StreamSupport.stream(collection.listSearchIndexes().spliterator(), false)
-                .filter(index -> indexName.equals(index.getString("name")))
-                .findAny().orElse(null);
-    }
-
-    static void waitForIndex(final MongoCollection<Document> collection, final String indexName) {
+    public static <T> boolean waitForIndex(final MongoCollection<T> collection, final String indexName) {
         long startTime = System.nanoTime();
         long timeoutNanos = TimeUnit.SECONDS.toNanos(60);
         while (System.nanoTime() - startTime < timeoutNanos) {
-            Document indexRecord = fetchIndexRecord(collection, indexName);
+            Document indexRecord = StreamSupport.stream(collection.listSearchIndexes().spliterator(), false)
+                    .filter(index -> indexName.equals(index.getString("name")))
+                    .findAny().orElse(null);
             if (indexRecord != null) {
                 if ("FAILED".equals(indexRecord.getString("status"))) {
                     throw new RuntimeException("Search index has failed status.");
                 }
                 if (indexRecord.getBoolean("queryable")) {
-                    return;
+                    return true;
                 }
             }
             try {
-                Thread.sleep(100);
+                Thread.sleep(100); // busy-wait, avoid in production
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new RuntimeException(e);
             }
         }
+        return false;
     }
 
 }
