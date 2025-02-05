@@ -16,12 +16,10 @@
 
 package com.mongodb.client;
 
+import com.mongodb.internal.connection.FaasEnvironmentAccessor;
 import com.mongodb.lang.Nullable;
 
-import java.lang.reflect.Field;
 import java.util.Map;
-
-import static java.lang.System.getenv;
 
 @FunctionalInterface
 public interface WithWrapper {
@@ -66,15 +64,6 @@ public interface WithWrapper {
     }
 
     static Map<String, String> getEnvInnerMap() {
-        try {
-            Map<String, String> env = getenv();
-            Field field = env.getClass().getDeclaredField("m");
-            field.setAccessible(true);
-            @SuppressWarnings("unchecked")
-            Map<String, String> result = (Map<String, String>) field.get(env);
-            return result;
-        } catch (IllegalAccessException | NoSuchFieldException e) {
-            throw new RuntimeException(e);
-        }
+        return FaasEnvironmentAccessor.getFaasEnvMap();
     }
 }
