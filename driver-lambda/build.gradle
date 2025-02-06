@@ -14,12 +14,22 @@
  * limitations under the License.
  */
 
+buildscript {
+    repositories {
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:6.1.0'
+    }
+}
 
 plugins {
-    id("java")
     id("application")
-    alias(libs.plugins.shadow)
 }
+
+apply plugin: 'application'
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'java'
 
 compileJava {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -43,10 +53,10 @@ dependencies {
     implementation project(':driver-sync')
     implementation project(':bson')
 
-    implementation(libs.aws.lambda.core)
-    implementation(libs.aws.lambda.events)
-    implementation(platform(libs.junit.bom))
-    implementation(libs.bundles.junit)
+    implementation('com.amazonaws:aws-lambda-java-core:1.2.2')
+    implementation('com.amazonaws:aws-lambda-java-events:3.11.1')
+    implementation(platform("org.junit:junit-bom:$junitBomVersion"))
+    implementation('org.junit.jupiter:junit-jupiter-api')
 }
 
 
