@@ -18,12 +18,12 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("org.jetbrains.kotlin.jvm")
-    id("java-library")
+    `java-library`
 
     // Test based plugins
-    alias(libs.plugins.spotless)
-    alias(libs.plugins.dokka)
-    alias(libs.plugins.detekt)
+    id("com.diffplug.spotless")
+    id("org.jetbrains.dokka")
+    id("io.gitlab.arturbosch.detekt")
 }
 
 repositories {
@@ -39,13 +39,13 @@ ext.set("pomName", "Bson Kotlin")
 
 dependencies {
     // Align versions of all Kotlin components
-    implementation(platform(libs.kotlin.bom))
-    implementation(libs.kotlin.stdlib.jdk8)
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
     api(project(path = ":bson", configuration = "default"))
-    implementation(libs.kotlin.reflect)
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
 
-    testImplementation(libs.junit.kotlin)
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
     testImplementation(project(path = ":driver-core", configuration = "default"))
 }
 
