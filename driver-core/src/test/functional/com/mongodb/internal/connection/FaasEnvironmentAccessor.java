@@ -18,6 +18,9 @@ package com.mongodb.internal.connection;
 
 import java.util.Map;
 
+/**
+ * In the same package as FaasEnvironment, to access package-private
+ */
 public class FaasEnvironmentAccessor {
     public static Map<String, String> getFaasEnvMap() {
         return FaasEnvironment.envOverridesForTesting;

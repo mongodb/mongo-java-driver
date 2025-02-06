@@ -32,7 +32,7 @@ public interface WithWrapper {
 
     default WithWrapper withEnvironmentVariable(final String name, @Nullable final String value) {
         return runnable -> {
-            Map<String, String> innerMap = getEnvInnerMap();
+            Map<String, String> innerMap = FaasEnvironmentAccessor.getFaasEnvMap();
             String original = innerMap.get(name);
             if (value == null) {
                 innerMap.remove(name);
@@ -63,7 +63,4 @@ public interface WithWrapper {
         };
     }
 
-    static Map<String, String> getEnvInnerMap() {
-        return FaasEnvironmentAccessor.getFaasEnvMap();
-    }
 }
