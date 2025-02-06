@@ -23,10 +23,100 @@ ext {
 dependencies {
     api project(path: ':bson', configuration: 'default')
     api project(path: ':driver-core', configuration: 'default')
+    implementation("org.jetbrains:annotations:13.0") // previously brought transitively by driver-core (via bson-kotlin)
+
+    api(project(path: ':driver-core')) {
+        capabilities {
+            requireCapabilities("org.mongodb:driver-core-jnr-unixsocket")
+        }
+    }
+
+    api(project(path: ':driver-core')) {
+        capabilities {
+            requireCapabilities("org.mongodb:driver-core-bson-kotlin")
+        }
+    }
+
+    api(project(path: ':driver-core')) {
+        capabilities {
+            requireCapabilities("org.mongodb:driver-core-bson-kotlinx")
+        }
+    }
+
+    api(project(path: ':driver-core')) {
+        capabilities {
+            requireCapabilities("org.mongodb:driver-core-mongodb-crypt")
+        }
+    }
+
+    api(project(path: ':driver-core')) {
+        capabilities {
+            requireCapability("org.mongodb:driver-core-netty-buffer")
+        }
+    }
+
+    api(project(path: ':driver-core')) {
+        capabilities {
+            requireCapabilities("org.mongodb:driver-core-netty-transport")
+        }
+    }
+
+    api(project(path: ':driver-core')) {
+        capabilities {
+            requireCapabilities("org.mongodb:driver-core-netty-handler")
+        }
+    }
+
+    api(project(path: ':driver-core')) {
+        capabilities {
+            requireCapabilities("org.mongodb:driver-core-awssdk-auth")
+        }
+    }
+
+    api(project(path: ':driver-core')) {
+        capabilities {
+            requireCapabilities("org.mongodb:driver-core-awssdk-sts")
+        }
+    }
+
+    api(project(path: ':driver-core')) {
+        capabilities {
+            requireCapabilities("org.mongodb:driver-core-aws-java-sdk-core")
+        }
+    }
+
+    api(project(path: ':driver-core')) {
+        capabilities {
+            requireCapabilities("org.mongodb:driver-core-aws-java-sdk-sts")
+        }
+    }
+
+    api(project(path: ':driver-core')) {
+        capabilities {
+            requireCapabilities("org.mongodb:driver-core-snappy-java")
+        }
+    }
+
+    api(project(path: ':driver-core')) {
+        capabilities {
+            requireCapabilities("org.mongodb:driver-core-zstd-jni")
+        }
+    }
+
+
+
+
+
+
+
+//    includeLibraryWithCapabilities(":driver-core", [
+//            "org.mongodb:driver-core-jnr-unixsocket",
+//            "org.mongodb:driver-core-bson-kotlin"]
+//    )
 
     testImplementation project(':bson').sourceSets.test.output
     testImplementation project(':driver-core').sourceSets.test.output
-    testRuntimeOnly project(path: ':driver-core', configuration: 'consumableTestRuntimeOnly')
+//    testRuntimeOnly project(path: ':driver-core', configuration: 'consumableTestRuntimeOnly')
 
     testImplementation('com.amazonaws:aws-lambda-java-core:1.2.1')
 }
