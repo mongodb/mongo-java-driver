@@ -117,6 +117,8 @@ data class DataClassWithCamelCase(
 data class DataClassWithSameSnakeCaseName(
     val myHTTPAuth: String = "",
     val myHttpAuth: String = "",
+    val myHTTPAuth1: String = "",
+    val myHttpAuth1: String = "",
 )
 
 @Serializable

@@ -133,11 +133,13 @@ internal object BsonCodecUtils {
                         .groupBy { entry -> entry.value }
                         .filter { group -> group.value.size > 1 }
                         .entries
-                        .forEach { group ->
+                        .fold(StringBuilder("")) { acc, group ->
                             val keys = group.value.joinToString(", ") { entry -> entry.key }
-                            throw SerializationException(
-                                "$keys in ${descriptor.serialName} generate same name: ${group.key}.")
+                            acc.append("$keys in ${descriptor.serialName} generate same name: ${group.key}.\n")
                         }
+                        .toString()
+                        .takeIf { it.trim().isNotEmpty() }
+                        ?.let { errorMessage: String -> throw SerializationException(errorMessage) }
 
                     snakeCasedNames.entries.associate { it.value to it.key }
                 }

@@ -1141,7 +1141,7 @@ class KotlinSerializerCodecTest {
 
     @Test
     fun testSameSnakeCaseName() {
-        val expected = """{"my_http_auth": ""}"""
+        val expected = """{"my_http_auth": "", "my_http_auth1": ""}"""
         val dataClass = DataClassWithSameSnakeCaseName()
         val exception =
             assertThrows<SerializationException> {
@@ -1149,8 +1149,10 @@ class KotlinSerializerCodecTest {
                     expected, dataClass, BsonConfiguration(bsonNamingStrategy = BsonNamingStrategy.SNAKE_CASE))
             }
         assertEquals(
-            "myHTTPAuth, myHttpAuth in org.bson.codecs.kotlinx.samples.DataClassWithSameSnakeCaseName " +
-                "generate same name: my_http_auth.",
+            "myHTTPAuth, myHttpAuth in org.bson.codecs.kotlinx.samples.DataClassWithSameSnakeCaseName" +
+                " generate same name: my_http_auth.\n" +
+                "myHTTPAuth1, myHttpAuth1 in org.bson.codecs.kotlinx.samples.DataClassWithSameSnakeCaseName" +
+                " generate same name: my_http_auth1.\n",
             exception.message)
     }
 
