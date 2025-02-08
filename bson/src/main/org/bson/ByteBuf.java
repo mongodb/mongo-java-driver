@@ -126,6 +126,13 @@ public interface ByteBuf  {
     ByteBuf flip();
 
     /**
+     * States whether this buffer is backed by an accessible byte array.
+     *
+     * @return {@code true} if, and only if, this buffer is backed by an array and is not read-only
+     */
+    boolean hasArray();
+
+    /**
      * <p>Returns the byte array that backs this buffer <em>(optional operation)</em>.</p>
      *
      * <p>Modifications to this buffer's content will cause the returned array's content to be modified, and vice versa.</p>
