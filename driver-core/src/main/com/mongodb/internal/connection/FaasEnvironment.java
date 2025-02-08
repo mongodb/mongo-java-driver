@@ -31,7 +31,7 @@ enum FaasEnvironment {
     VERCEL("vercel"),
     UNKNOWN(null);
 
-    static Map<String, String> envOverridesForTesting = new HashMap<>();
+    static final Map<String, String> ENV_OVERRIDES_FOR_TESTING = new HashMap<>();
 
     static FaasEnvironment getFaasEnvironment() {
         List<FaasEnvironment> result = new ArrayList<>();
@@ -62,8 +62,8 @@ enum FaasEnvironment {
 
     @Nullable
     public static String getEnv(final String key) {
-        if (envOverridesForTesting.containsKey(key)) {
-            return envOverridesForTesting.get(key);
+        if (ENV_OVERRIDES_FOR_TESTING.containsKey(key)) {
+            return ENV_OVERRIDES_FOR_TESTING.get(key);
         }
         return System.getenv(key);
     }

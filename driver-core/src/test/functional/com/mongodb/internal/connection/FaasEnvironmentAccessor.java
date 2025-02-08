@@ -21,8 +21,11 @@ import java.util.Map;
 /**
  * In the same package as FaasEnvironment, to access package-private
  */
-public class FaasEnvironmentAccessor {
+public final class FaasEnvironmentAccessor {
+    private FaasEnvironmentAccessor() {
+    }
+
     public static Map<String, String> getFaasEnvMap() {
-        return FaasEnvironment.envOverridesForTesting;
+        return FaasEnvironment.ENV_OVERRIDES_FOR_TESTING;
     }
 }
