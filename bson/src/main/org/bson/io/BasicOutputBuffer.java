@@ -38,14 +38,16 @@ public class BasicOutputBuffer extends OutputBuffer {
     private byte[] buffer;
     private int position;
 
-  /**
-   * A wrapper around `buffer` used to write ObjectIDs without allocating temprary arrays and
-   * leverage JVM intrinsics for writing little-endian numeric values.
-   */
-  private ByteBuffer buf;
+    /**
+     * A wrapper around `buffer` used to write ObjectIDs without allocating temporary arrays and
+     * leverage JVM intrinsics for writing little-endian numeric values.
+     */
+    private ByteBuffer buf;
 
-  /** Construct an instance with a default initial byte array size. */
-  public BasicOutputBuffer() {
+    /**
+     * Construct an instance with a default initial byte array size.
+     */
+    public BasicOutputBuffer() {
         this(1024);
     }
 
@@ -75,43 +77,43 @@ public class BasicOutputBuffer extends OutputBuffer {
         write(b, 0, b.length);
     }
 
-  @Override
-  public byte[] toByteArray() {
-    ensureOpen();
-    return Arrays.copyOf(buffer, position);
-  }
+    @Override
+    public byte[] toByteArray() {
+        ensureOpen();
+        return Arrays.copyOf(buffer, position);
+    }
 
-  @Override
-  public void writeInt32(final int value) {
-    ensureOpen();
-    ensure(4);
-    buf.putInt(position, value);
-    position += 4;
-  }
+    @Override
+    public void writeInt32(final int value) {
+        ensureOpen();
+        ensure(4);
+        buf.putInt(position, value);
+        position += 4;
+    }
 
-  @Override
-  public void writeInt32(final int position, final int value) {
-    ensureOpen();
-    checkPosition(position, 4);
-    buf.putInt(position, value);
-  }
+    @Override
+    public void writeInt32(final int position, final int value) {
+        ensureOpen();
+        checkPosition(position, 4);
+        buf.putInt(position, value);
+    }
 
-  @Override
-  public void writeInt64(final long value) {
-    ensureOpen();
-    ensure(8);
-    buf.putLong(position, value);
-    position += 8;
-  }
+    @Override
+    public void writeInt64(final long value) {
+        ensureOpen();
+        ensure(8);
+        buf.putLong(position, value);
+        position += 8;
+    }
 
-  @Override
-  public void writeObjectId(final ObjectId value) {
-    ensureOpen();
-    ensure(12);
-    ((Buffer) buf).position(position); // Avoid covariant call on jdk8
-    value.putToByteBuffer(buf);
-    position += 12;
-  }
+    @Override
+    public void writeObjectId(final ObjectId value) {
+        ensureOpen();
+        ensure(12);
+        ((Buffer) buf).position(position); // Avoid covariant call on jdk8
+        value.putToByteBuffer(buf);
+        position += 12;
+    }
 
     @Override
     public void writeBytes(final byte[] bytes, final int offset, final int length) {
@@ -203,7 +205,10 @@ public class BasicOutputBuffer extends OutputBuffer {
         buf = ByteBuffer.wrap(buffer).order(LITTLE_ENDIAN);
     }
 
-    /** Ensures that `absolutePosition` is a valid index in `this.buffer` and there is room to write at least `bytesToWrite` bytes. */
+    /**
+     * Ensures that `absolutePosition` is a valid index in `this.buffer` and there is room to write at
+     * least `bytesToWrite` bytes.
+     */
     private void checkPosition(final int absolutePosition, final int bytesToWrite) {
         if (absolutePosition < 0) {
             throw new IllegalArgumentException(format("position must be >= 0 but was %d", absolutePosition));
@@ -212,5 +217,4 @@ public class BasicOutputBuffer extends OutputBuffer {
             throw new IllegalArgumentException(format("position must be <= %d but was %d", position - 1, absolutePosition));
         }
     }
-
 }
