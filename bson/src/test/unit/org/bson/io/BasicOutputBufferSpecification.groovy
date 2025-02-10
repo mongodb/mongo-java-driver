@@ -17,6 +17,7 @@
 package org.bson.io
 
 import org.bson.BsonSerializationException
+import org.bson.ByteBuf
 import org.bson.types.ObjectId
 import spock.lang.Specification
 
@@ -44,9 +45,22 @@ class BasicOutputBufferSpecification extends Specification {
         bsonOutput.size == 1
     }
 
+    def 'writeBytes shorthand should extend buffer'() {
+        given:
+        def bsonOutput = new BasicOutputBuffer(3)
+
+        when:
+        bsonOutput.write([1, 2, 3, 4] as byte[])
+
+        then:
+        getBytes(bsonOutput) == [1, 2, 3, 4] as byte[]
+        bsonOutput.position == 4
+        bsonOutput.size == 4
+    }
+
     def 'should write bytes'() {
         given:
-        def bsonOutput = new BasicOutputBuffer()
+        def bsonOutput = new BasicOutputBuffer(3)
 
         when:
         bsonOutput.writeBytes([1, 2, 3, 4] as byte[])
@@ -59,13 +73,30 @@ class BasicOutputBufferSpecification extends Specification {
 
     def 'should write bytes from offset until length'() {
         given:
-        def bsonOutput = new BasicOutputBuffer()
+        def bsonOutput = new BasicOutputBuffer(5)
 
         when:
         bsonOutput.writeBytes([0, 1, 2, 3, 4, 5] as byte[], 1, 4)
 
         then:
         getBytes(bsonOutput) == [1, 2, 3, 4] as byte[]
+        bsonOutput.position == 4
+        bsonOutput.size == 4
+    }
+
+    def 'toByteArray should be idempotent'() {
+        given:
+        def bsonOutput = new BasicOutputBuffer(10)
+        bsonOutput.writeBytes([1, 2, 3, 4] as byte[])
+
+        when:
+        def first = bsonOutput.toByteArray()
+        def second = bsonOutput.toByteArray()
+
+        then:
+        getBytes(bsonOutput) == [1, 2, 3, 4] as byte[]
+        first == [1, 2, 3, 4] as byte[]
+        second == [1, 2, 3, 4] as byte[]
         bsonOutput.position == 4
         bsonOutput.size == 4
     }
@@ -164,7 +195,7 @@ class BasicOutputBufferSpecification extends Specification {
 
     def 'should write a UTF-8 string'() {
         given:
-        def bsonOutput = new BasicOutputBuffer()
+        def bsonOutput = new BasicOutputBuffer(7)
 
         when:
         bsonOutput.writeString('\u0900')
@@ -331,6 +362,20 @@ class BasicOutputBufferSpecification extends Specification {
 
         then:
         bsonOutput.getByteBuffers()[0].getInt() == 1
+    }
+
+    def 'should get byte buffer with limit'() {
+        given:
+        def bsonOutput = new BasicOutputBuffer(8)
+        bsonOutput.writeBytes([1, 0, 0, 0] as byte[])
+
+        when:
+        def buffers = bsonOutput.getByteBuffers()
+
+        then:
+        buffers.size() == 1
+        buffers[0].position() == 0
+        buffers[0].limit() == 4
     }
 
     def 'should get internal buffer'() {
