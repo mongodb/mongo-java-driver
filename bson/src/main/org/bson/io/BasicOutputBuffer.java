@@ -18,11 +18,14 @@ package org.bson.io;
 
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
+import org.bson.types.ObjectId;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static java.lang.String.format;
@@ -35,10 +38,14 @@ public class BasicOutputBuffer extends OutputBuffer {
     private byte[] buffer;
     private int position;
 
-    /**
-     * Construct an instance with a default initial byte array size.
-     */
-    public BasicOutputBuffer() {
+  /**
+   * A wrapper around `buffer` used to write ObjectIDs without allocating temprary arrays and
+   * leverage JVM intrinsics for writing little-endian numeric values.
+   */
+  private ByteBuffer buf;
+
+  /** Construct an instance with a default initial byte array size. */
+  public BasicOutputBuffer() {
         this(1024);
     }
 
@@ -49,6 +56,7 @@ public class BasicOutputBuffer extends OutputBuffer {
      */
     public BasicOutputBuffer(final int initialSize) {
         buffer = new byte[initialSize];
+        buf = ByteBuffer.wrap(buffer).order(LITTLE_ENDIAN);
     }
 
     /**
@@ -66,6 +74,44 @@ public class BasicOutputBuffer extends OutputBuffer {
         ensureOpen();
         write(b, 0, b.length);
     }
+
+  @Override
+  public byte[] toByteArray() {
+    ensureOpen();
+    return Arrays.copyOf(buffer, position);
+  }
+
+  @Override
+  public void writeInt32(final int value) {
+    ensureOpen();
+    ensure(4);
+    buf.putInt(position, value);
+    position += 4;
+  }
+
+  @Override
+  public void writeInt32(final int position, final int value) {
+    ensureOpen();
+    checkPosition(position, 4);
+    buf.putInt(position, value);
+  }
+
+  @Override
+  public void writeInt64(final long value) {
+    ensureOpen();
+    ensure(8);
+    buf.putLong(position, value);
+    position += 8;
+  }
+
+  @Override
+  public void writeObjectId(final ObjectId value) {
+    ensureOpen();
+    ensure(12);
+    ((Buffer) buf).position(position); // Avoid covariant call on jdk8
+    value.putToByteBuffer(buf);
+    position += 12;
+  }
 
     @Override
     public void writeBytes(final byte[] bytes, final int offset, final int length) {
@@ -87,13 +133,7 @@ public class BasicOutputBuffer extends OutputBuffer {
     @Override
     protected void write(final int absolutePosition, final int value) {
         ensureOpen();
-
-        if (absolutePosition < 0) {
-            throw new IllegalArgumentException(format("position must be >= 0 but was %d", absolutePosition));
-        }
-        if (absolutePosition > position - 1) {
-            throw new IllegalArgumentException(format("position must be <= %d but was %d", position - 1, absolutePosition));
-        }
+        checkPosition(absolutePosition, 1);
 
         buffer[absolutePosition] = (byte) (0xFF & value);
     }
@@ -132,7 +172,7 @@ public class BasicOutputBuffer extends OutputBuffer {
     @Override
     public List<ByteBuf> getByteBuffers() {
         ensureOpen();
-        return Arrays.asList(new ByteBufNIO(ByteBuffer.wrap(buffer, 0, position).duplicate().order(LITTLE_ENDIAN)));
+        return Collections.singletonList(new ByteBufNIO(ByteBuffer.wrap(buffer, 0, position).duplicate().order(LITTLE_ENDIAN)));
     }
 
     @Override
@@ -160,6 +200,17 @@ public class BasicOutputBuffer extends OutputBuffer {
         byte[] n = new byte[newSize];
         System.arraycopy(buffer, 0, n, 0, position);
         buffer = n;
+        buf = ByteBuffer.wrap(buffer).order(LITTLE_ENDIAN);
+    }
+
+    /** Ensures that `absolutePosition` is a valid index in `this.buffer` and there is room to write at least `bytesToWrite` bytes. */
+    private void checkPosition(final int absolutePosition, final int bytesToWrite) {
+        if (absolutePosition < 0) {
+            throw new IllegalArgumentException(format("position must be >= 0 but was %d", absolutePosition));
+        }
+        if (absolutePosition > position - bytesToWrite) {
+            throw new IllegalArgumentException(format("position must be <= %d but was %d", position - 1, absolutePosition));
+        }
     }
 
 }

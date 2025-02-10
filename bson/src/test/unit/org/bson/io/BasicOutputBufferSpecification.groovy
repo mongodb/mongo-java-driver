@@ -72,7 +72,7 @@ class BasicOutputBufferSpecification extends Specification {
 
     def 'should write a little endian Int32'() {
         given:
-        def bsonOutput = new BasicOutputBuffer()
+        def bsonOutput = new BasicOutputBuffer(3)
 
         when:
         bsonOutput.writeInt32(0x1020304)
@@ -85,7 +85,7 @@ class BasicOutputBufferSpecification extends Specification {
 
     def 'should write a little endian Int64'() {
         given:
-        def bsonOutput = new BasicOutputBuffer()
+        def bsonOutput = new BasicOutputBuffer(7)
 
         when:
         bsonOutput.writeInt64(0x102030405060708L)
@@ -98,7 +98,7 @@ class BasicOutputBufferSpecification extends Specification {
 
     def 'should write a double'() {
         given:
-        def bsonOutput = new BasicOutputBuffer()
+        def bsonOutput = new BasicOutputBuffer(7)
 
         when:
         bsonOutput.writeDouble(Double.longBitsToDouble(0x102030405060708L))
@@ -112,7 +112,7 @@ class BasicOutputBufferSpecification extends Specification {
     def 'should write an ObjectId'() {
         given:
         def objectIdAsByteArray = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1] as byte[]
-        def bsonOutput = new BasicOutputBuffer()
+        def bsonOutput = new BasicOutputBuffer(11)
 
         when:
         bsonOutput.writeObjectId(new ObjectId(objectIdAsByteArray))
@@ -121,6 +121,19 @@ class BasicOutputBufferSpecification extends Specification {
         getBytes(bsonOutput) == objectIdAsByteArray
         bsonOutput.position == 12
         bsonOutput.size == 12
+    }
+
+    def 'write ObjectId should throw after close'() {
+        given:
+        def objectIdAsByteArray = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1] as byte[]
+        def bsonOutput = new BasicOutputBuffer()
+        bsonOutput.close()
+
+        when:
+        bsonOutput.writeObjectId(new ObjectId(objectIdAsByteArray))
+
+        then:
+        thrown(IllegalStateException)
     }
 
     def 'should write an empty string'() {

@@ -13,9 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+plugins {
+    id "me.champeau.jmh" version "0.6.3"
+}
 
 archivesBaseName = 'bson'
 description = 'The BSON library'
+
+jmh {
+    includeTests = false
+    profilers = ["gc"]
+    failOnError = true
+}
+
+dependencies {
+    jmh 'org.openjdk.jmh:jmh-core:+'
+    jmh 'org.openjdk.jmh:jmh-generator-annprocess:+'
+
+    jmhAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:+'
+}
 
 ext {
     pomName = 'BSON'
@@ -26,3 +42,4 @@ afterEvaluate {
     jar.manifest.attributes['Automatic-Module-Name'] = 'org.mongodb.bson'
     jar.manifest.attributes['Import-Package'] = 'org.slf4j.*;resolution:=optional'
 }
+
