@@ -59,6 +59,7 @@ ext {
     junitBomVersion = '5.10.2'
     logbackVersion = '1.3.14'
     graalSdkVersion = '24.0.0'
+    reflectionsVersion = '0.9.10'
     gitVersion = getGitVersion()
 }
 
@@ -75,7 +76,7 @@ configure(coreProjects) {
     apply plugin: 'idea'
 
     group = 'org.mongodb'
-    version = '5.3.0-SNAPSHOT'
+    version = '5.4.0-SNAPSHOT'
 
     repositories {
         mavenLocal()
@@ -128,7 +129,7 @@ configure(scalaProjects) {
         testImplementation('org.scalatestplus:junit-4-13_%%:3.2.9.0')
         testImplementation('org.scalatestplus:mockito-3-12_%%:3.2.10.0')
         testImplementation("ch.qos.logback:logback-classic:$logbackVersion")
-        testImplementation('org.reflections:reflections:0.9.10')
+        testImplementation("org.reflections:reflections:$reflectionsVersion")
     }
 
     test{

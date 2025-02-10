@@ -109,10 +109,6 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     }
 
     @Override
-    public void flush() {
-    }
-
-    @Override
     protected Context getContext() {
         return (Context) super.getContext();
     }

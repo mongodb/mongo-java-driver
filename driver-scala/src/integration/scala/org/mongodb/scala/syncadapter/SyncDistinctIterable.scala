@@ -61,4 +61,15 @@ case class SyncDistinctIterable[T](wrapped: DistinctObservable[T])
     wrapped.comment(comment)
     this
   }
+
+  override def hint(hint: Bson): DistinctIterable[T] = {
+    wrapped.hint(hint)
+    this
+  }
+
+  override def hintString(hint: String): DistinctIterable[T] = {
+    wrapped.hintString(hint)
+    this
+  }
+
 }

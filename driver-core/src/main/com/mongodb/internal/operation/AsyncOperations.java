@@ -44,6 +44,9 @@ import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.internal.TimeoutSettings;
@@ -181,8 +184,9 @@ public final class AsyncOperations<TDocument> {
     }
 
     public <TResult> AsyncReadOperation<AsyncBatchCursor<TResult>> distinct(final String fieldName, final Bson filter,
-            final Class<TResult> resultClass, final Collation collation, final BsonValue comment) {
-        return operations.distinct(fieldName, filter, resultClass, collation, comment);
+            final Class<TResult> resultClass, final Collation collation, final BsonValue comment, final Bson hint,
+            final String hintString) {
+        return operations.distinct(fieldName, filter, resultClass, collation, comment, hint, hintString);
     }
 
     public <TResult> AsyncExplainableReadOperation<AsyncBatchCursor<TResult>> aggregate(
@@ -291,6 +295,12 @@ public final class AsyncOperations<TDocument> {
     public AsyncWriteOperation<BulkWriteResult> bulkWrite(final List<? extends WriteModel<? extends TDocument>> requests,
             final BulkWriteOptions options) {
         return operations.bulkWrite(requests, options);
+    }
+
+    public AsyncWriteOperation<ClientBulkWriteResult> clientBulkWriteOperation(
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
+            @Nullable final ClientBulkWriteOptions options) {
+        return operations.clientBulkWriteOperation(clientWriteModels, options);
     }
 
     public <TResult> AsyncReadOperation<TResult> commandRead(final Bson command, final Class<TResult> resultClass) {

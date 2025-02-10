@@ -93,6 +93,7 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
                 new InternalStreamConnectionFactory(clusterMode, true, heartbeatStreamFactory, null, applicationName,
                         mongoDriverInformation, emptyList(), loggerSettings, null, serverApi),
                 clusterMode, serverApi, isFunctionAsAServiceEnvironment, sdamProvider, heartbeatOperationContextFactory);
+
         ConnectionPool connectionPool = new DefaultConnectionPool(serverId,
                 new InternalStreamConnectionFactory(clusterMode, streamFactory, credential, applicationName,
                         mongoDriverInformation, compressorList, loggerSettings, commandListener, serverApi),
