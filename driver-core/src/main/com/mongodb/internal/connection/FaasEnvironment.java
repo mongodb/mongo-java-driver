@@ -20,7 +20,9 @@ import com.mongodb.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 enum FaasEnvironment {
     AWS_LAMBDA("aws.lambda"),
@@ -29,21 +31,23 @@ enum FaasEnvironment {
     VERCEL("vercel"),
     UNKNOWN(null);
 
+    static final Map<String, String> ENV_OVERRIDES_FOR_TESTING = new HashMap<>();
+
     static FaasEnvironment getFaasEnvironment() {
         List<FaasEnvironment> result = new ArrayList<>();
-        String awsExecutionEnv = System.getenv("AWS_EXECUTION_ENV");
+        String awsExecutionEnv = getEnv("AWS_EXECUTION_ENV");
 
-        if (System.getenv("VERCEL") != null) {
+        if (getEnv("VERCEL") != null) {
             result.add(FaasEnvironment.VERCEL);
         }
         if ((awsExecutionEnv != null && awsExecutionEnv.startsWith("AWS_Lambda_"))
-                || System.getenv("AWS_LAMBDA_RUNTIME_API") != null) {
+            || getEnv("AWS_LAMBDA_RUNTIME_API") != null) {
             result.add(FaasEnvironment.AWS_LAMBDA);
         }
-        if (System.getenv("FUNCTIONS_WORKER_RUNTIME") != null) {
+        if (getEnv("FUNCTIONS_WORKER_RUNTIME") != null) {
             result.add(FaasEnvironment.AZURE_FUNC);
         }
-        if (System.getenv("K_SERVICE") != null || System.getenv("FUNCTION_NAME") != null) {
+        if (getEnv("K_SERVICE") != null || getEnv("FUNCTION_NAME") != null) {
             result.add(FaasEnvironment.GCP_FUNC);
         }
         // vercel takes precedence over aws.lambda
@@ -54,6 +58,14 @@ enum FaasEnvironment {
             return FaasEnvironment.UNKNOWN;
         }
         return result.get(0);
+    }
+
+    @Nullable
+    public static String getEnv(final String key) {
+        if (ENV_OVERRIDES_FOR_TESTING.containsKey(key)) {
+            return ENV_OVERRIDES_FOR_TESTING.get(key);
+        }
+        return System.getenv(key);
     }
 
     @Nullable
@@ -95,11 +107,11 @@ enum FaasEnvironment {
     public String getRegion() {
         switch (this) {
             case AWS_LAMBDA:
-                return System.getenv("AWS_REGION");
+                return getEnv("AWS_REGION");
             case GCP_FUNC:
-                return System.getenv("FUNCTION_REGION");
+                return getEnv("FUNCTION_REGION");
             case VERCEL:
-                return System.getenv("VERCEL_REGION");
+                return getEnv("VERCEL_REGION");
             default:
                 return null;
         }
@@ -108,7 +120,7 @@ enum FaasEnvironment {
     @Nullable
     private static Integer getEnvInteger(final String name) {
         try {
-            String value = System.getenv(name);
+            String value = getEnv(name);
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
             return null;

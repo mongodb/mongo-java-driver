@@ -224,7 +224,7 @@ public final class ClientMetadataHelper {
         K8S("kubernetes") {
             @Override
             boolean isCurrentOrchestrator() {
-                return System.getenv("KUBERNETES_SERVICE_HOST") != null;
+                return FaasEnvironment.getEnv("KUBERNETES_SERVICE_HOST") != null;
             }
         },
         UNKNOWN(null);
