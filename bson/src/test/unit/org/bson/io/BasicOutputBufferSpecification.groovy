@@ -17,7 +17,6 @@
 package org.bson.io
 
 import org.bson.BsonSerializationException
-import org.bson.ByteBuf
 import org.bson.types.ObjectId
 import spock.lang.Specification
 
