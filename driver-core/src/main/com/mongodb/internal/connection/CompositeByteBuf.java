@@ -42,7 +42,9 @@ class CompositeByteBuf implements ByteBuf {
 
         int offset = 0;
         for (ByteBuf cur : buffers) {
-            Component component = new Component(cur.asReadOnly().order(ByteOrder.LITTLE_ENDIAN), offset);
+            // since we don't expose any method to modify the buffer nor expose its array we can avoid using read-only ones
+            // to speed up ByteBufNIO::indexOf, is it's the concrete type used
+            Component component = new Component(cur.duplicate().order(ByteOrder.LITTLE_ENDIAN), offset);
             components.add(component);
             offset = component.endOffset;
         }
@@ -61,6 +63,18 @@ class CompositeByteBuf implements ByteBuf {
             throw new UnsupportedOperationException(format("Only %s is supported", ByteOrder.BIG_ENDIAN));
         }
         return this;
+    }
+
+    @Override
+    public int indexOf(final byte b) {
+        // use this pattern to save creating a new iterator
+        for (int i = 0, size = components.size(); i < size; i++) {
+            int index = components.get(i).indexOf(b);
+            if (index != -1) {
+                return index;
+            }
+        }
+        return -1;
     }
 
     @Override
@@ -339,6 +353,14 @@ class CompositeByteBuf implements ByteBuf {
             length = buffer.limit() - buffer.position();
             this.offset = offset;
             this.endOffset = offset + length;
+        }
+
+        public int indexOf(final byte b) {
+            int i = buffer.indexOf(b);
+            if (i != -1) {
+                return i + offset;
+            }
+            return -1;
         }
     }
 }

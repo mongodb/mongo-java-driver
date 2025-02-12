@@ -65,6 +65,31 @@ public class ByteBufNIO implements ByteBuf {
     }
 
     @Override
+    public int indexOf(final byte b) {
+        ByteBuffer buf = this.buf;
+        // readonly buffers won't go into the fast-path
+        if (buf.hasArray()) {
+            byte[] array = buf.array();
+            int offset = buf.arrayOffset() + buf.position();
+            int length = buf.remaining();
+            for (int i = 0; i < length; i++) {
+                if (array[offset + i] == b) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+        int position = buf.position();
+        int limit = buf.limit();
+        for (int i = position; i < limit; i++) {
+            if (buf.get(i) == b) {
+                return i - position;
+            }
+        }
+        return -1;
+    }
+
+    @Override
     public int capacity() {
         return buf.capacity();
     }

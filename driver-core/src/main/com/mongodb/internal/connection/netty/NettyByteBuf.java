@@ -90,6 +90,16 @@ public final class NettyByteBuf implements ByteBuf {
     }
 
     @Override
+    public int indexOf(final byte b) {
+        int position = isWriting ? proxied.writerIndex() : proxied.readerIndex();
+        int limit = position + (isWriting ? proxied.writableBytes() : proxied.readableBytes());
+        if (position == limit) {
+            return -1;
+        }
+        return proxied.indexOf(position, limit, b);
+    }
+
+    @Override
     public ByteBuf flip() {
         isWriting = !isWriting;
         return this;

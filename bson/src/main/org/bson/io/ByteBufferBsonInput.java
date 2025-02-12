@@ -159,13 +159,12 @@ public class ByteBufferBsonInput implements BsonInput {
     @Override
     public void skipCString() {
         ensureOpen();
-        boolean checkNext = true;
-        while (checkNext) {
-            if (!buffer.hasRemaining()) {
-                throw new BsonSerializationException("Found a BSON string that is not null-terminated");
-            }
-            checkNext = buffer.get() != 0;
+        int indexOfZero = buffer.indexOf((byte) 0);
+        if (indexOfZero == -1) {
+            buffer.position(buffer.limit());
+            throw new BsonSerializationException("Found a BSON string that is not null-terminated");
         }
+        buffer.position(indexOfZero + 1);
     }
 
     @Override

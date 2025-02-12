@@ -290,6 +290,37 @@ class CompositeByteBufSpecification extends Specification {
         !buf.hasRemaining()
     }
 
+    def "should find the first occurrence of a byte"() {
+        given:
+        def buf = new CompositeByteBuf([
+                        new ByteBufNIO(ByteBuffer.wrap([5, 5, 5, 5] as byte[])),
+                        new ByteBufNIO(ByteBuffer.wrap([1, 2, 3, 4] as byte[]))])
+        when:
+        byte b = 3;
+
+        then:
+        buf.indexOf(b) == 6
+
+        cleanup:
+        buf.release()
+    }
+
+    def "should not find any occurrence of a byte"() {
+        given:
+        def buf = new CompositeByteBuf([
+                new ByteBufNIO(ByteBuffer.wrap([5, 5, 5, 5] as byte[])),
+                new ByteBufNIO(ByteBuffer.wrap([1, 2, 3, 4] as byte[]))])
+
+        when:
+          byte b = 6;
+
+        then:
+        buf.indexOf(b) == -1
+
+        cleanup:
+        buf.release()
+    }
+
     def 'absolute getInt should read little endian integer and preserve position'() {
         given:
         def byteBuffer = new ByteBufNIO(ByteBuffer.wrap([1, 2, 3, 4] as byte[]))
