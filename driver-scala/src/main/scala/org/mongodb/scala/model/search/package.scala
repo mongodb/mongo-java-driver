@@ -199,6 +199,13 @@ package object search {
   type GeoNearSearchOperator = com.mongodb.client.model.search.GeoNearSearchOperator
 
   /**
+   * @see `SearchOperator.in`
+   */
+  @Sealed
+  @Beta(Array(Reason.CLIENT))
+  type InSearchOperator = com.mongodb.client.model.search.InSearchOperator
+
+  /**
    * @see `SearchOperator.equals`
    */
   @Sealed

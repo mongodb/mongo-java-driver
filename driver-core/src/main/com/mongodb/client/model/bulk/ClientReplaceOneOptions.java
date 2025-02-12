@@ -74,4 +74,19 @@ public interface ClientReplaceOneOptions extends BaseClientWriteModelOptions, Ba
      */
     @Override
     ClientReplaceOneOptions upsert(@Nullable Boolean upsert);
+
+    /**
+     * Sets the sort criteria to apply to the operation. A null value means no sort criteria is set.
+     *
+     * <p>
+     * The sort criteria determines which document the operation replaces if the query matches multiple documents.
+     * The first document matched by the specified sort criteria will be replaced.
+     *
+     * @param sort The sort criteria. {@code null} represents the server default.
+     * @return this
+     * @mongodb.driver.manual reference/method/db.collection.replaceOne/ Sort
+     * @mongodb.server.release 8.0
+     * @since 5.4
+     */
+    ClientReplaceOneOptions sort(@Nullable Bson sort);
 }

@@ -1247,6 +1247,14 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             });
         }
 
+        private void encodeWriteModelInternals(final BsonWriter writer, final ConcreteClientUpdateOneModel model) {
+            encodeWriteModelInternals(writer, (AbstractClientUpdateModel<?>) model);
+            model.getOptions().getSort().ifPresent(value -> {
+                writer.writeName("sort");
+                encodeUsingRegistry(writer, value);
+            });
+        }
+
         private void encodeWriteModelInternals(final BsonWriter writer, final AbstractClientUpdateModel<?> model) {
             writer.writeName("filter");
             encodeUsingRegistry(writer, model.getFilter());
@@ -1294,6 +1302,10 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             });
             options.getHintString().ifPresent(value -> writer.writeString("hint", value));
             options.isUpsert().ifPresent(value -> writer.writeBoolean("upsert", value));
+            options.getSort().ifPresent(value -> {
+                writer.writeName("sort");
+                encodeUsingRegistry(writer, value);
+            });
         }
 
         private void encodeWriteModelInternals(final BsonWriter writer, final AbstractClientDeleteModel<?> model) {

@@ -38,6 +38,8 @@ public final class ConcreteClientReplaceOneOptions implements ClientReplaceOneOp
     private String hintString;
     @Nullable
     private Boolean upsert;
+    @Nullable
+    private Bson sort;
 
     public ConcreteClientReplaceOneOptions() {
     }
@@ -90,6 +92,21 @@ public final class ConcreteClientReplaceOneOptions implements ClientReplaceOneOp
     }
 
     /**
+     * @see ClientReplaceOneOptions#sort(Bson)
+     */
+    public ClientReplaceOneOptions sort(final Bson sort) {
+        this.sort = sort;
+        return this;
+    }
+
+    /**
+     * @see ClientReplaceOneOptions#sort(Bson)
+     */
+    public Optional<Bson> getSort() {
+        return ofNullable(sort);
+    }
+
+    /**
      * @see #upsert(Boolean)
      */
     public Optional<Boolean> isUpsert() {
@@ -103,6 +120,7 @@ public final class ConcreteClientReplaceOneOptions implements ClientReplaceOneOp
                 + ", hint=" + hint
                 + ", hintString='" + hintString + '\''
                 + ", upsert=" + upsert
+                + ", sort=" + sort
                 + '}';
     }
 }

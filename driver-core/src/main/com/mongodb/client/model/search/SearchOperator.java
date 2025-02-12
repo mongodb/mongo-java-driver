@@ -20,27 +20,26 @@ import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.geojson.Point;
-
-import java.util.UUID;
-
+import org.bson.BsonArray;
 import org.bson.BsonBinary;
-import org.bson.BsonNull;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
+import org.bson.BsonNull;
 import org.bson.BsonType;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Iterator;
-
-import org.bson.types.ObjectId;
+import java.util.UUID;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.Iterables.concat;
 import static com.mongodb.internal.client.model.Util.combineToBsonValue;
 import static java.util.Collections.singleton;
-import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * The core part of the {@link Aggregates#search(SearchOperator, SearchOptions) $search} pipeline stage of an aggregation pipeline.
@@ -298,6 +297,117 @@ public interface SearchOperator extends Bson {
         return new SearchConstructibleBsonElement("near", new Document("origin", notNull("origin", origin))
                 .append("path", combineToBsonValue(pathIterator, true))
                 .append("pivot", notNull("pivot", pivot)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that searches for documents where the
+     * value or array of values at a given path contains any of the specified values
+     *
+     * @param path The indexed field to be searched.
+     * @param value The boolean value to search for.
+     * @param values More fields to be searched.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/in/ in operator
+     */
+    static InSearchOperator in(final FieldSearchPath path, final boolean value, final boolean... values) {
+        notNull("values", values);
+        BsonArray bsonArray = new BsonArray();
+        bsonArray.add(new BsonBoolean(value));
+        for (boolean v : values) {
+            bsonArray.add(new BsonBoolean(v));
+        }
+        return in(notNull("path", path), bsonArray);
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that searches for documents where the
+     * value or array of values at a given path contains any of the specified values
+     *
+     * @param path The indexed field to be searched.
+     * @param value The objectId value to search for.
+     * @param values More fields to be searched.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/in/ in operator
+     */
+    static InSearchOperator in(final FieldSearchPath path, final ObjectId value, final ObjectId... values) {
+        return in(notNull("path", path), concat(notNull("value", value), values));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that searches for documents where the
+     * value or array of values at a given path contains any of the specified values
+     *
+     * @param path The indexed field to be searched.
+     * @param value The number value to search for.
+     * @param values More fields to be searched.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/in/ in operator
+     */
+    static InSearchOperator in(final FieldSearchPath path, final Number value, final Number... values) {
+        return in(notNull("path", path), concat(notNull("value", value), values));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that searches for documents where the
+     * value or array of values at a given path contains any of the specified values
+     *
+     * @param path The indexed field to be searched.
+     * @param value The instant date value to search for.
+     * @param values More fields to be searched.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/in/ in operator
+     */
+    static InSearchOperator in(final FieldSearchPath path, final Instant value, final Instant... values) {
+        return in(notNull("path", path), concat(notNull("value", value), values));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that searches for documents where the
+     * value or array of values at a given path contains any of the specified values
+     *
+     * @param path The indexed field to be searched.
+     * @param value The uuid value to search for.
+     * @param values More fields to be searched.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/in/ in operator
+     */
+    static InSearchOperator in(final FieldSearchPath path, final UUID value, final UUID... values) {
+        return in(notNull("path", path), concat(notNull("value", value), values));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that searches for documents where the
+     * value or array of values at a given path contains any of the specified values
+     *
+     * @param path The indexed field to be searched.
+     * @param value The string value to search for.
+     * @param values More fields to be searched.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/in/ in operator
+     */
+    static InSearchOperator in(final FieldSearchPath path, final String value, final String... values) {
+        return in(notNull("path", path), concat(notNull("value", value), values));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that searches for documents where the
+     * value or array of values at a given path contains any of the specified values
+     *
+     * @param path The indexed field to be searched.
+     * @param values The non-empty values to search for. Value can be either a single value or an array of values of only one of the supported BSON types and can't be a mix of different types.
+     * @param <T> the type of elements in {@code values}.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/in/ in operator
+     */
+    static <T> InSearchOperator in(final FieldSearchPath path, final Iterable<? extends T> values) {
+        notNull("path", path);
+        Iterator<? extends T> valueIterator = notNull("values", values).iterator();
+        isTrueArgument("values must not be empty", valueIterator.hasNext());
+        T firstValue = valueIterator.next();
+        boolean hasMore = valueIterator.hasNext();
+        return new SearchConstructibleBsonElement("in", new Document()
+                .append("path", path.toValue())
+                .append("value", hasMore ? values : firstValue));
     }
 
     /**
