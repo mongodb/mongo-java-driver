@@ -18,15 +18,24 @@ package com.mongodb.client.model.search;
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
+import org.bson.types.ObjectId;
+
+import java.time.Instant;
+import java.util.UUID;
 
 /**
- * @see SearchOperator#wildcard(SearchPath, String)
- * @see SearchOperator#wildcard(Iterable, Iterable)
- * @since 4.7
+ * @see SearchOperator#in(FieldSearchPath, boolean, boolean...)
+ * @see SearchOperator#in(FieldSearchPath, ObjectId, ObjectId...)
+ * @see SearchOperator#in(FieldSearchPath, Number, Number...)
+ * @see SearchOperator#in(FieldSearchPath, Instant, Instant...)
+ * @see SearchOperator#in(FieldSearchPath, UUID, UUID...)
+ * @see SearchOperator#in(FieldSearchPath, String, String...)
+ * @see SearchOperator#in(FieldSearchPath, Iterable)
+ * @since 5.3
  */
 @Sealed
 @Beta(Reason.CLIENT)
-public interface WildcardSearchOperator extends SearchOperator {
+public interface InSearchOperator extends SearchOperator {
     @Override
-    WildcardSearchOperator score(SearchScore modifier);
+    InSearchOperator score(SearchScore modifier);
 }
