@@ -208,7 +208,7 @@ public final class GridFSBucketImpl implements GridFSBucket {
                                                            final Publisher<ByteBuffer> source,
                                                            final GridFSUploadOptions options) {
         return createGridFSUploadPublisher(chunkSizeBytes, filesCollection, chunksCollection,
-                                           notNull("clientSession", clientSession), new BsonObjectId(), filename, options, source);
+                                           notNull("clientSession", clientSession), id, filename, options, source);
     }
 
     @Override
