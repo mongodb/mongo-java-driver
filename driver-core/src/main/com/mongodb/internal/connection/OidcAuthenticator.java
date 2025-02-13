@@ -38,7 +38,6 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.RawBsonDocument;
-import org.jetbrains.annotations.NotNull;
 
 import javax.security.sasl.SaslClient;
 import java.io.IOException;
@@ -528,7 +527,6 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         return readTokenFromFile(path);
     }
 
-    @NotNull
     private static String readTokenFromFile(final String path) {
         try {
             return new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8);

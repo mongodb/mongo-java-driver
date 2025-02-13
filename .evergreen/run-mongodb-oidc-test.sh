@@ -27,36 +27,6 @@ elif [ $OIDC_ENV == "k8s" ]; then
         exit 1
     fi
 
-    if [ -z "${VARIANT}" ]; then
-        echo "VARIANT is not set"
-        exit 1
-    elif [ $VARIANT == "eks" ]; then
-        path="${AWS_WEB_IDENTITY_TOKEN_FILE}"
-    elif [ $VARIANT == "aks" ]; then
-        path="${AZURE_FEDERATED_TOKEN_FILE}"
-    elif [ $VARIANT == "gke" ]; then
-        path="/var/run/secrets/kubernetes.io/serviceaccount/token"
-    else
-        echo "Unrecognized k8s VARIANT: $VARIANT"
-        exit 1
-    fi
-
-    # Print the file
-    if [ -f "$path" ]; then
-        file_size=$(stat -c%s "$path")
-        echo "VARIANT: $VARIANT"
-        echo "Token file path: $path"
-        echo "Token file size: $file_size bytes"
-    else
-        echo "Error: Token file not found at $path" >&2
-        exit 1
-    fi
-
-    if [ $VARIANT == "gke" ]; then
-        echo "Skipping gke test to avoid error code 137 when running gradle"
-        exit 0
-    fi
-
     # fix for git permissions issue:
     git config --global --add safe.directory /tmp/test
 else
