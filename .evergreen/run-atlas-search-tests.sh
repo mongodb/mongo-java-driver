@@ -16,4 +16,6 @@ echo "Running Atlas Search tests"
 ./gradlew --stacktrace --info \
     -Dorg.mongodb.test.atlas.search=true \
     -Dorg.mongodb.test.uri=${MONGODB_URI} \
-    driver-core:test --tests AggregatesSearchIntegrationTest --tests AggregatesVectorSearchIntegrationTest
+    driver-core:test --tests AggregatesSearchIntegrationTest \
+    --tests AggregatesBinaryVectorSearchIntegrationTest \
+    --tests AggregatesSearchTest \

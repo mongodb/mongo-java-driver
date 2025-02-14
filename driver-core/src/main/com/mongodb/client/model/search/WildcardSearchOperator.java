@@ -20,7 +20,7 @@ import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 
 /**
- * @see SearchOperator#wildcard(String, SearchPath)
+ * @see SearchOperator#wildcard(SearchPath, String)
  * @see SearchOperator#wildcard(Iterable, Iterable)
  * @since 4.7
  */
