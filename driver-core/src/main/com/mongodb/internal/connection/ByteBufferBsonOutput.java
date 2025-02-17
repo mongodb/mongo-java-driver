@@ -23,6 +23,7 @@ import org.bson.io.OutputBuffer;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
@@ -284,120 +285,54 @@ public class ByteBufferBsonOutput extends OutputBuffer {
             if (buf.hasArray()) {
                 return writeCharactersOnArray(str, checkForNullCharacters, buf);
             } else if (buf instanceof NettyByteBuf) {
-                return writeCharactersOnNettyByteBuf(str, checkForNullCharacters, buf);
+                io.netty.buffer.ByteBuf nettyBuffer = ((NettyByteBuf) buf).asByteBuf();
+                if (nettyBuffer.nioBufferCount() == 1) {
+                    return writeCharactersOnInternalNioNettyByteBuf(str, checkForNullCharacters, buf, nettyBuffer);
+                }
             }
         }
         return super.writeCharacters(str, 0, checkForNullCharacters);
     }
 
-    private static void validateNoNullSingleByteChars(String str, long chars, int i) {
-        long tmp = (chars & 0x7F7F7F7F7F7F7F7FL) + 0x7F7F7F7F7F7F7F7FL;
-        tmp = ~(tmp | chars | 0x7F7F7F7F7F7F7F7FL);
-        if (tmp != 0) {
-            int firstZero = Long.numberOfTrailingZeros(tmp) >>> 3;
-            throw new BsonSerializationException(format("BSON cstring '%s' is not valid because it contains a null character "
-                    + "at index %d", str, i + firstZero));
-        }
-    }
-
-    private static void validateNoNullAsciiCharacters(String str, long asciiChars, int i) {
-        // simplified Hacker's delight search for zero with ASCII chars i.e. which doesn't use the MSB
-        long tmp = asciiChars + 0x7F7F7F7F7F7F7F7FL;
-        // MSB is 0 iff the byte is 0x00, 1 otherwise
-        tmp = ~tmp & 0x8080808080808080L;
-        // MSB is 1 iff the byte is 0x00, 0 otherwise
-        if (tmp != 0) {
-            // there's some 0x00 in the word
-            int firstZero = Long.numberOfTrailingZeros(tmp) >> 3;
-            throw new BsonSerializationException(format("BSON cstring '%s' is not valid because it contains a null character "
-                    + "at index %d", str, i + firstZero));
-        }
-    }
-
-    private int writeCharactersOnNettyByteBuf(String str, boolean checkForNullCharacters, ByteBuf buf) {
+    private int writeCharactersOnInternalNioNettyByteBuf(String str, boolean checkForNullCharacters, ByteBuf buf, io.netty.buffer.ByteBuf nettyBuffer) {
+        int len = str.length();
+        final ByteBuffer nioBuffer = internalNioBufferOf(nettyBuffer, len + 1);
         int i = 0;
-        io.netty.buffer.ByteBuf nettyBuffer = ((NettyByteBuf) buf).asByteBuf();
-        // readonly buffers, netty buffers and off-heap NIO ByteBuffer
-        boolean slowPath = false;
-        int batches = str.length() / 8;
-        final int writerIndex = nettyBuffer.writerIndex();
-        // this would avoid resizing the buffer while appending: ASCII length + delimiter required space
-        nettyBuffer.ensureWritable(str.length() + 1);
-        for (int b = 0; b < batches; b++) {
-            i = b * 8;
-            // read 4 chars at time to preserve the 0x0100 cases
-            long evenChars = str.charAt(i) |
-                    str.charAt(i + 2) << 16 |
-                    (long) str.charAt(i + 4) << 32 |
-                    (long) str.charAt(i + 6) << 48;
-            long oddChars = str.charAt(i + 1) |
-                    str.charAt(i + 3) << 16 |
-                    (long) str.charAt(i + 5) << 32 |
-                    (long) str.charAt(i + 7) << 48;
-            // check that both the second byte and the MSB of the first byte of each pair is 0
-            // needed for cases like \u0100 and \u0080
-            long mergedChars = evenChars | oddChars;
-            if ((mergedChars & 0xFF80FF80FF80FF80L) != 0) {
-                if (allSingleByteChars(mergedChars)) {
-                    i = tryWriteAsciiChars(str, checkForNullCharacters, oddChars, evenChars, nettyBuffer, writerIndex, i);
-                }
-                slowPath = true;
+        int pos = nioBuffer.position();
+        for (; i < len; i++) {
+            char c = str.charAt(i);
+            if (checkForNullCharacters && c == 0x0) {
+                throw new BsonSerializationException(format("BSON cstring '%s' is not valid because it contains a null character "
+                        + "at index %d", str, i));
+            }
+            if (c >= 0x80) {
                 break;
             }
-            // all ASCII - compose them into a single long
-            long asciiChars = oddChars << 8 | evenChars;
-            if (checkForNullCharacters) {
-                validateNoNullAsciiCharacters(str, asciiChars, i);
-            }
-            nettyBuffer.setLongLE(writerIndex + i, asciiChars);
+            nioBuffer.put(pos + i, (byte) c);
         }
-        if (!slowPath) {
-            i = batches * 8;
-            // do the rest, if any
-            for (; i < str.length(); i++) {
-                char c = str.charAt(i);
-                if (checkForNullCharacters && c == 0x0) {
-                    throw new BsonSerializationException(format("BSON cstring '%s' is not valid because it contains a null character "
-                            + "at index %d", str, i));
-                }
-                if (c >= 0x80) {
-                    slowPath = true;
-                    break;
-                }
-                nettyBuffer.setByte(writerIndex + i, c);
-            }
+        if (i == len) {
+            int total = len + 1;
+            nioBuffer.put(pos + len, (byte) 0);
+            position += total;
+            buf.position(buf.position() + total);
+            return len + 1;
         }
-        if (slowPath) {
-            // ith char is not ASCII:
+        // ith character is not ASCII
+        if (i > 0) {
             position += i;
-            buf.position(writerIndex + i);
-            return i + super.writeCharacters(str, i, checkForNullCharacters);
-        } else {
-            nettyBuffer.setByte(writerIndex + str.length(), 0);
-            int totalWritten = str.length() + 1;
-            position += totalWritten;
-            buf.position(writerIndex + totalWritten);
-            return totalWritten;
+            buf.position(buf.position() + i);
         }
+        return i + super.writeCharacters(str, i, checkForNullCharacters);
     }
 
-    private static boolean allSingleByteChars(long fourChars) {
-        return (fourChars & 0xFF00FF00FF00FF00L) == 0;
-    }
-
-    private static int tryWriteAsciiChars(String str, boolean checkForNullCharacters,
-            long oddChars, long evenChars, io.netty.buffer.ByteBuf nettyByteBuf, int writerIndex, int i) {
-        // all single byte chars
-        long latinChars = oddChars << 8 | evenChars;
-        if (checkForNullCharacters) {
-            validateNoNullSingleByteChars(str, latinChars, i);
+    private static ByteBuffer internalNioBufferOf(io.netty.buffer.ByteBuf buf, int minCapacity) {
+        io.netty.buffer.ByteBuf unwrap;
+        while ((unwrap = buf.unwrap()) != null) {
+            buf = unwrap;
         }
-        long msbSetForNonAscii = latinChars & 0x8080808080808080L;
-        int firstNonAsciiOffset = Long.numberOfTrailingZeros(msbSetForNonAscii) >> 3;
-        // that's a bit cheating :P but later phases will patch the wrongly encoded ones
-        nettyByteBuf.setLongLE(writerIndex + i, latinChars);
-        i += firstNonAsciiOffset;
-        return i;
+        assert buf.unwrap() == null;
+        buf.ensureWritable(minCapacity);
+        return buf.internalNioBuffer(buf.writerIndex(), buf.writableBytes());
     }
 
     private int writeCharactersOnArray(String str, boolean checkForNullCharacters, ByteBuf buf) {
