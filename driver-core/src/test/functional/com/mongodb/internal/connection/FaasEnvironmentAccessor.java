@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.client.model.search;
 
-import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Reason;
-import com.mongodb.annotations.Sealed;
+package com.mongodb.internal.connection;
+
+import java.util.Map;
 
 /**
- * @see SearchOperator#wildcard(SearchPath, String)
- * @see SearchOperator#wildcard(Iterable, Iterable)
- * @since 4.7
+ * In the same package as FaasEnvironment, to access package-private
  */
-@Sealed
-@Beta(Reason.CLIENT)
-public interface WildcardSearchOperator extends SearchOperator {
-    @Override
-    WildcardSearchOperator score(SearchScore modifier);
+public final class FaasEnvironmentAccessor {
+    private FaasEnvironmentAccessor() {
+    }
+
+    public static Map<String, String> getFaasEnvMap() {
+        return FaasEnvironment.ENV_OVERRIDES_FOR_TESTING;
+    }
 }

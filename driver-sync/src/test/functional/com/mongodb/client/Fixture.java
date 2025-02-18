@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
@@ -24,7 +25,6 @@ import com.mongodb.connection.ServerDescription;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
@@ -34,7 +34,6 @@ import static java.util.Objects.requireNonNull;
  * Helper class for the acceptance tests.
  */
 public final class Fixture {
-    private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
     private static final long MIN_HEARTBEAT_FREQUENCY_MS = 50L;
 
     private static MongoClient mongoClient;
@@ -44,10 +43,23 @@ public final class Fixture {
     }
 
     public static synchronized MongoClient getMongoClient() {
-        if (mongoClient == null) {
-            mongoClient = MongoClients.create(getMongoClientSettings());
-            Runtime.getRuntime().addShutdownHook(new ShutdownHook());
+        if (mongoClient != null) {
+            return mongoClient;
         }
+        MongoClientSettings mongoClientSettings = getMongoClientSettings();
+        mongoClient = MongoClients.create(mongoClientSettings);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            synchronized (Fixture.class) {
+                if (mongoClient == null) {
+                    return;
+                }
+                if (defaultDatabase != null) {
+                    defaultDatabase.drop();
+                }
+                mongoClient.close();
+                mongoClient = null;
+            }
+        }));
         return mongoClient;
     }
 
@@ -59,34 +71,15 @@ public final class Fixture {
     }
 
     public static String getDefaultDatabaseName() {
-        return DEFAULT_DATABASE_NAME;
-    }
-
-    static class ShutdownHook extends Thread {
-        @Override
-        public void run() {
-            synchronized (Fixture.class) {
-                if (mongoClient != null) {
-                    if (defaultDatabase != null) {
-                        defaultDatabase.drop();
-                    }
-                    mongoClient.close();
-                    mongoClient = null;
-                }
-            }
-        }
+        return ClusterFixture.getDefaultDatabaseName();
     }
 
     public static MongoClientSettings getMongoClientSettings() {
         return getMongoClientSettingsBuilder().build();
     }
 
-    public static MongoClientSettings getMultiMongosMongoClientSettings() {
-        return getMultiMongosMongoClientSettingsBuilder().build();
-    }
-
     public static MongoClientSettings.Builder getMongoClientSettingsBuilder() {
-        return getMongoClientSettings(getConnectionString());
+        return getMongoClientSettings(ClusterFixture.getConnectionString());
     }
 
     public static MongoClientSettings.Builder getMultiMongosMongoClientSettingsBuilder() {
