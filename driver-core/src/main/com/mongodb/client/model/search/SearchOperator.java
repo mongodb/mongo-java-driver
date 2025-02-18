@@ -22,9 +22,9 @@ import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.geojson.Point;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
-import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonNull;
+import org.bson.BsonBoolean;
 import org.bson.BsonType;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -573,14 +573,15 @@ public interface SearchOperator extends Bson {
     }
 
     /**
-     * Returns a {@link SearchOperator} that performs a search using a special characters in the search string that can match any character.
+     * Returns a {@link SearchOperator} that performs a search using a special
+     * characters in the search string that can match any character.
      *
+     * @param path  The indexed field to be searched.
      * @param query The string to search for.
-     * @param path The indexed field to be searched.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/wildcard/ wildcard operator
      */
-    static WildcardSearchOperator wildcard(final String query, final SearchPath path) {
+    static WildcardSearchOperator wildcard(final SearchPath path, final String query) {
         return wildcard(singleton(notNull("query", query)), singleton(notNull("path", path)));
     }
 
