@@ -22,8 +22,6 @@ import com.mongodb.reactivestreams.client.{ MongoCluster => JMongoCluster }
 import org.bson.codecs.configuration.CodecRegistry
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.model.bulk.ClientNamespacedUpdateManyModel
-import org.mongodb.scala.model.bulk.ClientNamespacedDeleteManyModel
 import org.mongodb.scala.model.bulk.{ ClientBulkWriteOptions, ClientBulkWriteResult, ClientNamespacedWriteModel }
 
 import scala.collection.JavaConverters._
@@ -296,19 +294,19 @@ class MongoCluster(private val wrapped: JMongoCluster) {
   /**
    * Executes a client-level bulk write operation.
    * This method is functionally equivalent to `bulkWrite(List, ClientBulkWriteOptions)`
-   * with the [[ClientBulkWriteOptions.clientBulkWriteOptions default options]].
+   * with the [[org.mongodb.scala.model.bulk.ClientBulkWriteOptions.clientBulkWriteOptions default options]].
    *
    * This operation supports retryable writes.
    * Depending on the number of `models`, encoded size of `models`, and the size limits in effect,
    * executing this operation may require multiple `bulkWrite` commands.
    * The eligibility for retries is determined per each `bulkWrite` command:
-   * [[ClientNamespacedUpdateManyModel]], [[ClientNamespacedDeleteManyModel]] in a command render it non-retryable.
+   * [[org.mongodb.scala.model.bulk.ClientNamespacedUpdateManyModel]], [[org.mongodb.scala.model.bulk.ClientNamespacedDeleteManyModel]] in a command render it non-retryable.
    *
    * This operation is not supported by MongoDB Atlas Serverless instances.
    *
    * [[https://www.mongodb.com/docs/manual/reference/command/bulkWrite/ bulkWrite]]
-   * @param models The [[ClientNamespacedWriteModel]] individual write operations.
-   * @return The [[SingleObservable]] signalling at most one element [[ClientBulkWriteResult]] if the operation is successful,
+   * @param models The [[org.mongodb.scala.model.bulk.ClientNamespacedWriteModel]] individual write operations.
+   * @return The [[SingleObservable]] signalling at most one element [[org.mongodb.scala.model.bulk.ClientBulkWriteResult]] if the operation is successful,
    *         or the following errors:
    *         - [[ClientBulkWriteException]]: If and only if the operation is unsuccessful or partially unsuccessful,
    *           and there is at least one of the following pieces of information to report:
@@ -329,14 +327,14 @@ class MongoCluster(private val wrapped: JMongoCluster) {
    * Depending on the number of `models`, encoded size of `models`, and the size limits in effect,
    * executing this operation may require multiple `bulkWrite` commands.
    * The eligibility for retries is determined per each `bulkWrite` command:
-   * [[ClientNamespacedUpdateManyModel]], [[ClientNamespacedDeleteManyModel]] in a command render it non-retryable.
+   * [[org.mongodb.scala.model.bulk.ClientNamespacedUpdateManyModel]], [[org.mongodb.scala.model.bulk.ClientNamespacedDeleteManyModel]] in a command render it non-retryable.
    *
    * This operation is not supported by MongoDB Atlas Serverless instances.
    *
    * [[https://www.mongodb.com/docs/manual/reference/command/bulkWrite/ bulkWrite]]
-   * @param models The [[ClientNamespacedWriteModel]] individual write operations.
+   * @param models The [[org.mongodb.scala.model.bulk.ClientNamespacedWriteModel]] individual write operations.
    * @param options The options.
-   * @return The [[SingleObservable]] signalling at most one element [[ClientBulkWriteResult]] if the operation is successful,
+   * @return The [[SingleObservable]] signalling at most one element [[org.mongodb.scala.model.bulk.ClientBulkWriteResult]] if the operation is successful,
    *         or the following errors:
    *         - [[ClientBulkWriteException]]: If and only if the operation is unsuccessful or partially unsuccessful,
    *           and there is at least one of the following pieces of information to report:
@@ -355,20 +353,20 @@ class MongoCluster(private val wrapped: JMongoCluster) {
   /**
    * Executes a client-level bulk write operation.
    * This method is functionally equivalent to `bulkWrite(ClientSession, List, ClientBulkWriteOptions)`
-   * with the [[ClientBulkWriteOptions.clientBulkWriteOptions default options]].
+   * with the [[org.mongodb.scala.model.bulk.ClientBulkWriteOptions.clientBulkWriteOptions default options]].
    *
    * This operation supports retryable writes.
    * Depending on the number of `models`, encoded size of `models`, and the size limits in effect,
    * executing this operation may require multiple `bulkWrite` commands.
    * The eligibility for retries is determined per each `bulkWrite` command:
-   * [[ClientNamespacedUpdateManyModel]], [[ClientNamespacedDeleteManyModel]] in a command render it non-retryable.
+   * [[org.mongodb.scala.model.bulk.ClientNamespacedUpdateManyModel]], [[org.mongodb.scala.model.bulk.ClientNamespacedDeleteManyModel]] in a command render it non-retryable.
    *
    * This operation is not supported by MongoDB Atlas Serverless instances.
    *
    * [[https://www.mongodb.com/docs/manual/reference/command/bulkWrite/ bulkWrite]]
    * @param clientSession [[ClientSession client session]] with which to associate this operation.
-   * @param models The [[ClientNamespacedWriteModel]] individual write operations.
-   * @return The [[SingleObservable]] signalling at most one element [[ClientBulkWriteResult]] if the operation is successful,
+   * @param models The [[org.mongodb.scala.model.bulk.ClientNamespacedWriteModel]] individual write operations.
+   * @return The [[SingleObservable]] signalling at most one element [[org.mongodb.scala.model.bulk.ClientBulkWriteResult]] if the operation is successful,
    *         or the following errors:
    *         - [[ClientBulkWriteException]]: If and only if the operation is unsuccessful or partially unsuccessful,
    *           and there is at least one of the following pieces of information to report:
@@ -391,13 +389,13 @@ class MongoCluster(private val wrapped: JMongoCluster) {
    * Depending on the number of `models`, encoded size of `models`, and the size limits in effect,
    * executing this operation may require multiple `bulkWrite` commands.
    * The eligibility for retries is determined per each `bulkWrite` command:
-   * [[ClientNamespacedUpdateManyModel]], [[ClientNamespacedDeleteManyModel]] in a command render it non-retryable.
+   * [[org.mongodb.scala.model.bulk.ClientNamespacedUpdateManyModel]], [[org.mongodb.scala.model.bulk.ClientNamespacedDeleteManyModel]] in a command render it non-retryable.
    *
    * [[https://www.mongodb.com/docs/manual/reference/command/bulkWrite/ bulkWrite]]
    * @param clientSession The [[ClientSession client session]] with which to associate this operation.
-   * @param models The [[ClientNamespacedWriteModel]] individual write operations.
+   * @param models The [[org.mongodb.scala.model.bulk.ClientNamespacedWriteModel]] individual write operations.
    * @param options The options.
-   * @return The [[SingleObservable]] signalling at most one element [[ClientBulkWriteResult]] if the operation is successful,
+   * @return The [[SingleObservable]] signalling at most one element [[org.mongodb.scala.model.bulk.ClientBulkWriteResult]] if the operation is successful,
    *         or the following errors:
    *         - [[ClientBulkWriteException]]: If and only if the operation is unsuccessful or partially unsuccessful,
    *           and there is at least one of the following pieces of information to report:
