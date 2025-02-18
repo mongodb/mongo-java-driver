@@ -31,9 +31,10 @@ import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.bson.types.Symbol;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -71,7 +72,7 @@ import java.util.Set;
  */
 public class BsonTypeClassMap {
     static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP = new BsonTypeClassMap();
-    private final Map<BsonType, Class<?>> map = new HashMap<>();
+    private final Class<?>[] index = new Class<?>[BsonType.values().length];
 
     /**
      * Construct an instance with the default mapping, but replacing the default mapping with any values contained in the given map.
@@ -81,7 +82,7 @@ public class BsonTypeClassMap {
      */
     public BsonTypeClassMap(final Map<BsonType, Class<?>> replacementsForDefaults) {
         addDefaults();
-        map.putAll(replacementsForDefaults);
+        replacementsForDefaults.forEach((key, value) -> index[key.ordinal()] = value);
     }
 
     /**
@@ -92,7 +93,8 @@ public class BsonTypeClassMap {
     }
 
     Set<BsonType> keys() {
-        return map.keySet();
+        //TODO Only return keys that have been set
+        return EnumSet.allOf(BsonType.class);
     }
 
     /**
@@ -102,30 +104,30 @@ public class BsonTypeClassMap {
      * @return the Class that is mapped to the BSON type
      */
     public Class<?> get(final BsonType bsonType) {
-        return map.get(bsonType);
+        return index[bsonType.ordinal()];
     }
 
     private void addDefaults() {
-        map.put(BsonType.ARRAY, List.class);
-        map.put(BsonType.BINARY, Binary.class);
-        map.put(BsonType.BOOLEAN, Boolean.class);
-        map.put(BsonType.DATE_TIME, Date.class);
-        map.put(BsonType.DB_POINTER, BsonDbPointer.class);
-        map.put(BsonType.DOCUMENT, Document.class);
-        map.put(BsonType.DOUBLE, Double.class);
-        map.put(BsonType.INT32, Integer.class);
-        map.put(BsonType.INT64, Long.class);
-        map.put(BsonType.DECIMAL128, Decimal128.class);
-        map.put(BsonType.MAX_KEY, MaxKey.class);
-        map.put(BsonType.MIN_KEY, MinKey.class);
-        map.put(BsonType.JAVASCRIPT, Code.class);
-        map.put(BsonType.JAVASCRIPT_WITH_SCOPE, CodeWithScope.class);
-        map.put(BsonType.OBJECT_ID, ObjectId.class);
-        map.put(BsonType.REGULAR_EXPRESSION, BsonRegularExpression.class);
-        map.put(BsonType.STRING, String.class);
-        map.put(BsonType.SYMBOL, Symbol.class);
-        map.put(BsonType.TIMESTAMP, BsonTimestamp.class);
-        map.put(BsonType.UNDEFINED, BsonUndefined.class);
+        index[BsonType.ARRAY.ordinal()] = List.class;
+        index[BsonType.BINARY.ordinal()] = Binary.class;
+        index[BsonType.BOOLEAN.ordinal()] = Boolean.class;
+        index[BsonType.DATE_TIME.ordinal()] = Date.class;
+        index[BsonType.DB_POINTER.ordinal()] = BsonDbPointer.class;
+        index[BsonType.DOCUMENT.ordinal()] = Document.class;
+        index[BsonType.DOUBLE.ordinal()] = Double.class;
+        index[BsonType.INT32.ordinal()] = Integer.class;
+        index[BsonType.INT64.ordinal()] = Long.class;
+        index[BsonType.DECIMAL128.ordinal()] = Decimal128.class;
+        index[BsonType.MAX_KEY.ordinal()] = MaxKey.class;
+        index[BsonType.MIN_KEY.ordinal()] = MinKey.class;
+        index[BsonType.JAVASCRIPT.ordinal()] = Code.class;
+        index[BsonType.JAVASCRIPT_WITH_SCOPE.ordinal()] = CodeWithScope.class;
+        index[BsonType.OBJECT_ID.ordinal()] = ObjectId.class;
+        index[BsonType.REGULAR_EXPRESSION.ordinal()] = BsonRegularExpression.class;
+        index[BsonType.STRING.ordinal()] = String.class;
+        index[BsonType.SYMBOL.ordinal()] = Symbol.class;
+        index[BsonType.TIMESTAMP.ordinal()] = BsonTimestamp.class;
+        index[BsonType.UNDEFINED.ordinal()] = BsonUndefined.class;
     }
 
     @Override
@@ -139,15 +141,11 @@ public class BsonTypeClassMap {
 
         BsonTypeClassMap that = (BsonTypeClassMap) o;
 
-        if (!map.equals(that.map)) {
-            return false;
-        }
-
-        return true;
+        return Arrays.equals(index, that.index);
     }
 
     @Override
     public int hashCode() {
-        return map.hashCode();
+        return Arrays.hashCode(index);
     }
 }

@@ -156,7 +156,7 @@ public class DocumentCodec implements CollectibleCodec<Document>, OverridableUui
 
         beforeFields(writer, encoderContext, document);
 
-        for (final Map.Entry<String, Object> entry : ((Map<String, Object>) document).entrySet()) {
+        for (final Map.Entry<String, Object> entry : document.entrySet()) {
             if (skipField(encoderContext, entry.getKey())) {
                 continue;
             }
