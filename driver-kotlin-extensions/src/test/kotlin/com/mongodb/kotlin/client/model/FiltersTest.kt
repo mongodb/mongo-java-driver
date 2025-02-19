@@ -159,11 +159,18 @@ class FiltersTest {
     @Test
     fun testOrSupport() {
         val expected = BsonDocument.parse("""{${'$'}or: [{"name": "Ada"}, {"age": 20 }]}""")
+
         val bson = or(eq(Person::name, person.name), eq(Person::age, person.age))
         assertEquals(expected, bson.document)
 
         val kmongoDsl = or(Person::name eq person.name, Person::age eq person.age)
         assertEquals(expected, kmongoDsl.document)
+
+        val bsonWithNull = or(eq(Person::name, person.name), eq(Person::age, person.age), null)
+        assertEquals(expected, bsonWithNull.document)
+
+        val kmongoDslWithNull = or(Person::name eq person.name, Person::age eq person.age, null)
+        assertEquals(expected, kmongoDslWithNull.document)
     }
 
     @Test
@@ -186,11 +193,18 @@ class FiltersTest {
     @Test
     fun testAndSupport() {
         val expected = BsonDocument.parse("""{${'$'}and: [{"name": "Ada"}, {"age": 20 }]}""")
+
         val bson = and(eq(Person::name, person.name), eq(Person::age, person.age))
         assertEquals(expected, bson.document)
 
         val kmongoDsl = and(Person::name.eq(person.name), Person::age.eq(person.age))
         assertEquals(expected, kmongoDsl.document)
+
+        val bsonWithNull = and(eq(Person::name, person.name), eq(Person::age, person.age), null)
+        assertEquals(expected, bsonWithNull.document)
+
+        val kmongoDslWithNull = and(Person::name.eq(person.name), Person::age.eq(person.age), null)
+        assertEquals(expected, kmongoDslWithNull.document)
     }
 
     @Test
