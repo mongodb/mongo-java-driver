@@ -69,6 +69,10 @@ class FiltersTest {
     data class Person(val name: String, val age: Int, val address: List<String>, val results: List<Int>)
     val person = Person("Ada", 20, listOf("St James Square", "London", "W1"), listOf(1, 2, 3))
 
+    @JvmInline
+    value class Name(val value: String)
+    data class PersonWithValueClass(val name: Name, val age: Int, val address: List<String>, val results: List<Int>)
+
     @Test
     fun testEqSupport() {
         val expected = BsonDocument.parse("""{"name": "Ada"}""")
@@ -426,6 +430,15 @@ class FiltersTest {
         assertEquals(expected, kmongoDsl.document)
 
         kmongoDsl = Person::address.regex(pattern.toRegex(RegexOption.IGNORE_CASE).toPattern())
+        assertEquals(expected, kmongoDsl.document)
+
+        // Filter on a value class
+        expected = BsonDocument.parse("""{"name": {"${'$'}regex": "$pattern", ${'$'}options : ""}}}""")
+
+        bson = regex(PersonWithValueClass::name, pattern)
+        assertEquals(expected, bson.document)
+
+        kmongoDsl = PersonWithValueClass::name.regex(pattern)
         assertEquals(expected, kmongoDsl.document)
     }
 
