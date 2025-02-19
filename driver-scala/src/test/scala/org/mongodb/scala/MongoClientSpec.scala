@@ -103,7 +103,7 @@ class MongoClientSpec extends BaseSpec with MockitoSugar {
 
   it should "call the underlying bulkWrite with models only" in {
     val models = List(ClientNamespacedWriteModel.insertOne(namespace, Document("key" -> "value")))
-    mongoClient.bulkWrite(models) shouldBe a[SingleObservable[ClientBulkWriteResult]]
+    mongoClient.bulkWrite(models) shouldBe a[SingleObservable[_]]
     verify(wrapped).bulkWrite(models.asJava)
   }
 
