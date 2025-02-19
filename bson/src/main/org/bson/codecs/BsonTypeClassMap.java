@@ -34,10 +34,8 @@ import org.bson.types.Symbol;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * <p>A map from a BSON types to the Class to which it should be decoded.  This class is useful if, for example,
@@ -90,11 +88,6 @@ public class BsonTypeClassMap {
      */
     public BsonTypeClassMap() {
         this(Collections.emptyMap());
-    }
-
-    Set<BsonType> keys() {
-        //TODO Only return keys that have been set
-        return EnumSet.allOf(BsonType.class);
     }
 
     /**

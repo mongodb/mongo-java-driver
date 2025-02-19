@@ -32,10 +32,10 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 
 @BenchmarkMode(Mode.Throughput)
-@Warmup(iterations = 5, time = 2, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 5, time = 2, timeUnit = TimeUnit.SECONDS)
+@Warmup(iterations = 20, time = 2, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 20, time = 2, timeUnit = TimeUnit.SECONDS)
 @OutputTimeUnit(TimeUnit.SECONDS)
-@Fork(0)
+@Fork(3)
 public class BsonDocumentBenchmark {
 
     @State(Scope.Benchmark)

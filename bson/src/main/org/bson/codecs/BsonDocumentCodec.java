@@ -135,7 +135,7 @@ public class BsonDocumentCodec implements CollectibleCodec<BsonDocument> {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void writeValue(final BsonWriter writer, final EncoderContext encoderContext, final BsonValue value) {
-        Codec codec = codecRegistry.get(value.getClass());
+        Codec codec = bsonTypeCodecMap.get(value.getBsonType());
         encoderContext.encodeWithChildContext(codec, writer, value);
     }
 

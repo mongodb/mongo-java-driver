@@ -36,8 +36,6 @@ public class BsonArrayCodec implements Codec<BsonArray> {
 
     private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(new BsonValueCodecProvider());
     private static final BsonTypeCodecMap DEFAULT_BSON_TYPE_CODEC_MAP = new BsonTypeCodecMap(getBsonTypeClassMap(), DEFAULT_REGISTRY);
-
-    private final CodecRegistry codecRegistry;
     private final BsonTypeCodecMap bsonTypeCodecMap;
 
     /**
@@ -46,7 +44,7 @@ public class BsonArrayCodec implements Codec<BsonArray> {
      * @since 3.4
      */
     public BsonArrayCodec() {
-        this(DEFAULT_REGISTRY, DEFAULT_BSON_TYPE_CODEC_MAP);
+        this(DEFAULT_BSON_TYPE_CODEC_MAP);
     }
 
     /**
@@ -55,11 +53,10 @@ public class BsonArrayCodec implements Codec<BsonArray> {
      * @param codecRegistry the codec registry
      */
     public BsonArrayCodec(final CodecRegistry codecRegistry) {
-        this(codecRegistry, new BsonTypeCodecMap(getBsonTypeClassMap(), codecRegistry));
+        this(new BsonTypeCodecMap(getBsonTypeClassMap(), codecRegistry));
     }
 
-    private BsonArrayCodec(final CodecRegistry codecRegistry, final BsonTypeCodecMap bsonTypeCodecMap) {
-        this.codecRegistry = notNull("Codec registry", codecRegistry);
+    private BsonArrayCodec(final BsonTypeCodecMap bsonTypeCodecMap) {
         this.bsonTypeCodecMap = notNull("bsonTypeCodecMap", bsonTypeCodecMap);
     }
 
@@ -80,7 +77,7 @@ public class BsonArrayCodec implements Codec<BsonArray> {
         writer.writeStartArray();
 
         for (BsonValue value : array) {
-            Codec codec = codecRegistry.get(value.getClass());
+            Codec codec = bsonTypeCodecMap.get(value.getBsonType());
             encoderContext.encodeWithChildContext(codec, writer, value);
         }
 
