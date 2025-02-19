@@ -67,7 +67,7 @@ public operator fun <T0, K, T1, T2> KProperty1<T0, Map<out K, T1>?>.div(
  * - BsonProperty annotation
  * - Property name
  */
-internal fun <T> KProperty<T>.path(): String {
+public fun <T> KProperty<T>.path(): String {
     return if (this is KPropertyPath<*, T>) {
         this.name
     } else {
