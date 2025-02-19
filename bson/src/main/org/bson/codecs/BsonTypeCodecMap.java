@@ -40,7 +40,7 @@ public class BsonTypeCodecMap {
     public BsonTypeCodecMap(final BsonTypeClassMap bsonTypeClassMap, final CodecRegistry codecRegistry) {
         this.bsonTypeClassMap = notNull("bsonTypeClassMap", bsonTypeClassMap);
         notNull("codecRegistry", codecRegistry);
-        for (BsonType cur : bsonTypeClassMap.keys()) {
+        for (BsonType cur : BsonType.values()) {
             Class<?> clazz = bsonTypeClassMap.get(cur);
             if (clazz != null) {
                 try {
