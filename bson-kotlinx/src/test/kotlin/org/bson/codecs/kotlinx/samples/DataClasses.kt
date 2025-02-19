@@ -102,6 +102,31 @@ data class DataClassWithDefaults(
     val listSimple: List<String> = listOf("a", "b", "c")
 )
 
+@Serializable
+data class DataClassWithCamelCase(
+    val twoWords: String = "",
+    @Suppress("ConstructorParameterNaming") val MyProperty: String = "",
+    @Suppress("ConstructorParameterNaming") val camel_Case_Underscores: String = "",
+    @Suppress("ConstructorParameterNaming") val URLMapping: String = "",
+    val myHTTPAuth: String = "",
+    val myHTTP2ApiKey: String = "",
+    val myHTTP2fastApiKey: String = "",
+)
+
+@Serializable
+data class DataClassWithSameSnakeCaseName(
+    val myHTTPAuth: String = "",
+    val myHttpAuth: String = "",
+    val myHTTPAuth1: String = "",
+    val myHttpAuth1: String = "",
+)
+
+@Serializable
+data class DataClassWithKotlinAllowedName(
+    @Suppress("ConstructorParameterNaming") val имяПеременной: String = "",
+    @Suppress("ConstructorParameterNaming") val `variable Name`: String = "",
+)
+
 @Serializable data class DataClassWithNulls(val boolean: Boolean?, val string: String?, val listSimple: List<String?>?)
 
 @Serializable
