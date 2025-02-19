@@ -19,10 +19,11 @@ package com.mongodb.benchmark.jmh.codec;
 
 import com.mongodb.internal.connection.ByteBufferBsonOutput;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
+import org.bson.BsonArray;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
-import org.bson.BsonInt32;
+import org.bson.BsonDouble;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
@@ -47,43 +48,54 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 import static com.mongodb.benchmark.jmh.codec.BsonUtils.getDocumentAsBuffer;
 
-/**
- * Benchmark with minimal dependency on other codecs to evaluate BsonDocumentCodec's internal performance.
- */
 @BenchmarkMode(Mode.Throughput)
 @Warmup(iterations = 20, time = 2, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 20, time = 2, timeUnit = TimeUnit.SECONDS)
 @OutputTimeUnit(TimeUnit.SECONDS)
 @Fork(3)
-public class BsonDocumentBenchmark {
+public class BsonArrayCodecBenchmark {
 
     @State(Scope.Benchmark)
     public static class Input {
         protected final PowerOfTwoBufferPool bufferPool = PowerOfTwoBufferPool.DEFAULT;
-        protected final Codec<BsonDocument> codec = getDefaultCodecRegistry().get(BsonDocument.class);
+        protected final Codec<BsonArray> bsonArrayCodec = getDefaultCodecRegistry().get(BsonArray.class);
         protected BsonDocument document;
         protected byte[] documentBytes;
+        private BsonBinaryReader reader;
+        private BsonBinaryWriter writer;
+        private BsonArray bsonValues;
 
         @Setup
         public void setup() throws IOException {
-            document = new BsonDocument();
+            bsonValues = new BsonArray();
+            document = new BsonDocument("array", bsonValues);
 
-            for (int i = 0; i < 500; i++) {
-                document.append(Integer.toString(i), new BsonInt32(i));
+            for (int i = 0; i < 1000; i++) {
+                bsonValues.add(new BsonDouble(i));
             }
 
             documentBytes = getDocumentAsBuffer(document);
+        }
+
+        @Setup(Level.Invocation)
+        public void beforeIteration() {
+            reader = new BsonBinaryReader(ByteBuffer.wrap(documentBytes));
+            writer = new BsonBinaryWriter(new ByteBufferBsonOutput(bufferPool));
+
+            reader.readStartDocument();
+            writer.writeStartDocument();
+            writer.writeName("array");
         }
     }
 
     @Benchmark
     public void decode(@NotNull Input input, @NotNull Blackhole blackhole) {
-        blackhole.consume(input.codec.decode(new BsonBinaryReader(ByteBuffer.wrap(input.documentBytes)), DecoderContext.builder().build()));
+        blackhole.consume(input.bsonArrayCodec.decode(input.reader, DecoderContext.builder().build()));
     }
 
     @Benchmark
     public void encode(@NotNull Input input, @NotNull Blackhole blackhole) {
-        input.codec.encode(new BsonBinaryWriter(new ByteBufferBsonOutput(input.bufferPool)), input.document, EncoderContext.builder().build());
+        input.bsonArrayCodec.encode(input.writer, input.bsonValues, EncoderContext.builder().build());
         blackhole.consume(input);
     }
 }

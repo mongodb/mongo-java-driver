@@ -79,17 +79,15 @@ public class BsonDocumentCodec implements CollectibleCodec<BsonDocument> {
 
     @Override
     public BsonDocument decode(final BsonReader reader, final DecoderContext decoderContext) {
-        List<BsonElement> keyValuePairs = new ArrayList<>();
-
+        BsonDocument bsonDocument = new BsonDocument();
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             String fieldName = reader.readName();
-            keyValuePairs.add(new BsonElement(fieldName, readValue(reader, decoderContext)));
+            bsonDocument.append(fieldName, readValue(reader, decoderContext));
         }
 
         reader.readEndDocument();
-
-        return new BsonDocument(keyValuePairs);
+        return bsonDocument;
     }
 
     /**
