@@ -65,9 +65,10 @@ ext {
 
 def configDir = ext.configDir
 def utilProjects = project(":util").allprojects
+def bomProjects = project(":bom")
 def coreProjects = subprojects - utilProjects
-def scalaProjects = subprojects.findAll { it.name.contains('scala') }
-def javaProjects = subprojects - scalaProjects
+def scalaProjects = subprojects.findAll { it.name.contains('scala') } - bomProjects
+def javaProjects = subprojects - scalaProjects - bomProjects
 def javaMainProjects = javaProjects - utilProjects
 def javaCodeCheckedProjects = javaMainProjects.findAll { !['driver-benchmarks', 'driver-workload-executor', 'driver-lambda'].contains(it.name) }
 def javaAndScalaTestedProjects = javaCodeCheckedProjects + scalaProjects
