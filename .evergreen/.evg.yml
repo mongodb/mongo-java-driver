@@ -210,12 +210,6 @@ functions:
         script: |
           DRIVERS_TOOLS="${DRIVERS_TOOLS}" bash ${DRIVERS_TOOLS}/.evergreen/atlas_data_lake/run-mongohouse-image.sh
 
-  "assume-aws-role":
-    - command: ec2.assume_role
-      params:
-        role_arn: ${aws_test_secrets_role}
-        duration_seconds: 1800
-
   "run load-balancer":
     - command: shell.exec
       params:
@@ -951,23 +945,18 @@ tasks:
               export GCPOIDC_TEST_CMD="OIDC_ENV=gcp ./.evergreen/run-mongodb-oidc-test.sh"
               bash $DRIVERS_TOOLS/.evergreen/auth_oidc/gcp/run-driver-test.sh
 
-    - name: "oidc-auth-test-k8s-eks-task"
+    - name: "oidc-auth-test-k8s"
       commands:
-        - func: "assume-aws-role"
+        - command: ec2.assume_role
+          params:
+            role_arn: ${aws_test_secrets_role}
+            duration_seconds: 1800
         - func: "oidc-auth-test-k8s-func"
           vars:
             VARIANT: eks
-
-    - name: "oidc-auth-test-k8s-aks-task"
-      commands:
-        - func: "assume-aws-role"
         - func: "oidc-auth-test-k8s-func"
           vars:
             VARIANT: aks
-
-    - name: "oidc-auth-test-k8s-gke-task"
-      commands:
-        - func: "assume-aws-role"
         - func: "oidc-auth-test-k8s-func"
           vars:
             VARIANT: gke
@@ -2067,7 +2056,9 @@ task_groups:
       - func: fetch source
       - func: prepare resources
       - func: fix absolute paths
-      - func: "assume-aws-role"
+      - command: ec2.assume_role
+        params:
+          role_arn: ${aws_test_secrets_role}
       - command: subprocess.exec
         params:
           binary: bash
@@ -2141,7 +2132,9 @@ task_groups:
       - func: fetch source
       - func: prepare resources
       - func: fix absolute paths
-      - func: "assume-aws-role"
+      - command: ec2.assume_role
+        params:
+          role_arn: ${aws_test_secrets_role}
       - command: subprocess.exec
         params:
           binary: bash
@@ -2155,9 +2148,7 @@ task_groups:
           args:
             - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/k8s/teardown.sh
     tasks:
-      - "oidc-auth-test-k8s-eks-task"
-      - "oidc-auth-test-k8s-aks-task"
-      - "oidc-auth-test-k8s-gke-task"
+      - oidc-auth-test-k8s
 
 buildvariants:
 
