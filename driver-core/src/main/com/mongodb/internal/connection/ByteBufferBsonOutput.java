@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import org.bson.ByteBuf;
 import org.bson.io.OutputBuffer;
+import org.bson.types.ObjectId;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -80,6 +81,58 @@ public class ByteBufferBsonOutput extends OutputBuffer {
             currentOffset += bytesToPutInCurrentBuffer;
         }
         position += length;
+    }
+
+    @Override
+    public void writeInt32(final int value) {
+        ByteBuf buf = getCurrentByteBuffer();
+        if (buf.remaining() >= 4) {
+            ensureOpen();
+            buf.putInt(value);
+            position += 4;
+        } else {
+            // fallback for edge cases
+            super.writeInt32(value);
+        }
+    }
+
+    @Override
+    public void writeDouble(final double value) {
+        ByteBuf buf = getCurrentByteBuffer();
+        if (buf.remaining() >= 8) {
+            ensureOpen();
+            buf.putDouble(value);
+            position += 8;
+        } else {
+            // fallback for edge cases
+            super.writeDouble(value);
+        }
+    }
+
+    @Override
+    public void writeLong(final long value) {
+        ByteBuf buf = getCurrentByteBuffer();
+        if (buf.remaining() >= 8) {
+            ensureOpen();
+            buf.putLong(value);
+            position += 8;
+        } else {
+            // fallback for edge cases
+            super.writeInt64(value);
+        }
+    }
+
+    @Override
+    public void writeObjectId(final ObjectId value) {
+        ByteBuf byteBufferAtIndex = getByteBufferAtIndex(curBufferIndex);
+        if (byteBufferAtIndex.remaining() >= 12) {
+            ensureOpen();
+            value.putToByteBuffer(byteBufferAtIndex.asNIO());
+            position += 12;
+        } else {
+            // fallback for edge cases
+            writeBytes(value.toByteArray());
+        }
     }
 
     @Override
@@ -156,13 +209,12 @@ public class ByteBufferBsonOutput extends OutputBuffer {
 
         int total = 0;
         for (final ByteBuf cur : getByteBuffers()) {
-            ByteBuf dup = cur.duplicate();
-            while (dup.hasRemaining()) {
-                int numBytesToCopy = Math.min(dup.remaining(), tmp.length);
-                dup.get(tmp, 0, numBytesToCopy);
+            while (cur.hasRemaining()) {
+                int numBytesToCopy = Math.min(cur.remaining(), tmp.length);
+                cur.get(tmp, 0, numBytesToCopy);
                 out.write(tmp, 0, numBytesToCopy);
             }
-            total += dup.limit();
+            total += cur.limit();
         }
         return total;
     }
