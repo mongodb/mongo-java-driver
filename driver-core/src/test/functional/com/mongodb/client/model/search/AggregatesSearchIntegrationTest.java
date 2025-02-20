@@ -229,6 +229,9 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
  *      </tr>
  *  </tbody>
  * </table>
+ * <p>
+ * Use this class when needing to test against MFLIX specifically. Otherwise,
+ * see AggregatesSearchTest.
  */
 final class AggregatesSearchIntegrationTest {
     private static final MongoNamespace MFLIX_MOVIES_NS = new MongoNamespace("sample_mflix", "movies");
