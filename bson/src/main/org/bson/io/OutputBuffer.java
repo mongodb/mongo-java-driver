@@ -95,21 +95,12 @@ public abstract class OutputBuffer extends OutputStream implements BsonOutput {
         writeLong(Double.doubleToRawLongBits(x));
     }
 
-
+    @Override
     public void writeString(final String str) {
-        byte[] utf8Bytes = str.getBytes(StandardCharsets.UTF_8);
-        int length = utf8Bytes.length + 1; // include null terminator
-        writeInt32(length);
-        writeBytes(utf8Bytes);
-        writeByte(0);
+        writeInt(0); // making space for size
+        int strLen = writeCharacters(str, false);
+        writeInt32(getPosition() - strLen - 4, strLen);
     }
-
-//    @Override
-//    public void writeString(final String str) {
-//        writeInt(0); // making space for size
-//        int strLen = writeCharacters(str, false);
-//        writeInt32(getPosition() - strLen - 4, strLen);
-//    }
 
     @Override
     public void writeCString(final String value) {
