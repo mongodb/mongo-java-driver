@@ -17,7 +17,6 @@
 package org.bson.codecs;
 
 import org.bson.BsonDocument;
-import org.bson.BsonElement;
 import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonType;
@@ -26,8 +25,6 @@ import org.bson.BsonWriter;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import static org.bson.assertions.Assertions.notNull;

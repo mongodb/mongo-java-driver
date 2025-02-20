@@ -16,6 +16,7 @@
 
 package org.bson.codecs
 
+import org.bson.BsonType
 import spock.lang.Specification
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
@@ -57,7 +58,7 @@ class IterableCodecProviderSpecification extends Specification {
     def 'unidentical instances should not be equal'() {
         given:
         def first = new IterableCodecProvider()
-        def second = new IterableCodecProvider(new BsonTypeClassMap([BOOLEAN: String]))
+        def second = new IterableCodecProvider(new BsonTypeClassMap([(BsonType.BOOLEAN): String]))
         def third = new IterableCodecProvider(new BsonTypeClassMap(), { Object from ->
             from
         })
