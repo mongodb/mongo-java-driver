@@ -19,7 +19,7 @@
  * Contains JMH benchmarks for targeted components and code paths.
  *
  * <p> When changes are made, the existing benchmarks can be quickly executed to assess
- * any performance impact. These benchmarks are intended for targeted evaluation in a local environment
+ * any performance impact. These benchmarks are intended for targeted evaluation in a local environment or spawn host
  * and are not currently executed on the Evergreen. If a benchmark for a particular code path or component does not yet
  * exist, this package provides a convenient location to set up a new one
  * for performance testing.</p>
