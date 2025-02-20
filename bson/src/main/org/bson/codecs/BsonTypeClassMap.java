@@ -70,7 +70,7 @@ import java.util.Map;
  */
 public class BsonTypeClassMap {
     static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP = new BsonTypeClassMap();
-    private final Class<?>[] index = new Class<?>[BsonType.values().length];
+    private final Class<?>[] bsonTypeOrdinalToClassMap = new Class<?>[BsonType.values().length];
 
     /**
      * Construct an instance with the default mapping, but replacing the default mapping with any values contained in the given map.
@@ -80,7 +80,7 @@ public class BsonTypeClassMap {
      */
     public BsonTypeClassMap(final Map<BsonType, Class<?>> replacementsForDefaults) {
         addDefaults();
-        replacementsForDefaults.forEach((key, value) -> index[key.ordinal()] = value);
+        replacementsForDefaults.forEach((key, value) -> bsonTypeOrdinalToClassMap[key.ordinal()] = value);
     }
 
     /**
@@ -97,30 +97,30 @@ public class BsonTypeClassMap {
      * @return the Class that is mapped to the BSON type
      */
     public Class<?> get(final BsonType bsonType) {
-        return index[bsonType.ordinal()];
+        return bsonTypeOrdinalToClassMap[bsonType.ordinal()];
     }
 
     private void addDefaults() {
-        index[BsonType.ARRAY.ordinal()] = List.class;
-        index[BsonType.BINARY.ordinal()] = Binary.class;
-        index[BsonType.BOOLEAN.ordinal()] = Boolean.class;
-        index[BsonType.DATE_TIME.ordinal()] = Date.class;
-        index[BsonType.DB_POINTER.ordinal()] = BsonDbPointer.class;
-        index[BsonType.DOCUMENT.ordinal()] = Document.class;
-        index[BsonType.DOUBLE.ordinal()] = Double.class;
-        index[BsonType.INT32.ordinal()] = Integer.class;
-        index[BsonType.INT64.ordinal()] = Long.class;
-        index[BsonType.DECIMAL128.ordinal()] = Decimal128.class;
-        index[BsonType.MAX_KEY.ordinal()] = MaxKey.class;
-        index[BsonType.MIN_KEY.ordinal()] = MinKey.class;
-        index[BsonType.JAVASCRIPT.ordinal()] = Code.class;
-        index[BsonType.JAVASCRIPT_WITH_SCOPE.ordinal()] = CodeWithScope.class;
-        index[BsonType.OBJECT_ID.ordinal()] = ObjectId.class;
-        index[BsonType.REGULAR_EXPRESSION.ordinal()] = BsonRegularExpression.class;
-        index[BsonType.STRING.ordinal()] = String.class;
-        index[BsonType.SYMBOL.ordinal()] = Symbol.class;
-        index[BsonType.TIMESTAMP.ordinal()] = BsonTimestamp.class;
-        index[BsonType.UNDEFINED.ordinal()] = BsonUndefined.class;
+        bsonTypeOrdinalToClassMap[BsonType.ARRAY.ordinal()] = List.class;
+        bsonTypeOrdinalToClassMap[BsonType.BINARY.ordinal()] = Binary.class;
+        bsonTypeOrdinalToClassMap[BsonType.BOOLEAN.ordinal()] = Boolean.class;
+        bsonTypeOrdinalToClassMap[BsonType.DATE_TIME.ordinal()] = Date.class;
+        bsonTypeOrdinalToClassMap[BsonType.DB_POINTER.ordinal()] = BsonDbPointer.class;
+        bsonTypeOrdinalToClassMap[BsonType.DOCUMENT.ordinal()] = Document.class;
+        bsonTypeOrdinalToClassMap[BsonType.DOUBLE.ordinal()] = Double.class;
+        bsonTypeOrdinalToClassMap[BsonType.INT32.ordinal()] = Integer.class;
+        bsonTypeOrdinalToClassMap[BsonType.INT64.ordinal()] = Long.class;
+        bsonTypeOrdinalToClassMap[BsonType.DECIMAL128.ordinal()] = Decimal128.class;
+        bsonTypeOrdinalToClassMap[BsonType.MAX_KEY.ordinal()] = MaxKey.class;
+        bsonTypeOrdinalToClassMap[BsonType.MIN_KEY.ordinal()] = MinKey.class;
+        bsonTypeOrdinalToClassMap[BsonType.JAVASCRIPT.ordinal()] = Code.class;
+        bsonTypeOrdinalToClassMap[BsonType.JAVASCRIPT_WITH_SCOPE.ordinal()] = CodeWithScope.class;
+        bsonTypeOrdinalToClassMap[BsonType.OBJECT_ID.ordinal()] = ObjectId.class;
+        bsonTypeOrdinalToClassMap[BsonType.REGULAR_EXPRESSION.ordinal()] = BsonRegularExpression.class;
+        bsonTypeOrdinalToClassMap[BsonType.STRING.ordinal()] = String.class;
+        bsonTypeOrdinalToClassMap[BsonType.SYMBOL.ordinal()] = Symbol.class;
+        bsonTypeOrdinalToClassMap[BsonType.TIMESTAMP.ordinal()] = BsonTimestamp.class;
+        bsonTypeOrdinalToClassMap[BsonType.UNDEFINED.ordinal()] = BsonUndefined.class;
     }
 
     @Override
@@ -134,11 +134,11 @@ public class BsonTypeClassMap {
 
         BsonTypeClassMap that = (BsonTypeClassMap) o;
 
-        return Arrays.equals(index, that.index);
+        return Arrays.equals(bsonTypeOrdinalToClassMap, that.bsonTypeOrdinalToClassMap);
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(index);
+        return Arrays.hashCode(bsonTypeOrdinalToClassMap);
     }
 }
