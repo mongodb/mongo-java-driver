@@ -16,6 +16,7 @@
 
 package com.mongodb.client.internal;
 
+import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
@@ -33,9 +34,8 @@ class CollectionInfoRetriever {
         this.client = notNull("client", client);
     }
 
-    @Nullable
-    public BsonDocument filter(final String databaseName, final BsonDocument filter, @Nullable final Timeout operationTimeout) {
-        return databaseWithTimeout(client.getDatabase(databaseName), TIMEOUT_ERROR_MESSAGE,
-                operationTimeout).listCollections(BsonDocument.class).filter(filter).first();
+    public ListCollectionsIterable<BsonDocument> filter(final String databaseName, final BsonDocument filter, @Nullable final Timeout operationTimeout) {
+        return databaseWithTimeout(client.getDatabase(databaseName), TIMEOUT_ERROR_MESSAGE, operationTimeout)
+                .listCollections(BsonDocument.class).filter(filter);
     }
 }

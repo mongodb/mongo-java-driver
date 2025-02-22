@@ -922,7 +922,7 @@ public class OidcAuthenticationProseTests {
                 .first();
     }
 
-    private static <T extends Throwable> void assertCause(
+    public static <T extends Throwable> void assertCause(
             final Class<T> expectedCause, final String expectedMessageFragment, final Executable e) {
         Throwable cause = assertThrows(Throwable.class, e);
         while (cause.getCause() != null) {
