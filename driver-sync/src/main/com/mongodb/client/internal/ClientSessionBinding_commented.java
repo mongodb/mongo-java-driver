@@ -218,31 +218,16 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
             ClientSessionBinding.this.retain();
         }
 
-        /**
-         * Gets the server description from the wrapped connection source.
-         *
-         * @return the server description
-         */
         @Override
         public ServerDescription getServerDescription() {
             return wrapped.getServerDescription();
         }
 
-        /**
-         * Gets the operation context containing session information.
-         *
-         * @return the operation context
-         */
         @Override
         public OperationContext getOperationContext() {
             return operationContext;
         }
 
-        /**
-         * Gets the read preference from the wrapped connection source.
-         *
-         * @return the read preference
-         */
         @Override
         public ReadPreference getReadPreference() {
             return wrapped.getReadPreference();
@@ -271,11 +256,6 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
             }
         }
 
-        /**
-         * Retains a reference to this connection source.
-         *
-         * @return this
-         */
         @Override
         @SuppressWarnings("checkstyle:methodlength")
         public ConnectionSource retain() {
@@ -283,22 +263,11 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
             return this;
         }
 
-        /**
-         * Gets the current reference count.
-         *
-         * @return the current count of references
-         */
         @Override
         public int getCount() {
             return wrapped.getCount();
         }
 
-        /**
-         * Releases a reference to this connection source. When the reference count reaches zero,
-         * releases the parent binding.
-         *
-         * @return the current reference count after releasing
-         */
         @Override
         public int release() {
             int count = wrapped.release();
@@ -316,41 +285,21 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
     private final class SyncClientSessionContext extends ClientSessionContext {
         private final ClientSession clientSession;
 
-        /**
-         * Creates a new synchronous client session context.
-         *
-         * @param clientSession the client session to wrap
-         */
         SyncClientSessionContext(final ClientSession clientSession) {
             super(clientSession);
             this.clientSession = clientSession;
         }
 
-        /**
-         * Checks if this is an implicitly created session.
-         *
-         * @return true if this session was implicitly created
-         */
         @Override
         public boolean isImplicitSession() {
             return ownsSession;
         }
 
-        /**
-         * Notifies that a message has been sent using this session.
-         *
-         * @return true if the message was successfully sent
-         */
         @Override
         public boolean notifyMessageSent() {
             return clientSession.notifyMessageSent();
         }
 
-        /**
-         * Checks if there is an active transaction in this session.
-         *
-         * @return true if there is an active transaction
-         */
         @Override
         public boolean hasActiveTransaction() {
             return clientSession.hasActiveTransaction();

@@ -117,7 +117,6 @@ class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implem
 
     /**
      * Sets the number of documents to return per batch.
-     * Larger batch sizes reduce network round trips but increase memory usage.
      *
      * @param batchSize the batch size
      * @return this
@@ -142,8 +141,8 @@ class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implem
     }
 
     /**
-     * Sets a string comment to help trace this operation through the database profiler,
-     * currentOp, and logs.
+     * Sets a string comment to help trace this operation through the database profiler, currentOp,
+     * and logs.
      *
      * @param comment the comment to set
      * @return this
@@ -155,8 +154,8 @@ class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implem
     }
 
     /**
-     * Sets a BSON comment to help trace this operation through the database profiler,
-     * currentOp, and logs.
+     * Sets a BSON comment to help trace this operation through the database profiler, currentOp,
+     * and logs.
      *
      * @param comment the comment to set
      * @return this
@@ -171,7 +170,7 @@ class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implem
      * Creates a read operation that will execute the index listing.
      * This method integrates with MongoDB's operation execution framework.
      *
-     * @return the read operation that will execute the index listing
+     * @return the read operation
      */
     @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {

@@ -169,13 +169,6 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
      * Executes the aggregation pipeline and writes the results to a collection.
      * This method requires the last stage to be either $out or $merge.
      *
-     * <p>The operation will:</p>
-     * <ul>
-     *     <li>Validate that the last stage is $out or $merge</li>
-     *     <li>Execute the pipeline with the configured options</li>
-     *     <li>Write results to the specified output collection</li>
-     * </ul>
-     *
      * @throws IllegalStateException if the last stage is not $out or $merge
      */
     @Override
@@ -206,7 +199,6 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     /**
      * Sets the number of documents to return per batch.
-     * Larger batch sizes reduce network round trips but increase memory usage.
      *
      * @param batchSize the batch size
      * @return this
@@ -219,9 +211,8 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     /**
      * Sets the timeout mode for the operation.
-     * This provides more granular control over timeout behavior than maxTime.
      *
-     * @param timeoutMode the timeout mode to use
+     * @param timeoutMode the timeout mode
      * @return this
      */
     @Override
@@ -310,7 +301,6 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     /**
      * Sets the index hint for the aggregation.
-     * Can improve performance by forcing use of a specific index.
      *
      * @param hint the index hint
      * @return this
@@ -323,7 +313,6 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     /**
      * Sets the index hint for the aggregation.
-     * Can improve performance by forcing use of a specific index.
      *
      * @param hint the index hint
      * @return this
@@ -336,7 +325,6 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     /**
      * Sets the variables to use in the aggregation pipeline.
-     * Variables can be referenced in pipeline stages.
      *
      * @param variables the variables
      * @return this
@@ -408,12 +396,6 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     /**
      * Creates a read operation for this aggregation pipeline.
      * Handles both cursor-based results and output to collections.
-     *
-     * <p>For pipelines with $out or $merge:</p>
-     * <ul>
-     *     <li>Executes the pipeline to write results to the output collection</li>
-     *     <li>Creates a find operation to read from the output collection</li>
-     * </ul>
      *
      * @return the read operation
      */
@@ -518,6 +500,11 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         return null;
     }
 
+    /**
+     * Validates that the timeout mode is appropriate for output operations.
+     *
+     * @throws IllegalArgumentException if using ITERATION timeout mode with output operations
+     */
     private void validateTimeoutMode() {
         if (getTimeoutMode() == TimeoutMode.ITERATION) {
             throw new IllegalArgumentException("Aggregations that output to a collection do not support the ITERATION value for the "

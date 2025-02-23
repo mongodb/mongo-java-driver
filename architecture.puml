@@ -1,0 +1,102 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam monochrome true
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 100
+skinparam ranksep 80
+skinparam defaultFontSize 14
+skinparam defaultFontName Arial
+skinparam padding 2
+skinparam roundCorner 10
+
+' Base interfaces and abstract classes
+package "Core Interfaces" {
+    interface BatchCursor<T> {
+        +next(): T
+        +tryNext(): T
+    }
+    interface MongoCursor<T> {
+        +next(): T
+        +tryNext(): T
+    }
+    abstract class MongoIterableImpl<T>
+}
+
+' Cursor implementations
+package "Cursor Implementations" {
+    class MongoBatchCursorAdapter<T> {
+        +next(): T
+        +tryNext(): T
+        -getNextInBatch(): T
+    }
+
+    class MongoMappingCursor<T,U> {
+        +next(): U
+        +tryNext(): U
+    }
+}
+
+' Session and resource management
+package "Session Management" {
+    class ClientSessionBinding {
+        +getConnectionSource()
+        +release()
+    }
+
+    class KeyRetriever {
+        +find(keyFilter: BsonDocument, operationTimeout: Timeout): List<BsonDocument>
+    }
+}
+
+' Query operations
+package "Query Operations" {
+    class ListIndexesIterableImpl<TResult> {
+        +asReadOperation(): ReadOperation<BatchCursor<TResult>>
+    }
+
+    class AggregateIterableImpl<TDocument,TResult> {
+        +toCollection()
+        -getOutNamespace(): MongoNamespace
+    }
+}
+
+' Inheritance relationships
+MongoBatchCursorAdapter ..|> BatchCursor
+MongoMappingCursor ..|> MongoCursor
+ListIndexesIterableImpl --|> MongoIterableImpl
+AggregateIterableImpl --|> MongoIterableImpl
+
+' Usage relationships
+MongoMappingCursor --> BatchCursor: wraps
+MongoBatchCursorAdapter --> BatchCursor: implements
+ClientSessionBinding --> ConnectionSource: manages
+KeyRetriever --> MongoClient: uses
+ListIndexesIterableImpl --> BatchCursor: produces
+AggregateIterableImpl --> BatchCursor: produces
+
+note right of MongoBatchCursorAdapter
+  Manages cursor state and batch processing
+end note
+
+note right of MongoMappingCursor
+  Transforms documents between types
+end note
+
+note right of ClientSessionBinding
+  Handles session lifecycle and connection pinning
+end note
+
+note right of KeyRetriever
+  Retrieves keys with timeout and read concern
+end note
+
+note right of ListIndexesIterableImpl
+  Handles index listing with batch processing
+end note
+
+note right of AggregateIterableImpl
+  Manages aggregation pipelines and output stages
+end note
+
+@enduml
