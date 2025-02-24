@@ -17,14 +17,12 @@
 package org.mongodb.scala.model
 
 import java.lang
-
 import scala.collection.JavaConverters._
 import scala.util.matching.Regex
-
 import org.bson._
-import com.mongodb.client.model.geojson.{ Geometry, Point }
-import com.mongodb.client.model.{ Filters => JFilters }
-
+import com.mongodb.client.model.geojson.{Geometry, Point}
+import com.mongodb.client.model.{Filters => JFilters}
+import org.mongodb.scala.bson.BsonTransformer
 import org.mongodb.scala.bson.conversions.Bson
 
 //scalastyle:off null number.of.methods
@@ -47,7 +45,7 @@ object Filters {
    * @return the filter
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/eq \$eq]]
    */
-  def eq[TItem](fieldName: String, value: TItem): Bson = JFilters.eq(fieldName, value)
+  def eq[TItem](fieldName: String, value: TItem)(implicit bt : BsonTransformer[TItem]): Bson = JFilters.eq(fieldName, bt.apply(value))
 
   /**
    * Allows the use of aggregation expressions within the query language.
@@ -72,7 +70,7 @@ object Filters {
    * @return the filter
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/eq \$eq]]
    */
-  def equal[TItem](fieldName: String, value: TItem): Bson = eq(fieldName, value)
+  def equal[TItem](fieldName: String, value: TItem)(implicit bt : BsonTransformer[TItem]): Bson = eq(fieldName, value)
 
   /**
    * Creates a filter that matches all documents that validate against the given JSON schema document.
@@ -93,7 +91,7 @@ object Filters {
    * @return the filter
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/ne \$ne]]
    */
-  def ne[TItem](fieldName: String, value: TItem): Bson = JFilters.ne(fieldName, value)
+  def ne[TItem](fieldName: String, value: TItem)(implicit bt : BsonTransformer[TItem]): Bson = JFilters.ne(fieldName, bt.apply(value))
 
   /**
    * Creates a filter that matches all documents where the value of the field name does not equal the specified value.
@@ -106,7 +104,7 @@ object Filters {
    * @return the filter
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/ne \$ne]]
    */
-  def notEqual[TItem](fieldName: String, value: TItem): Bson = JFilters.ne(fieldName, value)
+  def notEqual[TItem](fieldName: String, value: TItem)(implicit bt : BsonTransformer[TItem]): Bson = JFilters.ne(fieldName, bt.apply(value))
 
   /**
    * Creates a filter that matches all documents where the value of the given field is greater than the specified value.
@@ -117,7 +115,7 @@ object Filters {
    * @return the filter
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/gt \$gt]]
    */
-  def gt[TItem](fieldName: String, value: TItem): Bson = JFilters.gt(fieldName, value)
+  def gt[TItem](fieldName: String, value: TItem)(implicit bt : BsonTransformer[TItem]): Bson = JFilters.gt(fieldName, bt.apply(value))
 
   /**
    * Creates a filter that matches all documents where the value of the given field is less than the specified value.
@@ -128,7 +126,7 @@ object Filters {
    * @return the filter
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/lt \$lt]]
    */
-  def lt[TItem](fieldName: String, value: TItem): Bson = JFilters.lt(fieldName, value)
+  def lt[TItem](fieldName: String, value: TItem)(implicit bt : BsonTransformer[TItem]): Bson = JFilters.lt(fieldName, bt.apply(value))
 
   /**
    * Creates a filter that matches all documents where the value of the given field is greater than or equal to the specified value.
@@ -139,7 +137,7 @@ object Filters {
    * @return the filter
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/gte \$gte]]
    */
-  def gte[TItem](fieldName: String, value: TItem): Bson = JFilters.gte(fieldName, value)
+  def gte[TItem](fieldName: String, value: TItem)(implicit bt : BsonTransformer[TItem]): Bson = JFilters.gte(fieldName, bt.apply(value))
 
   /**
    * Creates a filter that matches all documents where the value of the given field is less than or equal to the specified value.
@@ -150,7 +148,7 @@ object Filters {
    * @return the filter
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/lte \$lte]]
    */
-  def lte[TItem](fieldName: String, value: TItem): Bson = JFilters.lte(fieldName: String, value: TItem)
+  def lte[TItem](fieldName: String, value: TItem)(implicit bt : BsonTransformer[TItem]): Bson = JFilters.lte(fieldName: String, bt.apply(value))
 
   /**
    * Creates a filter that matches all documents where the value of a field equals any value in the list of specified values.
@@ -161,7 +159,7 @@ object Filters {
    * @return the filter
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/in \$in]]
    */
-  def in[TItem](fieldName: String, values: TItem*): Bson = JFilters.in(fieldName, values.asJava)
+  def in[TItem](fieldName: String, values: TItem*)(implicit bt : BsonTransformer[TItem]): Bson = JFilters.in(fieldName,(values.map(bt.apply) : _*).asJava)
 
   /**
    * Creates a filter that matches all documents where the value of a field does not equal any of the specified values or does not exist.
@@ -172,7 +170,7 @@ object Filters {
    * @return the filter
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/nin \$nin]]
    */
-  def nin[TItem](fieldName: String, values: TItem*): Bson = JFilters.nin(fieldName, values.asJava)
+  def nin[TItem](fieldName: String, values: TItem*)(implicit bt : BsonTransformer[TItem]): Bson = JFilters.nin(fieldName, (values.map(bt.apply) : _*).asJava)
 
   /**
    * Creates a filter that performs a logical AND of the provided list of filters.  Note that this will only generate a "\$and"
@@ -362,7 +360,8 @@ object Filters {
    * @return the filter
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/all \$all]]
    */
-  def all[TItem](fieldName: String, values: TItem*): Bson = JFilters.all(fieldName, values.toList.asJava)
+  def all[TItem](fieldName: String, values: TItem*)(implicit bt : BsonTransformer[TItem]): Bson =
+    JFilters.all(fieldName, (values.map(bt.apply) : _*).asJava)
 
   /**
    * Creates a filter that matches all documents containing a field that is an array where at least one member of the array matches the
@@ -467,11 +466,11 @@ object Filters {
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/box/#op._S_box \$box]]
    */
   def geoWithinBox(
-      fieldName: String,
-      lowerLeftX: Double,
-      lowerLeftY: Double,
-      upperRightX: Double,
-      upperRightY: Double
+    fieldName: String,
+    lowerLeftX: Double,
+    lowerLeftY: Double,
+    upperRightX: Double,
+    upperRightY: Double
   ): Bson =
     JFilters.geoWithinBox(fieldName, lowerLeftX, lowerLeftY, upperRightX, upperRightY)
 
@@ -689,11 +688,11 @@ object Filters {
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/near/ \$near]]
    */
   def nearSphere(
-      fieldName: String,
-      x: Double,
-      y: Double,
-      maxDistance: Option[Double],
-      minDistance: Option[Double]
+    fieldName: String,
+    x: Double,
+    y: Double,
+    maxDistance: Option[Double],
+    minDistance: Option[Double]
   ): Bson = {
     JFilters.nearSphere(fieldName, x, y, maxDistance.asJava, minDistance.asJava)
   }
