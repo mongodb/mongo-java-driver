@@ -68,8 +68,7 @@ public class ClientSideEncryption25LookupProseTests {
     }
 
     @BeforeEach
-    public void setUp() throws InterruptedException {
-        assumeTrue(serverVersionAtLeast(7, 0));
+    public void setUp() {
         assumeFalse(isStandalone());
 
         // Create an unencrypted MongoClient.
@@ -171,6 +170,7 @@ public class ClientSideEncryption25LookupProseTests {
             "qe, qe2",
             "no_schema, no_schema2"})
     void cases1Through7(final String from, final String to) {
+        assumeTrue(serverVersionAtLeast(8, 1));
         String mql = ("[\n"
                 + "    {\"$match\" : {\"<from>\" : \"<from>\"}},\n"
                 + "    {\n"
@@ -194,6 +194,7 @@ public class ClientSideEncryption25LookupProseTests {
 
     @Test
     void case8() {
+        assumeTrue(serverVersionAtLeast(8, 1));
         List<BsonDocument> pipeline = BsonArray.parse("[\n"
                 + "    {\"$match\" : {\"csfle\" : \"qe\"}},\n"
                 + "    {\n"

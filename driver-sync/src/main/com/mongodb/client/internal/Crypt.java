@@ -19,7 +19,6 @@ package com.mongodb.client.internal;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
-import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
@@ -42,7 +41,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -310,9 +309,9 @@ public class Crypt implements Closeable {
 
     private void collInfo(final MongoCryptContext cryptContext, final String databaseName, @Nullable final Timeout operationTimeout) {
         try {
-            ListCollectionsIterable<BsonDocument> results = assertNotNull(collectionInfoRetriever)
+            List<BsonDocument> results = assertNotNull(collectionInfoRetriever)
                     .filter(databaseName, cryptContext.getMongoOperation(), operationTimeout);
-            for (BsonDocument result : results.into(new ArrayList<>())) {
+            for (BsonDocument result : results) {
                 cryptContext.addMongoOperationResult(result);
             }
             cryptContext.completeMongoOperation();
