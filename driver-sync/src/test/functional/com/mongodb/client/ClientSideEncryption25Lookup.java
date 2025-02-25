@@ -403,6 +403,7 @@ public class ClientSideEncryption25Lookup {
 
     @Test
     public void case9() {
+    assumeTrue(serverVersionLessThan(8, 1));
         List<BsonDocument> pipeline = BsonArray.parse("[\n"
                 + "    {\"$match\" : {\"csfle\" : \"csfle\"}},\n"
                 + "    {\n"
