@@ -39,8 +39,6 @@ import org.bson.Document;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
-import org.opentest4j.AssertionFailedError;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -70,6 +68,7 @@ import static com.mongodb.MongoCredential.OidcCallbackContext;
 import static com.mongodb.MongoCredential.OidcCallbackResult;
 import static com.mongodb.MongoCredential.TOKEN_RESOURCE_KEY;
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.testing.MongoAssertions.assertCause;
 import static java.lang.System.getenv;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -920,20 +919,6 @@ public class OidcAuthenticationProseTests {
                 .getCollection("test")
                 .find()
                 .first();
-    }
-
-    public static <T extends Throwable> void assertCause(
-            final Class<T> expectedCause, final String expectedMessageFragment, final Executable e) {
-        Throwable cause = assertThrows(Throwable.class, e);
-        while (cause.getCause() != null) {
-            cause = cause.getCause();
-        }
-        if (!cause.getMessage().contains(expectedMessageFragment)) {
-            throw new AssertionFailedError("Unexpected message: " + cause.getMessage(), cause);
-        }
-        if (!expectedCause.isInstance(cause)) {
-            throw new AssertionFailedError("Unexpected cause: " + cause.getClass(), assertThrows(Throwable.class, e));
-        }
     }
 
     protected void delayNextFind() {

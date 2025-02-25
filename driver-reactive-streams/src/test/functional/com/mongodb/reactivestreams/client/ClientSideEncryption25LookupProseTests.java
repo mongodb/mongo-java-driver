@@ -24,7 +24,7 @@ import com.mongodb.reactivestreams.client.syncadapter.SyncClientEncryption;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import com.mongodb.reactivestreams.client.vault.ClientEncryptions;
 
-public class ClientSideEncryption25Lookup extends com.mongodb.client.ClientSideEncryption25Lookup {
+public class ClientSideEncryption25LookupProseTests extends com.mongodb.client.ClientSideEncryption25LookupProseTests {
 
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
