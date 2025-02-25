@@ -71,6 +71,7 @@ public class ClientSideEncryption25LookupProseTests {
     @BeforeEach
     public void setUp() {
         assumeFalse(isStandalone());
+        assumeTrue(serverVersionAtLeast(7, 0));
 
         // Create an encrypted MongoClient named `encryptedClient` configured with:
         MongoNamespace dataKeysNamespace = new MongoNamespace("db.keyvault");
