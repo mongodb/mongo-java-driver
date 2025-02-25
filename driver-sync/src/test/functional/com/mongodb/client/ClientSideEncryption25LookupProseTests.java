@@ -20,6 +20,7 @@ import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
+import com.mongodb.WriteConcern;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.vault.ClientEncryption;
@@ -71,35 +72,8 @@ public class ClientSideEncryption25LookupProseTests {
     public void setUp() {
         assumeFalse(isStandalone());
 
-        // Create an unencrypted MongoClient.
-        MongoClient unencryptedClient = createMongoClient(getMongoClientSettingsBuilder().build());
-
-        // drop database db
-        MongoDatabase db = unencryptedClient.getDatabase("db");
-        db.drop();
-
-        // Insert <key-doc.json> into db.keyvault.
+        // Create an encrypted MongoClient named `encryptedClient` configured with:
         MongoNamespace dataKeysNamespace = new MongoNamespace("db.keyvault");
-        db.getCollection(dataKeysNamespace.getCollectionName(), BsonDocument.class)
-                .insertOne(bsonDocumentFromPath("key-doc.json"));
-
-        // Create the following collections:
-        db.createCollection("csfle", new CreateCollectionOptions()
-                .validationOptions(new ValidationOptions()
-                        .validator(new BsonDocument("$jsonSchema", bsonDocumentFromPath("schema-csfle.json")))));
-        db.createCollection("csfle2", new CreateCollectionOptions()
-                .validationOptions(new ValidationOptions()
-                        .validator(new BsonDocument("$jsonSchema", bsonDocumentFromPath("schema-csfle2.json")))));
-
-        db.createCollection("qe",
-                new CreateCollectionOptions().encryptedFields(bsonDocumentFromPath("schema-qe.json")));
-        db.createCollection("qe2",
-                new CreateCollectionOptions().encryptedFields(bsonDocumentFromPath("schema-qe2.json")));
-
-        db.createCollection("no_schema");
-        db.createCollection("no_schema2");
-
-        // Create an encrypted MongoClient configured with:
         Map<String, Map<String, Object>> kmsProviders = getKmsProviders(EncryptionFixture.KmsProviderType.LOCAL);
         MongoClient encryptedClient = createMongoClient(getMongoClientSettingsBuilder()
                 .autoEncryptionSettings(
@@ -108,11 +82,38 @@ public class ClientSideEncryption25LookupProseTests {
                                 .kmsProviders(kmsProviders)
                                 .build())
                 .build());
+        // Use `encryptedClient` to drop `db.keyvault`.
+        MongoDatabase encryptedDb = encryptedClient.getDatabase("db");
+        MongoCollection<BsonDocument> encryptedCollection = encryptedDb
+                .getCollection(dataKeysNamespace.getCollectionName(), BsonDocument.class)
+                .withWriteConcern(WriteConcern.MAJORITY);
+        encryptedCollection.drop();
+        // Insert `<key-doc.json>` into `db.keyvault` with majority write concern.
+        encryptedCollection.insertOne(bsonDocumentFromPath("key-doc.json"));
 
-        // Insert documents with the encrypted MongoClient:
+        // Use `encryptedClient` to drop and create the following collections:
+        Arrays.asList("csfle", "csfle2", "qe", "qe2", "no_schema", "no_schema2").forEach(c -> {
+            encryptedDb.getCollection(c).drop();
+        });
+        // create
+        encryptedDb.createCollection("csfle", new CreateCollectionOptions()
+                .validationOptions(new ValidationOptions()
+                        .validator(new BsonDocument("$jsonSchema", bsonDocumentFromPath("schema-csfle.json")))));
+        encryptedDb.createCollection("csfle2", new CreateCollectionOptions()
+                .validationOptions(new ValidationOptions()
+                        .validator(new BsonDocument("$jsonSchema", bsonDocumentFromPath("schema-csfle2.json")))));
+
+        encryptedDb.createCollection("qe",
+                new CreateCollectionOptions().encryptedFields(bsonDocumentFromPath("schema-qe.json")));
+        encryptedDb.createCollection("qe2",
+                new CreateCollectionOptions().encryptedFields(bsonDocumentFromPath("schema-qe2.json")));
+
+        encryptedDb.createCollection("no_schema");
+        encryptedDb.createCollection("no_schema2");
+
+        // Insert documents with `encryptedClient`:
         Consumer<String> insert = (name) -> {
-            encryptedClient.getDatabase("db").getCollection(name)
-                    .insertOne(new Document(name, name));
+            encryptedDb.getCollection(name).insertOne(new Document(name, name));
         };
         insert.accept("csfle");
         insert.accept("csfle2");
@@ -121,14 +122,18 @@ public class ClientSideEncryption25LookupProseTests {
         insert.accept("no_schema");
         insert.accept("no_schema2");
 
+        // Create an unencrypted MongoClient named `unencryptedClient`.
+        MongoClient unencryptedClient = createMongoClient(getMongoClientSettingsBuilder().build());
+        MongoDatabase unencryptedDb = unencryptedClient.getDatabase("db");
+
         Consumer<String> assertDocument = (name) -> {
             List<BsonDocument> pipeline = Arrays.asList(
                     BsonDocument.parse("{\"$project\" : {\"_id\" : 0, \"__safeContent__\" : 0}}")
             );
-            Document decryptedDoc = encryptedClient.getDatabase("db").getCollection(name)
+            Document decryptedDoc = encryptedDb.getCollection(name)
                     .aggregate(pipeline).first();
             assertEquals(decryptedDoc, new Document(name, name));
-            Document encryptedDoc = unencryptedClient.getDatabase("db").getCollection(name)
+            Document encryptedDoc = unencryptedDb.getCollection(name)
                     .aggregate(pipeline).first();
             assertNotNull(encryptedDoc);
             assertEquals(Binary.class, encryptedDoc.get(name).getClass());
