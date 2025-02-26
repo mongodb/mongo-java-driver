@@ -16,7 +16,6 @@
 
 package com.mongodb.client.unified;
 
-import com.mongodb.assertions.Assertions;
 import org.opentest4j.AssertionFailedError;
 
 import java.util.ArrayList;
@@ -31,12 +30,14 @@ import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.IGNORE_EXTRA_EVENTS;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.RETRY;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.SKIP;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.SLEEP_AFTER_CURSOR_CLOSE;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.SLEEP_AFTER_CURSOR_OPEN;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.WAIT_FOR_BATCH_CURSOR_CREATION;
+import static java.lang.String.format;
 
 public final class UnifiedTestModifications {
     public static void applyCustomizations(final TestDef def) {
@@ -291,7 +292,7 @@ public final class UnifiedTestModifications {
          * @param ticket reason for skipping the test; must start with a Jira URL
          */
         public TestApplicator skipJira(final String ticket) {
-            Assertions.assertTrue(ticket.startsWith("https://jira.mongodb.org/browse/JAVA-"));
+            assertTrue(ticket.startsWith("https://jira.mongodb.org/browse/JAVA-"));
             return new TestApplicator(this, ticket, SKIP);
         }
 
@@ -496,6 +497,8 @@ public final class UnifiedTestModifications {
          * message will be checked. Otherwise, the throwable will be checked.
          */
         public TestApplicator whenFailureContains(final String messageFragment) {
+            assertTrue(this.modifiersToApply.contains(RETRY),
+                    format("Modifier %s was not specified before calling whenFailureContains", RETRY));
             this.matchesThrowable = (final Throwable e) -> {
                 // inspect the cause for failed assertions with a cause
                 if (e instanceof AssertionFailedError && e.getCause() != null) {

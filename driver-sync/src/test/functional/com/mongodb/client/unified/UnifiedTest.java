@@ -107,7 +107,7 @@ public abstract class UnifiedTest {
             "wait queue timeout errors include details about checked out connections");
 
     public static final int ATTEMPTS = 3;
-    private static Set<String> ignoreRemaining = new HashSet<>();
+    private static final Set<String> ATTEMPTED_TESTS_TO_HENCEFORTH_IGNORE = new HashSet<>();
 
     @Nullable
     private String fileDescription;
@@ -348,9 +348,12 @@ public abstract class UnifiedTest {
             final BsonDocument definition) {
         boolean forceFlaky = totalAttempts < 0;
         if (!forceFlaky) {
-            boolean ignoreThisTest = ignoreRemaining.contains(testName);
+            boolean ignoreThisTest = ATTEMPTED_TESTS_TO_HENCEFORTH_IGNORE.contains(testName);
             assumeFalse(ignoreThisTest, "Skipping a retryable test that already succeeded");
-            ignoreRemaining.add(testName);
+            // The attempt is what counts, since a test may fail with
+            // something like "ignored", and would not be retried.
+            // Only failures should trigger another attempt.
+            ATTEMPTED_TESTS_TO_HENCEFORTH_IGNORE.add(testName);
         }
         try {
             BsonArray operations = definition.getArray("operations");
@@ -377,11 +380,14 @@ public abstract class UnifiedTest {
                 }
                 compareLogMessages(rootContext, definition, tweaks);
             }
+        } catch (TestAbortedException e) {
+            // if a test is ignored, we do not retry
+            throw e;
         } catch (Throwable e) {
             if (forceFlaky) {
                 throw e;
             }
-            if (!testDef.matchesThrowable(e)) {
+            if (testDef!= null && !testDef.matchesThrowable(e)) {
                 // if the throwable is not matched, test definitions were not intended to apply; rethrow it
                 throw e;
             }
@@ -390,7 +396,7 @@ public abstract class UnifiedTest {
                 throw e;
             }
 
-            ignoreRemaining.remove(testName);
+            ATTEMPTED_TESTS_TO_HENCEFORTH_IGNORE.remove(testName);
             abort("Ignoring failure and retrying attempt " + attemptNumber);
         }
     }
