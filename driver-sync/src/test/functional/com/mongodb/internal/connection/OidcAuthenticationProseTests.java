@@ -826,6 +826,7 @@ public class OidcAuthenticationProseTests {
         String cleanedConnectionString = callback == null ? connectionString : connectionString
                 .replace("ENVIRONMENT:azure,", "")
                 .replace("ENVIRONMENT:gcp,", "")
+                .replace("&authMechanismProperties=ENVIRONMENT:k8s", "")
                 .replace("ENVIRONMENT:test,", "");
         return createSettings(cleanedConnectionString, callback, commandListener, OIDC_CALLBACK_KEY);
     }
@@ -1042,6 +1043,8 @@ public class OidcAuthenticationProseTests {
                     c = OidcAuthenticator.getAzureCallback(credential);
                 } else if (oidcEnv.contains("gcp")) {
                     c = OidcAuthenticator.getGcpCallback(credential);
+                } else if (oidcEnv.contains("k8s")) {
+                    c = OidcAuthenticator.getK8sCallback();
                 } else {
                     c = getProseTestCallback();
                 }
