@@ -98,18 +98,24 @@ public class WorkloadExecutor {
             BsonArray createEntities = fileDocument.getArray("createEntities", new BsonArray());
             BsonArray initialData = fileDocument.getArray("initialData", new BsonArray());
             unifiedTest.setUp(
+                    "",
                     null,
                     null,
                     null,
+                    1,
+                    1,
                     schemaVersion,
                     runOnRequirements,
                     createEntities,
                     initialData,
                     testDocument);
             unifiedTest.shouldPassAllOutcomes(
+                    "",
                     null,
                     null,
                     null,
+                    1,
+                    1,
                     schemaVersion,
                     runOnRequirements,
                     createEntities,
