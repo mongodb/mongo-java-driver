@@ -243,6 +243,11 @@ class CompositeByteBuf implements ByteBuf {
     }
 
     @Override
+    public ByteBuf putInt(final int index, final int b) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public ByteBuf putDouble(final double b) {
         throw new UnsupportedOperationException();
     }

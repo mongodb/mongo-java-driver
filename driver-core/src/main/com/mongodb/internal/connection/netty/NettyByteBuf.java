@@ -96,6 +96,12 @@ public final class NettyByteBuf implements ByteBuf {
     }
 
     @Override
+    public ByteBuf putInt(final int index, final int b) {
+        proxied.setInt(index, b);
+        return this;
+    }
+
+    @Override
     public ByteBuf putDouble(final double b) {
         proxied.writeDouble(b);
         return this;

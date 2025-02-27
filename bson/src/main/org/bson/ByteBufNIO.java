@@ -104,6 +104,12 @@ public class ByteBufNIO implements ByteBuf {
     }
 
     @Override
+    public ByteBuf putInt(final int index, final int b) {
+        buf.putInt(index, b);
+        return this;
+    }
+
+    @Override
     public ByteBuf putDouble(final double b) {
         buf.putDouble(b);
         return this;
