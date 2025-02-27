@@ -23,14 +23,13 @@ import org.bson.BsonBinaryReader;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
-import org.bson.codecs.Codec;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.jetbrains.annotations.NotNull;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
-import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
@@ -60,7 +59,7 @@ public class BsonDocumentBenchmark {
     @State(Scope.Benchmark)
     public static class Input {
         protected final PowerOfTwoBufferPool bufferPool = PowerOfTwoBufferPool.DEFAULT;
-        protected final Codec<BsonDocument> codec = getDefaultCodecRegistry().get(BsonDocument.class);
+        protected final BsonDocumentCodec bsonDocumentCodec = new BsonDocumentCodec(getDefaultCodecRegistry());
         protected BsonDocument document;
         protected byte[] documentBytes;
 
@@ -78,12 +77,12 @@ public class BsonDocumentBenchmark {
 
     @Benchmark
     public void decode(@NotNull Input input, @NotNull Blackhole blackhole) {
-        blackhole.consume(input.codec.decode(new BsonBinaryReader(ByteBuffer.wrap(input.documentBytes)), DecoderContext.builder().build()));
+        blackhole.consume(input.bsonDocumentCodec.decode(new BsonBinaryReader(ByteBuffer.wrap(input.documentBytes)), DecoderContext.builder().build()));
     }
 
     @Benchmark
     public void encode(@NotNull Input input, @NotNull Blackhole blackhole) {
-        input.codec.encode(new BsonBinaryWriter(new ByteBufferBsonOutput(input.bufferPool)), input.document, EncoderContext.builder().build());
+        input.bsonDocumentCodec.encode(new BsonBinaryWriter(new ByteBufferBsonOutput(input.bufferPool)), input.document, EncoderContext.builder().build());
         blackhole.consume(input);
     }
 }

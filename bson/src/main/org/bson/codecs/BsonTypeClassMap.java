@@ -70,7 +70,7 @@ import java.util.Map;
  */
 public class BsonTypeClassMap {
     static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP = new BsonTypeClassMap();
-    private final Class<?>[] bsonTypeOrdinalToClassMap = new Class<?>[BsonType.values().length];
+    private final Class<?>[] bsonTypeOrdinalToClassMap = new Class<?>[256];
 
     /**
      * Construct an instance with the default mapping, but replacing the default mapping with any values contained in the given map.
@@ -80,7 +80,7 @@ public class BsonTypeClassMap {
      */
     public BsonTypeClassMap(final Map<BsonType, Class<?>> replacementsForDefaults) {
         addDefaults();
-        replacementsForDefaults.forEach((key, value) -> bsonTypeOrdinalToClassMap[key.ordinal()] = value);
+        replacementsForDefaults.forEach((key, value) -> bsonTypeOrdinalToClassMap[key.getValue()] = value);
     }
 
     /**
@@ -97,30 +97,30 @@ public class BsonTypeClassMap {
      * @return the Class that is mapped to the BSON type
      */
     public Class<?> get(final BsonType bsonType) {
-        return bsonTypeOrdinalToClassMap[bsonType.ordinal()];
+        return bsonTypeOrdinalToClassMap[bsonType.getValue()];
     }
 
     private void addDefaults() {
-        bsonTypeOrdinalToClassMap[BsonType.ARRAY.ordinal()] = List.class;
-        bsonTypeOrdinalToClassMap[BsonType.BINARY.ordinal()] = Binary.class;
-        bsonTypeOrdinalToClassMap[BsonType.BOOLEAN.ordinal()] = Boolean.class;
-        bsonTypeOrdinalToClassMap[BsonType.DATE_TIME.ordinal()] = Date.class;
-        bsonTypeOrdinalToClassMap[BsonType.DB_POINTER.ordinal()] = BsonDbPointer.class;
-        bsonTypeOrdinalToClassMap[BsonType.DOCUMENT.ordinal()] = Document.class;
-        bsonTypeOrdinalToClassMap[BsonType.DOUBLE.ordinal()] = Double.class;
-        bsonTypeOrdinalToClassMap[BsonType.INT32.ordinal()] = Integer.class;
-        bsonTypeOrdinalToClassMap[BsonType.INT64.ordinal()] = Long.class;
-        bsonTypeOrdinalToClassMap[BsonType.DECIMAL128.ordinal()] = Decimal128.class;
-        bsonTypeOrdinalToClassMap[BsonType.MAX_KEY.ordinal()] = MaxKey.class;
-        bsonTypeOrdinalToClassMap[BsonType.MIN_KEY.ordinal()] = MinKey.class;
-        bsonTypeOrdinalToClassMap[BsonType.JAVASCRIPT.ordinal()] = Code.class;
-        bsonTypeOrdinalToClassMap[BsonType.JAVASCRIPT_WITH_SCOPE.ordinal()] = CodeWithScope.class;
-        bsonTypeOrdinalToClassMap[BsonType.OBJECT_ID.ordinal()] = ObjectId.class;
-        bsonTypeOrdinalToClassMap[BsonType.REGULAR_EXPRESSION.ordinal()] = BsonRegularExpression.class;
-        bsonTypeOrdinalToClassMap[BsonType.STRING.ordinal()] = String.class;
-        bsonTypeOrdinalToClassMap[BsonType.SYMBOL.ordinal()] = Symbol.class;
-        bsonTypeOrdinalToClassMap[BsonType.TIMESTAMP.ordinal()] = BsonTimestamp.class;
-        bsonTypeOrdinalToClassMap[BsonType.UNDEFINED.ordinal()] = BsonUndefined.class;
+        bsonTypeOrdinalToClassMap[BsonType.ARRAY.getValue()] = List.class;
+        bsonTypeOrdinalToClassMap[BsonType.BINARY.getValue()] = Binary.class;
+        bsonTypeOrdinalToClassMap[BsonType.BOOLEAN.getValue()] = Boolean.class;
+        bsonTypeOrdinalToClassMap[BsonType.DATE_TIME.getValue()] = Date.class;
+        bsonTypeOrdinalToClassMap[BsonType.DB_POINTER.getValue()] = BsonDbPointer.class;
+        bsonTypeOrdinalToClassMap[BsonType.DOCUMENT.getValue()] = Document.class;
+        bsonTypeOrdinalToClassMap[BsonType.DOUBLE.getValue()] = Double.class;
+        bsonTypeOrdinalToClassMap[BsonType.INT32.getValue()] = Integer.class;
+        bsonTypeOrdinalToClassMap[BsonType.INT64.getValue()] = Long.class;
+        bsonTypeOrdinalToClassMap[BsonType.DECIMAL128.getValue()] = Decimal128.class;
+        bsonTypeOrdinalToClassMap[BsonType.MAX_KEY.getValue()] = MaxKey.class;
+        bsonTypeOrdinalToClassMap[BsonType.MIN_KEY.getValue()] = MinKey.class;
+        bsonTypeOrdinalToClassMap[BsonType.JAVASCRIPT.getValue()] = Code.class;
+        bsonTypeOrdinalToClassMap[BsonType.JAVASCRIPT_WITH_SCOPE.getValue()] = CodeWithScope.class;
+        bsonTypeOrdinalToClassMap[BsonType.OBJECT_ID.getValue()] = ObjectId.class;
+        bsonTypeOrdinalToClassMap[BsonType.REGULAR_EXPRESSION.getValue()] = BsonRegularExpression.class;
+        bsonTypeOrdinalToClassMap[BsonType.STRING.getValue()] = String.class;
+        bsonTypeOrdinalToClassMap[BsonType.SYMBOL.getValue()] = Symbol.class;
+        bsonTypeOrdinalToClassMap[BsonType.TIMESTAMP.getValue()] = BsonTimestamp.class;
+        bsonTypeOrdinalToClassMap[BsonType.UNDEFINED.getValue()] = BsonUndefined.class;
     }
 
     @Override

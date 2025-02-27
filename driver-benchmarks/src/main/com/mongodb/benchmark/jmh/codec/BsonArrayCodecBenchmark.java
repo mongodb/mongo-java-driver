@@ -24,7 +24,7 @@ import org.bson.BsonBinaryReader;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
 import org.bson.BsonDouble;
-import org.bson.codecs.Codec;
+import org.bson.codecs.BsonArrayCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +58,7 @@ public class BsonArrayCodecBenchmark {
     @State(Scope.Benchmark)
     public static class Input {
         protected final PowerOfTwoBufferPool bufferPool = PowerOfTwoBufferPool.DEFAULT;
-        protected final Codec<BsonArray> bsonArrayCodec = getDefaultCodecRegistry().get(BsonArray.class);
+        protected final BsonArrayCodec bsonArrayCodec = new BsonArrayCodec(getDefaultCodecRegistry());
         protected BsonDocument document;
         protected byte[] documentBytes;
         private BsonBinaryReader reader;
