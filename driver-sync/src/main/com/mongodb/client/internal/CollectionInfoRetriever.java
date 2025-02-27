@@ -21,6 +21,9 @@ import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.internal.TimeoutHelper.databaseWithTimeout;
 
@@ -33,9 +36,10 @@ class CollectionInfoRetriever {
         this.client = notNull("client", client);
     }
 
-    @Nullable
-    public BsonDocument filter(final String databaseName, final BsonDocument filter, @Nullable final Timeout operationTimeout) {
-        return databaseWithTimeout(client.getDatabase(databaseName), TIMEOUT_ERROR_MESSAGE,
-                operationTimeout).listCollections(BsonDocument.class).filter(filter).first();
+    public List<BsonDocument> filter(final String databaseName, final BsonDocument filter, @Nullable final Timeout operationTimeout) {
+        return databaseWithTimeout(client.getDatabase(databaseName), TIMEOUT_ERROR_MESSAGE, operationTimeout)
+                .listCollections(BsonDocument.class)
+                .filter(filter)
+                .into(new ArrayList<>());
     }
 }
