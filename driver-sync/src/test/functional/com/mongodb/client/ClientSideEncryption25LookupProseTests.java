@@ -59,6 +59,7 @@ import static util.JsonPoweredTestHelper.getTestDocument;
 
 /**
  * <a href="https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/tests/README.md#25-test-lookup">
+ * 25. Test $lookup</a>
  */
 public class ClientSideEncryption25LookupProseTests {
     private MongoClient client;
@@ -178,7 +179,7 @@ public class ClientSideEncryption25LookupProseTests {
             "csfle, csfle2",
             "qe, qe2",
             "no_schema, no_schema2"})
-    void cases1Through7(final String from, final String to) {
+    void testCase1Through7(final String from, final String to) {
         assumeTrue(serverVersionAtLeast(8, 1));
         String mql = ("[\n"
                 + "    {\"$match\" : {\"<from>\" : \"<from>\"}},\n"
@@ -202,7 +203,7 @@ public class ClientSideEncryption25LookupProseTests {
     }
 
     @Test
-    void case8() {
+    void testCase8() {
         assumeTrue(serverVersionAtLeast(8, 1));
         List<BsonDocument> pipeline = BsonArray.parse("[\n"
                 + "    {\"$match\" : {\"csfle\" : \"qe\"}},\n"
@@ -223,7 +224,7 @@ public class ClientSideEncryption25LookupProseTests {
     }
 
     @Test
-    void case9() {
+    void testCase9() {
         assumeTrue(serverVersionLessThan(8, 1));
         List<BsonDocument> pipeline = BsonArray.parse("[\n"
                 + "    {\"$match\" : {\"csfle\" : \"csfle\"}},\n"

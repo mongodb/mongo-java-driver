@@ -60,7 +60,7 @@ val jnaLibsPath: String = System.getProperty("jnaLibsPath", "${jnaResourcesDir}$
 val jnaResources: String = System.getProperty("jna.library.path", jnaLibsPath)
 
 // Download jnaLibs that match the git tag or revision to jnaResourcesBuildDir
-val downloadRevision = "67f10bfb8de69549987cc62a1d4548d7b511a7ef" // TODO
+val downloadRevision = "r1.13.0"
 val binariesArchiveName = "libmongocrypt-java.tar.gz"
 
 /**
