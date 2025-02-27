@@ -387,7 +387,7 @@ public abstract class UnifiedTest {
             if (forceFlaky) {
                 throw e;
             }
-            if (testDef!= null && !testDef.matchesThrowable(e)) {
+            if (testDef != null && !testDef.matchesThrowable(e)) {
                 // if the throwable is not matched, test definitions were not intended to apply; rethrow it
                 throw e;
             }
