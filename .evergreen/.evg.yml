@@ -798,6 +798,30 @@ functions:
           ${PREPARE_SHELL}
           MONGODB_URI="${MONGODB_URI}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-graalvm-native-image-app.sh
 
+  "oidc-auth-test-k8s-func":
+      - command: shell.exec
+        type: test
+        params:
+          shell: bash
+          include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
+          script: |-
+            set -o errexit
+            ${PREPARE_SHELL}
+            export K8S_VARIANT=${VARIANT}
+            cd src
+            git add .
+            git commit --allow-empty -m "add files"
+            # uncompressed tar used to allow appending .git folder
+            export K8S_DRIVERS_TAR_FILE=/tmp/mongo-java-driver.tar
+            git archive -o $K8S_DRIVERS_TAR_FILE HEAD
+            tar -rf $K8S_DRIVERS_TAR_FILE .git
+            export K8S_TEST_CMD="OIDC_ENV=k8s VARIANT=${VARIANT} ./.evergreen/run-mongodb-oidc-test.sh"
+            bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/setup-pod.sh
+            bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/run-self-test.sh
+            source $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/secrets-export.sh
+            bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/run-driver-test.sh
+            bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/teardown-pod.sh
+
 # Anchors
 
 pre:
@@ -920,6 +944,22 @@ tasks:
               # and then run our test suite on the vm.
               export GCPOIDC_TEST_CMD="OIDC_ENV=gcp ./.evergreen/run-mongodb-oidc-test.sh"
               bash $DRIVERS_TOOLS/.evergreen/auth_oidc/gcp/run-driver-test.sh
+
+    - name: "oidc-auth-test-k8s"
+      commands:
+        - command: ec2.assume_role
+          params:
+            role_arn: ${aws_test_secrets_role}
+            duration_seconds: 1800
+        - func: "oidc-auth-test-k8s-func"
+          vars:
+            VARIANT: eks
+        - func: "oidc-auth-test-k8s-func"
+          vars:
+            VARIANT: aks
+        - func: "oidc-auth-test-k8s-func"
+          vars:
+            VARIANT: gke
 
     - name: serverless-test
       commands:
@@ -2011,7 +2051,7 @@ task_groups:
     tasks:
       - testazurekms-task
 
-  - name: testoidc_task_group
+  - name: test-oidc-task-group
     setup_group:
       - func: fetch source
       - func: prepare resources
@@ -2036,7 +2076,7 @@ task_groups:
     tasks:
       - oidc-auth-test
 
-  - name: testazureoidc_task_group
+  - name: test-oidc-azure-task-group
     setup_group:
       - func: fetch source
       - func: prepare resources
@@ -2059,7 +2099,7 @@ task_groups:
     tasks:
       - oidc-auth-test-azure
 
-  - name: testgcpoidc_task_group
+  - name: test-oidc-gcp-task-group
     setup_group:
       - func: fetch source
       - func: prepare resources
@@ -2082,6 +2122,33 @@ task_groups:
     setup_group_timeout_secs: 1800
     tasks:
       - oidc-auth-test-gcp
+
+  - name: test-oidc-k8s-task-group
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
+    teardown_task_can_fail_task: true
+    teardown_group_timeout_secs: 180
+    setup_group:
+      - func: fetch source
+      - func: prepare resources
+      - func: fix absolute paths
+      - command: ec2.assume_role
+        params:
+          role_arn: ${aws_test_secrets_role}
+      - command: subprocess.exec
+        params:
+          binary: bash
+          include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/k8s/setup.sh
+    teardown_group:
+      - command: subprocess.exec
+        params:
+          binary: bash
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/k8s/teardown.sh
+    tasks:
+      - oidc-auth-test-k8s
 
 buildvariants:
 
@@ -2254,21 +2321,28 @@ buildvariants:
   display_name: "OIDC Auth"
   run_on: ubuntu2204-small
   tasks:
-    - name: testoidc_task_group
+    - name: test-oidc-task-group
       batchtime: 20160 # 14 days
 
-- name: testazureoidc-variant
+- name: test-oidc-azure-variant
   display_name: "OIDC Auth Azure"
   run_on: ubuntu2204-small
   tasks:
-    - name: testazureoidc_task_group
+    - name: test-oidc-azure-task-group
       batchtime: 20160 # 14 days
 
-- name: testgcpoidc-variant
+- name: test-oidc-gcp-variant
   display_name: "OIDC Auth GCP"
   run_on: ubuntu2204-small
   tasks:
-    - name: testgcpoidc_task_group
+    - name: test-oidc-gcp-task-group
+      batchtime: 20160 # 14 days
+
+- name: test-oidc-k8s-variant
+  display_name: "OIDC Auth K8S"
+  run_on: ubuntu2204-small
+  tasks:
+    - name: test-oidc-k8s-task-group
       batchtime: 20160 # 14 days
 
 - matrix_name: "aws-auth-test"
