@@ -17,18 +17,23 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.assertions.Assertions;
+import com.mongodb.internal.connection.ByteBufSpecification.NettyBufferProvider;
 import org.bson.BsonSerializationException;
 import org.bson.ByteBuf;
 import org.bson.types.ObjectId;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ThreadLocalRandom;
@@ -45,6 +50,85 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 final class ByteBufferBsonOutputTest {
+
+    // Test all combinations: useBranch (true/false) × BufferProvider implementations
+    static Arguments[] bufferProviders() {
+        return new Arguments[]{
+                Arguments.of(false, new SimpleBufferProvider()),
+                Arguments.of(true, new SimpleBufferProvider()),
+                Arguments.of(false, new NettyBufferProvider()),
+                Arguments.of(true, new NettyBufferProvider())};
+    }
+
+    /** Generic method to test writing strings **/
+
+    private static String expectedNullCharExceptionMessage(String value) {
+        if (value.isEmpty()) {
+            return null;
+        }
+        int zeroIndex = value.indexOf(0);
+        if (zeroIndex == -1) {
+            return null;
+        }
+        return "BSON cstring '" + value + "' is not valid because it contains a null character at index " + zeroIndex;
+    }
+
+    private static void writeStringTest(BufferProvider bufferProvider, String value, boolean useBranch, boolean cstring) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
+            String expectedNullCharEx = null;
+            if (cstring) {
+                expectedNullCharEx = expectedNullCharExceptionMessage(value);
+            }
+            final byte[] expectedEncodedBytes;
+            if (expectedNullCharEx == null) {
+                expectedEncodedBytes = expectedStringBytesOf(value, cstring);
+            } else {
+                expectedEncodedBytes = null;
+            }
+            try {
+                if (useBranch) {
+                    try (ByteBufferBsonOutput.Branch branch = out.branch()) {
+                        if (cstring) {
+                            branch.writeCString(value);
+                        } else {
+                            branch.writeString(value);
+                        }
+                    }
+                } else {
+                    if (cstring) {
+                        out.writeCString(value);
+                    } else {
+                        out.writeString(value);
+                    }
+                }
+                if (expectedNullCharEx != null) {
+                    Assertions.fail("Expected BsonSerializationException");
+                }
+            } catch (BsonSerializationException e) {
+                if (expectedNullCharEx != null) {
+                    assertEquals(expectedNullCharEx, e.getMessage());
+                    return;
+                }
+            }
+            assertArrayEquals(expectedEncodedBytes, out.toByteArray());
+            assertEquals(expectedEncodedBytes.length, out.getPosition());
+            assertEquals(expectedEncodedBytes.length, out.size());
+        }
+    }
+
+    private static @NotNull byte[] expectedStringBytesOf(String v, boolean cstring) {
+        byte[] encoded = v.getBytes(StandardCharsets.UTF_8);
+        ByteBuffer expected = ByteBuffer.allocate((cstring ? 0 : 4) + encoded.length + 1).order(ByteOrder.LITTLE_ENDIAN);
+        if (!cstring) {
+            expected.putInt((byte) (encoded.length + 1));
+        }
+        expected.put(encoded);
+        expected.put((byte) 0);
+        return expected.array();
+    }
+
+    /** Tests **/
+
     @DisplayName("constructor should throw if buffer provider is null")
     @Test
     @SuppressWarnings("try")
@@ -92,9 +176,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should write a byte")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteByte(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProviders")
+    void shouldWriteByte(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             byte v = 11;
             if (useBranch) {
                 try (ByteBufferBsonOutput.Branch branch = out.branch()) {
@@ -111,9 +195,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should write a bytes")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteBytes(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProviders")
+    void shouldWriteBytes(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             byte[] v = {1, 2, 3, 4};
             if (useBranch) {
                 try (ByteBufferBsonOutput.Branch branch = out.branch()) {
@@ -226,123 +310,51 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should write an empty string")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteEmptyString(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
-            String v = "";
-            if (useBranch) {
-                try (ByteBufferBsonOutput.Branch branch = out.branch()) {
-                    branch.writeString(v);
-                }
-            } else {
-                out.writeString(v);
-            }
-            assertArrayEquals(new byte[] {1, 0, 0, 0, 0}, out.toByteArray());
-            assertEquals(5, out.getPosition());
-            assertEquals(5, out.size());
-        }
+    @MethodSource("bufferProviders")
+    void shouldWriteEmptyString(final boolean useBranch, final BufferProvider bufferProvider) {
+        writeStringTest(bufferProvider, "", useBranch, false);
     }
 
     @DisplayName("should write an ASCII string")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteAsciiString(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
-            String v = "Java";
-            if (useBranch) {
-                try (ByteBufferBsonOutput.Branch branch = out.branch()) {
-                    branch.writeString(v);
-                }
-            } else {
-                out.writeString(v);
-            }
-            assertArrayEquals(new byte[] {5, 0, 0, 0, 0x4a, 0x61, 0x76, 0x61, 0}, out.toByteArray());
-            assertEquals(9, out.getPosition());
-            assertEquals(9, out.size());
-        }
+    @MethodSource("bufferProviders")
+    void shouldWriteAsciiString(final boolean useBranch, final BufferProvider bufferProvider) {
+        writeStringTest(bufferProvider, "JavaIsACool\u0000Language", useBranch, false);
     }
 
     @DisplayName("should write a UTF-8 string")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteUtf8String(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
-            String v = "\u0900";
-            if (useBranch) {
-                try (ByteBufferBsonOutput.Branch branch = out.branch()) {
-                    branch.writeString(v);
-                }
-            } else {
-                out.writeString(v);
-            }
-            assertArrayEquals(new byte[] {4, 0, 0, 0, (byte) 0xe0, (byte) 0xa4, (byte) 0x80, 0}, out.toByteArray());
-            assertEquals(8, out.getPosition());
-            assertEquals(8, out.size());
-        }
+    @MethodSource("bufferProviders")
+    void shouldWriteUtf8String(final boolean useBranch, final BufferProvider bufferProvider) {
+        writeStringTest(bufferProvider, "Java\u0080I\u0000sACool\u0900Language", useBranch, false);
     }
 
     @DisplayName("should write an empty CString")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteEmptyCString(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
-            String v = "";
-            if (useBranch) {
-                try (ByteBufferBsonOutput.Branch branch = out.branch()) {
-                    branch.writeCString(v);
-                }
-            } else {
-                out.writeCString(v);
-            }
-            assertArrayEquals(new byte[] {0}, out.toByteArray());
-            assertEquals(1, out.getPosition());
-            assertEquals(1, out.size());
-        }
+    @MethodSource("bufferProviders")
+    void shouldWriteEmptyCString(final boolean useBranch, final BufferProvider bufferProvider) {
+        writeStringTest(bufferProvider, "", useBranch, true);
     }
 
     @DisplayName("should write an ASCII CString")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteAsciiCString(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
-            String v = "Java";
-            if (useBranch) {
-                try (ByteBufferBsonOutput.Branch branch = out.branch()) {
-                    branch.writeCString(v);
-                }
-            } else {
-                out.writeCString(v);
-            }
-            assertArrayEquals(new byte[] {0x4a, 0x61, 0x76, 0x61, 0}, out.toByteArray());
-            assertEquals(5, out.getPosition());
-            assertEquals(5, out.size());
-        }
+    @MethodSource("bufferProviders")
+    void shouldWriteAsciiCString(final boolean useBranch, final BufferProvider bufferProvider) {
+        writeStringTest(bufferProvider, "JavaIsACoolLanguage", useBranch, true);
     }
 
     @DisplayName("should write a UTF-8 CString")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteUtf8CString(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
-            String v = "\u0900";
-            if (useBranch) {
-                try (ByteBufferBsonOutput.Branch branch = out.branch()) {
-                    branch.writeCString(v);
-                }
-            } else {
-                out.writeCString(v);
-            }
-            assertArrayEquals(new byte[] {(byte) 0xe0, (byte) 0xa4, (byte) 0x80, 0}, out.toByteArray());
-            assertEquals(4, out.getPosition());
-            assertEquals(4, out.size());
-        }
+    @MethodSource("bufferProviders")
+    void shouldWriteUtf8CString(final boolean useBranch, final BufferProvider bufferProvider) {
+        writeStringTest(bufferProvider, "Java\u0080IsACool\u0900Language", useBranch, true);
     }
 
     @DisplayName("should get byte buffers as little endian")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldGetByteBuffersAsLittleEndian(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProviders")
+    void shouldGetByteBuffersAsLittleEndian(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             byte[] v = {1, 0, 0, 0};
             if (useBranch) {
                 try (ByteBufferBsonOutput.Branch branch = out.branch()) {
@@ -357,35 +369,23 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("null character in CString should throw SerializationException")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void nullCharacterInCStringShouldThrowSerializationException(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
-            String v = "hell\u0000world";
-            if (useBranch) {
-                try (ByteBufferBsonOutput.Branch branch = out.branch()) {
-                    assertThrows(BsonSerializationException.class, () -> branch.writeCString(v));
-                }
-            } else {
-                assertThrows(BsonSerializationException.class, () -> out.writeCString(v));
-            }
-        }
+    @MethodSource("bufferProviders")
+    void nullCharacterInCStringShouldThrowSerializationException(final boolean useBranch, final BufferProvider bufferProvider) {
+        writeStringTest(bufferProvider, "hello\u0000world", useBranch, true);
+    }
+
+    @DisplayName("null character in UTF-8 CString should throw SerializationException")
+    @ParameterizedTest
+    @MethodSource("bufferProviders")
+    void nullCharacterInUtf8CStringShouldThrowSerializationException(final boolean useBranch, final BufferProvider bufferProvider) {
+        writeStringTest(bufferProvider, "hello\u0080\u0000world", useBranch, true);
     }
 
     @DisplayName("null character in String should not throw SerializationException")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void nullCharacterInStringShouldNotThrowSerializationException(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
-            String v = "h\u0000i";
-            if (useBranch) {
-                try (ByteBufferBsonOutput.Branch branch = out.branch()) {
-                    branch.writeString(v);
-                }
-            } else {
-                out.writeString(v);
-            }
-            assertArrayEquals(new byte[] {4, 0, 0, 0, (byte) 'h', 0, (byte) 'i', 0}, out.toByteArray());
-        }
+    @MethodSource("bufferProviders")
+    void nullCharacterInStringShouldNotThrowSerializationException(final boolean useBranch, final BufferProvider bufferProvider) {
+        writeStringTest(bufferProvider, "hello\u0000world", useBranch, false);
     }
 
     @DisplayName("write Int32 at position should throw with invalid position")
@@ -409,9 +409,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should write Int32 at position")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteInt32AtPosition(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProviders")
+    void shouldWriteInt32AtPosition(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             Consumer<ByteBufferBsonOutput> lastAssertions = effectiveOut -> {
                 assertArrayEquals(new byte[] {4, 3, 2, 1}, copyOfRange(effectiveOut.toByteArray(), 1023, 1027), "the position is not in the first buffer");
                 assertEquals(1032, effectiveOut.getPosition());
@@ -462,9 +462,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should truncate to position")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldTruncateToPosition(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProviders")
+    void shouldTruncateToPosition(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             byte[] v = {1, 2, 3, 4};
             byte[] v2 = new byte[1024];
             if (useBranch) {
@@ -486,9 +486,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should grow to maximum allowed size of byte buffer")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldGrowToMaximumAllowedSizeOfByteBuffer(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProviders")
+    void shouldGrowToMaximumAllowedSizeOfByteBuffer(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             byte[] v = new byte[0x2000000];
             ThreadLocalRandom.current().nextBytes(v);
             Consumer<ByteBufferBsonOutput> assertByteBuffers = effectiveOut -> assertEquals(
@@ -520,9 +520,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should pipe")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldPipe(final boolean useBranch) throws IOException {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProviders")
+    void shouldPipe(final boolean useBranch, final BufferProvider bufferProvider) throws IOException {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             byte[] v = new byte[1027];
             BiConsumer<ByteBufferBsonOutput, ByteArrayOutputStream> assertions = (effectiveOut, baos) -> {
                 assertArrayEquals(v, baos.toByteArray());
@@ -556,10 +556,10 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should close")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
+    @MethodSource("bufferProviders")
     @SuppressWarnings("try")
-    void shouldClose(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    void shouldClose(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             byte[] v = new byte[1027];
             if (useBranch) {
                 try (ByteBufferBsonOutput.Branch branch = out.branch()) {
