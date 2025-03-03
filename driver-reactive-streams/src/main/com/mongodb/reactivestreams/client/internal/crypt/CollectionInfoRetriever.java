@@ -20,7 +20,7 @@ import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.MongoClient;
 import org.bson.BsonDocument;
-import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.databaseWithTimeoutDeferred;
@@ -35,8 +35,8 @@ class CollectionInfoRetriever {
         this.client = notNull("client", client);
     }
 
-    public Mono<BsonDocument> filter(final String databaseName, final BsonDocument filter, @Nullable final Timeout operationTimeout) {
+    public Flux<BsonDocument> filter(final String databaseName, final BsonDocument filter, @Nullable final Timeout operationTimeout) {
         return databaseWithTimeoutDeferred(client.getDatabase(databaseName), TIMEOUT_ERROR_MESSAGE, operationTimeout)
-                .flatMap(database -> Mono.from(database.listCollections(BsonDocument.class).filter(filter).first()));
+                .flatMapMany(database -> Flux.from(database.listCollections(BsonDocument.class).filter(filter)));
     }
 }

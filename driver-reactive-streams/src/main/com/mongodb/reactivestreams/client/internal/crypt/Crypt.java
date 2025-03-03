@@ -304,10 +304,8 @@ public class Crypt implements Closeable {
         } else {
             collectionInfoRetriever.filter(databaseName, cryptContext.getMongoOperation(), operationTimeout)
                     .contextWrite(sink.contextView())
-                    .doOnSuccess(result -> {
-                        if (result != null) {
-                            cryptContext.addMongoOperationResult(result);
-                        }
+                    .doOnNext(result -> cryptContext.addMongoOperationResult(result))
+                    .doOnComplete(() -> {
                         cryptContext.completeMongoOperation();
                         executeStateMachineWithSink(cryptContext, databaseName, sink, operationTimeout);
                     })

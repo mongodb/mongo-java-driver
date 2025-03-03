@@ -16,7 +16,7 @@
 
 package com.mongodb.client.model.bulk;
 
-import com.mongodb.MongoBaseInterfaceAssertions;
+import com.mongodb.testing.MongoBaseInterfaceAssertions;
 import org.junit.jupiter.api.Test;
 
 final class BaseClientUpsertableWriteModelOptionsTest {
