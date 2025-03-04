@@ -16,14 +16,17 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.assertions.Assertions;
 import org.bson.BsonSerializationException;
 import org.bson.ByteBuf;
+import org.bson.ByteBufNIO;
 import org.bson.types.ObjectId;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.ByteArrayOutputStream;
@@ -31,10 +34,13 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.internal.connection.ByteBufferBsonOutput.INITIAL_BUFFER_SIZE;
 import static com.mongodb.internal.connection.ByteBufferBsonOutput.MAX_BUFFER_SIZE;
 import static java.util.Arrays.asList;
@@ -82,7 +88,7 @@ final class ByteBufferBsonOutputTest {
                     break;
                 }
                 default: {
-                    throw Assertions.fail(branchState);
+                    throw fail(branchState);
                 }
             }
             assertEquals(0, out.getPosition());
@@ -620,6 +626,101 @@ final class ByteBufferBsonOutputTest {
                 }
             });
             assertEquals(expected.toString(), StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(out.toByteArray())).toString());
+        }
+    }
+
+    @Test
+    @DisplayName("Test that calling writeInt32 at an absolute position where the integer would not fit throws an exception")
+    void shouldThrowExceptionWhenIntegerDoesNotFitWriteInt32() {
+        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+            // Write 10 bytes (position becomes 10)
+            for (int i = 0; i < 10; i++) {
+                output.writeByte(0);
+            }
+
+            // absolutePosition = 7 would require bytes at positions 7,8,9,10, but the last written element was at 9.
+            assertThrows(IllegalArgumentException.class, () ->
+                    output.writeInt32(7, 5678)
+            );
+        }
+    }
+
+    @Test
+    @DisplayName("Test that calling writeInt32 with a negative absolute position throws an exception")
+    void shouldThrowExceptionWhenAbsolutePositionIsNegative() {
+        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+            Assertions.assertThrows(IllegalArgumentException.class, () ->
+                    output.writeInt32(-1, 5678)
+            );
+        }
+    }
+
+    static java.util.stream.Stream<Arguments> shouldWriteInt32WithinSpanningBuffers() {
+        return java.util.stream.Stream.of(
+                Arguments.of(0, 0x09080706,
+                        Arrays.asList(
+                                new byte[]{0, 1, 2, 3},
+                                new byte[]{4, 5, 6, 7}),
+                        Arrays.asList(
+                                new byte[]{0x06, 0x07, 0x08, 0x09},
+                                new byte[]{4, 5, 6, 7})),
+                Arguments.of(1, 0x09080706,
+                        Arrays.asList(
+                                new byte[]{0, 1, 2, 3},
+                                new byte[]{4, 5, 6, 7}),
+                        Arrays.asList(
+                                new byte[]{0, 0x06, 0x07, 0x08},
+                                new byte[]{0x09, 5, 6, 7})),
+                Arguments.of(2, 0x09080706,
+                        Arrays.asList(
+                                new byte[]{0, 1, 2, 3},
+                                new byte[]{4, 5, 6, 7}),
+                        Arrays.asList(
+                                new byte[]{0, 1, 0x06, 0x07},
+                                new byte[]{0x08, 0x09, 6, 7})
+                ),
+                Arguments.of(3, 0x09080706,
+                        Arrays.asList(
+                                new byte[]{0, 1, 2, 3},
+                                new byte[]{4, 5, 6, 7}),
+                        Arrays.asList(
+                                new byte[]{0, 1, 2, 0x06},
+                                new byte[]{0x07, 0x08, 0x09, 7})
+                ),
+                Arguments.of(4, 0x09080706,
+                        Arrays.asList(
+                                new byte[]{0, 1, 2, 3},
+                                new byte[]{4, 5, 6, 7}),
+                        Arrays.asList(
+                                new byte[]{0, 1, 2, 3},
+                                new byte[]{0x06, 0x07, 0x08, 0x09})
+                ));
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void shouldWriteInt32WithinSpanningBuffers(
+            int absolutePosition,
+            int intValue,
+            List<byte[]> initialData,
+            List<byte[]> expectedBuffers) {
+
+        try (ByteBufferBsonOutput output =
+                     new ByteBufferBsonOutput(size -> new ByteBufNIO(ByteBuffer.allocate(4)))) {
+
+            //given
+            initialData.forEach(output::writeBytes);
+
+            //when
+            output.writeInt32(absolutePosition, intValue);
+
+            //then
+            List<ByteBuf> buffers = output.getByteBuffers();
+            assertEquals(expectedBuffers.size(), buffers.size(), "Number of buffers mismatch");
+            for (int i = 0; i < expectedBuffers.size(); i++) {
+                assertArrayEquals(expectedBuffers.get(i), buffers.get(i).array(),
+                        "Buffer " + i + " contents mismatch");
+            }
         }
     }
 }

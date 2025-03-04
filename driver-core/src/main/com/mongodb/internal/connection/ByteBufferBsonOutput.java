@@ -18,7 +18,6 @@ package com.mongodb.internal.connection;
 
 import org.bson.ByteBuf;
 import org.bson.io.OutputBuffer;
-import org.bson.types.ObjectId;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -92,10 +91,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
             position += 4;
         } else {
             // fallback for edge cases
-            write(value);
-            write(value >> 8);
-            write(value >> 16);
-            write(value >> 24);
+            super.writeInt32(value);
         }
     }
 
@@ -109,15 +105,17 @@ public class ByteBufferBsonOutput extends OutputBuffer {
         }
 
         if (absolutePosition  + 3 > position - 1) {
-            throw new IllegalArgumentException(String.format("Integer at specified position must fit within limit <= %d, " +
-                    "but attempted to write at %d (occupies 4 bytes)", position - 1, absolutePosition + 3));
+            throw new IllegalArgumentException(String.format("Cannot write 4 bytes starting at position %d: current size is %d bytes",
+                    position - 1,
+                    absolutePosition + 3));
         }
 
         BufferPositionPair bufferPositionPair = getBufferPositionPair(absolutePosition);
         ByteBuf byteBuffer = getByteBufferAtIndex(bufferPositionPair.bufferIndex);
-        int capacity = bufferPositionPair.capacity;
-        if (bufferPositionPair.capacity >= 4) {
-                byteBuffer.putInt(bufferPositionPair.position, value);
+        int capacity = byteBuffer.position() - bufferPositionPair.position;
+
+        if (capacity >= 4) {
+            byteBuffer.putInt(bufferPositionPair.position, value);
         } else {
             // fallback for edge cases
             int valueToWrite = value;
@@ -158,27 +156,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
             position += 8;
         } else {
             // fallback for edge cases
-            write((byte) (0xFFL & (value)));
-            write((byte) (0xFFL & (value >> 8)));
-            write((byte) (0xFFL & (value >> 16)));
-            write((byte) (0xFFL & (value >> 24)));
-            write((byte) (0xFFL & (value >> 32)));
-            write((byte) (0xFFL & (value >> 40)));
-            write((byte) (0xFFL & (value >> 48)));
-            write((byte) (0xFFL & (value >> 56)));
-        }
-    }
-
-    @Override
-    public void writeObjectId(final ObjectId value) {
-        ByteBuf byteBufferAtIndex = getByteBufferAtIndex(curBufferIndex);
-        if (byteBufferAtIndex.remaining() >= 12) {
-            ensureOpen();
-            value.putToByteBuffer(byteBufferAtIndex.asNIO());
-            position += 12;
-        } else {
-            // fallback for edge cases
-            writeBytes(value.toByteArray());
+            super.writeInt64(value);
         }
     }
 
@@ -324,7 +302,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
             bufferSize = bufferList.get(bufferIndex).position();
         }
 
-        return new BufferPositionPair(bufferIndex, positionInBuffer, bufferSize - positionInBuffer);
+        return new BufferPositionPair(bufferIndex, positionInBuffer);
     }
 
     private void ensureOpen() {
@@ -375,12 +353,10 @@ public class ByteBufferBsonOutput extends OutputBuffer {
     private static final class BufferPositionPair {
         private final int bufferIndex;
         private int position;
-        private int capacity;
 
-        BufferPositionPair(final int bufferIndex, final int position, final int capacity) {
+        BufferPositionPair(final int bufferIndex, final int position) {
             this.bufferIndex = bufferIndex;
             this.position = position;
-            this.capacity = capacity;
         }
     }
 }
