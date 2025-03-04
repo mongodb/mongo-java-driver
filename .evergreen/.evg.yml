@@ -1941,6 +1941,7 @@ axes:
 
 task_groups:
   - name: "atlas-deployed-task-group"
+    max_hosts: -1
     setup_group:
       - func: fetch source
       - func: prepare resources
