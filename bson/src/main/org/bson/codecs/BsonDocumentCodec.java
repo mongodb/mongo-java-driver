@@ -17,7 +17,6 @@
 package org.bson.codecs;
 
 import org.bson.BsonDocument;
-import org.bson.BsonElement;
 import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonType;
@@ -26,8 +25,6 @@ import org.bson.BsonWriter;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import static org.bson.assertions.Assertions.notNull;
@@ -79,17 +76,15 @@ public class BsonDocumentCodec implements CollectibleCodec<BsonDocument> {
 
     @Override
     public BsonDocument decode(final BsonReader reader, final DecoderContext decoderContext) {
-        List<BsonElement> keyValuePairs = new ArrayList<>();
-
+        BsonDocument bsonDocument = new BsonDocument();
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             String fieldName = reader.readName();
-            keyValuePairs.add(new BsonElement(fieldName, readValue(reader, decoderContext)));
+            bsonDocument.append(fieldName, readValue(reader, decoderContext));
         }
 
         reader.readEndDocument();
-
-        return new BsonDocument(keyValuePairs);
+        return bsonDocument;
     }
 
     /**
@@ -135,7 +130,7 @@ public class BsonDocumentCodec implements CollectibleCodec<BsonDocument> {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void writeValue(final BsonWriter writer, final EncoderContext encoderContext, final BsonValue value) {
-        Codec codec = codecRegistry.get(value.getClass());
+        Codec codec = bsonTypeCodecMap.get(value.getBsonType());
         encoderContext.encodeWithChildContext(codec, writer, value);
     }
 
