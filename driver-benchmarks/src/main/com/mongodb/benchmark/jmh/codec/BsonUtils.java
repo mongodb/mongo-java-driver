@@ -29,7 +29,7 @@ import java.io.IOException;
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 
 public class BsonUtils {
-    static final Codec<BsonDocument> BSON_DOCUMENT_CODEC = getDefaultCodecRegistry().get(BsonDocument.class);
+    static final Codec<BsonDocument> BSON_DOCUMENT_CODEC = BsonDocumentCodec();
 
     public static byte[] getDocumentAsBuffer(final BsonDocument document) throws IOException {
         BasicOutputBuffer buffer = new BasicOutputBuffer();
