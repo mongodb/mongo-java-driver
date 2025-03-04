@@ -487,6 +487,14 @@ public class CAPI {
     mongocrypt_setopt_bypass_query_analysis (mongocrypt_t crypt);
 
     /**
+     * Opt-into enabling sending multiple collection info documents.
+     *
+     * @param crypt The @ref mongocrypt_t object to update
+     */
+    public static native void
+    mongocrypt_setopt_enable_multiple_collinfo (mongocrypt_t crypt);
+
+    /**
      * Set the contention factor used for explicit encryption.
      * The contention factor is only used for indexed Queryable Encryption.
      *

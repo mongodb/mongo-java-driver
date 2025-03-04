@@ -65,6 +65,7 @@ import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_append_cryp
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_bypass_query_analysis;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_crypto_hook_sign_rsaes_pkcs1_v1_5;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_crypto_hooks;
+import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_enable_multiple_collinfo;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_encrypted_field_config_map;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_kms_provider_aws;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_kms_provider_local;
@@ -119,6 +120,8 @@ class MongoCryptImpl implements MongoCrypt {
         }
 
         logCallback = new LogCallback();
+
+        mongocrypt_setopt_enable_multiple_collinfo(wrapped);
 
         configure(() -> mongocrypt_setopt_log_handler(wrapped, logCallback, null));
 

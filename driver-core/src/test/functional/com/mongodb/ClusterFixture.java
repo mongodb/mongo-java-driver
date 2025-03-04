@@ -261,7 +261,14 @@ public final class ClusterFixture {
         @Override
         public void run() {
             if (cluster != null) {
-                new DropDatabaseOperation(getDefaultDatabaseName(), WriteConcern.ACKNOWLEDGED).execute(getBinding());
+                try {
+                    new DropDatabaseOperation(getDefaultDatabaseName(), WriteConcern.ACKNOWLEDGED).execute(getBinding());
+                } catch (MongoCommandException e) {
+                    // if we do not have permission to drop the database, assume it is cleaned up in some other way
+                    if (!e.getMessage().contains("Command dropDatabase requires authentication")) {
+                        throw e;
+                    }
+                }
                 cluster.close();
             }
         }
