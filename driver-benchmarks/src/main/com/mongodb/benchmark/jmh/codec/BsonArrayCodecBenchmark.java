@@ -58,7 +58,7 @@ public class BsonArrayCodecBenchmark {
     @State(Scope.Benchmark)
     public static class Input {
         protected final PowerOfTwoBufferPool bufferPool = PowerOfTwoBufferPool.DEFAULT;
-        protected final BsonArrayCodec bsonArrayCodec = new BsonArrayCodec(getDefaultCodecRegistry());
+        protected final BsonArrayCodec bsonArrayCodec = new BsonArrayCodec();
         protected BsonDocument document;
         protected byte[] documentBytes;
         private BsonBinaryReader reader;
