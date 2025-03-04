@@ -19,6 +19,7 @@ package com.mongodb.benchmark.jmh.codec;
 
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
@@ -27,7 +28,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 public class BsonUtils {
-    static final Codec<BsonDocument> BSON_DOCUMENT_CODEC = BsonDocumentCodec();
+
+    private BsonUtils(){
+        //NOP
+    }
+
+    static final Codec<BsonDocument> BSON_DOCUMENT_CODEC = new BsonDocumentCodec();
 
     public static byte[] getDocumentAsBuffer(final BsonDocument document) throws IOException {
         BasicOutputBuffer buffer = new BasicOutputBuffer();
