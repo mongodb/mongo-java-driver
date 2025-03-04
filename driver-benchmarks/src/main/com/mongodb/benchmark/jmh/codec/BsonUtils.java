@@ -26,8 +26,6 @@ import org.bson.io.BasicOutputBuffer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
-
 public class BsonUtils {
     static final Codec<BsonDocument> BSON_DOCUMENT_CODEC = BsonDocumentCodec();
 
