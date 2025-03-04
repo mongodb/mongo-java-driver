@@ -59,7 +59,7 @@ public class BsonDocumentBenchmark {
     @State(Scope.Benchmark)
     public static class Input {
         protected final PowerOfTwoBufferPool bufferPool = PowerOfTwoBufferPool.DEFAULT;
-        protected final BsonDocumentCodec bsonDocumentCodec = new BsonDocumentCodec(getDefaultCodecRegistry());
+        protected final BsonDocumentCodec bsonDocumentCodec = new BsonDocumentCodec();
         protected BsonDocument document;
         protected byte[] documentBytes;
 
