@@ -44,8 +44,6 @@ import org.openjdk.jmh.infra.Blackhole;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
-
-import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 import static com.mongodb.benchmark.jmh.codec.BsonUtils.getDocumentAsBuffer;
 
 @BenchmarkMode(Mode.Throughput)
