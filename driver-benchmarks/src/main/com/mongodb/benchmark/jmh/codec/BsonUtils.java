@@ -29,11 +29,11 @@ import java.io.IOException;
 
 public class BsonUtils {
 
+    private static final Codec<BsonDocument> BSON_DOCUMENT_CODEC = new BsonDocumentCodec();
+
     private BsonUtils(){
         //NOP
     }
-
-    static final Codec<BsonDocument> BSON_DOCUMENT_CODEC = new BsonDocumentCodec();
 
     public static byte[] getDocumentAsBuffer(final BsonDocument document) throws IOException {
         BasicOutputBuffer buffer = new BasicOutputBuffer();
