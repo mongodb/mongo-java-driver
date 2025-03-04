@@ -13,8 +13,8 @@
 # limitations under the License.
 
 [versions]
-aws-sdk-v1 = "1.12.337"
-aws-sdk-v2 = "2.18.9"
+aws-sdk-v1 = "1.12.782"
+aws-sdk-v2 = "2.30.31"
 graal-sdk = "24.0.0"
 jna = "5.11.0"
 jnr-unixsocket = "0.38.17"
