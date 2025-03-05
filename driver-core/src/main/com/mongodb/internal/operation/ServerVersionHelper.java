@@ -25,20 +25,17 @@ import com.mongodb.connection.ConnectionDescription;
 public final class ServerVersionHelper {
 
     public static final int MIN_WIRE_VERSION = 0;
-    public static final int FOUR_DOT_ZERO_WIRE_VERSION = 7;
     public static final int FOUR_DOT_TWO_WIRE_VERSION = 8;
     public static final int FOUR_DOT_FOUR_WIRE_VERSION = 9;
     public static final int FIVE_DOT_ZERO_WIRE_VERSION = 12;
     public static final int SIX_DOT_ZERO_WIRE_VERSION = 17;
     public static final int SEVEN_DOT_ZERO_WIRE_VERSION = 21;
-    public static final int LATEST_WIRE_VERSION = SEVEN_DOT_ZERO_WIRE_VERSION;
+    public static final int EIGHT_DOT_ZERO_WIRE_VERSION = 21;
+    public static final int EARLIEST_WIRE_VERSION = FOUR_DOT_TWO_WIRE_VERSION;
+    public static final int LATEST_WIRE_VERSION = EIGHT_DOT_ZERO_WIRE_VERSION;
 
     public static boolean serverIsAtLeastVersionFourDotFour(final ConnectionDescription description) {
         return description.getMaxWireVersion() >= FOUR_DOT_FOUR_WIRE_VERSION;
-    }
-
-    public static boolean serverIsLessThanVersionFourDotTwo(final ConnectionDescription description) {
-        return description.getMaxWireVersion() < FOUR_DOT_TWO_WIRE_VERSION;
     }
 
     public static boolean serverIsLessThanVersionFourDotFour(final ConnectionDescription description) {
