@@ -23,7 +23,7 @@ project-reactor-bom = "2022.0.0"
 reactive-streams = "1.0.4"
 snappy = "1.1.10.3"
 zstd = "1.5.5-3"
-javax-annotation-api = "1.3.2"
+jetbrains-annotations = "26.0.2"
 
 kotlin = "1.8.10"
 kotlinx-coroutines-bom = "1.6.4"
@@ -78,7 +78,7 @@ aws-java-sdk-v2-sts = { module = "software.amazon.awssdk:sts", version.ref = "aw
 jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
 jnr-unixsocket = { module = "com.github.jnr:jnr-unixsocket", version.ref = "jnr-unixsocket" }
-javax-annotation-api = {module = "javax.annotation:javax.annotation-api", version.ref = "javax-annotation-api" }
+jetbrains-annotations = {module = "org.jetbrains:annotations", version.ref = "jetbrains-annotations" }
 
 netty-bom = { module = "io.netty:netty-bom", version.ref = "netty-bom" }
 netty-buffer = { module = "io.netty:netty-buffer" }

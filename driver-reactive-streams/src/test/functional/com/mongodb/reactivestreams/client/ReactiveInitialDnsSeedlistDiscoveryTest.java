@@ -24,14 +24,13 @@ import org.bson.BsonDocument;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.nio.file.Path;
 import java.util.List;
 
 // See https://github.com/mongodb/specifications/tree/master/source/initial-dns-seedlist-discovery/tests
 @RunWith(Parameterized.class)
 public class ReactiveInitialDnsSeedlistDiscoveryTest extends InitialDnsSeedlistDiscoveryTest {
 
-    public ReactiveInitialDnsSeedlistDiscoveryTest(final String filename, final Path parentDirectory, final String uri,
+    public ReactiveInitialDnsSeedlistDiscoveryTest(final String filename, final String parentDirectory, final String uri,
             final List<String> seeds, final Integer numSeeds, final List<String> hosts, final Integer numHosts,
             final BsonDocument options, final BsonDocument parsedOptions,
             final boolean isError, final boolean executePingCommand) {

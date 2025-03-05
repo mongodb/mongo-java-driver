@@ -20,7 +20,6 @@ import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.channels.Channels
 import java.util.UUID
-
 import org.bson.UuidRepresentation
 import org.bson.codecs.UuidCodec
 import org.bson.codecs.configuration.CodecRegistries
@@ -31,6 +30,7 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.exceptions.TestFailedException
 
 import scala.annotation.tailrec
+import scala.concurrent.Await
 
 class GridFSObservableSpec extends RequiresMongoDBISpec with FuturesSpec with BeforeAndAfterEach {
   private val filesCollectionName = "fs.files"
@@ -45,13 +45,13 @@ class GridFSObservableSpec extends RequiresMongoDBISpec with FuturesSpec with Be
     val mongoDatabase = mongoClient().getDatabase(databaseName)
     _filesCollection = Some(mongoDatabase.getCollection[GridFSFile](filesCollectionName))
     _chunksCollection = Some(mongoDatabase.getCollection(chunksCollectionName))
-    _filesCollection.map(_.drop())
-    _chunksCollection.map(_.drop())
+    _filesCollection.foreach(coll => Await.result(coll.drop().toFuture(), WAIT_DURATION))
+    _chunksCollection.foreach(coll => Await.result(coll.drop().toFuture(), WAIT_DURATION))
     _gridFSBucket = Some(GridFSBucket(mongoDatabase))
   }
 
   override def afterEach(): Unit = {
-    withDatabase(db => db.drop())
+    withDatabase(db => Await.result(db.drop().toFuture(), WAIT_DURATION))
   }
 
   private def gridFSBucket = _gridFSBucket.get
