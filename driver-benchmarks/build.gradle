@@ -32,7 +32,17 @@ sourceSets {
 dependencies {
     api project(':driver-sync')
     api project(':mongodb-crypt')
+
     implementation(libs.logback.classic)
+    implementation(libs.jmh.core)
+    annotationProcessor(libs.jmh.generator.annprocess)
+}
+
+tasks.register("jmh", JavaExec) {
+    group = 'benchmark'
+    description = 'Run JMH benchmarks.'
+    mainClass = 'org.openjdk.jmh.Main'
+    classpath = sourceSets.main.runtimeClasspath
 }
 
 javadoc {
