@@ -33,6 +33,16 @@ dependencies {
     api project(':driver-sync')
     api project(':mongodb-crypt')
     implementation "ch.qos.logback:logback-classic:$logbackVersion"
+
+    implementation 'org.openjdk.jmh:jmh-core:1.37'
+    annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.37'
+}
+
+tasks.register("jmh", JavaExec) {
+    group = 'benchmark'
+    description = 'Run JMH benchmarks.'
+    mainClass = 'org.openjdk.jmh.Main'
+    classpath = sourceSets.main.runtimeClasspath
 }
 
 javadoc {
