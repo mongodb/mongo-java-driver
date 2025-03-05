@@ -63,7 +63,7 @@ public abstract class OutputBuffer extends OutputStream implements BsonOutput {
 
     @Override
     public void writeInt32(final int value) {
-        write(value);
+        write(value >> 0);
         write(value >> 8);
         write(value >> 16);
         write(value >> 24);
@@ -79,7 +79,7 @@ public abstract class OutputBuffer extends OutputStream implements BsonOutput {
 
     @Override
     public void writeInt64(final long value) {
-        write((byte) (0xFFL & (value)));
+        write((byte) (0xFFL & (value >> 0)));
         write((byte) (0xFFL & (value >> 8)));
         write((byte) (0xFFL & (value >> 16)));
         write((byte) (0xFFL & (value >> 24)));

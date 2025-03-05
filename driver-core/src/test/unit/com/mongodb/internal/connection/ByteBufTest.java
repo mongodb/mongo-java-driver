@@ -1,3 +1,19 @@
+/*
+ * Copyright 2008-present MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.mongodb.internal.connection;
 
 
@@ -18,7 +34,7 @@ class ByteBufTest {
 
     @ParameterizedTest
     @MethodSource("bufferProviders")
-    void shouldPutInt(BufferProvider provider) {
+    void shouldPutInt(final BufferProvider provider) {
         ByteBuf buffer = provider.getBuffer(1024);
         try {
             buffer.putInt(42);
@@ -31,7 +47,7 @@ class ByteBufTest {
 
     @ParameterizedTest
     @MethodSource("bufferProviders")
-    void shouldPutLong(BufferProvider provider) {
+    void shouldPutLong(final BufferProvider provider) {
         ByteBuf buffer = provider.getBuffer(1024);
         try {
             buffer.putLong(42L);
@@ -44,7 +60,7 @@ class ByteBufTest {
 
     @ParameterizedTest
     @MethodSource("bufferProviders")
-    void shouldPutDouble(BufferProvider provider) {
+    void shouldPutDouble(final BufferProvider provider) {
         ByteBuf buffer = provider.getBuffer(1024);
         try {
             buffer.putDouble(42.0D);
@@ -57,7 +73,7 @@ class ByteBufTest {
 
     @ParameterizedTest
     @MethodSource("bufferProviders")
-    void shouldPutIntAtIndex(BufferProvider provider) {
+    void shouldPutIntAtIndex(final BufferProvider provider) {
         ByteBuf buffer = provider.getBuffer(1024);
         try {
             buffer.putInt(0);
@@ -71,6 +87,7 @@ class ByteBufTest {
             buffer.putInt(8, 24);
             buffer.putInt(12, 25);
             buffer.flip();
+
             assertEquals(22, buffer.getInt());
             assertEquals(23, buffer.getInt());
             assertEquals(24, buffer.getInt());

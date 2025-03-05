@@ -687,10 +687,10 @@ final class ByteBufferBsonOutputTest {
     @ParameterizedTest
     @MethodSource
     void shouldWriteInt32AbsoluteValueWithinSpanningBuffers(
-            int absolutePosition,
-            int intValue,
-            List<byte[]> initialData,
-            List<byte[]> expectedBuffers) {
+            final int absolutePosition,
+            final int intValue,
+            final List<byte[]> initialData,
+            final List<byte[]> expectedBuffers) {
 
         try (ByteBufferBsonOutput output =
                      new ByteBufferBsonOutput(size -> new ByteBufNIO(ByteBuffer.allocate(4)))) {
@@ -711,7 +711,7 @@ final class ByteBufferBsonOutputTest {
         }
     }
 
-    static java.util.stream.Stream<Arguments> shouldWriteInt32WithinSpanningBuffers() {
+    static java.util.stream.Stream<Arguments> int32SpanningBuffersData() {
         return java.util.stream.Stream.of(
                 // Test case 1: No initial data; entire int written into one buffer.
                 Arguments.of(0x09080706,
@@ -742,7 +742,7 @@ final class ByteBufferBsonOutputTest {
                 ));
     }
 
-    static java.util.stream.Stream<Arguments> shouldWriteInt64WithinSpanningBuffers() {
+    static java.util.stream.Stream<Arguments> int64SpanningBuffersData() {
         return java.util.stream.Stream.of(
                 // Test case 1: No initial data; entire long written into one buffer.
                 Arguments.of(0x0A0B0C0D0E0F1011L,
@@ -799,7 +799,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @ParameterizedTest
-    @MethodSource("shouldWriteInt32WithinSpanningBuffers")
+    @MethodSource("int32SpanningBuffersData")
     void shouldWriteInt32WithinSpanningBuffers(
             final int intValue,
             final List<byte[]> initialData,
@@ -831,7 +831,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @ParameterizedTest
-    @MethodSource("shouldWriteInt64WithinSpanningBuffers")
+    @MethodSource("int64SpanningBuffersData")
     void shouldWriteInt64WithinSpanningBuffers(
             final long intValue,
             final List<byte[]> initialData,
@@ -863,7 +863,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @ParameterizedTest
-    @MethodSource("shouldWriteInt64WithinSpanningBuffers")
+    @MethodSource("int64SpanningBuffersData")
     void shouldWriteDoubleWithinSpanningBuffers(
             final long intValue,
             final List<byte[]> initialData,

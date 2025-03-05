@@ -234,12 +234,13 @@ public class ByteBufferBsonOutput extends OutputBuffer {
 
         int total = 0;
         for (final ByteBuf cur : getByteBuffers()) {
-            while (cur.hasRemaining()) {
-                int numBytesToCopy = Math.min(cur.remaining(), tmp.length);
-                cur.get(tmp, 0, numBytesToCopy);
+            ByteBuf dup = cur.duplicate();
+            while (dup.hasRemaining()) {
+                int numBytesToCopy = Math.min(dup.remaining(), tmp.length);
+                dup.get(tmp, 0, numBytesToCopy);
                 out.write(tmp, 0, numBytesToCopy);
             }
-            total += cur.limit();
+            total += dup.limit();
         }
         return total;
     }
