@@ -19,6 +19,16 @@ elif [ $OIDC_ENV == "azure" ]; then
     source ./env.sh
 elif [ $OIDC_ENV == "gcp" ]; then
     source ./secrets-export.sh
+elif [ $OIDC_ENV == "k8s" ]; then
+    # Make sure K8S_VARIANT is set.
+    if [ -z "$K8S_VARIANT" ]; then
+        echo "Must specify K8S_VARIANT"
+        popd
+        exit 1
+    fi
+
+    # fix for git permissions issue:
+    git config --global --add safe.directory /tmp/test
 else
     echo "Unrecognized OIDC_ENV $OIDC_ENV"
     exit 1

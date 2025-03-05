@@ -41,6 +41,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -308,9 +309,10 @@ public class Crypt implements Closeable {
 
     private void collInfo(final MongoCryptContext cryptContext, final String databaseName, @Nullable final Timeout operationTimeout) {
         try {
-            BsonDocument collectionInfo = assertNotNull(collectionInfoRetriever).filter(databaseName, cryptContext.getMongoOperation(), operationTimeout);
-            if (collectionInfo != null) {
-                cryptContext.addMongoOperationResult(collectionInfo);
+            List<BsonDocument> results = assertNotNull(collectionInfoRetriever)
+                    .filter(databaseName, cryptContext.getMongoOperation(), operationTimeout);
+            for (BsonDocument result : results) {
+                cryptContext.addMongoOperationResult(result);
             }
             cryptContext.completeMongoOperation();
         } catch (Throwable t) {
