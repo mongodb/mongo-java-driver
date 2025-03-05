@@ -17,20 +17,14 @@ import ProjectExtensions.configureJarManifest
 import ProjectExtensions.configureMavenPublication
 
 plugins {
-    id("project.kotlin")
-    alias(libs.plugins.kotlin.serialization)
+    id("project.java")
+    id("conventions.test-artifacts")
 }
 
-base.archivesName.set("bson-kotlinx")
+base.archivesName.set("bson-record-codec")
 
 dependencies {
     api(project(path = ":bson", configuration = "default"))
-    implementation(platform(libs.kotlinx.serialization))
-    implementation(libs.kotlinx.serialization.core)
-    implementation(libs.kotlin.reflect)
-
-    optionalApi(libs.kotlinx.serialization.datetime)
-    optionalApi(libs.kotlinx.serialization.json)
 
     // Test case checks MongoClientSettings.getDefaultCodecRegistry() support
     testImplementation(project(path = ":driver-core", configuration = "default"))
@@ -38,10 +32,22 @@ dependencies {
 
 configureMavenPublication {
     pom {
-        name.set("BSON Kotlinx")
-        description.set("The BSON Codec for Kotlinx serialization")
+        name.set("BSON Record Codec")
+        description.set("The BSON Codec for Java records")
         url.set("https://bsonspec.org")
     }
 }
 
-configureJarManifest { attributes["Automatic-Module-Name"] = "org.mongodb.bson.kotlinx" }
+configureJarManifest {
+    attributes["Automatic-Module-Name"] = "org.mongodb.bson.record.codec"
+    attributes["Bundle-SymbolicName"] = "org.mongodb.bson-record-codec"
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+tasks.withType<JavaCompile> { options.release.set(17) }
+
+tasks.withType<Test>().configureEach { onlyIf { javaVersion.isCompatibleWith(JavaVersion.VERSION_17) } }

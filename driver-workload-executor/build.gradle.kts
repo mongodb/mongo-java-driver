@@ -15,38 +15,43 @@
  */
 
 plugins {
-    id("java")
     id("application")
-    alias(libs.plugins.shadow)
+    id("java-library")
+    id("project.base")
+    id("conventions.test-artifacts")
 }
 
-mainClassName = "com.mongodb.workload.WorkloadExecutor"
+application {
+    mainClass = "com.mongodb.workload.WorkloadExecutor"
+}
 
 sourceSets {
     main {
-        java {
-            srcDir 'src/main'
-        }
-        resources {
-            srcDir 'src/resources'
-        }
+        java { setSrcDirs(listOf("src/main")) }
+        resources { setSrcDirs(listOf("src/resources")) }
     }
 }
 
 dependencies {
-    implementation project(':driver-sync')
-    implementation project(':driver-core').sourceSets.test.output
-    implementation project(':driver-sync').sourceSets.test.output
+    implementation(project(":driver-sync"))
+    implementation(project(path = ":driver-core", configuration = "testArtifacts"))
+    implementation(project(path = ":driver-sync", configuration = "testArtifacts"))
     implementation(platform(libs.junit.bom))
     implementation(libs.bundles.junit.vintage)
 }
 
-javadoc {
+tasks.withType<Javadoc>().configureEach {
     enabled = false
 }
 
-jar {
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+
+tasks.withType<Jar> {
     manifest {
-        attributes "Main-Class": "com.mongodb.workload.WorkloadExecutor"
+        attributes["Main-Class"] = "com.mongodb.workload.WorkloadExecutor"
     }
 }

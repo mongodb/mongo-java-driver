@@ -14,34 +14,29 @@
  * limitations under the License.
  */
 
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
-    id("java")
     id("application")
+    id("java-library")
+    id("project.base")
     alias(libs.plugins.shadow)
 }
 
-compileJava {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+application {
+    mainClass = "com.mongodb.lambdatest.LambdaTestApp"
 }
-
-mainClassName = "com.mongodb.workload.WorkloadExecutor"
 
 sourceSets {
     main {
-        java {
-            srcDir 'src/main'
-        }
-        resources {
-            srcDir 'src/resources'
-        }
+        java { setSrcDirs(listOf("src/main")) }
+        resources { setSrcDirs(listOf("src/resources")) }
     }
 }
 
 dependencies {
-    implementation project(':driver-sync')
-    implementation project(':bson')
+    implementation(project(":driver-sync"))
+    implementation(project(":bson"))
 
     implementation(libs.aws.lambda.core)
     implementation(libs.aws.lambda.events)
@@ -49,18 +44,21 @@ dependencies {
     implementation(libs.bundles.junit)
 }
 
-
-javadoc {
+tasks.withType<Javadoc>().configureEach {
     enabled = false
 }
 
-jar {
-    manifest {
-        attributes "Main-Class": "com.mongodb.lambdatest.LambdaTestApp"
-    }
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 
-shadowJar {
-    archiveBaseName.set('lambdatest')
-    archiveVersion.set('')
+tasks.withType<Jar> {
+    manifest {
+        attributes["Main-Class"] = "com.mongodb.lambdatest.LambdaTestApp"
+    }
+}
+tasks.withType<ShadowJar>  {
+    archiveBaseName.set("lambdatest")
+    archiveVersion.set("")
 }

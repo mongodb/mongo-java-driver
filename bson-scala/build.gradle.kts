@@ -16,24 +16,22 @@
 import ProjectExtensions.configureJarManifest
 import ProjectExtensions.configureMavenPublication
 
-plugins { id("project.kotlin") }
+plugins { id("project.scala") }
 
-base.archivesName.set("bson-kotlin")
+base.archivesName.set("mongo-scala-bson")
 
-dependencies {
-    api(project(path = ":bson", configuration = "default"))
-    implementation(libs.kotlin.reflect)
-
-    // Test case checks MongoClientSettings.getDefaultCodecRegistry() support
-    testImplementation(project(path = ":driver-core", configuration = "default"))
-}
+dependencies { api(project(path = ":bson", configuration = "default")) }
 
 configureMavenPublication {
     pom {
-        name.set("BSON Kotlin")
-        description.set("The BSON Codec for Kotlin")
+        name.set("Mongo Scala BSON Library")
+        description.set("A Scala wrapper / extension to the BSON library")
         url.set("https://bsonspec.org")
     }
 }
 
-configureJarManifest { attributes["Automatic-Module-Name"] = "org.mongodb.bson.kotlin" }
+configureJarManifest {
+    attributes["Automatic-Module-Name"] = "org.mongodb.bson.scala"
+    attributes["Bundle-SymbolicName"] = "org.mongodb.scala.mongo-scala-bson"
+    attributes["Import-Package"] = "!scala.*,*"
+}

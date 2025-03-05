@@ -14,41 +14,41 @@
  * limitations under the License.
  */
 
-apply plugin: 'application'
+plugins {
+    id("application")
+    id("java-library")
+    id("project.base")
+}
 
-mainClassName = "com.mongodb.benchmark.benchmarks.BenchmarkSuite"
+application {
+    mainClass = "com.mongodb.benchmark.benchmarks.BenchmarkSuite"
+    applicationDefaultJvmArgs = listOf(
+        "-Dorg.mongodb.benchmarks.data=${System.getProperty("org.mongodb.benchmarks.data")}",
+        "-Dorg.mongodb.benchmarks.output=${System.getProperty("org.mongodb.benchmarks.output")}")
+}
 
 sourceSets {
     main {
-        java {
-            srcDir 'src/main'
-        }
-        resources {
-            srcDir 'src/resources'
-        }
+        java { setSrcDirs(listOf("src/main")) }
+        resources { setSrcDirs(listOf("src/resources")) }
     }
 }
 
 dependencies {
-    api project(':driver-sync')
-    api project(':mongodb-crypt')
-
+    api(project(":driver-sync"))
+    api(project(":mongodb-crypt"))
     implementation(libs.logback.classic)
     implementation(libs.jmh.core)
     annotationProcessor(libs.jmh.generator.annprocess)
 }
 
-tasks.register("jmh", JavaExec) {
-    group = 'benchmark'
-    description = 'Run JMH benchmarks.'
-    mainClass = 'org.openjdk.jmh.Main'
-    classpath = sourceSets.main.runtimeClasspath
+tasks.register<JavaExec>("jmh") {
+    group = "benchmark"
+    description = "Run JMH benchmarks."
+    mainClass = "org.openjdk.jmh.Main"
+    classpath = sourceSets.main.get().runtimeClasspath
 }
 
-javadoc {
+tasks.withType<Javadoc>().configureEach {
     enabled = false
 }
-
-applicationDefaultJvmArgs = ["-Dorg.mongodb.benchmarks.data=" + System.getProperty('org.mongodb.benchmarks.data'),
-                             "-Dorg.mongodb.benchmarks.output=" + System.getProperty('org.mongodb.benchmarks.output')]
-

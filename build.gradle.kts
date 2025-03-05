@@ -14,19 +14,7 @@
  * limitations under the License.
  */
 
-public final class AtlasManualTaglet extends DocTaglet {
-    @Override
-    public String getName() {
-        return "mongodb.atlas.manual";
-    }
-
-    @Override
-    protected String getHeader() {
-        return "MongoDB Atlas documentation";
-    }
-
-    @Override
-    protected String getBaseDocURI() {
-        return "https://www.mongodb.com/docs/atlas/";
-    }
+plugins {
+    id("eclipse")
+    id("idea")
 }

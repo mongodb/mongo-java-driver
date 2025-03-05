@@ -13,27 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import ProjectExtensions.configureJarManifest
 import ProjectExtensions.configureMavenPublication
 
-plugins { id("project.kotlin") }
+plugins {
+    id("project.java")
+    id("conventions.test-artifacts")
+    id("conventions.test-include-optionals")
+    id("conventions.testing-spock-exclude-slow")
+}
 
-base.archivesName.set("bson-kotlin")
+base.archivesName.set("mongodb-driver-legacy")
 
 dependencies {
     api(project(path = ":bson", configuration = "default"))
-    implementation(libs.kotlin.reflect)
+    api(project(path = ":driver-core", configuration = "default"))
+    api(project(path = ":driver-sync", configuration = "default"))
 
-    // Test case checks MongoClientSettings.getDefaultCodecRegistry() support
-    testImplementation(project(path = ":driver-core", configuration = "default"))
+    testImplementation(project(path = ":bson", configuration = "testArtifacts"))
+    testImplementation(project(path = ":driver-core", configuration = "testArtifacts"))
+    testImplementation(project(path = ":driver-sync", configuration = "testArtifacts"))
 }
 
 configureMavenPublication {
     pom {
-        name.set("BSON Kotlin")
-        description.set("The BSON Codec for Kotlin")
-        url.set("https://bsonspec.org")
+        name.set("The Legacy MongoDB Driver")
+        description.set("The Legacy MongoDB Driver")
     }
 }
-
-configureJarManifest { attributes["Automatic-Module-Name"] = "org.mongodb.bson.kotlin" }

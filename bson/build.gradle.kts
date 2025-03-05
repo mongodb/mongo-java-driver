@@ -13,22 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import ProjectExtensions.configureJarManifest
+import ProjectExtensions.configureMavenPublication
 
-public class DochubTaglet extends DocTaglet {
+plugins {
+    id("project.java")
+    id("conventions.testing-spock")
+    id("conventions.test-artifacts")
+}
 
-    @Override
-    public String getName() {
-        return "mongodb.driver.dochub";
+base.archivesName.set("bson")
+
+configureMavenPublication {
+    pom {
+        name.set("BSON")
+        description.set("The BSON library")
+        url.set("https://bsonspec.org")
     }
+}
 
-    @Override
-    protected String getHeader() {
-        return "MongoDB documentation";
-    }
-
-    @Override
-    protected String getBaseDocURI() {
-        return "https://dochub.mongodb.org/";
-    }
-
+configureJarManifest {
+    attributes["Automatic-Module-Name"] = "org.mongodb.bson"
+    attributes["Import-Package"] = "org.slf4j.*;resolution:=optional"
 }
