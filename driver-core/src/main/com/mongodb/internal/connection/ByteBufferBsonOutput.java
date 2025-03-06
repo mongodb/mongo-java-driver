@@ -149,9 +149,9 @@ public class ByteBufferBsonOutput extends OutputBuffer {
 
     @Override
     public void writeInt64(final long value) {
+        ensureOpen();
         ByteBuf buf = getCurrentByteBuffer();
         if (buf.remaining() >= 8) {
-            ensureOpen();
             buf.putLong(value);
             position += 8;
         } else {
