@@ -136,9 +136,9 @@ public class ByteBufferBsonOutput extends OutputBuffer {
 
     @Override
     public void writeDouble(final double value) {
+        ensureOpen();
         ByteBuf buf = getCurrentByteBuffer();
         if (buf.remaining() >= 8) {
-            ensureOpen();
             buf.putDouble(value);
             position += 8;
         } else {
