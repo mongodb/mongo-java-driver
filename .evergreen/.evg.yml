@@ -1942,6 +1942,8 @@ axes:
 task_groups:
   - name: "atlas-deployed-task-group"
     max_hosts: -1
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
     setup_group:
       - func: fetch source
       - func: prepare resources
@@ -1965,8 +1967,6 @@ task_groups:
           add_expansions_to_env: true
           args:
             - ${DRIVERS_TOOLS}/.evergreen/atlas/teardown-atlas-cluster.sh
-    setup_group_can_fail_task: true
-    setup_group_timeout_secs: 1800
     tasks:
       - "atlas-search-index-management-task"
       - "aws-lambda-deployed-task"

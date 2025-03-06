@@ -39,7 +39,7 @@ import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
-import org.jetbrains.annotations.NotNull;
+import com.mongodb.lang.NonNull;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
@@ -179,7 +179,7 @@ class KeyManagementService implements Closeable {
         return OperationContext.simpleOperationContext(new TimeoutContext(timeoutSettings));
     }
 
-    @NotNull
+    @NonNull
     private static TimeoutSettings createTimeoutSettings(final SocketSettings socketSettings,
             @Nullable final Long ms) {
         return new TimeoutSettings(
