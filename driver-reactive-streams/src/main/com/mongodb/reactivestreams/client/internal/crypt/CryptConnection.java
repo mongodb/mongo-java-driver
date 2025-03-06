@@ -16,15 +16,14 @@
 
 package com.mongodb.reactivestreams.client.internal.crypt;
 
-import com.mongodb.MongoClientException;
 import com.mongodb.ReadPreference;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.connection.MessageSettings;
 import com.mongodb.internal.connection.MessageSequences;
 import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
+import com.mongodb.internal.connection.MessageSettings;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.SplittablePayload;
 import com.mongodb.internal.connection.SplittablePayloadBsonWriter;
@@ -54,7 +53,6 @@ import java.util.Map;
 import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.fail;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotTwo;
 import static com.mongodb.reactivestreams.client.internal.MongoOperationPublisher.sinkToCallback;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
@@ -104,11 +102,6 @@ class CryptConnection implements AsyncConnection {
                                  @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
                                  final OperationContext operationContext, final boolean responseExpected, final MessageSequences sequences,
                                  final SingleResultCallback<T> callback) {
-
-        if (serverIsLessThanVersionFourDotTwo(wrapped.getDescription())) {
-            callback.onResult(null, new MongoClientException("Auto-encryption requires a minimum MongoDB version of 4.2"));
-            return;
-        }
 
         try {
             SplittablePayload payload = null;

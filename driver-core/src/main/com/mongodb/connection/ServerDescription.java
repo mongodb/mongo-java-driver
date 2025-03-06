@@ -55,12 +55,12 @@ public class ServerDescription {
      * The minimum supported driver server version
      * @since 3.8
      */
-    public static final String MIN_DRIVER_SERVER_VERSION = "3.6";
+    public static final String MIN_DRIVER_SERVER_VERSION = "4.2";
     /**
      * The minimum supported driver wire version
      * @since 3.8
      */
-    public static final int MIN_DRIVER_WIRE_VERSION = 7;
+    public static final int MIN_DRIVER_WIRE_VERSION = 8;
     /**
      * The maximum supported driver wire version
      * @since 3.8
