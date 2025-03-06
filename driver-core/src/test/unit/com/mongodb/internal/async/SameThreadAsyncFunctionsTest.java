@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.async;
 
-import org.jetbrains.annotations.NotNull;
+import com.mongodb.lang.NonNull;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -62,7 +62,7 @@ public class SameThreadAsyncFunctionsTest extends AsyncFunctionsAbstractTest {
 
     private static class SameThreadExecutorService extends AbstractExecutorService {
         @Override
-        public void execute(@NotNull final Runnable command) {
+        public void execute(@NonNull final Runnable command) {
             command.run();
         }
 
@@ -70,7 +70,7 @@ public class SameThreadAsyncFunctionsTest extends AsyncFunctionsAbstractTest {
         public void shutdown() {
         }
 
-        @NotNull
+        @NonNull
         @Override
         public List<Runnable> shutdownNow() {
             return Collections.emptyList();
@@ -87,7 +87,7 @@ public class SameThreadAsyncFunctionsTest extends AsyncFunctionsAbstractTest {
         }
 
         @Override
-        public boolean awaitTermination(final long timeout, @NotNull final TimeUnit unit) {
+        public boolean awaitTermination(final long timeout, @NonNull final TimeUnit unit) {
             return true;
         }
     }

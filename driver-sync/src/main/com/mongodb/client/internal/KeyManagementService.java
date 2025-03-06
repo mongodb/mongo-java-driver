@@ -23,7 +23,7 @@ import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
-import org.jetbrains.annotations.NotNull;
+import com.mongodb.lang.NonNull;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
@@ -149,13 +149,13 @@ class KeyManagementService {
         }
 
         @Override
-        public int read(@NotNull final byte[] b) throws IOException {
+        public int read(@NonNull final byte[] b) throws IOException {
             setSocketSoTimeoutToOperationTimeout();
             return wrapped.read(b);
         }
 
         @Override
-        public int read(@NotNull final byte[] b, final int off, final int len) throws IOException {
+        public int read(@NonNull final byte[] b, final int off, final int len) throws IOException {
             setSocketSoTimeoutToOperationTimeout();
             return wrapped.read(b, off, len);
         }
