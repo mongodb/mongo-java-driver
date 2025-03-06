@@ -41,10 +41,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import util.JsonPoweredTestHelper;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -69,7 +65,7 @@ import static org.junit.Assume.assumeTrue;
 // See https://github.com/mongodb/specifications/tree/master/source/initial-dns-seedlist-discovery/tests
 @RunWith(Parameterized.class)
 public abstract class InitialDnsSeedlistDiscoveryTest {
-    private final Path parentDirectory;
+    private final String parentDirectory;
     private final String uri;
     @Nullable
     private final List<String> seeds;
@@ -84,7 +80,7 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
     private final boolean isError;
     private final boolean executePingCommand;
 
-    public InitialDnsSeedlistDiscoveryTest(@SuppressWarnings("unused") final String filename, final Path parentDirectory, final String uri,
+    public InitialDnsSeedlistDiscoveryTest(@SuppressWarnings("unused") final String filename, final String parentDirectory, final String uri,
             @Nullable final List<String> seeds, @Nullable final Integer numSeeds,
             @Nullable final List<String> hosts, @Nullable final Integer numHosts,
             final BsonDocument options, final BsonDocument parsedOptions,
@@ -306,13 +302,13 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
 
 
     @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
+    public static Collection<Object[]> data() {
         List<Object[]> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/initial-dns-seedlist-discovery")) {
-            BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
+        for (BsonDocument testDocument : JsonPoweredTestHelper.getTestDocuments("/initial-dns-seedlist-discovery")) {
+            String resourcePath = testDocument.getString("resourcePath").getValue();
             data.add(new Object[]{
-                    file.getName(),
-                    file.toPath().getParent(),
+                    testDocument.getString("fileName").getValue(),
+                    resourcePath.substring(0, resourcePath.lastIndexOf("/")),
                     testDocument.getString("uri").getValue(),
                     toStringList(testDocument.getArray("seeds", null)),
                     toInteger(testDocument.getNumber("numSeeds", null)),
@@ -323,7 +319,6 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
                     testDocument.getBoolean("error", BsonBoolean.FALSE).getValue(),
                     testDocument.getBoolean("ping", BsonBoolean.TRUE).getValue()
             });
-
         }
         return data;
     }

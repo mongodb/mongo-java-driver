@@ -16,6 +16,7 @@
 
 package org.bson.vector;
 
+import org.bson.BinaryVector;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
@@ -23,16 +24,12 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.Float32BinaryVector;
 import org.bson.PackedBitBinaryVector;
-import org.bson.BinaryVector;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import util.JsonPoweredTestHelper;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -73,7 +70,7 @@ class BinaryVectorGenericBsonTest {
 
 
     @ParameterizedTest(name = "{0}")
-    @MethodSource("provideTestCases")
+    @MethodSource("data")
     void shouldPassAllOutcomes(@SuppressWarnings("unused") final String description,
                                final BsonDocument testDefinition, final BsonDocument testCase) {
         assumeFalse(TEST_NAMES_TO_IGNORE.contains(testCase.get("description").asString().getValue()));
@@ -254,10 +251,9 @@ class BinaryVectorGenericBsonTest {
         }
     }
 
-    private static Stream<Arguments> provideTestCases() throws URISyntaxException, IOException {
+    private static Stream<Arguments> data() {
         List<Arguments> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/bson-binary-vector")) {
-            BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
+        for (BsonDocument testDocument : JsonPoweredTestHelper.getTestDocuments("/bson-binary-vector")) {
             for (BsonValue curValue : testDocument.getArray("tests", new BsonArray())) {
                 BsonDocument testCaseDocument = curValue.asDocument();
                 data.add(Arguments.of(createTestCaseDescription(testDocument, testCaseDocument), testDocument, testCaseDocument));

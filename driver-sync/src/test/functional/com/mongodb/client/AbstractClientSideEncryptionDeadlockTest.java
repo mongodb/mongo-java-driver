@@ -44,7 +44,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashSet;
@@ -225,9 +224,8 @@ public abstract class AbstractClientSideEncryptionDeadlockTest {
                 .build();
     }
 
-    private static BsonDocument bsonDocumentFromPath(final String path) throws URISyntaxException, IOException {
-        return getTestDocument(new File(ClientSideEncryptionExternalKeyVaultTest.class
-                .getResource("/client-side-encryption-external/" + path).toURI()));
+    private static BsonDocument bsonDocumentFromPath(final String path) {
+        return getTestDocument("/client-side-encryption-external/" + path);
     }
 
     private static final class ExpectedEvent {

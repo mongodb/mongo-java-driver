@@ -26,7 +26,7 @@ import com.mongodb.connection.ServerId
 import com.mongodb.connection.SocketSettings
 import com.mongodb.internal.connection.netty.NettyStreamFactory
 import spock.lang.IgnoreIf
-import util.spock.annotations.Slow
+import com.mongodb.spock.Slow
 
 import java.util.concurrent.TimeUnit
 

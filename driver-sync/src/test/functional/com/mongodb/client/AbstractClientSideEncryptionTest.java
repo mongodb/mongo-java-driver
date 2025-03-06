@@ -44,9 +44,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import util.JsonPoweredTestHelper;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -403,14 +400,15 @@ public abstract class AbstractClientSideEncryptionTest {
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
+    public static Collection<Object[]> data() {
         List<Object[]> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/client-side-encryption/legacy")) {
-            BsonDocument specDocument = JsonPoweredTestHelper.getTestDocument(file);
+        for (BsonDocument specDocument : JsonPoweredTestHelper.getTestDocuments("/client-side-encryption/legacy")) {
             for (BsonValue test : specDocument.getArray("tests")) {
-                data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(), specDocument,
-                        specDocument.getArray("data", new BsonArray()), test.asDocument(),
-                        skipTest(specDocument, test.asDocument())});
+                BsonDocument testDocument = test.asDocument();
+                data.add(new Object[]{specDocument.getString("fileName").getValue(),
+                        testDocument.getString("description").getValue(), specDocument,
+                        specDocument.getArray("data", new BsonArray()), testDocument,
+                        skipTest(specDocument, testDocument)});
             }
         }
         return data;
