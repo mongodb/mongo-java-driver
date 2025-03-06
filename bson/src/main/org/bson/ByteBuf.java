@@ -114,6 +114,7 @@ public interface ByteBuf  {
      * @return this buffer
      * @throws java.nio.BufferOverflowException if there are fewer than 4 bytes remaining in this buffer
      * @throws java.nio.ReadOnlyBufferException if this buffer is read-only
+     * @since 5.4
      */
     ByteBuf putInt(int b);
 
@@ -125,6 +126,7 @@ public interface ByteBuf  {
      * @return this buffer
      * @throws java.nio.BufferOverflowException if there are fewer than 4 bytes remaining in this buffer
      * @throws java.nio.ReadOnlyBufferException if this buffer is read-only
+     * @since 5.4
      */
     ByteBuf putInt(int index, int b);
 
@@ -136,6 +138,7 @@ public interface ByteBuf  {
      * @return this buffer
      * @throws java.nio.BufferOverflowException if there are fewer than 8 bytes remaining in this buffer
      * @throws java.nio.ReadOnlyBufferException if this buffer is read-only
+     * @since 5.4
      */
     ByteBuf putDouble(double b);
 
@@ -147,6 +150,7 @@ public interface ByteBuf  {
      * @return this buffer
      * @throws java.nio.BufferOverflowException if there are fewer than 8 bytes remaining in this buffer
      * @throws java.nio.ReadOnlyBufferException if this buffer is read-only
+     * @since 5.4
      */
     ByteBuf putLong(long b);
 
