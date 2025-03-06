@@ -27,7 +27,7 @@ import org.bson.BsonDouble;
 import org.bson.codecs.BsonArrayCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
-import org.jetbrains.annotations.NotNull;
+import com.mongodb.lang.NonNull;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -87,12 +87,12 @@ public class BsonArrayCodecBenchmark {
     }
 
     @Benchmark
-    public void decode(@NotNull Input input, @NotNull Blackhole blackhole) {
+    public void decode(@NonNull Input input, @NonNull Blackhole blackhole) {
         blackhole.consume(input.bsonArrayCodec.decode(input.reader, DecoderContext.builder().build()));
     }
 
     @Benchmark
-    public void encode(@NotNull Input input, @NotNull Blackhole blackhole) {
+    public void encode(@NonNull Input input, @NonNull Blackhole blackhole) {
         input.bsonArrayCodec.encode(input.writer, input.bsonValues, EncoderContext.builder().build());
         blackhole.consume(input);
     }
