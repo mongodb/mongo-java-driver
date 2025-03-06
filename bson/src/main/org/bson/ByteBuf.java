@@ -107,6 +107,54 @@ public interface ByteBuf  {
     ByteBuf put(byte b);
 
     /**
+     * Writes the given int value into this buffer at the current position,
+     * using the current byte order, and increments the position by 4.
+     *
+     * @param b the int value to be written
+     * @return this buffer
+     * @throws java.nio.BufferOverflowException if there are fewer than 4 bytes remaining in this buffer
+     * @throws java.nio.ReadOnlyBufferException if this buffer is read-only
+     * @since 5.4
+     */
+    ByteBuf putInt(int b);
+
+    /**
+     * Writes the given int value into this buffer at the current position,
+     * using the current byte order, and increments the position by 4.
+     *
+     * @param b the int value to be written
+     * @return this buffer
+     * @throws java.nio.BufferOverflowException if there are fewer than 4 bytes remaining in this buffer
+     * @throws java.nio.ReadOnlyBufferException if this buffer is read-only
+     * @since 5.4
+     */
+    ByteBuf putInt(int index, int b);
+
+    /**
+     * Writes the given double value into this buffer at the current position,
+     * using the current byte order, and increments the position by 8.
+     *
+     * @param b the double value to be written
+     * @return this buffer
+     * @throws java.nio.BufferOverflowException if there are fewer than 8 bytes remaining in this buffer
+     * @throws java.nio.ReadOnlyBufferException if this buffer is read-only
+     * @since 5.4
+     */
+    ByteBuf putDouble(double b);
+
+    /**
+     * Writes the given long value into this buffer at the current position,
+     * using the current byte order, and increments the position by 8.
+     *
+     * @param b the long value to be written
+     * @return this buffer
+     * @throws java.nio.BufferOverflowException if there are fewer than 8 bytes remaining in this buffer
+     * @throws java.nio.ReadOnlyBufferException if this buffer is read-only
+     * @since 5.4
+     */
+    ByteBuf putLong(long b);
+
+    /**
      * <p>Flips this buffer.  The limit is set to the current position and then the position is set to zero.  If the mark is defined then it
      * is discarded.</p>
      *
