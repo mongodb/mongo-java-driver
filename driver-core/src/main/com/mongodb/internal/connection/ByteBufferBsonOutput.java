@@ -84,9 +84,9 @@ public class ByteBufferBsonOutput extends OutputBuffer {
 
     @Override
     public void writeInt32(final int value) {
+        ensureOpen();
         ByteBuf buf = getCurrentByteBuffer();
         if (buf.remaining() >= 4) {
-            ensureOpen();
             buf.putInt(value);
             position += 4;
         } else {
