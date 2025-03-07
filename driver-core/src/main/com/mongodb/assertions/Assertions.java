@@ -181,6 +181,19 @@ public final class Assertions {
 
     /**
      * @param value A value to check.
+     * @param message The message.
+     * @return {@code true}.
+     * @throws AssertionError If {@code value} is {@code false}.
+     */
+    public static boolean assertTrue(final boolean value, final String message) throws AssertionError {
+        if (!value) {
+            throw new AssertionError(message);
+        }
+        return true;
+    }
+
+    /**
+     * @param value A value to check.
      * @return {@code false}.
      * @throws AssertionError If {@code value} is {@code true}.
      */

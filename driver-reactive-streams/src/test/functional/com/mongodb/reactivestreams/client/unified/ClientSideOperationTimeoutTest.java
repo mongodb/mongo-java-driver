@@ -99,18 +99,25 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
     @MethodSource("data")
     @Override
     public void shouldPassAllOutcomes(
+            final String testName,
             @Nullable final String fileDescription,
             @Nullable final String testDescription,
             @Nullable final String directoryName,
+            final int attemptNumber,
+            final int totalAttempts,
             final String schemaVersion,
             @Nullable final BsonArray runOnRequirements,
             final BsonArray entitiesArray,
             final BsonArray initialData,
             final BsonDocument definition) {
         try {
-            super.shouldPassAllOutcomes(fileDescription,
+            super.shouldPassAllOutcomes(
+                    testName,
+                    fileDescription,
                     testDescription,
                     directoryName,
+                    attemptNumber,
+                    totalAttempts,
                     schemaVersion,
                     runOnRequirements,
                     entitiesArray,
