@@ -106,7 +106,8 @@ public abstract class UnifiedTest {
     private static final Set<String> PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS = Collections.singleton(
             "wait queue timeout errors include details about checked out connections");
 
-    public static final int ATTEMPTS = 3;
+    public static final int RETRY_ATTEMPTS = 3;
+    public static final int FORCE_FLAKY_ATTEMPTS = 10;
     private static final Set<String> ATTEMPTED_TESTS_TO_HENCEFORTH_IGNORE = new HashSet<>();
 
     @Nullable
@@ -180,9 +181,11 @@ public abstract class UnifiedTest {
                 boolean forceFlaky = testDef.wasAssignedModifier(Modifier.FORCE_FLAKY);
                 boolean retry = forceFlaky || testDef.wasAssignedModifier(Modifier.RETRY);
 
-                int attempts = retry ? ATTEMPTS : 1;
-                if (forceFlaky) {
-                    attempts = 10;
+                int attempts;
+                if (retry) {
+                    attempts = forceFlaky ? FORCE_FLAKY_ATTEMPTS : RETRY_ATTEMPTS;
+                } else {
+                    attempts = 1;
                 }
 
                 for (int attempt = 1; attempt <= attempts; attempt++) {
@@ -193,12 +196,12 @@ public abstract class UnifiedTest {
                             testDescription,
                             directory,
                             attempt,
-                            attempts * (forceFlaky ? -1 : 1),
+                            attempts,
                             fileDocument.getString("schemaVersion").getValue(),
                             fileDocument.getArray("runOnRequirements", null),
                             fileDocument.getArray("createEntities", new BsonArray()),
                             fileDocument.getArray("initialData", new BsonArray()),
-                            testDocument));
+                            testDocument.clone()));
                 }
             }
         }
@@ -346,7 +349,7 @@ public abstract class UnifiedTest {
             final BsonArray entitiesArray,
             final BsonArray initialData,
             final BsonDocument definition) {
-        boolean forceFlaky = totalAttempts < 0;
+        boolean forceFlaky = testDef.wasAssignedModifier(Modifier.FORCE_FLAKY);
         if (!forceFlaky) {
             boolean ignoreThisTest = ATTEMPTED_TESTS_TO_HENCEFORTH_IGNORE.contains(testName);
             assumeFalse(ignoreThisTest, "Skipping a retryable test that already succeeded");
@@ -391,7 +394,7 @@ public abstract class UnifiedTest {
                 // if the throwable is not matched, test definitions were not intended to apply; rethrow it
                 throw e;
             }
-            boolean isLastAttempt = attemptNumber == Math.abs(totalAttempts);
+            boolean isLastAttempt = attemptNumber == totalAttempts;
             if (isLastAttempt) {
                 throw e;
             }

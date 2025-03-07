@@ -42,17 +42,16 @@ import static java.lang.String.format;
 public final class UnifiedTestModifications {
     public static void applyCustomizations(final TestDef def) {
 
-        // TODO reasons for retry
         // Exception in encryption library: ChangeCipherSpec message sequence violation
-        def.retry("TODO reason")
+        def.retry("") // TODO-JAVA-5809
                 .whenFailureContains("ChangeCipherSpec message sequence violation")
                 .test("client-side-encryption", "namedKMS-createDataKey", "create datakey with named KMIP KMS provider");
 
-        def.retry("TODO reason")
+        def.retry("") // TODO-JAVA-5809
                 .whenFailureContains("Number of checked out connections must match expected")
                 .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters", "pinned connections are returned after a network error during a killCursors request");
 
-        def.retry("TODO reason")
+        def.retry("") // TODO-JAVA-5809
                 .test("client-side-encryption", "namedKMS-rewrapManyDataKey", "rewrap to kmip:name1");
 
         // atlas-data-lake
@@ -62,7 +61,7 @@ public final class UnifiedTestModifications {
                 .directory("atlas-data-lake-testing");
 
         // change-streams
-        def.skipNoncompliantReactive("error required from change stream initialization") // TODO reason?
+        def.skipNoncompliantReactive("error required from change stream initialization") // TODO-JAVA-5711 reason?
                 .test("change-streams", "change-streams", "Test with document comment - pre 4.4");
         def.skipNoncompliantReactive("event sensitive tests. We can't guarantee the amount of GetMore commands sent in the reactive driver")
                 .test("change-streams", "change-streams", "Test that comment is set on getMore")
@@ -78,17 +77,17 @@ public final class UnifiedTestModifications {
 
         // client-side-operation-timeout (CSOT)
 
-        // TODO
+        // TODO-JAVA-5712
 
         // collection-management
 
-        def.skipNoncompliant("") // TODO reason?
+        def.skipNoncompliant("") // TODO-JAVA-5711 reason?
                 .test("collection-management", "modifyCollection-pre_and_post_images", "modifyCollection to changeStreamPreAndPostImages enabled");
 
         // command-logging-and-monitoring
 
-        def.skipNoncompliant("TODO")
-                .when(() -> !def.isReactive() && isServerlessTest()) // TODO why reactive check?
+        def.skipNoncompliant("") // TODO-JAVA-5711
+                .when(() -> !def.isReactive() && isServerlessTest()) // TODO-JAVA-5711 why reactive check?
                 .directory("command-logging")
                 .directory("command-monitoring");
 
@@ -101,7 +100,7 @@ public final class UnifiedTestModifications {
 
         // connection-monitoring-and-pooling
 
-        // TODO reason, jira
+        // TODO-JAVA-5711 reason, jira
         // added as part of https://jira.mongodb.org/browse/JAVA-4976 , but unknown Jira to complete
         // The implementation of the functionality related to clearing the connection pool before closing the connection
         // will be carried out once the specification is finalized and ready.
