@@ -24,6 +24,56 @@ import org.bson.ByteBuf
 import spock.lang.Specification
 
 class ByteBufSpecification extends Specification {
+
+
+    def "should find the first occurrence of a byte"() {
+        given:
+        def buffer = provider.getBuffer(1024)
+
+        when:
+        buffer.with {
+            put((byte) 1)
+            put((byte) 2)
+            put((byte) 3)
+            put((byte) 4)
+            put((byte) 5)
+            flip()
+        }
+
+        then:
+        buffer.indexOf((byte) 3) == 2
+
+        cleanup:
+        buffer.release()
+
+        where:
+        provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
+    }
+
+    def "should not find any occurrence of a byte"() {
+            given:
+        def buffer = provider.getBuffer(1024)
+
+        when:
+        buffer.with {
+            put((byte) 1)
+            put((byte) 2)
+            put((byte) 3)
+            put((byte) 4)
+            put((byte) 5)
+            flip()
+        }
+
+        then:
+        buffer.indexOf((byte) 6) == -1
+
+        cleanup:
+        buffer.release()
+
+        where:
+        provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
+    }
+
     def 'should put a byte'() {
         given:
         def buffer = provider.getBuffer(1024)
