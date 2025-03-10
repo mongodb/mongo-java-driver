@@ -134,7 +134,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     }
 
     @SuppressWarnings("try")
-    @FlakyTest(maxAttempts = 3) // TODO-JAVA-5809
+    @FlakyTest(maxAttempts = 3)
     @DisplayName("4. Background Connection Pooling - timeoutMS used for handshake commands")
     public void testBackgroundConnectionPoolingTimeoutMSUsedForHandshakeCommands() {
         assumeTrue(serverVersionAtLeast(4, 4));
@@ -171,7 +171,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     }
 
     @SuppressWarnings("try")
-    @FlakyTest(maxAttempts = 3) // TODO-JAVA-5809
+    @FlakyTest(maxAttempts = 3)
     @DisplayName("4. Background Connection Pooling - timeoutMS is refreshed for each handshake command")
     public void testBackgroundConnectionPoolingTimeoutMSIsRefreshedForEachHandshakeCommand() {
         assumeTrue(serverVersionAtLeast(4, 4));
@@ -205,7 +205,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
     }
 
-    @FlakyTest(maxAttempts = 3) // TODO-JAVA-5809
+    @FlakyTest(maxAttempts = 3)
     @DisplayName("5. Blocking Iteration Methods - Tailable cursors")
     public void testBlockingIterationMethodsTailableCursor() {
         assumeTrue(serverVersionAtLeast(4, 4));
@@ -242,7 +242,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
     }
 
-    @FlakyTest(maxAttempts = 3) // TODO-JAVA-5809
+    @FlakyTest(maxAttempts = 3)
     @DisplayName("5. Blocking Iteration Methods - Change Streams")
     public void testBlockingIterationMethodsChangeStream() {
         assumeTrue(serverVersionAtLeast(4, 4));
@@ -290,7 +290,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     }
 
     @DisplayName("6. GridFS Upload - uploads via openUploadStream can be timed out")
-    @FlakyTest(maxAttempts = 3) // TODO-JAVA-5809
+    @FlakyTest(maxAttempts = 3)
     public void testGridFSUploadViaOpenUploadStreamTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
@@ -469,7 +469,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
     @SuppressWarnings("try")
     @DisplayName("9. End Session. The timeout specified via the MongoClient timeoutMS option")
-    @FlakyTest(maxAttempts = 3) // TODO-JAVA-5809
+    @FlakyTest(maxAttempts = 3)
     public void test9EndSessionClientTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeFalse(isStandalone());
