@@ -20,8 +20,6 @@ import com.mongodb.ClusterFixture;
 import com.mongodb.client.unified.UnifiedSyncTest;
 import org.junit.jupiter.params.provider.Arguments;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Collection;
 
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
@@ -30,7 +28,7 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
 // See https://github.com/mongodb/specifications/tree/master/source/client-side-operation-timeout/tests
 public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
 
-    private static Collection<Arguments> data() throws URISyntaxException, IOException {
+    private static Collection<Arguments> data() {
         return getTestData("unified-test-format/client-side-operation-timeout");
     }
 
