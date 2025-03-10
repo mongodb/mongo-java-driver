@@ -43,16 +43,27 @@ public final class UnifiedTestModifications {
     public static void applyCustomizations(final TestDef def) {
 
         // Exception in encryption library: ChangeCipherSpec message sequence violation
-        def.retry("") // TODO-JAVA-5809
+        def.retryReactive("") // TODO-JAVA-5809
                 .whenFailureContains("ChangeCipherSpec message sequence violation")
                 .test("client-side-encryption", "namedKMS-createDataKey", "create datakey with named KMIP KMS provider");
 
-        def.retry("") // TODO-JAVA-5809
+        def.retryReactive("") // TODO-JAVA-5809
                 .whenFailureContains("Number of checked out connections must match expected")
                 .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters", "pinned connections are returned after a network error during a killCursors request");
 
-        def.retry("") // TODO-JAVA-5809
+        def.retryReactive("") // TODO-JAVA-5809
                 .test("client-side-encryption", "namedKMS-rewrapManyDataKey", "rewrap to kmip:name1");
+
+        def.retry("") // TODO-JAVA-5809
+                .whenFailureContains("Read timed out")
+                .test("client-side-encryption", "rewrapManyDataKey", "rewrap with new Azure KMS provider")
+                .test("client-side-encryption", "rewrapManyDataKey", "rewrap with new KMIP KMS provider");
+
+        def.retryReactive("") // TODO-JAVA-5809
+                .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters", "pinned connections are returned after a network error during a killCursors request");
+
+        def.retryReactive("") // TODO-JAVA-5809
+                .test("server-selection.logging", "operation-id", "Failed bulkWrite operation: log messages have operationIds");
 
         // atlas-data-lake
 
@@ -339,12 +350,19 @@ public final class UnifiedTestModifications {
             return new TestApplicator(this, reason, SKIP);
         }
 
-
         /**
          * The test will be retried, for the reason provided
          */
         public TestApplicator retry(final String reason) {
             return new TestApplicator(this, reason, RETRY);
+        }
+
+        /**
+         * The reactive test will be retried, for the reason provided
+         */
+        public TestApplicator retryReactive(final String reason) {
+            return new TestApplicator(this, reason, RETRY)
+                    .when(this::isReactive);
         }
 
         public TestApplicator modify(final Modifier... modifiers) {
