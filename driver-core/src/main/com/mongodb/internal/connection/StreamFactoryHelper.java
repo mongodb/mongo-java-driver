@@ -21,8 +21,10 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.connection.AsyncTransportSettings;
 import com.mongodb.connection.NettyTransportSettings;
 import com.mongodb.connection.SocketSettings;
+import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.TransportSettings;
 import com.mongodb.internal.connection.netty.NettyStreamFactoryFactory;
+import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
 
 import java.io.IOException;
@@ -34,16 +36,26 @@ import java.util.concurrent.ExecutorService;
  */
 public final class StreamFactoryHelper {
 
-    public static StreamFactory getSyncStreamFactory(final MongoClientSettings settings,
-            final InetAddressResolver inetAddressResolver, final SocketSettings socketSettings) {
-        TransportSettings transportSettings = settings.getTransportSettings();
+    public static StreamFactoryFactory getSyncStreamFactoryFactory(
+            @Nullable final TransportSettings transportSettings,
+            final InetAddressResolver inetAddressResolver) {
+
         if (transportSettings == null) {
-            return new SocketStreamFactory(inetAddressResolver, socketSettings, settings.getSslSettings());
+            return new StreamFactoryFactory() {
+                @Override
+                public StreamFactory create(final SocketSettings socketSettings, final SslSettings sslSettings) {
+                    return new SocketStreamFactory(inetAddressResolver, socketSettings, sslSettings);
+                }
+
+                @Override
+                public void close() {
+                    //NOP
+                }
+            };
         } else if (transportSettings instanceof AsyncTransportSettings) {
             throw new MongoClientException("Unsupported transport settings in sync: " + transportSettings.getClass().getName());
         } else if (transportSettings instanceof NettyTransportSettings) {
-            return getNettyStreamFactoryFactory(inetAddressResolver, (NettyTransportSettings) transportSettings)
-                    .create(socketSettings, settings.getSslSettings());
+            return getNettyStreamFactoryFactory(inetAddressResolver, (NettyTransportSettings) transportSettings);
         } else {
             throw new MongoClientException("Unsupported transport settings: " + transportSettings.getClass().getName());
         }
@@ -75,7 +87,7 @@ public final class StreamFactoryHelper {
         }
     }
 
-    private static NettyStreamFactoryFactory getNettyStreamFactoryFactory(final InetAddressResolver inetAddressResolver,
+    public static NettyStreamFactoryFactory getNettyStreamFactoryFactory(final InetAddressResolver inetAddressResolver,
             final NettyTransportSettings transportSettings) {
         return NettyStreamFactoryFactory.builder()
                 .applySettings(transportSettings)
