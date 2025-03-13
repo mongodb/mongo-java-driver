@@ -425,6 +425,26 @@
       "description": "apply remaining timeoutMS if less than maxAwaitTimeMS",
       "operations": [
         {
+          "name": "failPoint",
+          "object": "testRunner",
+          "arguments": {
+            "client": "failPointClient",
+            "failPoint": {
+              "configureFailPoint": "failCommand",
+              "mode": {
+                "times": 1
+              },
+              "data": {
+                "failCommands": [
+                  "getMore"
+                ],
+                "blockConnection": true,
+                "blockTimeMS": 30
+              }
+            }
+          }
+        },
+        {
           "name": "createFindCursor",
           "object": "collection",
           "arguments": {
@@ -478,7 +498,7 @@
                 "databaseName": "test",
                 "command": {
                   "maxTimeMS": {
-                    "$$lte": 99
+                    "$$lte": 70
                   }
                 }
               }
