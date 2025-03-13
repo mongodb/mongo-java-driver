@@ -317,13 +317,13 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             TimeoutContext timeoutContext = operationContext.getTimeoutContext();
             timeoutContext.resetToDefaultMaxTime();
             if (resetTimeoutWhenClosing) {
-                timeoutContext.doWithResetTimeout(this::releaseResources);
+                releaseResources(operationContext.withNewlyStartedTimeout());
             } else {
-                releaseResources();
+                releaseResources(operationContext);
             }
         }
 
-        private void releaseResources() {
+        private void releaseResources(final OperationContext operationContext) {
             try {
                 if (isSkipReleasingServerResourcesOnClose()) {
                     unsetServerCursor();
@@ -331,7 +331,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
                 if (super.getServerCursor() != null) {
                     Connection connection = getConnection();
                     try {
-                        releaseServerResources(connection);
+                        releaseServerResources(connection, operationContext);
                     } finally {
                         connection.release();
                     }
@@ -373,21 +373,29 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             }
         }
 
-        private void releaseServerResources(final Connection connection) {
+        private void releaseServerResources(final Connection connection, final OperationContext operationContext) {
             try {
                 ServerCursor localServerCursor = super.getServerCursor();
                 if (localServerCursor != null) {
-                    killServerCursor(getNamespace(), localServerCursor, connection);
+                    killServerCursor(getNamespace(), localServerCursor, connection, operationContext);
                 }
             } finally {
                 unsetServerCursor();
             }
         }
 
-        private void killServerCursor(final MongoNamespace namespace, final ServerCursor localServerCursor,
-                final Connection localConnection) {
-            localConnection.command(namespace.getDatabaseName(), getKillCursorsCommand(namespace, localServerCursor),
-                    NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(), operationContext);
+        private void killServerCursor(
+                final MongoNamespace namespace,
+                final ServerCursor localServerCursor,
+                final Connection localConnection,
+                final OperationContext operationContext) {
+            localConnection.command(
+                    namespace.getDatabaseName(),
+                    getKillCursorsCommand(namespace, localServerCursor),
+                    NoOpFieldNameValidator.INSTANCE,
+                    ReadPreference.primary(),
+                    new BsonDocumentCodec(),
+                    operationContext);
         }
     }
 }

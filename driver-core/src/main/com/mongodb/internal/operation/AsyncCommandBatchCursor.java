@@ -53,6 +53,7 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.doesNotThrow;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
+import static com.mongodb.internal.async.SingleResultCallback.THEN_DO_NOTHING;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.FIRST_BATCH;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CLOSED_AS_CURSOR;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.NEXT_BATCH;
@@ -277,15 +278,14 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
         void doClose() {
             TimeoutContext timeoutContext = operationContext.getTimeoutContext();
             timeoutContext.resetToDefaultMaxTime();
-            SingleResultCallback<Void> thenDoNothing = (r, t) -> {};
             if (resetTimeoutWhenClosing) {
-                timeoutContext.doWithResetTimeout(this::releaseResourcesAsync, thenDoNothing);
+                releaseResourcesAsync(operationContext.withNewlyStartedTimeout(), THEN_DO_NOTHING);
             } else {
-                releaseResourcesAsync(thenDoNothing);
+                releaseResourcesAsync(operationContext, THEN_DO_NOTHING);
             }
         }
 
-        private void releaseResourcesAsync(final SingleResultCallback<Void> callback) {
+        private void releaseResourcesAsync(final OperationContext operationContext, final SingleResultCallback<Void> callback) {
             beginAsync().thenRunTryCatchAsyncBlocks(c -> {
                 if (isSkipReleasingServerResourcesOnClose()) {
                     unsetServerCursor();
@@ -295,7 +295,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
                         getConnection(c2);
                     }).thenConsume((connection, c3) -> {
                         beginAsync().thenRun(c4 -> {
-                            releaseServerResourcesAsync(connection, c4);
+                            releaseServerResourcesAsync(connection, operationContext, c4);
                         }).thenAlwaysRunAndFinish(() -> {
                             connection.release();
                         }, c3);
@@ -346,11 +346,12 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
             }
         }
 
-        private void releaseServerResourcesAsync(final AsyncConnection connection, final SingleResultCallback<Void> callback) {
+        private void releaseServerResourcesAsync(final AsyncConnection connection, final OperationContext operationContext,
+                final SingleResultCallback<Void> callback) {
             beginAsync().thenRun((c) -> {
                 ServerCursor localServerCursor = super.getServerCursor();
                 if (localServerCursor != null) {
-                    killServerCursorAsync(getNamespace(), localServerCursor, connection, callback);
+                    killServerCursorAsync(getNamespace(), localServerCursor, connection, operationContext, callback);
                 } else {
                     c.complete(c);
                 }
@@ -359,11 +360,22 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
             }, callback);
         }
 
-        private void killServerCursorAsync(final MongoNamespace namespace, final ServerCursor localServerCursor,
-                final AsyncConnection localConnection, final SingleResultCallback<Void> callback) {
-            localConnection.commandAsync(namespace.getDatabaseName(), getKillCursorsCommand(namespace, localServerCursor),
-                    NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(),
-                    operationContext, (r, t) -> callback.onResult(null, null));
+        private void killServerCursorAsync(
+                final MongoNamespace namespace,
+                final ServerCursor localServerCursor,
+                final AsyncConnection localConnection,
+                final OperationContext operationContext,
+                final SingleResultCallback<Void> callback) {
+            beginAsync().thenRun(c -> {
+                localConnection.commandAsync(
+                        namespace.getDatabaseName(),
+                        getKillCursorsCommand(namespace, localServerCursor),
+                        NoOpFieldNameValidator.INSTANCE,
+                        ReadPreference.primary(),
+                        new BsonDocumentCodec(),
+                        operationContext,
+                        (r, t) -> c.complete(c));
+            }).finish(callback);
         }
     }
 }

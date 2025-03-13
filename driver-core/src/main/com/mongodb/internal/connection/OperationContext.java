@@ -101,8 +101,7 @@ public class OperationContext {
         return serverApi;
     }
 
-    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
-    public OperationContext(final long id,
+    private OperationContext(final long id,
                             final RequestContext requestContext,
                             final SessionContext sessionContext,
                             final TimeoutContext timeoutContext,
@@ -136,6 +135,11 @@ public class OperationContext {
      */
     public ServerDeprioritization getServerDeprioritization() {
         return serverDeprioritization;
+    }
+
+    public OperationContext withNewlyStartedTimeout() {
+        TimeoutContext tc = this.timeoutContext.withNewlyStartedTimeout();
+        return this.withTimeoutContext(tc);
     }
 
     public static final class ServerDeprioritization {
