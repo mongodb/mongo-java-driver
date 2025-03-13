@@ -430,7 +430,7 @@
           "arguments": {
             "filter": {
               "_id": 1
-            }
+            },
             "cursorType": "tailableAwait",
             "batchSize": 1,
             "maxAwaitTimeMS": 100,
