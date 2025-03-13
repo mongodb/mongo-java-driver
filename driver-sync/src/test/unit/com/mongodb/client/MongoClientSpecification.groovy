@@ -212,7 +212,7 @@ class MongoClientSpecification extends Specification {
                 .build()
 
         when:
-        def client = new MongoClientImpl(Stub(Cluster), null, settings,null, new TestOperationExecutor([]))
+        def client = new MongoClientImpl(Stub(Cluster), null, settings, null, new TestOperationExecutor([]))
 
         then:
         (client.getCodecRegistry().get(UUID) as UuidCodec).getUuidRepresentation() == C_SHARP_LEGACY

@@ -87,7 +87,7 @@ public final class StreamFactoryHelper {
         }
     }
 
-    public static NettyStreamFactoryFactory getNettyStreamFactoryFactory(final InetAddressResolver inetAddressResolver,
+    private static NettyStreamFactoryFactory getNettyStreamFactoryFactory(final InetAddressResolver inetAddressResolver,
             final NettyTransportSettings transportSettings) {
         return NettyStreamFactoryFactory.builder()
                 .applySettings(transportSettings)
