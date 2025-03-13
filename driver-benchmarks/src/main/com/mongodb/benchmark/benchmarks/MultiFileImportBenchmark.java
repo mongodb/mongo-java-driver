@@ -31,19 +31,31 @@ import org.bson.json.JsonReader;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+;
+
 public class MultiFileImportBenchmark extends AbstractMongoBenchmark {
+    public static final String TEST_NAME = "LDJSON multi-file import";
     private MongoDatabase database;
 
     private MongoCollection<RawBsonDocument> collection;
 
     private ExecutorService fileReadingService;
     private ExecutorService documentWritingService;
+
+    public MultiFileImportBenchmark() {
+        super(Collections.emptyList(), TEST_NAME);
+    }
+
+    public MultiFileImportBenchmark(final List<String> tags) {
+        super(tags, TEST_NAME);
+    }
 
     @Override
     public void setUp() throws Exception {
@@ -76,12 +88,6 @@ public class MultiFileImportBenchmark extends AbstractMongoBenchmark {
 
         super.tearDown();
     }
-
-    @Override
-    public String getName() {
-        return "LDJSON multi-file import";
-    }
-
 
     @Override
     public void run() throws InterruptedException {

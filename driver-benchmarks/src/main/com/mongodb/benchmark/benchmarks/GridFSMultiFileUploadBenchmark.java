@@ -27,21 +27,28 @@ import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+
 public class GridFSMultiFileUploadBenchmark extends AbstractMongoBenchmark {
 
+    private static final String TEST_NAME = "GridFS multi-file upload";
     private MongoDatabase database;
     private GridFSBucket bucket;
 
     private ExecutorService fileService;
 
-    @Override
-    public String getName() {
-        return "GridFS multi-file upload";
+    public GridFSMultiFileUploadBenchmark(final List<String> tags) {
+        super(tags, TEST_NAME);
+    }
+
+    public GridFSMultiFileUploadBenchmark() {
+        super(Collections.emptyList(), TEST_NAME);
     }
 
     @Override

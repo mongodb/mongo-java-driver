@@ -46,7 +46,13 @@ public class EvergreenBenchmarkResultWriter implements BenchmarkResultWriter {
 
         jsonWriter.writeStartDocument("info");
         jsonWriter.writeString("test_name", benchmarkResult.getName());
-
+        if (!benchmarkResult.getTags().isEmpty()) {
+            jsonWriter.writeStartArray("tags");
+            for (String tag : benchmarkResult.getTags()) {
+                jsonWriter.writeString(tag);
+            }
+            jsonWriter.writeEndArray();
+        }
         jsonWriter.writeStartDocument("args");
         jsonWriter.writeInt32("threads", 1);
         jsonWriter.writeEndDocument();

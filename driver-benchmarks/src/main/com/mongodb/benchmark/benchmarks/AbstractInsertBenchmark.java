@@ -24,20 +24,23 @@ import org.bson.codecs.DecoderContext;
 import org.bson.json.JsonReader;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 public abstract class AbstractInsertBenchmark<T> extends AbstractMongoBenchmark {
 
     protected MongoCollection<T> collection;
 
-    private final String name;
     private final String resourcePath;
     private final Class<T> clazz;
     private byte[] bytes;
     protected int fileLength;
     protected T document;
 
-    protected AbstractInsertBenchmark(final String name, final String resourcePath, final Class<T> clazz) {
-        this.name = name;
+    protected AbstractInsertBenchmark(final List<String> tags,
+                                      final String name,
+                                      final String resourcePath,
+                                      final Class<T> clazz) {
+        super(tags, name);
         this.resourcePath = resourcePath;
         this.clazz = clazz;
     }
@@ -63,11 +66,6 @@ public abstract class AbstractInsertBenchmark<T> extends AbstractMongoBenchmark 
     public void before() throws Exception {
         super.before();
         collection.drop();
-    }
-
-    @Override
-    public String getName() {
-        return name;
     }
 
     protected T createDocument() {

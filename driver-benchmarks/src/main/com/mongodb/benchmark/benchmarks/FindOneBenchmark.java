@@ -21,10 +21,19 @@ import com.mongodb.benchmark.framework.BenchmarkRunner;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 
+import java.util.Collections;
+import java.util.List;
+
 public class FindOneBenchmark<T> extends AbstractFindBenchmark<T> {
 
+    private static final String TEST_NAME = "Find one by ID";
+
     public FindOneBenchmark(final String resourcePath, Class<T> clazz) {
-        super("Find one by ID", resourcePath, clazz);
+        this(Collections.emptyList(), resourcePath, clazz);
+    }
+
+    public FindOneBenchmark(final List<String> tags, final String resourcePath, Class<T> clazz) {
+        super(tags, TEST_NAME, resourcePath, clazz);
     }
 
     @Override

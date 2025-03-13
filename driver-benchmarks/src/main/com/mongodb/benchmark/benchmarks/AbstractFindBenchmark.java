@@ -32,21 +32,18 @@ import java.util.List;
 public abstract class AbstractFindBenchmark<T> extends AbstractMongoBenchmark {
     protected MongoCollection<T> collection;
 
-    private final String name;
     private final String resourcePath;
     private final Class<T> clazz;
 
     private int fileLength;
 
-    public AbstractFindBenchmark(final String name, final String resourcePath, final Class<T> clazz) {
-        this.name = name;
+    public AbstractFindBenchmark(final List<String> tags,
+                                 final String name,
+                                 final String resourcePath,
+                                 final Class<T> clazz) {
+        super(tags, name);
         this.resourcePath = resourcePath;
         this.clazz = clazz;
-    }
-
-    @Override
-    public String getName() {
-        return name;
     }
 
     public void setUp() throws Exception {

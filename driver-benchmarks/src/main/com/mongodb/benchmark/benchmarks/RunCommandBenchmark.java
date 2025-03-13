@@ -26,13 +26,24 @@ import org.bson.conversions.Bson;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.json.JsonReader;
 
+import java.util.Collections;
+import java.util.List;
+
 public class RunCommandBenchmark<T extends Bson> extends AbstractMongoBenchmark {
 
+    private static final String TEST_NAME = "Run command";
     private MongoDatabase database;
     private final Codec<T> codec;
     private final T command;
 
     public RunCommandBenchmark(final Codec<T> codec) {
+        super(Collections.emptyList(), TEST_NAME);
+        this.codec = codec;
+        this.command = createCommand();
+    }
+
+    public RunCommandBenchmark(final List<String> tags, final Codec<T> codec) {
+        super(tags, TEST_NAME);
         this.codec = codec;
         this.command = createCommand();
     }
@@ -41,11 +52,6 @@ public class RunCommandBenchmark<T extends Bson> extends AbstractMongoBenchmark 
     public void setUp() throws Exception {
         super.setUp();
         database = client.getDatabase("admin");
-    }
-
-    @Override
-    public String getName() {
-        return "Run command";
     }
 
     @Override

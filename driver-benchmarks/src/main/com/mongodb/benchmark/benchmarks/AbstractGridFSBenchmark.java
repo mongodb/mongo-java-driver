@@ -21,13 +21,18 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 
+import java.util.List;
+
 public abstract class AbstractGridFSBenchmark extends AbstractMongoBenchmark {
     private final String resourcePath;
     protected MongoDatabase database;
     protected GridFSBucket bucket;
     protected byte[] fileBytes;
 
-    public AbstractGridFSBenchmark(final String resourcePath) {
+    public AbstractGridFSBenchmark(final List<String> tags,
+                                   final String name,
+                                   final String resourcePath) {
+        super(tags, name);
         this.resourcePath = resourcePath;
     }
 

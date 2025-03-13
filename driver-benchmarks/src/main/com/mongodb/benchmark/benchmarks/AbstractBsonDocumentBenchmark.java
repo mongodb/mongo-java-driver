@@ -29,13 +29,12 @@ import org.bson.json.JsonReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 
 public abstract class AbstractBsonDocumentBenchmark<T> extends Benchmark {
 
     protected final PowerOfTwoBufferPool bufferPool = PowerOfTwoBufferPool.DEFAULT;
     protected final Codec<T> codec;
-
-    private final String name;
     private final String resourcePath;
 
     protected T document;
@@ -43,7 +42,7 @@ public abstract class AbstractBsonDocumentBenchmark<T> extends Benchmark {
     private int fileLength;
 
     public AbstractBsonDocumentBenchmark(final String name, final String resourcePath, final Codec<T> codec) {
-        this.name = name;
+        super(Collections.emptyList(), name);
         this.resourcePath = resourcePath;
         this.codec = codec;
     }
@@ -56,11 +55,6 @@ public abstract class AbstractBsonDocumentBenchmark<T> extends Benchmark {
         document = codec.decode(new JsonReader(new String(bytes, StandardCharsets.UTF_8)),
                 DecoderContext.builder().build());
         documentBytes = getDocumentAsBuffer(document);
-    }
-
-    @Override
-    public String getName() {
-        return name;
     }
 
     @Override

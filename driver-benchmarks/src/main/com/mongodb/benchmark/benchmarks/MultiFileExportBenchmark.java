@@ -42,14 +42,18 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+;
+
 public class MultiFileExportBenchmark extends AbstractMongoBenchmark {
 
+    public static final String TEST_NAME = "LDJSON multi-file export";
     private MongoDatabase database;
 
     private MongoCollection<RawBsonDocument> collection;
@@ -58,9 +62,12 @@ public class MultiFileExportBenchmark extends AbstractMongoBenchmark {
     private ExecutorService documentReadingService;
     private File tempDirectory;
 
-    @Override
-    public String getName() {
-        return "LDJSON multi-file export";
+    public MultiFileExportBenchmark() {
+        super(Collections.emptyList(), TEST_NAME);
+    }
+
+    public MultiFileExportBenchmark(final List<String> tags) {
+        super(tags, TEST_NAME);
     }
 
     @Override

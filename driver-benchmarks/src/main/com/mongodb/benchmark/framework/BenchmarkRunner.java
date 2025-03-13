@@ -70,7 +70,7 @@ public class BenchmarkRunner {
 
         benchmark.tearDown();
 
-        return new BenchmarkResult(benchmark.getName(), elapsedTimeNanosList, benchmark.getBytesPerRun());
+        return new BenchmarkResult(benchmark.getName(), elapsedTimeNanosList, benchmark.getBytesPerRun(), benchmark.getTags());
     }
 
     private boolean shouldContinue(final int iterationCount, final long totalTimeNanos) {

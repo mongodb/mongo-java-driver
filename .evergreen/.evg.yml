@@ -780,8 +780,12 @@ functions:
       type: test
       params:
         working_dir: "src"
+        env:
+          PROVIDER: ${PROVIDER}
         script: |
           ${PREPARE_SHELL}
+          echo "Running performance tests provider ${PROVIDER}"
+          PROVIDER=${PROVIDER}
           PROJECT_DIRECTORY=${PROJECT_DIRECTORY} .evergreen/run-perf-tests.sh
 
   "send dashboard data":
@@ -1559,6 +1563,20 @@ tasks:
         - func: "run perf tests"
         - func: "send dashboard data"
 
+    - name: "netty-perf"
+      tags: [ "perf" ]
+      commands:
+        - func: "bootstrap mongo-orchestration"
+          vars:
+            VERSION: "v6.0-perf"
+            TOPOLOGY: "server"
+            SSL: "nossl"
+            AUTH: "noauth"
+        - func: "run perf tests"
+          vars:
+            PROVIDER: "Netty"
+        - func: "send dashboard data"
+
     - name: "aws-lambda-deployed-task"
       commands:
         - command: ec2.assume_role
@@ -2311,6 +2329,7 @@ buildvariants:
   run_on: rhel90-dbx-perf-large
   tasks:
     - name: "perf"
+    - name: "netty-perf"
 
 - name: plain-auth-test
   display_name: "PLAIN (LDAP) Auth test"

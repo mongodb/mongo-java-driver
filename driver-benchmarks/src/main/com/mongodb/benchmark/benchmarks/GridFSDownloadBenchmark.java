@@ -21,18 +21,20 @@ import com.mongodb.client.gridfs.GridFSDownloadStream;
 import org.bson.types.ObjectId;
 
 import java.io.ByteArrayInputStream;
+import java.util.Collections;
+import java.util.List;
 
 public class GridFSDownloadBenchmark extends AbstractGridFSBenchmark {
+    private static final String TEST_NAME = "GridFS download";
 
     private ObjectId fileId;
 
-    public GridFSDownloadBenchmark(final String resourcePath) {
-        super(resourcePath);
+    public GridFSDownloadBenchmark(final List<String> tags, final String resourcePath) {
+        super(tags, TEST_NAME, resourcePath);
     }
 
-    @Override
-    public String getName() {
-        return "GridFS download";
+    public GridFSDownloadBenchmark(final String resourcePath) {
+        super(Collections.emptyList(), TEST_NAME, resourcePath);
     }
 
     @Override

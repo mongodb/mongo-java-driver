@@ -45,6 +45,14 @@ tasks.register("jmh", JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
 }
 
+tasks.register("runNetty", JavaExec) {
+    group = 'application'
+    description = 'Run the Netty main class.'
+    mainClass = 'com.mongodb.benchmark.benchmarks.netty.BenchmarkNettyProviderSuite'
+    classpath = sourceSets.main.runtimeClasspath
+    jvmArgs applicationDefaultJvmArgs
+}
+
 javadoc {
     enabled = false
 }

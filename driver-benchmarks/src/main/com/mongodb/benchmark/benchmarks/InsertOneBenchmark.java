@@ -17,13 +17,22 @@
 
 package com.mongodb.benchmark.benchmarks;
 
+import java.util.Collections;
+import java.util.List;
+
 public class InsertOneBenchmark<T> extends AbstractInsertBenchmark<T> {
     private final int numIterations;
     private final IdRemover<T> idRemover;
 
     public InsertOneBenchmark(final String name, final String resourcePath, final int numIterations, final Class<T> clazz,
                               final IdRemover<T> idRemover) {
-        super(name + " doc insertOne", resourcePath, clazz);
+        this(Collections.emptyList(), name, resourcePath, numIterations, clazz, idRemover);
+    }
+
+    public InsertOneBenchmark(final List<String> tags, final String name, final String resourcePath, final int numIterations,
+                              final Class<T> clazz,
+                              final IdRemover<T> idRemover) {
+        super(tags, name + " doc insertOne", resourcePath, clazz);
         this.numIterations = numIterations;
         this.idRemover = idRemover;
     }
