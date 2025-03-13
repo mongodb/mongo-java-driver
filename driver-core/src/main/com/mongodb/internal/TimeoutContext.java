@@ -193,7 +193,7 @@ public class TimeoutContext {
     public void runMaxTimeMS(final LongConsumer onRemaining) {
         if (maxTimeSupplier != null) {
             long maxTimeMS = maxTimeSupplier.get();
-            if(maxTimeMS > 0) {
+            if (maxTimeMS > 0) {
                 runMinTimeout(onRemaining, maxTimeMS);
             }
             return;
