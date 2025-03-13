@@ -58,11 +58,11 @@ import com.mongodb.kotlin.client.model.Filters.size
 import com.mongodb.kotlin.client.model.Filters.text
 import com.mongodb.kotlin.client.model.Filters.type
 import com.mongodb.kotlin.client.model.Filters.where
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import org.bson.BsonDocument
 import org.bson.BsonType
 import org.bson.conversions.Bson
-import org.junit.Test
 
 class FiltersTest {
 
