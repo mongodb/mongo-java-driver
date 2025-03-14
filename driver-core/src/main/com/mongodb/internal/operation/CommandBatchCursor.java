@@ -67,8 +67,8 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private final int maxWireVersion;
     private final boolean firstBatchEmpty;
     private final ResourceManager resourceManager;
-    private final OperationContext operationContext;
     private final TimeoutMode timeoutMode;
+    private OperationContext operationContext;
 
     private int batchSize;
     private CommandCursorResult<T> commandCursorResult;
@@ -92,10 +92,10 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         this.comment = comment;
         this.maxWireVersion = connectionDescription.getMaxWireVersion();
         this.firstBatchEmpty = commandCursorResult.getResults().isEmpty();
-        operationContext = connectionSource.getOperationContext();
         this.timeoutMode = timeoutMode;
 
-        operationContext.getTimeoutContext().setMaxTimeOverride(maxTimeMS);
+        operationContext = connectionSource.getOperationContext();
+        operationContext.getTimeoutContext().setMaxTimeOverride(maxTimeMS); // TODO-JAVA-5640 with?
 
         Connection connectionToPin = connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER ? connection : null;
         resourceManager = new ResourceManager(namespace, connectionSource, connectionToPin, commandCursorResult.getServerCursor());
@@ -235,7 +235,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
     void checkTimeoutModeAndResetTimeoutContextIfIteration() {
         if (timeoutMode == TimeoutMode.ITERATION) {
-            operationContext.getTimeoutContext().resetTimeoutIfPresent();
+            operationContext = operationContext.withNewlyStartedTimeout();
         }
     }
 
@@ -271,7 +271,8 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
     /**
      * Configures the cursor to {@link #close()}
-     * without {@linkplain TimeoutContext#resetTimeoutIfPresent() resetting} its {@linkplain TimeoutContext#getTimeout() timeout}.
+     * without {@linkplain TimeoutContext#withNewlyStartedTimeout() starting a new}
+     * {@linkplain TimeoutContext#getTimeout() timeout}.
      * This is useful when managing the {@link #close()} behavior externally.
      */
     CommandBatchCursor<T> disableTimeoutResetWhenClosing() {
@@ -316,7 +317,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         void doClose() {
             TimeoutContext timeoutContext = operationContext.getTimeoutContext();
             timeoutContext.resetToDefaultMaxTime();
-            if (resetTimeoutWhenClosing) {
+            if (resetTimeoutWhenClosing) { // TODO-JAVA-5640 don't we always reset when closing?
                 releaseResources(operationContext.withNewlyStartedTimeout());
             } else {
                 releaseResources(operationContext);

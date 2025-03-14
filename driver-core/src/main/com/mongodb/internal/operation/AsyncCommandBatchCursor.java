@@ -72,8 +72,8 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
     private final int maxWireVersion;
     private final boolean firstBatchEmpty;
     private final ResourceManager resourceManager;
-    private final OperationContext operationContext;
     private final TimeoutMode timeoutMode;
+    private OperationContext operationContext;
     private final AtomicBoolean processedInitial = new AtomicBoolean();
     private int batchSize;
     private volatile CommandCursorResult<T> commandCursorResult;
@@ -95,10 +95,10 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
         this.comment = comment;
         this.maxWireVersion = connectionDescription.getMaxWireVersion();
         this.firstBatchEmpty = commandCursorResult.getResults().isEmpty();
-        operationContext = connectionSource.getOperationContext();
         this.timeoutMode = timeoutMode;
 
-        operationContext.getTimeoutContext().setMaxTimeOverride(maxTimeMS);
+        operationContext = connectionSource.getOperationContext();
+        operationContext.getTimeoutContext().setMaxTimeOverride(maxTimeMS); // TODO-JAVA-5640 with?
 
         AsyncConnection connectionToPin = connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER
                 ? connection : null;
@@ -176,7 +176,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
 
     void checkTimeoutModeAndResetTimeoutContextIfIteration() {
         if (timeoutMode == TimeoutMode.ITERATION) {
-            operationContext.getTimeoutContext().resetTimeoutIfPresent();
+            operationContext = operationContext.withNewlyStartedTimeout();
         }
     }
 
@@ -230,7 +230,8 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
 
     /**
      * Configures the cursor to {@link #close()}
-     * without {@linkplain TimeoutContext#resetTimeoutIfPresent() resetting} its {@linkplain TimeoutContext#getTimeout() timeout}.
+     * without {@linkplain TimeoutContext#withNewlyStartedTimeout() starting a new}
+     * {@linkplain TimeoutContext#getTimeout() timeout}.
      * This is useful when managing the {@link #close()} behavior externally.
      */
     AsyncCommandBatchCursor<T> disableTimeoutResetWhenClosing() {
