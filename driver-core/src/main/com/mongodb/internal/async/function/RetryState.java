@@ -47,7 +47,7 @@ import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
 @NotThreadSafe
 public final class RetryState {
     public static final int RETRIES = 1;
-    private static final int INFINITE_ATTEMPTS = Integer.MAX_VALUE;
+    public static final int INFINITE_ATTEMPTS = Integer.MAX_VALUE;
 
     private final LoopState loopState;
     private final int attempts;
@@ -67,19 +67,16 @@ public final class RetryState {
      * </p>
      *
      * @param retries A positive number of allowed retries. {@link Integer#MAX_VALUE} is a special value interpreted as being unlimited.
-     * @param timeoutContext A timeout context that will be used to determine if the operation has timed out.
+     * @param retryUntilTimeoutThrowsException // TODO-JAVA-5640 shouldn't a timeout always stop retries?
      * @see #attempts()
      */
-    public static RetryState withRetryableState(final int retries, final TimeoutContext timeoutContext) {
+    public static RetryState withRetryableState(final int retries, final boolean retryUntilTimeoutThrowsException) {
         assertTrue(retries > 0);
-        if (timeoutContext.hasTimeoutMS()){
-            return new RetryState(INFINITE_ATTEMPTS, timeoutContext);
-        }
-        return new RetryState(retries, null);
+        return new RetryState(retries, retryUntilTimeoutThrowsException);
     }
 
     public static RetryState withNonRetryableState() {
-        return new RetryState(0, null);
+        return new RetryState(0, false);
     }
 
     /**
@@ -94,19 +91,19 @@ public final class RetryState {
      * @see #attempts()
      */
     public RetryState(final TimeoutContext timeoutContext) {
-        this(INFINITE_ATTEMPTS, timeoutContext);
+        this(INFINITE_ATTEMPTS, timeoutContext.hasTimeoutMS());
     }
 
     /**
      * @param retries A non-negative number of allowed retries. {@link Integer#MAX_VALUE} is a special value interpreted as being unlimited.
-     * @param timeoutContext A timeout context that will be used to determine if the operation has timed out.
+     * @param retryUntilTimeoutThrowsException
      * @see #attempts()
      */
-    private RetryState(final int retries, @Nullable final TimeoutContext timeoutContext) {
+    private RetryState(final int retries, final boolean retryUntilTimeoutThrowsException) {
         assertTrue(retries >= 0);
         loopState = new LoopState();
         attempts = retries == INFINITE_ATTEMPTS ? INFINITE_ATTEMPTS : retries + 1;
-        this.retryUntilTimeoutThrowsException = timeoutContext != null && timeoutContext.hasTimeoutMS();
+        this.retryUntilTimeoutThrowsException = retryUntilTimeoutThrowsException;
     }
 
     /**
