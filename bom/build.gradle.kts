@@ -106,7 +106,7 @@ configureMavenPublication {
 }
 
 /*
- * Validate the Bom file.
+ * Validate the BOM file.
  */
 tasks.withType<GenerateMavenPom> {
     doLast {
@@ -136,7 +136,7 @@ tasks.withType<GenerateMavenPom> {
                         "BOM must not contain <scope> elements in dependency:\n$destination"
                     }
                     assert(it.getNode("optional") == null) {
-                        "BOM must not contain <scope> elements in dependency:\n$destination"
+                        "BOM must not contain <optional> elements in dependency:\n$destination"
                     }
                 }
         }

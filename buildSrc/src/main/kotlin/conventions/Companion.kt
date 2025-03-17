@@ -25,5 +25,5 @@ internal val Project.libs: LibrariesForLibs
 
 /** Extension function to determine if a project property has been set. */
 fun Project.buildingWith(name: String): Boolean {
-    return this.hasProperty(name) && this.property(name).toString().toBoolean()
+    return this.findProperty(name)?.toString()?.toBoolean() ?: false
 }
