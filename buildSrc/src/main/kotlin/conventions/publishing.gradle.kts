@@ -108,14 +108,18 @@ publishing {
 tasks.withType<Jar> {
     manifest {
         attributes["-exportcontents"] = "*;-noimport:=true"
-        attributes["Bundle-Version"] = project.version
-        attributes["Bundle-SymbolicName"] = "${project.findProperty("group")}.${project.findProperty("archivesBaseName")}"
     }
 
     afterEvaluate {
         manifest {
-            attributes["Build-Version"] = gitVersion.get()
-            attributes["Bundle-Name"] = base.archivesName.get()
+            if (attributes.containsKey("-nomanifest")) {
+                attributes.remove("-exportcontents")
+            } else {
+                attributes["Bundle-Version"] = project.version
+                attributes["Bundle-SymbolicName"] = "${project.findProperty("group")}.${project.findProperty("archivesBaseName")}"
+                attributes["Build-Version"] = gitVersion.get()
+                attributes["Bundle-Name"] = base.archivesName.get()
+            }
         }
     }
 }

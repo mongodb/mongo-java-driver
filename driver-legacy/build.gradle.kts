@@ -45,11 +45,4 @@ configureMavenPublication {
 // Disable the manifest for driver-legacy as its not a valid OSGI package
 configureJarManifest {
     attributes["-nomanifest"] = true
-    afterEvaluate {
-        attributes.remove("Bundle-Version")
-        attributes.remove("Bundle-SymbolicName")
-        attributes.remove("Build-Version")
-        attributes.remove("Bundle-Name")
-        attributes.remove("-exportcontents")
-    }
 }
