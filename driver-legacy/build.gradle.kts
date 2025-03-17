@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import ProjectExtensions.configureJarManifest
 import ProjectExtensions.configureMavenPublication
 
 plugins {
@@ -38,5 +39,17 @@ configureMavenPublication {
     pom {
         name.set("The Legacy MongoDB Driver")
         description.set("The Legacy MongoDB Driver")
+    }
+}
+
+// Disable the manifest for driver-legacy as its not a valid OSGI package
+configureJarManifest {
+    attributes["-nomanifest"] = true
+    afterEvaluate {
+        attributes.remove("Bundle-Version")
+        attributes.remove("Bundle-SymbolicName")
+        attributes.remove("Build-Version")
+        attributes.remove("Bundle-Name")
+        attributes.remove("-exportcontents")
     }
 }
