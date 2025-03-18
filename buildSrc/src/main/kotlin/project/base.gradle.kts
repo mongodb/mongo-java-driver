@@ -19,9 +19,6 @@ plugins { id("conventions.git-version") }
 
 group = "org.mongodb"
 
-// TODO update Github publish action.
-version = "5.4.0-SNAPSHOT"
-
 repositories {
     mavenLocal()
     google()
