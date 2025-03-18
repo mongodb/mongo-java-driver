@@ -74,7 +74,6 @@ publishing {
     }
 
     publications.create<MavenPublication>("maven") {
-        components.findByName("scala")?.let { from(it) }
         components.findByName("java")?.let { from(it) }
 
         pom {
