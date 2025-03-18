@@ -214,6 +214,11 @@ class CompositeByteBuf implements ByteBuf {
     }
 
     @Override
+    public boolean hasArray() {
+        return false;
+    }
+
+    @Override
     public ByteBuf limit(final int newLimit) {
         if (newLimit < 0 || newLimit > capacity()) {
             throw new IndexOutOfBoundsException(format("%d is out of bounds", newLimit));
