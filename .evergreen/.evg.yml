@@ -1561,7 +1561,7 @@ tasks:
         - func: "run perf tests"
         - func: "send dashboard data"
 
-    - name: "netty-perf"
+    - name: "perf-netty"
       tags: [ "perf" ]
       commands:
         - func: "bootstrap mongo-orchestration"
