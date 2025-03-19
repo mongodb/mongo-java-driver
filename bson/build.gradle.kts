@@ -18,6 +18,7 @@ import ProjectExtensions.configureMavenPublication
 
 plugins {
     id("project.java")
+    id("conventions.testing-junit")
     id("conventions.testing-spock")
     id("conventions.test-artifacts")
 }

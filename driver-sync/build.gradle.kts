@@ -21,6 +21,7 @@ plugins {
     id("conventions.test-artifacts")
     id("conventions.test-include-optionals")
     id("conventions.testing-mockito")
+    id("conventions.testing-junit")
     id("conventions.testing-spock-exclude-slow")
 }
 

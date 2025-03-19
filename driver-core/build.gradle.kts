@@ -20,6 +20,7 @@ plugins {
     id("project.java")
     id("conventions.test-artifacts")
     id("conventions.testing-mockito")
+    id("conventions.testing-junit")
     id("conventions.testing-spock-exclude-slow")
     alias(libs.plugins.build.config)
 }
