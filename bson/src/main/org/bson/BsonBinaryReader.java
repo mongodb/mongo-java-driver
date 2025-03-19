@@ -260,6 +260,11 @@ public class BsonBinaryReader extends AbstractBsonReader {
     }
 
     @Override
+    protected BsonPlaceholder doReadPlaceholder() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void doReadStartArray() {
         int startPosition = bsonInput.getPosition(); // position of size field
         int size = readSize();

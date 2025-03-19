@@ -193,6 +193,11 @@ class BSONCallbackAdapter extends AbstractBsonWriter {
     }
 
     @Override
+    public void doWritePlaceholder() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     protected Context getContext() {
         return (Context) super.getContext();
     }

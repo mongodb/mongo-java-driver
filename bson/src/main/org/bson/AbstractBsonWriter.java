@@ -266,6 +266,11 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
      */
     protected abstract void doWriteUndefined();
 
+    /**
+     * Handles the logic of writing a placeholder  value
+     */
+    protected abstract void doWritePlaceholder();
+
     @Override
     public void writeStartDocument(final String name) {
         writeName(name);
@@ -649,6 +654,19 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     }
 
     @Override
+    public void writePlaceholder() {
+        checkPreconditions("writeUndefined", State.VALUE);
+        doWritePlaceholder();
+        setState(getNextState());
+    }
+
+    @Override
+    public void writePlaceholder(String name) {
+        writeName(name);
+        writePlaceholder();
+    }
+
+    @Override
     public void writeUndefined() {
         checkPreconditions("writeUndefined", State.VALUE);
         doWriteUndefined();
@@ -896,6 +914,10 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
                 reader.readMaxKey();
                 writeMaxKey();
                 break;
+            case PLACEHOLDER:
+                reader.readPlaceholder();
+                writePlaceholder();
+                break;
             default:
                 throw new IllegalArgumentException("unhandled BSON type: " + reader.getCurrentBsonType());
         }
@@ -1000,6 +1022,9 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
                 break;
             case MAX_KEY:
                 writeMaxKey();
+                break;
+            case PLACEHOLDER:
+                writePlaceholder();
                 break;
             default:
                 throw new IllegalArgumentException("unhandled BSON type: " + value.getBsonType());

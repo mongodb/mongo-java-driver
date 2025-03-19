@@ -95,7 +95,7 @@ class JsonScanner {
             default:
                 if (c == '-' || Character.isDigit(c)) {
                     return scanNumber((char) c);
-                } else if (c == '$' || c == '_' || Character.isLetter(c)) {
+                } else if (c == '$' || c == '_' || c == '?' || Character.isLetter(c)) {
                     return scanUnquotedString((char) c);
                 } else {
                     int position = buffer.getPosition();

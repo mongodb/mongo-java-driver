@@ -195,6 +195,11 @@ public class BsonDocumentWriter extends AbstractBsonWriter {
     }
 
     @Override
+    protected void doWritePlaceholder() {
+        write(new BsonPlaceholder());
+    }
+
+    @Override
     protected Context getContext() {
         return (Context) super.getContext();
     }

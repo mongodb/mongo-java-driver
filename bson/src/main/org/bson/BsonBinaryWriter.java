@@ -298,6 +298,11 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     }
 
     @Override
+    public void doWritePlaceholder() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void pipe(final BsonReader reader) {
         notNull("reader", reader);
         pipeDocument(reader, null);

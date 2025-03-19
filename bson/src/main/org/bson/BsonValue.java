@@ -405,6 +405,10 @@ public abstract class BsonValue {
         return this instanceof BsonJavaScript;
     }
 
+    public boolean isPlaceholder() {
+        return this instanceof BsonPlaceholder;
+    }
+
     /**
      * Returns true if this is a BsonJavaScriptWithScope, false otherwise.
      *
@@ -419,5 +423,10 @@ public abstract class BsonValue {
             throw new BsonInvalidOperationException(format("Value expected to be of type %s is of unexpected type %s",
                                                            expectedType, getBsonType()));
         }
+    }
+
+    public BsonPlaceholder asPlaceholder() {
+        throwIfInvalidType(BsonType.PLACEHOLDER);
+        return (BsonPlaceholder) this;
     }
 }
