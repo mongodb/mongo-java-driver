@@ -65,5 +65,3 @@ dependencies {
 
     "integrationTestImplementation"(libs.junit.kotlin)
 }
-
-sourceSets["integrationTest"].kotlin.srcDir("src/integration/kotlin")
