@@ -15,9 +15,7 @@
  */
 package conventions
 
-import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.dependencies
-import org.gradle.kotlin.dsl.withType
 import project.libs
 
 // Adds groovy spock testing framework support

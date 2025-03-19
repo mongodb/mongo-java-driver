@@ -44,7 +44,10 @@ dependencies {
 spotless {
     kotlinGradle {
         target("**/*.gradle.kts")
-        ktfmt("0.39").dropboxStyle().configure { it.setMaxWidth(120) }
+        ktfmt("0.39").dropboxStyle().configure {
+            it.setMaxWidth(120)
+            it.setRemoveUnusedImport(true)
+        }
         trimTrailingWhitespace()
         indentWithSpaces()
         endWithNewline()
@@ -54,7 +57,10 @@ spotless {
 
     kotlin {
         target("**/*.kt")
-        ktfmt().dropboxStyle().configure { it.setMaxWidth(120) }
+        ktfmt().dropboxStyle().configure {
+            it.setMaxWidth(120)
+            it.setRemoveUnusedImport(true)
+        }
         trimTrailingWhitespace()
         indentWithSpaces()
         endWithNewline()
