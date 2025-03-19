@@ -51,6 +51,6 @@ object ProjectExtensions {
 
     /** Extension function to configure the jars manifest */
     fun Project.configureJarManifest(configure: Manifest.() -> Unit = {}) {
-        tasks.withType<Jar> { manifest { configure() } }
+        tasks.withType<Jar> { manifest { afterEvaluate { configure() } } }
     }
 }
