@@ -1221,7 +1221,6 @@ class KotlinSerializerCodecTest {
         serializersModule: SerializersModule = defaultSerializersModule,
         configuration: BsonConfiguration = BsonConfiguration()
     ): T {
-        println("Deserializing: ${value.toJson()}")
         val codec = KotlinSerializerCodec.create(T::class, serializersModule, configuration)!!
         return codec.decode(BsonDocumentReader(value), DecoderContext.builder().build())
     }
