@@ -44,7 +44,6 @@ public class GridFSMultiFileUploadBenchmark extends AbstractMongoBenchmark {
         super("GridFS multi-file upload");
     }
 
-
     @Override
     public void setUp() throws Exception {
         super.setUp();

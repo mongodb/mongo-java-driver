@@ -784,7 +784,6 @@ functions:
           PROVIDER: ${PROVIDER}
         script: |
           ${PREPARE_SHELL}
-          echo "Running performance tests provider ${PROVIDER}"
           PROVIDER=${PROVIDER}
           PROJECT_DIRECTORY=${PROJECT_DIRECTORY} .evergreen/run-perf-tests.sh
 
