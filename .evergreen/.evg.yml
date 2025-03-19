@@ -784,7 +784,6 @@ functions:
           PROVIDER: ${PROVIDER}
         script: |
           ${PREPARE_SHELL}
-          PROVIDER=${PROVIDER}
           PROJECT_DIRECTORY=${PROJECT_DIRECTORY} .evergreen/run-perf-tests.sh
 
   "send dashboard data":
