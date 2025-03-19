@@ -34,7 +34,7 @@ dependencies {
 
 spotbugs {
     if (!project.buildingWith("ssdlcReport.enabled")) {
-        excludeFilter.set(rootProject.file("/config/spotbugs/exclude.xml"))
+        excludeFilter.set(rootProject.file("config/spotbugs/exclude.xml"))
     }
 }
 
