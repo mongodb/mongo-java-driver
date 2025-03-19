@@ -26,18 +26,13 @@ public class BenchmarkResult {
     private final List<Long> elapsedTimeNanosList;
     private final List<Long> sortedElapsedTimeNanosList;
     private final int bytesPerRun;
-    final List<String> tags;
 
-    public BenchmarkResult(final String name,
-                           final List<Long> elapsedTimeNanosList,
-                           final int bytesPerRun,
-                           final List<String> tags) {
+    public BenchmarkResult(final String name, final List<Long> elapsedTimeNanosList, final int bytesPerRun) {
         this.name = name;
         this.elapsedTimeNanosList = new ArrayList<>(elapsedTimeNanosList);
         this.bytesPerRun = bytesPerRun;
         this.sortedElapsedTimeNanosList = new ArrayList<>(elapsedTimeNanosList);
         Collections.sort(this.sortedElapsedTimeNanosList);
-        this.tags = tags;
     }
 
     public int getBytesPerIteration() {
@@ -58,10 +53,6 @@ public class BenchmarkResult {
 
     public int getNumIterations() {
         return elapsedTimeNanosList.size();
-    }
-
-    public List<String> getTags() {
-        return tags;
     }
 
     @Override

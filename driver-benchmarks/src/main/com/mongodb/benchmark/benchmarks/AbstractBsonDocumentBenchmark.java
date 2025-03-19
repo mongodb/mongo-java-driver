@@ -29,7 +29,6 @@ import org.bson.json.JsonReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 
 public abstract class AbstractBsonDocumentBenchmark<T> extends Benchmark {
 
@@ -42,7 +41,7 @@ public abstract class AbstractBsonDocumentBenchmark<T> extends Benchmark {
     private int fileLength;
 
     public AbstractBsonDocumentBenchmark(final String name, final String resourcePath, final Codec<T> codec) {
-        super(Collections.emptyList(), name);
+        super(name);
         this.resourcePath = resourcePath;
         this.codec = codec;
     }

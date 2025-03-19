@@ -19,19 +19,9 @@ package com.mongodb.benchmark.benchmarks;
 
 import com.mongodb.client.MongoCursor;
 
-import java.util.Collections;
-import java.util.List;
-
 public class FindManyBenchmark<T> extends AbstractFindBenchmark<T> {
-
-    private static final String TEST_NAME = "Find many and empty the cursor";
-
     public FindManyBenchmark(final String resourcePath, final Class<T> clazz) {
-        this(Collections.emptyList(), resourcePath, clazz);
-    }
-
-    public FindManyBenchmark(final List<String> tags, final String resourcePath, final Class<T> clazz) {
-        super(tags, TEST_NAME, resourcePath, clazz);
+        super("Find many and empty the cursor", resourcePath, clazz);
     }
 
     @Override

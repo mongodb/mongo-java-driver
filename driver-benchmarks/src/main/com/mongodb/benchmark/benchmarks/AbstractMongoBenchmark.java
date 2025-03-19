@@ -22,8 +22,6 @@ import com.mongodb.benchmark.framework.Benchmark;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 
-import java.util.List;
-
 public abstract class AbstractMongoBenchmark extends Benchmark {
 
     protected static final int GRIDFS_READING_THREAD_POOL_SIZE = 8;
@@ -38,9 +36,8 @@ public abstract class AbstractMongoBenchmark extends Benchmark {
     protected static final String COLLECTION_NAME = "corpus";
     protected MongoClientSettings mongoClientSettings;
 
-    public AbstractMongoBenchmark(final List<String> tags,
-                                  final String name) {
-        super(tags, name);
+    public AbstractMongoBenchmark(final String name) {
+        super(name);
     }
 
     protected MongoClient client;

@@ -18,7 +18,6 @@
 package com.mongodb.benchmark.benchmarks;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class InsertManyBenchmark<T> extends AbstractInsertBenchmark<T> {
@@ -26,12 +25,7 @@ public class InsertManyBenchmark<T> extends AbstractInsertBenchmark<T> {
     private final List<T> documentList;
 
     public InsertManyBenchmark(final String name, final String resourcePath, final int numDocuments, final Class<T> clazz) {
-        this(Collections.emptyList(), name, resourcePath, numDocuments, clazz);
-    }
-
-    public InsertManyBenchmark(final List<String> tags, final String name, final String resourcePath, final int numDocuments,
-                               final Class<T> clazz) {
-        super(tags, name + " doc bulk insert", resourcePath, clazz);
+        super(name + " doc bulk insert", resourcePath, clazz);
         this.numDocuments = numDocuments;
         documentList = new ArrayList<>(numDocuments);
     }

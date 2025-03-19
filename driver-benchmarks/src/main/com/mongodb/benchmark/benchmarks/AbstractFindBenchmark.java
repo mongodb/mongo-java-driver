@@ -37,11 +37,8 @@ public abstract class AbstractFindBenchmark<T> extends AbstractMongoBenchmark {
 
     private int fileLength;
 
-    public AbstractFindBenchmark(final List<String> tags,
-                                 final String name,
-                                 final String resourcePath,
-                                 final Class<T> clazz) {
-        super(tags, name);
+    public AbstractFindBenchmark(final String name, final String resourcePath, final Class<T> clazz) {
+        super(name);
         this.resourcePath = resourcePath;
         this.clazz = clazz;
     }

@@ -18,23 +18,11 @@
 package com.mongodb.benchmark.benchmarks;
 
 import java.io.ByteArrayInputStream;
-import java.util.Collections;
-import java.util.List;
 
 public class GridFSUploadBenchmark extends AbstractGridFSBenchmark {
-    private static final String TEST_NAME = "GridFS upload";
-
-    public GridFSUploadBenchmark(final List<String> tags, final String resourcePath) {
-        super(tags, TEST_NAME, resourcePath);
-    }
 
     public GridFSUploadBenchmark(final String resourcePath) {
-        super(Collections.emptyList(), TEST_NAME, resourcePath);
-    }
-
-    @Override
-    public String getName() {
-        return "GridFS upload";
+        super("GridFS upload", resourcePath);
     }
 
     @Override

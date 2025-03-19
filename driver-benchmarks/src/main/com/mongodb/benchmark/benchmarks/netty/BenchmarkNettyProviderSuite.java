@@ -35,14 +35,9 @@ import com.mongodb.connection.NettyTransportSettings;
 import io.netty.buffer.PooledByteBufAllocator;
 import org.bson.Document;
 
-import java.util.List;
-
-import static java.util.Collections.singletonList;
-
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class BenchmarkNettyProviderSuite extends BenchmarkSuite {
 
-    public static final List<String> TAGS = singletonList("Netty");
     public static final MongoClientSettings MONGO_CLIENT_SETTINGS = MongoClientSettings.builder()
             .transportSettings(NettyTransportSettings.nettyBuilder()
                     .allocator(PooledByteBufAllocator.DEFAULT)
@@ -59,35 +54,35 @@ public class BenchmarkNettyProviderSuite extends BenchmarkSuite {
 
     private static void runBenchmarks()
             throws Exception {
-        runBenchmark(new RunCommandBenchmark<>(TAGS, DOCUMENT_CODEC)
+        runBenchmark(new RunCommandBenchmark<>(DOCUMENT_CODEC)
                 .applyMongoClientSettings(MONGO_CLIENT_SETTINGS));
-        runBenchmark(new FindOneBenchmark<Document>(TAGS, "single_and_multi_document/tweet.json",
+        runBenchmark(new FindOneBenchmark<Document>("single_and_multi_document/tweet.json",
                 DOCUMENT_CLASS).applyMongoClientSettings(MONGO_CLIENT_SETTINGS));
 
-        runBenchmark(new InsertOneBenchmark<Document>(TAGS, "Small", "./single_and_multi_document/small_doc.json", 10000,
+        runBenchmark(new InsertOneBenchmark<Document>("Small", "./single_and_multi_document/small_doc.json", 10000,
                 DOCUMENT_CLASS, ID_REMOVER).applyMongoClientSettings(MONGO_CLIENT_SETTINGS));
-        runBenchmark(new InsertOneBenchmark<Document>(TAGS, "Large", "./single_and_multi_document/large_doc.json", 10,
+        runBenchmark(new InsertOneBenchmark<Document>("Large", "./single_and_multi_document/large_doc.json", 10,
                 DOCUMENT_CLASS, ID_REMOVER).applyMongoClientSettings(MONGO_CLIENT_SETTINGS));
 
-        runBenchmark(new FindManyBenchmark<Document>(TAGS, "single_and_multi_document/tweet.json",
+        runBenchmark(new FindManyBenchmark<Document>("single_and_multi_document/tweet.json",
                 DOCUMENT_CLASS).applyMongoClientSettings(MONGO_CLIENT_SETTINGS));
-        runBenchmark(new InsertManyBenchmark<Document>(TAGS, "Small", "./single_and_multi_document/small_doc.json", 10000,
+        runBenchmark(new InsertManyBenchmark<Document>("Small", "./single_and_multi_document/small_doc.json", 10000,
                 DOCUMENT_CLASS).applyMongoClientSettings(MONGO_CLIENT_SETTINGS));
-        runBenchmark(new InsertManyBenchmark<Document>(TAGS, "Large", "./single_and_multi_document/large_doc.json", 10,
+        runBenchmark(new InsertManyBenchmark<Document>("Large", "./single_and_multi_document/large_doc.json", 10,
                 DOCUMENT_CLASS).applyMongoClientSettings(MONGO_CLIENT_SETTINGS));
 
-        runBenchmark(new GridFSUploadBenchmark(TAGS, "single_and_multi_document/gridfs_large.bin")
+        runBenchmark(new GridFSUploadBenchmark("single_and_multi_document/gridfs_large.bin")
                 .applyMongoClientSettings(MONGO_CLIENT_SETTINGS));
-        runBenchmark(new GridFSDownloadBenchmark(TAGS, "single_and_multi_document/gridfs_large.bin")
+        runBenchmark(new GridFSDownloadBenchmark("single_and_multi_document/gridfs_large.bin")
                 .applyMongoClientSettings(MONGO_CLIENT_SETTINGS));
 
-        runBenchmark(new MultiFileImportBenchmark(TAGS)
+        runBenchmark(new MultiFileImportBenchmark()
                 .applyMongoClientSettings(MONGO_CLIENT_SETTINGS));
-        runBenchmark(new MultiFileExportBenchmark(TAGS)
+        runBenchmark(new MultiFileExportBenchmark()
                 .applyMongoClientSettings(MONGO_CLIENT_SETTINGS));
-        runBenchmark(new GridFSMultiFileUploadBenchmark(TAGS)
+        runBenchmark(new GridFSMultiFileUploadBenchmark()
                 .applyMongoClientSettings(MONGO_CLIENT_SETTINGS));
-        runBenchmark(new GridFSMultiFileDownloadBenchmark(TAGS)
+        runBenchmark(new GridFSMultiFileDownloadBenchmark()
                 .applyMongoClientSettings(MONGO_CLIENT_SETTINGS));
     }
 }

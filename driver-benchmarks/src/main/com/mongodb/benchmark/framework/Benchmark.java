@@ -24,17 +24,14 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
 
 public abstract class Benchmark {
 
     protected static final int NUM_INTERNAL_ITERATIONS = 10000;
     static final String TEST_DATA_SYSTEM_PROPERTY_NAME = "org.mongodb.benchmarks.data";
-    private List<String> tags;
     private String name;
 
-    protected Benchmark(final List<String> tags, final String name) {
-        this.tags = tags;
+    protected Benchmark(final String name) {
         this.name = name;
     }
 
@@ -52,10 +49,6 @@ public abstract class Benchmark {
 
     public String getName() {
         return name;
-    }
-
-    public List<String> getTags() {
-        return tags;
     }
 
     public abstract void run() throws Exception;
