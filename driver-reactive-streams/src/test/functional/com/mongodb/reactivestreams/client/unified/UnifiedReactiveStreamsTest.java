@@ -24,6 +24,7 @@ import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.unified.UnifiedTest;
 import com.mongodb.client.unified.UnifiedTestModifications;
 import com.mongodb.client.vault.ClientEncryption;
+import com.mongodb.lang.NonNull;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBuckets;
 import com.mongodb.reactivestreams.client.internal.vault.ClientEncryptionImpl;
@@ -31,6 +32,11 @@ import com.mongodb.reactivestreams.client.syncadapter.SyncClientEncryption;
 import com.mongodb.reactivestreams.client.syncadapter.SyncGridFSBucket;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoDatabase;
+import org.junit.jupiter.params.provider.Arguments;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.Collection;
 
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier;
 import static com.mongodb.client.unified.UnifiedTestModifications.TestDef;
@@ -93,5 +99,10 @@ public abstract class UnifiedReactiveStreamsTest extends UnifiedTest {
         if (testDef.wasAssignedModifier(Modifier.SLEEP_AFTER_CURSOR_OPEN)) {
             disableSleep();
         }
+    }
+
+    @NonNull
+    protected static Collection<Arguments> getTestData(final String directory) throws URISyntaxException, IOException {
+        return getTestData(directory, true);
     }
 }
