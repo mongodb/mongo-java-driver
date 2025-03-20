@@ -373,6 +373,18 @@ public interface BsonReader extends Closeable {
     void readUndefined(String name);
 
     /**
+     * Reads a placeholder from the reader.
+     */
+    void readPlaceholder();
+
+    /**
+     * Reads a placeholder element from the reader.
+     *
+     * @param name The name of the element.
+     */
+    void readPlaceholder(String name);
+
+    /**
      * Skips the name (reader must be positioned on a name).
      */
     void skipName();

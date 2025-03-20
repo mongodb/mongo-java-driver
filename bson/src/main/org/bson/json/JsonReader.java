@@ -23,6 +23,7 @@ import org.bson.BsonBinarySubType;
 import org.bson.BsonContextType;
 import org.bson.BsonDbPointer;
 import org.bson.BsonInvalidOperationException;
+import org.bson.BsonPlaceholder;
 import org.bson.BsonReaderMark;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
@@ -250,6 +251,9 @@ public class JsonReader extends AbstractBsonReader {
                     currentValue = visitUUIDConstructor();
                 } else if ("new".equals(value)) {
                     visitNew();
+                } else if ("?".equals(value)) {
+                    setCurrentBsonType(BsonType.PLACEHOLDER);
+                    currentValue = new BsonPlaceholder();
                 } else {
                     noValueFound = true;
                 }
@@ -406,6 +410,11 @@ public class JsonReader extends AbstractBsonReader {
 
     @Override
     protected void doReadUndefined() {
+    }
+
+    @Override
+    protected BsonPlaceholder doReadPlaceholder() {
+        return (BsonPlaceholder) currentValue;
     }
 
     @Override

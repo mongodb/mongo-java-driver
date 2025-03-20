@@ -20,6 +20,7 @@ import org.bson.AbstractBsonWriter;
 import org.bson.BsonBinary;
 import org.bson.BsonContextType;
 import org.bson.BsonDbPointer;
+import org.bson.BsonPlaceholder;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
 import org.bson.types.Decimal128;
@@ -223,6 +224,11 @@ public class JsonWriter extends AbstractBsonWriter {
     @Override
     public void doWriteUndefined() {
         settings.getUndefinedConverter().convert(null, strictJsonWriter);
+    }
+
+    @Override
+    protected void doWritePlaceholder() {
+        settings.getPlaceholderConverter().convert(new BsonPlaceholder(), strictJsonWriter);
     }
 
     @Override

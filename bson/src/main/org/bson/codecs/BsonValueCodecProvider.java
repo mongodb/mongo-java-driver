@@ -33,6 +33,7 @@ import org.bson.BsonMaxKey;
 import org.bson.BsonMinKey;
 import org.bson.BsonNull;
 import org.bson.BsonObjectId;
+import org.bson.BsonPlaceholder;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonString;
 import org.bson.BsonSymbol;
@@ -137,6 +138,7 @@ public class BsonValueCodecProvider implements CodecProvider {
         addCodec(new BsonSymbolCodec());
         addCodec(new BsonTimestampCodec());
         addCodec(new BsonUndefinedCodec());
+        addCodec(new BsonPlaceholderCodec());
     }
 
     private <T extends BsonValue> void addCodec(final Codec<T> codec) {
@@ -167,6 +169,7 @@ public class BsonValueCodecProvider implements CodecProvider {
         map.put(BsonType.SYMBOL, BsonSymbol.class);
         map.put(BsonType.TIMESTAMP, BsonTimestamp.class);
         map.put(BsonType.UNDEFINED, BsonUndefined.class);
+        map.put(BsonType.PLACEHOLDER, BsonPlaceholder.class);
 
         DEFAULT_BSON_TYPE_CLASS_MAP = new BsonTypeClassMap(map);
     }

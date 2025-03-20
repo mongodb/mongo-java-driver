@@ -262,6 +262,16 @@ public class BsonWriterDecorator implements BsonWriter {
     }
 
     @Override
+    public void writePlaceholder() {
+        bsonWriter.writePlaceholder();
+    }
+
+    @Override
+    public void writePlaceholder(final String name) {
+        bsonWriter.writePlaceholder(name);
+    }
+
+    @Override
     public void writeUndefined() {
         bsonWriter.writeUndefined();
     }

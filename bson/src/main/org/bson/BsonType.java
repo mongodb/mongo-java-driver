@@ -112,7 +112,11 @@ public enum BsonType {
     /**
      * A BSON MaxKey value.
      */
-    MAX_KEY(0x7f);
+    MAX_KEY(0x7f),
+
+    // This seems problematic, but is necessary to get everything else to work
+    // Using a value larger than a byte to avoid conflicting with future BSON types
+    PLACEHOLDER(0x80);
 
     private static final BsonType[] LOOKUP_TABLE = new BsonType[MIN_KEY.getValue() + 1];
 

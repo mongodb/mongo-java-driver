@@ -265,6 +265,8 @@ public abstract class AbstractBsonReader implements BsonReader {
      */
     protected abstract void doReadUndefined();
 
+    protected abstract BsonPlaceholder doReadPlaceholder();
+
     /**
      * Handles any logic required to skip the name (reader must be positioned on a name).
      */
@@ -480,6 +482,13 @@ public abstract class AbstractBsonReader implements BsonReader {
     }
 
     @Override
+    public void readPlaceholder() {
+        checkPreconditions("readPlaceholder", BsonType.PLACEHOLDER);
+        setState(getNextState());
+        doReadPlaceholder();
+    }
+
+    @Override
     public void skipName() {
         if (isClosed()) {
             throw new IllegalStateException("This instance has been closed");
@@ -636,6 +645,12 @@ public abstract class AbstractBsonReader implements BsonReader {
     public void readUndefined(final String name) {
         verifyName(name);
         readUndefined();
+    }
+
+    @Override
+    public void readPlaceholder(final String name) {
+        verifyName(name);
+        readPlaceholder();
     }
 
     /**

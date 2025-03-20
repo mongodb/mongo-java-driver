@@ -665,4 +665,13 @@ public class JsonWriterTest {
         String expected = "{\"dbPointer\": {\"$ref\": \"my.test\", \"$id\": {\"$oid\": \"4d0ce088e447ad08b4721a37\"}}}";
         assertEquals(expected, stringWriter.toString());
     }
+
+    @Test
+    public void testPlaceholder() {
+        writer.writeStartDocument();
+        writer.writePlaceholder("p");
+        writer.writeEndDocument();
+        String expected = "{\"p\": ?}";
+        assertEquals(expected, stringWriter.toString());
+    }
 }

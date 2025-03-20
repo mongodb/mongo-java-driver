@@ -186,6 +186,11 @@ public class BsonDocumentReader extends AbstractBsonReader {
     }
 
     @Override
+    protected BsonPlaceholder doReadPlaceholder() {
+        return currentValue.asPlaceholder();
+    }
+
+    @Override
     protected void doSkipName() {
     }
 

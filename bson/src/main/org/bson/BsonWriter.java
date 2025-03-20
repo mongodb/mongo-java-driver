@@ -351,6 +351,24 @@ public interface BsonWriter {
     void writeUndefined(String name);
 
     /**
+     * Writes a placeholder element to the writer.
+     * <p>
+     *     Not all implememntations support placeholders
+     * </p>
+     */
+    void writePlaceholder();
+
+    /**
+     * Writes a placeholder element to the writer.
+     * <p>
+     *     Not all implememntations support placeholders
+     * </p>
+     *
+     * @param name The name of the element.
+     */
+    void writePlaceholder(String name);
+
+    /**
      * Reads a single document from a BsonReader and writes it to this.
      *
      * @param reader The source.

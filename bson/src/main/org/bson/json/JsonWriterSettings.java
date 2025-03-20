@@ -20,6 +20,7 @@ import org.bson.BsonBinary;
 import org.bson.BsonMaxKey;
 import org.bson.BsonMinKey;
 import org.bson.BsonNull;
+import org.bson.BsonPlaceholder;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
 import org.bson.BsonUndefined;
@@ -77,6 +78,7 @@ public final class JsonWriterSettings extends BsonWriterSettings {
     private static final LegacyExtendedJsonRegularExpressionConverter LEGACY_EXTENDED_JSON_REGULAR_EXPRESSION_CONVERTER =
             new LegacyExtendedJsonRegularExpressionConverter();
     private static final ShellRegularExpressionConverter SHELL_REGULAR_EXPRESSION_CONVERTER = new ShellRegularExpressionConverter();
+    private static final DefaultPlaceholderConverter DEFAULT_PLACEHOLDER_CONVERTER = new DefaultPlaceholderConverter();
 
     private final boolean indent;
     private final String newLineCharacters;
@@ -100,6 +102,8 @@ public final class JsonWriterSettings extends BsonWriterSettings {
     private final Converter<BsonMinKey> minKeyConverter;
     private final Converter<BsonMaxKey> maxKeyConverter;
     private final Converter<String> javaScriptConverter;
+    private final Converter<BsonPlaceholder> placeholderConverter;
+
 
     /**
      * Create a builder for JsonWriterSettings, which are immutable.
@@ -259,6 +263,12 @@ public final class JsonWriterSettings extends BsonWriterSettings {
             regularExpressionConverter = LEGACY_EXTENDED_JSON_REGULAR_EXPRESSION_CONVERTER;
         } else {
             regularExpressionConverter = SHELL_REGULAR_EXPRESSION_CONVERTER;
+        }
+
+        if (builder.placeholderConverter != null) {
+            placeholderConverter = builder.placeholderConverter;
+        } else {
+            placeholderConverter = DEFAULT_PLACEHOLDER_CONVERTER;
         }
     }
 
@@ -480,6 +490,17 @@ public final class JsonWriterSettings extends BsonWriterSettings {
     }
 
     /**
+     * A converter from placeholder values to JSON.
+     *
+     * @return this
+     * @since ***
+     */
+    public Converter<BsonPlaceholder> getPlaceholderConverter() {
+        return placeholderConverter;
+    }
+
+
+    /**
      * A builder for JsonWriterSettings
      *
      * @since 3.5
@@ -507,6 +528,7 @@ public final class JsonWriterSettings extends BsonWriterSettings {
         private Converter<BsonMinKey> minKeyConverter;
         private Converter<BsonMaxKey> maxKeyConverter;
         private Converter<String> javaScriptConverter;
+        private Converter<BsonPlaceholder> placeholderConverter;
 
         /**
          * Build a JsonWriterSettings instance.
@@ -761,6 +783,17 @@ public final class JsonWriterSettings extends BsonWriterSettings {
          * @return this
          */
         public Builder javaScriptConverter(final Converter<String> javaScriptConverter) {
+            this.javaScriptConverter = javaScriptConverter;
+            return this;
+        }
+
+        /**
+         * Sets the converter from placeholder values to JSON.
+         *
+         * @param placeholderConverter the converter
+         * @return this
+         */
+        public Builder placeholderConverter(final Converter<String> placeholderConverter) {
             this.javaScriptConverter = javaScriptConverter;
             return this;
         }

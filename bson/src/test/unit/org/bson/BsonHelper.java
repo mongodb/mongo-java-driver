@@ -56,6 +56,7 @@ public final class BsonHelper {
                 new BsonSymbol("ruby stuff"),
                 new BsonTimestamp(0x12345678, 5),
                 new BsonUndefined(),
+                new BsonPlaceholder(),
                 new BsonBinary((byte) 80, new byte[]{5, 4, 3, 2, 1}),
                 new BsonArray(asList(
                         new BsonInt32(1),

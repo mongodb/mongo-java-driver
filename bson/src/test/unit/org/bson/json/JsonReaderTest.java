@@ -1270,6 +1270,17 @@ public class JsonReaderTest {
     }
 
     @Test
+    public void testPlaceholder() {
+        String json = "?";
+        testStringAndStream(json, bsonReader -> {
+            assertEquals(BsonType.PLACEHOLDER, bsonReader.readBsonType());
+            bsonReader.readPlaceholder();
+            assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+            return null;
+        });
+    }
+
+    @Test
     public void testMultipleMarks() {
         String json = "{a : { b : 1 }}";
         testStringAndStream(json, bsonReader -> {
