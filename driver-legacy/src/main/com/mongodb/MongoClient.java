@@ -21,6 +21,7 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.internal.Clusters;
 import com.mongodb.client.internal.MongoClientImpl;
 import com.mongodb.client.internal.OperationExecutor;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -37,6 +38,7 @@ import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.ServerSessionPool;
@@ -63,8 +65,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
 import static com.mongodb.internal.connection.ServerAddressHelper.createServerAddress;
+import static com.mongodb.internal.connection.ServerAddressHelper.getInetAddressResolver;
+import static com.mongodb.internal.connection.StreamFactoryHelper.getSyncStreamFactoryFactory;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -244,8 +249,20 @@ public class MongoClient implements Closeable {
     private MongoClient(final MongoClientSettings settings,
                        @Nullable final MongoClientOptions options,
                        @Nullable final MongoDriverInformation mongoDriverInformation) {
+        notNull("settings", settings);
+
         MongoDriverInformation wrappedMongoDriverInformation = wrapMongoDriverInformation(mongoDriverInformation);
-        delegate = new MongoClientImpl(settings, wrappedMongoDriverInformation);
+
+        StreamFactoryFactory syncStreamFactoryFactory = getSyncStreamFactoryFactory(
+                settings.getTransportSettings(),
+                getInetAddressResolver(settings));
+
+        Cluster cluster = Clusters.createCluster(
+                settings,
+                wrappedMongoDriverInformation,
+                syncStreamFactoryFactory);
+
+        delegate = new MongoClientImpl(cluster, settings, wrappedMongoDriverInformation, syncStreamFactoryFactory);
         this.options = options != null ? options : MongoClientOptions.builder(settings).build();
         cursorCleaningService = this.options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
         this.closed = new AtomicBoolean();
