@@ -136,6 +136,8 @@ public interface ByteBuf  {
      */
     byte[] array();
 
+    boolean hasArray();
+
     /**
      * Returns this buffer's limit.
      *

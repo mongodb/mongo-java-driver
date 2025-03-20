@@ -101,6 +101,11 @@ public final class NettyByteBuf implements ByteBuf {
     }
 
     @Override
+    public boolean hasArray() {
+        return proxied.hasArray();
+    }
+
+    @Override
     public int limit() {
         if (isWriting) {
             return proxied.writerIndex() + remaining();
