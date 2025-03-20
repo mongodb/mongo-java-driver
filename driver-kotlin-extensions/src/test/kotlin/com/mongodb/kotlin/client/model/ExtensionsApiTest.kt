@@ -16,8 +16,8 @@
 package com.mongodb.kotlin.client.model
 
 import io.github.classgraph.ClassGraph
+import kotlin.test.Test
 import kotlin.test.assertTrue
-import org.junit.jupiter.api.Test
 
 class ExtensionsApiTest {
 

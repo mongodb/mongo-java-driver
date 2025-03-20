@@ -17,11 +17,11 @@
 package com.mongodb.kotlin.client.model
 
 import java.util.Locale
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.serialization.SerialName
 import org.bson.codecs.pojo.annotations.BsonId
 import org.bson.codecs.pojo.annotations.BsonProperty
-import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 
 class KPropertiesTest {

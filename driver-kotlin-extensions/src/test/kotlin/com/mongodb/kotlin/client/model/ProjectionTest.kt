@@ -37,10 +37,10 @@ import com.mongodb.kotlin.client.model.Projections.metaVectorSearchScore
 import com.mongodb.kotlin.client.model.Projections.projection
 import com.mongodb.kotlin.client.model.Projections.projectionWith
 import com.mongodb.kotlin.client.model.Projections.slice
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import org.bson.BsonDocument
 import org.bson.conversions.Bson
-import org.junit.Test
 
 class ProjectionTest {
 

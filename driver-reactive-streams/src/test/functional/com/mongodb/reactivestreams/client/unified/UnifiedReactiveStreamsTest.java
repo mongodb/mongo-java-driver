@@ -34,8 +34,6 @@ import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoDatabase;
 import org.junit.jupiter.params.provider.Arguments;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Collection;
 
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier;
@@ -102,7 +100,7 @@ public abstract class UnifiedReactiveStreamsTest extends UnifiedTest {
     }
 
     @NonNull
-    protected static Collection<Arguments> getTestData(final String directory) throws URISyntaxException, IOException {
+    protected static Collection<Arguments> getTestData(final String directory) {
         return getTestData(directory, true);
     }
 }

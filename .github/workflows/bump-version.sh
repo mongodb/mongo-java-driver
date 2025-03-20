@@ -9,5 +9,5 @@ fi
 FROM_VERSION=$1
 TO_VERSION=$2
 
-sed --in-place "s/version = '${FROM_VERSION}'/version = '${TO_VERSION}'/g" build.gradle
-git commit -m "Version: bump ${TO_VERSION}" build.gradle
+sed --in-place "s/version=${FROM_VERSION}/version=${TO_VERSION}/g" gradle.properties
+git commit -m "Version: bump ${TO_VERSION}" gradle.properties

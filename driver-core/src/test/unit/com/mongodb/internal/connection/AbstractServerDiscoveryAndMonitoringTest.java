@@ -35,9 +35,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import util.JsonPoweredTestHelper;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -60,11 +58,11 @@ public class AbstractServerDiscoveryAndMonitoringTest {
         this.definition = definition;
     }
 
-    public static Collection<Object[]> data(final String root) throws URISyntaxException, IOException {
+    public static Collection<Object[]> data(final String resourcePath) {
         List<Object[]> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles(root)) {
-            BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
-            data.add(new Object[]{file.getName() + ": " + testDocument.getString("description").getValue(), testDocument});
+        for (BsonDocument testDocument : JsonPoweredTestHelper.getTestDocuments(resourcePath)) {
+            data.add(new Object[]{testDocument.getString("fileName").getValue()
+                    + ": " + testDocument.getString("description").getValue(), testDocument});
         }
         return data;
     }
