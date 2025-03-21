@@ -27,12 +27,7 @@ public class GridFSDownloadBenchmark extends AbstractGridFSBenchmark {
     private ObjectId fileId;
 
     public GridFSDownloadBenchmark(final String resourcePath) {
-        super(resourcePath);
-    }
-
-    @Override
-    public String getName() {
-        return "GridFS download";
+        super("GridFS download", resourcePath);
     }
 
     @Override

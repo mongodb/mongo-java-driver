@@ -35,16 +35,16 @@ import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class BenchmarkSuite {
 
-    private static final int NUM_WARMUP_ITERATIONS = 1;
-    private static final int NUM_ITERATIONS = 100;
-    private static final int MIN_TIME_SECONDS = 60;
-    private static final int MAX_TIME_SECONDS = 300;
+    protected static final int NUM_WARMUP_ITERATIONS = 1;
+    protected static final int NUM_ITERATIONS = 100;
+    protected static final int MIN_TIME_SECONDS = 60;
+    protected static final int MAX_TIME_SECONDS = 300;
 
-    private static final Class DOCUMENT_CLASS = Document.class;
-    private static final IdRemover<Document> ID_REMOVER = document -> document.remove("_id");
-    private static final Codec<Document> DOCUMENT_CODEC = getDefaultCodecRegistry().get(DOCUMENT_CLASS);
+    protected static final Class DOCUMENT_CLASS = Document.class;
+    protected static final IdRemover<Document> ID_REMOVER = document -> document.remove("_id");
+    protected static final Codec<Document> DOCUMENT_CODEC = getDefaultCodecRegistry().get(DOCUMENT_CLASS);
 
-    private static final List<BenchmarkResultWriter> WRITERS = Arrays.asList(
+    protected static final List<BenchmarkResultWriter> WRITERS = Arrays.asList(
             new EvergreenBenchmarkResultWriter());
 
     public static void main(String[] args) throws Exception {
@@ -101,7 +101,7 @@ public class BenchmarkSuite {
         }
     }
 
-    private static void runBenchmark(final Benchmark benchmark) throws Exception {
+    protected static void runBenchmark(final Benchmark benchmark) throws Exception {
         long startTime = System.currentTimeMillis();
         BenchmarkResult benchmarkResult = new BenchmarkRunner(benchmark, NUM_WARMUP_ITERATIONS, NUM_ITERATIONS, MIN_TIME_SECONDS,
                 MAX_TIME_SECONDS).run();

@@ -17,6 +17,7 @@
 
 package com.mongodb.benchmark.benchmarks;
 
+import com.mongodb.MongoClientSettings;
 import com.mongodb.benchmark.framework.Benchmark;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
@@ -33,12 +34,20 @@ public abstract class AbstractMongoBenchmark extends Benchmark {
 
     protected static final String DATABASE_NAME = "perftest";
     protected static final String COLLECTION_NAME = "corpus";
+    protected MongoClientSettings mongoClientSettings;
 
+    public AbstractMongoBenchmark(final String name) {
+        super(name);
+    }
 
     protected MongoClient client;
 
     public void setUp() throws Exception {
-       client = MongoClients.create();
+        if (mongoClientSettings != null) {
+            client = MongoClients.create(mongoClientSettings);
+        } else {
+            client = MongoClients.create();
+        }
     }
 
     @Override
@@ -46,4 +55,8 @@ public abstract class AbstractMongoBenchmark extends Benchmark {
         client.close();
     }
 
+    public AbstractMongoBenchmark applyMongoClientSettings(final MongoClientSettings mongoClientSettings) {
+        this.mongoClientSettings = mongoClientSettings;
+        return this;
+    }
 }

@@ -29,7 +29,6 @@ public abstract class AbstractInsertBenchmark<T> extends AbstractMongoBenchmark 
 
     protected MongoCollection<T> collection;
 
-    private final String name;
     private final String resourcePath;
     private final Class<T> clazz;
     private byte[] bytes;
@@ -37,7 +36,7 @@ public abstract class AbstractInsertBenchmark<T> extends AbstractMongoBenchmark 
     protected T document;
 
     protected AbstractInsertBenchmark(final String name, final String resourcePath, final Class<T> clazz) {
-        this.name = name;
+        super(name);
         this.resourcePath = resourcePath;
         this.clazz = clazz;
     }
@@ -63,11 +62,6 @@ public abstract class AbstractInsertBenchmark<T> extends AbstractMongoBenchmark 
     public void before() throws Exception {
         super.before();
         collection.drop();
-    }
-
-    @Override
-    public String getName() {
-        return name;
     }
 
     protected T createDocument() {

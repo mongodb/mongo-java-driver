@@ -27,7 +27,8 @@ public abstract class AbstractGridFSBenchmark extends AbstractMongoBenchmark {
     protected GridFSBucket bucket;
     protected byte[] fileBytes;
 
-    public AbstractGridFSBenchmark(final String resourcePath) {
+    public AbstractGridFSBenchmark(final String name, final String resourcePath) {
+        super(name);
         this.resourcePath = resourcePath;
     }
 

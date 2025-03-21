@@ -58,9 +58,8 @@ public class MultiFileExportBenchmark extends AbstractMongoBenchmark {
     private ExecutorService documentReadingService;
     private File tempDirectory;
 
-    @Override
-    public String getName() {
-        return "LDJSON multi-file export";
+    public MultiFileExportBenchmark() {
+        super("LDJSON multi-file export");
     }
 
     @Override
