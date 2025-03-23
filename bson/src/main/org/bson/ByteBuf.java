@@ -136,7 +136,25 @@ public interface ByteBuf  {
      */
     byte[] array();
 
+    /**
+     * <p>States whether this buffer is backed by an accessible byte array.</p>
+     *
+     * <p>If this method returns {@code true} then the {@link #array()} and {@link #arrayOffset()} methods may safely be invoked.</p>
+     *
+     * @return {@code true} if, and only if, this buffer is backed by an array and is not read-only
+     * @since 5.5
+     */
     boolean hasArray();
+
+    /**
+     * Returns the offset of the first byte within the backing byte array of
+     * this buffer.
+     *
+     * @throws java.nio.ReadOnlyBufferException If this buffer is backed by an array but is read-only
+     * @throws UnsupportedOperationException if this buffer is not backed by an accessible array
+     * @since 5.5
+     */
+    int arrayOffset();
 
     /**
      * Returns this buffer's limit.

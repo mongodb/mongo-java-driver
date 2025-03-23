@@ -16,14 +16,21 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.assertions.Assertions;
+import com.google.common.primitives.Ints;
+import com.mongodb.internal.connection.netty.NettyByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
 import org.bson.BsonSerializationException;
 import org.bson.ByteBuf;
+import org.bson.ByteBufNIO;
+import org.bson.io.OutputBuffer;
 import org.bson.types.ObjectId;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.ByteArrayOutputStream;
@@ -31,20 +38,77 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static com.mongodb.internal.connection.ByteBufferBsonOutput.INITIAL_BUFFER_SIZE;
 import static com.mongodb.internal.connection.ByteBufferBsonOutput.MAX_BUFFER_SIZE;
+import static java.lang.Character.MAX_CODE_POINT;
+import static java.lang.Character.MAX_HIGH_SURROGATE;
+import static java.lang.Character.MAX_LOW_SURROGATE;
+import static java.lang.Character.MIN_HIGH_SURROGATE;
+import static java.lang.Character.MIN_LOW_SURROGATE;
+import static java.lang.Integer.reverseBytes;
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.copyOfRange;
+import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.IntStream.range;
+import static java.util.stream.IntStream.rangeClosed;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 final class ByteBufferBsonOutputTest {
+
+    private static final List<Integer> ALL_CODE_POINTS_EXCLUDING_SURROGATES = Stream.concat(
+                    range(1, MIN_HIGH_SURROGATE).boxed(),
+                    rangeClosed(MAX_LOW_SURROGATE + 1, MAX_CODE_POINT).boxed())
+            .collect(toList());
+
+    static Stream<BufferProvider> bufferProviders() {
+        return Stream.of(
+                size -> new NettyByteBuf(PooledByteBufAllocator.DEFAULT.directBuffer(size)),
+                size -> new NettyByteBuf(PooledByteBufAllocator.DEFAULT.heapBuffer(size)),
+                new PowerOfTwoBufferPool(),
+                size -> new ByteBufNIO(ByteBuffer.wrap(new byte[size + 5], 2, size).slice()),  //different array offsets
+                size -> new ByteBufNIO(ByteBuffer.wrap(new byte[size + 4], 3, size).slice()),  //different array offsets
+                size -> new ByteBufNIO(ByteBuffer.allocate(size)) {
+                    @Override
+                    public boolean hasArray() {
+                        return false;
+                    }
+
+                    @Override
+                    public byte[] array() {
+                        return Assertions.fail("array() is called, when hasArray() returns false");
+                    }
+
+                    @Override
+                    public int arrayOffset() {
+                        return Assertions.fail("arrayOffset() is called, when hasArray() returns false");
+                    }
+                }
+        );
+    }
+
+    public static Stream<Arguments> bufferProvidersWithBranches() {
+        List<Arguments> arguments = new ArrayList<>();
+        List<BufferProvider> collect = bufferProviders().collect(toList());
+        for (BufferProvider bufferProvider : collect) {
+            arguments.add(Arguments.of(true, bufferProvider));
+            arguments.add(Arguments.of(false, bufferProvider));
+        }
+        return arguments.stream();
+    }
+
+
     @DisplayName("constructor should throw if buffer provider is null")
     @Test
     @SuppressWarnings("try")
@@ -82,7 +146,7 @@ final class ByteBufferBsonOutputTest {
                     break;
                 }
                 default: {
-                    throw Assertions.fail(branchState);
+                    throw com.mongodb.assertions.Assertions.fail(branchState);
                 }
             }
             assertEquals(0, out.getPosition());
@@ -92,9 +156,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should write a byte")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteByte(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProvidersWithBranches")
+    void shouldWriteByte(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             byte v = 11;
             if (useBranch) {
                 try (ByteBufferBsonOutput.Branch branch = out.branch()) {
@@ -111,9 +175,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should write a bytes")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteBytes(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProvidersWithBranches")
+    void shouldWriteBytes(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             byte[] v = {1, 2, 3, 4};
             if (useBranch) {
                 try (ByteBufferBsonOutput.Branch branch = out.branch()) {
@@ -130,9 +194,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should write bytes from offset until length")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteBytesFromOffsetUntilLength(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProvidersWithBranches")
+    void shouldWriteBytesFromOffsetUntilLength(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             byte[] v = {0, 1, 2, 3, 4, 5};
             if (useBranch) {
                 try (ByteBufferBsonOutput.Branch branch = out.branch()) {
@@ -149,9 +213,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should write a little endian Int32")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteLittleEndianInt32(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProvidersWithBranches")
+    void shouldWriteLittleEndianInt32(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             int v = 0x1020304;
             if (useBranch) {
                 try (ByteBufferBsonOutput.Branch branch = out.branch()) {
@@ -168,9 +232,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should write a little endian Int64")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteLittleEndianInt64(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProvidersWithBranches")
+    void shouldWriteLittleEndianInt64(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             long v = 0x102030405060708L;
             if (useBranch) {
                 try (ByteBufferBsonOutput.Branch branch = out.branch()) {
@@ -187,9 +251,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should write a double")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteDouble(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProvidersWithBranches")
+    void shouldWriteDouble(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             double v = Double.longBitsToDouble(0x102030405060708L);
             if (useBranch) {
                 try (ByteBufferBsonOutput.Branch branch = out.branch()) {
@@ -206,9 +270,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should write an ObjectId")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteObjectId(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProvidersWithBranches")
+    void shouldWriteObjectId(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             byte[] objectIdAsByteArray = {12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
             ObjectId v = new ObjectId(objectIdAsByteArray);
             if (useBranch) {
@@ -226,9 +290,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should write an empty string")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteEmptyString(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProvidersWithBranches")
+    void shouldWriteEmptyString(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             String v = "";
             if (useBranch) {
                 try (ByteBufferBsonOutput.Branch branch = out.branch()) {
@@ -245,9 +309,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should write an ASCII string")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteAsciiString(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProvidersWithBranches")
+    void shouldWriteAsciiString(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             String v = "Java";
             if (useBranch) {
                 try (ByteBufferBsonOutput.Branch branch = out.branch()) {
@@ -264,9 +328,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should write a UTF-8 string")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteUtf8String(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProvidersWithBranches")
+    void shouldWriteUtf8String(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             String v = "\u0900";
             if (useBranch) {
                 try (ByteBufferBsonOutput.Branch branch = out.branch()) {
@@ -283,9 +347,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should write an empty CString")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteEmptyCString(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProvidersWithBranches")
+    void shouldWriteEmptyCString(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             String v = "";
             if (useBranch) {
                 try (ByteBufferBsonOutput.Branch branch = out.branch()) {
@@ -302,9 +366,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should write an ASCII CString")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteAsciiCString(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProvidersWithBranches")
+    void shouldWriteAsciiCString(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             String v = "Java";
             if (useBranch) {
                 try (ByteBufferBsonOutput.Branch branch = out.branch()) {
@@ -321,9 +385,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should write a UTF-8 CString")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteUtf8CString(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProvidersWithBranches")
+    void shouldWriteUtf8CString(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             String v = "\u0900";
             if (useBranch) {
                 try (ByteBufferBsonOutput.Branch branch = out.branch()) {
@@ -340,9 +404,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should get byte buffers as little endian")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldGetByteBuffersAsLittleEndian(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProvidersWithBranches")
+    void shouldGetByteBuffersAsLittleEndian(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             byte[] v = {1, 0, 0, 0};
             if (useBranch) {
                 try (ByteBufferBsonOutput.Branch branch = out.branch()) {
@@ -357,9 +421,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("null character in CString should throw SerializationException")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void nullCharacterInCStringShouldThrowSerializationException(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProvidersWithBranches")
+    void nullCharacterInCStringShouldThrowSerializationException(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             String v = "hell\u0000world";
             if (useBranch) {
                 try (ByteBufferBsonOutput.Branch branch = out.branch()) {
@@ -373,9 +437,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("null character in String should not throw SerializationException")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void nullCharacterInStringShouldNotThrowSerializationException(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProvidersWithBranches")
+    void nullCharacterInStringShouldNotThrowSerializationException(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             String v = "h\u0000i";
             if (useBranch) {
                 try (ByteBufferBsonOutput.Branch branch = out.branch()) {
@@ -388,11 +452,25 @@ final class ByteBufferBsonOutputTest {
         }
     }
 
+
+    public static Stream<Arguments> writeInt32AtPositionShouldThrowWithInvalidPosition() {
+        return bufferProvidersWithBranches().flatMap(arguments -> {
+            Object[] args = arguments.get();
+            boolean useBranch = (boolean) args[0];
+            BufferProvider bufferProvider = (BufferProvider) args[1];
+            return Stream.of(
+                    Arguments.of(useBranch, -1, bufferProvider),
+                    Arguments.of(useBranch, 1, bufferProvider)
+            );
+        });
+    }
+
     @DisplayName("write Int32 at position should throw with invalid position")
     @ParameterizedTest
-    @CsvSource({"false, -1", "false, 1", "true, -1", "true, 1"})
-    void writeInt32AtPositionShouldThrowWithInvalidPosition(final boolean useBranch, final int position) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource
+    void writeInt32AtPositionShouldThrowWithInvalidPosition(final boolean useBranch, final int position,
+                                                            final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             byte[] v = {1, 2, 3, 4};
             int v2 = 0x1020304;
             if (useBranch) {
@@ -409,9 +487,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should write Int32 at position")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldWriteInt32AtPosition(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProvidersWithBranches")
+    void shouldWriteInt32AtPosition(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             Consumer<ByteBufferBsonOutput> lastAssertions = effectiveOut -> {
                 assertArrayEquals(new byte[] {4, 3, 2, 1}, copyOfRange(effectiveOut.toByteArray(), 1023, 1027), "the position is not in the first buffer");
                 assertEquals(1032, effectiveOut.getPosition());
@@ -442,9 +520,22 @@ final class ByteBufferBsonOutputTest {
         }
     }
 
+    public static Stream<Arguments> truncateShouldThrowWithInvalidPosition() {
+        return bufferProvidersWithBranches().flatMap(arguments -> {
+                    Object[] args = arguments.get();
+                    boolean useBranch = (boolean) args[0];
+                    BufferProvider bufferProvider = (BufferProvider) args[1];
+                    return Stream.of(
+                            Arguments.of(useBranch, -1, bufferProvider),
+                            Arguments.of(useBranch, 5, bufferProvider)
+                    );
+                }
+        );
+    }
+
     @DisplayName("truncate should throw with invalid position")
     @ParameterizedTest
-    @CsvSource({"false, -1", "false, 5", "true, -1", "true, 5"})
+    @MethodSource
     void truncateShouldThrowWithInvalidPosition(final boolean useBranch, final int position) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
             byte[] v = {1, 2, 3, 4};
@@ -462,9 +553,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should truncate to position")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldTruncateToPosition(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProvidersWithBranches")
+    void shouldTruncateToPosition(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             byte[] v = {1, 2, 3, 4};
             byte[] v2 = new byte[1024];
             if (useBranch) {
@@ -486,9 +577,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should grow to maximum allowed size of byte buffer")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldGrowToMaximumAllowedSizeOfByteBuffer(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProvidersWithBranches")
+    void shouldGrowToMaximumAllowedSizeOfByteBuffer(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             byte[] v = new byte[0x2000000];
             ThreadLocalRandom.current().nextBytes(v);
             Consumer<ByteBufferBsonOutput> assertByteBuffers = effectiveOut -> assertEquals(
@@ -520,9 +611,9 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should pipe")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void shouldPipe(final boolean useBranch) throws IOException {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    @MethodSource("bufferProvidersWithBranches")
+    void shouldPipe(final boolean useBranch, final BufferProvider bufferProvider) throws IOException {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             byte[] v = new byte[1027];
             BiConsumer<ByteBufferBsonOutput, ByteArrayOutputStream> assertions = (effectiveOut, baos) -> {
                 assertArrayEquals(v, baos.toByteArray());
@@ -556,10 +647,10 @@ final class ByteBufferBsonOutputTest {
 
     @DisplayName("should close")
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
+    @MethodSource("bufferProvidersWithBranches")
     @SuppressWarnings("try")
-    void shouldClose(final boolean useBranch) {
-        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+    void shouldClose(final boolean useBranch, final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             byte[] v = new byte[1027];
             if (useBranch) {
                 try (ByteBufferBsonOutput.Branch branch = out.branch()) {
@@ -621,5 +712,464 @@ final class ByteBufferBsonOutputTest {
             });
             assertEquals(expected.toString(), StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(out.toByteArray())).toString());
         }
+    }
+
+    /*
+      Tests that all Unicode code points are correctly encoded in UTF-8 when:
+      - The buffer has just enough capacity for the UTF-8 string plus a null terminator.
+      - The encoded string may span multiple buffers.
+
+      To test edge conditions, the test writes a UTF-8 CString/String at various starting offsets. This simulates scenarios where data
+      doesn't start at index 0, forcing the string to span multiple buffers.
+
+      For example, assume the encoded string requires N bytes and null terminator:
+      1. startingOffset == 0:
+         [ S S S ... S NULL ]
+
+      2. startingOffset == 2:
+         ("X" represents dummy bytes written before the string.)
+         Buffer 1: [ X X | S S S ... ] (Buffer 1 runs out of space, the remaining bytes (including the NULL) are written in Buffer 2.)
+         Buffer 2: [ S NULL ...]
+
+      3. startingOffset == bufferAllocationSize:
+         Buffer 1: [ X X X ... X ]
+         Buffer 2: [ S S S ... S NULL ]
+     */
+    @Nested
+    @DisplayName("UTF-8 String and CString Buffer Boundary Tests")
+    class Utf8StringTests {
+
+        @DisplayName("should write UTF-8 CString across buffers")
+        @ParameterizedTest
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void shouldWriteCStringAcrossBuffersUTF8(final BufferProvider bufferProvider) throws IOException {
+            for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
+                //given
+                String str = new String(Character.toChars(codePoint)) + "a";
+                byte[] expectedStringEncoding = str.getBytes(StandardCharsets.UTF_8);
+                int bufferAllocationSize = expectedStringEncoding.length + "\u0000".length();
+                testWriteCStringAcrossBuffers(bufferProvider, codePoint, bufferAllocationSize, str, expectedStringEncoding);
+            }
+        }
+
+        @DisplayName("should write UTF-8 CString across buffers with a branch")
+        @ParameterizedTest
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void shouldWriteCStringAcrossBuffersUTF8WithBranch(final BufferProvider bufferProvider) throws IOException {
+            for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
+                //given
+                String str = new String(Character.toChars(codePoint)) + "a";
+                int bufferAllocationSize = str.getBytes(StandardCharsets.UTF_8).length + "\u0000".length();
+                byte[] expectedEncoding = str.getBytes(StandardCharsets.UTF_8);
+
+                testWriteCStringAcrossBufferWithBranch(bufferProvider, codePoint, bufferAllocationSize, str, expectedEncoding);
+            }
+        }
+
+        @DisplayName("should write UTF-8 String across buffers")
+        @ParameterizedTest
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void shouldWriteStringAcrossBuffersUTF8(final BufferProvider bufferProvider) throws IOException {
+            for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
+                // given
+                String str = new String(Character.toChars(codePoint)) + "a";
+                //4 bytes for the length prefix, bytes for encoded String, and 1 byte for the null terminator
+                int bufferAllocationSize = Integer.BYTES + str.getBytes(StandardCharsets.UTF_8).length + "\u0000".length();
+                byte[] expectedEncoding = str.getBytes(StandardCharsets.UTF_8);
+                testWriteStringAcrossBuffers(bufferProvider, codePoint, bufferAllocationSize, str, expectedEncoding);
+            }
+        }
+
+        @DisplayName("should write UTF-8 String across buffers with branch")
+        @ParameterizedTest
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void shouldWriteStringAcrossBuffersUTF8WithBranch(final BufferProvider bufferProvider) throws IOException {
+            for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
+                String stringToEncode = new String(Character.toChars(codePoint)) + "a";
+                //4 bytes for the length prefix, bytes for encoded String, and 1 byte for the null terminator
+                int bufferAllocationSize = Integer.BYTES + stringToEncode.getBytes(StandardCharsets.UTF_8).length + "\u0000".length();
+                byte[] expectedEncoding = stringToEncode.getBytes(StandardCharsets.UTF_8);
+                testWriteStringAcrossBuffersWithBranch(
+                        bufferProvider,
+                        bufferAllocationSize,
+                        stringToEncode,
+                        codePoint,
+                        expectedEncoding);
+            }
+        }
+
+        /*
+           Tests that malformed surrogate pairs are encoded as-is without substituting any code point.
+           This known bug and corresponding test remain for backward compatibility.
+           Ticket: JAVA-5575
+         */
+        @DisplayName("should write malformed surrogate CString across buffers")
+        @ParameterizedTest
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void shouldWriteCStringWithMalformedSurrogates(final BufferProvider bufferProvider) throws IOException {
+            Stream<Integer> surrogates = Stream.concat(
+                    range(MIN_LOW_SURROGATE, Character.MAX_LOW_SURROGATE).boxed(),
+                    range(Character.MIN_HIGH_SURROGATE, MAX_HIGH_SURROGATE).boxed());
+
+            for (Integer surrogateCodePoint : surrogates.collect(toList())) {
+                byte[] expectedEncoding = new byte[]{
+                        (byte) (0xE0 | ((surrogateCodePoint >> 12) & 0x0F)),
+                        (byte) (0x80 | ((surrogateCodePoint >> 6) & 0x3F)),
+                        (byte) (0x80 | (surrogateCodePoint & 0x3F))
+                };
+                String str = new String(Character.toChars(surrogateCodePoint));
+                int bufferAllocationSize = expectedEncoding.length + "\u0000".length();
+
+                testWriteCStringAcrossBuffers(
+                        bufferProvider,
+                        surrogateCodePoint,
+                        bufferAllocationSize,
+                        str,
+                        expectedEncoding);
+            }
+        }
+
+        /*
+           Tests that malformed surrogate pairs are encoded as-is without substituting any code point.
+           This known bug and corresponding test remain for backward compatibility.
+           Ticket: JAVA-5575
+         */
+        @DisplayName("should write malformed surrogate CString across buffers with branch")
+        @ParameterizedTest
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void shouldWriteCStringWithMalformedSurrogatesWithBranch(final BufferProvider bufferProvider) throws IOException {
+            Stream<Integer> surrogates = Stream.concat(
+                    range(MIN_LOW_SURROGATE, Character.MAX_LOW_SURROGATE).boxed(),
+                    range(Character.MIN_HIGH_SURROGATE, MAX_HIGH_SURROGATE).boxed());
+
+            for (Integer surrogateCodePoint : surrogates.collect(toList())) {
+                byte[] expectedEncoding = new byte[]{
+                        (byte) (0xE0 | ((surrogateCodePoint >> 12) & 0x0F)),
+                        (byte) (0x80 | ((surrogateCodePoint >> 6) & 0x3F)),
+                        (byte) (0x80 | (surrogateCodePoint & 0x3F))
+                };
+                String str = new String(Character.toChars(surrogateCodePoint));
+                int bufferAllocationSize = expectedEncoding.length + "\u0000".length();
+
+                testWriteCStringAcrossBufferWithBranch(
+                        bufferProvider,
+                        surrogateCodePoint,
+                        bufferAllocationSize,
+                        str,
+                        expectedEncoding);
+            }
+        }
+
+        /*
+           Tests that malformed surrogate pairs are encoded as-is without substituting any code point.
+           This known bug and corresponding test remain for backward compatibility.
+           Ticket: JAVA-5575
+         */
+        @DisplayName("should write malformed surrogate String across buffers")
+        @ParameterizedTest
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void shouldWriteStringWithMalformedSurrogates(final BufferProvider bufferProvider) throws IOException {
+            Stream<Integer> surrogates = Stream.concat(
+                    range(MIN_LOW_SURROGATE, Character.MAX_LOW_SURROGATE).boxed(),
+                    range(Character.MIN_HIGH_SURROGATE, MAX_HIGH_SURROGATE).boxed());
+
+            for (Integer surrogateCodePoint : surrogates.collect(toList())) {
+                byte[] expectedEncoding = new byte[]{
+                        (byte) (0xE0 | ((surrogateCodePoint >> 12) & 0x0F)),
+                        (byte) (0x80 | ((surrogateCodePoint >> 6) & 0x3F)),
+                        (byte) (0x80 | (surrogateCodePoint & 0x3F))
+                };
+                String str = new String(Character.toChars(surrogateCodePoint));
+                int bufferAllocationSize = expectedEncoding.length + "\u0000".length();
+
+                testWriteCStringAcrossBufferWithBranch(
+                        bufferProvider,
+                        surrogateCodePoint,
+                        bufferAllocationSize,
+                        str,
+                        expectedEncoding);
+            }
+        }
+
+        /*
+          Tests that malformed surrogate pairs are encoded as-is without substituting any code point.
+          This known bug and corresponding test remain for backward compatibility.
+          Ticket: JAVA-5575
+        */
+        @DisplayName("should write malformed surrogate String across buffers with branch")
+        @ParameterizedTest
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void shouldWriteStringWithMalformedSurrogatesWithBranch(final BufferProvider bufferProvider) throws IOException {
+            Stream<Integer> surrogates = Stream.concat(
+                    range(MIN_LOW_SURROGATE, Character.MAX_LOW_SURROGATE).boxed(),
+                    range(Character.MIN_HIGH_SURROGATE, MAX_HIGH_SURROGATE).boxed());
+
+            for (Integer surrogateCodePoint : surrogates.collect(toList())) {
+                byte[] expectedEncoding = new byte[]{
+                        (byte) (0xE0 | ((surrogateCodePoint >> 12) & 0x0F)),
+                        (byte) (0x80 | ((surrogateCodePoint >> 6) & 0x3F)),
+                        (byte) (0x80 | (surrogateCodePoint & 0x3F))
+                };
+                String stringToEncode = new String(Character.toChars(surrogateCodePoint));
+                int bufferAllocationSize = expectedEncoding.length + "\u0000".length();
+
+                testWriteStringAcrossBuffersWithBranch(
+                        bufferProvider,
+                        bufferAllocationSize,
+                        stringToEncode,
+                        surrogateCodePoint,
+                        expectedEncoding);
+            }
+        }
+
+        private void testWriteCStringAcrossBuffers(final BufferProvider bufferProvider,
+                                                   final Integer surrogateCodePoint,
+                                                   final int bufferAllocationSize,
+                                                   final String str,
+                                                   final byte[] expectedEncoding) throws IOException {
+            for (int startingOffset = 0; startingOffset <= bufferAllocationSize; startingOffset++) {
+                //given
+                List<ByteBuf> actualByteBuffers = emptyList();
+
+                try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(
+                        size -> bufferProvider.getBuffer(bufferAllocationSize))) {
+                    // Write an initial startingOffset of empty bytes to shift the start position
+                    bsonOutput.write(new byte[startingOffset]);
+
+                    // when
+                    bsonOutput.writeCString(str);
+
+                    // then
+                    actualByteBuffers = bsonOutput.getDuplicateByteBuffers();
+                    byte[] actualFlattenedByteBuffersBytes = getBytes(bsonOutput);
+                    assertEncodedResult(surrogateCodePoint,
+                            startingOffset,
+                            expectedEncoding,
+                            bufferAllocationSize,
+                            actualByteBuffers,
+                            actualFlattenedByteBuffersBytes);
+                } finally {
+                    actualByteBuffers.forEach(ByteBuf::release);
+                }
+            }
+        }
+
+        private void testWriteStringAcrossBuffers(final BufferProvider bufferProvider,
+                                                  final Integer codePoint,
+                                                  final int bufferAllocationSize,
+                                                  final String str,
+                                                  final byte[] expectedEncoding) throws IOException {
+            for (int startingOffset = 0; startingOffset <= bufferAllocationSize; startingOffset++) {
+                //given
+                List<ByteBuf> actualByteBuffers = emptyList();
+
+                try (ByteBufferBsonOutput actualBsonOutput = new ByteBufferBsonOutput(
+                        size -> bufferProvider.getBuffer(bufferAllocationSize))) {
+                    // Write an initial startingOffset of empty bytes to shift the start position
+                    actualBsonOutput.write(new byte[startingOffset]);
+
+                    // when
+                    actualBsonOutput.writeString(str);
+
+                    // then
+                    actualByteBuffers = actualBsonOutput.getDuplicateByteBuffers();
+                    byte[] actualFlattenedByteBuffersBytes = getBytes(actualBsonOutput);
+
+                    assertEncodedStringSize(codePoint,
+                            expectedEncoding,
+                            actualFlattenedByteBuffersBytes,
+                            startingOffset);
+                    assertEncodedResult(codePoint,
+                            startingOffset + Integer.BYTES, // +4 bytes for the length prefix
+                            expectedEncoding,
+                            bufferAllocationSize,
+                            actualByteBuffers,
+                            actualFlattenedByteBuffersBytes);
+
+                } finally {
+                    actualByteBuffers.forEach(ByteBuf::release);
+                }
+            }
+        }
+
+        private void testWriteStringAcrossBuffersWithBranch(final BufferProvider bufferProvider,
+                                                            final int bufferAllocationSize,
+                                                            final String stringToEncode,
+                                                            final Integer codePoint,
+                                                            final byte[] expectedEncoding) throws IOException {
+            for (int startingOffset = 0; startingOffset <= bufferAllocationSize; startingOffset++) {
+                //given
+                List<ByteBuf> actualByteBuffers = emptyList();
+                List<ByteBuf> actualBranchByteBuffers = emptyList();
+
+                try (ByteBufferBsonOutput actualBsonOutput = new ByteBufferBsonOutput(
+                        size -> bufferProvider.getBuffer(bufferAllocationSize))) {
+
+                    try (ByteBufferBsonOutput.Branch branchOutput = actualBsonOutput.branch()) {
+                        // Write an initial startingOffset of empty bytes to shift the start position
+                        branchOutput.write(new byte[startingOffset]);
+
+                        // when
+                        branchOutput.writeString(stringToEncode);
+
+                        // then
+                        actualBranchByteBuffers = branchOutput.getDuplicateByteBuffers();
+                        byte[] actualFlattenedByteBuffersBytes = getBytes(branchOutput);
+                        assertEncodedStringSize(
+                                codePoint,
+                                expectedEncoding,
+                                actualFlattenedByteBuffersBytes,
+                                startingOffset);
+                        assertEncodedResult(codePoint,
+                                startingOffset + Integer.BYTES, // +4 bytes for the length prefix
+                                expectedEncoding,
+                                bufferAllocationSize,
+                                actualBranchByteBuffers,
+                                actualFlattenedByteBuffersBytes);
+                    }
+
+                    // then
+                    actualByteBuffers = actualBsonOutput.getDuplicateByteBuffers();
+                    byte[] actualFlattenedByteBuffersBytes = getBytes(actualBsonOutput);
+                    assertEncodedStringSize(
+                            codePoint,
+                            expectedEncoding,
+                            actualFlattenedByteBuffersBytes,
+                            startingOffset);
+                    assertEncodedResult(codePoint,
+                            startingOffset + Integer.BYTES, // +4 bytes for the length prefix
+                            expectedEncoding,
+                            bufferAllocationSize,
+                            actualByteBuffers,
+                            actualFlattenedByteBuffersBytes);
+
+                } finally {
+                    actualByteBuffers.forEach(ByteBuf::release);
+                    actualBranchByteBuffers.forEach(ByteBuf::release);
+                }
+            }
+        }
+
+        // Verify that the resulting byte array (excluding the starting offset and null terminator)
+        // matches the expected UTF-8 encoded length of the test string.
+        private void assertEncodedStringSize(final Integer codePoint,
+                                             final byte[] expectedStringEncoding,
+                                             final byte[] actualFlattenedByteBuffersBytes,
+                                             final int startingOffset) {
+            int littleEndianLength = reverseBytes(expectedStringEncoding.length + "\u0000".length());
+            byte[] expectedEncodedStringSize = Ints.toByteArray(littleEndianLength);
+            byte[] actualEncodedStringSize = copyOfRange(
+                    actualFlattenedByteBuffersBytes,
+                    startingOffset,
+                    startingOffset + Integer.BYTES);
+
+            assertArrayEquals(
+                    expectedEncodedStringSize,
+                    actualEncodedStringSize,
+                    () -> format("Encoded String size before the test String does not match expected size. "
+                                    + "Failed with code point: %s, startingOffset: %s",
+                            codePoint,
+                            startingOffset));
+        }
+
+        private void testWriteCStringAcrossBufferWithBranch(final BufferProvider bufferProvider, final Integer codePoint,
+                                                            final int bufferAllocationSize,
+                                                            final String str, final byte[] expectedEncoding) throws IOException {
+            for (int startingOffset = 0; startingOffset <= bufferAllocationSize; startingOffset++) {
+                List<ByteBuf> actualBranchByteBuffers = emptyList();
+                List<ByteBuf> actualByteBuffers = emptyList();
+
+                try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(
+                        size -> bufferProvider.getBuffer(bufferAllocationSize))) {
+
+                    try (ByteBufferBsonOutput.Branch branchOutput = bsonOutput.branch()) {
+                        // Write an initial startingOffset of empty bytes to shift the start position
+                        branchOutput.write(new byte[startingOffset]);
+
+                        // when
+                        branchOutput.writeCString(str);
+
+                        // then
+                        actualBranchByteBuffers = branchOutput.getDuplicateByteBuffers();
+                        byte[] actualFlattenedByteBuffersBytes = getBytes(branchOutput);
+                        assertEncodedResult(codePoint,
+                                startingOffset,
+                                expectedEncoding,
+                                bufferAllocationSize,
+                                actualBranchByteBuffers,
+                                actualFlattenedByteBuffersBytes);
+                    }
+
+                    // then
+                    actualByteBuffers = bsonOutput.getDuplicateByteBuffers();
+                    byte[] actualFlattenedByteBuffersBytes = getBytes(bsonOutput);
+                    assertEncodedResult(codePoint,
+                            startingOffset,
+                            expectedEncoding,
+                            bufferAllocationSize,
+                            actualByteBuffers,
+                            actualFlattenedByteBuffersBytes);
+                } finally {
+                    actualByteBuffers.forEach(ByteBuf::release);
+                    actualBranchByteBuffers.forEach(ByteBuf::release);
+                }
+            }
+        }
+
+        private void assertEncodedResult(final int codePoint,
+                                         final int startingOffset,
+                                         final byte[] expectedEncoding,
+                                         final int expectedBufferAllocationSize,
+                                         final List<ByteBuf> actualByteBuffers,
+                                         final byte[] actualFlattenedByteBuffersBytes) {
+            int expectedCodeUnitCount = expectedEncoding.length;
+            int byteCount = startingOffset + expectedCodeUnitCount + 1;
+            int expectedBufferCount = (byteCount + expectedBufferAllocationSize - 1) / expectedBufferAllocationSize;
+            int expectedLastBufferPosition = (byteCount % expectedBufferAllocationSize) == 0 ? expectedBufferAllocationSize
+                    : byteCount % expectedBufferAllocationSize;
+
+            assertEquals(
+                    expectedBufferCount,
+                    actualByteBuffers.size(),
+                    () -> format("expectedBufferCount failed with code point: %s, offset: %s",
+                            codePoint,
+                            startingOffset));
+            assertEquals(
+                    expectedLastBufferPosition,
+                    actualByteBuffers.get(actualByteBuffers.size() - 1).position(),
+                    () -> format("expectedLastBufferPosition failed  with code point: %s, offset: %s",
+                            codePoint,
+                            startingOffset));
+
+            for (ByteBuf byteBuf : actualByteBuffers.subList(0, actualByteBuffers.size() - 1)) {
+                assertEquals(
+                        byteBuf.position(),
+                        byteBuf.limit(),
+                        () -> format("All non-final buffers are not full. Code point: %s, offset: %s",
+                                codePoint,
+                                startingOffset));
+            }
+
+            // Verify that the final byte array (excluding the initial offset and null terminator)
+            // matches the expected UTF-8 encoding of the test string
+            assertArrayEquals(
+                    expectedEncoding,
+                    Arrays.copyOfRange(actualFlattenedByteBuffersBytes, startingOffset, actualFlattenedByteBuffersBytes.length - 1),
+                    () -> format("Expected UTF-8 encoding of the test string does not match actual encoding. Code point: %s, offset: %s",
+                            codePoint,
+                            startingOffset));
+            assertEquals(
+                    0,
+                    actualFlattenedByteBuffersBytes[actualFlattenedByteBuffersBytes.length - 1],
+                    () -> format("String does not end with null terminator. Code point: %s, offset: %s",
+                            codePoint,
+                            startingOffset));
+        }
+    }
+
+    private static byte[] getBytes(final OutputBuffer basicOutputBuffer) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(basicOutputBuffer.getSize());
+        basicOutputBuffer.pipe(baos);
+        return baos.toByteArray();
     }
 }

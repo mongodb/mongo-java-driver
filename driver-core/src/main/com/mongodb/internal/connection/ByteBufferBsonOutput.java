@@ -110,9 +110,10 @@ public class ByteBufferBsonOutput extends OutputBuffer {
 
     private ByteBuf getByteBufferAtIndex(final int index) {
         if (bufferList.size() < index + 1) {
-            bufferList.add(bufferProvider.getBuffer(index >= (MAX_SHIFT - INITIAL_SHIFT)
-                                                            ? MAX_BUFFER_SIZE
-                                                            : Math.min(INITIAL_BUFFER_SIZE << index, MAX_BUFFER_SIZE)));
+            ByteBuf buffer = bufferProvider.getBuffer(index >= (MAX_SHIFT - INITIAL_SHIFT)
+                    ? MAX_BUFFER_SIZE
+                    : Math.min(INITIAL_BUFFER_SIZE << index, MAX_BUFFER_SIZE));
+            bufferList.add(buffer);
         }
         return bufferList.get(index);
     }
@@ -155,6 +156,16 @@ public class ByteBufferBsonOutput extends OutputBuffer {
         return buffers;
     }
 
+    public List<ByteBuf> getDuplicateByteBuffers() {
+        ensureOpen();
+
+        List<ByteBuf> buffers = new ArrayList<>(bufferList.size());
+        for (final ByteBuf cur : bufferList) {
+            buffers.add(cur.duplicate().order(ByteOrder.LITTLE_ENDIAN));
+        }
+        return buffers;
+    }
+
 
     @Override
     public int pipe(final OutputStream out) throws IOException {
@@ -163,14 +174,18 @@ public class ByteBufferBsonOutput extends OutputBuffer {
         byte[] tmp = new byte[INITIAL_BUFFER_SIZE];
 
         int total = 0;
-        for (final ByteBuf cur : getByteBuffers()) {
-            ByteBuf dup = cur.duplicate();
-            while (dup.hasRemaining()) {
-                int numBytesToCopy = Math.min(dup.remaining(), tmp.length);
-                dup.get(tmp, 0, numBytesToCopy);
-                out.write(tmp, 0, numBytesToCopy);
+        List<ByteBuf> byteBuffers = getByteBuffers();
+        try {
+            for (final ByteBuf cur : byteBuffers) {
+                while (cur.hasRemaining()) {
+                    int numBytesToCopy = Math.min(cur.remaining(), tmp.length);
+                    cur.get(tmp, 0, numBytesToCopy);
+                    out.write(tmp, 0, numBytesToCopy);
+                }
+                total += cur.limit();
             }
-            total += dup.limit();
+        } finally {
+            byteBuffers.forEach(ByteBuf::release);
         }
         return total;
     }
@@ -301,13 +316,14 @@ public class ByteBufferBsonOutput extends OutputBuffer {
         int limit = buf.limit();
         int remaining = limit - currBufferPos;
 
-        if (buf instanceof PowerOfTwoBufferPool.PooledByteBufNIO && buf.hasArray()) {
+        if (buf.hasArray()) {
             byte[] dst = buf.array();
+            int arrayOffset = buf.arrayOffset();
             if (remaining >= str.length() + 1) {
-                sp = writeOnArrayAscii(str, dst, currBufferPos, checkNullTermination);
+                sp = writeOnArrayAscii(str, dst, arrayOffset + currBufferPos, checkNullTermination);
                 currBufferPos += sp;
                 if (sp == len) {
-                    dst[currBufferPos++] = 0;
+                    dst[arrayOffset + currBufferPos++] = 0;
                     position += sp + 1;
                     buf.position(currBufferPos);
                     return sp + 1;
@@ -397,9 +413,9 @@ public class ByteBufferBsonOutput extends OutputBuffer {
 
     private static int writeOnArrayAscii(final String str,
                                          final byte[] dst,
-                                         final int currentPos,
+                                         final int arrayPosition,
                                          final boolean checkNullTermination) {
-        int pos = currentPos;
+        int pos = arrayPosition;
         int sp = 0;
         for (; sp < str.length(); sp++, pos++) {
             char c = str.charAt(sp);

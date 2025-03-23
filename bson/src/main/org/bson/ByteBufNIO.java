@@ -114,6 +114,11 @@ public class ByteBufNIO implements ByteBuf {
     }
 
     @Override
+    public int arrayOffset() {
+        return buf.arrayOffset();
+    }
+
+    @Override
     public int limit() {
         return buf.limit();
     }
