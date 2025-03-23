@@ -71,6 +71,9 @@ final class ByteBufferBsonOutputTest {
                     range(1, MIN_HIGH_SURROGATE).boxed(),
                     rangeClosed(MAX_LOW_SURROGATE + 1, MAX_CODE_POINT).boxed())
             .collect(toList());
+    private static final List<Integer> ALL_SURROGATE_CODE_POINTS = Stream.concat(
+            range(MIN_LOW_SURROGATE, MAX_LOW_SURROGATE).boxed(),
+            range(MIN_HIGH_SURROGATE, MAX_HIGH_SURROGATE).boxed()).collect(toList());
 
     static Stream<BufferProvider> bufferProviders() {
         return Stream.of(
@@ -807,11 +810,7 @@ final class ByteBufferBsonOutputTest {
         @ParameterizedTest
         @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
         void shouldWriteCStringWithMalformedSurrogates(final BufferProvider bufferProvider) throws IOException {
-            Stream<Integer> surrogates = Stream.concat(
-                    range(MIN_LOW_SURROGATE, Character.MAX_LOW_SURROGATE).boxed(),
-                    range(Character.MIN_HIGH_SURROGATE, MAX_HIGH_SURROGATE).boxed());
-
-            for (Integer surrogateCodePoint : surrogates.collect(toList())) {
+            for (Integer surrogateCodePoint : ALL_SURROGATE_CODE_POINTS) {
                 byte[] expectedEncoding = new byte[]{
                         (byte) (0xE0 | ((surrogateCodePoint >> 12) & 0x0F)),
                         (byte) (0x80 | ((surrogateCodePoint >> 6) & 0x3F)),
@@ -838,11 +837,7 @@ final class ByteBufferBsonOutputTest {
         @ParameterizedTest
         @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
         void shouldWriteCStringWithMalformedSurrogatesWithBranch(final BufferProvider bufferProvider) throws IOException {
-            Stream<Integer> surrogates = Stream.concat(
-                    range(MIN_LOW_SURROGATE, Character.MAX_LOW_SURROGATE).boxed(),
-                    range(Character.MIN_HIGH_SURROGATE, MAX_HIGH_SURROGATE).boxed());
-
-            for (Integer surrogateCodePoint : surrogates.collect(toList())) {
+            for (Integer surrogateCodePoint : ALL_SURROGATE_CODE_POINTS) {
                 byte[] expectedEncoding = new byte[]{
                         (byte) (0xE0 | ((surrogateCodePoint >> 12) & 0x0F)),
                         (byte) (0x80 | ((surrogateCodePoint >> 6) & 0x3F)),
@@ -869,11 +864,7 @@ final class ByteBufferBsonOutputTest {
         @ParameterizedTest
         @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
         void shouldWriteStringWithMalformedSurrogates(final BufferProvider bufferProvider) throws IOException {
-            Stream<Integer> surrogates = Stream.concat(
-                    range(MIN_LOW_SURROGATE, Character.MAX_LOW_SURROGATE).boxed(),
-                    range(Character.MIN_HIGH_SURROGATE, MAX_HIGH_SURROGATE).boxed());
-
-            for (Integer surrogateCodePoint : surrogates.collect(toList())) {
+            for (Integer surrogateCodePoint : ALL_SURROGATE_CODE_POINTS) {
                 byte[] expectedEncoding = new byte[]{
                         (byte) (0xE0 | ((surrogateCodePoint >> 12) & 0x0F)),
                         (byte) (0x80 | ((surrogateCodePoint >> 6) & 0x3F)),
@@ -900,11 +891,7 @@ final class ByteBufferBsonOutputTest {
         @ParameterizedTest
         @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
         void shouldWriteStringWithMalformedSurrogatesWithBranch(final BufferProvider bufferProvider) throws IOException {
-            Stream<Integer> surrogates = Stream.concat(
-                    range(MIN_LOW_SURROGATE, Character.MAX_LOW_SURROGATE).boxed(),
-                    range(Character.MIN_HIGH_SURROGATE, MAX_HIGH_SURROGATE).boxed());
-
-            for (Integer surrogateCodePoint : surrogates.collect(toList())) {
+            for (Integer surrogateCodePoint : ALL_SURROGATE_CODE_POINTS) {
                 byte[] expectedEncoding = new byte[]{
                         (byte) (0xE0 | ((surrogateCodePoint >> 12) & 0x0F)),
                         (byte) (0x80 | ((surrogateCodePoint >> 6) & 0x3F)),
