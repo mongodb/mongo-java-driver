@@ -233,6 +233,13 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
 
     @Override
     AsyncReadOperation<AsyncBatchCursor<T>> asAsyncFirstReadOperation() {
-        return getOperations().findFirst(filter, getDocumentClass(), findOptions);
+        final FindOptions effectiveFindOptions;
+        if (findOptions.getBatchSize() > 0 && findOptions.getBatchSize() == findOptions.getLimit()) {
+            // Eliminate unnecessary killCursors command when batchSize == limit
+            effectiveFindOptions = findOptions.withBatchSize(findOptions.getBatchSize() + 1);
+        } else {
+            effectiveFindOptions = findOptions;
+        }
+        return getOperations().findFirst(filter, getDocumentClass(), effectiveFindOptions);
     }
 }

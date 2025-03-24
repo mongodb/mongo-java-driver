@@ -88,7 +88,7 @@ class GridFSFindIterableSpecification extends Specification {
         expect operation, isTheSameAs(new FindOperation<GridFSFile>(namespace, gridFSFileCodec)
                 .filter(new BsonDocument('filter', new BsonInt32(2)))
                 .sort(new BsonDocument('sort', new BsonInt32(2)))
-                .batchSize(99)
+                .batchSize(100)
                 .limit(99)
                 .skip(9)
                 .noCursorTimeout(true)

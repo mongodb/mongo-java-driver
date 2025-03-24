@@ -188,11 +188,18 @@ final class Operations<TDocument> {
 
     private <TResult> FindOperation<TResult> createFindOperation(final MongoNamespace findNamespace, @Nullable final Bson filter,
                                                                  final Class<TResult> resultClass, final FindOptions options) {
+        final int effectiveBatchSize;
+        if (options.getBatchSize() > 0 && options.getBatchSize() == options.getLimit()) {
+            // Eliminate unnecessary killCursors command when batchSize == limit
+            effectiveBatchSize = options.getBatchSize() + 1;
+        } else {
+            effectiveBatchSize = options.getBatchSize();
+        }
         FindOperation<TResult> operation = new FindOperation<>(
                 findNamespace, codecRegistry.get(resultClass))
                 .retryReads(retryReads)
                 .filter(filter == null ? new BsonDocument() : filter.toBsonDocument(documentClass, codecRegistry))
-                .batchSize(options.getBatchSize())
+                .batchSize(effectiveBatchSize)
                 .skip(options.getSkip())
                 .limit(options.getLimit())
                 .projection(toBsonDocument(options.getProjection()))
