@@ -54,6 +54,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
     private final List<TagSet> tagSetList = new ArrayList<>();
     private final Long maxStalenessMS;
+    @SuppressWarnings("deprecation")
     private final ReadPreferenceHedgeOptions hedgeOptions;
 
     TaggableReadPreference() {
@@ -61,6 +62,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         this.hedgeOptions = null;
     }
 
+    @SuppressWarnings("deprecation")
     TaggableReadPreference(final List<TagSet> tagSetList, @Nullable final Long maxStaleness, final TimeUnit timeUnit,
                            @Nullable final ReadPreferenceHedgeOptions hedgeOptions) {
         notNull("tagSetList", tagSetList);
@@ -80,6 +82,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
     @Override
     public abstract TaggableReadPreference withMaxStalenessMS(Long maxStalenessMS, TimeUnit timeUnit);
 
+    @Deprecated
     @Override
     public abstract TaggableReadPreference withHedgeOptions(ReadPreferenceHedgeOptions hedgeOptions);
 
@@ -146,7 +149,9 @@ public abstract class TaggableReadPreference extends ReadPreference {
      * @return the hedge options
      * @mongodb.server.release 4.4
      * @since 4.1
+     * @deprecated As of MongoDB 8.1, the server ignores the option and periodically logs a warning
      */
+    @Deprecated
     @Nullable
     public ReadPreferenceHedgeOptions getHedgeOptions() {
         return hedgeOptions;
@@ -327,6 +332,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
             this(tagSetList, maxStaleness, timeUnit, null);
         }
 
+        @SuppressWarnings("deprecation")
         SecondaryReadPreference(final List<TagSet> tagSetList, @Nullable final Long maxStaleness, final TimeUnit timeUnit,
                                 @Nullable final ReadPreferenceHedgeOptions hedgeOptions) {
             super(tagSetList, maxStaleness, timeUnit, hedgeOptions);
@@ -349,6 +355,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
             return new SecondaryReadPreference(getTagSetList(), maxStaleness, timeUnit, getHedgeOptions());
         }
 
+        @Deprecated
         @Override
         public TaggableReadPreference withHedgeOptions(final ReadPreferenceHedgeOptions hedgeOptions) {
             return new SecondaryReadPreference(getTagSetList(), getMaxStaleness(MILLISECONDS), MILLISECONDS, hedgeOptions);
@@ -388,6 +395,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
             this(tagSetList, maxStaleness, timeUnit, null);
         }
 
+        @SuppressWarnings("deprecation")
         SecondaryPreferredReadPreference(final List<TagSet> tagSetList, @Nullable final Long maxStaleness, final TimeUnit timeUnit,
                                          @Nullable final ReadPreferenceHedgeOptions hedgeOptions) {
             super(tagSetList, maxStaleness, timeUnit, hedgeOptions);
@@ -410,6 +418,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
             return new SecondaryPreferredReadPreference(getTagSetList(), maxStaleness, timeUnit, getHedgeOptions());
         }
 
+        @Deprecated
         @Override
         public TaggableReadPreference withHedgeOptions(final ReadPreferenceHedgeOptions hedgeOptions) {
             return new SecondaryPreferredReadPreference(getTagSetList(), getMaxStaleness(MILLISECONDS), MILLISECONDS, hedgeOptions);
@@ -441,6 +450,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
             this(tagSetList, maxStaleness, timeUnit, null);
         }
 
+        @SuppressWarnings("deprecation")
         NearestReadPreference(final List<TagSet> tagSetList, @Nullable final Long maxStaleness, final TimeUnit timeUnit,
                               @Nullable final ReadPreferenceHedgeOptions hedgeOptions) {
             super(tagSetList, maxStaleness, timeUnit, hedgeOptions);
@@ -463,6 +473,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
             return new NearestReadPreference(getTagSetList(), maxStaleness, timeUnit, getHedgeOptions());
         }
 
+        @Deprecated
         @Override
         public TaggableReadPreference withHedgeOptions(final ReadPreferenceHedgeOptions hedgeOptions) {
             return new NearestReadPreference(getTagSetList(), getMaxStaleness(MILLISECONDS), MILLISECONDS, hedgeOptions);
@@ -503,6 +514,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
             this(tagSetList, maxStaleness, timeUnit, null);
         }
 
+        @SuppressWarnings("deprecation")
         PrimaryPreferredReadPreference(final List<TagSet> tagSetList, @Nullable final Long maxStaleness, final TimeUnit timeUnit,
                                        @Nullable final ReadPreferenceHedgeOptions hedgeOptions) {
             super(tagSetList, maxStaleness, timeUnit, hedgeOptions);
@@ -525,6 +537,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
             return new PrimaryPreferredReadPreference(getTagSetList(), maxStaleness, timeUnit, getHedgeOptions());
         }
 
+        @Deprecated
         @Override
         public TaggableReadPreference withHedgeOptions(final ReadPreferenceHedgeOptions hedgeOptions) {
             return new PrimaryPreferredReadPreference(getTagSetList(), getMaxStaleness(MILLISECONDS), MILLISECONDS, hedgeOptions);
