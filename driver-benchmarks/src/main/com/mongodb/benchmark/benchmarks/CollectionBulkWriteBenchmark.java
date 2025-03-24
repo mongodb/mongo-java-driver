@@ -17,16 +17,16 @@
 
 package com.mongodb.benchmark.benchmarks;
 
+import com.mongodb.client.model.InsertOneModel;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class InsertManyBenchmark<T> extends AbstractInsertBenchmark<T> {
-    protected final int numDocuments;
-    private final List<T> documentList;
+public class CollectionBulkWriteBenchmark<T> extends InsertManyBenchmark<T> {
+    private final List<InsertOneModel<T>> documentList;
 
-    public InsertManyBenchmark(final String name, final String resourcePath, final int numDocuments, final Class<T> clazz) {
-        super(name + " doc bulk insert", resourcePath, clazz);
-        this.numDocuments = numDocuments;
+    public CollectionBulkWriteBenchmark(final String name, final String resourcePath, final int numDocuments, final Class<T> clazz) {
+        super(name + " doc Collection BulkWrite insert", resourcePath, numDocuments, clazz);
         documentList = new ArrayList<>(numDocuments);
     }
 
@@ -38,19 +38,15 @@ public class InsertManyBenchmark<T> extends AbstractInsertBenchmark<T> {
     @Override
     public void before() throws Exception {
         super.before();
+
         documentList.clear();
         for (int i = 0; i < numDocuments; i++) {
-            documentList.add(createDocument());
+            documentList.add(new InsertOneModel<>((createDocument())));
         }
     }
 
     @Override
     public void run() {
-        collection.insertMany(documentList);
-    }
-
-    @Override
-    public int getBytesPerRun() {
-        return fileLength * numDocuments;
+        collection.bulkWrite(documentList);
     }
 }
