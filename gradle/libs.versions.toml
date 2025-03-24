@@ -23,13 +23,16 @@ project-reactor-bom = "2022.0.0"
 reactive-streams = "1.0.4"
 snappy = "1.1.10.3"
 zstd = "1.5.5-3"
+jetbrains-annotations = "26.0.2"
 
 kotlin = "1.8.10"
 kotlinx-coroutines-bom = "1.6.4"
 kotlinx-datetime = "0.4.0"
 kotlinx-serialization = "1.5.0"
 
-scala = "%scala-version%" # Handled by the scala multiversion plugin
+scala-v2-v13 = "2.13.16"
+scala-v2-v12 = "2.12.20"
+scala-v2-v11 = "2.11.12"
 
 # Test
 assertj = "3.24.2"
@@ -48,10 +51,10 @@ mockito-java8 = "4.6.1"
 mockito-kotlin = "4.1.0"
 objenesis = "1.3"
 reflections = "0.9.10"
-scalatest = "3.2.9"
-scalatest-plus = "3.2.10.0"
 slf4j = "1.7.6"
 spock-bom = "2.1-groovy-3.0"
+scala-test = "3.2.18"
+scala-test-plus = "3.2.18.0"
 
 # Plugins
 plugin-bnd = "5.1.2"
@@ -61,11 +64,10 @@ plugin-dokka = "1.8.10"
 plugin-download = "5.6.0"
 plugin-graalvm = "0.9.23"
 plugin-optional-base = "7.0.0"
-plugin-scala-multiversion = "2.0.4"
-plugin-shadow = "6.1.0"
+plugin-shadow = "8.3.6"
 plugin-spotbugs = "6.0.15"
 plugin-spotless = "6.14.0"
-plugin-test-logger = "2.1.0"
+plugin-test-logger = "4.0.0"
 
 [libraries]
 aws-java-sdk-v1-core = { module = "com.amazonaws:aws-java-sdk-core", version.ref = "aws-sdk-v1" }
@@ -74,7 +76,9 @@ aws-java-sdk-v2-auth = { module = "software.amazon.awssdk:auth", version.ref = "
 aws-java-sdk-v2-sts = { module = "software.amazon.awssdk:sts", version.ref = "aws-sdk-v2" }
 
 jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
+jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
 jnr-unixsocket = { module = "com.github.jnr:jnr-unixsocket", version.ref = "jnr-unixsocket" }
+jetbrains-annotations = {module = "org.jetbrains:annotations", version.ref = "jetbrains-annotations" }
 
 netty-bom = { module = "io.netty:netty-bom", version.ref = "netty-bom" }
 netty-buffer = { module = "io.netty:netty-buffer" }
@@ -90,7 +94,7 @@ snappy-java = { module = "org.xerial.snappy:snappy-java", version.ref = "snappy"
 zstd-jni = { module = "com.github.luben:zstd-jni", version.ref = "zstd" }
 
 graal-sdk = { module = "org.graalvm.sdk:graal-sdk", version.ref = "graal-sdk" }
-graal-sdk-native = { module = "org.graalvm.sdk:native", version.ref = "graal-sdk" }
+graal-sdk-nativeimage = { module = "org.graalvm.sdk:nativeimage", version.ref = "graal-sdk" }
 
 kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom" }
 kotlin-stdlib-jdk8 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
@@ -103,8 +107,14 @@ kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json" }
 kotlinx-serialization-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
-scala-library = {module = "org.scala-lang:scala-library", version.ref = "scala" }
-scala-reflect = {module = "org.scala-lang:scala-reflect", version.ref = "scala" }
+scala-library-v2-v13 = { module = "org.scala-lang:scala-library", version.ref = "scala-v2-v13" }
+scala-reflect-v2-v13 = { module = "org.scala-lang:scala-reflect", version.ref = "scala-v2-v13" }
+
+scala-library-v2-v12 = { module = "org.scala-lang:scala-library", version.ref = "scala-v2-v12" }
+scala-reflect-v2-v12 = { module = "org.scala-lang:scala-reflect", version.ref = "scala-v2-v12" }
+
+scala-library-v2-v11 = { module = "org.scala-lang:scala-library", version.ref = "scala-v2-v11" }
+scala-reflect-v2-v11 = { module = "org.scala-lang:scala-reflect", version.ref = "scala-v2-v11" }
 
 # Test
 jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh"}
@@ -115,7 +125,7 @@ junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
 junit-vintage-engine = { module = "org.junit.vintage:junit-vintage-engine" }
-junit-kotlin = { module = "org.jetbrains.kotlin:kotlin-test-junit" }
+junit-kotlin = { module = "org.jetbrains.kotlin:kotlin-test-junit5" }
 
 spock-bom = { module = "org.spockframework:spock-bom", version.ref = "spock-bom" }
 spock-core = { module = "org.spockframework:spock-core" }
@@ -128,10 +138,21 @@ mockito-core-java8 = { module = "org.mockito:mockito-core", version.ref = "mocki
 mockito-inline-java8 = { module = "org.mockito:mockito-inline", version.ref = "mockito-java8" }
 mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockito-kotlin" }
 
-scalatest-flatspec = { module = "org.scalatest:scalatest-flatspec_%%", version.ref = "scalatest" }
-scalatest-should-matchers = { module = "org.scalatest:scalatest-shouldmatchers_%%", version.ref = "scalatest" }
-scalatest-plus-junit4 = { module = "org.scalatestplus:junit-4-13_%%", version.ref = "scalatest-plus" }
-scalatest-plus-mockito = { module = "org.scalatestplus:mockito-3-12_%%", version.ref = "scalatest-plus" }
+
+scala-test-flatspec-v2-v13 = { module = "org.scalatest:scalatest-flatspec_2.13", version.ref = "scala-test" }
+scala-test-shouldmatchers-v2-v13 = { module = "org.scalatest:scalatest-shouldmatchers_2.13", version.ref = "scala-test" }
+scala-test-mockito-v2-v13 = { module = "org.scalatestplus:mockito-4-11_2.13", version.ref = "scala-test-plus" }
+scala-test-junit-runner-v2-v13 = { module = "org.scalatestplus:junit-5-10_2.13", version.ref = "scala-test-plus" }
+
+scala-test-flatspec-v2-v12 = { module = "org.scalatest:scalatest-flatspec_2.12", version.ref = "scala-test" }
+scala-test-shouldmatchers-v2-v12 = { module = "org.scalatest:scalatest-shouldmatchers_2.12", version.ref = "scala-test" }
+scala-test-mockito-v2-v12 = { module = "org.scalatestplus:mockito-4-11_2.12", version.ref = "scala-test-plus" }
+scala-test-junit-runner-v2-v12 = { module = "org.scalatestplus:junit-5-10_2.12", version.ref = "scala-test-plus" }
+
+scala-test-flatspec-v2-v11 = { module = "org.scalatest:scalatest-flatspec_2.11", version.ref = "scala-test" }
+scala-test-shouldmatchers-v2-v11 = { module = "org.scalatest:scalatest-shouldmatchers_2.11", version.ref = "scala-test" }
+scala-test-mockito-v2-v11 = { module = "org.scalatestplus:mockito-4-11_2.11", version.ref = "scala-test-plus" }
+scala-test-junit-runner-v2-v11 = { module = "org.scalatestplus:junit-5-10_2.11", version.ref = "scala-test-plus" }
 
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test" }
 
@@ -144,28 +165,40 @@ findbugs-jsr = { module = "com.google.code.findbugs:jsr305", version.ref = "find
 groovy = { module = "org.codehaus.groovy:groovy-all", version.ref = "groovy" }
 hamcrest-all = { module = "org.hamcrest:hamcrest-all", version.ref = "hamcrest" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
-netty-boringssl = { module = "io.netty:netty-tcnative-boringssl-static" }
+netty-tcnative-boringssl = { module = "io.netty:netty-tcnative-boringssl-static" }
 objenesis = { module = "org.objenesis:objenesis", version.ref = "objenesis" }
 project-reactor-test = { module = "io.projectreactor:reactor-test" }
 reactive-streams-tck = { module = " org.reactivestreams:reactive-streams-tck", version.ref = "reactive-streams" }
 reflections = { module = "org.reflections:reflections", version.ref = "reflections" }
+
 
 [bundles]
 aws-java-sdk-v1 = ["aws-java-sdk-v1-core", "aws-java-sdk-v1-sts"]
 aws-java-sdk-v2 = ["aws-java-sdk-v2-auth", "aws-java-sdk-v2-sts"]
 netty = ["netty-buffer", "netty-handler", "netty-transport"]
 
+scala-v2-v13 = ["scala-library-v2-v13", "scala-reflect-v2-v13"]
+scala-v2-v12 = ["scala-library-v2-v12", "scala-reflect-v2-v12"]
+scala-v2-v11 = ["scala-library-v2-v11", "scala-reflect-v2-v11"]
+
 # Test
-junit = ["junit-jupiter", "junit-jupiter-params", "junit-jupiter-engine", "junit-jupiter", "logback-classic", "hamcrest-all"]
-junit-vintage = ["junit-vintage-engine", "junit-jupiter-params", "junit-jupiter-engine", "junit-jupiter", "logback-classic", "hamcrest-all"]
-scalatest = ["scalatest-flatspec", "scalatest-should-matchers", "scalatest-plus-junit4", "scalatest-plus-mockito"]
+junit = ["junit-jupiter", "junit-jupiter-params", "junit-jupiter-engine", "logback-classic", "hamcrest-all"]
+junit-vintage = ["junit-vintage-engine", "junit-jupiter-params", "junit-jupiter-engine", "logback-classic", "hamcrest-all"]
 spock = ["spock-core", "spock-junit4"]
 
 mockito = ["mockito-junit-jupiter", "mockito-core"]
 mockito-java8 = ["mockito-junit-jupiter-java8", "mockito-core-java8", "mockito-inline-java8"]
 mockito-kotlin = ["mockito-kotlin", "mockito-junit-jupiter-java8"]
 
+scala-test-v2-v13 = ["scala-test-flatspec-v2-v13", "scala-test-shouldmatchers-v2-v13", "scala-test-mockito-v2-v13",
+    "scala-test-junit-runner-v2-v13", "reflections"]
+scala-test-v2-v12 = ["scala-test-flatspec-v2-v12", "scala-test-shouldmatchers-v2-v12", "scala-test-mockito-v2-v12",
+    "scala-test-junit-runner-v2-v12", "reflections"]
+scala-test-v2-v11 = ["scala-test-flatspec-v2-v11", "scala-test-shouldmatchers-v2-v11", "scala-test-mockito-v2-v11",
+    "scala-test-junit-runner-v2-v11", "reflections"]
+
 [plugins]
+kotlin-gradle = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 bnd = { id = "biz.aQute.bnd", version.ref = "plugin-bnd" }
 build-config = { id = "com.github.gmazzo.buildconfig", version.ref = "plugin-build-config" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "plugin-detekt" }
@@ -175,8 +208,7 @@ graalvm-buildtools = { id = "org.graalvm.buildtools.native", version.ref = "plug
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 optional = { id = "nebula.optional-base", version.ref = "plugin-optional-base" }
-scala-multiversion = { id = "com.adtran.scala-multiversion-plugin", version.ref = "plugin-scala-multiversion" }
-shadow = { id = "com.github.johnrengelman.shadow", version.ref = "plugin-shadow" }
+shadow = { id = "com.gradleup.shadow", version.ref = "plugin-shadow" }
 spotbugs = { id = "com.github.spotbugs", version.ref = "plugin-spotbugs" }
 spotless = { id = "com.diffplug.spotless", version.ref = "plugin-spotless" }
 test-logger = { id = "com.adarshr.test-logger", version.ref = "plugin-test-logger" }

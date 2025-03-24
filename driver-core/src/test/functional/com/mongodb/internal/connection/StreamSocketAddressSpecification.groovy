@@ -8,7 +8,7 @@ import com.mongodb.spi.dns.InetAddressResolver
 import spock.lang.Ignore
 import spock.lang.IgnoreIf
 import spock.lang.Specification
-import util.spock.annotations.Slow
+import com.mongodb.spock.Slow
 
 import javax.net.SocketFactory
 import java.util.concurrent.TimeUnit

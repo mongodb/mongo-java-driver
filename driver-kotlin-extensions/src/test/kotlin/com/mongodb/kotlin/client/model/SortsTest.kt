@@ -22,10 +22,10 @@ import com.mongodb.client.model.Sorts.orderBy
 import com.mongodb.kotlin.client.model.Sorts.ascending
 import com.mongodb.kotlin.client.model.Sorts.descending
 import com.mongodb.kotlin.client.model.Sorts.metaTextScore
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import org.bson.BsonDocument
 import org.bson.conversions.Bson
-import org.junit.Test
 
 class SortsTest {
 
