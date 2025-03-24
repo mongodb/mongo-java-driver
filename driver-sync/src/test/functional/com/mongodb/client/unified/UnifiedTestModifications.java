@@ -61,7 +61,7 @@ public final class UnifiedTestModifications {
 
         // client-side-operation-timeout (CSOT)
 
-        def.skipNoncompliantReactive("No good way to fulfill tryNex() requirement with a Publisher<T>")
+        def.skipNoncompliantReactive("No good way to fulfill tryNext() requirement with a Publisher<T>")
                 .directory("client-side-operation-timeout")
                 .test("timeoutMS behaves correctly for tailable awaitData cursors", "apply remaining timeoutMS if less than maxAwaitTimeMS");
 
