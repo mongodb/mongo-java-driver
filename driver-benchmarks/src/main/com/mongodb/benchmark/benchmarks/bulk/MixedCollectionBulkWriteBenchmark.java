@@ -42,13 +42,11 @@ public class MixedCollectionBulkWriteBenchmark<T> extends AbstractCollectionWrit
         database.createCollection(COLLECTION_NAME);
 
         modelList.clear();
-        long time = System.currentTimeMillis();
         for (int i = 0; i < numDocuments; i++) {
             modelList.add(new InsertOneModel<>((createDocument())));
             modelList.add(new ReplaceOneModel<>(Filters.empty(), createDocument()));
             modelList.add(new DeleteOneModel<>(Filters.empty()));
         }
-        System.out.println("Time to create models: " + (System.currentTimeMillis() - time));
     }
 
     @Override

@@ -50,7 +50,6 @@ public class MixedClientBulkWriteBenchmark<T> extends AbstractWriteBenchmark<T> 
         database.drop();
 
         namespaces = new ArrayList<>();
-        long time = System.currentTimeMillis();
         for (int i = 1; i <= NAMESPACES_COUNT; i++) {
             namespaces.add(new MongoNamespace(AbstractMongoBenchmark.DATABASE_NAME, AbstractMongoBenchmark.COLLECTION_NAME + "_" + i));
         }
@@ -67,7 +66,6 @@ public class MixedClientBulkWriteBenchmark<T> extends AbstractWriteBenchmark<T> 
         }
 
         modelList.clear();
-        long time = System.currentTimeMillis();
         for (int i = 0; i < numDocuments; i++) {
             MongoNamespace namespace = namespaces.get(i % NAMESPACES_COUNT);
             modelList.add(insertOne(
@@ -81,7 +79,6 @@ public class MixedClientBulkWriteBenchmark<T> extends AbstractWriteBenchmark<T> 
                     namespace,
                     Filters.empty()));
         }
-        System.out.println("Time to create documents: " + (System.currentTimeMillis() - time));
     }
 
     @Override
