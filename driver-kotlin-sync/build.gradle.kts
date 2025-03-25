@@ -19,6 +19,7 @@ import ProjectExtensions.configureMavenPublication
 plugins {
     id("project.kotlin")
     id("conventions.test-artifacts")
+    id("conventions.test-artifacts-runtime-dependencies")
 }
 
 base.archivesName.set("mongodb-driver-kotlin-sync")

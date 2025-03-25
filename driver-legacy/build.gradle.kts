@@ -19,6 +19,7 @@ import ProjectExtensions.configureMavenPublication
 plugins {
     id("project.java")
     id("conventions.test-artifacts")
+    id("conventions.test-artifacts-runtime-dependencies")
     id("conventions.test-include-optionals")
     id("conventions.testing-junit")
     id("conventions.testing-spock-exclude-slow")

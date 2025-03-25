@@ -165,7 +165,7 @@ findbugs-jsr = { module = "com.google.code.findbugs:jsr305", version.ref = "find
 groovy = { module = "org.codehaus.groovy:groovy-all", version.ref = "groovy" }
 hamcrest-all = { module = "org.hamcrest:hamcrest-all", version.ref = "hamcrest" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
-netty-tcnative-boringssl = { module = "io.netty:netty-tcnative-boringssl-static" }
+netty-tcnative-boringssl-static = { module = "io.netty:netty-tcnative-boringssl-static" }
 objenesis = { module = "org.objenesis:objenesis", version.ref = "objenesis" }
 project-reactor-test = { module = "io.projectreactor:reactor-test" }
 reactive-streams-tck = { module = " org.reactivestreams:reactive-streams-tck", version.ref = "reactive-streams" }

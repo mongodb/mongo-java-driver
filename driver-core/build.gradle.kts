@@ -57,9 +57,9 @@ dependencies {
 
     testImplementation(project(path = ":bson", configuration = "testArtifacts"))
     testImplementation(libs.reflections)
-    testRuntimeOnly(libs.netty.tcnative.boringssl)
+    testImplementation(libs.netty.tcnative.boringssl.static)
     listOf("linux-x86_64", "linux-aarch_64", "osx-x86_64", "osx-aarch_64", "windows-x86_64").forEach { arch ->
-        testRuntimeOnly(variantOf(libs.netty.tcnative.boringssl) { classifier(arch) })
+        testImplementation("${libs.netty.tcnative.boringssl.static.get()}::$arch")
     }
 }
 
