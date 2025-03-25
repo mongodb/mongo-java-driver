@@ -215,7 +215,9 @@ public final class FindOptions {
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     public int getBatchSize() {
-        return batchSize;
+        return batchSize > 0 && batchSize == limit
+                ? batchSize + 1 // avoid an open cursor on server side when batchSize and limit are equal
+                : batchSize;
     }
 
     /**

@@ -245,14 +245,7 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     }
 
     public ExplainableReadOperation<BatchCursor<TResult>> asReadOperation() {
-        final FindOptions effectiveFindOptions;
-        if (findOptions.getBatchSize() > 0 && findOptions.getBatchSize() == findOptions.getLimit()) {
-            // Eliminate unnecessary killCursors command when batchSize == limit
-            effectiveFindOptions = findOptions.withBatchSize(findOptions.getBatchSize() + 1);
-        } else {
-            effectiveFindOptions = findOptions;
-        }
-        return operations.find(filter, resultClass, effectiveFindOptions);
+        return operations.find(filter, resultClass, findOptions);
     }
 
 }
