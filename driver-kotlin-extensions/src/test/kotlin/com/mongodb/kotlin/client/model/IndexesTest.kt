@@ -26,10 +26,10 @@ import com.mongodb.kotlin.client.model.Indexes.geo2d
 import com.mongodb.kotlin.client.model.Indexes.geo2dsphere
 import com.mongodb.kotlin.client.model.Indexes.hashed
 import com.mongodb.kotlin.client.model.Indexes.text
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import org.bson.BsonDocument
 import org.bson.conversions.Bson
-import org.junit.Test
 
 class IndexesTest {
 

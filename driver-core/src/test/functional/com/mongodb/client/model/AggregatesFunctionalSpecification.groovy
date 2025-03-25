@@ -1336,7 +1336,8 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                 [1, 2, 3, 4, 1, 2, 3, 4, 4.1]
         'num' | 'partitionId' | densify(field, partitionRangeWithStep(1), densifyOptions().partitionByFields([partitionByField])) |
                 [1, 2, 3, 4.1]
-        'date' | null | densify(field, rangeWithStep(Instant.EPOCH, Instant.ofEpochMilli(BigInteger.TWO.pow(32).longValueExact()) + 1,
+        'date' | null | densify(field, rangeWithStep(Instant.EPOCH, Instant.ofEpochMilli(BigInteger.TWO.pow(32).longValueExact())
+                .plusMillis(1),
                 // there is a server bug that prevents using `step` larger than 2^31 - 1 in versions before 6.1
                 BigInteger.TWO.pow(31).longValueExact() - 1, MongoTimeUnit.MILLISECOND)) |
                 [Instant.EPOCH,

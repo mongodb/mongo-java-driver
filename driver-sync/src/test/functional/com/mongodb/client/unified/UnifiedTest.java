@@ -59,12 +59,11 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.opentest4j.TestAbortedException;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -81,6 +80,8 @@ import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.test.CollectionHelper.getCurrentClusterTime;
 import static com.mongodb.client.test.CollectionHelper.killAllSessions;
 import static com.mongodb.client.unified.RunOnRequirementsMatcher.runOnRequirementsMet;
+import static com.mongodb.client.unified.UnifiedTestModifications.Modifier;
+import static com.mongodb.client.unified.UnifiedTestModifications.applyCustomizations;
 import static com.mongodb.client.unified.UnifiedTestModifications.testDef;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
@@ -91,15 +92,19 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.abort;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
-import static util.JsonPoweredTestHelper.getTestDocument;
-import static util.JsonPoweredTestHelper.getTestFiles;
+import static util.JsonPoweredTestHelper.getTestDocuments;
 
 @ExtendWith(AfterBeforeParameterResolver.class)
 public abstract class UnifiedTest {
     private static final Set<String> PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS = Collections.singleton(
             "wait queue timeout errors include details about checked out connections");
+
+    public static final int RETRY_ATTEMPTS = 3;
+    public static final int FORCE_FLAKY_ATTEMPTS = 10;
+    private static final Set<String> ATTEMPTED_TESTS_TO_HENCEFORTH_IGNORE = new HashSet<>();
 
     @Nullable
     private String fileDescription;
@@ -156,30 +161,45 @@ public abstract class UnifiedTest {
     }
 
     @NonNull
-    protected static Collection<Arguments> getTestData(final String directory) throws URISyntaxException, IOException {
+    protected static Collection<Arguments> getTestData(final String directory, final boolean isReactive) {
         List<Arguments> data = new ArrayList<>();
-        for (File file : getTestFiles("/" + directory + "/")) {
-            BsonDocument fileDocument = getTestDocument(file);
-
+        for (BsonDocument fileDocument : getTestDocuments("/" + directory + "/")) {
             for (BsonValue cur : fileDocument.getArray("tests")) {
-                data.add(UnifiedTest.createTestData(directory, fileDocument, cur.asDocument()));
+
+                final BsonDocument testDocument = cur.asDocument();
+                String testDescription = testDocument.getString("description").getValue();
+                String fileDescription = fileDocument.getString("description").getValue();
+                TestDef testDef = testDef(directory, fileDescription, testDescription, isReactive);
+                applyCustomizations(testDef);
+
+                boolean forceFlaky = testDef.wasAssignedModifier(Modifier.FORCE_FLAKY);
+                boolean retry = forceFlaky || testDef.wasAssignedModifier(Modifier.RETRY);
+
+                int attempts;
+                if (retry) {
+                    attempts = forceFlaky ? FORCE_FLAKY_ATTEMPTS : RETRY_ATTEMPTS;
+                } else {
+                    attempts = 1;
+                }
+
+                for (int attempt = 1; attempt <= attempts; attempt++) {
+                    String testName = MessageFormat.format("{0}: {1}", fileDescription, testDescription);
+                    data.add(Arguments.of(
+                            testName,
+                            fileDescription,
+                            testDescription,
+                            directory,
+                            attempt,
+                            attempts,
+                            fileDocument.getString("schemaVersion").getValue(),
+                            fileDocument.getArray("runOnRequirements", null),
+                            fileDocument.getArray("createEntities", new BsonArray()),
+                            fileDocument.getArray("initialData", new BsonArray()),
+                            testDocument.clone()));
+                }
             }
         }
         return data;
-    }
-
-    @NonNull
-    private static Arguments createTestData(
-            final String directory, final BsonDocument fileDocument, final BsonDocument testDocument) {
-        return Arguments.of(
-                fileDocument.getString("description").getValue(),
-                testDocument.getString("description").getValue(),
-                directory,
-                fileDocument.getString("schemaVersion").getValue(),
-                fileDocument.getArray("runOnRequirements", null),
-                fileDocument.getArray("createEntities", new BsonArray()),
-                fileDocument.getArray("initialData", new BsonArray()),
-                testDocument);
     }
 
     protected BsonDocument getDefinition() {
@@ -194,9 +214,12 @@ public abstract class UnifiedTest {
 
     @BeforeEach
     public void setUp(
+            final String testName,
             @Nullable final String fileDescription,
             @Nullable final String testDescription,
             @Nullable final String directoryName,
+            final int attemptNumber,
+            final int totalAttempts,
             final String schemaVersion,
             @Nullable final BsonArray runOnRequirements,
             final BsonArray entitiesArray,
@@ -218,9 +241,9 @@ public abstract class UnifiedTest {
         ignoreExtraEvents = false;
         if (directoryName != null && fileDescription != null && testDescription != null) {
             testDef = testDef(directoryName, fileDescription, testDescription, isReactive());
-            UnifiedTestModifications.doSkips(testDef);
+            applyCustomizations(testDef);
 
-            boolean skip = testDef.wasAssignedModifier(UnifiedTestModifications.Modifier.SKIP);
+            boolean skip = testDef.wasAssignedModifier(Modifier.SKIP);
             assumeFalse(skip, "Skipping test");
         }
         skips(fileDescription, testDescription);
@@ -295,8 +318,9 @@ public abstract class UnifiedTest {
     }
 
     /**
-     * This method is called once per {@link #setUp(String, String, String, String, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonDocument)},
-     * unless {@link #setUp(String, String, String, String, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonDocument)} fails unexpectedly.
+     * This method is called once per
+     * {@link #setUp(String, String, String, String, int, int, String, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonDocument)}, unless
+     * {@link #setUp(String, String, String, String, int, int, String, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonDocument)} fails unexpectedly.
      */
     protected void skips(final String fileDescription, final String testDescription) {
     }
@@ -305,40 +329,72 @@ public abstract class UnifiedTest {
         return false;
     }
 
-    @ParameterizedTest(name = "{0}: {1}")
+    @ParameterizedTest(name = "{0}")
     @MethodSource("data")
     public void shouldPassAllOutcomes(
+            final String testName,
             @Nullable final String fileDescription,
             @Nullable final String testDescription,
             @Nullable final String directoryName,
+            final int attemptNumber,
+            final int totalAttempts,
             final String schemaVersion,
             @Nullable final BsonArray runOnRequirements,
             final BsonArray entitiesArray,
             final BsonArray initialData,
             final BsonDocument definition) {
-        BsonArray operations = definition.getArray("operations");
-        for (int i = 0; i < operations.size(); i++) {
-            BsonValue cur = operations.get(i);
-            assertOperation(rootContext, cur.asDocument(), i);
+        boolean forceFlaky = testDef.wasAssignedModifier(Modifier.FORCE_FLAKY);
+        if (!forceFlaky) {
+            boolean ignoreThisTest = ATTEMPTED_TESTS_TO_HENCEFORTH_IGNORE.contains(testName);
+            assumeFalse(ignoreThisTest, "Skipping a retryable test that already succeeded");
+            // The attempt is what counts, since a test may fail with
+            // something like "ignored", and would not be retried.
+            // Only failures should trigger another attempt.
+            ATTEMPTED_TESTS_TO_HENCEFORTH_IGNORE.add(testName);
         }
-
-        if (definition.containsKey("outcome")) {
-            assertOutcome(rootContext);
-        }
-
-        if (definition.containsKey("expectEvents")) {
-            compareEvents(rootContext, definition);
-        }
-
-        if (definition.containsKey("expectLogMessages")) {
-            ArrayList<LogMatcher.Tweak> tweaks = new ArrayList<>(singletonList(
-                    // `LogMessage.Entry.Name.OPERATION` is not supported, therefore we skip matching its value
-                    LogMatcher.Tweak.skip(LogMessage.Entry.Name.OPERATION)));
-            if (getMongoClientSettings().getClusterSettings()
-                    .getHosts().stream().anyMatch(serverAddress -> serverAddress instanceof UnixServerAddress)) {
-                tweaks.add(LogMatcher.Tweak.skip(LogMessage.Entry.Name.SERVER_PORT));
+        try {
+            BsonArray operations = definition.getArray("operations");
+            for (int i = 0; i < operations.size(); i++) {
+                BsonValue cur = operations.get(i);
+                assertOperation(rootContext, cur.asDocument(), i);
             }
-            compareLogMessages(rootContext, definition, tweaks);
+
+            if (definition.containsKey("outcome")) {
+                assertOutcome(rootContext);
+            }
+
+            if (definition.containsKey("expectEvents")) {
+                compareEvents(rootContext, definition);
+            }
+
+            if (definition.containsKey("expectLogMessages")) {
+                ArrayList<LogMatcher.Tweak> tweaks = new ArrayList<>(singletonList(
+                        // `LogMessage.Entry.Name.OPERATION` is not supported, therefore we skip matching its value
+                        LogMatcher.Tweak.skip(LogMessage.Entry.Name.OPERATION)));
+                if (getMongoClientSettings().getClusterSettings()
+                        .getHosts().stream().anyMatch(serverAddress -> serverAddress instanceof UnixServerAddress)) {
+                    tweaks.add(LogMatcher.Tweak.skip(LogMessage.Entry.Name.SERVER_PORT));
+                }
+                compareLogMessages(rootContext, definition, tweaks);
+            }
+        } catch (TestAbortedException e) {
+            // if a test is ignored, we do not retry
+            throw e;
+        } catch (Throwable e) {
+            if (forceFlaky) {
+                throw e;
+            }
+            if (testDef != null && !testDef.matchesThrowable(e)) {
+                // if the throwable is not matched, test definitions were not intended to apply; rethrow it
+                throw e;
+            }
+            boolean isLastAttempt = attemptNumber == totalAttempts;
+            if (isLastAttempt) {
+                throw e;
+            }
+
+            ATTEMPTED_TESTS_TO_HENCEFORTH_IGNORE.remove(testName);
+            abort("Ignoring failure and retrying attempt " + attemptNumber);
         }
     }
 
