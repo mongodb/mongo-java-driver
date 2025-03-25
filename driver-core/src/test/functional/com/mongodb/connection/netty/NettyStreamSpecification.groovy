@@ -13,7 +13,7 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioSocketChannel
 import spock.lang.IgnoreIf
 import spock.lang.Specification
-import util.spock.annotations.Slow
+import com.mongodb.spock.Slow
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
