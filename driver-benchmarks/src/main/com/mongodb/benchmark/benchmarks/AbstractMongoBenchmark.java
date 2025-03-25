@@ -17,6 +17,7 @@
 
 package com.mongodb.benchmark.benchmarks;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.benchmark.framework.Benchmark;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
@@ -33,6 +34,8 @@ public abstract class AbstractMongoBenchmark extends Benchmark {
 
     protected static final String DATABASE_NAME = "perftest";
     protected static final String COLLECTION_NAME = "corpus";
+    protected static final MongoNamespace NAMESPACE = new MongoNamespace(
+            AbstractMongoBenchmark.DATABASE_NAME, AbstractMongoBenchmark.COLLECTION_NAME);
 
 
     protected MongoClient client;

@@ -15,38 +15,34 @@
  *
  */
 
-package com.mongodb.benchmark.benchmarks;
+package com.mongodb.benchmark.benchmarks.bulk;
 
+import com.mongodb.benchmark.benchmarks.AbstractCollectionWriteBenchmark;
 import com.mongodb.client.model.InsertOneModel;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class CollectionBulkWriteBenchmark<T> extends InsertManyBenchmark<T> {
-    private final List<InsertOneModel<T>> documentList;
+public class CollectionBulkWriteBenchmark<T> extends AbstractCollectionWriteBenchmark<T> {
+    private final List<InsertOneModel<T>> modelList;
 
     public CollectionBulkWriteBenchmark(final String name, final String resourcePath, final int numDocuments, final Class<T> clazz) {
-        super(name + " doc Collection BulkWrite insert", resourcePath, numDocuments, clazz);
-        documentList = new ArrayList<>(numDocuments);
-    }
-
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
+        super(name + " doc Collection BulkWrite insert", resourcePath, 1, numDocuments, clazz);
+        modelList = new ArrayList<>(numDocuments);
     }
 
     @Override
     public void before() throws Exception {
         super.before();
-
-        documentList.clear();
+        database.createCollection(COLLECTION_NAME);
+        modelList.clear();
         for (int i = 0; i < numDocuments; i++) {
-            documentList.add(new InsertOneModel<>((createDocument())));
+            modelList.add(new InsertOneModel<>((createDocument())));
         }
     }
 
     @Override
     public void run() {
-        collection.bulkWrite(documentList);
+        collection.bulkWrite(modelList);
     }
 }

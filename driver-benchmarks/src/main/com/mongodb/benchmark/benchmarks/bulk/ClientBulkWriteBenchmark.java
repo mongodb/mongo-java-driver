@@ -15,41 +15,36 @@
  *
  */
 
-package com.mongodb.benchmark.benchmarks;
+package com.mongodb.benchmark.benchmarks.bulk;
 
-import com.mongodb.MongoNamespace;
+import com.mongodb.benchmark.benchmarks.AbstractCollectionWriteBenchmark;
 import com.mongodb.client.model.bulk.ClientNamespacedInsertOneModel;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ClientBulkWriteBenchmark<T> extends InsertManyBenchmark<T> {
-    private static final MongoNamespace NAMESPACE = new MongoNamespace(DATABASE_NAME, COLLECTION_NAME);
-    private final List<ClientNamespacedInsertOneModel> documentList;
+public class ClientBulkWriteBenchmark<T> extends AbstractCollectionWriteBenchmark<T> {
+    private final List<ClientNamespacedInsertOneModel> modelList;
 
     public ClientBulkWriteBenchmark(final String name, final String resourcePath, final int numDocuments, final Class<T> clazz) {
-        super(name + " doc Client BulkWrite insert", resourcePath, numDocuments, clazz);
-        documentList = new ArrayList<>(numDocuments);
-    }
-
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
+        super(name + " doc Client BulkWrite insert", resourcePath, 1, numDocuments, clazz);
+        modelList = new ArrayList<>(numDocuments);
     }
 
     @Override
     public void before() throws Exception {
         super.before();
+        database.createCollection(COLLECTION_NAME);
 
-        documentList.clear();
+        modelList.clear();
         for (int i = 0; i < numDocuments; i++) {
-            documentList.add(ClientNamespacedWriteModel.insertOne(NAMESPACE, createDocument()));
+            modelList.add(ClientNamespacedWriteModel.insertOne(NAMESPACE, createDocument()));
         }
     }
 
     @Override
     public void run() {
-        client.bulkWrite(documentList);
+        client.bulkWrite(modelList);
     }
 }
