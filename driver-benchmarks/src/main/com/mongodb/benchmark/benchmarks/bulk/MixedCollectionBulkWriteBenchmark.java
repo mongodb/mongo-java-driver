@@ -23,6 +23,7 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.WriteModel;
+import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,8 +45,8 @@ public class MixedCollectionBulkWriteBenchmark<T> extends AbstractCollectionWrit
         modelList.clear();
         for (int i = 0; i < numDocuments; i++) {
             modelList.add(new InsertOneModel<>((createDocument())));
-            modelList.add(new ReplaceOneModel<>(Filters.empty(), createDocument()));
-            modelList.add(new DeleteOneModel<>(Filters.empty()));
+            modelList.add(new ReplaceOneModel<>(EMPTY_FILTER, createDocument()));
+            modelList.add(new DeleteOneModel<>(EMPTY_FILTER));
         }
     }
 

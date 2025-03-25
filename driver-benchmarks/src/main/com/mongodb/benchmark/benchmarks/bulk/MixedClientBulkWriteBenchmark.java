@@ -21,7 +21,6 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.benchmark.benchmarks.AbstractMongoBenchmark;
 import com.mongodb.benchmark.benchmarks.AbstractWriteBenchmark;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 
 import java.util.ArrayList;
@@ -72,12 +71,10 @@ public class MixedClientBulkWriteBenchmark<T> extends AbstractWriteBenchmark<T> 
                     namespace,
                     createDocument()));
             modelList.add(replaceOne(
-                    namespace,
-                    Filters.empty(),
+                    namespace, EMPTY_FILTER,
                     createDocument()));
             modelList.add(deleteOne(
-                    namespace,
-                    Filters.empty()));
+                    namespace, EMPTY_FILTER));
         }
     }
 

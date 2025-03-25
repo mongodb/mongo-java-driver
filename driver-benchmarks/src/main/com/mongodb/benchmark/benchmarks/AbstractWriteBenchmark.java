@@ -17,13 +17,16 @@
 
 package com.mongodb.benchmark.benchmarks;
 
+import com.mongodb.client.model.Filters;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
+import org.bson.conversions.Bson;
 import org.bson.json.JsonReader;
 
 import java.nio.charset.StandardCharsets;
 
 public abstract class AbstractWriteBenchmark<T> extends AbstractMongoBenchmark {
+    protected static final Bson EMPTY_FILTER = Filters.empty();
     private final String name;
     private final String resourcePath;
     private final Class<T> clazz;
