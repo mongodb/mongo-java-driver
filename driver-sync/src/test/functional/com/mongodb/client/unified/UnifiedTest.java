@@ -59,9 +59,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.opentest4j.TestAbortedException;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -98,8 +95,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.abort;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
-import static util.JsonPoweredTestHelper.getTestDocument;
-import static util.JsonPoweredTestHelper.getTestFiles;
+import static util.JsonPoweredTestHelper.getTestDocuments;
 
 @ExtendWith(AfterBeforeParameterResolver.class)
 public abstract class UnifiedTest {
@@ -165,11 +161,9 @@ public abstract class UnifiedTest {
     }
 
     @NonNull
-    protected static Collection<Arguments> getTestData(final String directory, final boolean isReactive)
-            throws URISyntaxException, IOException {
+    protected static Collection<Arguments> getTestData(final String directory, final boolean isReactive) {
         List<Arguments> data = new ArrayList<>();
-        for (File file : getTestFiles("/" + directory + "/")) {
-            BsonDocument fileDocument = getTestDocument(file);
+        for (BsonDocument fileDocument : getTestDocuments("/" + directory + "/")) {
             for (BsonValue cur : fileDocument.getArray("tests")) {
 
                 final BsonDocument testDocument = cur.asDocument();

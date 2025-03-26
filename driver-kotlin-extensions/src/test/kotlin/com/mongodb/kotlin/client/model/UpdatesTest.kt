@@ -45,6 +45,7 @@ import com.mongodb.kotlin.client.model.Updates.setOnInsert
 import com.mongodb.kotlin.client.model.Updates.unset
 import java.time.Instant
 import java.util.Date
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import org.bson.BsonDocument
 import org.bson.Document
@@ -53,7 +54,6 @@ import org.bson.codecs.configuration.CodecRegistries.fromProviders
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.codecs.pojo.PojoCodecProvider
 import org.bson.conversions.Bson
-import org.junit.Test
 
 class UpdatesTest {
     @Test

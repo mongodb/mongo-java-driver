@@ -27,8 +27,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Collection;
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
@@ -78,7 +76,7 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
     }
 
     @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
+    public static Collection<Object[]> data() {
         return data("/server-discovery-and-monitoring");
     }
 

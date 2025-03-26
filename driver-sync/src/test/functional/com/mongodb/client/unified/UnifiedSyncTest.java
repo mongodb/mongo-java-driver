@@ -28,8 +28,6 @@ import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.lang.NonNull;
 import org.junit.jupiter.params.provider.Arguments;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Collection;
 
 public abstract class UnifiedSyncTest extends UnifiedTest {
@@ -52,7 +50,7 @@ public abstract class UnifiedSyncTest extends UnifiedTest {
     }
 
     @NonNull
-    protected static Collection<Arguments> getTestData(final String directory) throws URISyntaxException, IOException {
+    protected static Collection<Arguments> getTestData(final String directory) {
         return getTestData(directory, false);
     }
 }

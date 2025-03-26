@@ -9,7 +9,7 @@ import com.mongodb.connection.SslSettings
 import com.mongodb.spi.dns.InetAddressResolver
 import spock.lang.IgnoreIf
 import spock.lang.Specification
-import util.spock.annotations.Slow
+import com.mongodb.spock.Slow
 
 import java.util.concurrent.CountDownLatch
 
