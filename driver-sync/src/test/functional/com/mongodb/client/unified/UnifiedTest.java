@@ -102,6 +102,10 @@ public abstract class UnifiedTest {
     private static final Set<String> PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS = Collections.singleton(
             "wait queue timeout errors include details about checked out connections");
 
+    public enum Language {
+        JAVA, KOTLIN, SCALA
+    }
+
     public static final int RETRY_ATTEMPTS = 3;
     public static final int FORCE_FLAKY_ATTEMPTS = 10;
     private static final Set<String> ATTEMPTED_TESTS_TO_HENCEFORTH_IGNORE = new HashSet<>();
@@ -161,7 +165,7 @@ public abstract class UnifiedTest {
     }
 
     @NonNull
-    protected static Collection<Arguments> getTestData(final String directory, final boolean isReactive) {
+    protected static Collection<Arguments> getTestData(final String directory, final boolean isReactive, final Language language) {
         List<Arguments> data = new ArrayList<>();
         for (BsonDocument fileDocument : getTestDocuments("/" + directory + "/")) {
             for (BsonValue cur : fileDocument.getArray("tests")) {
@@ -169,7 +173,7 @@ public abstract class UnifiedTest {
                 final BsonDocument testDocument = cur.asDocument();
                 String testDescription = testDocument.getString("description").getValue();
                 String fileDescription = fileDocument.getString("description").getValue();
-                TestDef testDef = testDef(directory, fileDescription, testDescription, isReactive);
+                TestDef testDef = testDef(directory, fileDescription, testDescription, isReactive, language);
                 applyCustomizations(testDef);
 
                 boolean forceFlaky = testDef.wasAssignedModifier(Modifier.FORCE_FLAKY);
@@ -240,7 +244,7 @@ public abstract class UnifiedTest {
         rootContext.getAssertionContext().push(ContextElement.ofTest(definition));
         ignoreExtraEvents = false;
         if (directoryName != null && fileDescription != null && testDescription != null) {
-            testDef = testDef(directoryName, fileDescription, testDescription, isReactive());
+            testDef = testDef(directoryName, fileDescription, testDescription, isReactive(), getLanguage());
             applyCustomizations(testDef);
 
             boolean skip = testDef.wasAssignedModifier(Modifier.SKIP);
@@ -327,6 +331,10 @@ public abstract class UnifiedTest {
 
     protected boolean isReactive() {
         return false;
+    }
+
+    protected Language getLanguage() {
+        return Language.JAVA;
     }
 
     @ParameterizedTest(name = "{0}")

@@ -92,7 +92,6 @@ import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
-import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.client.model.bulk.AbstractClientDeleteOptions;
 import com.mongodb.internal.client.model.bulk.AbstractClientUpdateOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteManyOptions;
@@ -114,7 +113,6 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistries;
-import org.bson.conversions.Bson;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -414,8 +412,6 @@ final class UnifiedCrudHelper extends UnifiedHelper {
      * There is no explicit {@code findOne()} method in {@link MongoCollection} class.
      * Its feature was emulated by {@link FindIterable#first()}, which would close cursor on server
      * by setting {@code batchSize} and {@code limit} appropriately.
-     *
-     * @see com.mongodb.internal.operation.Operations#findFirst(Bson, Class, FindOptions)
      */
     OperationResult executeFindOne(final BsonDocument operation) {
         return resultOf(() ->  createFindIterable(operation).first());
