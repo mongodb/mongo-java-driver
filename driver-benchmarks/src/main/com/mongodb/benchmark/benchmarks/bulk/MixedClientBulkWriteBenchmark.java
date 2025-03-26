@@ -82,9 +82,4 @@ public class MixedClientBulkWriteBenchmark<T> extends AbstractWriteBenchmark<T> 
     public void run() {
         client.bulkWrite(modelList);
     }
-
-    @Override
-    public int getBytesPerRun() {
-        return 0;
-    }
 }
