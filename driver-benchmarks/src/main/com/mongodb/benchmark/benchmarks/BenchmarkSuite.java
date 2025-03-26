@@ -97,7 +97,7 @@ public class BenchmarkSuite {
 
         runBenchmark(new MixedCollectionBulkWriteBenchmark<>("./single_and_multi_document/small_doc.json", 10_000,
                 DOCUMENT_CLASS));
-        runBenchmark(new MixedClientBulkWriteBenchmark<>("./single_and_multi_document/large_doc.json", 10,
+        runBenchmark(new MixedClientBulkWriteBenchmark<>("./single_and_multi_document/small_doc.json", 10_000,
                 DOCUMENT_CLASS));
 
         runBenchmark(new GridFSUploadBenchmark("single_and_multi_document/gridfs_large.bin"));
