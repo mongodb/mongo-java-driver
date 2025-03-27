@@ -1547,7 +1547,7 @@ tasks:
             product_name: mongo-java-driver
         - func: "create and upload SSDLC release assets"
 
-  #Do not rename this task, as we will lose perf timeseries
+  # Do not rename this task – renaming resets the performance time series
     - name: "perf"
       tags: ["perf"]
       commands:
