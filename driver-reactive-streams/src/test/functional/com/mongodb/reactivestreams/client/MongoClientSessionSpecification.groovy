@@ -32,7 +32,7 @@ import org.bson.Document
 import org.junit.Assert
 import reactor.core.publisher.Mono
 import spock.lang.IgnoreIf
-import util.spock.annotations.Slow
+import com.mongodb.spock.Slow
 
 import java.util.concurrent.TimeUnit
 

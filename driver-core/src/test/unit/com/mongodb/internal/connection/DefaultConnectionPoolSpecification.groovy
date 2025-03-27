@@ -34,7 +34,7 @@ import com.mongodb.logging.TestLoggingInterceptor
 import org.bson.types.ObjectId
 import spock.lang.Specification
 import spock.lang.Subject
-import util.spock.annotations.Slow
+import com.mongodb.spock.Slow
 
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch

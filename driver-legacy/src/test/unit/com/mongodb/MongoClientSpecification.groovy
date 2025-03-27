@@ -309,7 +309,7 @@ class MongoClientSpecification extends Specification {
     def 'should validate the ChangeStreamIterable pipeline data correctly'() {
         given:
         def executor = new TestOperationExecutor([])
-        def client = new MongoClientImpl(Stub(Cluster), null, MongoClientSettings.builder().build(), executor)
+        def client = new MongoClientImpl(Stub(Cluster), null, MongoClientSettings.builder().build(), null, executor)
 
         when:
         client.watch((Class) null)

@@ -16,11 +16,12 @@
 
 package com.mongodb.client.unified;
 
-import com.mongodb.assertions.Assertions;
+import org.opentest4j.AssertionFailedError;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.mongodb.ClusterFixture.isDataLakeTest;
@@ -29,14 +30,17 @@ import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.IGNORE_EXTRA_EVENTS;
+import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.RETRY;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.SKIP;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.SLEEP_AFTER_CURSOR_CLOSE;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.SLEEP_AFTER_CURSOR_OPEN;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.WAIT_FOR_BATCH_CURSOR_CREATION;
+import static java.lang.String.format;
 
 public final class UnifiedTestModifications {
-    public static void doSkips(final TestDef def) {
+    public static void applyCustomizations(final TestDef def) {
 
         // atlas-data-lake
 
@@ -45,7 +49,7 @@ public final class UnifiedTestModifications {
                 .directory("atlas-data-lake-testing");
 
         // change-streams
-        def.skipNoncompliantReactive("error required from change stream initialization") // TODO reason?
+        def.skipNoncompliantReactive("error required from change stream initialization") // TODO-JAVA-5711 reason?
                 .test("change-streams", "change-streams", "Test with document comment - pre 4.4");
         def.skipNoncompliantReactive("event sensitive tests. We can't guarantee the amount of GetMore commands sent in the reactive driver")
                 .test("change-streams", "change-streams", "Test that comment is set on getMore")
@@ -61,17 +65,21 @@ public final class UnifiedTestModifications {
 
         // client-side-operation-timeout (CSOT)
 
-        // TODO
+        def.skipNoncompliantReactive("No good way to fulfill tryNext() requirement with a Publisher<T>")
+                .directory("client-side-operation-timeout")
+                .test("timeoutMS behaves correctly for tailable awaitData cursors", "apply remaining timeoutMS if less than maxAwaitTimeMS");
+
+        // TODO-JAVA-5712
 
         // collection-management
 
-        def.skipNoncompliant("") // TODO reason?
+        def.skipNoncompliant("") // TODO-JAVA-5711 reason?
                 .test("collection-management", "modifyCollection-pre_and_post_images", "modifyCollection to changeStreamPreAndPostImages enabled");
 
         // command-logging-and-monitoring
 
-        def.skipNoncompliant("TODO")
-                .when(() -> !def.isReactive() && isServerlessTest()) // TODO why reactive check?
+        def.skipNoncompliant("") // TODO-JAVA-5711
+                .when(() -> !def.isReactive() && isServerlessTest()) // TODO-JAVA-5711 why reactive check?
                 .directory("command-logging")
                 .directory("command-monitoring");
 
@@ -84,7 +92,7 @@ public final class UnifiedTestModifications {
 
         // connection-monitoring-and-pooling
 
-        // TODO reason, jira
+        // TODO-JAVA-5711 reason, jira
         // added as part of https://jira.mongodb.org/browse/JAVA-4976 , but unknown Jira to complete
         // The implementation of the functionality related to clearing the connection pool before closing the connection
         // will be carried out once the specification is finalized and ready.
@@ -259,6 +267,7 @@ public final class UnifiedTestModifications {
         private final boolean reactive;
 
         private final List<Modifier> modifiers = new ArrayList<>();
+        private Function<Throwable, Boolean> matchesThrowable;
 
         private TestDef(final String dir, final String file, final String test, final boolean reactive) {
             this.dir = assertNotNull(dir);
@@ -274,7 +283,7 @@ public final class UnifiedTestModifications {
          * @param ticket reason for skipping the test; must start with a Jira URL
          */
         public TestApplicator skipJira(final String ticket) {
-            Assertions.assertTrue(ticket.startsWith("https://jira.mongodb.org/browse/JAVA-"));
+            assertTrue(ticket.startsWith("https://jira.mongodb.org/browse/JAVA-"));
             return new TestApplicator(this, ticket, SKIP);
         }
 
@@ -322,6 +331,21 @@ public final class UnifiedTestModifications {
             return new TestApplicator(this, reason, SKIP);
         }
 
+        /**
+         * The test will be retried, for the reason provided
+         */
+        public TestApplicator retry(final String reason) {
+            return new TestApplicator(this, reason, RETRY);
+        }
+
+        /**
+         * The reactive test will be retried, for the reason provided
+         */
+        public TestApplicator retryReactive(final String reason) {
+            return new TestApplicator(this, reason, RETRY)
+                    .when(this::isReactive);
+        }
+
         public TestApplicator modify(final Modifier... modifiers) {
             return new TestApplicator(this, null, modifiers);
         }
@@ -333,6 +357,13 @@ public final class UnifiedTestModifications {
         public boolean wasAssignedModifier(final Modifier modifier) {
             return this.modifiers.contains(modifier);
         }
+
+        public boolean matchesThrowable(final Throwable e) {
+            if (matchesThrowable != null) {
+                return matchesThrowable.apply(e);
+            }
+            return false;
+        }
     }
 
     /**
@@ -340,9 +371,11 @@ public final class UnifiedTestModifications {
      */
     public static final class TestApplicator {
         private final TestDef testDef;
-        private final List<Modifier> modifiersToApply;
         private Supplier<Boolean> precondition;
         private boolean matchWasPerformed = false;
+
+        private final List<Modifier> modifiersToApply;
+        private Function<Throwable, Boolean> matchesThrowable;
 
         private TestApplicator(
                 final TestDef testDef,
@@ -350,7 +383,7 @@ public final class UnifiedTestModifications {
                 final Modifier... modifiersToApply) {
             this.testDef = testDef;
             this.modifiersToApply = Arrays.asList(modifiersToApply);
-            if (this.modifiersToApply.contains(SKIP)) {
+            if (this.modifiersToApply.contains(SKIP) || this.modifiersToApply.contains(RETRY)) {
                 assertNotNull(reason);
             }
         }
@@ -362,6 +395,7 @@ public final class UnifiedTestModifications {
             }
             if (match) {
                 this.testDef.modifiers.addAll(this.modifiersToApply);
+                this.testDef.matchesThrowable = this.matchesThrowable;
             }
             return this;
         }
@@ -453,6 +487,26 @@ public final class UnifiedTestModifications {
             this.precondition = precondition;
             return this;
         }
+
+        /**
+         * The modification, if it is a RETRY, will only be applied when the
+         * failure message contains the provided message fragment. If an
+         * {@code AssertionFailedError} occurs, and has a cause, the cause's
+         * message will be checked. Otherwise, the throwable will be checked.
+         */
+        public TestApplicator whenFailureContains(final String messageFragment) {
+            assertTrue(this.modifiersToApply.contains(RETRY),
+                    format("Modifier %s was not specified before calling whenFailureContains", RETRY));
+            this.matchesThrowable = (final Throwable e) -> {
+                // inspect the cause for failed assertions with a cause
+                if (e instanceof AssertionFailedError && e.getCause() != null) {
+                    return e.getCause().getMessage().contains(messageFragment);
+                } else {
+                    return e.getMessage().contains(messageFragment);
+                }
+            };
+            return this;
+        }
     }
 
     public enum Modifier {
@@ -478,5 +532,17 @@ public final class UnifiedTestModifications {
          * Skip the test.
          */
         SKIP,
+        /**
+         * Ignore results and retry the test on failure. Will not repeat the
+         * test if the test succeeds. Multiple copies of the test are used to
+         * facilitate retries.
+         */
+        RETRY,
+        /**
+         * The test will be retried multiple times, without the results being
+         * ignored. This is a helper that can be used, in patches, to check
+         * if certain tests are (still) flaky.
+         */
+        FORCE_FLAKY,
     }
 }
