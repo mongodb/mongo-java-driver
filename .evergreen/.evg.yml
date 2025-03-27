@@ -1547,20 +1547,9 @@ tasks:
             product_name: mongo-java-driver
         - func: "create and upload SSDLC release assets"
 
-  #Do not currently rename this task, as we will lose perf timeseries
+  #Do not rename this task, as we will lose perf timeseries
     - name: "perf"
       tags: ["perf"]
-      commands:
-        - func: "bootstrap mongo-orchestration"
-          vars:
-            VERSION: "v6.0-perf"
-            TOPOLOGY: "server"
-            SSL: "nossl"
-            AUTH: "noauth"
-        - func: "run perf tests"
-        - func: "send dashboard data"
-    - name: "perf-8.0"
-      tags: [ "perf" ]
       commands:
         - func: "bootstrap mongo-orchestration"
           vars:
@@ -2323,7 +2312,6 @@ buildvariants:
   run_on: rhel90-dbx-perf-large
   tasks:
     - name: "perf"
-    - name: "perf-8.0"
 
 - name: plain-auth-test
   display_name: "PLAIN (LDAP) Auth test"
