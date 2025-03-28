@@ -19,11 +19,9 @@ package com.mongodb.benchmark.benchmarks.bulk;
 
 import com.mongodb.benchmark.benchmarks.AbstractCollectionWriteBenchmark;
 import com.mongodb.client.model.DeleteOneModel;
-import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.WriteModel;
-import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,8 +30,9 @@ public class MixedCollectionBulkWriteBenchmark<T> extends AbstractCollectionWrit
     private final List<WriteModel<T>> modelList;
 
     public MixedCollectionBulkWriteBenchmark(final String resourcePath, final int numDocuments, final Class<T> clazz) {
+        // numDocuments * 2 aligns with bytes transferred (insertOne + replaceOne documents)
         super("Small doc Collection BulkWrite Mixed Operations", resourcePath, 1, numDocuments * 2, clazz);
-        modelList = new ArrayList<>(super.numDocuments);
+        this.modelList = new ArrayList<>(numDocuments * 3);
     }
 
 
@@ -43,7 +42,7 @@ public class MixedCollectionBulkWriteBenchmark<T> extends AbstractCollectionWrit
         database.createCollection(COLLECTION_NAME);
 
         modelList.clear();
-        for (int i = 0; i < numDocuments; i++) {
+        for (int i = 0; i < numDocuments / 2; i++) {
             modelList.add(new InsertOneModel<>((createDocument())));
             modelList.add(new ReplaceOneModel<>(EMPTY_FILTER, createDocument()));
             modelList.add(new DeleteOneModel<>(EMPTY_FILTER));

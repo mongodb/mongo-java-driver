@@ -31,9 +31,9 @@ public abstract class AbstractCollectionWriteBenchmark<T> extends AbstractWriteB
     protected AbstractCollectionWriteBenchmark(final String name,
                                                final String resourcePath,
                                                int numIterations,
-                                               int numberDocuments,
+                                               int numDocuments,
                                                final Class<T> clazz) {
-        super(name, resourcePath, numIterations, numberDocuments, clazz);
+        super(name, resourcePath, numIterations, numDocuments, clazz);
         this.name = name;
         this.clazz = clazz;
     }

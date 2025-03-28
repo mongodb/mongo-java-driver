@@ -37,9 +37,10 @@ public class MixedClientBulkWriteBenchmark<T> extends AbstractWriteBenchmark<T> 
     private List<MongoNamespace> namespaces;
 
     public MixedClientBulkWriteBenchmark(final String resourcePath, final int numDocuments, final Class<T> clazz) {
+        // numDocuments * 2 aligns with bytes transferred (insertOne + replaceOne documents)
         super("Small doc Client BulkWrite Mixed Operations", resourcePath, 1, numDocuments * 2, clazz);
-        modelList = new ArrayList<>(super.numDocuments);
-        namespaces = new ArrayList<>(NAMESPACES_COUNT);
+        this.modelList = new ArrayList<>(numDocuments * 3);
+        this.namespaces = new ArrayList<>(NAMESPACES_COUNT);
     }
 
     @Override
@@ -65,7 +66,7 @@ public class MixedClientBulkWriteBenchmark<T> extends AbstractWriteBenchmark<T> 
         }
 
         modelList.clear();
-        for (int i = 0; i < numDocuments; i++) {
+        for (int i = 0; i < numDocuments / 2; i++) {
             MongoNamespace namespace = namespaces.get(i % NAMESPACES_COUNT);
             modelList.add(insertOne(
                     namespace,
