@@ -1549,12 +1549,13 @@ tasks:
             product_name: mongo-java-driver
         - func: "create and upload SSDLC release assets"
 
+  # Do not rename this task – renaming resets the performance time series
     - name: "perf"
       tags: ["perf"]
       commands:
         - func: "bootstrap mongo-orchestration"
           vars:
-            VERSION: "v6.0-perf"
+            VERSION: "v8.0-perf"
             TOPOLOGY: "server"
             SSL: "nossl"
             AUTH: "noauth"
