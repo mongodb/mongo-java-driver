@@ -285,7 +285,7 @@ functions:
           export AWS_TEMP_SESSION_TOKEN=$CSFLE_AWS_TEMP_SESSION_TOKEN
           export CRYPT_SHARED_LIB_PATH=${CRYPT_SHARED_LIB_PATH}
 
-          AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" \
+          AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" \
           COMPRESSOR="${COMPRESSOR}" JAVA_VERSION="${JAVA_VERSION}" REQUIRE_API_VERSION=${REQUIRE_API_VERSION} \
           TESTS="${TESTS}" .evergreen/run-tests.sh
 
@@ -344,7 +344,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          SCALA="${SCALA}" AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-scala-tests.sh
+          SCALA="${SCALA}" AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-scala-tests.sh
 
   "run kotlin tests":
     - command: shell.exec
@@ -353,7 +353,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-kotlin-tests.sh
+          AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-kotlin-tests.sh
 
 
   "run socket tests":
@@ -598,16 +598,6 @@ functions:
           KDC=${gssapi_auth_kdc} REALM=${gssapi_auth_realm} KEYTAB_BASE64=${gssapi_auth_keytab_base64} \
           LOGIN_CONTEXT_NAME=${LOGIN_CONTEXT_NAME} \
           .evergreen/run-gssapi-auth-test.sh
-
-  "run mmapv1 storage test":
-    - command: shell.exec
-      type: test
-      params:
-        silent: true
-        working_dir: "src"
-        script: |
-          ${PREPARE_SHELL}
-          PROJECT_DIRECTORY=${PROJECT_DIRECTORY} JAVA_VERSION=${JAVA_VERSION} TOPOLOGY=${TOPOLOGY} STORAGE_ENGINE=${STORAGE_ENGINE} MONGODB_URI="${MONGODB_URI}" .evergreen/run-mmapv1-storage-test.sh
 
   run socks5 tests:
     - command: shell.exec
@@ -1577,11 +1567,6 @@ tasks:
               TEST_LAMBDA_DIRECTORY: ${PROJECT_DIRECTORY}/driver-lambda/
               AWS_REGION: us-east-1
 
-    - name: "mmapv1-storage-test"
-      commands:
-        - func: "bootstrap mongo-orchestration"
-        - func: "run mmapv1 storage test"
-
     - name: "test-kms-tls-invalid-cert"
       tags: ["kms-tls"]
       commands:
@@ -1717,55 +1702,30 @@ axes:
         display_name: "latest"
         variables:
            VERSION: "latest"
-           # Multiple mongos instances can be specified in the connection string
-           # for this version.
-           SAFE_FOR_MULTI_MONGOS: true
       - id: "8.0"
         display_name: "8.0"
         variables:
           VERSION: "8.0"
-          # Multiple mongos instances can be specified in the connection string
-          # for this version.
-          SAFE_FOR_MULTI_MONGOS: true
       - id: "7.0"
         display_name: "7.0"
         variables:
           VERSION: "7.0"
-          # Multiple mongos instances can be specified in the connection string
-          # for this version.
-          SAFE_FOR_MULTI_MONGOS: true
       - id: "6.0"
         display_name: "6.0"
         variables:
           VERSION: "6.0"
-          # Multiple mongos instances can be specified in the connection string
-          # for this version.
-          SAFE_FOR_MULTI_MONGOS: true
       - id: "5.0"
         display_name: "5.0"
         variables:
           VERSION: "5.0"
-          # Multiple mongos instances can be specified in the connection string
-          # for this version.
-          SAFE_FOR_MULTI_MONGOS: true
       - id: "4.4"
         display_name: "4.4"
         variables:
           VERSION: "4.4"
-          # Multiple mongos instances can be specified in the connection string
-          # for this version.
-          SAFE_FOR_MULTI_MONGOS: true
       - id: "4.2"
         display_name: "4.2"
         variables:
            VERSION: "4.2"
-           # Multiple mongos instances can be specified in the connection string
-           # for this version.
-           SAFE_FOR_MULTI_MONGOS: true
-      - id: "4.0"
-        display_name: "4.0"
-        variables:
-           VERSION: "4.0"
   - id: os
     display_name: OS
     values:
@@ -1885,15 +1845,6 @@ axes:
         display_name: "Scala 2.13"
         variables:
           SCALA: "2.13"
-
-  # Choice of MongoDB storage engine
-  - id: storage-engine
-    display_name: Storage
-    values:
-      - id: mmapv1
-        display_name: MMAPv1
-        variables:
-           STORAGE_ENGINE: "mmapv1"
 
   - id: api-version
     display_name: API Version
@@ -2201,7 +2152,7 @@ buildvariants:
     - name: "test-bson-and-crypt"
 
 - matrix_name: "tests-jdk8-unsecure"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk8", version: ["4.0", "4.2", "4.4", "5.0", "6.0", "7.0", "8.0", "latest"],
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk8", version: ["4.2", "4.4", "5.0", "6.0", "7.0", "8.0", "latest"],
                  topology: "*", os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
@@ -2213,7 +2164,7 @@ buildvariants:
 
 - matrix_name: "tests-jdk-secure"
   matrix_spec: { auth: "auth", ssl: "ssl", jdk: [ "jdk8", "jdk17", "jdk21"],
-                 version: ["4.0", "4.2", "4.4", "5.0", "6.0", "7.0", "8.0", "latest" ],
+                 version: ["4.2", "4.4", "5.0", "6.0", "7.0", "8.0", "latest" ],
                  topology: "*", os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
@@ -2426,12 +2377,6 @@ buildvariants:
   run_on: ubuntu2004-small
   tasks:
     - name: "publish-release"
-
-- matrix_name: "tests-storage-engines"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk8", os: "linux", version: ["4.0"], topology: ["replicaset", "sharded-cluster"], storage-engine: "mmapv1" }
-  display_name: "${version} Storage ${storage-engine} ${jdk} ${os} ${topology}"
-  tasks:
-    - name: "mmapv1-storage-test"
 
 - matrix_name: "kms-tls-test"
   matrix_spec: { os: "linux", version: [ "5.0" ], topology: ["standalone"] }

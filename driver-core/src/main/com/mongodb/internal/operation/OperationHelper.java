@@ -46,7 +46,6 @@ import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotFour;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotTwo;
 import static java.lang.String.format;
 
 /**
@@ -70,10 +69,6 @@ public final class OperationHelper {
     private static void validateWriteRequestHint(final ConnectionDescription connectionDescription, final WriteConcern writeConcern,
                                                  final WriteRequest request) {
         if (!writeConcern.isAcknowledged()) {
-            if (request instanceof UpdateRequest && serverIsLessThanVersionFourDotTwo(connectionDescription)) {
-                throw new IllegalArgumentException(format("Hint not supported by wire version: %s",
-                        connectionDescription.getMaxWireVersion()));
-            }
             if (request instanceof DeleteRequest && serverIsLessThanVersionFourDotFour(connectionDescription)) {
                 throw new IllegalArgumentException(format("Hint not supported by wire version: %s",
                         connectionDescription.getMaxWireVersion()));
@@ -82,10 +77,6 @@ public final class OperationHelper {
     }
 
     static void validateHintForFindAndModify(final ConnectionDescription connectionDescription, final WriteConcern writeConcern) {
-        if (serverIsLessThanVersionFourDotTwo(connectionDescription)) {
-            throw new IllegalArgumentException(format("Hint not supported by wire version: %s",
-                    connectionDescription.getMaxWireVersion()));
-        }
         if (!writeConcern.isAcknowledged() && serverIsLessThanVersionFourDotFour(connectionDescription)) {
             throw new IllegalArgumentException(format("Hint not supported by wire version: %s",
                     connectionDescription.getMaxWireVersion()));

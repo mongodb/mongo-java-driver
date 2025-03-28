@@ -8,7 +8,6 @@ AUTH=${AUTH:-noauth}
 SSL=${SSL:-nossl}
 MONGODB_URI=${MONGODB_URI:-}
 TOPOLOGY=${TOPOLOGY:-standalone}
-SAFE_FOR_MULTI_MONGOS=${SAFE_FOR_MULTI_MONGOS:-}
 
 ############################################
 #            Main Program                  #
@@ -27,9 +26,7 @@ if [ "$AUTH" != "noauth" ]; then
   exit 1
 fi
 
-if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
-    export MULTI_MONGOS_URI_SYSTEM_PROPERTY="-Dorg.mongodb.test.multi.mongos.uri=${MONGODB_URI}"
-fi
+export MULTI_MONGOS_URI_SYSTEM_PROPERTY="-Dorg.mongodb.test.multi.mongos.uri=${MONGODB_URI}"
 
 ./gradlew -version
 
