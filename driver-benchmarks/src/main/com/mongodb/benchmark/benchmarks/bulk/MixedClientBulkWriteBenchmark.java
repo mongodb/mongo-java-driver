@@ -37,7 +37,7 @@ public class MixedClientBulkWriteBenchmark<T> extends AbstractWriteBenchmark<T> 
     private List<MongoNamespace> namespaces;
 
     public MixedClientBulkWriteBenchmark(final String resourcePath, final int numDocuments, final Class<T> clazz) {
-        super("Small doc Client BulkWrite Mixed Operations", resourcePath, 1, numDocuments * 3, clazz);
+        super("Small doc Client BulkWrite Mixed Operations", resourcePath, 1, numDocuments * 2, clazz);
         modelList = new ArrayList<>(super.numDocuments);
         namespaces = new ArrayList<>(NAMESPACES_COUNT);
     }

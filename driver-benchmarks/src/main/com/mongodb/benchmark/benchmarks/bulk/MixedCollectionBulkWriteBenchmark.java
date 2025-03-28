@@ -32,7 +32,7 @@ public class MixedCollectionBulkWriteBenchmark<T> extends AbstractCollectionWrit
     private final List<WriteModel<T>> modelList;
 
     public MixedCollectionBulkWriteBenchmark(final String resourcePath, final int numDocuments, final Class<T> clazz) {
-        super("Small doc Collection BulkWrite Mixed Operations", resourcePath, 1, numDocuments * 3, clazz);
+        super("Small doc Collection BulkWrite Mixed Operations", resourcePath, 1, numDocuments * 2, clazz);
         modelList = new ArrayList<>(super.numDocuments);
     }
 

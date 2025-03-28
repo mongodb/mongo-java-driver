@@ -33,18 +33,18 @@ public abstract class AbstractWriteBenchmark<T> extends AbstractMongoBenchmark {
     private byte[] bytes;
     protected int fileLength;
     protected T document;
-    protected int numIterations;
+    protected int numInternalIterations;
     protected int numDocuments;
 
     protected AbstractWriteBenchmark(final String name,
                                      final String resourcePath,
-                                     int numIterations,
+                                     int numInternalIterations,
                                      int numDocuments,
                                      final Class<T> clazz) {
         this.name = name;
         this.resourcePath = resourcePath;
         this.clazz = clazz;
-        this.numIterations = numIterations;
+        this.numInternalIterations = numInternalIterations;
         this.numDocuments = numDocuments;
     }
 
@@ -69,6 +69,6 @@ public abstract class AbstractWriteBenchmark<T> extends AbstractMongoBenchmark {
 
     @Override
     public int getBytesPerRun() {
-        return fileLength * numIterations * numDocuments;
+        return fileLength * numInternalIterations * numDocuments;
     }
 }
