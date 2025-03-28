@@ -192,7 +192,10 @@ public class TimeoutContext {
 
     public void runMaxTimeMS(final LongConsumer onRemaining) {
         if (maxTimeSupplier != null) {
-            runWithFixedTimeout(maxTimeSupplier.get(), onRemaining);
+            long maxTimeMS = maxTimeSupplier.get();
+            if (maxTimeMS > 0) {
+                runMinTimeout(onRemaining, maxTimeMS);
+            }
             return;
         }
         if (timeout == null) {
@@ -207,6 +210,22 @@ public class TimeoutContext {
                             throw createMongoRoundTripTimeoutException();
                         });
 
+    }
+
+    private void runMinTimeout(final LongConsumer onRemaining, final long fixedMs) {
+        Timeout timeout = timeoutIncludingRoundTrip();
+        if (timeout != null) {
+            timeout.run(MILLISECONDS, () -> {
+                        onRemaining.accept(fixedMs);
+                    },
+                    (renamingMs) -> {
+                        onRemaining.accept(Math.min(renamingMs, fixedMs));
+                    }, () -> {
+                        throwMongoTimeoutException("The operation exceeded the timeout limit.");
+                    });
+        } else {
+            onRemaining.accept(fixedMs);
+        }
     }
 
     private static void runWithFixedTimeout(final long ms, final LongConsumer onRemaining) {
@@ -227,10 +246,14 @@ public class TimeoutContext {
      * <p>
      * NOTE: Suitable for static user-defined values only (i.e MaxAwaitTimeMS),
      * not for running timeouts that adjust dynamically (CSOT).
+     *
+     * If remaining CSOT timeout is less than this static timeout, then CSOT timeout will be used.
+     *
      */
     public void setMaxTimeOverride(final long maxTimeMS) {
         this.maxTimeSupplier = () -> maxTimeMS;
     }
+
     /**
      * Disable the maxTimeMS override. This way the maxTimeMS will not
      * be appended to the command in the {@link CommandMessage}.

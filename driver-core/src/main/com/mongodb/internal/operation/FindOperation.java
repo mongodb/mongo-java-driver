@@ -390,7 +390,12 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
             if (batchSize < 0 && Math.abs(batchSize) < limit) {
                 commandDocument.put("limit", new BsonInt32(Math.abs(batchSize)));
             } else if (batchSize != 0) {
-                commandDocument.put("batchSize", new BsonInt32(Math.abs(batchSize)));
+                int effectiveBatchSize = Math.abs(batchSize);
+                if (effectiveBatchSize == limit) {
+                    // avoid an open cursor on server side when batchSize and limit are equal
+                    effectiveBatchSize++;
+                }
+                commandDocument.put("batchSize", new BsonInt32(effectiveBatchSize));
             }
         }
         if (limit < 0 || batchSize < 0) {
