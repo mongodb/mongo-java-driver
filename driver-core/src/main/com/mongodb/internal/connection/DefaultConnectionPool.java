@@ -149,9 +149,9 @@ final class DefaultConnectionPool implements ConnectionPool {
 
     /**
      * @param sdamProvider For handling exceptions via the
-     *                     <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.rst">
+     *                     <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.md">
      *                     SDAM</a> machinery as specified
-     *                     <a href="https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst#populating-the-pool-with-a-connection-internal-implementation">
+     *                     <a href="https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.md#populating-the-pool-with-a-connection-internal-implementation">
      *                     here</a>.
      *                     Must provide an {@linkplain Optional#isPresent() empty} {@link Optional} if created in load-balanced mode,
      *                     otherwise must provide a non-empty {@link Optional}.
@@ -511,7 +511,7 @@ final class DefaultConnectionPool implements ConnectionPool {
      * @return A {@link StartTime} before executing {@link ConnectionPoolListener#connectionCreated(ConnectionCreatedEvent)}
      * and logging the event. This order is required by
 
-     * <a href="https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst#events">CMAP</a>
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.md#events">CMAP</a>
      * and {@link ConnectionReadyEvent#getElapsedTime(TimeUnit)}.
      */
     private StartTime connectionCreated(final ConnectionPoolListener connectionPoolListener, final ConnectionId connectionId) {
@@ -570,7 +570,7 @@ final class DefaultConnectionPool implements ConnectionPool {
      * @return A {@link StartTime} before executing
      * {@link ConnectionPoolListener#connectionCheckOutStarted(ConnectionCheckOutStartedEvent)} and logging the event.
      * This order is required by
-     * <a href="https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst#events">CMAP</a>
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.md#events">CMAP</a>
      * and {@link ConnectionCheckedOutEvent#getElapsedTime(TimeUnit)}, {@link ConnectionCheckOutFailedEvent#getElapsedTime(TimeUnit)}.
      */
     private StartTime connectionCheckoutStarted(final OperationContext operationContext) {
@@ -1425,7 +1425,7 @@ final class DefaultConnectionPool implements ConnectionPool {
      * {@link #runOnceAndStop()} unless {@link BackgroundMaintenanceManager} is {@linkplain #close() closed}.
      * <p>
      * This class implements
-     * <a href="https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst#background-thread">
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.md#background-thread">
      * CMAP background thread</a>.
      */
     @NotThreadSafe

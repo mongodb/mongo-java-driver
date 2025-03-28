@@ -85,7 +85,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * See
- * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.rst#prose-tests">Retryable Write Prose Tests</a>.
+ * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#prose-tests">Retryable Write Prose Tests</a>.
  */
 public class RetryableWritesProseTest extends DatabaseTestCase {
 
@@ -158,7 +158,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
                 .applyToServerSettings(builder -> builder
                         /* We fake server's state by configuring a fail point. This breaks the mechanism of the
                          * streaming server monitoring protocol
-                         * (https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-monitoring.rst#streaming-protocol)
+                         * (https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-monitoring.md#streaming-protocol)
                          * that allows the server to determine whether or not it needs to send a new state to the client.
                          * As a result, the client has to wait for at least its heartbeat delay until it hears back from a server
                          * (while it waits for a response, calling `ServerMonitor.connect` has no effect).

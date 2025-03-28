@@ -40,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-// See https://github.com/mongodb/specifications/tree/master/source/transactions-convenient-api/tests/README.rst#prose-tests
+// See https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#prose-tests
 public class WithTransactionProseTest extends DatabaseTestCase {
     private static final long START_TIME_MS = 1L;
     private static final long ERROR_GENERATING_INTERVAL = 121000L;
