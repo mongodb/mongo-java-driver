@@ -53,7 +53,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 
-// See https://github.com/mongodb/specifications/tree/master/source/change-streams/tests/README.rst#prose-tests
+// See https://github.com/mongodb/specifications/tree/master/source/change-streams/tests/README.md#prose-tests
 public class ChangeStreamProseTest extends DatabaseTestCase {
     private BsonDocument failPointDocument;
 

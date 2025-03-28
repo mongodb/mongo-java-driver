@@ -83,7 +83,7 @@ public interface Cluster extends Closeable {
 
     /**
      * This method allows {@link Server}s to notify the {@link Cluster} about changes in their state as per the
-     * <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.rst">
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.md">
      * Server Discovery And Monitoring</a> specification.
      */
     void onChange(ServerDescriptionChangedEvent event);

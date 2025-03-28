@@ -53,7 +53,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 // Prose tests for Sessions specification: https://github.com/mongodb/specifications/tree/master/source/sessions
-// Prose test README: https://github.com/mongodb/specifications/tree/master/source/sessions/tests/README.rst
+// Prose test README: https://github.com/mongodb/specifications/tree/master/source/sessions/tests/README.md
 public abstract class AbstractSessionsProseTest {
 
     private static final int MONGOCRYPTD_PORT = 47017;

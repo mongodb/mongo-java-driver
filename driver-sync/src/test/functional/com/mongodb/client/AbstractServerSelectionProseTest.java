@@ -53,12 +53,12 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * See prose tests in
- * <a href="https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection-tests.rst">
+ * <a href="https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection-tests.md">
  * "Server Selection Test Plan"</a>.
  */
 public abstract class AbstractServerSelectionProseTest {
     /**
-     * <a href="https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection-tests.rst#prose-test">
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection-tests.md#prose-test">
      * {@code operationCount}-based Selection Within Latency Window</a>.
      */
     @Test

@@ -53,7 +53,7 @@ public interface Server {
 
     /**
      * An approximation of the
-     * <a href="https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#operationcount">
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.md#operationcount">
      * number of operations that this server is currently executing</a>.
      *
      * @return A negative value iff the server does not track its operation count.

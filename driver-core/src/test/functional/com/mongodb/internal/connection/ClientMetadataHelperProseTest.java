@@ -47,7 +47,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * See <a href="https://github.com/mongodb/specifications/blob/master/source/mongodb-handshake/handshake.rst#test-plan">spec</a>
+ * See <a href="https://github.com/mongodb/specifications/blob/master/source/mongodb-handshake/handshake.md#test-plan">spec</a>
  *
  * <p>
  * NOTE: This class also contains tests that aren't categorized as Prose tests.

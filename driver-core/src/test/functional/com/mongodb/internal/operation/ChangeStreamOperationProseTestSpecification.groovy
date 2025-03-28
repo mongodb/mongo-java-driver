@@ -42,7 +42,7 @@ import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.internal.connection.ServerHelper.waitForLastRelease
 import static java.util.Arrays.asList
 
-// See https://github.com/mongodb/specifications/tree/master/source/change-streams/tests/README.rst#prose-tests
+// See https://github.com/mongodb/specifications/tree/master/source/change-streams/tests/README.md#prose-tests
 @IgnoreIf({ !(serverVersionAtLeast(3, 6) && !isStandalone()) })
 class ChangeStreamOperationProseTestSpecification extends OperationFunctionalSpecification {
 

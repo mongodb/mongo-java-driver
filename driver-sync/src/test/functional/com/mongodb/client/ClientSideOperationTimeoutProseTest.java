@@ -22,7 +22,7 @@ import com.mongodb.client.gridfs.GridFSBuckets;
 
 
 /**
- * See https://github.com/mongodb/specifications/blob/master/source/client-side-operations-timeout/tests/README.rst#prose-tests
+ * See https://github.com/mongodb/specifications/blob/master/source/client-side-operations-timeout/tests/README.md#prose-tests
  */
 public final class ClientSideOperationTimeoutProseTest extends AbstractClientSideOperationsTimeoutProseTest {
 

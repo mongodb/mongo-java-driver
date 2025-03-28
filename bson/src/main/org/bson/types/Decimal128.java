@@ -18,19 +18,18 @@ package org.bson.types;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.HashSet;
-import java.util.Set;
-
 import static java.math.MathContext.DECIMAL128;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A binary integer decimal representation of a 128-bit decimal value, supporting 34 decimal digits of significand and an exponent range
  * of -6143 to +6144.
  *
  * @since 3.4
- * @see <a href="https://github.com/mongodb/specifications/blob/master/source/bson-decimal128/decimal128.rst">BSON Decimal128
+ * @see <a href="https://github.com/mongodb/specifications/blob/master/source/bson-decimal128/decimal128.md">BSON Decimal128
  * specification</a>
  * @see <a href="https://en.wikipedia.org/wiki/Binary_Integer_Decimal">binary integer decimal</a>
  * @see <a href="https://en.wikipedia.org/wiki/Decimal128_floating-point_format">decimal128 floating-point format</a>
@@ -110,7 +109,7 @@ public final class Decimal128 extends Number implements Comparable<Decimal128> {
      * @return the Decimal128 value representing the given String
      * @throws NumberFormatException if the value is out of the Decimal128 range
      * @see
-     * <a href="https://github.com/mongodb/specifications/blob/master/source/bson-decimal128/decimal128.rst#from-string-representation">
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/bson-decimal128/decimal128.md#from-string-representation">
      *     From-String Specification</a>
      */
     public static Decimal128 parse(final String value) {
@@ -565,7 +564,7 @@ public final class Decimal128 extends Number implements Comparable<Decimal128> {
      * Returns the String representation of the Decimal128 value.
      *
      * @return the String representation
-     * @see <a href="https://github.com/mongodb/specifications/blob/master/source/bson-decimal128/decimal128.rst#to-string-representation">
+     * @see <a href="https://github.com/mongodb/specifications/blob/master/source/bson-decimal128/decimal128.md#to-string-representation">
      *     To-String Sprecification</a>
      */
     @Override

@@ -27,7 +27,7 @@ and MUST be implemented by all drivers.
 Spec Test Format
 ================
 
-The spec tests format is an extension of `transactions spec tests <https://github.com/mongodb/specifications/blob/master/source/transactions/tests/README.rst>`_ with some additions:
+The spec tests format is an extension of `transactions spec tests <https://github.com/mongodb/specifications/blob/master/source/transactions/tests/README.md>`_ with some additions:
 
 - A ``json_schema`` to set on the collection used for operations.
 
@@ -182,7 +182,7 @@ Then for each element in ``tests``:
 
       {"create": <collection>, "validator": {"$jsonSchema": <json_schema>}}
 
-   If ``encrypted_fields`` is defined in the test, the required collections and index described in `Create and Drop Collection Helpers <https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/client-side-encryption.rst#queryable-encryption-create-and-drop-collection-helpers>`_  must be created:
+   If ``encrypted_fields`` is defined in the test, the required collections and index described in `Create and Drop Collection Helpers <https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/client-side-encryption.md#queryable-encryption-create-and-drop-collection-helpers>`_  must be created:
 
    - Use the ``dropCollection`` helper with ``encrypted_fields`` as an option and writeConcern "majority".
    - Use the ``createCollection`` helper with ``encrypted_fields`` as an option.
@@ -610,7 +610,7 @@ Using ``client_encrypted`` perform the following operations:
 
    - ``{ "_id": "over_2mib_2", "unencrypted": <the string "a" repeated (2097152) times> }``
 
-   Expect the bulk write to succeed and split after first doc (i.e. two inserts occur). This may be verified using `command monitoring <https://github.com/mongodb/specifications/tree/master/source/command-logging-and-monitoring/command-logging-and-monitoring.rst>`_.
+   Expect the bulk write to succeed and split after first doc (i.e. two inserts occur). This may be verified using `command monitoring <https://github.com/mongodb/specifications/tree/master/source/command-logging-and-monitoring/command-logging-and-monitoring.md>`_.
 
 #. Bulk insert the following:
 
@@ -618,7 +618,7 @@ Using ``client_encrypted`` perform the following operations:
 
    - The document `limits/limits-doc.json <../limits/limits-doc.json>`_ concatenated with ``{ "_id": "encryption_exceeds_2mib_2", "unencrypted": < the string "a" repeated (2097152 - 2000) times > }``
 
-   Expect the bulk write to succeed and split after first doc (i.e. two inserts occur). This may be verified using `command logging and monitoring <https://github.com/mongodb/specifications/tree/master/source/command-logging-and-monitoring/command-logging-and-monitoring.rst>`_.
+   Expect the bulk write to succeed and split after first doc (i.e. two inserts occur). This may be verified using `command logging and monitoring <https://github.com/mongodb/specifications/tree/master/source/command-logging-and-monitoring/command-logging-and-monitoring.md>`_.
 
 #. Insert ``{ "_id": "under_16mib", "unencrypted": <the string "a" repeated 16777216 - 2000 times>``.
 
@@ -1661,7 +1661,7 @@ Load the file `key1-document.json <https://github.com/mongodb/specifications/tre
 
 Read the ``"_id"`` field of ``key1Document`` as ``key1ID``.
 
-Drop and create the collection ``db.explicit_encryption`` using ``encryptedFields`` as an option. See `FLE 2 CreateCollection() and Collection.Drop() <https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/client-side-encryption.rst#fle-2-createcollection-and-collection-drop>`_.
+Drop and create the collection ``db.explicit_encryption`` using ``encryptedFields`` as an option. See `FLE 2 CreateCollection() and Collection.Drop() <https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/client-side-encryption.md#fle-2-createcollection-and-collection-drop>`_.
 
 Drop and create the collection ``keyvault.datakeys``.
 
