@@ -24,7 +24,7 @@ internal class UnifiedCrudTest() : UnifiedTest() {
         @JvmStatic
         @Throws(URISyntaxException::class, IOException::class)
         fun data(): Collection<Arguments>? {
-            return getTestData("unified-test-format/crud", true)
+            return getTestData("unified-test-format/crud", true, Language.KOTLIN)
         }
     }
 }

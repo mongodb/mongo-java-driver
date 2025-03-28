@@ -51,6 +51,6 @@ public abstract class UnifiedSyncTest extends UnifiedTest {
 
     @NonNull
     protected static Collection<Arguments> getTestData(final String directory) {
-        return getTestData(directory, false);
+        return getTestData(directory, false, Language.JAVA);
     }
 }

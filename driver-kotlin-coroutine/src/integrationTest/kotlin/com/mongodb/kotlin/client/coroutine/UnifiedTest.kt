@@ -39,4 +39,8 @@ internal abstract class UnifiedTest() : JUnifiedTest() {
     ): ClientEncryption {
         TODO("Not yet implemented - JAVA-4896")
     }
+
+    override fun isReactive(): Boolean = true
+
+    override fun getLanguage(): Language = Language.KOTLIN
 }
