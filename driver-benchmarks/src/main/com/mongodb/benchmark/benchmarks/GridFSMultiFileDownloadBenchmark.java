@@ -34,6 +34,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+
 public class GridFSMultiFileDownloadBenchmark extends AbstractMongoBenchmark {
 
     private GridFSBucket bucket;
@@ -43,9 +44,8 @@ public class GridFSMultiFileDownloadBenchmark extends AbstractMongoBenchmark {
 
     private File tempDirectory;
 
-    @Override
-    public String getName() {
-        return "GridFS multi-file download";
+    public GridFSMultiFileDownloadBenchmark() {
+        super("GridFS multi-file download");
     }
 
     @Override

@@ -33,6 +33,7 @@ public class RunCommandBenchmark<T extends Bson> extends AbstractMongoBenchmark 
     private final T command;
 
     public RunCommandBenchmark(final Codec<T> codec) {
+        super("Run command");
         this.codec = codec;
         this.command = createCommand();
     }
@@ -41,11 +42,6 @@ public class RunCommandBenchmark<T extends Bson> extends AbstractMongoBenchmark 
     public void setUp() throws Exception {
         super.setUp();
         database = client.getDatabase("admin");
-    }
-
-    @Override
-    public String getName() {
-        return "Run command";
     }
 
     @Override
