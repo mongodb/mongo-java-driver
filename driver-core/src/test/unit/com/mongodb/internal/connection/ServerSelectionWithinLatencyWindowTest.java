@@ -31,10 +31,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mockito.Mockito;
+import util.JsonPoweredTestHelper;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -44,12 +45,9 @@ import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.ClusterFixture.createOperationContext;
 import static com.mongodb.connection.ServerSelectionSelectionTest.buildClusterDescription;
 import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
-import static util.JsonPoweredTestHelper.testDir;
-import static util.JsonPoweredTestHelper.testDocs;
 
 /**
  * A runner for
@@ -64,7 +62,7 @@ public class ServerSelectionWithinLatencyWindowTest {
     private final Outcome outcome;
 
     public ServerSelectionWithinLatencyWindowTest(
-            @SuppressWarnings("unused") final Path fileName,
+            @SuppressWarnings("unused") final String fileName,
             @SuppressWarnings("unused") final String description,
             final BsonDocument definition) {
         clusterDescription = buildClusterDescription(definition.getDocument("topology_description"), null);
@@ -93,14 +91,13 @@ public class ServerSelectionWithinLatencyWindowTest {
 
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() {
-        return testDocs(testDir("/server-selection/in_window"))
-                .entrySet()
-                .stream()
-                .map(entry -> new Object[] {
-                        entry.getKey().getFileName(),
-                        entry.getValue().getString("description").getValue(),
-                        entry.getValue()})
-                .collect(toList());
+        List<Object[]> data = new ArrayList<>();
+        for (BsonDocument testDocument : JsonPoweredTestHelper.getTestDocuments("/server-selection/in_window")) {
+            data.add(new Object[]{testDocument.getString("fileName").getValue(),
+                    testDocument.getString("description").getValue(),
+                    testDocument});
+        }
+        return data;
     }
 
     private static Cluster.ServersSnapshot serverCatalog(final BsonArray mockedTopologyState) {

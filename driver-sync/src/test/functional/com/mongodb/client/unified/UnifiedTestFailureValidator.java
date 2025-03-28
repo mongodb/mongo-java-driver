@@ -24,8 +24,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Collection;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -101,7 +99,7 @@ final class UnifiedTestFailureValidator extends UnifiedSyncTest {
         assertNotNull(exception, "Expected exception but not was thrown");
     }
 
-    private static Collection<Arguments> data() throws URISyntaxException, IOException {
+    private static Collection<Arguments> data() {
         return getTestData("unified-test-format/valid-fail");
     }
 }

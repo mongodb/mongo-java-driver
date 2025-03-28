@@ -17,10 +17,16 @@
 package com.mongodb.client;
 
 import com.mongodb.ClusterFixture;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoDriverInformation;
+import com.mongodb.client.internal.MongoClientImpl;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
+import com.mongodb.internal.connection.Cluster;
+import com.mongodb.internal.mockito.MongoMockito;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -29,12 +35,13 @@ import java.util.concurrent.TimeoutException;
 
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.doNothing;
 
-public class MongoClientTest {
+class MongoClientTest {
 
     @SuppressWarnings("try")
     @Test
-    public void shouldIncludeApplicationNameInClusterId() throws InterruptedException,
+    void shouldIncludeApplicationNameInClusterId() throws InterruptedException,
             ExecutionException, TimeoutException {
         CompletableFuture<ClusterId> clusterIdFuture = new CompletableFuture<>();
         ClusterListener clusterListener = new ClusterListener() {
@@ -51,5 +58,38 @@ public class MongoClientTest {
             ClusterId clusterId = clusterIdFuture.get(ClusterFixture.TIMEOUT, TimeUnit.SECONDS);
             assertEquals(applicationName, clusterId.getDescription());
         }
+    }
+
+    @Test
+    void shouldCloseExternalResources() throws Exception {
+
+        //given
+        Cluster cluster = MongoMockito.mock(
+                Cluster.class,
+                mockedCluster -> {
+                    doNothing().when(mockedCluster).close();
+                });
+        AutoCloseable externalResource = MongoMockito.mock(
+                AutoCloseable.class,
+                mockedExternalResource -> {
+                    try {
+                        doNothing().when(mockedExternalResource).close();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+
+        MongoClientImpl mongoClient = new MongoClientImpl(
+                cluster,
+                MongoClientSettings.builder().build(),
+                MongoDriverInformation.builder().build(),
+                externalResource);
+
+        //when
+        mongoClient.close();
+
+        //then
+        Mockito.verify(externalResource).close();
+        Mockito.verify(cluster).close();
     }
 }

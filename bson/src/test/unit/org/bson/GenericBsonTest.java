@@ -25,11 +25,9 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import util.JsonPoweredTestHelper;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -283,10 +281,9 @@ public class GenericBsonTest {
     }
 
 
-    private static Stream<Arguments> data() throws URISyntaxException, IOException {
+    private static Stream<Arguments> data() {
         List<Arguments> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/bson")) {
-            BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
+        for (BsonDocument testDocument : JsonPoweredTestHelper.getTestDocuments("/bson")) {
             for (BsonValue curValue : testDocument.getArray("valid", new BsonArray())) {
                 BsonDocument testCaseDocument = curValue.asDocument();
                 data.add(Arguments.of(

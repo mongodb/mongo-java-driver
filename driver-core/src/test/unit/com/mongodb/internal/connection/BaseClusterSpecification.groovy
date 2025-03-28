@@ -37,7 +37,7 @@ import com.mongodb.internal.selector.ServerAddressSelector
 import com.mongodb.internal.selector.WritableServerSelector
 import com.mongodb.internal.time.Timeout
 import spock.lang.Specification
-import util.spock.annotations.Slow
+import com.mongodb.spock.Slow
 
 import java.util.concurrent.CountDownLatch
 

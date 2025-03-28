@@ -23,7 +23,7 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
 import org.bson.codecs.BsonDocumentCodec
-import util.spock.annotations.Slow
+import com.mongodb.spock.Slow
 
 class CommandOperationSpecification extends OperationFunctionalSpecification {
 
