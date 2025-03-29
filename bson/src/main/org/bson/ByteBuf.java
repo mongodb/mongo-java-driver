@@ -168,6 +168,23 @@ public interface ByteBuf  {
      */
     ByteBuf clear();
 
+
+    /**
+     * Returns the index within this buffer of the first occurrence of the given byte
+     *
+     * @param b     The byte to search for
+     * @return The index within this buffer of the first occurrence of the given byte, starting the search at the specified index, or {@code
+     * -1} if the byte does not occur before the limit
+     */
+    default int indexOf(byte b) {
+        for (int i = position(); i < limit(); i++) {
+            if (get(i) == b) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     /**
      * Modifies this buffer's byte order.
      *
