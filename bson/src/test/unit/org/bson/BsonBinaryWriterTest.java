@@ -200,29 +200,35 @@ public class BsonBinaryWriterTest {
     @Test
     public void testWriteArrayElements() throws IOException {
         ByteArrayOutputStream expectedOutput = new ByteArrayOutputStream();
-        writer.writeStartDocument();
-        writer.writeStartArray("a1");
         expectedOutput.write(new byte[]{
                 88, 11, 0, 0, //document length
-                4, 97, 49, 0,
+                4, // array type
+                97, 49, 0, // "a1" name + null terminator
                 79, 11, 0, 0}); // array length
 
+
+        writer.writeStartDocument();
+        writer.writeStartArray("a1");
         int arrayIndex = 0;
         while (arrayIndex < 500) {
             writer.writeBoolean(true);
+
             expectedOutput.write(BsonType.BOOLEAN.getValue());
             expectedOutput.write(Integer.toString(arrayIndex++).getBytes(StandardCharsets.UTF_8));
-            expectedOutput.write(new byte[]{0, 1});
+            expectedOutput.write(0); // null terminator
+            expectedOutput.write(1); // boolean value
 
             writer.writeBoolean(false);
+
             expectedOutput.write(BsonType.BOOLEAN.getValue());
             expectedOutput.write(Integer.toString(arrayIndex++).getBytes(StandardCharsets.UTF_8));
-            expectedOutput.write(new byte[]{0, 0});
+            expectedOutput.write(0); // null terminator
+            expectedOutput.write(0); // boolean value
         }
         writer.writeEndArray();
-        expectedOutput.write(0);
+        expectedOutput.write(0); // end of array
         writer.writeEndDocument();
-        expectedOutput.write(0);
+        expectedOutput.write(0); // end of a document
 
         assertArrayEquals(expectedOutput.toByteArray(), buffer.toByteArray());
     }
