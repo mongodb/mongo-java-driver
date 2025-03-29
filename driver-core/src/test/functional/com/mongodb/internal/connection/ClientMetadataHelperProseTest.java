@@ -47,7 +47,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * See <a href="https://github.com/mongodb/specifications/blob/master/source/mongodb-handshake/handshake.rst#test-plan">spec</a>
+ * See <a href="https://github.com/mongodb/specifications/blob/master/source/mongodb-handshake/handshake.md#test-plan">spec</a>
  *
  * <p>
  * NOTE: This class also contains tests that aren't categorized as Prose tests.
@@ -175,16 +175,32 @@ public class ClientMetadataHelperProseTest {
                 });
     }
 
+    @Test
+    public void test09ValidContainerAndFaasProvider() {
+        withWrapper()
+                .withEnvironmentVariable("AWS_EXECUTION_ENV", "AWS_Lambda_java8")
+                .withEnvironmentVariable("AWS_REGION", "us-east-2")
+                .withEnvironmentVariable("AWS_LAMBDA_FUNCTION_MEMORY_SIZE", "1024")
+                .withEnvironmentVariable("KUBERNETES_SERVICE_HOST", "1")
+                .run(() -> {
+                    BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
+                    expected.put("env", BsonDocument.parse("{'name': 'aws.lambda', 'memory_mb': 1024, 'region': 'us-east-2', 'container': {'orchestrator': 'kubernetes'}}"));
+                    BsonDocument actual = createActualClientMetadataDocument();
+                    assertEquals(expected, actual);
+
+                    performHello();
+                });
+    }
+
     // Additional tests, not specified as prose tests:
 
     @Test
     void testKubernetesMetadataIncluded() {
         withWrapper()
-                .withEnvironmentVariable("AWS_EXECUTION_ENV", "AWS_Lambda_java8")
                 .withEnvironmentVariable("KUBERNETES_SERVICE_HOST", "kubernetes.default.svc.cluster.local")
                 .run(() -> {
                     BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
-                    expected.put("env", BsonDocument.parse("{'name': 'aws.lambda', 'container': {'orchestrator': 'kubernetes'}}"));
+                    expected.put("env", BsonDocument.parse("{'container': {'orchestrator': 'kubernetes'}}"));
                     BsonDocument actual = createActualClientMetadataDocument();
                     assertEquals(expected, actual);
 
@@ -199,10 +215,9 @@ public class ClientMetadataHelperProseTest {
             pathsMockedStatic.when(() -> Files.exists(path)).thenReturn(true);
 
             withWrapper()
-                    .withEnvironmentVariable("AWS_EXECUTION_ENV", "AWS_Lambda_java8")
                     .run(() -> {
                         BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
-                        expected.put("env", BsonDocument.parse("{'name': 'aws.lambda', 'container': {'runtime': 'docker'}}"));
+                        expected.put("env", BsonDocument.parse("{'container': {'runtime': 'docker'}}"));
                         BsonDocument actual = createActualClientMetadataDocument();
                         assertEquals(expected, actual);
 
@@ -218,12 +233,10 @@ public class ClientMetadataHelperProseTest {
             pathsMockedStatic.when(() -> Files.exists(path)).thenReturn(true);
 
             withWrapper()
-                    .withEnvironmentVariable("AWS_EXECUTION_ENV", "AWS_Lambda_java8")
                     .withEnvironmentVariable("KUBERNETES_SERVICE_HOST", "kubernetes.default.svc.cluster.local")
                     .run(() -> {
                         BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
-                        expected.put("env", BsonDocument.parse("{'name': 'aws.lambda', 'container': {'runtime': 'docker', "
-                                + "'orchestrator': 'kubernetes'}}"));
+                        expected.put("env", BsonDocument.parse("{'container': {'runtime': 'docker', 'orchestrator': 'kubernetes'}}"));
                         BsonDocument actual = createActualClientMetadataDocument();
                         assertEquals(expected, actual);
 
