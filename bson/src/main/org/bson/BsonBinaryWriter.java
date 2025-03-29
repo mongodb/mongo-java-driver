@@ -37,7 +37,15 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
 
     private final BsonOutput bsonOutput;
     private final Stack<Integer> maxDocumentSizeStack = new Stack<>();
+    private static final int ARRAY_INDEXES_CACHE_SIZE = 1 << 8;
+    private static final String[] ARRAY_INDEXES_CACHE = new String[ARRAY_INDEXES_CACHE_SIZE];
     private Mark mark;
+
+    static {
+        for (int i = 0; i < ARRAY_INDEXES_CACHE_SIZE; i++) {
+            ARRAY_INDEXES_CACHE[i] = Integer.toString(i);
+        }
+    }
 
     /**
      * Construct an instance.
@@ -397,7 +405,12 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
 
     private void writeCurrentName() {
         if (getContext().getContextType() == BsonContextType.ARRAY) {
-            bsonOutput.writeCString(Integer.toString(getContext().index++));
+            int index = getContext().index++;
+            if (index >= ARRAY_INDEXES_CACHE_SIZE) {
+                bsonOutput.writeCString(Integer.toString(index));
+            } else {
+                bsonOutput.writeCString(ARRAY_INDEXES_CACHE[index]);
+            }
         } else {
             bsonOutput.writeCString(getName());
         }
