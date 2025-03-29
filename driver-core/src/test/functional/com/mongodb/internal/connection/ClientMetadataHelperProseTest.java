@@ -197,11 +197,10 @@ public class ClientMetadataHelperProseTest {
     @Test
     void testKubernetesMetadataIncluded() {
         withWrapper()
-                .withEnvironmentVariable("AWS_EXECUTION_ENV", "AWS_Lambda_java8")
                 .withEnvironmentVariable("KUBERNETES_SERVICE_HOST", "kubernetes.default.svc.cluster.local")
                 .run(() -> {
                     BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
-                    expected.put("env", BsonDocument.parse("{'name': 'aws.lambda', 'container': {'orchestrator': 'kubernetes'}}"));
+                    expected.put("env", BsonDocument.parse("{'container': {'orchestrator': 'kubernetes'}}"));
                     BsonDocument actual = createActualClientMetadataDocument();
                     assertEquals(expected, actual);
 
@@ -216,10 +215,9 @@ public class ClientMetadataHelperProseTest {
             pathsMockedStatic.when(() -> Files.exists(path)).thenReturn(true);
 
             withWrapper()
-                    .withEnvironmentVariable("AWS_EXECUTION_ENV", "AWS_Lambda_java8")
                     .run(() -> {
                         BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
-                        expected.put("env", BsonDocument.parse("{'name': 'aws.lambda', 'container': {'runtime': 'docker'}}"));
+                        expected.put("env", BsonDocument.parse("{'container': {'runtime': 'docker'}}"));
                         BsonDocument actual = createActualClientMetadataDocument();
                         assertEquals(expected, actual);
 
@@ -235,12 +233,10 @@ public class ClientMetadataHelperProseTest {
             pathsMockedStatic.when(() -> Files.exists(path)).thenReturn(true);
 
             withWrapper()
-                    .withEnvironmentVariable("AWS_EXECUTION_ENV", "AWS_Lambda_java8")
                     .withEnvironmentVariable("KUBERNETES_SERVICE_HOST", "kubernetes.default.svc.cluster.local")
                     .run(() -> {
                         BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
-                        expected.put("env", BsonDocument.parse("{'name': 'aws.lambda', 'container': {'runtime': 'docker', "
-                                + "'orchestrator': 'kubernetes'}}"));
+                        expected.put("env", BsonDocument.parse("{'container': {'runtime': 'docker', 'orchestrator': 'kubernetes'}}"));
                         BsonDocument actual = createActualClientMetadataDocument();
                         assertEquals(expected, actual);
 
