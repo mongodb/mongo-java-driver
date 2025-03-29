@@ -17,6 +17,10 @@
 
 package com.mongodb.benchmark.benchmarks;
 
+import com.mongodb.benchmark.benchmarks.bulk.ClientBulkWriteBenchmark;
+import com.mongodb.benchmark.benchmarks.bulk.CollectionBulkWriteBenchmark;
+import com.mongodb.benchmark.benchmarks.bulk.MixedClientBulkWriteBenchmark;
+import com.mongodb.benchmark.benchmarks.bulk.MixedCollectionBulkWriteBenchmark;
 import com.mongodb.benchmark.framework.Benchmark;
 import com.mongodb.benchmark.framework.BenchmarkResult;
 import com.mongodb.benchmark.framework.BenchmarkResultWriter;
@@ -70,15 +74,30 @@ public class BenchmarkSuite {
         runBenchmark(new RunCommandBenchmark<>(DOCUMENT_CODEC));
         runBenchmark(new FindOneBenchmark<Document>("single_and_multi_document/tweet.json", BenchmarkSuite.DOCUMENT_CLASS));
 
-        runBenchmark(new InsertOneBenchmark<Document>("Small", "./single_and_multi_document/small_doc.json", 10000,
+        runBenchmark(new InsertOneBenchmark<Document>("Small", "./single_and_multi_document/small_doc.json", 10_000,
                 DOCUMENT_CLASS, ID_REMOVER));
         runBenchmark(new InsertOneBenchmark<Document>("Large", "./single_and_multi_document/large_doc.json", 10,
                 DOCUMENT_CLASS, ID_REMOVER));
 
         runBenchmark(new FindManyBenchmark<Document>("single_and_multi_document/tweet.json", BenchmarkSuite.DOCUMENT_CLASS));
-        runBenchmark(new InsertManyBenchmark<Document>("Small", "./single_and_multi_document/small_doc.json", 10000,
+        runBenchmark(new InsertManyBenchmark<Document>("Small", "./single_and_multi_document/small_doc.json", 10_000,
                 DOCUMENT_CLASS));
         runBenchmark(new InsertManyBenchmark<Document>("Large", "./single_and_multi_document/large_doc.json", 10,
+                DOCUMENT_CLASS));
+
+        runBenchmark(new CollectionBulkWriteBenchmark<>("Small", "./single_and_multi_document/small_doc.json", 10_000,
+                DOCUMENT_CLASS));
+        runBenchmark(new CollectionBulkWriteBenchmark<>("Large", "./single_and_multi_document/large_doc.json", 10,
+                DOCUMENT_CLASS));
+
+        runBenchmark(new ClientBulkWriteBenchmark<>("Small", "./single_and_multi_document/small_doc.json", 10_000,
+                DOCUMENT_CLASS));
+        runBenchmark(new ClientBulkWriteBenchmark<>("Large", "./single_and_multi_document/large_doc.json", 10,
+                DOCUMENT_CLASS));
+
+        runBenchmark(new MixedCollectionBulkWriteBenchmark<>("./single_and_multi_document/small_doc.json", 10_000,
+                DOCUMENT_CLASS));
+        runBenchmark(new MixedClientBulkWriteBenchmark<>("./single_and_multi_document/small_doc.json", 10_000,
                 DOCUMENT_CLASS));
 
         runBenchmark(new GridFSUploadBenchmark("single_and_multi_document/gridfs_large.bin"));
