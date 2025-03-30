@@ -85,6 +85,7 @@ import static com.mongodb.internal.logging.LogMessage.Level.INFO;
 import static com.mongodb.internal.time.Timeout.ZeroSemantics.ZERO_DURATION_MEANS_EXPIRED;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.stream.Collectors.toList;
@@ -210,6 +211,11 @@ abstract class BaseCluster implements Cluster {
         if (!isClosed()) {
             isClosed = true;
             phase.get().countDown();
+
+            ClusterDescription curDescription = description;
+            ClusterDescription updatedDescription = new ClusterDescription(curDescription.getConnectionMode(), ClusterType.UNKNOWN, emptyList());
+            clusterListener.clusterDescriptionChanged(new ClusterDescriptionChangedEvent(clusterId, updatedDescription, curDescription));
+
             clusterListener.clusterClosed(new ClusterClosedEvent(clusterId));
             stopWaitQueueHandler();
         }

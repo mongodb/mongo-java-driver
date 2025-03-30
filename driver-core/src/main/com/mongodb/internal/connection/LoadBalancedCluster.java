@@ -272,6 +272,11 @@ final class LoadBalancedCluster implements Cluster {
             if (localServer != null) {
                 localServer.close();
             }
+
+            ClusterDescription curDescription = description;
+            ClusterDescription updatedDescription = new ClusterDescription(curDescription.getConnectionMode(), ClusterType.UNKNOWN, emptyList());
+            clusterListener.clusterDescriptionChanged(new ClusterDescriptionChangedEvent(clusterId, updatedDescription, curDescription));
+
             clusterListener.clusterClosed(new ClusterClosedEvent(clusterId));
         }
     }

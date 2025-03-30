@@ -269,6 +269,7 @@ public abstract class UnifiedTest {
                         || schemaVersion.equals("1.17")
                         || schemaVersion.equals("1.18")
                         || schemaVersion.equals("1.19")
+                        || schemaVersion.equals("1.20")
                         || schemaVersion.equals("1.21"),
                 String.format("Unsupported schema version %s", schemaVersion));
         if (runOnRequirements != null) {
