@@ -60,7 +60,7 @@ import static com.mongodb.internal.connection.BsonWriterHelper.writePayload;
 import static com.mongodb.internal.connection.ByteBufBsonDocument.createList;
 import static com.mongodb.internal.connection.ByteBufBsonDocument.createOne;
 import static com.mongodb.internal.connection.ReadConcernHelper.getReadConcernDocument;
-import static com.mongodb.internal.operation.ServerVersionHelper.EARLIEST_WIRE_VERSION;
+import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION;
 
 /**
  * A command message that uses OP_MSG or OP_QUERY to send the command.
@@ -408,7 +408,7 @@ public final class CommandMessage extends RequestMessage {
     }
 
     private static boolean isServerVersionKnown(final MessageSettings settings) {
-        return settings.getMaxWireVersion() >= EARLIEST_WIRE_VERSION;
+        return settings.getMaxWireVersion() != UNKNOWN_WIRE_VERSION;
     }
 
     @FunctionalInterface
