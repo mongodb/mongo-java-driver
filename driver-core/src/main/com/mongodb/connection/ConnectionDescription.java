@@ -29,6 +29,7 @@ import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize;
+import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION;
 
 /**
  * A description of a connection to a MongoDB server.
@@ -57,7 +58,7 @@ public class ConnectionDescription {
      * @param serverId   the server address
      */
     public ConnectionDescription(final ServerId serverId) {
-        this(new ConnectionId(serverId), 0, ServerType.UNKNOWN, DEFAULT_MAX_WRITE_BATCH_SIZE,
+        this(new ConnectionId(serverId), UNKNOWN_WIRE_VERSION, ServerType.UNKNOWN, DEFAULT_MAX_WRITE_BATCH_SIZE,
              getDefaultMaxDocumentSize(), DEFAULT_MAX_MESSAGE_SIZE, Collections.emptyList());
     }
 
