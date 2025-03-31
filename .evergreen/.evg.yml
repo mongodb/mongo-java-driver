@@ -1567,7 +1567,7 @@ tasks:
       commands:
         - func: "bootstrap mongo-orchestration"
           vars:
-            VERSION: "v6.0-perf"
+            VERSION: "v8.0-perf"
             TOPOLOGY: "server"
             SSL: "nossl"
             AUTH: "noauth"
