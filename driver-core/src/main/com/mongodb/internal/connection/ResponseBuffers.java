@@ -59,7 +59,8 @@ public class ResponseBuffers implements Closeable {
      * @return a read-only buffer containing the response body
      */
     public ByteBuf getBodyByteBuffer() {
-        return bodyByteBuffer.asReadOnly();
+        //TODO any side-effects to make it read-only?
+        return bodyByteBuffer;
     }
 
     public void reset() {

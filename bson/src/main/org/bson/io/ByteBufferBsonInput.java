@@ -127,10 +127,7 @@ public class ByteBufferBsonInput implements BsonInput {
 
     @Override
     public String readCString() {
-        int mark = buffer.position();
-        skipCString();
-        int size = buffer.position() - mark;
-        buffer.position(mark);
+        int size = computeCStringLength(buffer.position());
         return readString(size);
     }
 
@@ -146,26 +143,61 @@ public class ByteBufferBsonInput implements BsonInput {
             }
             return ONE_BYTE_ASCII_STRINGS[asciiByte];  // this will throw if asciiByte is negative
         } else {
-            byte[] bytes = new byte[size - 1];
-            buffer.get(bytes);
-            byte nullByte = buffer.get();
-            if (nullByte != 0) {
-                throw new BsonSerializationException("Found a BSON string that is not null-terminated");
+            if (buffer.hasArray()) {
+                int position = buffer.position();
+                int arrayOffset = buffer.arrayOffset();
+                buffer.position(position + size - 1);
+                byte nullByte = buffer.get();
+                if (nullByte != 0) {
+                    throw new BsonSerializationException("Found a BSON string that is not null-terminated");
+                }
+                return new String(buffer.array(), arrayOffset + position, size - 1, StandardCharsets.UTF_8);
             }
-            return new String(bytes, StandardCharsets.UTF_8);
+
+            byte[] bytes = new byte[size];
+            buffer.get(bytes);
+            if (bytes[size - 1] != 0) {
+                throw new BsonSerializationException("BSON string not null-terminated");
+            }
+            return new String(bytes, 0, size - 1, StandardCharsets.UTF_8);
         }
     }
 
     @Override
     public void skipCString() {
         ensureOpen();
-        boolean checkNext = true;
-        while (checkNext) {
-            if (!buffer.hasRemaining()) {
-                throw new BsonSerializationException("Found a BSON string that is not null-terminated");
+        int pos = buffer.position();
+        int length = computeCStringLength(pos);
+        buffer.position(pos + length);
+    }
+
+    public int computeCStringLength(int prevPos) {
+        ensureOpen();
+        //TODO should we fall back to byte-by-byte search on JDK 8? ByteBuffer does not use Unsafe internally
+        int pos = prevPos;
+        int limit = buffer.limit();
+        while (limit - pos >= Long.BYTES) {
+            long word = buffer.getLong(pos);
+            long mask = word - 0x0101010101010101L;
+            mask &= ~word;
+            mask &= 0x8080808080808080L;
+            if (mask != 0) {
+                // first null terminator found in the Little Endian long
+                int offset = Long.numberOfTrailingZeros(mask) >>> 3;
+                // Found the null at pos + offset; reset buffer's position.
+                return (pos - prevPos) + offset + 1;
             }
-            checkNext = buffer.get() != 0;
+            pos += 8;
         }
+
+        // Process remaining bytes one-by-one.
+        while (pos < limit) {
+            if (buffer.get(pos++) == 0) {
+                return (pos - prevPos);
+            }
+        }
+        buffer.position(pos);
+        throw new BsonSerializationException("Found a BSON string that is not null-terminated");
     }
 
     @Override
