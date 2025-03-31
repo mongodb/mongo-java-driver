@@ -24,8 +24,6 @@ public abstract class AbstractCollectionWriteBenchmark<T> extends AbstractWriteB
 
     protected MongoCollection<T> collection;
     protected MongoDatabase database;
-
-    private final String name;
     private final Class<T> clazz;
 
     protected AbstractCollectionWriteBenchmark(final String name,
@@ -34,7 +32,6 @@ public abstract class AbstractCollectionWriteBenchmark<T> extends AbstractWriteB
                                                int numDocuments,
                                                final Class<T> clazz) {
         super(name, resourcePath, numIterations, numDocuments, clazz);
-        this.name = name;
         this.clazz = clazz;
     }
 
@@ -50,10 +47,5 @@ public abstract class AbstractCollectionWriteBenchmark<T> extends AbstractWriteB
     public void before() throws Exception {
         super.before();
         collection.drop();
-    }
-
-    @Override
-    public String getName() {
-        return name;
     }
 }
