@@ -26,6 +26,7 @@ val scalaVersion: String = project.scalaVersion()
 dependencies {
     api(project(path = ":bson-scala", configuration = "default"))
     api(project(path = ":driver-reactive-streams", configuration = "default"))
+    compileOnly(libs.findbugs.jsr)
 
     testImplementation(project(path = ":driver-sync", configuration = "default"))
     testImplementation(project(path = ":bson", configuration = "testArtifacts"))
