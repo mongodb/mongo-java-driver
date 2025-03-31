@@ -50,7 +50,7 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand
-import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION
+import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION
 
 class CountDocumentsOperationSpecification extends OperationFunctionalSpecification {
 
@@ -274,7 +274,7 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
         def commandDocument = new BsonDocument('aggregate', new BsonString(getCollectionName()))
                 .append('pipeline', pipeline)
                 .append('cursor', new BsonDocument())
-        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
+        appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
 
         def operation = new CountDocumentsOperation(getNamespace())
 
@@ -314,7 +314,7 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
         def commandDocument = new BsonDocument('aggregate', new BsonString(getCollectionName()))
                 .append('pipeline', pipeline)
                 .append('cursor', new BsonDocument())
-        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
+        appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
 
         def operation = new CountDocumentsOperation(getNamespace())
 
