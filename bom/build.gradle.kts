@@ -16,6 +16,7 @@ dependencies {
         api(project(":bson-kotlinx"))
         api(project(":driver-kotlin-coroutine"))
         api(project(":driver-kotlin-sync"))
+        api(project(":driver-kotlin-extensions"))
 
         api(project(":bson-scala"))
         api(project(":driver-scala"))
