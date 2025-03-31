@@ -30,6 +30,10 @@ import com.mongodb.benchmark.benchmarks.InsertOneBenchmark;
 import com.mongodb.benchmark.benchmarks.MultiFileExportBenchmark;
 import com.mongodb.benchmark.benchmarks.MultiFileImportBenchmark;
 import com.mongodb.benchmark.benchmarks.RunCommandBenchmark;
+import com.mongodb.benchmark.benchmarks.bulk.ClientBulkWriteBenchmark;
+import com.mongodb.benchmark.benchmarks.bulk.CollectionBulkWriteBenchmark;
+import com.mongodb.benchmark.benchmarks.bulk.MixedClientBulkWriteBenchmark;
+import com.mongodb.benchmark.benchmarks.bulk.MixedCollectionBulkWriteBenchmark;
 import com.mongodb.benchmark.framework.BenchmarkResultWriter;
 import com.mongodb.connection.NettyTransportSettings;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -75,6 +79,21 @@ public class BenchmarkNettyProviderSuite extends BenchmarkSuite {
                 .applyMongoClientSettings(MONGO_CLIENT_SETTINGS));
         runBenchmark(new GridFSDownloadBenchmark("single_and_multi_document/gridfs_large.bin")
                 .applyMongoClientSettings(MONGO_CLIENT_SETTINGS));
+
+        runBenchmark(new CollectionBulkWriteBenchmark<>("Small", "./single_and_multi_document/small_doc.json", 10_000,
+                DOCUMENT_CLASS).applyMongoClientSettings(MONGO_CLIENT_SETTINGS));
+        runBenchmark(new CollectionBulkWriteBenchmark<>("Large", "./single_and_multi_document/large_doc.json", 10,
+                DOCUMENT_CLASS));
+
+        runBenchmark(new ClientBulkWriteBenchmark<>("Small", "./single_and_multi_document/small_doc.json", 10_000,
+                DOCUMENT_CLASS).applyMongoClientSettings(MONGO_CLIENT_SETTINGS));
+        runBenchmark(new ClientBulkWriteBenchmark<>("Large", "./single_and_multi_document/large_doc.json", 10,
+                DOCUMENT_CLASS).applyMongoClientSettings(MONGO_CLIENT_SETTINGS));
+
+        runBenchmark(new MixedCollectionBulkWriteBenchmark<>("./single_and_multi_document/small_doc.json", 10_000,
+                DOCUMENT_CLASS).applyMongoClientSettings(MONGO_CLIENT_SETTINGS));
+        runBenchmark(new MixedClientBulkWriteBenchmark<>("./single_and_multi_document/small_doc.json", 10_000,
+                DOCUMENT_CLASS).applyMongoClientSettings(MONGO_CLIENT_SETTINGS));
 
         runBenchmark(new MultiFileImportBenchmark()
                 .applyMongoClientSettings(MONGO_CLIENT_SETTINGS));
