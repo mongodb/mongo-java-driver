@@ -19,43 +19,31 @@ package com.mongodb.benchmark.benchmarks;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import org.bson.codecs.Codec;
-import org.bson.codecs.DecoderContext;
-import org.bson.json.JsonReader;
 
-import java.nio.charset.StandardCharsets;
-
-public abstract class AbstractInsertBenchmark<T> extends AbstractMongoBenchmark {
+public abstract class AbstractCollectionWriteBenchmark<T> extends AbstractWriteBenchmark<T> {
 
     protected MongoCollection<T> collection;
+    protected MongoDatabase database;
 
-    private final String resourcePath;
+    private final String name;
     private final Class<T> clazz;
-    private byte[] bytes;
-    protected int fileLength;
-    protected T document;
 
-    protected AbstractInsertBenchmark(final String name, final String resourcePath, final Class<T> clazz) {
-        super(name);
-        this.resourcePath = resourcePath;
+    protected AbstractCollectionWriteBenchmark(final String name,
+                                               final String resourcePath,
+                                               int numIterations,
+                                               int numDocuments,
+                                               final Class<T> clazz) {
+        super(name, resourcePath, numIterations, numDocuments, clazz);
+        this.name = name;
         this.clazz = clazz;
     }
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        MongoDatabase database = client.getDatabase(DATABASE_NAME);
-
+        database = client.getDatabase(DATABASE_NAME);
         collection = database.getCollection(COLLECTION_NAME, clazz);
-
         database.drop();
-        bytes = readAllBytesFromRelativePath(resourcePath);
-
-        fileLength = bytes.length;
-
-        Codec<T> codec = collection.getCodecRegistry().get(clazz);
-
-        document = codec.decode(new JsonReader(new String(bytes, StandardCharsets.UTF_8)), DecoderContext.builder().build());
     }
 
     @Override
@@ -64,9 +52,8 @@ public abstract class AbstractInsertBenchmark<T> extends AbstractMongoBenchmark 
         collection.drop();
     }
 
-    protected T createDocument() {
-        Codec<T> codec = collection.getCodecRegistry().get(clazz);
-
-        return codec.decode(new JsonReader(new String(bytes, StandardCharsets.UTF_8)), DecoderContext.builder().build());
+    @Override
+    public String getName() {
+        return name;
     }
 }
