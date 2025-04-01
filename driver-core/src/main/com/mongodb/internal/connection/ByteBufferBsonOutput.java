@@ -451,6 +451,8 @@ public class ByteBufferBsonOutput extends OutputBuffer {
                                          final boolean checkNullTermination) {
         int pos = arrayPosition;
         int sp = 0;
+        // Fast common path: This tight loop is JIT-friendly (simple, no calls, few branches),
+        // It might be unrolled for performance.
         for (; sp < str.length(); sp++, pos++) {
             char c = str.charAt(sp);
             if (checkNullTermination && c == 0) {
