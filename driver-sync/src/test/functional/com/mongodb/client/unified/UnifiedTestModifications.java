@@ -143,6 +143,10 @@ public final class UnifiedTestModifications {
                 .test("crud", "findOneAndDelete-hint-unacknowledged", "Unacknowledged findOneAndDelete with hint string on 4.4+ server")
                 .test("crud", "findOneAndDelete-hint-unacknowledged", "Unacknowledged findOneAndDelete with hint document on 4.4+ server");
 
+        def.skipNoncompliant("https://jira.mongodb.org/browse/JAVA-5838")
+                .when(() -> def.isReactive() && UnifiedTest.Language.KOTLIN.equals(def.getLanguage()))
+                .file("crud", "findOne");
+
         // gridfs
 
         def.skipDeprecated("contentType is deprecated in GridFS spec, and 4.x Java driver no longer supports it")
@@ -256,24 +260,28 @@ public final class UnifiedTestModifications {
 
     private UnifiedTestModifications() {}
 
-    public static TestDef testDef(final String dir, final String file, final String test, final boolean reactive) {
-        return new TestDef(dir, file, test, reactive);
+    public static TestDef testDef(final String dir, final String file, final String test, final boolean reactive,
+            final UnifiedTest.Language language) {
+        return new TestDef(dir, file, test, reactive, language);
     }
 
     public static final class TestDef {
+
         private final String dir;
         private final String file;
         private final String test;
         private final boolean reactive;
+        private final UnifiedTest.Language language;
 
         private final List<Modifier> modifiers = new ArrayList<>();
         private Function<Throwable, Boolean> matchesThrowable;
 
-        private TestDef(final String dir, final String file, final String test, final boolean reactive) {
+        private TestDef(final String dir, final String file, final String test, final boolean reactive, final UnifiedTest.Language language) {
             this.dir = assertNotNull(dir);
             this.file = assertNotNull(file);
             this.test = assertNotNull(test);
             this.reactive = reactive;
+            this.language = assertNotNull(language);
         }
 
         /**
@@ -352,6 +360,10 @@ public final class UnifiedTestModifications {
 
         public boolean isReactive() {
             return reactive;
+        }
+
+        public UnifiedTest.Language getLanguage() {
+            return language;
         }
 
         public boolean wasAssignedModifier(final Modifier modifier) {

@@ -408,6 +408,11 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         });
     }
 
+    /**
+     * There is no explicit {@code findOne()} method in {@link MongoCollection} class.
+     * Its feature was emulated by {@link FindIterable#first()}, which would close cursor on server
+     * by setting {@code batchSize} and {@code limit} appropriately.
+     */
     OperationResult executeFindOne(final BsonDocument operation) {
         return resultOf(() ->  createFindIterable(operation).first());
     }
