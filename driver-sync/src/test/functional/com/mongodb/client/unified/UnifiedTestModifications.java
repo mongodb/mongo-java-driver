@@ -281,7 +281,7 @@ public final class UnifiedTestModifications {
             this.file = assertNotNull(file);
             this.test = assertNotNull(test);
             this.reactive = reactive;
-            this.language = language;
+            this.language = assertNotNull(language);
         }
 
         /**
