@@ -67,7 +67,7 @@ import static com.mongodb.CursorType.Tailable
 import static com.mongodb.CursorType.TailableAwait
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand
-import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION
+import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION
 import static org.junit.Assert.assertEquals
 
 class FindOperationSpecification extends OperationFunctionalSpecification {
@@ -498,7 +498,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         source.retain() >> source
         source.operationContext >> operationContext
         def commandDocument = new BsonDocument('find', new BsonString(getCollectionName()))
-        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
+        appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
 
@@ -538,7 +538,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         source.getConnection(_) >> { it[0].onResult(connection, null) }
         source.retain() >> source
         def commandDocument = new BsonDocument('find', new BsonString(getCollectionName()))
-        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
+        appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
 
@@ -579,7 +579,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         source.retain() >> source
         source.operationContext >> operationContext
         def commandDocument = new BsonDocument('find', new BsonString(getCollectionName())).append('allowDiskUse', BsonBoolean.TRUE)
-        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
+        appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec()).allowDiskUse(true)
 
@@ -619,7 +619,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         source.getConnection(_) >> { it[0].onResult(connection, null) }
         source.retain() >> source
         def commandDocument = new BsonDocument('find', new BsonString(getCollectionName())).append('allowDiskUse', BsonBoolean.TRUE)
-        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
+        appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec()).allowDiskUse(true)
 
