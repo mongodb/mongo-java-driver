@@ -747,7 +747,6 @@ final class ByteBufferBsonOutputTest {
         @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
         void shouldWriteCStringAcrossBuffersUTF8(final BufferProvider bufferProvider) throws IOException {
             for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
-                //given
                 String str = new String(Character.toChars(codePoint)) + "a";
                 byte[] expectedStringEncoding = str.getBytes(StandardCharsets.UTF_8);
                 int bufferAllocationSize = expectedStringEncoding.length + "\u0000".length();
@@ -760,7 +759,6 @@ final class ByteBufferBsonOutputTest {
         @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
         void shouldWriteCStringAcrossBuffersUTF8WithBranch(final BufferProvider bufferProvider) throws IOException {
             for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
-                //given
                 String str = new String(Character.toChars(codePoint)) + "a";
                 int bufferAllocationSize = str.getBytes(StandardCharsets.UTF_8).length + "\u0000".length();
                 byte[] expectedEncoding = str.getBytes(StandardCharsets.UTF_8);

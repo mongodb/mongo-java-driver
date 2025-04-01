@@ -307,34 +307,59 @@ public class ByteBufferBsonOutput extends OutputBuffer {
     }
 
     protected int writeCharacters(final String str, final boolean checkNullTermination) {
-        int len = str.length();
+        int stringLength = str.length();
         int sp = 0;
         int prevPos = position;
 
-        ByteBuf buf = getCurrentByteBuffer();
-        int currBufferPos = buf.position();
-        int limit = buf.limit();
-        int remaining = limit - currBufferPos;
+        ByteBuf curBuffer = getCurrentByteBuffer();
+        int curBufferPos = curBuffer.position();
+        int curBufferLimit = curBuffer.limit();
+        int remaining = curBufferLimit - curBufferPos;
 
-        if (buf.hasArray()) {
-            byte[] dst = buf.array();
-            int arrayOffset = buf.arrayOffset();
+        if (curBuffer.hasArray()) {
+            byte[] dst = curBuffer.array();
+            int arrayOffset = curBuffer.arrayOffset();
             if (remaining >= str.length() + 1) {
-                sp = writeOnArrayAscii(str, dst, arrayOffset + currBufferPos, checkNullTermination);
-                currBufferPos += sp;
-                if (sp == len) {
-                    dst[arrayOffset + currBufferPos++] = 0;
+                // Write ASCII characters directly to the array until we hit a non-ASCII character
+                sp = writeOnArrayAscii(str, dst, arrayOffset + curBufferPos, checkNullTermination);
+                curBufferPos += sp;
+                if (sp == stringLength) {
+                    dst[arrayOffset + curBufferPos++] = 0;
                     position += sp + 1;
-                    buf.position(currBufferPos);
+                    curBuffer.position(curBufferPos);
                     return sp + 1;
                 }
                 position += sp;
-                buf.position(currBufferPos);
+                curBuffer.position(curBufferPos);
             }
         }
 
-        while (sp < len) {
-            remaining = limit - currBufferPos;
+        // We get here, when the buffer is not backed by an array, or when the string contains non-ASCII characters.
+        return writeOnBuffers(str,
+                checkNullTermination,
+                sp,
+                stringLength,
+                curBufferLimit,
+                curBufferPos,
+                curBuffer,
+                prevPos);
+    }
+
+    private int writeOnBuffers(final String str,
+                               final boolean checkNullTermination,
+                               final int stringPointer,
+                               final int stringLength,
+                               final int bufferLimit,
+                               final int bufferPos,
+                               final ByteBuf buffer,
+                               final int prevPos) {
+        int remaining;
+        int sp = stringPointer;
+        int curBufferPos = bufferPos;
+        int curBufferLimit = bufferLimit;
+        ByteBuf curBuffer = buffer;
+        while (sp < stringLength) {
+            remaining = curBufferLimit - curBufferPos;
             int c = str.charAt(sp);
 
             if (checkNullTermination && c == 0x0) {
@@ -344,43 +369,49 @@ public class ByteBufferBsonOutput extends OutputBuffer {
 
             if (c < 0x80) {
                 if (remaining == 0) {
-                    buf = getNextByteBuffer();
-                    currBufferPos = 0;
-                    limit = buf.limit();
+                    curBuffer = getNextByteBuffer();
+                    curBufferPos = 0;
+                    curBufferLimit = curBuffer.limit();
                 }
-                buf.put((byte) c);
-                currBufferPos++;
+                curBuffer.put((byte) c);
+                curBufferPos++;
                 position++;
             } else if (c < 0x800) {
                 if (remaining < 2) {
                     write((byte) (0xc0 + (c >> 6)));
                     write((byte) (0x80 + (c & 0x3f)));
 
-                    buf = getCurrentByteBuffer();
-                    currBufferPos = buf.position();
-                    limit = buf.limit();
+                    curBuffer = getCurrentByteBuffer();
+                    curBufferPos = curBuffer.position();
+                    curBufferLimit = curBuffer.limit();
                 } else {
-                    buf.put((byte) (0xc0 + (c >> 6)));
-                    buf.put((byte) (0x80 + (c & 0x3f)));
-                    currBufferPos += 2;
+                    curBuffer.put((byte) (0xc0 + (c >> 6)));
+                    curBuffer.put((byte) (0x80 + (c & 0x3f)));
+                    curBufferPos += 2;
                     position += 2;
                 }
             } else {
+                // Handle multibyte characters (may involve surrogate pairs)
                 c = Character.codePointAt(str, sp);
+                /*
+                 Malformed surrogate pairs are encoded as-is (3 byte code unit) without substituting any code point.
+                 This known deviation from the spec and current functionality remains for backward compatibility.
+                 Ticket: JAVA-5575
+                */
                 if (c < 0x10000) {
                     if (remaining < 3) {
                         write((byte) (0xe0 + (c >> 12)));
                         write((byte) (0x80 + ((c >> 6) & 0x3f)));
                         write((byte) (0x80 + (c & 0x3f)));
 
-                        buf = getCurrentByteBuffer();
-                        currBufferPos = buf.position();
-                        limit = buf.limit();
+                        curBuffer = getCurrentByteBuffer();
+                        curBufferPos = curBuffer.position();
+                        curBufferLimit = curBuffer.limit();
                     } else {
-                        buf.put((byte) (0xe0 + (c >> 12)));
-                        buf.put((byte) (0x80 + ((c >> 6) & 0x3f)));
-                        buf.put((byte) (0x80 + (c & 0x3f)));
-                        currBufferPos += 3;
+                        curBuffer.put((byte) (0xe0 + (c >> 12)));
+                        curBuffer.put((byte) (0x80 + ((c >> 6) & 0x3f)));
+                        curBuffer.put((byte) (0x80 + (c & 0x3f)));
+                        curBufferPos += 3;
                         position += 3;
                     }
                 } else {
@@ -390,15 +421,15 @@ public class ByteBufferBsonOutput extends OutputBuffer {
                         write((byte) (0x80 + ((c >> 6) & 0x3f)));
                         write((byte) (0x80 + (c & 0x3f)));
 
-                        buf = getCurrentByteBuffer();
-                        currBufferPos = buf.position();
-                        limit = buf.limit();
+                        curBuffer = getCurrentByteBuffer();
+                        curBufferPos = curBuffer.position();
+                        curBufferLimit = curBuffer.limit();
                     } else {
-                        buf.put((byte) (0xf0 + (c >> 18)));
-                        buf.put((byte) (0x80 + ((c >> 12) & 0x3f)));
-                        buf.put((byte) (0x80 + ((c >> 6) & 0x3f)));
-                        buf.put((byte) (0x80 + (c & 0x3f)));
-                        currBufferPos += 4;
+                        curBuffer.put((byte) (0xf0 + (c >> 18)));
+                        curBuffer.put((byte) (0x80 + ((c >> 12) & 0x3f)));
+                        curBuffer.put((byte) (0x80 + ((c >> 6) & 0x3f)));
+                        curBuffer.put((byte) (0x80 + (c & 0x3f)));
+                        curBufferPos += 4;
                         position += 4;
                     }
                 }
