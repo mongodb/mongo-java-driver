@@ -72,6 +72,7 @@ public class ClientSideEncryption25LookupProseTests {
 
     @BeforeEach
     public void setUp() {
+        assumeFalse(() -> true); // https://jira.mongodb.org/browse/JAVA-5837
         assumeFalse(isStandalone());
         assumeTrue(serverVersionAtLeast(7, 0));
 
@@ -242,6 +243,6 @@ public class ClientSideEncryption25LookupProseTests {
     }
 
     public static BsonDocument bsonDocumentFromPath(final String path) {
-        return getTestDocument("/client-side-encryption-data/lookup/" + path);
+        return getTestDocument("client-side-encryption/etc/data/lookup/" + path);
     }
 }

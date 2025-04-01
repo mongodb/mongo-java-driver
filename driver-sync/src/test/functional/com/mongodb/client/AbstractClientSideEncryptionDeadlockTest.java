@@ -225,7 +225,7 @@ public abstract class AbstractClientSideEncryptionDeadlockTest {
     }
 
     private static BsonDocument bsonDocumentFromPath(final String path) {
-        return getTestDocument("/client-side-encryption-external/" + path);
+        return getTestDocument("client-side-encryption/external/" + path);
     }
 
     private static final class ExpectedEvent {

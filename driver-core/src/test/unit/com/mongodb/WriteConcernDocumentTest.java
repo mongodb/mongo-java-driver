@@ -83,6 +83,6 @@ public class WriteConcernDocumentTest extends TestCase {
 
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() {
-        return JsonPoweredTestHelper.getTestData("/write-concern/document");
+        return JsonPoweredTestHelper.getLegacyTestData("read-write-concern/tests/document/write-concern.json");
     }
 }

@@ -22,6 +22,6 @@ import java.util.Collection;
 
 final class UnifiedGridFSTest extends UnifiedReactiveStreamsTest {
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/gridfs");
+        return getTestData("gridfs");
     }
 }

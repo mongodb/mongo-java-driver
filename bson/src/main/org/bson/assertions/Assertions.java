@@ -104,6 +104,18 @@ public final class Assertions {
     }
 
     /**
+     * @param msg The failure message.
+     * @param cause The underlying cause
+     * @return Never completes normally. The return type is {@link AssertionError} to allow writing
+     * {@code throw fail("failure message", throwable)}.
+     * This may be helpful in non-{@code void} methods.
+     * @throws AssertionError Always
+     */
+    public static AssertionError fail(final String msg, final Throwable cause) throws AssertionError {
+        throw new AssertionError(assertNotNull(msg), assertNotNull(cause));
+    }
+
+    /**
      * @param value A value to check.
      * @param <T>   The type of {@code value}.
      * @return {@code value}

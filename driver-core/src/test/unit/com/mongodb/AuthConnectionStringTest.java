@@ -33,21 +33,30 @@ import java.util.Collection;
 
 import static com.mongodb.AuthenticationMechanism.MONGODB_OIDC;
 import static com.mongodb.MongoCredential.OIDC_CALLBACK_KEY;
+import static org.junit.Assume.assumeFalse;
 
 // See https://github.com/mongodb/specifications/tree/master/source/auth/legacy/tests
 @RunWith(Parameterized.class)
 public class AuthConnectionStringTest extends TestCase {
+    private final String description;
     private final String input;
     private final BsonDocument definition;
 
     public AuthConnectionStringTest(final String filename, final String description, final String input,
                                     final BsonDocument definition) {
+        this.description = description;
         this.input = input;
         this.definition = definition;
     }
 
     @Test
     public void shouldPassAllOutcomes() {
+        // No CANONICALIZE_HOST_NAME support https://jira.mongodb.org/browse/JAVA-4278
+        assumeFalse(description.equals("must raise an error when the hostname canonicalization is invalid"));
+        assumeFalse(description.equals("should accept forwardAndReverse hostname canonicalization (GSSAPI)"));
+        assumeFalse(description.equals("should accept generic mechanism property (GSSAPI)"));
+        assumeFalse(description.equals("should accept no hostname canonicalization (GSSAPI)"));
+
         if (definition.getBoolean("valid").getValue()) {
             testValidUris();
         } else {
@@ -57,7 +66,7 @@ public class AuthConnectionStringTest extends TestCase {
 
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() {
-        return JsonPoweredTestHelper.getTestData("/auth/legacy");
+        return JsonPoweredTestHelper.getLegacyTestData("auth/tests/legacy");
     }
 
     private void testInvalidUris() {

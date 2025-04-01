@@ -37,8 +37,17 @@ public class UriOptionsTest extends AbstractConnectionStringTest {
         assumeFalse(getDefinition().getBoolean("warning", BsonBoolean.FALSE).getValue());
         assumeFalse(getDescription().equals("Arbitrary string readConcernLevel does not cause a warning"));
         // Skip because Java driver does not support the tlsAllowInvalidCertificates option
-        assumeFalse(getDescription().startsWith("tlsInsecure and tlsAllowInvalidCertificates both present"));
-        assumeFalse(getDescription().startsWith("tlsAllowInvalidCertificates and tlsInsecure both present"));
+        assumeFalse(getDescription().contains("tlsAllowInvalidCertificates"));
+        // Skip because Java driver does not support the tlsDisableCertificateRevocationCheck option
+        assumeFalse(getDescription().contains("tlsDisableCertificateRevocationCheck"));
+        // Skip because Java driver does not support the tlsDisableOCSPEndpointCheck option
+        assumeFalse(getDescription().contains("tlsDisableOCSPEndpointCheck"));
+
+        // No CANONICALIZE_HOST_NAME support https://jira.mongodb.org/browse/JAVA-4278
+        assumeFalse(getDescription().equals("Valid auth options are parsed correctly (GSSAPI)"));
+
+        // https://jira.mongodb.org/browse/JAVA-5834
+        assumeFalse(getFilename().equals("proxy-options.json"));
 
         if (getDefinition().getBoolean("valid", BsonBoolean.TRUE).getValue()) {
             testValidOptions();
@@ -49,6 +58,6 @@ public class UriOptionsTest extends AbstractConnectionStringTest {
 
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() {
-        return JsonPoweredTestHelper.getTestData("/uri-options");
+        return JsonPoweredTestHelper.getLegacyTestData("uri-options");
     }
 }

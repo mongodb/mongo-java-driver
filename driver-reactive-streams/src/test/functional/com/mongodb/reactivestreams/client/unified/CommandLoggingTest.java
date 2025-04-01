@@ -21,7 +21,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import java.util.Collection;
 
 final class CommandLoggingTest extends UnifiedReactiveStreamsTest {
+
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/command-logging");
+        return getTestData("command-logging-and-monitoring/tests/logging");
     }
 }

@@ -60,7 +60,7 @@ public class AbstractServerDiscoveryAndMonitoringTest {
 
     public static Collection<Object[]> data(final String resourcePath) {
         List<Object[]> data = new ArrayList<>();
-        for (BsonDocument testDocument : JsonPoweredTestHelper.getTestDocuments(resourcePath)) {
+        for (BsonDocument testDocument : JsonPoweredTestHelper.getSpecTestDocuments(resourcePath)) {
             data.add(new Object[]{testDocument.getString("fileName").getValue()
                     + ": " + testDocument.getString("description").getValue(), testDocument});
         }

@@ -51,6 +51,9 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
     public ServerDiscoveryAndMonitoringTest(final String description, final BsonDocument definition) {
         super(definition);
         this.description = description;
+        // Unified and monitoring tests have their own test runners
+        assumeFalse(definition.getString("resourcePath").getValue().contains("/tests/unified/"));
+        assumeFalse(definition.getString("resourcePath").getValue().contains("/tests/monitoring/"));
         init(serverAddress -> NO_OP_SERVER_LISTENER, NO_OP_CLUSTER_LISTENER);
     }
 
@@ -87,7 +90,7 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
 
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
-        return data("/server-discovery-and-monitoring");
+        return data("server-discovery-and-monitoring");
     }
 
     private void assertServers(final BsonDocument servers) {

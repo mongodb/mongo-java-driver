@@ -51,6 +51,8 @@ import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
+import org.bson.diagnostics.Logger;
+import org.bson.diagnostics.Loggers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -95,10 +97,12 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.abort;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
-import static util.JsonPoweredTestHelper.getTestDocuments;
+import static util.JsonPoweredTestHelper.getSpecTestDocuments;
 
 @ExtendWith(AfterBeforeParameterResolver.class)
 public abstract class UnifiedTest {
+    private static final Logger LOGGER = Loggers.getLogger("UnifiedTest");
+
     private static final Set<String> PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS = Collections.singleton(
             "wait queue timeout errors include details about checked out connections");
 
@@ -163,12 +167,16 @@ public abstract class UnifiedTest {
     @NonNull
     protected static Collection<Arguments> getTestData(final String directory, final boolean isReactive, final Language language) {
         List<Arguments> data = new ArrayList<>();
-        for (BsonDocument fileDocument : getTestDocuments("/" + directory + "/")) {
-            for (BsonValue cur : fileDocument.getArray("tests")) {
 
+        for (BsonDocument fileDocument : getSpecTestDocuments(directory)) {
+            if (!fileDocument.containsKey("schemaVersion")) {
+                LOGGER.info("Not a unified test file: " + fileDocument.getString("fileName").getValue());
+                continue;
+            }
+            String fileDescription = fileDocument.getString("description").getValue();
+            for (BsonValue cur : fileDocument.getArray("tests")) {
                 final BsonDocument testDocument = cur.asDocument();
                 String testDescription = testDocument.getString("description").getValue();
-                String fileDescription = fileDocument.getString("description").getValue();
                 TestDef testDef = testDef(directory, fileDescription, testDescription, isReactive, language);
                 applyCustomizations(testDef);
 
@@ -269,6 +277,7 @@ public abstract class UnifiedTest {
                         || schemaVersion.equals("1.17")
                         || schemaVersion.equals("1.18")
                         || schemaVersion.equals("1.19")
+                        || schemaVersion.equals("1.20")
                         || schemaVersion.equals("1.21"),
                 String.format("Unsupported schema version %s", schemaVersion));
         if (runOnRequirements != null) {
