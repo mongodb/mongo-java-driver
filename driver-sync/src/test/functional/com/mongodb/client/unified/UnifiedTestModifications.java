@@ -143,7 +143,7 @@ public final class UnifiedTestModifications {
                 .test("crud", "findOneAndDelete-hint-unacknowledged", "Unacknowledged findOneAndDelete with hint string on 4.4+ server")
                 .test("crud", "findOneAndDelete-hint-unacknowledged", "Unacknowledged findOneAndDelete with hint document on 4.4+ server");
 
-        def.skipNoncompliant("driver-kotlin-coroutine has bug in emulating collection's findOne() method")
+        def.skipNoncompliant("https://jira.mongodb.org/browse/JAVA-5838")
                 .when(() -> def.isReactive() && UnifiedTest.Language.KOTLIN.equals(def.getLanguage()))
                 .file("crud", "findOne");
 
