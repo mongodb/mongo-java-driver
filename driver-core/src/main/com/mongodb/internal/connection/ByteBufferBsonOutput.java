@@ -334,7 +334,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
             }
         }
 
-        // We get here, when the buffer is not backed by an array, or when the string contains non-ASCII characters.
+        // We get here, when the buffer is not backed by an array, or when the string contains at least one non-ASCII characters.
         return writeOnBuffers(str,
                 checkNullTermination,
                 sp,
