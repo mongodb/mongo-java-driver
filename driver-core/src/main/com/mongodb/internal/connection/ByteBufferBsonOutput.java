@@ -320,15 +320,17 @@ public class ByteBufferBsonOutput extends OutputBuffer {
             byte[] dst = curBuffer.array();
             int arrayOffset = curBuffer.arrayOffset();
             if (remaining >= str.length() + 1) {
-                // Write ASCII characters directly to the array until we hit a non-ASCII character
+                // Write ASCII characters directly to the array until we hit a non-ASCII character.
                 sp = writeOnArrayAscii(str, dst, arrayOffset + curBufferPos, checkNullTermination);
                 curBufferPos += sp;
+                // If the whole string was written as ASCII, append the null terminator.
                 if (sp == stringLength) {
                     dst[arrayOffset + curBufferPos++] = 0;
                     position += sp + 1;
                     curBuffer.position(curBufferPos);
                     return sp + 1;
                 }
+                // Otherwise, update the position to reflect the partial write.
                 position += sp;
                 curBuffer.position(curBufferPos);
             }
@@ -378,6 +380,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
                 position++;
             } else if (c < 0x800) {
                 if (remaining < 2) {
+                    // Not enough space: use write() to handle buffer boundary
                     write((byte) (0xc0 + (c >> 6)));
                     write((byte) (0x80 + (c & 0x3f)));
 
@@ -391,7 +394,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
                     position += 2;
                 }
             } else {
-                // Handle multibyte characters (may involve surrogate pairs)
+                // Handle multibyte characters (may involve surrogate pairs).
                 c = Character.codePointAt(str, sp);
                 /*
                  Malformed surrogate pairs are encoded as-is (3 byte code unit) without substituting any code point.
