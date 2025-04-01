@@ -35,7 +35,6 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.internal.connection.ClusterableServer.SHUTDOWN_CODES;
 import static com.mongodb.internal.connection.ServerDescriptionHelper.unknownConnectingServerDescription;
-import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_TWO_WIRE_VERSION;
 
 /**
  * See the
@@ -117,10 +116,6 @@ interface SdamServerDescriptionManager {
             return unknownConnectingServerDescription(context.serverId(), exception);
         }
 
-        boolean serverIsLessThanVersionFourDotTwo() {
-            return context.serverIsLessThanVersionFourDotTwo();
-        }
-
         boolean stale(final ConnectionPool connectionPool, final ServerDescription currentServerDescription) {
             return context.stale(connectionPool) || stale(exception, currentServerDescription);
         }
@@ -190,10 +185,6 @@ interface SdamServerDescriptionManager {
                 this.serverId = assertNotNull(serverId);
                 this.connectionPoolGeneration = connectionPoolGeneration;
                 this.serverMaxWireVersion = serverMaxWireVersion;
-            }
-
-            private boolean serverIsLessThanVersionFourDotTwo() {
-                return serverMaxWireVersion < FOUR_DOT_TWO_WIRE_VERSION;
             }
 
             private boolean stale(final ConnectionPool connectionPool) {

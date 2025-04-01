@@ -60,8 +60,7 @@ import static com.mongodb.internal.connection.BsonWriterHelper.writePayload;
 import static com.mongodb.internal.connection.ByteBufBsonDocument.createList;
 import static com.mongodb.internal.connection.ByteBufBsonDocument.createOne;
 import static com.mongodb.internal.connection.ReadConcernHelper.getReadConcernDocument;
-import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_TWO_WIRE_VERSION;
-import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_WIRE_VERSION;
+import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION;
 
 /**
  * A command message that uses OP_MSG or OP_QUERY to send the command.
@@ -346,7 +345,6 @@ public final class CommandMessage extends RequestMessage {
 
         assertFalse(sessionContext.hasActiveTransaction() && sessionContext.isSnapshot());
         if (sessionContext.hasActiveTransaction()) {
-            checkServerVersionForTransactionSupport();
             extraElements.add(new BsonElement("txnNumber", new BsonInt64(sessionContext.getTransactionNumber())));
             if (firstMessageInTransaction) {
                 extraElements.add(new BsonElement("startTransaction", BsonBoolean.TRUE));
@@ -381,12 +379,6 @@ public final class CommandMessage extends RequestMessage {
         }
     }
 
-    private void checkServerVersionForTransactionSupport() {
-        if (getSettings().getMaxWireVersion() < FOUR_DOT_TWO_WIRE_VERSION && getSettings().getServerType() == SHARD_ROUTER) {
-            throw new MongoClientException("Transactions are not supported by the MongoDB cluster to which this client is connected.");
-        }
-    }
-
 
     private void addReadConcernDocument(final List<BsonElement> extraElements, final SessionContext sessionContext) {
         BsonDocument readConcernDocument = getReadConcernDocument(sessionContext, getSettings().getMaxWireVersion());
@@ -416,7 +408,7 @@ public final class CommandMessage extends RequestMessage {
     }
 
     private static boolean isServerVersionKnown(final MessageSettings settings) {
-        return settings.getMaxWireVersion() >= FOUR_DOT_ZERO_WIRE_VERSION;
+        return settings.getMaxWireVersion() != UNKNOWN_WIRE_VERSION;
     }
 
     @FunctionalInterface
