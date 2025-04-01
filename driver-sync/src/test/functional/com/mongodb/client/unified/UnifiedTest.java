@@ -102,10 +102,6 @@ public abstract class UnifiedTest {
     private static final Set<String> PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS = Collections.singleton(
             "wait queue timeout errors include details about checked out connections");
 
-    public enum Language {
-        JAVA, KOTLIN, SCALA
-    }
-
     public static final int RETRY_ATTEMPTS = 3;
     public static final int FORCE_FLAKY_ATTEMPTS = 10;
     private static final Set<String> ATTEMPTED_TESTS_TO_HENCEFORTH_IGNORE = new HashSet<>();
@@ -1119,5 +1115,9 @@ public abstract class UnifiedTest {
 
     protected void ignoreExtraEvents() {
         this.ignoreExtraEvents = true;
+    }
+
+    public enum Language {
+        JAVA, KOTLIN
     }
 }
