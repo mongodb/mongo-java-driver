@@ -53,7 +53,7 @@ dependencies {
 val defaultScalaVersion: String = project.findProperty("defaultScalaVersion")!!.toString()
 val scalaVersions: List<String>? = project.findProperty("supportedScalaVersions")?.toString()?.split(",")
 
-assert(!scalaVersions.isNullOrEmpty()) {
+require(!scalaVersions.isNullOrEmpty()) {
     "Scala versions must be provided as a comma-separated list in the 'supportedScalaVersions' project property"
 }
 
@@ -73,14 +73,14 @@ configureMavenPublication {
             val pomXml: Node = asNode()
 
             val dependencyManagementNode = pomXml.getNode("dependencyManagement")
-            assert(dependencyManagementNode != null) {
+            require(dependencyManagementNode != null) {
                 "<dependencyManagement> node not found in the generated BOM POM"
             }
             val dependenciesNode = dependencyManagementNode.getNode("dependencies")
-            assert(dependenciesNode != null) { "<dependencies> node not found in the generated BOM POM" }
+            require(dependenciesNode != null) { "<dependencies> node not found in the generated BOM POM" }
 
             val existingScalaDeps =
-                dependenciesNode!!
+                dependenciesNode
                     .children()
                     .map { it as Node }
                     .filter { it.getNode("artifactId")?.text()?.contains("scala") ?: false }
@@ -110,37 +110,35 @@ configureMavenPublication {
  * Validate the BOM file.
  */
 tasks.withType<GenerateMavenPom> {
-    doLast {
-        pom.withXml {
-            val pomXml: Node = asNode()
-            val dependenciesNode = pomXml.getNode("dependencyManagement").getNode("dependencies")
-            assert(dependenciesNode!!.children().isNotEmpty()) {
-                "BOM must contain more then one <dependency> element:\n$destination"
-            }
-
-            dependenciesNode
-                .children()
-                .map { it as Node }
-                .forEach {
-                    val groupId: String = it.getNode("groupId")!!.text()
-                    assert(groupId.startsWith("org.mongodb")) {
-                        "BOM must contain only 'org.mongodb' dependencies, but found '$groupId':\n$destination"
-                    }
-
-                    /*
-                     * The <scope> and <optional> tags should be omitted in BOM dependencies.
-                     * This ensures that consuming projects have the flexibility to decide whether a dependency is optional in their context.
-                     *
-                     * The BOM's role is to provide version information, not to dictate inclusion or exclusion of dependencies.
-                     */
-                    assert(it.getNode("scope") == null) {
-                        "BOM must not contain <scope> elements in dependency:\n$destination"
-                    }
-                    assert(it.getNode("optional") == null) {
-                        "BOM must not contain <optional> elements in dependency:\n$destination"
-                    }
-                }
+    pom.withXml {
+        val pomXml: Node = asNode()
+        val dependenciesNode = pomXml.getNode("dependencyManagement").getNode("dependencies")
+        require(dependenciesNode!!.children().isNotEmpty()) {
+            "BOM must contain more then one <dependency> element:\n$destination"
         }
+
+        dependenciesNode
+            .children()
+            .map { it as Node }
+            .forEach {
+                val groupId: String = it.getNode("groupId")!!.text()
+                require(groupId.startsWith("org.mongodb")) {
+                    "BOM must contain only 'org.mongodb' dependencies, but found '$groupId':\n$destination"
+                }
+
+                /*
+                 * The <scope> and <optional> tags should be omitted in BOM dependencies.
+                 * This ensures that consuming projects have the flexibility to decide whether a dependency is optional in their context.
+                 *
+                 * The BOM's role is to provide version information, not to dictate inclusion or exclusion of dependencies.
+                 */
+                require(it.getNode("scope") == null) {
+                    "BOM must not contain <scope> elements in dependency:\n$destination"
+                }
+                require(it.getNode("optional") == null) {
+                    "BOM must not contain <optional> elements in dependency:\n$destination"
+                }
+            }
     }
 }
 
