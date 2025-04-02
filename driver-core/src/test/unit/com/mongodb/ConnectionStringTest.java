@@ -65,6 +65,6 @@ public class ConnectionStringTest extends AbstractConnectionStringTest {
 
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() {
-        return JsonPoweredTestHelper.getLegacyTestData("connection-string");
+        return JsonPoweredTestHelper.getTestData("connection-string");
     }
 }

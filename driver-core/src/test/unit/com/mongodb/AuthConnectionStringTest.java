@@ -66,7 +66,7 @@ public class AuthConnectionStringTest extends TestCase {
 
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() {
-        return JsonPoweredTestHelper.getLegacyTestData("auth/tests/legacy");
+        return JsonPoweredTestHelper.getTestData("auth/tests/legacy");
     }
 
     private void testInvalidUris() {

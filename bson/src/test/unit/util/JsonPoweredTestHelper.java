@@ -52,7 +52,7 @@ public final class JsonPoweredTestHelper {
         return testDocument;
     }
 
-    public static Collection<Object[]> getLegacyTestData(final String resourcePath) {
+    public static Collection<Object[]> getTestData(final String resourcePath) {
         List<Object[]> data = new ArrayList<>();
         for (BsonDocument document : getSpecTestDocuments(resourcePath)) {
             for (BsonValue test : document.getArray("tests")) {

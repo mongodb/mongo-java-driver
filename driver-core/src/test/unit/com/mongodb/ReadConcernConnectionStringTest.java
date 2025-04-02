@@ -55,6 +55,6 @@ public class ReadConcernConnectionStringTest extends TestCase {
 
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() {
-        return JsonPoweredTestHelper.getLegacyTestData("read-write-concern/tests/connection-string/read-concern.json");
+        return JsonPoweredTestHelper.getTestData("read-write-concern/tests/connection-string/read-concern.json");
     }
 }
