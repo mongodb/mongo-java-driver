@@ -66,7 +66,7 @@ public class BsonBinaryWriterTest {
             writer.writeEndDocument();
             fail();
         } catch (BsonMaximumSizeExceededException e) {
-            assertEquals("Document size of 1037 is larger than maximum of 1024.", e.getMessage());
+            assertEquals("Document size of 12917 is larger than maximum of 12904.", e.getMessage());
         }
     }
 
