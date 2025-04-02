@@ -27,8 +27,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import util.JsonPoweredTestHelper;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
 import static com.mongodb.ClusterFixture.getClusterDescription;
@@ -51,9 +55,6 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
     public ServerDiscoveryAndMonitoringTest(final String description, final BsonDocument definition) {
         super(definition);
         this.description = description;
-        // Unified and monitoring tests have their own test runners
-        assumeFalse(definition.getString("resourcePath").getValue().contains("/tests/unified/"));
-        assumeFalse(definition.getString("resourcePath").getValue().contains("/tests/monitoring/"));
         init(serverAddress -> NO_OP_SERVER_LISTENER, NO_OP_CLUSTER_LISTENER);
     }
 
@@ -90,7 +91,15 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
 
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
-        return data("server-discovery-and-monitoring");
+        // Unified and monitoring tests have their own test runners so filter them out.
+        return data("server-discovery-and-monitoring")
+                .stream().filter(i -> {
+                    Object definition = i[1];
+                    assert(definition instanceof BsonDocument);
+                    BsonDocument definitionDocument = (BsonDocument) definition;
+                    String resourcePath = definitionDocument.getString("resourcePath").getValue();
+                    return !(resourcePath.contains("/tests/unified/") || resourcePath.contains("/tests/monitoring"));
+                }).collect(Collectors.toList());
     }
 
     private void assertServers(final BsonDocument servers) {
