@@ -37,9 +37,14 @@ sourceSets {
 dependencies {
     api(project(":driver-sync"))
     api(project(":mongodb-crypt"))
+
+    implementation(platform(libs.netty.bom))
+    implementation(libs.bundles.netty)
+
     implementation(libs.logback.classic)
     implementation(libs.jmh.core)
     annotationProcessor(libs.jmh.generator.annprocess)
+
 }
 
 tasks.register<JavaExec>("jmh") {
@@ -47,6 +52,14 @@ tasks.register<JavaExec>("jmh") {
     description = "Run JMH benchmarks."
     mainClass = "org.openjdk.jmh.Main"
     classpath = sourceSets.main.get().runtimeClasspath
+}
+
+tasks.register<JavaExec>("runNetty") {
+    group = "application"
+    description = "Run the Netty main class."
+    mainClass.set("com.mongodb.benchmark.benchmarks.netty.BenchmarkNettyProviderSuite")
+    classpath = sourceSets["main"].runtimeClasspath
+    jvmArgs = application.applicationDefaultJvmArgs.toList()
 }
 
 tasks.withType<Javadoc>().configureEach {
