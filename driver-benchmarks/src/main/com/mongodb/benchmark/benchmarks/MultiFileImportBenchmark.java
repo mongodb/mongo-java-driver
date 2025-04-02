@@ -45,6 +45,10 @@ public class MultiFileImportBenchmark extends AbstractMongoBenchmark {
     private ExecutorService fileReadingService;
     private ExecutorService documentWritingService;
 
+    public MultiFileImportBenchmark() {
+        super("LDJSON multi-file import");
+    }
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -76,12 +80,6 @@ public class MultiFileImportBenchmark extends AbstractMongoBenchmark {
 
         super.tearDown();
     }
-
-    @Override
-    public String getName() {
-        return "LDJSON multi-file import";
-    }
-
 
     @Override
     public void run() throws InterruptedException {

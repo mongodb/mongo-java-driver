@@ -37,7 +37,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
 
     private final BsonOutput bsonOutput;
     private final Stack<Integer> maxDocumentSizeStack = new Stack<>();
-    private static final int ARRAY_INDEXES_CACHE_SIZE = 1 << 8;
+    private static final int ARRAY_INDEXES_CACHE_SIZE = 256;
     private static final byte[][] ARRAY_INDEXES_CACHE = new byte[ARRAY_INDEXES_CACHE_SIZE][];
     private Mark mark;
 

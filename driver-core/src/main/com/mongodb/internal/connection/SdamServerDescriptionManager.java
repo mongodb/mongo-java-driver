@@ -38,7 +38,7 @@ import static com.mongodb.internal.connection.ServerDescriptionHelper.unknownCon
 
 /**
  * See the
- * <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.rst">
+ * <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.md">
  * Server Discovery And Monitoring</a> specification.
  */
 @ThreadSafe
