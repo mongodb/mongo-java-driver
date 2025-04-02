@@ -100,7 +100,7 @@ public final class JsonPoweredTestHelper {
         }
 
         if (files.isEmpty()) {
-            Assertions.fail("No resources found in: " + resourcePath);
+            Assertions.fail("No test documents found in: " + resourcePath);
         }
         return files;
     }
