@@ -98,6 +98,10 @@ public final class JsonPoweredTestHelper {
         } catch (Exception e) {
             Assertions.fail("Unable to load resource: " + resourcePath, e);
         }
+
+        if (files.isEmpty()) {
+            Assertions.fail("No resources found in: " + resourcePath);
+        }
         return files;
     }
 
