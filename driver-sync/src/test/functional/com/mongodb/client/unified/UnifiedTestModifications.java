@@ -159,14 +159,8 @@ public final class UnifiedTestModifications {
 
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5827")
                         .file("crud", "bypassDocumentValidation");
-        def.skipNoncompliant("Find with batchSize equal to limit - batchSize is set to limit if limit is smaller")
-                        .test("crud", "find", "Find with batchSize equal to limit");
         def.skipNoncompliant("Updates and Replace bulk operations are split in the java driver")
                         .file("crud", "bulkWrite-comment");
-
-        def.skipNoncompliant("https://jira.mongodb.org/browse/JAVA-5838")
-                .when(() -> def.isReactive() && UnifiedTest.Language.KOTLIN.equals(def.getLanguage()))
-                .file("crud", "findOne");
 
         // gridfs
 

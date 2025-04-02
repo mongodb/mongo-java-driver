@@ -36,8 +36,9 @@ public class UriOptionsTest extends AbstractConnectionStringTest {
     public void shouldPassAllOutcomes() {
         assumeFalse(getDefinition().getBoolean("warning", BsonBoolean.FALSE).getValue());
         assumeFalse(getDescription().equals("Arbitrary string readConcernLevel does not cause a warning"));
-        // Skip because Java driver does not support the tlsAllowInvalidCertificates option
-        assumeFalse(getDescription().contains("tlsAllowInvalidCertificates"));
+        // Skip because Java driver does not support the tlsAllowInvalidCertificates & tlsInsecure options
+        assumeFalse(getDescription().startsWith("tlsInsecure and tlsAllowInvalidCertificates both present"));
+        assumeFalse(getDescription().startsWith("tlsAllowInvalidCertificates and tlsInsecure both present"));
         // Skip because Java driver does not support the tlsDisableCertificateRevocationCheck option
         assumeFalse(getDescription().contains("tlsDisableCertificateRevocationCheck"));
         // Skip because Java driver does not support the tlsDisableOCSPEndpointCheck option
