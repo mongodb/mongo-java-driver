@@ -24,6 +24,7 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 
 import static java.lang.String.format;
+import static org.bson.internal.PlatformUtil.isUnalignedAccessAllowed;
 
 /**
  * An implementation of {@code BsonInput} that is backed by a {@code ByteBuf}.
@@ -33,6 +34,10 @@ import static java.lang.String.format;
 public class ByteBufferBsonInput implements BsonInput {
 
     private static final String[] ONE_BYTE_ASCII_STRINGS = new String[Byte.MAX_VALUE + 1];
+    private static final boolean UNALIGNED_ACCESS_SUPPORTED = isUnalignedAccessAllowed();
+    private int scratchBufferSize = 0;
+    private byte[] scratchBuffer;
+
 
     static {
         for (int b = 0; b < ONE_BYTE_ASCII_STRINGS.length; b++) {
@@ -131,8 +136,8 @@ public class ByteBufferBsonInput implements BsonInput {
         return readString(size);
     }
 
-    private String readString(final int size) {
-        if (size == 2) {
+    private String readString(final int stringSize) {
+        if (stringSize == 2) {
             byte asciiByte = buffer.get();               // if only one byte in the string, it must be ascii.
             byte nullByte = buffer.get();                // read null terminator
             if (nullByte != 0) {
@@ -146,20 +151,29 @@ public class ByteBufferBsonInput implements BsonInput {
             if (buffer.hasArray()) {
                 int position = buffer.position();
                 int arrayOffset = buffer.arrayOffset();
-                buffer.position(position + size - 1);
+                buffer.position(position + stringSize - 1);
                 byte nullByte = buffer.get();
                 if (nullByte != 0) {
                     throw new BsonSerializationException("Found a BSON string that is not null-terminated");
                 }
-                return new String(buffer.array(), arrayOffset + position, size - 1, StandardCharsets.UTF_8);
+                return new String(buffer.array(), arrayOffset + position, stringSize - 1, StandardCharsets.UTF_8);
             }
 
-            byte[] bytes = new byte[size];
-            buffer.get(bytes);
-            if (bytes[size - 1] != 0) {
-                throw new BsonSerializationException("BSON string not null-terminated");
+            if (stringSize <= scratchBufferSize) {
+                buffer.get(scratchBuffer, 0, stringSize);
+                if (scratchBuffer[stringSize - 1] != 0) {
+                    throw new BsonSerializationException("BSON string not null-terminated");
+                }
+                return new String(scratchBuffer, 0, stringSize - 1, StandardCharsets.UTF_8);
+            } else {
+                scratchBufferSize = stringSize + (stringSize >> 1); //1.5 times the size
+                scratchBuffer = new byte[scratchBufferSize];
+                buffer.get(scratchBuffer, 0, stringSize);
+                if (scratchBuffer[stringSize - 1] != 0) {
+                    throw new BsonSerializationException("BSON string not null-terminated");
+                }
+                return new String(scratchBuffer, 0, stringSize - 1, StandardCharsets.UTF_8);
             }
-            return new String(bytes, 0, size - 1, StandardCharsets.UTF_8);
         }
     }
 
@@ -173,21 +187,25 @@ public class ByteBufferBsonInput implements BsonInput {
 
     public int computeCStringLength(int prevPos) {
         ensureOpen();
-        //TODO should we fall back to byte-by-byte search on JDK 8? ByteBuffer does not use Unsafe internally
-        int pos = prevPos;
+        int pos = buffer.position();
         int limit = buffer.limit();
-        while (limit - pos >= Long.BYTES) {
-            long word = buffer.getLong(pos);
-            long mask = word - 0x0101010101010101L;
-            mask &= ~word;
-            mask &= 0x8080808080808080L;
-            if (mask != 0) {
-                // first null terminator found in the Little Endian long
-                int offset = Long.numberOfTrailingZeros(mask) >>> 3;
-                // Found the null at pos + offset; reset buffer's position.
-                return (pos - prevPos) + offset + 1;
+
+        if (UNALIGNED_ACCESS_SUPPORTED) {
+            int chunks = (limit - pos) >>> 3;
+            // Process 8 bytes at a time.
+            for (int i = 0; i < chunks; i++) {
+                long word = buffer.getLong(pos);
+                long mask = word - 0x0101010101010101L;
+                mask &= ~word;
+                mask &= 0x8080808080808080L;
+                if (mask != 0) {
+                    // first null terminator found in the Little Endian long
+                    int offset = Long.numberOfTrailingZeros(mask) >>> 3;
+                    // Found the null at pos + offset; reset buffer's position.
+                    return pos + offset;
+                }
+                pos += 8;
             }
-            pos += 8;
         }
 
         // Process remaining bytes one-by-one.
@@ -196,6 +214,7 @@ public class ByteBufferBsonInput implements BsonInput {
                 return (pos - prevPos);
             }
         }
+
         buffer.position(pos);
         throw new BsonSerializationException("Found a BSON string that is not null-terminated");
     }
