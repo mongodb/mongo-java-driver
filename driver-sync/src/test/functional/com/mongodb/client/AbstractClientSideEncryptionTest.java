@@ -135,6 +135,7 @@ public abstract class AbstractClientSideEncryptionTest {
                 description.equals("timeoutMS applied to listCollections to get collection schema"));
         assumeFalse("runOn requirements not satisfied", skipTest);
         assumeFalse("Skipping count tests", filename.startsWith("count."));
+        assumeFalse("https://jira.mongodb.org/browse/JAVA-5297", description.equals("Insert with deterministic encryption, then find it"));
 
         assumeFalse(definition.getString("skipReason", new BsonString("")).getValue(), definition.containsKey("skipReason"));
 
