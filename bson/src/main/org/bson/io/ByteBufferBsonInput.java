@@ -202,7 +202,7 @@ public class ByteBufferBsonInput implements BsonInput {
                     // first null terminator found in the Little Endian long
                     int offset = Long.numberOfTrailingZeros(mask) >>> 3;
                     // Found the null at pos + offset; reset buffer's position.
-                    return pos + offset;
+                    return (pos - prevPos) + offset + 1;
                 }
                 pos += 8;
             }
