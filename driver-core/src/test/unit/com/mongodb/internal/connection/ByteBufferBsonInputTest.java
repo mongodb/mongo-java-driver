@@ -64,6 +64,7 @@ class ByteBufferBsonInputTest {
                 new PowerOfTwoBufferPool(),
                 size -> new ByteBufNIO(ByteBuffer.wrap(new byte[size + 5], 2, size).slice()),  //different array offsets
                 size -> new ByteBufNIO(ByteBuffer.wrap(new byte[size + 4], 3, size).slice()),  //different array offsets
+                size -> new ByteBufNIO(ByteBuffer.allocateDirect(size)),
                 size -> new ByteBufNIO(ByteBuffer.allocate(size)) {
                     @Override
                     public boolean hasArray() {
