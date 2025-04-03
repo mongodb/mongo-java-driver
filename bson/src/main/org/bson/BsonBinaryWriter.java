@@ -24,6 +24,7 @@ import org.bson.types.ObjectId;
 import java.util.List;
 import java.util.Stack;
 
+import static java.lang.Math.max;
 import static java.lang.String.format;
 import static org.bson.assertions.Assertions.notNull;
 
@@ -44,27 +45,27 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     private Mark mark;
 
     static {
-        int totalSize = 0;
-        int[] lengths = new int[ARRAY_INDEXES_CACHE_SIZE];
-        for (int i = 0; i < ARRAY_INDEXES_CACHE_SIZE; i++) {
-            String string = Integer.toString(i);
-            lengths[i] = string.length() + 1; // +1 for null terminator
-            totalSize += lengths[i];
-        }
-
-        ARRAY_INDEXES_BUFFER = new byte[totalSize];
+        ARRAY_INDEXES_LENGTHS = new int[ARRAY_INDEXES_CACHE_SIZE];
         ARRAY_INDEXES_OFFSETS = new int[ARRAY_INDEXES_CACHE_SIZE];
-        ARRAY_INDEXES_LENGTHS = lengths;
+        int totalSize = 0;
+        for (int i = 0; i < ARRAY_INDEXES_CACHE_SIZE; i++) {
+            totalSize += (int) (Math.log10(max(i, 1))
+                    + 1 // number of digits
+                    + 1); // +1 for null terminator
+        }
+        ARRAY_INDEXES_BUFFER = new byte[totalSize];
 
         // Fill buffer
         int offset = 0;
         for (int i = 0; i < ARRAY_INDEXES_CACHE_SIZE; i++) {
-            ARRAY_INDEXES_OFFSETS[i] = offset;
             String string = Integer.toString(i);
-            for (int j = 0; j < string.length(); j++) {
+            int length = string.length();
+            for (int j = 0; j < length; j++) {
                 ARRAY_INDEXES_BUFFER[offset++] = (byte) string.charAt(j);
             }
             ARRAY_INDEXES_BUFFER[offset++] = 0;
+            ARRAY_INDEXES_OFFSETS[i] = offset - (length + 1);
+            ARRAY_INDEXES_LENGTHS[i] = length + 1;  // +1 for null terminator
         }
     }
 
