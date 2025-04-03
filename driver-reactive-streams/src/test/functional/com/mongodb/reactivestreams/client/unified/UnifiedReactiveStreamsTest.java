@@ -101,6 +101,6 @@ public abstract class UnifiedReactiveStreamsTest extends UnifiedTest {
 
     @NonNull
     protected static Collection<Arguments> getTestData(final String directory) {
-        return getTestData(directory, true);
+        return getTestData(directory, true, Language.JAVA);
     }
 }

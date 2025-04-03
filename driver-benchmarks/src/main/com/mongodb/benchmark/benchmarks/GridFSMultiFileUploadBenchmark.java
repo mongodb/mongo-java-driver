@@ -32,6 +32,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+
 public class GridFSMultiFileUploadBenchmark extends AbstractMongoBenchmark {
 
     private MongoDatabase database;
@@ -39,9 +40,8 @@ public class GridFSMultiFileUploadBenchmark extends AbstractMongoBenchmark {
 
     private ExecutorService fileService;
 
-    @Override
-    public String getName() {
-        return "GridFS multi-file upload";
+    public GridFSMultiFileUploadBenchmark() {
+        super("GridFS multi-file upload");
     }
 
     @Override

@@ -119,7 +119,7 @@ final class DefaultSdamServerDescriptionManager implements SdamServerDescription
         }
         if (sdamIssue.relatedToStateChange()) {
             updateDescription(sdamIssue.serverDescription());
-            if (sdamIssue.serverIsLessThanVersionFourDotTwo() || sdamIssue.relatedToShutdown()) {
+            if (sdamIssue.relatedToShutdown()) {
                 connectionPool.invalidate(sdamIssue.exception().orElse(null));
             }
             serverMonitor.connect();
@@ -130,9 +130,6 @@ final class DefaultSdamServerDescriptionManager implements SdamServerDescription
             serverMonitor.cancelCurrentCheck();
         } else if (sdamIssue.relatedToWriteConcern() || !sdamIssue.specific()) {
             updateDescription(sdamIssue.serverDescription());
-            if (sdamIssue.serverIsLessThanVersionFourDotTwo()) {
-                connectionPool.invalidate(sdamIssue.exception().orElse(null));
-            }
             serverMonitor.connect();
         }
     }

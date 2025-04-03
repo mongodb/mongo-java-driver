@@ -161,7 +161,7 @@ public abstract class UnifiedTest {
     }
 
     @NonNull
-    protected static Collection<Arguments> getTestData(final String directory, final boolean isReactive) {
+    protected static Collection<Arguments> getTestData(final String directory, final boolean isReactive, final Language language) {
         List<Arguments> data = new ArrayList<>();
         for (BsonDocument fileDocument : getTestDocuments("/" + directory + "/")) {
             for (BsonValue cur : fileDocument.getArray("tests")) {
@@ -169,7 +169,7 @@ public abstract class UnifiedTest {
                 final BsonDocument testDocument = cur.asDocument();
                 String testDescription = testDocument.getString("description").getValue();
                 String fileDescription = fileDocument.getString("description").getValue();
-                TestDef testDef = testDef(directory, fileDescription, testDescription, isReactive);
+                TestDef testDef = testDef(directory, fileDescription, testDescription, isReactive, language);
                 applyCustomizations(testDef);
 
                 boolean forceFlaky = testDef.wasAssignedModifier(Modifier.FORCE_FLAKY);
@@ -240,7 +240,7 @@ public abstract class UnifiedTest {
         rootContext.getAssertionContext().push(ContextElement.ofTest(definition));
         ignoreExtraEvents = false;
         if (directoryName != null && fileDescription != null && testDescription != null) {
-            testDef = testDef(directoryName, fileDescription, testDescription, isReactive());
+            testDef = testDef(directoryName, fileDescription, testDescription, isReactive(), getLanguage());
             applyCustomizations(testDef);
 
             boolean skip = testDef.wasAssignedModifier(Modifier.SKIP);
@@ -327,6 +327,10 @@ public abstract class UnifiedTest {
 
     protected boolean isReactive() {
         return false;
+    }
+
+    protected Language getLanguage() {
+        return Language.JAVA;
     }
 
     @ParameterizedTest(name = "{0}")
@@ -1111,5 +1115,9 @@ public abstract class UnifiedTest {
 
     protected void ignoreExtraEvents() {
         this.ignoreExtraEvents = true;
+    }
+
+    public enum Language {
+        JAVA, KOTLIN
     }
 }

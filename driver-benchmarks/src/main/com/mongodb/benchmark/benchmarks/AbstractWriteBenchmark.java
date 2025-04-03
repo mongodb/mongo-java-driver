@@ -27,7 +27,6 @@ import java.nio.charset.StandardCharsets;
 
 public abstract class AbstractWriteBenchmark<T> extends AbstractMongoBenchmark {
     protected static final Bson EMPTY_FILTER = Filters.empty();
-    private final String name;
     private final String resourcePath;
     private final Class<T> clazz;
     private byte[] bytes;
@@ -41,7 +40,7 @@ public abstract class AbstractWriteBenchmark<T> extends AbstractMongoBenchmark {
                                      int numInternalIterations,
                                      int numDocuments,
                                      final Class<T> clazz) {
-        this.name = name;
+        super(name);
         this.resourcePath = resourcePath;
         this.clazz = clazz;
         this.numInternalIterations = numInternalIterations;
@@ -55,11 +54,6 @@ public abstract class AbstractWriteBenchmark<T> extends AbstractMongoBenchmark {
         fileLength = bytes.length;
         Codec<T> codec = client.getCodecRegistry().get(clazz);
         document = codec.decode(new JsonReader(new String(bytes, StandardCharsets.UTF_8)), DecoderContext.builder().build());
-    }
-
-    @Override
-    public String getName() {
-        return name;
     }
 
     protected T createDocument() {
