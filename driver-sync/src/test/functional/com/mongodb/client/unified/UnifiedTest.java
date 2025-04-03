@@ -428,6 +428,8 @@ public abstract class UnifiedTest {
 
         if (schemaVersionComponents.size() != 2) {
             Assertions.fail("Unsupported schema version: " + schemaVersion);
+        } else if (schemaVersionComponents.get(0) < 1) {
+            Assertions.fail("Unsupported schema version: " + schemaVersion);
         }
 
         for (int i = 0; i < 2; i++){
