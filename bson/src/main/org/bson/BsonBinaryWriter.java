@@ -37,13 +37,34 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
 
     private final BsonOutput bsonOutput;
     private final Stack<Integer> maxDocumentSizeStack = new Stack<>();
-    private static final int ARRAY_INDEXES_CACHE_SIZE = 256;
-    private static final String[] ARRAY_INDEXES_CACHE = new String[ARRAY_INDEXES_CACHE_SIZE];
+    private static final int ARRAY_INDEXES_CACHE_SIZE = 1000;
+    private static final byte[] ARRAY_INDEXES_BUFFER;
+    private static final int[] ARRAY_INDEXES_OFFSETS;
+    private static final int[] ARRAY_INDEXES_LENGTHS;
     private Mark mark;
 
     static {
+        int totalSize = 0;
+        int[] lengths = new int[ARRAY_INDEXES_CACHE_SIZE];
         for (int i = 0; i < ARRAY_INDEXES_CACHE_SIZE; i++) {
-            ARRAY_INDEXES_CACHE[i] = Integer.toString(i);
+            String string = Integer.toString(i);
+            lengths[i] = string.length() + 1; // +1 for null terminator
+            totalSize += lengths[i];
+        }
+
+        ARRAY_INDEXES_BUFFER = new byte[totalSize];
+        ARRAY_INDEXES_OFFSETS = new int[ARRAY_INDEXES_CACHE_SIZE];
+        ARRAY_INDEXES_LENGTHS = lengths;
+
+        // Fill buffer
+        int offset = 0;
+        for (int i = 0; i < ARRAY_INDEXES_CACHE_SIZE; i++) {
+            ARRAY_INDEXES_OFFSETS[i] = offset;
+            String string = Integer.toString(i);
+            for (int j = 0; j < string.length(); j++) {
+                ARRAY_INDEXES_BUFFER[offset++] = (byte) string.charAt(j);
+            }
+            ARRAY_INDEXES_BUFFER[offset++] = 0;
         }
     }
 
@@ -409,7 +430,9 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
             if (index >= ARRAY_INDEXES_CACHE_SIZE) {
                 bsonOutput.writeCString(Integer.toString(index));
             } else {
-                bsonOutput.writeCString(ARRAY_INDEXES_CACHE[index]);
+                bsonOutput.writeBytes(ARRAY_INDEXES_BUFFER,
+                        ARRAY_INDEXES_OFFSETS[index],
+                        ARRAY_INDEXES_LENGTHS[index]);
             }
         } else {
             bsonOutput.writeCString(getName());
