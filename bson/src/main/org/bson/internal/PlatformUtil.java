@@ -20,7 +20,7 @@ package org.bson.internal;
  * Utility class for platform-specific operations.
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public class PlatformUtil {
+public final class PlatformUtil {
 
     private PlatformUtil() {
         //NOOP
@@ -51,3 +51,4 @@ public class PlatformUtil {
         }
     }
 }
+

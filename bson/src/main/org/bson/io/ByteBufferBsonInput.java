@@ -185,7 +185,7 @@ public class ByteBufferBsonInput implements BsonInput {
         buffer.position(pos + length);
     }
 
-    public int computeCStringLength(int prevPos) {
+    public int computeCStringLength(final int prevPos) {
         ensureOpen();
         int pos = buffer.position();
         int limit = buffer.limit();
