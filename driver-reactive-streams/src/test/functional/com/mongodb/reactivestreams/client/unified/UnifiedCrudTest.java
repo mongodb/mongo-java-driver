@@ -22,6 +22,6 @@ import java.util.Collection;
 
 final class UnifiedCrudTest extends UnifiedReactiveStreamsTest {
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/crud");
+        return getTestData("crud");
     }
 }

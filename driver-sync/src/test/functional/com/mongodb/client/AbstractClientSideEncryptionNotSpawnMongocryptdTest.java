@@ -215,11 +215,11 @@ public abstract class AbstractClientSideEncryptionNotSpawnMongocryptdTest {
     }
 
     private static BsonDocument externalSchema() {
-            return getTestDocument("/client-side-encryption-external/external-schema.json");
+            return getTestDocument("client-side-encryption/external/external-schema.json");
     }
 
     private static BsonDocument externalKey() {
-        return getTestDocument("/client-side-encryption-external/external-key.json");
+        return getTestDocument("client-side-encryption/external/external-key.json");
     }
 
     @SafeVarargs

@@ -22,6 +22,6 @@ import java.util.Collection;
 
 final class UnifiedTransactionsTest extends UnifiedReactiveStreamsTest {
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/transactions");
+        return getTestData("transactions");
     }
 }

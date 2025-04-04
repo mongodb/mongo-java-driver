@@ -21,6 +21,7 @@ import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
+import com.mongodb.MongoGridFSException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoOperationTimeoutException;
@@ -74,11 +75,11 @@ final class ErrorMatcher {
             assertTrue(context.getMessage("isError must be true"), expectedError.getBoolean("isError").getValue());
         }
         if (expectedError.containsKey("isClientError")) {
-            assertEquals(context.getMessage("Exception must be of type MongoClientException or IllegalArgumentException"
-                            + " or IllegalStateException or MongoSocketException or MongoInternalException"),
+            assertEquals(context.getMessage("Exception must be of type MongoClientException or MongoSocketException"
+                            + " or MongoGridFSException or IllegalArgumentException or IllegalStateException "),
                     expectedError.getBoolean("isClientError").getValue(),
-                    e instanceof MongoClientException || e instanceof IllegalArgumentException || e instanceof IllegalStateException
-                            || e instanceof MongoSocketException);
+                    e instanceof MongoClientException || e instanceof MongoSocketException || e instanceof MongoGridFSException
+                            || e instanceof IllegalArgumentException || e instanceof IllegalStateException);
         }
 
         if (expectedError.containsKey("isTimeoutError")) {

@@ -22,6 +22,6 @@ import java.util.Collection;
 
 final class ServerSelectionLoggingTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/server-selection/logging");
+        return getTestData("server-selection/tests/logging");
     }
 }

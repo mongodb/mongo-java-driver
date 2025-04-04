@@ -22,6 +22,6 @@ import java.util.Collection;
 
 final class UnifiedAtlasDataLakeTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/atlas-data-lake-testing");
+        return getTestData("atlas-data-lake-testing");
     }
 }

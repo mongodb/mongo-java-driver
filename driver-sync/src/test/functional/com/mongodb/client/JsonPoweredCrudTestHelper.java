@@ -139,6 +139,8 @@ public class JsonPoweredCrudTestHelper {
             case "assertIndexNotExists":
                 assertIndexExists(operation, false);
                 return new BsonDocument();
+            case "wait":
+                return executeWait(operation);
             default:
                 try {
                     Method method = getClass().getDeclaredMethod(methodName, BsonDocument.class, BsonDocument.class, ClientSession.class);
@@ -244,6 +246,15 @@ public class JsonPoweredCrudTestHelper {
 
     BsonDocument toResult(@Nullable final BsonValue results) {
         return new BsonDocument("result", results != null ? results : BsonNull.VALUE);
+    }
+
+    private BsonDocument executeWait(final BsonDocument operation) {
+        try {
+            Thread.sleep(operation.getDocument("arguments").getNumber("ms").longValue());
+            return new BsonDocument();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void assertCollectionExists(final BsonDocument operation, final boolean shouldExist) {

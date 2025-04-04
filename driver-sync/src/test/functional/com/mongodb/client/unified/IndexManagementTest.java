@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package com.mongodb.reactivestreams.client.unified;
+package com.mongodb.client.unified;
 
 import org.junit.jupiter.params.provider.Arguments;
 
 import java.util.Collection;
 
-final class ClientSideEncryptionTest extends UnifiedReactiveStreamsTest {
-
+final class IndexManagementTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() {
-        return getTestData("client-side-encryption/tests/unified");
+        return getTestData("index-management");
     }
 }

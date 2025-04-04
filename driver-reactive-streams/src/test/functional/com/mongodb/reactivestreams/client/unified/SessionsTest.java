@@ -22,6 +22,6 @@ import java.util.Collection;
 
 final class SessionsTest extends UnifiedReactiveStreamsTest {
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/sessions");
+        return getTestData("sessions");
     }
 }

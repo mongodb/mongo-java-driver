@@ -49,7 +49,7 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
     private final AtomicReference<Throwable> atomicReferenceThrowable = new AtomicReference<>();
 
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/client-side-operation-timeout");
+        return getTestData("client-side-operations-timeout");
     }
 
     @Override
@@ -78,6 +78,10 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
 
         // No withTransaction support
         assumeFalse(fileDescription.contains("withTransaction") || testDescription.contains("withTransaction"));
+
+        assumeFalse(fileDescription.equals("operations ignore deprecated timeout options if timeoutMS is set")
+                && (testDescription.startsWith("abortTransaction ignores") || testDescription.startsWith("commitTransaction ignores")),
+                "No operation session based overrides");
 
         if (testDescription.equals("timeoutMS is refreshed for close")) {
             enableSleepAfterCursorError(256);
