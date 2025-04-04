@@ -196,7 +196,7 @@ public abstract class OutputBuffer extends OutputStream implements BsonOutput {
         writeInt64(value);
     }
 
-    private int writeCharacters(final String str, final boolean checkForNullCharacters) {
+    protected int writeCharacters(final String str, final boolean checkForNullCharacters) {
         int len = str.length();
         int total = 0;
 
