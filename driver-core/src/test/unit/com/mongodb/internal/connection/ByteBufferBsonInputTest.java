@@ -122,8 +122,10 @@ class ByteBufferBsonInputTest {
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, new byte[]{2, 0, 0, 0, (byte) 0xFF, 0});
         try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-            // when & then
+            // when
             String result = bufferInput.readString();
+
+            // then
             assertEquals("\uFFFD", result);
             assertEquals(6, bufferInput.getPosition());
         }
@@ -135,8 +137,10 @@ class ByteBufferBsonInputTest {
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, new byte[]{-0x01, 0});
         try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-            // when & then
+            // when
             String result = bufferInput.readCString();
+
+            // then
             assertEquals("\uFFFD", result);
             assertEquals(2, bufferInput.getPosition());
         }
@@ -156,8 +160,10 @@ class ByteBufferBsonInputTest {
                 ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, expectedStringEncoding);
                 try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-                    // when & then
+                    // when
                     String actualString = bufferInput.readString();
+
+                    // then
                     assertEquals(expectedString, actualString);
                     assertEquals(expectedStringEncoding.length, bufferInput.getPosition());
                 }
@@ -183,8 +189,10 @@ class ByteBufferBsonInputTest {
 
                 try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-                    // when & then
+                    // when
                     String actualString = bufferInput.readString();
+
+                    // then
                     assertEquals(expectedString, actualString);
                     assertEquals(expectedStringEncoding.length, bufferInput.getPosition());
                 }
@@ -217,8 +225,10 @@ class ByteBufferBsonInputTest {
                 buffer.position(3);
 
                 try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
-                    // when & then
+                    // when
                     String actualString1 = bufferInput.readString();
+
+                    // then
                     assertEquals(
                             expectedString1,
                             actualString1);
@@ -226,8 +236,10 @@ class ByteBufferBsonInputTest {
                             3 + expectedStringEncoding1.length,
                             bufferInput.getPosition());
 
+                    // when
                     assertEquals(expectedInteger, bufferInput.readInt32());
 
+                    // then
                     String actualString2 = bufferInput.readString();
                     assertEquals(
                             expectedString2,
@@ -263,8 +275,10 @@ class ByteBufferBsonInputTest {
                 buffer.position(3);
 
                 try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
-                    // when & then
+                    // when
                     String actualString1 = bufferInput.readString();
+
+                    // then
                     assertEquals(
                             expectedString1,
                             actualString1);
@@ -272,7 +286,10 @@ class ByteBufferBsonInputTest {
                             3 + expectedStringEncoding1.length,
                             bufferInput.getPosition());
 
+                    // when
                     String actualString2 = bufferInput.readString();
+
+                    // then
                     assertEquals(
                             expectedString2,
                             actualString2);
@@ -309,8 +326,10 @@ class ByteBufferBsonInputTest {
                 buffer.position(3);
 
                 try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
-                    // when & then
+                    // when
                     String actualString1 = bufferInput.readCString();
+
+                    // then
                     assertEquals(
                             expectedString1,
                             actualString1);
@@ -318,7 +337,10 @@ class ByteBufferBsonInputTest {
                             3 + expectedStringEncoding1.length,
                             bufferInput.getPosition());
 
+                    // when
                     String actualString2 = bufferInput.readCString();
+
+                    // then
                     assertEquals(
                             expectedString2,
                             actualString2);
@@ -355,8 +377,10 @@ class ByteBufferBsonInputTest {
                 buffer.position(3);
 
                 try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
-                    // when & then
+                    // when
                     String actualString1 = bufferInput.readCString();
+
+                    // then
                     assertEquals(
                             expectedString1,
                             actualString1);
@@ -364,9 +388,16 @@ class ByteBufferBsonInputTest {
                             3 + expectedStringEncoding1.length,
                             bufferInput.getPosition());
 
-                    assertEquals(expectedInteger, bufferInput.readInt32());
+                    // when
+                    int actualInteger = bufferInput.readInt32();
 
+                    // then
+                    assertEquals(expectedInteger, actualInteger);
+
+                    // when
                     String actualString2 = bufferInput.readCString();
+
+                    // then
                     assertEquals(
                             expectedString2,
                             actualString2);
@@ -399,8 +430,10 @@ class ByteBufferBsonInputTest {
 
                 try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-                    // when & then
+                    // when
                     String actualString = bufferInput.readString();
+
+                    // then
                     assertEquals(expectedString, actualString);
                     assertEquals(3 + expectedStringEncoding.length, bufferInput.getPosition());
                 }
@@ -421,8 +454,10 @@ class ByteBufferBsonInputTest {
 
                 try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-                    // when & then
+                    // when
                     String actualString = bufferInput.readCString();
+
+                    // then
                     assertEquals(expectedString, actualString);
                     assertEquals(expectedStringEncoding.length, bufferInput.getPosition());
                 }
@@ -448,8 +483,10 @@ class ByteBufferBsonInputTest {
 
                 try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-                    // when & then
+                    // when
                     String actualString = bufferInput.readCString();
+
+                    // then
                     assertEquals(expectedString, actualString);
                     assertEquals(expectedStringEncoding.length, bufferInput.getPosition());
                 }
@@ -478,8 +515,10 @@ class ByteBufferBsonInputTest {
                 buffer.position(3);
 
                 try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
-                    // when & then
+                    // when
                     String actualString = bufferInput.readCString();
+
+                    // then
                     assertEquals(expectedString, actualString);
                     assertEquals(3 + expectedStringEncoding.length, bufferInput.getPosition());
                 }
@@ -612,9 +651,10 @@ class ByteBufferBsonInputTest {
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, cStringBytes);
         try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-            // when & then
+            // when
             bufferInput.skipCString();
 
+            //then
             assertEquals(cStringBytes.length - Integer.BYTES, bufferInput.getPosition());
             assertEquals(8, bufferInput.readInt32());
         }
@@ -629,9 +669,10 @@ class ByteBufferBsonInputTest {
         buffer.position(4);
         try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-            // when & then
+            // when
             bufferInput.skipCString();
 
+            // then
             assertEquals(9, bufferInput.getPosition());
             assertEquals(8, bufferInput.readInt32());
         }
