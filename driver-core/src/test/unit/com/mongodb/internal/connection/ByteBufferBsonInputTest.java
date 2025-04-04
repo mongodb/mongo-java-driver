@@ -304,7 +304,7 @@ class ByteBufferBsonInputTest {
 
     @ParameterizedTest
     @MethodSource("bufferProviders")
-    void shouldConsecutiveReadMultipleCStringsWithinInBuffer(final BufferProvider bufferProvider) throws IOException {
+    void shouldReadConsecutiveMultipleCStringsWithinBuffer(final BufferProvider bufferProvider) throws IOException {
         // given
         for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
             for (int offset = 0; offset < 18; offset++) {
