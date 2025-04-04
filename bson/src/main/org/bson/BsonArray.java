@@ -20,6 +20,7 @@ import org.bson.codecs.BsonArrayCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.json.JsonReader;
 
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -234,11 +235,34 @@ public class BsonArray extends BsonValue implements List<BsonValue>, Cloneable {
         return values.hashCode();
     }
 
+    /**
+     * Gets a JSON representation of this array using the {@link org.bson.json.JsonMode#RELAXED} output mode, and otherwise the default
+     * settings of {@link JsonWriterSettings.Builder}.
+     *
+     * @return a JSON representation of this array
+     * @see #toJson(JsonWriterSettings)
+     * @see JsonWriterSettings
+     */
+    public String toJson() {
+        return toJson(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
+    }
+
+    /**
+     * Gets a JSON representation of this array using the given
+     * {@code JsonWriterSettings}.
+     * 
+     * @param settings the JSON writer settings
+     * @return a JSON representation of this array
+     */
+    public String toJson(final JsonWriterSettings settings) {
+        StringWriter writer = new StringWriter();
+        new BsonArrayCodec().encode(new JsonWriterExt(writer, settings), this, EncoderContext.builder().build());
+        return writer.toString();
+    }
+
     @Override
     public String toString() {
-        return "BsonArray{"
-               + "values=" + getValues()
-               + '}';
+        return this.toJson();
     }
 
     @Override
