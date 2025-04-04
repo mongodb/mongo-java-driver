@@ -80,7 +80,7 @@ public final class PojoCodecProvider implements CodecProvider {
         } else if (automatic || (clazz.getPackage() != null && packages.contains(clazz.getPackage().getName()))) {
             try {
                 classModel = createClassModel(clazz, conventions);
-                if (clazz.isInterface() || !classModel.getPropertyModels().isEmpty()) {
+                if (clazz.isInterface() || !classModel.getPropertyModels().isEmpty() || classModel.useDiscriminator()) {
                     discriminatorLookup.addClassModel(classModel);
                     return new AutomaticPojoCodec<>(createCodec(classModel, registry, propertyCodecProviders,
                             discriminatorLookup));
