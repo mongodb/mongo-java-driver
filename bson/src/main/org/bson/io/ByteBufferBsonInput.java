@@ -151,29 +151,24 @@ public class ByteBufferBsonInput implements BsonInput {
             if (buffer.hasArray()) {
                 int position = buffer.position();
                 int arrayOffset = buffer.arrayOffset();
-                buffer.position(position + stringSize - 1);
-                byte nullByte = buffer.get();
-                if (nullByte != 0) {
+                int newPosition = position + stringSize;
+                buffer.position(newPosition);
+
+                byte[] array = buffer.array();
+                if (array[arrayOffset + newPosition - 1] != 0) {
                     throw new BsonSerializationException("Found a BSON string that is not null-terminated");
                 }
-                return new String(buffer.array(), arrayOffset + position, stringSize - 1, StandardCharsets.UTF_8);
-            }
-
-            if (stringSize <= scratchBufferSize) {
-                buffer.get(scratchBuffer, 0, stringSize);
-                if (scratchBuffer[stringSize - 1] != 0) {
-                    throw new BsonSerializationException("BSON string not null-terminated");
-                }
-                return new String(scratchBuffer, 0, stringSize - 1, StandardCharsets.UTF_8);
-            } else {
+                return new String(array, arrayOffset + position, stringSize - 1, StandardCharsets.UTF_8);
+            } else if (stringSize > scratchBufferSize) {
                 scratchBufferSize = stringSize + (stringSize >> 1); //1.5 times the size
                 scratchBuffer = new byte[scratchBufferSize];
-                buffer.get(scratchBuffer, 0, stringSize);
-                if (scratchBuffer[stringSize - 1] != 0) {
-                    throw new BsonSerializationException("BSON string not null-terminated");
-                }
-                return new String(scratchBuffer, 0, stringSize - 1, StandardCharsets.UTF_8);
             }
+
+            buffer.get(scratchBuffer, 0, stringSize);
+            if (scratchBuffer[stringSize - 1] != 0) {
+                throw new BsonSerializationException("BSON string not null-terminated");
+            }
+            return new String(scratchBuffer, 0, stringSize - 1, StandardCharsets.UTF_8);
         }
     }
 

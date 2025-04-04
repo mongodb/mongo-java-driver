@@ -122,7 +122,7 @@ class ByteBufferBsonInputTest {
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, new byte[]{2, 0, 0, 0, (byte) 0xFF, 0});
         try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-            // when / then
+            // when & then
             String result = bufferInput.readString();
             assertEquals("\uFFFD", result);
             assertEquals(6, bufferInput.getPosition());
@@ -135,7 +135,7 @@ class ByteBufferBsonInputTest {
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, new byte[]{-0x01, 0});
         try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-            // when / then
+            // when & then
             String result = bufferInput.readCString();
             assertEquals("\uFFFD", result);
             assertEquals(2, bufferInput.getPosition());
@@ -149,16 +149,16 @@ class ByteBufferBsonInputTest {
         // given
         for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
             for (int offset = 0; offset < 18; offset++) {
-                String str = join("", nCopies(offset, "b"))
+                String expectedString = join("", nCopies(offset, "b"))
                         + String.valueOf(Character.toChars(codePoint));
-                byte[] expectedStringEncoding = getEncodedString(str);
+                byte[] expectedStringEncoding = getExpectedEncodedString(expectedString);
 
                 ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, expectedStringEncoding);
                 try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-                    // when / then
-                    String result = bufferInput.readString();
-                    assertEquals(str, result);
+                    // when & then
+                    String actualString = bufferInput.readString();
+                    assertEquals(expectedString, actualString);
                     assertEquals(expectedStringEncoding.length, bufferInput.getPosition());
                 }
             }
@@ -171,9 +171,9 @@ class ByteBufferBsonInputTest {
         // given
         for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
             for (int offset = 0; offset < 18; offset++) {
-                String str = join("", nCopies(offset, "b"))
+                String expectedString = join("", nCopies(offset, "b"))
                         + String.valueOf(Character.toChars(codePoint));
-                byte[] expectedStringEncoding = getEncodedString(str);
+                byte[] expectedStringEncoding = getExpectedEncodedString(expectedString);
                 byte[] bufferBytes = mergeArrays(
                         expectedStringEncoding,
                         new byte[]{1, 2, 3}
@@ -183,10 +183,196 @@ class ByteBufferBsonInputTest {
 
                 try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-                    // when / then
-                    String result = bufferInput.readString();
-                    assertEquals(str, result);
+                    // when & then
+                    String actualString = bufferInput.readString();
+                    assertEquals(expectedString, actualString);
                     assertEquals(expectedStringEncoding.length, bufferInput.getPosition());
+                }
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("bufferProviders")
+    void shouldReadMultipleStringsWithinBuffer(final BufferProvider bufferProvider) throws IOException {
+        // given
+        for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
+            for (int offset = 0; offset < 18; offset++) {
+                String expectedString1 = join("", nCopies(offset, "b"))
+                        + String.valueOf(Character.toChars(codePoint));
+                String expectedString2 = join("", nCopies(offset, "a"))
+                        + String.valueOf(Character.toChars(codePoint));
+
+                byte[] expectedStringEncoding1 = getExpectedEncodedString(expectedString1);
+                byte[] expectedStringEncoding2 = getExpectedEncodedString(expectedString2);
+                int expectedInteger = 12412;
+                byte[] bufferBytes = mergeArrays(
+                        new byte[]{1, 2, 3},
+                        expectedStringEncoding1,
+                        Ints.toByteArray(reverseBytes(expectedInteger)),
+                        expectedStringEncoding2,
+                        new byte[]{1, 2, 3, 4}
+                );
+                ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, bufferBytes);
+                buffer.position(3);
+
+                try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
+                    // when & then
+                    String actualString1 = bufferInput.readString();
+                    assertEquals(
+                            expectedString1,
+                            actualString1);
+                    assertEquals(
+                            3 + expectedStringEncoding1.length,
+                            bufferInput.getPosition());
+
+                    assertEquals(expectedInteger, bufferInput.readInt32());
+
+                    String actualString2 = bufferInput.readString();
+                    assertEquals(
+                            expectedString2,
+                            actualString2);
+                    assertEquals(
+                            3 + expectedStringEncoding1.length + expectedStringEncoding2.length + Integer.BYTES,
+                            bufferInput.getPosition());
+                }
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("bufferProviders")
+    void shouldReadConsecutiveMultipleStringsWithinBuffer(final BufferProvider bufferProvider) throws IOException {
+        // given
+        for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
+            for (int offset = 0; offset < 18; offset++) {
+                String expectedString1 = join("", nCopies(offset, "b"))
+                        + String.valueOf(Character.toChars(codePoint));
+                String expectedString2 = join("", nCopies(offset, "a"))
+                        + String.valueOf(Character.toChars(codePoint));
+
+                byte[] expectedStringEncoding1 = getExpectedEncodedString(expectedString1);
+                byte[] expectedStringEncoding2 = getExpectedEncodedString(expectedString2);
+                byte[] bufferBytes = mergeArrays(
+                        new byte[]{1, 2, 3},
+                        expectedStringEncoding1,
+                        expectedStringEncoding2,
+                        new byte[]{1, 2, 3, 4}
+                );
+                ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, bufferBytes);
+                buffer.position(3);
+
+                try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
+                    // when & then
+                    String actualString1 = bufferInput.readString();
+                    assertEquals(
+                            expectedString1,
+                            actualString1);
+                    assertEquals(
+                            3 + expectedStringEncoding1.length,
+                            bufferInput.getPosition());
+
+                    String actualString2 = bufferInput.readString();
+                    assertEquals(
+                            expectedString2,
+                            actualString2);
+                    assertEquals(
+                            3 + expectedStringEncoding1.length + expectedStringEncoding2.length,
+                            bufferInput.getPosition());
+                }
+            }
+
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("bufferProviders")
+    void shouldConsecutiveReadMultipleCStringsWithinInBuffer(final BufferProvider bufferProvider) throws IOException {
+        // given
+        for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
+            for (int offset = 0; offset < 18; offset++) {
+                String expectedString1 = join("", nCopies(offset, "b"))
+                        + String.valueOf(Character.toChars(codePoint));
+                String expectedString2 = join("", nCopies(offset, "a"))
+                        + String.valueOf(Character.toChars(codePoint));
+
+                byte[] expectedStringEncoding1 = getExpectedEncodedCString(expectedString1);
+                byte[] expectedStringEncoding2 = getExpectedEncodedCString(expectedString2);
+                byte[] bufferBytes = mergeArrays(
+                        new byte[]{1, 2, 3},
+                        expectedStringEncoding1,
+                        expectedStringEncoding2,
+                        new byte[]{1, 2, 3, 4}
+                );
+
+                ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, bufferBytes);
+                buffer.position(3);
+
+                try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
+                    // when & then
+                    String actualString1 = bufferInput.readCString();
+                    assertEquals(
+                            expectedString1,
+                            actualString1);
+                    assertEquals(
+                            3 + expectedStringEncoding1.length,
+                            bufferInput.getPosition());
+
+                    String actualString2 = bufferInput.readCString();
+                    assertEquals(
+                            expectedString2,
+                            actualString2);
+                    assertEquals(
+                            3 + expectedStringEncoding1.length + expectedStringEncoding2.length,
+                            bufferInput.getPosition());
+                }
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("bufferProviders")
+    void shouldReadMultipleCStringsWithinBuffer(final BufferProvider bufferProvider) throws IOException {
+        // given
+        for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
+            for (int offset = 0; offset < 18; offset++) {
+                String expectedString1 = join("", nCopies(offset, "b"))
+                        + String.valueOf(Character.toChars(codePoint));
+                String expectedString2 = join("", nCopies(offset, "a"))
+                        + String.valueOf(Character.toChars(codePoint));
+
+                byte[] expectedStringEncoding1 = getExpectedEncodedCString(expectedString1);
+                byte[] expectedStringEncoding2 = getExpectedEncodedCString(expectedString2);
+                int expectedInteger = 12412;
+                byte[] bufferBytes = mergeArrays(
+                        new byte[]{1, 2, 3},
+                        expectedStringEncoding1,
+                        Ints.toByteArray(reverseBytes(expectedInteger)),
+                        expectedStringEncoding2,
+                        new byte[]{1, 2, 3, 4}
+                );
+                ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, bufferBytes);
+                buffer.position(3);
+
+                try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
+                    // when & then
+                    String actualString1 = bufferInput.readCString();
+                    assertEquals(
+                            expectedString1,
+                            actualString1);
+                    assertEquals(
+                            3 + expectedStringEncoding1.length,
+                            bufferInput.getPosition());
+
+                    assertEquals(expectedInteger, bufferInput.readInt32());
+
+                    String actualString2 = bufferInput.readCString();
+                    assertEquals(
+                            expectedString2,
+                            actualString2);
+                    assertEquals(
+                            3 + expectedStringEncoding1.length + expectedStringEncoding2.length + Integer.BYTES,
+                            bufferInput.getPosition());
                 }
             }
         }
@@ -198,10 +384,10 @@ class ByteBufferBsonInputTest {
         // given
         for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
             for (int offset = 0; offset < 18; offset++) {
-                String str = join("", nCopies(offset, "b"))
+                String expectedString = join("", nCopies(offset, "b"))
                         + String.valueOf(Character.toChars(codePoint));
 
-                byte[] expectedStringEncoding = getEncodedString(str);
+                byte[] expectedStringEncoding = getExpectedEncodedString(expectedString);
                 byte[] bufferBytes = mergeArrays(
                         new byte[]{1, 2, 3},
                         expectedStringEncoding,
@@ -213,9 +399,9 @@ class ByteBufferBsonInputTest {
 
                 try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-                    // when / then
-                    String result = bufferInput.readString();
-                    assertEquals(str, result);
+                    // when & then
+                    String actualString = bufferInput.readString();
+                    assertEquals(expectedString, actualString);
                     assertEquals(3 + expectedStringEncoding.length, bufferInput.getPosition());
                 }
             }
@@ -228,16 +414,16 @@ class ByteBufferBsonInputTest {
         // given
         for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
             for (int offset = 0; offset < 18; offset++) {
-                String str = join("", nCopies(offset, "b"))
+                String expectedString = join("", nCopies(offset, "b"))
                         + String.valueOf(Character.toChars(codePoint));
-                byte[] expectedStringEncoding = getEncodedCString(str);
+                byte[] expectedStringEncoding = getExpectedEncodedCString(expectedString);
                 ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, expectedStringEncoding);
 
                 try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-                    // when / then
-                    String result = bufferInput.readCString();
-                    assertEquals(str, result);
+                    // when & then
+                    String actualString = bufferInput.readCString();
+                    assertEquals(expectedString, actualString);
                     assertEquals(expectedStringEncoding.length, bufferInput.getPosition());
                 }
             }
@@ -250,9 +436,9 @@ class ByteBufferBsonInputTest {
         // given
         for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
             for (int offset = 0; offset < 18; offset++) {
-                String str = join("", nCopies(offset, "b"))
+                String expectedString = join("", nCopies(offset, "b"))
                         + String.valueOf(Character.toChars(codePoint));
-                byte[] expectedStringEncoding = getEncodedCString(str);
+                byte[] expectedStringEncoding = getExpectedEncodedCString(expectedString);
                 byte[] bufferBytes = mergeArrays(
                         expectedStringEncoding,
                         new byte[]{1, 2, 3}
@@ -262,9 +448,9 @@ class ByteBufferBsonInputTest {
 
                 try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-                    // when / then
-                    String result = bufferInput.readCString();
-                    assertEquals(str, result);
+                    // when & then
+                    String actualString = bufferInput.readCString();
+                    assertEquals(expectedString, actualString);
                     assertEquals(expectedStringEncoding.length, bufferInput.getPosition());
                 }
             }
@@ -278,10 +464,10 @@ class ByteBufferBsonInputTest {
         for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
             for (int offset = 0; offset < 18; offset++) {
                 //given
-                String str = join("", nCopies(offset, "b"))
+                String expectedString = join("", nCopies(offset, "b"))
                         + String.valueOf(Character.toChars(codePoint));
 
-                byte[] expectedStringEncoding = getEncodedCString(str);
+                byte[] expectedStringEncoding = getExpectedEncodedCString(expectedString);
                 byte[] bufferBytes = mergeArrays(
                         new byte[]{1, 2, 3},
                         expectedStringEncoding,
@@ -292,9 +478,9 @@ class ByteBufferBsonInputTest {
                 buffer.position(3);
 
                 try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
-                    // when / then
-                    String result = bufferInput.readCString();
-                    assertEquals(str, result);
+                    // when & then
+                    String actualString = bufferInput.readCString();
+                    assertEquals(expectedString, actualString);
                     assertEquals(3 + expectedStringEncoding.length, bufferInput.getPosition());
                 }
             }
@@ -306,10 +492,10 @@ class ByteBufferBsonInputTest {
     void shouldThrowIfCStringIsNotNullTerminatedSkip(final BufferProvider bufferProvider) {
         // given
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, new byte[]{(byte) 0xe0, (byte) 0xa4, (byte) 0x80});
-        try (ByteBufferBsonInput stream = new ByteBufferBsonInput(buffer)) {
+        try (ByteBufferBsonInput expectedString = new ByteBufferBsonInput(buffer)) {
 
-            // when / then
-            assertThrows(BsonSerializationException.class, stream::skipCString);
+            // when & then
+            assertThrows(BsonSerializationException.class, expectedString::skipCString);
         }
     }
 
@@ -333,10 +519,10 @@ class ByteBufferBsonInputTest {
     void shouldThrowIfStringIsNotNullTerminated(final byte[] nonNullTerminatedString, final BufferProvider bufferProvider) {
         // given
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, nonNullTerminatedString);
-        try (ByteBufferBsonInput stream = new ByteBufferBsonInput(buffer)) {
+        try (ByteBufferBsonInput expectedStringeam = new ByteBufferBsonInput(buffer)) {
 
-            // when / then
-            assertThrows(BsonSerializationException.class, stream::readString);
+            // when & then
+            assertThrows(BsonSerializationException.class, expectedStringeam::readString);
         }
     }
 
@@ -361,7 +547,7 @@ class ByteBufferBsonInputTest {
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, nonNullTerminatedCString);
         try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-            // when / then
+            // when & then
             assertThrows(BsonSerializationException.class, bufferInput::readCString);
         }
     }
@@ -372,10 +558,10 @@ class ByteBufferBsonInputTest {
     void shouldThrowIfOneByteStringIsNotNullTerminated(final BufferProvider bufferProvider) {
         // given
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, new byte[]{2, 0, 0, 0, 1});
-        try (ByteBufferBsonInput stream = new ByteBufferBsonInput(buffer)) {
+        try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-            // when / then
-            assertThrows(BsonSerializationException.class, stream::readString);
+            // when & then
+            assertThrows(BsonSerializationException.class, bufferInput::readString);
         }
     }
 
@@ -384,10 +570,10 @@ class ByteBufferBsonInputTest {
     void shouldThrowIfOneByteCStringIsNotNullTerminated(final BufferProvider bufferProvider) {
         // given
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, new byte[]{1});
-        try (ByteBufferBsonInput stream = new ByteBufferBsonInput(buffer)) {
+        try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-            // when / then
-            assertThrows(BsonSerializationException.class, stream::readCString);
+            // when & then
+            assertThrows(BsonSerializationException.class, bufferInput::readCString);
         }
     }
 
@@ -396,10 +582,10 @@ class ByteBufferBsonInputTest {
     void shouldThrowIfLengthOfBsonStringIsNotPositive(final BufferProvider bufferProvider) {
         // given
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, new byte[]{-1, -1, -1, -1, 41, 42, 43, 0});
-        try (ByteBufferBsonInput stream = new ByteBufferBsonInput(buffer)) {
+        try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-            // when / then
-            assertThrows(BsonSerializationException.class, stream::readString);
+            // when & then
+            assertThrows(BsonSerializationException.class, bufferInput::readString);
         }
     }
 
@@ -424,13 +610,13 @@ class ByteBufferBsonInputTest {
     void shouldSkipCStringWhenMultipleNullTerminationPresent(final byte[] cStringBytes, final BufferProvider bufferProvider) {
         // given
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, cStringBytes);
-        try (ByteBufferBsonInput stream = new ByteBufferBsonInput(buffer)) {
+        try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-            // when / then
-            stream.skipCString();
+            // when & then
+            bufferInput.skipCString();
 
-            assertEquals(cStringBytes.length - Integer.BYTES, stream.getPosition());
-            assertEquals(8, stream.readInt32());
+            assertEquals(cStringBytes.length - Integer.BYTES, bufferInput.getPosition());
+            assertEquals(8, bufferInput.readInt32());
         }
     }
 
@@ -441,13 +627,13 @@ class ByteBufferBsonInputTest {
         byte[] input = {4, 0, 0, 0, 0x4a, 0x61, 0x76, 0x61, 0, 8, 0, 0, 0};
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, input);
         buffer.position(4);
-        try (ByteBufferBsonInput stream = new ByteBufferBsonInput(buffer)) {
+        try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
 
-            // when / then
-            stream.skipCString();
+            // when & then
+            bufferInput.skipCString();
 
-            assertEquals(9, stream.getPosition());
-            assertEquals(8, stream.readInt32());
+            assertEquals(9, bufferInput.getPosition());
+            assertEquals(8, bufferInput.readInt32());
         }
     }
 
@@ -472,19 +658,19 @@ class ByteBufferBsonInputTest {
         return baos.toByteArray();
     }
 
-    private static byte[] getEncodedString(final String str) {
-        byte[] encoding = str.getBytes(StandardCharsets.UTF_8);
-        int littleEndianLength = reverseBytes(encoding.length + "\u0000".length());
+    private static byte[] getExpectedEncodedString(final String expectedString) {
+        byte[] expectedEncoding = expectedString.getBytes(StandardCharsets.UTF_8);//baseline
+        int littleEndianLength = reverseBytes(expectedEncoding.length + "\u0000".length());
         byte[] length = Ints.toByteArray(littleEndianLength);
 
-        byte[] combined = new byte[encoding.length + length.length + 1];
+        byte[] combined = new byte[expectedEncoding.length + length.length + 1];
         System.arraycopy(length, 0, combined, 0, length.length);
-        System.arraycopy(encoding, 0, combined, length.length, encoding.length);
+        System.arraycopy(expectedEncoding, 0, combined, length.length, expectedEncoding.length);
         return combined;
     }
 
-    private static byte[] getEncodedCString(final String str) {
-        byte[] encoding = str.getBytes(StandardCharsets.UTF_8);
+    private static byte[] getExpectedEncodedCString(final String expectedString) {
+        byte[] encoding = expectedString.getBytes(StandardCharsets.UTF_8);
         byte[] combined = new byte[encoding.length + 1];
         System.arraycopy(encoding, 0, combined, 0, encoding.length);
         return combined;
