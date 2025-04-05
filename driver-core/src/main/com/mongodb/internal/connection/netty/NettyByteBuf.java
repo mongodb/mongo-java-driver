@@ -95,6 +95,10 @@ public final class NettyByteBuf implements ByteBuf {
         return this;
     }
 
+    public boolean hasArray() {
+        return proxied.hasArray();
+    }
+
     @Override
     public byte[] array() {
         return proxied.array();

@@ -209,6 +209,11 @@ class CompositeByteBuf implements ByteBuf {
     }
 
     @Override
+    public boolean hasArray() {
+        return false;
+    }
+
+    @Override
     public byte[] array() {
         throw new UnsupportedOperationException("Not implemented yet!");
     }

@@ -104,6 +104,11 @@ public class ByteBufNIO implements ByteBuf {
     }
 
     @Override
+    public boolean hasArray() {
+        return buf.hasArray();
+    }
+
+    @Override
     public byte[] array() {
         return buf.array();
     }

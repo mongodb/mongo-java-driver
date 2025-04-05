@@ -16,17 +16,21 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.internal.connection.netty.NettyByteBuf;
+import org.bson.BsonSerializationException;
 import org.bson.ByteBuf;
 import org.bson.io.OutputBuffer;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.lang.String.format;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -271,6 +275,95 @@ public class ByteBufferBsonOutput extends OutputBuffer {
                 }
             }
         }
+    }
+
+    @Override
+    protected int writeCharacters(final String str, final boolean checkForNullCharacters) {
+        ensureOpen();
+        ByteBuf buf = getCurrentByteBuffer();
+        if ((buf.remaining() >= str.length() + 1)) {
+            if (buf.hasArray()) {
+                return writeCharactersOnArray(str, checkForNullCharacters, buf);
+            } else if (buf instanceof NettyByteBuf) {
+                io.netty.buffer.ByteBuf nettyBuffer = ((NettyByteBuf) buf).asByteBuf();
+                if (nettyBuffer.nioBufferCount() == 1) {
+                    return writeCharactersOnInternalNioNettyByteBuf(str, checkForNullCharacters, buf, nettyBuffer);
+                }
+            }
+        }
+        return super.writeCharacters(str, 0, checkForNullCharacters);
+    }
+
+    private int writeCharactersOnInternalNioNettyByteBuf(String str, boolean checkForNullCharacters, ByteBuf buf, io.netty.buffer.ByteBuf nettyBuffer) {
+        int len = str.length();
+        final ByteBuffer nioBuffer = internalNioBufferOf(nettyBuffer, len + 1);
+        int i = 0;
+        int pos = nioBuffer.position();
+        for (; i < len; i++) {
+            char c = str.charAt(i);
+            if (checkForNullCharacters && c == 0x0) {
+                throw new BsonSerializationException(format("BSON cstring '%s' is not valid because it contains a null character "
+                        + "at index %d", str, i));
+            }
+            if (c >= 0x80) {
+                break;
+            }
+            nioBuffer.put(pos + i, (byte) c);
+        }
+        if (i == len) {
+            int total = len + 1;
+            nioBuffer.put(pos + len, (byte) 0);
+            position += total;
+            buf.position(buf.position() + total);
+            return len + 1;
+        }
+        // ith character is not ASCII
+        if (i > 0) {
+            position += i;
+            buf.position(buf.position() + i);
+        }
+        return i + super.writeCharacters(str, i, checkForNullCharacters);
+    }
+
+    private static ByteBuffer internalNioBufferOf(io.netty.buffer.ByteBuf buf, int minCapacity) {
+        io.netty.buffer.ByteBuf unwrap;
+        while ((unwrap = buf.unwrap()) != null) {
+            buf = unwrap;
+        }
+        assert buf.unwrap() == null;
+        buf.ensureWritable(minCapacity);
+        return buf.internalNioBuffer(buf.writerIndex(), buf.writableBytes());
+    }
+
+    private int writeCharactersOnArray(String str, boolean checkForNullCharacters, ByteBuf buf) {
+        int i = 0;
+        byte[] array = buf.array();
+        int pos = buf.position();
+        int len = str.length();
+        for (; i < len; i++) {
+            char c = str.charAt(i);
+            if (checkForNullCharacters && c == 0x0) {
+                throw new BsonSerializationException(format("BSON cstring '%s' is not valid because it contains a null character "
+                        + "at index %d", str, i));
+            }
+            if (c >= 0x80) {
+                break;
+            }
+            array[pos + i] = (byte) c;
+        }
+        if (i == len) {
+            int total = len + 1;
+            array[pos + len] = 0;
+            position += total;
+            buf.position(pos + total);
+            return len + 1;
+        }
+        // ith character is not ASCII
+        if (i > 0) {
+            position += i;
+            buf.position(pos + i);
+        }
+        return i + super.writeCharacters(str, i, checkForNullCharacters);
     }
 
     private static final class BufferPositionPair {
