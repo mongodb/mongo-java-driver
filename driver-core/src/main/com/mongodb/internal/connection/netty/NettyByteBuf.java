@@ -101,7 +101,7 @@ public final class NettyByteBuf implements ByteBuf {
     }
 
     @Override
-    public boolean hasArray() {
+    public boolean isBackedByArray() {
         return proxied.hasArray();
     }
 

@@ -144,7 +144,7 @@ public interface ByteBuf  {
      * @return {@code true} if, and only if, this buffer is backed by an array and is not read-only
      * @since 5.5
      */
-    boolean hasArray();
+    boolean isBackedByArray();
 
     /**
      * Returns the offset of the first byte within the backing byte array of

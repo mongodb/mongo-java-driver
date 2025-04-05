@@ -148,7 +148,7 @@ public class ByteBufferBsonInput implements BsonInput {
             }
             return ONE_BYTE_ASCII_STRINGS[asciiByte];  // this will throw if asciiByte is negative
         } else {
-            if (buffer.hasArray()) {
+            if (buffer.isBackedByArray()) {
                 int position = buffer.position();
                 int arrayOffset = buffer.arrayOffset();
                 int newPosition = position + stringSize;

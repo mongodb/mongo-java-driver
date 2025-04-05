@@ -67,7 +67,7 @@ class ByteBufferBsonInputTest {
                 size -> new ByteBufNIO(ByteBuffer.allocateDirect(size)),
                 size -> new ByteBufNIO(ByteBuffer.allocate(size)) {
                     @Override
-                    public boolean hasArray() {
+                    public boolean isBackedByArray() {
                         return false;
                     }
 
