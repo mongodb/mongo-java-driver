@@ -289,7 +289,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     public void doWriteObjectId(final ObjectId value) {
         bsonOutput.writeByte(BsonType.OBJECT_ID.getValue());
         writeCurrentName();
-        bsonOutput.writeBytes(value.toByteArray());
+        bsonOutput.writeObjectId(value);
     }
 
     @Override
