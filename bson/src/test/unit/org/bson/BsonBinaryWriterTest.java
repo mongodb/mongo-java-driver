@@ -66,7 +66,7 @@ public class BsonBinaryWriterTest {
             writer.writeEndDocument();
             fail();
         } catch (BsonMaximumSizeExceededException e) {
-            assertEquals("Document size of 1037 is larger than maximum of 1024.", e.getMessage());
+            assertEquals("Document size of 12917 is larger than maximum of 12904.", e.getMessage());
         }
     }
 
@@ -201,16 +201,16 @@ public class BsonBinaryWriterTest {
     public void testWriteArrayElements() throws IOException {
         ByteArrayOutputStream expectedOutput = new ByteArrayOutputStream();
         expectedOutput.write(new byte[]{
-                88, 11, 0, 0, //document length
+                -52, 25, 0, 0, //document length
                 4, // array type
                 97, 49, 0, // "a1" name + null terminator
-                79, 11, 0, 0}); // array length
+                -61, 25, 0, 0}); // array length
 
 
         writer.writeStartDocument();
         writer.writeStartArray("a1");
         int arrayIndex = 0;
-        while (arrayIndex < 500) {
+        while (arrayIndex < 1100) {
             writer.writeBoolean(true);
 
             expectedOutput.write(BsonType.BOOLEAN.getValue());
