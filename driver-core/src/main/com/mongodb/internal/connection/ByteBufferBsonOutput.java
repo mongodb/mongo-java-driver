@@ -250,9 +250,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
      */
     private void merge(final ByteBufferBsonOutput branch) {
         assertTrue(branch instanceof ByteBufferBsonOutput.Branch);
-        for (ByteBuf byteBuf : branch.bufferList) {
-            byteBuf.retain();
-        }
+        branch.bufferList.forEach(ByteBuf::retain);
         bufferList.addAll(branch.bufferList);
         curBufferIndex += branch.curBufferIndex + 1;
         position += branch.position;
