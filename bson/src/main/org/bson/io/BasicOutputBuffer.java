@@ -160,6 +160,7 @@ public class BasicOutputBuffer extends OutputBuffer {
         if (newPosition > buffer.position() || newPosition < 0) {
             throw new IllegalArgumentException();
         }
+         // The cast is required for compatibility with JDK 9+ where ByteBuffer's position method is inherited from Buffer.
         ((Buffer) buffer).position(newPosition);
     }
 
