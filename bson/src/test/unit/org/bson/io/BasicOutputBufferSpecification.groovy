@@ -100,6 +100,20 @@ class BasicOutputBufferSpecification extends Specification {
         bsonOutput.size == 4
     }
 
+    def 'toByteArray creates a copy'() {
+        given:
+        def bsonOutput = new BasicOutputBuffer(10)
+        bsonOutput.writeBytes([1, 2, 3, 4] as byte[])
+
+        when:
+        def first = bsonOutput.toByteArray()
+        def second = bsonOutput.toByteArray()
+
+        then:
+        first !== second
+        first == [1, 2, 3, 4] as byte[]
+        second == [1, 2, 3, 4] as byte[]
+    }
     def 'should write a little endian Int32'() {
         given:
         def bsonOutput = new BasicOutputBuffer(3)
