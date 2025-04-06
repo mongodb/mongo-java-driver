@@ -320,6 +320,46 @@ class BasicOutputBufferSpecification extends Specification {
         bsonOutput.size == 8
     }
 
+    def 'absolute write should throw with invalid position'() {
+        given:
+        def bsonOutput = new BasicOutputBuffer()
+        bsonOutput.writeBytes([1, 2, 3, 4] as byte[])
+
+        when:
+        bsonOutput.write(-1, 0x1020304)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        bsonOutput.write(4, 0x1020304)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def 'absolute write should write lower byte at position'() {
+        given:
+        def bsonOutput = new BasicOutputBuffer()
+        bsonOutput.writeBytes([0, 0, 0, 0, 1, 2, 3, 4] as byte[])
+
+        when:
+        bsonOutput.write(0, 0x1020304)
+
+        then:
+        getBytes(bsonOutput) == [4, 0, 0, 0, 1, 2, 3, 4] as byte[]
+        bsonOutput.position == 8
+        bsonOutput.size == 8
+
+        when:
+        bsonOutput.write(7, 0x1020304)
+
+        then:
+        getBytes(bsonOutput) == [4, 0, 0, 0, 1, 2, 3, 4] as byte[]
+        bsonOutput.position == 8
+        bsonOutput.size == 8
+    }
+
     def 'truncate should throw with invalid position'() {
         given:
         def bsonOutput = new BasicOutputBuffer()
