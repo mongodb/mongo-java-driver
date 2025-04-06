@@ -209,7 +209,7 @@ public class BasicOutputBuffer extends OutputBuffer {
             throw new IllegalArgumentException(format("position must be >= 0 but was %d", absolutePosition));
         }
         if (absolutePosition > buffer.position() - bytesToWrite) {
-            throw new IllegalArgumentException(format("position must be <= %d but was %d", buffer.position() - 1, absolutePosition));
+            throw new IllegalArgumentException(format("position must be <= %d but was %d", buffer.position() - bytesToWrite, absolutePosition));
         }
     }
 }
