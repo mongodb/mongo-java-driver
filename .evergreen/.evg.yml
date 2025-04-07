@@ -1543,7 +1543,7 @@ tasks:
     - name: "perf"
       tags: ["perf"]
       # Benchmark could exceed 1 hour of execution.
-      exec_timeout_secs: 4500
+      exec_timeout_secs: 7200
       commands:
         - func: "bootstrap mongo-orchestration"
           vars:
@@ -1557,7 +1557,7 @@ tasks:
     - name: "perf-netty"
       tags: [ "perf" ]
       # Benchmark could exceed 1 hour of execution.
-      exec_timeout_secs: 4500
+      exec_timeout_secs: 7200
       commands:
         - func: "bootstrap mongo-orchestration"
           vars:
