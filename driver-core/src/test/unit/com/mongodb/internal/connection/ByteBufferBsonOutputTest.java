@@ -114,6 +114,51 @@ final class ByteBufferBsonOutputTest {
         }
     }
 
+    @DisplayName("should write byte at position")
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void shouldWriteByteAtPosition(final boolean useBranch) {
+        for (int offset = 0; offset < 5; offset++) {
+            try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+                byte v = 11;
+                byte[] byteToWrite = {1, 2, 3, 4, 5};
+                if (useBranch) {
+                    try (ByteBufferBsonOutput.Branch branch = out.branch()) {
+                        branch.writeBytes(byteToWrite);
+                        branch.write(offset, v);
+                    }
+                } else {
+                    out.writeBytes(byteToWrite);
+                    out.write(offset, v);
+                }
+                byteToWrite[offset] = v;
+                assertArrayEquals(byteToWrite, out.toByteArray());
+                assertEquals(5, out.getPosition());
+                assertEquals(5, out.size());
+
+            }
+        }
+    }
+
+    @DisplayName("should throw exception when writing byte at invalid position")
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void shouldThrowExceptionWhenWriteByteAtInvalidPosition(final boolean useBranch) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+            byte v = 11;
+            byte[] byteToWrite = {1, 2, 3, 4, 5};
+            if (useBranch) {
+                try (ByteBufferBsonOutput.Branch branch = out.branch()) {
+                    out.writeBytes(byteToWrite);
+                    assertThrows(IllegalArgumentException.class, () -> branch.write(-1, v));
+                }
+            } else {
+                out.writeBytes(byteToWrite);
+                assertThrows(IllegalArgumentException.class, () -> out.write(-1, v));
+            }
+        }
+    }
+
     @DisplayName("should write a bytes")
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
