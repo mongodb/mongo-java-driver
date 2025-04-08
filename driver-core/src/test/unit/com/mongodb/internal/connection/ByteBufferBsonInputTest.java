@@ -700,7 +700,7 @@ class ByteBufferBsonInputTest {
     }
 
     private static byte[] getExpectedEncodedString(final String expectedString) {
-        byte[] expectedEncoding = expectedString.getBytes(StandardCharsets.UTF_8);//baseline
+        byte[] expectedEncoding = expectedString.getBytes(StandardCharsets.UTF_8);
         int littleEndianLength = reverseBytes(expectedEncoding.length + "\u0000".length());
         byte[] length = Ints.toByteArray(littleEndianLength);
 

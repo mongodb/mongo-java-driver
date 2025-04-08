@@ -22,9 +22,7 @@ package org.bson.internal;
  */
 public final class PlatformUtil {
 
-    private PlatformUtil() {
-        //NOP
-    }
+    private PlatformUtil() {}
 
     // These architectures support unaligned memory access.
     // While others might as well, it's safer to assume they don't.
@@ -33,7 +31,7 @@ public final class PlatformUtil {
             "amd64",
             "i386",
             "x86_64",
-            "arm64", // evergreen dbx-perf-distro uses ths architecture
+            "arm64", // evergreen dbx-perf-distro uses this architecture
             "aarch64"};
 
     public static boolean isUnalignedAccessAllowed() {

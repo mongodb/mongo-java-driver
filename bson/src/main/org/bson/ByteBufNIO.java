@@ -109,7 +109,7 @@ public class ByteBufNIO implements ByteBuf {
     }
 
     @Override
-    public boolean hasArray() {
+    public boolean isBackedByArray() {
         return buf.hasArray();
     }
 
