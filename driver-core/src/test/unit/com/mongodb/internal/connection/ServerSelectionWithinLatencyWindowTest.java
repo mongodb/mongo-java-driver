@@ -92,7 +92,7 @@ public class ServerSelectionWithinLatencyWindowTest {
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() {
         List<Object[]> data = new ArrayList<>();
-        for (BsonDocument testDocument : JsonPoweredTestHelper.getTestDocuments("/server-selection/in_window")) {
+        for (BsonDocument testDocument : JsonPoweredTestHelper.getSpecTestDocuments("server-selection/tests/in_window")) {
             data.add(new Object[]{testDocument.getString("fileName").getValue(),
                     testDocument.getString("description").getValue(),
                     testDocument});

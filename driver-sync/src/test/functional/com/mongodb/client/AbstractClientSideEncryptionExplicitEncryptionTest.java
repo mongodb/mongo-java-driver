@@ -205,6 +205,6 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
     }
 
     private static BsonDocument bsonDocumentFromPath(final String path) {
-        return getTestDocument("/client-side-encryption-data/" + path);
+        return getTestDocument("client-side-encryption/etc/data/" + path);
     }
 }

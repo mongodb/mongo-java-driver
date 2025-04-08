@@ -94,8 +94,8 @@ public abstract class AbstractClientSideEncryptionRangeExplicitEncryptionTest {
         assumeFalse(isServerlessTest());
 
         MongoNamespace dataKeysNamespace = new MongoNamespace("keyvault.datakeys");
-        BsonDocument encryptedFields = getTestDocument("/client-side-encryption-data/range-encryptedFields-" + type.value + ".json");
-        BsonDocument key1Document = getTestDocument("/client-side-encryption-data/keys/key1-document.json");
+        BsonDocument encryptedFields = getTestDocument("client-side-encryption/etc/data/range-encryptedFields-" + type.value + ".json");
+        BsonDocument key1Document = getTestDocument("client-side-encryption/etc/data/keys/key1-document.json");
         key1Id = key1Document.getBinary("_id");
 
         MongoDatabase explicitEncryptionDatabase = getDefaultDatabase();
