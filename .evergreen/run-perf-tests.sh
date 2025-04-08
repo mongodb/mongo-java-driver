@@ -17,8 +17,14 @@ RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
 export TEST_PATH="${PROJECT_DIRECTORY}/driver-performance-test-data/"
 export OUTPUT_FILE="${PROJECT_DIRECTORY}/results.json"
 
+if [ "${PROVIDER}" = "Netty" ]; then
+    TASK="driver-benchmarks:runNetty"
+else
+    TASK="driver-benchmarks:run"
+fi
+
 start_time=$(date +%s)
-./gradlew -Dorg.mongodb.benchmarks.data=${TEST_PATH} -Dorg.mongodb.benchmarks.output=${OUTPUT_FILE} driver-benchmarks:run
+./gradlew -Dorg.mongodb.benchmarks.data=${TEST_PATH} -Dorg.mongodb.benchmarks.output=${OUTPUT_FILE} ${TASK}
 end_time=$(date +%s)
 elapsed_secs=$((end_time-start_time))
 

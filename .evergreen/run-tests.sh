@@ -68,14 +68,10 @@ provision_multi_mongos_uri_for_ssl () {
   # Arguments for auth + SSL
   if [ "$AUTH" != "noauth" ] || [ "$TOPOLOGY" == "replica_set" ]; then
     export MONGODB_URI="${MONGODB_URI}&ssl=true&sslInvalidHostNameAllowed=true"
-    if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
-        export MULTI_MONGOS_URI="${MULTI_MONGOS_URI}&ssl=true&sslInvalidHostNameAllowed=true"
-    fi
+    export MULTI_MONGOS_URI="${MULTI_MONGOS_URI}&ssl=true&sslInvalidHostNameAllowed=true"
   else
     export MONGODB_URI="${MONGODB_URI}/?ssl=true&sslInvalidHostNameAllowed=true"
-    if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
-        export MULTI_MONGOS_URI="${MULTI_MONGOS_URI}/?ssl=true&sslInvalidHostNameAllowed=true"
-    fi
+    export MULTI_MONGOS_URI="${MULTI_MONGOS_URI}/?ssl=true&sslInvalidHostNameAllowed=true"
   fi
 }
 
@@ -85,13 +81,11 @@ provision_multi_mongos_uri_for_ssl () {
 
 # Provision the correct connection string and set up SSL if needed
 if [ "$TOPOLOGY" == "sharded_cluster" ]; then
-    if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
-        if [ "$AUTH" = "auth" ]; then
-            export MULTI_MONGOS_URI="mongodb://bob:pwd123@localhost:27017,localhost:27018/?authSource=admin"
-        else
-            export MULTI_MONGOS_URI="${MONGODB_URI}"
-        fi
-    fi
+     if [ "$AUTH" = "auth" ]; then
+       export MULTI_MONGOS_URI="mongodb://bob:pwd123@localhost:27017,localhost:27018/?authSource=admin"
+     else
+       export MULTI_MONGOS_URI="${MONGODB_URI}"
+     fi
 
      if [ "$AUTH" = "auth" ]; then
        export MONGODB_URI="mongodb://bob:pwd123@localhost:27017/?authSource=admin"
@@ -107,12 +101,10 @@ if [ "$COMPRESSOR" != "" ]; then
        export MONGODB_URI="${MONGODB_URI}/?compressors=${COMPRESSOR}"
      fi
 
-     if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
-         if [[ "$MULTI_MONGOS_URI" == *"?"* ]]; then
-             export MULTI_MONGOS_URI="${MULTI_MONGOS_URI}&compressors=${COMPRESSOR}"
-         else
-             export MULTI_MONGOS_URI="${MULTI_MONGOS_URI}/?compressors=${COMPRESSOR}"
-         fi
+     if [[ "$MULTI_MONGOS_URI" == *"?"* ]]; then
+       export MULTI_MONGOS_URI="${MULTI_MONGOS_URI}&compressors=${COMPRESSOR}"
+     else
+       export MULTI_MONGOS_URI="${MULTI_MONGOS_URI}/?compressors=${COMPRESSOR}"
      fi
 fi
 
@@ -123,9 +115,7 @@ if [ "$SSL" != "nossl" ]; then
    provision_multi_mongos_uri_for_ssl
 fi
 
-if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
-    export MULTI_MONGOS_URI_SYSTEM_PROPERTY="-Dorg.mongodb.test.multi.mongos.uri=${MULTI_MONGOS_URI}"
-fi
+export MULTI_MONGOS_URI_SYSTEM_PROPERTY="-Dorg.mongodb.test.multi.mongos.uri=${MULTI_MONGOS_URI}"
 
 # For now it's sufficient to hard-code the API version to "1", since it's the only API version
 if [ ! -z "$REQUIRE_API_VERSION" ]; then

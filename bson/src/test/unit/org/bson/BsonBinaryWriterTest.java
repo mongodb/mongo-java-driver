@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -49,7 +50,7 @@ public class BsonBinaryWriterTest {
     @BeforeEach
     public void setup() {
         buffer = new BasicOutputBuffer();
-        writer = new BsonBinaryWriter(new BsonWriterSettings(100), new BsonBinaryWriterSettings(1024), buffer);
+        writer = new BsonBinaryWriter(new BsonWriterSettings(100), new BsonBinaryWriterSettings(12904), buffer);
     }
 
     @AfterEach
@@ -61,11 +62,11 @@ public class BsonBinaryWriterTest {
     public void shouldThrowWhenMaxDocumentSizeIsExceeded() {
         try {
             writer.writeStartDocument();
-            writer.writeBinaryData("b", new BsonBinary(new byte[1024]));
+            writer.writeBinaryData("b", new BsonBinary(new byte[12904]));
             writer.writeEndDocument();
             fail();
         } catch (BsonMaximumSizeExceededException e) {
-            assertEquals("Document size of 1037 is larger than maximum of 1024.", e.getMessage());
+            assertEquals("Document size of 12917 is larger than maximum of 12904.", e.getMessage());
         }
     }
 
@@ -197,16 +198,39 @@ public class BsonBinaryWriterTest {
     }
 
     @Test
-    public void testWriteArrayElements() {
+    public void testWriteArrayElements() throws IOException {
+        ByteArrayOutputStream expectedOutput = new ByteArrayOutputStream();
+        expectedOutput.write(new byte[]{
+                -52, 25, 0, 0, //document length
+                4, // array type
+                97, 49, 0, // "a1" name + null terminator
+                -61, 25, 0, 0}); // array length
+
 
         writer.writeStartDocument();
         writer.writeStartArray("a1");
-        writer.writeBoolean(true);
-        writer.writeBoolean(false);
+        int arrayIndex = 0;
+        while (arrayIndex < 1100) {
+            writer.writeBoolean(true);
+
+            expectedOutput.write(BsonType.BOOLEAN.getValue());
+            expectedOutput.write(Integer.toString(arrayIndex++).getBytes(StandardCharsets.UTF_8));
+            expectedOutput.write(0); // null terminator
+            expectedOutput.write(1); // boolean value
+
+            writer.writeBoolean(false);
+
+            expectedOutput.write(BsonType.BOOLEAN.getValue());
+            expectedOutput.write(Integer.toString(arrayIndex++).getBytes(StandardCharsets.UTF_8));
+            expectedOutput.write(0); // null terminator
+            expectedOutput.write(0); // boolean value
+        }
         writer.writeEndArray();
+        expectedOutput.write(0); // end of array
         writer.writeEndDocument();
-        byte[] expectedValues = {22, 0, 0, 0, 4, 97, 49, 0, 13, 0, 0, 0, 8, 48, 0, 1, 8, 49, 0, 0, 0, 0};
-        assertArrayEquals(expectedValues, buffer.toByteArray());
+        expectedOutput.write(0); // end of a document
+
+        assertArrayEquals(expectedOutput.toByteArray(), buffer.toByteArray());
     }
 
     @Test

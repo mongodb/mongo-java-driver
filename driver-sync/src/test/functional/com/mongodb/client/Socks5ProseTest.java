@@ -48,7 +48,7 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.mockito.Mockito.atLeast;
 
 /**
- * See https://github.com/mongodb/specifications/blob/master/source/socks5-support/tests/README.rst#prose-tests
+ * See https://github.com/mongodb/specifications/blob/master/source/socks5-support/tests/README.md#prose-tests
  */
 @ExtendWith(Socks5ProseTest.SocksProxyPropertyCondition.class)
 class Socks5ProseTest {

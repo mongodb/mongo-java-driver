@@ -98,7 +98,9 @@ public abstract class ReadPreference {
      * @return a new ReadPreference instance with hedge options
      * @since 4.1
      * @mongodb.server.release 4.4
+     * @deprecated As of MongoDB 8.1, the server ignores the option and periodically logs a warning
      */
+    @Deprecated
     public abstract ReadPreference withHedgeOptions(ReadPreferenceHedgeOptions hedgeOptions);
 
     /**
@@ -682,6 +684,7 @@ public abstract class ReadPreference {
             throw new UnsupportedOperationException("Primary read preference can not also specify max staleness");
         }
 
+        @Deprecated
         @Override
         public TaggableReadPreference withHedgeOptions(final ReadPreferenceHedgeOptions hedgeOptions) {
             throw new UnsupportedOperationException("Primary read preference can not also specify hedge");

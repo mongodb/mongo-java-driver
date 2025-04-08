@@ -44,9 +44,22 @@ class BasicOutputBufferSpecification extends Specification {
         bsonOutput.size == 1
     }
 
+    def 'writeBytes shorthand should extend buffer'() {
+        given:
+        def bsonOutput = new BasicOutputBuffer(3)
+
+        when:
+        bsonOutput.write([1, 2, 3, 4] as byte[])
+
+        then:
+        getBytes(bsonOutput) == [1, 2, 3, 4] as byte[]
+        bsonOutput.position == 4
+        bsonOutput.size == 4
+    }
+
     def 'should write bytes'() {
         given:
-        def bsonOutput = new BasicOutputBuffer()
+        def bsonOutput = new BasicOutputBuffer(3)
 
         when:
         bsonOutput.writeBytes([1, 2, 3, 4] as byte[])
@@ -59,7 +72,7 @@ class BasicOutputBufferSpecification extends Specification {
 
     def 'should write bytes from offset until length'() {
         given:
-        def bsonOutput = new BasicOutputBuffer()
+        def bsonOutput = new BasicOutputBuffer(5)
 
         when:
         bsonOutput.writeBytes([0, 1, 2, 3, 4, 5] as byte[], 1, 4)
@@ -70,9 +83,40 @@ class BasicOutputBufferSpecification extends Specification {
         bsonOutput.size == 4
     }
 
+    def 'toByteArray should be idempotent'() {
+        given:
+        def bsonOutput = new BasicOutputBuffer(10)
+        bsonOutput.writeBytes([1, 2, 3, 4] as byte[])
+
+        when:
+        def first = bsonOutput.toByteArray()
+        def second = bsonOutput.toByteArray()
+
+        then:
+        getBytes(bsonOutput) == [1, 2, 3, 4] as byte[]
+        first == [1, 2, 3, 4] as byte[]
+        second == [1, 2, 3, 4] as byte[]
+        bsonOutput.position == 4
+        bsonOutput.size == 4
+    }
+
+    def 'toByteArray creates a copy'() {
+        given:
+        def bsonOutput = new BasicOutputBuffer(10)
+        bsonOutput.writeBytes([1, 2, 3, 4] as byte[])
+
+        when:
+        def first = bsonOutput.toByteArray()
+        def second = bsonOutput.toByteArray()
+
+        then:
+        first !== second
+        first == [1, 2, 3, 4] as byte[]
+        second == [1, 2, 3, 4] as byte[]
+    }
     def 'should write a little endian Int32'() {
         given:
-        def bsonOutput = new BasicOutputBuffer()
+        def bsonOutput = new BasicOutputBuffer(3)
 
         when:
         bsonOutput.writeInt32(0x1020304)
@@ -85,7 +129,7 @@ class BasicOutputBufferSpecification extends Specification {
 
     def 'should write a little endian Int64'() {
         given:
-        def bsonOutput = new BasicOutputBuffer()
+        def bsonOutput = new BasicOutputBuffer(7)
 
         when:
         bsonOutput.writeInt64(0x102030405060708L)
@@ -98,7 +142,7 @@ class BasicOutputBufferSpecification extends Specification {
 
     def 'should write a double'() {
         given:
-        def bsonOutput = new BasicOutputBuffer()
+        def bsonOutput = new BasicOutputBuffer(7)
 
         when:
         bsonOutput.writeDouble(Double.longBitsToDouble(0x102030405060708L))
@@ -112,7 +156,7 @@ class BasicOutputBufferSpecification extends Specification {
     def 'should write an ObjectId'() {
         given:
         def objectIdAsByteArray = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1] as byte[]
-        def bsonOutput = new BasicOutputBuffer()
+        def bsonOutput = new BasicOutputBuffer(11)
 
         when:
         bsonOutput.writeObjectId(new ObjectId(objectIdAsByteArray))
@@ -121,6 +165,19 @@ class BasicOutputBufferSpecification extends Specification {
         getBytes(bsonOutput) == objectIdAsByteArray
         bsonOutput.position == 12
         bsonOutput.size == 12
+    }
+
+    def 'write ObjectId should throw after close'() {
+        given:
+        def objectIdAsByteArray = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1] as byte[]
+        def bsonOutput = new BasicOutputBuffer()
+        bsonOutput.close()
+
+        when:
+        bsonOutput.writeObjectId(new ObjectId(objectIdAsByteArray))
+
+        then:
+        thrown(IllegalStateException)
     }
 
     def 'should write an empty string'() {
@@ -151,7 +208,7 @@ class BasicOutputBufferSpecification extends Specification {
 
     def 'should write a UTF-8 string'() {
         given:
-        def bsonOutput = new BasicOutputBuffer()
+        def bsonOutput = new BasicOutputBuffer(7)
 
         when:
         bsonOutput.writeString('\u0900')
@@ -263,6 +320,46 @@ class BasicOutputBufferSpecification extends Specification {
         bsonOutput.size == 8
     }
 
+    def 'absolute write should throw with invalid position'() {
+        given:
+        def bsonOutput = new BasicOutputBuffer()
+        bsonOutput.writeBytes([1, 2, 3, 4] as byte[])
+
+        when:
+        bsonOutput.write(-1, 0x1020304)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        bsonOutput.write(4, 0x1020304)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def 'absolute write should write lower byte at position'() {
+        given:
+        def bsonOutput = new BasicOutputBuffer()
+        bsonOutput.writeBytes([0, 0, 0, 0, 1, 2, 3, 4] as byte[])
+
+        when:
+        bsonOutput.write(0, 0x1020304)
+
+        then:
+        getBytes(bsonOutput) == [4, 0, 0, 0, 1, 2, 3, 4] as byte[]
+        bsonOutput.position == 8
+        bsonOutput.size == 8
+
+        when:
+        bsonOutput.write(7, 0x1020304)
+
+        then:
+        getBytes(bsonOutput) == [4, 0, 0, 0, 1, 2, 3, 4] as byte[]
+        bsonOutput.position == 8
+        bsonOutput.size == 8
+    }
+
     def 'truncate should throw with invalid position'() {
         given:
         def bsonOutput = new BasicOutputBuffer()
@@ -318,6 +415,20 @@ class BasicOutputBufferSpecification extends Specification {
 
         then:
         bsonOutput.getByteBuffers()[0].getInt() == 1
+    }
+
+    def 'should get byte buffer with limit'() {
+        given:
+        def bsonOutput = new BasicOutputBuffer(8)
+        bsonOutput.writeBytes([1, 0, 0, 0] as byte[])
+
+        when:
+        def buffers = bsonOutput.getByteBuffers()
+
+        then:
+        buffers.size() == 1
+        buffers[0].position() == 0
+        buffers[0].limit() == 4
     }
 
     def 'should get internal buffer'() {

@@ -50,7 +50,7 @@ import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand
-import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION
+import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION
 
 class MapReduceWithInlineResultsOperationSpecification extends OperationFunctionalSpecification {
     private final bsonDocumentCodec = new BsonDocumentCodec()
@@ -234,7 +234,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
               "reduce" : { "$code" : "function(key, values){ }" },
               "out" : { "inline" : 1 },
               }''')
-        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
+        appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
 
         def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(helper.namespace,
                 new BsonJavaScript('function(){ }'), new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
@@ -283,7 +283,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
               "reduce" : { "$code" : "function(key, values){ }" },
               "out" : { "inline" : 1 },
               }''')
-        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
+        appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
 
         def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(helper.namespace,
                 new BsonJavaScript('function(){ }'), new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)

@@ -60,9 +60,6 @@ import org.junit.runners.Parameterized;
 import org.mockito.Mockito;
 import util.JsonPoweredTestHelper;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -85,8 +82,8 @@ import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -96,7 +93,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 
 // Implementation of
-// https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst
+// https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.md
 // specification tests
 @SuppressWarnings("deprecation")
 @RunWith(Parameterized.class)
@@ -566,16 +563,12 @@ public abstract class AbstractConnectionPoolTest {
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
+    public static Collection<Object[]> data() {
         List<Object[]> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/connection-monitoring-and-pooling/cmap-format")) {
-            BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
-            data.add(new Object[]{
-                    file.getName(),
+        for (BsonDocument testDocument : JsonPoweredTestHelper.getTestDocuments("/connection-monitoring-and-pooling/cmap-format")) {
+            data.add(new Object[]{testDocument.getString("fileName").getValue(),
                     testDocument.getString("description").getValue(),
-                    testDocument,
-                    JsonTestServerVersionChecker.skipTest(testDocument, BsonDocument.parse("{}"))
-            });
+                    testDocument, JsonTestServerVersionChecker.skipTest(testDocument, BsonDocument.parse("{}"))});
         }
         return data;
     }

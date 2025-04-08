@@ -24,14 +24,14 @@ import org.bson.BsonTimestamp
 import spock.lang.Specification
 
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand
-import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION
+import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION
 
 
 class OperationReadConcernHelperSpecification extends Specification {
 
     def 'should throw IllegalArgumentException if command document is null'() {
         when:
-        appendReadConcernToCommand(Stub(SessionContext), MIN_WIRE_VERSION, null)
+        appendReadConcernToCommand(Stub(SessionContext), UNKNOWN_WIRE_VERSION, null)
 
         then:
         thrown(IllegalArgumentException)
@@ -39,7 +39,7 @@ class OperationReadConcernHelperSpecification extends Specification {
 
     def 'should throw IllegalArgumentException if session context is null'() {
         when:
-        appendReadConcernToCommand(null, MIN_WIRE_VERSION, new BsonDocument())
+        appendReadConcernToCommand(null, UNKNOWN_WIRE_VERSION, new BsonDocument())
 
         then:
         thrown(IllegalArgumentException)
@@ -56,7 +56,7 @@ class OperationReadConcernHelperSpecification extends Specification {
         def commandDocument = new BsonDocument()
 
         when:
-        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
+        appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
 
         then:
         commandDocument == new BsonDocument('readConcern',
@@ -74,7 +74,7 @@ class OperationReadConcernHelperSpecification extends Specification {
         def commandDocument = new BsonDocument()
 
         when:
-        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
+        appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
 
         then:
         commandDocument == new BsonDocument('readConcern',
@@ -91,7 +91,7 @@ class OperationReadConcernHelperSpecification extends Specification {
         def commandDocument = new BsonDocument()
 
         when:
-        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
+        appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
 
         then:
         commandDocument == new BsonDocument('readConcern',
@@ -107,7 +107,7 @@ class OperationReadConcernHelperSpecification extends Specification {
         def commandDocument = new BsonDocument()
 
         when:
-        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
+        appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
 
         then:
         commandDocument == new BsonDocument()
@@ -123,7 +123,7 @@ class OperationReadConcernHelperSpecification extends Specification {
         def commandDocument = new BsonDocument()
 
         when:
-        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
+        appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
 
         then:
         commandDocument == new BsonDocument('readConcern',

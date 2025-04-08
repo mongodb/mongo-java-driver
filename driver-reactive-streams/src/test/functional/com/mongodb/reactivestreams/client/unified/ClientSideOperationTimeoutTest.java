@@ -31,8 +31,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Hooks;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -50,7 +48,7 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
 
     private final AtomicReference<Throwable> atomicReferenceThrowable = new AtomicReference<>();
 
-    private static Collection<Arguments> data() throws URISyntaxException, IOException {
+    private static Collection<Arguments> data() {
         return getTestData("unified-test-format/client-side-operation-timeout");
     }
 
@@ -99,18 +97,25 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
     @MethodSource("data")
     @Override
     public void shouldPassAllOutcomes(
+            final String testName,
             @Nullable final String fileDescription,
             @Nullable final String testDescription,
             @Nullable final String directoryName,
+            final int attemptNumber,
+            final int totalAttempts,
             final String schemaVersion,
             @Nullable final BsonArray runOnRequirements,
             final BsonArray entitiesArray,
             final BsonArray initialData,
             final BsonDocument definition) {
         try {
-            super.shouldPassAllOutcomes(fileDescription,
+            super.shouldPassAllOutcomes(
+                    testName,
+                    fileDescription,
                     testDescription,
                     directoryName,
+                    attemptNumber,
+                    totalAttempts,
                     schemaVersion,
                     runOnRequirements,
                     entitiesArray,

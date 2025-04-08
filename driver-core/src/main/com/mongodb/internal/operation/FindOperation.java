@@ -56,7 +56,7 @@ import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
 import static com.mongodb.internal.operation.OperationHelper.setNonTailableCursorMaxTimeSupplier;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
-import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION;
+import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.createReadCommandAndExecute;
 import static com.mongodb.internal.operation.SyncOperationHelper.decorateReadWithRetries;
@@ -366,7 +366,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     <R> CommandReadOperation<R> createExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
         return new CommandReadOperation<>(getNamespace().getDatabaseName(),
                 (operationContext, serverDescription, connectionDescription) -> {
-                    BsonDocument command = getCommand(operationContext, MIN_WIRE_VERSION);
+                    BsonDocument command = getCommand(operationContext, UNKNOWN_WIRE_VERSION);
                     applyMaxTimeMS(operationContext.getTimeoutContext(), command);
                     return asExplainCommand(command, verbosity);
                 }, resultDecoder);
@@ -390,7 +390,12 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
             if (batchSize < 0 && Math.abs(batchSize) < limit) {
                 commandDocument.put("limit", new BsonInt32(Math.abs(batchSize)));
             } else if (batchSize != 0) {
-                commandDocument.put("batchSize", new BsonInt32(Math.abs(batchSize)));
+                int effectiveBatchSize = Math.abs(batchSize);
+                if (effectiveBatchSize == limit) {
+                    // avoid an open cursor on server side when batchSize and limit are equal
+                    effectiveBatchSize++;
+                }
+                commandDocument.put("batchSize", new BsonInt32(effectiveBatchSize));
             }
         }
         if (limit < 0 || batchSize < 0) {
