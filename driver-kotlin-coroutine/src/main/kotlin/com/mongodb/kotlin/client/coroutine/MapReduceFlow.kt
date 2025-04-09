@@ -33,6 +33,9 @@ import org.bson.conversions.Bson
 /**
  * Flow implementation for map reduce operations.
  *
+ * By default, the [MapReduceFlow] emits the results inline. You can write map-reduce output to a collection by using
+ * the [collectionName] and [toCollection] methods.
+ *
  * Note: Starting in MongoDB 5.0, map-reduce is deprecated, prefer Aggregation instead
  *
  * @param T The type of the result.
@@ -65,9 +68,10 @@ public class MapReduceFlow<T : Any>(private val wrapped: MapReducePublisher<T>) 
 
     /**
      * Aggregates documents to a collection according to the specified map-reduce function with the given options, which
-     * must specify a non-inline result.
+     * must not emit results inline. Calling this method is a preferred alternative to consuming this [MapReduceFlow].
      *
      * @throws IllegalStateException if a collection name to write the results to has not been specified
+     * @see collectionName
      */
     public suspend fun toCollection() {
         wrapped.toCollection().awaitFirstOrNull()
@@ -80,6 +84,7 @@ public class MapReduceFlow<T : Any>(private val wrapped: MapReducePublisher<T>) 
      *
      * @param collectionName the name of the collection that you want the map-reduce operation to write its output.
      * @return this
+     * @see toCollection
      */
     public fun collectionName(collectionName: String): MapReduceFlow<T> = apply {
         wrapped.collectionName(collectionName)
@@ -205,5 +210,12 @@ public class MapReduceFlow<T : Any>(private val wrapped: MapReducePublisher<T>) 
      */
     public fun collation(collation: Collation?): MapReduceFlow<T> = apply { wrapped.collation(collation) }
 
+    /**
+     * Requests [MapReduceFlow] to start streaming data according to the specified map-reduce function with the given
+     * options.
+     * - If the aggregation produces results inline, then finds all documents in the affected namespace and emits them.
+     *   You may want to use [toCollection] instead.
+     * - Otherwise, emits no values.
+     */
     public override suspend fun collect(collector: FlowCollector<T>): Unit = wrapped.asFlow().collect(collector)
 }
