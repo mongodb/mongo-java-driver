@@ -27,7 +27,7 @@ import static org.junit.Assert.assertTrue;
 class PlatformUtilTest {
 
     @ParameterizedTest
-    @ValueSource(strings = {"arm", "arm64", "aarch64", "ppc", "ppc64", "sparc", "mips"})
+    @ValueSource(strings = {"arm", "ppc", "ppc64", "sparc", "mips"})
     @DisplayName("Should not allow unaligned access for unsupported architectures")
     void shouldNotAllowUnalignedAccessForUnsupportedArchitecture(final String architecture) {
         withSystemProperty("os.arch", architecture, () -> {
