@@ -176,6 +176,51 @@ final class ByteBufferBsonOutputTest {
         }
     }
 
+    @DisplayName("should write byte at position")
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void shouldWriteByteAtPosition(final boolean useBranch) {
+        for (int offset = 0; offset < 5; offset++) {
+            try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+                byte v = 11;
+                byte[] byteToWrite = {1, 2, 3, 4, 5};
+                if (useBranch) {
+                    try (ByteBufferBsonOutput.Branch branch = out.branch()) {
+                        branch.writeBytes(byteToWrite);
+                        branch.write(offset, v);
+                    }
+                } else {
+                    out.writeBytes(byteToWrite);
+                    out.write(offset, v);
+                }
+                byteToWrite[offset] = v;
+                assertArrayEquals(byteToWrite, out.toByteArray());
+                assertEquals(5, out.getPosition());
+                assertEquals(5, out.size());
+
+            }
+        }
+    }
+
+    @DisplayName("should throw exception when writing byte at invalid position")
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void shouldThrowExceptionWhenWriteByteAtInvalidPosition(final boolean useBranch) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+            byte v = 11;
+            byte[] byteToWrite = {1, 2, 3, 4, 5};
+            if (useBranch) {
+                try (ByteBufferBsonOutput.Branch branch = out.branch()) {
+                    out.writeBytes(byteToWrite);
+                    assertThrows(IllegalArgumentException.class, () -> branch.write(-1, v));
+                }
+            } else {
+                out.writeBytes(byteToWrite);
+                assertThrows(IllegalArgumentException.class, () -> out.write(-1, v));
+            }
+        }
+    }
+
     @DisplayName("should write a bytes")
     @ParameterizedTest
     @MethodSource("bufferProvidersWithBranches")
@@ -717,27 +762,321 @@ final class ByteBufferBsonOutputTest {
         }
     }
 
+    @ParameterizedTest
+    @DisplayName("should throw exception when calling writeInt32 at absolute position where integer would not fit")
+    @MethodSource("bufferProviders")
+    void shouldThrowExceptionWhenIntegerDoesNotFitWriteInt32(final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(bufferProvider)) {
+            // Write 10 bytes (position becomes 10)
+            for (int i = 0; i < 10; i++) {
+                output.writeByte(0);
+            }
+
+            // absolutePosition = 7 would require bytes at positions 7,8,9,10, but the last written element was at 9.
+            assertThrows(IllegalArgumentException.class, () ->
+                    output.writeInt32(7, 5678)
+            );
+        }
+    }
+
+    @ParameterizedTest
+    @DisplayName("should throw exception when calling writeInt32 with negative absolute position")
+    @MethodSource("bufferProviders")
+    void shouldThrowExceptionWhenAbsolutePositionIsNegative(final BufferProvider bufferProvider) {
+        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(bufferProvider)) {
+            Assertions.assertThrows(IllegalArgumentException.class, () ->
+                    output.writeInt32(-1, 5678)
+            );
+        }
+    }
+
+    static Stream<Arguments> shouldWriteInt32AbsoluteValueWithinSpanningBuffers() {
+        return bufferProviders().flatMap(bufferProvider -> Stream.of(
+                Arguments.of(
+                        0, // absolute position
+                        0x09080706, // int value
+                        asList(
+                                // initial data
+                                new byte[]{0, 1, 2, 3},
+                                new byte[]{4, 5, 6, 7}),
+                        asList(
+                                // expected BsonByteBufferOutput data
+                                new byte[]{0x06, 0x07, 0x08, 0x09},
+                                new byte[]{4, 5, 6, 7}),
+                        bufferProvider // buffer to write data to
+                ),
+                Arguments.of(1, 0x09080706,
+                        asList(new byte[]{0, 1, 2, 3}, new byte[]{4, 5, 6, 7}),
+                        asList(new byte[]{0, 0x06, 0x07, 0x08}, new byte[]{0x09, 5, 6, 7}),
+                        bufferProvider),
+                Arguments.of(2, 0x09080706,
+                        asList(new byte[]{0, 1, 2, 3}, new byte[]{4, 5, 6, 7}),
+                        asList(new byte[]{0, 1, 0x06, 0x07}, new byte[]{0x08, 0x09, 6, 7}),
+                        bufferProvider
+                ),
+                Arguments.of(3, 0x09080706,
+                        asList(new byte[]{0, 1, 2, 3}, new byte[]{4, 5, 6, 7}),
+                        asList(new byte[]{0, 1, 2, 0x06}, new byte[]{0x07, 0x08, 0x09, 7}),
+                        bufferProvider
+                ),
+                Arguments.of(4, 0x09080706,
+                        asList(new byte[]{0, 1, 2, 3}, new byte[]{4, 5, 6, 7}),
+                        asList(new byte[]{0, 1, 2, 3}, new byte[]{0x06, 0x07, 0x08, 0x09}),
+                        bufferProvider
+                )));
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void shouldWriteInt32AbsoluteValueWithinSpanningBuffers(
+            final int absolutePosition,
+            final int intValue,
+            final List<byte[]> initialData,
+            final List<byte[]> expectedBuffers,
+            final BufferProvider bufferProvider) {
+
+        try (ByteBufferBsonOutput output =
+                     new ByteBufferBsonOutput(size -> bufferProvider.getBuffer(Integer.BYTES))) {
+
+            //given
+            initialData.forEach(output::writeBytes);
+
+            //when
+            output.writeInt32(absolutePosition, intValue);
+
+            //then
+            List<ByteBuf> buffers = output.getByteBuffers();
+            assertEquals(expectedBuffers.size(), buffers.size(), "Number of buffers mismatch");
+            assertBufferContents(expectedBuffers, buffers);
+        }
+    }
+
+    static Stream<Arguments> int32SpanningBuffersData() {
+        return bufferProviders().flatMap(bufferProvider -> Stream.of(
+                // Test case 1: No initial data; entire int written into one buffer.
+                Arguments.of(0x09080706,
+                        asList(
+                                // No initial data
+                        ),
+                        asList(
+                                // expected BsonByteBufferOutput data
+                                new byte[]{0x06, 0x07, 0x08, 0x09}),
+                        4, // expected overall position after write (0 + 4)
+                        4,  // expected last buffer position (buffer fully written)
+                        bufferProvider //buffer to write data to
+                ),
+                Arguments.of(0x09080706,
+                        asList(new byte[]{0}),
+                        asList(new byte[]{0, 0x06, 0x07, 0x08}, new byte[]{0x09, 0, 0, 0}), 5, 1,
+                        bufferProvider
+                ),
+                Arguments.of(0x09080706,
+                        asList(new byte[]{0, 1}),
+                        asList(new byte[]{0, 1, 0x06, 0x07}, new byte[]{0x08, 0x09, 0, 0}), 6, 2,
+                        bufferProvider
+                ),
+                Arguments.of(0x09080706,
+                        asList(new byte[]{0, 1, 2}),
+                        asList(new byte[]{0, 1, 2, 0x06}, new byte[]{0x07, 0x08, 0x09, 0}), 7, 3,
+                        bufferProvider
+                ),
+                Arguments.of(0x09080706,
+                        asList(new byte[]{0, 1, 2, 3}),
+                        asList(new byte[]{0, 1, 2, 3}, new byte[]{0x06, 0x07, 0x08, 0x09}), 8, 4,
+                        bufferProvider
+                )));
+    }
+
+    static Stream<Arguments> int64SpanningBuffersData() {
+        return bufferProviders().flatMap(bufferProvider -> Stream.of(
+                // Test case 1: No initial data; entire long written into one buffer.
+                Arguments.of(0x0A0B0C0D0E0F1011L,
+                        asList(
+                                // No initial data
+                        ),
+                        asList(
+                                // expected BsonByteBufferOutput data
+                                new byte[]{0x11, 0x10, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A}
+                        ),
+                        8, // expected overall position after write (0 + 8)
+                        8,  // expected last buffer position (buffer fully written)
+                        bufferProvider //buffer to write data to
+                ),
+                Arguments.of(0x0A0B0C0D0E0F1011L,
+                        asList(new byte[]{0}),
+                        asList(new byte[]{0, 0x11, 0x10, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B}, new byte[]{0x0A, 0, 0, 0, 0, 0, 0, 0}),
+                        9, 1,
+                        bufferProvider
+                ),
+                Arguments.of(0x0A0B0C0D0E0F1011L,
+                        asList(new byte[]{0, 1}),
+                        asList(new byte[]{0, 1, 0x11, 0x10, 0x0F, 0x0E, 0x0D, 0x0C}, new byte[]{0x0B, 0x0A, 0, 0, 0, 0, 0, 0}),
+                        10, 2,
+                        bufferProvider
+                ),
+                Arguments.of(0x0A0B0C0D0E0F1011L,
+                        asList(new byte[]{0, 1, 2}),
+                        asList(new byte[]{0, 1, 2, 0x11, 0x10, 0x0F, 0x0E, 0x0D}, new byte[]{0x0C, 0x0B, 0x0A, 0, 0, 0, 0, 0}),
+                        11, 3,
+                        bufferProvider
+                ),
+                Arguments.of(0x0A0B0C0D0E0F1011L,
+                        asList(new byte[]{0, 1, 2, 3}),
+                        asList(new byte[]{0, 1, 2, 3, 0x11, 0x10, 0x0F, 0x0E}, new byte[]{0x0D, 0x0C, 0x0B, 0x0A, 0, 0, 0, 0}),
+                        12, 4,
+                        bufferProvider
+                ),
+                Arguments.of(0x0A0B0C0D0E0F1011L,
+                        asList(new byte[]{0, 1, 2, 3, 4}),
+                        asList(new byte[]{0, 1, 2, 3, 4, 0x11, 0x10, 0x0F}, new byte[]{0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0, 0, 0}),
+                        13, 5,
+                        bufferProvider
+                ),
+                Arguments.of(0x0A0B0C0D0E0F1011L,
+                        asList(new byte[]{0, 1, 2, 3, 4, 5}),
+                        asList(new byte[]{0, 1, 2, 3, 4, 5, 0x11, 0x10}, new byte[]{0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0, 0}),
+                        14, 6,
+                        bufferProvider
+                ), Arguments.of(0x0A0B0C0D0E0F1011L,
+                        asList(new byte[]{0, 1, 2, 3, 4, 5, 6}),
+                        asList(new byte[]{0, 1, 2, 3, 4, 5, 6, 0x11}, new byte[]{0x10, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0}),
+                        15, 7,
+                        bufferProvider
+                ),
+                Arguments.of(0x0A0B0C0D0E0F1011L,
+                        asList(new byte[]{0, 1, 2, 3, 4, 5, 6, 7}),
+                        asList(new byte[]{0, 1, 2, 3, 4, 5, 6, 7}, new byte[]{0x11, 0x10, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A}),
+                        16, 8,
+                        bufferProvider
+                )));
+    }
+
+    @ParameterizedTest
+    @MethodSource("int32SpanningBuffersData")
+    void shouldWriteInt32WithinSpanningBuffers(
+            final int intValue,
+            final List<byte[]> initialData,
+            final List<byte[]> expectedBuffers,
+            final int expectedOutputPosition,
+            final int expectedLastBufferPosition,
+            final BufferProvider bufferProvider) {
+
+        try (ByteBufferBsonOutput output =
+                     new ByteBufferBsonOutput(size -> bufferProvider.getBuffer(Integer.BYTES))) {
+
+            //given
+            initialData.forEach(output::writeBytes);
+
+            //when
+            output.writeInt32(intValue);
+
+            //then
+            //getByteBuffers returns ByteBuffers with limit() set to position, position set to 0.
+            List<ByteBuf> buffers = output.getByteBuffers();
+            assertEquals(expectedBuffers.size(), buffers.size(), "Number of buffers mismatch");
+            assertBufferContents(expectedBuffers, buffers);
+
+            assertEquals(expectedLastBufferPosition, buffers.get(buffers.size() - 1).limit());
+            assertEquals(expectedOutputPosition, output.getPosition());
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("int64SpanningBuffersData")
+    void shouldWriteInt64WithinSpanningBuffers(
+            final long intValue,
+            final List<byte[]> initialData,
+            final List<byte[]> expectedBuffers,
+            final int expectedOutputPosition,
+            final int expectedLastBufferPosition,
+            final BufferProvider bufferProvider) {
+
+        try (ByteBufferBsonOutput output =
+                     new ByteBufferBsonOutput(size -> bufferProvider.getBuffer(Long.BYTES))) {
+
+            //given
+            initialData.forEach(output::writeBytes);
+
+            //when
+            output.writeInt64(intValue);
+
+            //then
+            //getByteBuffers returns ByteBuffers with limit() set to position, position set to 0.
+            List<ByteBuf> buffers = output.getByteBuffers();
+            assertEquals(expectedBuffers.size(), buffers.size(), "Number of buffers mismatch");
+            assertBufferContents(expectedBuffers, buffers);
+
+            assertEquals(expectedLastBufferPosition, buffers.get(buffers.size() - 1).limit());
+            assertEquals(expectedOutputPosition, output.getPosition());
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("int64SpanningBuffersData")
+    void shouldWriteDoubleWithinSpanningBuffers(
+            final long intValue,
+            final List<byte[]> initialData,
+            final List<byte[]> expectedBuffers,
+            final int expectedOutputPosition,
+            final int expectedLastBufferPosition,
+            final BufferProvider bufferProvider) {
+
+        try (ByteBufferBsonOutput output =
+                     new ByteBufferBsonOutput(size -> bufferProvider.getBuffer(Long.BYTES))) {
+
+            //given
+            initialData.forEach(output::writeBytes);
+
+            //when
+            output.writeDouble(Double.longBitsToDouble(intValue));
+
+            //then
+            //getByteBuffers returns ByteBuffers with limit() set to position, position set to 0.
+            List<ByteBuf> buffers = output.getByteBuffers();
+            assertEquals(expectedBuffers.size(), buffers.size(), "Number of buffers mismatch");
+            assertBufferContents(expectedBuffers, buffers);
+
+            assertEquals(expectedLastBufferPosition, buffers.get(buffers.size() - 1).limit());
+            assertEquals(expectedOutputPosition, output.getPosition());
+        }
+    }
+
+    private static void assertBufferContents(final List<byte[]> expectedBuffersContent,
+                                             final List<ByteBuf> actualByteBuffers) {
+        for (int i = 0; i < expectedBuffersContent.size(); i++) {
+            ByteBuf byteBuf = actualByteBuffers.get(i);
+            byte[] expectedBufferBytes = expectedBuffersContent.get(i);
+            byte[] actualBufferBytes =
+                    new byte[byteBuf.capacity()]; //capacity is used because we want to compare internal ByteBuffer arrays.
+            byteBuf.get(actualBufferBytes, 0, byteBuf.limit());
+
+            assertEquals(expectedBufferBytes.length, byteBuf.capacity());
+            assertArrayEquals(expectedBufferBytes, actualBufferBytes,
+                    "Buffer " + i + " contents mismatch");
+        }
+    }
+
     /*
-      Tests that all Unicode code points are correctly encoded in UTF-8 when:
-      - The buffer has just enough capacity for the UTF-8 string plus a null terminator.
-      - The encoded string may span multiple buffers.
+   Tests that all Unicode code points are correctly encoded in UTF-8 when:
+   - The buffer has just enough capacity for the UTF-8 string plus a null terminator.
+   - The encoded string may span multiple buffers.
 
-      To test edge conditions, the test writes a UTF-8 CString/String at various starting offsets. This simulates scenarios where data
-      doesn't start at index 0, forcing the string to span multiple buffers.
+   To test edge conditions, the test writes a UTF-8 CString/String at various starting offsets. This simulates scenarios where data
+   doesn't start at index 0, forcing the string to span multiple buffers.
 
-      For example, assume the encoded string requires N bytes and null terminator:
-      1. startingOffset == 0:
-         [ S S S ... S NULL ]
+   For example, assume the encoded string requires N bytes and null terminator:
+   1. startingOffset == 0:
+      [ S S S ... S NULL ]
 
-      2. startingOffset == 2:
-         ("X" represents dummy bytes written before the string.)
-         Buffer 1: [ X X | S S S ... ] (Buffer 1 runs out of space, the remaining bytes (including the NULL) are written in Buffer 2.)
-         Buffer 2: [ S NULL ...]
+   2. startingOffset == 2:
+      ("X" represents dummy bytes written before the string.)
+      Buffer 1: [ X X | S S S ... ] (Buffer 1 runs out of space, the remaining bytes (including the NULL) are written in Buffer 2.)
+      Buffer 2: [ S NULL ...]
 
-      3. startingOffset == bufferAllocationSize:
-         Buffer 1: [ X X X ... X ]
-         Buffer 2: [ S S S ... S NULL ]
-     */
+   3. startingOffset == bufferAllocationSize:
+      Buffer 1: [ X X X ... X ]
+      Buffer 2: [ S S S ... S NULL ]
+  */
     @Nested
     @DisplayName("UTF-8 String and CString Buffer Boundary Tests")
     class Utf8StringTests {
@@ -970,7 +1309,6 @@ final class ByteBufferBsonOutputTest {
                             bufferAllocationSize,
                             actualByteBuffers,
                             actualFlattenedByteBuffersBytes);
-
                 } finally {
                     actualByteBuffers.forEach(ByteBuf::release);
                 }

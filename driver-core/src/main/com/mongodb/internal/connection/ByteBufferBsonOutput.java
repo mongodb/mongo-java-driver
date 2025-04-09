@@ -86,6 +86,84 @@ public class ByteBufferBsonOutput extends OutputBuffer {
     }
 
     @Override
+    public void writeInt32(final int value) {
+        ensureOpen();
+        ByteBuf buf = getCurrentByteBuffer();
+        if (buf.remaining() >= 4) {
+            buf.putInt(value);
+            position += 4;
+        } else {
+            // fallback for edge cases
+            super.writeInt32(value);
+        }
+    }
+
+
+    @Override
+    public void writeInt32(final int absolutePosition, final int value) {
+        ensureOpen();
+
+        if (absolutePosition < 0) {
+            throw new IllegalArgumentException(String.format("position must be >= 0 but was %d", absolutePosition));
+        }
+
+        if (absolutePosition  + 3 > position - 1) {
+            throw new IllegalArgumentException(String.format("Cannot write 4 bytes starting at position %d: current size is %d bytes",
+                    position - 1,
+                    absolutePosition + 3));
+        }
+
+        BufferPositionPair bufferPositionPair = getBufferPositionPair(absolutePosition);
+        ByteBuf byteBuffer = getByteBufferAtIndex(bufferPositionPair.bufferIndex);
+        int capacity = byteBuffer.position() - bufferPositionPair.position;
+
+        if (capacity >= 4) {
+            byteBuffer.putInt(bufferPositionPair.position, value);
+        } else {
+            // fallback for edge cases
+            int valueToWrite = value;
+            int pos = bufferPositionPair.position;
+            int bufferIndex = bufferPositionPair.bufferIndex;
+
+            for (int i = 0; i < 4; i++) {
+                byteBuffer.put(pos++, (byte) valueToWrite);
+                valueToWrite = valueToWrite >> 8;
+                if (--capacity == 0) {
+                    byteBuffer = getByteBufferAtIndex(++bufferIndex);
+                    pos = 0;
+                    capacity = byteBuffer.position();
+                }
+            }
+        }
+    }
+
+    @Override
+    public void writeDouble(final double value) {
+        ensureOpen();
+        ByteBuf buf = getCurrentByteBuffer();
+        if (buf.remaining() >= 8) {
+            buf.putDouble(value);
+            position += 8;
+        } else {
+            // fallback for edge cases
+            writeInt64(Double.doubleToRawLongBits(value));
+        }
+    }
+
+    @Override
+    public void writeInt64(final long value) {
+        ensureOpen();
+        ByteBuf buf = getCurrentByteBuffer();
+        if (buf.remaining() >= 8) {
+            buf.putLong(value);
+            position += 8;
+        } else {
+            // fallback for edge cases
+            super.writeInt64(value);
+        }
+    }
+
+    @Override
     public void writeByte(final int value) {
         ensureOpen();
 
