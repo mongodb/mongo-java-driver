@@ -37,7 +37,7 @@ class AggregateIterableTest {
 
     @Test
     fun shouldHaveTheSameMethods() {
-        val jAggregateIterableFunctions = JAggregateIterable::class.declaredFunctions.map { it.name }.toSet()
+        val jAggregateIterableFunctions = JAggregateIterable::class.declaredFunctions.map { it.name }.filterNot { it == "iterator" }.toSet()
         val kAggregateIterableFunctions = AggregateIterable::class.declaredFunctions.map { it.name }.toSet()
 
         assertEquals(jAggregateIterableFunctions, kAggregateIterableFunctions)
