@@ -18,7 +18,7 @@
  * This packages contains classes for the reactive stream client implementation.
  * <p>
  * All API {@link org.reactivestreams.Publisher}s are
- * <a href="https://projectreactor.io/docs/core/release/reference/#reactor.hotCold">cold</a>,
+ * <a href="https://projectreactor.io/docs/core/release/reference/reactiveProgramming.html#reactive.hotCold">cold</a>,
  * meaning that nothing happens until they are subscribed to.
  * So just creating a {@link org.reactivestreams.Publisher} won’t cause any network IO.
  * It’s not until {@link org.reactivestreams.Publisher#subscribe(org.reactivestreams.Subscriber)} is called that the driver executes the
