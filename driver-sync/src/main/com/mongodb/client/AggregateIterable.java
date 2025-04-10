@@ -17,10 +17,13 @@
 package com.mongodb.client;
 
 import com.mongodb.ExplainVerbosity;
+import com.mongodb.MongoNamespace;
 import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Reason;
 import com.mongodb.client.cursor.TimeoutMode;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Collation;
+import com.mongodb.client.model.MergeOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 import org.bson.Document;
@@ -38,14 +41,46 @@ import java.util.concurrent.TimeUnit;
 public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
 
     /**
-     * Aggregates documents according to the specified aggregation pipeline, which must end with a $out or $merge stage.
+     * Aggregates documents according to the specified aggregation pipeline, which must end with an
+     * {@link Aggregates#out(String, String) $out} or {@link Aggregates#merge(MongoNamespace, MergeOptions) $merge} stage.
+     * This method is the preferred alternative to {@link #iterator()}, {@link #cursor()}.
      *
-     * @throws IllegalStateException if the pipeline does not end with a $out or $merge stage
+     * @throws IllegalStateException if the pipeline does not end with an {@code $out} or {@code $merge} stage
      * @mongodb.driver.manual reference/operator/aggregation/out/ $out stage
      * @mongodb.driver.manual reference/operator/aggregation/merge/ $merge stage
      * @since 3.4
      */
     void toCollection();
+
+    /**
+     * Aggregates documents according to the specified aggregation pipeline.
+     * <ul>
+     *     <li>
+     *     If the aggregation pipeline ends with an {@link Aggregates#out(String, String) $out} or
+     *     {@link Aggregates#merge(MongoNamespace, MergeOptions) $merge} stage,
+     *     then {@linkplain MongoCollection#find() finds all} documents in the affected namespace and returns a {@link MongoCursor}
+     *     over them. You may want to use {@link #toCollection()} instead.</li>
+     *     <li>
+     *     Otherwise, returns a {@link MongoCursor} producing no elements.</li>
+     * </ul>
+     */
+    @Override
+    MongoCursor<TResult> iterator();
+
+    /**
+     * Aggregates documents according to the specified aggregation pipeline.
+     * <ul>
+     *     <li>
+     *     If the aggregation pipeline ends with an {@link Aggregates#out(String, String) $out} or
+     *     {@link Aggregates#merge(MongoNamespace, MergeOptions) $merge} stage,
+     *     then {@linkplain MongoCollection#find() finds all} documents in the affected namespace and returns a {@link MongoCursor}
+     *     over them. You may want to use {@link #toCollection()} instead.</li>
+     *     <li>
+     *     Otherwise, returns a {@link MongoCursor} producing no elements.</li>
+     * </ul>
+     */
+    @Override
+    MongoCursor<TResult> cursor();
 
     /**
      * Enables writing to temporary files. A null value indicates that it's unspecified.

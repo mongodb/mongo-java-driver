@@ -61,13 +61,22 @@ public class AggregateIterable<T : Any>(private val wrapped: JAggregateIterable<
     }
 
     /**
-     * Aggregates documents according to the specified aggregation pipeline, which must end with a $out or $merge stage.
+     * Aggregates documents according to the specified aggregation pipeline, which must end with an `$out` or `$merge`
+     * stage. This method is the preferred alternative to [cursor].
      *
-     * @throws IllegalStateException if the pipeline does not end with a $out or $merge stage
+     * @throws IllegalStateException if the pipeline does not end with an `$out` or `$merge` stage
      * @see [$out stage](https://www.mongodb.com/docs/manual/reference/operator/aggregation/out/)
      * @see [$merge stage](https://www.mongodb.com/docs/manual/reference/operator/aggregation/merge/)
      */
     public fun toCollection(): Unit = wrapped.toCollection()
+
+    /**
+     * Aggregates documents according to the specified aggregation pipeline.
+     * - If the aggregation pipeline ends with an `$out` or `$merge` stage, then finds all documents in the affected
+     *   namespace and returns a [MongoCursor] over them. You may want to use [toCollection] instead.
+     * - Otherwise, returns a [MongoCursor] producing no elements.
+     */
+    public override fun cursor(): MongoCursor<T> = super.cursor()
 
     /**
      * Enables writing to temporary files. A null value indicates that it's unspecified.
