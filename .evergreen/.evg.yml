@@ -256,7 +256,7 @@ functions:
             . ./activate-authawsvenv.sh
             python ./lib/aws_assign_instance_profile.py
           fi
-          
+
   "run tests":
     - command: shell.exec
       type: test
@@ -277,9 +277,9 @@ functions:
           AZUREKMS_KEY_NAME: ${testazurekms_keyname}
         script: |
           ${PREPARE_SHELL}
-          
+
           . ${DRIVERS_TOOLS}/.evergreen/csfle/set-temp-creds.sh
-          
+
           export AWS_TEMP_ACCESS_KEY_ID=$CSFLE_AWS_TEMP_ACCESS_KEY_ID
           export AWS_TEMP_SECRET_ACCESS_KEY=$CSFLE_AWS_TEMP_SECRET_ACCESS_KEY
           export AWS_TEMP_SESSION_TOKEN=$CSFLE_AWS_TEMP_SESSION_TOKEN
@@ -375,7 +375,7 @@ functions:
           STREAM_TYPE="netty" AUTH="${AUTH}" SSL="${SSL}" NETTY_SSL_PROVIDER="${NETTY_SSL_PROVIDER}" MONGODB_URI="${MONGODB_URI}" \
            TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JAVA_VERSION="${JAVA_VERSION}" \
            AZUREKMS_KEY_VAULT_ENDPOINT=${testazurekms_keyvaultendpoint} AZUREKMS_KEY_NAME=${testazurekms_keyname} \
-           .evergreen/run-tests.sh         
+           .evergreen/run-tests.sh
 
   "run plain auth test":
     - command: shell.exec
@@ -683,11 +683,11 @@ functions:
         script: |
           ${PREPARE_SHELL}
           . ${DRIVERS_TOOLS}/.evergreen/csfle/set-temp-creds.sh
-          
+
           export AWS_TEMP_ACCESS_KEY_ID=$CSFLE_AWS_TEMP_ACCESS_KEY_ID
           export AWS_TEMP_SECRET_ACCESS_KEY=$CSFLE_AWS_TEMP_SECRET_ACCESS_KEY
           export AWS_TEMP_SESSION_TOKEN=$CSFLE_AWS_TEMP_SESSION_TOKEN
-          
+
           MONGODB_URI="${MONGODB_URI}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-csfle-tests-with-mongocryptd.sh
 
   "trace artifacts":
@@ -777,9 +777,41 @@ functions:
           PROJECT_DIRECTORY=${PROJECT_DIRECTORY} .evergreen/run-perf-tests.sh
 
   "send dashboard data":
-    - command: perf.send
+    - command: shell.exec
       params:
-        file: src/results.json
+        script: |
+          if [ "${requester}" == "commit" ]; then
+            echo "is_mainline: true" >> expansion.yml
+          else
+            echo "is_mainline: false" >> expansion.yml
+          fi
+
+          echo "parsed_order_id: $(echo "${revision_order_id}" | awk -F'_' '{print $NF}')"  >> expansion.yml
+    - command: expansions.update
+      params:
+        file: expansion.yml
+    - command: shell.exec
+      params:
+        script: |
+          response=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X 'POST' \
+            "https://performance-monitoring-api.corp.mongodb.com/raw_perf_results/cedar_report?project=${project_id}&version=${version_id}&variant=${build_variant}&order=${parsed_order_id}&task_name=${task_name}&task_id=${task_id}&execution=${execution}&mainline=${is_mainline}" \
+            -H 'accept: application/json' \
+            -H 'Content-Type: application/json' \
+            -d @src/results.json)
+
+          http_status=$(echo "$response" | grep "HTTP_STATUS" | awk -F':' '{print $2}')
+          response_body=$(echo "$response" | sed '/HTTP_STATUS/d')
+
+          # We want to throw an error if the data was not successfully submitted
+          if [ "$http_status" -ne 200 ]; then
+            echo "Error: Received HTTP status $http_status"
+            echo "Response Body: $response_body"
+            exit 1
+          fi
+
+          echo "Response Body: $response_body"
+          echo "HTTP Status: $http_status"
+        add_expansions_to_env: true
 
   "run graalvm native image app":
     - command: shell.exec
