@@ -99,7 +99,8 @@ public class ByteBufferBsonOutput extends OutputBuffer {
             return currentByteBuffer;
         }
 
-        currentByteBuffer = getByteBufferAtIndex(++curBufferIndex);
+        curBufferIndex++;
+        currentByteBuffer = getByteBufferAtIndex(curBufferIndex);
         return currentByteBuffer;
     }
 
