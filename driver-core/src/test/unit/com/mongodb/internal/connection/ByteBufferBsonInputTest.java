@@ -73,12 +73,12 @@ class ByteBufferBsonInputTest {
 
                     @Override
                     public byte[] array() {
-                        return Assertions.fail("array() is called, when hasArray() returns false");
+                        return Assertions.fail("array() is called, when isBackedByArray() returns false");
                     }
 
                     @Override
                     public int arrayOffset() {
-                        return Assertions.fail("arrayOffset() is called, when hasArray() returns false");
+                        return Assertions.fail("arrayOffset() is called, when isBackedByArray() returns false");
                     }
                 }
         );
@@ -558,10 +558,10 @@ class ByteBufferBsonInputTest {
     void shouldThrowIfStringIsNotNullTerminated(final byte[] nonNullTerminatedString, final BufferProvider bufferProvider) {
         // given
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, nonNullTerminatedString);
-        try (ByteBufferBsonInput expectedStringeam = new ByteBufferBsonInput(buffer)) {
+        try (ByteBufferBsonInput expectedString = new ByteBufferBsonInput(buffer)) {
 
             // when & then
-            assertThrows(BsonSerializationException.class, expectedStringeam::readString);
+            assertThrows(BsonSerializationException.class, expectedString::readString);
         }
     }
 
