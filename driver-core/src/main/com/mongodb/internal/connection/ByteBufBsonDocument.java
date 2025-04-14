@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.lang.Nullable;
+import org.bson.BsonArray;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
 import org.bson.BsonType;
@@ -36,10 +37,8 @@ import java.io.StringWriter;
 import java.util.AbstractCollection;
 import java.util.AbstractMap;
 import java.util.AbstractSet;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -54,13 +53,13 @@ final class ByteBufBsonDocument extends BsonDocument {
     private final transient ByteBuf byteBuf;
 
     /**
-     * Create a list of ByteBufBsonDocument from a buffer positioned at the start of the first document of an OP_MSG Section
+     * Create a {@link BsonArray} of ByteBufBsonDocument from a buffer positioned at the start of the first document of an OP_MSG Section
      * of type Document Sequence (Kind 1).
      * <p>
      * The provided buffer will be positioned at the end of the section upon normal completion of the method
      */
-    static List<ByteBufBsonDocument> createList(final ByteBuf outputByteBuf) {
-        List<ByteBufBsonDocument> documents = new ArrayList<>();
+    static BsonArray createBsonArray(final ByteBuf outputByteBuf) {
+        BsonArray documents = new BsonArray();
         while (outputByteBuf.hasRemaining()) {
             ByteBufBsonDocument curDocument = createOne(outputByteBuf);
             documents.add(curDocument);

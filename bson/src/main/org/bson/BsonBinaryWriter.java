@@ -21,8 +21,9 @@ import org.bson.io.BsonOutput;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
-import java.util.Stack;
 
 import static java.lang.Math.max;
 import static java.lang.String.format;
@@ -37,7 +38,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     private final BsonBinaryWriterSettings binaryWriterSettings;
 
     private final BsonOutput bsonOutput;
-    private final Stack<Integer> maxDocumentSizeStack = new Stack<>();
+    private final Deque<Integer> maxDocumentSizeQueue = new ArrayDeque<>();
     private static final int ARRAY_INDEXES_CACHE_SIZE = 1000;
     private static final byte[] ARRAY_INDEXES_BUFFER;
     private static final int[] ARRAY_INDEXES_OFFSETS;
@@ -113,7 +114,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
         super(settings, validator);
         this.binaryWriterSettings = binaryWriterSettings;
         this.bsonOutput = bsonOutput;
-        maxDocumentSizeStack.push(binaryWriterSettings.getMaxDocumentSize());
+        maxDocumentSizeQueue.push(binaryWriterSettings.getMaxDocumentSize());
     }
 
     @Override
@@ -394,14 +395,14 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
      * @param maxDocumentSize the maximum document size.
      */
     public void pushMaxDocumentSize(final int maxDocumentSize) {
-        maxDocumentSizeStack.push(maxDocumentSize);
+        maxDocumentSizeQueue.push(maxDocumentSize);
     }
 
     /**
      * Reset the maximum document size to its previous value.
      */
     public void popMaxDocumentSize() {
-        maxDocumentSizeStack.pop();
+        maxDocumentSizeQueue.pop();
     }
 
     /**
@@ -447,9 +448,9 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     }
 
     private void validateSize(final int size) {
-        if (size > maxDocumentSizeStack.peek()) {
+        if (size > maxDocumentSizeQueue.peek()) {
             throw new BsonMaximumSizeExceededException(format("Document size of %d is larger than maximum of %d.", size,
-                    maxDocumentSizeStack.peek()));
+                    maxDocumentSizeQueue.peek()));
         }
     }
 
