@@ -294,6 +294,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
             for (final ByteBuf cur : bufferList) {
                 cur.release();
             }
+            currentByteBuffer = null;
             bufferList.clear();
             closed = true;
         }
