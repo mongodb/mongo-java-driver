@@ -36,7 +36,7 @@ import static org.bson.assertions.Assertions.notNull;
  */
 public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     private final BsonWriterSettings settings;
-    private final Deque<FieldNameValidator> fieldNameValidatorQueue = new ArrayDeque<>();
+    private final Deque<FieldNameValidator> fieldNameValidatorStack = new ArrayDeque<>();
     private State state;
     private Context context;
     private int serializationDepth;
@@ -62,7 +62,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
             throw new IllegalArgumentException("Validator can not be null");
         }
         this.settings = settings;
-        fieldNameValidatorQueue.push(validator);
+        fieldNameValidatorStack.push(validator);
         state = State.INITIAL;
     }
 
@@ -277,8 +277,8 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     public void writeStartDocument() {
         checkPreconditions("writeStartDocument", State.INITIAL, State.VALUE, State.SCOPE_DOCUMENT, State.DONE);
         if (context != null && context.name != null) {
-            FieldNameValidator validator = fieldNameValidatorQueue.peek().getValidatorForField(getName());
-            fieldNameValidatorQueue.push(validator);
+            FieldNameValidator validator = fieldNameValidatorStack.peek().getValidatorForField(getName());
+            fieldNameValidatorStack.push(validator);
             validator.start();
         }
         serializationDepth++;
@@ -301,7 +301,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
         }
 
         if (context.getParentContext() != null && context.getParentContext().name != null) {
-            fieldNameValidatorQueue.pop().end();
+            fieldNameValidatorStack.pop().end();
         }
         serializationDepth--;
 
@@ -325,7 +325,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
         checkPreconditions("writeStartArray", State.VALUE);
 
         if (context != null && context.name != null) {
-            fieldNameValidatorQueue.push(fieldNameValidatorQueue.peek().getValidatorForField(getName()));
+            fieldNameValidatorStack.push(fieldNameValidatorStack.peek().getValidatorForField(getName()));
         }
         serializationDepth++;
         if (serializationDepth > settings.getMaxSerializationDepth()) {
@@ -346,7 +346,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
         }
 
         if (context.getParentContext() != null && context.getParentContext().name != null) {
-            fieldNameValidatorQueue.pop();
+            fieldNameValidatorStack.pop();
         }
         serializationDepth--;
 
@@ -531,7 +531,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
         if (state != State.NAME) {
             throwInvalidState("WriteName", State.NAME);
         }
-        FieldNameValidator fieldNameValidator = fieldNameValidatorQueue.peek();
+        FieldNameValidator fieldNameValidator = fieldNameValidatorStack.peek();
         if (!fieldNameValidator.validate(name)) {
             throw new IllegalArgumentException(fieldNameValidator.getValidationErrorMessage(name));
         }

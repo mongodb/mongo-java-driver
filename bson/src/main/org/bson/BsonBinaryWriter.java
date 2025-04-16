@@ -38,7 +38,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     private final BsonBinaryWriterSettings binaryWriterSettings;
 
     private final BsonOutput bsonOutput;
-    private final Deque<Integer> maxDocumentSizeQueue = new ArrayDeque<>();
+    private final Deque<Integer> maxDocumentSizeStack = new ArrayDeque<>();
     private static final int ARRAY_INDEXES_CACHE_SIZE = 1000;
     private static final byte[] ARRAY_INDEXES_BUFFER;
     private static final int[] ARRAY_INDEXES_OFFSETS;
@@ -114,7 +114,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
         super(settings, validator);
         this.binaryWriterSettings = binaryWriterSettings;
         this.bsonOutput = bsonOutput;
-        maxDocumentSizeQueue.push(binaryWriterSettings.getMaxDocumentSize());
+        maxDocumentSizeStack.push(binaryWriterSettings.getMaxDocumentSize());
     }
 
     @Override
@@ -395,14 +395,14 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
      * @param maxDocumentSize the maximum document size.
      */
     public void pushMaxDocumentSize(final int maxDocumentSize) {
-        maxDocumentSizeQueue.push(maxDocumentSize);
+        maxDocumentSizeStack.push(maxDocumentSize);
     }
 
     /**
      * Reset the maximum document size to its previous value.
      */
     public void popMaxDocumentSize() {
-        maxDocumentSizeQueue.pop();
+        maxDocumentSizeStack.pop();
     }
 
     /**
@@ -448,9 +448,9 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     }
 
     private void validateSize(final int size) {
-        if (size > maxDocumentSizeQueue.peek()) {
+        if (size > maxDocumentSizeStack.peek()) {
             throw new BsonMaximumSizeExceededException(format("Document size of %d is larger than maximum of %d.", size,
-                    maxDocumentSizeQueue.peek()));
+                    maxDocumentSizeStack.peek()));
         }
     }
 
