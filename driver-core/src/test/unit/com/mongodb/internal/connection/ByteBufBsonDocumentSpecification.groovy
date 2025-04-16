@@ -319,8 +319,8 @@ class ByteBufBsonDocumentSpecification extends Specification {
                 0x00, // End of document
 
                 0x13, 0x00, 0x00, 0x00, // Document size (13 bytes)
-                0x10, 'c'.bytes[0], 0x00, 0x05, 0x00, 0x00, 0x00, // Int32 field "a" with value 5
-                0x10, 'd'.bytes[0], 0x00, 0x04, 0x00, 0x00, 0x00, // Int32 field "b" with value 4
+                0x10, 'c'.bytes[0], 0x00, 0x05, 0x00, 0x00, 0x00, // Int32 field "c" with value 5
+                0x10, 'd'.bytes[0], 0x00, 0x04, 0x00, 0x00, 0x00, // Int32 field "d" with value 4
                 0x00 // End of document
         ] as byte[]
         def byteBuf = new ByteBufNIO(ByteBuffer.wrap(bsonData))
