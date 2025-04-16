@@ -310,30 +310,4 @@ class ByteBufBsonDocumentSpecification extends Specification {
         }
     }
 
-    def "createBsonArray should create array of documents from BSON buffer"() {
-        given:
-        def bsonData = [
-                0x13, 0x00, 0x00, 0x00, // Document size (13 bytes)
-                0x10, 'a'.bytes[0], 0x00, 0x01, 0x00, 0x00, 0x00, // Int32 field "a" with value 1
-                0x10, 'b'.bytes[0], 0x00, 0x02, 0x00, 0x00, 0x00, // Int32 field "b" with value 2
-                0x00, // End of document
-
-                0x13, 0x00, 0x00, 0x00, // Document size (13 bytes)
-                0x10, 'c'.bytes[0], 0x00, 0x05, 0x00, 0x00, 0x00, // Int32 field "c" with value 5
-                0x10, 'd'.bytes[0], 0x00, 0x04, 0x00, 0x00, 0x00, // Int32 field "d" with value 4
-                0x00 // End of document
-        ] as byte[]
-        def byteBuf = new ByteBufNIO(ByteBuffer.wrap(bsonData))
-
-        when:
-        def result = ByteBufBsonDocument.createBsonArray(byteBuf)
-
-        then:
-        result.size() == 2
-        result[0].get("a") == new BsonInt32(1)
-        result[0].get("b") == new BsonInt32(2)
-
-        result[1].get("c") == new BsonInt32(5)
-        result[1].get("d") == new BsonInt32(4)
-    }
 }

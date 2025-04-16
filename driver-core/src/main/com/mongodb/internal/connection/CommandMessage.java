@@ -26,6 +26,7 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonArray;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -56,7 +57,7 @@ import static com.mongodb.internal.connection.BsonWriterHelper.appendElementsToD
 import static com.mongodb.internal.connection.BsonWriterHelper.backpatchLength;
 import static com.mongodb.internal.connection.BsonWriterHelper.writeDocumentsOfDualMessageSequences;
 import static com.mongodb.internal.connection.BsonWriterHelper.writePayload;
-import static com.mongodb.internal.connection.ByteBufBsonDocument.createBsonArray;
+import static com.mongodb.internal.connection.ByteBufBsonDocument.createList;
 import static com.mongodb.internal.connection.ByteBufBsonDocument.createOne;
 import static com.mongodb.internal.connection.ReadConcernHelper.getReadConcernDocument;
 import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION;
@@ -167,7 +168,7 @@ public final class CommandMessage extends RequestMessage {
 
                         ByteBuf documentsByteBufSlice = byteBuf.duplicate().limit(sectionEnd);
                         try {
-                            commandBsonDocument.append(fieldName, createBsonArray(documentsByteBufSlice));
+                            commandBsonDocument.append(fieldName, new BsonArray(createList(documentsByteBufSlice)));
                         } finally {
                             documentsByteBufSlice.release();
                         }
