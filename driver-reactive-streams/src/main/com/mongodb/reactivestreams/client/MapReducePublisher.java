@@ -16,7 +16,6 @@
 
 package com.mongodb.reactivestreams.client;
 
-
 import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Reason;
 import com.mongodb.client.cursor.TimeoutMode;
@@ -24,11 +23,15 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
 
 import java.util.concurrent.TimeUnit;
 
 /**
  * Publisher for map reduce.
+ * <p>
+ * By default, the {@code MapReducePublisher} produces the results inline. You can write map-reduce output to a collection by using the
+ * {@link #collectionName(String)} and {@link #toCollection()} methods.</p>
  *
  * @param <TResult> The type of the result.
  * @since 1.0
@@ -44,6 +47,7 @@ public interface MapReducePublisher<TResult> extends Publisher<TResult> {
      *
      * @param collectionName the name of the collection that you want the map-reduce operation to write its output.
      * @return this
+     * @see #toCollection()
      */
     MapReducePublisher<TResult> collectionName(String collectionName);
 
@@ -152,13 +156,28 @@ public interface MapReducePublisher<TResult> extends Publisher<TResult> {
     MapReducePublisher<TResult> bypassDocumentValidation(@Nullable Boolean bypassDocumentValidation);
 
     /**
-     * Aggregates documents to a collection according to the specified map-reduce function with the given options, which must specify a
-     * non-inline result.
+     * Aggregates documents to a collection according to the specified map-reduce function with the given options, which must not produce
+     * results inline. Calling this method and then {@linkplain Publisher#subscribe(Subscriber) subscribing} to the returned
+     * {@link Publisher} is a preferred alternative to {@linkplain #subscribe(Subscriber) subscribing} to this {@link MapReducePublisher}.
      *
      * @return an empty publisher that indicates when the operation has completed
+     * @throws IllegalStateException if a {@linkplain #collectionName(String) collection name} to write the results to has not been specified
+     * @see #collectionName(String)
      * @mongodb.driver.manual aggregation/ Aggregation
      */
     Publisher<Void> toCollection();
+
+    /**
+     * Requests {@link MapReducePublisher} to start streaming data according to the specified map-reduce function with the given options.
+     * <ul>
+     *     <li>
+     *     If the aggregation produces results inline, then {@linkplain MongoCollection#find() finds all} documents in the
+     *     affected namespace and produces them. You may want to use {@link #toCollection()} instead.</li>
+     *     <li>
+     *     Otherwise, produces no elements.</li>
+     * </ul>
+     */
+    void subscribe(Subscriber<? super TResult> s);
 
     /**
      * Sets the collation options
