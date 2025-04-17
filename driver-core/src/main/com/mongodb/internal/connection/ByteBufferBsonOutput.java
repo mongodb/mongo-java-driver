@@ -43,6 +43,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
     private int curBufferIndex = 0;
     private int position = 0;
     private boolean closed;
+    private ByteBuf currentByteBuffer;
 
     /**
      * Construct an instance that uses the given buffer provider to allocate byte buffers as needs as it grows.
@@ -169,13 +170,16 @@ public class ByteBufferBsonOutput extends OutputBuffer {
     }
 
     private ByteBuf getCurrentByteBuffer() {
-        ByteBuf curByteBuffer = getByteBufferAtIndex(curBufferIndex);
-        if (curByteBuffer.hasRemaining()) {
-            return curByteBuffer;
+        if (currentByteBuffer == null) {
+            currentByteBuffer = getByteBufferAtIndex(curBufferIndex);
+        }
+        if (currentByteBuffer.hasRemaining()) {
+            return currentByteBuffer;
         }
 
         curBufferIndex++;
-        return getByteBufferAtIndex(curBufferIndex);
+        currentByteBuffer = getByteBufferAtIndex(curBufferIndex);
+        return currentByteBuffer;
     }
 
     private ByteBuf getByteBufferAtIndex(final int index) {
@@ -259,6 +263,10 @@ public class ByteBufferBsonOutput extends OutputBuffer {
 
         bufferList.get(bufferPositionPair.bufferIndex).position(bufferPositionPair.position);
 
+        if (bufferPositionPair.bufferIndex + 1 < bufferList.size()) {
+            currentByteBuffer = null;
+        }
+
         while (bufferList.size() > bufferPositionPair.bufferIndex + 1) {
             ByteBuf buffer = bufferList.remove(bufferList.size() - 1);
             buffer.release();
@@ -286,6 +294,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
             for (final ByteBuf cur : bufferList) {
                 cur.release();
             }
+            currentByteBuffer = null;
             bufferList.clear();
             closed = true;
         }
@@ -325,6 +334,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
         bufferList.addAll(branch.bufferList);
         curBufferIndex += branch.curBufferIndex + 1;
         position += branch.position;
+        currentByteBuffer = null;
     }
 
     public static final class Branch extends ByteBufferBsonOutput {
