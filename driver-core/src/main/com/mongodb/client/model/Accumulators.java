@@ -364,6 +364,35 @@ public final class Accumulators {
         return accumulatorOperator("$addToSet", fieldName, expression);
     }
 
+    /**
+     * Gets a field name for a $group operation that concatenates arrays from the given expressions into a single array.
+     *
+     * @param fieldName  the field name for the concatenated array
+     * @param expressions the list of array expressions to concatenate
+     * @param <TExpression> the expression type
+     * @return the field
+     * @mongodb.driver.manual reference/operator/aggregation/concatArrays/ $concatArrays
+     * @mongodb.server.release 8.1
+     * @since 5.4
+     */
+    public static <TExpression> BsonField concatArrays(final String fieldName, final List<TExpression> expressions) {
+        return accumulatorOperator("$concatArrays", fieldName, expressions);
+    }
+
+    /**
+     * Gets a field name for a $group operation that computes the union of arrays from the given expressions, removing duplicates.
+     *
+     * @param fieldName  the field name for the union array
+     * @param expressions the list of array expressions to union
+     * @param <TExpression> the expression type
+     * @return the field
+     * @mongodb.driver.manual reference/operator/aggregation/setUnion/ $setUnion
+     * @mongodb.server.release 8.1
+     * @since 5.4
+     */
+    public static <TExpression> BsonField setUnion(final String fieldName, final List<TExpression> expressions) {
+        return accumulatorOperator("$setUnion", fieldName, expressions);
+    }
 
     /**
      * Gets a field name for a $group operation representing the result of merging the fields of the documents.
