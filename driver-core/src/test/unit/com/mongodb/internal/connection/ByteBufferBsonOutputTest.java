@@ -74,6 +74,9 @@ final class ByteBufferBsonOutputTest {
     private static final List<Integer> ALL_SURROGATE_CODE_POINTS = Stream.concat(
             range(MIN_LOW_SURROGATE, MAX_LOW_SURROGATE).boxed(),
             range(MIN_HIGH_SURROGATE, MAX_HIGH_SURROGATE).boxed()).collect(toList());
+    public static final List<Integer> ALL_UTF_16_CODE_POINTS_FORMED_BY_SURROGATE_PAIRS = rangeClosed(0x10000, MAX_CODE_POINT)
+            .boxed()
+            .collect(toList());
 
     static Stream<BufferProvider> bufferProviders() {
         return Stream.of(
@@ -630,10 +633,18 @@ final class ByteBufferBsonOutputTest {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             byte[] v = new byte[0x2000000];
             ThreadLocalRandom.current().nextBytes(v);
-            Consumer<ByteBufferBsonOutput> assertByteBuffers = effectiveOut -> assertEquals(
-                    asList(1 << 10, 1 << 11, 1 << 12, 1 << 13, 1 << 14, 1 << 15, 1 << 16, 1 << 17, 1 << 18, 1 << 19, 1 << 20,
-                            1 << 21, 1 << 22, 1 << 23, 1 << 24, 1 << 24),
-                    effectiveOut.getByteBuffers().stream().map(ByteBuf::capacity).collect(toList()));
+            Consumer<ByteBufferBsonOutput> assertByteBuffers = effectiveOut -> {
+                List<ByteBuf> byteBuffers = new ArrayList<>();
+                try {
+                    byteBuffers = effectiveOut.getByteBuffers();
+                    assertEquals(
+                            asList(1 << 10, 1 << 11, 1 << 12, 1 << 13, 1 << 14, 1 << 15, 1 << 16, 1 << 17, 1 << 18, 1 << 19, 1 << 20,
+                                    1 << 21, 1 << 22, 1 << 23, 1 << 24, 1 << 24),
+                            byteBuffers.stream().map(ByteBuf::capacity).collect(toList()));
+                } finally {
+                    byteBuffers.forEach(ByteBuf::release);
+                }
+            };
             Consumer<ByteBufferBsonOutput> assertions = effectiveOut -> {
                 effectiveOut.writeBytes(v);
                 assertEquals(v.length, effectiveOut.size());
@@ -835,8 +846,8 @@ final class ByteBufferBsonOutputTest {
             final List<byte[]> expectedBuffers,
             final BufferProvider bufferProvider) {
 
-        try (ByteBufferBsonOutput output =
-                     new ByteBufferBsonOutput(size -> bufferProvider.getBuffer(Integer.BYTES))) {
+        List<ByteBuf> buffers = new ArrayList<>();
+        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(size -> bufferProvider.getBuffer(Integer.BYTES))) {
 
             //given
             initialData.forEach(output::writeBytes);
@@ -845,9 +856,11 @@ final class ByteBufferBsonOutputTest {
             output.writeInt32(absolutePosition, intValue);
 
             //then
-            List<ByteBuf> buffers = output.getByteBuffers();
+            buffers = output.getByteBuffers();
             assertEquals(expectedBuffers.size(), buffers.size(), "Number of buffers mismatch");
             assertBufferContents(expectedBuffers, buffers);
+        }finally {
+            buffers.forEach(ByteBuf::release);
         }
     }
 
@@ -1086,10 +1099,10 @@ final class ByteBufferBsonOutputTest {
         @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
         void shouldWriteCStringAcrossBuffersUTF8(final BufferProvider bufferProvider) throws IOException {
             for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
-                String str = new String(Character.toChars(codePoint)) + "a";
-                byte[] expectedStringEncoding = str.getBytes(StandardCharsets.UTF_8);
+                String stringToEncode = new String(Character.toChars(codePoint)) + "a";
+                byte[] expectedStringEncoding = stringToEncode.getBytes(StandardCharsets.UTF_8);
                 int bufferAllocationSize = expectedStringEncoding.length + "\u0000".length();
-                testWriteCStringAcrossBuffers(bufferProvider, codePoint, bufferAllocationSize, str, expectedStringEncoding);
+                testWriteCStringAcrossBuffers(bufferProvider, codePoint, bufferAllocationSize, stringToEncode, expectedStringEncoding);
             }
         }
 
@@ -1098,11 +1111,11 @@ final class ByteBufferBsonOutputTest {
         @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
         void shouldWriteCStringAcrossBuffersUTF8WithBranch(final BufferProvider bufferProvider) throws IOException {
             for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
-                String str = new String(Character.toChars(codePoint)) + "a";
-                int bufferAllocationSize = str.getBytes(StandardCharsets.UTF_8).length + "\u0000".length();
-                byte[] expectedEncoding = str.getBytes(StandardCharsets.UTF_8);
+                String stringToEncode = new String(Character.toChars(codePoint)) + "a";
+                int bufferAllocationSize = stringToEncode.getBytes(StandardCharsets.UTF_8).length + "\u0000".length();
+                byte[] expectedEncoding = stringToEncode.getBytes(StandardCharsets.UTF_8);
 
-                testWriteCStringAcrossBufferWithBranch(bufferProvider, codePoint, bufferAllocationSize, str, expectedEncoding);
+                testWriteCStringAcrossBufferWithBranch(bufferProvider, codePoint, bufferAllocationSize, stringToEncode, expectedEncoding);
             }
         }
 
@@ -1112,11 +1125,15 @@ final class ByteBufferBsonOutputTest {
         void shouldWriteStringAcrossBuffersUTF8(final BufferProvider bufferProvider) throws IOException {
             for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
                 // given
-                String str = new String(Character.toChars(codePoint)) + "a";
+                String stringToEncode = new String(Character.toChars(codePoint)) + "a";
                 //4 bytes for the length prefix, bytes for encoded String, and 1 byte for the null terminator
-                int bufferAllocationSize = Integer.BYTES + str.getBytes(StandardCharsets.UTF_8).length + "\u0000".length();
-                byte[] expectedEncoding = str.getBytes(StandardCharsets.UTF_8);
-                testWriteStringAcrossBuffers(bufferProvider, codePoint, bufferAllocationSize, str, expectedEncoding);
+                int bufferAllocationSize = Integer.BYTES + stringToEncode.getBytes(StandardCharsets.UTF_8).length + "\u0000".length();
+                byte[] expectedEncoding = stringToEncode.getBytes(StandardCharsets.UTF_8);
+                testWriteStringAcrossBuffers(bufferProvider,
+                        codePoint,
+                        bufferAllocationSize,
+                        stringToEncode,
+                        expectedEncoding);
             }
         }
 
@@ -1192,6 +1209,78 @@ final class ByteBufferBsonOutputTest {
             }
         }
 
+        @DisplayName("should write surrogate String across buffers")
+        @ParameterizedTest
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void shouldWriteStringWithSurrogatePairs(final BufferProvider bufferProvider) throws IOException {
+            for (Integer surrogateCodePoint : ALL_UTF_16_CODE_POINTS_FORMED_BY_SURROGATE_PAIRS) {
+                String stringToEncode = new String(toSurrogatePair(surrogateCodePoint));
+                byte[] expectedEncoding = stringToEncode.getBytes(StandardCharsets.UTF_8);
+                int bufferAllocationSize = expectedEncoding.length + "\u0000".length();
+
+                testWriteCStringAcrossBufferWithBranch(
+                        bufferProvider,
+                        surrogateCodePoint,
+                        bufferAllocationSize,
+                        stringToEncode,
+                        expectedEncoding);
+            }
+        }
+
+        @DisplayName("should write surrogate String across buffers with branch")
+        @ParameterizedTest
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void shouldWriteStringWithSurrogatePairsWithBranch(final BufferProvider bufferProvider) throws IOException {
+            for (Integer surrogateCodePoint : ALL_UTF_16_CODE_POINTS_FORMED_BY_SURROGATE_PAIRS) {
+                String stringToEncode = new String(toSurrogatePair(surrogateCodePoint));
+                byte[] expectedEncoding = stringToEncode.getBytes(StandardCharsets.UTF_8);
+                int bufferAllocationSize = expectedEncoding.length + "\u0000".length();
+
+                testWriteStringAcrossBuffersWithBranch(
+                        bufferProvider,
+                        bufferAllocationSize,
+                        stringToEncode,
+                        surrogateCodePoint,
+                        expectedEncoding);
+            }
+        }
+
+        @DisplayName("should write surrogate CString across buffers")
+        @ParameterizedTest
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void shouldWriteCStringWithSurrogatePairs(final BufferProvider bufferProvider) throws IOException {
+            for (Integer surrogateCodePoint : ALL_UTF_16_CODE_POINTS_FORMED_BY_SURROGATE_PAIRS) {
+                String stringToEncode = new String(toSurrogatePair(surrogateCodePoint));
+                byte[] expectedEncoding = stringToEncode.getBytes(StandardCharsets.UTF_8);
+                int bufferAllocationSize = expectedEncoding.length + "\u0000".length();
+
+                testWriteCStringAcrossBufferWithBranch(
+                        bufferProvider,
+                        surrogateCodePoint,
+                        bufferAllocationSize,
+                        stringToEncode,
+                        expectedEncoding);
+            }
+        }
+
+        @DisplayName("should write surrogate CString across buffers with branch")
+        @ParameterizedTest
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void shouldWriteCStringWithSurrogatePairsWithBranch(final BufferProvider bufferProvider) throws IOException {
+            for (Integer surrogateCodePoint : ALL_UTF_16_CODE_POINTS_FORMED_BY_SURROGATE_PAIRS) {
+                String stringToEncode = new String(toSurrogatePair(surrogateCodePoint));
+                byte[] expectedEncoding = stringToEncode.getBytes(StandardCharsets.UTF_8);
+                int bufferAllocationSize = expectedEncoding.length + "\u0000".length();
+
+                testWriteCStringAcrossBufferWithBranch(
+                        bufferProvider,
+                        surrogateCodePoint,
+                        bufferAllocationSize,
+                        stringToEncode,
+                        expectedEncoding);
+            }
+        }
+
         /*
            Tests that malformed surrogate pairs are encoded as-is without substituting any code point.
            This known bug and corresponding test remain for backward compatibility.
@@ -1207,14 +1296,14 @@ final class ByteBufferBsonOutputTest {
                         (byte) (0x80 | ((surrogateCodePoint >> 6) & 0x3F)),
                         (byte) (0x80 | (surrogateCodePoint & 0x3F))
                 };
-                String str = new String(Character.toChars(surrogateCodePoint));
+                String stringToEncode = new String(Character.toChars(surrogateCodePoint));
                 int bufferAllocationSize = expectedEncoding.length + "\u0000".length();
 
-                testWriteCStringAcrossBufferWithBranch(
+                testWriteStringAcrossBuffers(
                         bufferProvider,
                         surrogateCodePoint,
                         bufferAllocationSize,
-                        str,
+                        stringToEncode,
                         expectedEncoding);
             }
         }
@@ -1281,7 +1370,7 @@ final class ByteBufferBsonOutputTest {
         private void testWriteStringAcrossBuffers(final BufferProvider bufferProvider,
                                                   final Integer codePoint,
                                                   final int bufferAllocationSize,
-                                                  final String str,
+                                                  final String stringToEncode,
                                                   final byte[] expectedEncoding) throws IOException {
             for (int startingOffset = 0; startingOffset <= bufferAllocationSize; startingOffset++) {
                 //given
@@ -1293,7 +1382,7 @@ final class ByteBufferBsonOutputTest {
                     actualBsonOutput.write(new byte[startingOffset]);
 
                     // when
-                    actualBsonOutput.writeString(str);
+                    actualBsonOutput.writeString(stringToEncode);
 
                     // then
                     actualByteBuffers = actualBsonOutput.getDuplicateByteBuffers();
@@ -1395,7 +1484,8 @@ final class ByteBufferBsonOutputTest {
                             startingOffset));
         }
 
-        private void testWriteCStringAcrossBufferWithBranch(final BufferProvider bufferProvider, final Integer codePoint,
+        private void testWriteCStringAcrossBufferWithBranch(final BufferProvider bufferProvider,
+                                                            final Integer codePoint,
                                                             final int bufferAllocationSize,
                                                             final String str, final byte[] expectedEncoding) throws IOException {
             for (int startingOffset = 0; startingOffset <= bufferAllocationSize; startingOffset++) {
@@ -1488,6 +1578,17 @@ final class ByteBufferBsonOutputTest {
                             codePoint,
                             startingOffset));
         }
+
+        public char[] toSurrogatePair(int codePoint) {
+            if (!Character.isValidCodePoint(codePoint) || codePoint < 0x10000) {
+                throw new IllegalArgumentException("Invalid code point: " + codePoint);
+            }
+            char[] result = new char[2];
+            result[0] = Character.highSurrogate(codePoint);
+            result[1] = Character.lowSurrogate(codePoint);
+            return result;
+        }
+
     }
 
     private static byte[] getBytes(final OutputBuffer basicOutputBuffer) throws IOException {
