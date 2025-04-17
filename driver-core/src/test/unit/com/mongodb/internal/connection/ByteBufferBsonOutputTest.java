@@ -1209,42 +1209,6 @@ final class ByteBufferBsonOutputTest {
             }
         }
 
-        @DisplayName("should write surrogate String across buffers")
-        @ParameterizedTest
-        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
-        void shouldWriteStringWithSurrogatePairs(final BufferProvider bufferProvider) throws IOException {
-            for (Integer surrogateCodePoint : ALL_UTF_16_CODE_POINTS_FORMED_BY_SURROGATE_PAIRS) {
-                String stringToEncode = new String(toSurrogatePair(surrogateCodePoint));
-                byte[] expectedEncoding = stringToEncode.getBytes(StandardCharsets.UTF_8);
-                int bufferAllocationSize = expectedEncoding.length + "\u0000".length();
-
-                testWriteCStringAcrossBufferWithBranch(
-                        bufferProvider,
-                        surrogateCodePoint,
-                        bufferAllocationSize,
-                        stringToEncode,
-                        expectedEncoding);
-            }
-        }
-
-        @DisplayName("should write surrogate String across buffers with branch")
-        @ParameterizedTest
-        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
-        void shouldWriteStringWithSurrogatePairsWithBranch(final BufferProvider bufferProvider) throws IOException {
-            for (Integer surrogateCodePoint : ALL_UTF_16_CODE_POINTS_FORMED_BY_SURROGATE_PAIRS) {
-                String stringToEncode = new String(toSurrogatePair(surrogateCodePoint));
-                byte[] expectedEncoding = stringToEncode.getBytes(StandardCharsets.UTF_8);
-                int bufferAllocationSize = expectedEncoding.length + "\u0000".length();
-
-                testWriteStringAcrossBuffersWithBranch(
-                        bufferProvider,
-                        bufferAllocationSize,
-                        stringToEncode,
-                        surrogateCodePoint,
-                        expectedEncoding);
-            }
-        }
-
         @DisplayName("should write surrogate CString across buffers")
         @ParameterizedTest
         @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
@@ -1254,7 +1218,7 @@ final class ByteBufferBsonOutputTest {
                 byte[] expectedEncoding = stringToEncode.getBytes(StandardCharsets.UTF_8);
                 int bufferAllocationSize = expectedEncoding.length + "\u0000".length();
 
-                testWriteCStringAcrossBufferWithBranch(
+                testWriteCStringAcrossBuffers(
                         bufferProvider,
                         surrogateCodePoint,
                         bufferAllocationSize,
@@ -1277,6 +1241,42 @@ final class ByteBufferBsonOutputTest {
                         surrogateCodePoint,
                         bufferAllocationSize,
                         stringToEncode,
+                        expectedEncoding);
+            }
+        }
+
+        @DisplayName("should write surrogate String across buffers")
+        @ParameterizedTest
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void shouldWriteStringWithSurrogatePairs(final BufferProvider bufferProvider) throws IOException {
+            for (Integer surrogateCodePoint : ALL_UTF_16_CODE_POINTS_FORMED_BY_SURROGATE_PAIRS) {
+                String stringToEncode = new String(toSurrogatePair(surrogateCodePoint));
+                byte[] expectedEncoding = stringToEncode.getBytes(StandardCharsets.UTF_8);
+                int bufferAllocationSize = expectedEncoding.length + "\u0000".length();
+
+                testWriteStringAcrossBuffers(
+                        bufferProvider,
+                        surrogateCodePoint,
+                        bufferAllocationSize,
+                        stringToEncode,
+                        expectedEncoding);
+            }
+        }
+
+        @DisplayName("should write surrogate String across buffers with branch")
+        @ParameterizedTest
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void shouldWriteStringWithSurrogatePairsWithBranch(final BufferProvider bufferProvider) throws IOException {
+            for (Integer surrogateCodePoint : ALL_UTF_16_CODE_POINTS_FORMED_BY_SURROGATE_PAIRS) {
+                String stringToEncode = new String(toSurrogatePair(surrogateCodePoint));
+                byte[] expectedEncoding = stringToEncode.getBytes(StandardCharsets.UTF_8);
+                int bufferAllocationSize = expectedEncoding.length + "\u0000".length();
+
+                testWriteStringAcrossBuffersWithBranch(
+                        bufferProvider,
+                        bufferAllocationSize,
+                        stringToEncode,
+                        surrogateCodePoint,
                         expectedEncoding);
             }
         }
