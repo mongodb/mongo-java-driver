@@ -16,14 +16,17 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.assertions.Assertions;
 import org.bson.BsonSerializationException;
 import org.bson.ByteBuf;
+import org.bson.ByteBufNIO;
 import org.bson.types.ObjectId;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.ByteArrayOutputStream;
@@ -31,10 +34,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.internal.connection.ByteBufferBsonOutput.INITIAL_BUFFER_SIZE;
 import static com.mongodb.internal.connection.ByteBufferBsonOutput.MAX_BUFFER_SIZE;
 import static java.util.Arrays.asList;
@@ -82,7 +87,7 @@ final class ByteBufferBsonOutputTest {
                     break;
                 }
                 default: {
-                    throw Assertions.fail(branchState);
+                    throw fail(branchState);
                 }
             }
             assertEquals(0, out.getPosition());
@@ -106,6 +111,51 @@ final class ByteBufferBsonOutputTest {
             assertArrayEquals(new byte[] {v}, out.toByteArray());
             assertEquals(1, out.getPosition());
             assertEquals(1, out.size());
+        }
+    }
+
+    @DisplayName("should write byte at position")
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void shouldWriteByteAtPosition(final boolean useBranch) {
+        for (int offset = 0; offset < 5; offset++) {
+            try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+                byte v = 11;
+                byte[] byteToWrite = {1, 2, 3, 4, 5};
+                if (useBranch) {
+                    try (ByteBufferBsonOutput.Branch branch = out.branch()) {
+                        branch.writeBytes(byteToWrite);
+                        branch.write(offset, v);
+                    }
+                } else {
+                    out.writeBytes(byteToWrite);
+                    out.write(offset, v);
+                }
+                byteToWrite[offset] = v;
+                assertArrayEquals(byteToWrite, out.toByteArray());
+                assertEquals(5, out.getPosition());
+                assertEquals(5, out.size());
+
+            }
+        }
+    }
+
+    @DisplayName("should throw exception when writing byte at invalid position")
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void shouldThrowExceptionWhenWriteByteAtInvalidPosition(final boolean useBranch) {
+        try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+            byte v = 11;
+            byte[] byteToWrite = {1, 2, 3, 4, 5};
+            if (useBranch) {
+                try (ByteBufferBsonOutput.Branch branch = out.branch()) {
+                    out.writeBytes(byteToWrite);
+                    assertThrows(IllegalArgumentException.class, () -> branch.write(-1, v));
+                }
+            } else {
+                out.writeBytes(byteToWrite);
+                assertThrows(IllegalArgumentException.class, () -> out.write(-1, v));
+            }
         }
     }
 
@@ -620,6 +670,272 @@ final class ByteBufferBsonOutputTest {
                 }
             });
             assertEquals(expected.toString(), StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(out.toByteArray())).toString());
+        }
+    }
+
+    @Test
+    @DisplayName("should throw exception when calling writeInt32 at absolute position where integer would not fit")
+    void shouldThrowExceptionWhenIntegerDoesNotFitWriteInt32() {
+        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+            // Write 10 bytes (position becomes 10)
+            for (int i = 0; i < 10; i++) {
+                output.writeByte(0);
+            }
+
+            // absolutePosition = 7 would require bytes at positions 7,8,9,10, but the last written element was at 9.
+            assertThrows(IllegalArgumentException.class, () ->
+                    output.writeInt32(7, 5678)
+            );
+        }
+    }
+
+    @Test
+    @DisplayName("should throw exception when calling writeInt32 with negative absolute position")
+    void shouldThrowExceptionWhenAbsolutePositionIsNegative() {
+        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+            Assertions.assertThrows(IllegalArgumentException.class, () ->
+                    output.writeInt32(-1, 5678)
+            );
+        }
+    }
+
+    static java.util.stream.Stream<Arguments> shouldWriteInt32AbsoluteValueWithinSpanningBuffers() {
+        return java.util.stream.Stream.of(
+                Arguments.of(
+                        0, // absolute position
+                        0x09080706, // int value
+                        asList(
+                                // initial data
+                                new byte[]{0, 1, 2, 3},
+                                new byte[]{4, 5, 6, 7}),
+                        asList(
+                                // expected BsonByteBufferOutput data
+                                new byte[]{0x06, 0x07, 0x08, 0x09},
+                                new byte[]{4, 5, 6, 7})),
+                Arguments.of(1, 0x09080706,
+                        asList(new byte[]{0, 1, 2, 3}, new byte[]{4, 5, 6, 7}),
+                        asList(new byte[]{0, 0x06, 0x07, 0x08}, new byte[]{0x09, 5, 6, 7})),
+                Arguments.of(2, 0x09080706,
+                        asList(new byte[]{0, 1, 2, 3}, new byte[]{4, 5, 6, 7}),
+                        asList(new byte[]{0, 1, 0x06, 0x07}, new byte[]{0x08, 0x09, 6, 7})
+                ),
+                Arguments.of(3, 0x09080706,
+                        asList(new byte[]{0, 1, 2, 3}, new byte[]{4, 5, 6, 7}),
+                        asList(new byte[]{0, 1, 2, 0x06}, new byte[]{0x07, 0x08, 0x09, 7})
+                ),
+                Arguments.of(4, 0x09080706,
+                        asList(new byte[]{0, 1, 2, 3}, new byte[]{4, 5, 6, 7}),
+                        asList(new byte[]{0, 1, 2, 3}, new byte[]{0x06, 0x07, 0x08, 0x09})
+                ));
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void shouldWriteInt32AbsoluteValueWithinSpanningBuffers(
+            final int absolutePosition,
+            final int intValue,
+            final List<byte[]> initialData,
+            final List<byte[]> expectedBuffers) {
+
+        try (ByteBufferBsonOutput output =
+                     new ByteBufferBsonOutput(size -> new ByteBufNIO(ByteBuffer.allocate(4)))) {
+
+            //given
+            initialData.forEach(output::writeBytes);
+
+            //when
+            output.writeInt32(absolutePosition, intValue);
+
+            //then
+            List<ByteBuf> buffers = output.getByteBuffers();
+            assertEquals(expectedBuffers.size(), buffers.size(), "Number of buffers mismatch");
+            for (int i = 0; i < expectedBuffers.size(); i++) {
+                assertArrayEquals(expectedBuffers.get(i), buffers.get(i).array(),
+                        "Buffer " + i + " contents mismatch");
+            }
+        }
+    }
+
+    static java.util.stream.Stream<Arguments> int32SpanningBuffersData() {
+        return java.util.stream.Stream.of(
+                // Test case 1: No initial data; entire int written into one buffer.
+                Arguments.of(0x09080706,
+                        asList(
+                                // No initial data
+                        ),
+                        asList(
+                                // expected BsonByteBufferOutput data
+                                new byte[]{0x06, 0x07, 0x08, 0x09}),
+                        4, // expected overall position after write (0 + 4)
+                        4  // expected last buffer position (buffer fully written)
+                ),
+                Arguments.of(0x09080706,
+                        asList(new byte[]{0}),
+                        asList(new byte[]{0, 0x06, 0x07, 0x08}, new byte[]{0x09, 0, 0, 0}), 5, 1
+                ),
+                Arguments.of(0x09080706,
+                        asList(new byte[]{0, 1}),
+                        asList(new byte[]{0, 1, 0x06, 0x07}, new byte[]{0x08, 0x09, 0, 0}), 6, 2
+                ),
+                Arguments.of(0x09080706,
+                        asList(new byte[]{0, 1, 2}),
+                        asList(new byte[]{0, 1, 2, 0x06}, new byte[]{0x07, 0x08, 0x09, 0}), 7, 3
+                ),
+                Arguments.of(0x09080706,
+                        asList(new byte[]{0, 1, 2, 3}),
+                        asList(new byte[]{0, 1, 2, 3}, new byte[]{0x06, 0x07, 0x08, 0x09}), 8, 4
+                ));
+    }
+
+    static java.util.stream.Stream<Arguments> int64SpanningBuffersData() {
+        return java.util.stream.Stream.of(
+                // Test case 1: No initial data; entire long written into one buffer.
+                Arguments.of(0x0A0B0C0D0E0F1011L,
+                        asList(
+                                // No initial data
+                        ),
+                        asList(
+                                // expected BsonByteBufferOutput data
+                                new byte[]{0x11, 0x10, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A}
+                        ),
+                        8, // expected overall position after write (0 + 8)
+                        8  // expected last buffer position (buffer fully written)
+                ),
+                Arguments.of(0x0A0B0C0D0E0F1011L,
+                        asList(new byte[]{0}),
+                        asList(new byte[]{0, 0x11, 0x10, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B}, new byte[]{0x0A, 0, 0, 0, 0, 0, 0, 0}),
+                        9, 1
+                ),
+                Arguments.of(0x0A0B0C0D0E0F1011L,
+                        asList(new byte[]{0, 1}),
+                        asList(new byte[]{0, 1, 0x11, 0x10, 0x0F, 0x0E, 0x0D, 0x0C}, new byte[]{0x0B, 0x0A, 0, 0, 0, 0, 0, 0}),
+                        10, 2
+                ),
+                Arguments.of(0x0A0B0C0D0E0F1011L,
+                        asList(new byte[]{0, 1, 2}),
+                        asList(new byte[]{0, 1, 2, 0x11, 0x10, 0x0F, 0x0E, 0x0D}, new byte[]{0x0C, 0x0B, 0x0A, 0, 0, 0, 0, 0}),
+                        11, 3
+                ),
+                Arguments.of(0x0A0B0C0D0E0F1011L,
+                        asList(new byte[]{0, 1, 2, 3}),
+                        asList(new byte[]{0, 1, 2, 3, 0x11, 0x10, 0x0F, 0x0E}, new byte[]{0x0D, 0x0C, 0x0B, 0x0A, 0, 0, 0, 0}),
+                        12, 4
+                ),
+                Arguments.of(0x0A0B0C0D0E0F1011L,
+                        asList(new byte[]{0, 1, 2, 3, 4}),
+                        asList(new byte[]{0, 1, 2, 3, 4, 0x11, 0x10, 0x0F}, new byte[]{0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0, 0, 0}),
+                        13, 5
+                ),
+                Arguments.of(0x0A0B0C0D0E0F1011L,
+                        asList(new byte[]{0, 1, 2, 3, 4, 5}),
+                        asList(new byte[]{0, 1, 2, 3, 4, 5, 0x11, 0x10}, new byte[]{0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0, 0}),
+                        14, 6
+                ), Arguments.of(0x0A0B0C0D0E0F1011L,
+                        asList(new byte[]{0, 1, 2, 3, 4, 5, 6}),
+                        asList(new byte[]{0, 1, 2, 3, 4, 5, 6, 0x11}, new byte[]{0x10, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0}),
+                        15, 7
+                ),
+                Arguments.of(0x0A0B0C0D0E0F1011L,
+                        asList(new byte[]{0, 1, 2, 3, 4, 5, 6, 7}),
+                        asList(new byte[]{0, 1, 2, 3, 4, 5, 6, 7}, new byte[]{0x11, 0x10, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A}),
+                        16, 8
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("int32SpanningBuffersData")
+    void shouldWriteInt32WithinSpanningBuffers(
+            final int intValue,
+            final List<byte[]> initialData,
+            final List<byte[]> expectedBuffers,
+            final int expectedOutputPosition,
+            final int expectedLastBufferPosition) {
+
+        try (ByteBufferBsonOutput output =
+                     new ByteBufferBsonOutput(size -> new ByteBufNIO(ByteBuffer.allocate(4)))) {
+
+            //given
+            initialData.forEach(output::writeBytes);
+
+            //when
+            output.writeInt32(intValue);
+
+            //then
+            //getByteBuffers returns ByteBuffers with limit() set to position, position set to 0.
+            List<ByteBuf> buffers = output.getByteBuffers();
+            assertEquals(expectedBuffers.size(), buffers.size(), "Number of buffers mismatch");
+            for (int i = 0; i < expectedBuffers.size(); i++) {
+                assertArrayEquals(expectedBuffers.get(i), buffers.get(i).array(),
+                        "Buffer " + i + " contents mismatch");
+            }
+
+            assertEquals(expectedLastBufferPosition, buffers.get(buffers.size() - 1).limit());
+            assertEquals(expectedOutputPosition, output.getPosition());
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("int64SpanningBuffersData")
+    void shouldWriteInt64WithinSpanningBuffers(
+            final long intValue,
+            final List<byte[]> initialData,
+            final List<byte[]> expectedBuffers,
+            final int expectedOutputPosition,
+            final int expectedLastBufferPosition) {
+
+        try (ByteBufferBsonOutput output =
+                     new ByteBufferBsonOutput(size -> new ByteBufNIO(ByteBuffer.allocate(8)))) {
+
+            //given
+            initialData.forEach(output::writeBytes);
+
+            //when
+            output.writeInt64(intValue);
+
+            //then
+            //getByteBuffers returns ByteBuffers with limit() set to position, position set to 0.
+            List<ByteBuf> buffers = output.getByteBuffers();
+            assertEquals(expectedBuffers.size(), buffers.size(), "Number of buffers mismatch");
+            for (int i = 0; i < expectedBuffers.size(); i++) {
+                assertArrayEquals(expectedBuffers.get(i), buffers.get(i).array(),
+                        "Buffer " + i + " contents mismatch");
+            }
+
+            assertEquals(expectedLastBufferPosition, buffers.get(buffers.size() - 1).limit());
+            assertEquals(expectedOutputPosition, output.getPosition());
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("int64SpanningBuffersData")
+    void shouldWriteDoubleWithinSpanningBuffers(
+            final long intValue,
+            final List<byte[]> initialData,
+            final List<byte[]> expectedBuffers,
+            final int expectedOutputPosition,
+            final int expectedLastBufferPosition) {
+
+        try (ByteBufferBsonOutput output =
+                     new ByteBufferBsonOutput(size -> new ByteBufNIO(ByteBuffer.allocate(8)))) {
+
+            //given
+            initialData.forEach(output::writeBytes);
+
+            //when
+            output.writeDouble(Double.longBitsToDouble(intValue));
+
+            //then
+            //getByteBuffers returns ByteBuffers with limit() set to position, position set to 0.
+            List<ByteBuf> buffers = output.getByteBuffers();
+            assertEquals(expectedBuffers.size(), buffers.size(), "Number of buffers mismatch");
+            for (int i = 0; i < expectedBuffers.size(); i++) {
+                assertArrayEquals(expectedBuffers.get(i), buffers.get(i).array(),
+                        "Buffer " + i + " contents mismatch");
+            }
+
+            assertEquals(expectedLastBufferPosition, buffers.get(buffers.size() - 1).limit());
+            assertEquals(expectedOutputPosition, output.getPosition());
         }
     }
 }

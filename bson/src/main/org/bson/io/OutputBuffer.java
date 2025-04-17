@@ -70,6 +70,7 @@ public abstract class OutputBuffer extends OutputStream implements BsonOutput {
     }
 
     @Override
+    @Deprecated
     public void writeInt32(final int position, final int value) {
         write(position, value >> 0);
         write(position + 1, value >> 8);
