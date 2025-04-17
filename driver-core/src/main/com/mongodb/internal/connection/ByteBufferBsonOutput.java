@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import org.bson.BsonSerializationException;
 import org.bson.ByteBuf;
 import org.bson.io.OutputBuffer;
 
@@ -25,8 +26,10 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.lang.String.format;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -182,11 +185,17 @@ public class ByteBufferBsonOutput extends OutputBuffer {
         return currentByteBuffer;
     }
 
+    private ByteBuf getNextByteBuffer() {
+        assertFalse(bufferList.get(curBufferIndex).hasRemaining());
+        return getByteBufferAtIndex(++curBufferIndex);
+    }
+
     private ByteBuf getByteBufferAtIndex(final int index) {
         if (bufferList.size() < index + 1) {
-            bufferList.add(bufferProvider.getBuffer(index >= (MAX_SHIFT - INITIAL_SHIFT)
-                                                            ? MAX_BUFFER_SIZE
-                                                            : Math.min(INITIAL_BUFFER_SIZE << index, MAX_BUFFER_SIZE)));
+            ByteBuf buffer = bufferProvider.getBuffer(index >= (MAX_SHIFT - INITIAL_SHIFT)
+                    ? MAX_BUFFER_SIZE
+                    : Math.min(INITIAL_BUFFER_SIZE << index, MAX_BUFFER_SIZE));
+            bufferList.add(buffer);
         }
         return bufferList.get(index);
     }
@@ -229,6 +238,16 @@ public class ByteBufferBsonOutput extends OutputBuffer {
         return buffers;
     }
 
+    public List<ByteBuf> getDuplicateByteBuffers() {
+        ensureOpen();
+
+        List<ByteBuf> buffers = new ArrayList<>(bufferList.size());
+        for (final ByteBuf cur : bufferList) {
+            buffers.add(cur.duplicate().order(ByteOrder.LITTLE_ENDIAN));
+        }
+        return buffers;
+    }
+
 
     @Override
     public int pipe(final OutputStream out) throws IOException {
@@ -237,14 +256,18 @@ public class ByteBufferBsonOutput extends OutputBuffer {
         byte[] tmp = new byte[INITIAL_BUFFER_SIZE];
 
         int total = 0;
-        for (final ByteBuf cur : getByteBuffers()) {
-            ByteBuf dup = cur.duplicate();
-            while (dup.hasRemaining()) {
-                int numBytesToCopy = Math.min(dup.remaining(), tmp.length);
-                dup.get(tmp, 0, numBytesToCopy);
-                out.write(tmp, 0, numBytesToCopy);
+        List<ByteBuf> byteBuffers = getByteBuffers();
+        try {
+            for (final ByteBuf cur : byteBuffers) {
+                while (cur.hasRemaining()) {
+                    int numBytesToCopy = Math.min(cur.remaining(), tmp.length);
+                    cur.get(tmp, 0, numBytesToCopy);
+                    out.write(tmp, 0, numBytesToCopy);
+                }
+                total += cur.limit();
             }
-            total += dup.limit();
+        } finally {
+            byteBuffers.forEach(ByteBuf::release);
         }
         return total;
     }
@@ -369,5 +392,166 @@ public class ByteBufferBsonOutput extends OutputBuffer {
             this.bufferIndex = bufferIndex;
             this.position = position;
         }
+    }
+
+    protected int writeCharacters(final String str, final boolean checkNullTermination) {
+        int stringLength = str.length();
+        int sp = 0;
+        int prevPos = position;
+
+        ByteBuf curBuffer = getCurrentByteBuffer();
+        int curBufferPos = curBuffer.position();
+        int curBufferLimit = curBuffer.limit();
+        int remaining = curBufferLimit - curBufferPos;
+
+        if (curBuffer.hasArray()) {
+            byte[] dst = curBuffer.array();
+            int arrayOffset = curBuffer.arrayOffset();
+            if (remaining >= str.length() + 1) {
+                // Write ASCII characters directly to the array until we hit a non-ASCII character.
+                sp = writeOnArrayAscii(str, dst, arrayOffset + curBufferPos, checkNullTermination);
+                curBufferPos += sp;
+                // If the whole string was written as ASCII, append the null terminator.
+                if (sp == stringLength) {
+                    dst[arrayOffset + curBufferPos++] = 0;
+                    position += sp + 1;
+                    curBuffer.position(curBufferPos);
+                    return sp + 1;
+                }
+                // Otherwise, update the position to reflect the partial write.
+                position += sp;
+                curBuffer.position(curBufferPos);
+            }
+        }
+
+        // We get here, when the buffer is not backed by an array, or when the string contains at least one non-ASCII characters.
+        return writeOnBuffers(str,
+                checkNullTermination,
+                sp,
+                stringLength,
+                curBufferLimit,
+                curBufferPos,
+                curBuffer,
+                prevPos);
+    }
+
+    private int writeOnBuffers(final String str,
+                               final boolean checkNullTermination,
+                               final int stringPointer,
+                               final int stringLength,
+                               final int bufferLimit,
+                               final int bufferPos,
+                               final ByteBuf buffer,
+                               final int prevPos) {
+        int remaining;
+        int sp = stringPointer;
+        int curBufferPos = bufferPos;
+        int curBufferLimit = bufferLimit;
+        ByteBuf curBuffer = buffer;
+        while (sp < stringLength) {
+            remaining = curBufferLimit - curBufferPos;
+            int c = str.charAt(sp);
+
+            if (checkNullTermination && c == 0x0) {
+                throw new BsonSerializationException(
+                        format("BSON cstring '%s' is not valid because it contains a null character " + "at index %d", str, sp));
+            }
+
+            if (c < 0x80) {
+                if (remaining == 0) {
+                    curBuffer = getNextByteBuffer();
+                    curBufferPos = 0;
+                    curBufferLimit = curBuffer.limit();
+                }
+                curBuffer.put((byte) c);
+                curBufferPos++;
+                position++;
+            } else if (c < 0x800) {
+                if (remaining < 2) {
+                    // Not enough space: use write() to handle buffer boundary
+                    write((byte) (0xc0 + (c >> 6)));
+                    write((byte) (0x80 + (c & 0x3f)));
+
+                    curBuffer = getCurrentByteBuffer();
+                    curBufferPos = curBuffer.position();
+                    curBufferLimit = curBuffer.limit();
+                } else {
+                    curBuffer.put((byte) (0xc0 + (c >> 6)));
+                    curBuffer.put((byte) (0x80 + (c & 0x3f)));
+                    curBufferPos += 2;
+                    position += 2;
+                }
+            } else {
+                // Handle multibyte characters (may involve surrogate pairs).
+                c = Character.codePointAt(str, sp);
+                /*
+                 Malformed surrogate pairs are encoded as-is (3 byte code unit) without substituting any code point.
+                 This known deviation from the spec and current functionality remains for backward compatibility.
+                 Ticket: JAVA-5575
+                */
+                if (c < 0x10000) {
+                    if (remaining < 3) {
+                        write((byte) (0xe0 + (c >> 12)));
+                        write((byte) (0x80 + ((c >> 6) & 0x3f)));
+                        write((byte) (0x80 + (c & 0x3f)));
+
+                        curBuffer = getCurrentByteBuffer();
+                        curBufferPos = curBuffer.position();
+                        curBufferLimit = curBuffer.limit();
+                    } else {
+                        curBuffer.put((byte) (0xe0 + (c >> 12)));
+                        curBuffer.put((byte) (0x80 + ((c >> 6) & 0x3f)));
+                        curBuffer.put((byte) (0x80 + (c & 0x3f)));
+                        curBufferPos += 3;
+                        position += 3;
+                    }
+                } else {
+                    if (remaining < 4) {
+                        write((byte) (0xf0 + (c >> 18)));
+                        write((byte) (0x80 + ((c >> 12) & 0x3f)));
+                        write((byte) (0x80 + ((c >> 6) & 0x3f)));
+                        write((byte) (0x80 + (c & 0x3f)));
+
+                        curBuffer = getCurrentByteBuffer();
+                        curBufferPos = curBuffer.position();
+                        curBufferLimit = curBuffer.limit();
+                    } else {
+                        curBuffer.put((byte) (0xf0 + (c >> 18)));
+                        curBuffer.put((byte) (0x80 + ((c >> 12) & 0x3f)));
+                        curBuffer.put((byte) (0x80 + ((c >> 6) & 0x3f)));
+                        curBuffer.put((byte) (0x80 + (c & 0x3f)));
+                        curBufferPos += 4;
+                        position += 4;
+                    }
+                }
+            }
+            sp += Character.charCount(c);
+        }
+
+        getCurrentByteBuffer().put((byte) 0);
+        position++;
+        return position - prevPos;
+    }
+
+    private static int writeOnArrayAscii(final String str,
+                                         final byte[] dst,
+                                         final int arrayPosition,
+                                         final boolean checkNullTermination) {
+        int pos = arrayPosition;
+        int sp = 0;
+        // Fast common path: This tight loop is JIT-friendly (simple, no calls, few branches),
+        // It might be unrolled for performance.
+        for (; sp < str.length(); sp++, pos++) {
+            char c = str.charAt(sp);
+            if (checkNullTermination && c == 0) {
+                throw new BsonSerializationException(
+                        format("BSON cstring '%s' is not valid because it contains a null character " + "at index %d", str, sp));
+            }
+            if (c >= 0x80) {
+                break;
+            }
+            dst[pos] = (byte) c;
+        }
+        return sp;
     }
 }
