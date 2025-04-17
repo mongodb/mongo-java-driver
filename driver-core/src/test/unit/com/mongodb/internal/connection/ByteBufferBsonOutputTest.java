@@ -859,7 +859,7 @@ final class ByteBufferBsonOutputTest {
             buffers = output.getByteBuffers();
             assertEquals(expectedBuffers.size(), buffers.size(), "Number of buffers mismatch");
             assertBufferContents(expectedBuffers, buffers);
-        }finally {
+        } finally {
             buffers.forEach(ByteBuf::release);
         }
     }
@@ -1579,7 +1579,7 @@ final class ByteBufferBsonOutputTest {
                             startingOffset));
         }
 
-        public char[] toSurrogatePair(int codePoint) {
+        public char[] toSurrogatePair(final int codePoint) {
             if (!Character.isValidCodePoint(codePoint) || codePoint < 0x10000) {
                 throw new IllegalArgumentException("Invalid code point: " + codePoint);
             }
