@@ -261,7 +261,7 @@ public class ClientSideEncryptionCorpusTest {
     }
 
     private static BsonDocument bsonDocumentFromPath(final String path) {
-        return getTestDocument("/client-side-encryption-corpus/" + path);
+        return getTestDocument("client-side-encryption/corpus/" + path);
     }
 
     @Parameterized.Parameters(name = "useLocalSchema: {0}")

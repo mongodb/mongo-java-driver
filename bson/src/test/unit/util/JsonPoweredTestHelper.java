@@ -19,15 +19,14 @@ package util;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
-import org.bson.codecs.BsonDocumentCodec;
-import org.bson.codecs.DecoderContext;
-import org.bson.json.JsonReader;
+import org.bson.assertions.Assertions;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -42,13 +41,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static org.bson.assertions.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.fail;
-
 public final class JsonPoweredTestHelper {
 
+    private static final String SPECIFICATIONS_PREFIX = "/specifications/source/";
+
     public static BsonDocument getTestDocument(final String resourcePath) {
-        BsonDocument testDocument = getTestDocumentWithMetaData(resourcePath);
+        BsonDocument testDocument = getTestDocumentWithMetaData(SPECIFICATIONS_PREFIX + resourcePath);
         testDocument.remove("resourcePath");
         testDocument.remove("fileName");
         return testDocument;
@@ -56,7 +54,7 @@ public final class JsonPoweredTestHelper {
 
     public static Collection<Object[]> getTestData(final String resourcePath) {
         List<Object[]> data = new ArrayList<>();
-        for (BsonDocument document : getTestDocuments(resourcePath)) {
+        for (BsonDocument document : getSpecTestDocuments(resourcePath)) {
             for (BsonValue test : document.getArray("tests")) {
                 BsonDocument testDocument = test.asDocument();
                 data.add(new Object[]{document.getString("fileName").getValue(),
@@ -68,10 +66,19 @@ public final class JsonPoweredTestHelper {
         return data;
     }
 
+    public static List<BsonDocument> getSpecTestDocuments(final String resourcePath) {
+        return getTestDocuments(SPECIFICATIONS_PREFIX + resourcePath);
+    }
+
     public static List<BsonDocument> getTestDocuments(final String resourcePath) {
         List<BsonDocument> files = new ArrayList<>();
         try {
-            URI resource = assertNotNull(JsonPoweredTestHelper.class.getResource(resourcePath)).toURI();
+            URL urlResource = JsonPoweredTestHelper.class.getResource(resourcePath);
+            if (urlResource == null) {
+                Assertions.fail("No such resource: " + resourcePath);
+            }
+
+            URI resource = urlResource.toURI();
             try (FileSystem fileSystem = (resource.getScheme().equals("jar") ? FileSystems.newFileSystem(resource, Collections.emptyMap()) : null)) {
                 Path myPath = Paths.get(resource);
                 Files.walkFileTree(myPath, new SimpleFileVisitor<Path>() {
@@ -89,14 +96,17 @@ public final class JsonPoweredTestHelper {
                 });
             }
         } catch (Exception e) {
-            fail("Unable to load resource", e);
+            Assertions.fail("Unable to load resource: " + resourcePath, e);
+        }
+
+        if (files.isEmpty()) {
+            Assertions.fail("No test documents found in: " + resourcePath);
         }
         return files;
     }
 
     private static BsonDocument getTestDocumentWithMetaData(final String resourcePath) {
-        JsonReader jsonReader = new JsonReader(resourcePathToString(resourcePath));
-        BsonDocument testDocument = new BsonDocumentCodec().decode(jsonReader, DecoderContext.builder().build());
+        BsonDocument testDocument = BsonDocument.parse(resourcePathToString(resourcePath));
         testDocument.append("resourcePath", new BsonString(resourcePath))
                 .append("fileName", new BsonString(resourcePath.substring(resourcePath.lastIndexOf('/') + 1)));
         return testDocument;
@@ -107,7 +117,9 @@ public final class JsonPoweredTestHelper {
         String line;
         String ls = System.lineSeparator();
         try (InputStream inputStream = JsonPoweredTestHelper.class.getResourceAsStream(resourcePath)) {
-            assertNotNull(inputStream);
+            if (inputStream == null) {
+                Assertions.fail("Unable to load resource: " + resourcePath);
+            }
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
                 while ((line = reader.readLine()) != null) {
                     stringBuilder.append(line);
@@ -115,7 +127,7 @@ public final class JsonPoweredTestHelper {
                 }
             }
         } catch (Exception e) {
-            fail("Unable to load resource", e);
+            Assertions.fail("Unable to load resource", e);
         }
         return stringBuilder.toString();
     }

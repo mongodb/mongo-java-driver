@@ -50,7 +50,10 @@ import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.assertions.Assertions;
 import org.bson.codecs.BsonDocumentCodec;
+import org.bson.diagnostics.Logger;
+import org.bson.diagnostics.Loggers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,6 +64,7 @@ import org.opentest4j.TestAbortedException;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -83,6 +87,7 @@ import static com.mongodb.client.unified.RunOnRequirementsMatcher.runOnRequireme
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier;
 import static com.mongodb.client.unified.UnifiedTestModifications.applyCustomizations;
 import static com.mongodb.client.unified.UnifiedTestModifications.testDef;
+import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -95,12 +100,19 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.abort;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
-import static util.JsonPoweredTestHelper.getTestDocuments;
+import static util.JsonPoweredTestHelper.getSpecTestDocuments;
 
 @ExtendWith(AfterBeforeParameterResolver.class)
 public abstract class UnifiedTest {
+    private static final Logger LOGGER = Loggers.getLogger("UnifiedTest");
+
     private static final Set<String> PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS = Collections.singleton(
             "wait queue timeout errors include details about checked out connections");
+
+    private static final String MAX_SUPPORTED_SCHEMA_VERSION = "1.21";
+    private static final List<Integer> MAX_SUPPORTED_SCHEMA_VERSION_COMPONENTS = Arrays.stream(MAX_SUPPORTED_SCHEMA_VERSION.split("\\."))
+            .map(Integer::parseInt)
+            .collect(Collectors.toList());
 
     public static final int RETRY_ATTEMPTS = 3;
     public static final int FORCE_FLAKY_ATTEMPTS = 10;
@@ -163,12 +175,16 @@ public abstract class UnifiedTest {
     @NonNull
     protected static Collection<Arguments> getTestData(final String directory, final boolean isReactive, final Language language) {
         List<Arguments> data = new ArrayList<>();
-        for (BsonDocument fileDocument : getTestDocuments("/" + directory + "/")) {
-            for (BsonValue cur : fileDocument.getArray("tests")) {
 
+        for (BsonDocument fileDocument : getSpecTestDocuments(directory)) {
+            if (!fileDocument.containsKey("schemaVersion")) {
+                LOGGER.info("Not a unified test file: " + fileDocument.getString("fileName").getValue());
+                continue;
+            }
+            String fileDescription = fileDocument.getString("description").getValue();
+            for (BsonValue cur : fileDocument.getArray("tests")) {
                 final BsonDocument testDocument = cur.asDocument();
                 String testDescription = testDocument.getString("description").getValue();
-                String fileDescription = fileDocument.getString("description").getValue();
                 TestDef testDef = testDef(directory, fileDescription, testDescription, isReactive, language);
                 applyCustomizations(testDef);
 
@@ -248,29 +264,7 @@ public abstract class UnifiedTest {
         }
         skips(fileDescription, testDescription);
 
-        assertTrue(
-                schemaVersion.equals("1.0")
-                        || schemaVersion.equals("1.1")
-                        || schemaVersion.equals("1.2")
-                        || schemaVersion.equals("1.3")
-                        || schemaVersion.equals("1.4")
-                        || schemaVersion.equals("1.5")
-                        || schemaVersion.equals("1.6")
-                        || schemaVersion.equals("1.7")
-                        || schemaVersion.equals("1.8")
-                        || schemaVersion.equals("1.9")
-                        || schemaVersion.equals("1.10")
-                        || schemaVersion.equals("1.11")
-                        || schemaVersion.equals("1.12")
-                        || schemaVersion.equals("1.13")
-                        || schemaVersion.equals("1.14")
-                        || schemaVersion.equals("1.15")
-                        || schemaVersion.equals("1.16")
-                        || schemaVersion.equals("1.17")
-                        || schemaVersion.equals("1.18")
-                        || schemaVersion.equals("1.19")
-                        || schemaVersion.equals("1.21"),
-                String.format("Unsupported schema version %s", schemaVersion));
+        assumeTrue(isSupportedSchemaVersion(schemaVersion), format("Unsupported schema version %s", schemaVersion));
         if (runOnRequirements != null) {
             assumeTrue(runOnRequirementsMet(runOnRequirements, getMongoClientSettings(), getServerVersion()),
                     "Run-on requirements not met");
@@ -425,6 +419,27 @@ public abstract class UnifiedTest {
                 throw new UnsupportedOperationException("Unexpected event type: " + eventType);
             }
         }
+    }
+
+    private boolean isSupportedSchemaVersion(final String schemaVersion) {
+        List<Integer> schemaVersionComponents = Arrays.stream(schemaVersion.split("\\."))
+                .map(Integer::parseInt)
+                .collect(Collectors.toList());
+
+        if (schemaVersionComponents.size() != 2) {
+            Assertions.fail("Unsupported schema version: " + schemaVersion);
+        } else if (schemaVersionComponents.get(0) < 1) {
+            Assertions.fail("Unsupported schema version: " + schemaVersion);
+        }
+
+        for (int i = 0; i < 2; i++){
+            int schemaComponent = schemaVersionComponents.get(i);
+            int maxSupportedComponent = MAX_SUPPORTED_SCHEMA_VERSION_COMPONENTS.get(i);
+            if (schemaComponent > maxSupportedComponent) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void compareLogMessages(final UnifiedTestContext rootContext, final BsonDocument definition,

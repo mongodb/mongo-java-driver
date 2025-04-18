@@ -123,6 +123,13 @@ public abstract class AbstractConnectionPoolTest {
         this.description = description;
         this.definition = definition;
         this.skipTest = skipTest;
+
+        // Driver does not support interruptInUseConnections option See: JAVA-4536
+        assumeFalse(fileName.equals("pool-clear-schedule-run-interruptInUseConnections-false.json"));
+        assumeFalse(fileName.equals("pool-clear-interrupting-pending-connections.json"));
+
+        // Events out of order - the driver closes connection first then clears the pool.
+        assumeFalse(fileName.equals("pool-create-min-size-error.json"));
     }
 
     @Before
@@ -565,7 +572,8 @@ public abstract class AbstractConnectionPoolTest {
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() {
         List<Object[]> data = new ArrayList<>();
-        for (BsonDocument testDocument : JsonPoweredTestHelper.getTestDocuments("/connection-monitoring-and-pooling/cmap-format")) {
+        for (BsonDocument testDocument
+                : JsonPoweredTestHelper.getSpecTestDocuments("connection-monitoring-and-pooling/tests/cmap-format")) {
             data.add(new Object[]{testDocument.getString("fileName").getValue(),
                     testDocument.getString("description").getValue(),
                     testDocument, JsonTestServerVersionChecker.skipTest(testDocument, BsonDocument.parse("{}"))});

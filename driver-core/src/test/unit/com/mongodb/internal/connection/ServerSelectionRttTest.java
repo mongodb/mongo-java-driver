@@ -56,7 +56,7 @@ public class ServerSelectionRttTest {
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         List<Object[]> data = new ArrayList<>();
-        for (BsonDocument testDocument : JsonPoweredTestHelper.getTestDocuments("/server-selection/rtt")) {
+        for (BsonDocument testDocument : JsonPoweredTestHelper.getSpecTestDocuments("server-selection/tests/rtt")) {
             data.add(new Object[]{testDocument.getString("fileName").getValue(), testDocument});
         }
         return data;

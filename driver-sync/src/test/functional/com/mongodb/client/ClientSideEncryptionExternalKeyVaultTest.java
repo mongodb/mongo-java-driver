@@ -146,7 +146,7 @@ public class ClientSideEncryptionExternalKeyVaultTest {
     }
 
     private static BsonDocument bsonDocumentFromPath(final String path) {
-        return getTestDocument("/client-side-encryption-external/" + path);
+        return getTestDocument("client-side-encryption/external/" + path);
     }
 
     @Parameterized.Parameters(name = "withExternalKeyVault: {0}")

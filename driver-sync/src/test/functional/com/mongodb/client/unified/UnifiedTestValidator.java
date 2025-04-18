@@ -22,6 +22,6 @@ import java.util.Collection;
 
 final class UnifiedTestValidator extends UnifiedSyncTest {
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/valid-pass");
+        return getTestData("unified-test-format/tests/valid-pass");
     }
 }

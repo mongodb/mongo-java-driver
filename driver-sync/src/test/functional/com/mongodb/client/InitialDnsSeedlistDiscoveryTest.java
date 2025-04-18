@@ -65,6 +65,7 @@ import static org.junit.Assume.assumeTrue;
 // See https://github.com/mongodb/specifications/tree/master/source/initial-dns-seedlist-discovery/tests
 @RunWith(Parameterized.class)
 public abstract class InitialDnsSeedlistDiscoveryTest {
+    private final String filename;
     private final String parentDirectory;
     private final String uri;
     @Nullable
@@ -80,11 +81,12 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
     private final boolean isError;
     private final boolean executePingCommand;
 
-    public InitialDnsSeedlistDiscoveryTest(@SuppressWarnings("unused") final String filename, final String parentDirectory, final String uri,
+    public InitialDnsSeedlistDiscoveryTest(final String filename, final String parentDirectory, final String uri,
             @Nullable final List<String> seeds, @Nullable final Integer numSeeds,
             @Nullable final List<String> hosts, @Nullable final Integer numHosts,
             final BsonDocument options, final BsonDocument parsedOptions,
             final boolean isError, final boolean executePingCommand) {
+        this.filename = filename;
         this.parentDirectory = parentDirectory;
         this.uri = uri;
         this.seeds = seeds;
@@ -102,6 +104,7 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
     @Before
     public void setUp() {
         assumeFalse(isServerlessTest());
+        assumeFalse("https://jira.mongodb.org/browse/JAVA-5064", filename.equals("uri-with-uppercase-hostname.json"));
 
         if (parentDirectory.endsWith("replica-set")) {
             assumeTrue(isDiscoverableReplicaSet());
@@ -304,7 +307,7 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         List<Object[]> data = new ArrayList<>();
-        for (BsonDocument testDocument : JsonPoweredTestHelper.getTestDocuments("/initial-dns-seedlist-discovery")) {
+        for (BsonDocument testDocument : JsonPoweredTestHelper.getSpecTestDocuments("initial-dns-seedlist-discovery")) {
             String resourcePath = testDocument.getString("resourcePath").getValue();
             data.add(new Object[]{
                     testDocument.getString("fileName").getValue(),
