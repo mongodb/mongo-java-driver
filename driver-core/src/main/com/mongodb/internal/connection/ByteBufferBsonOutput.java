@@ -399,7 +399,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
         int curBufferLimit = curBuffer.limit();
         int remaining = curBufferLimit - curBufferPos;
 
-        if (curBuffer.hasArray()) {
+        if (curBuffer.isBackedByArray()) {
             byte[] dst = curBuffer.array();
             int arrayOffset = curBuffer.arrayOffset();
             if (remaining >= str.length() + 1) {

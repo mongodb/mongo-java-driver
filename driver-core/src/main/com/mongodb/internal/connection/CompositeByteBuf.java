@@ -214,7 +214,7 @@ class CompositeByteBuf implements ByteBuf {
     }
 
     @Override
-    public boolean hasArray() {
+    public boolean isBackedByArray() {
         return false;
     }
 
