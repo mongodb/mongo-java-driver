@@ -26,7 +26,6 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
@@ -176,6 +175,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
         if (currentByteBuffer == null) {
             currentByteBuffer = getByteBufferAtIndex(curBufferIndex);
         }
+
         if (currentByteBuffer.hasRemaining()) {
             return currentByteBuffer;
         }
@@ -183,11 +183,6 @@ public class ByteBufferBsonOutput extends OutputBuffer {
         curBufferIndex++;
         currentByteBuffer = getByteBufferAtIndex(curBufferIndex);
         return currentByteBuffer;
-    }
-
-    private ByteBuf getNextByteBuffer() {
-        assertFalse(bufferList.get(curBufferIndex).hasRemaining());
-        return getByteBufferAtIndex(++curBufferIndex);
     }
 
     private ByteBuf getByteBufferAtIndex(final int index) {
@@ -459,7 +454,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
 
             if (c < 0x80) {
                 if (remaining == 0) {
-                    curBuffer = getNextByteBuffer();
+                    curBuffer = getCurrentByteBuffer();
                     curBufferPos = 0;
                     curBufferLimit = curBuffer.limit();
                 }
