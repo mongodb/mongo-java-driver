@@ -30,6 +30,8 @@ import com.mongodb.client.model.densify.DensifyRange
 import com.mongodb.kotlin.client.MongoCollection
 import com.mongodb.kotlin.client.model.Accumulators.accumulator
 import com.mongodb.kotlin.client.model.Accumulators.addToSet
+import com.mongodb.kotlin.client.model.Accumulators.concatArrays
+import com.mongodb.kotlin.client.model.Accumulators.setUnion
 import com.mongodb.kotlin.client.model.Accumulators.avg
 import com.mongodb.kotlin.client.model.Accumulators.bottom
 import com.mongodb.kotlin.client.model.Accumulators.bottomN
@@ -283,6 +285,16 @@ class AggregatesTest {
         assertEquals(com.mongodb.client.model.Accumulators.push("age", 1), push(Person::age, 1))
 
         assertEquals(com.mongodb.client.model.Accumulators.addToSet("age", 1), addToSet(Person::age, 1))
+
+        assertEquals(
+            com.mongodb.client.model.Accumulators.concatArrays("results", listOf("\$array1", "\$array2")),
+            concatArrays(Person::results, listOf("\$array1", "\$array2"))
+        )
+
+        assertEquals(
+            com.mongodb.client.model.Accumulators.setUnion("results", listOf("\$expression1", "\$expression2")),
+            setUnion(Person::results, listOf("\$expression1", "\$expression2"))
+        )
 
         assertEquals(com.mongodb.client.model.Accumulators.mergeObjects("age", 1), mergeObjects(Person::age, 1))
 

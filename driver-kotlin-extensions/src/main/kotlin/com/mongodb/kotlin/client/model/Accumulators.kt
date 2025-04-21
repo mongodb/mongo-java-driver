@@ -322,6 +322,34 @@ public object Accumulators {
         Accumulators.addToSet(property.path(), expression)
 
     /**
+     * Gets a field name for a $group operation that concatenates arrays from the given expressions into a single array.
+     *
+     * @param property The data class property computed by the accumulator
+     * @param expressions The list of array expressions to concatenate
+     * @param <TExpression> The expression type
+     * @return The field
+     * @mongodb.driver.manual reference/operator/aggregation/concatArrays/ $concatArrays
+     * @mongodb.server.release 8.1
+     * @since 5.4
+     */
+    public fun <TExpression> concatArrays(property: KProperty<*>, expressions: List<TExpression>): BsonField =
+        Accumulators.concatArrays(property.path(), expressions)
+
+    /**
+     * Gets a field name for a $group operation that computes the union of arrays from the given expressions, removing duplicates.
+     *
+     * @param property The data class property computed by the accumulator
+     * @param expressions The list of array expressions to union
+     * @param <TExpression> The expression type
+     * @return The field
+     * @mongodb.driver.manual reference/operator/aggregation/setUnion/ $setUnion
+     * @mongodb.server.release 8.1
+     * @since 5.4
+     */
+    public fun <TExpression> setUnion(property: KProperty<*>, expressions: List<TExpression>): BsonField =
+        Accumulators.setUnion(property.path(), expressions)
+
+    /**
      * Gets a field name for a $group operation representing the result of merging the fields of the documents. If
      * documents to merge include the same field name, the field, in the resulting document, has the value from the last
      * document merged for the field.
