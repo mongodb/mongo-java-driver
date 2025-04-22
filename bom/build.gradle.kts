@@ -56,7 +56,11 @@ val scalaVersions: List<String>? = project.findProperty("supportedScalaVersions"
 require(!scalaVersions.isNullOrEmpty()) {
     "Scala versions must be provided as a comma-separated list in the 'supportedScalaVersions' project property"
 }
-
+scalaVersions?.forEach { version ->
+    require(version.matches(Regex("\\d\\.\\d{2}"))) {
+        "Scala version '$version' must be in the format X.YY"
+    }
+}
 /*
  * Apply the Java Platform plugin to create the BOM
  * Modify the generated POM to include all supported versions of Scala for driver-scala or bson-scala.
