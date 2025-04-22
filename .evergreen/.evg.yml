@@ -1548,6 +1548,8 @@ tasks:
   # Do not rename this task – renaming resets the performance time series
     - name: "perf"
       tags: ["perf"]
+      # Benchmark could exceed 1 hour of execution.
+      exec_timeout_secs: 7200
       commands:
         - func: "bootstrap mongo-orchestration"
           vars:
@@ -1560,6 +1562,8 @@ tasks:
 
     - name: "perf-netty"
       tags: [ "perf" ]
+      # Benchmark could exceed 1 hour of execution.
+      exec_timeout_secs: 7200
       commands:
         - func: "bootstrap mongo-orchestration"
           vars:

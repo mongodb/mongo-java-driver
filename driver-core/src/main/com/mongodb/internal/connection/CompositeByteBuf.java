@@ -214,6 +214,16 @@ class CompositeByteBuf implements ByteBuf {
     }
 
     @Override
+    public boolean hasArray() {
+        return false;
+    }
+
+    @Override
+    public int arrayOffset() {
+        throw new UnsupportedOperationException("Not implemented yet!");
+    }
+
+    @Override
     public ByteBuf limit(final int newLimit) {
         if (newLimit < 0 || newLimit > capacity()) {
             throw new IndexOutOfBoundsException(format("%d is out of bounds", newLimit));
@@ -234,6 +244,26 @@ class CompositeByteBuf implements ByteBuf {
 
     @Override
     public ByteBuf put(final byte b) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ByteBuf putInt(final int b) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ByteBuf putInt(final int index, final int b) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ByteBuf putDouble(final double b) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ByteBuf putLong(final long b) {
         throw new UnsupportedOperationException();
     }
 

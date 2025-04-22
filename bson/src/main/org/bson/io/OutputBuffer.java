@@ -70,6 +70,7 @@ public abstract class OutputBuffer extends OutputStream implements BsonOutput {
     }
 
     @Override
+    @Deprecated
     public void writeInt32(final int position, final int value) {
         write(position, value >> 0);
         write(position + 1, value >> 8);
@@ -196,7 +197,7 @@ public abstract class OutputBuffer extends OutputStream implements BsonOutput {
         writeInt64(value);
     }
 
-    private int writeCharacters(final String str, final boolean checkForNullCharacters) {
+    protected int writeCharacters(final String str, final boolean checkForNullCharacters) {
         int len = str.length();
         int total = 0;
 
