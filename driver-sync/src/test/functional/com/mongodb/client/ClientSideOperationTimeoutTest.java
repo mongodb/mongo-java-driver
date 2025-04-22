@@ -35,6 +35,12 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
     @Override
     protected void skips(final String fileDescription, final String testDescription) {
         skipOperationTimeoutTests(fileDescription, testDescription);
+
+        /*
+         * The test is occasionally racy. The "killCursors" command may appear as an additional event. This is unexpected in unified tests,
+         * but anticipated in reactive streams because an operation timeout error triggers the closure of the stream/publisher.
+         */
+        ignoreExtraCommandEvents(testDescription.contains("timeoutMS is refreshed for getMore - failure"));
     }
 
     public static void skipOperationTimeoutTests(final String fileDescription, final String testDescription) {
