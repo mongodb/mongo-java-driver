@@ -128,7 +128,7 @@ public abstract class AbstractConnectionPoolTest {
         assumeFalse(fileName.equals("pool-clear-schedule-run-interruptInUseConnections-false.json"));
         assumeFalse(fileName.equals("pool-clear-interrupting-pending-connections.json"));
 
-        // Events out of order - the driver closes connection first then clears the pool.
+        // Events out of order - the driver closes connection first then clears the pool. See: JAVA-5664
         assumeFalse(fileName.equals("pool-create-min-size-error.json"));
     }
 
