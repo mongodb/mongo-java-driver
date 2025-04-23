@@ -24,7 +24,6 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 
 import static java.lang.String.format;
-import static org.bson.internal.PlatformUtil.isUnalignedAccessAllowed;
 
 /**
  * An implementation of {@code BsonInput} that is backed by a {@code ByteBuf}.
@@ -34,7 +33,6 @@ import static org.bson.internal.PlatformUtil.isUnalignedAccessAllowed;
 public class ByteBufferBsonInput implements BsonInput {
 
     private static final String[] ONE_BYTE_ASCII_STRINGS = new String[Byte.MAX_VALUE + 1];
-    private static final boolean UNALIGNED_ACCESS_SUPPORTED = isUnalignedAccessAllowed();
     /* A dynamically sized scratch buffer, that is reused across BSON String reads:
      * 1. Reduces garbage collection by avoiding new byte array creation.
      * 2. Improves cache utilization through temporal locality.
@@ -184,34 +182,11 @@ public class ByteBufferBsonInput implements BsonInput {
         buffer.position(pos + length);
     }
 
-    /*
-         This method uses the SWAR (SIMD Within A Register) technique when aligned access is supported.
-         SWAR finds a null terminator by processing 8 bytes at once.
-     */
     public int computeCStringLength(final int prevPos) {
         ensureOpen();
         int pos = buffer.position();
         int limit = buffer.limit();
 
-        if (UNALIGNED_ACCESS_SUPPORTED) {
-            int chunks = (limit - pos) >>> 3;
-            // Process 8 bytes at a time.
-            for (int i = 0; i < chunks; i++) {
-                long word = buffer.getLong(pos);
-                long mask = word - 0x0101010101010101L;
-                mask &= ~word;
-                mask &= 0x8080808080808080L;
-                if (mask != 0) {
-                    // first null terminator found in the Little Endian long
-                    int offset = Long.numberOfTrailingZeros(mask) >>> 3;
-                    // Found the null at pos + offset; reset buffer's position.
-                    return (pos - prevPos) + offset + 1;
-                }
-                pos += 8;
-            }
-        }
-
-        // Process remaining bytes one-by-one.
         while (pos < limit) {
             if (buffer.get(pos++) == 0) {
                 return (pos - prevPos);
