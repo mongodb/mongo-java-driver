@@ -53,13 +53,15 @@ public class ResponseBuffers implements Closeable {
     }
 
     /**
-     * Returns a read-only buffer containing the response body.  Care should be taken to not use the returned buffer after this instance has
+     * Returns a buffer containing the response body.  Care should be taken to not use the returned buffer after this instance has
      * been closed.
      *
-     * @return a read-only buffer containing the response body
+     * NOTE: do not modify this buffer, it is being made writable for performance reasons to avoid redundant copying.
+     *
+     * @return a buffer containing the response body
      */
     public ByteBuf getBodyByteBuffer() {
-        return bodyByteBuffer.asReadOnly();
+        return bodyByteBuffer;
     }
 
     public void reset() {

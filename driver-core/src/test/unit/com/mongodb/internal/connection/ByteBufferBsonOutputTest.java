@@ -87,18 +87,18 @@ final class ByteBufferBsonOutputTest {
                 size -> new ByteBufNIO(ByteBuffer.wrap(new byte[size + 4], 3, size).slice()),  //different array offsets
                 size -> new ByteBufNIO(ByteBuffer.allocate(size)) {
                     @Override
-                    public boolean hasArray() {
+                    public boolean isBackedByArray() {
                         return false;
                     }
 
                     @Override
                     public byte[] array() {
-                        return Assertions.fail("array() is called, when hasArray() returns false");
+                        return Assertions.fail("array() is called, when isBackedByArray() returns false");
                     }
 
                     @Override
                     public int arrayOffset() {
-                        return Assertions.fail("arrayOffset() is called, when hasArray() returns false");
+                        return Assertions.fail("arrayOffset() is called, when isBackedByArray() returns false");
                     }
                 }
         );
