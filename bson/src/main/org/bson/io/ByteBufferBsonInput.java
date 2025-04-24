@@ -182,11 +182,58 @@ public class ByteBufferBsonInput implements BsonInput {
         buffer.position(pos + length);
     }
 
+    /**
+     * Detects the position of the first NULL (0x00) byte in a 64-bit word using SWAR technique.
+     * <a href="https://graphics.stanford.edu/~seander/bithacks.html#ZeroInWord">
+     */
     private int computeCStringLength(final int prevPos) {
         ensureOpen();
         int pos = buffer.position();
         int limit = buffer.limit();
 
+        int chunks = (limit - pos) >>> 3;
+        // Process 8 bytes at a time.
+        for (int i = 0; i < chunks; i++) {
+            long word = buffer.getLong(pos);
+            /*
+              Subtract 0x0101010101010101L to cause a borrow on 0x00 bytes.
+              if original byte is 00000000 -> 00000000 - 00000001 = 11111111 (borrow causes high bit set to 1).
+             */
+            long mask = word - 0x0101010101010101L;
+            /*
+              mask will only have high bits set iff it was a 0x00 byte (0x00 becomes 0xFF because of the borrow).
+              ~word will have bits that were originally 0 set to 1.
+              mask & ~word will have high bits set iff original byte was 0x00.
+             */
+            mask &= ~word;
+            /*
+               0x8080808080808080:
+               10000000 10000000 10000000 10000000 10000000 10000000 10000000 10000000
+
+               mask:
+               00000000 00000000 11111111 00000000 00000001 00000001 00000000 00000111
+
+               ANDing mask with 0x8080808080808080 isolates the high bit (0x80) in positions where
+               the original byte was 0x00, setting the high bit to 1 only at the 0x00 byte position.
+
+               result:
+               00000000 00000000 10000000 00000000 00000000 00000000 00000000 00000000
+                                           ^^^^^^^^
+                          The high bit is set only at the 0x00 byte position.
+             */
+            mask &= 0x8080808080808080L;
+            if (mask != 0) {
+                /*
+                 *  Performing >>> 3 (i.e., dividing by 8) gives the byte offset from the least significant bit (LSB).
+                 */
+                int offset = Long.numberOfTrailingZeros(mask) >>> 3;
+                // Find the NULL terminator at pos + offset
+                return (pos - prevPos) + offset + 1;
+            }
+            pos += 8;
+        }
+
+        // Process remaining bytes one-by-one.
         while (pos < limit) {
             if (buffer.get(pos++) == 0) {
                 return (pos - prevPos);
