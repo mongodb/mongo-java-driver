@@ -787,6 +787,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
             doc.remove('_id')
             doc.remove('clusterTime')
             doc.remove('wallTime')
+            doc.remove('collectionUUID')
             doc
         }
     }
