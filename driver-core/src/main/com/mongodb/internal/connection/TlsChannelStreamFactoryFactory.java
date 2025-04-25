@@ -159,8 +159,6 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
                                 if (markedCompleted) {
                                     Runnable runnable = socketRegistration.attachment;
                                     runnable.run();
-                                } else {
-                                    assertFalse(socketRegistration.socketChannel.isOpen());
                                 }
                             }
 
