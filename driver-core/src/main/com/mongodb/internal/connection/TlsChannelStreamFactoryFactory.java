@@ -237,20 +237,27 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
                         socketChannel, () -> initializeTslChannel(handler, socketChannel));
 
                 int connectTimeoutMs = getSettings().getConnectTimeout(TimeUnit.MILLISECONDS);
-
-                group.getTimeoutExecutor().schedule(() -> {
-                    boolean markedTimedOut = socketRegistration.markConnectionEstablishmentTimedOut();
-                    if (markedTimedOut) {
-                        closeAndTimeout(handler, socketChannel);
-                    }
-                }, connectTimeoutMs, TimeUnit.MILLISECONDS);
-
+                if (connectTimeoutMs > 0) {
+                    scheduleTimeoutInterruption(handler, socketRegistration, socketChannel, connectTimeoutMs);
+                }
                 selectorMonitor.register(socketRegistration);
             } catch (IOException e) {
                 handler.failed(new MongoSocketOpenException("Exception opening socket", getServerAddress(), e));
             } catch (Throwable t) {
                 handler.failed(t);
             }
+        }
+
+        private void scheduleTimeoutInterruption(final AsyncCompletionHandler<Void> handler,
+                                                 final SelectorMonitor.SocketRegistration socketRegistration,
+                                                 final SocketChannel socketChannel,
+                                                 final int connectTimeoutMs) {
+            group.getTimeoutExecutor().schedule(() -> {
+                boolean markedTimedOut = socketRegistration.markConnectionEstablishmentTimedOut();
+                if (markedTimedOut) {
+                    closeAndTimeout(handler, socketChannel);
+                }
+            }, connectTimeoutMs, TimeUnit.MILLISECONDS);
         }
 
         private void closeAndTimeout(final AsyncCompletionHandler<Void> handler, final SocketChannel socketChannel) {
