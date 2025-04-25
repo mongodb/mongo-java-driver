@@ -254,13 +254,23 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
         }
 
         private void closeAndTimeout(final AsyncCompletionHandler<Void> handler, final SocketChannel socketChannel) {
-            InterruptedByTimeoutException interruptedByTimeoutException = new InterruptedByTimeoutException();
+            // We check if this stream was closed before timeout exception.
+            boolean streamClosed = isClosed();
+
+            //TODO refactor ths draft
+            InterruptedByTimeoutException timeoutException = new InterruptedByTimeoutException();
             try {
                 socketChannel.close();
             } catch (Exception e) {
-                interruptedByTimeoutException.addSuppressed(e);
+                //TODO should ignore this exception? We seem to do so in other places
+                timeoutException.addSuppressed(e);
             }
-            handler.failed(new MongoSocketOpenException("Exception opening socket", getAddress(), new InterruptedByTimeoutException()));
+
+            if (streamClosed) {
+                handler.completed(null);
+            } else {
+                handler.failed(new MongoSocketOpenException("Exception opening socket", getAddress(), new InterruptedByTimeoutException()));
+            }
         }
 
         private void initializeTslChannel(final AsyncCompletionHandler<Void> handler, final SocketChannel socketChannel) {
