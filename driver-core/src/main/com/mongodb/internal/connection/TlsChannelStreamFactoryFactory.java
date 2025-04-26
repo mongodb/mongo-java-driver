@@ -274,7 +274,7 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
             if (streamClosed) {
                 handler.completed(null);
             } else {
-                handler.failed(new MongoSocketOpenException("Exception opening socket", getAddress(), new InterruptedByTimeoutException()));
+                handler.failed(new MongoSocketOpenException("Exception opening socket", getAddress(), timeoutException));
             }
         }
 
