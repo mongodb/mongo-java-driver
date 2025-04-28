@@ -24,6 +24,7 @@ import org.bson.BsonValue;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -158,7 +159,12 @@ final class ValueMatcher {
     private void assertExpectedType(final BsonValue actualValue, final BsonValue expectedTypes) {
         List<String> types;
         if (expectedTypes.isString()) {
-            types = singletonList(expectedTypes.asString().getValue());
+            String expectedType = expectedTypes.asString().getValue();
+            if (expectedType.equals("number")) {
+                types = asList("int", "long", "double", "decimal");
+            } else {
+                types = singletonList(expectedType);
+            }
         } else if (expectedTypes.isArray()) {
             types = expectedTypes.asArray().stream().map(type -> type.asString().getValue()).collect(Collectors.toList());
         } else {
