@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.TimeoutSettings.convertAndValidateTimeout;
 import static java.util.Collections.unmodifiableMap;
@@ -50,6 +51,9 @@ public final class ClientEncryptionSettings {
     private final Map<String, SSLContext> kmsProviderSslContextMap;
     @Nullable
     private final Long timeoutMS;
+    @Nullable
+    private final Long keyExpirationMS;
+
     /**
      * A builder for {@code ClientEncryptionSettings} so that {@code ClientEncryptionSettings} can be immutable, and to support easier
      * construction through chaining.
@@ -63,6 +67,8 @@ public final class ClientEncryptionSettings {
         private Map<String, SSLContext> kmsProviderSslContextMap = new HashMap<>();
         @Nullable
         private Long timeoutMS;
+        @Nullable
+        private Long keyExpirationMS;
 
         /**
          * Sets the {@link MongoClientSettings} that will be used to access the key vault.
@@ -127,6 +133,22 @@ public final class ClientEncryptionSettings {
          */
         public Builder kmsProviderSslContextMap(final Map<String, SSLContext> kmsProviderSslContextMap) {
             this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", kmsProviderSslContextMap);
+            return this;
+        }
+
+        /**
+         * The cache expiration time for data encryption keys.
+         * <p>Defaults to {@code null} which defers to libmongocrypt's default which is currently 60000. Set to 0 to disable key expiration.</p>
+         *
+         * @param keyExpiration the cache expiration time in milliseconds or null to use libmongocrypt's default.
+         * @param timeUnit the time unit
+         * @return this
+         * @see #getKeyExpiration(TimeUnit)
+         * @since 5.5
+         */
+        public Builder keyExpiration(@Nullable final Long keyExpiration, final TimeUnit timeUnit) {
+            assertTrue(keyExpiration == null || keyExpiration >= 0, "keyExpiration must be >= 0 or null");
+            this.keyExpirationMS = keyExpiration == null ? null : TimeUnit.MILLISECONDS.convert(keyExpiration, timeUnit);
             return this;
         }
 
@@ -309,6 +331,21 @@ public final class ClientEncryptionSettings {
     }
 
     /**
+     * Returns the cache expiration time for data encryption keys.
+     *
+     * <p>Defaults to {@code null} which defers to libmongocrypt's default which is currently {@code 60000}.
+     * Set to {@code 0} to disable key expiration.</p>
+     *
+     * @param timeUnit the time unit, which may not be null
+     * @return the cache expiration time or null if not set.
+     * @since 5.5
+     */
+    @Nullable
+    public Long getKeyExpiration(final TimeUnit timeUnit) {
+        return keyExpirationMS == null ? null : timeUnit.convert(keyExpirationMS, TimeUnit.MILLISECONDS);
+    }
+
+    /**
      * The time limit for the full execution of an operation.
      *
      * <p>If set the following deprecated options will be ignored:
@@ -348,6 +385,7 @@ public final class ClientEncryptionSettings {
         this.kmsProviderPropertySuppliers = notNull("kmsProviderPropertySuppliers", builder.kmsProviderPropertySuppliers);
         this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", builder.kmsProviderSslContextMap);
         this.timeoutMS = builder.timeoutMS;
+        this.keyExpirationMS = builder.keyExpirationMS;
     }
 
 }

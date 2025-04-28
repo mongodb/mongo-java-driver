@@ -39,6 +39,7 @@ public final class MongoCryptOptions {
     private final BsonDocument extraOptions;
     private final boolean bypassQueryAnalysis;
     private final List<String> searchPaths;
+    private final Long keyExpirationMS;
 
 
     /**
@@ -136,6 +137,19 @@ public final class MongoCryptOptions {
     }
 
     /**
+     * Returns the cache expiration time for data encryption keys.
+     *
+     * <p>Defaults to {@code null} which defers to libmongocrypt's default which is currently {@code 60000}.
+     * Set to {@code 0} to disable key expiration.</p>
+     *
+     * @return the cache expiration time or null if not set.
+     * @since 5.5
+     */
+    public Long getKeyExpirationMS() {
+        return keyExpirationMS;
+    }
+
+    /**
      * The builder for the options
      */
     public static final class Builder {
@@ -148,6 +162,7 @@ public final class MongoCryptOptions {
         private boolean bypassQueryAnalysis;
         private BsonDocument extraOptions = new BsonDocument();
         private List<String> searchPaths = emptyList();
+        private Long keyExpirationMS = null;
 
         private Builder() {
         }
@@ -259,6 +274,18 @@ public final class MongoCryptOptions {
         }
 
         /**
+         * The cache expiration time for data encryption keys.
+         *
+         * @param keyExpirationMS the cache expiration time in milliseconds or null to use libmongocrypt's default.
+         * @return this
+         * @since 5.5
+         */
+        public Builder keyExpirationMS(final Long keyExpirationMS) {
+            this.keyExpirationMS = keyExpirationMS;
+            return this;
+        }
+
+        /**
          * Build the options.
          *
          * @return the options
@@ -281,5 +308,6 @@ public final class MongoCryptOptions {
         this.bypassQueryAnalysis = builder.bypassQueryAnalysis;
         this.extraOptions = builder.extraOptions;
         this.searchPaths = builder.searchPaths;
+        this.keyExpirationMS = builder.keyExpirationMS;
     }
 }

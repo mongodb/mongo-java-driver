@@ -166,9 +166,10 @@ public final class UnifiedClientEncryptionHelper {
             }
 
             if (explicitPropertySupplier == null) {
-                throw new UnsupportedOperationException("Non-placeholder value is not supported for: " + key + " :: " + kmsProviderOptions.toJson());
+                kmsProviderMap.put(key, kmsProviderOptions.get(key));
+            } else {
+                kmsProviderMap.put(key, explicitPropertySupplier.get());
             }
-            kmsProviderMap.put(key, explicitPropertySupplier.get());
         }
     }
 

@@ -135,7 +135,6 @@ public abstract class AbstractClientSideEncryptionTest {
                 description.equals("timeoutMS applied to listCollections to get collection schema"));
         assumeFalse("runOn requirements not satisfied", skipTest);
         assumeFalse("Skipping count tests", filename.startsWith("count."));
-        assumeFalse("https://jira.mongodb.org/browse/JAVA-5297", description.equals("Insert with deterministic encryption, then find it"));
 
         assumeFalse(definition.getString("skipReason", new BsonString("")).getValue(), definition.containsKey("skipReason"));
 
@@ -185,6 +184,8 @@ public abstract class AbstractClientSideEncryptionTest {
         BsonDocument kmsProviders = cryptOptions.getDocument("kmsProviders", new BsonDocument());
         boolean bypassAutoEncryption = cryptOptions.getBoolean("bypassAutoEncryption", BsonBoolean.FALSE).getValue();
         boolean bypassQueryAnalysis = cryptOptions.getBoolean("bypassQueryAnalysis", BsonBoolean.FALSE).getValue();
+        Long keyExpirationMS = cryptOptions.containsKey("keyExpirationMS")
+                ? cryptOptions.getNumber("keyExpirationMS").longValue() : null;
 
         Map<String, BsonDocument> namespaceToSchemaMap = new HashMap<>();
 
@@ -285,6 +286,7 @@ public abstract class AbstractClientSideEncryptionTest {
                     .bypassQueryAnalysis(bypassQueryAnalysis)
                     .bypassAutoEncryption(bypassAutoEncryption)
                     .extraOptions(extraOptions)
+                    .keyExpiration(keyExpirationMS, TimeUnit.MILLISECONDS)
                     .build());
         }
         createMongoClient(mongoClientSettingsBuilder.build());
