@@ -505,7 +505,7 @@ public class ConnectionString {
             throw new IllegalArgumentException("srvMaxHosts can not be specified with replica set name");
         }
 
-        validateProxyParameters();
+        validateProxyParameters(combinedOptionsMaps);
 
         credential = createCredentials(combinedOptionsMaps, userName, password);
         warnOnUnsupportedOptions(combinedOptionsMaps);
@@ -1226,7 +1226,7 @@ public class ConnectionString {
         }
     }
 
-    private void validateProxyParameters() {
+    private void validateProxyParameters(final Map<String, List<String>> optionsMap) {
         if (proxyHost == null) {
             if (proxyPort != null) {
                 throw new IllegalArgumentException("proxyPort can only be specified with proxyHost");
@@ -1258,6 +1258,19 @@ public class ConnectionString {
         if (proxyUsername == null ^ proxyPassword == null) {
             throw new IllegalArgumentException(
                     "Both proxyUsername and proxyPassword must be set together. They cannot be set individually");
+        }
+
+        if (proxyHost != null && optionsMap.get("proxyhost").size() > 1) {
+            throw new IllegalArgumentException("Duplicated values for proxyHost: " + optionsMap.get("proxyhost"));
+        }
+        if (proxyPort != null && optionsMap.get("proxyport").size() > 1) {
+            throw new IllegalArgumentException("Duplicated values for proxyPort: " + optionsMap.get("proxyport"));
+        }
+        if (proxyPassword != null && optionsMap.get("proxypassword").size() > 1) {
+            throw new IllegalArgumentException("Duplicated values for proxyPassword: " + optionsMap.get("proxypassword"));
+        }
+        if (proxyUsername != null && optionsMap.get("proxyusername").size() > 1) {
+            throw new IllegalArgumentException("Duplicated values for proxyUsername: " + optionsMap.get("proxyusername"));
         }
     }
 
