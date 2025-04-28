@@ -134,6 +134,7 @@ public class ByteBufferBsonInput implements BsonInput {
 
     @Override
     public String readCString() {
+        ensureOpen();
         int size = computeCStringLength(buffer.position());
         return readString(size);
     }
@@ -184,10 +185,9 @@ public class ByteBufferBsonInput implements BsonInput {
 
     /**
      * Detects the position of the first NULL (0x00) byte in a 64-bit word using SWAR technique.
-     * <a href="https://graphics.stanford.edu/~seander/bithacks.html#ZeroInWord">
+     * <a href="https://en.wikipedia.org/wiki/SWAR">
      */
     private int computeCStringLength(final int prevPos) {
-        ensureOpen();
         int pos = buffer.position();
         int limit = buffer.limit();
 
@@ -197,7 +197,7 @@ public class ByteBufferBsonInput implements BsonInput {
             long word = buffer.getLong(pos);
             /*
               Subtract 0x0101010101010101L to cause a borrow on 0x00 bytes.
-              if original byte is 00000000 -> 00000000 - 00000001 = 11111111 (borrow causes high bit set to 1).
+              if original byte is 00000000, then 00000000 - 00000001 = 11111111 (borrow causes high bit set to 1).
              */
             long mask = word - 0x0101010101010101L;
             /*
@@ -214,7 +214,7 @@ public class ByteBufferBsonInput implements BsonInput {
                00000000 00000000 11111111 00000000 00000001 00000001 00000000 00000111
 
                ANDing mask with 0x8080808080808080 isolates the high bit (0x80) in positions where
-               the original byte was 0x00, setting the high bit to 1 only at the 0x00 byte position.
+               the original byte was 0x00, by setting the high bit to 1 only at the 0x00 byte position.
 
                result:
                00000000 00000000 10000000 00000000 00000000 00000000 00000000 00000000
