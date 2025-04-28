@@ -219,7 +219,7 @@ public class ByteBufferBsonInput implements BsonInput {
                result:
                00000000 00000000 10000000 00000000 00000000 00000000 00000000 00000000
                                  ^^^^^^^^
-                          The high bit is set only at the 0x00 byte position.
+               The high bit is set only at the 0x00 byte position.
              */
             mask &= 0x8080808080808080L;
             if (mask != 0) {
