@@ -131,8 +131,11 @@ public abstract class AbstractClientSideEncryptionTest {
     @Before
     public void setUp() {
         assumeTrue("Client side encryption tests disabled", hasEncryptionTestsEnabled());
+        assumeFalse("blockTimeMS and timeoutMS too small",
+                description.equals("timeoutMS applied to listCollections to get collection schema"));
         assumeFalse("runOn requirements not satisfied", skipTest);
         assumeFalse("Skipping count tests", filename.startsWith("count."));
+        assumeFalse("https://jira.mongodb.org/browse/JAVA-5297", description.equals("Insert with deterministic encryption, then find it"));
 
         assumeFalse(definition.getString("skipReason", new BsonString("")).getValue(), definition.containsKey("skipReason"));
 
@@ -402,7 +405,7 @@ public abstract class AbstractClientSideEncryptionTest {
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() {
         List<Object[]> data = new ArrayList<>();
-        for (BsonDocument specDocument : JsonPoweredTestHelper.getTestDocuments("/client-side-encryption/legacy")) {
+        for (BsonDocument specDocument : JsonPoweredTestHelper.getSpecTestDocuments("client-side-encryption/tests/legacy")) {
             for (BsonValue test : specDocument.getArray("tests")) {
                 BsonDocument testDocument = test.asDocument();
                 data.add(new Object[]{specDocument.getString("fileName").getValue(),

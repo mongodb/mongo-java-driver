@@ -22,6 +22,6 @@ import java.util.Collection;
 
 public final class UnifiedRetryableReadsTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/retryable-reads");
+        return getTestData("retryable-reads");
     }
 }

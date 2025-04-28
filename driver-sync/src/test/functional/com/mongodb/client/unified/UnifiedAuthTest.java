@@ -22,6 +22,6 @@ import java.util.Collection;
 
 final class UnifiedAuthTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/auth");
+        return getTestData("auth");
     }
 }

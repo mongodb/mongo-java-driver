@@ -77,7 +77,7 @@ public class ServerDiscoveryAndMonitoringMonitoringTest extends AbstractServerDi
 
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
-        return data("/server-discovery-and-monitoring-monitoring");
+        return data("server-discovery-and-monitoring/tests/monitoring");
     }
 
     private void assertEvents(final BsonArray events) {

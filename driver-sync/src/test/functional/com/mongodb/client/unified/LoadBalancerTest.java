@@ -22,6 +22,6 @@ import java.util.Collection;
 
 final class LoadBalancerTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/load-balancers");
+        return getTestData("load-balancers");
     }
 }

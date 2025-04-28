@@ -22,6 +22,7 @@ import java.util.Collection;
 
 final class UnifiedWriteConcernTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/write-concern");
+        // Note: only the write-concern tests in this directory are in unified test format
+        return getTestData("read-write-concern");
     }
 }

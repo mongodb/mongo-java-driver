@@ -21,7 +21,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import java.util.Collection;
 
 final class ChangeStreamsTest extends UnifiedReactiveStreamsTest {
+
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/change-streams");
+        return getTestData("change-streams");
     }
 }

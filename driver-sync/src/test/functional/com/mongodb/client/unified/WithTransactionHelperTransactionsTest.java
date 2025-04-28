@@ -22,6 +22,6 @@ import java.util.Collection;
 
 final class WithTransactionHelperTransactionsTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/transactions-convenient-api");
+        return getTestData("transactions-convenient-api");
     }
 }
