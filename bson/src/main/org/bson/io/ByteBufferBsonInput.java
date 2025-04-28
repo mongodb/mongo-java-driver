@@ -214,7 +214,7 @@ public class ByteBufferBsonInput implements BsonInput {
                00000000 00000000 11111111 00000000 00000001 00000001 00000000 00000111
 
                ANDing mask with 0x8080808080808080 isolates the high bit (0x80) in positions where
-               the original byte was 0x00, by setting the high bit to 1 only at the 0x00 byte position.
+               the original byte was 0x00, thereby setting the high bit to 1 only at the 0x00 byte position.
 
                result:
                00000000 00000000 10000000 00000000 00000000 00000000 00000000 00000000
