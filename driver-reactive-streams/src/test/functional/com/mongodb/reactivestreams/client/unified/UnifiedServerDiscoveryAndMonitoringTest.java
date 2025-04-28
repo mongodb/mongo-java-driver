@@ -22,6 +22,6 @@ import java.util.Collection;
 
 final class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedReactiveStreamsTest {
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/server-discovery-and-monitoring");
+        return getTestData("server-discovery-and-monitoring");
     }
 }

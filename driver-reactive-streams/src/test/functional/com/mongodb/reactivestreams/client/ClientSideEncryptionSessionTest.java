@@ -150,6 +150,6 @@ public class ClientSideEncryptionSessionTest {
     }
 
     private static BsonDocument bsonDocumentFromPath(final String path) {
-        return getTestDocument("/client-side-encryption-external/" + path);
+        return getTestDocument("client-side-encryption/external/" + path);
     }
 }

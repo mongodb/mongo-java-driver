@@ -21,7 +21,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import java.util.Collection;
 
 final class CollectionManagementTest extends UnifiedSyncTest {
+
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/collection-management");
+        return getTestData("collection-management");
     }
 }

@@ -125,6 +125,9 @@ public abstract class AbstractConnectionStringTest extends TestCase {
             } else if (option.getKey().equalsIgnoreCase("replicaset")) {
                 String expected = option.getValue().asString().getValue();
                 assertEquals(expected, connectionString.getRequiredReplicaSetName());
+            } else if (option.getKey().equalsIgnoreCase("timeoutMS")) {
+                int expected = option.getValue().asInt32().getValue();
+                assertEquals(expected, connectionString.getTimeout().intValue());
             } else if (option.getKey().equalsIgnoreCase("serverselectiontimeoutms")) {
                 int expected = option.getValue().asInt32().getValue();
                 assertEquals(expected, connectionString.getServerSelectionTimeout().intValue());

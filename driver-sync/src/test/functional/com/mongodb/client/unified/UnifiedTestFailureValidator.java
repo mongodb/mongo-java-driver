@@ -100,6 +100,6 @@ final class UnifiedTestFailureValidator extends UnifiedSyncTest {
     }
 
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/valid-fail");
+        return getTestData("unified-test-format/tests/valid-fail");
     }
 }
