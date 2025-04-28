@@ -233,7 +233,7 @@ public class ByteBufferBsonInput implements BsonInput {
             pos += 8;
         }
 
-        // Process remaining bytes one-by-one.
+        // Process remaining bytes one by one.
         while (pos < limit) {
             if (buffer.get(pos++) == 0) {
                 return (pos - prevPos);
