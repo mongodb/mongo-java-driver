@@ -35,6 +35,7 @@ import static org.junit.Assert.assertTrue;
 final class ValueMatcher {
     private final Entities entities;
     private final AssertionContext context;
+    private static final List<String> NUMBER_TYPES = asList("int", "long", "double", "decimal");
 
     ValueMatcher(final Entities entities, final AssertionContext context) {
         this.entities = entities;
@@ -160,11 +161,7 @@ final class ValueMatcher {
         List<String> types;
         if (expectedTypes.isString()) {
             String expectedType = expectedTypes.asString().getValue();
-            if (expectedType.equals("number")) {
-                types = asList("int", "long", "double", "decimal");
-            } else {
-                types = singletonList(expectedType);
-            }
+            types = expectedType.equals("number") ? NUMBER_TYPES : singletonList(expectedType);
         } else if (expectedTypes.isArray()) {
             types = expectedTypes.asArray().stream().map(type -> type.asString().getValue()).collect(Collectors.toList());
         } else {
