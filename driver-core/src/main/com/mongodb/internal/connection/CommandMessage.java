@@ -186,6 +186,10 @@ public final class CommandMessage extends RequestMessage {
         }
     }
 
+    BsonDocument getCommand() {
+        return command;
+    }
+
     /**
      * Get the field name from a buffer positioned at the start of the document sequence identifier of an OP_MSG Section of type
      * `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE`.
