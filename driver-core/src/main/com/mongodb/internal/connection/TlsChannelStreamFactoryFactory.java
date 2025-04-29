@@ -174,7 +174,6 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
             selectorThread.start();
         }
 
-
         void register(final SocketRegistration registration) {
             pendingRegistrations.add(registration);
             selector.wakeup();
@@ -249,13 +248,10 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
         private void closeAndTimeout(final AsyncCompletionHandler<Void> handler, final SocketChannel socketChannel) {
             // We check if this stream was closed before timeout exception.
             boolean streamClosed = isClosed();
-
-            //TODO refactor ths draft
             InterruptedByTimeoutException timeoutException = new InterruptedByTimeoutException();
             try {
                 socketChannel.close();
             } catch (Exception e) {
-                //TODO should ignore this exception? We seem to do so in other places
                 timeoutException.addSuppressed(e);
             }
 
