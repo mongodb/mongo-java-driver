@@ -53,10 +53,11 @@ final class TimeoutSettingsTest {
                             .withMaxAwaitTimeMS(11)
                             .withMaxCommitMS(999L)
                             .withReadTimeoutMS(11_000)
+                            .withConnectTimeoutMS(500)
                             .withWTimeoutMS(222L);
                     assertAll(
                             () -> assertEquals(30_000, timeoutSettings.getServerSelectionTimeoutMS()),
-                            () -> assertEquals(10_000, timeoutSettings.getConnectTimeoutMS()),
+                            () -> assertEquals(500, timeoutSettings.getConnectTimeoutMS()),
                             () -> assertEquals(11_000, timeoutSettings.getReadTimeoutMS()),
                             () -> assertEquals(100, timeoutSettings.getTimeoutMS()),
                             () -> assertEquals(111, timeoutSettings.getMaxTimeMS()),
