@@ -165,6 +165,11 @@ public class TimeoutSettings {
                 maxTimeMS, maxCommitTimeMS, wTimeoutMS, maxWaitTimeMS);
     }
 
+    public TimeoutSettings withConnectTimeoutMS(final long connectTimeoutMS) {
+        return new TimeoutSettings(generationId, timeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, maxAwaitTimeMS,
+                maxTimeMS, maxCommitTimeMS, wTimeoutMS, maxWaitTimeMS);
+    }
+
     public TimeoutSettings withServerSelectionTimeoutMS(final long serverSelectionTimeoutMS) {
         return new TimeoutSettings(timeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, maxAwaitTimeMS,
                 maxTimeMS, maxCommitTimeMS, wTimeoutMS, maxWaitTimeMS);

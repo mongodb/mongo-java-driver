@@ -75,29 +75,29 @@ class TlsChannelStreamFunctionalTest {
 
             //then
             long elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - connectOpenStart);
+            long diff = elapsedMs - connectTimeout;
+            // Allowed difference, with test overhead setup is 300MS.
+            int epsilonMs = 300;
+
             assertInstanceOf(InterruptedByTimeoutException.class, mongoSocketOpenException.getCause(),
                     "Actual cause: " + mongoSocketOpenException.getCause());
-            long diff = elapsedMs - connectTimeout;
             assertFalse(diff < 0,
                     String.format("Connection timed-out sooner than expected. Difference: %d ms", diff));
-            // Allowed difference, with test overhead setup is 300MS.
-            int epsilon = 300;
-            assertTrue(diff < epsilon,
-                    String.format("Elapsed time %d ms should be within %d ms of the connect timeout", elapsedMs, epsilon));
+            assertTrue(diff < epsilonMs,
+                    String.format("Elapsed time %d ms should be within %d ms of the connect timeout", elapsedMs, epsilonMs));
         }
     }
 
     @ParameterizedTest
     @ValueSource(ints = {0, 500, 1000, 2000})
     void shouldEstablishConnection(final int connectTimeout) throws IOException {
+        //given
         try (TlsChannelStreamFactoryFactory factory = new TlsChannelStreamFactoryFactory(new DefaultInetAddressResolver())) {
-            //given
             StreamFactory streamFactory = factory.create(SocketSettings.builder()
                     .connectTimeout(connectTimeout, TimeUnit.MILLISECONDS)
                     .build(), SSL_SETTINGS);
 
             Stream stream = streamFactory.create(new ServerAddress("localhost", port));
-
             try {
                 //when
                 stream.open(OperationContext.simpleOperationContext(
