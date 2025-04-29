@@ -76,10 +76,6 @@ public final class UnifiedTestModifications {
                 .test("client-side-operations-timeout", "timeoutMS behaves correctly for GridFS download operations",
                       "timeoutMS applied to entire download, not individual parts");
 
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5820")
-                .test("client-side-operations-timeout", "timeoutMS behaves correctly for tailable awaitData cursors",
-                        "apply maxAwaitTimeMS if less than remaining timeout");
-
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5815")
                 .test("client-side-operations-timeout", "WaitQueueTimeoutError does not clear the pool",
                         "WaitQueueTimeoutError does not clear the pool");
