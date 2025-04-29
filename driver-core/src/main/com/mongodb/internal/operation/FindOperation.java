@@ -30,6 +30,8 @@ import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.tracing.Span;
+import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -296,13 +298,18 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         if (invalidTimeoutModeException != null) {
             throw invalidTimeoutModeException;
         }
+        OperationContext operationContext = binding.getOperationContext();
 
-        RetryState retryState = initialRetryState(retryReads,  binding.getOperationContext().getTimeoutContext());
-        Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, binding.getOperationContext(), () ->
+        // Adds a Tracing Span for 'find' operation
+        TracingManager tracingManager = operationContext.getTracingManager();
+        Span tracingSpan = tracingManager.addSpan("find", operationContext.getId());
+
+        RetryState retryState = initialRetryState(retryReads,  operationContext.getTimeoutContext());
+        Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, operationContext, () ->
             withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
-                retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getOperationContext()));
+                retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), operationContext));
                 try {
-                    return createReadCommandAndExecute(retryState, binding.getOperationContext(), source, namespace.getDatabaseName(),
+                    return createReadCommandAndExecute(retryState, operationContext, source, namespace.getDatabaseName(),
                                                        getCommandCreator(), CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
                                                        transformer(), connection);
                 } catch (MongoCommandException e) {
@@ -310,7 +317,16 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                 }
             })
         );
-        return read.get();
+        try {
+            return read.get();
+        } catch (MongoQueryException e) {
+            tracingSpan.error(e);
+            throw e;
+        } finally {
+            tracingSpan.end();
+            // Clean up the tracing span after the operation is complete
+            tracingManager.cleanContexts(operationContext.getId());
+        }
     }
 
     @Override
@@ -473,9 +489,17 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     }
 
     private CommandReadTransformer<BsonDocument, CommandBatchCursor<T>> transformer() {
-        return (result, source, connection) ->
-                new CommandBatchCursor<>(getTimeoutMode(), result, batchSize, getMaxTimeForCursor(source.getOperationContext()), decoder,
-                        comment, source, connection);
+        return (result, source, connection) -> {
+            OperationContext operationContext = source.getOperationContext();
+
+            // register cursor id with the operation context, so 'getMore' commands can be folded under the 'find' operation
+            long cursorId = result.getDocument("cursor").getInt64("id").longValue();
+            TracingManager tracingManager = operationContext.getTracingManager();
+            tracingManager.addCursorParentContext(cursorId, operationContext.getId());
+
+            return new CommandBatchCursor<>(getTimeoutMode(), result, batchSize, getMaxTimeForCursor(operationContext), decoder,
+                    comment, source, connection);
+        };
     }
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {

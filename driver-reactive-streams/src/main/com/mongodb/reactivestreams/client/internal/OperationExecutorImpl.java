@@ -205,7 +205,8 @@ public class OperationExecutorImpl implements OperationExecutor {
                 new ReadConcernAwareNoOpSessionContext(readConcern),
                 createTimeoutContext(session, timeoutSettings),
                 mongoClient.getSettings().getServerApi(),
-                commandName);
+                commandName,
+                mongoClient.getSettings().getTracingManager());
     }
 
     private ReadPreference getReadPreferenceForBinding(final ReadPreference readPreference, @Nullable final ClientSession session) {

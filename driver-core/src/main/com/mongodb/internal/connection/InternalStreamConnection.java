@@ -51,6 +51,9 @@ import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.time.Timeout;
+import com.mongodb.internal.tracing.Span;
+import com.mongodb.internal.tracing.TraceContext;
+import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
@@ -374,13 +377,24 @@ public class InternalStreamConnection implements InternalConnection {
     public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
         Supplier<T> sendAndReceiveInternal = () -> sendAndReceiveInternal(
                 message, decoder, operationContext);
+
+        Span tracingSpan = createTracingSpan(message, operationContext);
+
         try {
             return sendAndReceiveInternal.get();
         } catch (MongoCommandException e) {
+            if (tracingSpan != null) {
+                tracingSpan.error(e);
+            }
+
             if (reauthenticationIsTriggered(e)) {
                 return reauthenticateAndRetry(sendAndReceiveInternal, operationContext);
             }
             throw e;
+        } finally {
+            if (tracingSpan != null) {
+                tracingSpan.end();
+            }
         }
     }
 
@@ -391,6 +405,7 @@ public class InternalStreamConnection implements InternalConnection {
 
         AsyncSupplier<T> sendAndReceiveAsyncInternal = c -> sendAndReceiveAsyncInternal(
                 message, decoder, operationContext, c);
+
         beginAsync().<T>thenSupply(c -> {
             sendAndReceiveAsyncInternal.getAsync(c);
         }).onErrorIf(e -> reauthenticationIsTriggered(e), (t, c) -> {
@@ -870,6 +885,42 @@ public class InternalStreamConnection implements InternalConnection {
     public ByteBuf getBuffer(final int size) {
         notNull("open", stream);
         return stream.getBuffer(size);
+    }
+
+    @Nullable
+    private Span createTracingSpan(final CommandMessage message, final OperationContext operationContext) {
+        TracingManager tracingManager = operationContext.getTracingManager();
+        Span span;
+        if (tracingManager.isEnabled()) {
+            BsonDocument command = message.getCommand();
+            TraceContext parentContext = null;
+            long cursorId = -1;
+            if (command.containsKey("getMore")) {
+                cursorId = command.getInt64("getMore").longValue();
+                parentContext = tracingManager.getCursorParentContext(cursorId);
+            } else {
+                parentContext = tracingManager.getParentContext(operationContext.getId());
+            }
+
+            span = tracingManager.addSpan("Command " + command.getFirstKey(), parentContext);
+            span.tag("db.system", "mongodb");
+            span.tag("db.namespace", message.getNamespace().getFullName());
+            span.tag("db.query.summary", command.getFirstKey());
+            span.tag("db.query.opcode", String.valueOf(message.getOpCode()));
+            span.tag("db.query.text", command.toString());
+            if (cursorId != -1) {
+                span.tag("db.mongodb.cursor_id", String.valueOf(cursorId));
+            }
+            span.tag("server.address", serverId.getAddress().getHost());
+            span.tag("server.port", String.valueOf(serverId.getAddress().getPort()));
+            span.tag("server.type", message.getSettings().getServerType().name());
+
+            span.tag("db.mongodb.server_connection_id", this.description.getConnectionId().toString());
+        } else {
+            span = null;
+        }
+
+        return span;
     }
 
     private class MessageHeaderCallback implements SingleResultCallback<ByteBuf> {
