@@ -24,6 +24,7 @@ reactive-streams = "1.0.4"
 snappy = "1.1.10.3"
 zstd = "1.5.5-3"
 jetbrains-annotations = "26.0.2"
+micrometer = "1.4.5"
 
 kotlin = "1.8.10"
 kotlinx-coroutines-bom = "1.6.4"
@@ -93,6 +94,7 @@ reactive-streams = { module = " org.reactivestreams:reactive-streams", version.r
 slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 snappy-java = { module = "org.xerial.snappy:snappy-java", version.ref = "snappy" }
 zstd-jni = { module = "com.github.luben:zstd-jni", version.ref = "zstd" }
+micrometer = { module = "io.micrometer:micrometer-tracing", version.ref = "micrometer" }
 
 graal-sdk = { module = "org.graalvm.sdk:graal-sdk", version.ref = "graal-sdk" }
 graal-sdk-nativeimage = { module = "org.graalvm.sdk:nativeimage", version.ref = "graal-sdk" }

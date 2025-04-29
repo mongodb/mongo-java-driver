@@ -27,6 +27,7 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
 
@@ -47,6 +48,7 @@ public class OperationContext {
     private final SessionContext sessionContext;
     private final RequestContext requestContext;
     private final TimeoutContext timeoutContext;
+    private final TracingManager tracingManager;
     @Nullable
     private final ServerApi serverApi;
     @Nullable
@@ -54,12 +56,17 @@ public class OperationContext {
 
     public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
             @Nullable final ServerApi serverApi) {
-        this(requestContext, sessionContext, timeoutContext, serverApi, null);
+        this(requestContext, sessionContext, timeoutContext, TracingManager.NO_OP, serverApi, null);
     }
 
     public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
-            @Nullable final ServerApi serverApi, @Nullable final String operationName) {
-        this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, new ServerDeprioritization(), serverApi, operationName);
+            final TracingManager tracingManager,
+            @Nullable final ServerApi serverApi,
+            @Nullable final String operationName) {
+        this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, new ServerDeprioritization(),
+                tracingManager,
+                serverApi,
+                operationName);
     }
 
     public static OperationContext simpleOperationContext(
@@ -68,8 +75,10 @@ public class OperationContext {
                 IgnorableRequestContext.INSTANCE,
                 NoOpSessionContext.INSTANCE,
                 new TimeoutContext(timeoutSettings),
+                TracingManager.NO_OP,
                 serverApi,
-                null);
+                null
+                );
     }
 
     public static OperationContext simpleOperationContext(final TimeoutContext timeoutContext) {
@@ -77,24 +86,32 @@ public class OperationContext {
                 IgnorableRequestContext.INSTANCE,
                 NoOpSessionContext.INSTANCE,
                 timeoutContext,
+                TracingManager.NO_OP,
                 null,
                 null);
     }
 
     public OperationContext withSessionContext(final SessionContext sessionContext) {
-        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, serverApi, operationName);
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, tracingManager, serverApi,
+                operationName);
     }
 
     public OperationContext withTimeoutContext(final TimeoutContext timeoutContext) {
-        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, serverApi, operationName);
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, tracingManager, serverApi,
+                operationName);
     }
 
     public OperationContext withOperationName(final String operationName) {
-        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, serverApi, operationName);
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, tracingManager, serverApi,
+                operationName);
     }
 
     public long getId() {
         return id;
+    }
+
+    public TracingManager getTracingManager() {
+        return tracingManager;
     }
 
     public SessionContext getSessionContext() {
@@ -121,33 +138,37 @@ public class OperationContext {
 
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
     public OperationContext(final long id,
-                            final RequestContext requestContext,
-                            final SessionContext sessionContext,
-                            final TimeoutContext timeoutContext,
-                            final ServerDeprioritization serverDeprioritization,
-                            @Nullable final ServerApi serverApi,
-                            @Nullable final String operationName) {
+            final RequestContext requestContext,
+            final SessionContext sessionContext,
+            final TimeoutContext timeoutContext,
+            final ServerDeprioritization serverDeprioritization,
+            final TracingManager tracingManager,
+            @Nullable final ServerApi serverApi,
+            @Nullable final String operationName) {
         this.id = id;
         this.serverDeprioritization = serverDeprioritization;
         this.requestContext = requestContext;
         this.sessionContext = sessionContext;
         this.timeoutContext = timeoutContext;
+        this.tracingManager = tracingManager;
         this.serverApi = serverApi;
         this.operationName = operationName;
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
     public OperationContext(final long id,
-                            final RequestContext requestContext,
-                            final SessionContext sessionContext,
-                            final TimeoutContext timeoutContext,
-                            @Nullable final ServerApi serverApi,
-                            @Nullable final String operationName) {
+            final RequestContext requestContext,
+            final SessionContext sessionContext,
+            final TimeoutContext timeoutContext,
+            final TracingManager tracingManager,
+            @Nullable final ServerApi serverApi,
+            @Nullable final String operationName) {
         this.id = id;
         this.serverDeprioritization = new ServerDeprioritization();
         this.requestContext = requestContext;
         this.sessionContext = sessionContext;
         this.timeoutContext = timeoutContext;
+        this.tracingManager = tracingManager;
         this.serverApi = serverApi;
         this.operationName = operationName;
     }

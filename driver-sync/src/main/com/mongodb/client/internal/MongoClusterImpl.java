@@ -57,6 +57,7 @@ import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.ServerSessionPool;
+import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -99,6 +100,7 @@ final class MongoClusterImpl implements MongoCluster {
     private final UuidRepresentation uuidRepresentation;
     private final WriteConcern writeConcern;
     private final SyncOperations<BsonDocument> operations;
+    private final TracingManager tracingManager;
 
     MongoClusterImpl(
             @Nullable final AutoEncryptionSettings autoEncryptionSettings, final Cluster cluster, final CodecRegistry codecRegistry,
@@ -106,7 +108,8 @@ final class MongoClusterImpl implements MongoCluster {
             @Nullable final OperationExecutor operationExecutor, final ReadConcern readConcern, final ReadPreference readPreference,
             final boolean retryReads, final boolean retryWrites, @Nullable final ServerApi serverApi,
             final ServerSessionPool serverSessionPool, final TimeoutSettings timeoutSettings, final UuidRepresentation uuidRepresentation,
-            final WriteConcern writeConcern) {
+            final WriteConcern writeConcern,
+            final TracingManager tracingManager) {
         this.autoEncryptionSettings = autoEncryptionSettings;
         this.cluster = cluster;
         this.codecRegistry = codecRegistry;
@@ -123,6 +126,8 @@ final class MongoClusterImpl implements MongoCluster {
         this.timeoutSettings = timeoutSettings;
         this.uuidRepresentation = uuidRepresentation;
         this.writeConcern = writeConcern;
+        this.tracingManager = tracingManager;
+
         operations = new SyncOperations<>(
                 null,
                 BsonDocument.class,
@@ -165,35 +170,35 @@ final class MongoClusterImpl implements MongoCluster {
     public MongoCluster withCodecRegistry(final CodecRegistry codecRegistry) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, serverApi, serverSessionPool, timeoutSettings,
-                uuidRepresentation, writeConcern);
+                uuidRepresentation, writeConcern, tracingManager);
     }
 
     @Override
     public MongoCluster withReadPreference(final ReadPreference readPreference) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, serverApi, serverSessionPool, timeoutSettings,
-                uuidRepresentation, writeConcern);
+                uuidRepresentation, writeConcern, tracingManager);
     }
 
     @Override
     public MongoCluster withWriteConcern(final WriteConcern writeConcern) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, serverApi, serverSessionPool, timeoutSettings,
-                uuidRepresentation, writeConcern);
+                uuidRepresentation, writeConcern, tracingManager);
     }
 
     @Override
     public MongoCluster withReadConcern(final ReadConcern readConcern) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, serverApi, serverSessionPool, timeoutSettings,
-                uuidRepresentation, writeConcern);
+                uuidRepresentation, writeConcern, tracingManager);
     }
 
     @Override
     public MongoCluster withTimeout(final long timeout, final TimeUnit timeUnit) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, serverApi, serverSessionPool,
-                timeoutSettings.withTimeout(timeout, timeUnit), uuidRepresentation, writeConcern);
+                timeoutSettings.withTimeout(timeout, timeUnit), uuidRepresentation, writeConcern, tracingManager);
     }
 
     @Override

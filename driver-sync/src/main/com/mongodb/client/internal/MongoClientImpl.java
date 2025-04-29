@@ -106,7 +106,8 @@ public final class MongoClientImpl implements MongoClient {
                                              operationExecutor, settings.getReadConcern(), settings.getReadPreference(), settings.getRetryReads(),
                                              settings.getRetryWrites(), settings.getServerApi(),
                                              new ServerSessionPool(cluster, TimeoutSettings.create(settings), settings.getServerApi()),
-                                             TimeoutSettings.create(settings), settings.getUuidRepresentation(), settings.getWriteConcern());
+                                             TimeoutSettings.create(settings), settings.getUuidRepresentation(),
+                                             settings.getWriteConcern(), settings.getTracingManager());
         this.closed = new AtomicBoolean();
 
         BsonDocument clientMetadataDocument = delegate.getCluster().getClientMetadata().getBsonDocument();
