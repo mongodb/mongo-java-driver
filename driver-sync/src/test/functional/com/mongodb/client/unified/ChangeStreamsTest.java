@@ -22,6 +22,6 @@ import java.util.Collection;
 
 final class ChangeStreamsTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/change-streams");
+        return getTestData("change-streams");
     }
 }

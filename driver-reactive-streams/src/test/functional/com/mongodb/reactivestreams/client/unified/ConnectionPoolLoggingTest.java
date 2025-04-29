@@ -22,6 +22,6 @@ import java.util.Collection;
 
 final class ConnectionPoolLoggingTest extends UnifiedReactiveStreamsTest {
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/connection-monitoring-and-pooling/logging");
+        return getTestData("connection-monitoring-and-pooling/tests/logging");
     }
 }

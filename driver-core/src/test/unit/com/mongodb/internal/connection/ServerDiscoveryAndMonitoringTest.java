@@ -23,12 +23,14 @@ import com.mongodb.internal.time.Timeout;
 import org.bson.BsonDocument;
 import org.bson.BsonNull;
 import org.bson.BsonValue;
+import org.bson.assertions.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
 import static com.mongodb.ClusterFixture.getClusterDescription;
@@ -87,7 +89,15 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
 
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
-        return data("/server-discovery-and-monitoring");
+        // Unified and monitoring tests have their own test runners so filter them out.
+        return data("server-discovery-and-monitoring")
+                .stream().filter(i -> {
+                    Object definition = i[1];
+                    Assertions.assertTrue("Expected a BsonDocument for definition", definition instanceof BsonDocument);
+                    BsonDocument definitionDocument = (BsonDocument) definition;
+                    String resourcePath = definitionDocument.getString("resourcePath").getValue();
+                    return !(resourcePath.contains("/tests/unified/") || resourcePath.contains("/tests/monitoring"));
+                }).collect(Collectors.toList());
     }
 
     private void assertServers(final BsonDocument servers) {

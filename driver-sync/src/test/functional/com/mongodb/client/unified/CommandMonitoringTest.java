@@ -22,6 +22,6 @@ import java.util.Collection;
 
 public final class CommandMonitoringTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/command-monitoring");
+        return getTestData("command-logging-and-monitoring/tests/monitoring");
     }
 }

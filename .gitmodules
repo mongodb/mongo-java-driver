@@ -1,0 +1,3 @@
+[submodule "specifications"]
+	path = driver-core/src/test/resources/specifications
+	url = https://github.com/mongodb/specifications

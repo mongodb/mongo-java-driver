@@ -22,6 +22,6 @@ import java.util.Collection;
 
 final class UnifiedRetryableReadsTest extends UnifiedReactiveStreamsTest {
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/retryable-reads");
+        return getTestData("retryable-reads");
     }
 }

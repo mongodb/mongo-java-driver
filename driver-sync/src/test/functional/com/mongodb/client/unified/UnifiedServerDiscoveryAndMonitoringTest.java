@@ -22,6 +22,6 @@ import java.util.Collection;
 
 public final class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() {
-        return getTestData("unified-test-format/server-discovery-and-monitoring");
+        return getTestData("server-discovery-and-monitoring");
     }
 }
