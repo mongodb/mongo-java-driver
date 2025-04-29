@@ -26,16 +26,27 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.channels.InterruptedByTimeoutException;
+import java.nio.channels.SocketChannel;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.assertions.Assertions.assertTrue;
+import static java.lang.String.format;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.verify;
 
 class TlsChannelStreamFunctionalTest {
     private static final SslSettings SSL_SETTINGS = SslSettings.builder().enabled(true).build();
@@ -50,16 +61,22 @@ class TlsChannelStreamFunctionalTest {
     }
 
     @AfterEach
+    @SuppressWarnings("try")
     void cleanUp() throws IOException {
-        try (ServerSocket ignore = serverSocket) {
+        try (ServerSocket ignored = serverSocket) {
+            //ignored
         }
     }
 
     @ParameterizedTest
     @ValueSource(ints = {500, 1000, 2000})
-    void shouldInterruptConnectionEstablishmentWhenConnectionTimeoutExpires(final int connectTimeout) {
+    void shouldInterruptConnectionEstablishmentWhenConnectionTimeoutExpires(final int connectTimeout) throws IOException {
         //given
-        try (TlsChannelStreamFactoryFactory factory = new TlsChannelStreamFactoryFactory(new DefaultInetAddressResolver())) {
+        try (TlsChannelStreamFactoryFactory factory = new TlsChannelStreamFactoryFactory(new DefaultInetAddressResolver());
+             MockedStatic<SocketChannel> socketChannelMockedStatic = Mockito.mockStatic(SocketChannel.class)) {
+            SingleResultSpyCaptor<SocketChannel> singleResultSpyCaptor = new SingleResultSpyCaptor<>();
+            socketChannelMockedStatic.when(SocketChannel::open).thenAnswer(singleResultSpyCaptor);
+
             StreamFactory streamFactory = factory.create(SocketSettings.builder()
                     .connectTimeout(connectTimeout, TimeUnit.MILLISECONDS)
                     .build(), SSL_SETTINGS);
@@ -75,39 +92,72 @@ class TlsChannelStreamFunctionalTest {
 
             //then
             long elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - connectOpenStart);
-            long diff = elapsedMs - connectTimeout;
-            // Allowed difference, with test overhead setup is 300MS.
-            int epsilonMs = 300;
+            // Allow for some timing imprecision due to test overhead.
+            int maximumAcceptableTimeoutOvershoot = 300;
 
             assertInstanceOf(InterruptedByTimeoutException.class, mongoSocketOpenException.getCause(),
                     "Actual cause: " + mongoSocketOpenException.getCause());
-            assertFalse(diff < 0,
-                    String.format("Connection timed-out sooner than expected. Difference: %d ms", diff));
-            assertTrue(diff < epsilonMs,
-                    String.format("Elapsed time %d ms should be within %d ms of the connect timeout", elapsedMs, epsilonMs));
+            assertFalse(connectTimeout > elapsedMs,
+                    format("Connection timed-out sooner than expected. ConnectTimeoutMS: %d, elapsedMs: %d", connectTimeout, elapsedMs));
+            assertTrue(elapsedMs - connectTimeout < maximumAcceptableTimeoutOvershoot,
+                    format("Connection timeout overshoot time %d ms should be within %d ms", elapsedMs - connectTimeout,
+                            maximumAcceptableTimeoutOvershoot));
+
+            SocketChannel actualSpySocketChannel = singleResultSpyCaptor.getResult();
+            assertNotNull(actualSpySocketChannel, "SocketChannel was not opened");
+            verify(actualSpySocketChannel, atLeast(1)).close();
         }
     }
 
     @ParameterizedTest
     @ValueSource(ints = {0, 500, 1000, 2000})
-    void shouldEstablishConnection(final int connectTimeout) throws IOException {
+    void shouldEstablishConnection(final int connectTimeout) throws IOException, InterruptedException {
         //given
-        try (TlsChannelStreamFactoryFactory factory = new TlsChannelStreamFactoryFactory(new DefaultInetAddressResolver())) {
+        try (TlsChannelStreamFactoryFactory factory = new TlsChannelStreamFactoryFactory(new DefaultInetAddressResolver());
+             MockedStatic<SocketChannel> socketChannelMockedStatic = Mockito.mockStatic(SocketChannel.class)) {
+            SingleResultSpyCaptor<SocketChannel> singleResultSpyCaptor = new SingleResultSpyCaptor<>();
+            socketChannelMockedStatic.when(SocketChannel::open).thenAnswer(singleResultSpyCaptor);
+
             StreamFactory streamFactory = factory.create(SocketSettings.builder()
                     .connectTimeout(connectTimeout, TimeUnit.MILLISECONDS)
                     .build(), SSL_SETTINGS);
 
-            Stream stream = streamFactory.create(new ServerAddress("localhost", port));
+            Stream stream = streamFactory.create(new ServerAddress(serverSocket.getInetAddress(), port));
             try {
                 //when
                 stream.open(OperationContext.simpleOperationContext(
                         new TimeoutContext(TimeoutSettings.DEFAULT.withConnectTimeoutMS(connectTimeout))));
 
                 //then
+                SocketChannel actualSpySocketChannel = singleResultSpyCaptor.getResult();
+                assertNotNull(actualSpySocketChannel, "SocketChannel was not opened");
+                assertTrue(actualSpySocketChannel.isConnected());
+
+                // Wait to verify that socket was not closed by timeout.
+                SECONDS.sleep(3);
+                assertTrue(actualSpySocketChannel.isConnected());
                 assertFalse(stream.isClosed());
             } finally {
                 stream.close();
             }
+        }
+    }
+
+    private static final class SingleResultSpyCaptor<T> implements Answer<T> {
+        private volatile T result = null;
+
+        public T getResult() {
+            return result;
+        }
+
+        @Override
+        public T answer(InvocationOnMock invocationOnMock) throws Throwable {
+            if (result != null) {
+                fail(invocationOnMock.getMethod().getName() + " was called more then once");
+            }
+            T returnedValue = (T) invocationOnMock.callRealMethod();
+            result = Mockito.spy(returnedValue);
+            return result;
         }
     }
 }
