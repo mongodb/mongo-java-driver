@@ -81,7 +81,7 @@ class TlsChannelStreamFunctionalTest {
             assertInstanceOf(InterruptedByTimeoutException.class, mongoSocketOpenException.getCause());
             assertFalse(connectTimeoutMs > elapsedMs,
                     format("Connection timed-out sooner than expected. ConnectTimeoutMS: %d, elapsedMs: %d", connectTimeoutMs, elapsedMs));
-            assertTrue(elapsedMs - connectTimeoutMs < maximumAcceptableTimeoutOvershoot,
+            assertTrue(elapsedMs - connectTimeoutMs <= maximumAcceptableTimeoutOvershoot,
                     format("Connection timeout overshoot time %d ms should be within %d ms", elapsedMs - connectTimeoutMs,
                             maximumAcceptableTimeoutOvershoot));
 
