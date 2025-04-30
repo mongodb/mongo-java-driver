@@ -220,8 +220,9 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
 
   /**
    * Aggregates documents to a collection according to the specified map-reduce function with the given options, which must not produce
-   * results inline. Calling this method and then subscribing to the returned [[SingleObservable]] is a preferred alternative to
-   * subscribing to this [[MapReduceObservable]].
+   * results inline. Calling this method and then subscribing to the returned [[SingleObservable]] is the preferred alternative to
+   * subscribing to this [[MapReduceObservable]],
+   * because this method does what is explicitly requested without executing implicit operations.
    *
    * @return an Observable that indicates when the operation has completed
    * [[https://www.mongodb.com/docs/manual/aggregation/ Aggregation]]

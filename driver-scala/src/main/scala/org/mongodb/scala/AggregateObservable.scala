@@ -195,7 +195,8 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
   /**
    * Aggregates documents according to the specified aggregation pipeline, which must end with an `\$out` or `\$merge` stage.
    * Calling this method and then `subscribing` to the returned [[SingleObservable]]
-   * is a preferred alternative to subscribing to this [[AggregateObservable]].
+   * is the preferred alternative to subscribing to this [[AggregateObservable]],
+   * because this method does what is explicitly requested without executing implicit operations.
    *
    * [[https://www.mongodb.com/docs/manual/aggregation/ Aggregation]]
    *

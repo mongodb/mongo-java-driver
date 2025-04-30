@@ -90,7 +90,8 @@ public interface AggregatePublisher<TResult> extends Publisher<TResult> {
      * Aggregates documents according to the specified aggregation pipeline, which must end with an
      * {@link Aggregates#out(String, String) $out} or {@link Aggregates#merge(MongoNamespace, MergeOptions) $merge} stage.
      * Calling this method and then {@linkplain Publisher#subscribe(Subscriber) subscribing} to the returned {@link Publisher}
-     * is a preferred alternative to {@linkplain #subscribe(Subscriber) subscribing} to this {@link AggregatePublisher}.
+     * is the preferred alternative to {@linkplain #subscribe(Subscriber) subscribing} to this {@link AggregatePublisher},
+     * because this method does what is explicitly requested without executing implicit operations.
      *
      * @throws IllegalStateException if the pipeline does not end with an {@code $out} or {@code $merge} stage
      * @return an empty publisher that indicates when the operation has completed

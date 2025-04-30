@@ -43,7 +43,8 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
     /**
      * Aggregates documents according to the specified aggregation pipeline, which must end with an
      * {@link Aggregates#out(String, String) $out} or {@link Aggregates#merge(MongoNamespace, MergeOptions) $merge} stage.
-     * This method is the preferred alternative to {@link #iterator()}, {@link #cursor()}.
+     * This method is the preferred alternative to {@link #iterator()}, {@link #cursor()},
+     * because this method does what is explicitly requested without executing implicit operations.
      *
      * @throws IllegalStateException if the pipeline does not end with an {@code $out} or {@code $merge} stage
      * @mongodb.driver.manual reference/operator/aggregation/out/ $out stage

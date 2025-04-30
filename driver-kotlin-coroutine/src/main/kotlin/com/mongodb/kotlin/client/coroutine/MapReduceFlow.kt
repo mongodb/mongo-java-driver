@@ -68,7 +68,8 @@ public class MapReduceFlow<T : Any>(private val wrapped: MapReducePublisher<T>) 
 
     /**
      * Aggregates documents to a collection according to the specified map-reduce function with the given options, which
-     * must not emit results inline. Calling this method is a preferred alternative to consuming this [MapReduceFlow].
+     * must not emit results inline. Calling this method is the preferred alternative to consuming this [MapReduceFlow],
+     * because this method does what is explicitly requested without executing implicit operations.
      *
      * @throws IllegalStateException if a collection name to write the results to has not been specified
      * @see collectionName

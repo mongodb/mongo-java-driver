@@ -40,7 +40,8 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
 
     /**
      * Aggregates documents to a collection according to the specified map-reduce function with the given options, which must not produce
-     * results inline. This method is the preferred alternative to {@link #iterator()}, {@link #cursor()}.
+     * results inline. This method is the preferred alternative to {@link #iterator()}, {@link #cursor()},
+     * because this method does what is explicitly requested without executing implicit operations.
      *
      * @throws IllegalStateException if a {@linkplain #collectionName(String) collection name} to write the results to has not been specified
      * @see #collectionName(String)

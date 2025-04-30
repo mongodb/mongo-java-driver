@@ -63,7 +63,8 @@ public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) 
 
     /**
      * Aggregates documents according to the specified aggregation pipeline, which must end with an `$out` or `$merge`
-     * stage. Calling this method is a preferred alternative to consuming this [AggregateFlow].
+     * stage. Calling this method is the preferred alternative to consuming this [AggregateFlow], because this method
+     * does what is explicitly requested without executing implicit operations.
      *
      * @throws IllegalStateException if the pipeline does not end with an `$out` or `$merge` stage
      * @see [$out stage](https://www.mongodb.com/docs/manual/reference/operator/aggregation/out/)
