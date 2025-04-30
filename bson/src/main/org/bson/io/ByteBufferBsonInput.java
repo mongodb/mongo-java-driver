@@ -193,7 +193,7 @@ public class ByteBufferBsonInput implements BsonInput {
 
         // `>>> 3` means dividing without remainder by `Long.BYTES` because `Long.BYTES` is 2^3
         int chunks = (limit - pos) >>> 3;
-        // Process 8 bytes at a time.
+        // Process `Long.BYTES` at a time.
         for (int i = 0; i < chunks; i++) {
             long word = buffer.getLong(pos);
             /*
