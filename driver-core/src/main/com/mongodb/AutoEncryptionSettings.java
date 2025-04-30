@@ -515,7 +515,7 @@ public final class AutoEncryptionSettings {
      * <p>Defaults to {@code null} which defers to libmongocrypt's default which is currently {@code 60000 ms}.
      * Set to {@code 0} to disable key expiration.</p>
      *
-     * @param timeUnit the time unit, which may not be null
+     * @param timeUnit the time unit, which must not be null
      * @return the cache expiration time or null if not set.
      * @since 5.5
      */
