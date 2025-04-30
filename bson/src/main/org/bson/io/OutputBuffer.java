@@ -197,6 +197,14 @@ public abstract class OutputBuffer extends OutputStream implements BsonOutput {
         writeInt64(value);
     }
 
+    /**
+     * Writes the characters of a string to the output buffer as UTF-8 bytes.
+     *
+     * @param str the string to write.
+     * @param checkForNullCharacters if true, check for and disallow null characters in the string.
+     * @return the total number of bytes written.
+     * @throws BsonSerializationException if checkForNullCharacters is true and the string contains a null character.
+     */
     protected int writeCharacters(final String str, final boolean checkForNullCharacters) {
         int len = str.length();
         int total = 0;
