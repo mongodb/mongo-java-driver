@@ -198,7 +198,7 @@ public abstract class OutputBuffer extends OutputStream implements BsonOutput {
     }
 
     /**
-     * Writes the characters of a string to the output buffer as UTF-8 bytes.
+     * Writes the characters of a string to the buffer as UTF-8 bytes.
      *
      * @param str the string to write.
      * @param checkForNullCharacters if true, check for and disallow null characters in the string.
