@@ -193,20 +193,21 @@ public class ByteBufferBsonInput implements BsonInput {
 
         // `>>> 3` means dividing without remainder by `Long.BYTES` because `Long.BYTES` is 2^3
         int chunks = (limit - pos) >>> 3;
-        // Process `Long.BYTES` at a time.
-        for (int i = 0; i < chunks; i++) {
-            long word = buffer.getLong(pos);
+        // `<< 3` means multiplying by `Long.BYTES` because `Long.BYTES` is 2^3
+        int toPos = pos + (chunks << 3);
+        for (; pos < toPos; pos += Long.BYTES) {
+            long chunk = buffer.getLong(pos);
             /*
               Subtract 0x0101010101010101L to cause a borrow on 0x00 bytes.
-              if original byte is 00000000, then 00000000 - 00000001 = 11111111 (borrow causes high bit set to 1).
+              if original byte is 00000000, then 00000000 - 00000001 = 11111111 (borrow causes the MSB set to 1).
              */
-            long mask = word - 0x0101010101010101L;
+            long mask = chunk - 0x0101010101010101L;
             /*
-              mask will only have high bits set iff it was a 0x00 byte (0x00 becomes 0xFF because of the borrow).
-              ~word will have bits that were originally 0 set to 1.
-              mask & ~word will have high bits set iff original byte was 0x00.
+              mask will only have the MSB set iff it was a 0x00 byte (0x00 becomes 0xFF because of the borrow).
+              ~chunk will have bits that were originally 0 set to 1.
+              mask & ~chunk will have the MSB set iff original byte was 0x00.
              */
-            mask &= ~word;
+            mask &= ~chunk;
             /*
                0x8080808080808080:
                10000000 10000000 10000000 10000000 10000000 10000000 10000000 10000000
@@ -214,24 +215,23 @@ public class ByteBufferBsonInput implements BsonInput {
                mask:
                00000000 00000000 11111111 00000000 00000001 00000001 00000000 00000111
 
-               ANDing mask with 0x8080808080808080 isolates the high bit (0x80) in positions where
-               the original byte was 0x00, thereby setting the high bit to 1 only at the 0x00 byte position.
+               ANDing mask with 0x8080808080808080 isolates the MSB (0x80) in positions where
+               the original byte was 0x00, thereby setting the MSB to 1 only at the 0x00 byte position.
 
                result:
                00000000 00000000 10000000 00000000 00000000 00000000 00000000 00000000
                                  ^^^^^^^^
-               The high bit is set only at the 0x00 byte position.
+               The MSB is set only at the 0x00 byte position.
              */
             mask &= 0x8080808080808080L;
             if (mask != 0) {
                 /*
-                 *  Performing >>> 3 (i.e., dividing by 8) gives the byte offset from the least significant bit (LSB).
+                 *  Performing >>> 3 (i.e., dividing by 8) gives the byte offset from the LSB.
                  */
                 int offset = Long.numberOfTrailingZeros(mask) >>> 3;
                 // Find the NULL terminator at pos + offset
                 return (pos - prevPos) + offset + 1;
             }
-            pos += 8;
         }
 
         // Process remaining bytes one by one.
