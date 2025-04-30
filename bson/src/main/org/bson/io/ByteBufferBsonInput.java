@@ -199,13 +199,13 @@ public class ByteBufferBsonInput implements BsonInput {
             long chunk = buffer.getLong(pos);
             /*
               Subtract 0x0101010101010101L to cause a borrow on 0x00 bytes.
-              if original byte is 00000000, then 00000000 - 00000001 = 11111111 (borrow causes the MSB set to 1).
+              if original byte is 00000000, then 00000000 - 00000001 = 11111111 (borrow causes the MSb set to 1).
              */
             long mask = chunk - 0x0101010101010101L;
             /*
-              mask will only have the MSB set iff it was a 0x00 byte (0x00 becomes 0xFF because of the borrow).
+              mask will only have the MSb set iff it was a 0x00 byte (0x00 becomes 0xFF because of the borrow).
               ~chunk will have bits that were originally 0 set to 1.
-              mask & ~chunk will have the MSB set iff original byte was 0x00.
+              mask & ~chunk will have the MSb set iff original byte was 0x00.
              */
             mask &= ~chunk;
             /*
@@ -215,18 +215,24 @@ public class ByteBufferBsonInput implements BsonInput {
                mask:
                00000000 00000000 11111111 00000000 00000001 00000001 00000000 00000111
 
-               ANDing mask with 0x8080808080808080 isolates the MSB (0x80) in positions where
-               the original byte was 0x00, thereby setting the MSB to 1 only at the 0x00 byte position.
+               ANDing mask with 0x8080808080808080 isolates the MSb (0x80) in positions where
+               the original byte was 0x00, thereby setting the MSb to 1 only at the 0x00 byte position.
 
                result:
                00000000 00000000 10000000 00000000 00000000 00000000 00000000 00000000
                                  ^^^^^^^^
-               The MSB is set only at the 0x00 byte position.
+               The MSb is set only at the 0x00 byte position.
              */
             mask &= 0x8080808080808080L;
             if (mask != 0) {
                 /*
-                 *  Performing >>> 3 (i.e., dividing by 8) gives the byte offset from the LSB.
+                The UTF-8 data is endian-independent and stored in left-to-right order in the buffer, with the first byte at the lowest index.
+                After calling getLong() in little-endian mode, the first UTF-8 byte ends up in the least significant byte of the long (bits 0–7),
+                and the last one in the most significant byte (bits 56–63).
+
+                numberOfTrailingZeros scans from the least significant bit (LSb), which aligns with the position of the first UTF-8 byte.
+                We then use >>> 3, which means dividing without remainder by Long.BYTES because Long.BYTES is 2^3, computing the byte offset
+                of the NULL terminator in the original UTF-8 data.
                  */
                 int offset = Long.numberOfTrailingZeros(mask) >>> 3;
                 // Find the NULL terminator at pos + offset
