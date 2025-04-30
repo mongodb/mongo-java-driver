@@ -205,7 +205,7 @@ public class ByteBufferBsonInput implements BsonInput {
             /*
               mask will only have the most significant bit set iff it was a 0x00 byte (0x00 becomes 0xFF because of the borrow).
               ~chunk will have bits that were originally 0 set to 1.
-              mask & ~chunk will have the most significant bit set iff original byte was 0x00.
+              mask & ~chunk will have the most significant bit in each byte set iff original byte was 0x00.
              */
             mask &= ~chunk;
             /*
