@@ -188,7 +188,7 @@ public class ByteBufferBsonInput implements BsonInput {
      * <a href="https://en.wikipedia.org/wiki/SWAR">
      */
     private int computeCStringLength(final int prevPos) {
-        int pos = buffer.position();
+        int pos = prevPos;
         int limit = buffer.limit();
 
         int chunks = (limit - pos) >>> 3;
