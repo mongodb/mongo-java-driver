@@ -138,7 +138,7 @@ public final class ClientEncryptionSettings {
 
         /**
          * The cache expiration time for data encryption keys.
-         * <p>Defaults to {@code null} which defers to libmongocrypt's default which is currently 60000. Set to 0 to disable key expiration.</p>
+         * <p>Defaults to {@code null} which defers to libmongocrypt's default which is currently 60000 ms. Set to 0 to disable key expiration.</p>
          *
          * @param keyExpiration the cache expiration time in milliseconds or null to use libmongocrypt's default.
          * @param timeUnit the time unit
