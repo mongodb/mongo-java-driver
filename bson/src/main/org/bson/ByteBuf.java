@@ -122,14 +122,14 @@ public interface ByteBuf  {
      * Writes the given int value into this buffer at the current position,
      * using the current byte order, and increments the position by 4.
      *
-     * @param b the int value to be written
+     * @param value the int value to be written
      * @param index the index at which the int will be written
      * @return this buffer
      * @throws java.nio.BufferOverflowException if there are fewer than 4 bytes remaining in this buffer
      * @throws java.nio.ReadOnlyBufferException if this buffer is read-only
      * @since 5.4
      */
-    ByteBuf putInt(int index, int b);
+    ByteBuf putInt(int index, int value);
 
     /**
      * Writes the given double value into this buffer at the current position,
