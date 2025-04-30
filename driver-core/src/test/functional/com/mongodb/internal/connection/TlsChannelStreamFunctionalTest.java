@@ -137,6 +137,7 @@ class TlsChannelStreamFunctionalTest {
             if (result != null) {
                 fail(invocationOnMock.getMethod().getName() + " was called more then once");
             }
+            @SuppressWarnings("unchecked")
             T returnedValue = (T) invocationOnMock.callRealMethod();
             result = Mockito.spy(returnedValue);
             return result;
