@@ -38,7 +38,8 @@ import reactor.core.publisher.Mono
 class MapReduceFlowTest {
     @Test
     fun shouldHaveTheSameMethods() {
-        val jMapReducePublisherFunctions = MapReducePublisher::class.declaredFunctions.map { it.name }.toSet() - "first"
+        val jMapReducePublisherFunctions =
+            MapReducePublisher::class.declaredFunctions.map { it.name }.toSet() - "first" - "subscribe"
         val kMapReduceFlowFunctions = MapReduceFlow::class.declaredFunctions.map { it.name }.toSet() - "collect"
 
         assertEquals(jMapReducePublisherFunctions, kMapReduceFlowFunctions)
