@@ -164,8 +164,6 @@ public final class UnifiedTestModifications {
                 .when(() -> def.isReactive() && UnifiedTest.Language.KOTLIN.equals(def.getLanguage()))
                 .file("crud", "findOne");
 
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5827")
-                        .file("crud", "bypassDocumentValidation");
         def.skipNoncompliant("Updates and Replace bulk operations are split in the java driver")
                         .file("crud", "bulkWrite-comment");
 
