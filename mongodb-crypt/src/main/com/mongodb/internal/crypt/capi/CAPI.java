@@ -487,6 +487,17 @@ public class CAPI {
     mongocrypt_setopt_bypass_query_analysis (mongocrypt_t crypt);
 
     /**
+     * Set the expiration time for the data encryption key cache. Defaults to 60 seconds if not set.
+     *
+     * @param crypt The @ref mongocrypt_t object to update
+     * @param cache_expiration_ms if 0 the cache never expires
+     * @return A boolean indicating success. If false, an error status is set.
+     * @since 5.4
+     */
+    public static native boolean
+    mongocrypt_setopt_key_expiration (mongocrypt_t crypt, long cache_expiration_ms);
+
+    /**
      * Opt-into enabling sending multiple collection info documents.
      *
      * @param crypt The @ref mongocrypt_t object to update

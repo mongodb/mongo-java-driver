@@ -1198,6 +1198,15 @@ public class JsonPoweredCrudTestHelper {
         }
     }
 
+    BsonDocument wait(final BsonDocument options, final BsonDocument rawArguments, @Nullable final ClientSession clientSession) {
+        try {
+            Thread.sleep(rawArguments.getNumber("ms").longValue());
+            return new BsonDocument();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     Collation getCollation(final BsonDocument bsonCollation) {
         Collation.Builder builder = Collation.builder();
         if (bsonCollation.containsKey("locale")) {

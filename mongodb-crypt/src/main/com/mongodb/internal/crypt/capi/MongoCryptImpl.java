@@ -67,6 +67,7 @@ import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_crypto_hook
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_crypto_hooks;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_enable_multiple_collinfo;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_encrypted_field_config_map;
+import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_key_expiration;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_kms_provider_aws;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_kms_provider_local;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_kms_providers;
@@ -192,6 +193,11 @@ class MongoCryptImpl implements MongoCrypt {
 
         if (options.isBypassQueryAnalysis()) {
             mongocrypt_setopt_bypass_query_analysis(wrapped);
+        }
+
+        Long keyExpirationMS = options.getKeyExpirationMS();
+        if (keyExpirationMS != null) {
+            configure(() -> mongocrypt_setopt_key_expiration(wrapped, keyExpirationMS));
         }
 
         if (options.getEncryptedFieldsMap() != null) {
