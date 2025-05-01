@@ -62,9 +62,11 @@ public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) 
     public fun timeoutMode(timeoutMode: TimeoutMode): AggregateFlow<T> = apply { wrapped.timeoutMode(timeoutMode) }
 
     /**
-     * Aggregates documents according to the specified aggregation pipeline, which must end with a $out or $merge stage.
+     * Aggregates documents according to the specified aggregation pipeline, which must end with an `$out` or `$merge`
+     * stage. Calling this method is the preferred alternative to consuming this [AggregateFlow], because this method
+     * does what is explicitly requested without executing implicit operations.
      *
-     * @throws IllegalStateException if the pipeline does not end with a $out or $merge stage
+     * @throws IllegalStateException if the pipeline does not end with an `$out` or `$merge` stage
      * @see [$out stage](https://www.mongodb.com/docs/manual/reference/operator/aggregation/out/)
      * @see [$merge stage](https://www.mongodb.com/docs/manual/reference/operator/aggregation/merge/)
      */
@@ -214,5 +216,11 @@ public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) 
     public suspend inline fun <reified R : Any> explain(verbosity: ExplainVerbosity? = null): R =
         explain(R::class.java, verbosity)
 
+    /**
+     * Requests [AggregateFlow] to start streaming data according to the specified aggregation pipeline.
+     * - If the aggregation pipeline ends with an `$out` or `$merge` stage, then finds all documents in the affected
+     *   namespace and emits them. You may want to use [toCollection] instead.
+     * - Otherwise, emits no values.
+     */
     public override suspend fun collect(collector: FlowCollector<T>): Unit = wrapped.asFlow().collect(collector)
 }
