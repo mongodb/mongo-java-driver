@@ -72,6 +72,10 @@ public final class UnifiedTestModifications {
                 .test("client-side-operations-timeout", "timeoutMS behaves correctly for tailable awaitData cursors",
                       "apply remaining timeoutMS if less than maxAwaitTimeMS");
 
+        def.skipNoncompliantReactive("No good way to fulfill tryNext() requirement with a Publisher<T>")
+                .test("client-side-operations-timeout", "timeoutMS behaves correctly for tailable awaitData cursors",
+                        "apply maxAwaitTimeMS if less than remaining timeout");
+
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5839")
                 .test("client-side-operations-timeout", "timeoutMS behaves correctly for GridFS download operations",
                       "timeoutMS applied to entire download, not individual parts");
