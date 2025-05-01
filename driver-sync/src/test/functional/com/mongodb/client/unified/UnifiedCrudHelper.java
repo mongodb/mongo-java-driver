@@ -1381,10 +1381,10 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         // In Java driver there is a separate method for creating a view, but in the unified test CRUD format
         // views and collections are both created with the createCollection operation. We use the createView
         // method if the requisite arguments are present.
-        if (arguments.containsKey("viewOn") && arguments.containsKey("pipeline")) {
+        if (arguments.containsKey("viewOn")) {
             String viewOn = arguments.getString("viewOn").getValue();
             List<BsonDocument> pipeline =
-                    arguments.getArray("pipeline").stream().map(BsonValue::asDocument).collect(toList());
+                    arguments.getArray("pipeline", new BsonArray()).stream().map(BsonValue::asDocument).collect(toList());
 
             for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
                 switch (cur.getKey()) {

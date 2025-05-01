@@ -63,9 +63,6 @@ public final class UnifiedTestModifications {
                 .test("change-streams", "change-streams-errors", "Change Stream should error when an invalid aggregation stage is passed in")
                 .test("change-streams", "change-streams-errors", "The watch helper must not throw a custom exception when executed against a single server topology, but instead depend on a server error");
 
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5769")
-                .test("change-streams", "change-streams-nsType", "nsType is present when creating views");
-
         // client-side-operation-timeout (CSOT)
 
         def.skipNoncompliantReactive("No good way to fulfill tryNext() requirement with a Publisher<T>")
