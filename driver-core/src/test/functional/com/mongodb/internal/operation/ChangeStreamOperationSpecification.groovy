@@ -209,6 +209,8 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         waitForLastRelease(getCluster())
     }
 
+    // TODO undo skip and update for JAVA-5835
+    @IgnoreIf({ !serverVersionLessThan(8, 0) })
     def 'should decode update to ChangeStreamDocument '() {
         given:
         def helper = getHelper()
