@@ -108,6 +108,9 @@ public final class UnifiedTestModifications {
                 .test("command-logging-and-monitoring/tests/monitoring", "find",
                       "A successful find event with a getmore and the server kills the cursor (<= 4.4)");
 
+        def.skipNoncompliant("The driver doesn't reduce the batchSize for the getMore")
+                .test("atlas-data-lake-testing", "getMore", "A successful find event with getMore");
+
         // connection-monitoring-and-pooling
 
         // TODO-JAVA-5711 reason, jira
