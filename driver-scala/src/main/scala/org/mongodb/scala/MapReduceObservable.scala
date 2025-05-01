@@ -23,11 +23,15 @@ import com.mongodb.client.model.MapReduceAction
 import com.mongodb.reactivestreams.client.MapReducePublisher
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Collation
+import org.reactivestreams.Subscriber
 
 import scala.concurrent.duration.Duration
 
 /**
  * Observable for map reduce.
+ *
+ * By default, the [[MapReduceObservable]] produces the results inline. You can write map-reduce output to a collection by using the
+ * [[collectionName]] and [[toCollection]] methods.
  *
  * @define docsRef https://www.mongodb.com/docs/manual/reference
  *
@@ -44,6 +48,7 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
    *
    * @param collectionName the name of the collection that you want the map-reduce operation to write its output.
    * @return this
+   * @see [[toCollection]]
    */
   def collectionName(collectionName: String): MapReduceObservable[TResult] = {
     wrapped.collectionName(collectionName)
@@ -214,11 +219,15 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
   }
 
   /**
-   * Aggregates documents to a collection according to the specified map-reduce function with the given options, which must specify a
-   * non-inline result.
+   * Aggregates documents to a collection according to the specified map-reduce function with the given options, which must not produce
+   * results inline. Calling this method and then subscribing to the returned [[SingleObservable]] is the preferred alternative to
+   * subscribing to this [[MapReduceObservable]],
+   * because this method does what is explicitly requested without executing implicit operations.
    *
    * @return an Observable that indicates when the operation has completed
    * [[https://www.mongodb.com/docs/manual/aggregation/ Aggregation]]
+   * @throws java.lang.IllegalStateException if a collection name to write the results to has not been specified
+   * @see [[collectionName]]
    */
   def toCollection(): SingleObservable[Unit] = wrapped.toCollection()
 
@@ -246,5 +255,21 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
    */
   def first(): SingleObservable[TResult] = wrapped.first()
 
+  /**
+   * Requests [[MapReduceObservable]] to start streaming data according to the specified map-reduce function with the given options.
+   *
+   *  - If the aggregation produces results inline, then finds all documents in the
+   *    affected namespace and produces them. You may want to use [[toCollection]] instead.
+   *  - Otherwise, produces no elements.
+   */
   override def subscribe(observer: Observer[_ >: TResult]): Unit = wrapped.subscribe(observer)
+
+  /**
+   * Requests [[MapReduceObservable]] to start streaming data according to the specified map-reduce function with the given options.
+   *
+   *  - If the aggregation produces results inline, then finds all documents in the
+   *    affected namespace and produces them. You may want to use [[toCollection]] instead.
+   *  - Otherwise, produces no elements.
+   */
+  override def subscribe(observer: Subscriber[_ >: TResult]): Unit = wrapped.subscribe(observer)
 }

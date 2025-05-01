@@ -638,6 +638,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 case "arrayFilters":
                     options.arrayFilters(cur.getValue().asArray().stream().map(BsonValue::asDocument).collect(toList()));
                     break;
+                case "bypassDocumentValidation":
+                    options.bypassDocumentValidation(cur.getValue().asBoolean().getValue());
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -713,6 +716,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                     break;
                 case "collation":
                     options.collation(asCollation(cur.getValue().asDocument()));
+                    break;
+                case "bypassDocumentValidation":
+                    options.bypassDocumentValidation(cur.getValue().asBoolean().getValue());
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -830,6 +836,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                         break;
                     case "maxAwaitTimeMS":
                         iterable.maxAwaitTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                        break;
+                    case "bypassDocumentValidation":
+                        iterable.bypassDocumentValidation(cur.getValue().asBoolean().getValue());
                         break;
                     default:
                         throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -981,6 +990,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 case "comment":
                     options.comment(cur.getValue());
                     break;
+                case "bypassDocumentValidation":
+                    options.bypassDocumentValidation(cur.getValue().asBoolean().getValue());
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -1017,6 +1029,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                     break;
                 case "comment":
                     options.comment(cur.getValue());
+                    break;
+                case "bypassDocumentValidation":
+                    options.bypassDocumentValidation(cur.getValue().asBoolean().getValue());
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -1061,6 +1076,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                     break;
                 case "let":
                     options.let(cur.getValue().asDocument());
+                    break;
+                case "bypassDocumentValidation":
+                    options.bypassDocumentValidation(cur.getValue().asBoolean().getValue());
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -1192,6 +1210,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 case "sort":
                     options.sort(cur.getValue().asDocument());
                     break;
+                case "bypassDocumentValidation":
+                    options.bypassDocumentValidation(cur.getValue().asBoolean().getValue());
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -1228,6 +1249,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                     break;
                 case "sort":
                     options.sort(cur.getValue().asDocument());
+                    break;
+                case "bypassDocumentValidation":
+                    options.bypassDocumentValidation(cur.getValue().asBoolean().getValue());
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -1357,10 +1381,10 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         // In Java driver there is a separate method for creating a view, but in the unified test CRUD format
         // views and collections are both created with the createCollection operation. We use the createView
         // method if the requisite arguments are present.
-        if (arguments.containsKey("viewOn") && arguments.containsKey("pipeline")) {
+        if (arguments.containsKey("viewOn")) {
             String viewOn = arguments.getString("viewOn").getValue();
             List<BsonDocument> pipeline =
-                    arguments.getArray("pipeline").stream().map(BsonValue::asDocument).collect(toList());
+                    arguments.getArray("pipeline", new BsonArray()).stream().map(BsonValue::asDocument).collect(toList());
 
             for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
                 switch (cur.getKey()) {

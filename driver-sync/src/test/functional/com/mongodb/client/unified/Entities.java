@@ -754,6 +754,9 @@ public final class Entities {
                 case "kmsProviders":
                     builder.kmsProviders(createKmsProvidersMap(entry.getValue().asDocument()));
                     break;
+                case "keyExpirationMS":
+                    builder.keyExpiration(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported client encryption option: " + entry.getKey());
             }
