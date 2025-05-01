@@ -210,7 +210,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
     }
 
     // TODO undo skip and update for JAVA-5835
-    @IgnoreIf({ !serverVersionLessThan(8, 0) })
+    @IgnoreIf({ !serverVersionLessThan(8, 2) })
     def 'should decode update to ChangeStreamDocument '() {
         given:
         def helper = getHelper()
