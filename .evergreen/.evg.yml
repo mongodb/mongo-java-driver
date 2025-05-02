@@ -836,7 +836,7 @@ functions:
             git commit --allow-empty -m "add files"
             # uncompressed tar used to allow appending .git folder
             export K8S_DRIVERS_TAR_FILE=/tmp/mongo-java-driver.tar
-            git archive --recursive -o $K8S_DRIVERS_TAR_FILE HEAD
+            git archive -o $K8S_DRIVERS_TAR_FILE HEAD
             tar -rf $K8S_DRIVERS_TAR_FILE .git
             # Loop through all submodule directories and append to the archive
             git submodule foreach --recursive '
