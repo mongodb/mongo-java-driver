@@ -838,6 +838,11 @@ functions:
             export K8S_DRIVERS_TAR_FILE=/tmp/mongo-java-driver.tar
             git archive --recursive -o $K8S_DRIVERS_TAR_FILE HEAD
             tar -rf $K8S_DRIVERS_TAR_FILE .git
+            # Loop through all submodule directories and append to the archive
+            git submodule foreach --recursive '
+            echo "Appending submodule $path to archive"
+            tar -rf $K8S_DRIVERS_TAR_FILE $path
+            '
             export K8S_TEST_CMD="OIDC_ENV=k8s VARIANT=${VARIANT} ./.evergreen/run-mongodb-oidc-test.sh"
             bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/setup-pod.sh
             bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/run-self-test.sh
