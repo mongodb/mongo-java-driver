@@ -134,6 +134,7 @@ public class ByteBufferBsonInput implements BsonInput {
 
     @Override
     public String readCString() {
+        ensureOpen();
         int size = computeCStringLength(buffer.position());
         return readString(size);
     }
@@ -182,11 +183,64 @@ public class ByteBufferBsonInput implements BsonInput {
         buffer.position(pos + length);
     }
 
+    /**
+     * Detects the position of the first NULL (0x00) byte in a 64-bit word using SWAR technique.
+     * <a href="https://en.wikipedia.org/wiki/SWAR">
+     */
     private int computeCStringLength(final int prevPos) {
-        ensureOpen();
-        int pos = buffer.position();
+        int pos = prevPos;
         int limit = buffer.limit();
 
+        // `>>> 3` means dividing without remainder by `Long.BYTES` because `Long.BYTES` is 2^3
+        int chunks = (limit - pos) >>> 3;
+        // `<< 3` means multiplying by `Long.BYTES` because `Long.BYTES` is 2^3
+        int toPos = pos + (chunks << 3);
+        for (; pos < toPos; pos += Long.BYTES) {
+            long chunk = buffer.getLong(pos);
+            /*
+              Subtract 0x0101010101010101L to cause a borrow on 0x00 bytes.
+              if original byte is 00000000, then 00000000 - 00000001 = 11111111 (borrow causes the most significant bit set to 1).
+             */
+            long mask = chunk - 0x0101010101010101L;
+            /*
+              mask will only have the most significant bit in each byte set iff it was a 0x00 byte (0x00 becomes 0xFF because of the borrow).
+              ~chunk will have bits that were originally 0 set to 1.
+              mask & ~chunk will have the most significant bit in each byte set iff original byte was 0x00.
+             */
+            mask &= ~chunk;
+            /*
+               0x8080808080808080:
+               10000000 10000000 10000000 10000000 10000000 10000000 10000000 10000000
+
+               mask:
+               00000000 00000000 11111111 00000000 00000001 00000001 00000000 00000111
+
+               ANDing mask with 0x8080808080808080 isolates the most significant bit in each byte where
+               the original byte was 0x00, thereby setting the most significant bit to 1 in each 0x00 original byte.
+
+               result:
+               00000000 00000000 10000000 00000000 00000000 00000000 00000000 00000000
+                                 ^^^^^^^^
+               The most significant bit is set in each 0x00 byte, and only there.
+             */
+            mask &= 0x8080808080808080L;
+            if (mask != 0) {
+                /*
+                The UTF-8 data is endian-independent and stored in left-to-right order in the buffer, with the first byte at the lowest index.
+                After calling getLong() in little-endian mode, the first UTF-8 byte ends up in the least significant byte of the long (bits 0–7),
+                and the last one in the most significant byte (bits 56–63).
+
+                numberOfTrailingZeros scans from the least significant bit, which aligns with the position of the first UTF-8 byte.
+                We then use >>> 3, which means dividing without remainder by Long.BYTES because Long.BYTES is 2^3, computing the byte offset
+                of the NULL terminator in the original UTF-8 data.
+                 */
+                int offset = Long.numberOfTrailingZeros(mask) >>> 3;
+                // Find the NULL terminator at pos + offset
+                return (pos - prevPos) + offset + 1;
+            }
+        }
+
+        // Process remaining bytes one by one.
         while (pos < limit) {
             if (buffer.get(pos++) == 0) {
                 return (pos - prevPos);
