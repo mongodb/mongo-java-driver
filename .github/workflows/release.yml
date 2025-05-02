@@ -55,9 +55,9 @@ jobs:
 
       - name: "Ensure current snapshot version matches release version"
         run: |
-          grep -q "version = '${{ env.RELEASE_VERSION_WITHOUT_SUFFIX }}-SNAPSHOT'" build.gradle.kts
+          grep -q "version='${{ env.RELEASE_VERSION_WITHOUT_SUFFIX }}-SNAPSHOT'" gradle.properties
           if [[ $? != 0 ]]; then
-            echo '❌ Release failed: version in build.gradle.kts is not a snapshot for release version ${{ inputs.version }}' >> $GITHUB_STEP_SUMMARY
+            echo '❌ Release failed: version in gradle.properties is not a snapshot for release version ${{ inputs.version }}' >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
 
@@ -110,7 +110,7 @@ jobs:
           git push origin ${{ github.ref_name }}
           git checkout ${{ env.RELEASE_BRANCH }}
 
-      # This step bumps version numbers in build.gradle.kts and creates git artifacts for the release
+      # This step bumps version numbers in gradle.properties and creates git artifacts for the release
       - name: "Bump version numbers and create release tag"
         run: .github/workflows/bump-and-tag.sh "${{ env.RELEASE_VERSION_WITHOUT_SUFFIX }}" "${{ env.RELEASE_VERSION }}" "${{ env.NEXT_VERSION }}"
 
