@@ -249,11 +249,7 @@ class ByteBufSpecification extends Specification {
         @Override
         ByteBuf getBuffer(final int size) {
             io.netty.buffer.ByteBuf buffer = allocator.directBuffer(size, size)
-            try {
-                new NettyByteBuf(buffer.retain())
-            } finally {
-                buffer.release();
-            }
+            new NettyByteBuf(buffer)
         }
     }
 }

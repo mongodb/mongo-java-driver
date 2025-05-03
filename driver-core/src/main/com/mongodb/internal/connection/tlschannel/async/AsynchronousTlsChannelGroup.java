@@ -823,4 +823,13 @@ public class AsynchronousTlsChannelGroup {
     public long getCurrentRegistrationCount() {
         return registrations.mappingCount();
     }
+
+    /**
+     * Returns the timeout executor used by this channel group.
+     *
+     * @return the timeout executor
+     */
+    public ScheduledThreadPoolExecutor getTimeoutExecutor() {
+        return timeoutExecutor;
+    }
 }

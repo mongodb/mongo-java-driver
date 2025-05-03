@@ -42,12 +42,12 @@ public interface ByteBuf  {
      * <p>Writes the given byte into this buffer at the given index. </p>
      *
      * @param index The index at which the byte will be written
-     * @param b     The byte value to be written
+     * @param value     The byte value to be written
      * @return This buffer
      * @throws IndexOutOfBoundsException        If {@code index} is negative or not smaller than the buffer's limit
      * @throws java.nio.ReadOnlyBufferException If this buffer is read-only
      */
-    ByteBuf put(int index, byte b);
+    ByteBuf put(int index, byte value);
 
     /**
      * Returns the number of elements between the current position and the limit.
@@ -99,12 +99,61 @@ public interface ByteBuf  {
      *
      * <p>Writes the given byte into this buffer at the current position, and then increments the position. </p>
      *
-     * @param b The byte to be written
+     * @param value The byte to be written
      * @return This buffer
      * @throws java.nio.BufferOverflowException If this buffer's current position is not smaller than its limit
      * @throws java.nio.ReadOnlyBufferException If this buffer is read-only
      */
-    ByteBuf put(byte b);
+    ByteBuf put(byte value);
+
+    /**
+     * Writes the given int value into this buffer at the current position,
+     * using the current byte order, and increments the position by 4.
+     *
+     * @param value the int value to be written
+     * @return this buffer
+     * @throws java.nio.BufferOverflowException if there are fewer than 4 bytes remaining in this buffer
+     * @throws java.nio.ReadOnlyBufferException if this buffer is read-only
+     * @since 5.4
+     */
+    ByteBuf putInt(int value);
+
+    /**
+     * Writes the given int value into this buffer at the current position,
+     * using the current byte order, and increments the position by 4.
+     *
+     * @param value the int value to be written
+     * @param index the index at which the int will be written
+     * @return this buffer
+     * @throws java.nio.BufferOverflowException if there are fewer than 4 bytes remaining in this buffer
+     * @throws java.nio.ReadOnlyBufferException if this buffer is read-only
+     * @since 5.4
+     */
+    ByteBuf putInt(int index, int value);
+
+    /**
+     * Writes the given double value into this buffer at the current position,
+     * using the current byte order, and increments the position by 8.
+     *
+     * @param value the double value to be written
+     * @return this buffer
+     * @throws java.nio.BufferOverflowException if there are fewer than 8 bytes remaining in this buffer
+     * @throws java.nio.ReadOnlyBufferException if this buffer is read-only
+     * @since 5.4
+     */
+    ByteBuf putDouble(double value);
+
+    /**
+     * Writes the given long value into this buffer at the current position,
+     * using the current byte order, and increments the position by 8.
+     *
+     * @param value the long value to be written
+     * @return this buffer
+     * @throws java.nio.BufferOverflowException if there are fewer than 8 bytes remaining in this buffer
+     * @throws java.nio.ReadOnlyBufferException if this buffer is read-only
+     * @since 5.4
+     */
+    ByteBuf putLong(long value);
 
     /**
      * <p>Flips this buffer.  The limit is set to the current position and then the position is set to zero.  If the mark is defined then it
@@ -135,6 +184,27 @@ public interface ByteBuf  {
      * @throws UnsupportedOperationException    If this buffer is not backed by an accessible array
      */
     byte[] array();
+
+    /**
+     * <p>States whether this buffer is backed by an accessible byte array.</p>
+     *
+     * <p>If this method returns {@code true} then the {@link #array()} and {@link #arrayOffset()} methods may safely be invoked.</p>
+     *
+     * @return {@code true} if, and only if, this buffer is backed by an array and is not read-only
+     * @since 5.5
+     */
+    boolean isBackedByArray();
+
+    /**
+     * Returns the offset of the first byte within the backing byte array of
+     * this buffer.
+     *
+     * @return the offset within this buffer's array.
+     * @throws java.nio.ReadOnlyBufferException If this buffer is backed by an array but is read-only
+     * @throws UnsupportedOperationException if this buffer is not backed by an accessible array
+     * @since 5.5
+     */
+    int arrayOffset();
 
     /**
      * Returns this buffer's limit.

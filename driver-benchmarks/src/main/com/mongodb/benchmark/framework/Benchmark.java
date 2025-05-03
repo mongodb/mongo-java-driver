@@ -29,6 +29,11 @@ public abstract class Benchmark {
 
     protected static final int NUM_INTERNAL_ITERATIONS = 10000;
     static final String TEST_DATA_SYSTEM_PROPERTY_NAME = "org.mongodb.benchmarks.data";
+    private String name;
+
+    protected Benchmark(final String name) {
+        this.name = name;
+    }
 
     public void setUp() throws Exception {
     }
@@ -42,7 +47,9 @@ public abstract class Benchmark {
     public void after() throws Exception {
     }
 
-    public abstract String getName();
+    public String getName() {
+        return name;
+    }
 
     public abstract void run() throws Exception;
 

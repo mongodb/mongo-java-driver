@@ -18,12 +18,10 @@ package com.mongodb.reactivestreams.client.unified;
 
 import org.junit.jupiter.params.provider.Arguments;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Collection;
 
 final class UnifiedWriteConcernTest extends UnifiedReactiveStreamsTest {
-    private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/write-concern");
+    private static Collection<Arguments> data() {
+        return getTestData("read-write-concern");
     }
 }

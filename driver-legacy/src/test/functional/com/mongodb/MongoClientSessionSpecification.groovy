@@ -28,7 +28,7 @@ import org.bson.Document
 import org.bson.types.ObjectId
 import org.junit.Assert
 import spock.lang.IgnoreIf
-import util.spock.annotations.Slow
+import com.mongodb.spock.Slow
 
 import java.util.concurrent.TimeUnit
 

@@ -37,7 +37,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +51,6 @@ import static com.mongodb.fixture.EncryptionFixture.getKmsProviders;
 import static com.mongodb.testing.MongoAssertions.assertCause;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static util.JsonPoweredTestHelper.getTestDocument;
@@ -244,12 +242,6 @@ public class ClientSideEncryption25LookupProseTests {
     }
 
     public static BsonDocument bsonDocumentFromPath(final String path) {
-        try {
-            return getTestDocument(new File(ClientSideEncryption25LookupProseTests.class
-                    .getResource("/client-side-encryption-data/lookup/" + path).toURI()));
-        } catch (Exception e) {
-            fail("Unable to load resource", e);
-            return null;
-        }
+        return getTestDocument("client-side-encryption/etc/data/lookup/" + path);
     }
 }

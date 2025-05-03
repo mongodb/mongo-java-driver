@@ -17,105 +17,119 @@
 package util;
 
 import org.bson.BsonDocument;
-import org.bson.codecs.BsonDocumentCodec;
-import org.bson.codecs.DecoderContext;
-import org.bson.json.JsonReader;
+import org.bson.BsonString;
+import org.bson.BsonValue;
+import org.bson.assertions.Assertions;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URISyntaxException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-
-import static java.nio.file.Files.isDirectory;
-import static java.util.stream.Collectors.toMap;
 
 public final class JsonPoweredTestHelper {
 
-    public static BsonDocument getTestDocument(final File file) throws IOException {
-        return new BsonDocumentCodec().decode(new JsonReader(getFileAsString(file)), DecoderContext.builder().build());
+    private static final String SPECIFICATIONS_PREFIX = "/specifications/source/";
+
+    public static BsonDocument getTestDocument(final String resourcePath) {
+        BsonDocument testDocument = getTestDocumentWithMetaData(SPECIFICATIONS_PREFIX + resourcePath);
+        testDocument.remove("resourcePath");
+        testDocument.remove("fileName");
+        return testDocument;
     }
 
-    public static BsonDocument getTestDocument(final String resourcePath) throws IOException, URISyntaxException {
-        return getTestDocument(new File(JsonPoweredTestHelper.class.getResource(resourcePath).toURI()));
-    }
-
-    public static Path testDir(final String resourceName) {
-        URL res = JsonPoweredTestHelper.class.getResource(resourceName);
-        if (res == null) {
-            throw new AssertionError("Did not find " + resourceName);
-        }
-        try {
-            Path dir = Paths.get(res.toURI());
-            if (!isDirectory(dir)) {
-                throw new AssertionError(dir + " is not a directory");
+    public static Collection<Object[]> getTestData(final String resourcePath) {
+        List<Object[]> data = new ArrayList<>();
+        for (BsonDocument document : getSpecTestDocuments(resourcePath)) {
+            for (BsonValue test : document.getArray("tests")) {
+                BsonDocument testDocument = test.asDocument();
+                data.add(new Object[]{document.getString("fileName").getValue(),
+                        testDocument.getString("description").getValue(),
+                        testDocument.getString("uri", new BsonString("")).getValue(),
+                        testDocument});
             }
-            return dir;
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
         }
+        return data;
     }
 
-    public static Map<Path, BsonDocument> testDocs(final Path dir) {
-        PathMatcher jsonMatcher = FileSystems.getDefault().getPathMatcher("glob:**.json");
+    public static List<BsonDocument> getSpecTestDocuments(final String resourcePath) {
+        return getTestDocuments(SPECIFICATIONS_PREFIX + resourcePath);
+    }
+
+    public static List<BsonDocument> getTestDocuments(final String resourcePath) {
+        List<BsonDocument> files = new ArrayList<>();
         try {
-            return Files.list(dir)
-                    .filter(jsonMatcher::matches)
-                    .collect(toMap(Function.identity(), path -> {
-                        try {
-                            return getTestDocument(path.toFile());
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
+            URL urlResource = JsonPoweredTestHelper.class.getResource(resourcePath);
+            if (urlResource == null) {
+                Assertions.fail("No such resource: " + resourcePath);
+            }
 
-    public static List<File> getTestFiles(final String resourcePath) throws URISyntaxException {
-        List<File> files = new ArrayList<>();
-        addFilesFromDirectory(new File(JsonPoweredTestHelper.class.getResource(resourcePath).toURI()), files);
+            URI resource = urlResource.toURI();
+            try (FileSystem fileSystem = (resource.getScheme().equals("jar") ? FileSystems.newFileSystem(resource, Collections.emptyMap()) : null)) {
+                Path myPath = Paths.get(resource);
+                Files.walkFileTree(myPath, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult visitFile(final Path filePath, final BasicFileAttributes attrs) throws IOException {
+                        if (filePath.toString().endsWith(".json")) {
+                            if (fileSystem == null) {
+                                files.add(getTestDocumentWithMetaData(filePath.toString().substring(filePath.toString().lastIndexOf(resourcePath))));
+                            } else {
+                                files.add(getTestDocumentWithMetaData(filePath.toString()));
+                            }
+                        }
+                        return super.visitFile(filePath, attrs);
+                    }
+                });
+            }
+        } catch (Exception e) {
+            Assertions.fail("Unable to load resource: " + resourcePath, e);
+        }
+
+        if (files.isEmpty()) {
+            Assertions.fail("No test documents found in: " + resourcePath);
+        }
         return files;
     }
 
-    private static String getFileAsString(final File file) throws IOException {
-        StringBuilder stringBuilder = new StringBuilder();
-        String line;
-        String ls = System.getProperty("line.separator");
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
-            while ((line = reader.readLine()) != null) {
-                stringBuilder.append(line);
-                stringBuilder.append(ls);
-            }
-        }
-        return stringBuilder.toString();
+    private static BsonDocument getTestDocumentWithMetaData(final String resourcePath) {
+        BsonDocument testDocument = BsonDocument.parse(resourcePathToString(resourcePath));
+        testDocument.append("resourcePath", new BsonString(resourcePath))
+                .append("fileName", new BsonString(resourcePath.substring(resourcePath.lastIndexOf('/') + 1)));
+        return testDocument;
     }
 
-    private static void addFilesFromDirectory(final File directory, final List<File> files) {
-        String[] fileNames = directory.list();
-        if (fileNames != null) {
-            for (String fileName : fileNames) {
-                File file = new File(directory, fileName);
-                if (file.isDirectory()) {
-                    addFilesFromDirectory(file, files);
-                } else if (file.getName().endsWith(".json")) {
-                    files.add(file);
+    private static String resourcePathToString(final String resourcePath)  {
+        StringBuilder stringBuilder = new StringBuilder();
+        String line;
+        String ls = System.lineSeparator();
+        try (InputStream inputStream = JsonPoweredTestHelper.class.getResourceAsStream(resourcePath)) {
+            if (inputStream == null) {
+                Assertions.fail("Unable to load resource: " + resourcePath);
+            }
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+                while ((line = reader.readLine()) != null) {
+                    stringBuilder.append(line);
+                    stringBuilder.append(ls);
                 }
             }
+        } catch (Exception e) {
+            Assertions.fail("Unable to load resource", e);
         }
+        return stringBuilder.toString();
     }
 
     private JsonPoweredTestHelper() {

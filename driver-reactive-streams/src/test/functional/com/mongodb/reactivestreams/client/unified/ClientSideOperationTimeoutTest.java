@@ -31,8 +31,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Hooks;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -50,8 +48,8 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
 
     private final AtomicReference<Throwable> atomicReferenceThrowable = new AtomicReference<>();
 
-    private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/client-side-operation-timeout");
+    private static Collection<Arguments> data() {
+        return getTestData("client-side-operations-timeout");
     }
 
     @Override
@@ -81,6 +79,10 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
         // No withTransaction support
         assumeFalse(fileDescription.contains("withTransaction") || testDescription.contains("withTransaction"));
 
+        assumeFalse(fileDescription.equals("operations ignore deprecated timeout options if timeoutMS is set")
+                && (testDescription.startsWith("abortTransaction ignores") || testDescription.startsWith("commitTransaction ignores")),
+                "No operation session based overrides");
+
         if (testDescription.equals("timeoutMS is refreshed for close")) {
             enableSleepAfterCursorError(256);
         }
@@ -99,18 +101,25 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
     @MethodSource("data")
     @Override
     public void shouldPassAllOutcomes(
+            final String testName,
             @Nullable final String fileDescription,
             @Nullable final String testDescription,
             @Nullable final String directoryName,
+            final int attemptNumber,
+            final int totalAttempts,
             final String schemaVersion,
             @Nullable final BsonArray runOnRequirements,
             final BsonArray entitiesArray,
             final BsonArray initialData,
             final BsonDocument definition) {
         try {
-            super.shouldPassAllOutcomes(fileDescription,
+            super.shouldPassAllOutcomes(
+                    testName,
+                    fileDescription,
                     testDescription,
                     directoryName,
+                    attemptNumber,
+                    totalAttempts,
                     schemaVersion,
                     runOnRequirements,
                     entitiesArray,

@@ -18,12 +18,10 @@ package com.mongodb.client.unified;
 
 import org.junit.jupiter.params.provider.Arguments;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Collection;
 
 final class UnifiedAtlasDataLakeTest extends UnifiedSyncTest {
-    private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/atlas-data-lake-testing");
+    private static Collection<Arguments> data() {
+        return getTestData("atlas-data-lake-testing");
     }
 }

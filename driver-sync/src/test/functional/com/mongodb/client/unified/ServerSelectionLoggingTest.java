@@ -18,12 +18,10 @@ package com.mongodb.client.unified;
 
 import org.junit.jupiter.params.provider.Arguments;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Collection;
 
 final class ServerSelectionLoggingTest extends UnifiedSyncTest {
-    private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/server-selection/logging");
+    private static Collection<Arguments> data() {
+        return getTestData("server-selection/tests/logging");
     }
 }

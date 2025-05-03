@@ -18,12 +18,10 @@ package com.mongodb.reactivestreams.client.unified;
 
 import org.junit.jupiter.params.provider.Arguments;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Collection;
 
 final class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedReactiveStreamsTest {
-    private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/server-discovery-and-monitoring");
+    private static Collection<Arguments> data() {
+        return getTestData("server-discovery-and-monitoring");
     }
 }

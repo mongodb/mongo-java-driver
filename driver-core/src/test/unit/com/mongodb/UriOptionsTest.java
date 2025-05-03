@@ -18,17 +18,11 @@ package com.mongodb;
 
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonValue;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
 import util.JsonPoweredTestHelper;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import static org.junit.Assume.assumeFalse;
 
@@ -42,9 +36,19 @@ public class UriOptionsTest extends AbstractConnectionStringTest {
     public void shouldPassAllOutcomes() {
         assumeFalse(getDefinition().getBoolean("warning", BsonBoolean.FALSE).getValue());
         assumeFalse(getDescription().equals("Arbitrary string readConcernLevel does not cause a warning"));
-        // Skip because Java driver does not support the tlsAllowInvalidCertificates option
+        // Skip because Java driver does not support the tlsAllowInvalidCertificates & tlsInsecure options
         assumeFalse(getDescription().startsWith("tlsInsecure and tlsAllowInvalidCertificates both present"));
         assumeFalse(getDescription().startsWith("tlsAllowInvalidCertificates and tlsInsecure both present"));
+        // Skip because Java driver does not support the tlsDisableCertificateRevocationCheck option
+        assumeFalse(getDescription().contains("tlsDisableCertificateRevocationCheck"));
+        // Skip because Java driver does not support the tlsDisableOCSPEndpointCheck option
+        assumeFalse(getDescription().contains("tlsDisableOCSPEndpointCheck"));
+
+        // No CANONICALIZE_HOST_NAME support https://jira.mongodb.org/browse/JAVA-4278
+        assumeFalse(getDescription().equals("Valid auth options are parsed correctly (GSSAPI)"));
+
+        // https://jira.mongodb.org/browse/JAVA-5834
+        assumeFalse(getFilename().equals("proxy-options.json"));
 
         if (getDefinition().getBoolean("valid", BsonBoolean.TRUE).getValue()) {
             testValidOptions();
@@ -54,15 +58,7 @@ public class UriOptionsTest extends AbstractConnectionStringTest {
     }
 
     @Parameterized.Parameters(name = "{1}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        List<Object[]> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/uri-options")) {
-            BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
-            for (BsonValue test : testDocument.getArray("tests")) {
-                data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
-                        test.asDocument().getString("uri").getValue(), test.asDocument()});
-            }
-        }
-        return data;
+    public static Collection<Object[]> data() {
+        return JsonPoweredTestHelper.getTestData("uri-options");
     }
 }

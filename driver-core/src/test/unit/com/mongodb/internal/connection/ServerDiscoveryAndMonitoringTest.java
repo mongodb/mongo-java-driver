@@ -23,13 +23,14 @@ import com.mongodb.internal.time.Timeout;
 import org.bson.BsonDocument;
 import org.bson.BsonNull;
 import org.bson.BsonValue;
+import org.bson.assertions.Assertions;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
 import static com.mongodb.ClusterFixture.getClusterDescription;
@@ -41,14 +42,23 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 // See https://github.com/mongodb/specifications/tree/master/source/server-discovery-and-monitoring/tests
 @RunWith(Parameterized.class)
 public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAndMonitoringTest {
 
+    private final String description;
+
     public ServerDiscoveryAndMonitoringTest(final String description, final BsonDocument definition) {
         super(definition);
+        this.description = description;
         init(serverAddress -> NO_OP_SERVER_LISTENER, NO_OP_CLUSTER_LISTENER);
+    }
+
+    @Before
+    public void setUp() {
+        assumeFalse(description.startsWith("pre-42"));
     }
 
     @Test
@@ -78,8 +88,16 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
     }
 
     @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        return data("/server-discovery-and-monitoring");
+    public static Collection<Object[]> data() {
+        // Unified and monitoring tests have their own test runners so filter them out.
+        return data("server-discovery-and-monitoring")
+                .stream().filter(i -> {
+                    Object definition = i[1];
+                    Assertions.assertTrue("Expected a BsonDocument for definition", definition instanceof BsonDocument);
+                    BsonDocument definitionDocument = (BsonDocument) definition;
+                    String resourcePath = definitionDocument.getString("resourcePath").getValue();
+                    return !(resourcePath.contains("/tests/unified/") || resourcePath.contains("/tests/monitoring"));
+                }).collect(Collectors.toList());
     }
 
     private void assertServers(final BsonDocument servers) {

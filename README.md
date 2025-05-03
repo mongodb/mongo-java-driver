@@ -113,7 +113,7 @@ Example for Maven:
 Java 17+ and git is required to build and compile the source. To build and test the driver:
 
 ```
-$ git clone https://github.com/mongodb/mongo-java-driver.git
+$ git clone --recurse-submodules https://github.com/mongodb/mongo-java-driver.git
 $ cd mongo-java-driver
 $ ./gradlew check
 ```

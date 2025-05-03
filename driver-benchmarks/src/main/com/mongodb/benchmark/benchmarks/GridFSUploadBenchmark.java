@@ -22,12 +22,7 @@ import java.io.ByteArrayInputStream;
 public class GridFSUploadBenchmark extends AbstractGridFSBenchmark {
 
     public GridFSUploadBenchmark(final String resourcePath) {
-        super(resourcePath);
-    }
-
-    @Override
-    public String getName() {
-        return "GridFS upload";
+        super("GridFS upload", resourcePath);
     }
 
     @Override

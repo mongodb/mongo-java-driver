@@ -44,9 +44,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import util.JsonPoweredTestHelper;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -134,6 +131,8 @@ public abstract class AbstractClientSideEncryptionTest {
     @Before
     public void setUp() {
         assumeTrue("Client side encryption tests disabled", hasEncryptionTestsEnabled());
+        assumeFalse("blockTimeMS and timeoutMS too small",
+                description.equals("timeoutMS applied to listCollections to get collection schema"));
         assumeFalse("runOn requirements not satisfied", skipTest);
         assumeFalse("Skipping count tests", filename.startsWith("count."));
 
@@ -185,6 +184,8 @@ public abstract class AbstractClientSideEncryptionTest {
         BsonDocument kmsProviders = cryptOptions.getDocument("kmsProviders", new BsonDocument());
         boolean bypassAutoEncryption = cryptOptions.getBoolean("bypassAutoEncryption", BsonBoolean.FALSE).getValue();
         boolean bypassQueryAnalysis = cryptOptions.getBoolean("bypassQueryAnalysis", BsonBoolean.FALSE).getValue();
+        Long keyExpirationMS = cryptOptions.containsKey("keyExpirationMS")
+                ? cryptOptions.getNumber("keyExpirationMS").longValue() : null;
 
         Map<String, BsonDocument> namespaceToSchemaMap = new HashMap<>();
 
@@ -285,6 +286,7 @@ public abstract class AbstractClientSideEncryptionTest {
                     .bypassQueryAnalysis(bypassQueryAnalysis)
                     .bypassAutoEncryption(bypassAutoEncryption)
                     .extraOptions(extraOptions)
+                    .keyExpiration(keyExpirationMS, TimeUnit.MILLISECONDS)
                     .build());
         }
         createMongoClient(mongoClientSettingsBuilder.build());
@@ -403,14 +405,15 @@ public abstract class AbstractClientSideEncryptionTest {
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
+    public static Collection<Object[]> data() {
         List<Object[]> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/client-side-encryption/legacy")) {
-            BsonDocument specDocument = JsonPoweredTestHelper.getTestDocument(file);
+        for (BsonDocument specDocument : JsonPoweredTestHelper.getSpecTestDocuments("client-side-encryption/tests/legacy")) {
             for (BsonValue test : specDocument.getArray("tests")) {
-                data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(), specDocument,
-                        specDocument.getArray("data", new BsonArray()), test.asDocument(),
-                        skipTest(specDocument, test.asDocument())});
+                BsonDocument testDocument = test.asDocument();
+                data.add(new Object[]{specDocument.getString("fileName").getValue(),
+                        testDocument.getString("description").getValue(), specDocument,
+                        specDocument.getArray("data", new BsonArray()), testDocument,
+                        skipTest(specDocument, testDocument)});
             }
         }
         return data;

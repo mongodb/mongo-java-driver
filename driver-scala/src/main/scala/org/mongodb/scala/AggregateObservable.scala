@@ -25,6 +25,7 @@ import org.mongodb.scala.bson.BsonValue
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Collation
+import org.reactivestreams.Subscriber
 
 import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
@@ -192,9 +193,14 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
   }
 
   /**
-   * Aggregates documents according to the specified aggregation pipeline, which must end with a `\$out` stage.
+   * Aggregates documents according to the specified aggregation pipeline, which must end with an `\$out` or `\$merge` stage.
+   * Calling this method and then `subscribing` to the returned [[SingleObservable]]
+   * is the preferred alternative to subscribing to this [[AggregateObservable]],
+   * because this method does what is explicitly requested without executing implicit operations.
    *
    * [[https://www.mongodb.com/docs/manual/aggregation/ Aggregation]]
+   *
+   * @throws java.lang.IllegalStateException if the pipeline does not end with an `\$out` or `\$merge` stage
    * @return an Observable that indicates when the operation has completed.
    */
   def toCollection(): SingleObservable[Unit] = wrapped.toCollection()
@@ -257,5 +263,23 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
   )(implicit e: ExplainResult DefaultsTo Document, ct: ClassTag[ExplainResult]): SingleObservable[ExplainResult] =
     wrapped.explain[ExplainResult](ct, verbosity)
 
+  /**
+   * Requests [[AggregateObservable]] to start streaming data according to the specified aggregation pipeline.
+   *
+   *  - If the aggregation pipeline ends with an `\$out` or `\$merge` stage,
+   *    then finds all documents in the affected namespace and produces them.
+   *    You may want to use [[toCollection]] instead.
+   *  - Otherwise, produces no elements.
+   */
   override def subscribe(observer: Observer[_ >: TResult]): Unit = wrapped.subscribe(observer)
+
+  /**
+   * Requests [[AggregateObservable]] to start streaming data according to the specified aggregation pipeline.
+   *
+   *  - If the aggregation pipeline ends with an `\$out` or `\$merge` stage,
+   *    then finds all documents in the affected namespace and produces them.
+   *    You may want to use [[toCollection]] instead.
+   *  - Otherwise, produces no elements.
+   */
+  override def subscribe(observer: Subscriber[_ >: TResult]): Unit = wrapped.subscribe(observer)
 }

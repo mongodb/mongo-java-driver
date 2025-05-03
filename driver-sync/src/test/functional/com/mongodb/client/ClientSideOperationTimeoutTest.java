@@ -20,8 +20,6 @@ import com.mongodb.ClusterFixture;
 import com.mongodb.client.unified.UnifiedSyncTest;
 import org.junit.jupiter.params.provider.Arguments;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Collection;
 
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
@@ -30,13 +28,18 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
 // See https://github.com/mongodb/specifications/tree/master/source/client-side-operation-timeout/tests
 public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
 
-    private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/client-side-operation-timeout");
+    private static Collection<Arguments> data() {
+        return getTestData("client-side-operations-timeout");
     }
 
     @Override
     protected void skips(final String fileDescription, final String testDescription) {
         skipOperationTimeoutTests(fileDescription, testDescription);
+
+        /*
+         * The test is occasionally racy. Sometimes multiple getMores can be triggered.
+         */
+        ignoreExtraCommandEvents(testDescription.contains("timeoutMS is refreshed for getMore if maxAwaitTimeMS is set"));
     }
 
     public static void skipOperationTimeoutTests(final String fileDescription, final String testDescription) {
@@ -63,8 +66,13 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
         assumeFalse(testDescription.endsWith("count on collection"), "No count command helper");
         assumeFalse(fileDescription.equals("timeoutMS can be overridden for an operation"), "No operation based overrides");
         assumeFalse(testDescription.equals("timeoutMS can be overridden for commitTransaction")
-                        || testDescription.equals("timeoutMS applied to abortTransaction"),
+                || testDescription.equals("timeoutMS applied to abortTransaction"),
                 "No operation session based overrides");
+
+        assumeFalse(fileDescription.equals("operations ignore deprecated timeout options if timeoutMS is set")
+                && (testDescription.startsWith("abortTransaction ignores") || testDescription.startsWith("commitTransaction ignores")),
+                "No operation session based overrides");
+
         assumeFalse(fileDescription.equals("timeoutMS behaves correctly when closing cursors")
                 && testDescription.equals("timeoutMS can be overridden for close"), "No operation based overrides");
     }

@@ -39,9 +39,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import util.JsonPoweredTestHelper;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -75,8 +72,7 @@ public class ServerSelectionSelectionTest {
     @Test
     public void shouldPassAllOutcomes() {
         // skip this test because the driver prohibits maxStaleness or tagSets with mode of primary at a much lower level
-        assumeTrue(!description.equals("max-staleness/ReplicaSetWithPrimary/MaxStalenessWithModePrimary.json"));
-
+        assumeTrue(!description.endsWith("/max-staleness/tests/ReplicaSetWithPrimary/MaxStalenessWithModePrimary.json"));
         ServerSelector serverSelector = null;
         List<ServerDescription> suitableServers = buildServerDescriptions(definition.getArray("suitable_servers", new BsonArray()));
         List<ServerDescription> selectedServers = null;
@@ -102,24 +98,15 @@ public class ServerSelectionSelectionTest {
     }
 
     @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
+    public static Collection<Object[]> data() {
         List<Object[]> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/server-selection/server_selection")) {
-            data.add(new Object[]{getServerSelectionTestDescription(file), JsonPoweredTestHelper.getTestDocument(file)});
+        for (BsonDocument testDocument : JsonPoweredTestHelper.getSpecTestDocuments("server-selection/tests/server_selection")) {
+            data.add(new Object[]{testDocument.getString("resourcePath").getValue(), testDocument});
         }
-        for (File file : JsonPoweredTestHelper.getTestFiles("/max-staleness/server_selection")) {
-            data.add(new Object[]{getMaxStalenessTestDescription(file), JsonPoweredTestHelper.getTestDocument(file)});
+        for (BsonDocument testDocument : JsonPoweredTestHelper.getSpecTestDocuments("max-staleness/tests")) {
+            data.add(new Object[]{testDocument.getString("resourcePath").getValue(), testDocument});
         }
         return data;
-    }
-
-    private static String getServerSelectionTestDescription(final File file) {
-        return "server-selection" + "/" + file.getParentFile().getParentFile().getName() + "/" + file.getParentFile().getName() + "/"
-                + file.getName();
-    }
-
-    private static String getMaxStalenessTestDescription(final File file) {
-        return "max-staleness" + "/" + file.getParentFile().getName() + "/" + file.getName();
     }
 
     public static ClusterDescription buildClusterDescription(final BsonDocument topologyDescription,

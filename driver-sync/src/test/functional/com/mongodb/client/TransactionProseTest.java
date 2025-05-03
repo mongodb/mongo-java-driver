@@ -35,7 +35,7 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
-// See https://github.com/mongodb/specifications/blob/master/source/transactions/tests/README.rst#mongos-pinning-prose-tests
+// See https://github.com/mongodb/specifications/blob/master/source/transactions/tests/README.md#mongos-pinning-prose-tests
 public class TransactionProseTest {
     private MongoClient client;
     private MongoCollection<Document> collection;
