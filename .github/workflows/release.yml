@@ -24,10 +24,15 @@ jobs:
       - name: "Create release output"
         run: echo '🎬 Release process for version ${{ env.RELEASE_VERSION }} started by @${{ github.triggering_actor }}' >> $GITHUB_STEP_SUMMARY
 
-      - uses: mongodb-labs/drivers-github-tools/secure-checkout@v2
+      - uses: actions/checkout@v4
         with:
-          app_id: ${{ vars.APP_ID }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+          ref: ${{ github.ref }}
+          fetch-depth: "1"
+          submodules: "false"
+
+      - name: Store GitHub token in environment
+        run: echo "GH_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> "$GITHUB_ENV"
+        shell: bash
 
       - name: "Store version numbers in env variables"
         # The awk command to increase the version number was copied from
@@ -55,7 +60,7 @@ jobs:
 
       - name: "Ensure current snapshot version matches release version"
         run: |
-          grep -q "version='${{ env.RELEASE_VERSION_WITHOUT_SUFFIX }}-SNAPSHOT'" gradle.properties
+          grep -q "version=${{ env.RELEASE_VERSION_WITHOUT_SUFFIX }}-SNAPSHOT" gradle.properties
           if [[ $? != 0 ]]; then
             echo '❌ Release failed: version in gradle.properties is not a snapshot for release version ${{ inputs.version }}' >> $GITHUB_STEP_SUMMARY
             exit 1
