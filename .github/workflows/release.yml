@@ -55,7 +55,7 @@ jobs:
 
       - name: "Ensure current snapshot version matches release version"
         run: |
-          grep -q "version='${{ env.RELEASE_VERSION_WITHOUT_SUFFIX }}-SNAPSHOT'" gradle.properties
+          grep -q "version=${{ env.RELEASE_VERSION_WITHOUT_SUFFIX }}-SNAPSHOT" gradle.properties
           if [[ $? != 0 ]]; then
             echo '❌ Release failed: version in gradle.properties is not a snapshot for release version ${{ inputs.version }}' >> $GITHUB_STEP_SUMMARY
             exit 1
