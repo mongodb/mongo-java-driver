@@ -43,7 +43,9 @@ import static com.mongodb.client.CrudTestHelper.repeat;
 import static com.mongodb.client.WithWrapper.withWrapper;
 import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
 import static com.mongodb.internal.connection.ClientMetadataHelper.getOperatingSystemType;
+import static com.mongodb.internal.connection.ClientMetadataHelper.updateClientMedataDocument;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -316,6 +318,43 @@ public class ClientMetadataHelperProseTest {
         assertEquals(
                 createExpectedClientMetadataDocument(appName, driverInformation),
                 createClientMetadataDocument(appName, driverInformation));
+    }
+
+
+    @Test
+    void testUpdateClientMetadataDocument() {
+        //given
+        MongoDriverInformation initialDriverInformation = MongoDriverInformation.builder()
+                .driverName("mongo-spark")
+                .driverVersion("2.0.0")
+                .driverPlatform("Scala 2.10 / Spark 2.0.0")
+                .build();
+
+        BsonDocument initialClientMetadataDocument = createClientMetadataDocument(null, initialDriverInformation);
+        assertEquals(
+                createExpectedClientMetadataDocument(null, initialDriverInformation),
+                initialClientMetadataDocument);
+
+        MongoDriverInformation metadataToAppend = MongoDriverInformation.builder()
+                .driverVersion("2.0.0")
+                .driverName("Framework")
+                .driverPlatform("JDK 99")
+                .build();
+
+        MongoDriverInformation expectedUpdatedMetadata = MongoDriverInformation.builder(metadataToAppend)
+                .driverName("mongo-spark")
+                .driverVersion("2.0.0")
+                .driverPlatform("Scala 2.10 / Spark 2.0.0")
+                .build();
+
+        //when
+        BsonDocument updatedClientMetadata = updateClientMedataDocument(initialClientMetadataDocument, metadataToAppend);
+
+        //then
+        assertEquals(
+                createExpectedClientMetadataDocument(null, expectedUpdatedMetadata),
+                updatedClientMetadata);
+        assertNotEquals(updatedClientMetadata, initialClientMetadataDocument);
     }
 
     @ParameterizedTest

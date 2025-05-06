@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client.syncadapter;
 
 import com.mongodb.ClientBulkWriteException;
 import com.mongodb.ClientSessionOptions;
+import com.mongodb.MongoDriverInformation;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
@@ -29,8 +30,8 @@ import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
-import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.bulk.ClientBulkWriteResult;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.reactivestreams.client.internal.BatchCursor;
 import org.bson.Document;
@@ -309,6 +310,11 @@ public class SyncMongoClient implements MongoClient {
     @Override
     public ClusterDescription getClusterDescription() {
         return wrapped.getClusterDescription();
+    }
+
+    @Override
+    public void updateClientMetadata(final MongoDriverInformation mongoDriverInformation) {
+        //TODO
     }
 
 }

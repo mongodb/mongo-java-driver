@@ -15,12 +15,16 @@
  */
 package com.mongodb.kotlin.client.syncadapter
 
-import com.mongodb.client.MongoClient as JMongoClient
+import com.mongodb.MongoDriverInformation
 import com.mongodb.connection.ClusterDescription
 import com.mongodb.kotlin.client.MongoClient
+import com.mongodb.client.MongoClient as JMongoClient
 
 internal class SyncMongoClient(override val wrapped: MongoClient) : SyncMongoCluster(wrapped), JMongoClient {
     override fun close(): Unit = wrapped.close()
 
     override fun getClusterDescription(): ClusterDescription = wrapped.clusterDescription
+    override fun updateClientMetadata(mongoDriverInformation: MongoDriverInformation) {
+        TODO("Not yet implemented")
+    }
 }

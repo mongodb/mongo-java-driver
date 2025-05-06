@@ -76,6 +76,7 @@ final class LoadBalancedCluster implements Cluster {
     private final ClusterId clusterId;
     private final ClusterSettings settings;
     private final ClusterClock clusterClock = new ClusterClock();
+    private final ClientMetadata clientMetadata;
     private final ClusterListener clusterListener;
     private ClusterDescription description;
     @Nullable
@@ -91,6 +92,7 @@ final class LoadBalancedCluster implements Cluster {
     private final Condition condition = lock.newCondition();
 
     LoadBalancedCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
+                        final ClientMetadata clientMetadata,
                         final DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory) {
         assertTrue(settings.getMode() == ClusterConnectionMode.LOAD_BALANCED);
         LOGGER.info(format("Cluster created with id %s and settings %s", clusterId, settings.getShortDescription()));
@@ -100,6 +102,7 @@ final class LoadBalancedCluster implements Cluster {
         this.clusterListener = singleClusterListener(settings);
         this.description = new ClusterDescription(settings.getMode(), ClusterType.UNKNOWN, emptyList(), settings,
                 serverFactory.getSettings());
+        this.clientMetadata = clientMetadata;
 
         if (settings.getSrvHost() == null) {
             dnsSrvRecordMonitor = null;
@@ -202,6 +205,11 @@ final class LoadBalancedCluster implements Cluster {
     public ClusterClock getClock() {
         isTrue("open", !isClosed());
         return clusterClock;
+    }
+
+    @Override
+    public ClientMetadata getClientMetadata() {
+        return clientMetadata;
     }
 
     @Override

@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.MongoDriverInformation;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
@@ -61,4 +62,6 @@ public interface MongoClient extends MongoCluster, Closeable {
      * @since 3.11
      */
     ClusterDescription getClusterDescription();
+
+    void updateClientMetadata(MongoDriverInformation mongoDriverInformation);
 }
