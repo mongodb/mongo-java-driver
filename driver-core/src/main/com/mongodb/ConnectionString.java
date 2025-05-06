@@ -56,6 +56,7 @@ import static com.mongodb.MongoCredential.ALLOWED_HOSTS_KEY;
 import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateCreateOidcCredential;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
 
@@ -1260,18 +1261,22 @@ public class ConnectionString {
                     "Both proxyUsername and proxyPassword must be set together. They cannot be set individually");
         }
 
-        if (proxyHost != null && optionsMap.get("proxyhost").size() > 1) {
+        if (containsDuplicatedOptions("proxyhost", optionsMap)) {
             throw new IllegalArgumentException("Duplicated values for proxyHost: " + optionsMap.get("proxyhost"));
         }
-        if (proxyPort != null && optionsMap.get("proxyport").size() > 1) {
+        if (containsDuplicatedOptions("proxyport", optionsMap)) {
             throw new IllegalArgumentException("Duplicated values for proxyPort: " + optionsMap.get("proxyport"));
         }
-        if (proxyPassword != null && optionsMap.get("proxypassword").size() > 1) {
+        if (containsDuplicatedOptions("proxypassword", optionsMap)) {
             throw new IllegalArgumentException("Duplicated values for proxyPassword: " + optionsMap.get("proxypassword"));
         }
-        if (proxyUsername != null && optionsMap.get("proxyusername").size() > 1) {
+        if (containsDuplicatedOptions("proxyusername", optionsMap)) {
             throw new IllegalArgumentException("Duplicated values for proxyUsername: " + optionsMap.get("proxyusername"));
         }
+    }
+
+    private static boolean containsDuplicatedOptions(final String optionName, final Map<String, List<String>> optionsMap) {
+        return optionsMap.getOrDefault(optionName, emptyList()).size() > 1;
     }
 
     private int countOccurrences(final String haystack, final String needle) {
