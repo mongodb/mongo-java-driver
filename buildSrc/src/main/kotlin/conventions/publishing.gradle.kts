@@ -126,6 +126,9 @@ signing {
     if (signingKey.isPresent && signingPassword.isPresent) {
         logger.debug("[${project.displayName}] Signing is enabled")
         useInMemoryPgpKeys(signingKey.get(), signingPassword.get())
+        sign(publishing.publications["maven"])
+    } else {
+        logger.warn("[${project.displayName}] No Signing keys found, skipping signing configuration")
     }
 }
 
