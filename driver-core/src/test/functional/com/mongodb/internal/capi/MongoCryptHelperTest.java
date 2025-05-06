@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.internal.capi.MongoCryptHelper.isMongocryptdSpawningDisabled;
 import static com.mongodb.internal.capi.MongoCryptHelper.validateRewrapManyDataKeyOptions;
@@ -94,6 +95,11 @@ public class MongoCryptHelperTest {
 
         assertMongoCryptOptions(mongoCryptOptionsBuilder.build(), mongoCryptOptions);
 
+        // Ensure can set key expiration
+        autoEncryptionSettingsBuilder.keyExpiration(10L, TimeUnit.SECONDS);
+        mongoCryptOptions = MongoCryptHelper.createMongoCryptOptions(autoEncryptionSettingsBuilder.build());
+        assertMongoCryptOptions(mongoCryptOptionsBuilder.keyExpirationMS(10_000L).build(), mongoCryptOptions);
+
         // Ensure search Paths is empty when bypassAutoEncryption is true
         autoEncryptionSettingsBuilder.bypassAutoEncryption(true);
         mongoCryptOptions = MongoCryptHelper.createMongoCryptOptions(autoEncryptionSettingsBuilder.build());
@@ -143,5 +149,6 @@ public class MongoCryptHelperTest {
         assertEquals(expected.getSearchPaths(), actual.getSearchPaths(), "SearchPaths not equal");
         assertEquals(expected.isBypassQueryAnalysis(), actual.isBypassQueryAnalysis(), "isBypassQueryAnalysis not equal");
         assertEquals(expected.isNeedsKmsCredentialsStateEnabled(), actual.isNeedsKmsCredentialsStateEnabled(), "isNeedsKmsCredentialsStateEnabled not equal");
+        assertEquals(expected.getKeyExpirationMS(), actual.getKeyExpirationMS(), "keyExpirationMS not equal");
     }
 }

@@ -53,7 +53,8 @@ import static java.util.Collections.singletonList;
 public final class MongoCryptHelper {
 
     public static MongoCryptOptions createMongoCryptOptions(final ClientEncryptionSettings settings) {
-        return createMongoCryptOptions(settings.getKmsProviders(), false, emptyList(), emptyMap(), null, null);
+        return createMongoCryptOptions(settings.getKmsProviders(), false, emptyList(), emptyMap(), null, null,
+                settings.getKeyExpiration(TimeUnit.MILLISECONDS));
     }
 
     public static MongoCryptOptions createMongoCryptOptions(final AutoEncryptionSettings settings) {
@@ -63,7 +64,8 @@ public final class MongoCryptHelper {
                 settings.isBypassAutoEncryption() ? emptyList() :  singletonList("$SYSTEM"),
                 settings.getExtraOptions(),
                 settings.getSchemaMap(),
-                settings.getEncryptedFieldsMap());
+                settings.getEncryptedFieldsMap(),
+                settings.getKeyExpiration(TimeUnit.MILLISECONDS));
     }
 
     public static void validateRewrapManyDataKeyOptions(final RewrapManyDataKeyOptions options) {
@@ -78,7 +80,8 @@ public final class MongoCryptHelper {
             final List<String> searchPaths,
             @Nullable final Map<String, Object> extraOptions,
             @Nullable final Map<String, BsonDocument> localSchemaMap,
-            @Nullable final Map<String, BsonDocument> encryptedFieldsMap) {
+            @Nullable final Map<String, BsonDocument> encryptedFieldsMap,
+            @Nullable final Long keyExpirationMS) {
         MongoCryptOptions.Builder mongoCryptOptionsBuilder = MongoCryptOptions.builder();
         mongoCryptOptionsBuilder.kmsProviderOptions(getKmsProvidersAsBsonDocument(kmsProviders));
         mongoCryptOptionsBuilder.bypassQueryAnalysis(bypassQueryAnalysis);
@@ -87,6 +90,7 @@ public final class MongoCryptHelper {
         mongoCryptOptionsBuilder.localSchemaMap(localSchemaMap);
         mongoCryptOptionsBuilder.encryptedFieldsMap(encryptedFieldsMap);
         mongoCryptOptionsBuilder.needsKmsCredentialsStateEnabled(true);
+        mongoCryptOptionsBuilder.keyExpirationMS(keyExpirationMS);
         return mongoCryptOptionsBuilder.build();
     }
     public static BsonDocument fetchCredentials(final Map<String, Map<String, Object>> kmsProviders,

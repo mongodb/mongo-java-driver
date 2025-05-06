@@ -63,22 +63,19 @@ public final class UnifiedTestModifications {
                 .test("change-streams", "change-streams-errors", "Change Stream should error when an invalid aggregation stage is passed in")
                 .test("change-streams", "change-streams-errors", "The watch helper must not throw a custom exception when executed against a single server topology, but instead depend on a server error");
 
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5769")
-                .test("change-streams", "change-streams-nsType", "nsType is present when creating views");
-
         // client-side-operation-timeout (CSOT)
 
         def.skipNoncompliantReactive("No good way to fulfill tryNext() requirement with a Publisher<T>")
                 .test("client-side-operations-timeout", "timeoutMS behaves correctly for tailable awaitData cursors",
                       "apply remaining timeoutMS if less than maxAwaitTimeMS");
 
+        def.skipNoncompliantReactive("No good way to fulfill tryNext() requirement with a Publisher<T>")
+                .test("client-side-operations-timeout", "timeoutMS behaves correctly for tailable awaitData cursors",
+                        "apply maxAwaitTimeMS if less than remaining timeout");
+
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5839")
                 .test("client-side-operations-timeout", "timeoutMS behaves correctly for GridFS download operations",
                       "timeoutMS applied to entire download, not individual parts");
-
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5820")
-                .test("client-side-operations-timeout", "timeoutMS behaves correctly for tailable awaitData cursors",
-                        "apply maxAwaitTimeMS if less than remaining timeout");
 
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5815")
                 .test("client-side-operations-timeout", "WaitQueueTimeoutError does not clear the pool",
@@ -107,6 +104,9 @@ public final class UnifiedTestModifications {
         def.skipNoncompliant("The driver doesn't reduce the batchSize for the getMore")
                 .test("command-logging-and-monitoring/tests/monitoring", "find",
                       "A successful find event with a getmore and the server kills the cursor (<= 4.4)");
+
+        def.skipNoncompliant("The driver doesn't reduce the batchSize for the getMore")
+                .test("atlas-data-lake-testing", "getMore", "A successful find event with getMore");
 
         // connection-monitoring-and-pooling
 
@@ -168,8 +168,6 @@ public final class UnifiedTestModifications {
                 .when(() -> def.isReactive() && UnifiedTest.Language.KOTLIN.equals(def.getLanguage()))
                 .file("crud", "findOne");
 
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5827")
-                        .file("crud", "bypassDocumentValidation");
         def.skipNoncompliant("Updates and Replace bulk operations are split in the java driver")
                         .file("crud", "bulkWrite-comment");
 
@@ -298,8 +296,6 @@ public final class UnifiedTestModifications {
                 .file("unified-test-format/tests/valid-pass", "kmsProviders-mixed_kms_credential_fields");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5672")
                 .file("unified-test-format/tests/valid-pass", "operator-matchAsRoot");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5682")
-                .file("unified-test-format/tests/valid-pass", "operator-type-number_alias");
 
         // valid fail
 
