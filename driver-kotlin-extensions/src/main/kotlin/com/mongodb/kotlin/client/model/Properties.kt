@@ -71,8 +71,7 @@ public fun <T> KProperty<T>.path(): String {
     return if (this is KPropertyPath<*, T>) {
         this.name
     } else {
-        pathCache.computeIfAbsent(this.toString()) {
-
+        pathCache.computeIfAbsent("${this.javaClass.getSimpleName()}@${Integer.toHexString(hashCode())}") {
             // Check serial name - Note kotlinx.serialization.SerialName may not be on the class
             // path
             val serialName =
