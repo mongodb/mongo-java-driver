@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>graphLookup</title>
+    <link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../../";</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async="async"></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
+</head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+            <a href="../../../index.html">
+                    <span>mongodb-driver-kotlin-extensions</span>
+            </a>
+    </div>
+    <div>
+5.5.0    </div>
+    <div class="pull-right d-flex">
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":driver-kotlin-extensions:dokkaHtml/main">jvm</button>
+        </div>
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" data-page-type="member" id="content" pageIds="mongodb-driver-kotlin-extensions::com.mongodb.kotlin.client.model/Aggregates/graphLookup/#com.mongodb.kotlin.client.MongoCollection[TypeParam(bounds=[kotlin.Any])]#TypeParam(bounds=[kotlin.Any?])#kotlin.reflect.KProperty1[TypeParam(bounds=[kotlin.Any]),kotlin.Any?]#kotlin.reflect.KProperty1[TypeParam(bounds=[kotlin.Any]),kotlin.Any?]#kotlin.String#com.mongodb.client.model.GraphLookupOptions/PointingToDeclaration//-1274903326">
+  <div class="breadcrumbs"><a href="../../../index.html">mongodb-driver-kotlin-extensions</a><span class="delimiter">/</span><a href="../index.html">com.mongodb.kotlin.client.model</a><span class="delimiter">/</span><a href="index.html">Aggregates</a><span class="delimiter">/</span><span class="current">graphLookup</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>graph</span><wbr></wbr><span><span>Lookup</span></span></h1>
+  </div>
+  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="graph-lookup.html">TExpression</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="graph-lookup.html">FROM</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="graph-lookup.html"><span class="token function">graphLookup</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">from<span class="token operator">: </span><span data-unresolved-link="com.mongodb.kotlin.client/MongoCollection///PointingToDeclaration/">MongoCollection</span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="graph-lookup.html">FROM</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">startWith<span class="token operator">: </span><a href="graph-lookup.html">TExpression</a><span class="token punctuation">, </span></span><span class="parameter ">connectFromField<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property1/index.html">KProperty1</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="graph-lookup.html">FROM</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-any/index.html">Any</a><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">connectToField<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property1/index.html">KProperty1</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="graph-lookup.html">FROM</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-any/index.html">Any</a><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">fieldAs<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">options<span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/GraphLookupOptions///PointingToDeclaration/">GraphLookupOptions</span><span class="token operator"> = </span>GraphLookupOptions()</span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="graph-lookup.html">TExpression</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="graph-lookup.html">FROM</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="graph-lookup.html"><span class="token function">graphLookup</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">from<span class="token operator">: </span><span data-unresolved-link="com.mongodb.kotlin.client.coroutine/MongoCollection///PointingToDeclaration/">MongoCollection</span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="graph-lookup.html">FROM</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">startWith<span class="token operator">: </span><a href="graph-lookup.html">TExpression</a><span class="token punctuation">, </span></span><span class="parameter ">connectFromField<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property1/index.html">KProperty1</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="graph-lookup.html">FROM</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-any/index.html">Any</a><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">connectToField<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property1/index.html">KProperty1</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="graph-lookup.html">FROM</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-any/index.html">Any</a><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">fieldAs<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">options<span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/GraphLookupOptions///PointingToDeclaration/">GraphLookupOptions</span><span class="token operator"> = </span>GraphLookupOptions()</span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><p class="paragraph">Creates a graphLookup pipeline stage for the specified filter</p><span class="kdoc-tag"><h4 class="">Return</h4><p class="paragraph">the $graphLookup pipeline stage @mongodb.driver.manual reference/operator/aggregation/graphLookup/ $graphLookup @mongodb.server.release 3.4</p></span><h4 class="">Parameters</h4><div class="table"><div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u></u></div></span></div><div><div class="title"><TExpression> the expression type</div></div></div></div><div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>from</span></span></u></div></span></div><div><div class="title"><p class="paragraph">the collection to query</p></div></div></div></div><div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>start</span><wbr></wbr><span><span>With</span></span></u></div></span></div><div><div class="title"><p class="paragraph">the expression to start the graph lookup with</p></div></div></div></div><div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>connect</span><wbr></wbr><span>From</span><wbr></wbr><span><span>Field</span></span></u></div></span></div><div><div class="title"><p class="paragraph">the data class from field</p></div></div></div></div><div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>connect</span><wbr></wbr><span>To</span><wbr></wbr><span><span>Field</span></span></u></div></span></div><div><div class="title"><p class="paragraph">the data class to field</p></div></div></div></div><div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>field</span><wbr></wbr><span><span>As</span></span></u></div></span></div><div><div class="title"><p class="paragraph">name of field in output document</p></div></div></div></div><div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>options</span></span></u></div></span></div><div><div class="title"><p class="paragraph">optional values for the graphLookup</p></div></div></div></div></div></div></div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2025 Copyright</span><span
+                class="pull-right"><span>Generated by </span><a
+                href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+    </div>
+</div>
+</body>
+</html>

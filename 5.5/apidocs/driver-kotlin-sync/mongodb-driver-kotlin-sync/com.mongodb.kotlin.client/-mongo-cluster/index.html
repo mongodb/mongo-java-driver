@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>MongoCluster</title>
+    <link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../../";</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async="async"></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
+</head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+            <a href="../../../index.html">
+                    <span>mongodb-driver-kotlin-sync</span>
+            </a>
+    </div>
+    <div>
+5.5.0    </div>
+    <div class="pull-right d-flex">
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":driver-kotlin-sync:dokkaHtml/main">jvm</button>
+        </div>
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageIds="mongodb-driver-kotlin-sync::com.mongodb.kotlin.client/MongoCluster///PointingToDeclaration//305748649">
+  <div class="breadcrumbs"><a href="../../../index.html">mongodb-driver-kotlin-sync</a><span class="delimiter">/</span><a href="../index.html">com.mongodb.kotlin.client</a><span class="delimiter">/</span><span class="current">MongoCluster</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Mongo</span><wbr></wbr><span><span>Cluster</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">class </span><a href="index.html">MongoCluster</a></div><p class="paragraph">The client-side representation of a MongoDB cluster operations.</p><p class="paragraph">The originating <a href="../-mongo-client/index.html">MongoClient</a> is responsible for the closing of resources. If the originator <a href="../-mongo-client/index.html">MongoClient</a> is closed, then any operations will fail.</p><span class="kdoc-tag"><h4 class="">Since</h4><p class="paragraph">5.2</p></span><h4 class="">See also</h4><div class="table"><div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-mongo-client/index.html"><span>Mongo</span><wbr></wbr><span><span>Client</span></span></a></div></span></div><div></div></div></div></div><h4 class="">Inheritors</h4><div class="table"><div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-mongo-client/index.html">MongoClient</a></div></span></div><div></div></div></div></div></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,FUNCTION,PROPERTY">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="-1904653204%2FFunctions%2F305748649" anchor-label="bulkWrite" id="-1904653204%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="bulk-write.html"><span>bulk</span><wbr></wbr><span><span>Write</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1904653204%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="bulk-write.html"><span class="token function">bulkWrite</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">models<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><span data-unresolved-link="com.mongodb.client.model.bulk/ClientNamespacedWriteModel///PointingToDeclaration/">ClientNamespacedWriteModel</span><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model.bulk/ClientBulkWriteResult///PointingToDeclaration/">ClientBulkWriteResult</span></div><div class="brief "><p class="paragraph">Executes a client-level bulk write operation. This method is functionally equivalent to <a href="bulk-write.html">bulkWrite(models, options)</a> with the <span data-unresolved-link="com.mongodb.client.model.bulk/ClientBulkWriteOptions/clientBulkWriteOptions/#/PointingToDeclaration/">default options</span>.</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="bulk-write.html"><span class="token function">bulkWrite</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">clientSession<span class="token operator">: </span><a href="../-client-session/index.html">ClientSession</a><span class="token punctuation">, </span></span><span class="parameter ">models<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><span data-unresolved-link="com.mongodb.client.model.bulk/ClientNamespacedWriteModel///PointingToDeclaration/">ClientNamespacedWriteModel</span><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model.bulk/ClientBulkWriteResult///PointingToDeclaration/">ClientBulkWriteResult</span></div><div class="brief "><p class="paragraph">Executes a client-level bulk write operation. This method is functionally equivalent to <a href="bulk-write.html">bulkWrite(clientSession, models, options)</a> with the <span data-unresolved-link="com.mongodb.client.model.bulk/ClientBulkWriteOptions/clientBulkWriteOptions/#/PointingToDeclaration/">default options</span>.</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="bulk-write.html"><span class="token function">bulkWrite</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">models<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><span data-unresolved-link="com.mongodb.client.model.bulk/ClientNamespacedWriteModel///PointingToDeclaration/">ClientNamespacedWriteModel</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">options<span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model.bulk/ClientBulkWriteOptions///PointingToDeclaration/">ClientBulkWriteOptions</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model.bulk/ClientBulkWriteResult///PointingToDeclaration/">ClientBulkWriteResult</span></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="bulk-write.html"><span class="token function">bulkWrite</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">clientSession<span class="token operator">: </span><a href="../-client-session/index.html">ClientSession</a><span class="token punctuation">, </span></span><span class="parameter ">models<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><span data-unresolved-link="com.mongodb.client.model.bulk/ClientNamespacedWriteModel///PointingToDeclaration/">ClientNamespacedWriteModel</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">options<span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model.bulk/ClientBulkWriteOptions///PointingToDeclaration/">ClientBulkWriteOptions</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model.bulk/ClientBulkWriteResult///PointingToDeclaration/">ClientBulkWriteResult</span></div><div class="brief "><p class="paragraph">Executes a client-level bulk write operation.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-123268817%2FFunctions%2F305748649" anchor-label="getDatabase" id="-123268817%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-database.html"><span>get</span><wbr></wbr><span><span>Database</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-123268817%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="get-database.html"><span class="token function">getDatabase</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">databaseName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-mongo-database/index.html">MongoDatabase</a></div><div class="brief "><p class="paragraph">Gets a <a href="../-mongo-database/index.html">MongoDatabase</a> instance for the given database name.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="145726954%2FFunctions%2F305748649" anchor-label="listDatabaseNames" id="145726954%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="list-database-names.html"><span>list</span><wbr></wbr><span>Database</span><wbr></wbr><span><span>Names</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="145726954%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="list-database-names.html"><span class="token function">listDatabaseNames</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-mongo-iterable/index.html">MongoIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Get a list of the database names</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="list-database-names.html"><span class="token function">listDatabaseNames</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">clientSession<span class="token operator">: </span><a href="../-client-session/index.html">ClientSession</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-mongo-iterable/index.html">MongoIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Gets the list of databases</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1502745169%2FFunctions%2F305748649" anchor-label="listDatabases" id="-1502745169%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="list-databases.html"><span>list</span><wbr></wbr><span><span>Databases</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1502745169%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;listDatabasesAsDocument&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword"></span><span class="token keyword">fun </span><a href="list-databases.html"><span class="token function">listDatabases</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-list-databases-iterable/index.html">ListDatabasesIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><span data-unresolved-link="org.bson/Document///PointingToDeclaration/">Document</span><span class="token operator">&gt;</span></div><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="list-databases.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="list-databases.html"><span class="token function">listDatabases</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-list-databases-iterable/index.html">ListDatabasesIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="list-databases.html">T</a><span class="token operator">&gt;</span></div><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;listDatabasesAsDocumentWithSession&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword"></span><span class="token keyword">fun </span><a href="list-databases.html"><span class="token function">listDatabases</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">clientSession<span class="token operator">: </span><a href="../-client-session/index.html">ClientSession</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-list-databases-iterable/index.html">ListDatabasesIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><span data-unresolved-link="org.bson/Document///PointingToDeclaration/">Document</span><span class="token operator">&gt;</span></div><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="list-databases.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="list-databases.html"><span class="token function">listDatabases</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">clientSession<span class="token operator">: </span><a href="../-client-session/index.html">ClientSession</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-list-databases-iterable/index.html">ListDatabasesIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="list-databases.html">T</a><span class="token operator">&gt;</span></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="list-databases.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="list-databases.html"><span class="token function">listDatabases</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">resultClass<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html">Class</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="list-databases.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-list-databases-iterable/index.html">ListDatabasesIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="list-databases.html">T</a><span class="token operator">&gt;</span></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="list-databases.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="list-databases.html"><span class="token function">listDatabases</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">clientSession<span class="token operator">: </span><a href="../-client-session/index.html">ClientSession</a><span class="token punctuation">, </span></span><span class="parameter ">resultClass<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html">Class</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="list-databases.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-list-databases-iterable/index.html">ListDatabasesIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="list-databases.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Gets the list of databases</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1903278788%2FFunctions%2F305748649" anchor-label="startSession" id="1903278788%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="start-session.html"><span>start</span><wbr></wbr><span><span>Session</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1903278788%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="start-session.html"><span class="token function">startSession</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">options<span class="token operator">: </span><span data-unresolved-link="com.mongodb/ClientSessionOptions///PointingToDeclaration/">ClientSessionOptions</span><span class="token operator"> = </span>ClientSessionOptions.builder().build()</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-client-session/index.html">ClientSession</a></div><div class="brief "><p class="paragraph">Creates a client session.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1512428843%2FFunctions%2F305748649" anchor-label="timeout" id="-1512428843%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="timeout.html"><span><span>timeout</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1512428843%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><span data-unresolved-link="com.mongodb.annotations/Alpha///PointingToDeclaration/"><span class="token annotation builtin">Alpha</span></span><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="token punctuation">[</span><span><span data-unresolved-link="com.mongodb.annotations/Reason.CLIENT///PointingToDeclaration/">Reason.CLIENT</span></span><wbr></wbr><span class="token punctuation">]</span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword"></span><span class="token keyword">fun </span><a href="timeout.html"><span class="token function">timeout</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">timeUnit<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html">TimeUnit</a><span class="token operator"> = </span>TimeUnit.MILLISECONDS</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-long/index.html">Long</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">The time limit for the full execution of an operation.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1392532748%2FFunctions%2F305748649" anchor-label="watch" id="1392532748%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="watch.html"><span><span>watch</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1392532748%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;watchAsDocument&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword"></span><span class="token keyword">fun </span><a href="watch.html"><span class="token function">watch</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">pipeline<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span><span class="token operator">&gt;</span><span class="token operator"> = </span>emptyList()</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-change-stream-iterable/index.html">ChangeStreamIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><span data-unresolved-link="org.bson/Document///PointingToDeclaration/">Document</span><span class="token operator">&gt;</span></div><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="watch.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="watch.html"><span class="token function">watch</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">pipeline<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span><span class="token operator">&gt;</span><span class="token operator"> = </span>emptyList()</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-change-stream-iterable/index.html">ChangeStreamIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="watch.html">T</a><span class="token operator">&gt;</span></div><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;watchAsDocumentWithSession&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword"></span><span class="token keyword">fun </span><a href="watch.html"><span class="token function">watch</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">clientSession<span class="token operator">: </span><a href="../-client-session/index.html">ClientSession</a><span class="token punctuation">, </span></span><span class="parameter ">pipeline<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span><span class="token operator">&gt;</span><span class="token operator"> = </span>emptyList()</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-change-stream-iterable/index.html">ChangeStreamIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><span data-unresolved-link="org.bson/Document///PointingToDeclaration/">Document</span><span class="token operator">&gt;</span></div><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="watch.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="watch.html"><span class="token function">watch</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">clientSession<span class="token operator">: </span><a href="../-client-session/index.html">ClientSession</a><span class="token punctuation">, </span></span><span class="parameter ">pipeline<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span><span class="token operator">&gt;</span><span class="token operator"> = </span>emptyList()</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-change-stream-iterable/index.html">ChangeStreamIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="watch.html">T</a><span class="token operator">&gt;</span></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="watch.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="watch.html"><span class="token function">watch</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">pipeline<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span><span class="token operator">&gt;</span><span class="token operator"> = </span>emptyList()<span class="token punctuation">, </span></span><span class="parameter ">resultClass<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html">Class</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="watch.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-change-stream-iterable/index.html">ChangeStreamIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="watch.html">T</a><span class="token operator">&gt;</span></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="watch.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="watch.html"><span class="token function">watch</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">clientSession<span class="token operator">: </span><a href="../-client-session/index.html">ClientSession</a><span class="token punctuation">, </span></span><span class="parameter ">pipeline<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span><span class="token operator">&gt;</span><span class="token operator"> = </span>emptyList()<span class="token punctuation">, </span></span><span class="parameter ">resultClass<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html">Class</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="watch.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-change-stream-iterable/index.html">ChangeStreamIterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="watch.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Creates a change stream for this client.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1218005835%2FFunctions%2F305748649" anchor-label="withCodecRegistry" id="1218005835%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="with-codec-registry.html"><span>with</span><wbr></wbr><span>Codec</span><wbr></wbr><span><span>Registry</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1218005835%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="with-codec-registry.html"><span class="token function">withCodecRegistry</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">newCodecRegistry<span class="token operator">: </span><span data-unresolved-link="org.bson.codecs.configuration/CodecRegistry///PointingToDeclaration/">CodecRegistry</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MongoCluster</a></div><div class="brief "><p class="paragraph">Create a new MongoCluster instance with a different codec registry.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="831115007%2FFunctions%2F305748649" anchor-label="withReadConcern" id="831115007%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="with-read-concern.html"><span>with</span><wbr></wbr><span>Read</span><wbr></wbr><span><span>Concern</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="831115007%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="with-read-concern.html"><span class="token function">withReadConcern</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">newReadConcern<span class="token operator">: </span><span data-unresolved-link="com.mongodb/ReadConcern///PointingToDeclaration/">ReadConcern</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MongoCluster</a></div><div class="brief "><p class="paragraph">Create a new MongoCluster instance with a different read concern.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="288262787%2FFunctions%2F305748649" anchor-label="withReadPreference" id="288262787%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="with-read-preference.html"><span>with</span><wbr></wbr><span>Read</span><wbr></wbr><span><span>Preference</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="288262787%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="with-read-preference.html"><span class="token function">withReadPreference</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">newReadPreference<span class="token operator">: </span><span data-unresolved-link="com.mongodb/ReadPreference///PointingToDeclaration/">ReadPreference</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MongoCluster</a></div><div class="brief "><p class="paragraph">Create a new MongoCluster instance with a different read preference.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1440254967%2FFunctions%2F305748649" anchor-label="withTimeout" id="-1440254967%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="with-timeout.html"><span>with</span><wbr></wbr><span><span>Timeout</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1440254967%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><span data-unresolved-link="com.mongodb.annotations/Alpha///PointingToDeclaration/"><span class="token annotation builtin">Alpha</span></span><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="token punctuation">[</span><span><span data-unresolved-link="com.mongodb.annotations/Reason.CLIENT///PointingToDeclaration/">Reason.CLIENT</span></span><wbr></wbr><span class="token punctuation">]</span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword"></span><span class="token keyword">fun </span><a href="with-timeout.html"><span class="token function">withTimeout</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">timeout<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-long/index.html">Long</a><span class="token punctuation">, </span></span><span class="parameter ">timeUnit<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html">TimeUnit</a><span class="token operator"> = </span>TimeUnit.MILLISECONDS</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MongoCluster</a></div><div class="brief "><p class="paragraph">Create a new MongoCluster instance with the set time limit for the full execution of an operation.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1450157533%2FFunctions%2F305748649" anchor-label="withWriteConcern" id="-1450157533%2FFunctions%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="with-write-concern.html"><span>with</span><wbr></wbr><span>Write</span><wbr></wbr><span><span>Concern</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1450157533%2FFunctions%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="with-write-concern.html"><span class="token function">withWriteConcern</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">newWriteConcern<span class="token operator">: </span><span data-unresolved-link="com.mongodb/WriteConcern///PointingToDeclaration/">WriteConcern</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MongoCluster</a></div><div class="brief "><p class="paragraph">Create a new MongoCluster instance with a different write concern.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="-471175565%2FProperties%2F305748649" anchor-label="codecRegistry" id="-471175565%2FProperties%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="codec-registry.html"><span>codec</span><wbr></wbr><span><span>Registry</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-471175565%2FProperties%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="codec-registry.html">codecRegistry</a><span class="token operator">: </span><span data-unresolved-link="org.bson.codecs.configuration/CodecRegistry///PointingToDeclaration/">CodecRegistry</span></div><div class="brief "><p class="paragraph">The codec registry.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1918065956%2FProperties%2F305748649" anchor-label="readConcern" id="-1918065956%2FProperties%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="read-concern.html"><span>read</span><wbr></wbr><span><span>Concern</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1918065956%2FProperties%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="read-concern.html">readConcern</a><span class="token operator">: </span><span data-unresolved-link="com.mongodb/ReadConcern///PointingToDeclaration/">ReadConcern</span></div><div class="brief "><p class="paragraph">The read concern.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="821162275%2FProperties%2F305748649" anchor-label="readPreference" id="821162275%2FProperties%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="read-preference.html"><span>read</span><wbr></wbr><span><span>Preference</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="821162275%2FProperties%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="read-preference.html">readPreference</a><span class="token operator">: </span><span data-unresolved-link="com.mongodb/ReadPreference///PointingToDeclaration/">ReadPreference</span></div><div class="brief "><p class="paragraph">The read preference.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1862615501%2FProperties%2F305748649" anchor-label="writeConcern" id="-1862615501%2FProperties%2F305748649" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-sync:dokkaHtml/main" data-filterable-set=":driver-kotlin-sync:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="write-concern.html"><span>write</span><wbr></wbr><span><span>Concern</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1862615501%2FProperties%2F305748649"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-sync:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="write-concern.html">writeConcern</a><span class="token operator">: </span><span data-unresolved-link="com.mongodb/WriteConcern///PointingToDeclaration/">WriteConcern</span></div><div class="brief "><p class="paragraph">The write concern.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2025 Copyright</span><span
+                class="pull-right"><span>Generated by </span><a
+                href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+    </div>
+</div>
+</body>
+</html>

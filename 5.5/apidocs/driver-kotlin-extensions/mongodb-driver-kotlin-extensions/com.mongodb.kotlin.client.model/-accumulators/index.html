@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>Accumulators</title>
+    <link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../../";</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async="async"></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
+</head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+            <a href="../../../index.html">
+                    <span>mongodb-driver-kotlin-extensions</span>
+            </a>
+    </div>
+    <div>
+5.5.0    </div>
+    <div class="pull-right d-flex">
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":driver-kotlin-extensions:dokkaHtml/main">jvm</button>
+        </div>
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageIds="mongodb-driver-kotlin-extensions::com.mongodb.kotlin.client.model/Accumulators///PointingToDeclaration//-1274903326">
+  <div class="breadcrumbs"><a href="../../../index.html">mongodb-driver-kotlin-extensions</a><span class="delimiter">/</span><a href="../index.html">com.mongodb.kotlin.client.model</a><span class="delimiter">/</span><span class="current">Accumulators</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span><span>Accumulators</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="index.html">Accumulators</a></div><p class="paragraph">Accumulators extension methods to improve Kotlin interop</p><span class="kdoc-tag"><h4 class="">Since</h4><p class="paragraph">5.3</p></span></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,FUNCTION,PROPERTY">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="-1391811903%2FFunctions%2F-1274903326" anchor-label="accumulator" id="-1391811903%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="accumulator.html"><span><span>accumulator</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1391811903%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="accumulator.html">T</a><span class="token operator">&gt; </span><a href="accumulator.html"><span class="token function">accumulator</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="accumulator.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">initFunction<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">accumulateFunction<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">mergeFunction<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="accumulator.html">T</a><span class="token operator">&gt; </span><a href="accumulator.html"><span class="token function">accumulator</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="accumulator.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">initFunction<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">accumulateFunction<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">mergeFunction<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">finalizeFunction<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="accumulator.html">T</a><span class="token operator">&gt; </span><a href="accumulator.html"><span class="token function">accumulator</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="accumulator.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">initFunction<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">accumulateFunction<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">mergeFunction<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">finalizeFunction<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">lang<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="accumulator.html">T</a><span class="token operator">&gt; </span><a href="accumulator.html"><span class="token function">accumulator</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="accumulator.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">initFunction<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">initArgs<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">accumulateFunction<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">accumulateArgs<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">mergeFunction<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">finalizeFunction<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="accumulator.html">T</a><span class="token operator">&gt; </span><a href="accumulator.html"><span class="token function">accumulator</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="accumulator.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">initFunction<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">initArgs<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">accumulateFunction<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">accumulateArgs<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">mergeFunction<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">finalizeFunction<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">lang<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Creates an $accumulator pipeline stage</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1145676677%2FFunctions%2F-1274903326" anchor-label="addToSet" id="-1145676677%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="add-to-set.html"><span>add</span><wbr></wbr><span>To</span><wbr></wbr><span><span>Set</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1145676677%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="add-to-set.html">TExpression</a><span class="token operator">&gt; </span><a href="add-to-set.html"><span class="token function">addToSet</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">expression<span class="token operator">: </span><a href="add-to-set.html">TExpression</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Gets a field name for a $group operation representing all unique values that results from applying the given expression to each document in a group of documents that share the same group by key.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="960549293%2FFunctions%2F-1274903326" anchor-label="avg" id="960549293%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="avg.html"><span><span>avg</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="960549293%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="avg.html">TExpression</a><span class="token operator">&gt; </span><a href="avg.html"><span class="token function">avg</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">expression<span class="token operator">: </span><a href="avg.html">TExpression</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Gets a field name for a $group operation representing the average of the values of the given expression when applied to all members of the group.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1473650642%2FFunctions%2F-1274903326" anchor-label="bottom" id="-1473650642%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="bottom.html"><span><span>bottom</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1473650642%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bottom.html">OutExpression</a><span class="token operator">&gt; </span><a href="bottom.html"><span class="token function">bottom</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">sortBy<span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span><span class="token punctuation">, </span></span><span class="parameter ">outExpression<span class="token operator">: </span><a href="bottom.html">OutExpression</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Returns a combination of a computed field and an accumulator that produces a value of the given {@code outExpression} computed for the bottom element within a group sorted according to the provided {@code sortBy} specification.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2094683381%2FFunctions%2F-1274903326" anchor-label="bottomN" id="-2094683381%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="bottom-n.html"><span>bottom</span><wbr></wbr><span><span>N</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2094683381%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bottom-n.html">OutExpression</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="bottom-n.html">NExpression</a><span class="token operator">&gt; </span><a href="bottom-n.html"><span class="token function">bottomN</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">sortBy<span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span><span class="token punctuation">, </span></span><span class="parameter ">outExpression<span class="token operator">: </span><a href="bottom-n.html">OutExpression</a><span class="token punctuation">, </span></span><span class="parameter ">nExpression<span class="token operator">: </span><a href="bottom-n.html">NExpression</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Returns a combination of a computed field and an accumulator that produces a BSON {@link org.bson.BsonType#ARRAY Array} of values of the given {@code outExpression} computed for the bottom {@code N} elements within a group sorted according to the provided {@code sortBy} specification, where {@code N} is the positive integral value of the {@code nExpression}.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1618536907%2FFunctions%2F-1274903326" anchor-label="first" id="1618536907%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="first.html"><span><span>first</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1618536907%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="first.html">TExpression</a><span class="token operator">&gt; </span><a href="first.html"><span class="token function">first</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">expression<span class="token operator">: </span><a href="first.html">TExpression</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Gets a field name for a $group operation representing the value of the given expression when applied to the first member of the group.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-462344398%2FFunctions%2F-1274903326" anchor-label="firstN" id="-462344398%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="first-n.html"><span>first</span><wbr></wbr><span><span>N</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-462344398%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="first-n.html">InExpression</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="first-n.html">NExpression</a><span class="token operator">&gt; </span><a href="first-n.html"><span class="token function">firstN</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">inExpression<span class="token operator">: </span><a href="first-n.html">InExpression</a><span class="token punctuation">, </span></span><span class="parameter ">nExpression<span class="token operator">: </span><a href="first-n.html">NExpression</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Returns a combination of a computed field and an accumulator that produces a BSON {@link org.bson.BsonType#ARRAY Array} of values of the given {@code inExpression} computed for the first {@code N} elements within a presorted group, where {@code N} is the positive integral value of the {@code nExpression}.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-560354869%2FFunctions%2F-1274903326" anchor-label="last" id="-560354869%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="last.html"><span><span>last</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-560354869%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="last.html">TExpression</a><span class="token operator">&gt; </span><a href="last.html"><span class="token function">last</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">expression<span class="token operator">: </span><a href="last.html">TExpression</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Gets a field name for a $group operation representing the value of the given expression when applied to the last member of the group.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2103996210%2FFunctions%2F-1274903326" anchor-label="lastN" id="2103996210%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="last-n.html"><span>last</span><wbr></wbr><span><span>N</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2103996210%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="last-n.html">InExpression</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="last-n.html">NExpression</a><span class="token operator">&gt; </span><a href="last-n.html"><span class="token function">lastN</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">inExpression<span class="token operator">: </span><a href="last-n.html">InExpression</a><span class="token punctuation">, </span></span><span class="parameter ">nExpression<span class="token operator">: </span><a href="last-n.html">NExpression</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Returns a combination of a computed field and an accumulator that produces a BSON {@link org.bson.BsonType#ARRAY Array} of values of the given {@code inExpression} computed for the last {@code N} elements within a presorted group, where {@code N} is the positive integral value of the {@code nExpression}.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-401707201%2FFunctions%2F-1274903326" anchor-label="max" id="-401707201%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="max.html"><span><span>max</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-401707201%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="max.html">TExpression</a><span class="token operator">&gt; </span><a href="max.html"><span class="token function">max</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">expression<span class="token operator">: </span><a href="max.html">TExpression</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Gets a field name for a $group operation representing the maximum of the values of the given expression when applied to all members of the group.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1765464002%2FFunctions%2F-1274903326" anchor-label="maxN" id="-1765464002%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="max-n.html"><span>max</span><wbr></wbr><span><span>N</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1765464002%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="max-n.html">InExpression</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="max-n.html">NExpression</a><span class="token operator">&gt; </span><a href="max-n.html"><span class="token function">maxN</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">inExpression<span class="token operator">: </span><a href="max-n.html">InExpression</a><span class="token punctuation">, </span></span><span class="parameter ">nExpression<span class="token operator">: </span><a href="max-n.html">NExpression</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Returns a combination of a computed field and an accumulator that produces a BSON {@link org.bson.BsonType#ARRAY Array} of {@code N} largest values of the given {@code inExpression}, where {@code N} is the positive integral value of the {@code nExpression}.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1018454883%2FFunctions%2F-1274903326" anchor-label="median" id="1018454883%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="median.html"><span><span>median</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1018454883%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="median.html">InExpression</a><span class="token operator">&gt; </span><a href="median.html"><span class="token function">median</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">inExpression<span class="token operator">: </span><a href="median.html">InExpression</a><span class="token punctuation">, </span></span><span class="parameter ">method<span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/QuantileMethod///PointingToDeclaration/">QuantileMethod</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Returns a combination of a computed field and an accumulator that generates a BSON {@link org.bson.BsonType#DOUBLE Double } representing the median value computed from the given {@code inExpression} within a group.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1053504753%2FFunctions%2F-1274903326" anchor-label="mergeObjects" id="1053504753%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="merge-objects.html"><span>merge</span><wbr></wbr><span><span>Objects</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1053504753%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="merge-objects.html">TExpression</a><span class="token operator">&gt; </span><a href="merge-objects.html"><span class="token function">mergeObjects</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">expression<span class="token operator">: </span><a href="merge-objects.html">TExpression</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Gets a field name for a $group operation representing the result of merging the fields of the documents. If documents to merge include the same field name, the field, in the resulting document, has the value from the last document merged for the field.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-438551251%2FFunctions%2F-1274903326" anchor-label="min" id="-438551251%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="min.html"><span><span>min</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-438551251%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="min.html">TExpression</a><span class="token operator">&gt; </span><a href="min.html"><span class="token function">min</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">expression<span class="token operator">: </span><a href="min.html">TExpression</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Gets a field name for a $group operation representing the minimum of the values of the given expression when applied to all members of the group.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1976741872%2FFunctions%2F-1274903326" anchor-label="minN" id="-1976741872%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="min-n.html"><span>min</span><wbr></wbr><span><span>N</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1976741872%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="min-n.html">InExpression</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="min-n.html">NExpression</a><span class="token operator">&gt; </span><a href="min-n.html"><span class="token function">minN</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">inExpression<span class="token operator">: </span><a href="min-n.html">InExpression</a><span class="token punctuation">, </span></span><span class="parameter ">nExpression<span class="token operator">: </span><a href="min-n.html">NExpression</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Returns a combination of a computed field and an accumulator that produces a BSON {@link org.bson.BsonType#ARRAY Array} of {@code N} smallest values of the given {@code inExpression}, where {@code N} is the positive integral value of the {@code nExpression}.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2136012597%2FFunctions%2F-1274903326" anchor-label="percentile" id="2136012597%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="percentile.html"><span><span>percentile</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2136012597%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="percentile.html">InExpression</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="percentile.html">PExpression</a><span class="token operator">&gt; </span><a href="percentile.html"><span class="token function">percentile</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">inExpression<span class="token operator">: </span><a href="percentile.html">InExpression</a><span class="token punctuation">, </span></span><span class="parameter ">pExpression<span class="token operator">: </span><a href="percentile.html">PExpression</a><span class="token punctuation">, </span></span><span class="parameter ">method<span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/QuantileMethod///PointingToDeclaration/">QuantileMethod</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Returns a combination of a computed field and an accumulator that generates a BSON {@link org.bson.BsonType#ARRAY Array} containing computed values from the given {@code inExpression} based on the provided {@code pExpression}, which represents an array of percentiles of interest within a group, where each element is a numeric value between 0.0 and 1.0 (inclusive).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1803435087%2FFunctions%2F-1274903326" anchor-label="push" id="1803435087%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="push.html"><span><span>push</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1803435087%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="push.html">TExpression</a><span class="token operator">&gt; </span><a href="push.html"><span class="token function">push</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">expression<span class="token operator">: </span><a href="push.html">TExpression</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Gets a field name for a $group operation representing an array of all values that results from applying an expression to each document in a group of documents that share the same group by key.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-485323238%2FFunctions%2F-1274903326" anchor-label="stdDevPop" id="-485323238%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="std-dev-pop.html"><span>std</span><wbr></wbr><span>Dev</span><wbr></wbr><span><span>Pop</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-485323238%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="std-dev-pop.html">TExpression</a><span class="token operator">&gt; </span><a href="std-dev-pop.html"><span class="token function">stdDevPop</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">expression<span class="token operator">: </span><a href="std-dev-pop.html">TExpression</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Gets a field name for a $group operation representing the sample standard deviation of the values of the given expression when applied to all members of the group.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1840488312%2FFunctions%2F-1274903326" anchor-label="stdDevSamp" id="1840488312%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="std-dev-samp.html"><span>std</span><wbr></wbr><span>Dev</span><wbr></wbr><span><span>Samp</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1840488312%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="std-dev-samp.html">TExpression</a><span class="token operator">&gt; </span><a href="std-dev-samp.html"><span class="token function">stdDevSamp</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">expression<span class="token operator">: </span><a href="std-dev-samp.html">TExpression</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Gets a field name for a $group operation representing the sample standard deviation of the values of the given expression when applied to all members of the group.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="145315494%2FFunctions%2F-1274903326" anchor-label="sum" id="145315494%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="sum.html"><span><span>sum</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="145315494%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="sum.html">TExpression</a><span class="token operator">&gt; </span><a href="sum.html"><span class="token function">sum</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">expression<span class="token operator">: </span><a href="sum.html">TExpression</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Gets a field name for a $group operation representing the sum of the values of the given expression when applied to all members of the group.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-182500546%2FFunctions%2F-1274903326" anchor-label="top" id="-182500546%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="top.html"><span><span>top</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-182500546%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="top.html">OutExpression</a><span class="token operator">&gt; </span><a href="top.html"><span class="token function">top</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">sortBy<span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span><span class="token punctuation">, </span></span><span class="parameter ">outExpression<span class="token operator">: </span><a href="top.html">OutExpression</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Returns a combination of a computed field and an accumulator that produces a value of the given {@code outExpression} computed for the top element within a group sorted according to the provided {@code sortBy} specification.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2086344197%2FFunctions%2F-1274903326" anchor-label="topN" id="-2086344197%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="top-n.html"><span>top</span><wbr></wbr><span><span>N</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2086344197%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="top-n.html">OutExpression</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="top-n.html">NExpression</a><span class="token operator">&gt; </span><a href="top-n.html"><span class="token function">topN</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">sortBy<span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span><span class="token punctuation">, </span></span><span class="parameter ">outExpression<span class="token operator">: </span><a href="top-n.html">OutExpression</a><span class="token punctuation">, </span></span><span class="parameter ">nExpression<span class="token operator">: </span><a href="top-n.html">NExpression</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/BsonField///PointingToDeclaration/">BsonField</span></div><div class="brief "><p class="paragraph">Returns a combination of a computed field and an accumulator that produces a BSON {@link org.bson.BsonType#ARRAY Array} of values of the given {@code outExpression} computed for the top {@code N} elements within a group sorted according to the provided {@code sortBy} specification, where {@code N} is the positive integral value of the {@code nExpression}.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2025 Copyright</span><span
+                class="pull-right"><span>Generated by </span><a
+                href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>Updates</title>
+    <link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../../";</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async="async"></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
+</head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+            <a href="../../../index.html">
+                    <span>mongodb-driver-kotlin-extensions</span>
+            </a>
+    </div>
+    <div>
+5.5.0    </div>
+    <div class="pull-right d-flex">
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":driver-kotlin-extensions:dokkaHtml/main">jvm</button>
+        </div>
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageIds="mongodb-driver-kotlin-extensions::com.mongodb.kotlin.client.model/Updates///PointingToDeclaration//-1274903326">
+  <div class="breadcrumbs"><a href="../../../index.html">mongodb-driver-kotlin-extensions</a><span class="delimiter">/</span><a href="../index.html">com.mongodb.kotlin.client.model</a><span class="delimiter">/</span><span class="current">Updates</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span><span>Updates</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="index.html">Updates</a></div><p class="paragraph">Updates extension methods to improve Kotlin interop</p><span class="kdoc-tag"><h4 class="">Since</h4><p class="paragraph">5.3</p></span></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,FUNCTION,PROPERTY">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="-774547026%2FFunctions%2F-1274903326" anchor-label="addEachToSet" id="-774547026%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="add-each-to-set.html"><span>add</span><wbr></wbr><span>Each</span><wbr></wbr><span>To</span><wbr></wbr><span><span>Set</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-774547026%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="add-each-to-set.html">T</a><span class="token operator">&gt; </span><a href="add-each-to-set.html"><span class="token function">addEachToSet</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-iterable/index.html">Iterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="add-each-to-set.html">T</a><span class="token operator">&gt;</span><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">values<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="add-each-to-set.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that adds each of the given values to the array value of the property, unless the value is already present, in which case it does nothing</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1078831201%2FFunctions%2F-1274903326" anchor-label="addToSet" id="1078831201%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="add-to-set.html"><span>add</span><wbr></wbr><span>To</span><wbr></wbr><span><span>Set</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1078831201%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="add-to-set.html">T</a><span class="token operator">&gt; </span><a href="add-to-set.html"><span class="token function">addToSet</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-iterable/index.html">Iterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="add-to-set.html">T</a><span class="token operator">&gt;</span><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="add-to-set.html">T</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that adds the given value to the array value of the property, unless the value is already present, in which case it does nothing</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="697493724%2FFunctions%2F-1274903326" anchor-label="addToSet" id="697493724%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="add-to-set.html"><span>add</span><wbr></wbr><span>To</span><wbr></wbr><span><span>Set</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="697493724%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;addToSetExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">infix </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="add-to-set.html">T</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-iterable/index.html">Iterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="add-to-set.html">T</a><span class="token operator">&gt;</span><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="add-to-set.html"><span class="token function">addToSet</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">value<span class="token operator">: </span><a href="add-to-set.html">T</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that adds the given value to the array value of the property, unless the value is already present, in which case it does nothing</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1021218165%2FFunctions%2F-1274903326" anchor-label="bitwiseAnd" id="1021218165%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="bitwise-and.html"><span>bitwise</span><wbr></wbr><span><span>And</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1021218165%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-and.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-number/index.html">Number</a><span class="token operator">?</span><span class="token operator">&gt; </span><a href="bitwise-and.html"><span class="token function">bitwiseAnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-and.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that performs a bitwise and between the given integer value and the integral value of the property.</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-and.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-number/index.html">Number</a><span class="token operator">?</span><span class="token operator">&gt; </span><a href="bitwise-and.html"><span class="token function">bitwiseAnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-and.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-long/index.html">Long</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that performs a bitwise and between the given long value and the integral value of the property.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="643775179%2FFunctions%2F-1274903326" anchor-label="bitwiseAnd" id="643775179%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="bitwise-and.html"><span>bitwise</span><wbr></wbr><span><span>And</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="643775179%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;bitwiseAndExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">infix </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-and.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-number/index.html">Number</a><span class="token operator">?</span><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-and.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="bitwise-and.html"><span class="token function">bitwiseAnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">value<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that performs a bitwise and between the given integer value and the integral value of the property.</p></div><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;bitwiseAndExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">infix </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-and.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-number/index.html">Number</a><span class="token operator">?</span><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-and.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="bitwise-and.html"><span class="token function">bitwiseAnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">value<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-long/index.html">Long</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that performs a bitwise and between the given long value and the integral value of the property.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-434617045%2FFunctions%2F-1274903326" anchor-label="bitwiseOr" id="-434617045%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="bitwise-or.html"><span>bitwise</span><wbr></wbr><span><span>Or</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-434617045%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-or.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-number/index.html">Number</a><span class="token operator">?</span><span class="token operator">&gt; </span><a href="bitwise-or.html"><span class="token function">bitwiseOr</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-or.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that performs a bitwise or between the given integer value and the integral value of the property.</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-or.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-number/index.html">Number</a><span class="token operator">?</span><span class="token operator">&gt; </span><a href="bitwise-or.html"><span class="token function">bitwiseOr</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-or.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-long/index.html">Long</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that performs a bitwise or between the given long value and the integral value of the property.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1336002893%2FFunctions%2F-1274903326" anchor-label="bitwiseOr" id="-1336002893%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="bitwise-or.html"><span>bitwise</span><wbr></wbr><span><span>Or</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1336002893%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;bitwiseOrExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">infix </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-or.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-number/index.html">Number</a><span class="token operator">?</span><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-or.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="bitwise-or.html"><span class="token function">bitwiseOr</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">value<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that performs a bitwise or between the given integer value and the integral value of the property.</p></div><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;bitwiseOrExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">infix </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-or.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-number/index.html">Number</a><span class="token operator">?</span><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-or.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="bitwise-or.html"><span class="token function">bitwiseOr</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">value<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-long/index.html">Long</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that performs a bitwise or between the given long value and the integral value of the property.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1353796461%2FFunctions%2F-1274903326" anchor-label="bitwiseXor" id="1353796461%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="bitwise-xor.html"><span>bitwise</span><wbr></wbr><span><span>Xor</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1353796461%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-xor.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-number/index.html">Number</a><span class="token operator">?</span><span class="token operator">&gt; </span><a href="bitwise-xor.html"><span class="token function">bitwiseXor</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-xor.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that performs a bitwise xor between the given integer value and the integral value of the property.</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-xor.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-number/index.html">Number</a><span class="token operator">?</span><span class="token operator">&gt; </span><a href="bitwise-xor.html"><span class="token function">bitwiseXor</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-xor.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-long/index.html">Long</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that performs a bitwise xor between the given long value and the integral value of the property.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1394099275%2FFunctions%2F-1274903326" anchor-label="bitwiseXor" id="1394099275%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="bitwise-xor.html"><span>bitwise</span><wbr></wbr><span><span>Xor</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1394099275%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;bitwiseXorExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">infix </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-xor.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-number/index.html">Number</a><span class="token operator">?</span><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-xor.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="bitwise-xor.html"><span class="token function">bitwiseXor</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">value<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that performs a bitwise xor between the given integer value and the integral value of the property.</p></div><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;addToSetExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">infix </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-xor.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-number/index.html">Number</a><span class="token operator">?</span><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="bitwise-xor.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="bitwise-xor.html"><span class="token function">bitwiseXor</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">value<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-long/index.html">Long</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that performs a bitwise xor between the given long value and the integral value of the property.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1044835776%2FFunctions%2F-1274903326" anchor-label="combine" id="-1044835776%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="combine.html"><span><span>combine</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1044835776%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="combine.html"><span class="token function">combine</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">vararg </span>updates<span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="combine.html"><span class="token function">combine</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">updates<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Combine a list of updates into a single update.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1831006800%2FFunctions%2F-1274903326" anchor-label="currentDate" id="1831006800%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="current-date.html"><span>current</span><wbr></wbr><span><span>Date</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1831006800%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="current-date.html">T</a><span class="token operator">&gt; </span><a href="current-date.html"><span class="token function">currentDate</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="current-date.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that sets the value of the property to the current date as a BSON date.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1793226246%2FFunctions%2F-1274903326" anchor-label="currentTimestamp" id="-1793226246%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="current-timestamp.html"><span>current</span><wbr></wbr><span><span>Timestamp</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1793226246%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="current-timestamp.html">T</a><span class="token operator">&gt; </span><a href="current-timestamp.html"><span class="token function">currentTimestamp</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="current-timestamp.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that sets the value of the property to the current date as a BSON timestamp.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-998990673%2FFunctions%2F-1274903326" anchor-label="inc" id="-998990673%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="inc.html"><span><span>inc</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-998990673%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="inc.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-number/index.html">Number</a><span class="token operator">?</span><span class="token operator">&gt; </span><a href="inc.html"><span class="token function">inc</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="inc.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">number<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-number/index.html">Number</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that increments the value of the property by the given value.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1380195164%2FFunctions%2F-1274903326" anchor-label="inc" id="1380195164%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="inc.html"><span><span>inc</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1380195164%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;incExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">infix </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="inc.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-number/index.html">Number</a><span class="token operator">?</span><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="inc.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="inc.html"><span class="token function">inc</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">number<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-number/index.html">Number</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that increments the value of the property by the given value.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-158523572%2FFunctions%2F-1274903326" anchor-label="max" id="-158523572%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="max.html"><span><span>max</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-158523572%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="max.html">T</a><span class="token operator">&gt; </span><a href="max.html"><span class="token function">max</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="max.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="max.html">T</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that sets the value of the property if the given value is greater than the current value of the property.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-759605197%2FFunctions%2F-1274903326" anchor-label="max" id="-759605197%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="max.html"><span><span>max</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-759605197%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;maxExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">infix </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="max.html">T</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="max.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="max.html"><span class="token function">max</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">value<span class="token operator">: </span><a href="max.html">T</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that sets the value of the property if the given value is greater than the current value of the property.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1751144634%2FFunctions%2F-1274903326" anchor-label="min" id="1751144634%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="min.html"><span><span>min</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1751144634%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="min.html">T</a><span class="token operator">&gt; </span><a href="min.html"><span class="token function">min</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="min.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="min.html">T</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that sets the value of the property if the given value is less than the current value of the property.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1241659653%2FFunctions%2F-1274903326" anchor-label="min" id="1241659653%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="min.html"><span><span>min</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1241659653%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;minExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">infix </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="min.html">T</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="min.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="min.html"><span class="token function">min</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">value<span class="token operator">: </span><a href="min.html">T</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that sets the value of the property if the given value is less than the current value of the property.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-768670967%2FFunctions%2F-1274903326" anchor-label="mul" id="-768670967%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="mul.html"><span><span>mul</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-768670967%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="mul.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-number/index.html">Number</a><span class="token operator">?</span><span class="token operator">&gt; </span><a href="mul.html"><span class="token function">mul</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="mul.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">number<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-number/index.html">Number</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that multiplies the value of the property by the given number.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-690585150%2FFunctions%2F-1274903326" anchor-label="mul" id="-690585150%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="mul.html"><span><span>mul</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-690585150%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;mulExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">infix </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="mul.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-number/index.html">Number</a><span class="token operator">?</span><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="mul.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="mul.html"><span class="token function">mul</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">number<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-number/index.html">Number</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that multiplies the value of the property by the given number.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1608061252%2FFunctions%2F-1274903326" anchor-label="popFirst" id="-1608061252%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="pop-first.html"><span>pop</span><wbr></wbr><span><span>First</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1608061252%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="pop-first.html">T</a><span class="token operator">&gt; </span><a href="pop-first.html"><span class="token function">popFirst</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="pop-first.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that pops the first element of an array that is the value of the property.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="556480784%2FFunctions%2F-1274903326" anchor-label="popLast" id="556480784%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="pop-last.html"><span>pop</span><wbr></wbr><span><span>Last</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="556480784%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="pop-last.html">T</a><span class="token operator">&gt; </span><a href="pop-last.html"><span class="token function">popLast</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="pop-last.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that pops the last element of an array that is the value of the property.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1049267354%2FFunctions%2F-1274903326" anchor-label="pull" id="1049267354%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="pull.html"><span><span>pull</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1049267354%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="pull.html">T</a><span class="token operator">&gt; </span><a href="pull.html"><span class="token function">pull</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-iterable/index.html">Iterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="pull.html">T</a><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="pull.html">T</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that removes all instances of the given value from the array value of the property.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1978870519%2FFunctions%2F-1274903326" anchor-label="pull" id="1978870519%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="pull.html"><span><span>pull</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1978870519%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;pullExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">infix </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="pull.html">T</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-iterable/index.html">Iterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="pull.html">T</a><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="pull.html"><span class="token function">pull</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">value<span class="token operator">: </span><a href="pull.html">T</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that removes all instances of the given value from the array value of the property.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1367759399%2FFunctions%2F-1274903326" anchor-label="pullAll" id="1367759399%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="pull-all.html"><span>pull</span><wbr></wbr><span><span>All</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1367759399%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="pull-all.html">T</a><span class="token operator">&gt; </span><a href="pull-all.html"><span class="token function">pullAll</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-iterable/index.html">Iterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="pull-all.html">T</a><span class="token operator">&gt;</span><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">values<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="pull-all.html">T</a><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that removes all instances of the given values from the array value of the property.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1934926448%2FFunctions%2F-1274903326" anchor-label="pullAll" id="-1934926448%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="pull-all.html"><span>pull</span><wbr></wbr><span><span>All</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1934926448%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;pullAllExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">infix </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="pull-all.html">T</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-iterable/index.html">Iterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="pull-all.html">T</a><span class="token operator">&gt;</span><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="pull-all.html"><span class="token function">pullAll</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">values<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="pull-all.html">T</a><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that removes all instances of the given values from the array value of the property.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="232151239%2FFunctions%2F-1274903326" anchor-label="pullByFilter" id="232151239%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="pull-by-filter.html"><span>pull</span><wbr></wbr><span>By</span><wbr></wbr><span><span>Filter</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="232151239%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="pull-by-filter.html"><span class="token function">pullByFilter</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">filter<span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that removes from an array all elements that match the given filter.</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="pull-by-filter.html"><span class="token function">pullByFilter</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">filter<span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that removes all instances of the given value from the array value of the property.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="595600068%2FFunctions%2F-1274903326" anchor-label="pullByFilter" id="595600068%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="pull-by-filter.html"><span>pull</span><wbr></wbr><span>By</span><wbr></wbr><span><span>Filter</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="595600068%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;pullByFilterExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">infix </span><span class="token keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token operator">*</span><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="pull-by-filter.html"><span class="token function">pullByFilter</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">filter<span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that removes all instances of the given value from the array value of the property.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1589800779%2FFunctions%2F-1274903326" anchor-label="push" id="-1589800779%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="push.html"><span><span>push</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1589800779%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="push.html">T</a><span class="token operator">&gt; </span><a href="push.html"><span class="token function">push</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-iterable/index.html">Iterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="push.html">T</a><span class="token operator">&gt;</span><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="push.html">T</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that adds the given value to the array value of the property.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1948744405%2FFunctions%2F-1274903326" anchor-label="pushEach" id="-1948744405%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="push-each.html"><span>push</span><wbr></wbr><span><span>Each</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1948744405%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="push-each.html">T</a><span class="token operator">&gt; </span><a href="push-each.html"><span class="token function">pushEach</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-iterable/index.html">Iterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="push-each.html">T</a><span class="token operator">&gt;</span><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">values<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="push-each.html">T</a><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">options<span class="token operator">: </span><span data-unresolved-link="com.mongodb.client.model/PushOptions///PointingToDeclaration/">PushOptions</span><span class="token operator"> = </span>PushOptions()</span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that adds each of the given values to the array value of the property, applying the given options for positioning the pushed values, and then slicing and/or sorting the array.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1511350774%2FFunctions%2F-1274903326" anchor-label="rename" id="-1511350774%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="rename.html"><span><span>rename</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1511350774%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="rename.html">T</a><span class="token operator">&gt; </span><a href="rename.html"><span class="token function">rename</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="rename.html">T</a><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">newProperty<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="rename.html">T</a><span class="token operator">?</span><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that renames a field.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2066429355%2FFunctions%2F-1274903326" anchor-label="rename" id="-2066429355%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="rename.html"><span><span>rename</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2066429355%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;renameExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">infix </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="rename.html">T</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="rename.html">T</a><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="rename.html"><span class="token function">rename</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">newProperty<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="rename.html">T</a><span class="token operator">?</span><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that renames a field.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="742912392%2FFunctions%2F-1274903326" anchor-label="set" id="742912392%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="set.html"><span><span>set</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="742912392%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="set.html">T</a><span class="token operator">&gt; </span><a href="set.html"><span class="token function">set</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="set.html">T</a><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="set.html">T</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that sets the value of the property to the given value.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2139754354%2FFunctions%2F-1274903326" anchor-label="set" id="-2139754354%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="set.html"><span><span>set</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2139754354%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;setExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">infix </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="set.html">T</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="set.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="set.html"><span class="token function">set</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">value<span class="token operator">: </span><a href="set.html">T</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that sets the value of the property to the given value.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1941767392%2FFunctions%2F-1274903326" anchor-label="setOnInsert" id="-1941767392%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="set-on-insert.html"><span>set</span><wbr></wbr><span>On</span><wbr></wbr><span><span>Insert</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1941767392%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="set-on-insert.html">T</a><span class="token operator">&gt; </span><a href="set-on-insert.html"><span class="token function">setOnInsert</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="set-on-insert.html">T</a><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="set-on-insert.html">T</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that sets the value of the property to the given value, but only if the update is an upsert that results in an insert of a document.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="419885147%2FFunctions%2F-1274903326" anchor-label="setOnInsert" id="419885147%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="set-on-insert.html"><span>set</span><wbr></wbr><span>On</span><wbr></wbr><span><span>Insert</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="419885147%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;setOnInsertExt&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">infix </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="set-on-insert.html">T</a><span class="token operator">&gt; </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="set-on-insert.html">T</a><span class="token operator">?</span><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="set-on-insert.html"><span class="token function">setOnInsert</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">value<span class="token operator">: </span><a href="set-on-insert.html">T</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that sets the value of the property to the given value, but only if the update is an upsert that results in an insert of a document.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1467806542%2FFunctions%2F-1274903326" anchor-label="unset" id="-1467806542%2FFunctions%2F-1274903326" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":driver-kotlin-extensions:dokkaHtml/main" data-filterable-set=":driver-kotlin-extensions:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="unset.html"><span><span>unset</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1467806542%2FFunctions%2F-1274903326"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":driver-kotlin-extensions:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="unset.html">T</a><span class="token operator">&gt; </span><a href="unset.html"><span class="token function">unset</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">property<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.reflect/-k-property/index.html">KProperty</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="unset.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="org.bson.conversions/Bson///PointingToDeclaration/">Bson</span></div><div class="brief "><p class="paragraph">Creates an update that deletes the property with the given name.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2025 Copyright</span><span
+                class="pull-right"><span>Generated by </span><a
+                href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+    </div>
+</div>
+</body>
+</html>
