@@ -47,9 +47,6 @@ public class UriOptionsTest extends AbstractConnectionStringTest {
         // No CANONICALIZE_HOST_NAME support https://jira.mongodb.org/browse/JAVA-4278
         assumeFalse(getDescription().equals("Valid auth options are parsed correctly (GSSAPI)"));
 
-        // https://jira.mongodb.org/browse/JAVA-5834
-        assumeFalse(getFilename().equals("proxy-options.json"));
-
         if (getDefinition().getBoolean("valid", BsonBoolean.TRUE).getValue()) {
             testValidOptions();
         } else {
