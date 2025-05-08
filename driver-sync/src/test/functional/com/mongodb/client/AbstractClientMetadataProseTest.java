@@ -185,7 +185,7 @@ public abstract class AbstractClientMetadataProseTest {
     }
 
     protected MongoClientSettings.Builder getMongoClientSettingsBuilder() {
-        return getMongoClientSettingsBuilder()
+        return Fixture.getMongoClientSettingsBuilder()
                 .addCommandListener(commandListener)
                 .applyToConnectionPoolSettings(builder ->
                         builder.addConnectionPoolListener(connectionPoolListener));
