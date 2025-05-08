@@ -56,6 +56,7 @@ import static com.mongodb.MongoCredential.ALLOWED_HOSTS_KEY;
 import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateCreateOidcCredential;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
 
@@ -505,7 +506,7 @@ public class ConnectionString {
             throw new IllegalArgumentException("srvMaxHosts can not be specified with replica set name");
         }
 
-        validateProxyParameters();
+        validateProxyParameters(combinedOptionsMaps);
 
         credential = createCredentials(combinedOptionsMaps, userName, password);
         warnOnUnsupportedOptions(combinedOptionsMaps);
@@ -1226,7 +1227,7 @@ public class ConnectionString {
         }
     }
 
-    private void validateProxyParameters() {
+    private void validateProxyParameters(final Map<String, List<String>> optionsMap) {
         if (proxyHost == null) {
             if (proxyPort != null) {
                 throw new IllegalArgumentException("proxyPort can only be specified with proxyHost");
@@ -1259,6 +1260,23 @@ public class ConnectionString {
             throw new IllegalArgumentException(
                     "Both proxyUsername and proxyPassword must be set together. They cannot be set individually");
         }
+
+        if (containsDuplicatedOptions("proxyhost", optionsMap)) {
+            throw new IllegalArgumentException("Duplicated values for proxyHost: " + optionsMap.get("proxyhost"));
+        }
+        if (containsDuplicatedOptions("proxyport", optionsMap)) {
+            throw new IllegalArgumentException("Duplicated values for proxyPort: " + optionsMap.get("proxyport"));
+        }
+        if (containsDuplicatedOptions("proxypassword", optionsMap)) {
+            throw new IllegalArgumentException("Duplicated values for proxyPassword: " + optionsMap.get("proxypassword"));
+        }
+        if (containsDuplicatedOptions("proxyusername", optionsMap)) {
+            throw new IllegalArgumentException("Duplicated values for proxyUsername: " + optionsMap.get("proxyusername"));
+        }
+    }
+
+    private static boolean containsDuplicatedOptions(final String optionName, final Map<String, List<String>> optionsMap) {
+        return optionsMap.getOrDefault(optionName, emptyList()).size() > 1;
     }
 
     private int countOccurrences(final String haystack, final String needle) {

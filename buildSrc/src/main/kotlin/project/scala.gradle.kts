@@ -17,6 +17,7 @@ package project
 
 import ProjectExtensions.configureMavenPublication
 import ProjectExtensions.scalaVersion
+import gradle.kotlin.dsl.accessors._473b9544fb0ec2c6cc860d9af4296ace.java
 
 plugins {
     id("scala")
@@ -50,6 +51,14 @@ tasks.withType<Test> {
 }
 
 tasks.named<Delete>("clean") { delete.add(rootProject.file("build/docs/")) }
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+
+    withSourcesJar()
+    withJavadocJar()
+}
 
 afterEvaluate {
     configureMavenPublication { artifactId = "${base.archivesName.get()}_${scalaVersion}" }
