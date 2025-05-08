@@ -341,6 +341,7 @@ public class ClientMetadataHelperProseTest {
                 .driverPlatform("JDK 99")
                 .build();
 
+        //We pass metadataToAppend to a builder and prepend with initial driver information.
         MongoDriverInformation expectedUpdatedMetadata = MongoDriverInformation.builder(metadataToAppend)
                 .driverName("mongo-spark")
                 .driverVersion("2.0.0")

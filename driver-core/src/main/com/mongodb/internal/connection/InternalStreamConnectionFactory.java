@@ -42,8 +42,8 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final MongoCredentialWithCache credential;
 
     InternalStreamConnectionFactory(final ClusterConnectionMode clusterConnectionMode,
-            final StreamFactory streamFactory,
-            @Nullable final MongoCredentialWithCache credential,
+                                    final StreamFactory streamFactory,
+                                    @Nullable final MongoCredentialWithCache credential,
                                     final ClientMetadata clientMetadata,
             final List<MongoCompressor> compressorList,
             final LoggerSettings loggerSettings, @Nullable final CommandListener commandListener, @Nullable final ServerApi serverApi) {
@@ -52,8 +52,8 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
     }
 
     InternalStreamConnectionFactory(final ClusterConnectionMode clusterConnectionMode, final boolean isMonitoringConnection,
-            final StreamFactory streamFactory,
-            @Nullable final MongoCredentialWithCache credential,
+                                    final StreamFactory streamFactory,
+                                    @Nullable final MongoCredentialWithCache credential,
                                     final ClientMetadata clientMetadata,
             final List<MongoCompressor> compressorList,
             final LoggerSettings loggerSettings, @Nullable final CommandListener commandListener, @Nullable final ServerApi serverApi) {
@@ -72,7 +72,7 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
     public InternalConnection create(final ServerId serverId, final ConnectionGenerationSupplier connectionGenerationSupplier) {
         Authenticator authenticator = credential == null ? null : createAuthenticator(credential);
         InternalStreamConnectionInitializer connectionInitializer = new InternalStreamConnectionInitializer(
-                clusterConnectionMode, authenticator, clientMetadata.getClientMetadataBsonDocument(), compressorList, serverApi);
+                clusterConnectionMode, authenticator, clientMetadata.getBsonDocument(), compressorList, serverApi);
         return new InternalStreamConnection(
                 clusterConnectionMode, authenticator,
                 isMonitoringConnection, serverId, connectionGenerationSupplier,
