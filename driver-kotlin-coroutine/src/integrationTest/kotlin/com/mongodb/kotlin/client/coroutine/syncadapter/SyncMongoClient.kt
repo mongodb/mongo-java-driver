@@ -25,7 +25,7 @@ internal class SyncMongoClient(override val wrapped: MongoClient) : SyncMongoClu
 
     override fun getClusterDescription(): ClusterDescription = wrapped.getClusterDescription()
 
-    override fun updateClientMetadata(mongoDriverInformation: MongoDriverInformation) {
-        // TODO
+    override fun updateMetadata(mongoDriverInformation: MongoDriverInformation) {
+        throw UnsupportedOperationException("TODO-JAVA-5871")
     }
 }

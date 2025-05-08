@@ -16,6 +16,7 @@
 
 package com.mongodb.reactivestreams.client;
 
+import com.mongodb.MongoDriverInformation;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
@@ -58,4 +59,7 @@ public interface MongoClient extends MongoCluster, Closeable {
      * @since 4.1
      */
     ClusterDescription getClusterDescription();
+
+
+    void updateMetadata(MongoDriverInformation mongoDriverInformation);
 }

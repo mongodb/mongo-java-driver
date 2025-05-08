@@ -136,8 +136,8 @@ public final class MongoClientImpl implements MongoClient {
     }
 
     @Override
-    public void updateClientMetadata(final MongoDriverInformation mongoDriverInformation) {
-        delegate.getCluster().getClientMetadata().updateClientMetadataBsonDocument(mongoDriverInformation);
+    public void updateMetadata(final MongoDriverInformation mongoDriverInformation) {
+        delegate.getCluster().getClientMetadata().append(mongoDriverInformation);
     }
 
     @Override

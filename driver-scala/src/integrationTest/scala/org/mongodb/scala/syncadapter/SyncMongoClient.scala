@@ -1,15 +1,8 @@
 package org.mongodb.scala.syncadapter
 
-import com.mongodb.ClientSessionOptions
-import com.mongodb.client.{ ClientSession, MongoClient => JMongoClient, MongoDatabase => JMongoDatabase }
-import org.bson.Document
-import org.bson.conversions.Bson
+import com.mongodb.MongoDriverInformation
+import com.mongodb.client.{MongoClient => JMongoClient}
 import org.mongodb.scala.MongoClient
-import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
-
-import scala.collection.JavaConverters._
-import scala.concurrent.Await
-import scala.reflect.ClassTag
 
 case class SyncMongoClient(wrapped: MongoClient) extends SyncMongoCluster(wrapped) with JMongoClient {
 
@@ -17,4 +10,6 @@ case class SyncMongoClient(wrapped: MongoClient) extends SyncMongoCluster(wrappe
 
   override def getClusterDescription = throw new UnsupportedOperationException
 
+  override def updateMetadata(mongoDriverInformation: MongoDriverInformation): Unit =
+    throw new UnsupportedOperationException("TODO-JAVA-5871")
 }

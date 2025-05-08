@@ -33,7 +33,6 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final ClusterConnectionMode clusterConnectionMode;
     private final boolean isMonitoringConnection;
     private final StreamFactory streamFactory;
-    //TODO UPDATE
     private final ClientMetadata clientMetadata;
     private final List<MongoCompressor> compressorList;
     private final LoggerSettings loggerSettings;

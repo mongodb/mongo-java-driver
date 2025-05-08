@@ -63,5 +63,5 @@ public interface MongoClient extends MongoCluster, Closeable {
      */
     ClusterDescription getClusterDescription();
 
-    void updateClientMetadata(MongoDriverInformation mongoDriverInformation);
+    void updateMetadata(MongoDriverInformation mongoDriverInformation);
 }
