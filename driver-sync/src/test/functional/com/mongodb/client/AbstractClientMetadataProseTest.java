@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.event.CommandStartedEvent;
@@ -36,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.ClusterFixture.sleep;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 /**
  * See <a href="https://github.com/mongodb/specifications/blob/master/source/mongodb-handshake/handshake.md#test-plan">spec</a>
@@ -50,6 +52,8 @@ public abstract class AbstractClientMetadataProseTest {
 
     @BeforeEach
     public void setUp() {
+        assumeFalse(ClusterFixture.isLoadBalanced());
+
         commandListener = new TestCommandListener();
         connectionPoolListener = new TestConnectionPoolListener();
         InternalStreamConnection.setRecordEverything(true);
