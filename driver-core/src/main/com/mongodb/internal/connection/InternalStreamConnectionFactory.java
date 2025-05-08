@@ -45,8 +45,9 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
                                     final StreamFactory streamFactory,
                                     @Nullable final MongoCredentialWithCache credential,
                                     final ClientMetadata clientMetadata,
-            final List<MongoCompressor> compressorList,
-            final LoggerSettings loggerSettings, @Nullable final CommandListener commandListener, @Nullable final ServerApi serverApi) {
+                                    final List<MongoCompressor> compressorList,
+                                    final LoggerSettings loggerSettings, @Nullable final CommandListener commandListener,
+                                    @Nullable final ServerApi serverApi) {
         this(clusterConnectionMode, false, streamFactory, credential, clientMetadata, compressorList,
                 loggerSettings, commandListener, serverApi);
     }

@@ -44,11 +44,11 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
  */
 public abstract class AbstractClientMetadataProseTest {
 
-    protected TestCommandListener commandListener;
-    protected TestConnectionPoolListener connectionPoolListener;
+    private TestCommandListener commandListener;
+    private TestConnectionPoolListener connectionPoolListener;
 
-    protected abstract MongoClient createMongoClient(@Nullable final MongoDriverInformation driverInformation,
-                                                     final MongoClientSettings mongoClientSettings);
+    protected abstract MongoClient createMongoClient(@Nullable MongoDriverInformation driverInformation,
+                                                     MongoClientSettings mongoClientSettings);
 
     @BeforeEach
     public void setUp() {

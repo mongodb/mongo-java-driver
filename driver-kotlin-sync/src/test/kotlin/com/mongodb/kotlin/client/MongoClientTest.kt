@@ -17,12 +17,8 @@ package com.mongodb.kotlin.client
 
 import com.mongodb.ClientSessionOptions
 import com.mongodb.MongoNamespace
-import com.mongodb.client.MongoClient as JMongoClient
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel
-import kotlin.reflect.full.declaredFunctions
-import kotlin.reflect.full.declaredMemberProperties
-import kotlin.test.assertEquals
 import org.bson.BsonDocument
 import org.bson.Document
 import org.junit.jupiter.api.Test
@@ -35,6 +31,10 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoMoreInteractions
 import org.mockito.kotlin.whenever
+import kotlin.reflect.full.declaredFunctions
+import kotlin.reflect.full.declaredMemberProperties
+import kotlin.test.assertEquals
+import com.mongodb.client.MongoClient as JMongoClient
 
 class MongoClientTest {
 
@@ -43,7 +43,14 @@ class MongoClientTest {
 
     @Test
     fun shouldHaveTheSameMethods() {
-        val jMongoClientFunctions = JMongoClient::class.declaredFunctions.map { it.name }.toSet()
+        val jMongoClientFunctions =
+            JMongoClient::class
+                .declaredFunctions
+                .map { it.name }
+                // TODO-JAVA-5871 remove .filterNot { it == "updateMetadata" }
+                .filterNot { it == "updateMetadata" }
+                .toSet()
+
         val kMongoClientFunctions =
             MongoClient::class.declaredFunctions.map { it.name }.toSet() +
                 MongoClient::class
