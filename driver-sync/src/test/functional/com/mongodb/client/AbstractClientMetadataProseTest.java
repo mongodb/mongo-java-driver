@@ -16,7 +16,6 @@
 
 package com.mongodb.client;
 
-import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.event.CommandStartedEvent;
@@ -34,6 +33,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.isAuthenticated;
+import static com.mongodb.ClusterFixture.isLoadBalanced;
 import static com.mongodb.ClusterFixture.sleep;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -52,7 +53,8 @@ public abstract class AbstractClientMetadataProseTest {
 
     @BeforeEach
     public void setUp() {
-        assumeFalse(ClusterFixture.isLoadBalanced());
+        assumeFalse(isLoadBalanced());
+        assumeFalse(isAuthenticated());
 
         commandListener = new TestCommandListener();
         connectionPoolListener = new TestConnectionPoolListener();
