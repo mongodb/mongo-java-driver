@@ -38,6 +38,7 @@ import static com.mongodb.ClusterFixture.isLoadBalanced;
 import static com.mongodb.ClusterFixture.sleep;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 /**
@@ -92,12 +93,16 @@ public abstract class AbstractClientMetadataProseTest {
 
             //then
             //TODO change get() to orElseThrow
-            clientMetadata = executePingAndCaptureMetadataHandshake(mongoClient).get();
-            driverInformation = clientMetadata.getDocument("driver");
+            BsonDocument updatedClientMetadata = executePingAndCaptureMetadataHandshake(mongoClient).get();
+            BsonDocument updatedDriverInformation = updatedClientMetadata.getDocument("driver");
 
-            assertThat(driverInformation.getString("name").getValue()).isEqualTo(generatedDriverName + "|Framework");
-            assertThat(driverInformation.getString("version").getValue()).isEqualTo(generatedVersionName + "|1.0");
-            assertThat(clientMetadata.getString("platform").getValue()).isEqualTo(generatedPlatformName + "|Framework Platform");
+            assertThat(updatedDriverInformation.getString("name").getValue()).isEqualTo(generatedDriverName + "|Framework");
+            assertThat(updatedDriverInformation.getString("version").getValue()).isEqualTo(generatedVersionName + "|1.0");
+            assertThat(updatedClientMetadata.getString("platform").getValue()).isEqualTo(generatedPlatformName + "|Framework Platform");
+
+            assertThat(withRemovedKeys(updatedClientMetadata, "driver", "platform"))
+                    .usingRecursiveAssertion()
+                    .isEqualTo(withRemovedKeys(clientMetadata, "driver", "platform"));
         }
     }
 
@@ -110,12 +115,12 @@ public abstract class AbstractClientMetadataProseTest {
                 .build())) {
 
             //TODO change get() to orElseThrow
-            BsonDocument clientMetadata = executePingAndCaptureMetadataHandshake(mongoClient).get();
+            BsonDocument initialClientMetadata = executePingAndCaptureMetadataHandshake(mongoClient).get();
 
-            BsonDocument generatedDriverInformation = clientMetadata.getDocument("driver");
+            BsonDocument generatedDriverInformation = initialClientMetadata.getDocument("driver");
             String generatedDriverName = generatedDriverInformation.get("name").asString().getValue();
             String generatedVersionName = generatedDriverInformation.get("version").asString().getValue();
-            String generatedPlatformName = clientMetadata.get("platform").asString().getValue();
+            String generatedPlatformName = initialClientMetadata.get("platform").asString().getValue();
 
             //when
             sleep(5); // wait for connection to become idle
@@ -127,12 +132,16 @@ public abstract class AbstractClientMetadataProseTest {
 
             //then
             //TODO change get() to orElseThrow
-            clientMetadata = executePingAndCaptureMetadataHandshake(mongoClient).get();
-            generatedDriverInformation = clientMetadata.getDocument("driver");
+            BsonDocument updatedClientMetadata = executePingAndCaptureMetadataHandshake(mongoClient).get();
+            BsonDocument updatedDriverInformation = initialClientMetadata.getDocument("driver");
 
-            assertThat(generatedDriverInformation.getString("name").getValue()).isEqualTo(generatedDriverName + "|Framework");
-            assertThat(generatedDriverInformation.getString("version").getValue()).endsWith(generatedVersionName + "|1.0");
-            assertThat(clientMetadata.getString("platform").getValue()).endsWith(generatedPlatformName + "|Framework Platform");
+            assertThat(updatedDriverInformation.getString("name").getValue()).isEqualTo(generatedDriverName + "|Framework");
+            assertThat(updatedDriverInformation.getString("version").getValue()).endsWith(generatedVersionName + "|1.0");
+            assertThat(updatedClientMetadata.getString("platform").getValue()).endsWith(generatedPlatformName + "|Framework Platform");
+
+            assertThat(withRemovedKeys(updatedClientMetadata, "driver", "platform"))
+                    .usingRecursiveAssertion()
+                    .isEqualTo(withRemovedKeys(initialClientMetadata, "driver", "platform"));
         }
     }
 
@@ -151,23 +160,39 @@ public abstract class AbstractClientMetadataProseTest {
             //TODO change get() to orElseThrow
             BsonDocument clientMetadata = executePingAndCaptureMetadataHandshake(mongoClient).get();
             BsonDocument driverInformation = clientMetadata.getDocument("driver");
-            String generatedDriverName = driverInformation.get("name").asString().getValue();
-            String generatedVersionName = driverInformation.get("version").asString().getValue();
-            String generatedPlatformName = clientMetadata.get("platform").asString().getValue();
+            assertNotNull(driverInformation);
 
             //when
             mongoClient.updateMetadata(initialWrappingLibraryDriverInformation);
 
             //then
             assertThat(executePingAndCaptureMetadataHandshake(mongoClient)).isEmpty();
-            driverInformation = clientMetadata.getDocument("driver");
-
-            assertThat(driverInformation.getString("name").getValue()).isEqualTo(generatedDriverName);
-            assertThat(driverInformation.getString("version").getValue()).isEqualTo(generatedVersionName);
-            assertThat(clientMetadata.getString("platform").getValue()).isEqualTo(generatedPlatformName);
-
             assertFalse(connectionPoolListener.getEvents().stream().anyMatch(ConnectionClosedEvent.class::isInstance),
                     "Expected no connection closed events");
+        }
+    }
+
+    @Test
+    void shouldAppendAppendProvidedMetadatDuringInitialization() {
+        //given
+        MongoDriverInformation initialWrappingLibraryDriverInformation = MongoDriverInformation.builder()
+                .driverName("library")
+                .driverVersion("1.2")
+                .driverPlatform("Library Platform")
+                .build();
+
+        try (MongoClient mongoClient = createMongoClient(initialWrappingLibraryDriverInformation, getMongoClientSettingsBuilder()
+                .build())) {
+
+            //when
+            //TODO change get() to orElseThrow
+            BsonDocument clientMetadata = executePingAndCaptureMetadataHandshake(mongoClient).get();
+            BsonDocument driverInformation = clientMetadata.getDocument("driver");
+
+            //then
+            assertThat(driverInformation.get("name").asString().getValue()).endsWith("|library");
+            assertThat(driverInformation.get("version").asString().getValue()).endsWith("|1.2");
+            assertThat(clientMetadata.get("platform").asString().getValue()).endsWith("|Library Platform");
         }
     }
 
@@ -196,6 +221,15 @@ public abstract class AbstractClientMetadataProseTest {
     @AfterEach
     public void tearDown() {
         InternalStreamConnection.setRecordEverything(false);
+    }
+
+    private static BsonDocument withRemovedKeys(final BsonDocument updatedClientMetadata,
+                                                final String... keysToFilter) {
+        BsonDocument clone = updatedClientMetadata.clone();
+        for (String keyToRemove : keysToFilter) {
+            clone.remove(keyToRemove);
+        }
+        return clone;
     }
 }
 
