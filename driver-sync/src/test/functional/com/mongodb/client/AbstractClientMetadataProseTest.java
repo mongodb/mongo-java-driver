@@ -77,11 +77,11 @@ public abstract class AbstractClientMetadataProseTest {
                 .build())) {
 
             //TODO change get() to orElseThrow
-            BsonDocument clientMetadata = executePingAndCaptureMetadataHandshake(mongoClient).get();
-            BsonDocument driverInformation = clientMetadata.getDocument("driver");
+            BsonDocument initialClientMetadata = executePingAndCaptureMetadataHandshake(mongoClient).get();
+            BsonDocument driverInformation = initialClientMetadata.getDocument("driver");
             String generatedDriverName = driverInformation.get("name").asString().getValue();
             String generatedVersionName = driverInformation.get("version").asString().getValue();
-            String generatedPlatformName = clientMetadata.get("platform").asString().getValue();
+            String generatedPlatformName = initialClientMetadata.get("platform").asString().getValue();
 
             //when
             sleep(5); // wait for connection to become idle
@@ -102,7 +102,7 @@ public abstract class AbstractClientMetadataProseTest {
 
             assertThat(withRemovedKeys(updatedClientMetadata, "driver", "platform"))
                     .usingRecursiveAssertion()
-                    .isEqualTo(withRemovedKeys(clientMetadata, "driver", "platform"));
+                    .isEqualTo(withRemovedKeys(initialClientMetadata, "driver", "platform"));
         }
     }
 
@@ -133,7 +133,7 @@ public abstract class AbstractClientMetadataProseTest {
             //then
             //TODO change get() to orElseThrow
             BsonDocument updatedClientMetadata = executePingAndCaptureMetadataHandshake(mongoClient).get();
-            BsonDocument updatedDriverInformation = initialClientMetadata.getDocument("driver");
+            BsonDocument updatedDriverInformation = updatedClientMetadata.getDocument("driver");
 
             assertThat(updatedDriverInformation.getString("name").getValue()).isEqualTo(generatedDriverName + "|Framework");
             assertThat(updatedDriverInformation.getString("version").getValue()).endsWith(generatedVersionName + "|1.0");
