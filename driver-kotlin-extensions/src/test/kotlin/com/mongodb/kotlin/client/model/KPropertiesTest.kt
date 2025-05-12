@@ -144,11 +144,13 @@ class KPropertiesTest {
     fun testNoCacheCollisions() {
         for (i in 1.rangeTo(25_000)) {
             assertEquals("reviews.$i", Restaurant::reviews.pos(i).path())
-            assertEquals("reviews.$[identifier$i]",  Restaurant::reviews.filteredPosOp("identifier$i").path())
+            assertEquals("reviews.$[identifier$i]", Restaurant::reviews.filteredPosOp("identifier$i").path())
             assertEquals("localeMap.$i", Restaurant::localeMap.keyProjection(i).path())
 
             val x = i / 2
-            assertEquals("reviews.$[identifier$x].rating", (Restaurant::reviews.filteredPosOp("identifier$x") / Review::score).path())
+            assertEquals(
+                "reviews.$[identifier$x].rating",
+                (Restaurant::reviews.filteredPosOp("identifier$x") / Review::score).path())
             assertEquals("reviews.$x.rating", (Restaurant::reviews.pos(x) / Review::score).path())
             assertEquals("localeMap.$x.rating", (Restaurant::localeMap.keyProjection(x) / Review::score).path())
         }
