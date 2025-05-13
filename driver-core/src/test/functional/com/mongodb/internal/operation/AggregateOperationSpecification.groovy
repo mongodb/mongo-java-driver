@@ -183,9 +183,9 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         def operation = new AggregateOperation<BsonDocument>(namespace, pipeline, new BsonDocumentCodec())
 
         when:
-        helper.create(helper.getNamespace().getCollectionName(), new CreateCollectionOptions())
+        collectionHelper.create(collectionHelper.getNamespace().getCollectionName(), new CreateCollectionOptions())
         def cursor = execute(operation, async)
-        helper.insertDocuments(['{_id: 0, a: 0}', '{_id: 1, a: 1}'].collect { BsonDocument.parse(it) })
+        collectionHelper.insertDocuments(['{_id: 0, a: 0}', '{_id: 1, a: 1}'].collect { BsonDocument.parse(it) })
 
         then:
         def nextDoc = next(cursor, async).collect { doc ->
@@ -317,7 +317,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         [async, options] << [[true, false], [defaultCollation, null, Collation.builder().build()]].combinations()
     }
 
-    // Explain output keeps changing so only testing this in the range where the assertion still works
+    @IgnoreIf({ isSharded() })
     def 'should apply $hint'() {
         given:
         def index = new BsonDocument('a', new BsonInt32(1))
