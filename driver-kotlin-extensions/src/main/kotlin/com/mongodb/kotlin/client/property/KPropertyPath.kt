@@ -20,6 +20,7 @@ package com.mongodb.kotlin.client.property
 
 import com.mongodb.annotations.Sealed
 import com.mongodb.kotlin.client.model.path
+import java.util.Objects
 import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
@@ -84,6 +85,15 @@ public open class KPropertyPath<T, R>(
     override fun callBy(args: Map<KParameter, Any?>): R = unSupportedOperation()
     override fun get(receiver: T): R = unSupportedOperation()
     override fun getDelegate(receiver: T): Any? = unSupportedOperation()
+    override fun hashCode(): Int = Objects.hash(previous, property, name)
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as KPropertyPath<*, *>
+        return Objects.equals(previous, other.previous) &&
+            Objects.equals(property, other.property) &&
+            Objects.equals(name, other.name)
+    }
 
     public companion object {
 
@@ -121,6 +131,13 @@ public open class KPropertyPath<T, R>(
             override fun get(receiver: T): R = unSupportedOperation()
             override fun getDelegate(receiver: T): Any? = unSupportedOperation()
             override fun invoke(p1: T): R = unSupportedOperation()
+            override fun hashCode(): Int = Objects.hash(previous, name)
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+                other as CustomProperty<*, *>
+                return Objects.equals(previous, other.previous) && Objects.equals(name, other.name)
+            }
         }
 
         /** Provides "fake" property with custom name. */
