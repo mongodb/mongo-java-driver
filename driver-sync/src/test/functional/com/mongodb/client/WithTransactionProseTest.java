@@ -210,10 +210,8 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     private boolean canRunTests() {
         if (isSharded()) {
             return serverVersionAtLeast(4, 2);
-        } else if (isDiscoverableReplicaSet()) {
-            return serverVersionAtLeast(4, 0);
         } else {
-            return false;
+            return isDiscoverableReplicaSet();
         }
     }
 }

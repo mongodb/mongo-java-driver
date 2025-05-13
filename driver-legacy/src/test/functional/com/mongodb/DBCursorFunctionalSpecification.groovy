@@ -20,11 +20,7 @@ import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationStrength
 import com.mongodb.internal.operation.BatchCursor
-import spock.lang.IgnoreIf
 import spock.lang.Subject
-
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.ClusterFixture.serverVersionLessThan
 
 class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
@@ -52,7 +48,6 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         1 * decoder.decode(_ as byte[], collection)
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 0) })
     def 'should use provided hints for queries mongod > 3.0'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
@@ -274,34 +269,6 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         executor.getReadPreference() == ReadPreference.secondaryPreferred()
     }
 
-    @IgnoreIf({ serverVersionAtLeast(3, 4) })
-    def 'should throw an exception when using an unsupported Collation'() {
-        given:
-        dbCursor = collection.find().setCollation(caseInsensitiveCollation)
-
-        when:
-        dbCursor.count()
-
-        then:
-        def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by wire version:')
-
-        when:
-        dbCursor.one()
-
-        then:
-        exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by wire version:')
-
-        when:
-        ++dbCursor.iterator()
-
-        then:
-        exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by wire version:')
-    }
-
-    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should support collation'() {
         when:
         def document = BasicDBObject.parse('{_id: 1, str: "foo"}')

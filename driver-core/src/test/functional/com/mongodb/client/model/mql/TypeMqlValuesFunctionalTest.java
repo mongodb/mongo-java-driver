@@ -173,7 +173,6 @@ class TypeMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
 
     @Test
     public void asStringTest() {
-        assumeTrue(serverVersionAtLeast(4, 0));
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toString/
         // asString, since toString conflicts
         assertExpression("false", of(false).asString(), "{'$toString': [false]}");
@@ -199,7 +198,6 @@ class TypeMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
 
     @Test
     public void dateAsStringTest() {
-        assumeTrue(serverVersionAtLeast(4, 0));
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/dateToString/
         final Instant instant = Instant.parse("2007-12-03T10:15:30.005Z");
         MqlDate date = of(instant);
@@ -231,7 +229,6 @@ class TypeMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
 
     @Test
     public void parseDateTest() {
-        assumeTrue(serverVersionAtLeast(4, 0));
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/dateToString/
         String dateString = "2007-12-03T10:15:30.005Z";
         assertExpression(
@@ -270,7 +267,6 @@ class TypeMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
 
     @Test
     public void parseIntegerTest() {
-        assumeTrue(serverVersionAtLeast(4, 0));
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toInt/
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toLong/
         assertExpression(
@@ -310,7 +306,6 @@ class TypeMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
 
     @Test
     public void millisecondsToDateTest() {
-        assumeTrue(serverVersionAtLeast(4, 0));
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toDate/
         assertExpression(
                 Instant.ofEpochMilli(1234),

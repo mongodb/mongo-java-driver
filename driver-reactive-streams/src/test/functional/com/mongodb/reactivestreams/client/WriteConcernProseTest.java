@@ -31,7 +31,6 @@ import reactor.core.publisher.Mono;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.reactivestreams.client.Fixture.getDefaultDatabaseName;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -94,6 +93,6 @@ public class WriteConcernProseTest extends DatabaseTestCase {
     }
 
     private boolean canRunTests() {
-        return isDiscoverableReplicaSet() && serverVersionAtLeast(4, 0);
+        return isDiscoverableReplicaSet();
     }
 }

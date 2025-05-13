@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadConcern
@@ -25,7 +24,6 @@ import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CreateCollectionOptions
-import com.mongodb.client.model.Filters
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
@@ -50,7 +48,6 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
-import static TestOperationHelper.getKeyPattern
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.collectCursorResults
 import static com.mongodb.ClusterFixture.executeAsync
@@ -59,13 +56,12 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.isStandalone
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.ExplainVerbosity.QUERY_PLANNER
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.connection.ServerHelper.waitForLastRelease
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand
 import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION
+import static com.mongodb.internal.operation.TestOperationHelper.getKeyPattern
 
 class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
@@ -160,7 +156,6 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should support collation'() {
         given:
         def document = BsonDocument.parse('{_id: 1, str: "foo"}')
@@ -179,13 +174,12 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !(serverVersionAtLeast(3, 6) && !isStandalone()) })
+    @IgnoreIf({ isStandalone() })
     def 'should support changeStreams'() {
         given:
         def expected = [createExpectedChangeNotification(namespace, 0), createExpectedChangeNotification(namespace, 1)]
         def pipeline = ['{$changeStream: {}}', '{$project: {"_id.clusterTime": 0, "_id.uuid": 0}}'].collect { BsonDocument.parse(it) }
         def operation = new AggregateOperation<BsonDocument>(namespace, pipeline, new BsonDocumentCodec())
-        def helper = getCollectionHelper()
 
         when:
         helper.create(helper.getNamespace().getCollectionName(), new CreateCollectionOptions())
@@ -224,7 +218,6 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should be able to aggregate on a view'() {
         given:
         def viewSuffix = '-view'
@@ -291,7 +284,6 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         batchSize << [null, 0, 10]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 6) })
     def 'should be able to explain an empty pipeline'() {
         given:
         def operation = new AggregateOperation(getNamespace(), [], new BsonDocumentCodec())
@@ -308,7 +300,6 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should be able to aggregate with collation'() {
         when:
         AggregateOperation operation = new AggregateOperation<Document>(getNamespace(),
@@ -326,7 +317,6 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     }
 
     // Explain output keeps changing so only testing this in the range where the assertion still works
-    @IgnoreIf({ serverVersionLessThan(3, 6) || serverVersionAtLeast(4, 2) })
     def 'should apply $hint'() {
         given:
         def index = new BsonDocument('a', new BsonInt32(1))
@@ -340,13 +330,13 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         BsonDocument explainPlan = execute(operation.asExplainableOperation(QUERY_PLANNER, new BsonDocumentCodec()), async)
 
         then:
-        getKeyPattern(explainPlan.getArray('stages').get(0).asDocument().getDocument('$cursor')) == index
+        getKeyPattern(explainPlan) == index
 
         where:
         [async, hint] << [[true, false], [BsonDocument.parse('{a: 1}'), new BsonString('a_1')]].combinations()
     }
 
-    @IgnoreIf({ isSharded() || serverVersionLessThan(3, 6) })
+    @IgnoreIf({ isSharded() })
     def 'should apply comment'() {
         given:
         def profileCollectionHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'system.profile'))

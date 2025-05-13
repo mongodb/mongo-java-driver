@@ -41,7 +41,6 @@ import java.lang.reflect.Field;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.client.CrudTestHelper.repeat;
 import static com.mongodb.client.model.Updates.set;
 import static java.util.Arrays.asList;
@@ -147,7 +146,6 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     //
     @Test
     public void test03ResumeOneTimeOnError() {
-        assumeTrue(serverVersionAtLeast(4, 0));
         try (MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch().cursor()) {
             collection.insertOne(Document.parse("{ x: 1 }"));
             setFailPoint("getMore", 10107);
@@ -198,8 +196,6 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     //
     @Test
     public void test11GetResumeTokenReturnsPostBatchResumeToken() throws NoSuchFieldException, IllegalAccessException {
-        assumeTrue(serverVersionAtLeast(4, 0));
-
         MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch().cursor();
         assertNull(cursor.getResumeToken());
         collection.insertOne(Document.parse("{ _id: 42, x: 1 }"));
@@ -209,46 +205,6 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
             // use reflection to access the postBatchResumeToken
             AggregateResponseBatchCursor<?> batchCursor = getBatchCursor(cursor);
             assertEquals(cursor.getResumeToken(), batchCursor.getPostBatchResumeToken());
-        } finally {
-            cursor.close();
-        }
-    }
-
-    //
-    // 12. For a ChangeStream under these conditions:
-    //   Running against a server <4.0.7.
-    //   The batch is empty or has been iterated to the last document.
-    // Expected result:
-    //   getResumeToken must return the _id of the last document returned if one exists.
-    //   getResumeToken must return resumeAfter from the initial aggregate if the option was specified.
-    //   If the resumeAfter option was not specified, the getResumeToken result must be empty.
-    //
-    @Test
-    public void test12GetResumeTokenShouldWorkAsExpectedForEmptyAndIteratedBatch() {
-        assumeTrue(serverVersionLessThan(4, 0));
-
-        BsonDocument resumeAfterToken;
-        MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch().cursor();
-        try {
-            cursor.tryNext();
-            assertNull(cursor.getResumeToken());
-            collection.insertOne(Document.parse("{ _id: 42, x: 1 }"));
-            collection.insertOne(Document.parse("{ _id: 43, x: 1 }"));
-            resumeAfterToken = cursor.next().getResumeToken();
-
-            cursor.next(); // iterate to the end of the batch
-            BsonDocument lastResumeToken = cursor.getResumeToken();
-            assertNotNull(lastResumeToken);
-
-            cursor.tryNext(); // returns an empty batch
-            assertEquals(lastResumeToken, cursor.getResumeToken());
-        } finally {
-            cursor.close();
-        }
-
-        cursor = collection.watch().resumeAfter(resumeAfterToken).cursor();
-        try {
-            assertEquals(resumeAfterToken, cursor.getResumeToken());
         } finally {
             cursor.close();
         }
@@ -358,8 +314,6 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     @Test
     public void test15GetResumeTokenReturnsPostBatchResumeTokenAfterGetMore()
             throws NoSuchFieldException, IllegalAccessException {
-        assumeTrue(serverVersionAtLeast(4, 0));
-
         try (MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch().cursor()) {
             collection.insertOne(Document.parse("{ _id: 42, x: 1 }"));
             // use reflection to access the postBatchResumeToken
@@ -372,38 +326,6 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
 
             cursor.next();
             assertEquals(cursor.getResumeToken(), batchCursor.getPostBatchResumeToken());
-        }
-    }
-
-    //
-    // 16. For a ChangeStream under these conditions:
-    //   Running against a server <4.0.7.
-    //   The batch is not empty.
-    //   The batch hasn’t been iterated at all.
-    //   The stream has iterated beyond a previous batch and a getMore command has just been executed.
-    // Expected result:
-    //   getResumeToken must return the _id of the previous document returned if one exists.
-    //   getResumeToken must return resumeAfter from the initial aggregate if the option was specified.
-    //   If the resumeAfter option was not specified, the getResumeToken result must be empty.
-    //
-    @Test
-    public void test16GetResumeTokenReturnsIdOfPreviousDocument() {
-        assumeTrue(serverVersionLessThan(4, 0));
-
-        BsonDocument resumeToken;
-        try (MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch().cursor()) {
-            collection.insertOne(Document.parse("{ _id: 42, x: 1 }"));
-            cursor.next();
-            resumeToken = cursor.getResumeToken();
-            assertNotNull(resumeToken);
-
-            collection.insertOne(Document.parse("{ _id: 43, x: 1 }"));
-            cursor.next();
-            assertNotNull(cursor.getResumeToken());
-        }
-
-        try (MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor2 = collection.watch().resumeAfter(resumeToken).cursor()) {
-            assertEquals(resumeToken, cursor2.getResumeToken());
         }
     }
 

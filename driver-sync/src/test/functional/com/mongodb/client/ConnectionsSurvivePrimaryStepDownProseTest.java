@@ -54,7 +54,7 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
 
     @Before
     public void setUp() {
-        assumeTrue(isDiscoverableReplicaSet() && serverVersionAtLeast(4, 0));
+        assumeTrue(isDiscoverableReplicaSet());
         connectionPoolListener = new TestConnectionPoolListener();
         MongoClientSettings settings = MongoClientSettings.builder(getMongoClientSettings()).retryWrites(false)
                 .applyToConnectionPoolSettings(builder -> builder.addConnectionPoolListener(connectionPoolListener)).build();

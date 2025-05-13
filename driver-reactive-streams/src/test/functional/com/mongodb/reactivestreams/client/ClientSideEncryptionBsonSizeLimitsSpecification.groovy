@@ -31,7 +31,6 @@ import org.bson.codecs.BsonDocumentCodec
 import reactor.core.publisher.Mono
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.reactivestreams.client.Fixture.drop
 import static com.mongodb.reactivestreams.client.Fixture.getDefaultDatabaseName
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClientBuilderFromConnectionString
@@ -51,7 +50,6 @@ class ClientSideEncryptionBsonSizeLimitsSpecification extends FunctionalSpecific
     private MongoCollection<BsonDocument> autoEncryptingDataCollection
 
     def setup() {
-        assumeTrue(serverVersionAtLeast(4, 2))
         assumeTrue('Key vault tests disabled',
                 !System.getProperty('AWS_ACCESS_KEY_ID', '').isEmpty())
         drop(keyVaultNamespace)
