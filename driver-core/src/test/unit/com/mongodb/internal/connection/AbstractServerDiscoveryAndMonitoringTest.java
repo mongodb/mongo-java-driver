@@ -42,6 +42,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.CLIENT_METADATA;
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
@@ -187,11 +188,11 @@ public class AbstractServerDiscoveryAndMonitoringTest {
                 : ClusterSettings.builder(settings).addClusterListener(clusterListener).build();
 
         if (settings.getMode() == ClusterConnectionMode.SINGLE) {
-            cluster = new SingleServerCluster(clusterId, clusterSettings, factory);
+            cluster = new SingleServerCluster(clusterId, clusterSettings, factory, CLIENT_METADATA);
         } else if (settings.getMode() == ClusterConnectionMode.MULTIPLE) {
-            cluster = new MultiServerCluster(clusterId, clusterSettings, factory);
+            cluster = new MultiServerCluster(clusterId, clusterSettings, factory, CLIENT_METADATA);
         } else {
-            cluster = new LoadBalancedCluster(clusterId, clusterSettings, factory, null);
+            cluster = new LoadBalancedCluster(clusterId, clusterSettings, factory, CLIENT_METADATA, null);
         }
     }
 

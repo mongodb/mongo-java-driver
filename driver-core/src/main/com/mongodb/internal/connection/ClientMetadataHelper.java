@@ -180,6 +180,31 @@ public final class ClientMetadataHelper {
         return buffer.getPosition() > MAXIMUM_CLIENT_METADATA_ENCODED_SIZE;
     }
 
+    public static BsonDocument updateClientMedataDocument(final BsonDocument clientMetadataDocument,
+                                                          final MongoDriverInformation mongoDriverInformation) {
+        BsonDocument updatedClientMetadataDocument = clientMetadataDocument.clone();
+        BsonDocument driverInformation = clientMetadataDocument.getDocument("driver");
+
+        MongoDriverInformation.Builder builder = MongoDriverInformation.builder(mongoDriverInformation)
+                .driverName(driverInformation.getString("name").getValue())
+                .driverVersion(driverInformation.getString("version").getValue());
+
+        if (updatedClientMetadataDocument.containsKey("platform")) {
+            builder.driverPlatform(updatedClientMetadataDocument.getString("platform").getValue());
+        }
+
+        MongoDriverInformation updatedDriverInformation = builder.build();
+
+        tryWithLimit(updatedClientMetadataDocument, d -> {
+            putAtPath(d, "driver.name", listToString(updatedDriverInformation.getDriverNames()));
+            putAtPath(d, "driver.version", listToString(updatedDriverInformation.getDriverVersions()));
+        });
+        tryWithLimit(updatedClientMetadataDocument, d -> {
+            putAtPath(d, "platform", listToString(updatedDriverInformation.getDriverPlatforms()));
+        });
+        return updatedClientMetadataDocument;
+    }
+
     public enum ContainerRuntime {
         DOCKER("docker") {
             @Override

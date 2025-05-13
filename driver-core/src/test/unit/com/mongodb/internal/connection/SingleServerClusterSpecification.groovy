@@ -28,6 +28,7 @@ import com.mongodb.event.ClusterListener
 import com.mongodb.internal.selector.WritableServerSelector
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.CLIENT_METADATA
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.connection.ClusterType.REPLICA_SET
@@ -54,7 +55,7 @@ class SingleServerClusterSpecification extends Specification {
     def 'should update description when the server connects'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
-                ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer)).build(), factory)
+                ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer)).build(), factory, CLIENT_METADATA)
 
         when:
         sendNotification(firstServer, STANDALONE)
@@ -71,7 +72,7 @@ class SingleServerClusterSpecification extends Specification {
     def 'should get server when open'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
-                ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer)).build(), factory)
+                ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer)).build(), factory, CLIENT_METADATA)
 
         when:
         sendNotification(firstServer, STANDALONE)
@@ -90,7 +91,7 @@ class SingleServerClusterSpecification extends Specification {
     def 'should not get servers snapshot when closed'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
-                ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer)).build(), factory)
+                ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer)).build(), factory, CLIENT_METADATA)
         cluster.close()
 
         when:
@@ -108,7 +109,7 @@ class SingleServerClusterSpecification extends Specification {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
                 ClusterSettings.builder().mode(SINGLE).requiredClusterType(ClusterType.SHARDED).hosts(Arrays.asList(firstServer)).build(),
-                factory)
+                factory, CLIENT_METADATA)
 
         when:
         sendNotification(firstServer, ServerType.REPLICA_SET_PRIMARY)
@@ -125,7 +126,7 @@ class SingleServerClusterSpecification extends Specification {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
                 ClusterSettings.builder().mode(SINGLE).requiredReplicaSetName('test1').hosts(Arrays.asList(firstServer)).build(),
-                factory)
+                factory, CLIENT_METADATA)
 
         when:
         sendNotification(firstServer, ServerType.REPLICA_SET_PRIMARY, 'test1')
@@ -141,7 +142,7 @@ class SingleServerClusterSpecification extends Specification {
     def 'getServer should throw when cluster is incompatible'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer))
-                        .serverSelectionTimeout(1, SECONDS).build(), factory)
+                        .serverSelectionTimeout(1, SECONDS).build(), factory, CLIENT_METADATA)
         sendNotification(firstServer, getBuilder(firstServer).minWireVersion(1000).maxWireVersion(1000).build())
 
         when:
@@ -157,7 +158,7 @@ class SingleServerClusterSpecification extends Specification {
     def 'should connect to server'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(SINGLE).hosts([firstServer]).build(),
-                factory)
+                factory, CLIENT_METADATA)
 
         when:
         cluster.connect()
@@ -181,7 +182,7 @@ class SingleServerClusterSpecification extends Specification {
         when:
         def cluster = new SingleServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(SINGLE).hosts([firstServer])
                 .addClusterListener(listener).build(),
-                factory)
+                factory, CLIENT_METADATA)
 
         then:
         1 * listener.clusterOpening { it.clusterId == CLUSTER_ID }
