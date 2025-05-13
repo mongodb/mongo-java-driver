@@ -24,6 +24,7 @@ import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.client.model.Filters
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
