@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation
 
+
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadConcern
@@ -181,11 +182,12 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         def expected = [createExpectedChangeNotification(namespace, 0), createExpectedChangeNotification(namespace, 1)]
         def pipeline = ['{$changeStream: {}}', '{$project: {"_id.clusterTime": 0, "_id.uuid": 0}}'].collect { BsonDocument.parse(it) }
         def operation = new AggregateOperation<BsonDocument>(namespace, pipeline, new BsonDocumentCodec())
+        def helper = getCollectionHelper()
 
         when:
-        collectionHelper.create(collectionHelper.getNamespace().getCollectionName(), new CreateCollectionOptions())
+        helper.create(helper.getNamespace().getCollectionName(), new CreateCollectionOptions())
         def cursor = execute(operation, async)
-        collectionHelper.insertDocuments(['{_id: 0, a: 0}', '{_id: 1, a: 1}'].collect { BsonDocument.parse(it) })
+        helper.insertDocuments(['{_id: 0, a: 0}', '{_id: 1, a: 1}'].collect { BsonDocument.parse(it) })
 
         then:
         def nextDoc = next(cursor, async).collect { doc ->
