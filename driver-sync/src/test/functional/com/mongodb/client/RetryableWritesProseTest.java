@@ -248,8 +248,6 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
             final Function<MongoCollection<Document>, R> operation, final String operationName, final boolean write) {
         if (write) {
             assumeTrue(serverVersionAtLeast(4, 4));
-        } else  {
-            assumeTrue(serverVersionAtLeast(4, 2));
         }
         assumeTrue(isSharded());
         ConnectionString connectionString = getMultiMongosConnectionString();
@@ -312,8 +310,6 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
             final Function<MongoCollection<Document>, R> operation, final String operationName, final boolean write) {
         if (write) {
             assumeTrue(serverVersionAtLeast(4, 4));
-        } else  {
-            assumeTrue(serverVersionAtLeast(4, 2));
         }
         assumeTrue(isSharded());
         ConnectionString connectionString = getConnectionString();

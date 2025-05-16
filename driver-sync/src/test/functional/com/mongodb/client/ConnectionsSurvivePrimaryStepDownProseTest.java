@@ -35,12 +35,10 @@ import java.util.List;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 // See https://github.com/mongodb/specifications/tree/master/source/connections-survive-step-down/tests
@@ -86,8 +84,6 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
 
     @Test
     public void testGetMoreIteration() {
-        assumeTrue(serverVersionAtLeast(4, 2));
-
         List<Document> documents = asList(Document.parse("{_id: 1}"), Document.parse("{_id: 2}"), Document.parse("{_id: 3}"),
                 Document.parse("{_id: 4}"), Document.parse("{_id: 5}"));
         collection.withWriteConcern(WriteConcern.MAJORITY).insertMany(documents);
@@ -104,8 +100,6 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
 
     @Test
     public void testNotPrimaryKeepConnectionPool() {
-        assumeTrue(serverVersionAtLeast(4, 2));
-
         collectionHelper.runAdminCommand("{configureFailPoint: 'failCommand',  mode: {times: 1}, data: {failCommands: ['insert'], "
                 + "errorCode: 10107}}");
         int connectionCount = connectionPoolListener.countEvents(ConnectionCreatedEvent.class);
@@ -119,25 +113,6 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
 
         collection.insertOne(new Document());
         assertEquals(connectionCount, connectionPoolListener.countEvents(ConnectionCreatedEvent.class));
-    }
-
-    @Test
-    public void testNotPrimaryClearConnectionPool() {
-        assumeFalse(serverVersionAtLeast(4, 2));
-
-        collectionHelper.runAdminCommand("{configureFailPoint: 'failCommand',  mode: {times: 1}, data: {failCommands: ['insert'], "
-                + "errorCode: 10107}}");
-        int connectionCount = connectionPoolListener.countEvents(ConnectionCreatedEvent.class);
-
-        try {
-            collection.insertOne(new Document());
-            fail();
-        } catch (MongoException e) {
-            assertEquals(10107, e.getCode());
-        }
-        assertEquals(1, connectionPoolListener.countEvents(ConnectionPoolClearedEvent.class));
-        collection.insertOne(new Document("test", 1));
-        assertEquals(connectionCount + 1, connectionPoolListener.countEvents(ConnectionCreatedEvent.class));
     }
 
     @Test

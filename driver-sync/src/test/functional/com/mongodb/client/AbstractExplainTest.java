@@ -147,10 +147,6 @@ public abstract class AbstractExplainTest {
 
     @Test
     public void testExplainOfAggregateWithNewResponseStructure() {
-        // Aggregate explain is supported on earlier versions, but the structure of the response on which we're asserting in this test
-        // changed radically in 4.2.
-        assumeTrue(serverVersionAtLeast(4, 2));
-
         MongoCollection<BsonDocument> collection = client.getDatabase(getDefaultDatabaseName())
                 .getCollection("explainTest", BsonDocument.class);
         collection.drop();

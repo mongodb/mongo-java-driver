@@ -44,7 +44,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.AbstractClientSideEncryptionTest.cryptSharedLibPathSysPropValue;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.unified.UnifiedClientEncryptionHelper.localKmsProviderKey;
@@ -75,7 +74,6 @@ public abstract class AbstractClientSideEncryptionNotCreateMongocryptdClientTest
 
     @BeforeEach
     public void setUp() throws Exception {
-        assumeTrue(serverVersionAtLeast(4, 2));
         assumeTrue(CRYPT_SHARED_LIB_PATH_SYS_PROP_VALUE != null);
         mongocryptdConnectionTracker = ConnectionTracker.start();
         client = createMongoClient(MongoClientSettings.builder(getMongoClientSettings())

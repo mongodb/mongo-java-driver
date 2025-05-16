@@ -49,6 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 
@@ -124,20 +125,13 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     //
     @Test
     public void test02MissingResumeTokenThrowsException() {
-        boolean exceptionFound = false;
-
         try (MongoCursor<ChangeStreamDocument<Document>> cursor = collection.watch(asList(Aggregates.project(Document.parse("{ _id : 0 }"))))
                 .iterator()) {
             collection.insertOne(Document.parse("{ x: 1 }"));
             cursor.next();
-        } catch (MongoChangeStreamException e) {
-            exceptionFound = true;
-        } catch (MongoQueryException e) {
-            if (serverVersionAtLeast(4, 2)) {
-                exceptionFound = true;
-            }
+            fail();
+        } catch (MongoChangeStreamException | MongoQueryException ignored) {
         }
-        assertTrue(exceptionFound);
     }
 
     //
@@ -239,8 +233,6 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     //
     @Test
     public void test14GetResumeTokenReturnsStartAfter() {
-        assumeTrue(serverVersionAtLeast(4, 2));
-
         BsonDocument resumeToken;
         MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch().cursor();
         collection.insertOne(Document.parse("{ _id: 42, x: 1 }"));

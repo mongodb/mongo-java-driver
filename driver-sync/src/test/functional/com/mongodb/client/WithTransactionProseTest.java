@@ -32,7 +32,6 @@ import static com.mongodb.ClusterFixture.TIMEOUT;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -208,10 +207,6 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     }
 
     private boolean canRunTests() {
-        if (isSharded()) {
-            return serverVersionAtLeast(4, 2);
-        } else {
-            return isDiscoverableReplicaSet();
-        }
+        return isSharded() || isDiscoverableReplicaSet();
     }
 }

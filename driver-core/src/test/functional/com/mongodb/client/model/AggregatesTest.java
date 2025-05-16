@@ -136,7 +136,6 @@ public class AggregatesTest extends OperationTest {
 
     @Test
     public void testUnset() {
-        assumeTrue(serverVersionAtLeast(4, 2));
         getCollectionHelper().insertDocuments("[\n"
                 + "   { _id: 1, title: 'Antelope Antics', author: { last:'An', first: 'Auntie' } },\n"
                 + "   { _id: 2, title: 'Bees Babble', author: { last:'Bumble', first: 'Bee' } }\n"
