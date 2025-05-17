@@ -70,6 +70,7 @@ import com.mongodb.internal.operation.CommandReadOperation;
 import com.mongodb.internal.operation.DropDatabaseOperation;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
+import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.lang.Nullable;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
@@ -194,7 +195,8 @@ public final class ClusterFixture {
             IgnorableRequestContext.INSTANCE,
             new ReadConcernAwareNoOpSessionContext(ReadConcern.DEFAULT),
             new TimeoutContext(TIMEOUT_SETTINGS),
-            getServerApi());
+            getServerApi(),
+            TracingManager.NO_OP);
 
     public static final InternalOperationContextFactory OPERATION_CONTEXT_FACTORY =
             new InternalOperationContextFactory(TIMEOUT_SETTINGS, getServerApi());
@@ -204,7 +206,8 @@ public final class ClusterFixture {
                 IgnorableRequestContext.INSTANCE,
                 new ReadConcernAwareNoOpSessionContext(ReadConcern.DEFAULT),
                 new TimeoutContext(timeoutSettings),
-                getServerApi());
+                getServerApi(),
+                TracingManager.NO_OP);
     }
 
     private static ServerVersion getVersion(final BsonDocument buildInfoResult) {
@@ -386,7 +389,8 @@ public final class ClusterFixture {
                 OPERATION_CONTEXT.getRequestContext(),
                 OPERATION_CONTEXT.getSessionContext(),
                 new TimeoutContext(timeoutSettings),
-                OPERATION_CONTEXT.getServerApi());
+                OPERATION_CONTEXT.getServerApi(),
+                TracingManager.NO_OP);
     }
 
     private static ReadWriteBinding getBinding(final Cluster cluster,

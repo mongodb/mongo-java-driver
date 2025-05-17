@@ -30,9 +30,11 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.TransportSettings;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.DnsClient;
 import com.mongodb.spi.dns.InetAddressResolver;
+import com.mongodb.tracing.Tracer;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.BsonCodecProvider;
 import org.bson.codecs.BsonValueCodecProvider;
@@ -118,6 +120,7 @@ public final class MongoClientSettings {
     private final InetAddressResolver inetAddressResolver;
     @Nullable
     private final Long timeoutMS;
+    private final TracingManager tracingManager;
 
     /**
      * Gets the default codec registry.  It includes the following providers:
@@ -238,6 +241,7 @@ public final class MongoClientSettings {
         private ContextProvider contextProvider;
         private DnsClient dnsClient;
         private InetAddressResolver inetAddressResolver;
+        private TracingManager tracingManager;
 
         private Builder() {
         }
@@ -275,6 +279,7 @@ public final class MongoClientSettings {
             if (settings.heartbeatSocketTimeoutSetExplicitly) {
                 heartbeatSocketTimeoutMS = settings.heartbeatSocketSettings.getReadTimeout(MILLISECONDS);
             }
+            tracingManager = settings.tracingManager;
         }
 
         /**
@@ -724,6 +729,20 @@ public final class MongoClientSettings {
         }
 
         /**
+         * Sets the tracer to use for creating Spans for operations and commands.
+         *
+         * @param tracer the tracer
+         * @see com.mongodb.tracing.MicrometerTracer
+         * @return this
+         * @since 5.5
+         */
+        @Alpha(Reason.CLIENT)
+        public Builder tracer(final Tracer tracer) {
+            this.tracingManager = new TracingManager(tracer);
+            return this;
+        }
+
+        /**
          * Build an instance of {@code MongoClientSettings}.
          *
          * @return the settings from this builder
@@ -1040,6 +1059,17 @@ public final class MongoClientSettings {
         return contextProvider;
     }
 
+    /**
+     * Get the tracer to create Spans for operations and commands.
+     *
+     * @return this
+     * @since 5.5
+     */
+    @Alpha(Reason.CLIENT)
+    public TracingManager getTracingManager() {
+        return tracingManager;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -1156,5 +1186,6 @@ public final class MongoClientSettings {
         heartbeatConnectTimeoutSetExplicitly = builder.heartbeatConnectTimeoutMS != 0;
         contextProvider = builder.contextProvider;
         timeoutMS = builder.timeoutMS;
+        tracingManager = builder.tracingManager;
     }
 }
