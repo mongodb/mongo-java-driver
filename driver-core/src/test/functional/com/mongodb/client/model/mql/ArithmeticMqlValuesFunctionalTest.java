@@ -22,13 +22,11 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.model.mql.MqlValues.numberToMqlNumber;
 import static com.mongodb.client.model.mql.MqlValues.of;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @SuppressWarnings("ConstantConditions")
 class ArithmeticMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
@@ -227,7 +225,6 @@ class ArithmeticMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest 
 
     @Test
     public void roundTest() {
-        assumeTrue(serverVersionAtLeast(4, 2));
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/round/
         MqlInteger actual = of(5.5).round();
         assertExpression(

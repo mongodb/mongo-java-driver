@@ -104,7 +104,7 @@ public class CrudProseTest {
     @Test
     @SuppressWarnings("try")
     void testWriteConcernErrInfoIsPropagated() throws InterruptedException {
-        assumeTrue(isDiscoverableReplicaSet() && serverVersionAtLeast(4, 0));
+        assumeTrue(isDiscoverableReplicaSet());
         BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
                 .append("mode", new BsonDocument("times", new BsonInt32(1)))
                 .append("data", new BsonDocument("failCommands", new BsonArray(singletonList(new BsonString("insert"))))

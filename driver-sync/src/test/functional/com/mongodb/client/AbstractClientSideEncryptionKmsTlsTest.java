@@ -38,7 +38,6 @@ import java.util.Map;
 
 import static com.mongodb.ClusterFixture.getEnv;
 import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -129,7 +128,6 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
      */
     @Test()
     public void testThatCustomSslContextIsUsed() {
-        assumeTrue(serverVersionAtLeast(4, 2));
         assumeTrue(hasEncryptionTestsEnabled());
 
         Map<String, Map<String, Object>> kmsProviders = getKmsProviders();

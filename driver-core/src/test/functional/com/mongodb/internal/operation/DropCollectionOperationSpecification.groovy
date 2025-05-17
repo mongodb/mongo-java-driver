@@ -27,7 +27,6 @@ import spock.lang.IgnoreIf
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
-import static com.mongodb.ClusterFixture.serverVersionLessThan
 
 class DropCollectionOperationSpecification extends OperationFunctionalSpecification {
 
@@ -79,7 +78,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         !collectionNameExists('nonExistingCollection')
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentTo', 'createTheCollection'))

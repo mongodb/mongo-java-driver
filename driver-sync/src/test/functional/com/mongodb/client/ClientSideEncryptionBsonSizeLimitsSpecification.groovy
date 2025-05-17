@@ -28,7 +28,6 @@ import org.bson.BsonDocument
 import org.bson.BsonString
 
 import static com.mongodb.ClusterFixture.isClientSideEncryptionTest
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.Fixture.getDefaultDatabaseName
 import static com.mongodb.client.Fixture.getMongoClient
 import static com.mongodb.client.Fixture.getMongoClientSettings
@@ -56,7 +55,6 @@ class ClientSideEncryptionBsonSizeLimitsSpecification extends FunctionalSpecific
     private MongoCollection<BsonDocument> autoEncryptingDataCollection
 
     def setup() {
-        assumeTrue(serverVersionAtLeast(4, 2))
         assumeTrue(isClientSideEncryptionTest())
         dataKeyCollection.drop()
         dataCollection.drop()

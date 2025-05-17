@@ -46,7 +46,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static com.mongodb.fixture.EncryptionFixture.getKmsProviders;
@@ -72,7 +71,6 @@ public class ClientSideEncryptionCorpusTest {
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
-        assumeTrue(serverVersionAtLeast(4, 2));
         assumeTrue("Corpus tests disabled", hasEncryptionTestsEnabled());
 
         MongoClientSettings clientSettings = getMongoClientSettingsBuilder()

@@ -18,9 +18,7 @@ package com.mongodb.client;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.Function;
-import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoException;
 import com.mongodb.MongoServerException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ServerAddress;
@@ -62,13 +60,11 @@ import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
-import static com.mongodb.ClusterFixture.getServerStatus;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static com.mongodb.client.Fixture.getMultiMongosMongoClientSettingsBuilder;
@@ -93,40 +89,6 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
     @Override
     public void setUp() {
         super.setUp();
-    }
-
-    @Test
-    public void testRetryWritesWithInsertOneAgainstMMAPv1RaisesError() {
-        assumeTrue(canRunMmapv1Tests());
-        boolean exceptionFound = false;
-
-        try {
-            collection.insertOne(Document.parse("{x: 1}"));
-        } catch (MongoClientException e) {
-            assertEquals("This MongoDB deployment does not support retryable writes. "
-                    + "Please add retryWrites=false to your connection string.", e.getMessage());
-            assertEquals(20, ((MongoException) e.getCause()).getCode());
-            assertTrue(e.getCause().getMessage().contains("Transaction numbers"));
-            exceptionFound = true;
-        }
-        assertTrue(exceptionFound);
-    }
-
-    @Test
-    public void testRetryWritesWithFindOneAndDeleteAgainstMMAPv1RaisesError() {
-        assumeTrue(canRunMmapv1Tests());
-        boolean exceptionFound = false;
-
-        try {
-            collection.findOneAndDelete(Document.parse("{x: 1}"));
-        } catch (MongoClientException e) {
-            assertEquals("This MongoDB deployment does not support retryable writes. "
-                    + "Please add retryWrites=false to your connection string.", e.getMessage());
-            assertEquals(20, ((MongoException) e.getCause()).getCode());
-            assertTrue(e.getCause().getMessage().contains("Transaction numbers"));
-            exceptionFound = true;
-        }
-        assertTrue(exceptionFound);
     }
 
     /**
@@ -286,8 +248,6 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
             final Function<MongoCollection<Document>, R> operation, final String operationName, final boolean write) {
         if (write) {
             assumeTrue(serverVersionAtLeast(4, 4));
-        } else  {
-            assumeTrue(serverVersionAtLeast(4, 2));
         }
         assumeTrue(isSharded());
         ConnectionString connectionString = getMultiMongosConnectionString();
@@ -350,8 +310,6 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
             final Function<MongoCollection<Document>, R> operation, final String operationName, final boolean write) {
         if (write) {
             assumeTrue(serverVersionAtLeast(4, 4));
-        } else  {
-            assumeTrue(serverVersionAtLeast(4, 2));
         }
         assumeTrue(isSharded());
         ConnectionString connectionString = getConnectionString();
@@ -396,13 +354,5 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
             assertInstanceOf(CommandSucceededEvent.class, commandEvents.get(1), commandEvents::toString);
             assertEquals(s0Address, commandEvents.get(1).getConnectionDescription().getServerAddress(), commandEvents::toString);
         }
-    }
-
-    private boolean canRunMmapv1Tests() {
-        Document storageEngine = (Document) getServerStatus().get("storageEngine");
-
-        return ((isSharded() || isDiscoverableReplicaSet())
-                && storageEngine != null && storageEngine.get("name").equals("mmapv1")
-                && serverVersionLessThan(4, 2));
     }
 }

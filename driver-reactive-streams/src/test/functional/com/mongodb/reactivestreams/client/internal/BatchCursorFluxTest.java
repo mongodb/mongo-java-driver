@@ -57,7 +57,6 @@ import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.reactivestreams.client.Fixture.drop;
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClientBuilderFromConnectionString;
 import static com.mongodb.reactivestreams.client.Fixture.isReplicaSet;
-import static com.mongodb.reactivestreams.client.Fixture.serverVersionAtLeast;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -292,7 +291,7 @@ public class BatchCursorFluxTest {
     @Test
     @DisplayName("ChangeStreamPublisher for a collection must complete after dropping the collection")
     void changeStreamPublisherCompletesAfterDroppingCollection() {
-        assumeTrue(isReplicaSet() && serverVersionAtLeast(4, 0));
+        assumeTrue(isReplicaSet());
         TestSubscriber<ChangeStreamDocument<Document>> subscriber = new TestSubscriber<>();
         subscriber.doOnSubscribe(subscription -> {
             subscription.request(Long.MAX_VALUE);

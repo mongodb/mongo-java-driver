@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
@@ -38,18 +37,14 @@ import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonDouble
 import org.bson.BsonInt64
-import org.bson.BsonRegularExpression
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
-import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.ClusterFixture.serverVersionLessThan
 
 class ListCollectionsOperationSpecification extends OperationFunctionalSpecification {
 
@@ -106,19 +101,6 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         names.findAll { it.contains('$') }.isEmpty()
     }
 
-    @IgnoreIf({ serverVersionAtLeast(3, 0) })
-    def 'should throw if filtering on name with something other than a string'() {
-        given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
-                .filter(new BsonDocument('name', new BsonRegularExpression('^[^$]*$')))
-
-        when:
-        operation.execute(getBinding())
-
-        then:
-        thrown(IllegalArgumentException)
-    }
-
     def 'should filter collection names if a name filter is specified'() {
         given:
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
@@ -158,21 +140,6 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         !names.contains(collectionName)
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 4) || serverVersionAtLeast(4, 0) })
-    def 'should get all fields when nameOnly is not requested'() {
-        given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
-        getCollectionHelper().create('collection4', new CreateCollectionOptions())
-
-        when:
-        def cursor = operation.execute(getBinding())
-        def collection = cursor.next()[0]
-
-        then:
-        collection.size() > 2
-    }
-
-    @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should only get collection names when nameOnly is requested'() {
         given:
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
@@ -187,7 +154,6 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         collection.size() == 2
     }
 
-    @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should only get collection names when nameOnly and authorizedCollections are requested'() {
         given:
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
@@ -203,22 +169,6 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         collection.size() == 2
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 4) || serverVersionAtLeast(4, 0) })
-    def 'should only get all field names when nameOnly is requested on server versions that do not support nameOnly'() {
-        given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
-                .nameOnly(true)
-        getCollectionHelper().create('collection7', new CreateCollectionOptions())
-
-        when:
-        def cursor = operation.execute(getBinding())
-        def collection = cursor.next()[0]
-
-        then:
-        collection.size() > 2
-    }
-
-    @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should get all fields when authorizedCollections is requested and nameOnly is not requested'() {
         given:
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())

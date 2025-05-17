@@ -31,7 +31,6 @@ import static Fixture.getMongoClient
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION
 import static com.mongodb.ClusterFixture.getConnectionString
 import static com.mongodb.reactivestreams.client.Fixture.isReplicaSet
-import static com.mongodb.reactivestreams.client.Fixture.serverVersionAtLeast
 
 class SmokeTestSpecification extends FunctionalSpecification {
 
@@ -152,7 +151,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         !run('the collection name is no longer in the collectionNames list', database.&listCollectionNames).contains(collectionName)
     }
 
-    @IgnoreIf({ !(serverVersionAtLeast(4, 0) && isReplicaSet()) })
+    @IgnoreIf({ !isReplicaSet() })
     def 'should commit a transaction'() {
         given:
         run('create collection', database.&createCollection, collection.namespace.collectionName)
@@ -170,7 +169,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         session?.close()
     }
 
-    @IgnoreIf({ !(serverVersionAtLeast(4, 0) && isReplicaSet()) })
+    @IgnoreIf({ !isReplicaSet() })
     def 'should abort a transaction'() {
         given:
         run('create collection', database.&createCollection, collection.namespace.collectionName)

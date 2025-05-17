@@ -56,14 +56,13 @@ import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.isStandalone
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.client.model.changestream.ChangeStreamDocument.createCodec
 import static com.mongodb.internal.connection.ServerHelper.waitForLastRelease
 import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
-@IgnoreIf({ !(serverVersionAtLeast(3, 6) && !isStandalone()) })
+@IgnoreIf({ isStandalone() })
 class ChangeStreamOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should have the correct defaults'() {
@@ -323,7 +322,6 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         waitForLastRelease(getCluster())
     }
 
-    @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should decode drop to ChangeStreamDocument '() {
         given:
         def helper = getHelper()
@@ -352,7 +350,6 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         waitForLastRelease(getCluster())
     }
 
-    @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should decode dropDatabase to ChangeStreamDocument '() {
         given:
         def helper = getHelper()
@@ -382,7 +379,6 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         waitForLastRelease(getCluster())
     }
 
-    @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should decode rename to ChangeStreamDocument '() {
         given:
         def helper = getHelper()
@@ -505,7 +501,6 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should work with a startAtOperationTime'() {
         given:
         def helper = getHelper()
@@ -584,7 +579,6 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(4, 2) })
     def 'should work with a startAfter resumeToken'() {
         given:
         def helper = getHelper()

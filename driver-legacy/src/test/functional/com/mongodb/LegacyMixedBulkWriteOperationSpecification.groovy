@@ -31,7 +31,6 @@ import spock.lang.IgnoreIf
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getSingleConnectionBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
-import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.LegacyMixedBulkWriteOperation.createBulkWriteOperationForDelete
 import static com.mongodb.LegacyMixedBulkWriteOperation.createBulkWriteOperationForInsert
 import static com.mongodb.LegacyMixedBulkWriteOperation.createBulkWriteOperationForReplace
@@ -134,7 +133,7 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
         getCollectionHelper().count() == 1
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 6) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should support retryable writes'() {
         given:
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))

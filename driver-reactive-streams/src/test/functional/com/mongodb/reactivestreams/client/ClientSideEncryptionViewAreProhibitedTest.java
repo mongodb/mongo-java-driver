@@ -33,7 +33,6 @@ import java.util.Map;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.ClusterFixture.isClientSideEncryptionTest;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClient;
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClientBuilderFromConnectionString;
 import static junit.framework.TestCase.assertTrue;
@@ -45,7 +44,6 @@ public class ClientSideEncryptionViewAreProhibitedTest {
 
     @Before
     public void setUp() {
-        assumeTrue(serverVersionAtLeast(4, 2));
         assumeTrue("Encryption test with external keyVault is disabled", isClientSideEncryptionTest());
 
         MongoClient client = getMongoClient();

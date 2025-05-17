@@ -42,7 +42,6 @@ import java.util.Map;
 
 import static com.mongodb.ClusterFixture.getEnv;
 import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -78,7 +77,6 @@ public abstract class AbstractClientEncryptionCustomEndpointTest {
 
     @Before
     public void setUp() {
-        assumeTrue(serverVersionAtLeast(4, 2));
         assumeTrue("Custom Endpoint tests disables", hasEncryptionTestsEnabled());
 
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{

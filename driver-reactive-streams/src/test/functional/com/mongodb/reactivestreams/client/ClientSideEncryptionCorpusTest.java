@@ -49,7 +49,6 @@ import java.util.Map;
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.ClusterFixture.getEnv;
 import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClientBuilderFromConnectionString;
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClientSettings;
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
@@ -73,7 +72,6 @@ public class ClientSideEncryptionCorpusTest {
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
-        assumeTrue(serverVersionAtLeast(4, 2));
         assumeTrue("Corpus tests disabled", hasEncryptionTestsEnabled());
 
         MongoClientSettings clientSettings = getMongoClientBuilderFromConnectionString()

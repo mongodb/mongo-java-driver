@@ -41,7 +41,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.fixture.EncryptionFixture.getKmsProviders;
@@ -70,7 +69,6 @@ public class ClientEncryptionDataKeyAndDoubleEncryptionTest {
 
     @Before
     public void setUp() {
-        assumeTrue(serverVersionAtLeast(4, 2));
         assumeTrue("Has encryption tests", hasEncryptionTestsEnabled());
 
         // Step 1: create unencrypted client

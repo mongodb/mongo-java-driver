@@ -46,11 +46,4 @@ public class ExplainTest extends AbstractExplainTest {
         super.testExplainOfAggregateWithNewResponseStructure();
         assertContextPassedThrough();
     }
-
-    @Test
-    @Override
-    public void testExplainOfAggregateWithOldResponseStructure() {
-        super.testExplainOfAggregateWithOldResponseStructure();
-        assertContextPassedThrough();
-    }
 }

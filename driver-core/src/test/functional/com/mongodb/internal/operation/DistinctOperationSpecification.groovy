@@ -49,11 +49,9 @@ import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.StringCodec
 import org.bson.codecs.ValueCodecProvider
 import org.bson.types.ObjectId
-import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.executeAsync
-import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand
 import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION
@@ -207,7 +205,6 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         async << [false, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should support collation'() {
         given:
         def document = Document.parse('{str: "foo"}')

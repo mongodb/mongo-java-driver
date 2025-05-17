@@ -44,7 +44,6 @@ import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.getEnv;
 import static com.mongodb.ClusterFixture.isClientSideEncryptionTest;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -66,7 +65,6 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
 
     @Test
     public void testGetCredentialsFromEnvironment() {
-        assumeTrue(serverVersionAtLeast(4, 2));
         assumeTrue(System.getenv().containsKey("AWS_ACCESS_KEY_ID"));
 
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
@@ -103,7 +101,6 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
     }
     @Test
     public void testGetCredentialsFromSupplier() {
-        assumeTrue(serverVersionAtLeast(4, 2));
         assumeFalse(System.getenv().containsKey("AWS_ACCESS_KEY_ID"));
         assumeTrue(isClientSideEncryptionTest());
 
@@ -165,7 +162,6 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
     public void shouldThrowMongoConfigurationIfSupplierReturnsDoesSomethingUnexpected(final String testNameSuffix,
             final Supplier<Map<String, Object>> awsProviderPropertySupplier, final String exceptionMessageSuffix,
             @Nullable final Class<?> exceptionCauseType) {
-        assumeTrue(serverVersionAtLeast(4, 2));
         assumeFalse(System.getenv().containsKey("AWS_ACCESS_KEY_ID"));
         assumeTrue(isClientSideEncryptionTest());
 
@@ -212,7 +208,6 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
     @Test
     @DisplayName("Throw MongoCryptException when configured for automatic/on-demand credentials in ClientEncryptionSettings")
     void shouldThrowMongoCryptExceptionWhenNamedKMSProviderUsesEmptyOnDemandCredentialsWithEncryptionSettings() {
-        assumeTrue(serverVersionAtLeast(4, 2));
         assumeTrue(isClientSideEncryptionTest());
 
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
@@ -250,7 +245,6 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
     @Test
     @DisplayName("Throw MongoCryptException when configured for automatic/on-demand credentials in AutoEncryptionSettings")
     public void shouldThrowMongoCryptExceptionWhenNamedKMSProviderUsesEmptyOnDemandCredentialsWithAutoEncryptionSettings() {
-        assumeTrue(serverVersionAtLeast(4, 2));
         assumeTrue(isClientSideEncryptionTest());
 
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
@@ -277,7 +271,6 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
 
     @Test
     public void shouldIgnoreSupplierIfKmsProviderMapValueIsNotEmpty() {
-        assumeTrue(serverVersionAtLeast(4, 2));
         assumeFalse(System.getenv().containsKey("AWS_ACCESS_KEY_ID"));
         assumeTrue(isClientSideEncryptionTest());
 
