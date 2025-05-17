@@ -16,14 +16,17 @@
 
 package com.mongodb.internal.operation
 
-
+import com.mongodb.MongoCommandException
 import com.mongodb.MongoNamespace
+import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.Aggregates
+import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.Filters
+import com.mongodb.client.model.ValidationOptions
 import com.mongodb.client.test.CollectionHelper
 import com.mongodb.internal.client.model.AggregationLevel
 import org.bson.BsonArray
@@ -38,8 +41,10 @@ import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
+import static com.mongodb.client.model.Filters.gte
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class AggregateToCollectionOperationSpecification extends OperationFunctionalSpecification {
@@ -150,6 +155,59 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
 
         then:
         getCollectionHelper(aggregateCollectionNamespace).count() == 1
+
+        where:
+        async << [true, false]
+    }
+
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
+    def 'should throw on write concern error'() {
+        given:
+        AggregateToCollectionOperation operation = createOperation(getNamespace(),
+                        [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
+                        new WriteConcern(5))
+
+        when:
+        execute(operation, async)
+
+        then:
+        def ex = thrown(MongoWriteConcernException)
+        ex.writeConcernError.code == 100
+        ex.writeResult.wasAcknowledged()
+
+        where:
+        async << [true, false]
+    }
+
+    def 'should support bypassDocumentValidation'() {
+        given:
+        def collectionOutHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'collectionOut'))
+        collectionOutHelper.create('collectionOut', new CreateCollectionOptions().validationOptions(
+                new ValidationOptions().validator(gte('level', 10))))
+        getCollectionHelper().insertDocuments(BsonDocument.parse('{ level: 9 }'))
+
+        when:
+        AggregateToCollectionOperation operation = createOperation(getNamespace(),
+                [BsonDocument.parse('{$out: "collectionOut"}')], ACKNOWLEDGED)
+        execute(operation, async)
+
+        then:
+        thrown(MongoCommandException)
+
+        when:
+        execute(operation.bypassDocumentValidation(false), async)
+
+        then:
+        thrown(MongoCommandException)
+
+        when:
+        execute(operation.bypassDocumentValidation(true), async)
+
+        then:
+        notThrown(MongoCommandException)
+
+        cleanup:
+        collectionOutHelper?.drop()
 
         where:
         async << [true, false]
