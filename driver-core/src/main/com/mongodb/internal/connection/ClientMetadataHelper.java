@@ -186,18 +186,22 @@ public final class ClientMetadataHelper {
         BsonDocument updatedClientMetadataDocument = clientMetadataDocument.clone();
         BsonDocument driverInformation = clientMetadataDocument.getDocument("driver");
 
-        List<String> updatedDriverNames = new ArrayList<>();
-        List<String> updatedDriverVersions = new ArrayList<>();
-        List<String> updateDriverPlatforms = new ArrayList<>();
+        List<String> driverNamesToAppend = mongoDriverInformation.getDriverNames();
+        List<String> driverVersionsToAppend = mongoDriverInformation.getDriverVersions();
+        List<String> driverPlatformsToAppend = mongoDriverInformation.getDriverPlatforms();
+
+        List<String> updatedDriverNames = new ArrayList<>(driverNamesToAppend.size() + 1);
+        List<String> updatedDriverVersions = new ArrayList<>(driverVersionsToAppend.size() + 1);
+        List<String> updateDriverPlatforms = new ArrayList<>(driverPlatformsToAppend.size() + 1);
 
         updatedDriverNames.add(driverInformation.getString("name").getValue());
-        updatedDriverNames.addAll(mongoDriverInformation.getDriverNames());
+        updatedDriverNames.addAll(driverNamesToAppend);
 
         updatedDriverVersions.add(driverInformation.getString("version").getValue());
-        updatedDriverVersions.addAll(mongoDriverInformation.getDriverVersions());
+        updatedDriverVersions.addAll(driverVersionsToAppend);
 
         updateDriverPlatforms.add(clientMetadataDocument.getString("platform").getValue());
-        updateDriverPlatforms.addAll(mongoDriverInformation.getDriverPlatforms());
+        updateDriverPlatforms.addAll(driverPlatformsToAppend);
 
         tryWithLimit(updatedClientMetadataDocument, d -> {
             putAtPath(d, "driver.name", listToString(updatedDriverNames));
