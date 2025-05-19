@@ -32,6 +32,7 @@ import org.bson.io.BasicOutputBuffer;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -185,22 +186,25 @@ public final class ClientMetadataHelper {
         BsonDocument updatedClientMetadataDocument = clientMetadataDocument.clone();
         BsonDocument driverInformation = clientMetadataDocument.getDocument("driver");
 
-        MongoDriverInformation.Builder builder = MongoDriverInformation.builder(mongoDriverInformation)
-                .driverName(driverInformation.getString("name").getValue())
-                .driverVersion(driverInformation.getString("version").getValue());
+        List<String> updatedDriverNames = new ArrayList<>();
+        List<String> updatedDriverVersions = new ArrayList<>();
+        List<String> updateDriverPlatforms = new ArrayList<>();
 
-        if (updatedClientMetadataDocument.containsKey("platform")) {
-            builder.driverPlatform(updatedClientMetadataDocument.getString("platform").getValue());
-        }
+        updatedDriverNames.add(driverInformation.getString("name").getValue());
+        updatedDriverNames.addAll(mongoDriverInformation.getDriverNames());
 
-        MongoDriverInformation updatedDriverInformation = builder.build();
+        updatedDriverVersions.add(driverInformation.getString("version").getValue());
+        updatedDriverVersions.addAll(mongoDriverInformation.getDriverVersions());
+
+        updateDriverPlatforms.add(clientMetadataDocument.getString("platform").getValue());
+        updateDriverPlatforms.addAll(mongoDriverInformation.getDriverPlatforms());
 
         tryWithLimit(updatedClientMetadataDocument, d -> {
-            putAtPath(d, "driver.name", listToString(updatedDriverInformation.getDriverNames()));
-            putAtPath(d, "driver.version", listToString(updatedDriverInformation.getDriverVersions()));
+            putAtPath(d, "driver.name", listToString(updatedDriverNames));
+            putAtPath(d, "driver.version", listToString(updatedDriverVersions));
         });
         tryWithLimit(updatedClientMetadataDocument, d -> {
-            putAtPath(d, "platform", listToString(updatedDriverInformation.getDriverPlatforms()));
+            putAtPath(d, "platform", listToString(updateDriverPlatforms));
         });
         return updatedClientMetadataDocument;
     }
