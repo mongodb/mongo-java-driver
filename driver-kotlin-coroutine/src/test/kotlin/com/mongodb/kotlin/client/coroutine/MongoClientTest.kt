@@ -19,6 +19,9 @@ import com.mongodb.ClientSessionOptions
 import com.mongodb.MongoNamespace
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel
+import com.mongodb.reactivestreams.client.MongoClient as JMongoClient
+import kotlin.reflect.full.declaredFunctions
+import kotlin.test.assertEquals
 import kotlinx.coroutines.runBlocking
 import org.bson.BsonDocument
 import org.bson.Document
@@ -33,9 +36,6 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoMoreInteractions
 import org.mockito.kotlin.whenever
 import reactor.core.publisher.Mono
-import kotlin.reflect.full.declaredFunctions
-import kotlin.test.assertEquals
-import com.mongodb.reactivestreams.client.MongoClient as JMongoClient
 
 class MongoClientTest {
 
