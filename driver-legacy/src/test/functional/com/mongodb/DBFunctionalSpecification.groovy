@@ -29,7 +29,6 @@ class DBFunctionalSpecification extends FunctionalSpecification {
         given:
         database.createCollection('ctest', new BasicDBObject())
 
-        // On servers older than 4.0 that don't support this failpoint, use a crazy w value instead
         def w = 2
         database.setWriteConcern(new WriteConcern(w))
         configureFailPoint(BsonDocument.parse('{ configureFailPoint: "failCommand", ' +

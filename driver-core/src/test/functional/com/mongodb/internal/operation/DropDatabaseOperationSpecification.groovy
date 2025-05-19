@@ -68,7 +68,6 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentTo', 'createTheCollection'))
 
-        // On servers older than 4.0 that don't support this failpoint, use a crazy w value instead
         def w = 2
         def operation = new DropDatabaseOperation(databaseName, new WriteConcern(w))
         configureFailPoint(BsonDocument.parse('{ configureFailPoint: "failCommand", ' +
