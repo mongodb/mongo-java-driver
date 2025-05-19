@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
@@ -30,8 +29,6 @@ import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.ClusterFixture.serverVersionLessThan
 
 class DropDatabaseOperationSpecification extends OperationFunctionalSpecification {
 
@@ -66,20 +63,17 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentTo', 'createTheCollection'))
 
-        // On servers older than 4.0 that don't support this failpoint, use a crazy w value instead
-        def w = serverVersionAtLeast(4, 0) ? 2 : 5
+        def w = 2
         def operation = new DropDatabaseOperation(databaseName, new WriteConcern(w))
-        if (serverVersionAtLeast(4, 0)) {
-            configureFailPoint(BsonDocument.parse('{ configureFailPoint: "failCommand", ' +
-                    'mode : {times : 1}, ' +
-                    'data : {failCommands : ["dropDatabase"], ' +
-                    'writeConcernError : {code : 100, errmsg : "failed"}}}'))
-        }
+        configureFailPoint(BsonDocument.parse('{ configureFailPoint: "failCommand", ' +
+                'mode : {times : 1}, ' +
+                'data : {failCommands : ["dropDatabase"], ' +
+                'writeConcernError : {code : 100, errmsg : "failed"}}}'))
 
         when:
         async ? executeAsync(operation) : operation.execute(getBinding())

@@ -27,7 +27,6 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.net.InetAddress;
@@ -42,7 +41,6 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.AbstractClientSideEncryptionNotCreateMongocryptdClientTest.findAvailableMongocryptdLoopbackPort;
 import static com.mongodb.client.AbstractClientSideEncryptionTest.cryptSharedLibPathSysPropValue;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
@@ -74,11 +72,6 @@ public abstract class AbstractClientSideEncryptionNotSpawnMongocryptdTest {
 
     private MongoClient client;
     private InetSocketAddress mongocryptdSocketAddress;
-
-    @BeforeEach
-    public void setUp() {
-        assumeTrue(serverVersionAtLeast(4, 2));
-    }
 
     @AfterEach
     public void cleanUp() {

@@ -30,7 +30,6 @@ import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static java.util.Collections.singletonList
 
@@ -53,7 +52,6 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         operation.getCollation() == null
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 0) })
     def 'should set optional values correctly'(){
         given:
         def storageEngineOptions = BsonDocument.parse('{ wiredTiger : {}}')
@@ -101,13 +99,9 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 0) })
     def 'should pass through storage engine options'() {
         given:
         def storageEngineOptions = new BsonDocument('wiredTiger', new BsonDocument('configString', new BsonString('block_compressor=zlib')))
-        if (serverVersionLessThan(4, 2)) {
-            storageEngineOptions.append('mmapv1', new BsonDocument())
-        }
         def operation = createOperation()
                 .storageEngineOptions(storageEngineOptions)
 
@@ -123,13 +117,9 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(4, 2) })
     def 'should pass through storage engine options- zstd compression'() {
         given:
         def storageEngineOptions = new BsonDocument('wiredTiger', new BsonDocument('configString', new BsonString('block_compressor=zstd')))
-        if (serverVersionLessThan(4, 2)) {
-            storageEngineOptions.append('mmapv1', new BsonDocument())
-        }
         def operation = createOperation()
                 .storageEngineOptions(storageEngineOptions)
 
@@ -172,28 +162,6 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionAtLeast(4, 0) })
-    def 'should create collection in respect to the autoIndex option'() {
-        given:
-        assert !collectionNameExists(getCollectionName())
-        def operation = createOperation()
-                .autoIndex(autoIndex)
-
-        when:
-        execute(operation, async)
-
-        then:
-        storageStats().getInt32('nindexes').intValue() == expectedNumberOfIndexes
-
-        where:
-        autoIndex | expectedNumberOfIndexes | async
-        true      | 1                       | true
-        true      | 1                       | false
-        false     | 0                       | true
-        false     | 0                       | false
-    }
-
-    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should allow indexOptionDefaults'() {
         given:
         assert !collectionNameExists(getCollectionName())
@@ -212,7 +180,6 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
     }
 
 
-    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should allow validator'() {
         given:
         assert !collectionNameExists(getCollectionName())
@@ -242,7 +209,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         assert !collectionNameExists(getCollectionName())
@@ -260,7 +227,6 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should be able to create a collection with a collation'() {
         given:
         def operation = createOperation().collation(defaultCollation)

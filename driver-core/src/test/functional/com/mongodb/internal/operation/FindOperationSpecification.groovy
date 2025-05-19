@@ -60,7 +60,6 @@ import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.isSharded
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.CursorType.NonTailable
 import static com.mongodb.CursorType.Tailable
@@ -362,7 +361,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should apply $hint'() {
         given:
         def index = new BsonDocument('a', new BsonInt32(1))
@@ -398,13 +396,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         Document profileDocument = profileCollectionHelper.find().get(0)
-        if (serverVersionAtLeast(3, 6)) {
-            assertEquals(expectedComment, ((Document) profileDocument.get('command')).get('comment'))
-        } else if (serverVersionAtLeast(3, 2)) {
-            assertEquals(expectedComment, ((Document) profileDocument.get('query')).get('comment'))
-        } else {
-            assertEquals(expectedComment, ((Document) profileDocument.get('query')).get('$comment'))
-        }
+        assertEquals(expectedComment, ((Document) profileDocument.get('command')).get('comment'))
 
         cleanup:
         new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)),
@@ -418,7 +410,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should apply $showDiskLoc'() {
         given:
-        String fieldName = serverVersionAtLeast(3, 2) ? '$recordId' : '$diskLoc'
+        String fieldName = '$recordId'
         collectionHelper.insertDocuments(new BsonDocument())
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
@@ -693,7 +685,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should support collation'() {
         given:
         def document = BsonDocument.parse('{_id: 1, str: "foo"}')

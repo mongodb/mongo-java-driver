@@ -46,7 +46,6 @@ import static com.mongodb.ClusterFixture.disableFailPoint
 import static com.mongodb.ClusterFixture.disableOnPrimaryTransactionalWriteFailPoint
 import static com.mongodb.ClusterFixture.enableOnPrimaryTransactionalWriteFailPoint
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
-import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.WriteConcern.W1
@@ -77,7 +76,6 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         operation.getCollation() == null
     }
 
-    @IgnoreIf({ serverVersionLessThan(4, 2) })
     def 'should have the correct defaults and passed values using update pipelines'() {
         when:
         def updatePipeline = new BsonArray(singletonList(new BsonDocument('update', new BsonInt32(1))))
@@ -121,7 +119,6 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         operation.getCollation() == defaultCollation
     }
 
-    @IgnoreIf({ serverVersionLessThan(4, 2) })
     def 'should set optional values correctly when using update pipelines'(){
         given:
         def filter = new BsonDocument('filter', new BsonInt32(1))
@@ -183,7 +180,6 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(4, 2) })
     def 'should add field using update pipeline'() {
         given:
         CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
@@ -250,7 +246,6 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(4, 2) })
     def 'should update using pipeline when using custom codecs'() {
         given:
         CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
@@ -305,7 +300,6 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(4, 2) })
     def 'should throw an exception if update pipeline contains operations that are not supported'() {
         when:
         def update = new BsonArray(singletonList(new BsonDocument('$foo', new BsonDocument('x', new BsonInt32(1)))))
@@ -327,7 +321,6 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should support bypassDocumentValidation'() {
         given:
         def namespace = new MongoNamespace(getDatabaseName(), 'collectionOut')
@@ -367,7 +360,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 2) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('name', 'Pete'))
@@ -404,7 +397,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 8) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should throw on write concern error on multiple failpoint'() {
         given:
         CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
@@ -492,7 +485,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         ].combinations()
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 6) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should support retryable writes'() {
         given:
         CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
@@ -568,7 +561,6 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should support collation'() {
         given:
         def document = Document.parse('{_id: 1, str: "foo"}')
@@ -589,7 +581,6 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 6) })
     def 'should support array filters'() {
         given:
         def documentOne = Document.parse('{_id: 1, y: [ {b: 3}, {b: 1}]}')

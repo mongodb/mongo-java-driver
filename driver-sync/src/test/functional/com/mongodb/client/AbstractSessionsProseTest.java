@@ -42,7 +42,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -50,7 +49,6 @@ import static org.bson.assertions.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 // Prose tests for Sessions specification: https://github.com/mongodb/specifications/tree/master/source/sessions
 // Prose test README: https://github.com/mongodb/specifications/tree/master/source/sessions/tests/README.md
@@ -63,9 +61,7 @@ public abstract class AbstractSessionsProseTest {
 
     @BeforeAll
     public static void beforeAll() throws IOException {
-        if (serverVersionAtLeast(4, 2)) {
-            mongocryptdProcess = startMongocryptdProcess();
-        }
+        mongocryptdProcess = startMongocryptdProcess();
     }
 
     @AfterAll
@@ -134,8 +130,6 @@ public abstract class AbstractSessionsProseTest {
     // Test 18 from #18-implicit-session-is-ignored-if-connection-does-not-support-sessions
     @Test
     public void shouldIgnoreImplicitSessionIfConnectionDoesNotSupportSessions() throws IOException {
-        assumeTrue(serverVersionAtLeast(4, 2));
-
         // initialize to true in case the command listener is never actually called, in which case the assertFalse will fire
         AtomicBoolean containsLsid = new AtomicBoolean(true);
         try (MongoClient client = getMongoClient(
@@ -174,7 +168,6 @@ public abstract class AbstractSessionsProseTest {
     // Test 19 from #19-explicit-session-raises-an-error-if-connection-does-not-support-sessions
     @Test
     public void shouldThrowOnExplicitSessionIfConnectionDoesNotSupportSessions() throws IOException {
-        assumeTrue(serverVersionAtLeast(4, 2));
         try (MongoClient client = getMongoClient(getMongocryptdMongoClientSettingsBuilder().build())) {
             MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
 

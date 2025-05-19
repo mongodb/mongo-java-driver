@@ -31,7 +31,6 @@ import spock.lang.Unroll
 
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
-import static com.mongodb.ClusterFixture.serverVersionLessThan
 
 class DropIndexOperationSpecification extends OperationFunctionalSpecification {
 
@@ -135,7 +134,7 @@ class DropIndexOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))

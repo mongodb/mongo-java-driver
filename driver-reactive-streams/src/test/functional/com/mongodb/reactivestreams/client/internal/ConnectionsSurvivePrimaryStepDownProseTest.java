@@ -41,14 +41,12 @@ import java.util.List;
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClientSettings;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 // See https://github.com/mongodb/specifications/tree/master/source/connections-survive-step-down/tests
@@ -63,7 +61,7 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
 
     @Before
     public void setUp() {
-        assumeTrue(isDiscoverableReplicaSet() && serverVersionAtLeast(4, 0));
+        assumeTrue(isDiscoverableReplicaSet());
         connectionPoolListener = new TestConnectionPoolListener();
         MongoClientSettings settings = MongoClientSettings.builder(getMongoClientSettings()).retryWrites(false)
                 .applyToConnectionPoolSettings(builder -> builder.addConnectionPoolListener(connectionPoolListener)).build();
@@ -94,8 +92,6 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
 
     @Test
     public void testGetMoreIteration() {
-        assumeTrue(serverVersionAtLeast(4, 2));
-
         List<Document> documents = asList(Document.parse("{_id: 1}"), Document.parse("{_id: 2}"), Document.parse("{_id: 3}"),
                                           Document.parse("{_id: 4}"), Document.parse("{_id: 5}"));
         Mono.from(collection.withWriteConcern(WriteConcern.MAJORITY).insertMany(documents)).block(TIMEOUT_DURATION);
@@ -116,8 +112,6 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
 
     @Test
     public void testNotPrimaryKeepConnectionPool() {
-        assumeTrue(serverVersionAtLeast(4, 2));
-
         collectionHelper.runAdminCommand("{configureFailPoint: 'failCommand',  mode: {times: 1}, "
                                                  + "data: {failCommands: ['insert'], errorCode: 10107}}");
         int connectionCount = connectionPoolListener.countEvents(ConnectionCreatedEvent.class);
@@ -131,26 +125,6 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
 
         Mono.from(collection.insertOne(new Document())).block(TIMEOUT_DURATION);
         assertEquals(connectionCount, connectionPoolListener.countEvents(ConnectionCreatedEvent.class));
-    }
-
-    @Test
-    public void testNotPrimaryClearConnectionPool() {
-        assumeFalse(serverVersionAtLeast(4, 2));
-
-        collectionHelper.runAdminCommand("{configureFailPoint: 'failCommand',  mode: {times: 1}, "
-                                                 + "data: {failCommands: ['insert'], errorCode: 10107}}");
-        int connectionCount = connectionPoolListener.countEvents(ConnectionCreatedEvent.class);
-
-        try {
-            Mono.from(collection.insertOne(new Document())).block(TIMEOUT_DURATION);
-            fail();
-        } catch (MongoException e) {
-            assertEquals(10107, e.getCode());
-        }
-        assertEquals(1, connectionPoolListener.countEvents(ConnectionPoolClearedEvent.class));
-
-        Mono.from(collection.insertOne(new Document())).block(TIMEOUT_DURATION);
-        assertEquals(connectionCount + 1, connectionPoolListener.countEvents(ConnectionCreatedEvent.class));
     }
 
     @Test
