@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.operation
 
-import com.mongodb.MongoChangeStreamException
+
 import com.mongodb.MongoException
 import com.mongodb.MongoQueryException
 import com.mongodb.OperationFunctionalSpecification
@@ -37,13 +37,11 @@ import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isStandalone
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.internal.connection.ServerHelper.waitForLastRelease
 import static java.util.Arrays.asList
 
 // See https://github.com/mongodb/specifications/tree/master/source/change-streams/tests/README.md#prose-tests
-@IgnoreIf({ !(serverVersionAtLeast(3, 6) && !isStandalone()) })
+@IgnoreIf({ isStandalone() })
 class ChangeStreamOperationProseTestSpecification extends OperationFunctionalSpecification {
 
     //
@@ -65,11 +63,7 @@ class ChangeStreamOperationProseTestSpecification extends OperationFunctionalSpe
         def exception = thrown(MongoException)
 
         then:
-        if (serverVersionAtLeast(4, 2)) {
-            exception instanceof MongoQueryException
-        } else {
-            exception instanceof MongoChangeStreamException
-        }
+        exception instanceof MongoQueryException
 
         cleanup:
         cursor?.close()
@@ -83,7 +77,7 @@ class ChangeStreamOperationProseTestSpecification extends OperationFunctionalSpe
     // Test that the ChangeStream will automatically resume one time on a resumable error (including not master)
     // with the initial pipeline and options, except for the addition/update of a resumeToken.
     //
-    @IgnoreIf({ serverVersionLessThan(4, 0) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should resume after single getMore Error'() {
         given:
         def helper = getHelper()

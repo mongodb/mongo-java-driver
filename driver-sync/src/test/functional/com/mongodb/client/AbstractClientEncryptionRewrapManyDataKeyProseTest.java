@@ -44,7 +44,6 @@ import java.util.Set;
 
 import static com.mongodb.ClusterFixture.getEnv;
 import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -116,7 +115,6 @@ public abstract class AbstractClientEncryptionRewrapManyDataKeyProseTest {
     }
 
     protected AbstractClientEncryptionRewrapManyDataKeyProseTest() {
-        Assumptions.assumeTrue(serverVersionAtLeast(4, 2));
         Assumptions.assumeTrue(hasEncryptionTestsEnabled(), "Custom Endpoint tests disables");
     }
 

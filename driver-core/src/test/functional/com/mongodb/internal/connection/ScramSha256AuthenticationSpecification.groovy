@@ -38,12 +38,11 @@ import static com.mongodb.ClusterFixture.createAsyncCluster
 import static com.mongodb.ClusterFixture.createCluster
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isAuthenticated
-import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.MongoCredential.createScramSha1Credential
 import static com.mongodb.MongoCredential.createScramSha256Credential
 
-@IgnoreIf({ serverVersionLessThan(4, 0) || !isAuthenticated() })
+@IgnoreIf({ (!isAuthenticated()) })
 class ScramSha256AuthenticationSpecification extends Specification {
 
     static MongoCredential sha1Implicit = createCredential('sha1', 'admin', 'sha1'.toCharArray())

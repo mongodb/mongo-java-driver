@@ -21,11 +21,9 @@ import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonType
 import org.bson.Document
 import org.bson.conversions.Bson
-import spock.lang.IgnoreIf
 
 import java.util.regex.Pattern
 
-import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.client.model.Filters.all
 import static com.mongodb.client.model.Filters.and
 import static com.mongodb.client.model.Filters.bitsAllClear
@@ -228,7 +226,6 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(size('a', 4)) == [b]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should render $bitsAllClear'() {
         when:
         def bitDoc = Document.parse('{_id: 1, bits: 20}')
@@ -239,7 +236,6 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(bitsAllClear('bits', 35)) == [bitDoc]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should render $bitsAllSet'() {
         when:
         def bitDoc = Document.parse('{_id: 1, bits: 54}')
@@ -250,7 +246,6 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(bitsAllSet('bits', 50)) == [bitDoc]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should render $bitsAnyClear'() {
         when:
         def bitDoc = Document.parse('{_id: 1, bits: 50}')
@@ -261,7 +256,6 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(bitsAnyClear('bits', 20)) == [bitDoc]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should render $bitsAnySet'() {
         when:
         def bitDoc = Document.parse('{_id: 1, bits: 20}')
@@ -278,7 +272,6 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(type('x', BsonType.ARRAY)) == []
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should render $type with a string type representation'() {
         expect:
         find(type('x', 'number')) == [a, b, c]
@@ -299,7 +292,6 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(text('GIANT', new TextSearchOptions().language('english'))) == [textDocument]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should render $text with 3.2 options'() {
         given:
         collectionHelper.drop()
@@ -331,14 +323,12 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(where('Array.isArray(this.a)')) == [a, b]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 6) })
     def '$expr'() {
         expect:
         find(expr(Document.parse('{ $eq: [ "$x" , 3 ] } '))) == [c]
     }
 
 
-    @IgnoreIf({ serverVersionLessThan(3, 6) })
     def '$jsonSchema'() {
         expect:
         find(jsonSchema(Document.parse('{ bsonType : "object", properties: { x : {type : "number", minimum : 2} } } '))) == [b, c]
