@@ -136,7 +136,7 @@ class DefaultServerSpecification extends Specification {
 
     def 'invalidate should invoke server listeners'() {
         given:
-        def serverListener = Mock(ServerListener)
+        def serverListener = new TestServerListener()
         def connectionPool = Mock(ConnectionPool)
         def sdamProvider = SameObjectProvider.<SdamServerDescriptionManager>uninitialized()
         def serverMonitor = new TestServerMonitor(sdamProvider)
@@ -151,7 +151,7 @@ class DefaultServerSpecification extends Specification {
                 .build())
 
         when:
-        server.invalidate()
+        server.invalidate(new Throwable())
 
         then:
         1 * serverListener.serverDescriptionChanged(_)
@@ -170,7 +170,7 @@ class DefaultServerSpecification extends Specification {
         server.close()
 
         when:
-        server.invalidate()
+        server.invalidate(new Throwable())
 
         then:
         0 * connectionPool.invalidate(null)

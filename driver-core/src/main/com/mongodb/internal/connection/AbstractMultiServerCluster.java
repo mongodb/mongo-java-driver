@@ -266,7 +266,8 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         }
 
         if (isStalePrimary(newDescription)) {
-            invalidatePotentialPrimary(newDescription);
+            //TODO change exception type
+            invalidatePotentialPrimary(newDescription, new Throwable("Primary marked stale due to electionId/setVersion mismatch"));
             return false;
         }
 
@@ -297,12 +298,13 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         }
      }
 
-    private void invalidatePotentialPrimary(final ServerDescription newDescription) {
+    private void invalidatePotentialPrimary(final ServerDescription newDescription, final Throwable cause) {
         LOGGER.info(format("Invalidating potential primary %s whose (set version, election id) tuple of (%d, %s) "
                         + "is less than one already seen of (%d, %s)",
                 newDescription.getAddress(), newDescription.getSetVersion(), newDescription.getElectionId(),
                 maxSetVersion, maxElectionId));
-        addressToServerTupleMap.get(newDescription.getAddress()).server.resetToConnecting();
+
+        addressToServerTupleMap.get(newDescription.getAddress()).server.resetToConnecting(cause);
     }
 
     /**
@@ -377,7 +379,8 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
                 if (LOGGER.isInfoEnabled()) {
                     LOGGER.info(format("Rediscovering type of existing primary %s", serverTuple.description.getAddress()));
                 }
-                serverTuple.server.invalidate();
+                //TODO use specific exception type
+                serverTuple.server.invalidate(new Throwable("Primary marked stale due to discovery of newer primary"));
             }
         }
     }

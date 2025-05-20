@@ -30,13 +30,13 @@ interface ClusterableServer extends Server {
     /**
      * Reset server description to connecting state
      */
-    void resetToConnecting();
+    void resetToConnecting(Throwable cause);
 
     /**
      * Invalidate the description of this server.  Implementation of this method should not block, but rather trigger an asynchronous
      * attempt to connect with the server in order to determine its current status.
      */
-    void invalidate();
+    void invalidate(Throwable cause);
 
     /**
      * <p>Closes the server.  Instances that have been closed will no longer be available for use.</p>

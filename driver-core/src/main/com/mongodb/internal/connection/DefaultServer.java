@@ -150,14 +150,14 @@ class DefaultServer implements ClusterableServer {
     }
 
     @Override
-    public void resetToConnecting() {
-        sdam.update(unknownConnectingServerDescription(serverId, null));
+    public void resetToConnecting(final Throwable cause) {
+        sdam.update(unknownConnectingServerDescription(serverId, cause));
     }
 
     @Override
-    public void invalidate() {
+    public void invalidate(final Throwable cause) {
         if (!isClosed()) {
-            sdam.handleExceptionAfterHandshake(SdamIssue.unspecified(sdam.context()));
+            sdam.handleExceptionAfterHandshake(SdamIssue.specific(cause, sdam.context()));
         }
     }
 

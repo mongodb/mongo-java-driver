@@ -80,12 +80,12 @@ public class LoadBalancedServer implements ClusterableServer {
     }
 
     @Override
-    public void resetToConnecting() {
+    public void resetToConnecting(final Throwable cause) {
         // no op
     }
 
     @Override
-    public void invalidate() {
+    public void invalidate(final Throwable cause) {
         // no op
     }
 
