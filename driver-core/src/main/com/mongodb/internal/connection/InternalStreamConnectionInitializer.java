@@ -40,7 +40,6 @@ import static com.mongodb.internal.connection.CommandHelper.HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
 import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync;
-import static com.mongodb.internal.connection.CommandHelper.executeCommandWithoutCheckingForFailure;
 import static com.mongodb.internal.connection.DefaultAuthenticator.USER_NOT_FOUND_CODE;
 import static com.mongodb.internal.connection.DescriptionHelper.createConnectionDescription;
 import static com.mongodb.internal.connection.DescriptionHelper.createServerDescription;
@@ -88,7 +87,8 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
         if (Authenticator.shouldAuthenticate(authenticator, connectionDescription)) {
             authenticator.authenticate(internalConnection, connectionDescription, operationContext);
         }
-        return completeConnectionDescriptionInitialization(internalConnection, description, operationContext);
+
+        return description;
     }
 
     @Override
@@ -121,14 +121,14 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
         ConnectionDescription connectionDescription = description.getConnectionDescription();
 
         if (!Authenticator.shouldAuthenticate(authenticator, connectionDescription)) {
-            completeConnectionDescriptionInitializationAsync(internalConnection, description, operationContext, callback);
+            callback.onResult(description, null);
         } else {
             authenticator.authenticateAsync(internalConnection, connectionDescription, operationContext,
                     (result1, t1) -> {
                         if (t1 != null) {
                             callback.onResult(null, t1);
                         } else {
-                            completeConnectionDescriptionInitializationAsync(internalConnection, description, operationContext, callback);
+                            callback.onResult(description, null);
                         }
                     });
         }
@@ -203,48 +203,11 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
         return helloCommandDocument;
     }
 
-    private InternalConnectionInitializationDescription completeConnectionDescriptionInitialization(
-            final InternalConnection internalConnection,
-            final InternalConnectionInitializationDescription description,
-            final OperationContext operationContext) {
-
-        if (description.getConnectionDescription().getConnectionId().getServerValue() != null) {
-            return description;
-        }
-
-        return applyGetLastErrorResult(executeCommandWithoutCheckingForFailure("admin",
-                new BsonDocument("getlasterror", new BsonInt32(1)), clusterConnectionMode, serverApi,
-                internalConnection, operationContext),
-                description);
-    }
-
     private void setSpeculativeAuthenticateResponse(final BsonDocument helloResult) {
         if (authenticator instanceof SpeculativeAuthenticator) {
             ((SpeculativeAuthenticator) authenticator).setSpeculativeAuthenticateResponse(
                     helloResult.getDocument("speculativeAuthenticate", null));
         }
-    }
-
-    private void completeConnectionDescriptionInitializationAsync(
-            final InternalConnection internalConnection,
-            final InternalConnectionInitializationDescription description,
-            final OperationContext operationContext,
-            final SingleResultCallback<InternalConnectionInitializationDescription> callback) {
-
-        if (description.getConnectionDescription().getConnectionId().getServerValue() != null) {
-            callback.onResult(description, null);
-            return;
-        }
-
-        executeCommandAsync("admin", new BsonDocument("getlasterror", new BsonInt32(1)), clusterConnectionMode, serverApi,
-                internalConnection, operationContext,
-                (result, t) -> {
-                    if (t != null) {
-                        callback.onResult(description, null);
-                    } else {
-                        callback.onResult(applyGetLastErrorResult(result, description), null);
-                    }
-                });
     }
 
     private InternalConnectionInitializationDescription applyGetLastErrorResult(
