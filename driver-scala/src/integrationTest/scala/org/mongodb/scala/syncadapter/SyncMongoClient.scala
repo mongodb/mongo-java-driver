@@ -1,7 +1,7 @@
 package org.mongodb.scala.syncadapter
 
 import com.mongodb.MongoDriverInformation
-import com.mongodb.client.{ MongoClient => JMongoClient }
+import com.mongodb.client.{MongoClient => JMongoClient}
 import org.mongodb.scala.MongoClient
 
 case class SyncMongoClient(wrapped: MongoClient) extends SyncMongoCluster(wrapped) with JMongoClient {
@@ -10,6 +10,6 @@ case class SyncMongoClient(wrapped: MongoClient) extends SyncMongoCluster(wrappe
 
   override def getClusterDescription = throw new UnsupportedOperationException
 
-  override def updateMetadata(mongoDriverInformation: MongoDriverInformation): Unit =
+  override def appendMetadata(mongoDriverInformation: MongoDriverInformation): Unit =
     throw new UnsupportedOperationException("TODO-JAVA-5871")
 }

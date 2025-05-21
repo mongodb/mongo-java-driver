@@ -313,7 +313,7 @@ public class SyncMongoClient implements MongoClient {
     }
 
     @Override
-    public void updateMetadata(final MongoDriverInformation mongoDriverInformation) {
-        wrapped.updateMetadata(mongoDriverInformation);
+    public void appendMetadata(final MongoDriverInformation mongoDriverInformation) {
+        wrapped.appendMetadata(mongoDriverInformation);
     }
 }

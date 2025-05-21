@@ -16,10 +16,10 @@
 
 package org.mongodb.scala
 
-import com.mongodb.reactivestreams.client.{ MongoClient => JMongoClient }
+import com.mongodb.reactivestreams.client.{MongoClient => JMongoClient}
 import org.bson.BsonDocument
 import org.mockito.Mockito.verify
-import org.mongodb.scala.model.bulk.{ ClientBulkWriteOptions, ClientNamespacedWriteModel }
+import org.mongodb.scala.model.bulk.{ClientBulkWriteOptions, ClientNamespacedWriteModel}
 import org.scalatestplus.mockito.MockitoSugar
 
 import scala.collection.JavaConverters._
@@ -37,7 +37,7 @@ class MongoClientSpec extends BaseSpec with MockitoSugar {
 
     wrapped.foreach((name: String) => {
       // TODO-JAVA-5871 remove this if statement, but leave the body.
-      if (!name.equals("updateMetadata")) {
+      if (!name.equals("appendMetadata")) {
         val cleanedName = name.stripPrefix("get")
         assert(local.contains(name) | local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
       }

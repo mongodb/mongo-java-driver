@@ -47,8 +47,8 @@ class MongoClientTest {
             JMongoClient::class
                 .declaredFunctions
                 .map { it.name }
-                // TODO-JAVA-5871 remove .filterNot { it == "updateMetadata" }
-                .filterNot { it == "updateMetadata" }
+                // TODO-JAVA-5871 remove .filterNot { it == "appendMetadata" }
+                .filterNot { it == "appendMetadata" }
                 .toSet()
 
         val kMongoClientFunctions =

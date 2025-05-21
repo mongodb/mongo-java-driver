@@ -169,7 +169,7 @@ public abstract class AbstractClientMetadataProseTest {
     }
 
     @Test
-    void shouldNotCloseExistingConnectionsToUpdateMetadata() {
+    void shouldNotCloseExistingConnectionsToAppendMetadata() {
         //given
         MongoDriverInformation initialWrappingLibraryDriverInformation = MongoDriverInformation.builder()
                 .driverName("library")
@@ -186,7 +186,7 @@ public abstract class AbstractClientMetadataProseTest {
             assertNotNull(driverInformation);
 
             //when
-            mongoClient.updateMetadata(initialWrappingLibraryDriverInformation);
+            mongoClient.appendMetadata(initialWrappingLibraryDriverInformation);
 
             //then
             assertThat(executePingAndCaptureMetadataHandshake(mongoClient)).isEmpty();
@@ -260,7 +260,7 @@ public abstract class AbstractClientMetadataProseTest {
         ofNullable(driverName).ifPresent(builder::driverName);
         ofNullable(driverVersion).ifPresent(builder::driverVersion);
         ofNullable(driverPlatform).ifPresent(builder::driverPlatform);
-        mongoClient.updateMetadata(builder.build());
+        mongoClient.appendMetadata(builder.build());
     }
 }
 
