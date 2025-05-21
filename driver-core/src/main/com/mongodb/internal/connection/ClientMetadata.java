@@ -48,7 +48,7 @@ public class ClientMetadata {
 
     public void append(final MongoDriverInformation mongoDriverInformation) {
         withLock(updateLock, () ->
-                this.clientMetadataBsonDocument = updateClientMedataDocument(clientMetadataBsonDocument, mongoDriverInformation)
+                this.clientMetadataBsonDocument = updateClientMedataDocument(clientMetadataBsonDocument.clone(), mongoDriverInformation)
         );
     }
 }

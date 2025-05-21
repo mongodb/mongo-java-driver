@@ -180,10 +180,15 @@ public final class ClientMetadataHelper {
         new BsonDocumentCodec().encode(new BsonBinaryWriter(buffer), document, EncoderContext.builder().build());
         return buffer.getPosition() > MAXIMUM_CLIENT_METADATA_ENCODED_SIZE;
     }
-
+/**
+ * Modifies the given client metadata document by appending the driver information.
+ * Driver name and version are appended atomically to the existing driver name and version if they do not exceed
+ * {@value MAXIMUM_CLIENT_METADATA_ENCODED_SIZE} bytes.
+ *
+ * Platform is appended separately to the existing platform if it does not exceed {@value MAXIMUM_CLIENT_METADATA_ENCODED_SIZE} bytes.
+ */
     public static BsonDocument updateClientMedataDocument(final BsonDocument clientMetadataDocument,
                                                           final MongoDriverInformation mongoDriverInformation) {
-        BsonDocument updatedClientMetadataDocument = clientMetadataDocument.clone();
         BsonDocument driverInformation = clientMetadataDocument.getDocument("driver");
 
         List<String> driverNamesToAppend = mongoDriverInformation.getDriverNames();
@@ -203,14 +208,14 @@ public final class ClientMetadataHelper {
         updateDriverPlatforms.add(clientMetadataDocument.getString("platform").getValue());
         updateDriverPlatforms.addAll(driverPlatformsToAppend);
 
-        tryWithLimit(updatedClientMetadataDocument, d -> {
+        tryWithLimit(clientMetadataDocument, d -> {
             putAtPath(d, "driver.name", listToString(updatedDriverNames));
             putAtPath(d, "driver.version", listToString(updatedDriverVersions));
         });
-        tryWithLimit(updatedClientMetadataDocument, d -> {
+        tryWithLimit(clientMetadataDocument, d -> {
             putAtPath(d, "platform", listToString(updateDriverPlatforms));
         });
-        return updatedClientMetadataDocument;
+        return clientMetadataDocument;
     }
 
     public enum ContainerRuntime {
