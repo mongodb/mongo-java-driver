@@ -20,6 +20,9 @@ import com.mongodb.MongoDriverInformation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
+import java.util.concurrent.locks.ReentrantLock;
+
+import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
 import static com.mongodb.internal.connection.ClientMetadataHelper.updateClientMedataDocument;
 
@@ -29,6 +32,7 @@ import static com.mongodb.internal.connection.ClientMetadataHelper.updateClientM
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ClientMetadata {
+    private final ReentrantLock updateLock = new ReentrantLock();
     private volatile BsonDocument clientMetadataBsonDocument;
 
     public ClientMetadata(@Nullable final String applicationName, final MongoDriverInformation mongoDriverInformation) {
@@ -43,7 +47,9 @@ public class ClientMetadata {
     }
 
     public void append(final MongoDriverInformation mongoDriverInformation) {
-        this.clientMetadataBsonDocument = updateClientMedataDocument(clientMetadataBsonDocument, mongoDriverInformation);
+        withLock(updateLock, () ->
+                this.clientMetadataBsonDocument = updateClientMedataDocument(clientMetadataBsonDocument, mongoDriverInformation)
+        );
     }
 }
 
