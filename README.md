@@ -42,6 +42,8 @@ MongoDB project, please report it according to the [instructions here](https://w
 
 ## Versioning
 
+The MongoDB Java, Kotlin and Scala drivers follow [semantic versioning](https://semver.org/) for their releases.
+
 Major increments (such as 4.x -> 5.x) will occur when breaking changes are being made to the public API.  All methods and
 classes removed in a major release will have been deprecated in a prior release of the previous major release branch, and/or otherwise
 called out in the release notes.
