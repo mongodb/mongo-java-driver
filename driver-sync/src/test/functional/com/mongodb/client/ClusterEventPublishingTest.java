@@ -155,17 +155,18 @@ public class ClusterEventPublishingTest {
         @Override
         public void serverHearbeatStarted(final ServerHeartbeatStartedEvent event) {
             events.add(event);
-            heartbeatLatch.countDown();
         }
 
         @Override
         public void serverHeartbeatSucceeded(final ServerHeartbeatSucceededEvent event) {
             events.add(event);
+            heartbeatLatch.countDown();
         }
 
         @Override
         public void serverHeartbeatFailed(final ServerHeartbeatFailedEvent event) {
             events.add(event);
+            heartbeatLatch.countDown();
         }
     }
 }

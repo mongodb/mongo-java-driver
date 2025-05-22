@@ -30,6 +30,7 @@ import com.mongodb.event.ServerHeartbeatStartedEvent;
 import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.ServerMonitorListener;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.inject.Provider;
@@ -55,6 +56,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerType.UNKNOWN;
 import static com.mongodb.internal.Locks.checkedWithLock;
 import static com.mongodb.internal.Locks.withLock;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
@@ -149,8 +151,14 @@ class DefaultServerMonitor implements ServerMonitor {
         monitor.cancelCurrentCheck();
     }
 
+    @VisibleForTesting(otherwise = PRIVATE)
+    ServerMonitor getServerMonitor() {
+        return monitor;
+    }
+
     class ServerMonitor extends Thread implements AutoCloseable {
         private volatile InternalConnection connection = null;
+        private volatile boolean alreadyLoggedHeartBeatStarted = false;
         private volatile boolean currentCheckCancelled;
 
         ServerMonitor() {
@@ -213,9 +221,13 @@ class DefaultServerMonitor implements ServerMonitor {
 
         private ServerDescription lookupServerDescription(final ServerDescription currentServerDescription) {
             try {
+                boolean shouldStreamResponses = shouldStreamResponses(currentServerDescription);
                 if (connection == null || connection.isClosed()) {
+                    alreadyLoggedHeartBeatStarted = true;
                     currentCheckCancelled = false;
                     InternalConnection newConnection = internalConnectionFactory.create(serverId);
+                    serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(
+                            newConnection.getDescription().getConnectionId(), shouldStreamResponses));
                     newConnection.open(operationContextFactory.create());
                     connection = newConnection;
                     roundTripTimeSampler.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
@@ -225,9 +237,11 @@ class DefaultServerMonitor implements ServerMonitor {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug(format("Checking status of %s", serverId.getAddress()));
                 }
-                boolean shouldStreamResponses = shouldStreamResponses(currentServerDescription);
-                serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(
-                        connection.getDescription().getConnectionId(), shouldStreamResponses));
+                if (!alreadyLoggedHeartBeatStarted) {
+                    serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(
+                            connection.getDescription().getConnectionId(), shouldStreamResponses));
+                }
+                alreadyLoggedHeartBeatStarted = false;
 
                 long start = System.nanoTime();
                 try {
