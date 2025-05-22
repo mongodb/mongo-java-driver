@@ -203,8 +203,6 @@ public class DefaultServerMonitorTest {
     void shouldEmitHeartbeatStartedBeforeSocketIsConnected() throws Exception {
         // Given
         InternalConnection mockConnection = mock(InternalConnection.class);
-
-        AtomicBoolean firstHeartBeat = new AtomicBoolean(false);
         CountDownLatch latch = new CountDownLatch(1);
         List<String> events = new ArrayList<>();
         ServerMonitorListener listener = new ServerMonitorListener() {
