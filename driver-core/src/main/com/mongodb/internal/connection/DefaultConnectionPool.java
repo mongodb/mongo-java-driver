@@ -430,7 +430,7 @@ final class DefaultConnectionPool implements ConnectionPool {
                         try {
                             sdamProvider.optional().ifPresent(sdam -> {
                                 if (!silentlyComplete.test(actualException)) {
-                                    sdam.handleExceptionBeforeHandshake(SdamIssue.specific(actualException, sdam.context(newConnection)));
+                                    sdam.handleExceptionBeforeHandshake(SdamIssue.of(actualException, sdam.context(newConnection)));
                                 }
                             });
                         } catch (Exception suppressed) {
