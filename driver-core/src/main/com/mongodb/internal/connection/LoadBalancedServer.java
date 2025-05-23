@@ -80,12 +80,12 @@ public class LoadBalancedServer implements ClusterableServer {
     }
 
     @Override
-    public void resetToConnecting(final Throwable cause) {
+    public void resetToConnecting(final MongoException cause) {
         // no op
     }
 
     @Override
-    public void invalidate(final Throwable cause) {
+    public void invalidate(final MongoException cause) {
         // no op
     }
 

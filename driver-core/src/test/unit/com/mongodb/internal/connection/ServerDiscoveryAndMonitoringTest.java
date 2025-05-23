@@ -37,6 +37,7 @@ import static com.mongodb.ClusterFixture.getClusterDescription;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
 import static com.mongodb.internal.event.EventListenerHelper.NO_OP_CLUSTER_LISTENER;
 import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_LISTENER;
+import static java.lang.Character.toLowerCase;
 import static java.lang.String.format;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -117,13 +118,14 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
         assertNotNull(serverDescription);
         assertEquals(getServerType(expectedServerDescriptionDocument.getString("type").getValue()), serverDescription.getType());
 
-        if(expectedServerDescriptionDocument.containsKey("error")){
+        if (expectedServerDescriptionDocument.containsKey("error")) {
             String expectedErrorMessage = expectedServerDescriptionDocument.getString("error").getValue();
 
             Throwable exception = serverDescription.getException();
             assertNotNull(format("Expected exception with message \"%s\" in cluster description", expectedErrorMessage), exception);
             String actualErrorMessage = exception.getMessage();
-            assertEquals("Expected exception message is not equal to actual one", expectedErrorMessage, actualErrorMessage);
+            assertEquals("Expected exception message is not equal to actual one", expectedErrorMessage,
+                    toLowerCase(actualErrorMessage.charAt(0)) + actualErrorMessage.substring(1));
         }
         if (expectedServerDescriptionDocument.isObjectId("electionId")) {
             assertNotNull(serverDescription.getElectionId());

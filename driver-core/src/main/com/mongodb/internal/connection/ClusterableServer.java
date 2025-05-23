@@ -16,6 +16,8 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoException;
+
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -30,13 +32,13 @@ interface ClusterableServer extends Server {
     /**
      * Reset server description to connecting state
      */
-    void resetToConnecting(Throwable cause);
+    void resetToConnecting(MongoException cause);
 
     /**
      * Invalidate the description of this server.  Implementation of this method should not block, but rather trigger an asynchronous
      * attempt to connect with the server in order to determine its current status.
      */
-    void invalidate(Throwable cause);
+    void invalidate(MongoException cause);
 
     /**
      * <p>Closes the server.  Instances that have been closed will no longer be available for use.</p>

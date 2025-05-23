@@ -52,6 +52,12 @@ class DefaultServerMonitorSpecification extends Specification {
         def stateChanged = false
         def sdam = new SdamServerDescriptionManager() {
             @Override
+            void monitorUpdate(final ServerDescription candidateDescription) {
+                assert candidateDescription != null
+                stateChanged = true
+            }
+
+            @Override
             void update(final ServerDescription candidateDescription) {
                 assert candidateDescription != null
                 stateChanged = true

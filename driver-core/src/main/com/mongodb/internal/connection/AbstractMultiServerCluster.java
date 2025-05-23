@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
+import com.mongodb.MongoStalePrimaryException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterId;
@@ -266,8 +267,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         }
 
         if (isStalePrimary(newDescription)) {
-            //TODO change exception type
-            invalidatePotentialPrimary(newDescription, new Throwable("Primary marked stale due to electionId/setVersion mismatch"));
+            invalidatePotentialPrimary(newDescription, new MongoStalePrimaryException("Primary marked stale due to electionId/setVersion mismatch"));
             return false;
         }
 
@@ -298,7 +298,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         }
      }
 
-    private void invalidatePotentialPrimary(final ServerDescription newDescription, final Throwable cause) {
+    private void invalidatePotentialPrimary(final ServerDescription newDescription, final MongoStalePrimaryException cause) {
         LOGGER.info(format("Invalidating potential primary %s whose (set version, election id) tuple of (%d, %s) "
                         + "is less than one already seen of (%d, %s)",
                 newDescription.getAddress(), newDescription.getSetVersion(), newDescription.getElectionId(),
@@ -379,8 +379,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
                 if (LOGGER.isInfoEnabled()) {
                     LOGGER.info(format("Rediscovering type of existing primary %s", serverTuple.description.getAddress()));
                 }
-                //TODO use specific exception type
-                serverTuple.server.invalidate(new Throwable("Primary marked stale due to discovery of newer primary"));
+                serverTuple.server.invalidate(new MongoStalePrimaryException("Primary marked stale due to discovery of newer primary"));
             }
         }
     }

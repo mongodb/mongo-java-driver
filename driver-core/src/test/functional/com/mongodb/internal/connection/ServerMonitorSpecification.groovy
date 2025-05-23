@@ -194,6 +194,13 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
     def initializeServerMonitor(ServerAddress address) {
         SdamServerDescriptionManager sdam = new SdamServerDescriptionManager() {
             @Override
+            void monitorUpdate(final ServerDescription candidateDescription) {
+                assert candidateDescription != null
+                newDescription = candidateDescription
+                latch.countDown()
+            }
+
+            @Override
             void update(final ServerDescription candidateDescription) {
                 assert candidateDescription != null
                 newDescription = candidateDescription

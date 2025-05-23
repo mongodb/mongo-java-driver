@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ServerDescription;
@@ -55,12 +56,12 @@ public class TestServer implements ClusterableServer {
     }
 
     @Override
-    public void resetToConnecting(final Throwable cause) {
+    public void resetToConnecting(final MongoException cause) {
         this.description = ServerDescription.builder().state(CONNECTING).exception(cause).address(serverId.getAddress()).build();
     }
 
     @Override
-    public void invalidate(final Throwable cause) {
+    public void invalidate(final MongoException cause) {
         sendNotification(ServerDescription.builder().state(CONNECTING).exception(cause).address(serverId.getAddress()).build());
     }
 
