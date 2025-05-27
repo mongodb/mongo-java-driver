@@ -18,6 +18,7 @@ cp ${JAVA_HOME}/lib/security/cacerts mongo-truststore
 ${JAVA_HOME}/bin/keytool -importcert -trustcacerts -file ${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem -keystore mongo-truststore -storepass changeit -storetype JKS -noprompt
 
 export GRADLE_EXTRA_VARS="-Pssl.enabled=true -Pssl.trustStoreType=jks -Pssl.trustStore=`pwd`/mongo-truststore -Pssl.trustStorePassword=changeit"
+export KMS_TLS_ERROR_TYPE=${KMS_TLS_ERROR_TYPE}
 
 ./gradlew -version
 
