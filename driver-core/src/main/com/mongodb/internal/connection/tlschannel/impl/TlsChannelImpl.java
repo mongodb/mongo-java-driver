@@ -36,7 +36,6 @@ import javax.net.ssl.SSLEngineResult.Status;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 import java.io.IOException;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.ClosedChannelException;
@@ -48,7 +47,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 import static java.lang.String.format;
-import static javax.net.ssl.SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING;
 
 public class TlsChannelImpl implements ByteChannel {
 
@@ -56,36 +54,20 @@ public class TlsChannelImpl implements ByteChannel {
 
   public static final int buffersInitialSize = 4096;
 
-  /** Official TLS max data size is 2^14 = 16k. Use 1024 more to account for the overhead */
+  /**
+   * Official TLS max data size is 2^14 = 16k. Use 1024 more to account for the overhead
+   */
   public static final int maxTlsPacketSize = 17 * 1024;
 
-  private static class UnwrapResult {
-    public final int bytesProduced;
-    public final HandshakeStatus lastHandshakeStatus;
-    public final boolean wasClosed;
-
-    public UnwrapResult(int bytesProduced, HandshakeStatus lastHandshakeStatus, boolean wasClosed) {
-      this.bytesProduced = bytesProduced;
-      this.lastHandshakeStatus = lastHandshakeStatus;
-      this.wasClosed = wasClosed;
-    }
-  }
-
-  private static class WrapResult {
-    public final int bytesConsumed;
-    public final HandshakeStatus lastHandshakeStatus;
-
-    public WrapResult(int bytesConsumed, HandshakeStatus lastHandshakeStatus) {
-      this.bytesConsumed = bytesConsumed;
-      this.lastHandshakeStatus = lastHandshakeStatus;
-    }
-  }
-
-  /** Used to signal EOF conditions from the underlying channel */
+  /**
+   * Used to signal EOF conditions from the underlying channel
+   */
   public static class EofException extends Exception {
     private static final long serialVersionUID = -3859156713994602991L;
 
-    /** For efficiency, override this method to do nothing. */
+    /**
+     * For efficiency, override this method to do nothing.
+     */
     @Override
     public Throwable fillInStackTrace() {
       return this;
@@ -95,7 +77,7 @@ public class TlsChannelImpl implements ByteChannel {
   private final ReadableByteChannel readChannel;
   private final WritableByteChannel writeChannel;
   private final SSLEngine engine;
-  private BufferHolder inEncrypted;
+  private final BufferHolder inEncrypted;
   private final Consumer<SSLSession> initSessionCallback;
 
   private final boolean runTasks;
@@ -105,38 +87,34 @@ public class TlsChannelImpl implements ByteChannel {
 
   // @formatter:off
   public TlsChannelImpl(
-      ReadableByteChannel readChannel,
-      WritableByteChannel writeChannel,
-      SSLEngine engine,
-      Optional<BufferHolder> inEncrypted,
-      Consumer<SSLSession> initSessionCallback,
-      boolean runTasks,
-      TrackingAllocator plainBufAllocator,
-      TrackingAllocator encryptedBufAllocator,
-      boolean releaseBuffers,
-      boolean waitForCloseConfirmation) {
+          ReadableByteChannel readChannel,
+          WritableByteChannel writeChannel,
+          SSLEngine engine,
+          Optional<BufferHolder> inEncrypted,
+          Consumer<SSLSession> initSessionCallback,
+          boolean runTasks,
+          TrackingAllocator plainBufAllocator,
+          TrackingAllocator encryptedBufAllocator,
+          boolean releaseBuffers,
+          boolean waitForCloseConfirmation) {
     // @formatter:on
     this.readChannel = readChannel;
     this.writeChannel = writeChannel;
     this.engine = engine;
-    this.inEncrypted =
-        inEncrypted.orElseGet(
-            () ->
-                new BufferHolder(
-                    "inEncrypted",
-                    Optional.empty(),
-                    encryptedBufAllocator,
-                    buffersInitialSize,
-                    maxTlsPacketSize,
-                    false /* plainData */,
-                    releaseBuffers));
+    this.inEncrypted = inEncrypted.orElseGet(() -> new BufferHolder(
+            "inEncrypted",
+            Optional.empty(),
+            encryptedBufAllocator,
+            buffersInitialSize,
+            maxTlsPacketSize,
+            false /* plainData */,
+            releaseBuffers));
     this.initSessionCallback = initSessionCallback;
     this.runTasks = runTasks;
     this.plainBufAllocator = plainBufAllocator;
     this.encryptedBufAllocator = encryptedBufAllocator;
     this.waitForCloseConfirmation = waitForCloseConfirmation;
-    inPlain =
-        new BufferHolder(
+    inPlain = new BufferHolder(
             "inPlain",
             Optional.empty(),
             plainBufAllocator,
@@ -144,8 +122,7 @@ public class TlsChannelImpl implements ByteChannel {
             maxTlsPacketSize,
             true /* plainData */,
             releaseBuffers);
-    outEncrypted =
-        new BufferHolder(
+    outEncrypted = new BufferHolder(
             "outEncrypted",
             Optional.empty(),
             encryptedBufAllocator,
@@ -159,7 +136,9 @@ public class TlsChannelImpl implements ByteChannel {
   private final Lock readLock = new ReentrantLock();
   private final Lock writeLock = new ReentrantLock();
 
-  private volatile boolean negotiated = false;
+  private boolean handshakeStarted = false;
+
+  private volatile boolean handshakeCompleted = false;
 
   /**
    * Whether a IOException was received from the underlying channel or from the {@link SSLEngine}.
@@ -172,11 +151,27 @@ public class TlsChannelImpl implements ByteChannel {
   /** Whether a close_notify was already received. */
   private volatile boolean shutdownReceived = false;
 
-  // decrypted data from inEncrypted
-  private BufferHolder inPlain;
+  /**
+   * Decrypted data from inEncrypted
+   */
+  private final BufferHolder inPlain;
 
-  // contains data encrypted to send to the underlying channel
-  private BufferHolder outEncrypted;
+  /**
+   * Contains data encrypted to send to the underlying channel
+   */
+  private final BufferHolder outEncrypted;
+
+  /**
+   * Reference to the current read buffer supplied by the client this field is only valid during a
+   * read operation. This field is used instead of {@link #inPlain} in order to avoid copying
+   * returned bytes when possible.
+   */
+  private ByteBufferSet suppliedInPlain;
+
+  /**
+   * Bytes produced by the current read operation
+   */
+  private int bytesToReturn;
 
   /**
    * Handshake wrap() method calls need a buffer to read from, even when they actually do not read
@@ -185,8 +180,7 @@ public class TlsChannelImpl implements ByteChannel {
    * <p>Note: standard SSLEngine is happy with no buffers, the empty buffer is here to make this
    * work with Netty's OpenSSL's wrapper.
    */
-  private final ByteBufferSet dummyOut =
-      new ByteBufferSet(new ByteBuffer[] {ByteBuffer.allocate(0)});
+  private final ByteBufferSet dummyOut = new ByteBufferSet(new ByteBuffer[] {ByteBuffer.allocate(0)});
 
   public Consumer<SSLSession> getSessionInitCallback() {
     return initSessionCallback;
@@ -204,45 +198,53 @@ public class TlsChannelImpl implements ByteChannel {
 
   public long read(ByteBufferSet dest) throws IOException {
     checkReadBuffer(dest);
-    if (!dest.hasRemaining()) return 0;
+    if (!dest.hasRemaining()) {
+      return 0;
+    }
     handshake();
     readLock.lock();
     try {
       if (invalid || shutdownSent) {
         throw new ClosedChannelException();
       }
-      HandshakeStatus handshakeStatus = engine.getHandshakeStatus();
-      int bytesToReturn = inPlain.nullOrEmpty() ? 0 :inPlain.buffer.position();
+
+      long originalDestPosition = dest.position();
+      suppliedInPlain = dest;
+      bytesToReturn = inPlain.nullOrEmpty() ? 0 : inPlain.buffer.position();
+
       while (true) {
+
+        // return bytes are soon as we have them
         if (bytesToReturn > 0) {
           if (inPlain.nullOrEmpty()) {
+            // if there is not in internal buffer, that means that the bytes must be in the supplied
+            // buffer
+            Util.assertTrue(dest.position() == originalDestPosition + bytesToReturn);
             return bytesToReturn;
           } else {
+            Util.assertTrue(inPlain.buffer.position() == bytesToReturn);
             return transferPendingPlain(dest);
           }
         }
+
         if (shutdownReceived) {
           return -1;
         }
         Util.assertTrue(inPlain.nullOrEmpty());
-        switch (handshakeStatus) {
+        switch (engine.getHandshakeStatus()) {
           case NEED_UNWRAP:
           case NEED_WRAP:
-            bytesToReturn = handshake(Optional.of(dest), Optional.of(handshakeStatus));
-            handshakeStatus = NOT_HANDSHAKING;
+            writeAndHandshake();
             break;
           case NOT_HANDSHAKING:
           case FINISHED:
-            UnwrapResult res = readAndUnwrap(Optional.of(dest));
-            if (res.wasClosed) {
+            readAndUnwrap();
+            if (shutdownReceived) {
               return -1;
             }
-            bytesToReturn = res.bytesProduced;
-            handshakeStatus = res.lastHandshakeStatus;
             break;
           case NEED_TASK:
             handleTask();
-            handshakeStatus = engine.getHandshakeStatus();
             break;
           default:
             // Unsupported stage eg: NEED_UNWRAP_AGAIN
@@ -252,20 +254,28 @@ public class TlsChannelImpl implements ByteChannel {
     } catch (EofException e) {
       return -1;
     } finally {
+      bytesToReturn = 0;
+      suppliedInPlain = null;
       readLock.unlock();
     }
   }
 
   private void handleTask() throws NeedsTaskException {
+    Runnable task = engine.getDelegatedTask();
     if (runTasks) {
-      engine.getDelegatedTask().run();
+      LOGGER.trace("delegating in task: " + task);
+      task.run();
     } else {
-      throw new NeedsTaskException(engine.getDelegatedTask());
+      if (LOGGER.isTraceEnabled()) {
+        LOGGER.trace("task needed, throwing exception: " + task);
+      }
+      throw new NeedsTaskException(task);
     }
   }
 
+  /** Copies bytes from the internal input plain buffer to the supplied buffer. */
   private int transferPendingPlain(ByteBufferSet dstBuffers) {
-    ((Buffer) inPlain.buffer).flip(); // will read
+    inPlain.buffer.flip(); // will read
     int bytes = dstBuffers.putRemaining(inPlain.buffer);
     inPlain.buffer.compact(); // will write
     boolean disposed = inPlain.release();
@@ -275,40 +285,54 @@ public class TlsChannelImpl implements ByteChannel {
     return bytes;
   }
 
-  private UnwrapResult unwrapLoop(Optional<ByteBufferSet> dest, HandshakeStatus originalStatus)
-      throws SSLException {
-    ByteBufferSet effDest =
-        dest.orElseGet(
-            () -> {
-              inPlain.prepare();
-              return new ByteBufferSet(inPlain.buffer);
-            });
+  private SSLEngineResult unwrapLoop() throws SSLException {
+    ByteBufferSet effDest;
+    if (suppliedInPlain != null) {
+      effDest = suppliedInPlain;
+    } else {
+      inPlain.prepare();
+      effDest = new ByteBufferSet(inPlain.buffer);
+    }
+
     while (true) {
       Util.assertTrue(inPlain.nullOrEmpty());
       SSLEngineResult result = callEngineUnwrap(effDest);
+      HandshakeStatus status = engine.getHandshakeStatus();
+
       /*
        * Note that data can be returned even in case of overflow, in that
        * case, just return the data.
        */
-      if (result.bytesProduced() > 0
-          || result.getStatus() == Status.BUFFER_UNDERFLOW
-          || result.getStatus() == Status.CLOSED
-          || result.getHandshakeStatus() != originalStatus) {
-        boolean wasClosed = result.getStatus() == Status.CLOSED;
-        return new UnwrapResult(result.bytesProduced(), result.getHandshakeStatus(), wasClosed);
+      if (result.bytesProduced() > 0) {
+        return result;
+      }
+      if (result.getStatus() == Status.CLOSED) {
+        return result;
+      }
+      if (result.getStatus() == Status.BUFFER_UNDERFLOW) {
+        return result;
+      }
+
+      if (result.getHandshakeStatus() == HandshakeStatus.FINISHED
+              || status == HandshakeStatus.NEED_TASK
+              || status == HandshakeStatus.NEED_WRAP) {
+        return result;
       }
       if (result.getStatus() == Status.BUFFER_OVERFLOW) {
-        if (dest.isPresent() && effDest == dest.get()) {
+        if (effDest == suppliedInPlain) {
           /*
            * The client-supplier buffer is not big enough. Use the
-           * internal inPlain buffer, also ensure that it is bigger
+           * internal inPlain buffer. Also ensure that it is bigger
            * than the too-small supplied one.
            */
           inPlain.prepare();
-          ensureInPlainCapacity(Math.min(((int) dest.get().remaining()) * 2, maxTlsPacketSize));
+          if (inPlain.buffer.capacity() <= suppliedInPlain.remaining()) {
+            inPlain.enlarge();
+          }
         } else {
           inPlain.enlarge();
         }
+
         // inPlain changed, re-create the wrapper
         effDest = new ByteBufferSet(inPlain.buffer);
       }
@@ -316,7 +340,7 @@ public class TlsChannelImpl implements ByteChannel {
   }
 
   private SSLEngineResult callEngineUnwrap(ByteBufferSet dest) throws SSLException {
-    ((Buffer) inEncrypted.buffer).flip();
+    inEncrypted.buffer.flip();
     try {
       SSLEngineResult result =
           engine.unwrap(inEncrypted.buffer, dest.array, dest.offset, dest.length);
@@ -339,9 +363,9 @@ public class TlsChannelImpl implements ByteChannel {
     }
   }
 
-  private int readFromChannel() throws IOException, EofException {
+  private void readFromChannel() throws IOException, EofException {
     try {
-      return readFromChannel(readChannel, inEncrypted.buffer);
+      callChannelRead(readChannel, inEncrypted.buffer);
     } catch (WouldBlockException e) {
       throw e;
     } catch (IOException e) {
@@ -350,8 +374,8 @@ public class TlsChannelImpl implements ByteChannel {
     }
   }
 
-  public static int readFromChannel(ReadableByteChannel readChannel, ByteBuffer buffer)
-      throws IOException, EofException {
+  public static void callChannelRead(ReadableByteChannel readChannel, ByteBuffer buffer)
+  throws IOException, EofException {
     Util.assertTrue(buffer.hasRemaining());
     LOGGER.trace("Reading from channel");
     int c = readChannel.read(buffer); // IO block
@@ -364,7 +388,6 @@ public class TlsChannelImpl implements ByteChannel {
     if (c == 0) {
       throw new NeedsReadException();
     }
-    return c;
   }
 
   // write
@@ -389,27 +412,33 @@ public class TlsChannelImpl implements ByteChannel {
 
   private long wrapAndWrite(ByteBufferSet source) throws IOException {
     long bytesToConsume = source.remaining();
-    long bytesConsumed = 0;
     outEncrypted.prepare();
     try {
       while (true) {
-        writeToChannel();
-        if (bytesConsumed == bytesToConsume) return bytesToConsume;
-        WrapResult res = wrapLoop(source);
-        bytesConsumed += res.bytesConsumed;
+        writeToChannel(); // IO block
+        if (source.remaining() == 0) {
+          return bytesToConsume;
+        }
+        SSLEngineResult result = wrapLoop(source);
+        if (result.getStatus() == Status.CLOSED) {
+          return bytesToConsume - source.remaining();
+        }
       }
     } finally {
       outEncrypted.release();
     }
   }
 
-  private WrapResult wrapLoop(ByteBufferSet source) throws SSLException {
+  /**
+   * Returns last {@link HandshakeStatus} of the loop
+   */
+  private SSLEngineResult wrapLoop(ByteBufferSet source) throws SSLException {
     while (true) {
       SSLEngineResult result = callEngineWrap(source);
       switch (result.getStatus()) {
         case OK:
         case CLOSED:
-          return new WrapResult(result.bytesConsumed(), result.getHandshakeStatus());
+          return result;
         case BUFFER_OVERFLOW:
           Util.assertTrue(result.bytesConsumed() == 0);
           outEncrypted.enlarge();
@@ -439,26 +468,14 @@ public class TlsChannelImpl implements ByteChannel {
     }
   }
 
-  private void ensureInPlainCapacity(int newCapacity) {
-    if (inPlain.buffer.capacity() < newCapacity) {
-      if (LOGGER.isTraceEnabled()) {
-        LOGGER.trace(format(
-          "inPlain buffer too small, increasing from %s to %s",
-          inPlain.buffer.capacity(),
-          newCapacity));
-      }
-      inPlain.resize(newCapacity);
-    }
-  }
-
   private void writeToChannel() throws IOException {
     if (outEncrypted.buffer.position() == 0) {
       return;
     }
-    ((Buffer) outEncrypted.buffer).flip();
+    outEncrypted.buffer.flip();
     try {
       try {
-        writeToChannel(writeChannel, outEncrypted.buffer);
+        callChannelWrite(writeChannel, outEncrypted.buffer); // IO block
       } catch (WouldBlockException e) {
         throw e;
       } catch (IOException e) {
@@ -470,13 +487,12 @@ public class TlsChannelImpl implements ByteChannel {
     }
   }
 
-  private static void writeToChannel(WritableByteChannel channel, ByteBuffer src)
-      throws IOException {
+  private static void callChannelWrite(WritableByteChannel channel, ByteBuffer src) throws IOException {
     while (src.hasRemaining()) {
       if (LOGGER.isTraceEnabled()) {
         LOGGER.trace("Writing to channel: " + src);
       }
-      int c = channel.write(src);
+      int c = channel.write(src); // IO block
       if (c == 0) {
         /*
          * If no bytesProduced were written, it means that the socket is
@@ -485,7 +501,7 @@ public class TlsChannelImpl implements ByteChannel {
         throw new NeedsWriteException();
       }
       // blocking SocketChannels can write less than all the bytesProduced
-      // just before an error the loop forces the exception
+      // just before an error, the loop forces the exception
     }
   }
 
@@ -526,14 +542,34 @@ public class TlsChannelImpl implements ByteChannel {
   }
 
   private void doHandshake(boolean force) throws IOException, EofException {
-    if (!force && negotiated) return;
+    if (!force && handshakeCompleted) {
+      return;
+    }
     initLock.lock();
     try {
-      if (invalid || shutdownSent) throw new ClosedChannelException();
-      if (force || !negotiated) {
-        engine.beginHandshake();
-        LOGGER.trace("Called engine.beginHandshake()");
-        handshake(Optional.empty(), Optional.empty());
+      if (invalid || shutdownSent) {
+        throw new ClosedChannelException();
+      }
+      if (force || !handshakeCompleted) {
+
+        if (!handshakeStarted) {
+          LOGGER.trace("Called engine.beginHandshake()");
+          engine.beginHandshake();
+
+          // Some engines that do not support renegotiations may be sensitive to calling
+          // SSLEngine.beginHandshake() more than once. This guard prevents that.
+          // See: https://github.com/marianobarrios/tls-channel/issues/197
+          handshakeStarted = true;
+        }
+
+        writeAndHandshake();
+
+        if (engine.getSession().getProtocol().startsWith("DTLS")) {
+          throw new IllegalArgumentException("DTLS not supported");
+        }
+
+        handshakeCompleted = true;
+
         // call client code
         try {
           initSessionCallback.accept(engine.getSession());
@@ -541,27 +577,22 @@ public class TlsChannelImpl implements ByteChannel {
           LOGGER.trace("client code threw exception in session initialization callback", e);
           throw new TlsChannelCallbackException("session initialization callback failed", e);
         }
-        negotiated = true;
       }
     } finally {
       initLock.unlock();
     }
   }
 
-  private int handshake(Optional<ByteBufferSet> dest, Optional<HandshakeStatus> handshakeStatus)
-      throws IOException, EofException {
+  private void writeAndHandshake() throws IOException, EofException {
     readLock.lock();
     try {
       writeLock.lock();
       try {
-        if (invalid || shutdownSent) {
-            throw new ClosedChannelException();
-        }
         Util.assertTrue(inPlain.nullOrEmpty());
         outEncrypted.prepare();
         try {
           writeToChannel(); // IO block
-          return handshakeLoop(dest, handshakeStatus);
+          handshakeLoop();
         } finally {
           outEncrypted.release();
         }
@@ -573,58 +604,56 @@ public class TlsChannelImpl implements ByteChannel {
     }
   }
 
-  private int handshakeLoop(Optional<ByteBufferSet> dest, Optional<HandshakeStatus> handshakeStatus)
-      throws IOException, EofException {
+  private void handshakeLoop() throws IOException, EofException {
     Util.assertTrue(inPlain.nullOrEmpty());
-    HandshakeStatus status = handshakeStatus.orElseGet(() -> engine.getHandshakeStatus());
     while (true) {
-      switch (status) {
+      switch (engine.getHandshakeStatus()) {
         case NEED_WRAP:
           Util.assertTrue(outEncrypted.nullOrEmpty());
-          WrapResult wrapResult = wrapLoop(dummyOut);
-          status = wrapResult.lastHandshakeStatus;
+          wrapLoop(dummyOut);
           writeToChannel(); // IO block
           break;
         case NEED_UNWRAP:
-          UnwrapResult res = readAndUnwrap(dest);
-          status = res.lastHandshakeStatus;
-          if (res.bytesProduced > 0) return res.bytesProduced;
+          readAndUnwrap();
+          if (bytesToReturn > 0) {
+            return;
+          }
           break;
         case NOT_HANDSHAKING:
-          /*
-           * This should not really happen using SSLEngine, because
-           * handshaking ends with a FINISHED status. However, we accept
-           * this value to permit the use of a pass-through stub engine
-           * with no encryption.
-           */
-          return 0;
+          return;
         case NEED_TASK:
           handleTask();
-          status = engine.getHandshakeStatus();
           break;
         case FINISHED:
-          return 0;
+          // this status is never returned by SSLEngine.getHandshakeStatus()
+          throw new IllegalStateException();
         default:
           // Unsupported stage eg: NEED_UNWRAP_AGAIN
-          return 0;
+          throw new IllegalStateException();
       }
     }
   }
 
-  private UnwrapResult readAndUnwrap(Optional<ByteBufferSet> dest)
-      throws IOException, EofException {
+  private void readAndUnwrap() throws IOException, EofException {
     // Save status before operation: use it to stop when status changes
-    HandshakeStatus orig = engine.getHandshakeStatus();
     inEncrypted.prepare();
     try {
       while (true) {
         Util.assertTrue(inPlain.nullOrEmpty());
-        UnwrapResult res = unwrapLoop(dest, orig);
-        if (res.bytesProduced > 0 || res.lastHandshakeStatus != orig || res.wasClosed) {
-          if (res.wasClosed) {
-            shutdownReceived = true;
-          }
-          return res;
+        SSLEngineResult result = unwrapLoop();
+        HandshakeStatus status = engine.getHandshakeStatus();
+        if (result.bytesProduced() > 0) {
+          bytesToReturn = result.bytesProduced();
+          return;
+        }
+        if (result.getStatus() == Status.CLOSED) {
+          shutdownReceived = true;
+          return;
+        }
+        if (result.getHandshakeStatus() == HandshakeStatus.FINISHED
+                || status == HandshakeStatus.NEED_TASK
+                || status == HandshakeStatus.NEED_WRAP) {
+          return;
         }
         if (!inEncrypted.buffer.hasRemaining()) {
           inEncrypted.enlarge();
@@ -720,7 +749,7 @@ public class TlsChannelImpl implements ByteChannel {
         if (!shutdownReceived) {
           try {
             // IO block
-            readAndUnwrap(Optional.empty());
+            readAndUnwrap();
             Util.assertTrue(shutdownReceived);
           } catch (EofException e) {
             throw new ClosedChannelException();
@@ -737,18 +766,9 @@ public class TlsChannelImpl implements ByteChannel {
   }
 
   private void freeBuffers() {
-    if (inEncrypted != null) {
-      inEncrypted.dispose();
-      inEncrypted = null;
-    }
-    if (inPlain != null) {
-      inPlain.dispose();
-      inPlain = null;
-    }
-    if (outEncrypted != null) {
-      outEncrypted.dispose();
-      outEncrypted = null;
-    }
+    inEncrypted.dispose();
+    inPlain.dispose();
+    outEncrypted.dispose();
   }
 
   public boolean isOpen() {
