@@ -44,6 +44,10 @@ import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.test.AfterBeforeParameterResolver;
+import io.micrometer.tracing.Tracer;
+import io.micrometer.tracing.test.simple.SimpleSpan;
+import io.micrometer.tracing.test.simple.SimpleTracer;
+import io.micrometer.tracing.test.simple.SpanAssert;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -68,6 +72,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -380,6 +385,11 @@ public abstract class UnifiedTest {
                 }
                 compareLogMessages(rootContext, definition, tweaks);
             }
+
+            if (definition.containsKey("expectTracingSpans")) {
+                compareTracingSpans(definition);
+            }
+
         } catch (TestAbortedException e) {
             // if a test is ignored, we do not retry
             throw e;
@@ -484,6 +494,42 @@ public abstract class UnifiedTest {
                     entities.getClientLoggingInterceptor(clientId);
             rootContext.getLogMatcher().assertLogMessageEquality(clientId, ignoreMessages, ignoreExtraMessages,
                     curLogMessagesForClient.getArray("messages"), loggingInterceptor.getMessages(), tweaks);
+        }
+    }
+
+    private void compareTracingSpans(final BsonDocument definition) {
+        BsonDocument curTracingSpansForClient = definition.getDocument("expectTracingSpans");
+        String clientId = curTracingSpansForClient.getString("client").getValue();
+
+        // Get the tracer for the client
+        Tracer micrometerTracer = entities.getClientTracer(clientId);
+        SimpleTracer simpleTracer = (SimpleTracer) micrometerTracer;
+
+        // Get the list of expected spans
+        BsonArray expectedSpans = curTracingSpansForClient.getArray("spans");
+
+        // Get the actual reported spans
+        Deque<SimpleSpan> reportedSpans = simpleTracer.getSpans();
+
+        // First assert that we have at least the number of expected spans
+        assertEquals(reportedSpans.size(), expectedSpans.size(), "Expected at least " + expectedSpans.size() + " spans, but found " + reportedSpans.size());
+
+        for (BsonValue expectedSpan : expectedSpans) {
+            BsonDocument expectedSpanDoc = expectedSpan.asDocument();
+            String expectedName = expectedSpanDoc.getString("name").getValue();
+            BsonDocument expectedTags = expectedSpanDoc.getDocument("tags");
+
+            SimpleSpan reportedSpan = reportedSpans.pop();
+
+            SpanAssert.assertThat(reportedSpan)
+                    .hasNameEqualTo(expectedName);
+
+            if (!expectedTags.isEmpty()) {
+                for (Map.Entry<String, BsonValue> tag : expectedTags.entrySet()) {
+                    SpanAssert.assertThat(reportedSpan)
+                            .hasTag(tag.getKey(), tag.getValue().asString().getValue());
+                }
+            }
         }
     }
 
