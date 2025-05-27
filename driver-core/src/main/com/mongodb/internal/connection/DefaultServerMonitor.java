@@ -58,6 +58,7 @@ import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
+import static com.mongodb.internal.connection.DescriptionHelper.createServerDescription;
 import static com.mongodb.internal.connection.ServerDescriptionHelper.unknownConnectingServerDescription;
 import static com.mongodb.internal.event.EventListenerHelper.singleServerMonitorListener;
 import static java.lang.String.format;
@@ -258,9 +259,8 @@ class DefaultServerMonitor implements ServerMonitor {
                             new ServerHeartbeatSucceededEvent(connection.getDescription().getConnectionId(), helloResult,
                                     elapsedTimeNanos, shouldStreamResponses));
 
-                    throw new Throwable("WELL WELL WELL");
-                   // return createServerDescription(serverId.getAddress(), helloResult, roundTripTimeSampler.getAverage(),
-                     //       roundTripTimeSampler.getMin());
+                    return createServerDescription(serverId.getAddress(), helloResult, roundTripTimeSampler.getAverage(),
+                            roundTripTimeSampler.getMin());
                 } catch (Exception e) {
                     serverMonitorListener.serverHeartbeatFailed(
                             new ServerHeartbeatFailedEvent(connection.getDescription().getConnectionId(), System.nanoTime() - start,

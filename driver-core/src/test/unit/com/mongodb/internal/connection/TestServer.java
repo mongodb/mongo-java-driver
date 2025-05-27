@@ -57,7 +57,7 @@ public class TestServer implements ClusterableServer {
 
     @Override
     public void resetToConnecting(final MongoException cause) {
-        this.description = ServerDescription.builder().state(CONNECTING).exception(cause).address(serverId.getAddress()).build();
+        sendNotification(ServerDescription.builder().state(CONNECTING).exception(cause).address(serverId.getAddress()).build());
     }
 
     @Override
