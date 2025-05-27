@@ -20,11 +20,11 @@ import com.mongodb.MongoDriverInformation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
-import static com.mongodb.internal.connection.ClientMetadataHelper.updateClientMedataDocument;
+import static com.mongodb.internal.connection.ClientMetadataHelper.updateClientMetadataDocument;
 
 /**
  * Represents metadata of the current MongoClient.
@@ -32,11 +32,13 @@ import static com.mongodb.internal.connection.ClientMetadataHelper.updateClientM
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ClientMetadata {
-    private final ReentrantLock updateLock = new ReentrantLock();
-    private volatile BsonDocument clientMetadataBsonDocument;
+    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+    private BsonDocument clientMetadataBsonDocument;
 
     public ClientMetadata(@Nullable final String applicationName, final MongoDriverInformation mongoDriverInformation) {
-        this.clientMetadataBsonDocument = createClientMetadataDocument(applicationName, mongoDriverInformation);
+        withLock(readWriteLock.writeLock(), () -> {
+            this.clientMetadataBsonDocument = createClientMetadataDocument(applicationName, mongoDriverInformation);
+        });
     }
 
     /**
@@ -47,8 +49,8 @@ public class ClientMetadata {
     }
 
     public void append(final MongoDriverInformation mongoDriverInformation) {
-        withLock(updateLock, () ->
-                this.clientMetadataBsonDocument = updateClientMedataDocument(clientMetadataBsonDocument.clone(), mongoDriverInformation)
+        withLock(readWriteLock.writeLock(), () ->
+                this.clientMetadataBsonDocument = updateClientMetadataDocument(clientMetadataBsonDocument.clone(), mongoDriverInformation)
         );
     }
 }

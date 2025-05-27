@@ -43,7 +43,7 @@ import static com.mongodb.client.CrudTestHelper.repeat;
 import static com.mongodb.client.WithWrapper.withWrapper;
 import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
 import static com.mongodb.internal.connection.ClientMetadataHelper.getOperatingSystemType;
-import static com.mongodb.internal.connection.ClientMetadataHelper.updateClientMedataDocument;
+import static com.mongodb.internal.connection.ClientMetadataHelper.updateClientMetadataDocument;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -349,7 +349,7 @@ public class ClientMetadataHelperProseTest {
                 .build();
 
         //when
-        BsonDocument updatedClientMetadata = updateClientMedataDocument(initialClientMetadataDocument, metadataToAppend);
+        BsonDocument updatedClientMetadata = updateClientMetadataDocument(initialClientMetadataDocument, metadataToAppend);
 
         //then
         assertEquals(

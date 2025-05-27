@@ -180,29 +180,30 @@ public final class ClientMetadataHelper {
         new BsonDocumentCodec().encode(new BsonBinaryWriter(buffer), document, EncoderContext.builder().build());
         return buffer.getPosition() > MAXIMUM_CLIENT_METADATA_ENCODED_SIZE;
     }
-/**
- * Modifies the given client metadata document by appending the driver information.
- * Driver name and version are appended atomically to the existing driver name and version if they do not exceed
- * {@value MAXIMUM_CLIENT_METADATA_ENCODED_SIZE} bytes.
- *
- * Platform is appended separately to the existing platform if it does not exceed {@value MAXIMUM_CLIENT_METADATA_ENCODED_SIZE} bytes.
- */
-    public static BsonDocument updateClientMedataDocument(final BsonDocument clientMetadataDocument,
-                                                          final MongoDriverInformation mongoDriverInformation) {
-        BsonDocument driverInformation = clientMetadataDocument.getDocument("driver");
 
-        List<String> driverNamesToAppend = mongoDriverInformation.getDriverNames();
-        List<String> driverVersionsToAppend = mongoDriverInformation.getDriverVersions();
-        List<String> driverPlatformsToAppend = mongoDriverInformation.getDriverPlatforms();
+    /**
+     * Modifies the given client metadata document by appending the driver information.
+     * Driver name and version are appended atomically to the existing driver name and version if they do not exceed
+     * {@value MAXIMUM_CLIENT_METADATA_ENCODED_SIZE} bytes.
+     * <p>
+     * Platform is appended separately to the existing platform if it does not exceed {@value MAXIMUM_CLIENT_METADATA_ENCODED_SIZE} bytes.
+     */
+    public static BsonDocument updateClientMetadataDocument(final BsonDocument clientMetadataDocument,
+                                                            final MongoDriverInformation driverInformationToAppend) {
+        BsonDocument currentDriverInformation = clientMetadataDocument.getDocument("driver");
+
+        List<String> driverNamesToAppend = driverInformationToAppend.getDriverNames();
+        List<String> driverVersionsToAppend = driverInformationToAppend.getDriverVersions();
+        List<String> driverPlatformsToAppend = driverInformationToAppend.getDriverPlatforms();
 
         List<String> updatedDriverNames = new ArrayList<>(driverNamesToAppend.size() + 1);
         List<String> updatedDriverVersions = new ArrayList<>(driverVersionsToAppend.size() + 1);
         List<String> updateDriverPlatforms = new ArrayList<>(driverPlatformsToAppend.size() + 1);
 
-        updatedDriverNames.add(driverInformation.getString("name").getValue());
+        updatedDriverNames.add(currentDriverInformation.getString("name").getValue());
         updatedDriverNames.addAll(driverNamesToAppend);
 
-        updatedDriverVersions.add(driverInformation.getString("version").getValue());
+        updatedDriverVersions.add(currentDriverInformation.getString("version").getValue());
         updatedDriverVersions.addAll(driverVersionsToAppend);
 
         updateDriverPlatforms.add(clientMetadataDocument.getString("platform").getValue());
