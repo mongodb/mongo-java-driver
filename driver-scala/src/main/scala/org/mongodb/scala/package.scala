@@ -295,6 +295,15 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
   type MongoNodeIsRecoveringException = com.mongodb.MongoNodeIsRecoveringException
 
   /**
+   * Exception thrown when a replica set primary is identified as a stale primary during Server Discovery and Monitoring (SDAM).
+   * This occurs when a new primary is discovered, causing the previously known primary to be marked stale, typically during network
+   * partitions or elections.
+   *
+   * @since 5.6
+   */
+  type MongoStalePrimaryException = com.mongodb.MongoStalePrimaryException
+
+  /**
    * An exception indicating that the server is a member of a replica set but is not the primary, and therefore refused to execute either a
    * write operation or a read operation that required a primary.  This can happen during a replica set election.
    */

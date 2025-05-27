@@ -308,10 +308,15 @@ class MultiServerClusterSpecification extends Specification {
         given:
         def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([firstServer, secondServer]).build(),
                 factory)
-        factory.sendNotification(firstServer, REPLICA_SET_PRIMARY, [firstServer, secondServer, thirdServer], new ObjectId(new Date(1000)))
+
+        def electionId = new ObjectId(new Date(1000))
+        factory.sendNotification(firstServer, REPLICA_SET_PRIMARY, [firstServer, secondServer, thirdServer], electionId)
+
 
         when:
-        factory.sendNotification(secondServer, REPLICA_SET_PRIMARY, [firstServer, secondServer, thirdServer], new ObjectId(new Date(999)))
+        def outdatedElectionId = new ObjectId(new Date(999))
+        factory.sendNotification(secondServer, REPLICA_SET_PRIMARY, [firstServer, secondServer, thirdServer], outdatedElectionId)
+
         then:
         factory.getDescription(firstServer).state == CONNECTED
         factory.getDescription(firstServer).type == REPLICA_SET_PRIMARY
