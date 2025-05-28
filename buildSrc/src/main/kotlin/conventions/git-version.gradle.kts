@@ -25,8 +25,8 @@ val gitVersion: Provider<String> =
         }
         .standardOutput
         .asText
-        .orElse("UNKNOWN")
         .map { it.trim().removePrefix("r") }
+        .orElse("UNKNOWN")
 
 // Allows access to gitVersion extension to other conventions
 extensions.add("gitVersion", gitVersion)
