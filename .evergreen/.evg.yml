@@ -830,13 +830,15 @@ functions:
         type: test
         params:
           shell: bash
+          working-directory: "src"
           include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
           script: |-
             set -o errexit
             ${PREPARE_SHELL}
             export K8S_VARIANT=${VARIANT}
-            export K8S_DRIVERS_TAR_FILE=$(./.evergreen/git-archive.sh)
+            export K8S_DRIVERS_TAR_FILE="/tmp/mongo-java-driver-k8s.tar"
             export K8S_TEST_CMD="OIDC_ENV=k8s VARIANT=${VARIANT} ./.evergreen/run-mongodb-oidc-test.sh"
+            bash $PROJECT_DIRECTORY/.evergreen/git-archive.sh $K8S_DRIVERS_TAR_FILE
             bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/setup-pod.sh
             bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/run-self-test.sh
             source $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/secrets-export.sh
@@ -929,29 +931,33 @@ tasks:
       commands:
         - command: shell.exec
           params:
-            shell: bash
+            shell: "bash"
+            working_dir: "src"
             env:
               JAVA_HOME: ${JAVA_HOME}
             script: |-
               set -o errexit
               ${PREPARE_SHELL}
-              export AZUREOIDC_DRIVERS_TAR_FILE=$(./.evergreen/git-archive.sh)
+              export AZUREOIDC_DRIVERS_TAR_FILE=/tmp/mongo-java-driver-azure.tar
               export AZUREOIDC_TEST_CMD="OIDC_ENV=azure ./.evergreen/run-mongodb-oidc-test.sh"
+              bash $PROJECT_DIRECTORY/.evergreen/git-archive.sh $AZUREOIDC_DRIVERS_TAR_FILE
               bash $DRIVERS_TOOLS/.evergreen/auth_oidc/azure/run-driver-test.sh
 
     - name: "oidc-auth-test-gcp"
       commands:
         - command: shell.exec
           params:
-            shell: bash
+            shell: "bash"
+            working_dir: "src"
             script: |-
               set -o errexit
               ${PREPARE_SHELL}
-              export GCPOIDC_DRIVERS_TAR_FILE=$(./.evergreen/git-archive.sh)
+              export GCPOIDC_DRIVERS_TAR_FILE=/tmp/mongo-java-driver-gcp.tar
               # Define the command to run on the VM.
               # Ensure that we source the environment file created for us, set up any other variables we need,
               # and then run our test suite on the vm.
               export GCPOIDC_TEST_CMD="OIDC_ENV=gcp ./.evergreen/run-mongodb-oidc-test.sh"
+              bash $PROJECT_DIRECTORY/.evergreen/git-archive.sh $GCPOIDC_DRIVERS_TAR_FILE
               bash $DRIVERS_TOOLS/.evergreen/auth_oidc/gcp/run-driver-test.sh
 
     - name: "oidc-auth-test-k8s"
@@ -971,8 +977,6 @@ tasks:
         - func: "oidc-auth-test-k8s-func"
           vars:
             VARIANT: gke
-          params:
-            include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
 
     - name: serverless-test
       commands:
@@ -1706,11 +1710,11 @@ tasks:
               export AZUREKMS_RESOURCEGROUP=${testazurekms_resourcegroup}
               export AZUREKMS_VMNAME=${AZUREKMS_VMNAME}
               export AZUREKMS_PRIVATEKEYPATH=/tmp/testazurekms_privatekey
-              tar czf /tmp/mongo-csharp-driver.tgz .
-              AZUREKMS_SRC=/tmp/mongo-csharp-driver.tgz AZUREKMS_DST="~/" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/copy-file.sh
+              tar czf /tmp/mongo-java-driver.tgz .
+              AZUREKMS_SRC=/tmp/mongo-java-driver.tgz AZUREKMS_DST="~/" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/copy-file.sh
               echo "Copying files ... end"
               echo "Untarring file ... begin"
-              AZUREKMS_CMD="tar xf mongo-csharp-driver.tgz" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/run-command.sh
+              AZUREKMS_CMD="tar xf mongo-java-driver.tgz" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/run-command.sh
               echo "Untarring file ... end"
         - command: shell.exec
           type: test
@@ -2071,6 +2075,10 @@ task_groups:
       - oidc-auth-test
 
   - name: test-oidc-azure-task-group
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
+    teardown_task_can_fail_task: true
+    teardown_group_timeout_secs: 180 # 3 minutes (max allowed time)
     setup_group:
       - func: fetch source
       - func: prepare resources
@@ -2088,12 +2096,14 @@ task_groups:
           binary: bash
           args:
             - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/azure/delete-vm.sh
-    setup_group_can_fail_task: true
-    setup_group_timeout_secs: 1800
     tasks:
       - oidc-auth-test-azure
 
   - name: test-oidc-gcp-task-group
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
+    teardown_task_can_fail_task: true
+    teardown_group_timeout_secs: 180 # 3 minutes (max allowed time)
     setup_group:
       - func: fetch source
       - func: prepare resources
@@ -2112,8 +2122,6 @@ task_groups:
           binary: bash
           args:
             - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/gcp/teardown.sh
-    setup_group_can_fail_task: true
-    setup_group_timeout_secs: 1800
     tasks:
       - oidc-auth-test-gcp
 
@@ -2121,7 +2129,7 @@ task_groups:
     setup_group_can_fail_task: true
     setup_group_timeout_secs: 1800
     teardown_task_can_fail_task: true
-    teardown_group_timeout_secs: 180
+    teardown_group_timeout_secs: 180 # 3 minutes (max allowed time)
     setup_group:
       - func: fetch source
       - func: prepare resources
