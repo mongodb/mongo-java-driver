@@ -520,9 +520,9 @@ public final class ClusterFixture {
 
     @Nullable
     public static TransportSettings getOverriddenTransportSettings() {
-        String streamType = System.getProperty("org.mongodb.test.async.type", "nio2");
+        String asyncTransport = System.getProperty("org.mongodb.test.async.transport", "nio2");
 
-        if (nettyTransportSettings == null && streamType.equals("netty")) {
+        if (nettyTransportSettings == null && asyncTransport.equals("netty")) {
             NettyTransportSettings.Builder builder = TransportSettings.nettyBuilder();
             String sslProvider = System.getProperty("org.mongodb.test.netty.ssl.provider");
             if (sslProvider != null) {
