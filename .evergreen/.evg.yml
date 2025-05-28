@@ -831,15 +831,7 @@ functions:
             set -o errexit
             ${PREPARE_SHELL}
             export K8S_VARIANT=${VARIANT}
-            cd src
-            git add .
-            git commit --allow-empty -m "add files"
-            # uncompressed tar used to allow appending .git folder
-            export K8S_DRIVERS_TAR_FILE=/tmp/mongo-java-driver.tar
-            git archive -o $K8S_DRIVERS_TAR_FILE HEAD
-            tar -rf $K8S_DRIVERS_TAR_FILE .git
-            # Loop through all submodule directories and append to the archive
-            git submodule status --recursive | awk '{ print $2 }' | xargs tar -rf "$K8S_DRIVERS_TAR_FILE"
+            export K8S_DRIVERS_TAR_FILE=$(./.evergreen/git-archive.sh)
             export K8S_TEST_CMD="OIDC_ENV=k8s VARIANT=${VARIANT} ./.evergreen/run-mongodb-oidc-test.sh"
             bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/setup-pod.sh
             bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/run-self-test.sh
@@ -939,13 +931,7 @@ tasks:
             script: |-
               set -o errexit
               ${PREPARE_SHELL}
-              cd src
-              git add .
-              git commit --allow-empty -m "add files"
-              # uncompressed tar used to allow appending .git folder
-              export AZUREOIDC_DRIVERS_TAR_FILE=/tmp/mongo-java-driver.tar
-              git archive -o $AZUREOIDC_DRIVERS_TAR_FILE HEAD
-              tar -rf $AZUREOIDC_DRIVERS_TAR_FILE .git
+              export AZUREOIDC_DRIVERS_TAR_FILE=$(./.evergreen/git-archive.sh)
               export AZUREOIDC_TEST_CMD="OIDC_ENV=azure ./.evergreen/run-mongodb-oidc-test.sh"
               bash $DRIVERS_TOOLS/.evergreen/auth_oidc/azure/run-driver-test.sh
 
@@ -957,13 +943,7 @@ tasks:
             script: |-
               set -o errexit
               ${PREPARE_SHELL}
-              cd src
-              git add .
-              git commit --allow-empty -m "add files"
-              # uncompressed tar used to allow appending .git folder
-              export GCPOIDC_DRIVERS_TAR_FILE=/tmp/mongo-java-driver.tar
-              git archive -o $GCPOIDC_DRIVERS_TAR_FILE HEAD
-              tar -rf $GCPOIDC_DRIVERS_TAR_FILE .git
+              export GCPOIDC_DRIVERS_TAR_FILE=$(./.evergreen/git-archive.sh)
               # Define the command to run on the VM.
               # Ensure that we source the environment file created for us, set up any other variables we need,
               # and then run our test suite on the vm.
