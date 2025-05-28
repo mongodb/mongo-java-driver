@@ -830,7 +830,7 @@ functions:
         type: test
         params:
           shell: bash
-          working-directory: "src"
+          working_dir: "src"
           include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
           script: |-
             set -o errexit
@@ -839,7 +839,6 @@ functions:
             export K8S_DRIVERS_TAR_FILE="/tmp/mongo-java-driver.tgz"
             export K8S_TEST_CMD="OIDC_ENV=k8s VARIANT=${VARIANT} ./.evergreen/run-mongodb-oidc-test.sh"
             tar --exclude="**build/ --exclude-vcs" -czf $K8S_DRIVERS_TAR_FILE .
-            tar -tvf $K8S_DRIVERS_TAR_FILE
             bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/setup-pod.sh
             bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/run-self-test.sh
             source $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/secrets-export.sh
