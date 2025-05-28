@@ -838,7 +838,7 @@ functions:
             export K8S_VARIANT=${VARIANT}
             export K8S_DRIVERS_TAR_FILE="/tmp/mongo-java-driver.tgz"
             export K8S_TEST_CMD="OIDC_ENV=k8s VARIANT=${VARIANT} ./.evergreen/run-mongodb-oidc-test.sh"
-            tar --exclude="**build/ --exclude-vcs" -czf $K8S_DRIVERS_TAR_FILE .
+            tar --exclude="**build/" --exclude-vcs -czf $K8S_DRIVERS_TAR_FILE .
             bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/setup-pod.sh
             bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/run-self-test.sh
             source $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/secrets-export.sh
@@ -940,7 +940,7 @@ tasks:
               ${PREPARE_SHELL}
               export AZUREOIDC_DRIVERS_TAR_FILE=/tmp/mongo-java-driver.tgz
               export AZUREOIDC_TEST_CMD="OIDC_ENV=azure ./.evergreen/run-mongodb-oidc-test.sh"
-              tar --exclude="**build/ --exclude-vcs" -czf $AZUREOIDC_DRIVERS_TAR_FILE .
+              tar --exclude="**build/" --exclude-vcs -czf $AZUREOIDC_DRIVERS_TAR_FILE .
               bash $DRIVERS_TOOLS/.evergreen/auth_oidc/azure/run-driver-test.sh
 
     - name: "oidc-auth-test-gcp"
@@ -957,7 +957,7 @@ tasks:
               # Ensure that we source the environment file created for us, set up any other variables we need,
               # and then run our test suite on the vm.
               export GCPOIDC_TEST_CMD="OIDC_ENV=gcp ./.evergreen/run-mongodb-oidc-test.sh"
-              tar --exclude="**build/ --exclude-vcs" -czf $GCPOIDC_DRIVERS_TAR_FILE .
+              tar --exclude="**build/" --exclude-vcs -czf $GCPOIDC_DRIVERS_TAR_FILE .
               bash $DRIVERS_TOOLS/.evergreen/auth_oidc/gcp/run-driver-test.sh
 
     - name: "oidc-auth-test-k8s"
@@ -1678,7 +1678,7 @@ tasks:
               export GCPKMS_PROJECT=${GCPKMS_PROJECT}
               export GCPKMS_ZONE=${GCPKMS_ZONE}
               export GCPKMS_INSTANCENAME=${GCPKMS_INSTANCENAME}
-              tar --exclude="**build/ --exclude-vcs -czf /tmp/mongo-java-driver.tgz .
+              tar --exclude="**build/" --exclude-vcs -czf /tmp/mongo-java-driver.tgz .
               GCPKMS_SRC=/tmp/mongo-java-driver.tgz GCPKMS_DST=$GCPKMS_INSTANCENAME: $DRIVERS_TOOLS/.evergreen/csfle/gcpkms/copy-file.sh
               echo "Copying files ... end"
               echo "Untarring file ... begin"
@@ -1710,7 +1710,7 @@ tasks:
               export AZUREKMS_RESOURCEGROUP=${testazurekms_resourcegroup}
               export AZUREKMS_VMNAME=${AZUREKMS_VMNAME}
               export AZUREKMS_PRIVATEKEYPATH=/tmp/testazurekms_privatekey
-              tar --exclude="**build/ --exclude-vcs -czf /tmp/mongo-java-driver.tgz .
+              tar --exclude="**build/" --exclude-vcs -czf /tmp/mongo-java-driver.tgz .
               AZUREKMS_SRC=/tmp/mongo-java-driver.tgz AZUREKMS_DST="~/" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/copy-file.sh
               echo "Copying files ... end"
               echo "Untarring file ... begin"
