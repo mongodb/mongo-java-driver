@@ -775,7 +775,9 @@ functions:
     - command: shell.exec
       params:
         script: |
+          echo "Creating archive tar file at ${ARCHIVE_FILE_PATH}"
           tar --exclude="**build/" --exclude-vcs -czf "${ARCHIVE_FILE_PATH}" .
+          echo "Created archive tar file at ${ARCHIVE_FILE_PATH}"
 
   "fix absolute paths":
     - command: shell.exec
@@ -842,7 +844,7 @@ functions:
         params:
           shell: bash
           working_dir: "src"
-          include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
+          include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN", "ARCHIVE_FILE_PATH"]
           script: |-
             set -o errexit
             ${PREPARE_SHELL}
@@ -943,6 +945,7 @@ tasks:
           params:
             shell: "bash"
             working_dir: "src"
+            include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN", "ARCHIVE_FILE_PATH"]
             env:
               JAVA_HOME: ${JAVA_HOME}
             script: |-
@@ -959,6 +962,7 @@ tasks:
           params:
             shell: "bash"
             working_dir: "src"
+            include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN", "ARCHIVE_FILE_PATH"]
             script: |-
               set -o errexit
               ${PREPARE_SHELL}
@@ -2097,9 +2101,13 @@ task_groups:
       - func: prepare resources
       - func: fix absolute paths
       - func: create archive tar file
+      - command: ec2.assume_role
+        params:
+          role_arn: ${aws_test_secrets_role}
       - command: subprocess.exec
         params:
           binary: bash
+          include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
           env:
             AZUREOIDC_VMNAME_PREFIX: "JAVA_DRIVER"
           args:
@@ -2123,9 +2131,13 @@ task_groups:
       - func: prepare resources
       - func: fix absolute paths
       - func: create archive tar file
+      - command: ec2.assume_role
+        params:
+          role_arn: ${aws_test_secrets_role}
       - command: subprocess.exec
         params:
           binary: bash
+          include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
           env:
             GCPOIDC_VMNAME_PREFIX: "JAVA_DRIVER"
             GCPKMS_MACHINETYPE: "e2-medium" # comparable elapsed time to Azure; default was starved, caused timeouts
