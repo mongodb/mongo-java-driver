@@ -44,7 +44,13 @@ class MongoClientTest {
 
     @Test
     fun shouldHaveTheSameMethods() {
-        val jMongoClientFunctions = JMongoClient::class.declaredFunctions.map { it.name }.toSet()
+        val jMongoClientFunctions =
+            JMongoClient::class
+                .declaredFunctions
+                .map { it.name }
+                // TODO-JAVA-5871 remove .filterNot { it == "appendMetadata" }
+                .filterNot { it == "appendMetadata" }
+                .toSet()
         val kMongoClientFunctions = MongoClient::class.declaredFunctions.map { it.name }.toSet()
 
         assertEquals(jMongoClientFunctions, kMongoClientFunctions)

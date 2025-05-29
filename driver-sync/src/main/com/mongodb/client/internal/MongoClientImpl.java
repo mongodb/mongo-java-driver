@@ -136,6 +136,11 @@ public final class MongoClientImpl implements MongoClient {
     }
 
     @Override
+    public void appendMetadata(final MongoDriverInformation mongoDriverInformation) {
+        delegate.getCluster().getClientMetadata().append(mongoDriverInformation);
+    }
+
+    @Override
     public CodecRegistry getCodecRegistry() {
         return delegate.getCodecRegistry();
     }
