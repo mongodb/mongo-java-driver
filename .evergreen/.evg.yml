@@ -2078,7 +2078,7 @@ task_groups:
     setup_group_can_fail_task: true
     setup_group_timeout_secs: 1800
     teardown_task_can_fail_task: true
-    teardown_group_timeout_secs: 1800
+    teardown_group_timeout_secs: 180 # 3 minutes (max allowed time)
     setup_group:
       - func: fetch source
       - func: prepare resources
@@ -2103,7 +2103,7 @@ task_groups:
     setup_group_can_fail_task: true
     setup_group_timeout_secs: 1800
     teardown_task_can_fail_task: true
-    teardown_group_timeout_secs: 1800
+    teardown_group_timeout_secs: 180 # 3 minutes (max allowed time)
     setup_group:
       - func: fetch source
       - func: prepare resources
