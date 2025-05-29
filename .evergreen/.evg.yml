@@ -71,6 +71,8 @@ functions:
            MONGODB_BINARIES: "$MONGODB_BINARIES"
            UPLOAD_BUCKET: "$UPLOAD_BUCKET"
            PROJECT_DIRECTORY: "$PROJECT_DIRECTORY"
+           ARCHIVE_FILE_NAME: "$ARCHIVE_FILE_NAME"
+           ARCHIVE_FILE_PATH: "$ARCHIVE_FILE_PATH"
            PREPARE_SHELL: |
               set -o errexit
               set -o xtrace
@@ -84,7 +86,7 @@ functions:
               export PROJECT="${project}"
               export ARCHIVE_FILE_NAME="$ARCHIVE_FILE_NAME"
               export ARCHIVE_FILE_PATH="$ARCHIVE_FILE_PATH"
-            EOT
+           EOT
            # See what we've done
            cat expansion.yml
 
