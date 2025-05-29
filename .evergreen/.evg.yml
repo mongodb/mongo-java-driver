@@ -62,7 +62,7 @@ functions:
            export UPLOAD_BUCKET="${project}"
            export PROJECT_DIRECTORY="$(pwd)"
            export ARCHIVE_FILE_NAME="mongo-java-driver.tgz"
-           export ARCHIVE_FILE_PATH="/tmp/${ARCHIVE_FILE_NAME}"
+           export ARCHIVE_FILE_PATH="/tmp/$ARCHIVE_FILE_NAME"
 
            cat <<EOT > expansion.yml
            CURRENT_VERSION: "$CURRENT_VERSION"
