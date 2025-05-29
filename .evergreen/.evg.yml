@@ -774,6 +774,7 @@ functions:
   "create archive tar file":
     - command: shell.exec
       params:
+        working_dir: "src"
         script: |
           echo "Creating archive tar file at ${ARCHIVE_FILE_PATH}"
           tar --exclude="**build/" --exclude-vcs -czf "${ARCHIVE_FILE_PATH}" .
