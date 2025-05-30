@@ -24,9 +24,12 @@ import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.assertions.Assertions;
+import com.mongodb.client.ClientSession;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.Fixture;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.TestListener;
 import com.mongodb.event.CommandListener;
 import com.mongodb.lang.Nullable;
@@ -334,12 +337,17 @@ public class OidcAuthenticationProseTests {
 
     @Test
     public void test4p1Reauthentication() {
+        testReauthentication(false);
+    }
+
+    private void testReauthentication(final boolean inSession) {
         TestCallback callback = createCallback();
         MongoClientSettings clientSettings = createSettings(callback);
-        try (MongoClient mongoClient = createMongoClient(clientSettings)) {
+        try (MongoClient mongoClient = createMongoClient(clientSettings);
+             ClientSession session = inSession ? mongoClient.startSession() : null) {
             failCommand(391, 1, "find");
             // #. Perform a find operation that succeeds.
-            performFind(mongoClient);
+            performFind(mongoClient, session);
         }
         assertEquals(2, callback.invocations.get());
     }
@@ -390,6 +398,11 @@ public class OidcAuthenticationProseTests {
                 .getDatabase("test")
                 .getCollection("test")
                 .insertOne(Document.parse("{ x: 1 }"));
+    }
+
+    @Test
+    public void test4p5ReauthenticationInSession() {
+        testReauthentication(true);
     }
 
     @Test
@@ -914,12 +927,14 @@ public class OidcAuthenticationProseTests {
         }
     }
 
-    private void performFind(final MongoClient mongoClient) {
-        mongoClient
-                .getDatabase("test")
-                .getCollection("test")
-                .find()
-                .first();
+    private static void performFind(final MongoClient mongoClient) {
+        performFind(mongoClient, null);
+    }
+
+    private static void performFind(final MongoClient mongoClient, @Nullable final ClientSession session) {
+        MongoCollection<Document> collection = mongoClient.getDatabase("test").getCollection("test");
+        FindIterable<Document> findIterable = session == null ? collection.find() : collection.find(session);
+        findIterable.first();
     }
 
     protected void delayNextFind() {
