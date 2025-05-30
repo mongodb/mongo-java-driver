@@ -61,6 +61,8 @@ functions:
            export MONGODB_BINARIES="$DRIVERS_TOOLS/mongodb/bin"
            export UPLOAD_BUCKET="${project}"
            export PROJECT_DIRECTORY="$(pwd)"
+           export ARCHIVE_FILE_NAME="mongo-java-driver.tgz"
+           export ARCHIVE_FILE_PATH="/tmp/$ARCHIVE_FILE_NAME"
 
            cat <<EOT > expansion.yml
            CURRENT_VERSION: "$CURRENT_VERSION"
@@ -69,6 +71,8 @@ functions:
            MONGODB_BINARIES: "$MONGODB_BINARIES"
            UPLOAD_BUCKET: "$UPLOAD_BUCKET"
            PROJECT_DIRECTORY: "$PROJECT_DIRECTORY"
+           ARCHIVE_FILE_NAME: "$ARCHIVE_FILE_NAME"
+           ARCHIVE_FILE_PATH: "$ARCHIVE_FILE_PATH"
            PREPARE_SHELL: |
               set -o errexit
               set -o xtrace
@@ -77,10 +81,11 @@ functions:
               export MONGODB_BINARIES="$MONGODB_BINARIES"
               export UPLOAD_BUCKET="$UPLOAD_BUCKET"
               export PROJECT_DIRECTORY="$PROJECT_DIRECTORY"
-
               export TMPDIR="$MONGO_ORCHESTRATION_HOME/db"
               export PATH="$MONGODB_BINARIES:$PATH"
               export PROJECT="${project}"
+              export ARCHIVE_FILE_NAME="$ARCHIVE_FILE_NAME"
+              export ARCHIVE_FILE_PATH="$ARCHIVE_FILE_PATH"
            EOT
            # See what we've done
            cat expansion.yml
@@ -266,7 +271,7 @@ functions:
             . ./activate-authawsvenv.sh
             python ./lib/aws_assign_instance_profile.py
           fi
-          
+
   "run tests":
     - command: shell.exec
       type: test
@@ -766,6 +771,15 @@ functions:
           bash ${DRIVERS_TOOLS}/.evergreen/stop-orchestration.sh || true
           rm -rf $DRIVERS_TOOLS || true
 
+  "create archive tar file":
+    - command: shell.exec
+      params:
+        working_dir: "src"
+        script: |
+          echo "Creating archive tar file at ${ARCHIVE_FILE_PATH}"
+          tar --exclude="**build/" --exclude-vcs -czf "${ARCHIVE_FILE_PATH}" .
+          echo "Created archive tar file at ${ARCHIVE_FILE_PATH}"
+
   "fix absolute paths":
     - command: shell.exec
       params:
@@ -830,12 +844,13 @@ functions:
         type: test
         params:
           shell: bash
-          include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
+          working_dir: "src"
+          include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN", "ARCHIVE_FILE_PATH"]
           script: |-
             set -o errexit
             ${PREPARE_SHELL}
             export K8S_VARIANT=${VARIANT}
-            export K8S_DRIVERS_TAR_FILE=$(./.evergreen/git-archive.sh)
+            export K8S_DRIVERS_TAR_FILE=$ARCHIVE_FILE_PATH
             export K8S_TEST_CMD="OIDC_ENV=k8s VARIANT=${VARIANT} ./.evergreen/run-mongodb-oidc-test.sh"
             bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/setup-pod.sh
             bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/run-self-test.sh
@@ -929,29 +944,35 @@ tasks:
       commands:
         - command: shell.exec
           params:
-            shell: bash
+            shell: "bash"
+            working_dir: "src"
+            include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN", "ARCHIVE_FILE_PATH"]
             env:
               JAVA_HOME: ${JAVA_HOME}
             script: |-
               set -o errexit
               ${PREPARE_SHELL}
-              export AZUREOIDC_DRIVERS_TAR_FILE=$(./.evergreen/git-archive.sh)
+              export AZUREOIDC_DRIVERS_TAR_FILE=$ARCHIVE_FILE_PATH
               export AZUREOIDC_TEST_CMD="OIDC_ENV=azure ./.evergreen/run-mongodb-oidc-test.sh"
+              tar --exclude="**build/" --exclude-vcs -czf $AZUREOIDC_DRIVERS_TAR_FILE .
               bash $DRIVERS_TOOLS/.evergreen/auth_oidc/azure/run-driver-test.sh
 
     - name: "oidc-auth-test-gcp"
       commands:
         - command: shell.exec
           params:
-            shell: bash
+            shell: "bash"
+            working_dir: "src"
+            include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN", "ARCHIVE_FILE_PATH"]
             script: |-
               set -o errexit
               ${PREPARE_SHELL}
-              export GCPOIDC_DRIVERS_TAR_FILE=$(./.evergreen/git-archive.sh)
+              export GCPOIDC_DRIVERS_TAR_FILE=$ARCHIVE_FILE_PATH
               # Define the command to run on the VM.
               # Ensure that we source the environment file created for us, set up any other variables we need,
               # and then run our test suite on the vm.
               export GCPOIDC_TEST_CMD="OIDC_ENV=gcp ./.evergreen/run-mongodb-oidc-test.sh"
+              tar --exclude="**build/" --exclude-vcs -czf $GCPOIDC_DRIVERS_TAR_FILE .
               bash $DRIVERS_TOOLS/.evergreen/auth_oidc/gcp/run-driver-test.sh
 
     - name: "oidc-auth-test-k8s"
@@ -971,8 +992,6 @@ tasks:
         - func: "oidc-auth-test-k8s-func"
           vars:
             VARIANT: gke
-          params:
-            include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
 
     - name: serverless-test
       commands:
@@ -1674,11 +1693,10 @@ tasks:
               export GCPKMS_PROJECT=${GCPKMS_PROJECT}
               export GCPKMS_ZONE=${GCPKMS_ZONE}
               export GCPKMS_INSTANCENAME=${GCPKMS_INSTANCENAME}
-              tar czf /tmp/mongo-java-driver.tgz .
-              GCPKMS_SRC=/tmp/mongo-java-driver.tgz GCPKMS_DST=$GCPKMS_INSTANCENAME: $DRIVERS_TOOLS/.evergreen/csfle/gcpkms/copy-file.sh
+              GCPKMS_SRC=$ARCHIVE_FILE_PATH GCPKMS_DST=$GCPKMS_INSTANCENAME: $DRIVERS_TOOLS/.evergreen/csfle/gcpkms/copy-file.sh
               echo "Copying files ... end"
               echo "Untarring file ... begin"
-              GCPKMS_CMD="tar xf mongo-java-driver.tgz" $DRIVERS_TOOLS/.evergreen/csfle/gcpkms/run-command.sh
+              GCPKMS_CMD="tar xf $ARCHIVE_FILE_NAME" $DRIVERS_TOOLS/.evergreen/csfle/gcpkms/run-command.sh
               echo "Untarring file ... end"
         - command: shell.exec
           type: test
@@ -1706,11 +1724,11 @@ tasks:
               export AZUREKMS_RESOURCEGROUP=${testazurekms_resourcegroup}
               export AZUREKMS_VMNAME=${AZUREKMS_VMNAME}
               export AZUREKMS_PRIVATEKEYPATH=/tmp/testazurekms_privatekey
-              tar czf /tmp/mongo-csharp-driver.tgz .
-              AZUREKMS_SRC=/tmp/mongo-csharp-driver.tgz AZUREKMS_DST="~/" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/copy-file.sh
+              tar --exclude="**build/" --exclude-vcs -czf $ARCHIVE_FILE_PATH .
+              AZUREKMS_SRC=$ARCHIVE_FILE_PATH AZUREKMS_DST="~/" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/copy-file.sh
               echo "Copying files ... end"
               echo "Untarring file ... begin"
-              AZUREKMS_CMD="tar xf mongo-csharp-driver.tgz" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/run-command.sh
+              AZUREKMS_CMD="tar xf $ARCHIVE_FILE_NAME" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/run-command.sh
               echo "Untarring file ... end"
         - command: shell.exec
           type: test
@@ -1971,6 +1989,7 @@ task_groups:
       - func: fetch source
       - func: prepare resources
       - func: fix absolute paths
+      - func: create archive tar file
       - command: shell.exec
         params:
           shell: "bash"
@@ -2007,6 +2026,7 @@ task_groups:
       - func: fetch source
       - func: prepare resources
       - func: fix absolute paths
+      - func: create archive tar file
       - command: shell.exec
         params:
           shell: "bash"
@@ -2046,6 +2066,10 @@ task_groups:
       - testazurekms-task
 
   - name: test-oidc-task-group
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
+    teardown_task_can_fail_task: true
+    teardown_task_timeout_secs: 1800
     setup_group:
       - func: fetch source
       - func: prepare resources
@@ -2065,19 +2089,26 @@ task_groups:
           binary: bash
           args:
             - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/teardown.sh
-    setup_group_can_fail_task: true
-    setup_group_timeout_secs: 1800
     tasks:
       - oidc-auth-test
 
   - name: test-oidc-azure-task-group
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
+    teardown_task_can_fail_task: true
+    teardown_task_timeout_secs: 1800
     setup_group:
       - func: fetch source
       - func: prepare resources
       - func: fix absolute paths
+      - func: create archive tar file
+      - command: ec2.assume_role
+        params:
+          role_arn: ${aws_test_secrets_role}
       - command: subprocess.exec
         params:
           binary: bash
+          include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
           env:
             AZUREOIDC_VMNAME_PREFIX: "JAVA_DRIVER"
           args:
@@ -2088,19 +2119,26 @@ task_groups:
           binary: bash
           args:
             - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/azure/delete-vm.sh
-    setup_group_can_fail_task: true
-    setup_group_timeout_secs: 1800
     tasks:
       - oidc-auth-test-azure
 
   - name: test-oidc-gcp-task-group
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
+    teardown_task_can_fail_task: true
+    teardown_task_timeout_secs: 1800
     setup_group:
       - func: fetch source
       - func: prepare resources
       - func: fix absolute paths
+      - func: create archive tar file
+      - command: ec2.assume_role
+        params:
+          role_arn: ${aws_test_secrets_role}
       - command: subprocess.exec
         params:
           binary: bash
+          include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
           env:
             GCPOIDC_VMNAME_PREFIX: "JAVA_DRIVER"
             GCPKMS_MACHINETYPE: "e2-medium" # comparable elapsed time to Azure; default was starved, caused timeouts
@@ -2112,8 +2150,6 @@ task_groups:
           binary: bash
           args:
             - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/gcp/teardown.sh
-    setup_group_can_fail_task: true
-    setup_group_timeout_secs: 1800
     tasks:
       - oidc-auth-test-gcp
 
@@ -2121,11 +2157,12 @@ task_groups:
     setup_group_can_fail_task: true
     setup_group_timeout_secs: 1800
     teardown_task_can_fail_task: true
-    teardown_group_timeout_secs: 180
+    teardown_task_timeout_secs: 1800
     setup_group:
       - func: fetch source
       - func: prepare resources
       - func: fix absolute paths
+      - func: create archive tar file
       - command: ec2.assume_role
         params:
           role_arn: ${aws_test_secrets_role}
@@ -2135,7 +2172,7 @@ task_groups:
           include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
           args:
             - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/k8s/setup.sh
-    teardown_group:
+    teardown_task:
       - command: subprocess.exec
         params:
           binary: bash
