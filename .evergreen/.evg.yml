@@ -124,6 +124,11 @@ functions:
             perl -p -i -e "s|ABSOLUTE_PATH_REPLACEMENT_TOKEN|${DRIVERS_TOOLS}|g" $filename
           done
 
+  "assume-aws-test-secrets-role":
+    - command: ec2.assume_role
+      params:
+        role_arn: ${aws_test_secrets_role}
+
   "create-archive-tar-file":
     - command: shell.exec
       params:
@@ -154,9 +159,6 @@ functions:
           bash ${DRIVERS_TOOLS}/.evergreen/stop-orchestration.sh || true
 
   "start-mongohoused":
-    - command: ec2.assume_role
-      params:
-        role_arn: ${aws_test_secrets_role}
     - command: shell.exec
       params:
         include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
@@ -168,9 +170,6 @@ functions:
           DRIVERS_TOOLS="${DRIVERS_TOOLS}" bash ${DRIVERS_TOOLS}/.evergreen/atlas_data_lake/run-mongohouse-image.sh
 
   "stop-mongohoused":
-    - command: ec2.assume_role
-      params:
-        role_arn: ${aws_test_secrets_role}
     - command: shell.exec
       params:
         include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
@@ -182,6 +181,7 @@ functions:
     - command: shell.exec
       params:
         shell: "bash"
+        include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
         script: |
           ${PREPARE_SHELL}
           bash ${DRIVERS_TOOLS}/.evergreen/serverless/setup-secrets.sh ${VAULT_NAME}
@@ -192,6 +192,8 @@ functions:
   "stop-serverless":
     - command: shell.exec
       params:
+        shell: "bash"
+        include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
         script: |
           ${PREPARE_SHELL}
           bash ${DRIVERS_TOOLS}/.evergreen/serverless/delete-instance.sh || true
@@ -210,34 +212,6 @@ functions:
         script: |
           cd ${DRIVERS_TOOLS}/.evergreen
           DRIVERS_TOOLS=${DRIVERS_TOOLS} bash ${DRIVERS_TOOLS}/.evergreen/run-load-balancer.sh stop  || true
-
-  "start-kms-mock-server":
-    - command: shell.exec
-      params:
-        background: true
-        shell: "bash"
-        script: |
-          ${PREPARE_SHELL}
-          cd ${DRIVERS_TOOLS}/.evergreen/csfle
-          . ./activate-kmstlsvenv.sh
-          python -u kms_http_server.py -v --ca_file ../x509gen/ca.pem --cert_file ../x509gen/${CERT_FILE} --port 8000
-
-  "start-kms-kmip-server":
-    - command: shell.exec
-      params:
-        shell: "bash"
-        script: |
-          ${PREPARE_SHELL}
-          cd ${DRIVERS_TOOLS}/.evergreen/csfle
-          . ./activate-kmstlsvenv.sh
-    - command: shell.exec
-      params:
-        shell: "bash"
-        background: true
-        script: |
-          cd ${DRIVERS_TOOLS}/.evergreen/csfle
-          . ./activate-kmstlsvenv.sh
-          python -u kms_kmip_server.py
 
   "stop-aws":
     - command: shell.exec
@@ -260,9 +234,6 @@ functions:
           rm -rf $DRIVERS_TOOLS || true
 
   "add-aws-auth-variables-to-file":
-    - command: ec2.assume_role
-      params:
-        role_arn: ${aws_test_secrets_role}
     - command: shell.exec
       type: "test"
       params:
@@ -463,8 +434,6 @@ functions:
           echo "Response Body: $response_body"
           echo "HTTP Status: $http_status"
 
-
-  #
   #  Test functions
   #
 
@@ -474,25 +443,11 @@ functions:
       params:
         working_dir: "src"
         env:
-          AWS_ACCESS_KEY_ID: ${aws_access_key_id}
-          AWS_SECRET_ACCESS_KEY: ${aws_secret_access_key}
-          AWS_ACCESS_KEY_ID_AWS_KMS_NAMED: ${aws_access_key_id_2}
-          AWS_SECRET_ACCESS_KEY_AWS_KMS_NAMED: ${aws_secret_access_key_2}
-          AWS_DEFAULT_REGION: us-east-1
-          AZURE_TENANT_ID: ${azure_tenant_id}
-          AZURE_CLIENT_ID: ${azure_client_id}
-          AZURE_CLIENT_SECRET: ${azure_client_secret}
-          GCP_EMAIL: ${gcp_email}
-          GCP_PRIVATE_KEY: ${gcp_private_key}
           AZUREKMS_KEY_VAULT_ENDPOINT: ${testazurekms_keyvaultendpoint}
           AZUREKMS_KEY_NAME: ${testazurekms_keyname}
         script: |
           ${PREPARE_SHELL}
 
-          . ${DRIVERS_TOOLS}/.evergreen/csfle/set-temp-creds.sh
-          export AWS_TEMP_ACCESS_KEY_ID=$CSFLE_AWS_TEMP_ACCESS_KEY_ID
-          export AWS_TEMP_SECRET_ACCESS_KEY=$CSFLE_AWS_TEMP_SECRET_ACCESS_KEY
-          export AWS_TEMP_SESSION_TOKEN=$CSFLE_AWS_TEMP_SESSION_TOKEN
           export CRYPT_SHARED_LIB_PATH=${CRYPT_SHARED_LIB_PATH}
 
           AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" \
@@ -816,9 +771,6 @@ functions:
       type: "test"
       params:
         working_dir: "src"
-        env:
-          AWS_ACCESS_KEY_ID: ${aws_access_key_id}
-          AWS_SECRET_ACCESS_KEY: ${aws_secret_access_key}
         script: |
           ${PREPARE_SHELL}
           set +o xtrace
@@ -830,26 +782,10 @@ functions:
       params:
         working_dir: "src"
         env:
-          AWS_ACCESS_KEY_ID: ${aws_access_key_id}
-          AWS_SECRET_ACCESS_KEY: ${aws_secret_access_key}
-          AWS_ACCESS_KEY_ID_AWS_KMS_NAMED: ${aws_access_key_id_2}
-          AWS_SECRET_ACCESS_KEY_AWS_KMS_NAMED: ${aws_secret_access_key_2}
-          AWS_DEFAULT_REGION: us-east-1
-          AZURE_TENANT_ID: ${azure_tenant_id}
-          AZURE_CLIENT_ID: ${azure_client_id}
-          AZURE_CLIENT_SECRET: ${azure_client_secret}
-          GCP_EMAIL: ${gcp_email}
-          GCP_PRIVATE_KEY: ${gcp_private_key}
           AZUREKMS_KEY_VAULT_ENDPOINT: ${testazurekms_keyvaultendpoint}
           AZUREKMS_KEY_NAME: ${testazurekms_keyname}
         script: |
           ${PREPARE_SHELL}
-          . ${DRIVERS_TOOLS}/.evergreen/csfle/set-temp-creds.sh
-
-          export AWS_TEMP_ACCESS_KEY_ID=$CSFLE_AWS_TEMP_ACCESS_KEY_ID
-          export AWS_TEMP_SECRET_ACCESS_KEY=$CSFLE_AWS_TEMP_SECRET_ACCESS_KEY
-          export AWS_TEMP_SESSION_TOKEN=$CSFLE_AWS_TEMP_SESSION_TOKEN
-
           MONGODB_URI="${MONGODB_URI}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-csfle-tests-with-mongocryptd.sh
 
   "run-perf-tests":
@@ -899,13 +835,15 @@ pre:
   - func: "fix-absolute-paths"
 
 post:
+  - func: "stop-mongo-orchestration"
   - func: "upload-mo-artifacts"
   - func: "upload-test-results"
+  - func: "assume-aws-test-secrets-role"
   - func: "stop-load-balancer"
   - func: "stop-serverless"
   - func: "stop-aws"
-  - func: "stop-mongo-orchestration"
   - func: "stop-mongohoused"
+  - func: "stop-csfle-servers"
   - func: "cleanup"
 
 tasks:
@@ -936,7 +874,7 @@ tasks:
 
   - name: "test-legacy-task"
     commands:
-      - func: "start-kms-kmip-server"
+      - func: "start-csfle-servers"
       - func: "start-mongo-orchestration"
       - func: "run-tests"
         vars:
@@ -944,7 +882,7 @@ tasks:
 
   - name: "test-sync-task"
     commands:
-      - func: "start-kms-kmip-server"
+      - func: "start-csfle-servers"
       - func: "start-mongo-orchestration"
       - func: "run-tests"
         vars:
@@ -952,7 +890,7 @@ tasks:
 
   - name: "test-reactive-task"
     commands:
-      - func: "start-kms-kmip-server"
+      - func: "start-csfle-servers"
       - func: "start-mongo-orchestration"
       - func: "run-tests"
         vars:
@@ -1036,10 +974,7 @@ tasks:
     # Might exceed 1 hour of execution.
     exec_timeout_secs: 7200
     commands:
-      - command: ec2.assume_role
-        params:
-          role_arn: ${aws_test_secrets_role}
-          duration_seconds: 1800
+      - func: "assume-aws-test-secrets-role"
       - func: "run-oidc-auth-test-k8s-test"
         vars:
           VARIANT: eks
@@ -1052,12 +987,13 @@ tasks:
 
   - name: "serverless-test-task"
     commands:
+      - func: "assume-aws-test-secrets-role"
       - func: "start-serverless"
       - func: "run-serverless-tests"
 
   - name: "accept-api-version-2-test-task"
     commands:
-      - func: "start-kms-kmip-server"
+      - func: "start-csfle-servers"
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "versioned-api-testing.json"
@@ -1074,6 +1010,7 @@ tasks:
           AUTH: "auth"
           ORCHESTRATION_FILE: "auth-aws.json"
           TOPOLOGY: "server"
+      - func: "assume-aws-test-secrets-role"
       - func: "add-aws-auth-variables-to-file"
       - func: "run-aws-auth-test-with-regular-aws-credentials"
 
@@ -1084,6 +1021,7 @@ tasks:
           AUTH: "auth"
           ORCHESTRATION_FILE: "auth-aws.json"
           TOPOLOGY: "server"
+      - func: "assume-aws-test-secrets-role"
       - func: "add-aws-auth-variables-to-file"
       - func: "run-aws-auth-test-with-assume-role-credentials"
 
@@ -1094,6 +1032,7 @@ tasks:
           AUTH: "auth"
           ORCHESTRATION_FILE: "auth-aws.json"
           TOPOLOGY: "server"
+      - func: "assume-aws-test-secrets-role"
       - func: "add-aws-auth-variables-to-file"
       - func: "run-aws-auth-test-with-aws-credentials-as-environment-variables"
 
@@ -1104,6 +1043,7 @@ tasks:
           AUTH: "auth"
           ORCHESTRATION_FILE: "auth-aws.json"
           TOPOLOGY: "server"
+      - func: "assume-aws-test-secrets-role"
       - func: "add-aws-auth-variables-to-file"
       - func: "run-aws-auth-test-with-aws-credentials-and-session-token-as-environment-variables"
 
@@ -1114,6 +1054,7 @@ tasks:
           AUTH: "auth"
           ORCHESTRATION_FILE: "auth-aws.json"
           TOPOLOGY: "server"
+      - func: "assume-aws-test-secrets-role"
       - func: "add-aws-auth-variables-to-file"
       - func: "run-aws-auth-test-with-aws-EC2 credentials"
 
@@ -1124,6 +1065,7 @@ tasks:
           AUTH: "auth"
           ORCHESTRATION_FILE: "auth-aws.json"
           TOPOLOGY: "server"
+      - func: "assume-aws-test-secrets-role"
       - func: "add-aws-auth-variables-to-file"
       - func: "run-aws-auth-test-with-web-identity-credentials"
 
@@ -1526,6 +1468,7 @@ tasks:
 
   - name: "atlas-data-lake-task"
     commands:
+      - func: "assume-aws-test-secrets-role"
       - func: "start-mongohoused"
       - command: shell.exec
         type: "test"
@@ -1664,9 +1607,7 @@ tasks:
           TOPOLOGY: "server"
           AUTH: "noauth"
           SSL: "nossl"
-      - func: "start-kms-mock-server"
-        vars:
-          CERT_FILE: "expired.pem"
+      - func: "start-csfle-servers"
       - func: "run-kms-tls-test"
         vars:
           KMS_TLS_ERROR_TYPE: "expired"
@@ -1682,7 +1623,7 @@ tasks:
           TOPOLOGY: "server"
           AUTH: "noauth"
           SSL: "nossl"
-      - func: "start-kms-mock-server"
+      - func: "start-csfle-servers"
         vars:
           CERT_FILE: "wrong-host.pem"
       - func: "run-kms-tls-test"
@@ -1695,6 +1636,7 @@ tasks:
   - name: "test-csfle-aws-from-environment-task"
     tags: [ "csfle-aws-from-environment" ]
     commands:
+      - func: "start-csfle-servers"
       - func: "start-mongo-orchestration"
         vars:
           TOPOLOGY: "server"
@@ -1704,7 +1646,7 @@ tasks:
 
   - name: "csfle-tests-with-mongocryptd-task"
     commands:
-      - func: "start-kms-kmip-server"
+      - func: "start-csfle-servers"
       - func: "start-mongo-orchestration"
       - func: "run-csfle-tests-with-mongocryptd"
 
@@ -2054,7 +1996,7 @@ task_groups:
             export GCPKMS_PROJECT=${GCPKMS_PROJECT}
             export GCPKMS_ZONE=${GCPKMS_ZONE}
             export GCPKMS_INSTANCENAME=${GCPKMS_INSTANCENAME}
-            $DRIVERS_TOOLS/.evergreen/csfle/gcpkms/delete-instance.sh
+            $DRIVERS_TOOLS/.evergreen/csfle/gcpkms/delete-instance.sh || true
     tasks:
       - "test-gcp-kms-task"
 
@@ -2066,9 +2008,11 @@ task_groups:
       - func: "prepare-resources"
       - func: "fix-absolute-paths"
       - func: "create-archive-tar-file"
+      - func: "assume-aws-test-secrets-role"
       - command: shell.exec
         params:
           shell: "bash"
+          include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
           script: |
             ${PREPARE_SHELL}
             echo '${testazurekms_publickey}' > /tmp/testazurekms_publickey
@@ -2113,9 +2057,7 @@ task_groups:
       - func: "fetch-source"
       - func: "prepare-resources"
       - func: "fix-absolute-paths"
-      - command: ec2.assume_role
-        params:
-          role_arn: ${aws_test_secrets_role}
+      - func: "assume-aws-test-secrets-role"
       - command: subprocess.exec
         params:
           binary: bash
@@ -2141,9 +2083,7 @@ task_groups:
       - func: "prepare-resources"
       - func: "fix-absolute-paths"
       - func: "create-archive-tar-file"
-      - command: ec2.assume_role
-        params:
-          role_arn: ${aws_test_secrets_role}
+      - func: "assume-aws-test-secrets-role"
       - command: subprocess.exec
         params:
           binary: bash
@@ -2171,9 +2111,7 @@ task_groups:
       - func: "prepare-resources"
       - func: "fix-absolute-paths"
       - func: "create-archive-tar-file"
-      - command: ec2.assume_role
-        params:
-          role_arn: ${aws_test_secrets_role}
+      - func: "assume-aws-test-secrets-role"
       - command: subprocess.exec
         params:
           binary: bash
@@ -2202,9 +2140,7 @@ task_groups:
       - func: "prepare-resources"
       - func: "fix-absolute-paths"
       - func: "create-archive-tar-file"
-      - command: ec2.assume_role
-        params:
-          role_arn: ${aws_test_secrets_role}
+      - func: "assume-aws-test-secrets-role"
       - command: subprocess.exec
         params:
           binary: bash

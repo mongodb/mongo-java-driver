@@ -13,7 +13,7 @@ TOPOLOGY=${TOPOLOGY:-standalone}
 #            Main Program                  #
 ############################################
 RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
-. "${RELATIVE_DIR_PATH}/javaConfig.bash"
+. "${RELATIVE_DIR_PATH}/setup-env.bash"
 
 
 if [ "$SSL" != "nossl" ]; then

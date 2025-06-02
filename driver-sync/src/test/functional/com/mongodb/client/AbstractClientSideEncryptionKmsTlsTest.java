@@ -109,12 +109,14 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
                     }});
                 }})
                 .build();
+        // See: https://github.com/mongodb-labs/drivers-evergreen-tools/blob/master/.evergreen/csfle/README.md
+        String endpoint = expectedKmsTlsError == TlsErrorType.EXPIRED ? "mongodb://127.0.0.1:9000" : "mongodb://127.0.0.1:9001";
         try (ClientEncryption clientEncryption = getClientEncryption(clientEncryptionSettings)) {
             clientEncryption.createDataKey("aws", new DataKeyOptions().masterKey(
                     BsonDocument.parse("{"
                             + "region: \"us-east-1\", "
                             + "key: \"arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0\","
-                            + "endpoint: \"mongodb://127.0.0.1:8000\"}")));
+                            + "endpoint: \"" + endpoint + "\"}")));
             fail();
         } catch (MongoClientException e) {
             assertNotNull(expectedKmsTlsError.getCauseOfExpectedClass(e));
