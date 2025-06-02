@@ -14,7 +14,7 @@ if [ $OIDC_ENV == "test" ]; then
     source ${DRIVERS_TOOLS}/.evergreen/auth_oidc/secrets-export.sh
     # java will not need to be installed, but we need to config
     RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
-    source "${RELATIVE_DIR_PATH}/javaConfig.bash"
+    source "${RELATIVE_DIR_PATH}/setup-env.bash"
 elif [ $OIDC_ENV == "azure" ]; then
     source ./env.sh
 elif [ $OIDC_ENV == "gcp" ]; then
