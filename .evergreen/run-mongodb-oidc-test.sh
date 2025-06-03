@@ -68,4 +68,3 @@ echo "Running OIDC authentication tests against driver-sync"
 echo "Running OIDC authentication tests against driver-reactive-streams"
 ./gradlew -Dorg.mongodb.test.uri="$ADMIN_URI" \
   --stacktrace --debug --info driver-reactive-streams:test --tests OidcAuthenticationAsyncProseTests
-
