@@ -16,13 +16,7 @@
 
 package com.mongodb.reactivestreams.client.unified;
 
-import com.mongodb.ClusterFixture;
-import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.connection.TransportSettings;
 import com.mongodb.lang.Nullable;
-import com.mongodb.reactivestreams.client.MongoClients;
-import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.junit.jupiter.api.AfterEach;
@@ -137,13 +131,6 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
             throw e;
         }
         assertNoDroppedError(format("%s passed but there was a dropped error; `onError` called with no handler.", testDescription));
-    }
-    @Override
-    protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        TransportSettings overriddenTransportSettings = ClusterFixture.getOverriddenTransportSettings();
-        MongoClientSettings clientSettings = overriddenTransportSettings == null ? settings
-                : MongoClientSettings.builder(settings).transportSettings(overriddenTransportSettings).build();
-        return new SyncMongoClient(MongoClients.create(clientSettings));
     }
 
     @AfterEach
