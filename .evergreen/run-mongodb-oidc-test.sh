@@ -49,7 +49,23 @@ TO_REPLACE="mongodb://"
 REPLACEMENT="mongodb://$OIDC_ADMIN_USER:$OIDC_ADMIN_PWD@"
 ADMIN_URI=${MONGODB_URI/$TO_REPLACE/$REPLACEMENT}
 
+echo "Running gradle version"
+./gradlew -version
+
+echo "Running gradle classes compile for driver-core"
+./gradlew --parallel --stacktrace --info  \
+  driver-core:compileJava driver-core:compileTestGroovy
+
+echo "Running gradle classes compile for driver-sync and driver-reactive-streams"
+./gradlew --parallel --stacktrace --info  \
+  driver-sync:classes driver-reactive-streams:classes
+
+echo "Running OIDC authentication tests against driver-sync"
 ./gradlew -Dorg.mongodb.test.uri="$ADMIN_URI" \
-  --stacktrace --debug --info --no-build-cache driver-core:cleanTest \
-  driver-sync:test --tests OidcAuthenticationProseTests --tests UnifiedAuthTest \
-  driver-reactive-streams:test --tests OidcAuthenticationAsyncProseTests \
+  --stacktrace --debug --info \
+  driver-sync:test --tests OidcAuthenticationProseTests --tests UnifiedAuthTest
+
+echo "Running OIDC authentication tests against driver-reactive-streams"
+./gradlew -Dorg.mongodb.test.uri="$ADMIN_URI" \
+  --stacktrace --debug --info driver-reactive-streams:test --tests OidcAuthenticationAsyncProseTests
+
