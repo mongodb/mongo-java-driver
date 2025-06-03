@@ -50,6 +50,6 @@ REPLACEMENT="mongodb://$OIDC_ADMIN_USER:$OIDC_ADMIN_PWD@"
 ADMIN_URI=${MONGODB_URI/$TO_REPLACE/$REPLACEMENT}
 
 ./gradlew -Dorg.mongodb.test.uri="$ADMIN_URI" \
-  --stacktrace --debug --info --no-build-cache driver-core:cleanTest \
+  --stacktrace --debug --info driver-core:cleanTest \
   driver-sync:test --tests OidcAuthenticationProseTests --tests UnifiedAuthTest \
   driver-reactive-streams:test --tests OidcAuthenticationAsyncProseTests \

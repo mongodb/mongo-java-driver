@@ -24,13 +24,13 @@ export KMS_TLS_ERROR_TYPE=${KMS_TLS_ERROR_TYPE}
 
 ./gradlew --stacktrace --info ${GRADLE_EXTRA_VARS} -Dorg.mongodb.test.uri=${MONGODB_URI} \
     -Dorg.mongodb.test.kms.tls.error.type=${KMS_TLS_ERROR_TYPE} \
-    --no-build-cache driver-sync:cleanTest driver-sync:test --tests ClientSideEncryptionKmsTlsTest
+    driver-sync:cleanTest driver-sync:test --tests ClientSideEncryptionKmsTlsTest
 first=$?
 echo $first
 
 ./gradlew --stacktrace --info ${GRADLE_EXTRA_VARS} -Dorg.mongodb.test.uri=${MONGODB_URI} \
     -Dorg.mongodb.test.kms.tls.error.type=${KMS_TLS_ERROR_TYPE} \
-    --no-build-cache driver-reactive-streams:cleanTest driver-reactive-streams:test --tests ClientSideEncryptionKmsTlsTest
+    driver-reactive-streams:cleanTest driver-reactive-streams:test --tests ClientSideEncryptionKmsTlsTest
 second=$?
 echo $second
 
