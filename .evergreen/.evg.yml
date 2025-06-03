@@ -129,13 +129,21 @@ functions:
       params:
         role_arn: ${aws_test_secrets_role}
 
+  "gradle-cache":
+    - command: shell.exec
+      params:
+        working_dir: "src"
+        script: |
+          export GRADLE_RO_DEP_CACHE="$(pwd)/build/gradle-cache"
+          .evergreen/gradle-cache.sh
+
   "create-archive-tar-file":
     - command: shell.exec
       params:
         working_dir: "src"
         script: |
           echo "Creating archive tar file at ${ARCHIVE_FILE_PATH}"
-          tar --exclude="**build/" --exclude-vcs -czf "${ARCHIVE_FILE_PATH}" .
+          tar --exclude-vcs -czf "${ARCHIVE_FILE_PATH}" .
           echo "Created archive tar file at ${ARCHIVE_FILE_PATH}"
 
   "start-mongo-orchestration":
@@ -820,7 +828,7 @@ functions:
           ${PREPARE_SHELL}
           export K8S_VARIANT=${VARIANT}
           export K8S_DRIVERS_TAR_FILE=$ARCHIVE_FILE_PATH
-          export K8S_TEST_CMD="OIDC_ENV=k8s VARIANT=${VARIANT} ./.evergreen/run-mongodb-oidc-test.sh"
+          export K8S_TEST_CMD="GRADLE_RO_DEP_CACHE='/tmp/test/build/gradle-cache' OIDC_ENV=k8s VARIANT=${VARIANT} ./.evergreen/run-mongodb-oidc-test.sh"
           bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/setup-pod.sh
           bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/run-self-test.sh
           source $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/secrets-export.sh
@@ -936,6 +944,8 @@ tasks:
             - .evergreen/run-mongodb-oidc-test.sh
 
   - name: "oidc-auth-test-azure-task"
+    # Might exceed 1 hour of execution.
+    exec_timeout_secs: 7200
     commands:
       - command: shell.exec
         params:
@@ -948,11 +958,13 @@ tasks:
             set -o errexit
             ${PREPARE_SHELL}
             export AZUREOIDC_DRIVERS_TAR_FILE=$ARCHIVE_FILE_PATH
-            export AZUREOIDC_TEST_CMD="OIDC_ENV=azure ./.evergreen/run-mongodb-oidc-test.sh"
-            tar --exclude="**build/" --exclude-vcs -czf $AZUREOIDC_DRIVERS_TAR_FILE .
+            export AZUREOIDC_TEST_CMD="GRADLE_RO_DEP_CACHE='/home/azureuser/build/gradle-cache' OIDC_ENV=azure ./.evergreen/run-mongodb-oidc-test.sh"
+            tar --exclude-vcs -czf $AZUREOIDC_DRIVERS_TAR_FILE .
             bash $DRIVERS_TOOLS/.evergreen/auth_oidc/azure/run-driver-test.sh
 
   - name: "oidc-auth-test-gcp-task"
+    # Might exceed 1 hour of execution.
+    exec_timeout_secs: 7200
     commands:
       - command: shell.exec
         params:
@@ -966,8 +978,8 @@ tasks:
             # Define the command to run on the VM.
             # Ensure that we source the environment file created for us, set up any other variables we need,
             # and then run our test suite on the vm.
-            export GCPOIDC_TEST_CMD="OIDC_ENV=gcp ./.evergreen/run-mongodb-oidc-test.sh"
-            tar --exclude="**build/" --exclude-vcs -czf $GCPOIDC_DRIVERS_TAR_FILE .
+            export GCPOIDC_TEST_CMD="GRADLE_RO_DEP_CACHE='./build/gradle-cache' OIDC_ENV=gcp ./.evergreen/run-mongodb-oidc-test.sh"
+            tar --exclude-vcs -czf $GCPOIDC_DRIVERS_TAR_FILE .
             bash $DRIVERS_TOOLS/.evergreen/auth_oidc/gcp/run-driver-test.sh
 
   - name: "oidc-auth-test-k8s-task"
@@ -1695,7 +1707,7 @@ tasks:
             export AZUREKMS_RESOURCEGROUP=${testazurekms_resourcegroup}
             export AZUREKMS_VMNAME=${AZUREKMS_VMNAME}
             export AZUREKMS_PRIVATEKEYPATH=/tmp/testazurekms_privatekey
-            tar --exclude="**build/" --exclude-vcs -czf $ARCHIVE_FILE_PATH .
+            tar --exclude-vcs -czf $ARCHIVE_FILE_PATH .
             AZUREKMS_SRC=$ARCHIVE_FILE_PATH AZUREKMS_DST="~/" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/copy-file.sh
             echo "Copying files ... end"
             echo "Untarring file ... begin"
@@ -1711,7 +1723,7 @@ tasks:
             export AZUREKMS_RESOURCEGROUP=${testazurekms_resourcegroup}
             export AZUREKMS_VMNAME=${AZUREKMS_VMNAME}
             export AZUREKMS_PRIVATEKEYPATH=/tmp/testazurekms_privatekey
-            AZUREKMS_CMD="MONGODB_URI=mongodb://localhost:27017 PROVIDER=azure AZUREKMS_KEY_VAULT_ENDPOINT=${testazurekms_keyvaultendpoint} AZUREKMS_KEY_NAME=${testazurekms_keyname} ./.evergreen/run-fle-on-demand-credential-test.sh" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/run-command.sh
+            AZUREKMS_CMD="GRADLE_RO_DEP_CACHE='/home/azureuser/build/gradle-cache' MONGODB_URI=mongodb://localhost:27017 PROVIDER=azure AZUREKMS_KEY_VAULT_ENDPOINT=${testazurekms_keyvaultendpoint} AZUREKMS_KEY_NAME=${testazurekms_keyname} ./.evergreen/run-fle-on-demand-credential-test.sh" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/run-command.sh
 
   - name: "test-socks5-task"
     tags: [ ]
@@ -1970,6 +1982,7 @@ task_groups:
       - func: "fetch-source"
       - func: "prepare-resources"
       - func: "fix-absolute-paths"
+      - func: "gradle-cache"
       - func: "create-archive-tar-file"
       - command: shell.exec
         params:
@@ -2007,6 +2020,7 @@ task_groups:
       - func: "fetch-source"
       - func: "prepare-resources"
       - func: "fix-absolute-paths"
+      - func: "gradle-cache"
       - func: "create-archive-tar-file"
       - func: "assume-aws-test-secrets-role"
       - command: shell.exec
@@ -2082,6 +2096,7 @@ task_groups:
       - func: "fetch-source"
       - func: "prepare-resources"
       - func: "fix-absolute-paths"
+      - func: "gradle-cache"
       - func: "create-archive-tar-file"
       - func: "assume-aws-test-secrets-role"
       - command: subprocess.exec
@@ -2110,6 +2125,7 @@ task_groups:
       - func: "fetch-source"
       - func: "prepare-resources"
       - func: "fix-absolute-paths"
+      - func: "gradle-cache"
       - func: "create-archive-tar-file"
       - func: "assume-aws-test-secrets-role"
       - command: subprocess.exec
@@ -2139,6 +2155,7 @@ task_groups:
       - func: "fetch-source"
       - func: "prepare-resources"
       - func: "fix-absolute-paths"
+      - func: "gradle-cache"
       - func: "create-archive-tar-file"
       - func: "assume-aws-test-secrets-role"
       - command: subprocess.exec
@@ -2192,14 +2209,14 @@ buildvariants:
 
   - name: "test-oidc-azure-variant"
     display_name: "OIDC Auth Azure"
-    run_on: ubuntu2204-small
+    run_on: ubuntu2204-large
     tasks:
       - name: "test-oidc-azure-task-group"
         batchtime: 20160 # 14 days
 
   - name: "test-oidc-gcp-variant"
     display_name: "OIDC Auth GCP"
-    run_on: ubuntu2204-small
+    run_on: ubuntu2204-large
     tasks:
       - name: "test-oidc-gcp-task-group"
         batchtime: 20160 # 14 days
