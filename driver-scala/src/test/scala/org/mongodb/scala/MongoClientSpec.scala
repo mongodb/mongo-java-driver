@@ -16,10 +16,10 @@
 
 package org.mongodb.scala
 
-import com.mongodb.reactivestreams.client.{MongoClient => JMongoClient}
+import com.mongodb.reactivestreams.client.{ MongoClient => JMongoClient }
 import org.bson.BsonDocument
 import org.mockito.Mockito.verify
-import org.mongodb.scala.model.bulk.{ClientBulkWriteOptions, ClientNamespacedWriteModel}
+import org.mongodb.scala.model.bulk.{ ClientBulkWriteOptions, ClientNamespacedWriteModel }
 import org.scalatestplus.mockito.MockitoSugar
 
 import scala.collection.JavaConverters._

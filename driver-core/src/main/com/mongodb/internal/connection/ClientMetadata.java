@@ -36,7 +36,7 @@ public class ClientMetadata {
     private BsonDocument clientMetadataBsonDocument;
 
     public ClientMetadata(@Nullable final String applicationName, final MongoDriverInformation mongoDriverInformation) {
-        withLock(readWriteLock.writeLock(), () -> {
+        withLock(readWriteLock.readLock(), () -> {
             this.clientMetadataBsonDocument = createClientMetadataDocument(applicationName, mongoDriverInformation);
         });
     }
