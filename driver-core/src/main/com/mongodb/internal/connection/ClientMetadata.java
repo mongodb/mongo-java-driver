@@ -36,7 +36,7 @@ public class ClientMetadata {
     private BsonDocument clientMetadataBsonDocument;
 
     public ClientMetadata(@Nullable final String applicationName, final MongoDriverInformation mongoDriverInformation) {
-        withLock(readWriteLock.readLock(), () -> {
+        withLock(readWriteLock.writeLock(), () -> {
             this.clientMetadataBsonDocument = createClientMetadataDocument(applicationName, mongoDriverInformation);
         });
     }
@@ -45,7 +45,7 @@ public class ClientMetadata {
      * Returns mutable BsonDocument that represents the client metadata.
      */
     public BsonDocument getBsonDocument() {
-        return clientMetadataBsonDocument;
+        return withLock(readWriteLock.readLock(), () -> clientMetadataBsonDocument);
     }
 
     public void append(final MongoDriverInformation mongoDriverInformation) {
