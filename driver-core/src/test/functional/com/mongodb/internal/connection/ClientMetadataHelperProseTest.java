@@ -28,7 +28,9 @@ import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
@@ -38,12 +40,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static com.mongodb.client.CrudTestHelper.repeat;
 import static com.mongodb.client.WithWrapper.withWrapper;
 import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
 import static com.mongodb.internal.connection.ClientMetadataHelper.getOperatingSystemType;
 import static com.mongodb.internal.connection.ClientMetadataHelper.updateClientMetadataDocument;
+import static java.util.Optional.ofNullable;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -320,9 +324,22 @@ public class ClientMetadataHelperProseTest {
                 createClientMetadataDocument(appName, driverInformation));
     }
 
+    public static java.util.stream.Stream<Arguments> provideDriverInformation() {
+        return Stream.of(
+                Arguments.of("1.0", "Framework", "Framework Platform"),
+                Arguments.of("1.0", "Framework", null),
+                Arguments.of(null, "Framework", "Framework Platform"),
+                Arguments.of(null, null, "Framework Platform"),
+                Arguments.of(null, "Framework", null)
+        );
+    }
 
-    @Test
-    void testUpdateClientMetadataDocument() {
+
+    @ParameterizedTest
+    @MethodSource("provideDriverInformation")
+    void testUpdateClientMetadataDocument(@Nullable final String driverVersion,
+                                          @Nullable final String driverName,
+                                          @Nullable final String driverPlatform) {
         //given
         MongoDriverInformation initialDriverInformation = MongoDriverInformation.builder()
                 .driverName("mongo-spark")
@@ -335,11 +352,12 @@ public class ClientMetadataHelperProseTest {
                 createExpectedClientMetadataDocument(null, initialDriverInformation),
                 initialClientMetadataDocument);
 
-        MongoDriverInformation metadataToAppend = MongoDriverInformation.builder()
-                .driverVersion("2.0.0")
-                .driverName("Framework")
-                .driverPlatform("JDK 99")
-                .build();
+        MongoDriverInformation.Builder builder;
+        builder = MongoDriverInformation.builder();
+        ofNullable(driverName).ifPresent(builder::driverName);
+        ofNullable(driverVersion).ifPresent(builder::driverVersion);
+        ofNullable(driverPlatform).ifPresent(builder::driverPlatform);
+        MongoDriverInformation metadataToAppend = builder.build();
 
         //We pass metadataToAppend to a builder and prepend with initial driver information.
         MongoDriverInformation expectedUpdatedMetadata = MongoDriverInformation.builder(metadataToAppend)
@@ -349,7 +367,7 @@ public class ClientMetadataHelperProseTest {
                 .build();
 
         //when
-        BsonDocument updatedClientMetadata = updateClientMetadataDocument(initialClientMetadataDocument, metadataToAppend);
+        BsonDocument updatedClientMetadata = updateClientMetadataDocument(initialClientMetadataDocument.clone(), metadataToAppend);
 
         //then
         assertEquals(
