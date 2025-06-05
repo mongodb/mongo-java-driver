@@ -575,7 +575,7 @@ functions:
           ${PREPARE_SHELL}
           JAVA_VERSION=${JAVA_VERSION} AWS_CREDENTIAL_PROVIDER=${AWS_CREDENTIAL_PROVIDER} .evergreen/run-mongodb-aws-test.sh assume-role
 
-  "run-aws-auth-test-with-aws-EC2 credentials":
+  "run-aws-auth-test-with-aws-EC2-credentials":
     - command: shell.exec
       type: "test"
       params:
@@ -1071,7 +1071,7 @@ tasks:
           TOPOLOGY: "server"
       - func: "assume-aws-test-secrets-role"
       - func: "add-aws-auth-variables-to-file"
-      - func: "run-aws-auth-test-with-aws-EC2 credentials"
+      - func: "run-aws-auth-test-with-aws-EC2-credentials"
 
   - name: "aws-auth-test-with-web-identity-credentials-task"
     commands:
