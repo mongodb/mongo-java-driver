@@ -1127,16 +1127,6 @@ tasks:
       - func: "add-aws-auth-variables-to-file"
       - func: "run-aws-auth-test-with-web-identity-credentials"
 
-  - name: "aws-ECS-auth-test-task"
-    commands:
-      - func: "start-mongo-orchestration"
-        vars:
-          AUTH: "auth"
-          ORCHESTRATION_FILE: "auth-aws.json"
-          TOPOLOGY: "server"
-      - func: "add-aws-auth-variables-to-file"
-      - func: "run-aws-ECS-auth-test"
-
   - name: "test-ocsp-rsa-valid-cert-server-staples-task"
     tags: [ "ocsp" ]
     commands:
