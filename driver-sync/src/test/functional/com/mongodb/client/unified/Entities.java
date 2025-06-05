@@ -617,15 +617,15 @@ public final class Entities {
                         break;
                     case "schemaMap":
                         Map<String, BsonDocument> schemaMap = new HashMap<>();
-                        for (Map.Entry<String, BsonValue> entries : entry.getValue().asDocument().entrySet()) {
-                            schemaMap.put(entries.getKey(), entries.getValue().asDocument());
+                        for (Map.Entry<String, BsonValue> schemaEntry : entry.getValue().asDocument().entrySet()) {
+                            schemaMap.put(schemaEntry.getKey(), schemaEntry.getValue().asDocument());
                         }
                         builder.schemaMap(schemaMap);
                         break;
                     case "encryptedFieldsMap":
                         Map<String, BsonDocument> encryptedFieldsMap = new HashMap<>();
-                        for (Map.Entry<String, BsonValue> entries : entry.getValue().asDocument().entrySet()) {
-                            encryptedFieldsMap.put(entries.getKey(), entries.getValue().asDocument());
+                        for (Map.Entry<String, BsonValue> encryptedEntry : entry.getValue().asDocument().entrySet()) {
+                            encryptedFieldsMap.put(encryptedEntry.getKey(), encryptedEntry.getValue().asDocument());
                         }
                         builder.encryptedFieldsMap(encryptedFieldsMap);
                         break;
