@@ -1000,6 +1000,7 @@ tasks:
           VARIANT: gke
 
   - name: "serverless-test-task"
+    disable: true # TODO JAVA-5849
     commands:
       - func: "assume-aws-test-secrets-role"
       - func: "start-serverless"
