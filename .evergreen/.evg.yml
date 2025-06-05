@@ -946,6 +946,7 @@ tasks:
   - name: "oidc-auth-test-azure-task"
     # Might exceed 1 hour of execution.
     exec_timeout_secs: 7200
+    disable: true # TODO JAVA-5896
     commands:
       - command: shell.exec
         params:
@@ -965,6 +966,7 @@ tasks:
   - name: "oidc-auth-test-gcp-task"
     # Might exceed 1 hour of execution.
     exec_timeout_secs: 7200
+    disable: true # TODO JAVA-5896
     commands:
       - command: shell.exec
         params:
