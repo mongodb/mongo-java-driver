@@ -159,7 +159,9 @@ public class TlsChannelImpl implements ByteChannel {
   private final Lock readLock = new ReentrantLock();
   private final Lock writeLock = new ReentrantLock();
 
-  private volatile boolean negotiated = false;
+  private boolean handshakeStarted = false;
+
+  private volatile boolean handshakeCompleted = false;
 
   /**
    * Whether a IOException was received from the underlying channel or from the {@link SSLEngine}.
@@ -526,14 +528,27 @@ public class TlsChannelImpl implements ByteChannel {
   }
 
   private void doHandshake(boolean force) throws IOException, EofException {
-    if (!force && negotiated) return;
+    if (!force && handshakeCompleted) {
+      return;
+    }
     initLock.lock();
     try {
       if (invalid || shutdownSent) throw new ClosedChannelException();
-      if (force || !negotiated) {
-        engine.beginHandshake();
-        LOGGER.trace("Called engine.beginHandshake()");
-        handshake(Optional.empty(), Optional.empty());
+      if (force || !handshakeCompleted) {
+
+        if (!handshakeStarted) {
+          engine.beginHandshake();
+          LOGGER.trace("Called engine.beginHandshake()");
+          handshake(Optional.empty(), Optional.empty());
+
+          // Some engines that do not support renegotiations may be sensitive to calling
+          // SSLEngine.beginHandshake() more than once. This guard prevents that.
+          // See: https://github.com/marianobarrios/tls-channel/issues/197
+          handshakeStarted = true;
+        }
+
+        handshakeCompleted = true;
+
         // call client code
         try {
           initSessionCallback.accept(engine.getSession());
@@ -541,7 +556,6 @@ public class TlsChannelImpl implements ByteChannel {
           LOGGER.trace("client code threw exception in session initialization callback", e);
           throw new TlsChannelCallbackException("session initialization callback failed", e);
         }
-        negotiated = true;
       }
     } finally {
       initLock.unlock();
