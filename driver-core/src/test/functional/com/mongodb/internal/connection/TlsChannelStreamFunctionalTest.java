@@ -25,6 +25,7 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -41,23 +42,21 @@ import java.net.ServerSocket;
 import java.nio.ByteBuffer;
 import java.nio.channels.InterruptedByTimeoutException;
 import java.nio.channels.SocketChannel;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.getPrimaryServerDescription;
-import static com.mongodb.ClusterFixture.sleep;
 import static com.mongodb.internal.connection.OperationContext.simpleOperationContext;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.junit.Assume.assumeTrue;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeast;
@@ -169,8 +168,8 @@ class TlsChannelStreamFunctionalTest {
 
     @Test
     @DisplayName("should not call beginHandshake more than once during TLS session establishment")
-    void shouldNotCallBeginHandshakeMoreThenOnceDuringTlsSessionEstablishment() throws IOException, NoSuchAlgorithmException {
-         assumeTrue(ClusterFixture.getSslSettings().isEnabled());
+    void shouldNotCallBeginHandshakeMoreThenOnceDuringTlsSessionEstablishment() throws Exception {
+        assumeTrue(ClusterFixture.getSslSettings().isEnabled());
 
         //given
         try (StreamFactoryFactory streamFactoryFactory = new TlsChannelStreamFactoryFactory(new DefaultInetAddressResolver())) {
@@ -186,12 +185,14 @@ class TlsChannelStreamFunctionalTest {
                             .build());
 
             Stream stream = streamFactory.create(getPrimaryServerDescription().getAddress());
-
             stream.open(ClusterFixture.OPERATION_CONTEXT);
             ByteBuf wrap = new ByteBufNIO(ByteBuffer.wrap(new byte[]{1, 3, 4}));
+
+            //when
             stream.write(Collections.singletonList(wrap), ClusterFixture.OPERATION_CONTEXT);
 
-            sleep(1000);
+            //then
+            SECONDS.sleep(5);
             verify(singleResultSpyCaptor.getResult(), times(1)).beginHandshake();
         }
     }
