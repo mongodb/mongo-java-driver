@@ -42,17 +42,7 @@ MongoDB project, please report it according to the [instructions here](https://w
 
 ## Versioning
 
-Major increments (such as 4.x -> 5.x) will occur when breaking changes are being made to the public API.  All methods and
-classes removed in a major release will have been deprecated in a prior release of the previous major release branch, and/or otherwise
-called out in the release notes.
-
-Minor 5.x increments (such as 5.1, 5.2, etc) will occur when non-trivial new functionality is added or significant enhancements or bug
-fixes occur that may have behavioral changes that may affect some edge cases (such as dependence on behavior resulting from a bug). An
-example of an enhancement is a method or class added to support new functionality added to the MongoDB server.   Minor releases will
-almost always be binary compatible with prior minor releases from the same major release branch, except as noted below.
-
-Patch 5.x.y increments (such as 5.0.0 -> 5.0.1, 5.1.1 -> 5.1.2, etc) will occur for bug fixes only and will always be binary compatible
-with prior patch releases of the same minor release branch.
+We follow [semantic versioning](https://semver.org/spec/v2.0.0.html) when releasing.
 
 #### @Alpha
 
