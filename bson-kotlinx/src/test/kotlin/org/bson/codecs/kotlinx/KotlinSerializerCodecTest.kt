@@ -1140,6 +1140,16 @@ class KotlinSerializerCodecTest {
     }
 
     @Test
+    fun testKebabCaseNamingStrategy() {
+        val expected =
+            """{"two-words": "", "my-property": "", "camel_-case_-underscores": "", "url-mapping": "",
+            | "my-http-auth": "", "my-http2-api-key": "", "my-http2fast-api-key": ""}"""
+                .trimMargin()
+        val dataClass = DataClassWithCamelCase()
+        assertRoundTrips(expected, dataClass, BsonConfiguration(bsonNamingStrategy = BsonNamingStrategy.KEBAB_CASE))
+    }
+
+    @Test
     fun testSameSnakeCaseName() {
         val expected = """{"my_http_auth": "", "my_http_auth1": ""}"""
         val dataClass = DataClassWithSameSnakeCaseName()

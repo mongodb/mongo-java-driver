@@ -58,5 +58,14 @@ public fun interface BsonNamingStrategy {
                 override fun toString() = "BsonNamingStrategySnakeCase"
             }
 
+        /**
+         * A strategy that transforms serial names from camel case to kebab case — lowercase characters with words
+         * separated by hyphens.
+         */
+        public val KEBAB_CASE: BsonNamingStrategy =
+            object : BsonNamingStrategy {
+                override fun transformName(serialName: String): String = convertCamelCase(serialName, '-')
+                override fun toString() = "BsonNamingStrategyKebabCase"
+            }
     }
 }
