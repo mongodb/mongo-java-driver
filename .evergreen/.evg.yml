@@ -207,8 +207,12 @@ functions:
         file: mo-expansion.yml
 
   "bootstrap mongohoused":
+    - command: ec2.assume_role
+      params:
+        role_arn: ${aws_test_secrets_role}
     - command: shell.exec
       params:
+        include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
         script: |
           DRIVERS_TOOLS="${DRIVERS_TOOLS}" bash ${DRIVERS_TOOLS}/.evergreen/atlas_data_lake/pull-mongohouse-image.sh
     - command: shell.exec
@@ -838,6 +842,8 @@ functions:
             export K8S_DRIVERS_TAR_FILE=/tmp/mongo-java-driver.tar
             git archive -o $K8S_DRIVERS_TAR_FILE HEAD
             tar -rf $K8S_DRIVERS_TAR_FILE .git
+            # Loop through all submodule directories and append to the archive
+            git submodule status --recursive | awk '{ print $2 }' | xargs tar -rf "$K8S_DRIVERS_TAR_FILE"
             export K8S_TEST_CMD="OIDC_ENV=k8s VARIANT=${VARIANT} ./.evergreen/run-mongodb-oidc-test.sh"
             bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/setup-pod.sh
             bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/run-self-test.sh
@@ -969,6 +975,8 @@ tasks:
               bash $DRIVERS_TOOLS/.evergreen/auth_oidc/gcp/run-driver-test.sh
 
     - name: "oidc-auth-test-k8s"
+      # Might exceed 1 hour of execution.
+      exec_timeout_secs: 7200
       commands:
         - command: ec2.assume_role
           params:
@@ -983,6 +991,8 @@ tasks:
         - func: "oidc-auth-test-k8s-func"
           vars:
             VARIANT: gke
+          params:
+            include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
 
     - name: serverless-test
       commands:
