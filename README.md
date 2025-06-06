@@ -42,7 +42,7 @@ MongoDB project, please report it according to the [instructions here](https://w
 
 ## Versioning
 
-We generally follow [semantic versioning](https://semver.org/spec/v2.0.0.html) when releasing.
+We follow [semantic versioning](https://semver.org/spec/v2.0.0.html) when releasing.
 
 #### @Alpha
 
