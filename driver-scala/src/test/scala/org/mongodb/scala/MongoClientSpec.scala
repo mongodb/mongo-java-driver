@@ -36,11 +36,8 @@ class MongoClientSpec extends BaseSpec with MockitoSugar {
     val local = classOf[MongoClient].getMethods.map(_.getName)
 
     wrapped.foreach((name: String) => {
-      // TODO-JAVA-5871 remove this if statement, but leave the body.
-      if (!name.equals("appendMetadata")) {
-        val cleanedName = name.stripPrefix("get")
-        assert(local.contains(name) | local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
-      }
+      val cleanedName = name.stripPrefix("get")
+      assert(local.contains(name) | local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
     })
   }
 
@@ -138,5 +135,11 @@ class MongoClientSpec extends BaseSpec with MockitoSugar {
   it should "call the underlying getClusterDescription" in {
     mongoClient.getClusterDescription
     verify(wrapped).getClusterDescription
+  }
+
+  it should "call the underlying appendMetadata" in {
+    val driverInformation = MongoDriverInformation.builder().build()
+    mongoClient.appendMetadata(driverInformation)
+    verify(wrapped).appendMetadata(driverInformation)
   }
 }

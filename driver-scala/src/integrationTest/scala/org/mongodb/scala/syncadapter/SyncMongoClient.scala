@@ -11,5 +11,5 @@ case class SyncMongoClient(wrapped: MongoClient) extends SyncMongoCluster(wrappe
   override def getClusterDescription = throw new UnsupportedOperationException
 
   override def appendMetadata(mongoDriverInformation: MongoDriverInformation): Unit =
-    throw new UnsupportedOperationException("TODO-JAVA-5871")
+    wrapped.appendMetadata(mongoDriverInformation)
 }

@@ -16,6 +16,7 @@
 package com.mongodb.kotlin.client
 
 import com.mongodb.ClientSessionOptions
+import com.mongodb.MongoDriverInformation
 import com.mongodb.MongoNamespace
 import com.mongodb.client.MongoClient as JMongoClient
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions
@@ -43,13 +44,7 @@ class MongoClientTest {
 
     @Test
     fun shouldHaveTheSameMethods() {
-        val jMongoClientFunctions =
-            JMongoClient::class
-                .declaredFunctions
-                .map { it.name }
-                // TODO-JAVA-5871 remove .filterNot { it == "appendMetadata" }
-                .filterNot { it == "appendMetadata" }
-                .toSet()
+        val jMongoClientFunctions = JMongoClient::class.declaredFunctions.map { it.name }.toSet()
 
         val kMongoClientFunctions =
             MongoClient::class.declaredFunctions.map { it.name }.toSet() +
@@ -78,6 +73,22 @@ class MongoClientTest {
         mongoClient.clusterDescription
 
         verify(wrapped).clusterDescription
+        verifyNoMoreInteractions(wrapped)
+    }
+
+    @Test
+    fun shouldCallTheUnderlyingAppendMetadata() {
+        val mongoClient = MongoClient(wrapped)
+
+        val mongoDriverInformation =
+            MongoDriverInformation.builder()
+                .driverName("kotlin")
+                .driverPlatform("kotlin/${KotlinVersion.CURRENT}")
+                .build()
+
+        mongoClient.appendMetadata(mongoDriverInformation)
+
+        verify(wrapped).appendMetadata(mongoDriverInformation)
         verifyNoMoreInteractions(wrapped)
     }
 
