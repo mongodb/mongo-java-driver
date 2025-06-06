@@ -26,8 +26,9 @@ import static com.mongodb.assertions.Assertions.isTrue;
  */
 public final class MultiServerCluster extends AbstractMultiServerCluster {
     public MultiServerCluster(final ClusterId clusterId, final ClusterSettings settings,
-                              final ClusterableServerFactory serverFactory) {
-        super(clusterId, settings, serverFactory);
+                              final ClusterableServerFactory serverFactory,
+                              final ClientMetadata clientMetadata) {
+        super(clusterId, settings, serverFactory, clientMetadata);
         isTrue("srvHost is null", settings.getSrvHost() == null);
         initialize(settings.getHosts());
     }
