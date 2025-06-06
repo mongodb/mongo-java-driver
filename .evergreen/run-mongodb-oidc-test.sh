@@ -14,7 +14,7 @@ if [ $OIDC_ENV == "test" ]; then
     source ${DRIVERS_TOOLS}/.evergreen/auth_oidc/secrets-export.sh
     # java will not need to be installed, but we need to config
     RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
-    source "${RELATIVE_DIR_PATH}/javaConfig.bash"
+    source "${RELATIVE_DIR_PATH}/setup-env.bash"
 elif [ $OIDC_ENV == "azure" ]; then
     source ./env.sh
 elif [ $OIDC_ENV == "gcp" ]; then
@@ -50,6 +50,6 @@ REPLACEMENT="mongodb://$OIDC_ADMIN_USER:$OIDC_ADMIN_PWD@"
 ADMIN_URI=${MONGODB_URI/$TO_REPLACE/$REPLACEMENT}
 
 ./gradlew -Dorg.mongodb.test.uri="$ADMIN_URI" \
-  --stacktrace --debug --info --no-build-cache driver-core:cleanTest \
+  --stacktrace --debug --info driver-core:cleanTest \
   driver-sync:test --tests OidcAuthenticationProseTests --tests UnifiedAuthTest \
   driver-reactive-streams:test --tests OidcAuthenticationAsyncProseTests \

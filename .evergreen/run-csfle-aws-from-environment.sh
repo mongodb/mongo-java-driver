@@ -12,7 +12,8 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #            Main Program                  #
 ############################################
 RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
-. "${RELATIVE_DIR_PATH}/javaConfig.bash"
+. "${RELATIVE_DIR_PATH}/setup-env.bash"
+
 echo "Running CSFLE AWS from environment tests"
 
 ./gradlew -version
@@ -21,12 +22,12 @@ export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
 export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 
 ./gradlew --stacktrace --info -Dorg.mongodb.test.uri=${MONGODB_URI} \
-    --no-build-cache driver-sync:cleanTest driver-sync:test --tests ClientSideEncryptionAwsCredentialFromEnvironmentTest
+    driver-sync:cleanTest driver-sync:test --tests ClientSideEncryptionAwsCredentialFromEnvironmentTest
 first=$?
 echo $first
 
 ./gradlew --stacktrace --info  -Dorg.mongodb.test.uri=${MONGODB_URI} \
-    --no-build-cache driver-reactive-streams:cleanTest driver-reactive-streams:test --tests ClientSideEncryptionAwsCredentialFromEnvironmentTest
+    driver-reactive-streams:cleanTest driver-reactive-streams:test --tests ClientSideEncryptionAwsCredentialFromEnvironmentTest
 second=$?
 echo $second
 
