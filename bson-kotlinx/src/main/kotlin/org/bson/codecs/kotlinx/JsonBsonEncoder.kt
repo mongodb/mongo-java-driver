@@ -30,7 +30,7 @@ import kotlinx.serialization.json.int
 import kotlinx.serialization.json.long
 import kotlinx.serialization.modules.SerializersModule
 import org.bson.BsonWriter
-import org.bson.codecs.kotlinx.utils.BsonCodecUtils.toJsonNamingStrategy
+import org.bson.codecs.kotlinx.utils.BsonCodecUtils.asJsonNamingStrategy
 import org.bson.types.Decimal128
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -53,7 +53,7 @@ internal class JsonBsonEncoder(
         explicitNulls = configuration.explicitNulls
         encodeDefaults = configuration.encodeDefaults
         classDiscriminator = configuration.classDiscriminator
-        namingStrategy = configuration.bsonNamingStrategy.toJsonNamingStrategy()
+        namingStrategy = configuration.bsonNamingStrategy.asJsonNamingStrategy()
         serializersModule = this@JsonBsonEncoder.serializersModule
     }
 
