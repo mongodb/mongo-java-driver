@@ -113,7 +113,7 @@ public abstract class Authenticator {
         }).finish(callback);
     }
 
-    private static OperationContext operationContextWithoutSession(final OperationContext operationContext) {
+    static OperationContext operationContextWithoutSession(final OperationContext operationContext) {
         return operationContext.withSessionContext(
                 new ReadConcernAwareNoOpSessionContext(operationContext.getSessionContext().getReadConcern()));
     }
