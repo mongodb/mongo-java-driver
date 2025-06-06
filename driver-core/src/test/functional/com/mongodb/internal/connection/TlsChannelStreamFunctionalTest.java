@@ -16,12 +16,17 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
+import org.bson.ByteBuf;
+import org.bson.ByteBufNIO;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedStatic;
@@ -29,23 +34,34 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.nio.ByteBuffer;
 import java.nio.channels.InterruptedByTimeoutException;
 import java.nio.channels.SocketChannel;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.getPrimaryServerDescription;
 import static com.mongodb.internal.connection.OperationContext.simpleOperationContext;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class TlsChannelStreamFunctionalTest {
     private static final SslSettings SSL_SETTINGS = SslSettings.builder().enabled(true).build();
@@ -98,6 +114,7 @@ class TlsChannelStreamFunctionalTest {
         try (StreamFactoryFactory streamFactoryFactory = new TlsChannelStreamFactoryFactory(new DefaultInetAddressResolver());
              MockedStatic<SocketChannel> socketChannelMockedStatic = Mockito.mockStatic(SocketChannel.class);
              ServerSocket serverSocket = new ServerSocket(0, 1)) {
+
             SingleResultSpyCaptor<SocketChannel> singleResultSpyCaptor = new SingleResultSpyCaptor<>();
             socketChannelMockedStatic.when(SocketChannel::open).thenAnswer(singleResultSpyCaptor);
 
@@ -146,5 +163,36 @@ class TlsChannelStreamFunctionalTest {
 
     private static OperationContext createOperationContext(final int connectTimeoutMs) {
         return simpleOperationContext(new TimeoutContext(TimeoutSettings.DEFAULT.withConnectTimeoutMS(connectTimeoutMs)));
+    }
+
+    @Test
+    @DisplayName("should not call beginHandshake more than once during TLS session establishment")
+    void shouldNotCallBeginHandshakeMoreThenOnceDuringTlsSessionEstablishment() throws Exception {
+        assumeTrue(ClusterFixture.getSslSettings().isEnabled());
+
+        //given
+        try (StreamFactoryFactory streamFactoryFactory = new TlsChannelStreamFactoryFactory(new DefaultInetAddressResolver())) {
+
+            SSLContext sslContext = Mockito.spy(SSLContext.getDefault());
+            SingleResultSpyCaptor<SSLEngine> singleResultSpyCaptor = new SingleResultSpyCaptor<>();
+            when(sslContext.createSSLEngine(anyString(), anyInt())).thenAnswer(singleResultSpyCaptor);
+
+            StreamFactory streamFactory = streamFactoryFactory.create(
+                    SocketSettings.builder().build(),
+                    SslSettings.builder(ClusterFixture.getSslSettings())
+                            .context(sslContext)
+                            .build());
+
+            Stream stream = streamFactory.create(getPrimaryServerDescription().getAddress());
+            stream.open(ClusterFixture.OPERATION_CONTEXT);
+            ByteBuf wrap = new ByteBufNIO(ByteBuffer.wrap(new byte[]{1, 3, 4}));
+
+            //when
+            stream.write(Collections.singletonList(wrap), ClusterFixture.OPERATION_CONTEXT);
+
+            //then
+            SECONDS.sleep(5);
+            verify(singleResultSpyCaptor.getResult(), times(1)).beginHandshake();
+        }
     }
 }
