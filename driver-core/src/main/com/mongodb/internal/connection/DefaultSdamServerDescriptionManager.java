@@ -83,7 +83,8 @@ final class DefaultSdamServerDescriptionManager implements SdamServerDescription
     }
 
     @Override
-    public void update(final ServerDescription candidateDescription) {
+    public void updateToUnknown(final ServerDescription candidateDescription) {
+        assertTrue(candidateDescription.getType() == UNKNOWN);
         cluster.withLock(() -> {
             if (TopologyVersionHelper.newer(description.getTopologyVersion(), candidateDescription.getTopologyVersion())) {
                 return;

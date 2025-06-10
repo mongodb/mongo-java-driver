@@ -201,7 +201,7 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
             }
 
             @Override
-            void update(final ServerDescription candidateDescription) {
+            void updateToUnknown(final ServerDescription candidateDescription) {
                 assert candidateDescription != null
                 newDescription = candidateDescription
                 latch.countDown()

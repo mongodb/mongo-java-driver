@@ -151,7 +151,7 @@ class DefaultServer implements ClusterableServer {
 
     @Override
     public void resetToConnecting(final MongoException cause) {
-        sdam.update(unknownConnectingServerDescription(serverId, cause));
+        sdam.updateToUnknown(unknownConnectingServerDescription(serverId, cause));
     }
 
     @Override

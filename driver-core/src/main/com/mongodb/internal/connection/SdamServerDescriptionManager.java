@@ -58,7 +58,7 @@ interface SdamServerDescriptionManager {
      *                             {@linkplain TopologyVersionHelper#newer(TopologyVersion, TopologyVersion) depending on}
      *                             its {@link ServerDescription#getTopologyVersion() topology version}.
      */
-    void update(ServerDescription candidateDescription);
+    void updateToUnknown(ServerDescription candidateDescription);
 
     void handleExceptionBeforeHandshake(SdamIssue sdamIssue);
 

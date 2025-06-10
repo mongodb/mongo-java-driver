@@ -58,7 +58,7 @@ class DefaultServerMonitorSpecification extends Specification {
             }
 
             @Override
-            void update(final ServerDescription candidateDescription) {
+            void updateToUnknown(final ServerDescription candidateDescription) {
                 assert candidateDescription != null
                 stateChanged = true
             }
