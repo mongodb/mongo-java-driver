@@ -47,14 +47,6 @@ public final class ChangeStreamDocument<TDocument> {
     private final BsonDocument resumeToken;
     private final BsonDocument namespaceDocument;
 
-    /**
-     * Only present for ops of type 'create'.
-     * Only present when the `showExpandedEvents` change stream option is enabled.
-     *
-     * The type of the newly created object.
-     *
-     * @since 8.1.0
-     */
     @BsonProperty("nsType")
     private final String namespaceTypeString;
     @BsonIgnore
