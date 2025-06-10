@@ -253,7 +253,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     @Override
     public void reauthenticate(final InternalConnection connection, final OperationContext operationContext) {
         assertTrue(connection.opened());
-        authenticationLoop(connection, connection.getDescription(), operationContext);
+        authenticationLoop(connection, connection.getDescription(), operationContextWithoutSession(operationContext));
     }
 
     @Override
@@ -262,7 +262,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                                     final SingleResultCallback<Void> callback) {
         beginAsync().thenRun(c -> {
             assertTrue(connection.opened());
-            authenticationLoopAsync(connection, connection.getDescription(), operationContext, c);
+            authenticationLoopAsync(connection, connection.getDescription(), operationContextWithoutSession(operationContext), c);
         }).finish(callback);
     }
 
