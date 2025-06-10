@@ -166,7 +166,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
      * <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-tests.md#connection-pool-management">Connection Pool Management</a>.
      */
     @Test
-    @Ignore
+    @Ignore("JAVA-4484 - events are not guaranteed to be delivered in order")
     @SuppressWarnings("try")
     public void testConnectionPoolManagement() throws InterruptedException {
         assumeTrue(serverVersionAtLeast(4, 3));
@@ -232,7 +232,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
      */
     @Test
     @SuppressWarnings("try")
-    public void monitorsSleepAtLeastMinHeartbeatFreqencyMSBetweenChecks() {
+    public void monitorsSleepAtLeastMinHeartbeatFrequencyMSBetweenChecks() {
         assumeTrue(serverVersionAtLeast(4, 3));
         assumeFalse(isServerlessTest());
         long defaultMinHeartbeatIntervalMillis = MongoClientSettings.builder().build().getServerSettings()
@@ -265,6 +265,13 @@ public class ServerDiscoveryAndMonitoringProseTests {
             assertTrue(msg, durationMillis >= 2000);
             assertTrue(msg, durationMillis <= 3500);
         }
+    }
+
+    @Test
+    @Ignore("Run as part of DefaultServerMonitorTest")
+    public void shouldEmitHeartbeatStartedBeforeSocketIsConnected() {
+        // The implementation of this test is in DefaultServerMonitorTest.shouldEmitHeartbeatStartedBeforeSocketIsConnected
+        // As it requires mocking and package access to `com.mongodb.internal.connection`
     }
 
     private static void assertPoll(final BlockingQueue<?> queue, @Nullable final Class<?> allowed, final Set<Class<?>> required)
