@@ -37,8 +37,6 @@ public enum NamespaceType {
      *
      * <p>A placeholder for newer namespace types issued by the server.
      * Users encountering OTHER namespace types are advised to update the driver to get the actual namespace type.</p>
-     *
-     * @since 5.6
      */
     OTHER("other");
 
