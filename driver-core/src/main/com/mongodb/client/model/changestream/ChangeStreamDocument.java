@@ -46,6 +46,19 @@ public final class ChangeStreamDocument<TDocument> {
     @BsonId()
     private final BsonDocument resumeToken;
     private final BsonDocument namespaceDocument;
+
+    /**
+     * Only present for ops of type 'create'.
+     * Only present when the `showExpandedEvents` change stream option is enabled.
+     *
+     * The type of the newly created object.
+     *
+     * @since 8.1.0
+     */
+    @BsonProperty("nsType")
+    private final String namespaceTypeString;
+    @BsonIgnore
+    private final NamespaceType namespaceType;
     private final BsonDocument destinationNamespaceDocument;
     private final TDocument fullDocument;
     private final TDocument fullDocumentBeforeChange;
@@ -66,9 +79,10 @@ public final class ChangeStreamDocument<TDocument> {
     /**
      * Creates a new instance
      *
-     * @param operationTypeString the operation type
+     * @param operationType the operation type
      * @param resumeToken the resume token
      * @param namespaceDocument the BsonDocument representing the namespace
+     * @param namespaceType the namespace type
      * @param destinationNamespaceDocument the BsonDocument representing the destinatation namespace
      * @param fullDocument the full document
      * @param fullDocumentBeforeChange the full document before change
@@ -85,9 +99,10 @@ public final class ChangeStreamDocument<TDocument> {
      */
     @BsonCreator
     public ChangeStreamDocument(
-            @Nullable @BsonProperty("operationType") final String operationTypeString,
+            @Nullable @BsonProperty("operationType") final String operationType,
             @BsonProperty("resumeToken") final BsonDocument resumeToken,
             @Nullable @BsonProperty("ns") final BsonDocument namespaceDocument,
+            @Nullable @BsonProperty("nsType") final String  namespaceType,
             @Nullable @BsonProperty("to") final BsonDocument destinationNamespaceDocument,
             @Nullable @BsonProperty("fullDocument") final TDocument fullDocument,
             @Nullable @BsonProperty("fullDocumentBeforeChange") final TDocument fullDocumentBeforeChange,
@@ -101,12 +116,14 @@ public final class ChangeStreamDocument<TDocument> {
             @Nullable @BsonProperty final BsonDocument extraElements) {
         this.resumeToken = resumeToken;
         this.namespaceDocument = namespaceDocument;
+        this.namespaceTypeString = namespaceType;
+        this.namespaceType = namespaceTypeString == null ? null : NamespaceType.fromString(namespaceType);
         this.destinationNamespaceDocument = destinationNamespaceDocument;
         this.fullDocumentBeforeChange = fullDocumentBeforeChange;
         this.documentKey = documentKey;
         this.fullDocument = fullDocument;
         this.clusterTime = clusterTime;
-        this.operationTypeString = operationTypeString;
+        this.operationTypeString = operationType;
         this.operationType = operationTypeString == null ? null : OperationType.fromString(operationTypeString);
         this.updateDescription = updateDescription;
         this.txnNumber = txnNumber;
@@ -134,6 +151,8 @@ public final class ChangeStreamDocument<TDocument> {
      *
      * @return the namespace. If the namespaceDocument is null or if it is missing either the 'db' or 'coll' keys,
      * then this will return null.
+     * @see #getNamespaceType()
+     * @see #getNamespaceTypeString()
      */
     @BsonIgnore
     @Nullable
@@ -156,11 +175,47 @@ public final class ChangeStreamDocument<TDocument> {
      *
      * @return the namespaceDocument
      * @since 3.8
+     * @see #getNamespaceType()
+     * @see #getNamespaceTypeString()
      */
     @BsonProperty("ns")
     @Nullable
     public BsonDocument getNamespaceDocument() {
         return namespaceDocument;
+    }
+
+    /**
+     * Returns the type of the newly created namespace object as a String, derived from the "nsType" field in a change stream document.
+     * <p>
+     * This method is useful when using a driver release that has not yet been updated to include a newer namespace type in the
+     * {@link NamespaceType} enum.  In that case, {@link #getNamespaceType()} will return {@link NamespaceType#OTHER} and this method can
+     * be used to retrieve the actual namespace type as a string value.
+     * <p>
+     * May return null only if <code>$changeStreamSplitLargeEvent</code> is used.
+     *
+     * @return the namespace type as a string
+     * @since 5.6
+     * @mongodb.server.release 8.1
+     * @see #getNamespaceType()
+     * @see #getNamespaceDocument()
+     */
+    @Nullable
+    public String getNamespaceTypeString() {
+        return namespaceTypeString;
+    }
+
+    /**
+     * Returns the type of the newly created namespace object, derived from the "nsType" field in a change stream document.
+     *
+     * @return the namespace type.
+     * @since 5.6
+     * @mongodb.server.release 8.1
+     * @see #getNamespaceTypeString()
+     * @see #getNamespaceDocument()
+     */
+    @Nullable
+    public NamespaceType getNamespaceType() {
+        return namespaceType;
     }
 
     /**
