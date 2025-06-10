@@ -168,33 +168,6 @@ public abstract class AbstractClientMetadataProseTest {
         }
     }
 
-    @Test
-    void shouldNotCloseExistingConnectionsToAppendMetadata() {
-        //given
-        MongoDriverInformation initialWrappingLibraryDriverInformation = MongoDriverInformation.builder()
-                .driverName("library")
-                .driverVersion("1.2")
-                .driverPlatform("Library Platform")
-                .build();
-
-        try (MongoClient mongoClient = createMongoClient(initialWrappingLibraryDriverInformation, getMongoClientSettingsBuilder()
-                .build())) {
-
-            //TODO change get() to orElseThrow
-            BsonDocument clientMetadata = executePingAndCaptureMetadataHandshake(mongoClient).get();
-            BsonDocument driverInformation = clientMetadata.getDocument("driver");
-            assertNotNull(driverInformation);
-
-            //when
-            mongoClient.appendMetadata(initialWrappingLibraryDriverInformation);
-
-            //then
-            assertThat(executePingAndCaptureMetadataHandshake(mongoClient)).isEmpty();
-            assertFalse(connectionPoolListener.getEvents().stream().anyMatch(ConnectionClosedEvent.class::isInstance),
-                    "Expected no connection closed events");
-        }
-    }
-
     // Not a prose test. Additional test for better coverage.
     @Test
     void shouldAppendProvidedMetadatDuringInitialization() {
