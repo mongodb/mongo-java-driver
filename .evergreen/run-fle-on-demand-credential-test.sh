@@ -32,7 +32,7 @@ echo "Running gradle classes compile for driver-sync and driver-reactive-streams
 echo "Running driver-sync tests"
 ./gradlew -Dorg.mongodb.test.uri="${MONGODB_URI}" \
  -Dorg.mongodb.test.fle.on.demand.credential.test.success.enabled=true \
- --build-cache--stacktrace --info  driver-sync:test --tests ClientSideEncryptionOnDemandCredentialsTest
+ --build-cache --stacktrace --info  driver-sync:test --tests ClientSideEncryptionOnDemandCredentialsTest
 first=$?
 echo $first
 

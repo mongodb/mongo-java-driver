@@ -5,7 +5,7 @@ set -eu
 
 echo "Running MONGODB-OIDC authentication tests"
 echo "OIDC_ENV $OIDC_ENV"
-
+FULL_DESCRIPTION=$OIDC_ENV
 if [ $OIDC_ENV == "test" ]; then
     if [ -z "$DRIVERS_TOOLS" ]; then
         echo "Must specify DRIVERS_TOOLS"
@@ -27,13 +27,13 @@ elif [ $OIDC_ENV == "k8s" ]; then
         exit 1
     fi
 
+    FULL_DESCRIPTION="${OIDC_ENV} - ${K8S_VARIANT}"
     # fix for git permissions issue:
     git config --global --add safe.directory /tmp/test
 else
     echo "Unrecognized OIDC_ENV $OIDC_ENV"
     exit 1
 fi
-
 
 if ! which java ; then
     echo "Installing java..."
@@ -52,15 +52,15 @@ ADMIN_URI=${MONGODB_URI/$TO_REPLACE/$REPLACEMENT}
 echo "Running gradle version"
 ./gradlew -version
 
-echo "Running gradle classes compile for driver-sync and driver-reactive-streams"
+echo "Running gradle classes compile for driver-sync and driver-reactive-streams: ${FULL_DESCRIPTION}"
 ./gradlew --parallel --stacktrace --info  \
   driver-sync:classes driver-reactive-streams:classes
 
-echo "Running OIDC authentication tests against driver-sync"
+echo "Running OIDC authentication tests against driver-sync: ${FULL_DESCRIPTION}"
 ./gradlew -Dorg.mongodb.test.uri="$ADMIN_URI" \
   --stacktrace --debug --info \
   driver-sync:test --tests OidcAuthenticationProseTests --tests UnifiedAuthTest
 
-echo "Running OIDC authentication tests against driver-reactive-streams"
+echo "Running OIDC authentication tests against driver-reactive-streams: ${FULL_DESCRIPTION}"
 ./gradlew -Dorg.mongodb.test.uri="$ADMIN_URI" \
   --stacktrace --debug --info driver-reactive-streams:test --tests OidcAuthenticationAsyncProseTests
