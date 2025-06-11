@@ -22,15 +22,24 @@ fi
 
 export PROVIDER=${PROVIDER}
 
+echo "Running gradle version"
+./gradlew -version
+
+echo "Running gradle classes compile for driver-sync and driver-reactive-streams"
+./gradlew --parallel --build-cache --stacktrace --info  \
+  driver-sync:classes driver-reactive-streams:classes
+
+echo "Running driver-sync tests"
 ./gradlew -Dorg.mongodb.test.uri="${MONGODB_URI}" \
  -Dorg.mongodb.test.fle.on.demand.credential.test.success.enabled=true \
- --stacktrace --debug --info  driver-sync:test --tests ClientSideEncryptionOnDemandCredentialsTest
+ --build-cache--stacktrace --info  driver-sync:test --tests ClientSideEncryptionOnDemandCredentialsTest
 first=$?
 echo $first
 
+echo "Running driver-reactive-streams tests"
 ./gradlew -Dorg.mongodb.test.uri="${MONGODB_URI}" \
  -Dorg.mongodb.test.fle.on.demand.credential.test.success.enabled=true \
- --stacktrace --debug --info  driver-reactive-streams:test --tests ClientSideEncryptionOnDemandCredentialsTest
+ --build-cache --stacktrace --info  driver-reactive-streams:test --tests ClientSideEncryptionOnDemandCredentialsTest
 second=$?
 echo $second
 

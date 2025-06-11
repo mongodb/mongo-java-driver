@@ -999,6 +999,7 @@ tasks:
         vars:
           VARIANT: gke
 
+
   - name: "serverless-test-task"
     disable: true # TODO JAVA-5849
     commands:
@@ -1698,6 +1699,8 @@ tasks:
             GCPKMS_CMD="MONGODB_URI=mongodb://localhost:27017 PROVIDER=gcp ./.evergreen/run-fle-on-demand-credential-test.sh" $DRIVERS_TOOLS/.evergreen/csfle/gcpkms/run-command.sh
 
   - name: "test-azure-kms-task"
+    # Might exceed 1 hour of execution.
+    exec_timeout_secs: 7200
     commands:
       - command: shell.exec
         type: "setup"
@@ -1783,7 +1786,7 @@ axes:
         run_on: "rhel80-small"
       - id: "ubuntu"
         display_name: "Ubuntu"
-        run_on: "ubuntu2004-small"
+        run_on: "ubuntu2204-small"
 
   - id: "topology"
     display_name: "Topology"
@@ -2212,14 +2215,14 @@ buildvariants:
 
   - name: "test-oidc-azure-variant"
     display_name: "OIDC Auth Azure"
-    run_on: ubuntu2204-large
+    run_on: ubuntu2204-small
     tasks:
       - name: "test-oidc-azure-task-group"
         batchtime: 20160 # 14 days
 
   - name: "test-oidc-gcp-variant"
     display_name: "OIDC Auth GCP"
-    run_on: ubuntu2204-large
+    run_on: ubuntu2204-small
     tasks:
       - name: "test-oidc-gcp-task-group"
         batchtime: 20160 # 14 days
@@ -2241,7 +2244,7 @@ buildvariants:
 
   - name: "atlas-data-lake-test"
     display_name: "Atlas Data Lake test"
-    run_on: "ubuntu2004-small"
+    run_on: "ubuntu2204-small"
     tasks:
       - name: "atlas-data-lake-task"
 
@@ -2253,20 +2256,20 @@ buildvariants:
 
   - name: "publish-snapshot"
     display_name: "Publish Snapshot"
-    run_on: "ubuntu2004-small"
+    run_on: "ubuntu2204-small"
     tasks:
       - name: "publish-snapshot-task"
 
   - name: "publish-release"
     display_name: "Publish Release"
-    run_on: "ubuntu2004-small"
+    run_on: "ubuntu2204-small"
     tasks:
       - name: "publish-release-task"
 
   - name: "test-gcp-kms-variant"
     display_name: "GCP KMS"
     run_on:
-      - debian11-small
+      - debian12-small
     tasks:
       - name: "test-gcp-kms-task-group"
         batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
@@ -2274,7 +2277,7 @@ buildvariants:
   - name: "test-azure-kms-variant"
     display_name: "Azure KMS"
     run_on:
-      - debian11-small
+      - debian12-small
     tasks:
       - name: "test-azure-kms-task-group"
         batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
@@ -2432,14 +2435,14 @@ buildvariants:
     matrix_spec: { ssl: "nossl", jdk: [ "jdk8", "jdk17", "jdk21" ], version: [ "4.4", "5.0", "6.0", "7.0", "8.0", "latest" ], os: "ubuntu",
                    aws-credential-provider: "*" }
     display_name: "MONGODB-AWS Basic Auth test ${version} ${jdk} ${aws-credential-provider}"
-    run_on: "ubuntu2004-small"
+    run_on: "ubuntu2204-small"
     tasks:
       - name: "aws-auth-test-with-regular-aws-credentials-task"
 
   - matrix_name: "aws-ec2-auth-test"
     matrix_spec: { ssl: "nossl", jdk: [ "jdk21" ], version: [ "7.0" ], os: "ubuntu", aws-credential-provider: "*" }
     display_name: "MONGODB-AWS Advanced Auth test ${version} ${jdk} ${aws-credential-provider}"
-    run_on: "ubuntu2004-small"
+    run_on: "ubuntu2204-small"
     tasks:
       - name: "aws-auth-test-with-aws-EC2-credentials-task"
       - name: "aws-auth-test-with-assume-role-credentials-task"
@@ -2451,7 +2454,7 @@ buildvariants:
     matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk21", version: [ "5.0", "6.0", "7.0", "8.0", "latest" ], topology: "standalone",
                    os: "linux" }
     display_name: "Accept API Version 2 ${version}"
-    run_on: "ubuntu2004-small"
+    run_on: "ubuntu2204-small"
     tasks:
       - name: "accept-api-version-2-test-task"
 
