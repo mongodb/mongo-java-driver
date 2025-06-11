@@ -982,7 +982,7 @@ tasks:
             tar --exclude-vcs -czf $GCPOIDC_DRIVERS_TAR_FILE .
             bash $DRIVERS_TOOLS/.evergreen/auth_oidc/gcp/run-driver-test.sh
 
-  - name: "oidc-auth-test-k8s-task"
+  - name: "oidc-auth-test-k8s-eks-task"
     # Might exceed 1 hour of execution.
     exec_timeout_secs: 7200
     commands:
@@ -990,9 +990,21 @@ tasks:
       - func: "run-oidc-auth-test-k8s-test"
         vars:
           VARIANT: eks
+
+  - name: "oidc-auth-test-k8s-aks-task"
+    # Might exceed 1 hour of execution.
+    exec_timeout_secs: 7200
+    commands:
+      - func: "assume-aws-test-secrets-role"
       - func: "run-oidc-auth-test-k8s-test"
         vars:
           VARIANT: aks
+
+  - name: "oidc-auth-test-k8s-gke-task"
+    # Might exceed 1 hour of execution.
+    exec_timeout_secs: 7200
+    commands:
+      - func: "assume-aws-test-secrets-role"
       - func: "run-oidc-auth-test-k8s-test"
         vars:
           VARIANT: gke
@@ -2152,7 +2164,7 @@ task_groups:
     tasks:
       - "oidc-auth-test-gcp-task"
 
-  - name: "test-oidc-k8s-task-group"
+  - name: "test-oidc-k8s-eks-task-group"
     setup_group_can_fail_task: true
     setup_group_timeout_secs: 1800
     teardown_task_can_fail_task: true
@@ -2177,7 +2189,61 @@ task_groups:
           args:
             - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/k8s/teardown.sh
     tasks:
-      - "oidc-auth-test-k8s-task"
+      - "oidc-auth-test-k8s-eks-task"
+
+  - name: "test-oidc-k8s-aks-task-group"
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
+    teardown_task_can_fail_task: true
+    teardown_task_timeout_secs: 1800
+    setup_group:
+      - func: "fetch-source"
+      - func: "prepare-resources"
+      - func: "fix-absolute-paths"
+      - func: "gradle-cache"
+      - func: "create-archive-tar-file"
+      - func: "assume-aws-test-secrets-role"
+      - command: subprocess.exec
+        params:
+          binary: bash
+          include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/k8s/setup.sh
+    teardown_task:
+      - command: subprocess.exec
+        params:
+          binary: bash
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/k8s/teardown.sh
+    tasks:
+      - "oidc-auth-test-k8s-aks-task"
+
+  - name: "test-oidc-k8s-gke-task-group"
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
+    teardown_task_can_fail_task: true
+    teardown_task_timeout_secs: 1800
+    setup_group:
+      - func: "fetch-source"
+      - func: "prepare-resources"
+      - func: "fix-absolute-paths"
+      - func: "gradle-cache"
+      - func: "create-archive-tar-file"
+      - func: "assume-aws-test-secrets-role"
+      - command: subprocess.exec
+        params:
+          binary: bash
+          include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/k8s/setup.sh
+    teardown_task:
+      - command: subprocess.exec
+        params:
+          binary: bash
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/k8s/teardown.sh
+    tasks:
+      - "oidc-auth-test-k8s-gke-task"
 
 buildvariants:
 
@@ -2231,7 +2297,11 @@ buildvariants:
     display_name: "OIDC Auth K8S"
     run_on: ubuntu2204-small
     tasks:
-      - name: "test-oidc-k8s-task-group"
+      - name: "test-oidc-k8s-eks-task-group"
+        batchtime: 20160 # 14 days
+      - name: "test-oidc-k8s-aks-task-group"
+        batchtime: 20160 # 14 days
+      - name: "test-oidc-k8s-gke-task-group"
         batchtime: 20160 # 14 days
 
   - name: "atlas-search-variant"
