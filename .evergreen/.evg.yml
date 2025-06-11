@@ -946,7 +946,6 @@ tasks:
   - name: "oidc-auth-test-azure-task"
     # Might exceed 1 hour of execution.
     exec_timeout_secs: 7200
-    disable: true # TODO JAVA-5896
     commands:
       - command: shell.exec
         params:
@@ -966,7 +965,6 @@ tasks:
   - name: "oidc-auth-test-gcp-task"
     # Might exceed 1 hour of execution.
     exec_timeout_secs: 7200
-    disable: true # TODO JAVA-5896
     commands:
       - command: shell.exec
         params:
@@ -2048,6 +2046,7 @@ task_groups:
             export AZUREKMS_PRIVATEKEYPATH=/tmp/testazurekms_privatekey
             export AZUREKMS_SCOPE=${testazurekms_scope}
             export AZUREKMS_VMNAME_PREFIX=JAVADRIVER
+            export AZUREKMS_MACHINESIZE="Standard_DS3_v2"
             $DRIVERS_TOOLS/.evergreen/csfle/azurekms/create-and-setup-vm.sh
       - command: expansions.update
         params:
@@ -2111,6 +2110,7 @@ task_groups:
           include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
           env:
             AZUREOIDC_VMNAME_PREFIX: "JAVA_DRIVER"
+            AZUREKMS_MACHINESIZE: "Standard_DS3_v2"
           args:
             - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/azure/create-and-setup-vm.sh
     teardown_task:
@@ -2140,7 +2140,7 @@ task_groups:
           include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
           env:
             GCPOIDC_VMNAME_PREFIX: "JAVA_DRIVER"
-            GCPKMS_MACHINEtype: "e2-medium" # comparable elapsed time to Azure; default was starved, caused timeouts"
+            GCPKMS_MACHINETYPE: "e2-standard-4"
           args:
             - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/gcp/setup.sh
     teardown_task:
@@ -2269,7 +2269,7 @@ buildvariants:
   - name: "test-gcp-kms-variant"
     display_name: "GCP KMS"
     run_on:
-      - debian12-small
+      - ubuntu2204-small
     tasks:
       - name: "test-gcp-kms-task-group"
         batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
@@ -2277,7 +2277,7 @@ buildvariants:
   - name: "test-azure-kms-variant"
     display_name: "Azure KMS"
     run_on:
-      - debian12-small
+      - ubuntu2204-small
     tasks:
       - name: "test-azure-kms-task-group"
         batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
