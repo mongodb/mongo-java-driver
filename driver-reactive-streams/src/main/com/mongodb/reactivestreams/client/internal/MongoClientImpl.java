@@ -325,4 +325,9 @@ public final class MongoClientImpl implements MongoClient {
     public ClusterDescription getClusterDescription() {
         return getCluster().getCurrentDescription();
     }
+
+    @Override
+    public void appendMetadata(final MongoDriverInformation mongoDriverInformation) {
+        getCluster().getClientMetadata().append(mongoDriverInformation);
+    }
 }

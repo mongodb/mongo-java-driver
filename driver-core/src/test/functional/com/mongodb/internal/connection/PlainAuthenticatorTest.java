@@ -32,6 +32,7 @@ import org.junit.Test;
 
 import java.util.Collections;
 
+import static com.mongodb.ClusterFixture.CLIENT_METADATA;
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
 import static com.mongodb.ClusterFixture.getClusterConnectionMode;
 import static com.mongodb.ClusterFixture.getServerApi;
@@ -52,8 +53,8 @@ public class PlainAuthenticatorTest {
         userName = System.getProperty("org.mongodb.test.userName");
         source = System.getProperty("org.mongod.test.source");
         password = System.getProperty("org.mongodb.test.password");
-        internalConnection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE, streamFactory, null, null,
-                null, Collections.emptyList(), LoggerSettings.builder().build(), null, getServerApi()
+        internalConnection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE, streamFactory, null, CLIENT_METADATA,
+                Collections.emptyList(), LoggerSettings.builder().build(), null, getServerApi()
         ).create(new ServerId(new ClusterId(),
                 new ServerAddress(host)));
         connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
