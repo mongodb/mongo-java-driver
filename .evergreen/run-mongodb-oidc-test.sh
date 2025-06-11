@@ -52,10 +52,6 @@ ADMIN_URI=${MONGODB_URI/$TO_REPLACE/$REPLACEMENT}
 echo "Running gradle version"
 ./gradlew -version
 
-echo "Running gradle classes compile for driver-core"
-./gradlew --parallel --stacktrace --info  \
-  driver-core:compileJava driver-core:compileTestGroovy
-
 echo "Running gradle classes compile for driver-sync and driver-reactive-streams"
 ./gradlew --parallel --stacktrace --info  \
   driver-sync:classes driver-reactive-streams:classes
