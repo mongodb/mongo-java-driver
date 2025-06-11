@@ -17,6 +17,11 @@
 package com.mongodb.client.unified;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ServerDescription;
+import com.mongodb.event.ClusterClosedEvent;
+import com.mongodb.event.ClusterDescriptionChangedEvent;
+import com.mongodb.event.ClusterOpeningEvent;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
@@ -130,6 +135,47 @@ abstract class ContextElement {
         return new EventCountContext("Cluster Description Changed Event Count", client, event, count);
     }
 
+    public static ContextElement ofWaitForClusterClosedEvent(final String client) {
+        return new ContextElement() {
+            @Override
+            public String toString() {
+                return "Event MatchingContext\n"
+                        + "   client: " + client + "\n"
+                        + "   expected event: ClusterClosedEvent\n";
+            }
+        };
+    }
+
+    public static ContextElement ofTopologyEvents(final String client, final BsonArray expectedEvents,
+            final List<?> actualEvents) {
+        return new ContextElement() {
+            @Override
+            public String toString() {
+                return "Events MatchingContext: \n"
+                        + "   client: '" + client + "'\n"
+                        + "   Expected events:\n"
+                        + new BsonDocument("events", expectedEvents).toJson(JsonWriterSettings.builder().indent(true).build()) + "\n"
+                        + "   Actual events:\n"
+                        + new BsonDocument("events",
+                        new BsonArray(actualEvents.stream().map(ContextElement::topologyEventToDocument).collect(Collectors.toList())))
+                        .toJson(JsonWriterSettings.builder().indent(true).build())
+                        + "\n";
+            }
+        };
+    }
+
+    public static ContextElement ofTopologyEvent(final BsonDocument expected, final Object actual, final int eventPosition) {
+        return new ContextElement() {
+            @Override
+            public String toString() {
+                return "Event Matching Context\n"
+                        + "   event position: " + eventPosition + "\n"
+                        + "   expected event: " + expected + "\n"
+                        + "   actual event:   " + topologyEventToDocument(actual) + "\n";
+            }
+        };
+    }
+
     public static ContextElement ofWaitForServerMonitorEvents(final String client, final BsonDocument event, final int count) {
         return new EventCountContext("Wait For Server Monitor Events", client, event, count);
     }
@@ -151,11 +197,6 @@ abstract class ContextElement {
                                 new BsonArray(actualEvents.stream().map(ContextElement::serverMonitorEventToDocument).collect(Collectors.toList())))
                                         .toJson(JsonWriterSettings.builder().indent(true).build())
                         + "\n";
-            }
-
-            private BsonDocument toDocument(final Object event) {
-                return new BsonDocument(EventMatcher.getEventType(event.getClass()),
-                        new BsonDocument("awaited", BsonBoolean.valueOf(EventMatcher.getAwaitedFromServerMonitorEvent(event))));
             }
         };
     }
@@ -466,5 +507,41 @@ abstract class ContextElement {
     private static BsonDocument serverMonitorEventToDocument(final Object event) {
         return new BsonDocument(EventMatcher.getEventType(event.getClass()),
                 new BsonDocument("awaited", BsonBoolean.valueOf(EventMatcher.getAwaitedFromServerMonitorEvent(event))));
+    }
+
+    static BsonDocument topologyEventToDocument(final Object event) {
+        if (event != null && !(event instanceof ClusterOpeningEvent || event instanceof ClusterDescriptionChangedEvent || event instanceof ClusterClosedEvent)) {
+            throw new UnsupportedOperationException("Unsupported topology event: " + event.getClass().getName());
+        }
+        BsonDocument eventDocument = new BsonDocument();
+        if (event instanceof ClusterDescriptionChangedEvent) {
+            ClusterDescriptionChangedEvent changedEvent = (ClusterDescriptionChangedEvent) event;
+            eventDocument.put("previousDescription",
+                    new BsonDocument("type", new BsonString(clusterDescriptionToString(changedEvent.getPreviousDescription()))));
+            eventDocument.put("newDescription",
+                    new BsonDocument("type", new BsonString(clusterDescriptionToString(changedEvent.getNewDescription()))));
+        }
+        return new BsonDocument(EventMatcher.getEventType(event.getClass()), eventDocument);
+    }
+
+    static String clusterDescriptionToString(final ClusterDescription clusterDescription) {
+        switch (clusterDescription.getType()) {
+            case STANDALONE:
+                return "Single";
+            case REPLICA_SET:
+                return clusterDescription.getServerDescriptions().stream().
+                        filter(ServerDescription::isPrimary)
+                        .findFirst()
+                        .map(serverDescription -> "ReplicaSetWithPrimary")
+                        .orElse("ReplicaSetNoPrimary");
+            case SHARDED:
+                return "Sharded";
+            case LOAD_BALANCED:
+                return "LoadBalancer";
+            case UNKNOWN:
+                return "Unknown";
+            default:
+                throw new IllegalStateException("Unexpected value: " + clusterDescription.getShortDescription());
+        }
     }
 }

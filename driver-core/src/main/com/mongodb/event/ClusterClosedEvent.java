@@ -23,6 +23,8 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * A cluster closed event.
  *
+ * <p>This event is synonymous to a TopologyClosedEvent</p>
+ *
  * @since 3.3
  */
 public final class ClusterClosedEvent {
