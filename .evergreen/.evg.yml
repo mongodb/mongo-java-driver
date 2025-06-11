@@ -1796,7 +1796,7 @@ axes:
         run_on: "rhel80-small"
       - id: "ubuntu"
         display_name: "Ubuntu"
-        run_on: "ubuntu2204-small"
+        run_on: "ubuntu2004-small"
 
   - id: "topology"
     display_name: "Topology"
