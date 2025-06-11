@@ -79,8 +79,15 @@ public class DefaultServerMonitorTest {
         AtomicBoolean stateChanged = new AtomicBoolean(false);
 
         SdamServerDescriptionManager sdamManager = new SdamServerDescriptionManager() {
+
             @Override
-            public void update(final ServerDescription candidateDescription) {
+            public void monitorUpdate(final ServerDescription candidateDescription) {
+                assertNotNull(candidateDescription);
+                stateChanged.set(true);
+            }
+
+            @Override
+            public void updateToUnknown(final ServerDescription candidateDescription) {
                 assertNotNull(candidateDescription);
                 stateChanged.set(true);
             }
