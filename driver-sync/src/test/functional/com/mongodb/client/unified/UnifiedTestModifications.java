@@ -243,11 +243,6 @@ public final class UnifiedTestModifications {
                 .file("server-discovery-and-monitoring", "replicaset-logging")
                 .file("server-discovery-and-monitoring", "sharded-logging")
                 .file("server-discovery-and-monitoring", "loadbalanced-logging");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5229")
-                .file("server-discovery-and-monitoring", "standalone-emit-topology-description-changed-before-close")
-                .file("server-discovery-and-monitoring", "replicaset-emit-topology-description-changed-before-close")
-                .file("server-discovery-and-monitoring", "sharded-emit-topology-description-changed-before-close")
-                .file("server-discovery-and-monitoring", "loadbalanced-emit-topology-description-changed-before-close");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5564")
                 .test("server-discovery-and-monitoring", "serverMonitoringMode", "poll waits after successful heartbeat");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-4536")

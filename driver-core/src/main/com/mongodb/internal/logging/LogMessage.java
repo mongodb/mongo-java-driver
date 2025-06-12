@@ -48,7 +48,8 @@ public final class LogMessage {
     public enum Component {
         COMMAND("command"),
         CONNECTION("connection"),
-        SERVER_SELECTION("serverSelection");
+        SERVER_SELECTION("serverSelection"),
+        TOPOLOGY("topology");
 
         private static final Map<String, Component> INDEX;
 
@@ -124,7 +125,10 @@ public final class LogMessage {
             WAIT_QUEUE_TIMEOUT_MS("waitQueueTimeoutMS"),
             SELECTOR("selector"),
             TOPOLOGY_DESCRIPTION("topologyDescription"),
-            REMAINING_TIME_MS("remainingTimeMS");
+            REMAINING_TIME_MS("remainingTimeMS"),
+            TOPOLOGY_ID("topologyId"),
+            TOPOLOGY_PREVIOUS_DESCRIPTION("previousDescription"),
+            TOPOLOGY_NEW_DESCRIPTION("newDescription");
 
             private final String value;
 

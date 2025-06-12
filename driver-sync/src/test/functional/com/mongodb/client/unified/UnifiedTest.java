@@ -36,6 +36,7 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.TestServerMonitorListener;
+import com.mongodb.internal.connection.TestClusterListener;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.internal.logging.LogMessage;
@@ -88,6 +89,7 @@ import static com.mongodb.client.unified.UnifiedTestModifications.Modifier;
 import static com.mongodb.client.unified.UnifiedTestModifications.applyCustomizations;
 import static com.mongodb.client.unified.UnifiedTestModifications.testDef;
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -113,6 +115,10 @@ public abstract class UnifiedTest {
     private static final List<Integer> MAX_SUPPORTED_SCHEMA_VERSION_COMPONENTS = Arrays.stream(MAX_SUPPORTED_SCHEMA_VERSION.split("\\."))
             .map(Integer::parseInt)
             .collect(Collectors.toList());
+
+    private static final String TOPOLOGY_CLOSED_EVENT = "topologyClosedEvent";
+    private static final List<String> TOPOLOGY_EVENT_NAMES = asList("topologyOpeningEvent", "topologyDescriptionChangedEvent",
+            TOPOLOGY_CLOSED_EVENT);
 
     public static final int RETRY_ATTEMPTS = 3;
     public static final int FORCE_FLAKY_ATTEMPTS = 10;
@@ -414,8 +420,36 @@ public abstract class UnifiedTest {
                 context.getEventMatcher().assertConnectionPoolEventsEquality(client, ignoreExtraEvents, expectedEvents,
                         listener.getEvents());
             } else if (eventType.equals("sdam")) {
-                TestServerMonitorListener listener = entities.getServerMonitorListener(client);
-                context.getEventMatcher().assertServerMonitorEventsEquality(client, ignoreExtraEvents, expectedEvents, listener.getEvents());
+
+                // Sdam tests also include topology events, so we need to separate them
+                BsonArray expectedTopologyEvents = new BsonArray(expectedEvents.stream()
+                        .map(BsonValue::asDocument)
+                        .filter(doc -> TOPOLOGY_EVENT_NAMES.stream().anyMatch(doc::containsKey))
+                        .collect(Collectors.toList()));
+
+                if (!expectedTopologyEvents.isEmpty()) {
+                    TestClusterListener clusterListener = entities.getClusterListener(client);
+                    // Unfortunately, some tests expect the cluster to be closed, but do not define it as a waitForEvent in the spec -
+                    // causing a race condition in the test.
+                    if (expectedTopologyEvents.stream().anyMatch(doc -> doc.asDocument().containsKey(TOPOLOGY_CLOSED_EVENT))) {
+                        context.getEventMatcher().waitForClusterClosedEvent(client, clusterListener);
+                    }
+
+                    List<Object> topologyEvents = new ArrayList<>();
+                    topologyEvents.add(clusterListener.getClusterOpeningEvent());
+                    topologyEvents.addAll(clusterListener.getClusterDescriptionChangedEvents());
+                    topologyEvents.add(clusterListener.getClusterClosingEvent());
+                    context.getEventMatcher().assertTopologyEventsEquality(client, ignoreExtraEvents, expectedTopologyEvents, topologyEvents);
+                }
+
+                BsonArray expectedSdamEvents = new BsonArray(expectedEvents.stream()
+                        .map(BsonValue::asDocument)
+                        .filter(doc -> TOPOLOGY_EVENT_NAMES.stream().noneMatch(doc::containsKey))
+                        .collect(Collectors.toList()));
+                if (!expectedSdamEvents.isEmpty()) {
+                    TestServerMonitorListener serverMonitorListener = entities.getServerMonitorListener(client);
+                    context.getEventMatcher().assertServerMonitorEventsEquality(client, ignoreExtraEvents, expectedSdamEvents, serverMonitorListener.getEvents());
+                }
             } else {
                 throw new UnsupportedOperationException("Unexpected event type: " + eventType);
             }

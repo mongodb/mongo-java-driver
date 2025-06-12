@@ -27,7 +27,6 @@ import com.mongodb.UnixServerAddress;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
-import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.event.ClusterClosedEvent;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
@@ -50,7 +49,6 @@ import com.mongodb.lang.Nullable;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.ServerSelector;
 
-import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
@@ -64,6 +62,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.connection.ClusterType.UNKNOWN;
 import static com.mongodb.connection.ServerDescription.MAX_DRIVER_WIRE_VERSION;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_SERVER_VERSION;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
@@ -72,6 +71,7 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.connection.EventHelper.wouldDescriptionsGenerateEquivalentEvents;
 import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
 import static com.mongodb.internal.logging.LogMessage.Component.SERVER_SELECTION;
+import static com.mongodb.internal.logging.LogMessage.Component.TOPOLOGY;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.FAILURE;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.OPERATION;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.OPERATION_ID;
@@ -80,11 +80,16 @@ import static com.mongodb.internal.logging.LogMessage.Entry.Name.SELECTOR;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_HOST;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_PORT;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.TOPOLOGY_DESCRIPTION;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.TOPOLOGY_ID;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.TOPOLOGY_NEW_DESCRIPTION;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.TOPOLOGY_PREVIOUS_DESCRIPTION;
 import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
 import static com.mongodb.internal.logging.LogMessage.Level.INFO;
 import static com.mongodb.internal.time.Timeout.ZeroSemantics.ZERO_DURATION_MEANS_EXPIRED;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.stream.Collectors.toList;
@@ -111,8 +116,10 @@ abstract class BaseCluster implements Cluster {
         this.settings = notNull("settings", settings);
         this.serverFactory = notNull("serverFactory", serverFactory);
         this.clusterListener = singleClusterListener(settings);
-        clusterListener.clusterOpening(new ClusterOpeningEvent(clusterId));
-        description = new ClusterDescription(settings.getMode(), ClusterType.UNKNOWN, Collections.emptyList(),
+        ClusterOpeningEvent clusterOpeningEvent = new ClusterOpeningEvent(clusterId);
+        clusterListener.clusterOpening(clusterOpeningEvent);
+        logTopologyOpening(clusterId, clusterOpeningEvent);
+        description = new ClusterDescription(settings.getMode(), UNKNOWN, emptyList(),
                 settings, serverFactory.getSettings());
     }
 
@@ -210,7 +217,11 @@ abstract class BaseCluster implements Cluster {
         if (!isClosed()) {
             isClosed = true;
             phase.get().countDown();
-            clusterListener.clusterClosed(new ClusterClosedEvent(clusterId));
+            fireChangeEvent(new ClusterDescription(settings.getMode(), UNKNOWN, emptyList(), settings, serverFactory.getSettings()),
+                    description);
+            ClusterClosedEvent clusterClosedEvent = new ClusterClosedEvent(clusterId);
+            clusterListener.clusterClosed(clusterClosedEvent);
+            logTopologyClosedEvent(clusterId, clusterClosedEvent);
             stopWaitQueueHandler();
         }
     }
@@ -237,8 +248,9 @@ abstract class BaseCluster implements Cluster {
      */
     protected void fireChangeEvent(final ClusterDescription newDescription, final ClusterDescription previousDescription) {
         if (!wouldDescriptionsGenerateEquivalentEvents(newDescription, previousDescription)) {
-             clusterListener.clusterDescriptionChanged(
-                     new ClusterDescriptionChangedEvent(getClusterId(), newDescription, previousDescription));
+            ClusterDescriptionChangedEvent changedEvent = new ClusterDescriptionChangedEvent(getClusterId(), newDescription, previousDescription);
+            clusterListener.clusterDescriptionChanged(changedEvent);
+            logTopologyDescriptionChanged(getClusterId(),  changedEvent);
         }
     }
 
@@ -619,4 +631,43 @@ abstract class BaseCluster implements Cluster {
                             + " Selector: {}, topology description: {}"));
         }
     }
+
+    static void logTopologyOpening(
+            final ClusterId clusterId,
+            final ClusterOpeningEvent clusterOpeningEvent) {
+        if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
+            STRUCTURED_LOGGER.log(new LogMessage(
+                    TOPOLOGY, DEBUG, "Starting topology monitoring", clusterId,
+                    singletonList(new Entry(TOPOLOGY_ID, clusterId)),
+                    "Starting monitoring for topology with ID {}"));
+        }
+    }
+
+    static void logTopologyDescriptionChanged(
+            final ClusterId clusterId,
+            final ClusterDescriptionChangedEvent clusterDescriptionChangedEvent) {
+        if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
+            STRUCTURED_LOGGER.log(new LogMessage(
+                    TOPOLOGY, DEBUG, "Topology description changed", clusterId,
+                    asList(
+                            new Entry(TOPOLOGY_ID, clusterId),
+                            new Entry(TOPOLOGY_PREVIOUS_DESCRIPTION,
+                                    clusterDescriptionChangedEvent.getPreviousDescription().getShortDescription()),
+                            new Entry(TOPOLOGY_NEW_DESCRIPTION,
+                                    clusterDescriptionChangedEvent.getNewDescription().getShortDescription())),
+                    "Description changed for topology with ID {}. Previous description: {}. New description: {}"));
+        }
+    }
+
+    static void logTopologyClosedEvent(
+            final ClusterId clusterId,
+            final ClusterClosedEvent clusterClosedEvent) {
+        if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
+            STRUCTURED_LOGGER.log(new LogMessage(
+                    TOPOLOGY, DEBUG, "Stopped topology monitoring", clusterId,
+                    singletonList(new Entry(TOPOLOGY_ID, clusterId)),
+                    "Stopped monitoring for topology with ID {}"));
+        }
+    }
+
 }

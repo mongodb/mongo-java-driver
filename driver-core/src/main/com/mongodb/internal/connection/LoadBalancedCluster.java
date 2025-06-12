@@ -63,6 +63,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.internal.connection.BaseCluster.logServerSelectionStarted;
 import static com.mongodb.internal.connection.BaseCluster.logServerSelectionSucceeded;
+import static com.mongodb.internal.connection.BaseCluster.logTopologyClosedEvent;
 import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
@@ -272,7 +273,9 @@ final class LoadBalancedCluster implements Cluster {
             if (localServer != null) {
                 localServer.close();
             }
-            clusterListener.clusterClosed(new ClusterClosedEvent(clusterId));
+            ClusterClosedEvent clusterClosedEvent = new ClusterClosedEvent(clusterId);
+            clusterListener.clusterClosed(clusterClosedEvent);
+            logTopologyClosedEvent(clusterId, clusterClosedEvent);
         }
     }
 

@@ -18,7 +18,9 @@ package com.mongodb.client.unified;
 
 import com.mongodb.assertions.Assertions;
 import com.mongodb.connection.ServerType;
+import com.mongodb.event.ClusterClosedEvent;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
+import com.mongodb.event.ClusterOpeningEvent;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
@@ -49,6 +51,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static com.mongodb.client.unified.ContextElement.clusterDescriptionToString;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
@@ -272,7 +275,19 @@ final class EventMatcher {
         BsonDocument expectedEventContents = getEventContents(expectedEvent);
         try {
             clusterListener.waitForClusterDescriptionChangedEvents(
-                    event -> clusterDescriptionChangedEventMatches(expectedEventContents, event), count, Duration.ofSeconds(10));
+                    event -> clusterDescriptionChangedEventMatches(expectedEventContents, event, context), count, Duration.ofSeconds(10));
+            context.pop();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (TimeoutException e) {
+            fail(context.getMessage("Timed out waiting for cluster description changed events"));
+        }
+    }
+
+    public void waitForClusterClosedEvent(final String client, final TestClusterListener clusterListener) {
+        context.push(ContextElement.ofWaitForClusterClosedEvent(client));
+        try {
+            clusterListener.waitForClusterClosedEvent(Duration.ofSeconds(10));
             context.pop();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -285,8 +300,33 @@ final class EventMatcher {
             final List<ClusterDescriptionChangedEvent> events) {
         BsonDocument expectedEventContents = getEventContents(expectedEvent);
         context.push(ContextElement.ofClusterDescriptionChangedEventCount(client, expectedEvent, count));
-        long matchCount = events.stream().filter(event -> clusterDescriptionChangedEventMatches(expectedEventContents, event)).count();
+        long matchCount =
+                events.stream().filter(event -> clusterDescriptionChangedEventMatches(expectedEventContents, event, context)).count();
         assertEquals(context.getMessage("Expected cluster description changed event counts to match"), count, matchCount);
+        context.pop();
+    }
+
+    public void assertTopologyEventsEquality(
+            final String client,
+            final boolean ignoreExtraEvents,
+            final BsonArray expectedEventDocuments,
+            final List<?> events) {
+        context.push(ContextElement.ofTopologyEvents(client, expectedEventDocuments, events));
+        if (ignoreExtraEvents) {
+            assertTrue(context.getMessage("Number of events must be greater than or equal to the expected number of events"),
+                    events.size() >= expectedEventDocuments.size());
+        } else {
+            assertEquals(context.getMessage("Number of events must be the same"), expectedEventDocuments.size(), events.size());
+        }
+        for (int i = 0; i < expectedEventDocuments.size(); i++) {
+            Object actualEvent = events.get(i);
+            BsonDocument expectedEventDocument = expectedEventDocuments.get(i).asDocument();
+            String expectedEventType = expectedEventDocument.getFirstKey();
+            context.push(ContextElement.ofTopologyEvent(expectedEventDocument, actualEvent, i));
+            assertEquals(context.getMessage("Expected event type to match"), expectedEventType, getEventType(actualEvent.getClass()));
+            assertTopologyEventEquality(expectedEventType, expectedEventDocument, actualEvent, context);
+            context.pop();
+        }
         context.pop();
     }
 
@@ -354,6 +394,7 @@ final class EventMatcher {
         if (expectedEventContents.isEmpty()) {
             return expectedEventContents;
         }
+
         HashSet<String> emptyEventTypes = new HashSet<>(singleton("topologyDescriptionChangedEvent"));
         if (emptyEventTypes.contains(expectedEventType)) {
             throw new UnsupportedOperationException("Contents of " + expectedEventType + " must be empty");
@@ -383,12 +424,51 @@ final class EventMatcher {
     }
 
     private static boolean clusterDescriptionChangedEventMatches(final BsonDocument expectedEventContents,
-            final ClusterDescriptionChangedEvent event) {
+            final ClusterDescriptionChangedEvent event, @Nullable final AssertionContext context) {
         if (!expectedEventContents.isEmpty()) {
             throw new UnsupportedOperationException(
                     "Contents of " + ClusterDescriptionChangedEvent.class.getSimpleName() + " must be empty");
         }
         return true;
+    }
+
+    /**
+     * @param context Not {@code null} iff mismatch must result in an error, that is, this method works as an assertion.
+     */
+    private static <T> void assertTopologyEventEquality(
+            final String expectedEventType,
+            final BsonDocument expectedEventDocument,
+            final T actualEvent,
+            final AssertionContext context) {
+
+        switch (expectedEventType) {
+            case "topologyOpeningEvent":
+                assertTrue(context.getMessage("Expected ClusterOpeningEvent"), actualEvent instanceof ClusterOpeningEvent);
+                break;
+            case "topologyClosedEvent":
+                assertTrue(context.getMessage("Expected ClusterClosedEvent"), actualEvent instanceof ClusterClosedEvent);
+                break;
+            case "topologyDescriptionChangedEvent":
+                assertTrue(context.getMessage("Expected ClusterDescriptionChangedEvent"), actualEvent instanceof ClusterDescriptionChangedEvent);
+                ClusterDescriptionChangedEvent event = (ClusterDescriptionChangedEvent) actualEvent;
+                BsonDocument topologyChangeDocument = expectedEventDocument.getDocument(expectedEventType, new BsonDocument());
+
+                if (!topologyChangeDocument.isEmpty()) {
+                    if (topologyChangeDocument.containsKey("previousDescription")) {
+                        String previousDescription = topologyChangeDocument.getDocument("previousDescription").getString("type").getValue();
+                        assertEquals(context.getMessage("Expected ClusterDescriptionChangedEvent with previousDescription: " + previousDescription),
+                                previousDescription, clusterDescriptionToString(event.getPreviousDescription()));
+                    }
+                    if (topologyChangeDocument.containsKey("newDescription")) {
+                        String newDescription = topologyChangeDocument.getDocument("newDescription").getString("type").getValue();
+                        assertEquals(context.getMessage("Expected ClusterDescriptionChangedEvent with newDescription: " + newDescription),
+                                newDescription, clusterDescriptionToString(event.getNewDescription()));
+                    }
+                }
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported topology event:" + expectedEventType);
+        }
     }
 
     /**
@@ -427,7 +507,9 @@ final class EventMatcher {
 
     static String getEventType(final Class<?> eventClass) {
         String eventClassName = eventClass.getSimpleName();
-        if (eventClassName.startsWith("ConnectionPool")) {
+        if (eventClassName.startsWith("Cluster")) {
+            return eventClassName.replace("Cluster", "topology");
+        } else if (eventClassName.startsWith("ConnectionPool")) {
             return eventClassName.replace("ConnectionPool", "pool");
         } else if (eventClassName.startsWith("Connection")) {
             return eventClassName.replace("Connection", "connection");
