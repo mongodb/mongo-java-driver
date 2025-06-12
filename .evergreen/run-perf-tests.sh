@@ -12,7 +12,7 @@ tar xf single_and_multi_document.tgz
 cd ..
 
 RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
-. "${RELATIVE_DIR_PATH}/javaConfig.bash"
+. "${RELATIVE_DIR_PATH}/setup-env.bash"
 
 export TEST_PATH="${PROJECT_DIRECTORY}/driver-performance-test-data/"
 export OUTPUT_FILE="${PROJECT_DIRECTORY}/results.json"
