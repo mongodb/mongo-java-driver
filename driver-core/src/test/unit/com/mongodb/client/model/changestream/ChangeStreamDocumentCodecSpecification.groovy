@@ -61,6 +61,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                 new ChangeStreamDocument<Document>(OperationType.INSERT.value,
                         BsonDocument.parse('{token: true}'),
                         BsonDocument.parse('{db: "engineering", coll: "users"}'),
+                        NamespaceType.COLLECTION.value,
                         null,
                         Document.parse('{_id: 1, userName: "alice123", name: "Alice"}'),
                         null,
@@ -73,6 +74,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                 new ChangeStreamDocument<Document>(OperationType.UPDATE.value,
                         BsonDocument.parse('{token: true}'),
                         BsonDocument.parse('{db: "engineering", coll: "users"}'),
+                        NamespaceType.COLLECTION.value,
                         null,
                         null,
                         null,
@@ -84,6 +86,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                 new ChangeStreamDocument<Document>(OperationType.UPDATE.value,
                         BsonDocument.parse('{token: true}'),
                         BsonDocument.parse('{db: "engineering", coll: "users"}'),
+                        NamespaceType.COLLECTION.value,
                         null,
                         Document.parse('{_id: 1, userName: "alice123", name: "Alice"}'),
                         Document.parse('{_id: 1, userName: "alice1234", name: "Alice"}'),
@@ -96,6 +99,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                 new ChangeStreamDocument<Document>(OperationType.REPLACE.value,
                         BsonDocument.parse('{token: true}'),
                         BsonDocument.parse('{db: "engineering", coll: "users"}'),
+                        NamespaceType.COLLECTION.value,
                         null,
                         Document.parse('{_id: 1, userName: "alice123", name: "Alice"}'),
                         Document.parse('{_id: 1, userName: "alice1234", name: "Alice"}'),
@@ -106,6 +110,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                 new ChangeStreamDocument<Document>(OperationType.DELETE.value,
                         BsonDocument.parse('{token: true}'),
                         BsonDocument.parse('{db: "engineering", coll: "users"}'),
+                        NamespaceType.COLLECTION.value,
                         null,
                         null,
                         Document.parse('{_id: 1, userName: "alice123", name: "Alice"}'),
@@ -116,6 +121,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                 new ChangeStreamDocument<Document>(OperationType.DROP.value,
                         BsonDocument.parse('{token: true}'),
                         BsonDocument.parse('{db: "engineering", coll: "users"}'),
+                        NamespaceType.COLLECTION.value,
                         null,
                         null,
                         null,
@@ -126,6 +132,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                 new ChangeStreamDocument<Document>(OperationType.RENAME.value,
                         BsonDocument.parse('{token: true}'),
                         BsonDocument.parse('{db: "engineering", coll: "users"}'),
+                        NamespaceType.COLLECTION.value,
                         BsonDocument.parse('{db: "engineering", coll: "people"}'),
                         null,
                         null,
@@ -140,11 +147,13 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         null,
                         null,
                         null,
+                        null,
                         new BsonTimestamp(1234, 2),
                         null, null, null, null, null, null
                 ),
                 new ChangeStreamDocument<Document>(OperationType.INVALIDATE.value,
                         BsonDocument.parse('{token: true}'),
+                        null,
                         null,
                         null,
                         null,
@@ -156,6 +165,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                 new ChangeStreamDocument<Document>(OperationType.INSERT.value,
                         BsonDocument.parse('{token: true}'),
                         BsonDocument.parse('{db: "engineering", coll: "users"}'),
+                        NamespaceType.COLLECTION.value,
                         null,
                         Document.parse('{_id: 1, userName: "alice123", name: "Alice"}'),
                         null,
@@ -180,6 +190,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
       db: 'engineering',
       coll: 'users'
    },
+   nsType: 'collection',
    documentKey: {
       userName: 'alice123',
       _id: 1
@@ -204,6 +215,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
       db: 'engineering',
       coll: 'users'
    },
+   nsType: 'collection',
    documentKey: {
       _id: 1
    },
@@ -225,6 +237,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
       db: 'engineering',
       coll: 'users'
    },
+   nsType: 'collection',
    documentKey: {
       _id: 1
    },
@@ -261,6 +274,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
       db: 'engineering',
       coll: 'users'
    },
+   nsType: 'collection',
    documentKey: {
       _id: 1
    },
@@ -285,6 +299,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
       db: 'engineering',
       coll: 'users'
    },
+   nsType: 'collection',
    documentKey: {
       _id: 1
    },
@@ -304,6 +319,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
       db: 'engineering',
       coll: 'users'
    }
+   nsType: 'collection',
 }
 ''',
                 '''
@@ -315,6 +331,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
       db: 'engineering',
       coll: 'users'
    },
+   nsType: 'collection',
    to: {
       db: 'engineering',
       coll: 'people'
@@ -347,6 +364,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
       db: 'engineering',
       coll: 'users'
    },
+   nsType: 'collection',
    documentKey: {
       userName: 'alice123',
       _id: 1
