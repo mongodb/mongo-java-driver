@@ -421,7 +421,7 @@ public abstract class UnifiedTest {
                         listener.getEvents());
             } else if (eventType.equals("sdam")) {
 
-                // Sdam tests also include topology events, so we need to separate them
+                // SDAM tests also include topology events, so we need to separate them
                 BsonArray expectedTopologyEvents = new BsonArray(expectedEvents.stream()
                         .map(BsonValue::asDocument)
                         .filter(doc -> TOPOLOGY_EVENT_NAMES.stream().anyMatch(doc::containsKey))
