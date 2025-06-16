@@ -41,7 +41,11 @@ import org.bson.BsonString;
 import org.bson.Document;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -58,9 +62,11 @@ import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.mongodb.MongoCredential.ALLOWED_HOSTS_KEY;
 import static com.mongodb.MongoCredential.ENVIRONMENT_KEY;
@@ -72,9 +78,12 @@ import static com.mongodb.MongoCredential.OidcCallbackResult;
 import static com.mongodb.MongoCredential.TOKEN_RESOURCE_KEY;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.testing.MongoAssertions.assertCause;
+import static java.lang.Math.min;
+import static java.lang.String.format;
 import static java.lang.System.getenv;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -196,6 +205,66 @@ public class OidcAuthenticationProseTests {
             // callback was called
             assertEquals(1, callback1.getInvocations());
         }
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    @DisplayName("{testName}")
+    public void testValidCallbackInputsTimeout(String testName,
+                                               int timeoutMs,
+                                               int serverSelectionTimeoutMS,
+                                               int expectedTimeoutThreshold) {
+        TestCallback callback1 = createCallback();
+
+        OidcCallback callback2 = (context) -> {
+            assertTrue(context.getTimeout().toMillis() < expectedTimeoutThreshold,
+                    format("Expected timeout to be less than %d, but was %d",
+                            expectedTimeoutThreshold,
+                            context.getTimeout().toMillis()));
+            return callback1.onRequest(context);
+        };
+
+        MongoClientSettings clientSettings = MongoClientSettings.builder(createSettings(callback2))
+                .applyToClusterSettings(builder ->
+                        builder.serverSelectionTimeout(
+                                serverSelectionTimeoutMS,
+                                TimeUnit.MILLISECONDS))
+                .timeout(timeoutMs, TimeUnit.MILLISECONDS)
+                .build();
+
+        try (MongoClient mongoClient = createMongoClient(clientSettings)) {
+            long start = System.nanoTime();
+            performFind(mongoClient);
+            assertEquals(1, callback1.getInvocations());
+            long elapsed = msElapsedSince(start);
+
+            assertFalse(elapsed > (timeoutMs == 0 ? serverSelectionTimeoutMS : min(serverSelectionTimeoutMS, timeoutMs)),
+                    format("Elapsed time %d is greater then minimum of serverSelectionTimeoutMS and timeoutMs, which is %d. "
+                                    + "This indicates that the callback was not called with the expected timeout.",
+                            min(serverSelectionTimeoutMS, timeoutMs),
+                            elapsed));
+        }
+    }
+
+    private static Stream<Arguments> testValidCallbackInputsTimeout() {
+        return Stream.of(
+                Arguments.of("serverSelectionTimeoutMS honored for oidc callback if it's lower than timeoutMS",
+                        1000, // timeoutMS
+                        500,  // serverSelectionTimeoutMS
+                        499), // expectedTimeoutThreshold
+                Arguments.of("timeoutMS honored for oidc callback if it's lower than serverSelectionTimeoutMS",
+                        500,  // timeoutMS
+                        1000, // serverSelectionTimeoutMS
+                        499), // expectedTimeoutThreshold
+                Arguments.of("serverSelectionTimeoutMS honored for oidc callback if timeoutMS=0",
+                        0,   // infinite timeoutMS
+                        500, // serverSelectionTimeoutMS
+                        499) // expectedTimeoutThreshold
+        );
+    }
+
+    private long msElapsedSince(final long t1) {
+        return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t1);
     }
 
     @Test
