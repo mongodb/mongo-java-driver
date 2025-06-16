@@ -467,7 +467,7 @@ final class EventMatcher {
                 }
                 break;
             default:
-                throw new UnsupportedOperationException("Unsupported topology event:" + expectedEventType);
+                throw new UnsupportedOperationException("Unsupported topology event: " + expectedEventType);
         }
     }
 
