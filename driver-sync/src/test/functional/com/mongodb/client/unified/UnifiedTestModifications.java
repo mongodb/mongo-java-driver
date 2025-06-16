@@ -235,8 +235,7 @@ public final class UnifiedTestModifications {
 
         // server-discovery-and-monitoring (SDAM)
 
-        // These tests can be flaky, due to a race waiting for the failed heartbeat.
-        def.modify(RETRY)
+        def.retry("Flaky test,due to a race waiting for the failed heartbeat.")
                 .test("server-discovery-and-monitoring", "standalone-logging", "Failing heartbeat")
                 .test("server-discovery-and-monitoring", "replicaset-logging", "Failing heartbeat")
                 .test("server-discovery-and-monitoring", "sharded-logging", "Failing heartbeat")
