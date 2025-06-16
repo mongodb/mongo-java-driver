@@ -432,9 +432,6 @@ final class EventMatcher {
         return true;
     }
 
-    /**
-     * @param context Not {@code null} iff mismatch must result in an error, that is, this method works as an assertion.
-     */
     private static <T> void assertTopologyEventEquality(
             final String expectedEventType,
             final BsonDocument expectedEventDocument,

@@ -24,7 +24,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * An event signifying that the cluster description has changed.
  *
- * <p>This event is synonymous to a TopologyDescriptionChangedEvent</p>
+ * <p>This event is synonymous with TopologyDescriptionChangedEvent</p>
  *
  * @since 3.3
  */

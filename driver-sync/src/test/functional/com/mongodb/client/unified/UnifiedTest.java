@@ -70,6 +70,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -421,12 +422,13 @@ public abstract class UnifiedTest {
                         listener.getEvents());
             } else if (eventType.equals("sdam")) {
 
-                // SDAM tests also include topology events, so we need to separate them
-                BsonArray expectedTopologyEvents = new BsonArray(expectedEvents.stream()
+                // SDAM tests also include topology events, so we need to separate them to be able to assert them separately.
+                // Partition the expected events into two lists with the key being if it's a topology based event or not.
+                Map<Boolean, List<BsonDocument>> partitionedEventsMap = expectedEvents.stream()
                         .map(BsonValue::asDocument)
-                        .filter(doc -> TOPOLOGY_EVENT_NAMES.stream().anyMatch(doc::containsKey))
-                        .collect(Collectors.toList()));
+                        .collect(Collectors.partitioningBy(doc -> TOPOLOGY_EVENT_NAMES.stream().anyMatch(doc::containsKey)));
 
+                BsonArray expectedTopologyEvents = new BsonArray(partitionedEventsMap.get(true));
                 if (!expectedTopologyEvents.isEmpty()) {
                     TestClusterListener clusterListener = entities.getClusterListener(client);
                     // Unfortunately, some tests expect the cluster to be closed, but do not define it as a waitForEvent in the spec -
@@ -442,10 +444,7 @@ public abstract class UnifiedTest {
                     context.getEventMatcher().assertTopologyEventsEquality(client, ignoreExtraEvents, expectedTopologyEvents, topologyEvents);
                 }
 
-                BsonArray expectedSdamEvents = new BsonArray(expectedEvents.stream()
-                        .map(BsonValue::asDocument)
-                        .filter(doc -> TOPOLOGY_EVENT_NAMES.stream().noneMatch(doc::containsKey))
-                        .collect(Collectors.toList()));
+                BsonArray expectedSdamEvents = new BsonArray(partitionedEventsMap.get(false));
                 if (!expectedSdamEvents.isEmpty()) {
                     TestServerMonitorListener serverMonitorListener = entities.getServerMonitorListener(client);
                     context.getEventMatcher().assertServerMonitorEventsEquality(client, ignoreExtraEvents, expectedSdamEvents, serverMonitorListener.getEvents());

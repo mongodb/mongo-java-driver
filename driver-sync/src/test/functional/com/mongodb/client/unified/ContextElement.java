@@ -529,11 +529,8 @@ abstract class ContextElement {
             case STANDALONE:
                 return "Single";
             case REPLICA_SET:
-                return clusterDescription.getServerDescriptions().stream().
-                        filter(ServerDescription::isPrimary)
-                        .findFirst()
-                        .map(serverDescription -> "ReplicaSetWithPrimary")
-                        .orElse("ReplicaSetNoPrimary");
+                return clusterDescription.getServerDescriptions().stream()
+                        .anyMatch(ServerDescription::isPrimary) ? "ReplicaSetWithPrimary" : "ReplicaSetNoPrimary";
             case SHARDED:
                 return "Sharded";
             case LOAD_BALANCED:
@@ -541,7 +538,7 @@ abstract class ContextElement {
             case UNKNOWN:
                 return "Unknown";
             default:
-                throw new IllegalStateException("Unexpected value: " + clusterDescription.getShortDescription());
+                throw new UnsupportedOperationException("Unexpected value: " + clusterDescription.getShortDescription());
         }
     }
 }

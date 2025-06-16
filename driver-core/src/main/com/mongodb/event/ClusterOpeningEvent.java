@@ -23,7 +23,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * A cluster opening event.
  *
- * <p>This event is synonymous to a TopologyOpeningEvent</p>
+ * <p>This event is synonymous with TopologyOpeningEvent</p>
  *
  * @since 3.3
  */
