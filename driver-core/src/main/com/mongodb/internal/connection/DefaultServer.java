@@ -31,6 +31,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.SdamServerDescriptionManager.SdamIssue;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -48,6 +49,7 @@ import static com.mongodb.internal.connection.ServerDescriptionHelper.unknownCon
 
 class DefaultServer implements ClusterableServer {
     private static final Logger LOGGER = Loggers.getLogger("connection");
+    private static final StructuredLogger STRUCTURED_LOGGER = new StructuredLogger("connection");
     private final ServerId serverId;
     private final ConnectionPool connectionPool;
     private final ClusterConnectionMode clusterConnectionMode;
@@ -75,7 +77,6 @@ class DefaultServer implements ClusterableServer {
         this.connectionPool = notNull("connectionPool", connectionPool);
 
         this.serverId = serverId;
-
         serverListener.serverOpening(new ServerOpeningEvent(this.serverId));
 
         this.serverMonitor = serverMonitor;
