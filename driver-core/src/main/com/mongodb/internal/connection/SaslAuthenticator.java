@@ -117,7 +117,6 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
 
     public abstract String getMechanismName();
 
-    //protected abstract SaslClient createSaslClient(ServerAddress serverAddress);
     protected abstract SaslClient createSaslClient(ServerAddress serverAddress, OperationContext operationContext);
 
     protected void appendSaslStartOptions(final BsonDocument saslStartCommand) {
