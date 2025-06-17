@@ -37,11 +37,11 @@ COMPRESSOR=${COMPRESSOR:-}
 TESTS=${TESTS:-test}
 SLOW_TESTS_ONLY=${SLOW_TESTS_ONLY:-false}
 
-if [ -n "${ASYNC_TRANSPORT}"]; then
+if [ -n "${ASYNC_TRANSPORT}" ]; then
   readonly JAVA_SYSPROP_ASYNC_TRANSPORT="-Dorg.mongodb.test.async.transport=${ASYNC_TRANSPORT}"
 fi
 
-if [ "${SSL}" = "ssl" ] && [ "${ASYNC_TRANSPORT}" = "netty" ] && [ "${NETTY_SSL_PROVIDER}" != "" ]; then
+if [ "${SSL}" = "ssl" ] && [ "${ASYNC_TRANSPORT}" = "netty" ] && [ -n "${NETTY_SSL_PROVIDER}" ]; then
   readonly JAVA_SYSPROP_NETTY_SSL_PROVIDER="-Dorg.mongodb.test.netty.ssl.provider=${NETTY_SSL_PROVIDER}"
 fi
 
