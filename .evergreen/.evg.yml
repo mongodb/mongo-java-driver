@@ -458,6 +458,7 @@ functions:
 
           export CRYPT_SHARED_LIB_PATH=${CRYPT_SHARED_LIB_PATH}
 
+          ASYNC_TRANSPORT="${ASYNC_TRANSPORT}" NETTY_SSL_PROVIDER="${NETTY_SSL_PROVIDER}" \
           AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" \
           COMPRESSOR="${COMPRESSOR}" JAVA_VERSION="${JAVA_VERSION}" REQUIRE_API_VERSION=${REQUIRE_API_VERSION} \
           TESTS="${TESTS}" .evergreen/run-tests.sh
@@ -532,18 +533,6 @@ functions:
         script: |
           ${PREPARE_SHELL}
           AUTH="${AUTH}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-socket-tests.sh
-
-  "run-netty-tests":
-    - command: shell.exec
-      type: "test"
-      params:
-        working_dir: "src"
-        script: |
-          ${PREPARE_SHELL}
-          STREAM_TYPE="netty" AUTH="${AUTH}" SSL="${SSL}" NETTY_SSL_PROVIDER="${NETTY_SSL_PROVIDER}" MONGODB_URI="${MONGODB_URI}" \
-           TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JAVA_VERSION="${JAVA_VERSION}" \
-           AZUREKMS_KEY_VAULT_ENDPOINT=${testazurekms_keyvaultendpoint} AZUREKMS_KEY_NAME=${testazurekms_keyname} \
-           .evergreen/run-tests.sh
 
   "run-plain-auth-test":
     - command: shell.exec
@@ -1552,11 +1541,6 @@ tasks:
       - func: "start-mongo-orchestration"
       - func: "run-socket-tests"
 
-  - name: "netty-test-task"
-    commands:
-      - func: "start-mongo-orchestration"
-      - func: "run-netty-tests"
-
   - name: "publish-snapshot-task"
     depends_on:
       - variant: "static-checks"
@@ -1849,6 +1833,14 @@ axes:
         display_name: "NoSSL"
         variables:
           SSL: "nossl"
+
+  - id: "async-transport"
+    display_name: Async Transport
+    values:
+      - id: "netty"
+        display_name: Netty
+        variables:
+          ASYNC_TRANSPORT: "netty"
 
   - id: "netty-ssl-provider"
     display_name: "Netty TLS/SSL protocol provider"
@@ -2467,18 +2459,22 @@ buildvariants:
       - name: "socket-test-task"
 
   - matrix_name: "tests-netty"
-    matrix_spec: { auth: "noauth", ssl: "*", jdk: "jdk8", version: [ "7.0" ], topology: "replicaset", os: "linux" }
+    matrix_spec: { auth: "noauth", ssl: "*", jdk: "jdk8", version: [ "7.0" ], topology: "replicaset", os: "linux",
+                   async-transport: "netty" }
     display_name: "Netty: ${version} ${topology} ${ssl} ${auth} ${jdk} ${os} "
     tags: [ "tests-netty-variant" ]
     tasks:
-      - name: "netty-test-task"
+      - name: "test-reactive-task"
+      - name: "test-core-task"
 
   - matrix_name: "tests-netty-ssl-provider"
-    matrix_spec: { netty-ssl-provider: "*", auth: "auth", ssl: "ssl", jdk: "jdk8", version: [ "7.0" ], topology: "replicaset", os: "linux" }
+    matrix_spec: { auth: "auth", ssl: "ssl", jdk: "jdk8", version: [ "7.0" ], topology: "replicaset", os: "linux",
+                   async-transport: "netty", netty-ssl-provider: "*" }
     display_name: "Netty SSL provider: ${version} ${topology} ${ssl} SslProvider.${netty-ssl-provider} ${auth} ${jdk} ${os} "
     tags: [ "tests-netty-variant" ]
     tasks:
-      - name: "netty-test-task"
+      - name: "test-reactive-task"
+      - name: "test-core-task"
 
   - matrix_name: "tests-socket-snappy-compression"
     matrix_spec: { compressor: "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: [ "4.2" ], topology: "standalone", os: "linux" }

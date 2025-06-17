@@ -6,12 +6,12 @@ set -o errexit  # Exit the script with error if any of the commands fail
 # Supported/used environment variables:
 #   AUTH                                 Set to enable authentication. Values are: "auth" / "noauth" (default)
 #   SSL                                  Set to enable SSL. Values are "ssl" / "nossl" (default)
-#   NETTY_SSL_PROVIDER                   The Netty TLS/SSL protocol provider. Ignored unless SSL is "ssl" and STREAM_TYPE is "netty". Values are "JDK", "OPENSSL", null (a.k.a. "" or '') (default).
+#   NETTY_SSL_PROVIDER                   The Netty TLS/SSL protocol provider. Ignored unless SSL is "ssl" and ASYNC_TRANSPORT is "netty". Values are "JDK", "OPENSSL", null (a.k.a. "" or '') (default).
 #   MONGODB_URI                          Set the suggested connection MONGODB_URI (including credentials and topology info)
 #   TOPOLOGY                             Allows you to modify variables and the MONGODB_URI based on test topology
 #                                        Supported values: "server", "replica_set", "sharded_cluster"
 #   COMPRESSOR                           Set to enable compression. Values are "snappy" and "zlib" (default is no compression)
-#   STREAM_TYPE                          Set the stream type.  Values are "nio2" or "netty".  Defaults to "nio2".
+#   ASYNC_TRANSPORT                      Set the async transport.  Values are "nio2" or "netty".
 #   JDK                                  Set the version of java to be used.  Java versions can be set from the java toolchain /opt/java
 #   SLOW_TESTS_ONLY                      Set to true to only run the slow tests
 #   AWS_ACCESS_KEY_ID                    The AWS access key identifier for client-side encryption
@@ -34,13 +34,14 @@ SSL=${SSL:-nossl}
 MONGODB_URI=${MONGODB_URI:-}
 TOPOLOGY=${TOPOLOGY:-server}
 COMPRESSOR=${COMPRESSOR:-}
-STREAM_TYPE=${STREAM_TYPE:-nio2}
 TESTS=${TESTS:-test}
 SLOW_TESTS_ONLY=${SLOW_TESTS_ONLY:-false}
 
-export ASYNC_TYPE="-Dorg.mongodb.test.async.type=${STREAM_TYPE}"
+if [ -n "${ASYNC_TRANSPORT}" ]; then
+  readonly JAVA_SYSPROP_ASYNC_TRANSPORT="-Dorg.mongodb.test.async.transport=${ASYNC_TRANSPORT}"
+fi
 
-if [ "${SSL}" = "ssl" ] && [ "${STREAM_TYPE}" = "netty" ] && [ "${NETTY_SSL_PROVIDER}" != "" ]; then
+if [ "${SSL}" = "ssl" ] && [ "${ASYNC_TRANSPORT}" = "netty" ] && [ -n "${NETTY_SSL_PROVIDER}" ]; then
   readonly JAVA_SYSPROP_NETTY_SSL_PROVIDER="-Dorg.mongodb.test.netty.ssl.provider=${NETTY_SSL_PROVIDER}"
 fi
 
@@ -128,7 +129,7 @@ echo "Running tests with Java ${JAVA_VERSION}"
 ./gradlew -version
 
 ./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
-          ${MULTI_MONGOS_URI_SYSTEM_PROPERTY} ${API_VERSION} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} \
-          ${JAVA_SYSPROP_NETTY_SSL_PROVIDER} \
+          ${MULTI_MONGOS_URI_SYSTEM_PROPERTY} ${API_VERSION} ${GRADLE_EXTRA_VARS} \
+          ${JAVA_SYSPROP_ASYNC_TRANSPORT}  ${JAVA_SYSPROP_NETTY_SSL_PROVIDER} \
           -Dorg.mongodb.test.fle.on.demand.credential.test.failure.enabled=true \
           --stacktrace --info --continue ${TESTS}
