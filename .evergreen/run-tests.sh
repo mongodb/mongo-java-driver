@@ -45,7 +45,7 @@ if [ "${SSL}" = "ssl" ] && [ "${STREAM_TYPE}" = "netty" ] && [ "${NETTY_SSL_PROV
 fi
 
 RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
-. "${RELATIVE_DIR_PATH}/javaConfig.bash"
+. "${RELATIVE_DIR_PATH}/setup-env.bash"
 
 ############################################
 #            Functions                     #
