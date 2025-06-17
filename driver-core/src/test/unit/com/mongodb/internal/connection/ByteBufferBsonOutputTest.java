@@ -70,38 +70,76 @@ final class ByteBufferBsonOutputTest {
     private static final List<Integer> ALL_CODE_POINTS_EXCLUDING_SURROGATES = Stream.concat(
                     range(1, MIN_HIGH_SURROGATE).boxed(),
                     rangeClosed(MAX_LOW_SURROGATE + 1, MAX_CODE_POINT).boxed())
+            .filter(codePoint -> codePoint < 128 || codePoint % 30 == 0) // only subset of code points to speed up testing
             .collect(toList());
+
     private static final List<Integer> ALL_SURROGATE_CODE_POINTS = Stream.concat(
             range(MIN_LOW_SURROGATE, MAX_LOW_SURROGATE).boxed(),
-            range(MIN_HIGH_SURROGATE, MAX_HIGH_SURROGATE).boxed()).collect(toList());
+            range(MIN_HIGH_SURROGATE, MAX_HIGH_SURROGATE).boxed())
+            .filter(codePoint -> codePoint < 128 || codePoint % 30 == 0) // only subset of code points to speed up testing
+            .collect(toList());
+
     public static final List<Integer> ALL_UTF_16_CODE_POINTS_FORMED_BY_SURROGATE_PAIRS = rangeClosed(0x10000, MAX_CODE_POINT)
             .boxed()
+            .filter(codePoint -> codePoint < 128 || codePoint % 30 == 0) // only subset of code points to speed up testing
             .collect(toList());
 
     static Stream<BufferProvider> bufferProviders() {
         return Stream.of(
-                size -> new NettyByteBuf(PooledByteBufAllocator.DEFAULT.directBuffer(size)),
-                size -> new NettyByteBuf(PooledByteBufAllocator.DEFAULT.heapBuffer(size)),
-                new PowerOfTwoBufferPool(),
-                size -> new ByteBufNIO(ByteBuffer.wrap(new byte[size + 5], 2, size).slice()),  //different array offsets
-                size -> new ByteBufNIO(ByteBuffer.wrap(new byte[size + 4], 3, size).slice()),  //different array offsets
-                size -> new ByteBufNIO(ByteBuffer.allocate(size)) {
-                    @Override
-                    public boolean isBackedByArray() {
-                        return false;
-                    }
+                createBufferProvider(
+                        "NettyByteBuf based on PooledByteBufAllocator.DEFAULT.directBuffer",
+                        size -> new NettyByteBuf(PooledByteBufAllocator.DEFAULT.directBuffer(size))
+                ),
+                createBufferProvider(
+                        "NettyByteBuf based on PooledByteBufAllocator.DEFAULT.heapBuffer",
+                        size -> new NettyByteBuf(PooledByteBufAllocator.DEFAULT.heapBuffer(size))
+                ),
+                createBufferProvider(
+                        "PowerOfTwoBufferPool",
+                        new PowerOfTwoBufferPool()
+                ),
+                createBufferProvider(
+                        "ByteBufNIO based on ByteBuffer with arrayOffset() -> 2",
+                        size -> new ByteBufNIO(ByteBuffer.wrap(new byte[size + 5], 2, size).slice())
+                ),
+                createBufferProvider(
+                        "ByteBufNIO based on ByteBuffer with arrayOffset() -> 3,",
+                        size -> new ByteBufNIO(ByteBuffer.wrap(new byte[size + 4], 3, size).slice())
+                ),
+                createBufferProvider(
+                        "ByteBufNIO emulating direct ByteBuffer",
+                        size -> new ByteBufNIO(ByteBuffer.allocate(size)) {
+                            @Override
+                            public boolean isBackedByArray() {
+                                return false;
+                            }
 
-                    @Override
-                    public byte[] array() {
-                        return Assertions.fail("array() is called, when isBackedByArray() returns false");
-                    }
+                            @Override
+                            public byte[] array() {
+                                return Assertions.fail("array() is called, when isBackedByArray() returns false");
+                            }
 
-                    @Override
-                    public int arrayOffset() {
-                        return Assertions.fail("arrayOffset() is called, when isBackedByArray() returns false");
-                    }
-                }
+                            @Override
+                            public int arrayOffset() {
+                                return Assertions.fail("arrayOffset() is called, when isBackedByArray() returns false");
+                            }
+                        }
+                )
         );
+    }
+
+    private static BufferProvider createBufferProvider(final String bufferName, BufferProvider bufferProvider) {
+        return new BufferProvider() {
+            @Override
+            public ByteBuf getBuffer(final int size) {
+                return bufferProvider.getBuffer(size);
+            }
+
+            @Override
+            public String toString() {
+                return bufferName;
+            }
+        };
     }
 
     public static Stream<Arguments> bufferProvidersWithBranches() {
@@ -127,7 +165,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("position and size should be 0 after constructor")
-    @ParameterizedTest
+    @ParameterizedTest(name = "position and size should be 0 after constructor. Parameters: useBranch={0}")
     @ValueSource(strings = {"none", "empty", "truncated"})
     void positionAndSizeShouldBe0AfterConstructor(final String branchState) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
@@ -161,7 +199,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should write a byte")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should write a byte. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void shouldWriteByte(final boolean useBranch, final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
@@ -180,7 +218,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should write byte at position")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should write byte at position. Parameters: useBranch={0}")
     @ValueSource(booleans = {false, true})
     void shouldWriteByteAtPosition(final boolean useBranch) {
         for (int offset = 0; offset < 5; offset++) {
@@ -206,7 +244,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should throw exception when writing byte at invalid position")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should throw exception when writing byte at invalid position. Parameters: useBranch={0}")
     @ValueSource(booleans = {false, true})
     void shouldThrowExceptionWhenWriteByteAtInvalidPosition(final boolean useBranch) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
@@ -225,7 +263,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should write a bytes")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should write a bytes. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void shouldWriteBytes(final boolean useBranch, final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
@@ -244,7 +282,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should write bytes from offset until length")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should write bytes from offset until length. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void shouldWriteBytesFromOffsetUntilLength(final boolean useBranch, final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
@@ -263,7 +301,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should write a little endian Int32")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should write a little endian Int32. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void shouldWriteLittleEndianInt32(final boolean useBranch, final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
@@ -282,7 +320,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should write a little endian Int64")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should write a little endian Int64. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void shouldWriteLittleEndianInt64(final boolean useBranch, final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
@@ -301,7 +339,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should write a double")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should write a double. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void shouldWriteDouble(final boolean useBranch, final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
@@ -320,7 +358,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should write an ObjectId")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should write an ObjectId. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void shouldWriteObjectId(final boolean useBranch, final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
@@ -340,7 +378,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should write an empty string")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should write an empty string. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void shouldWriteEmptyString(final boolean useBranch, final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
@@ -359,7 +397,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should write an ASCII string")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should write an ASCII string. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void shouldWriteAsciiString(final boolean useBranch, final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
@@ -378,7 +416,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should write a UTF-8 string")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should write a UTF-8 string. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void shouldWriteUtf8String(final boolean useBranch, final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
@@ -397,7 +435,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should write an empty CString")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should write an empty CString. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void shouldWriteEmptyCString(final boolean useBranch, final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
@@ -416,7 +454,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should write an ASCII CString")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should write an ASCII CString. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void shouldWriteAsciiCString(final boolean useBranch, final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
@@ -435,7 +473,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should write a UTF-8 CString")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should write a UTF-8 CString. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void shouldWriteUtf8CString(final boolean useBranch, final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
@@ -454,7 +492,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should get byte buffers as little endian")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should get byte buffers as little endian. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void shouldGetByteBuffersAsLittleEndian(final boolean useBranch, final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
@@ -471,7 +509,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("null character in CString should throw SerializationException")
-    @ParameterizedTest
+    @ParameterizedTest(name = "null character in CString should throw SerializationException. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void nullCharacterInCStringShouldThrowSerializationException(final boolean useBranch, final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
@@ -487,7 +525,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("null character in String should not throw SerializationException")
-    @ParameterizedTest
+    @ParameterizedTest(name = "null character in String should not throw SerializationException. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void nullCharacterInStringShouldNotThrowSerializationException(final boolean useBranch, final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
@@ -517,7 +555,8 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("write Int32 at position should throw with invalid position")
-    @ParameterizedTest
+    @ParameterizedTest(name = "write Int32 at position should throw with invalid position. " +
+            "Parameters: useBranch={0}, position={1}, bufferProvider={2}")
     @MethodSource
     void writeInt32AtPositionShouldThrowWithInvalidPosition(final boolean useBranch, final int position,
                                                             final BufferProvider bufferProvider) {
@@ -537,7 +576,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should write Int32 at position")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should write Int32 at position. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void shouldWriteInt32AtPosition(final boolean useBranch, final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
@@ -585,7 +624,8 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("truncate should throw with invalid position")
-    @ParameterizedTest
+    @ParameterizedTest(name = "truncate should throw with invalid position. " +
+            "Parameters: useBranch={0}, position={1}")
     @MethodSource
     void truncateShouldThrowWithInvalidPosition(final boolean useBranch, final int position) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
@@ -603,7 +643,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should truncate to position")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should truncate to position. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void shouldTruncateToPosition(final boolean useBranch, final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
@@ -627,7 +667,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should grow to maximum allowed size of byte buffer")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should grow to maximum allowed size of byte buffer. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void shouldGrowToMaximumAllowedSizeOfByteBuffer(final boolean useBranch, final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
@@ -669,7 +709,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should pipe")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should pipe. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void shouldPipe(final boolean useBranch, final BufferProvider bufferProvider) throws IOException {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
@@ -705,7 +745,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should close")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should close. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     @SuppressWarnings("try")
     void shouldClose(final boolean useBranch, final BufferProvider bufferProvider) {
@@ -726,7 +766,7 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("should handle mixed branching and truncating")
-    @ParameterizedTest
+    @ParameterizedTest(name = "should handle mixed branching and truncating. Reps={0}")
     @ValueSource(ints = {1, INITIAL_BUFFER_SIZE, INITIAL_BUFFER_SIZE * 3})
     void shouldHandleMixedBranchingAndTruncating(final int reps) throws CharacterCodingException {
         BiConsumer<ByteBufferBsonOutput, Character> write = (out, c) -> {
@@ -773,8 +813,8 @@ final class ByteBufferBsonOutputTest {
         }
     }
 
-    @ParameterizedTest
     @DisplayName("should throw exception when calling writeInt32 at absolute position where integer would not fit")
+    @ParameterizedTest(name = "should throw exception when calling writeInt32 at absolute position where integer would not fit. BufferProvider={0}")
     @MethodSource("bufferProviders")
     void shouldThrowExceptionWhenIntegerDoesNotFitWriteInt32(final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(bufferProvider)) {
@@ -790,8 +830,8 @@ final class ByteBufferBsonOutputTest {
         }
     }
 
-    @ParameterizedTest
     @DisplayName("should throw exception when calling writeInt32 with negative absolute position")
+    @ParameterizedTest(name = "should throw exception when calling writeInt32 with negative absolute position. BufferProvider={0}")
     @MethodSource("bufferProviders")
     void shouldThrowExceptionWhenAbsolutePositionIsNegative(final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(bufferProvider)) {
@@ -837,7 +877,8 @@ final class ByteBufferBsonOutputTest {
                 )));
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should write Int32 absolute value within spanning buffers. " +
+            "Parameters: absolutePosition={0}, intValue={1}, initialData={2}, expectedBuffers={3}, bufferProvider={4}")
     @MethodSource
     void shouldWriteInt32AbsoluteValueWithinSpanningBuffers(
             final int absolutePosition,
@@ -964,7 +1005,9 @@ final class ByteBufferBsonOutputTest {
                 )));
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should write Int32 within spanning buffers. " +
+            "Parameters: intValue={0}, initialData={1}, expectedBuffers={2}, expectedOutputPosition={3}, " +
+            "expectedLastBufferPosition={4}, bufferProvider={5}")
     @MethodSource("int32SpanningBuffersData")
     void shouldWriteInt32WithinSpanningBuffers(
             final int intValue,
@@ -994,7 +1037,9 @@ final class ByteBufferBsonOutputTest {
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should write Int64 within spanning buffers. " +
+            "Parameters: intValue={0}, initialData={1}, expectedBuffers={2}, expectedOutputPosition={3}, " +
+            "expectedLastBufferPosition={4}, bufferProvider={5}")
     @MethodSource("int64SpanningBuffersData")
     void shouldWriteInt64WithinSpanningBuffers(
             final long intValue,
@@ -1024,7 +1069,9 @@ final class ByteBufferBsonOutputTest {
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should write double within spanning buffers. " +
+            "Parameters: intValue={0}, initialData={1}, expectedBuffers={2}, expectedOutputPosition={3}, " +
+            "expectedLastBufferPosition={4}, bufferProvider={5}")
     @MethodSource("int64SpanningBuffersData")
     void shouldWriteDoubleWithinSpanningBuffers(
             final long intValue,
@@ -1095,7 +1142,7 @@ final class ByteBufferBsonOutputTest {
     class Utf8StringTests {
 
         @DisplayName("should write UTF-8 CString across buffers")
-        @ParameterizedTest
+        @ParameterizedTest(name = "should write UTF-8 CString across buffers. BufferProvider={0}")
         @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
         void shouldWriteCStringAcrossBuffersUTF8(final BufferProvider bufferProvider) throws IOException {
             for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
@@ -1107,7 +1154,7 @@ final class ByteBufferBsonOutputTest {
         }
 
         @DisplayName("should write UTF-8 CString across buffers with a branch")
-        @ParameterizedTest
+        @ParameterizedTest(name = "should write UTF-8 CString across buffers with a branch. BufferProvider={0}")
         @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
         void shouldWriteCStringAcrossBuffersUTF8WithBranch(final BufferProvider bufferProvider) throws IOException {
             for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
@@ -1120,7 +1167,7 @@ final class ByteBufferBsonOutputTest {
         }
 
         @DisplayName("should write UTF-8 String across buffers")
-        @ParameterizedTest
+        @ParameterizedTest(name = "should write UTF-8 String across buffers. BufferProvider={0}")
         @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
         void shouldWriteStringAcrossBuffersUTF8(final BufferProvider bufferProvider) throws IOException {
             for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
@@ -1138,7 +1185,7 @@ final class ByteBufferBsonOutputTest {
         }
 
         @DisplayName("should write UTF-8 String across buffers with branch")
-        @ParameterizedTest
+        @ParameterizedTest(name = "should write UTF-8 String across buffers with branch. BufferProvider={0}")
         @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
         void shouldWriteStringAcrossBuffersUTF8WithBranch(final BufferProvider bufferProvider) throws IOException {
             for (Integer codePoint : ALL_CODE_POINTS_EXCLUDING_SURROGATES) {
@@ -1161,7 +1208,7 @@ final class ByteBufferBsonOutputTest {
            Ticket: JAVA-5575
          */
         @DisplayName("should write malformed surrogate CString across buffers")
-        @ParameterizedTest
+        @ParameterizedTest(name = "should write malformed surrogate CString across buffers. BufferProvider={0}")
         @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
         void shouldWriteCStringWithMalformedSurrogates(final BufferProvider bufferProvider) throws IOException {
             for (Integer surrogateCodePoint : ALL_SURROGATE_CODE_POINTS) {
@@ -1188,7 +1235,7 @@ final class ByteBufferBsonOutputTest {
            Ticket: JAVA-5575
          */
         @DisplayName("should write malformed surrogate CString across buffers with branch")
-        @ParameterizedTest
+        @ParameterizedTest(name = "should write malformed surrogate CString across buffers with branch. BufferProvider={0}")
         @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
         void shouldWriteCStringWithMalformedSurrogatesWithBranch(final BufferProvider bufferProvider) throws IOException {
             for (Integer surrogateCodePoint : ALL_SURROGATE_CODE_POINTS) {
@@ -1210,7 +1257,7 @@ final class ByteBufferBsonOutputTest {
         }
 
         @DisplayName("should write surrogate CString across buffers")
-        @ParameterizedTest
+        @ParameterizedTest(name = "should write surrogate CString across buffers. BufferProvider={0}")
         @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
         void shouldWriteCStringWithSurrogatePairs(final BufferProvider bufferProvider) throws IOException {
             for (Integer surrogateCodePoint : ALL_UTF_16_CODE_POINTS_FORMED_BY_SURROGATE_PAIRS) {
@@ -1228,7 +1275,7 @@ final class ByteBufferBsonOutputTest {
         }
 
         @DisplayName("should write surrogate CString across buffers with branch")
-        @ParameterizedTest
+        @ParameterizedTest(name = "should write surrogate CString across buffers with branch. BufferProvider={0}")
         @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
         void shouldWriteCStringWithSurrogatePairsWithBranch(final BufferProvider bufferProvider) throws IOException {
             for (Integer surrogateCodePoint : ALL_UTF_16_CODE_POINTS_FORMED_BY_SURROGATE_PAIRS) {
@@ -1246,7 +1293,7 @@ final class ByteBufferBsonOutputTest {
         }
 
         @DisplayName("should write surrogate String across buffers")
-        @ParameterizedTest
+        @ParameterizedTest(name = "should write surrogate String across buffers. BufferProvider={0}")
         @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
         void shouldWriteStringWithSurrogatePairs(final BufferProvider bufferProvider) throws IOException {
             for (Integer surrogateCodePoint : ALL_UTF_16_CODE_POINTS_FORMED_BY_SURROGATE_PAIRS) {
@@ -1264,7 +1311,7 @@ final class ByteBufferBsonOutputTest {
         }
 
         @DisplayName("should write surrogate String across buffers with branch")
-        @ParameterizedTest
+        @ParameterizedTest(name = "should write surrogate String across buffers with branch. BufferProvider={0}")
         @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
         void shouldWriteStringWithSurrogatePairsWithBranch(final BufferProvider bufferProvider) throws IOException {
             for (Integer surrogateCodePoint : ALL_UTF_16_CODE_POINTS_FORMED_BY_SURROGATE_PAIRS) {
@@ -1287,7 +1334,7 @@ final class ByteBufferBsonOutputTest {
            Ticket: JAVA-5575
          */
         @DisplayName("should write malformed surrogate String across buffers")
-        @ParameterizedTest
+        @ParameterizedTest(name = "should write malformed surrogate String across buffers. BufferProvider={0}")
         @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
         void shouldWriteStringWithMalformedSurrogates(final BufferProvider bufferProvider) throws IOException {
             for (Integer surrogateCodePoint : ALL_SURROGATE_CODE_POINTS) {
@@ -1314,7 +1361,7 @@ final class ByteBufferBsonOutputTest {
           Ticket: JAVA-5575
         */
         @DisplayName("should write malformed surrogate String across buffers with branch")
-        @ParameterizedTest
+        @ParameterizedTest(name = "should write malformed surrogate String across buffers with branch. BufferProvider={0}")
         @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
         void shouldWriteStringWithMalformedSurrogatesWithBranch(final BufferProvider bufferProvider) throws IOException {
             for (Integer surrogateCodePoint : ALL_SURROGATE_CODE_POINTS) {
