@@ -1834,7 +1834,7 @@ axes:
         variables:
           SSL: "nossl"
 
-  - id: async_transport
+  - id: "async-transport"
     display_name: Async Transport
     values:
       - id: "netty"
@@ -2460,7 +2460,7 @@ buildvariants:
 
   - matrix_name: "tests-netty"
     matrix_spec: { auth: "noauth", ssl: "*", jdk: "jdk8", version: [ "7.0" ], topology: "replicaset", os: "linux",
-                   async_transport: "netty" }
+                   async-transport: "netty" }
     display_name: "Netty: ${version} ${topology} ${ssl} ${auth} ${jdk} ${os} "
     tags: [ "tests-netty-variant" ]
     tasks:
@@ -2469,7 +2469,7 @@ buildvariants:
 
   - matrix_name: "tests-netty-ssl-provider"
     matrix_spec: { auth: "auth", ssl: "ssl", jdk: "jdk8", version: [ "7.0" ], topology: "replicaset", os: "linux",
-                   async_transport: "netty", netty-ssl-provider: "*" }
+                   async-transport: "netty", netty-ssl-provider: "*" }
     display_name: "Netty SSL provider: ${version} ${topology} ${ssl} SslProvider.${netty-ssl-provider} ${auth} ${jdk} ${os} "
     tags: [ "tests-netty-variant" ]
     tasks:

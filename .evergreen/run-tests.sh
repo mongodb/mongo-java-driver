@@ -37,7 +37,7 @@ COMPRESSOR=${COMPRESSOR:-}
 TESTS=${TESTS:-test}
 SLOW_TESTS_ONLY=${SLOW_TESTS_ONLY:-false}
 
-if [ "${ASYNC_TRANSPORT}" != "" ]; then
+if [ -n "${ASYNC_TRANSPORT}"]; then
   readonly JAVA_SYSPROP_ASYNC_TRANSPORT="-Dorg.mongodb.test.async.transport=${ASYNC_TRANSPORT}"
 fi
 
