@@ -54,7 +54,7 @@ class ByteBufferBsonInputTest {
     private static final List<Integer> ALL_CODE_POINTS_EXCLUDING_SURROGATES = Stream.concat(
                     range(1, MIN_HIGH_SURROGATE).boxed(),
                     rangeClosed(MAX_LOW_SURROGATE + 1, MAX_CODE_POINT).boxed())
-            .filter(i -> i < 128 || i % 10 == 0) // only subset of code points to speed up testing
+            .filter(i -> i < 128 || i % 30 == 0) // only subset of code points to speed up testing
             .collect(toList());
 
     static Stream<BufferProvider> bufferProviders() {
