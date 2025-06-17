@@ -2464,8 +2464,8 @@ buildvariants:
     display_name: "Netty: ${version} ${topology} ${ssl} ${auth} ${jdk} ${os} "
     tags: [ "tests-netty-variant" ]
     tasks:
-      - name: "test-reactive"
-      - name: "test-core"
+      - name: "test-reactive-task"
+      - name: "test-core-task"
 
   - matrix_name: "tests-netty-ssl-provider"
     matrix_spec: { auth: "auth", ssl: "ssl", jdk: "jdk8", version: [ "7.0" ], topology: "replicaset", os: "linux",
@@ -2473,8 +2473,8 @@ buildvariants:
     display_name: "Netty SSL provider: ${version} ${topology} ${ssl} SslProvider.${netty-ssl-provider} ${auth} ${jdk} ${os} "
     tags: [ "tests-netty-variant" ]
     tasks:
-      - name: "test-reactive"
-      - name: "test-core"
+      - name: "test-reactive-task"
+      - name: "test-core-task"
 
   - matrix_name: "tests-socket-snappy-compression"
     matrix_spec: { compressor: "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: [ "4.2" ], topology: "standalone", os: "linux" }
