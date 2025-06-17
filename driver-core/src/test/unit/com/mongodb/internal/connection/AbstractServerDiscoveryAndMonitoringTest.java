@@ -113,11 +113,11 @@ public class AbstractServerDiscoveryAndMonitoringTest {
         switch (when) {
             case "beforeHandshakeCompletes":
                 server.sdamServerDescriptionManager().handleExceptionBeforeHandshake(
-                        SdamIssue.specific(exception, new SdamIssue.Context(server.serverId(), errorGeneration, maxWireVersion)));
+                        SdamIssue.of(exception, new SdamIssue.Context(server.serverId(), errorGeneration, maxWireVersion)));
                 break;
             case "afterHandshakeCompletes":
                 server.sdamServerDescriptionManager().handleExceptionAfterHandshake(
-                        SdamIssue.specific(exception, new SdamIssue.Context(server.serverId(), errorGeneration, maxWireVersion)));
+                        SdamIssue.of(exception, new SdamIssue.Context(server.serverId(), errorGeneration, maxWireVersion)));
                 break;
             default:
                 throw new UnsupportedOperationException("Unsupported `when` value: " + when);
