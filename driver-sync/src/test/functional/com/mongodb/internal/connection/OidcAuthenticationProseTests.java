@@ -207,13 +207,14 @@ public class OidcAuthenticationProseTests {
         }
     }
 
+    // Not a prose test
     @ParameterizedTest
     @MethodSource
     @DisplayName("{testName}")
-    public void testValidCallbackInputsTimeout(String testName,
-                                               int timeoutMs,
-                                               int serverSelectionTimeoutMS,
-                                               int expectedTimeoutThreshold) {
+    void testValidCallbackInputsTimeout(final String testName,
+                                        final int timeoutMs,
+                                        final int serverSelectionTimeoutMS,
+                                        final int expectedTimeoutThreshold) {
         TestCallback callback1 = createCallback();
 
         OidcCallback callback2 = (context) -> {
@@ -261,10 +262,6 @@ public class OidcAuthenticationProseTests {
                         500, // serverSelectionTimeoutMS
                         499) // expectedTimeoutThreshold
         );
-    }
-
-    private long msElapsedSince(final long t1) {
-        return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t1);
     }
 
     @Test
@@ -1211,5 +1208,9 @@ public class OidcAuthenticationProseTests {
         return new TestCallback()
                 .setPathSupplier(() -> oidcTokenDirectory() + "test_user1")
                 .setRefreshToken("refreshToken");
+    }
+
+    private long msElapsedSince(final long timeOfStart) {
+        return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - timeOfStart);
     }
 }
