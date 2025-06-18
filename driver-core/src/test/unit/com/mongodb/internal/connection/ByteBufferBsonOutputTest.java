@@ -128,7 +128,7 @@ final class ByteBufferBsonOutputTest {
         );
     }
 
-    private static BufferProvider createBufferProvider(final String bufferName, BufferProvider bufferProvider) {
+    private static BufferProvider createBufferProvider(final String bufferName, final BufferProvider bufferProvider) {
         return new BufferProvider() {
             @Override
             public ByteBuf getBuffer(final int size) {
@@ -555,8 +555,8 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("write Int32 at position should throw with invalid position")
-    @ParameterizedTest(name = "write Int32 at position should throw with invalid position. " +
-            "Parameters: useBranch={0}, position={1}, bufferProvider={2}")
+    @ParameterizedTest(name = "write Int32 at position should throw with invalid position. "
+            + "Parameters: useBranch={0}, position={1}, bufferProvider={2}")
     @MethodSource
     void writeInt32AtPositionShouldThrowWithInvalidPosition(final boolean useBranch, final int position,
                                                             final BufferProvider bufferProvider) {
@@ -624,8 +624,8 @@ final class ByteBufferBsonOutputTest {
     }
 
     @DisplayName("truncate should throw with invalid position")
-    @ParameterizedTest(name = "truncate should throw with invalid position. " +
-            "Parameters: useBranch={0}, position={1}")
+    @ParameterizedTest(name = "truncate should throw with invalid position. "
+            + "Parameters: useBranch={0}, position={1}")
     @MethodSource
     void truncateShouldThrowWithInvalidPosition(final boolean useBranch, final int position) {
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
@@ -877,8 +877,8 @@ final class ByteBufferBsonOutputTest {
                 )));
     }
 
-    @ParameterizedTest(name = "should write Int32 absolute value within spanning buffers. " +
-            "Parameters: absolutePosition={0}, intValue={1}, initialData={2}, expectedBuffers={3}, bufferProvider={4}")
+    @ParameterizedTest(name = "should write Int32 absolute value within spanning buffers. "
+            + "Parameters: absolutePosition={0}, intValue={1}, initialData={2}, expectedBuffers={3}, bufferProvider={4}")
     @MethodSource
     void shouldWriteInt32AbsoluteValueWithinSpanningBuffers(
             final int absolutePosition,
@@ -1005,9 +1005,9 @@ final class ByteBufferBsonOutputTest {
                 )));
     }
 
-    @ParameterizedTest(name = "should write Int32 within spanning buffers. " +
-            "Parameters: intValue={0}, initialData={1}, expectedBuffers={2}, expectedOutputPosition={3}, " +
-            "expectedLastBufferPosition={4}, bufferProvider={5}")
+    @ParameterizedTest(name = "should write Int32 within spanning buffers. "
+            + "Parameters: intValue={0}, initialData={1}, expectedBuffers={2}, expectedOutputPosition={3}, "
+            + "expectedLastBufferPosition={4}, bufferProvider={5}")
     @MethodSource("int32SpanningBuffersData")
     void shouldWriteInt32WithinSpanningBuffers(
             final int intValue,
@@ -1037,9 +1037,9 @@ final class ByteBufferBsonOutputTest {
         }
     }
 
-    @ParameterizedTest(name = "should write Int64 within spanning buffers. " +
-            "Parameters: intValue={0}, initialData={1}, expectedBuffers={2}, expectedOutputPosition={3}, " +
-            "expectedLastBufferPosition={4}, bufferProvider={5}")
+    @ParameterizedTest(name = "should write Int64 within spanning buffers. "
+            + "Parameters: intValue={0}, initialData={1}, expectedBuffers={2}, expectedOutputPosition={3}, "
+            + "expectedLastBufferPosition={4}, bufferProvider={5}")
     @MethodSource("int64SpanningBuffersData")
     void shouldWriteInt64WithinSpanningBuffers(
             final long intValue,
@@ -1069,9 +1069,9 @@ final class ByteBufferBsonOutputTest {
         }
     }
 
-    @ParameterizedTest(name = "should write double within spanning buffers. " +
-            "Parameters: intValue={0}, initialData={1}, expectedBuffers={2}, expectedOutputPosition={3}, " +
-            "expectedLastBufferPosition={4}, bufferProvider={5}")
+    @ParameterizedTest(name = "should write double within spanning buffers. "
+            + "Parameters: intValue={0}, initialData={1}, expectedBuffers={2}, expectedOutputPosition={3}, "
+            + "expectedLastBufferPosition={4}, bufferProvider={5}")
     @MethodSource("int64SpanningBuffersData")
     void shouldWriteDoubleWithinSpanningBuffers(
             final long intValue,

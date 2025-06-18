@@ -101,7 +101,7 @@ class ByteBufferBsonInputTest {
         );
     }
 
-    private static BufferProvider createBufferProvider(final String bufferName, BufferProvider bufferProvider) {
+    private static BufferProvider createBufferProvider(final String bufferName, final BufferProvider bufferProvider) {
         return new BufferProvider() {
             @Override
             public ByteBuf getBuffer(final int size) {
