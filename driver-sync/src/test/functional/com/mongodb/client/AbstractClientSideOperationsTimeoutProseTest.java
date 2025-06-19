@@ -870,7 +870,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         //given
         try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
                 .applyToConnectionPoolSettings(builder -> builder
-                        .maxWaitTime(1, TimeUnit.MILLISECONDS)
+                        .maxWaitTime(100, TimeUnit.MILLISECONDS)
                         .maxSize(1)
                 ))) {
             MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
