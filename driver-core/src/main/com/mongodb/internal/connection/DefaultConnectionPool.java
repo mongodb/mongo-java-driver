@@ -210,7 +210,7 @@ final class DefaultConnectionPool implements ConnectionPool {
     @Override
     public void getAsync(final OperationContext operationContext, final SingleResultCallback<InternalConnection> callback) {
         StartTime checkoutStart = connectionCheckoutStarted(operationContext);
-        Timeout maxWaitTimeout = checkoutStart.timeoutAfterOrInfiniteIfNegative(settings.getMaxWaitTime(NANOSECONDS), NANOSECONDS);
+        Timeout maxWaitTimeout = operationContext.getTimeoutContext().startWaitQueueTimeout(checkoutStart);
         SingleResultCallback<PooledConnection> eventSendingCallback = (connection, failure) -> {
             SingleResultCallback<InternalConnection> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
             if (failure == null) {
