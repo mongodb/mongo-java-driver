@@ -336,7 +336,7 @@ final class EventMatcher {
         BsonDocument expectedEventContents = getEventContents(expectedEvent);
         try {
             serverMonitorListener.waitForEvents(expectedEventType,
-                    event -> serverMonitorEventMatches(expectedEventContents, event, null), count, Duration.ofSeconds(30));
+                    event -> serverMonitorEventMatches(expectedEventContents, event, null), count, Duration.ofSeconds(15));
             context.pop();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
