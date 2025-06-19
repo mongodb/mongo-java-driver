@@ -556,7 +556,7 @@ class DefaultServerMonitor implements ServerMonitor {
                             new LogMessage.Entry(TOPOLOGY_ID, serverId.getClusterId()),
                             new LogMessage.Entry(AWAITED, awaited)),
                     "Heartbeat started for {}:{} on connection with driver-generated ID {} and server-generated ID {} "
-                    + "in topology with ID {}. Awaited: {}"));
+                           + "in topology with ID {}. Awaited: {}"));
         }
     }
 
