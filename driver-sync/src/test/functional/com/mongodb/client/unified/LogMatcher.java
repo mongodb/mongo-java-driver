@@ -33,6 +33,7 @@ import org.bson.BsonValue;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -47,15 +48,20 @@ final class LogMatcher {
         this.context = context;
     }
 
-    void assertLogMessageEquality(final String client, final boolean ignoreExtraMessages, final BsonArray expectedMessages,
+    void assertLogMessageEquality(final String client, final BsonArray ignoreMessages,
+            final boolean ignoreExtraMessages, final BsonArray expectedMessages,
             final List<LogMessage> actualMessages, final Iterable<Tweak> tweaks) {
         context.push(ContextElement.ofLogMessages(client, expectedMessages, actualMessages));
 
+        List<LogMessage> logMessages = actualMessages.stream()
+                .filter(logMessage -> !ignoreMessages.contains(logMessageAsIgnoreMessageDocument(logMessage)))
+                .collect(Collectors.toList());
+
         if (ignoreExtraMessages) {
             assertTrue(context.getMessage("Number of messages must be greater than or equal to the expected number of messages"),
-                    actualMessages.size() >= expectedMessages.size());
+                    logMessages.size() >= expectedMessages.size());
         } else {
-            assertEquals(context.getMessage("Number of log messages must be the same"), expectedMessages.size(), actualMessages.size());
+            assertEquals(context.getMessage("Number of log messages must be the same"), expectedMessages.size(), logMessages.size());
         }
 
         for (int i = 0; i < expectedMessages.size(); i++) {
@@ -64,14 +70,22 @@ final class LogMatcher {
                 expectedMessage = tweak.apply(expectedMessage);
             }
             if (expectedMessage != null) {
-                valueMatcher.assertValuesMatch(expectedMessage, asDocument(actualMessages.get(i)));
+                valueMatcher.assertValuesMatch(expectedMessage, logMessageAsDocument(logMessages.get(i)));
             }
         }
 
         context.pop();
     }
 
-     static BsonDocument asDocument(final LogMessage message) {
+    private static BsonDocument logMessageAsIgnoreMessageDocument(final LogMessage message) {
+        BsonDocument document = new BsonDocument();
+        document.put("level", new BsonString(message.getLevel().name().toLowerCase()));
+        document.put("component", new BsonString(message.getComponent().getValue()));
+        document.put("data", new BsonDocument("message", new BsonString(message.getMessageId())));
+        return document;
+    }
+
+     static BsonDocument logMessageAsDocument(final LogMessage message) {
         BsonDocument document = new BsonDocument();
         document.put("component", new BsonString(message.getComponent().getValue()));
         document.put("level", new BsonString(message.getLevel().name().toLowerCase()));

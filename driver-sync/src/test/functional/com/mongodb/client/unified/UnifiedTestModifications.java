@@ -235,14 +235,15 @@ public final class UnifiedTestModifications {
 
         // server-discovery-and-monitoring (SDAM)
 
+        def.retry("Flaky test,due to a race waiting for the failed heartbeat.")
+                .test("server-discovery-and-monitoring", "standalone-logging", "Failing heartbeat")
+                .test("server-discovery-and-monitoring", "replicaset-logging", "Failing heartbeat")
+                .test("server-discovery-and-monitoring", "sharded-logging", "Failing heartbeat")
+                .test("server-discovery-and-monitoring", "loadbalanced-logging", "Failing heartbeat");
+
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5230")
                 .test("server-discovery-and-monitoring", "serverMonitoringMode", "connect with serverMonitoringMode=auto >=4.4")
                 .test("server-discovery-and-monitoring", "serverMonitoringMode", "connect with serverMonitoringMode=stream >=4.4");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-4770")
-                .file("server-discovery-and-monitoring", "standalone-logging")
-                .file("server-discovery-and-monitoring", "replicaset-logging")
-                .file("server-discovery-and-monitoring", "sharded-logging")
-                .file("server-discovery-and-monitoring", "loadbalanced-logging");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5564")
                 .test("server-discovery-and-monitoring", "serverMonitoringMode", "poll waits after successful heartbeat");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-4536")

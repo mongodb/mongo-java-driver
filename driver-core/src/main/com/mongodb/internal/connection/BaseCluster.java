@@ -118,9 +118,9 @@ abstract class BaseCluster implements Cluster {
         this.clusterListener = singleClusterListener(settings);
         ClusterOpeningEvent clusterOpeningEvent = new ClusterOpeningEvent(clusterId);
         clusterListener.clusterOpening(clusterOpeningEvent);
-        logTopologyOpening(clusterId, clusterOpeningEvent);
         description = new ClusterDescription(settings.getMode(), UNKNOWN, emptyList(),
                 settings, serverFactory.getSettings());
+        logTopologyMonitoringStarting(clusterId);
     }
 
     @Override
@@ -221,7 +221,7 @@ abstract class BaseCluster implements Cluster {
                     description);
             ClusterClosedEvent clusterClosedEvent = new ClusterClosedEvent(clusterId);
             clusterListener.clusterClosed(clusterClosedEvent);
-            logTopologyClosedEvent(clusterId, clusterClosedEvent);
+            logTopologyMonitoringStopping(clusterId);
             stopWaitQueueHandler();
         }
     }
@@ -632,9 +632,7 @@ abstract class BaseCluster implements Cluster {
         }
     }
 
-    static void logTopologyOpening(
-            final ClusterId clusterId,
-            final ClusterOpeningEvent clusterOpeningEvent) {
+    static void logTopologyMonitoringStarting(final ClusterId clusterId) {
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
             STRUCTURED_LOGGER.log(new LogMessage(
                     TOPOLOGY, DEBUG, "Starting topology monitoring", clusterId,
@@ -659,9 +657,7 @@ abstract class BaseCluster implements Cluster {
         }
     }
 
-    static void logTopologyClosedEvent(
-            final ClusterId clusterId,
-            final ClusterClosedEvent clusterClosedEvent) {
+    static void logTopologyMonitoringStopping(final ClusterId clusterId) {
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
             STRUCTURED_LOGGER.log(new LogMessage(
                     TOPOLOGY, DEBUG, "Stopped topology monitoring", clusterId,
