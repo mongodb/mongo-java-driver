@@ -519,7 +519,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                     .getCollection(namespace.getCollectionName());
 
             try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
-                    .defaultTimeout((100), TimeUnit.MILLISECONDS).build())) {
+                    .defaultTimeout(100, TimeUnit.MILLISECONDS).build())) {
                 session.startTransaction();
                 collection.insertOne(session, new Document("x", 1));
 
