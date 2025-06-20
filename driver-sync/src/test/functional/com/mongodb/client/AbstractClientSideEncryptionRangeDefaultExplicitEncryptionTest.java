@@ -31,7 +31,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
@@ -57,7 +56,6 @@ public abstract class AbstractClientSideEncryptionRangeDefaultExplicitEncryption
     public void setUp() {
         assumeTrue(serverVersionAtLeast(8, 0));
         assumeFalse(isStandalone());
-        assumeFalse(isServerlessTest());
 
         MongoNamespace dataKeysNamespace = new MongoNamespace("keyvault.datakeys");
         clientEncryption = createClientEncryption(ClientEncryptionSettings.builder()

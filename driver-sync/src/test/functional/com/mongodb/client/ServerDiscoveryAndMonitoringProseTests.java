@@ -51,7 +51,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import static com.mongodb.ClusterFixture.configureFailPoint;
 import static com.mongodb.ClusterFixture.disableFailPoint;
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
@@ -70,7 +69,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 /**
@@ -89,8 +87,6 @@ public class ServerDiscoveryAndMonitoringProseTests {
     @Test
     @SuppressWarnings("try")
     public void testHeartbeatFrequency() throws InterruptedException {
-        assumeFalse(isServerlessTest());
-
         CountDownLatch latch = new CountDownLatch(5);
         MongoClientSettings settings = getMongoClientSettingsBuilder()
                                        .applyToServerSettings(builder -> {
@@ -170,7 +166,6 @@ public class ServerDiscoveryAndMonitoringProseTests {
     @SuppressWarnings("try")
     public void testConnectionPoolManagement() throws InterruptedException {
         assumeTrue(serverVersionAtLeast(4, 3));
-        assumeFalse(isServerlessTest());
         BlockingQueue<Object> events = new LinkedBlockingQueue<>();
         ServerMonitorListener serverMonitorListener = new ServerMonitorListener() {
             @Override
@@ -234,7 +229,6 @@ public class ServerDiscoveryAndMonitoringProseTests {
     @SuppressWarnings("try")
     public void monitorsSleepAtLeastMinHeartbeatFrequencyMSBetweenChecks() {
         assumeTrue(serverVersionAtLeast(4, 3));
-        assumeFalse(isServerlessTest());
         long defaultMinHeartbeatIntervalMillis = MongoClientSettings.builder().build().getServerSettings()
                 .getMinHeartbeatFrequency(MILLISECONDS);
         assertEquals(500, defaultMinHeartbeatIntervalMillis);

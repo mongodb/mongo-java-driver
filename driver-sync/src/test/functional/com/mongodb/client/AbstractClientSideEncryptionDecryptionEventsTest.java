@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.mongodb.ClusterFixture.configureFailPoint;
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
@@ -77,7 +76,6 @@ public abstract class AbstractClientSideEncryptionDecryptionEventsTest {
         assumeTrue(serverVersionAtLeast(6, 0));
         assumeFalse(isStandalone());
         assumeFalse(isSharded());
-        assumeFalse(isServerlessTest());
 
         getDefaultDatabase().getCollection("decryption_events").drop();
         getDefaultDatabase().createCollection("decryption_events");

@@ -66,7 +66,6 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
@@ -167,7 +166,6 @@ public class CrudProseTest {
     @Test
     void testBulkWriteSplitsWhenExceedingMaxWriteBatchSize() {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         TestCommandListener commandListener = new TestCommandListener();
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder().addCommandListener(commandListener))) {
             int maxWriteBatchSize = droppedDatabase(client).runCommand(new Document("hello", 1)).getInteger("maxWriteBatchSize");
@@ -189,7 +187,6 @@ public class CrudProseTest {
     @Test
     void testBulkWriteSplitsWhenExceedingMaxMessageSizeBytes() {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         TestCommandListener commandListener = new TestCommandListener();
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder().addCommandListener(commandListener))) {
             Document helloResponse = droppedDatabase(client).runCommand(new Document("hello", 1));
@@ -216,7 +213,6 @@ public class CrudProseTest {
     @SuppressWarnings("try")
     protected void testBulkWriteCollectsWriteConcernErrorsAcrossBatches() throws InterruptedException {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         TestCommandListener commandListener = new TestCommandListener();
         BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
                 .append("mode", new BsonDocument("times", new BsonInt32(2)))
@@ -246,7 +242,6 @@ public class CrudProseTest {
     @ValueSource(booleans = {false, true})
     protected void testBulkWriteHandlesWriteErrorsAcrossBatches(final boolean ordered) {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         TestCommandListener commandListener = new TestCommandListener();
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
                 .retryWrites(false)
@@ -270,7 +265,6 @@ public class CrudProseTest {
     @Test
     void testBulkWriteHandlesCursorRequiringGetMore() {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         assertBulkWriteHandlesCursorRequiringGetMore(false);
     }
 
@@ -278,7 +272,6 @@ public class CrudProseTest {
     @Test
     protected void testBulkWriteHandlesCursorRequiringGetMoreWithinTransaction() {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         assumeFalse(isStandalone());
         assertBulkWriteHandlesCursorRequiringGetMore(true);
     }
@@ -320,7 +313,6 @@ public class CrudProseTest {
     @Test
     protected void testBulkWriteSplitsWhenExceedingMaxMessageSizeBytesDueToNsInfo() {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         assertAll(
                 () -> {
                     // Case 1: No batch-splitting required
@@ -392,7 +384,6 @@ public class CrudProseTest {
     @ValueSource(strings = {"document", "namespace"})
     protected void testBulkWriteSplitsErrorsForTooLargeOpsOrNsInfo(final String tooLarge) {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder())) {
             int maxMessageSizeBytes = droppedDatabase(client).runCommand(new Document("hello", 1)).getInteger("maxMessageSizeBytes");
             ClientNamespacedWriteModel model;
@@ -421,7 +412,6 @@ public class CrudProseTest {
     @Test
     protected void testBulkWriteErrorsForAutoEncryption() {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         HashMap<String, Object> awsKmsProviderProperties = new HashMap<>();
         awsKmsProviderProperties.put("accessKeyId", "foo");
         awsKmsProviderProperties.put("secretAccessKey", "bar");
@@ -443,7 +433,6 @@ public class CrudProseTest {
     @Test
     protected void testWriteConcernOfAllBatchesWhenUnacknowledgedRequested() {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         TestCommandListener commandListener = new TestCommandListener();
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder().addCommandListener(commandListener)
                 .writeConcern(WriteConcern.UNACKNOWLEDGED))) {

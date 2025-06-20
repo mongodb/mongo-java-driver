@@ -112,9 +112,8 @@ public final class JsonTestServerVersionChecker {
     public static boolean serverlessMatches(final String serverlessRequirement) {
         switch (serverlessRequirement) {
             case "require":
-                return ClusterFixture.isServerlessTest();
+                return false;
             case "forbid":
-                return !ClusterFixture.isServerlessTest();
             case "allow":
                 return true;
             default:

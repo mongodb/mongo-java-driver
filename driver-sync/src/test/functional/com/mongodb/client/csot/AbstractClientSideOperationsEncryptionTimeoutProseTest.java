@@ -57,7 +57,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.ClusterFixture.applyTimeoutMultiplierForServerless;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -274,7 +273,7 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
         assumeTrue(serverVersionAtLeast(7, 0));
         //given
         long rtt = ClusterFixture.getPrimaryRTT();
-        long initialTimeoutMS = rtt + applyTimeoutMultiplierForServerless(200);
+        long initialTimeoutMS = rtt + 200;
 
         try (ClientEncryption clientEncryption = createClientEncryption(getClientEncryptionSettingsBuilder()
                 .timeout(initialTimeoutMS, MILLISECONDS))) {

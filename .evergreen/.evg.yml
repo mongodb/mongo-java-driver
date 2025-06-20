@@ -185,27 +185,6 @@ functions:
           DRIVERS_TOOLS="${DRIVERS_TOOLS}" bash ${DRIVERS_TOOLS}/.evergreen/atlas_data_lake/teardown.sh || true
 
 
-  "start-serverless":
-    - command: shell.exec
-      params:
-        shell: "bash"
-        include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
-        script: |
-          ${PREPARE_SHELL}
-          bash ${DRIVERS_TOOLS}/.evergreen/serverless/setup-secrets.sh ${VAULT_NAME}
-          bash ${DRIVERS_TOOLS}/.evergreen/serverless/create-instance.sh
-    - command: expansions.update
-      params:
-        file: serverless-expansion.yml
-  "stop-serverless":
-    - command: shell.exec
-      params:
-        shell: "bash"
-        include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
-        script: |
-          ${PREPARE_SHELL}
-          bash ${DRIVERS_TOOLS}/.evergreen/serverless/delete-instance.sh || true
-
   "start-load-balancer":
     - command: shell.exec
       params:
@@ -474,17 +453,6 @@ functions:
           SINGLE_MONGOS_LB_URI="${SINGLE_MONGOS_LB_URI}" \
           MULTI_MONGOS_LB_URI="${MULTI_MONGOS_LB_URI}" \
           .evergreen/run-load-balancer-tests.sh
-
-  "run-serverless-tests":
-    - command: shell.exec
-      type: "test"
-      params:
-        working_dir: "src"
-        shell: "bash"
-        include_expansions_in_env: ["JAVA_VERSION", "SERVERLESS_URI", "SERVERLESS_ATLAS_USER", "SERVERLESS_ATLAS_PASSWORD"]
-        script: |
-          ${PREPARE_SHELL}
-          .evergreen/run-serverless-tests.sh
 
   "run-reactive-streams-tck-tests":
     - command: shell.exec
@@ -837,7 +805,6 @@ post:
   - func: "upload-test-results"
   - func: "assume-aws-test-secrets-role"
   - func: "stop-load-balancer"
-  - func: "stop-serverless"
   - func: "stop-aws"
   - func: "stop-mongohoused"
   - func: "stop-csfle-servers"
@@ -998,13 +965,6 @@ tasks:
         vars:
           VARIANT: gke
 
-
-  - name: "serverless-test-task"
-    disable: true # TODO JAVA-5849
-    commands:
-      - func: "assume-aws-test-secrets-role"
-      - func: "start-serverless"
-      - func: "run-serverless-tests"
 
   - name: "accept-api-version-2-test-task"
     commands:
@@ -1513,7 +1473,7 @@ tasks:
           script: |
             # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
             # The connection strings are pipe-delimited
-            MONGODB_URIS="${atlas_free_tier_uri}|${atlas_replica_set_uri}|${atlas_sharded_uri}|${atlas_tls_v11_uri}|${atlas_tls_v12_uri}|${atlas_free_tier_uri_srv}|${atlas_replica_set_uri_srv}|${atlas_sharded_uri_srv}|${atlas_tls_v11_uri_srv}|${atlas_tls_v12_uri_srv}|${atlas_serverless_uri}|${atlas_serverless_uri_srv}" \
+            MONGODB_URIS="${atlas_free_tier_uri}|${atlas_replica_set_uri}|${atlas_sharded_uri}|${atlas_tls_v11_uri}|${atlas_tls_v12_uri}|${atlas_free_tier_uri_srv}|${atlas_replica_set_uri_srv}|${atlas_sharded_uri_srv}|${atlas_tls_v11_uri_srv}|${atlas_tls_v12_uri_srv}" \
             JAVA_VERSION="8" \
             .evergreen/run-connectivity-tests.sh
 
@@ -1941,15 +1901,6 @@ axes:
         display_name: "Built-In"
         variables:
           AWS_CREDENTIAL_PROVIDER: "builtIn"
-
-  - id: "serverless"
-    display_name: "Serverless"
-    values:
-      - id: "passthrough"
-        display_name: "Serverless Passthrough Proxy"
-        variables:
-          VAULT_NAME: "serverless"
-        batchtime: 10080  # 7 days
 
 task_groups:
   - name: "atlas-deployed-task-group"
@@ -2437,12 +2388,6 @@ buildvariants:
     display_name: "Load Balancer ${version} ${auth} ${ssl} ${jdk} ${os}"
     tasks:
       - name: "load-balancer-test-task"
-
-  - matrix_name: "tests-serverless"
-    matrix_spec: { serverless: "*", jdk: [ "jdk21" ], os: "ubuntu" }
-    display_name: "${serverless} ${jdk} ${os}"
-    tasks:
-      - name: "serverless-test-task"
 
   - matrix_name: "tests-slow-task"
     matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk21", version: [ "7.0" ], topology: "standalone", os: "linux" }

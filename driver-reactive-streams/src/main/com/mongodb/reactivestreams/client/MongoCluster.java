@@ -372,8 +372,6 @@ public interface MongoCluster {
      * executing this operation may require multiple {@code bulkWrite} commands.
      * The eligibility for retries is determined per each {@code bulkWrite} command:
      * {@link ClientNamespacedUpdateManyModel}, {@link ClientNamespacedDeleteManyModel} in a command render it non-retryable.</p>
-     * <p>
-     * This operation is not supported by MongoDB Atlas Serverless instances.</p>
      *
      * @param models The {@linkplain ClientNamespacedWriteModel individual write operations}.
      * @return The {@link Publisher} signalling at most one element {@link ClientBulkWriteResult} if the operation is successful,
@@ -401,8 +399,6 @@ public interface MongoCluster {
      * executing this operation may require multiple {@code bulkWrite} commands.
      * The eligibility for retries is determined per each {@code bulkWrite} command:
      * {@link ClientNamespacedUpdateManyModel}, {@link ClientNamespacedDeleteManyModel} in a command render it non-retryable.</p>
-     * <p>
-     * This operation is not supported by MongoDB Atlas Serverless instances.</p>
      *
      * @param models The {@linkplain ClientNamespacedWriteModel individual write operations}.
      * @param options The options.
@@ -435,8 +431,6 @@ public interface MongoCluster {
      * executing this operation may require multiple {@code bulkWrite} commands.
      * The eligibility for retries is determined per each {@code bulkWrite} command:
      * {@link ClientNamespacedUpdateManyModel}, {@link ClientNamespacedDeleteManyModel} in a command render it non-retryable.</p>
-     * <p>
-     * This operation is not supported by MongoDB Atlas Serverless instances.</p>
      *
      * @param clientSession The {@linkplain ClientSession client session} with which to associate this operation.
      * @param models The {@linkplain ClientNamespacedWriteModel individual write operations}.
@@ -467,8 +461,6 @@ public interface MongoCluster {
      * executing this operation may require multiple {@code bulkWrite} commands.
      * The eligibility for retries is determined per each {@code bulkWrite} command:
      * {@link ClientNamespacedUpdateManyModel}, {@link ClientNamespacedDeleteManyModel} in a command render it non-retryable.</p>
-     * <p>
-     * This operation is not supported by MongoDB Atlas Serverless instances.</p>
      *
      * @param clientSession The {@linkplain ClientSession client session} with which to associate this operation.
      * @param models The {@linkplain ClientNamespacedWriteModel individual write operations}.

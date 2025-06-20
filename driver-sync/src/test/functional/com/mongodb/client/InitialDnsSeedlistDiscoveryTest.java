@@ -53,7 +53,6 @@ import java.util.stream.Collectors;
 import static com.mongodb.ClusterFixture.getSslSettings;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isLoadBalanced;
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static java.util.Objects.requireNonNull;
 import static org.junit.Assert.assertEquals;
@@ -103,7 +102,6 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
 
     @Before
     public void setUp() {
-        assumeFalse(isServerlessTest());
         assumeFalse("https://jira.mongodb.org/browse/JAVA-5064", filename.equals("uri-with-uppercase-hostname.json"));
 
         if (parentDirectory.endsWith("replica-set")) {
