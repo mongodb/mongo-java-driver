@@ -44,9 +44,7 @@ import java.util.stream.Stream;
 
 import static com.mongodb.client.CrudTestHelper.repeat;
 import static com.mongodb.client.WithWrapper.withWrapper;
-import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
-import static com.mongodb.internal.connection.ClientMetadataHelper.getOperatingSystemType;
-import static com.mongodb.internal.connection.ClientMetadataHelper.updateClientMetadataDocument;
+import static com.mongodb.internal.connection.ClientMetadata.getOperatingSystemType;
 import static java.util.Optional.ofNullable;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -58,7 +56,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * <p>
  * NOTE: This class also contains tests that aren't categorized as Prose tests.
  */
-public class ClientMetadataHelperProseTest {
+public class ClientMetadataTest {
     private static final String APP_NAME = "app name";
 
     @Test
@@ -264,7 +262,7 @@ public class ClientMetadataHelperProseTest {
         BsonDocument expectedBase = createExpectedClientMetadataDocument(APP_NAME);
         expected.put("driver", expectedBase.get("driver"));
 
-        BsonDocument actual = createClientMetadataDocument(APP_NAME, driverInfo);
+        BsonDocument actual = new ClientMetadata(APP_NAME, driverInfo).getBsonDocument();
         assertEquals(expected, actual);
     }
 
@@ -280,7 +278,7 @@ public class ClientMetadataHelperProseTest {
         BsonDocument expectedBase = createExpectedClientMetadataDocument(APP_NAME);
         expected.put("platform", expectedBase.get("platform"));
 
-        BsonDocument actual = createClientMetadataDocument(APP_NAME, driverInfo);
+        BsonDocument actual = new ClientMetadata(APP_NAME, driverInfo).getBsonDocument();
         assertEquals(expected, actual);
     }
 
@@ -300,14 +298,14 @@ public class ClientMetadataHelperProseTest {
     @Test
     public void testApplicationNameUnderLimit() {
         String applicationName = repeat(126, "a") + "\u00A0";
-        BsonDocument client = createClientMetadataDocument(applicationName, null);
+        BsonDocument client = new ClientMetadata(applicationName, null).getBsonDocument();
         assertEquals(applicationName, client.getDocument("application").getString("name").getValue());
     }
 
     @Test
     public void testApplicationNameOverLimit() {
         String applicationName = repeat(127, "a") + "\u00A0";
-        assertThrows(IllegalArgumentException.class, () -> createClientMetadataDocument(applicationName, null));
+        assertThrows(IllegalArgumentException.class, () -> new ClientMetadata(applicationName, null));
     }
 
     @ParameterizedTest
@@ -319,9 +317,10 @@ public class ClientMetadataHelperProseTest {
     })
     public void testCreateClientMetadataDocument(@Nullable final String appName, final boolean hasDriverInfo) {
         MongoDriverInformation driverInformation = hasDriverInfo ? createDriverInformation() : null;
+        ClientMetadata clientMetadata = new ClientMetadata(appName, driverInformation);
         assertEquals(
                 createExpectedClientMetadataDocument(appName, driverInformation),
-                createClientMetadataDocument(appName, driverInformation));
+                clientMetadata.getBsonDocument());
     }
 
     public static java.util.stream.Stream<Arguments> provideDriverInformation() {
@@ -347,7 +346,8 @@ public class ClientMetadataHelperProseTest {
                 .driverPlatform("Scala 2.10 / Spark 2.0.0")
                 .build();
 
-        BsonDocument initialClientMetadataDocument = createClientMetadataDocument(null, initialDriverInformation);
+        ClientMetadata clientMetadata = new ClientMetadata(null, initialDriverInformation);
+        BsonDocument initialClientMetadataDocument = clientMetadata.getBsonDocument();
         assertEquals(
                 createExpectedClientMetadataDocument(null, initialDriverInformation),
                 initialClientMetadataDocument);
@@ -367,7 +367,8 @@ public class ClientMetadataHelperProseTest {
                 .build();
 
         //when
-        BsonDocument updatedClientMetadata = updateClientMetadataDocument(initialClientMetadataDocument.clone(), metadataToAppend);
+        clientMetadata.append(metadataToAppend);
+        BsonDocument updatedClientMetadata = clientMetadata.getBsonDocument();
 
         //then
         assertEquals(
@@ -401,7 +402,7 @@ public class ClientMetadataHelperProseTest {
     }
 
     private BsonDocument createActualClientMetadataDocument() {
-        return createClientMetadataDocument(APP_NAME, null);
+        return new ClientMetadata(APP_NAME, null).getBsonDocument();
     }
 
     private static MongoDriverInformation createDriverInformation() {
