@@ -35,6 +35,7 @@ class ChangeStreamDocumentSpecification extends Specification {
         def resumeToken = RawBsonDocument.parse('{token: true}')
         def namespaceDocument = BsonDocument.parse('{db: "databaseName", coll: "collectionName"}')
         def namespace = new MongoNamespace('databaseName.collectionName')
+        def namespaceType = NamespaceType.COLLECTION
         def destinationNamespaceDocument = BsonDocument.parse('{db: "databaseName2", coll: "collectionName2"}')
         def destinationNamespace = new MongoNamespace('databaseName2.collectionName2')
         def fullDocument = BsonDocument.parse('{key: "value for fullDocument"}')
@@ -50,8 +51,11 @@ class ChangeStreamDocumentSpecification extends Specification {
         def extraElements = new BsonDocument('extra', BsonBoolean.TRUE)
 
         when:
-        def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken, namespaceDocument,
-                destinationNamespaceDocument, fullDocument, fullDocumentBeforeChange, documentKey, clusterTime, updateDesc, txnNumber,
+        def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken,
+                namespaceDocument, namespaceType.value,
+                destinationNamespaceDocument, fullDocument,
+                fullDocumentBeforeChange, documentKey,
+                clusterTime, updateDesc, txnNumber,
                 lsid, wallTime, splitEvent, extraElements)
 
         then:
@@ -62,6 +66,8 @@ class ChangeStreamDocumentSpecification extends Specification {
         changeStreamDocument.getClusterTime() == clusterTime
         changeStreamDocument.getNamespace() == namespace
         changeStreamDocument.getNamespaceDocument() == namespaceDocument
+        changeStreamDocument.getNamespaceType() == namespaceType
+        changeStreamDocument.getNamespaceTypeString() == namespaceType.value
         changeStreamDocument.getDestinationNamespace() == destinationNamespace
         changeStreamDocument.getDestinationNamespaceDocument() == destinationNamespaceDocument
         changeStreamDocument.getOperationTypeString() == operationType.value
@@ -88,12 +94,15 @@ class ChangeStreamDocumentSpecification extends Specification {
         def splitEvent = new SplitEvent(1, 2)
         def extraElements = new BsonDocument('extra', BsonBoolean.TRUE)
         def changeStreamDocumentNullNamespace = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken,
-                (BsonDocument) null, (BsonDocument) null, fullDocument, fullDocumentBeforeChange, documentKey, clusterTime, updateDesc,
+                (BsonDocument) null, null, (BsonDocument) null, fullDocument, fullDocumentBeforeChange,
+                documentKey, clusterTime, updateDesc,
                 null, null, wallTime, splitEvent, extraElements)
 
         expect:
         changeStreamDocumentNullNamespace.getDatabaseName() == null
         changeStreamDocumentNullNamespace.getNamespace() == null
+        changeStreamDocumentNullNamespace.getNamespaceType() == null
+        changeStreamDocumentNullNamespace.getNamespaceTypeString() == null
         changeStreamDocumentNullNamespace.getNamespaceDocument() == null
         changeStreamDocumentNullNamespace.getDestinationNamespace() == null
         changeStreamDocumentNullNamespace.getDestinationNamespaceDocument() == null
@@ -113,15 +122,18 @@ class ChangeStreamDocumentSpecification extends Specification {
         def splitEvent = new SplitEvent(1, 2)
         def extraElements = new BsonDocument('extra', BsonBoolean.TRUE)
 
-        def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(null, resumeToken, namespaceDocument,
+        def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(null, resumeToken, namespaceDocument, null,
                 (BsonDocument) null, fullDocument, fullDocumentBeforeChange, documentKey, clusterTime, updateDesc, null, null,
                 wallTime, splitEvent, extraElements)
         def changeStreamDocumentEmptyNamespace = new ChangeStreamDocument<BsonDocument>(null, resumeToken,
-                namespaceDocumentEmpty, (BsonDocument) null, fullDocument, fullDocumentBeforeChange, documentKey, clusterTime, updateDesc,
+                namespaceDocumentEmpty, null, (BsonDocument) null, fullDocument, fullDocumentBeforeChange,
+                documentKey, clusterTime, updateDesc,
                 null, null, wallTime, splitEvent, extraElements)
 
         expect:
         changeStreamDocument.getNamespace() == null
+        changeStreamDocument.getNamespaceType() == null
+        changeStreamDocument.getNamespaceTypeString() == null
         changeStreamDocument.getDatabaseName() == 'databaseName'
         changeStreamDocument.getOperationTypeString() == null
         changeStreamDocument.getOperationType() == null

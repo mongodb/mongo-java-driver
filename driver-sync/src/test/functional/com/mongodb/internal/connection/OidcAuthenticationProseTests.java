@@ -581,7 +581,7 @@ public class OidcAuthenticationProseTests {
                 "accessToken can not be null");
     }
 
-    // not a prose test
+    // Not a prose test
     @Test
     public void testRefreshTokenAbsent() {
         // additionally, check validation for refresh in machine workflow:
