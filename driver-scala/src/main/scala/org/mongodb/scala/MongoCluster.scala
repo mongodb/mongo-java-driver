@@ -16,16 +16,16 @@
 
 package org.mongodb.scala
 
-import com.mongodb.annotations.{Alpha, Reason}
-import com.mongodb.reactivestreams.client.{MongoCluster => JMongoCluster}
-import com.mongodb.{ReadConcern, ReadPreference, WriteConcern}
+import com.mongodb.annotations.{ Alpha, Reason }
+import com.mongodb.{ ReadConcern, ReadPreference, WriteConcern }
+import com.mongodb.reactivestreams.client.{ MongoCluster => JMongoCluster }
 import org.bson.codecs.configuration.CodecRegistry
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.model.bulk.{ClientBulkWriteOptions, ClientBulkWriteResult, ClientNamespacedWriteModel}
+import org.mongodb.scala.model.bulk.{ ClientBulkWriteOptions, ClientBulkWriteResult, ClientNamespacedWriteModel }
 
 import scala.collection.JavaConverters._
-import scala.concurrent.duration.{Duration, MILLISECONDS}
+import scala.concurrent.duration.{ Duration, MILLISECONDS }
 import scala.reflect.ClassTag
 
 /**

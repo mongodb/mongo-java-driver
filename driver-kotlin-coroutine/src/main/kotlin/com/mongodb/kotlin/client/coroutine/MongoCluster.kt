@@ -15,18 +15,28 @@
  */
 package com.mongodb.kotlin.client.coroutine
 
-import com.mongodb.*
+import com.mongodb.ClientBulkWriteException
+import com.mongodb.ClientSessionOptions
+import com.mongodb.MongoClientSettings
+import com.mongodb.MongoException
+import com.mongodb.ReadConcern
+import com.mongodb.ReadPreference
+import com.mongodb.WriteConcern
 import com.mongodb.annotations.Alpha
 import com.mongodb.annotations.Reason
-import com.mongodb.client.model.bulk.*
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions
+import com.mongodb.client.model.bulk.ClientBulkWriteResult
+import com.mongodb.client.model.bulk.ClientNamespacedDeleteManyModel
+import com.mongodb.client.model.bulk.ClientNamespacedUpdateManyModel
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel
+import com.mongodb.reactivestreams.client.MongoCluster as JMongoCluster
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitSingle
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
-import java.util.concurrent.TimeUnit
-import com.mongodb.reactivestreams.client.MongoCluster as JMongoCluster
 
 /**
  * The client-side representation of a MongoDB cluster operations.
