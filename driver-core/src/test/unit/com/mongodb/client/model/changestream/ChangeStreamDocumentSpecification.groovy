@@ -51,8 +51,11 @@ class ChangeStreamDocumentSpecification extends Specification {
         def extraElements = new BsonDocument('extra', BsonBoolean.TRUE)
 
         when:
-        def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken, namespaceDocument, namespaceType.value,
-                destinationNamespaceDocument, fullDocument, fullDocumentBeforeChange, documentKey, clusterTime, updateDesc, txnNumber,
+        def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken,
+                namespaceDocument, namespaceType.value,
+                destinationNamespaceDocument, fullDocument,
+                fullDocumentBeforeChange, documentKey,
+                clusterTime, updateDesc, txnNumber,
                 lsid, wallTime, splitEvent, extraElements)
 
         then:
@@ -91,7 +94,8 @@ class ChangeStreamDocumentSpecification extends Specification {
         def splitEvent = new SplitEvent(1, 2)
         def extraElements = new BsonDocument('extra', BsonBoolean.TRUE)
         def changeStreamDocumentNullNamespace = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken,
-                (BsonDocument) null, null, (BsonDocument) null, fullDocument, fullDocumentBeforeChange, documentKey, clusterTime, updateDesc,
+                (BsonDocument) null, null, (BsonDocument) null, fullDocument, fullDocumentBeforeChange,
+                documentKey, clusterTime, updateDesc,
                 null, null, wallTime, splitEvent, extraElements)
 
         expect:
@@ -122,7 +126,8 @@ class ChangeStreamDocumentSpecification extends Specification {
                 (BsonDocument) null, fullDocument, fullDocumentBeforeChange, documentKey, clusterTime, updateDesc, null, null,
                 wallTime, splitEvent, extraElements)
         def changeStreamDocumentEmptyNamespace = new ChangeStreamDocument<BsonDocument>(null, resumeToken,
-                namespaceDocumentEmpty, null, (BsonDocument) null, fullDocument, fullDocumentBeforeChange, documentKey, clusterTime, updateDesc,
+                namespaceDocumentEmpty, null, (BsonDocument) null, fullDocument, fullDocumentBeforeChange,
+                documentKey, clusterTime, updateDesc,
                 null, null, wallTime, splitEvent, extraElements)
 
         expect:
