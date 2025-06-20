@@ -16,6 +16,7 @@
 package com.mongodb.kotlin.client.coroutine
 
 import com.mongodb.ClientSessionOptions
+import com.mongodb.MongoDriverInformation
 import com.mongodb.MongoNamespace
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel
@@ -67,6 +68,22 @@ class MongoClientTest {
         mongoClient.getClusterDescription()
 
         verify(wrapped).clusterDescription
+        verifyNoMoreInteractions(wrapped)
+    }
+
+    @Test
+    fun shouldCallTheUnderlyingAppendMetadata() {
+        val mongoClient = MongoClient(wrapped)
+
+        val mongoDriverInformation =
+            MongoDriverInformation.builder()
+                .driverName("kotlin")
+                .driverPlatform("kotlin/${KotlinVersion.CURRENT}")
+                .build()
+
+        mongoClient.appendMetadata(mongoDriverInformation)
+
+        verify(wrapped).appendMetadata(mongoDriverInformation)
         verifyNoMoreInteractions(wrapped)
     }
 

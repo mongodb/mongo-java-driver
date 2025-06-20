@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoDriverInformation;
+import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.build.MongoDriverVersion;
 import com.mongodb.lang.Nullable;
@@ -32,52 +33,50 @@ import org.bson.io.BasicOutputBuffer;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.connection.FaasEnvironment.getFaasEnvironment;
 import static java.lang.String.format;
 import static java.lang.System.getProperty;
 import static java.nio.file.Paths.get;
 
 /**
+ * Represents metadata of the current MongoClient.
+ *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public final class ClientMetadataHelper {
+@ThreadSafe
+public class ClientMetadata {
     private static final String SEPARATOR = "|";
-
     private static final int MAXIMUM_CLIENT_METADATA_ENCODED_SIZE = 512;
+    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+    private BsonDocument clientMetadataBsonDocument;
 
-    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
-    static String getOperatingSystemType(final String operatingSystemName) {
-        if (nameStartsWith(operatingSystemName, "linux")) {
-            return "Linux";
-        } else if (nameStartsWith(operatingSystemName, "mac")) {
-            return "Darwin";
-        } else if (nameStartsWith(operatingSystemName, "windows")) {
-            return  "Windows";
-        } else if (nameStartsWith(operatingSystemName, "hp-ux", "aix", "irix", "solaris", "sunos")) {
-            return "Unix";
-        } else {
-            return "unknown";
-        }
+    public ClientMetadata(@Nullable final String applicationName, final MongoDriverInformation mongoDriverInformation) {
+        withLock(readWriteLock.writeLock(), () -> {
+            this.clientMetadataBsonDocument = createClientMetadataDocument(applicationName, mongoDriverInformation);
+        });
     }
 
-    private static String getOperatingSystemName() {
-        return getProperty("os.name", "unknown");
+    /**
+     * Returns mutable BsonDocument that represents the client metadata.
+     */
+    public BsonDocument getBsonDocument() {
+        return withLock(readWriteLock.readLock(), () -> clientMetadataBsonDocument);
     }
 
-    private static boolean nameStartsWith(final String name, final String... prefixes) {
-        for (String prefix : prefixes) {
-            if (name.toLowerCase().startsWith(prefix.toLowerCase())) {
-                return true;
-            }
-        }
-        return false;
+    public void append(final MongoDriverInformation mongoDriverInformation) {
+        withLock(readWriteLock.writeLock(), () ->
+                this.clientMetadataBsonDocument = updateClientMetadataDocument(clientMetadataBsonDocument.clone(), mongoDriverInformation)
+        );
     }
 
-    public static BsonDocument createClientMetadataDocument(@Nullable final String applicationName,
+    private static BsonDocument createClientMetadataDocument(@Nullable final String applicationName,
                                                             @Nullable final MongoDriverInformation mongoDriverInformation) {
         if (applicationName != null) {
             isTrueArgument("applicationName UTF-8 encoding length <= 128",
@@ -103,8 +102,8 @@ public final class ClientMetadataHelper {
 
         // optional fields:
         FaasEnvironment faasEnvironment =  getFaasEnvironment();
-        ContainerRuntime containerRuntime = ContainerRuntime.determineExecutionContainer();
-        Orchestrator orchestrator = Orchestrator.determineExecutionOrchestrator();
+        ClientMetadata.ContainerRuntime containerRuntime = ClientMetadata.ContainerRuntime.determineExecutionContainer();
+        ClientMetadata.Orchestrator orchestrator = ClientMetadata.Orchestrator.determineExecutionOrchestrator();
 
         tryWithLimit(client, d -> putAtPath(d, "platform", listToString(baseDriverInfor.getDriverPlatforms())));
         tryWithLimit(client, d -> putAtPath(d, "platform", listToString(fullDriverInfo.getDriverPlatforms())));
@@ -121,6 +120,44 @@ public final class ClientMetadataHelper {
         tryWithLimit(client, d -> putAtPath(d, "env.container.orchestrator", orchestrator.getName()));
 
         return client;
+    }
+
+    /**
+     * Modifies the given client metadata document by appending the driver information.
+     * Driver name and version are appended atomically to the existing driver name and version if they do not exceed
+     * {@value MAXIMUM_CLIENT_METADATA_ENCODED_SIZE} bytes.
+     * <p>
+     * Platform is appended separately to the existing platform if it does not exceed {@value MAXIMUM_CLIENT_METADATA_ENCODED_SIZE} bytes.
+     */
+    private static BsonDocument updateClientMetadataDocument(final BsonDocument clientMetadataDocument,
+                                                            final MongoDriverInformation driverInformationToAppend) {
+        BsonDocument currentDriverInformation = clientMetadataDocument.getDocument("driver");
+
+        List<String> driverNamesToAppend = driverInformationToAppend.getDriverNames();
+        List<String> driverVersionsToAppend = driverInformationToAppend.getDriverVersions();
+        List<String> driverPlatformsToAppend = driverInformationToAppend.getDriverPlatforms();
+
+        List<String> updatedDriverNames = new ArrayList<>(driverNamesToAppend.size() + 1);
+        List<String> updatedDriverVersions = new ArrayList<>(driverVersionsToAppend.size() + 1);
+        List<String> updateDriverPlatforms = new ArrayList<>(driverPlatformsToAppend.size() + 1);
+
+        updatedDriverNames.add(currentDriverInformation.getString("name").getValue());
+        updatedDriverNames.addAll(driverNamesToAppend);
+
+        updatedDriverVersions.add(currentDriverInformation.getString("version").getValue());
+        updatedDriverVersions.addAll(driverVersionsToAppend);
+
+        updateDriverPlatforms.add(clientMetadataDocument.getString("platform").getValue());
+        updateDriverPlatforms.addAll(driverPlatformsToAppend);
+
+        tryWithLimit(clientMetadataDocument, d -> {
+            putAtPath(d, "driver.name", listToString(updatedDriverNames));
+            putAtPath(d, "driver.version", listToString(updatedDriverVersions));
+        });
+        tryWithLimit(clientMetadataDocument, d -> {
+            putAtPath(d, "platform", listToString(updateDriverPlatforms));
+        });
+        return clientMetadataDocument;
     }
 
 
@@ -180,7 +217,7 @@ public final class ClientMetadataHelper {
         return buffer.getPosition() > MAXIMUM_CLIENT_METADATA_ENCODED_SIZE;
     }
 
-    public enum ContainerRuntime {
+    private enum ContainerRuntime {
         DOCKER("docker") {
             @Override
             boolean isCurrentRuntimeContainer() {
@@ -210,8 +247,8 @@ public final class ClientMetadataHelper {
             return false;
         }
 
-        static ContainerRuntime determineExecutionContainer() {
-            for (ContainerRuntime allegedContainer : ContainerRuntime.values()) {
+        static ClientMetadata.ContainerRuntime determineExecutionContainer() {
+            for (ClientMetadata.ContainerRuntime allegedContainer : ClientMetadata.ContainerRuntime.values()) {
                 if (allegedContainer.isCurrentRuntimeContainer()) {
                     return allegedContainer;
                 }
@@ -245,8 +282,8 @@ public final class ClientMetadataHelper {
             return false;
         }
 
-        static Orchestrator determineExecutionOrchestrator() {
-            for (Orchestrator alledgedOrchestrator : Orchestrator.values()) {
+        static ClientMetadata.Orchestrator determineExecutionOrchestrator() {
+            for (ClientMetadata.Orchestrator alledgedOrchestrator : ClientMetadata.Orchestrator.values()) {
                 if (alledgedOrchestrator.isCurrentOrchestrator()) {
                     return alledgedOrchestrator;
                 }
@@ -279,6 +316,31 @@ public final class ClientMetadataHelper {
         return stringBuilder.toString();
     }
 
-    private ClientMetadataHelper() {
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+    public static String getOperatingSystemType(final String operatingSystemName) {
+        if (nameStartsWith(operatingSystemName, "linux")) {
+            return "Linux";
+        } else if (nameStartsWith(operatingSystemName, "mac")) {
+            return "Darwin";
+        } else if (nameStartsWith(operatingSystemName, "windows")) {
+            return  "Windows";
+        } else if (nameStartsWith(operatingSystemName, "hp-ux", "aix", "irix", "solaris", "sunos")) {
+            return "Unix";
+        } else {
+            return "unknown";
+        }
+    }
+
+    private static String getOperatingSystemName() {
+        return getProperty("os.name", "unknown");
+    }
+
+    private static boolean nameStartsWith(final String name, final String... prefixes) {
+        for (String prefix : prefixes) {
+            if (name.toLowerCase().startsWith(prefix.toLowerCase())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
