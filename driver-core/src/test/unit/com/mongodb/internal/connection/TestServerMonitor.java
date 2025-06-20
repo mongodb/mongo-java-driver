@@ -43,6 +43,6 @@ class TestServerMonitor implements ServerMonitor {
     }
 
     public void updateServerDescription(final ServerDescription serverDescription) {
-        sdamProvider.get().update(serverDescription);
+        sdamProvider.get().monitorUpdate(serverDescription);
     }
 }

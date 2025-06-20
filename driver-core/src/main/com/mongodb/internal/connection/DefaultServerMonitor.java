@@ -198,7 +198,7 @@ class DefaultServerMonitor implements ServerMonitor {
                     }
 
                     logStateChange(previousServerDescription, currentServerDescription);
-                    sdamProvider.get().update(currentServerDescription);
+                    sdamProvider.get().monitorUpdate(currentServerDescription);
 
                     if ((shouldStreamResponses && currentServerDescription.getType() != UNKNOWN)
                             || (connection != null && connection.hasMoreToCome())

@@ -96,7 +96,7 @@ class DefaultServer implements ClusterableServer {
             try {
                 operationEnd();
                 if (e instanceof MongoException) {
-                    sdam.handleExceptionBeforeHandshake(SdamIssue.specific(e, exceptionContext));
+                    sdam.handleExceptionBeforeHandshake(SdamIssue.of(e, exceptionContext));
                 }
             } catch (Exception suppressed) {
                 e.addSuppressed(suppressed);
@@ -118,7 +118,7 @@ class DefaultServer implements ClusterableServer {
             if (t != null) {
                 try {
                     operationEnd();
-                    sdam.handleExceptionBeforeHandshake(SdamIssue.specific(t, exceptionContext));
+                    sdam.handleExceptionBeforeHandshake(SdamIssue.of(t, exceptionContext));
                 } catch (Exception suppressed) {
                     t.addSuppressed(suppressed);
                 } finally {
@@ -150,14 +150,14 @@ class DefaultServer implements ClusterableServer {
     }
 
     @Override
-    public void resetToConnecting() {
-        sdam.update(unknownConnectingServerDescription(serverId, null));
+    public void resetToConnecting(final MongoException cause) {
+        sdam.updateToUnknown(unknownConnectingServerDescription(serverId, cause));
     }
 
     @Override
-    public void invalidate() {
+    public void invalidate(final MongoException cause) {
         if (!isClosed()) {
-            sdam.handleExceptionAfterHandshake(SdamIssue.unspecified(sdam.context()));
+            sdam.handleExceptionAfterHandshake(SdamIssue.of(cause, sdam.context()));
         }
     }
 
@@ -208,7 +208,7 @@ class DefaultServer implements ClusterableServer {
                         .execute(connection);
             } catch (MongoException e) {
                 try {
-                    sdam.handleExceptionAfterHandshake(SdamIssue.specific(e, sdam.context(connection)));
+                    sdam.handleExceptionAfterHandshake(SdamIssue.of(e, sdam.context(connection)));
                 } catch (Exception suppressed) {
                     e.addSuppressed(suppressed);
                 }
@@ -231,7 +231,7 @@ class DefaultServer implements ClusterableServer {
                     .executeAsync(connection, errorHandlingCallback((result, t) -> {
                 if (t != null) {
                     try {
-                        sdam.handleExceptionAfterHandshake(SdamIssue.specific(t, sdam.context(connection)));
+                        sdam.handleExceptionAfterHandshake(SdamIssue.of(t, sdam.context(connection)));
                     } catch (Exception suppressed) {
                         t.addSuppressed(suppressed);
                     } finally {
