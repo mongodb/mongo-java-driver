@@ -16,16 +16,16 @@
 
 package org.mongodb.scala
 
-import com.mongodb.annotations.{ Alpha, Reason }
-import com.mongodb.{ ReadConcern, ReadPreference, WriteConcern }
-import com.mongodb.reactivestreams.client.{ MongoCluster => JMongoCluster }
+import com.mongodb.annotations.{Alpha, Reason}
+import com.mongodb.reactivestreams.client.{MongoCluster => JMongoCluster}
+import com.mongodb.{ReadConcern, ReadPreference, WriteConcern}
 import org.bson.codecs.configuration.CodecRegistry
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.model.bulk.{ ClientBulkWriteOptions, ClientBulkWriteResult, ClientNamespacedWriteModel }
+import org.mongodb.scala.model.bulk.{ClientBulkWriteOptions, ClientBulkWriteResult, ClientNamespacedWriteModel}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.duration.{ Duration, MILLISECONDS }
+import scala.concurrent.duration.{Duration, MILLISECONDS}
 import scala.reflect.ClassTag
 
 /**
@@ -302,8 +302,6 @@ class MongoCluster(private val wrapped: JMongoCluster) {
    * The eligibility for retries is determined per each `bulkWrite` command:
    * [[org.mongodb.scala.model.bulk.ClientNamespacedUpdateManyModel]], [[org.mongodb.scala.model.bulk.ClientNamespacedDeleteManyModel]] in a command render it non-retryable.
    *
-   * This operation is not supported by MongoDB Atlas Serverless instances.
-   *
    * [[https://www.mongodb.com/docs/manual/reference/command/bulkWrite/ bulkWrite]]
    * @param models The [[org.mongodb.scala.model.bulk.ClientNamespacedWriteModel]] individual write operations.
    * @return The [[SingleObservable]] signalling at most one element [[org.mongodb.scala.model.bulk.ClientBulkWriteResult]] if the operation is successful,
@@ -328,8 +326,6 @@ class MongoCluster(private val wrapped: JMongoCluster) {
    * executing this operation may require multiple `bulkWrite` commands.
    * The eligibility for retries is determined per each `bulkWrite` command:
    * [[org.mongodb.scala.model.bulk.ClientNamespacedUpdateManyModel]], [[org.mongodb.scala.model.bulk.ClientNamespacedDeleteManyModel]] in a command render it non-retryable.
-   *
-   * This operation is not supported by MongoDB Atlas Serverless instances.
    *
    * [[https://www.mongodb.com/docs/manual/reference/command/bulkWrite/ bulkWrite]]
    * @param models The [[org.mongodb.scala.model.bulk.ClientNamespacedWriteModel]] individual write operations.
@@ -360,8 +356,6 @@ class MongoCluster(private val wrapped: JMongoCluster) {
    * executing this operation may require multiple `bulkWrite` commands.
    * The eligibility for retries is determined per each `bulkWrite` command:
    * [[org.mongodb.scala.model.bulk.ClientNamespacedUpdateManyModel]], [[org.mongodb.scala.model.bulk.ClientNamespacedDeleteManyModel]] in a command render it non-retryable.
-   *
-   * This operation is not supported by MongoDB Atlas Serverless instances.
    *
    * [[https://www.mongodb.com/docs/manual/reference/command/bulkWrite/ bulkWrite]]
    * @param clientSession [[ClientSession client session]] with which to associate this operation.
