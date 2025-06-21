@@ -26,7 +26,6 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
-import com.mongodb.assertions.Assertions;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.Locks;
@@ -47,6 +46,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -131,10 +131,9 @@ public final class OidcAuthenticator extends SaslAuthenticator {
 
         if (timeoutContext.hasTimeoutMS()) {
             return assertNotNull(timeoutContext.getTimeout()).call(TimeUnit.MILLISECONDS,
-                    () -> {
-                        Assertions.fail();
-                        return null;
-                    },
+                    () ->
+                          // we can get here if server selection timeout was set to infinite.
+                          ChronoUnit.FOREVER.getDuration(),
                     (renamingMs) -> Duration.ofMillis(renamingMs),
                     () -> throwMongoTimeoutException());
 

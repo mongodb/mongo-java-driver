@@ -41,11 +41,11 @@ import org.bson.BsonString;
 import org.bson.Document;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -54,6 +54,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -208,10 +209,12 @@ public class OidcAuthenticationProseTests {
     }
 
     // Not a prose test
-    @ParameterizedTest
+    @ParameterizedTest(name = "{testName}. "
+            + "Parameters: timeoutMs={1}, "
+            + "serverSelectionTimeoutMS={2},"
+            + " expectedTimeoutThreshold={3}")
     @MethodSource
-    @DisplayName("{testName}")
-    void testValidCallbackInputsTimeout(final String testName,
+    void testValidCallbackInputsTimeoutWhenTimeoutMsIsSet(final String testName,
                                         final int timeoutMs,
                                         final int serverSelectionTimeoutMS,
                                         final int expectedTimeoutThreshold) {
@@ -247,7 +250,7 @@ public class OidcAuthenticationProseTests {
         }
     }
 
-    private static Stream<Arguments> testValidCallbackInputsTimeout() {
+    private static Stream<Arguments> testValidCallbackInputsTimeoutWhenTimeoutMsIsSet() {
         return Stream.of(
                 Arguments.of("serverSelectionTimeoutMS honored for oidc callback if it's lower than timeoutMS",
                         1000, // timeoutMS
@@ -262,6 +265,32 @@ public class OidcAuthenticationProseTests {
                         500, // serverSelectionTimeoutMS
                         499) // expectedTimeoutThreshold
         );
+    }
+
+    // Not a prose test
+    @ParameterizedTest(name = "test callback timeout when server selection timeout is "
+            + "infinite and timeoutMs is set to {0}")
+    @ValueSource(ints = {0, 100})
+    void testCallbackTimeoutWhenServerSelectionTimeoutIsInfiniteTimeoutMsIsSet(final int timeoutMs) {
+        TestCallback callback1 = createCallback();
+
+        OidcCallback callback2 = (context) -> {
+            assertEquals(context.getTimeout(), ChronoUnit.FOREVER.getDuration());
+            return callback1.onRequest(context);
+        };
+
+        MongoClientSettings clientSettings = MongoClientSettings.builder(createSettings(callback2))
+                .applyToClusterSettings(builder ->
+                        builder.serverSelectionTimeout(
+                                -1, // -1 means infinite
+                                TimeUnit.MILLISECONDS))
+                .timeout(timeoutMs, TimeUnit.MILLISECONDS)
+                .build();
+
+        try (MongoClient mongoClient = createMongoClient(clientSettings)) {
+            performFind(mongoClient);
+            assertEquals(1, callback1.getInvocations());
+        }
     }
 
     @Test
