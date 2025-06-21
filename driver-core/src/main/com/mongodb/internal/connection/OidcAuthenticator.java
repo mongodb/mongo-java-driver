@@ -29,6 +29,7 @@ import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.Locks;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.authentication.AzureCredentialHelper;
@@ -45,10 +46,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.mongodb.AuthenticationMechanism.MONGODB_OIDC;
@@ -64,11 +67,14 @@ import static com.mongodb.MongoCredential.TOKEN_RESOURCE_KEY;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.internal.TimeoutContext.throwMongoTimeoutException;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateBeforeUse;
 import static java.lang.String.format;
 
 /**
+ * Created per connection, and exists until connection is closed.
+ *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class OidcAuthenticator extends SaslAuthenticator {
@@ -118,8 +124,21 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         }
     }
 
-    private Duration getCallbackTimeout() {
-        return isHumanCallback() ? HUMAN_CALLBACK_TIMEOUT : CALLBACK_TIMEOUT;
+    private Duration getCallbackTimeout(final TimeoutContext timeoutContext) {
+        if (isHumanCallback()) {
+            return HUMAN_CALLBACK_TIMEOUT;
+        }
+
+        if (timeoutContext.hasTimeoutMS()) {
+            return assertNotNull(timeoutContext.getTimeout()).call(TimeUnit.MILLISECONDS,
+                    () ->
+                          // we can get here if server selection timeout was set to infinite.
+                          ChronoUnit.FOREVER.getDuration(),
+                    (renamingMs) -> Duration.ofMillis(renamingMs),
+                    () -> throwMongoTimeoutException());
+
+        }
+        return CALLBACK_TIMEOUT;
     }
 
     @Override
@@ -128,10 +147,10 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     }
 
     @Override
-    protected SaslClient createSaslClient(final ServerAddress serverAddress) {
+    protected SaslClient createSaslClient(final ServerAddress serverAddress, final OperationContext operationContext) {
         this.serverAddress = assertNotNull(serverAddress);
         MongoCredentialWithCache mongoCredentialWithCache = getMongoCredentialWithCache();
-        return new OidcSaslClient(mongoCredentialWithCache);
+        return new OidcSaslClient(mongoCredentialWithCache, operationContext.getTimeoutContext());
     }
 
     @Override
@@ -322,7 +341,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         ).finish(callback);
     }
 
-    private byte[] evaluate(final byte[] challenge) {
+    private byte[] evaluate(final byte[] challenge, final TimeoutContext timeoutContext) {
         byte[][] jwt = new byte[1][];
         Locks.withInterruptibleLock(getMongoCredentialWithCache().getOidcLock(), () -> {
             OidcCacheEntry oidcCacheEntry = getMongoCredentialWithCache().getOidcCacheEntry();
@@ -343,7 +362,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                 // Invoke Callback using cached Refresh Token
                 fallbackState = FallbackState.PHASE_2_REFRESH_CALLBACK_TOKEN;
                 OidcCallbackResult result = requestCallback.onRequest(new OidcCallbackContextImpl(
-                        getCallbackTimeout(), cachedIdpInfo, cachedRefreshToken, userName));
+                        getCallbackTimeout(timeoutContext), cachedIdpInfo, cachedRefreshToken, userName));
                 jwt[0] = populateCacheWithCallbackResultAndPrepareJwt(cachedIdpInfo, result);
             } else {
                 // cache is empty
@@ -352,7 +371,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                     // no principal request
                     fallbackState = FallbackState.PHASE_3B_CALLBACK_TOKEN;
                     OidcCallbackResult result = requestCallback.onRequest(new OidcCallbackContextImpl(
-                            getCallbackTimeout(), userName));
+                            getCallbackTimeout(timeoutContext), userName));
                     jwt[0] = populateCacheWithCallbackResultAndPrepareJwt(null, result);
                     if (result.getRefreshToken() != null) {
                         throw new MongoConfigurationException(
@@ -382,7 +401,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                         // there is no cached refresh token
                         fallbackState = FallbackState.PHASE_3B_CALLBACK_TOKEN;
                         OidcCallbackResult result = requestCallback.onRequest(new OidcCallbackContextImpl(
-                                getCallbackTimeout(), idpInfo, null, userName));
+                                getCallbackTimeout(timeoutContext), idpInfo, null, userName));
                         jwt[0] = populateCacheWithCallbackResultAndPrepareJwt(idpInfo, result);
                     }
                 }
@@ -501,14 +520,18 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     }
 
     private final class OidcSaslClient extends SaslClientImpl {
+        private final TimeoutContext timeoutContext;
 
-        private OidcSaslClient(final MongoCredentialWithCache mongoCredentialWithCache) {
+        private OidcSaslClient(final MongoCredentialWithCache mongoCredentialWithCache,
+                               final TimeoutContext timeoutContext) {
             super(mongoCredentialWithCache.getCredential());
+
+            this.timeoutContext = timeoutContext;
         }
 
         @Override
         public byte[] evaluateChallenge(final byte[] challenge) {
-            return evaluate(challenge);
+            return evaluate(challenge, timeoutContext);
         }
 
         @Override

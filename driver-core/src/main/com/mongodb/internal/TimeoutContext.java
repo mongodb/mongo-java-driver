@@ -70,6 +70,9 @@ public class TimeoutContext {
     public static <T> T throwMongoTimeoutException(final String message) {
         throw new MongoOperationTimeoutException(message);
     }
+    public static <T> T throwMongoTimeoutException() {
+        throw new MongoOperationTimeoutException("The operation exceeded the timeout limit.");
+    }
 
     public static MongoOperationTimeoutException createMongoTimeoutException(final Throwable cause) {
         return createMongoTimeoutException("Operation exceeded the timeout limit: " + cause.getMessage(), cause);

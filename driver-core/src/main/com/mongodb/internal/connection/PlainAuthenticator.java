@@ -47,7 +47,7 @@ class PlainAuthenticator extends SaslAuthenticator {
     }
 
     @Override
-    protected SaslClient createSaslClient(final ServerAddress serverAddress) {
+    protected SaslClient createSaslClient(final ServerAddress serverAddress, final OperationContext operationContext) {
         MongoCredential credential = getMongoCredential();
         isTrue("mechanism is PLAIN", credential.getAuthenticationMechanism() == PLAIN);
         try {

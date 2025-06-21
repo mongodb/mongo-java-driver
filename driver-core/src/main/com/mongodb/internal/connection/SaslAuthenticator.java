@@ -65,7 +65,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
     public void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription,
                              final OperationContext operationContext) {
         doAsSubject(() -> {
-            SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress());
+            SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress(), operationContext);
             throwIfSaslClientIsNull(saslClient);
             try {
                 BsonDocument responseDocument = getNextSaslResponse(saslClient, connection, operationContext);
@@ -105,7 +105,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
             final OperationContext operationContext, final SingleResultCallback<Void> callback) {
         try {
             doAsSubject(() -> {
-                SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress());
+                SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress(), operationContext);
                 throwIfSaslClientIsNull(saslClient);
                 getNextSaslResponseAsync(saslClient, connection, operationContext, callback);
                 return null;
@@ -117,7 +117,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
 
     public abstract String getMechanismName();
 
-    protected abstract SaslClient createSaslClient(ServerAddress serverAddress);
+    protected abstract SaslClient createSaslClient(ServerAddress serverAddress, OperationContext operationContext);
 
     protected void appendSaslStartOptions(final BsonDocument saslStartCommand) {
     }
