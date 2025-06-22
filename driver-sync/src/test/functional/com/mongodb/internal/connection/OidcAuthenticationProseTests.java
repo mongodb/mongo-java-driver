@@ -209,7 +209,7 @@ public class OidcAuthenticationProseTests {
     }
 
     // Not a prose test
-    @ParameterizedTest(name = "{testName}. "
+    @ParameterizedTest(name = "{0}. "
             + "Parameters: timeoutMs={1}, "
             + "serverSelectionTimeoutMS={2},"
             + " expectedTimeoutThreshold={3}")
