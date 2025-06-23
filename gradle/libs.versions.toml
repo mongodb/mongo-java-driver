@@ -64,6 +64,7 @@ plugin-dokka = "1.8.10"
 plugin-download = "5.6.0"
 plugin-graalvm = "0.9.23"
 plugin-optional-base = "7.0.0"
+plugin-nexus-publish = "2.0.0"
 plugin-shadow = "8.3.6"
 plugin-spotbugs = "6.0.15"
 plugin-spotless = "6.14.0"
@@ -207,6 +208,7 @@ download = { id = "de.undercouch.download", version.ref = "plugin-download" }
 graalvm-buildtools = { id = "org.graalvm.buildtools.native", version.ref = "plugin-graalvm" }
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+nexus-publish = { id = "io.github.gradle-nexus.publish-plugin", version.ref = "plugin-nexus-publish" }
 optional = { id = "nebula.optional-base", version.ref = "plugin-optional-base" }
 shadow = { id = "com.gradleup.shadow", version.ref = "plugin-shadow" }
 spotbugs = { id = "com.github.spotbugs", version.ref = "plugin-spotbugs" }

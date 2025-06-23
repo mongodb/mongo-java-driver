@@ -28,8 +28,6 @@ plugins {
 
 val signingKey: Provider<String> = providers.gradleProperty("signingKey")
 val signingPassword: Provider<String> = providers.gradleProperty("signingPassword")
-val nexusUsername: Provider<String> = providers.gradleProperty("nexusUsername")
-val nexusPassword: Provider<String> = providers.gradleProperty("nexusPassword")
 @Suppress("UNCHECKED_CAST") val gitVersion: Provider<String> = project.findProperty("gitVersion") as Provider<String>
 
 tasks.withType<AbstractPublishToMaven>().configureEach {
@@ -45,25 +43,8 @@ tasks.withType<AbstractPublishToMaven>().configureEach {
 
 val localBuildRepo: Provider<Directory> = rootProject.layout.buildDirectory.dir("repo")
 
-val sonatypeRepositoryReleaseUrl: Provider<String> = provider {
-    if (version.toString().endsWith("SNAPSHOT")) {
-        "https://oss.sonatype.org/content/repositories/snapshots/"
-    } else {
-        "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-    }
-}
-
 publishing {
     repositories {
-        maven {
-            url = uri(sonatypeRepositoryReleaseUrl)
-            if (nexusUsername.isPresent && nexusPassword.isPresent) {
-                credentials {
-                    username = nexusUsername.get()
-                    password = nexusPassword.get()
-                }
-            }
-        }
 
         // publish to local dir, for artifact tracking and testing
         // `./gradlew publishMavenPublicationToLocalBuildRepository`
@@ -141,7 +122,7 @@ tasks.register("publishSnapshots") {
     description = "Publishes snapshots to Sonatype"
 
     if (version.toString().endsWith("-SNAPSHOT")) {
-        dependsOn(tasks.withType<PublishToMavenRepository>())
+        dependsOn(tasks.named("publishToSonatype"))
     }
 }
 
@@ -168,7 +149,7 @@ tasks.register("publishArchives") {
         }
     }
     if (gitVersionMatch) {
-        dependsOn(tasks.withType<PublishToMavenRepository>())
+        dependsOn(tasks.named("publishToSonatype"))
     }
 }
 

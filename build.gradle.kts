@@ -17,4 +17,25 @@
 plugins {
     id("eclipse")
     id("idea")
+    alias(libs.plugins.nexus.publish)
+}
+
+val nexusUsername: Provider<String> = providers.gradleProperty("nexusUsername")
+val nexusPassword: Provider<String> = providers.gradleProperty("nexusPassword")
+
+nexusPublishing {
+    packageGroup = "org.mongodb"
+    repositories {
+        sonatype {
+            username = nexusUsername
+            password = nexusPassword
+
+            snapshotRepositoryUrl.set(uri("https://oss.sonatype.org/content/repositories/snapshots/"))
+            nexusUrl.set(uri("https://oss.sonatype.org/service/local/"))
+
+            // central portal URLs
+//            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
+//            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
+        }
+    }
 }
