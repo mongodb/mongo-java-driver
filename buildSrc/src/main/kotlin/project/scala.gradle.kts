@@ -17,7 +17,6 @@ package project
 
 import ProjectExtensions.configureMavenPublication
 import ProjectExtensions.scalaVersion
-import gradle.kotlin.dsl.accessors._473b9544fb0ec2c6cc860d9af4296ace.java
 
 plugins {
     id("scala")
