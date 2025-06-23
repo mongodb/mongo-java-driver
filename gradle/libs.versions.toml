@@ -199,7 +199,7 @@ scala-test-v2-v11 = ["scala-test-flatspec-v2-v11", "scala-test-shouldmatchers-v2
 
 [plugins]
 kotlin-gradle = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-bnd = { id = "biz.aQute.bnd", version.ref = "plugin-bnd" }
+bnd = { id = "biz.aQute.bnd.builder", version.ref = "plugin-bnd" }
 build-config = { id = "com.github.gmazzo.buildconfig", version.ref = "plugin-build-config" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "plugin-detekt" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "plugin-dokka" }
