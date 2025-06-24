@@ -224,7 +224,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         decodeCommand(internalConnection.getSent()[0]) == expectedHelloCommandDocument
 
         where:
-        [clientMetadataDocument, async] << [[createExpectedClientMetadataDocument('appName'), null],
+        [clientMetadataDocument, async] << [[ClientMetadataTest.createExpectedClientMetadataDocument('appName'), null],
                                             [true, false]].combinations()
     }
 
