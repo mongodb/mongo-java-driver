@@ -39,8 +39,9 @@ import java.util.stream.Stream;
 import static com.mongodb.ClusterFixture.isAuthenticated;
 import static com.mongodb.ClusterFixture.isLoadBalanced;
 import static com.mongodb.ClusterFixture.sleep;
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static java.util.Optional.ofNullable;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 /**
@@ -115,12 +116,13 @@ public abstract class AbstractClientMetadataProseTest {
             String expectedDriverVersion = driverVersion == null ? generatedVersionName : generatedVersionName + "|" + driverVersion;
             String expectedDriverPlatform = driverPlatform == null ? generatedPlatformName : generatedPlatformName + "|" + driverPlatform;
 
-            assertThat(updatedDriverInformation.getString("name").getValue()).isEqualTo(expectedDriverName);
-            assertThat(updatedDriverInformation.getString("version").getValue()).endsWith(expectedDriverVersion);
-            assertThat(updatedClientMetadata.getString("platform").getValue()).endsWith(expectedDriverPlatform);
-            assertThat(withRemovedKeys(updatedClientMetadata, "driver", "platform"))
-                    .usingRecursiveAssertion()
-                    .isEqualTo(withRemovedKeys(initialClientMetadata, "driver", "platform"));
+            assertEquals(updatedDriverInformation.getString("name").getValue(), expectedDriverName);
+            assertTrue(updatedDriverInformation.getString("version").getValue().endsWith(expectedDriverVersion));
+            assertTrue(updatedClientMetadata.getString("platform").getValue().endsWith(expectedDriverPlatform));
+
+            assertEquals(
+                    withRemovedKeys(updatedClientMetadata, "driver", "platform"),
+                    withRemovedKeys(initialClientMetadata, "driver", "platform"));
         }
     }
 
@@ -156,12 +158,13 @@ public abstract class AbstractClientMetadataProseTest {
             String expectedDriverVersion = driverVersion == null ? generatedVersionName : generatedVersionName + "|" + driverVersion;
             String expectedDriverPlatform = driverPlatform == null ? generatedPlatformName : generatedPlatformName + "|" + driverPlatform;
 
-            assertThat(updatedDriverInformation.getString("name").getValue()).isEqualTo(expectedDriverName);
-            assertThat(updatedDriverInformation.getString("version").getValue()).endsWith(expectedDriverVersion);
-            assertThat(updatedClientMetadata.getString("platform").getValue()).endsWith(expectedDriverPlatform);
-            assertThat(withRemovedKeys(updatedClientMetadata, "driver", "platform"))
-                    .usingRecursiveAssertion()
-                    .isEqualTo(withRemovedKeys(initialClientMetadata, "driver", "platform"));
+            assertEquals(updatedDriverInformation.getString("name").getValue(), expectedDriverName);
+            assertTrue(updatedDriverInformation.getString("version").getValue().endsWith(expectedDriverVersion));
+            assertTrue(updatedClientMetadata.getString("platform").getValue().endsWith(expectedDriverPlatform));
+
+            assertEquals(
+                    withRemovedKeys(updatedClientMetadata, "driver", "platform"),
+                    withRemovedKeys(initialClientMetadata, "driver", "platform"));
         }
     }
 
@@ -184,9 +187,9 @@ public abstract class AbstractClientMetadataProseTest {
             BsonDocument driverInformation = clientMetadata.getDocument("driver");
 
             //then
-            assertThat(driverInformation.get("name").asString().getValue()).endsWith("|library");
-            assertThat(driverInformation.get("version").asString().getValue()).endsWith("|1.2");
-            assertThat(clientMetadata.get("platform").asString().getValue()).endsWith("|Library Platform");
+            assertTrue(driverInformation.get("name").asString().getValue().endsWith("|library"));
+            assertTrue(driverInformation.get("version").asString().getValue().endsWith("|1.2"));
+            assertTrue(clientMetadata.get("platform").asString().getValue().endsWith("|Library Platform"));
         }
     }
 
@@ -233,4 +236,3 @@ public abstract class AbstractClientMetadataProseTest {
         mongoClient.appendMetadata(builder.build());
     }
 }
-

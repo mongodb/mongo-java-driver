@@ -105,7 +105,3 @@ testlogger {
     showFailedStandardStreams = true
     logLevel = LogLevel.LIFECYCLE
 }
-
-dependencies {
-    testImplementation(libs.assertj)
-}
