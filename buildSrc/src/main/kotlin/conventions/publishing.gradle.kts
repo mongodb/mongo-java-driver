@@ -122,6 +122,7 @@ tasks.register("publishSnapshots") {
     description = "Publishes snapshots to Sonatype"
 
     if (version.toString().endsWith("-SNAPSHOT")) {
+        dependsOn(tasks.named("publishAllPublicationsToLocalBuildRepository"))
         dependsOn(tasks.named("publishToSonatype"))
     }
 }
@@ -149,6 +150,7 @@ tasks.register("publishArchives") {
         }
     }
     if (gitVersionMatch) {
+        dependsOn(tasks.named("publishAllPublicationsToLocalBuildRepository"))
         dependsOn(tasks.named("publishToSonatype"))
     }
 }
