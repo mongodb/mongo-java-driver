@@ -17,10 +17,11 @@ package conventions
 
 import com.diffplug.gradle.spotless.SpotlessApply
 import com.diffplug.gradle.spotless.SpotlessCheck
+import libs
 
 // Spotless - keep your code spotless
 // https://plugins.gradle.org/plugin/com.diffplug.spotless
-plugins { id("com.diffplug.spotless") }
+plugins { alias(libs.plugins.spotless) }
 
 val doesNotHaveACustomLicenseHeader = "/^(?s)(?!.*@custom-license-header).*/"
 

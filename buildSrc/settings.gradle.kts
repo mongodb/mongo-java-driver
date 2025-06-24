@@ -17,5 +17,5 @@ plugins {
     // Add support for `libs.versions.toml` within `buildSrc`
     // https://github.com/radoslaw-panuszewski/typesafe-conventions-gradle-plugin
     // https://github.com/gradle/gradle/issues/15383
-    id("dev.panuszewski.typesafe-conventions") version "0.4.1"
+    id("dev.panuszewski.typesafe-conventions") version "0.7.3"
 }
