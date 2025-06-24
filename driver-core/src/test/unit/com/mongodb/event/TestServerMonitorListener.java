@@ -42,6 +42,7 @@ public final class TestServerMonitorListener implements ServerMonitorListener {
     private final Lock lock;
     private final Condition condition;
     private final List<Object> events;
+    private final List<Object> allEvents;
 
     public TestServerMonitorListener(final Iterable<String> listenableEventTypes) {
         this.listenableEventTypes = unmodifiableSet(stream(listenableEventTypes.spliterator(), false)
@@ -51,6 +52,7 @@ public final class TestServerMonitorListener implements ServerMonitorListener {
         lock = new ReentrantLock();
         condition = lock.newCondition();
         events = new ArrayList<>();
+        allEvents = new ArrayList<>();
     }
 
     public void serverHearbeatStarted(final ServerHeartbeatStartedEvent event) {
@@ -74,8 +76,8 @@ public final class TestServerMonitorListener implements ServerMonitorListener {
             long observedCount = countEvents(type, matcher);
             while (observedCount < count) {
                 if (remainingNanos <= 0) {
-                    throw new TimeoutException(String.format("Timed out waiting for %d %s events. The observed count is %d.",
-                            count, type.getSimpleName(), observedCount));
+                    throw new TimeoutException(String.format("Timed out waiting for %d %s events. The observed count is %d. Seen: %s",
+                            count, type.getSimpleName(), observedCount, allEvents));
                 }
                 remainingNanos = condition.awaitNanos(remainingNanos);
                 observedCount = countEvents(type, matcher);
@@ -135,6 +137,7 @@ public final class TestServerMonitorListener implements ServerMonitorListener {
     }
 
     private void register(final Object event) {
+        allEvents.add(event);
         if (!listenable(event.getClass())) {
             return;
         }
