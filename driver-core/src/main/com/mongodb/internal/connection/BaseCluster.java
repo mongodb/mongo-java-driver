@@ -116,11 +116,11 @@ abstract class BaseCluster implements Cluster {
         this.settings = notNull("settings", settings);
         this.serverFactory = notNull("serverFactory", serverFactory);
         this.clusterListener = singleClusterListener(settings);
+        logTopologyMonitoringStarting(clusterId);
         ClusterOpeningEvent clusterOpeningEvent = new ClusterOpeningEvent(clusterId);
         clusterListener.clusterOpening(clusterOpeningEvent);
         description = new ClusterDescription(settings.getMode(), UNKNOWN, emptyList(),
                 settings, serverFactory.getSettings());
-        logTopologyMonitoringStarting(clusterId);
     }
 
     @Override
@@ -219,9 +219,9 @@ abstract class BaseCluster implements Cluster {
             phase.get().countDown();
             fireChangeEvent(new ClusterDescription(settings.getMode(), UNKNOWN, emptyList(), settings, serverFactory.getSettings()),
                     description);
+            logTopologyMonitoringStopping(clusterId);
             ClusterClosedEvent clusterClosedEvent = new ClusterClosedEvent(clusterId);
             clusterListener.clusterClosed(clusterClosedEvent);
-            logTopologyMonitoringStopping(clusterId);
             stopWaitQueueHandler();
         }
     }
@@ -249,8 +249,8 @@ abstract class BaseCluster implements Cluster {
     protected void fireChangeEvent(final ClusterDescription newDescription, final ClusterDescription previousDescription) {
         if (!wouldDescriptionsGenerateEquivalentEvents(newDescription, previousDescription)) {
             ClusterDescriptionChangedEvent changedEvent = new ClusterDescriptionChangedEvent(getClusterId(), newDescription, previousDescription);
-            clusterListener.clusterDescriptionChanged(changedEvent);
             logTopologyDescriptionChanged(getClusterId(),  changedEvent);
+            clusterListener.clusterDescriptionChanged(changedEvent);
         }
     }
 

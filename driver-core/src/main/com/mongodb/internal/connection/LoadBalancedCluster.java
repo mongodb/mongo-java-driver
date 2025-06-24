@@ -273,9 +273,9 @@ final class LoadBalancedCluster implements Cluster {
             if (localServer != null) {
                 localServer.close();
             }
+            logTopologyMonitoringStopping(clusterId);
             ClusterClosedEvent clusterClosedEvent = new ClusterClosedEvent(clusterId);
             clusterListener.clusterClosed(clusterClosedEvent);
-            logTopologyMonitoringStopping(clusterId);
         }
     }
 
