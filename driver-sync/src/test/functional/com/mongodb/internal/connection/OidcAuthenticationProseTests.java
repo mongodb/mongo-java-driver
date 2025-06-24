@@ -42,6 +42,10 @@ import org.bson.Document;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -50,6 +54,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -58,9 +63,11 @@ import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.mongodb.MongoCredential.ALLOWED_HOSTS_KEY;
 import static com.mongodb.MongoCredential.ENVIRONMENT_KEY;
@@ -72,9 +79,12 @@ import static com.mongodb.MongoCredential.OidcCallbackResult;
 import static com.mongodb.MongoCredential.TOKEN_RESOURCE_KEY;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.testing.MongoAssertions.assertCause;
+import static java.lang.Math.min;
+import static java.lang.String.format;
 import static java.lang.System.getenv;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -194,6 +204,91 @@ public class OidcAuthenticationProseTests {
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
             performFind(mongoClient);
             // callback was called
+            assertEquals(1, callback1.getInvocations());
+        }
+    }
+
+    // Not a prose test
+    @ParameterizedTest(name = "{0}. "
+            + "Parameters: timeoutMs={1}, "
+            + "serverSelectionTimeoutMS={2},"
+            + " expectedTimeoutThreshold={3}")
+    @MethodSource
+    void testValidCallbackInputsTimeoutWhenTimeoutMsIsSet(final String testName,
+                                        final int timeoutMs,
+                                        final int serverSelectionTimeoutMS,
+                                        final int expectedTimeoutThreshold) {
+        TestCallback callback1 = createCallback();
+
+        OidcCallback callback2 = (context) -> {
+            assertTrue(context.getTimeout().toMillis() < expectedTimeoutThreshold,
+                    format("Expected timeout to be less than %d, but was %d",
+                            expectedTimeoutThreshold,
+                            context.getTimeout().toMillis()));
+            return callback1.onRequest(context);
+        };
+
+        MongoClientSettings clientSettings = MongoClientSettings.builder(createSettings(callback2))
+                .applyToClusterSettings(builder ->
+                        builder.serverSelectionTimeout(
+                                serverSelectionTimeoutMS,
+                                TimeUnit.MILLISECONDS))
+                .timeout(timeoutMs, TimeUnit.MILLISECONDS)
+                .build();
+
+        try (MongoClient mongoClient = createMongoClient(clientSettings)) {
+            long start = System.nanoTime();
+            performFind(mongoClient);
+            assertEquals(1, callback1.getInvocations());
+            long elapsed = msElapsedSince(start);
+
+            assertFalse(elapsed > (timeoutMs == 0 ? serverSelectionTimeoutMS : min(serverSelectionTimeoutMS, timeoutMs)),
+                    format("Elapsed time %d is greater then minimum of serverSelectionTimeoutMS and timeoutMs, which is %d. "
+                                    + "This indicates that the callback was not called with the expected timeout.",
+                            min(serverSelectionTimeoutMS, timeoutMs),
+                            elapsed));
+        }
+    }
+
+    private static Stream<Arguments> testValidCallbackInputsTimeoutWhenTimeoutMsIsSet() {
+        return Stream.of(
+                Arguments.of("serverSelectionTimeoutMS honored for oidc callback if it's lower than timeoutMS",
+                        1000, // timeoutMS
+                        500,  // serverSelectionTimeoutMS
+                        499), // expectedTimeoutThreshold
+                Arguments.of("timeoutMS honored for oidc callback if it's lower than serverSelectionTimeoutMS",
+                        500,  // timeoutMS
+                        1000, // serverSelectionTimeoutMS
+                        499), // expectedTimeoutThreshold
+                Arguments.of("serverSelectionTimeoutMS honored for oidc callback if timeoutMS=0",
+                        0,   // infinite timeoutMS
+                        500, // serverSelectionTimeoutMS
+                        499) // expectedTimeoutThreshold
+        );
+    }
+
+    // Not a prose test
+    @ParameterizedTest(name = "test callback timeout when server selection timeout is "
+            + "infinite and timeoutMs is set to {0}")
+    @ValueSource(ints = {0, 100})
+    void testCallbackTimeoutWhenServerSelectionTimeoutIsInfiniteTimeoutMsIsSet(final int timeoutMs) {
+        TestCallback callback1 = createCallback();
+
+        OidcCallback callback2 = (context) -> {
+            assertEquals(context.getTimeout(), ChronoUnit.FOREVER.getDuration());
+            return callback1.onRequest(context);
+        };
+
+        MongoClientSettings clientSettings = MongoClientSettings.builder(createSettings(callback2))
+                .applyToClusterSettings(builder ->
+                        builder.serverSelectionTimeout(
+                                -1, // -1 means infinite
+                                TimeUnit.MILLISECONDS))
+                .timeout(timeoutMs, TimeUnit.MILLISECONDS)
+                .build();
+
+        try (MongoClient mongoClient = createMongoClient(clientSettings)) {
+            performFind(mongoClient);
             assertEquals(1, callback1.getInvocations());
         }
     }
@@ -1142,5 +1237,9 @@ public class OidcAuthenticationProseTests {
         return new TestCallback()
                 .setPathSupplier(() -> oidcTokenDirectory() + "test_user1")
                 .setRefreshToken("refreshToken");
+    }
+
+    private long msElapsedSince(final long timeOfStart) {
+        return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - timeOfStart);
     }
 }
