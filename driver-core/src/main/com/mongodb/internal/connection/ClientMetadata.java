@@ -48,6 +48,8 @@ import static java.nio.file.Paths.get;
 /**
  * Represents metadata of the current MongoClient.
  *
+ * Metadata is used to identify the client in the server logs and metrics.
+ *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 @ThreadSafe
@@ -55,11 +57,18 @@ public class ClientMetadata {
     private static final String SEPARATOR = "|";
     private static final int MAXIMUM_CLIENT_METADATA_ENCODED_SIZE = 512;
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+    private final String applicationName;
     private BsonDocument clientMetadataBsonDocument;
+    private DriverInformation driverInformation;
 
     public ClientMetadata(@Nullable final String applicationName, final MongoDriverInformation mongoDriverInformation) {
+        this.applicationName = applicationName;
         withLock(readWriteLock.writeLock(), () -> {
-            this.clientMetadataBsonDocument = createClientMetadataDocument(applicationName, mongoDriverInformation);
+            this.driverInformation = DriverInformation.from(
+                    mongoDriverInformation.getDriverNames(),
+                    mongoDriverInformation.getDriverVersions(),
+                    mongoDriverInformation.getDriverPlatforms());
+            this.clientMetadataBsonDocument = createClientMetadataDocument(applicationName, driverInformation);
         });
     }
 
@@ -70,14 +79,18 @@ public class ClientMetadata {
         return withLock(readWriteLock.readLock(), () -> clientMetadataBsonDocument);
     }
 
-    public void append(final MongoDriverInformation mongoDriverInformation) {
-        withLock(readWriteLock.writeLock(), () ->
-                this.clientMetadataBsonDocument = updateClientMetadataDocument(clientMetadataBsonDocument.clone(), mongoDriverInformation)
-        );
+    public void append(final MongoDriverInformation mongoDriverInformationToAppend) {
+        withLock(readWriteLock.writeLock(), () -> {
+            this.driverInformation.append(
+                    mongoDriverInformationToAppend.getDriverNames(),
+                    mongoDriverInformationToAppend.getDriverVersions(),
+                    mongoDriverInformationToAppend.getDriverPlatforms());
+            this.clientMetadataBsonDocument = createClientMetadataDocument(applicationName, driverInformation);
+        });
     }
 
     private static BsonDocument createClientMetadataDocument(@Nullable final String applicationName,
-                                                            @Nullable final MongoDriverInformation mongoDriverInformation) {
+                                                             final DriverInformation driverInformation) {
         if (applicationName != null) {
             isTrueArgument("applicationName UTF-8 encoding length <= 128",
                     applicationName.getBytes(StandardCharsets.UTF_8).length <= 128);
@@ -86,18 +99,17 @@ public class ClientMetadata {
         // client fields are added in "preservation" order:
         BsonDocument client = new BsonDocument();
         tryWithLimit(client, d -> putAtPath(d, "application.name", applicationName));
-        MongoDriverInformation baseDriverInfor = getDriverInformation(null);
+
         // required fields:
         tryWithLimit(client, d -> {
-            putAtPath(d, "driver.name", listToString(baseDriverInfor.getDriverNames()));
-            putAtPath(d, "driver.version", listToString(baseDriverInfor.getDriverVersions()));
+            putAtPath(d, "driver.name", driverInformation.getInitialDriverName());
+            putAtPath(d, "driver.version", driverInformation.getInitialDriverVersion());
         });
         tryWithLimit(client, d -> putAtPath(d, "os.type", getOperatingSystemType(getOperatingSystemName())));
         // full driver information:
-        MongoDriverInformation fullDriverInfo = getDriverInformation(mongoDriverInformation);
         tryWithLimit(client, d -> {
-            putAtPath(d, "driver.name", listToString(fullDriverInfo.getDriverNames()));
-            putAtPath(d, "driver.version", listToString(fullDriverInfo.getDriverVersions()));
+            putAtPath(d, "driver.name", listToString(driverInformation.getAllDriverNames()));
+            putAtPath(d, "driver.version", listToString(driverInformation.getAllDriverVersions()));
         });
 
         // optional fields:
@@ -105,8 +117,8 @@ public class ClientMetadata {
         ClientMetadata.ContainerRuntime containerRuntime = ClientMetadata.ContainerRuntime.determineExecutionContainer();
         ClientMetadata.Orchestrator orchestrator = ClientMetadata.Orchestrator.determineExecutionOrchestrator();
 
-        tryWithLimit(client, d -> putAtPath(d, "platform", listToString(baseDriverInfor.getDriverPlatforms())));
-        tryWithLimit(client, d -> putAtPath(d, "platform", listToString(fullDriverInfo.getDriverPlatforms())));
+        tryWithLimit(client, d -> putAtPath(d, "platform", driverInformation.getInitialDriverPlatform()));
+        tryWithLimit(client, d -> putAtPath(d, "platform", listToString(driverInformation.getAllDriverPlatforms())));
         tryWithLimit(client, d -> putAtPath(d, "os.name", getOperatingSystemName()));
         tryWithLimit(client, d -> putAtPath(d, "os.architecture", getProperty("os.arch", "unknown")));
         tryWithLimit(client, d -> putAtPath(d, "os.version", getProperty("os.version", "unknown")));
@@ -121,45 +133,6 @@ public class ClientMetadata {
 
         return client;
     }
-
-    /**
-     * Modifies the given client metadata document by appending the driver information.
-     * Driver name and version are appended atomically to the existing driver name and version if they do not exceed
-     * {@value MAXIMUM_CLIENT_METADATA_ENCODED_SIZE} bytes.
-     * <p>
-     * Platform is appended separately to the existing platform if it does not exceed {@value MAXIMUM_CLIENT_METADATA_ENCODED_SIZE} bytes.
-     */
-    private static BsonDocument updateClientMetadataDocument(final BsonDocument clientMetadataDocument,
-                                                            final MongoDriverInformation driverInformationToAppend) {
-        BsonDocument currentDriverInformation = clientMetadataDocument.getDocument("driver");
-
-        List<String> driverNamesToAppend = driverInformationToAppend.getDriverNames();
-        List<String> driverVersionsToAppend = driverInformationToAppend.getDriverVersions();
-        List<String> driverPlatformsToAppend = driverInformationToAppend.getDriverPlatforms();
-
-        List<String> updatedDriverNames = new ArrayList<>(driverNamesToAppend.size() + 1);
-        List<String> updatedDriverVersions = new ArrayList<>(driverVersionsToAppend.size() + 1);
-        List<String> updateDriverPlatforms = new ArrayList<>(driverPlatformsToAppend.size() + 1);
-
-        updatedDriverNames.add(currentDriverInformation.getString("name").getValue());
-        updatedDriverNames.addAll(driverNamesToAppend);
-
-        updatedDriverVersions.add(currentDriverInformation.getString("version").getValue());
-        updatedDriverVersions.addAll(driverVersionsToAppend);
-
-        updateDriverPlatforms.add(clientMetadataDocument.getString("platform").getValue());
-        updateDriverPlatforms.addAll(driverPlatformsToAppend);
-
-        tryWithLimit(clientMetadataDocument, d -> {
-            putAtPath(d, "driver.name", listToString(updatedDriverNames));
-            putAtPath(d, "driver.version", listToString(updatedDriverVersions));
-        });
-        tryWithLimit(clientMetadataDocument, d -> {
-            putAtPath(d, "platform", listToString(updateDriverPlatforms));
-        });
-        return clientMetadataDocument;
-    }
-
 
     private static void putAtPath(final BsonDocument d, final String path, @Nullable final String value) {
         if (value == null) {
@@ -292,17 +265,6 @@ public class ClientMetadata {
         }
     }
 
-    static MongoDriverInformation getDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation) {
-        MongoDriverInformation.Builder builder = mongoDriverInformation != null ? MongoDriverInformation.builder(mongoDriverInformation)
-                : MongoDriverInformation.builder();
-        return builder
-                .driverName(MongoDriverVersion.NAME)
-                .driverVersion(MongoDriverVersion.VERSION)
-                .driverPlatform(format("Java/%s/%s", getProperty("java.vendor", "unknown-vendor"),
-                        getProperty("java.runtime.version", "unknown-version")))
-                .build();
-    }
-
     private static String listToString(final List<String> listOfStrings) {
         StringBuilder stringBuilder = new StringBuilder();
         int i = 0;
@@ -342,5 +304,69 @@ public class ClientMetadata {
             }
         }
         return false;
+    }
+
+    /**
+     * Holds driver information of client.driver field
+     * in {@link ClientMetadata#clientMetadataBsonDocument}.
+     */
+    private static class DriverInformation {
+        private final List<String> driverNames;
+        private final List<String> driverVersions;
+        private final List<String> driverPlatforms;
+        private final String initialPlatform;
+
+        DriverInformation() {
+            this.driverNames = new ArrayList<>();
+            driverNames.add(MongoDriverVersion.NAME);
+
+            this.driverVersions = new ArrayList<>();
+            driverVersions.add(MongoDriverVersion.VERSION);
+
+            this.initialPlatform = format("Java/%s/%s", getProperty("java.vendor", "unknown-vendor"),
+                    getProperty("java.runtime.version", "unknown-version"));
+            this.driverPlatforms = new ArrayList<>();
+            driverPlatforms.add(initialPlatform);
+        }
+
+        static DriverInformation from(final List<String> driverNames,
+                                      final List<String> driverVersions,
+                                      final List<String> driverPlatforms) {
+            DriverInformation driverInformation = new DriverInformation();
+            return driverInformation.append(driverNames, driverVersions, driverPlatforms);
+        }
+
+        DriverInformation append(final List<String> driverNames,
+                                 final List<String> driverVersions,
+                                 final List<String> driverPlatforms) {
+            this.driverNames.addAll(driverNames);
+            this.driverVersions.addAll(driverVersions);
+            this.driverPlatforms.addAll(driverPlatforms);
+            return this;
+        }
+
+        public String getInitialDriverPlatform() {
+            return initialPlatform;
+        }
+
+        public String getInitialDriverName() {
+            return MongoDriverVersion.NAME;
+        }
+
+        public String getInitialDriverVersion() {
+            return MongoDriverVersion.VERSION;
+        }
+
+        public List<String> getAllDriverNames() {
+            return driverNames;
+        }
+
+        public List<String> getAllDriverVersions() {
+            return driverVersions;
+        }
+
+        public List<String> getAllDriverPlatforms() {
+            return driverPlatforms;
+        }
     }
 }
