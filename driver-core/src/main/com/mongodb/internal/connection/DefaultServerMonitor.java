@@ -258,15 +258,16 @@ class DefaultServerMonitor implements ServerMonitor {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug(format("Checking status of %s", serverId.getAddress()));
                 }
-                if (!alreadyLoggedHeartBeatStarted) {
-                    logHeartbeatStarted(serverId, connection.getDescription(), shouldStreamResponses);
-                    serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(
-                            connection.getDescription().getConnectionId(), shouldStreamResponses));
-                }
-                alreadyLoggedHeartBeatStarted = false;
 
                 long start = System.nanoTime();
                 try {
+                    if (!alreadyLoggedHeartBeatStarted) {
+                        logHeartbeatStarted(serverId, connection.getDescription(), shouldStreamResponses);
+                        serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(
+                                connection.getDescription().getConnectionId(), shouldStreamResponses));
+                    }
+                    alreadyLoggedHeartBeatStarted = false;
+
                     OperationContext operationContext = operationContextFactory.create();
                     if (!connection.hasMoreToCome()) {
                         BsonDocument helloDocument = new BsonDocument(getHandshakeCommandName(currentServerDescription), new BsonInt32(1))
@@ -385,6 +386,7 @@ class DefaultServerMonitor implements ServerMonitor {
         }
 
         public void cancelCurrentCheck() {
+            System.out.println("Canceling current check for server " + serverId.getAddress());
             InternalConnection localConnection = withLock(lock, () -> {
                 if (connection != null && !currentCheckCancelled) {
                     InternalConnection result = connection;
