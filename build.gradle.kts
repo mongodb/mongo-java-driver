@@ -30,12 +30,9 @@ nexusPublishing {
             username = nexusUsername
             password = nexusPassword
 
-            snapshotRepositoryUrl.set(uri("https://oss.sonatype.org/content/repositories/snapshots/"))
-            nexusUrl.set(uri("https://oss.sonatype.org/service/local/"))
-
             // central portal URLs
-//            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
-//            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
+            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
         }
     }
 }
