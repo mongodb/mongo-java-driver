@@ -41,6 +41,7 @@ import org.bson.BsonString;
 import org.bson.Document;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -260,6 +261,10 @@ public class OidcAuthenticationProseTests {
                         500,  // timeoutMS
                         1000, // serverSelectionTimeoutMS
                         499), // expectedTimeoutThreshold
+                Arguments.of("timeoutMS honored for oidc callback if serverSelectionTimeoutMS is infinite",
+                        500,  // timeoutMS
+                        -1, // serverSelectionTimeoutMS
+                        499), // expectedTimeoutThreshold,
                 Arguments.of("serverSelectionTimeoutMS honored for oidc callback if timeoutMS=0",
                         0,   // infinite timeoutMS
                         500, // serverSelectionTimeoutMS
@@ -268,14 +273,18 @@ public class OidcAuthenticationProseTests {
     }
 
     // Not a prose test
-    @ParameterizedTest(name = "test callback timeout when server selection timeout is "
-            + "infinite and timeoutMs is set to {0}")
-    @ValueSource(ints = {0, 100})
-    void testCallbackTimeoutWhenServerSelectionTimeoutIsInfiniteTimeoutMsIsSet(final int timeoutMs) {
+    @Test
+    @DisplayName("test callback timeout when server selection timeout and "
+            + "timeoutMs are infinite")
+    void testCallbackTimeoutWhenServerSelectionTimeoutIsInfiniteTimeoutMsIsSet() {
         TestCallback callback1 = createCallback();
 
         OidcCallback callback2 = (context) -> {
-            assertEquals(context.getTimeout(), ChronoUnit.FOREVER.getDuration());
+            assertEquals(ChronoUnit.FOREVER.getDuration(), context.getTimeout(),
+                    format("Expected timeout to be infinite (%d seconds), but was %d seconds",
+                            ChronoUnit.FOREVER.getDuration().getSeconds(),
+                            context.getTimeout().getSeconds()));
+
             return callback1.onRequest(context);
         };
 
@@ -284,7 +293,7 @@ public class OidcAuthenticationProseTests {
                         builder.serverSelectionTimeout(
                                 -1, // -1 means infinite
                                 TimeUnit.MILLISECONDS))
-                .timeout(timeoutMs, TimeUnit.MILLISECONDS)
+                .timeout(0, TimeUnit.MILLISECONDS)
                 .build();
 
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
