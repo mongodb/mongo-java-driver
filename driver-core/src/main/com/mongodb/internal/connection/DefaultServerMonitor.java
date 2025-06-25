@@ -249,7 +249,18 @@ class DefaultServerMonitor implements ServerMonitor {
                     logHeartbeatStarted(serverId, newConnection.getDescription(), shouldStreamResponses);
                     serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(
                             newConnection.getDescription().getConnectionId(), shouldStreamResponses));
-                    newConnection.open(operationContextFactory.create());
+                    long start = System.nanoTime();
+                    try {
+                        newConnection.open(operationContextFactory.create());
+                    } catch (Exception e) {
+                        alreadyLoggedHeartBeatStarted = false;
+                        long elapsedTimeNanos = System.nanoTime() - start;
+                        logHeartbeatFailed(serverId, connection.getDescription(), shouldStreamResponses, elapsedTimeNanos, e);
+                        serverMonitorListener.serverHeartbeatFailed(
+                                new ServerHeartbeatFailedEvent(connection.getDescription().getConnectionId(), elapsedTimeNanos,
+                                        shouldStreamResponses, e));
+                        throw e;
+                    }
                     connection = newConnection;
                     roundTripTimeSampler.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
                     return connection.getInitialServerDescription();
@@ -259,15 +270,15 @@ class DefaultServerMonitor implements ServerMonitor {
                     LOGGER.debug(format("Checking status of %s", serverId.getAddress()));
                 }
 
+                if (!alreadyLoggedHeartBeatStarted) {
+                    logHeartbeatStarted(serverId, connection.getDescription(), shouldStreamResponses);
+                    serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(
+                            connection.getDescription().getConnectionId(), shouldStreamResponses));
+                }
+                alreadyLoggedHeartBeatStarted = false;
+
                 long start = System.nanoTime();
                 try {
-                    if (!alreadyLoggedHeartBeatStarted) {
-                        logHeartbeatStarted(serverId, connection.getDescription(), shouldStreamResponses);
-                        serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(
-                                connection.getDescription().getConnectionId(), shouldStreamResponses));
-                    }
-                    alreadyLoggedHeartBeatStarted = false;
-
                     OperationContext operationContext = operationContextFactory.create();
                     if (!connection.hasMoreToCome()) {
                         BsonDocument helloDocument = new BsonDocument(getHandshakeCommandName(currentServerDescription), new BsonInt32(1))
@@ -386,7 +397,6 @@ class DefaultServerMonitor implements ServerMonitor {
         }
 
         public void cancelCurrentCheck() {
-            System.out.println("Canceling current check for server " + serverId.getAddress());
             InternalConnection localConnection = withLock(lock, () -> {
                 if (connection != null && !currentCheckCancelled) {
                     InternalConnection result = connection;
