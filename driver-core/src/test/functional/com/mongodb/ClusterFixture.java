@@ -120,7 +120,6 @@ public final class ClusterFixture {
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
     public static final String MONGODB_API_VERSION = "org.mongodb.test.api.version";
     public static final String MONGODB_MULTI_MONGOS_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.multi.mongos.uri";
-    public static final String SERVERLESS_TEST_SYSTEM_PROPERTY_NAME = "org.mongodb.test.serverless";
     public static final String DATA_LAKE_TEST_SYSTEM_PROPERTY_NAME = "org.mongodb.test.data.lake";
     public static final String ATLAS_SEARCH_TEST_SYSTEM_PROPERTY_NAME = "org.mongodb.test.atlas.search";
     private static final String MONGODB_OCSP_SHOULD_SUCCEED = "org.mongodb.test.ocsp.tls.should.succeed";
@@ -293,10 +292,6 @@ public final class ClusterFixture {
     @Nullable
     public static synchronized ConnectionString getMultiMongosConnectionString() {
         return getConnectionStringFromSystemProperty(MONGODB_MULTI_MONGOS_URI_SYSTEM_PROPERTY_NAME);
-    }
-
-    public static boolean isServerlessTest() {
-        return System.getProperty(SERVERLESS_TEST_SYSTEM_PROPERTY_NAME, "").equals("true");
     }
 
     public static synchronized boolean isDataLakeTest() {
@@ -844,10 +839,4 @@ public final class ClusterFixture {
         return builder.mode(ClusterConnectionMode.SINGLE).hosts(singletonList(getPrimary()));
     }
 
-    public static int applyTimeoutMultiplierForServerless(final int timeoutMs) {
-        if (ClusterFixture.isServerlessTest()) {
-            return timeoutMs * 2;
-        }
-        return timeoutMs;
-    }
 }

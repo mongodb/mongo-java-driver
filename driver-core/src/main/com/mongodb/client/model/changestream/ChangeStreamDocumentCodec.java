@@ -35,8 +35,6 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 @SuppressWarnings({"unchecked", "rawtypes"})
 final class ChangeStreamDocumentCodec<TResult> implements Codec<ChangeStreamDocument<TResult>> {
 
-    private static final OperationTypeCodec OPERATION_TYPE_CODEC = new OperationTypeCodec();
-
     private final Codec<ChangeStreamDocument<TResult>> codec;
 
     ChangeStreamDocumentCodec(final Class<TResult> fullDocumentClass, final CodecRegistry codecRegistry) {

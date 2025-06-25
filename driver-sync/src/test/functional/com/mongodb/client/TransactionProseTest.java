@@ -29,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
@@ -120,6 +119,6 @@ public class TransactionProseTest {
     }
 
     private boolean canRunTests() {
-        return isSharded() && !isServerlessTest();
+        return isSharded();
     }
 }
