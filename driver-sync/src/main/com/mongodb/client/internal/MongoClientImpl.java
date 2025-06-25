@@ -38,6 +38,7 @@ import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
 import com.mongodb.internal.connection.InternalConnectionPoolSettings;
@@ -81,7 +82,8 @@ public final class MongoClientImpl implements MongoClient {
         this(cluster, mongoDriverInformation, settings, externalResourceCloser, null);
     }
 
-    private MongoClientImpl(final Cluster cluster,
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+    public MongoClientImpl(final Cluster cluster,
                             final MongoDriverInformation mongoDriverInformation,
                             final MongoClientSettings settings,
                             @Nullable final AutoCloseable externalResourceCloser,
