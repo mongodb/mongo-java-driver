@@ -278,11 +278,12 @@ public class OidcAuthenticationProseTests {
             + "timeoutMs are infinite")
     void testCallbackTimeoutWhenServerSelectionTimeoutIsInfiniteTimeoutMsIsSet() {
         TestCallback callback1 = createCallback();
+        Duration expectedTimeout = ChronoUnit.FOREVER.getDuration();
 
         OidcCallback callback2 = (context) -> {
-            assertEquals(ChronoUnit.FOREVER.getDuration(), context.getTimeout(),
+            assertEquals(expectedTimeout, context.getTimeout(),
                     format("Expected timeout to be infinite (%d seconds), but was %d seconds",
-                            ChronoUnit.FOREVER.getDuration().getSeconds(),
+                            expectedTimeout.getSeconds(),
                             context.getTimeout().getSeconds()));
 
             return callback1.onRequest(context);
