@@ -23,7 +23,7 @@ else
   TASK="publishSnapshots"
 fi
 
-SYSTEM_PROPERTIES="-Dorg.gradle.internal.publish.checksums.insecure=true -Dorg.gradle.internal.http.connectionTimeout=120000 -Dorg.gradle.internal.http.socketTimeout=120000"
+SYSTEM_PROPERTIES="-Dorg.gradle.internal.publish.checksums.insecure=true"
 
 ./gradlew -version
 ./gradlew ${SYSTEM_PROPERTIES} --stacktrace --info  ${TASK} # Scala 2.13 is published as result of this gradle execution.
