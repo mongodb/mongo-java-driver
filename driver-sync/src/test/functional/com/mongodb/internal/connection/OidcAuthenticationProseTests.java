@@ -79,7 +79,6 @@ import static com.mongodb.MongoCredential.OidcCallbackResult;
 import static com.mongodb.MongoCredential.TOKEN_RESOURCE_KEY;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.testing.MongoAssertions.assertCause;
-import static java.lang.Math.min;
 import static java.lang.String.format;
 import static java.lang.System.getenv;
 import static java.util.Arrays.asList;
@@ -242,11 +241,13 @@ public class OidcAuthenticationProseTests {
             assertEquals(1, callback1.getInvocations());
             long elapsed = msElapsedSince(start);
 
-            assertFalse(elapsed > (timeoutMs == 0 ? serverSelectionTimeoutMS : min(serverSelectionTimeoutMS, timeoutMs)),
+
+            assertFalse(elapsed > minTimeout(serverSelectionTimeoutMS, timeoutMs),
                     format("Elapsed time %d is greater then minimum of serverSelectionTimeoutMS and timeoutMs, which is %d. "
                                     + "This indicates that the callback was not called with the expected timeout.",
-                            min(serverSelectionTimeoutMS, timeoutMs),
-                            elapsed));
+                            elapsed,
+                            minTimeout(serverSelectionTimeoutMS, timeoutMs)));
+
         }
     }
 
@@ -1248,5 +1249,11 @@ public class OidcAuthenticationProseTests {
 
     private long msElapsedSince(final long timeOfStart) {
         return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - timeOfStart);
+    }
+
+    private static long minTimeout(final int timeoutMs, final int serverSelectionTimeoutMS) {
+        long timeoutMsEffective = timeoutMs != 0 ? timeoutMs : Long.MAX_VALUE;
+        long serverSelectionTimeoutMSEffective = serverSelectionTimeoutMS != -1 ? serverSelectionTimeoutMS : Long.MAX_VALUE;
+        return Math.min(timeoutMsEffective, serverSelectionTimeoutMSEffective);
     }
 }
