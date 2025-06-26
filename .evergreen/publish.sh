@@ -18,7 +18,7 @@ export ORG_GRADLE_PROJECT_signingKey="${SIGNING_KEY}"
 export ORG_GRADLE_PROJECT_signingPassword=${SIGNING_PASSWORD}
 
 if [ "$RELEASE" == "true" ]; then
-  TASK="publishArchives"
+  TASK="publishArchives closeSonatypeStagingRepository"
 else
   TASK="publishSnapshots"
 fi
