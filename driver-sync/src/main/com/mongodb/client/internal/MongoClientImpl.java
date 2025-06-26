@@ -39,6 +39,7 @@ import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.internal.connection.ClientMetadata;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
 import com.mongodb.internal.connection.InternalConnectionPoolSettings;
@@ -138,7 +139,9 @@ public final class MongoClientImpl implements MongoClient {
 
     @Override
     public void appendMetadata(final MongoDriverInformation mongoDriverInformation) {
-        delegate.getCluster().getClientMetadata().append(mongoDriverInformation);
+        ClientMetadata clientMetadata = getCluster().getClientMetadata();
+        clientMetadata.append(mongoDriverInformation);
+        LOGGER.info(format("MongoClient metadata has been updated to %s", clientMetadata.getBsonDocument()));
     }
 
     @Override

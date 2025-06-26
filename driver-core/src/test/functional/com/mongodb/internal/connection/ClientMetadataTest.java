@@ -58,6 +58,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  */
 public class ClientMetadataTest {
     private static final String APP_NAME = "app name";
+    private static final MongoDriverInformation EMPTY_MONGO_DRIVER_INFORMATION = MongoDriverInformation.builder().build();
 
     @Test
     public void test01ValidAws() {
@@ -298,14 +299,14 @@ public class ClientMetadataTest {
     @Test
     public void testApplicationNameUnderLimit() {
         String applicationName = repeat(126, "a") + "\u00A0";
-        BsonDocument client = new ClientMetadata(applicationName, null).getBsonDocument();
+        BsonDocument client = new ClientMetadata(applicationName, EMPTY_MONGO_DRIVER_INFORMATION).getBsonDocument();
         assertEquals(applicationName, client.getDocument("application").getString("name").getValue());
     }
 
     @Test
     public void testApplicationNameOverLimit() {
         String applicationName = repeat(127, "a") + "\u00A0";
-        assertThrows(IllegalArgumentException.class, () -> new ClientMetadata(applicationName, null));
+        assertThrows(IllegalArgumentException.class, () -> new ClientMetadata(applicationName, EMPTY_MONGO_DRIVER_INFORMATION));
     }
 
     @ParameterizedTest
@@ -316,7 +317,7 @@ public class ClientMetadataTest {
             ", " + false,
     })
     public void testCreateClientMetadataDocument(@Nullable final String appName, final boolean hasDriverInfo) {
-        MongoDriverInformation driverInformation = hasDriverInfo ? createDriverInformation() : null;
+        MongoDriverInformation driverInformation = hasDriverInfo ? createDriverInformation() : EMPTY_MONGO_DRIVER_INFORMATION;
         ClientMetadata clientMetadata = new ClientMetadata(appName, driverInformation);
         assertEquals(
                 createExpectedClientMetadataDocument(appName, driverInformation),
@@ -402,7 +403,7 @@ public class ClientMetadataTest {
     }
 
     private BsonDocument createActualClientMetadataDocument() {
-        return new ClientMetadata(APP_NAME, null).getBsonDocument();
+        return new ClientMetadata(APP_NAME, EMPTY_MONGO_DRIVER_INFORMATION).getBsonDocument();
     }
 
     private static MongoDriverInformation createDriverInformation() {

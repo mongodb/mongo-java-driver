@@ -29,6 +29,7 @@ import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.connection.ClientMetadata;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
@@ -328,6 +329,8 @@ public final class MongoClientImpl implements MongoClient {
 
     @Override
     public void appendMetadata(final MongoDriverInformation mongoDriverInformation) {
-        getCluster().getClientMetadata().append(mongoDriverInformation);
+        ClientMetadata clientMetadata = getCluster().getClientMetadata();
+        clientMetadata.append(mongoDriverInformation);
+        LOGGER.info(format("MongoClient metadata has been updated to %s", clientMetadata.getBsonDocument()));
     }
 }
