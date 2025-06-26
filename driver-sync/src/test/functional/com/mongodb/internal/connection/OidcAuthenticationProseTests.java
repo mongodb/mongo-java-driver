@@ -280,9 +280,8 @@ public class OidcAuthenticationProseTests {
 
         OidcCallback callback2 = (context) -> {
             assertEquals(expectedTimeout, context.getTimeout(),
-                    format("Expected timeout to be infinite (%d seconds), but was %d seconds",
-                            expectedTimeout.getSeconds(),
-                            context.getTimeout().getSeconds()));
+                    format("Expected timeout to be infinite (%s), but was %s",
+                            expectedTimeout, context.getTimeout()));
 
             return callback1.onRequest(context);
         };
