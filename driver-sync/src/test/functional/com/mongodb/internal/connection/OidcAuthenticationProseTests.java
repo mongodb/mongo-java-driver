@@ -273,9 +273,8 @@ public class OidcAuthenticationProseTests {
 
     // Not a prose test
     @Test
-    @DisplayName("test callback timeout when server selection timeout and "
-            + "timeoutMs are infinite")
-    void testCallbackTimeoutWhenServerSelectionTimeoutIsInfiniteTimeoutMsIsSet() {
+    @DisplayName("test callback timeout when serverSelectionTimeoutMS and timeoutMS are infinite")
+    void testCallbackTimeoutWhenServerSelectionTimeoutMsIsInfiniteTimeoutMsIsSet() {
         TestCallback callback1 = createCallback();
         Duration expectedTimeout = ChronoUnit.FOREVER.getDuration();
 
