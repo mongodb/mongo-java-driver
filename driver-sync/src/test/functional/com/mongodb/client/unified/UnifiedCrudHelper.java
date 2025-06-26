@@ -17,6 +17,7 @@
 package com.mongodb.client.unified;
 
 import com.mongodb.CursorType;
+import com.mongodb.MongoDriverInformation;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
@@ -39,6 +40,7 @@ import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.ListSearchIndexesIterable;
 import com.mongodb.client.MongoChangeStreamCursor;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -2215,6 +2217,24 @@ final class UnifiedCrudHelper extends UnifiedHelper {
 
         return resultOf(() ->
                 new BsonInt64(collection.estimatedDocumentCount(options)));
+    }
+
+    public OperationResult executeUpdateClientMetadata(final BsonDocument operation) {
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+        BsonDocument driverInfo = arguments.getDocument("driverInfoOptions");
+
+        MongoDriverInformation mongoDriverInformation = MongoDriverInformation.builder()
+                .driverVersion(driverInfo.getString("version").getValue())
+                .driverName(driverInfo.getString("name").getValue())
+                .driverPlatform(driverInfo.getString("platform").getValue())
+                .build();
+
+        String clientId = operation.getString("object").getValue();
+        MongoClient client = entities.getClient(clientId);
+        return resultOf(() -> {
+            client.appendMetadata(mongoDriverInformation);
+            return null;
+        });
     }
 
     @NonNull

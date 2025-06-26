@@ -29,6 +29,7 @@ import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.connection.ClientMetadata;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
@@ -54,7 +55,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
 import static java.lang.String.format;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
 
@@ -117,7 +117,8 @@ public final class MongoClientImpl implements MongoClient {
         this.externalResourceCloser = externalResourceCloser;
         this.settings = settings;
         this.closed = new AtomicBoolean();
-        BsonDocument clientMetadataDocument = createClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation);
+
+        BsonDocument clientMetadataDocument = delegate.getCluster().getClientMetadata().getBsonDocument();
         LOGGER.info(format("MongoClient with metadata %s created with settings %s", clientMetadataDocument.toJson(), settings));
     }
 
@@ -324,5 +325,12 @@ public final class MongoClientImpl implements MongoClient {
     @Override
     public ClusterDescription getClusterDescription() {
         return getCluster().getCurrentDescription();
+    }
+
+    @Override
+    public void appendMetadata(final MongoDriverInformation mongoDriverInformation) {
+        ClientMetadata clientMetadata = getCluster().getClientMetadata();
+        clientMetadata.append(mongoDriverInformation);
+        LOGGER.info(format("MongoClient metadata has been updated to %s", clientMetadata.getBsonDocument()));
     }
 }

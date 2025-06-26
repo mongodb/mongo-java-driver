@@ -17,6 +17,7 @@
 package com.mongodb.client
 
 import com.mongodb.MongoClientSettings
+import com.mongodb.MongoDriverInformation
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.ServerAddress
@@ -34,6 +35,7 @@ import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
 import com.mongodb.internal.TimeoutSettings
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
+import com.mongodb.internal.connection.ClientMetadata
 import com.mongodb.internal.connection.Cluster
 import org.bson.BsonDocument
 import org.bson.Document
@@ -191,13 +193,15 @@ class MongoClientSpecification extends Specification {
                          .type(ServerType.UNKNOWN)
                          .state(ServerConnectionState.CONNECTING)
                          .build()])
+        def driverInformation = MongoDriverInformation.builder().build()
         def cluster = Mock(Cluster) {
             1 * getCurrentDescription() >> {
                 clusterDescription
             }
+            1 * getClientMetadata() >> new ClientMetadata("test", driverInformation)
         }
         def settings = MongoClientSettings.builder().build()
-        def client = new MongoClientImpl(cluster, null, settings, null, new TestOperationExecutor([]))
+        def client = new MongoClientImpl(cluster, driverInformation, settings, null, new TestOperationExecutor([]))
 
         expect:
         client.getClusterDescription() == clusterDescription

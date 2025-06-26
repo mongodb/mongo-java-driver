@@ -38,6 +38,8 @@ import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.internal.connection.ClientMetadata;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
 import com.mongodb.internal.connection.InternalConnectionPoolSettings;
@@ -58,7 +60,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.internal.Crypts.createCrypt;
-import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
 import static java.lang.String.format;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
@@ -82,9 +83,10 @@ public final class MongoClientImpl implements MongoClient {
         this(cluster, mongoDriverInformation, settings, externalResourceCloser, null);
     }
 
-    private MongoClientImpl(final Cluster cluster,
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+    public MongoClientImpl(final Cluster cluster,
                             final MongoDriverInformation mongoDriverInformation,
-                           final MongoClientSettings settings,
+                            final MongoClientSettings settings,
                             @Nullable final AutoCloseable externalResourceCloser,
                             @Nullable final OperationExecutor operationExecutor) {
 
@@ -106,8 +108,8 @@ public final class MongoClientImpl implements MongoClient {
                                              new ServerSessionPool(cluster, TimeoutSettings.create(settings), settings.getServerApi()),
                                              TimeoutSettings.create(settings), settings.getUuidRepresentation(), settings.getWriteConcern());
         this.closed = new AtomicBoolean();
-        BsonDocument clientMetadataDocument = createClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation);
 
+        BsonDocument clientMetadataDocument = delegate.getCluster().getClientMetadata().getBsonDocument();
         LOGGER.info(format("MongoClient with metadata %s created with settings %s", clientMetadataDocument.toJson(), settings));
     }
 
@@ -133,6 +135,13 @@ public final class MongoClientImpl implements MongoClient {
     @Override
     public ClusterDescription getClusterDescription() {
         return delegate.getCluster().getCurrentDescription();
+    }
+
+    @Override
+    public void appendMetadata(final MongoDriverInformation mongoDriverInformation) {
+        ClientMetadata clientMetadata = getCluster().getClientMetadata();
+        clientMetadata.append(mongoDriverInformation);
+        LOGGER.info(format("MongoClient metadata has been updated to %s", clientMetadata.getBsonDocument()));
     }
 
     @Override

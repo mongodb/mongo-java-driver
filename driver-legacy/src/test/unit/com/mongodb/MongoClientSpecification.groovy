@@ -21,6 +21,7 @@ import com.mongodb.client.internal.MongoDatabaseImpl
 import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.model.geojson.MultiPolygon
 import com.mongodb.connection.ClusterSettings
+import com.mongodb.internal.connection.ClientMetadata
 import com.mongodb.internal.connection.Cluster
 import org.bson.BsonDocument
 import org.bson.Document
@@ -309,7 +310,11 @@ class MongoClientSpecification extends Specification {
     def 'should validate the ChangeStreamIterable pipeline data correctly'() {
         given:
         def executor = new TestOperationExecutor([])
-        def client = new MongoClientImpl(Stub(Cluster), null, MongoClientSettings.builder().build(), null, executor)
+
+        def clusterStub = Stub(Cluster)
+        clusterStub.getClientMetadata() >> new ClientMetadata("test", MongoDriverInformation.builder().build())
+
+        def client = new MongoClientImpl(clusterStub, null, MongoClientSettings.builder().build(), null, executor)
 
         when:
         client.watch((Class) null)

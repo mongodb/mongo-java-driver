@@ -23,6 +23,7 @@ import com.mongodb.client.internal.MongoClientImpl;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
+import com.mongodb.internal.connection.ClientMetadata;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.mockito.MongoMockito;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,7 @@ import java.util.concurrent.TimeoutException;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 
 class MongoClientTest {
 
@@ -64,10 +66,13 @@ class MongoClientTest {
     void shouldCloseExternalResources() throws Exception {
 
         //given
+        MongoDriverInformation mongoDriverInformation = MongoDriverInformation.builder().build();
         Cluster cluster = MongoMockito.mock(
                 Cluster.class,
                 mockedCluster -> {
                     doNothing().when(mockedCluster).close();
+                    when(mockedCluster.getClientMetadata())
+                            .thenReturn(new ClientMetadata("test", mongoDriverInformation));
                 });
         AutoCloseable externalResource = MongoMockito.mock(
                 AutoCloseable.class,
@@ -82,7 +87,7 @@ class MongoClientTest {
         MongoClientImpl mongoClient = new MongoClientImpl(
                 cluster,
                 MongoClientSettings.builder().build(),
-                MongoDriverInformation.builder().build(),
+                mongoDriverInformation,
                 externalResource);
 
         //when

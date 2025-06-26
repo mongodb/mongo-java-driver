@@ -20,12 +20,11 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.ReadConcern;
-import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
-import com.mongodb.connection.ServerConnectionState;
-import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
+import com.mongodb.internal.connection.ClientMetadata;
 import com.mongodb.internal.connection.Cluster;
+import com.mongodb.internal.mockito.MongoMockito;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
@@ -44,6 +43,7 @@ import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 
 public class MongoClientImplTest extends TestHelper {
@@ -178,13 +178,6 @@ public class MongoClientImplTest extends TestHelper {
 
     @Test
     void testStartSession() {
-        ServerDescription serverDescription = ServerDescription.builder()
-                .address(new ServerAddress())
-                .state(ServerConnectionState.CONNECTED)
-                .maxWireVersion(8)
-                .build();
-
-        MongoClientImpl mongoClient = createMongoClient();
         ServerSessionPool serverSessionPool = mock(ServerSessionPool.class);
         ClientSessionHelper clientSessionHelper = new ClientSessionHelper(mongoClient, serverSessionPool);
 
@@ -209,7 +202,12 @@ public class MongoClientImplTest extends TestHelper {
     }
 
     private MongoClientImpl createMongoClient() {
+        MongoDriverInformation mongoDriverInformation = MongoDriverInformation.builder().driverName("reactive-streams").build();
+        Cluster mock = MongoMockito.mock(Cluster.class, cluster -> {
+            when(cluster.getClientMetadata())
+                    .thenReturn(new ClientMetadata("test", mongoDriverInformation));
+        });
         return new MongoClientImpl(MongoClientSettings.builder().build(),
-                MongoDriverInformation.builder().driverName("reactive-streams").build(), mock(Cluster.class), OPERATION_EXECUTOR);
+                mongoDriverInformation, mock, OPERATION_EXECUTOR);
     }
 }

@@ -32,6 +32,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import static com.mongodb.ClusterFixture.CLIENT_METADATA;
 import static java.util.Collections.singletonList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -117,6 +118,7 @@ class InitialDnsSeedListDiscoveryProseTest {
 
         cluster = new DnsMultiServerCluster(clusterId, settingsBuilder.build(),
                 serverFactory,
+                CLIENT_METADATA,
                 dnsSrvRecordMonitorFactory);
 
         ClusterFixture.sleep(100);
