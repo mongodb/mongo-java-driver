@@ -19,12 +19,8 @@ package com.mongodb.client.unified;
 import org.junit.jupiter.params.provider.Arguments;
 import java.util.Collection;
 
-import static java.util.stream.Collectors.toList;
-
 public final class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() {
-        return getTestData("server-discovery-and-monitoring")
-                .stream().filter(arguments -> arguments.get()[1].toString().endsWith("serverMonitoringMode"))
-                .collect(toList());
+        return getTestData("server-discovery-and-monitoring");
     }
 }
