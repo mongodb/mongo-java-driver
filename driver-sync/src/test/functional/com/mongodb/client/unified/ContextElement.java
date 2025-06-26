@@ -495,7 +495,7 @@ abstract class ContextElement {
                     + new BsonDocument("messages", expectedMessages).toJson(JsonWriterSettings.builder().indent(true).build()) + "\n"
                     + "   actualMessages="
                     + new BsonDocument("messages", new BsonArray(actualMessages.stream()
-                    .map(LogMatcher::asDocument).collect(Collectors.toList())))
+                    .map(LogMatcher::logMessageAsDocument).collect(Collectors.toList())))
                     .toJson(JsonWriterSettings.builder().indent(true).build()) + "\n";
         }
     }

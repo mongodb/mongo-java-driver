@@ -116,9 +116,9 @@ abstract class BaseCluster implements Cluster {
         this.settings = notNull("settings", settings);
         this.serverFactory = notNull("serverFactory", serverFactory);
         this.clusterListener = singleClusterListener(settings);
+        logTopologyMonitoringStarting(clusterId);
         ClusterOpeningEvent clusterOpeningEvent = new ClusterOpeningEvent(clusterId);
         clusterListener.clusterOpening(clusterOpeningEvent);
-        logTopologyOpening(clusterId, clusterOpeningEvent);
         description = new ClusterDescription(settings.getMode(), UNKNOWN, emptyList(),
                 settings, serverFactory.getSettings());
     }
@@ -219,9 +219,9 @@ abstract class BaseCluster implements Cluster {
             phase.get().countDown();
             fireChangeEvent(new ClusterDescription(settings.getMode(), UNKNOWN, emptyList(), settings, serverFactory.getSettings()),
                     description);
+            logTopologyMonitoringStopping(clusterId);
             ClusterClosedEvent clusterClosedEvent = new ClusterClosedEvent(clusterId);
             clusterListener.clusterClosed(clusterClosedEvent);
-            logTopologyClosedEvent(clusterId, clusterClosedEvent);
             stopWaitQueueHandler();
         }
     }
@@ -249,8 +249,8 @@ abstract class BaseCluster implements Cluster {
     protected void fireChangeEvent(final ClusterDescription newDescription, final ClusterDescription previousDescription) {
         if (!wouldDescriptionsGenerateEquivalentEvents(newDescription, previousDescription)) {
             ClusterDescriptionChangedEvent changedEvent = new ClusterDescriptionChangedEvent(getClusterId(), newDescription, previousDescription);
-            clusterListener.clusterDescriptionChanged(changedEvent);
             logTopologyDescriptionChanged(getClusterId(),  changedEvent);
+            clusterListener.clusterDescriptionChanged(changedEvent);
         }
     }
 
@@ -632,9 +632,7 @@ abstract class BaseCluster implements Cluster {
         }
     }
 
-    static void logTopologyOpening(
-            final ClusterId clusterId,
-            final ClusterOpeningEvent clusterOpeningEvent) {
+    static void logTopologyMonitoringStarting(final ClusterId clusterId) {
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
             STRUCTURED_LOGGER.log(new LogMessage(
                     TOPOLOGY, DEBUG, "Starting topology monitoring", clusterId,
@@ -659,9 +657,7 @@ abstract class BaseCluster implements Cluster {
         }
     }
 
-    static void logTopologyClosedEvent(
-            final ClusterId clusterId,
-            final ClusterClosedEvent clusterClosedEvent) {
+    static void logTopologyMonitoringStopping(final ClusterId clusterId) {
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
             STRUCTURED_LOGGER.log(new LogMessage(
                     TOPOLOGY, DEBUG, "Stopped topology monitoring", clusterId,
