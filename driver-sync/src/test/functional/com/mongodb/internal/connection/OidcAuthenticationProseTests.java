@@ -242,11 +242,11 @@ public class OidcAuthenticationProseTests {
             long elapsed = msElapsedSince(start);
 
 
-            assertFalse(elapsed > minTimeout(serverSelectionTimeoutMS, timeoutMs),
+            assertFalse(elapsed > minTimeout(timeoutMs, serverSelectionTimeoutMS),
                     format("Elapsed time %d is greater then minimum of serverSelectionTimeoutMS and timeoutMs, which is %d. "
                                     + "This indicates that the callback was not called with the expected timeout.",
                             elapsed,
-                            minTimeout(serverSelectionTimeoutMS, timeoutMs)));
+                            minTimeout(timeoutMs, serverSelectionTimeoutMS)));
 
         }
     }
