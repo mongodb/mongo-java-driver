@@ -446,7 +446,7 @@ public class TimeoutContext {
         return this;
     }
 
-    public Timeout startWaitQueueTimeout(final StartTime checkoutStart) {
+    public Timeout startMaxWaitTimeout(final StartTime checkoutStart) {
         if (hasTimeoutMS()) {
             return assertNotNull(timeout);
         }

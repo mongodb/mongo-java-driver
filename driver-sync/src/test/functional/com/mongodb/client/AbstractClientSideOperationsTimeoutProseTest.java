@@ -89,10 +89,12 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.sleep;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getPrimary;
+import static java.lang.Long.MAX_VALUE;
 import static java.lang.String.join;
 import static java.util.Arrays.asList;
 import static java.util.Collections.nCopies;
 import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -114,6 +116,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     protected static final String FAIL_COMMAND_NAME = "failCommand";
     protected static final String GRID_FS_BUCKET_NAME = "db.fs";
     private static final AtomicInteger COUNTER = new AtomicInteger();
+    public ExecutorService executor;
 
     protected MongoNamespace namespace;
     protected MongoNamespace gridFsFileNamespace;
@@ -811,8 +814,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                     + "    }"
                     + "}");
 
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-
             executor.submit(() -> collection.find().first());
             sleep(100);
 
@@ -833,7 +834,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
                 .timeout(100, TimeUnit.MILLISECONDS)
                 .applyToConnectionPoolSettings(builder -> builder
-                        .maxWaitTime(1, TimeUnit.MILLISECONDS)
                         .maxSize(1)
                 ))) {
             MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
@@ -849,8 +849,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                     + "    }"
                     + "}");
 
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-
             executor.submit(() -> collection.withTimeout(0, TimeUnit.MILLISECONDS).find().first());
             sleep(100);
 
@@ -863,7 +861,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
     @Test
-    @DisplayName("Should ignore waitQueueTimeoutMS when timeoutMS is set")
+    @DisplayName("Should use waitQueueTimeoutMS when timeoutMS is not set")
     public void shouldUseWaitQueueTimeoutMSWhenTimeoutIsNotSet() {
         assumeTrue(serverVersionAtLeast(4, 4));
 
@@ -885,8 +883,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                     + "        blockTimeMS: " + 300
                     + "    }"
                     + "}");
-
-            ExecutorService executor = Executors.newSingleThreadExecutor();
 
             executor.submit(() -> collection.find().first());
             sleep(100);
@@ -1070,6 +1066,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     @BeforeEach
     public void setUp() {
         namespace = generateNamespace();
+        executor = Executors.newSingleThreadExecutor();
         gridFsFileNamespace = new MongoNamespace(getDefaultDatabaseName(), GRID_FS_BUCKET_NAME + ".files");
         gridFsChunksNamespace = new MongoNamespace(getDefaultDatabaseName(), GRID_FS_BUCKET_NAME + ".chunks");
 
@@ -1080,7 +1077,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     }
 
     @AfterEach
-    public void tearDown() {
+    public void tearDown() throws InterruptedException {
         ClusterFixture.disableFailPoint(FAIL_COMMAND_NAME);
         if (collectionHelper != null) {
             collectionHelper.drop();
@@ -1093,6 +1090,10 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 // ignore
             }
         }
+
+        executor.shutdownNow();
+        //noinspection ResultOfMethodCallIgnored
+        executor.awaitTermination(MAX_VALUE, NANOSECONDS);
     }
 
     @AfterAll

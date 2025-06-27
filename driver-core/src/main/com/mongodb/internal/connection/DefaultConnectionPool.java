@@ -112,12 +112,12 @@ import static com.mongodb.internal.logging.LogMessage.Entry.Name.ERROR_DESCRIPTI
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.MAX_CONNECTING;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.MAX_IDLE_TIME_MS;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.MAX_POOL_SIZE;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.MAX_WAIT_TIMEOUT_MS;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.MIN_POOL_SIZE;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.REASON_DESCRIPTION;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_HOST;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_PORT;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVICE_ID;
-import static com.mongodb.internal.logging.LogMessage.Entry.Name.WAIT_QUEUE_TIMEOUT_MS;
 import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -192,12 +192,12 @@ final class DefaultConnectionPool implements ConnectionPool {
     @Override
     public InternalConnection get(final OperationContext operationContext) {
         StartTime checkoutStart = connectionCheckoutStarted(operationContext);
-        Timeout waitQueueTimeout =  operationContext.getTimeoutContext().startWaitQueueTimeout(checkoutStart);
+        Timeout maxWaitTimeout = operationContext.getTimeoutContext().startMaxWaitTimeout(checkoutStart);
         try {
             stateAndGeneration.throwIfClosedOrPaused();
-            PooledConnection connection = getPooledConnection(waitQueueTimeout, checkoutStart, operationContext);
+            PooledConnection connection = getPooledConnection(maxWaitTimeout, checkoutStart, operationContext.getTimeoutContext());
             if (!connection.opened()) {
-                connection = openConcurrencyLimiter.openOrGetAvailable(operationContext, connection, waitQueueTimeout, checkoutStart);
+                connection = openConcurrencyLimiter.openOrGetAvailable(operationContext, connection, maxWaitTimeout, checkoutStart);
             }
             connection.checkedOutForOperation(operationContext);
             connectionCheckedOut(operationContext, connection, checkoutStart);
@@ -210,7 +210,7 @@ final class DefaultConnectionPool implements ConnectionPool {
     @Override
     public void getAsync(final OperationContext operationContext, final SingleResultCallback<InternalConnection> callback) {
         StartTime checkoutStart = connectionCheckoutStarted(operationContext);
-        Timeout maxWaitTimeout = operationContext.getTimeoutContext().startWaitQueueTimeout(checkoutStart);
+        Timeout maxWaitTimeout = operationContext.getTimeoutContext().startMaxWaitTimeout(checkoutStart);
         SingleResultCallback<PooledConnection> eventSendingCallback = (connection, failure) -> {
             SingleResultCallback<InternalConnection> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
             if (failure == null) {
@@ -227,13 +227,13 @@ final class DefaultConnectionPool implements ConnectionPool {
             eventSendingCallback.onResult(null, e);
             return;
         }
-        asyncWorkManager.enqueue(new Task(maxWaitTimeout, checkoutStart, operationContext, t -> {
+        asyncWorkManager.enqueue(new Task(maxWaitTimeout, checkoutStart, operationContext.getTimeoutContext(), t -> {
             if (t != null) {
                 eventSendingCallback.onResult(null, t);
             } else {
                 PooledConnection connection;
                 try {
-                    connection = getPooledConnection(maxWaitTimeout, checkoutStart, operationContext);
+                    connection = getPooledConnection(maxWaitTimeout, checkoutStart, operationContext.getTimeoutContext());
                 } catch (Exception e) {
                     eventSendingCallback.onResult(null, e);
                     return;
@@ -332,24 +332,24 @@ final class DefaultConnectionPool implements ConnectionPool {
         return stateAndGeneration.generation();
     }
 
-    private PooledConnection getPooledConnection(final Timeout waitQueueTimeout,
+    private PooledConnection getPooledConnection(final Timeout maxWaitTimeout,
                                                  final StartTime startTime,
-                                                 final OperationContext operationContext) throws MongoTimeoutException {
+                                                 final TimeoutContext timeoutContext) throws MongoTimeoutException {
         try {
-            UsageTrackingInternalConnection internalConnection = waitQueueTimeout.call(NANOSECONDS,
+            UsageTrackingInternalConnection internalConnection = maxWaitTimeout.call(NANOSECONDS,
                     () -> pool.get(-1L, NANOSECONDS),
                     (ns) -> pool.get(ns, NANOSECONDS),
                     () -> pool.get(0L, NANOSECONDS));
             while (shouldPrune(internalConnection)) {
                 pool.release(internalConnection, true);
-                internalConnection = waitQueueTimeout.call(NANOSECONDS,
+                internalConnection = maxWaitTimeout.call(NANOSECONDS,
                         () -> pool.get(-1L, NANOSECONDS),
                         (ns) -> pool.get(ns, NANOSECONDS),
                         () -> pool.get(0L, NANOSECONDS));
             }
             return new PooledConnection(internalConnection);
         } catch (MongoTimeoutException e) {
-            throw createTimeoutException(startTime, operationContext.getTimeoutContext());
+            throw createTimeoutException(startTime, timeoutContext);
         }
     }
 
@@ -367,10 +367,11 @@ final class DefaultConnectionPool implements ConnectionPool {
         long elapsedMs = startTime.elapsed().toMillis();
         int numPinnedToCursor = pinnedStatsManager.getNumPinnedToCursor();
         int numPinnedToTransaction = pinnedStatsManager.getNumPinnedToTransaction();
+        String errorMessage;
+
         if (numPinnedToCursor == 0 && numPinnedToTransaction == 0) {
-            String errorMessage = format("Timed out after %d ms while waiting for a connection to server %s.",
+            errorMessage = format("Timed out after %d ms while waiting for a connection to server %s.",
                     elapsedMs, serverId.getAddress());
-            return timeoutContext.hasTimeoutMS() ? createMongoTimeoutException(errorMessage) : new MongoTimeoutException(errorMessage);
         } else {
             int maxSize = pool.getMaxSize();
             int numInUse = pool.getInUseCount();
@@ -399,14 +400,15 @@ final class DefaultConnectionPool implements ConnectionPool {
             int numOtherInUse = numInUse - numPinnedToCursor - numPinnedToTransaction;
             assertTrue(numOtherInUse >= 0);
             assertTrue(numPinnedToCursor + numPinnedToTransaction + numOtherInUse <= maxSize);
-            String errorMessage = format("Timed out after %d ms while waiting for a connection to server %s. Details: "
+            errorMessage = format("Timed out after %d ms while waiting for a connection to server %s. Details: "
                             + "maxPoolSize: %s, connections in use by cursors: %d, connections in use by transactions: %d, "
                             + "connections in use by other operations: %d",
                     elapsedMs, serverId.getAddress(),
                     sizeToString(maxSize), numPinnedToCursor, numPinnedToTransaction,
                     numOtherInUse);
-            return timeoutContext.hasTimeoutMS() ? createMongoTimeoutException(errorMessage) : new MongoTimeoutException(errorMessage);
         }
+
+        return timeoutContext.hasTimeoutMS() ? createMongoTimeoutException(errorMessage) : new MongoTimeoutException(errorMessage);
     }
 
     @VisibleForTesting(otherwise = PRIVATE)
@@ -503,7 +505,7 @@ final class DefaultConnectionPool implements ConnectionPool {
             entries.add(new LogMessage.Entry(MIN_POOL_SIZE, settings.getMinSize()));
             entries.add(new LogMessage.Entry(MAX_POOL_SIZE, settings.getMaxSize()));
             entries.add(new LogMessage.Entry(MAX_CONNECTING, settings.getMaxConnecting()));
-            entries.add(new LogMessage.Entry(WAIT_QUEUE_TIMEOUT_MS, settings.getMaxWaitTime(MILLISECONDS)));
+            entries.add(new LogMessage.Entry(MAX_WAIT_TIMEOUT_MS, settings.getMaxWaitTime(MILLISECONDS)));
 
             logMessage("Connection pool created", clusterId, message, entries);
         }
@@ -909,11 +911,11 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         PooledConnection openOrGetAvailable(final OperationContext operationContext, final PooledConnection connection,
-                final Timeout waitQueueTimeout, final StartTime startTime)
+                                            final Timeout maxWaitTimeout, final StartTime startTime)
                 throws MongoTimeoutException {
             PooledConnection result = openWithConcurrencyLimit(
                     operationContext, connection, OpenWithConcurrencyLimitMode.TRY_GET_AVAILABLE,
-                    waitQueueTimeout, startTime);
+                    maxWaitTimeout, startTime);
             return assertNotNull(result);
         }
 
@@ -956,7 +958,7 @@ final class DefaultConnectionPool implements ConnectionPool {
          * </ol>
          *
          * @param operationContext the operation context
-         * @param waitQueueTimeout Applies only to the first phase.
+         * @param maxWaitTimeout Applies only to the first phase.
          * @return An {@linkplain PooledConnection#opened() opened} connection which is either the specified
          * {@code connection}, or potentially a different one if {@code mode} is
          * {@link OpenWithConcurrencyLimitMode#TRY_GET_AVAILABLE}, or {@code null} if {@code mode} is
@@ -966,12 +968,13 @@ final class DefaultConnectionPool implements ConnectionPool {
         @Nullable
         private PooledConnection openWithConcurrencyLimit(final OperationContext operationContext,
                 final PooledConnection connection, final OpenWithConcurrencyLimitMode mode,
-                final Timeout waitQueueTimeout, final StartTime startTime)
+                                                          final Timeout maxWaitTimeout, final StartTime startTime)
                 throws MongoTimeoutException {
             PooledConnection availableConnection;
             try {//phase one
                 availableConnection = acquirePermitOrGetAvailableOpenedConnection(
-                        mode == OpenWithConcurrencyLimitMode.TRY_GET_AVAILABLE, waitQueueTimeout, startTime, operationContext);
+                        mode == OpenWithConcurrencyLimitMode.TRY_GET_AVAILABLE, maxWaitTimeout, startTime,
+                        operationContext.getTimeoutContext());
             } catch (Exception e) {
                 connection.closeSilently();
                 throw e;
@@ -1013,7 +1016,8 @@ final class DefaultConnectionPool implements ConnectionPool {
                 final SingleResultCallback<PooledConnection> callback) {
             PooledConnection availableConnection;
             try {//phase one
-                availableConnection = acquirePermitOrGetAvailableOpenedConnection(true, maxWaitTimeout, startTime, operationContext);
+                availableConnection =
+                        acquirePermitOrGetAvailableOpenedConnection(true, maxWaitTimeout, startTime, operationContext.getTimeoutContext());
             } catch (Exception e) {
                 connection.closeSilently();
                 callback.onResult(null, e);
@@ -1044,8 +1048,8 @@ final class DefaultConnectionPool implements ConnectionPool {
          */
         @Nullable
         private PooledConnection acquirePermitOrGetAvailableOpenedConnection(final boolean tryGetAvailable,
-                                                                             final Timeout waitQueueTimeout, final StartTime startTime,
-                                                                             final OperationContext operationContext)
+                                                                             final Timeout maxWaitTimeout, final StartTime startTime,
+                                                                             final TimeoutContext timeoutContext)
                 throws MongoTimeoutException, MongoInterruptedException {
             PooledConnection availableConnection = null;
             boolean expressedDesireToGetAvailableConnection = false;
@@ -1073,10 +1077,10 @@ final class DefaultConnectionPool implements ConnectionPool {
                         & !stateAndGeneration.throwIfClosedOrPaused()
                         & (availableConnection = tryGetAvailable ? tryGetAvailableConnection() : null) == null) {
 
-                    Timeout.onExistsAndExpired(waitQueueTimeout, () -> {
-                        throw createTimeoutException(startTime, operationContext.getTimeoutContext());
+                    Timeout.onExistsAndExpired(maxWaitTimeout, () -> {
+                        throw createTimeoutException(startTime, timeoutContext);
                     });
-                    waitQueueTimeout.awaitOn(permitAvailableOrHandedOverOrClosedOrPausedCondition,
+                    maxWaitTimeout.awaitOn(permitAvailableOrHandedOverOrClosedOrPausedCondition,
                             () -> "acquiring permit or getting available opened connection");
                 }
                 if (availableConnection == null) {
@@ -1396,15 +1400,15 @@ final class DefaultConnectionPool implements ConnectionPool {
         private final Timeout timeout;
         private final StartTime startTime;
         private final Consumer<RuntimeException> action;
-        private final OperationContext operationContext;
+        private final TimeoutContext timeoutContext;
         private boolean completed;
 
         Task(final Timeout timeout,
              final StartTime startTime,
-             final OperationContext operationContext,
+             final TimeoutContext timeoutContext,
              final Consumer<RuntimeException> action) {
             this.timeout = timeout;
-            this.operationContext = operationContext;
+            this.timeoutContext = timeoutContext;
             this.startTime = startTime;
             this.action = action;
         }
@@ -1418,7 +1422,7 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         void failAsTimedOut() {
-            doComplete(() -> createTimeoutException(startTime, operationContext.getTimeoutContext()));
+            doComplete(() -> createTimeoutException(startTime, timeoutContext));
         }
 
         private void doComplete(final Supplier<RuntimeException> failureSupplier) {

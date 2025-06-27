@@ -127,7 +127,7 @@ public class DefaultConnectionPoolTest {
 
         // when
         TimeoutTrackingConnectionGetter connectionGetter = new TimeoutTrackingConnectionGetter(provider, timeoutSettings);
-        new Thread(connectionGetter).start();
+        cachedExecutor.submit(connectionGetter);
 
         connectionGetter.getLatch().await();
 
@@ -136,7 +136,7 @@ public class DefaultConnectionPoolTest {
     }
 
     @Test
-    public void shouldNotUseMaxAwaitTimeMSOnWhenTimeoutMsIsSet() throws InterruptedException {
+    public void shouldNotUseMaxAwaitTimeMSWhenTimeoutMsIsSet() throws InterruptedException {
         // given
         provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                 ConnectionPoolSettings.builder()
@@ -152,7 +152,7 @@ public class DefaultConnectionPoolTest {
 
         // when
         TimeoutTrackingConnectionGetter connectionGetter = new TimeoutTrackingConnectionGetter(provider, timeoutSettings);
-        new Thread(connectionGetter).start();
+        cachedExecutor.submit(connectionGetter);
 
         sleep(70); // wait for more than maxWaitTimeMS but less than timeoutMs.
         internalConnection.close();
