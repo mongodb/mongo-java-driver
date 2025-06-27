@@ -116,7 +116,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     protected static final String FAIL_COMMAND_NAME = "failCommand";
     protected static final String GRID_FS_BUCKET_NAME = "db.fs";
     private static final AtomicInteger COUNTER = new AtomicInteger();
-    public ExecutorService executor;
+    private ExecutorService executor;
 
     protected MongoNamespace namespace;
     protected MongoNamespace gridFsFileNamespace;

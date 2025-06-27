@@ -967,7 +967,7 @@ final class DefaultConnectionPool implements ConnectionPool {
          */
         @Nullable
         private PooledConnection openWithConcurrencyLimit(final OperationContext operationContext,
-                final PooledConnection connection, final OpenWithConcurrencyLimitMode mode,
+                                                          final PooledConnection connection, final OpenWithConcurrencyLimitMode mode,
                                                           final Timeout maxWaitTimeout, final StartTime startTime)
                 throws MongoTimeoutException {
             PooledConnection availableConnection;
