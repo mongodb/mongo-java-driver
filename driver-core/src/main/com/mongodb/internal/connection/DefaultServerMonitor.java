@@ -247,56 +247,20 @@ class DefaultServerMonitor implements ServerMonitor {
                 }
 
                 boolean shouldStreamResponses = shouldStreamResponses(currentServerDescription);
+                lookupStartTimeNanos = System.nanoTime();
+
+                // Handle connection setup
                 if (connection == null || connection.isClosed()) {
-                    lookupStartTimeNanos = System.nanoTime();
-                    return openNewConnectionAndGetInitialDescription(shouldStreamResponses);
+                    return setupNewConnectionAndGetInitialDescription(shouldStreamResponses);
                 }
 
+                // Log heartbeat started if it hasn't been logged yet
                 if (!alreadyLoggedHeartBeatStarted) {
-                    lookupStartTimeNanos = System.nanoTime();
-                    logHeartbeatStarted(serverId, connection.getDescription(), shouldStreamResponses);
-                    serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(
-                            connection.getDescription().getConnectionId(), shouldStreamResponses));
+                    logAndNotifyHeartbeatStarted(shouldStreamResponses);
                 }
-                alreadyLoggedHeartBeatStarted = false;
 
-                try {
-                    OperationContext operationContext = operationContextFactory.create();
-                    if (!connection.hasMoreToCome()) {
-                        BsonDocument helloDocument = new BsonDocument(getHandshakeCommandName(currentServerDescription), new BsonInt32(1))
-                                .append("helloOk", BsonBoolean.TRUE);
-                        if (shouldStreamResponses) {
-                            helloDocument.append("topologyVersion", assertNotNull(currentServerDescription.getTopologyVersion()).asDocument());
-                            helloDocument.append("maxAwaitTimeMS", new BsonInt64(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
-                        }
-                        connection.send(createCommandMessage(helloDocument, connection, currentServerDescription), new BsonDocumentCodec(),
-                                operationContext);
-                    }
-
-                    BsonDocument helloResult;
-                    if (shouldStreamResponses) {
-                        helloResult = connection.receive(new BsonDocumentCodec(), operationContextWithAdditionalTimeout(operationContext));
-                    } else {
-                        helloResult = connection.receive(new BsonDocumentCodec(), operationContext);
-                    }
-                    long elapsedTimeNanos = getElapsedTimeNanos();
-                    if (!shouldStreamResponses) {
-                        roundTripTimeSampler.addSample(elapsedTimeNanos);
-                    }
-                    logHeartbeatSucceeded(serverId, connection.getDescription(), shouldStreamResponses, elapsedTimeNanos, helloResult);
-                    serverMonitorListener.serverHeartbeatSucceeded(
-                            new ServerHeartbeatSucceededEvent(connection.getDescription().getConnectionId(), helloResult,
-                                    elapsedTimeNanos, shouldStreamResponses));
-                    return createServerDescription(serverId.getAddress(), helloResult, roundTripTimeSampler.getAverage(),
-                            roundTripTimeSampler.getMin());
-                } catch (Exception e) {
-                    long elapsedTimeNanos = getElapsedTimeNanos();
-                    logHeartbeatFailed(serverId, connection.getDescription(), shouldStreamResponses, elapsedTimeNanos, e);
-                    serverMonitorListener.serverHeartbeatFailed(
-                            new ServerHeartbeatFailedEvent(connection.getDescription().getConnectionId(), elapsedTimeNanos,
-                                    shouldStreamResponses, e));
-                    throw e;
-                }
+                // Get existing connection
+                return doHeartbeat(currentServerDescription, shouldStreamResponses);
             } catch (Throwable t) {
                 roundTripTimeSampler.reset();
                 InternalConnection localConnection = withLock(lock, () -> {
@@ -311,28 +275,79 @@ class DefaultServerMonitor implements ServerMonitor {
             }
         }
 
-        private ServerDescription openNewConnectionAndGetInitialDescription(final boolean shouldStreamResponses) {
-            currentCheckCancelled = false;
-            alreadyLoggedHeartBeatStarted = true;
-            InternalConnection newConnection = internalConnectionFactory.create(serverId);
-            logHeartbeatStarted(serverId, newConnection.getDescription(), shouldStreamResponses);
-            serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(
-                    newConnection.getDescription().getConnectionId(), shouldStreamResponses));
+        private ServerDescription setupNewConnectionAndGetInitialDescription(final boolean shouldStreamResponses) {
+            connection = internalConnectionFactory.create(serverId);
+            logAndNotifyHeartbeatStarted(shouldStreamResponses);
 
             try {
-                newConnection.open(operationContextFactory.create());
-                connection = newConnection;
+                connection.open(operationContextFactory.create());
                 roundTripTimeSampler.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
                 return connection.getInitialServerDescription();
             } catch (Exception e) {
-                alreadyLoggedHeartBeatStarted = false;
-                long elapsedTimeNanos = getElapsedTimeNanos();
-                logHeartbeatFailed(serverId, newConnection.getDescription(), shouldStreamResponses, elapsedTimeNanos, e);
-                serverMonitorListener.serverHeartbeatFailed(
-                        new ServerHeartbeatFailedEvent(newConnection.getDescription().getConnectionId(), elapsedTimeNanos,
-                                shouldStreamResponses, e));
+                logAndNotifyHeartbeatFailed(shouldStreamResponses, e);
                 throw e;
             }
+        }
+
+        /**
+         * Run hello command to get the server description.
+         */
+        private ServerDescription doHeartbeat(final ServerDescription currentServerDescription,
+                                              final boolean shouldStreamResponses) {
+            try {
+                OperationContext operationContext = operationContextFactory.create();
+                if (!connection.hasMoreToCome()) {
+                    BsonDocument helloDocument = new BsonDocument(getHandshakeCommandName(currentServerDescription), new BsonInt32(1))
+                            .append("helloOk", BsonBoolean.TRUE);
+                    if (shouldStreamResponses) {
+                        helloDocument.append("topologyVersion", assertNotNull(currentServerDescription.getTopologyVersion()).asDocument());
+                        helloDocument.append("maxAwaitTimeMS", new BsonInt64(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
+                    }
+                    connection.send(createCommandMessage(helloDocument, connection, currentServerDescription), new BsonDocumentCodec(),
+                            operationContext);
+                }
+
+                BsonDocument helloResult;
+                if (shouldStreamResponses) {
+                    helloResult = connection.receive(new BsonDocumentCodec(), operationContextWithAdditionalTimeout(operationContext));
+                } else {
+                    helloResult = connection.receive(new BsonDocumentCodec(), operationContext);
+                }
+                logAndNotifyHeartbeatSucceeded(shouldStreamResponses, helloResult);
+                return createServerDescription(serverId.getAddress(), helloResult, roundTripTimeSampler.getAverage(),
+                        roundTripTimeSampler.getMin());
+            } catch (Exception e) {
+                logAndNotifyHeartbeatFailed(shouldStreamResponses, e);
+                throw e;
+            }
+        }
+
+        private void logAndNotifyHeartbeatStarted(final boolean shouldStreamResponses) {
+            alreadyLoggedHeartBeatStarted = true;
+            logHeartbeatStarted(serverId, connection.getDescription(), shouldStreamResponses);
+            serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(
+                    connection.getDescription().getConnectionId(), shouldStreamResponses));
+        }
+
+        private void logAndNotifyHeartbeatSucceeded(final boolean shouldStreamResponses, final BsonDocument helloResult) {
+            alreadyLoggedHeartBeatStarted = false;
+            long elapsedTimeNanos = getElapsedTimeNanos();
+            if (!shouldStreamResponses) {
+                roundTripTimeSampler.addSample(elapsedTimeNanos);
+            }
+            logHeartbeatSucceeded(serverId, connection.getDescription(), shouldStreamResponses, elapsedTimeNanos, helloResult);
+            serverMonitorListener.serverHeartbeatSucceeded(
+                    new ServerHeartbeatSucceededEvent(connection.getDescription().getConnectionId(), helloResult,
+                            elapsedTimeNanos, shouldStreamResponses));
+        }
+
+        private void logAndNotifyHeartbeatFailed(final boolean shouldStreamResponses, final Exception e) {
+            alreadyLoggedHeartBeatStarted = false;
+            long elapsedTimeNanos = getElapsedTimeNanos();
+            logHeartbeatFailed(serverId, connection.getDescription(), shouldStreamResponses, elapsedTimeNanos, e);
+            serverMonitorListener.serverHeartbeatFailed(
+                    new ServerHeartbeatFailedEvent(connection.getDescription().getConnectionId(), elapsedTimeNanos,
+                            shouldStreamResponses, e));
         }
 
         private long getElapsedTimeNanos() {
