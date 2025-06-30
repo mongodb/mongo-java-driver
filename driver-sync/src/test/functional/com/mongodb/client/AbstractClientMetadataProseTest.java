@@ -25,6 +25,7 @@ import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -96,8 +97,8 @@ public abstract class AbstractClientMetadataProseTest {
                         builder.maxConnectionIdleTime(1, TimeUnit.MILLISECONDS))
                 .build())) {
 
-            //TODO change get() to orElseThrow
-            BsonDocument initialClientMetadata = executePingAndCaptureMetadataHandshake(mongoClient).get();
+            BsonDocument initialClientMetadata = executePingAndCaptureMetadataHandshake(mongoClient)
+                    .orElseThrow(AbstractClientMetadataProseTest::failOnEmptyMetadata);
             BsonDocument driverInformation = initialClientMetadata.getDocument("driver");
             String generatedDriverName = driverInformation.get("name").asString().getValue();
             String generatedVersionName = driverInformation.get("version").asString().getValue();
@@ -108,8 +109,8 @@ public abstract class AbstractClientMetadataProseTest {
             updateClientMetadata(driverVersion, driverName, driverPlatform, mongoClient);
 
             //then
-            //TODO change get() to orElseThrow
-            BsonDocument updatedClientMetadata = executePingAndCaptureMetadataHandshake(mongoClient).get();
+            BsonDocument updatedClientMetadata = executePingAndCaptureMetadataHandshake(mongoClient)
+                    .orElseThrow(AbstractClientMetadataProseTest::failOnEmptyMetadata);
             BsonDocument updatedDriverInformation = updatedClientMetadata.getDocument("driver");
 
             String expectedDriverName = driverName == null ? generatedDriverName : generatedDriverName + "|" + driverName;
@@ -137,8 +138,8 @@ public abstract class AbstractClientMetadataProseTest {
                         builder.maxConnectionIdleTime(1, TimeUnit.MILLISECONDS))
                 .build())) {
 
-            //TODO change get() to orElseThrow
-            BsonDocument initialClientMetadata = executePingAndCaptureMetadataHandshake(mongoClient).get();
+            BsonDocument initialClientMetadata = executePingAndCaptureMetadataHandshake(mongoClient)
+                    .orElseThrow(AbstractClientMetadataProseTest::failOnEmptyMetadata);
 
             BsonDocument generatedDriverInformation = initialClientMetadata.getDocument("driver");
             String generatedDriverName = generatedDriverInformation.get("name").asString().getValue();
@@ -150,8 +151,8 @@ public abstract class AbstractClientMetadataProseTest {
             updateClientMetadata(driverVersion, driverName, driverPlatform, mongoClient);
 
             //then
-            //TODO change get() to orElseThrow
-            BsonDocument updatedClientMetadata = executePingAndCaptureMetadataHandshake(mongoClient).get();
+            BsonDocument updatedClientMetadata = executePingAndCaptureMetadataHandshake(mongoClient)
+                    .orElseThrow(AbstractClientMetadataProseTest::failOnEmptyMetadata);
             BsonDocument updatedDriverInformation = updatedClientMetadata.getDocument("driver");
 
             String expectedDriverName = driverName == null ? generatedDriverName : generatedDriverName + "|" + driverName;
@@ -182,8 +183,8 @@ public abstract class AbstractClientMetadataProseTest {
                 .build())) {
 
             //when
-            //TODO change get() to orElseThrow
-            BsonDocument clientMetadata = executePingAndCaptureMetadataHandshake(mongoClient).get();
+            BsonDocument clientMetadata = executePingAndCaptureMetadataHandshake(mongoClient)
+                    .orElseThrow(AbstractClientMetadataProseTest::failOnEmptyMetadata);
             BsonDocument driverInformation = clientMetadata.getDocument("driver");
 
             //then
@@ -234,5 +235,9 @@ public abstract class AbstractClientMetadataProseTest {
         ofNullable(driverVersion).ifPresent(builder::driverVersion);
         ofNullable(driverPlatform).ifPresent(builder::driverPlatform);
         mongoClient.appendMetadata(builder.build());
+    }
+
+    private static AssertionError failOnEmptyMetadata() {
+        return Assertions.fail("Client metadata was expected to be present after ping command");
     }
 }
