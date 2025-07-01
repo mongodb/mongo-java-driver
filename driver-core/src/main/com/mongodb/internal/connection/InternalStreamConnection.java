@@ -46,6 +46,7 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.AsyncSupplier;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.connection.netty.NettyByteBuf;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.StructuredLogger;
@@ -355,7 +356,7 @@ public class InternalStreamConnection implements InternalConnection {
     public void close() {
         // All but the first call is a no-op
         if (!isClosed.getAndSet(true) && (stream != null)) {
-                stream.close();
+            stream.close();
         }
     }
 

@@ -307,8 +307,7 @@ final class NettyStream implements Stream {
                             composite.addComponent(next);
                             iter.remove();
                         } else {
-                            next.retain();
-                            composite.addComponent(next.readSlice(bytesNeededFromCurrentBuffer));
+                            composite.addComponent(next.readRetainedSlice(bytesNeededFromCurrentBuffer));
                         }
                         composite.writerIndex(composite.writerIndex() + bytesNeededFromCurrentBuffer);
                         bytesNeeded -= bytesNeededFromCurrentBuffer;
@@ -349,7 +348,11 @@ final class NettyStream implements Stream {
     private void handleReadResponse(@Nullable final io.netty.buffer.ByteBuf buffer, @Nullable final Throwable t) {
         PendingReader localPendingReader = withLock(lock, () -> {
             if (buffer != null) {
-                pendingInboundBuffers.add(buffer.retain());
+                if (isClosed) {
+                    pendingException = new MongoSocketException("Received data after the stream was closed.", address);
+                } else {
+                    pendingInboundBuffers.add(buffer.retain());
+                }
             } else {
                 pendingException = t;
             }
@@ -378,7 +381,7 @@ final class NettyStream implements Stream {
             for (Iterator<io.netty.buffer.ByteBuf> iterator = pendingInboundBuffers.iterator(); iterator.hasNext();) {
                 io.netty.buffer.ByteBuf nextByteBuf = iterator.next();
                 iterator.remove();
-                nextByteBuf.release();
+                nextByteBuf.release(nextByteBuf.refCnt());
             }
         });
     }

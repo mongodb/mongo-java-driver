@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoIncompatibleDriverException;
+import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoTimeoutException;
@@ -188,7 +189,9 @@ abstract class BaseCluster implements Cluster {
     @Override
     public void selectServerAsync(final ServerSelector serverSelector, final OperationContext operationContext,
             final SingleResultCallback<ServerTuple> callback) {
-        isTrue("open", !isClosed());
+        if (isClosed()) {
+            callback.onResult(null, new MongoClientException("Cluster was closed during server selection."));
+        }
 
         Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
         ServerSelectionRequest request = new ServerSelectionRequest(
