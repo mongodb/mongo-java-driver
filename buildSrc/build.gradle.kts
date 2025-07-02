@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import dev.panuszewski.gradle.pluginMarker
-
 plugins {
     id("java-library")
     `kotlin-dsl`
@@ -26,18 +24,6 @@ repositories {
     gradlePluginPortal()
     mavenCentral()
     google()
-}
-
-// Dependencies needed for the configuration of the plugins
-// Uses `pluginMarker` from the `typesafe-conventions` plugin, see `settings.gradle.kts`
-dependencies {
-    implementation(pluginMarker(libs.plugins.bnd))
-    implementation(pluginMarker(libs.plugins.detekt))
-    implementation(pluginMarker(libs.plugins.dokka))
-    implementation(pluginMarker(libs.plugins.kotlin.gradle))
-    implementation(pluginMarker(libs.plugins.spotbugs))
-    implementation(pluginMarker(libs.plugins.spotless))
-    implementation(pluginMarker(libs.plugins.test.logger))
 }
 
 // Spotless configuration for `buildSrc` code.
