@@ -49,8 +49,9 @@ public final class SingleServerCluster extends BaseCluster {
 
     private final AtomicReference<ClusterableServer> server;
 
-    public SingleServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
-        super(clusterId, settings, serverFactory);
+    public SingleServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
+                               final ClientMetadata clientMetadata) {
+        super(clusterId, settings, serverFactory, clientMetadata);
         isTrue("one server in a direct cluster", settings.getHosts().size() == 1);
         isTrue("connection mode is single", settings.getMode() == ClusterConnectionMode.SINGLE);
 

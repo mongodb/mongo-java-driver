@@ -44,7 +44,6 @@ import static com.mongodb.MongoCredential.createPlainCredential
 import static com.mongodb.MongoCredential.createScramSha1Credential
 import static com.mongodb.MongoCredential.createScramSha256Credential
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
-import static com.mongodb.internal.connection.ClientMetadataHelperProseTest.createExpectedClientMetadataDocument
 import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO
 import static com.mongodb.internal.connection.MessageHelper.buildSuccessfulReply
 import static com.mongodb.internal.connection.MessageHelper.decodeCommand
@@ -225,7 +224,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         decodeCommand(internalConnection.getSent()[0]) == expectedHelloCommandDocument
 
         where:
-        [clientMetadataDocument, async] << [[createExpectedClientMetadataDocument('appName'), null],
+        [clientMetadataDocument, async] << [[ClientMetadataTest.createExpectedClientMetadataDocument('appName'), null],
                                             [true, false]].combinations()
     }
 

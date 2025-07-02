@@ -29,8 +29,17 @@ import com.mongodb.lang.Nullable;
  * @mongodb.server.release 8.1
  */
 public enum NamespaceType {
+    /**
+     * The collection namespace type.
+     */
     COLLECTION("collection"),
+    /**
+     * The timeseries namespace type.
+     */
     TIMESERIES("timeseries"),
+    /**
+     * The view namespace type.
+     */
     VIEW("view"),
     /**
      * The other namespace type.
