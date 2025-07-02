@@ -215,19 +215,15 @@ public class OidcAuthenticationProseTests {
             + " expectedTimeoutThreshold={3}")
     @MethodSource
     void testValidCallbackInputsTimeoutWhenTimeoutMsIsSet(final String testName,
-                                        final int timeoutMs,
-                                        final int serverSelectionTimeoutMS,
-                                        final int expectedTimeoutThreshold) {
-        long rtt = ClusterFixture.getPrimaryRTT();
-        final long timeoutMsWithRtt = timeoutMs + rtt;
-        final long serverSelectionTimeoutMSWithRtt = serverSelectionTimeoutMS + rtt;
-        final long expectedTimeoutThresholdWithRtt = expectedTimeoutThreshold + rtt;
+                                                          final long timeoutMs,
+                                                          final long serverSelectionTimeoutMS,
+                                                          final long expectedTimeoutThreshold) {
         TestCallback callback1 = createCallback();
 
         OidcCallback callback2 = (context) -> {
-            assertTrue(context.getTimeout().toMillis() < expectedTimeoutThresholdWithRtt,
+            assertTrue(context.getTimeout().toMillis() < expectedTimeoutThreshold,
                     format("Expected timeout to be less than %d, but was %d",
-                            expectedTimeoutThresholdWithRtt,
+                            expectedTimeoutThreshold,
                             context.getTimeout().toMillis()));
             return callback1.onRequest(context);
         };
@@ -235,9 +231,9 @@ public class OidcAuthenticationProseTests {
         MongoClientSettings clientSettings = MongoClientSettings.builder(createSettings(callback2))
                 .applyToClusterSettings(builder ->
                         builder.serverSelectionTimeout(
-                                serverSelectionTimeoutMSWithRtt,
+                                serverSelectionTimeoutMS,
                                 TimeUnit.MILLISECONDS))
-                .timeout(timeoutMsWithRtt, TimeUnit.MILLISECONDS)
+                .timeout(timeoutMs, TimeUnit.MILLISECONDS)
                 .build();
 
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
@@ -247,33 +243,34 @@ public class OidcAuthenticationProseTests {
             long elapsed = msElapsedSince(start);
 
 
-            assertFalse(elapsed > minTimeout(timeoutMsWithRtt, serverSelectionTimeoutMSWithRtt),
+            assertFalse(elapsed > minTimeout(timeoutMs, serverSelectionTimeoutMS),
                     format("Elapsed time %d is greater then minimum of serverSelectionTimeoutMS and timeoutMs, which is %d. "
                                     + "This indicates that the callback was not called with the expected timeout.",
                             elapsed,
-                            minTimeout(timeoutMsWithRtt, serverSelectionTimeoutMSWithRtt)));
+                            minTimeout(timeoutMs, serverSelectionTimeoutMS)));
 
         }
     }
 
     private static Stream<Arguments> testValidCallbackInputsTimeoutWhenTimeoutMsIsSet() {
+        long rtt = ClusterFixture.getPrimaryRTT();
         return Stream.of(
                 Arguments.of("serverSelectionTimeoutMS honored for oidc callback if it's lower than timeoutMS",
-                        1000, // timeoutMS
-                        500,  // serverSelectionTimeoutMS
-                        499), // expectedTimeoutThreshold
+                        1000 + rtt, // timeoutMS
+                        500 + rtt,  // serverSelectionTimeoutMS
+                        499 + rtt), // expectedTimeoutThreshold
                 Arguments.of("timeoutMS honored for oidc callback if it's lower than serverSelectionTimeoutMS",
-                        500,  // timeoutMS
-                        1000, // serverSelectionTimeoutMS
-                        499), // expectedTimeoutThreshold
+                        500 + rtt,  // timeoutMS
+                        1000 + rtt, // serverSelectionTimeoutMS
+                        499 + rtt), // expectedTimeoutThreshold
                 Arguments.of("timeoutMS honored for oidc callback if serverSelectionTimeoutMS is infinite",
-                        500,  // timeoutMS
+                        500 + rtt,  // timeoutMS
                         -1, // serverSelectionTimeoutMS
-                        499), // expectedTimeoutThreshold,
+                        499 + rtt), // expectedTimeoutThreshold,
                 Arguments.of("serverSelectionTimeoutMS honored for oidc callback if timeoutMS=0",
                         0,   // infinite timeoutMS
-                        500, // serverSelectionTimeoutMS
-                        499) // expectedTimeoutThreshold
+                        500 + rtt, // serverSelectionTimeoutMS
+                        499 + rtt) // expectedTimeoutThreshold
         );
     }
 
