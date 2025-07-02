@@ -101,7 +101,7 @@ class ByteBufferBsonInputTest {
         );
     }
 
-    private static BufferProvider createBufferProvider(final String bufferName, final BufferProvider bufferProvider) {
+    private static BufferProvider createBufferProvider(final String bufferDescription, final BufferProvider bufferProvider) {
         return new BufferProvider() {
             @Override
             public ByteBuf getBuffer(final int size) {
@@ -110,7 +110,7 @@ class ByteBufferBsonInputTest {
 
             @Override
             public String toString() {
-                return bufferName;
+                return bufferDescription;
             }
         };
     }
@@ -659,7 +659,7 @@ class ByteBufferBsonInputTest {
         }
     }
 
-    public static Stream<Arguments> shouldSkipCStringWhenMultipleNullTerminationPresent() {
+    public static Stream<Arguments> shouldSkipCStringWhenMultipleNullTerminatorsPresent() {
         List<Arguments> arguments = new ArrayList<>();
         List<BufferProvider> collect = bufferProviders().collect(toList());
         for (BufferProvider bufferProvider : collect) {
@@ -675,9 +675,9 @@ class ByteBufferBsonInputTest {
         return arguments.stream();
     }
 
-    @ParameterizedTest(name = "should skip CString when multiple null termination present. Parameters: cStringBytes={0}, bufferProvider={1}")
+    @ParameterizedTest(name = "should skip CString when multiple null terminatiors present. Parameters: cStringBytes={0}, bufferProvider={1}")
     @MethodSource
-    void shouldSkipCStringWhenMultipleNullTerminationPresent(final byte[] cStringBytes, final BufferProvider bufferProvider) {
+    void shouldSkipCStringWhenMultipleNullTerminatorsPresent(final byte[] cStringBytes, final BufferProvider bufferProvider) {
         // given
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, cStringBytes);
         try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
@@ -691,9 +691,9 @@ class ByteBufferBsonInputTest {
         }
     }
 
-    @ParameterizedTest(name = "should read skip CString when multiple null termination present within buffer. BufferProvider={0}")
+    @ParameterizedTest(name = "should read skip CString when multiple null terminators present within buffer. BufferProvider={0}")
     @MethodSource("bufferProviders")
-    void shouldReadSkipCStringWhenMultipleNullTerminationPresentWithinBuffer(final BufferProvider bufferProvider) {
+    void shouldReadSkipCStringWhenMultipleNullTerminatorPresentWithinBuffer(final BufferProvider bufferProvider) {
         // given
         byte[] input = {4, 0, 0, 0, 0x4a, 0x61, 0x76, 0x61, 0, 8, 0, 0, 0};
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, input);

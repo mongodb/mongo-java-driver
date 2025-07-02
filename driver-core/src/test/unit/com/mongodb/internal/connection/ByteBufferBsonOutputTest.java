@@ -128,7 +128,7 @@ final class ByteBufferBsonOutputTest {
         );
     }
 
-    private static BufferProvider createBufferProvider(final String bufferName, final BufferProvider bufferProvider) {
+    private static BufferProvider createBufferProvider(final String bufferDescription, final BufferProvider bufferProvider) {
         return new BufferProvider() {
             @Override
             public ByteBuf getBuffer(final int size) {
@@ -137,7 +137,7 @@ final class ByteBufferBsonOutputTest {
 
             @Override
             public String toString() {
-                return bufferName;
+                return bufferDescription;
             }
         };
     }
