@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
@@ -217,12 +218,16 @@ public class OidcAuthenticationProseTests {
                                         final int timeoutMs,
                                         final int serverSelectionTimeoutMS,
                                         final int expectedTimeoutThreshold) {
+        long rtt = ClusterFixture.getPrimaryRTT();
+        final long timeoutMsWithRtt = timeoutMs + rtt;
+        final long serverSelectionTimeoutMSWithRtt = serverSelectionTimeoutMS + rtt;
+        final long expectedTimeoutThresholdWithRtt = expectedTimeoutThreshold + rtt;
         TestCallback callback1 = createCallback();
 
         OidcCallback callback2 = (context) -> {
-            assertTrue(context.getTimeout().toMillis() < expectedTimeoutThreshold,
+            assertTrue(context.getTimeout().toMillis() < expectedTimeoutThresholdWithRtt,
                     format("Expected timeout to be less than %d, but was %d",
-                            expectedTimeoutThreshold,
+                            expectedTimeoutThresholdWithRtt,
                             context.getTimeout().toMillis()));
             return callback1.onRequest(context);
         };
@@ -230,9 +235,9 @@ public class OidcAuthenticationProseTests {
         MongoClientSettings clientSettings = MongoClientSettings.builder(createSettings(callback2))
                 .applyToClusterSettings(builder ->
                         builder.serverSelectionTimeout(
-                                serverSelectionTimeoutMS,
+                                serverSelectionTimeoutMSWithRtt,
                                 TimeUnit.MILLISECONDS))
-                .timeout(timeoutMs, TimeUnit.MILLISECONDS)
+                .timeout(timeoutMsWithRtt, TimeUnit.MILLISECONDS)
                 .build();
 
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
@@ -242,11 +247,11 @@ public class OidcAuthenticationProseTests {
             long elapsed = msElapsedSince(start);
 
 
-            assertFalse(elapsed > minTimeout(timeoutMs, serverSelectionTimeoutMS),
+            assertFalse(elapsed > minTimeout(timeoutMsWithRtt, serverSelectionTimeoutMSWithRtt),
                     format("Elapsed time %d is greater then minimum of serverSelectionTimeoutMS and timeoutMs, which is %d. "
                                     + "This indicates that the callback was not called with the expected timeout.",
                             elapsed,
-                            minTimeout(timeoutMs, serverSelectionTimeoutMS)));
+                            minTimeout(timeoutMsWithRtt, serverSelectionTimeoutMSWithRtt)));
 
         }
     }
@@ -1251,7 +1256,7 @@ public class OidcAuthenticationProseTests {
         return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - timeOfStart);
     }
 
-    private static long minTimeout(final int timeoutMs, final int serverSelectionTimeoutMS) {
+    private static long minTimeout(final long timeoutMs, final long serverSelectionTimeoutMS) {
         long timeoutMsEffective = timeoutMs != 0 ? timeoutMs : Long.MAX_VALUE;
         long serverSelectionTimeoutMSEffective = serverSelectionTimeoutMS != -1 ? serverSelectionTimeoutMS : Long.MAX_VALUE;
         return Math.min(timeoutMsEffective, serverSelectionTimeoutMSEffective);
