@@ -66,11 +66,13 @@ import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.ClusterFixture.createOperationContext;
 import static com.mongodb.internal.time.Timeout.ZeroSemantics.ZERO_DURATION_MEANS_EXPIRED;
 import static java.lang.Long.MAX_VALUE;
+import static java.lang.Thread.sleep;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -125,12 +127,39 @@ public class DefaultConnectionPoolTest {
 
         // when
         TimeoutTrackingConnectionGetter connectionGetter = new TimeoutTrackingConnectionGetter(provider, timeoutSettings);
-        new Thread(connectionGetter).start();
+        cachedExecutor.submit(connectionGetter);
 
         connectionGetter.getLatch().await();
 
         // then
         assertTrue(connectionGetter.isGotTimeout());
+    }
+
+    @Test
+    public void shouldNotUseMaxAwaitTimeMSWhenTimeoutMsIsSet() throws InterruptedException {
+        // given
+        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
+                ConnectionPoolSettings.builder()
+                        .maxSize(1)
+                        .build(),
+                mockSdamProvider(), OPERATION_CONTEXT_FACTORY);
+        provider.ready();
+        TimeoutSettings timeoutSettings = TIMEOUT_SETTINGS
+                .withTimeout(100L, MILLISECONDS)
+                .withMaxWaitTimeMS(50);
+
+        InternalConnection internalConnection = provider.get(createOperationContext(timeoutSettings));
+
+        // when
+        TimeoutTrackingConnectionGetter connectionGetter = new TimeoutTrackingConnectionGetter(provider, timeoutSettings);
+        cachedExecutor.submit(connectionGetter);
+
+        sleep(70); // wait for more than maxWaitTimeMS but less than timeoutMs.
+        internalConnection.close();
+        connectionGetter.getLatch().await();
+
+        // then
+        assertFalse(connectionGetter.isGotTimeout());
     }
 
     @Test
@@ -166,7 +195,7 @@ public class DefaultConnectionPoolTest {
 
         // when
         provider.get(OPERATION_CONTEXT).close();
-        Thread.sleep(100);
+        sleep(100);
         provider.doMaintenance();
         provider.get(OPERATION_CONTEXT);
 
@@ -187,7 +216,7 @@ public class DefaultConnectionPoolTest {
 
         // when
         InternalConnection connection = provider.get(OPERATION_CONTEXT);
-        Thread.sleep(50);
+        sleep(50);
         connection.close();
 
         // then
@@ -208,7 +237,7 @@ public class DefaultConnectionPoolTest {
 
         // when
         provider.get(OPERATION_CONTEXT).close();
-        Thread.sleep(100);
+        sleep(100);
         provider.doMaintenance();
         provider.get(OPERATION_CONTEXT);
 
@@ -230,7 +259,7 @@ public class DefaultConnectionPoolTest {
 
         // when
         provider.get(OPERATION_CONTEXT).close();
-        Thread.sleep(50);
+        sleep(50);
         provider.doMaintenance();
         provider.get(OPERATION_CONTEXT);
 
@@ -252,7 +281,7 @@ public class DefaultConnectionPoolTest {
 
         // when
         provider.get(OPERATION_CONTEXT).close();
-        Thread.sleep(50);
+        sleep(50);
         provider.doMaintenance();
         InternalConnection secondConnection = provider.get(OPERATION_CONTEXT);
 
@@ -277,7 +306,7 @@ public class DefaultConnectionPoolTest {
 
 
         // when
-        Thread.sleep(10);
+        sleep(10);
         provider.doMaintenance();
 
         // then
@@ -594,7 +623,7 @@ public class DefaultConnectionPoolTest {
      */
     private static void sleepMillis(final long millis) {
         try {
-            Thread.sleep(millis);
+            sleep(millis);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
