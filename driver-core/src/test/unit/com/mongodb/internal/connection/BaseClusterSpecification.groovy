@@ -36,11 +36,12 @@ import com.mongodb.internal.selector.ReadPreferenceServerSelector
 import com.mongodb.internal.selector.ServerAddressSelector
 import com.mongodb.internal.selector.WritableServerSelector
 import com.mongodb.internal.time.Timeout
-import spock.lang.Specification
 import com.mongodb.spock.Slow
+import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
 
+import static com.mongodb.ClusterFixture.CLIENT_METADATA
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.ClusterFixture.createOperationContext
@@ -68,7 +69,7 @@ class BaseClusterSpecification extends Specification {
                 .hosts([firstServer, secondServer, thirdServer])
                 .serverSelector(new ServerAddressSelector(firstServer))
                 .build()
-        def cluster = new BaseCluster(new ClusterId(), clusterSettings, factory) {
+        def cluster = new BaseCluster(new ClusterId(), clusterSettings, factory, CLIENT_METADATA) {
             @Override
             protected void connect() {
             }
@@ -114,7 +115,7 @@ class BaseClusterSpecification extends Specification {
                 .serverSelectionTimeout(1, SECONDS)
                 .serverSelector(new ServerAddressSelector(firstServer))
                 .build()
-        def cluster = new MultiServerCluster(new ClusterId(), clusterSettings, factory)
+        def cluster = new MultiServerCluster(new ClusterId(), clusterSettings, factory, CLIENT_METADATA)
 
         expect:
         cluster.getSettings() == clusterSettings
@@ -128,7 +129,7 @@ class BaseClusterSpecification extends Specification {
                         .serverSelectionTimeout(1, SECONDS)
                         .serverSelector(new ServerAddressSelector(firstServer))
                         .build(),
-                factory)
+                factory, CLIENT_METADATA)
         factory.sendNotification(firstServer, REPLICA_SET_SECONDARY, allServers)
         factory.sendNotification(secondServer, REPLICA_SET_SECONDARY, allServers)
         factory.sendNotification(thirdServer, REPLICA_SET_PRIMARY, allServers)
@@ -144,7 +145,7 @@ class BaseClusterSpecification extends Specification {
                 builder().mode(MULTIPLE)
                         .hosts([firstServer, secondServer, thirdServer])
                         .build(),
-                factory)
+                factory, CLIENT_METADATA)
         factory.sendNotification(firstServer, REPLICA_SET_SECONDARY, allServers)
         factory.sendNotification(secondServer, REPLICA_SET_SECONDARY, allServers)
         factory.sendNotification(thirdServer, REPLICA_SET_PRIMARY, allServers)
@@ -164,7 +165,7 @@ class BaseClusterSpecification extends Specification {
                         .serverSelector(new ReadPreferenceServerSelector(ReadPreference.secondary()))
                         .localThreshold(5, MILLISECONDS)
                         .build(),
-                factory)
+                factory, CLIENT_METADATA)
         factory.sendNotification(firstServer, 1, REPLICA_SET_SECONDARY, allServers)
         factory.sendNotification(secondServer, 7, REPLICA_SET_SECONDARY, allServers)
         factory.sendNotification(thirdServer, 1, REPLICA_SET_PRIMARY, allServers)
@@ -182,7 +183,7 @@ class BaseClusterSpecification extends Specification {
                         .hosts([firstServer, secondServer, thirdServer])
                         .localThreshold(5, MILLISECONDS)
                         .build(),
-                factory)
+                factory, CLIENT_METADATA)
         factory.sendNotification(firstServer, 1, REPLICA_SET_SECONDARY, allServers)
         factory.sendNotification(secondServer, 7, REPLICA_SET_SECONDARY, allServers)
         factory.sendNotification(thirdServer, 1, REPLICA_SET_PRIMARY, allServers)
@@ -198,7 +199,7 @@ class BaseClusterSpecification extends Specification {
                 builder().mode(MULTIPLE)
                         .hosts([firstServer, secondServer])
                         .build(),
-                factory)
+                factory, CLIENT_METADATA)
 
         when:
         factory.sendNotification(firstServer, ServerDescription.builder().type(ServerType.UNKNOWN)
@@ -229,7 +230,7 @@ class BaseClusterSpecification extends Specification {
                 builder().mode(MULTIPLE)
                         .hosts([firstServer, secondServer, thirdServer])
                         .build(),
-                factory)
+                factory, CLIENT_METADATA)
         factory.sendNotification(firstServer, REPLICA_SET_SECONDARY, allServers)
         factory.sendNotification(secondServer, REPLICA_SET_SECONDARY, allServers)
         factory.sendNotification(thirdServer, REPLICA_SET_PRIMARY, allServers)
@@ -253,7 +254,7 @@ class BaseClusterSpecification extends Specification {
                 builder().mode(MULTIPLE)
                         .hosts([firstServer, secondServer, thirdServer])
                         .build(),
-                factory)
+                factory, CLIENT_METADATA)
 
         when:
         def latch = new CountDownLatch(1)
@@ -283,7 +284,7 @@ class BaseClusterSpecification extends Specification {
                 builder().mode(MULTIPLE)
                         .hosts([firstServer, secondServer, thirdServer])
                         .build(),
-                factory)
+                factory, CLIENT_METADATA)
         factory.sendNotification(firstServer, REPLICA_SET_SECONDARY, allServers)
 
         when:
@@ -305,7 +306,7 @@ class BaseClusterSpecification extends Specification {
                 builder().mode(MULTIPLE)
                         .hosts([firstServer, secondServer, thirdServer])
                         .build(),
-                factory)
+                factory, CLIENT_METADATA)
 
         when:
         def secondServerLatch = selectServerAsync(cluster, secondServer, serverSelectionTimeoutMS)
@@ -330,7 +331,7 @@ class BaseClusterSpecification extends Specification {
                 builder().mode(MULTIPLE)
                         .hosts([firstServer, secondServer, thirdServer])
                         .build(),
-                factory)
+                factory, CLIENT_METADATA)
 
         when:
         def serverLatch = selectServerAsync(cluster, firstServer)
@@ -350,7 +351,7 @@ class BaseClusterSpecification extends Specification {
                 builder().mode(MULTIPLE)
                         .hosts([firstServer, secondServer, thirdServer])
                         .build(),
-                factory)
+                factory, CLIENT_METADATA)
 
         when:
         selectServerAsyncAndGet(cluster, firstServer, serverSelectionTimeoutMS)

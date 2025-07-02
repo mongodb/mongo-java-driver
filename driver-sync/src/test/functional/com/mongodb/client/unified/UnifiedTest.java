@@ -723,6 +723,8 @@ public abstract class UnifiedTest {
                     return clientEncryptionHelper.executeEncrypt(operation);
                 case "decrypt":
                     return clientEncryptionHelper.executeDecrypt(operation);
+                case "appendMetadata":
+                    return crudHelper.executeUpdateClientMetadata(operation);
                 default:
                     throw new UnsupportedOperationException("Unsupported test operation: " + name);
             }

@@ -53,11 +53,11 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Stream;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -106,26 +106,36 @@ abstract class BaseCluster implements Cluster {
     private final ClusterListener clusterListener;
     private final Deque<ServerSelectionRequest> waitQueue = new ConcurrentLinkedDeque<>();
     private final ClusterClock clusterClock = new ClusterClock();
+    private final ClientMetadata clientMetadata;
     private Thread waitQueueHandler;
 
     private volatile boolean isClosed;
     private volatile ClusterDescription description;
 
-    BaseCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
+    BaseCluster(final ClusterId clusterId,
+                final ClusterSettings settings,
+                final ClusterableServerFactory serverFactory,
+                final ClientMetadata clientMetadata) {
         this.clusterId = notNull("clusterId", clusterId);
         this.settings = notNull("settings", settings);
         this.serverFactory = notNull("serverFactory", serverFactory);
         this.clusterListener = singleClusterListener(settings);
         ClusterOpeningEvent clusterOpeningEvent = new ClusterOpeningEvent(clusterId);
-        clusterListener.clusterOpening(clusterOpeningEvent);
+        this.clusterListener.clusterOpening(clusterOpeningEvent);
         logTopologyOpening(clusterId, clusterOpeningEvent);
-        description = new ClusterDescription(settings.getMode(), UNKNOWN, emptyList(),
+        this.description = new ClusterDescription(settings.getMode(), UNKNOWN, emptyList(),
                 settings, serverFactory.getSettings());
+        this.clientMetadata = clientMetadata;
     }
 
     @Override
     public ClusterClock getClock() {
         return clusterClock;
+    }
+
+    @Override
+    public ClientMetadata getClientMetadata() {
+        return clientMetadata;
     }
 
     @Override
