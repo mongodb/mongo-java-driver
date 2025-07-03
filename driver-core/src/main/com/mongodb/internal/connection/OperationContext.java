@@ -49,10 +49,17 @@ public class OperationContext {
     private final TimeoutContext timeoutContext;
     @Nullable
     private final ServerApi serverApi;
+    @Nullable
+    private final String commandName;
 
     public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
             @Nullable final ServerApi serverApi) {
-        this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, new ServerDeprioritization(), serverApi);
+        this(requestContext, sessionContext, timeoutContext, serverApi, null);
+    }
+
+    public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
+            @Nullable final ServerApi serverApi, @Nullable final String commandName) {
+        this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, new ServerDeprioritization(), serverApi, commandName);
     }
 
     public static OperationContext simpleOperationContext(
@@ -61,7 +68,8 @@ public class OperationContext {
                 IgnorableRequestContext.INSTANCE,
                 NoOpSessionContext.INSTANCE,
                 new TimeoutContext(timeoutSettings),
-                serverApi);
+                serverApi,
+                null);
     }
 
     public static OperationContext simpleOperationContext(final TimeoutContext timeoutContext) {
@@ -69,15 +77,16 @@ public class OperationContext {
                 IgnorableRequestContext.INSTANCE,
                 NoOpSessionContext.INSTANCE,
                 timeoutContext,
+                null,
                 null);
     }
 
     public OperationContext withSessionContext(final SessionContext sessionContext) {
-        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, serverApi);
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, serverApi, commandName);
     }
 
     public OperationContext withTimeoutContext(final TimeoutContext timeoutContext) {
-        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, serverApi);
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, serverApi, commandName);
     }
 
     public long getId() {
@@ -101,19 +110,9 @@ public class OperationContext {
         return serverApi;
     }
 
-    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
-    public OperationContext(final long id,
-                            final RequestContext requestContext,
-                            final SessionContext sessionContext,
-                            final TimeoutContext timeoutContext,
-                            final ServerDeprioritization serverDeprioritization,
-                            @Nullable final ServerApi serverApi) {
-        this.id = id;
-        this.serverDeprioritization = serverDeprioritization;
-        this.requestContext = requestContext;
-        this.sessionContext = sessionContext;
-        this.timeoutContext = timeoutContext;
-        this.serverApi = serverApi;
+    @Nullable
+    public String getCommandName() {
+        return commandName;
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
@@ -121,13 +120,32 @@ public class OperationContext {
                             final RequestContext requestContext,
                             final SessionContext sessionContext,
                             final TimeoutContext timeoutContext,
-                            @Nullable final ServerApi serverApi) {
+                            final ServerDeprioritization serverDeprioritization,
+                            @Nullable final ServerApi serverApi,
+                            @Nullable final String commandName) {
+        this.id = id;
+        this.serverDeprioritization = serverDeprioritization;
+        this.requestContext = requestContext;
+        this.sessionContext = sessionContext;
+        this.timeoutContext = timeoutContext;
+        this.serverApi = serverApi;
+        this.commandName = commandName;
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+    public OperationContext(final long id,
+                            final RequestContext requestContext,
+                            final SessionContext sessionContext,
+                            final TimeoutContext timeoutContext,
+                            @Nullable final ServerApi serverApi,
+                            @Nullable final String commandName) {
         this.id = id;
         this.serverDeprioritization = new ServerDeprioritization();
         this.requestContext = requestContext;
         this.sessionContext = sessionContext;
         this.timeoutContext = timeoutContext;
         this.serverApi = serverApi;
+        this.commandName = commandName;
     }
 
 

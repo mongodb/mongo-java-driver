@@ -222,9 +222,9 @@ final class LoadBalancedCluster implements Cluster {
             throw createResolvedToMultipleHostsException();
         }
         ClusterDescription curDescription = description;
-        logServerSelectionStarted(clusterId, operationContext.getId(), serverSelector, curDescription);
+        logServerSelectionStarted(operationContext, clusterId, serverSelector, curDescription);
         ServerTuple serverTuple = new ServerTuple(assertNotNull(server), curDescription.getServerDescriptions().get(0));
-        logServerSelectionSucceeded(clusterId, operationContext.getId(), serverTuple.getServerDescription().getAddress(),
+        logServerSelectionSucceeded(operationContext, clusterId, serverTuple.getServerDescription().getAddress(),
                 serverSelector, curDescription);
         return serverTuple;
     }
@@ -254,8 +254,8 @@ final class LoadBalancedCluster implements Cluster {
             return;
         }
         Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
-        ServerSelectionRequest serverSelectionRequest = new ServerSelectionRequest(operationContext.getId(), serverSelector,
-                operationContext, computedServerSelectionTimeout, callback);
+        ServerSelectionRequest serverSelectionRequest = new ServerSelectionRequest(serverSelector, operationContext,
+                computedServerSelectionTimeout, callback);
         if (initializationCompleted) {
             handleServerSelectionRequest(serverSelectionRequest);
         } else {
@@ -309,9 +309,9 @@ final class LoadBalancedCluster implements Cluster {
         } else {
             ClusterDescription curDescription = description;
             logServerSelectionStarted(
-                    clusterId, serverSelectionRequest.operationId, serverSelectionRequest.serverSelector, curDescription);
+                    serverSelectionRequest.operationContext, clusterId, serverSelectionRequest.serverSelector, curDescription);
             ServerTuple serverTuple = new ServerTuple(assertNotNull(server), curDescription.getServerDescriptions().get(0));
-            logServerSelectionSucceeded(clusterId, serverSelectionRequest.operationId,
+            logServerSelectionSucceeded(serverSelectionRequest.operationContext, clusterId,
                     serverTuple.getServerDescription().getAddress(), serverSelectionRequest.serverSelector, curDescription);
             serverSelectionRequest.onSuccess(serverTuple);
         }
@@ -416,15 +416,13 @@ final class LoadBalancedCluster implements Cluster {
     }
 
     private static final class ServerSelectionRequest {
-        private final long operationId;
         private final ServerSelector serverSelector;
         private final SingleResultCallback<ServerTuple> callback;
         private final Timeout timeout;
         private final OperationContext operationContext;
 
-        private ServerSelectionRequest(final long operationId, final ServerSelector serverSelector, final OperationContext operationContext,
+        private ServerSelectionRequest(final ServerSelector serverSelector, final OperationContext operationContext,
                                        final Timeout timeout, final SingleResultCallback<ServerTuple> callback) {
-            this.operationId = operationId;
             this.serverSelector = serverSelector;
             this.timeout = timeout;
             this.operationContext = operationContext;

@@ -70,6 +70,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+    private static final String COMMAND_NAME = "listCollections";
     private final String databaseName;
     private final Decoder<T> decoder;
     private boolean retryReads;
@@ -158,6 +159,11 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     }
 
     @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+    @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         RetryState retryState = initialRetryState(retryReads, binding.getOperationContext().getTimeoutContext());
         Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, binding.getOperationContext(), () ->
@@ -215,7 +221,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
 
     private CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
-            BsonDocument commandDocument = new BsonDocument("listCollections", new BsonInt32(1))
+            BsonDocument commandDocument = new BsonDocument(getCommandName(), new BsonInt32(1))
                     .append("cursor", getCursorDocumentFromBatchSize(batchSize == 0 ? null : batchSize));
             putIfNotNull(commandDocument, "filter", filter);
             putIfTrue(commandDocument, "nameOnly", nameOnly);

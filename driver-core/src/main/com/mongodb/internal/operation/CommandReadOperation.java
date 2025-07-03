@@ -33,18 +33,26 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOperation<T> {
+    private final String commandName;
     private final String databaseName;
     private final CommandCreator commandCreator;
     private final Decoder<T> decoder;
 
-    public CommandReadOperation(final String databaseName, final BsonDocument command, final Decoder<T> decoder) {
-        this(databaseName, (operationContext, serverDescription, connectionDescription) -> command, decoder);
+    public CommandReadOperation(final String databaseName,  final BsonDocument command, final Decoder<T> decoder) {
+        this(databaseName, command.getFirstKey(), (operationContext, serverDescription, connectionDescription) -> command, decoder);
     }
 
-    public CommandReadOperation(final String databaseName, final CommandCreator commandCreator, final Decoder<T> decoder) {
+    public CommandReadOperation(final String databaseName, final String commandName, final CommandCreator commandCreator,
+                                final Decoder<T> decoder) {
+        this.commandName = notNull("commandName", commandName);
         this.databaseName = notNull("databaseName", databaseName);
         this.commandCreator = notNull("commandCreator", commandCreator);
         this.decoder = notNull("decoder", decoder);
+    }
+
+    @Override
+    public String getCommandName() {
+        return commandName;
     }
 
     @Override

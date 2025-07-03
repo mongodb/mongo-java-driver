@@ -415,7 +415,8 @@ final class MongoClusterImpl implements MongoCluster {
             }
 
             ClientSession actualClientSession = getClientSession(session);
-            ReadBinding binding = getReadBinding(readPreference, readConcern, actualClientSession, session == null);
+            ReadBinding binding = getReadBinding(readPreference, readConcern, actualClientSession, session == null,
+                    operation.getCommandName());
 
             try {
                 if (actualClientSession.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
@@ -440,7 +441,7 @@ final class MongoClusterImpl implements MongoCluster {
             }
 
             ClientSession actualClientSession = getClientSession(session);
-            WriteBinding binding = getWriteBinding(readConcern, actualClientSession, session == null);
+            WriteBinding binding = getWriteBinding(readConcern, actualClientSession, session == null, operation.getCommandName());
 
             try {
                 return operation.execute(binding);
@@ -467,20 +468,23 @@ final class MongoClusterImpl implements MongoCluster {
             return executorTimeoutSettings;
         }
 
-        WriteBinding getWriteBinding(final ReadConcern readConcern, final ClientSession session, final boolean ownsSession) {
-            return getReadWriteBinding(primary(), readConcern, session, ownsSession);
+        WriteBinding getWriteBinding(final ReadConcern readConcern, final ClientSession session, final boolean ownsSession,
+                final String commandName) {
+            return getReadWriteBinding(primary(), readConcern, session, ownsSession, commandName);
         }
 
         ReadBinding getReadBinding(final ReadPreference readPreference, final ReadConcern readConcern, final ClientSession session,
-                final boolean ownsSession) {
-            return getReadWriteBinding(readPreference, readConcern, session, ownsSession);
+                final boolean ownsSession, final String commandName) {
+            return getReadWriteBinding(readPreference, readConcern, session, ownsSession, commandName);
         }
 
         ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference,
-                final ReadConcern readConcern, final ClientSession session, final boolean ownsSession) {
+                final ReadConcern readConcern, final ClientSession session, final boolean ownsSession,
+                final String commandName) {
 
             ClusterAwareReadWriteBinding readWriteBinding = new ClusterBinding(cluster,
-                    getReadPreferenceForBinding(readPreference, session), readConcern, getOperationContext(session, readConcern));
+                    getReadPreferenceForBinding(readPreference, session), readConcern,
+                    getOperationContext(session, readConcern, commandName));
 
             if (crypt != null) {
                 readWriteBinding = new CryptBinding(readWriteBinding, crypt);
@@ -489,12 +493,13 @@ final class MongoClusterImpl implements MongoCluster {
             return new ClientSessionBinding(session, ownsSession, readWriteBinding);
         }
 
-        private OperationContext getOperationContext(final ClientSession session, final ReadConcern readConcern) {
+        private OperationContext getOperationContext(final ClientSession session, final ReadConcern readConcern, final String commandName) {
             return new OperationContext(
                     getRequestContext(),
                     new ReadConcernAwareNoOpSessionContext(readConcern),
                     createTimeoutContext(session, executorTimeoutSettings),
-                    serverApi);
+                    serverApi,
+                    commandName);
         }
 
         private RequestContext getRequestContext() {

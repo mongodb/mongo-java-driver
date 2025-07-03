@@ -35,8 +35,13 @@ final class UpdateSearchIndexesOperation extends AbstractWriteSearchIndexOperati
     }
 
     @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+    @Override
     BsonDocument buildCommand() {
-        return new BsonDocument(COMMAND_NAME, new BsonString(getNamespace().getCollectionName()))
+        return new BsonDocument(getCommandName(), new BsonString(getNamespace().getCollectionName()))
                 .append("name", new BsonString(request.getIndexName()))
                 .append("definition", request.getDefinition());
     }

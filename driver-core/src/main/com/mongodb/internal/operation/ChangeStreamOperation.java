@@ -193,6 +193,11 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
     }
 
     @Override
+    public String getCommandName() {
+        return wrapped.getCommandName();
+    }
+
+    @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         TimeoutContext timeoutContext = binding.getOperationContext().getTimeoutContext();
         CommandBatchCursor<RawBsonDocument> cursor = ((CommandBatchCursor<RawBsonDocument>) getAggregateOperation(timeoutContext).execute(binding))

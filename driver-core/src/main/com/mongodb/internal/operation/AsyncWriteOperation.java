@@ -29,6 +29,11 @@ import com.mongodb.internal.binding.AsyncWriteBinding;
 public interface AsyncWriteOperation<T> {
 
     /**
+     * @return the command name of the operation, e.g. "insert", "update", "delete", "bulkWrite", etc.
+     */
+    String getCommandName();
+
+    /**
      * General execute which can return anything of type T
      *
      * @param binding the binding to execute in the context of
