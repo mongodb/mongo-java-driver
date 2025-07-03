@@ -55,7 +55,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getDefaultDatabase;
@@ -91,7 +90,6 @@ public abstract class AbstractClientSideEncryptionRangeExplicitEncryptionTest {
     public void setUp(final Type type) {
         assumeTrue(serverVersionAtLeast(8, 0));
         assumeFalse(isStandalone());
-        assumeFalse(isServerlessTest());
 
         MongoNamespace dataKeysNamespace = new MongoNamespace("keyvault.datakeys");
         BsonDocument encryptedFields = getTestDocument("client-side-encryption/etc/data/range-encryptedFields-" + type.value + ".json");

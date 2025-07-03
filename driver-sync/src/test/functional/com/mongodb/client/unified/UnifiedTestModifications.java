@@ -26,7 +26,6 @@ import java.util.function.Supplier;
 
 import static com.mongodb.ClusterFixture.isDataLakeTest;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.assertions.Assertions.assertNotNull;
@@ -89,10 +88,6 @@ public final class UnifiedTestModifications {
                 .test("collection-management", "modifyCollection-pre_and_post_images", "modifyCollection to changeStreamPreAndPostImages enabled");
 
         // command-logging-and-monitoring
-
-        def.skipNoncompliant("") // TODO-JAVA-5711
-                .when(() -> !def.isReactive() && isServerlessTest()) // TODO-JAVA-5711 why reactive check?
-                .directory("command-logging-and-monitoring");
 
         def.skipNoncompliant("The driver has a hack where getLastError command "
                         + "is executed as part of the handshake in order to "
@@ -533,7 +528,7 @@ public final class UnifiedTestModifications {
         /**
          * Ensuing matching methods are applied only when the condition is met.
          * For example, if tests should only be skipped (or modified) on
-         * serverless, check for serverless in the condition.
+         * sharded clusters, check for sharded in the condition.
          * Must be the first method called in the chain.
          * @param precondition the condition; methods are no-op when false.
          * @return this

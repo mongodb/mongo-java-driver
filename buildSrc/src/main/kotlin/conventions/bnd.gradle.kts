@@ -15,7 +15,9 @@
  */
 package conventions
 
+import libs
+
 // Gradle Plugin for developing OSGi bundles with Bnd.
 // https://plugins.gradle.org/plugin/biz.aQute.bnd.builder
 
-plugins { id("biz.aQute.bnd.builder") }
+plugins { alias(libs.plugins.bnd) }

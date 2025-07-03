@@ -15,6 +15,7 @@
  */
 package com.mongodb.kotlin.client.coroutine.syncadapter
 
+import com.mongodb.MongoDriverInformation
 import com.mongodb.client.MongoClient as JMongoClient
 import com.mongodb.connection.ClusterDescription
 import com.mongodb.kotlin.client.coroutine.MongoClient
@@ -23,4 +24,7 @@ internal class SyncMongoClient(override val wrapped: MongoClient) : SyncMongoClu
     override fun close(): Unit = wrapped.close()
 
     override fun getClusterDescription(): ClusterDescription = wrapped.getClusterDescription()
+
+    override fun appendMetadata(mongoDriverInformation: MongoDriverInformation): Unit =
+        wrapped.appendMetadata(mongoDriverInformation)
 }

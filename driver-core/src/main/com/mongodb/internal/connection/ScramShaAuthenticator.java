@@ -90,11 +90,15 @@ class ScramShaAuthenticator extends SaslAuthenticator {
 
 
     @Override
-    protected SaslClient createSaslClient(final ServerAddress serverAddress) {
+    protected SaslClient createSaslClient(final ServerAddress serverAddress, @Nullable final OperationContext operationContext) {
         if (speculativeSaslClient != null) {
             return speculativeSaslClient;
         }
         return new ScramShaSaslClient(getMongoCredentialWithCache().getCredential(), randomStringGenerator, authenticationHashGenerator);
+    }
+
+    protected SaslClient createSaslClient(final ServerAddress serverAddress) {
+        return createSaslClient(serverAddress, null);
     }
 
     @Override

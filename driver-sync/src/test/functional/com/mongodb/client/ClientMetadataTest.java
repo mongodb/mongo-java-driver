@@ -13,9 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-plugins {
-    // Add support for `libs.versions.toml` within `buildSrc`
-    // https://github.com/radoslaw-panuszewski/typesafe-conventions-gradle-plugin
-    // https://github.com/gradle/gradle/issues/15383
-    id("dev.panuszewski.typesafe-conventions") version "0.7.3"
+
+package com.mongodb.client;
+
+import com.mongodb.client.unified.UnifiedSyncTest;
+import org.junit.jupiter.params.provider.Arguments;
+
+import java.util.Collection;
+
+public class ClientMetadataTest extends UnifiedSyncTest {
+
+    private static Collection<Arguments> data() {
+        return getTestData("mongodb-handshake/tests/unified");
+    }
 }

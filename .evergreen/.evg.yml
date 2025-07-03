@@ -185,27 +185,6 @@ functions:
           DRIVERS_TOOLS="${DRIVERS_TOOLS}" bash ${DRIVERS_TOOLS}/.evergreen/atlas_data_lake/teardown.sh || true
 
 
-  "start-serverless":
-    - command: shell.exec
-      params:
-        shell: "bash"
-        include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
-        script: |
-          ${PREPARE_SHELL}
-          bash ${DRIVERS_TOOLS}/.evergreen/serverless/setup-secrets.sh ${VAULT_NAME}
-          bash ${DRIVERS_TOOLS}/.evergreen/serverless/create-instance.sh
-    - command: expansions.update
-      params:
-        file: serverless-expansion.yml
-  "stop-serverless":
-    - command: shell.exec
-      params:
-        shell: "bash"
-        include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
-        script: |
-          ${PREPARE_SHELL}
-          bash ${DRIVERS_TOOLS}/.evergreen/serverless/delete-instance.sh || true
-
   "start-load-balancer":
     - command: shell.exec
       params:
@@ -458,6 +437,7 @@ functions:
 
           export CRYPT_SHARED_LIB_PATH=${CRYPT_SHARED_LIB_PATH}
 
+          ASYNC_TRANSPORT="${ASYNC_TRANSPORT}" NETTY_SSL_PROVIDER="${NETTY_SSL_PROVIDER}" \
           AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" \
           COMPRESSOR="${COMPRESSOR}" JAVA_VERSION="${JAVA_VERSION}" REQUIRE_API_VERSION=${REQUIRE_API_VERSION} \
           TESTS="${TESTS}" .evergreen/run-tests.sh
@@ -473,17 +453,6 @@ functions:
           SINGLE_MONGOS_LB_URI="${SINGLE_MONGOS_LB_URI}" \
           MULTI_MONGOS_LB_URI="${MULTI_MONGOS_LB_URI}" \
           .evergreen/run-load-balancer-tests.sh
-
-  "run-serverless-tests":
-    - command: shell.exec
-      type: "test"
-      params:
-        working_dir: "src"
-        shell: "bash"
-        include_expansions_in_env: ["JAVA_VERSION", "SERVERLESS_URI", "SERVERLESS_ATLAS_USER", "SERVERLESS_ATLAS_PASSWORD"]
-        script: |
-          ${PREPARE_SHELL}
-          .evergreen/run-serverless-tests.sh
 
   "run-reactive-streams-tck-tests":
     - command: shell.exec
@@ -532,18 +501,6 @@ functions:
         script: |
           ${PREPARE_SHELL}
           AUTH="${AUTH}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-socket-tests.sh
-
-  "run-netty-tests":
-    - command: shell.exec
-      type: "test"
-      params:
-        working_dir: "src"
-        script: |
-          ${PREPARE_SHELL}
-          STREAM_TYPE="netty" AUTH="${AUTH}" SSL="${SSL}" NETTY_SSL_PROVIDER="${NETTY_SSL_PROVIDER}" MONGODB_URI="${MONGODB_URI}" \
-           TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JAVA_VERSION="${JAVA_VERSION}" \
-           AZUREKMS_KEY_VAULT_ENDPOINT=${testazurekms_keyvaultendpoint} AZUREKMS_KEY_NAME=${testazurekms_keyname} \
-           .evergreen/run-tests.sh
 
   "run-plain-auth-test":
     - command: shell.exec
@@ -848,7 +805,6 @@ post:
   - func: "upload-test-results"
   - func: "assume-aws-test-secrets-role"
   - func: "stop-load-balancer"
-  - func: "stop-serverless"
   - func: "stop-aws"
   - func: "stop-mongohoused"
   - func: "stop-csfle-servers"
@@ -1009,13 +965,6 @@ tasks:
         vars:
           VARIANT: gke
 
-
-  - name: "serverless-test-task"
-    disable: true # TODO JAVA-5849
-    commands:
-      - func: "assume-aws-test-secrets-role"
-      - func: "start-serverless"
-      - func: "run-serverless-tests"
 
   - name: "accept-api-version-2-test-task"
     commands:
@@ -1524,7 +1473,7 @@ tasks:
           script: |
             # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
             # The connection strings are pipe-delimited
-            MONGODB_URIS="${atlas_free_tier_uri}|${atlas_replica_set_uri}|${atlas_sharded_uri}|${atlas_tls_v11_uri}|${atlas_tls_v12_uri}|${atlas_free_tier_uri_srv}|${atlas_replica_set_uri_srv}|${atlas_sharded_uri_srv}|${atlas_tls_v11_uri_srv}|${atlas_tls_v12_uri_srv}|${atlas_serverless_uri}|${atlas_serverless_uri_srv}" \
+            MONGODB_URIS="${atlas_free_tier_uri}|${atlas_replica_set_uri}|${atlas_sharded_uri}|${atlas_tls_v11_uri}|${atlas_tls_v12_uri}|${atlas_free_tier_uri_srv}|${atlas_replica_set_uri_srv}|${atlas_sharded_uri_srv}|${atlas_tls_v11_uri_srv}|${atlas_tls_v12_uri_srv}" \
             JAVA_VERSION="8" \
             .evergreen/run-connectivity-tests.sh
 
@@ -1551,11 +1500,6 @@ tasks:
     commands:
       - func: "start-mongo-orchestration"
       - func: "run-socket-tests"
-
-  - name: "netty-test-task"
-    commands:
-      - func: "start-mongo-orchestration"
-      - func: "run-netty-tests"
 
   - name: "publish-snapshot-task"
     depends_on:
@@ -1850,6 +1794,14 @@ axes:
         variables:
           SSL: "nossl"
 
+  - id: "async-transport"
+    display_name: Async Transport
+    values:
+      - id: "netty"
+        display_name: Netty
+        variables:
+          ASYNC_TRANSPORT: "netty"
+
   - id: "netty-ssl-provider"
     display_name: "Netty TLS/SSL protocol provider"
     values:
@@ -1949,15 +1901,6 @@ axes:
         display_name: "Built-In"
         variables:
           AWS_CREDENTIAL_PROVIDER: "builtIn"
-
-  - id: "serverless"
-    display_name: "Serverless"
-    values:
-      - id: "passthrough"
-        display_name: "Serverless Passthrough Proxy"
-        variables:
-          VAULT_NAME: "serverless"
-        batchtime: 10080  # 7 days
 
 task_groups:
   - name: "atlas-deployed-task-group"
@@ -2446,12 +2389,6 @@ buildvariants:
     tasks:
       - name: "load-balancer-test-task"
 
-  - matrix_name: "tests-serverless"
-    matrix_spec: { serverless: "*", jdk: [ "jdk21" ], os: "ubuntu" }
-    display_name: "${serverless} ${jdk} ${os}"
-    tasks:
-      - name: "serverless-test-task"
-
   - matrix_name: "tests-slow-task"
     matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk21", version: [ "7.0" ], topology: "standalone", os: "linux" }
     display_name: "Slow: ${version} ${topology} ${ssl} ${jdk} ${os} "
@@ -2467,18 +2404,22 @@ buildvariants:
       - name: "socket-test-task"
 
   - matrix_name: "tests-netty"
-    matrix_spec: { auth: "noauth", ssl: "*", jdk: "jdk8", version: [ "7.0" ], topology: "replicaset", os: "linux" }
+    matrix_spec: { auth: "noauth", ssl: "*", jdk: "jdk8", version: [ "7.0" ], topology: "replicaset", os: "linux",
+                   async-transport: "netty" }
     display_name: "Netty: ${version} ${topology} ${ssl} ${auth} ${jdk} ${os} "
     tags: [ "tests-netty-variant" ]
     tasks:
-      - name: "netty-test-task"
+      - name: "test-reactive-task"
+      - name: "test-core-task"
 
   - matrix_name: "tests-netty-ssl-provider"
-    matrix_spec: { netty-ssl-provider: "*", auth: "auth", ssl: "ssl", jdk: "jdk8", version: [ "7.0" ], topology: "replicaset", os: "linux" }
+    matrix_spec: { auth: "auth", ssl: "ssl", jdk: "jdk8", version: [ "7.0" ], topology: "replicaset", os: "linux",
+                   async-transport: "netty", netty-ssl-provider: "*" }
     display_name: "Netty SSL provider: ${version} ${topology} ${ssl} SslProvider.${netty-ssl-provider} ${auth} ${jdk} ${os} "
     tags: [ "tests-netty-variant" ]
     tasks:
-      - name: "netty-test-task"
+      - name: "test-reactive-task"
+      - name: "test-core-task"
 
   - matrix_name: "tests-socket-snappy-compression"
     matrix_spec: { compressor: "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: [ "4.2" ], topology: "standalone", os: "linux" }
