@@ -59,6 +59,7 @@ import static java.util.Arrays.asList;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistics>, WriteOperation<MapReduceStatistics> {
+    private static final String COMMAND_NAME = "mapReduce";
     private final MongoNamespace namespace;
     private final BsonJavaScript mapFunction;
     private final BsonJavaScript reduceFunction;
@@ -209,6 +210,11 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
     }
 
     @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+    @Override
     public MapReduceStatistics execute(final WriteBinding binding) {
         return executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(), transformer(binding
                 .getOperationContext()
@@ -243,7 +249,7 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
     }
 
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return new CommandReadOperation<>(getNamespace().getDatabaseName(),
+        return new CommandReadOperation<>(getNamespace().getDatabaseName(), getCommandName(),
                 (operationContext, serverDescription, connectionDescription) -> {
                     BsonDocument command = getCommandCreator().create(operationContext, serverDescription, connectionDescription);
                     applyMaxTimeMS(operationContext.getTimeoutContext(), command);

@@ -91,7 +91,6 @@ import static com.mongodb.client.unified.UnifiedTestModifications.applyCustomiza
 import static com.mongodb.client.unified.UnifiedTestModifications.testDef;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -374,9 +373,7 @@ public abstract class UnifiedTest {
             }
 
             if (definition.containsKey("expectLogMessages")) {
-                ArrayList<LogMatcher.Tweak> tweaks = new ArrayList<>(singletonList(
-                        // `LogMessage.Entry.Name.OPERATION` is not supported, therefore we skip matching its value
-                        LogMatcher.Tweak.skip(LogMessage.Entry.Name.OPERATION)));
+                ArrayList<LogMatcher.Tweak> tweaks = new ArrayList<>();
                 if (getMongoClientSettings().getClusterSettings()
                         .getHosts().stream().anyMatch(serverAddress -> serverAddress instanceof UnixServerAddress)) {
                     tweaks.add(LogMatcher.Tweak.skip(LogMessage.Entry.Name.SERVER_PORT));

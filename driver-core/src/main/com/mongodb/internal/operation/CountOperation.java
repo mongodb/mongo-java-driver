@@ -42,6 +42,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
+    private static final String COMMAND_NAME = "count";
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
     private final MongoNamespace namespace;
     private boolean retryReads;
@@ -110,6 +111,11 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
     }
 
     @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+    @Override
     public Long execute(final ReadBinding binding) {
         return executeRetryableRead(binding, namespace.getDatabaseName(),
                                     getCommandCreator(), DECODER, transformer(), retryReads);
@@ -131,7 +137,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
 
     private CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
-            BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
+            BsonDocument document = new BsonDocument(getCommandName(), new BsonString(namespace.getCollectionName()));
 
             appendReadConcernToCommand(operationContext.getSessionContext(), connectionDescription.getMaxWireVersion(), document);
 

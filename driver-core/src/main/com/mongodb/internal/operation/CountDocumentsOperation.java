@@ -38,6 +38,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
+    private static final String COMMAND_NAME = "aggregate";
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
     private final MongoNamespace namespace;
     private boolean retryReads;
@@ -117,6 +118,11 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
     public CountDocumentsOperation comment(@Nullable final BsonValue comment) {
         this.comment = comment;
         return this;
+    }
+
+    @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
     }
 
     @Override

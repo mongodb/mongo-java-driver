@@ -40,6 +40,11 @@ class VoidReadOperationThenCursorReadOperation<T> implements AsyncReadOperation<
     }
 
     @Override
+    public String getCommandName() {
+        return readOperation.getCommandName();
+    }
+
+    @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         readOperation.executeAsync(binding, (result, t) -> {
             if (t != null) {
