@@ -18,7 +18,7 @@
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true,
   "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":["java.lang.String","org.bson.BsonDocument","org.bson.BsonDocument","org.bson.BsonDocument","java.lang.Object","java.lang.Object","org.bson.BsonDocument","org.bson.BsonTimestamp","com.mongodb.client.model.changestream.UpdateDescription","org.bson.BsonInt64","org.bson.BsonDocument","org.bson.BsonDateTime","com.mongodb.client.model.changestream.SplitEvent","org.bson.BsonDocument"] }]
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String","org.bson.BsonDocument","org.bson.BsonDocument","java.lang.String","org.bson.BsonDocument","java.lang.Object","java.lang.Object","org.bson.BsonDocument","org.bson.BsonTimestamp","com.mongodb.client.model.changestream.UpdateDescription","org.bson.BsonInt64","org.bson.BsonDocument","org.bson.BsonDateTime","com.mongodb.client.model.changestream.SplitEvent","org.bson.BsonDocument"] }]
 },
 {
   "name":"com.mongodb.client.model.changestream.SplitEvent",
