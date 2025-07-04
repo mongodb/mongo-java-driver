@@ -108,6 +108,7 @@ public final class LogMessage {
              * Not supported.
              */
             OPERATION("operation"),
+            AWAITED("awaited"),
             SERVICE_ID("serviceId"),
             SERVER_CONNECTION_ID("serverConnectionId"),
             DRIVER_CONNECTION_ID("driverConnectionId"),

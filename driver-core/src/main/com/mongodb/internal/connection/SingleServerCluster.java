@@ -59,9 +59,9 @@ public final class SingleServerCluster extends BaseCluster {
         // synchronized in the constructor because the change listener is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
         withLock(() -> {
-            server.set(createServer(settings.getHosts().get(0)));
             publishDescription(ServerDescription.builder().state(CONNECTING).address(settings.getHosts().get(0))
                     .build());
+            server.set(createServer(settings.getHosts().get(0)));
         });
     }
 

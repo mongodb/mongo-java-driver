@@ -75,7 +75,6 @@ class DefaultServer implements ClusterableServer {
         this.connectionPool = notNull("connectionPool", connectionPool);
 
         this.serverId = serverId;
-
         serverListener.serverOpening(new ServerOpeningEvent(this.serverId));
 
         this.serverMonitor = serverMonitor;
