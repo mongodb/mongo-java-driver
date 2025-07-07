@@ -379,11 +379,7 @@ public final class ClusterFixture {
     }
 
     public static OperationContext createNewOperationContext(final TimeoutSettings timeoutSettings) {
-        return new OperationContext(OPERATION_CONTEXT.getId(),
-                OPERATION_CONTEXT.getRequestContext(),
-                OPERATION_CONTEXT.getSessionContext(),
-                new TimeoutContext(timeoutSettings),
-                OPERATION_CONTEXT.getServerApi());
+        return OPERATION_CONTEXT.withTimeoutContext(new TimeoutContext(timeoutSettings));
     }
 
     private static ReadWriteBinding getBinding(final Cluster cluster,

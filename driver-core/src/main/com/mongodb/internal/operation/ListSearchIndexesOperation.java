@@ -44,6 +44,7 @@ import static java.util.Collections.singletonList;
  */
 public final class ListSearchIndexesOperation<T>
         implements AsyncExplainableReadOperation<AsyncBatchCursor<T>>, ExplainableReadOperation<BatchCursor<T>> {
+    private static final String COMMAND_NAME = "aggregate";
     private static final String STAGE_LIST_SEARCH_INDEXES = "$listSearchIndexes";
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
@@ -71,6 +72,11 @@ public final class ListSearchIndexesOperation<T>
         this.comment = comment;
         this.indexName = indexName;
         this.retryReads = retryReads;
+    }
+
+    @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
     }
 
     @Override

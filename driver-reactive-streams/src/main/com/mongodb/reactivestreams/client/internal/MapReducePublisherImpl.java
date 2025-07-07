@@ -233,6 +233,11 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
         }
 
         @Override
+        public String getCommandName() {
+            return operation.getCommandName();
+        }
+
+        @Override
         public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
             operation.executeAsync(binding, callback::onResult);
         }
@@ -247,6 +252,11 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
 
         AsyncWriteOperation<MapReduceStatistics> getOperation() {
             return operation;
+        }
+
+        @Override
+        public String getCommandName() {
+            return operation.getCommandName();
         }
 
         @Override

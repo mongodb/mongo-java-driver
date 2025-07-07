@@ -87,6 +87,11 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
     }
 
     @Override
+    public String getCommandName() {
+        return "dropCollection";
+    }
+
+    @Override
     public Void execute(final WriteBinding binding) {
         BsonDocument localEncryptedFields = getEncryptedFields((ReadWriteBinding) binding);
         return withConnection(binding, connection -> {

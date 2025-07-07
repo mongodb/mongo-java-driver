@@ -95,5 +95,4 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
     protected void specializeCommand(final BsonDocument commandDocument, final ConnectionDescription connectionDescription) {
         commandDocument.put("remove", BsonBoolean.TRUE);
     }
-
 }

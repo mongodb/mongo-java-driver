@@ -104,14 +104,12 @@ public final class UnifiedTestModifications {
                 .test("atlas-data-lake-testing", "getMore", "A successful find event with getMore");
 
         // connection-monitoring-and-pooling
-
-        // TODO-JAVA-5711 reason, jira
-        // added as part of https://jira.mongodb.org/browse/JAVA-4976 , but unknown Jira to complete
-        // The implementation of the functionality related to clearing the connection pool before closing the connection
-        // will be carried out once the specification is finalized and ready.
-        def.skipUnknownReason("")
+        def.skipNoncompliant("According to the test, we should clear the pool then close the connection. Our implementation"
+                        + "immediately closes the failed connection, then clears the pool.")
                 .test("connection-monitoring-and-pooling/tests/logging", "connection-logging", "Connection checkout fails due to error establishing connection");
-        def.skipUnknownReason("")
+
+
+        def.skipNoncompliant("Driver does not support waitQueueSize or waitQueueMultiple options")
                 .test("connection-monitoring-and-pooling/tests/logging", "connection-pool-options", "waitQueueSize should be included in connection pool created message when specified")
                 .test("connection-monitoring-and-pooling/tests/logging", "connection-pool-options", "waitQueueMultiple should be included in connection pool created message when specified");
 
