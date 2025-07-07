@@ -261,7 +261,7 @@ class DefaultServerMonitor implements ServerMonitor {
 
                 // Get existing connection
                 return doHeartbeat(currentServerDescription, shouldStreamResponses);
-            } catch (Throwable t) {
+            } catch (Exception t) {
                 roundTripTimeSampler.reset();
                 InternalConnection localConnection = withLock(lock, () -> {
                     InternalConnection result = connection;
