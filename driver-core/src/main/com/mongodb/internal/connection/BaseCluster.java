@@ -19,7 +19,6 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoIncompatibleDriverException;
-import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoTimeoutException;

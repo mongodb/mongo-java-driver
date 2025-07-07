@@ -507,7 +507,7 @@ final class ByteBufferBsonOutputTest {
             }
 
            byteBuffers = out.getByteBuffers();
-            assertEquals(1,byteBuffers.get(0).getInt());
+            assertEquals(1, byteBuffers.get(0).getInt());
         } finally {
             byteBuffers.forEach(ByteBuf::release);
         }
