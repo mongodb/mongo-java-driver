@@ -89,6 +89,10 @@ public class OperationContext {
         return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, serverApi, operationName);
     }
 
+    public OperationContext withOperationName(final String operationName) {
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, serverApi, operationName);
+    }
+
     public long getId() {
         return id;
     }
