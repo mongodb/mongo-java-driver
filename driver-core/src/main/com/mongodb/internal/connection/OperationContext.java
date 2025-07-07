@@ -50,7 +50,7 @@ public class OperationContext {
     @Nullable
     private final ServerApi serverApi;
     @Nullable
-    private final String commandName;
+    private final String operationName;
 
     public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
             @Nullable final ServerApi serverApi) {
@@ -58,8 +58,8 @@ public class OperationContext {
     }
 
     public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
-            @Nullable final ServerApi serverApi, @Nullable final String commandName) {
-        this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, new ServerDeprioritization(), serverApi, commandName);
+            @Nullable final ServerApi serverApi, @Nullable final String operationName) {
+        this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, new ServerDeprioritization(), serverApi, operationName);
     }
 
     public static OperationContext simpleOperationContext(
@@ -82,11 +82,11 @@ public class OperationContext {
     }
 
     public OperationContext withSessionContext(final SessionContext sessionContext) {
-        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, serverApi, commandName);
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, serverApi, operationName);
     }
 
     public OperationContext withTimeoutContext(final TimeoutContext timeoutContext) {
-        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, serverApi, commandName);
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, serverApi, operationName);
     }
 
     public long getId() {
@@ -111,8 +111,8 @@ public class OperationContext {
     }
 
     @Nullable
-    public String getCommandName() {
-        return commandName;
+    public String getOperationName() {
+        return operationName;
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
@@ -122,14 +122,14 @@ public class OperationContext {
                             final TimeoutContext timeoutContext,
                             final ServerDeprioritization serverDeprioritization,
                             @Nullable final ServerApi serverApi,
-                            @Nullable final String commandName) {
+                            @Nullable final String operationName) {
         this.id = id;
         this.serverDeprioritization = serverDeprioritization;
         this.requestContext = requestContext;
         this.sessionContext = sessionContext;
         this.timeoutContext = timeoutContext;
         this.serverApi = serverApi;
-        this.commandName = commandName;
+        this.operationName = operationName;
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
@@ -138,14 +138,14 @@ public class OperationContext {
                             final SessionContext sessionContext,
                             final TimeoutContext timeoutContext,
                             @Nullable final ServerApi serverApi,
-                            @Nullable final String commandName) {
+                            @Nullable final String operationName) {
         this.id = id;
         this.serverDeprioritization = new ServerDeprioritization();
         this.requestContext = requestContext;
         this.sessionContext = sessionContext;
         this.timeoutContext = timeoutContext;
         this.serverApi = serverApi;
-        this.commandName = commandName;
+        this.operationName = operationName;
     }
 
 

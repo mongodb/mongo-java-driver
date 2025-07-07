@@ -545,7 +545,7 @@ abstract class BaseCluster implements Cluster {
             STRUCTURED_LOGGER.log(new LogMessage(
                     SERVER_SELECTION, DEBUG, "Server selection started", clusterId,
                     asList(
-                            new Entry(OPERATION, operationContext.getCommandName()),
+                            new Entry(OPERATION, operationContext.getOperationName()),
                             new Entry(OPERATION_ID, operationContext.getId()),
                             new Entry(SELECTOR, serverSelector.toString()),
                             new Entry(TOPOLOGY_DESCRIPTION, clusterDescription.getShortDescription())),
@@ -563,7 +563,7 @@ abstract class BaseCluster implements Cluster {
             STRUCTURED_LOGGER.log(new LogMessage(
                     SERVER_SELECTION, INFO, "Waiting for suitable server to become available", clusterId,
                     asList(
-                            new Entry(OPERATION, operationContext.getCommandName()),
+                            new Entry(OPERATION, operationContext.getOperationName()),
                             new Entry(OPERATION_ID, operationContext.getId()),
                             timeout.call(MILLISECONDS,
                                     () -> new Entry(REMAINING_TIME_MS, "infinite"),
@@ -592,7 +592,7 @@ abstract class BaseCluster implements Cluster {
             STRUCTURED_LOGGER.log(new LogMessage(
                     SERVER_SELECTION, DEBUG, "Server selection failed", clusterId,
                     asList(
-                            new Entry(OPERATION, operationContext.getCommandName()),
+                            new Entry(OPERATION, operationContext.getOperationName()),
                             new Entry(OPERATION_ID, operationContext.getId()),
                             new Entry(FAILURE, failureDescription),
                             new Entry(SELECTOR, serverSelector.toString()),
@@ -611,7 +611,7 @@ abstract class BaseCluster implements Cluster {
             STRUCTURED_LOGGER.log(new LogMessage(
                     SERVER_SELECTION, DEBUG, "Server selection succeeded", clusterId,
                     asList(
-                            new Entry(OPERATION, operationContext.getCommandName()),
+                            new Entry(OPERATION, operationContext.getOperationName()),
                             new Entry(OPERATION_ID, operationContext.getId()),
                             new Entry(SERVER_HOST, serverAddress.getHost()),
                             new Entry(SERVER_PORT, serverAddress instanceof UnixServerAddress ? null : serverAddress.getPort()),
