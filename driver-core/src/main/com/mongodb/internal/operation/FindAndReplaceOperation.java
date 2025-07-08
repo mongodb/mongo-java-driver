@@ -130,12 +130,14 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
         return this;
     }
 
+    @Override
     protected FieldNameValidator getFieldNameValidator() {
         return new MappedFieldNameValidator(
                 NoOpFieldNameValidator.INSTANCE,
                 singletonMap("update", ReplacingDocumentFieldNameValidator.INSTANCE));
     }
 
+    @Override
     protected void specializeCommand(final BsonDocument commandDocument, final ConnectionDescription connectionDescription) {
         commandDocument.put("new", new BsonBoolean(!isReturnOriginal()));
         putIfTrue(commandDocument, "upsert", isUpsert());

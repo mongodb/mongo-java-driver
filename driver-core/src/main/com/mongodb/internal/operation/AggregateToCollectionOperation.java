@@ -54,7 +54,8 @@ import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConc
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class AggregateToCollectionOperation implements AsyncReadOperation<Void>, ReadOperation<Void> {
+public class AggregateToCollectionOperation implements ReadOperation<Void>, AsyncReadOperation<Void> {
+    private static final String COMMAND_NAME = "aggregate";
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
     private final WriteConcern writeConcern;
@@ -152,6 +153,11 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
     }
 
     @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+    @Override
     public Void execute(final ReadBinding binding) {
         return executeRetryableRead(binding,
                                     () -> binding.getReadConnectionSource(FIVE_DOT_ZERO_WIRE_VERSION, ReadPreference.primary()),
@@ -183,7 +189,7 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
             BsonValue aggregationTarget = (aggregationLevel == AggregationLevel.DATABASE)
                     ? new BsonInt32(1) : new BsonString(namespace.getCollectionName());
 
-            BsonDocument commandDocument = new BsonDocument("aggregate", aggregationTarget);
+            BsonDocument commandDocument = new BsonDocument(getCommandName(), aggregationTarget);
             commandDocument.put("pipeline", new BsonArray(pipeline));
             if (allowDiskUse != null) {
                 commandDocument.put("allowDiskUse", BsonBoolean.valueOf(allowDiskUse));
