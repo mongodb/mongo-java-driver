@@ -233,6 +233,11 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         }
 
         @Override
+        public String getCommandName() {
+            return operation.getCommandName();
+        }
+
+        @Override
         public BatchCursor<TResult> execute(final ReadBinding binding) {
             return operation.execute(binding);
         }

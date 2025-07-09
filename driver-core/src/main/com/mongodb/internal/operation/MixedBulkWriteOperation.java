@@ -49,6 +49,7 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -84,17 +85,20 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     private final boolean retryWrites;
     private final WriteConcern writeConcern;
     private Boolean bypassDocumentValidation;
+    private String commandName;
     private BsonValue comment;
     private BsonDocument variables;
 
     public MixedBulkWriteOperation(final MongoNamespace namespace, final List<? extends WriteRequest> writeRequests,
             final boolean ordered, final WriteConcern writeConcern, final boolean retryWrites) {
+        notNull("writeRequests", writeRequests);
+        isTrueArgument("writeRequests is not an empty list", !writeRequests.isEmpty());
+        this.commandName = notNull("commandName", writeRequests.get(0).getType().toString().toLowerCase(Locale.ROOT));
         this.namespace = notNull("namespace", namespace);
-        this.writeRequests = notNull("writes", writeRequests);
+        this.writeRequests = writeRequests;
         this.ordered = ordered;
         this.writeConcern = notNull("writeConcern", writeConcern);
         this.retryWrites = retryWrites;
-        isTrueArgument("writes is not an empty list", !writeRequests.isEmpty());
     }
 
     public MongoNamespace getNamespace() {
@@ -173,6 +177,11 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             bulkWriteTracker.advance();
         }
         return decision;
+    }
+
+    @Override
+    public String getCommandName() {
+        return commandName;
     }
 
     @Override
@@ -420,8 +429,9 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             final OperationContext operationContext,
             final Connection connection,
             final BulkWriteBatch batch) {
+        commandName = batch.getCommand().getFirstKey();
         return connection.command(namespace.getDatabaseName(), batch.getCommand(), NoOpFieldNameValidator.INSTANCE, null, batch.getDecoder(),
-                operationContext, shouldExpectResponse(batch, effectiveWriteConcern), batch.getPayload());
+                operationContext.withOperationName(commandName), shouldExpectResponse(batch, effectiveWriteConcern), batch.getPayload());
     }
 
     private void executeCommandAsync(
@@ -430,8 +440,10 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             final AsyncConnection connection,
             final BulkWriteBatch batch,
             final SingleResultCallback<BsonDocument> callback) {
+        commandName = batch.getCommand().getFirstKey();
         connection.commandAsync(namespace.getDatabaseName(), batch.getCommand(), NoOpFieldNameValidator.INSTANCE, null, batch.getDecoder(),
-                operationContext, shouldExpectResponse(batch, effectiveWriteConcern), batch.getPayload(), callback);
+                operationContext.withOperationName(commandName), shouldExpectResponse(batch, effectiveWriteConcern),
+                batch.getPayload(), callback);
     }
 
     private boolean shouldExpectResponse(final BulkWriteBatch batch, final WriteConcern effectiveWriteConcern) {

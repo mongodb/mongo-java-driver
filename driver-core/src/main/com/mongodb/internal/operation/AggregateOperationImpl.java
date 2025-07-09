@@ -53,6 +53,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTran
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
 
 class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+    private static final String COMMAND_NAME = "aggregate";
     private static final String RESULT = "result";
     private static final String CURSOR = "cursor";
     private static final String FIRST_BATCH = "firstBatch";
@@ -186,6 +187,11 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     }
 
     @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+    @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         return executeRetryableRead(binding, namespace.getDatabaseName(),
                 getCommandCreator(), CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT),
@@ -207,7 +213,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     }
 
     BsonDocument getCommand(final OperationContext operationContext, final int maxWireVersion) {
-        BsonDocument commandDocument = new BsonDocument("aggregate", aggregateTarget.create());
+        BsonDocument commandDocument = new BsonDocument(getCommandName(), aggregateTarget.create());
         appendReadConcernToCommand(operationContext.getSessionContext(), maxWireVersion, commandDocument);
         commandDocument.put("pipeline", pipelineCreator.create());
         setNonTailableCursorMaxTimeSupplier(timeoutMode, operationContext);

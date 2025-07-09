@@ -56,6 +56,11 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
     }
 
     @Override
+    public String getCommandName() {
+        return "dropDatabase";
+    }
+
+    @Override
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, connection -> {
             executeCommand(binding, databaseName, getCommand(), connection, writeConcernErrorTransformer(binding.getOperationContext()

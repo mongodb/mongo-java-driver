@@ -34,6 +34,11 @@ class VoidWriteOperationThenCursorReadOperation<T> implements AsyncReadOperation
     }
 
     @Override
+    public String getCommandName() {
+        return writeOperation.getCommandName();
+    }
+
+    @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         writeOperation.executeAsync((AsyncWriteBinding) binding, (result, t) -> {
             if (t != null) {

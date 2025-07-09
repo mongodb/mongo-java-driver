@@ -104,9 +104,6 @@ public final class LogMessage {
             COMMAND_NAME("commandName"),
             REQUEST_ID("requestId"),
             OPERATION_ID("operationId"),
-            /**
-             * Not supported.
-             */
             OPERATION("operation"),
             AWAITED("awaited"),
             SERVICE_ID("serviceId"),

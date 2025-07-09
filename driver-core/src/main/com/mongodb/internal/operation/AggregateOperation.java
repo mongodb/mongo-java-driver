@@ -136,6 +136,11 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
     }
 
     @Override
+    public String getCommandName() {
+        return wrapped.getCommandName();
+    }
+
+    @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         return wrapped.execute(binding);
     }
@@ -145,17 +150,19 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
         wrapped.executeAsync(binding, callback);
     }
 
+    @Override
     public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
         return createExplainableOperation(verbosity, resultDecoder);
     }
 
+    @Override
     public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
                                                                  final Decoder<R> resultDecoder) {
         return createExplainableOperation(verbosity, resultDecoder);
     }
 
     <R> CommandReadOperation<R> createExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
-        return new CommandReadOperation<>(getNamespace().getDatabaseName(),
+        return new CommandReadOperation<>(getNamespace().getDatabaseName(), wrapped.getCommandName(),
                 (operationContext, serverDescription, connectionDescription) -> {
                     BsonDocument command = wrapped.getCommand(operationContext, UNKNOWN_WIRE_VERSION);
                     applyMaxTimeMS(operationContext.getTimeoutContext(), command);
@@ -166,5 +173,4 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
     MongoNamespace getNamespace() {
         return wrapped.getNamespace();
     }
-
 }
