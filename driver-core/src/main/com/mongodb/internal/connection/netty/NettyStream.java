@@ -381,6 +381,8 @@ final class NettyStream implements Stream {
             for (Iterator<io.netty.buffer.ByteBuf> iterator = pendingInboundBuffers.iterator(); iterator.hasNext();) {
                 io.netty.buffer.ByteBuf nextByteBuf = iterator.next();
                 iterator.remove();
+                // Drops all retains to prevent silent leaks; assumes callers have already released   
+                // ByteBuffers returned by that NettyStream before calling close.
                 nextByteBuf.release(nextByteBuf.refCnt());
             }
         });
