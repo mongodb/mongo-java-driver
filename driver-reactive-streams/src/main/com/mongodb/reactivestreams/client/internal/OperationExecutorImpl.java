@@ -47,6 +47,7 @@ import java.util.Objects;
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
 import static com.mongodb.ReadPreference.primary;
+import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.TimeoutContext.createTimeoutContext;
 import static com.mongodb.reactivestreams.client.internal.MongoOperationPublisher.sinkToCallback;
@@ -73,6 +74,7 @@ public class OperationExecutorImpl implements OperationExecutor {
     @Override
     public <T> Mono<T> execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
             @Nullable final ClientSession session) {
+        isTrue("open", !mongoClient.getCluster().isClosed());
         notNull("operation", operation);
         notNull("readPreference", readPreference);
         notNull("readConcern", readConcern);
@@ -109,6 +111,7 @@ public class OperationExecutorImpl implements OperationExecutor {
     @Override
     public <T> Mono<T> execute(final AsyncWriteOperation<T> operation, final ReadConcern readConcern,
             @Nullable final ClientSession session) {
+        isTrue("open", !mongoClient.getCluster().isClosed());
         notNull("operation", operation);
         notNull("readConcern", readConcern);
 

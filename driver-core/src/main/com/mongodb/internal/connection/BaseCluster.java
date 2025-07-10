@@ -183,7 +183,9 @@ abstract class BaseCluster implements Cluster {
     @Override
     public void selectServerAsync(final ServerSelector serverSelector, final OperationContext operationContext,
             final SingleResultCallback<ServerTuple> callback) {
-        isTrue("open", !isClosed());
+        if (isClosed()) {
+            callback.onResult(null, new MongoClientException("Cluster was closed during server selection."));
+        }
 
         Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
         ServerSelectionRequest request = new ServerSelectionRequest(

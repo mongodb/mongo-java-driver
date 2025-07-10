@@ -495,6 +495,7 @@ final class ByteBufferBsonOutputTest {
     @ParameterizedTest(name = "should get byte buffers as little endian. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void shouldGetByteBuffersAsLittleEndian(final boolean useBranch, final BufferProvider bufferProvider) {
+        List<ByteBuf> byteBuffers = new ArrayList<>();
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             byte[] v = {1, 0, 0, 0};
             if (useBranch) {
@@ -504,7 +505,11 @@ final class ByteBufferBsonOutputTest {
             } else {
                 out.writeBytes(v);
             }
-            assertEquals(1, out.getByteBuffers().get(0).getInt());
+
+           byteBuffers = out.getByteBuffers();
+            assertEquals(1, byteBuffers.get(0).getInt());
+        } finally {
+            byteBuffers.forEach(ByteBuf::release);
         }
     }
 
@@ -1017,6 +1022,7 @@ final class ByteBufferBsonOutputTest {
             final int expectedLastBufferPosition,
             final BufferProvider bufferProvider) {
 
+        List<ByteBuf> buffers = new ArrayList<>();
         try (ByteBufferBsonOutput output =
                      new ByteBufferBsonOutput(size -> bufferProvider.getBuffer(Integer.BYTES))) {
 
@@ -1028,12 +1034,14 @@ final class ByteBufferBsonOutputTest {
 
             //then
             //getByteBuffers returns ByteBuffers with limit() set to position, position set to 0.
-            List<ByteBuf> buffers = output.getByteBuffers();
+            buffers = output.getByteBuffers();
             assertEquals(expectedBuffers.size(), buffers.size(), "Number of buffers mismatch");
             assertBufferContents(expectedBuffers, buffers);
 
             assertEquals(expectedLastBufferPosition, buffers.get(buffers.size() - 1).limit());
             assertEquals(expectedOutputPosition, output.getPosition());
+        } finally {
+            buffers.forEach(ByteBuf::release);
         }
     }
 
@@ -1049,6 +1057,7 @@ final class ByteBufferBsonOutputTest {
             final int expectedLastBufferPosition,
             final BufferProvider bufferProvider) {
 
+        List<ByteBuf> buffers = new ArrayList<>();
         try (ByteBufferBsonOutput output =
                      new ByteBufferBsonOutput(size -> bufferProvider.getBuffer(Long.BYTES))) {
 
@@ -1060,12 +1069,14 @@ final class ByteBufferBsonOutputTest {
 
             //then
             //getByteBuffers returns ByteBuffers with limit() set to position, position set to 0.
-            List<ByteBuf> buffers = output.getByteBuffers();
+            buffers = output.getByteBuffers();
             assertEquals(expectedBuffers.size(), buffers.size(), "Number of buffers mismatch");
             assertBufferContents(expectedBuffers, buffers);
 
             assertEquals(expectedLastBufferPosition, buffers.get(buffers.size() - 1).limit());
             assertEquals(expectedOutputPosition, output.getPosition());
+        } finally {
+            buffers.forEach(ByteBuf::release);
         }
     }
 
@@ -1081,6 +1092,7 @@ final class ByteBufferBsonOutputTest {
             final int expectedLastBufferPosition,
             final BufferProvider bufferProvider) {
 
+        List<ByteBuf> buffers = new ArrayList<>();
         try (ByteBufferBsonOutput output =
                      new ByteBufferBsonOutput(size -> bufferProvider.getBuffer(Long.BYTES))) {
 
@@ -1092,12 +1104,14 @@ final class ByteBufferBsonOutputTest {
 
             //then
             //getByteBuffers returns ByteBuffers with limit() set to position, position set to 0.
-            List<ByteBuf> buffers = output.getByteBuffers();
+            buffers = output.getByteBuffers();
             assertEquals(expectedBuffers.size(), buffers.size(), "Number of buffers mismatch");
             assertBufferContents(expectedBuffers, buffers);
 
             assertEquals(expectedLastBufferPosition, buffers.get(buffers.size() - 1).limit());
             assertEquals(expectedOutputPosition, output.getPosition());
+        } finally {
+            buffers.forEach(ByteBuf::release);
         }
     }
 

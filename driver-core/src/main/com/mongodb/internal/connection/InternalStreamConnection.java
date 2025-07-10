@@ -75,8 +75,8 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.Authenticator.shouldAuthenticate;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
@@ -355,7 +355,7 @@ public class InternalStreamConnection implements InternalConnection {
     public void close() {
         // All but the first call is a no-op
         if (!isClosed.getAndSet(true) && (stream != null)) {
-                stream.close();
+            stream.close();
         }
     }
 

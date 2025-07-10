@@ -34,6 +34,8 @@ tasks.withType<Test> {
 
     useJUnitPlatform()
 
+    jvmArgs.add("-Dio.netty.leakDetection.level=paranoid")
+
     // Pass any `org.mongodb.*` system settings
     systemProperties =
         System.getProperties()
