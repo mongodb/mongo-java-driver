@@ -91,7 +91,7 @@ public final class MongoNamespace {
     public MongoNamespace(final String fullName) {
         notNull("fullName", fullName);
         this.fullName = fullName;
-        this.databaseName = getDatatabaseNameFromFullName(fullName);
+        this.databaseName = getDatabaseNameFromFullName(fullName);
         this.collectionName = getCollectionNameFullName(fullName);
         checkDatabaseNameValidity(databaseName);
         checkCollectionNameValidity(collectionName);
@@ -190,7 +190,7 @@ public final class MongoNamespace {
         return namespace.substring(firstDot + 1);
     }
 
-    private static String getDatatabaseNameFromFullName(final String namespace) {
+    private static String getDatabaseNameFromFullName(final String namespace) {
         int firstDot = namespace.indexOf('.');
         if (firstDot == -1) {
             return "";

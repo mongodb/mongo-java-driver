@@ -253,7 +253,7 @@ final class MongoClusterImpl implements MongoCluster {
                                             .readPreference(readPreference)
                                             .build()))
                     .build();
-            return new ClientSessionImpl(serverSessionPool, originator, mergedOptions, operationExecutor);
+            return new ClientSessionImpl(serverSessionPool, originator, mergedOptions, operationExecutor, tracingManager);
     }
 
     @Override

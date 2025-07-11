@@ -30,7 +30,6 @@ import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.OperationContext;
-import com.mongodb.internal.tracing.Span;
 import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
@@ -63,6 +62,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTran
 import static com.mongodb.internal.operation.SyncOperationHelper.createReadCommandAndExecute;
 import static com.mongodb.internal.operation.SyncOperationHelper.decorateReadWithRetries;
 import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndConnection;
+import static com.mongodb.internal.tracing.TracingManager.runWithTracing;
 
 /**
  * An operation that queries a collection using the provided criteria.
@@ -300,10 +300,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         }
         OperationContext operationContext = binding.getOperationContext();
 
-        // Adds a Tracing Span for 'find' operation
-        TracingManager tracingManager = operationContext.getTracingManager();
-        Span tracingSpan = tracingManager.addSpan("find", operationContext.getId());
-
         RetryState retryState = initialRetryState(retryReads,  operationContext.getTimeoutContext());
         Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, operationContext, () ->
             withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
@@ -317,16 +313,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                 }
             })
         );
-        try {
-            return read.get();
-        } catch (MongoQueryException e) {
-            tracingSpan.error(e);
-            throw e;
-        } finally {
-            tracingSpan.end();
-            // Clean up the tracing span after the operation is complete
-            tracingManager.cleanContexts(operationContext.getId());
-        }
+        return runWithTracing(read, operationContext, "find", namespace);
     }
 
     @Override
@@ -493,9 +480,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
             OperationContext operationContext = source.getOperationContext();
 
             // register cursor id with the operation context, so 'getMore' commands can be folded under the 'find' operation
-            long cursorId = result.getDocument("cursor").getInt64("id").longValue();
-            TracingManager tracingManager = operationContext.getTracingManager();
-            tracingManager.addCursorParentContext(cursorId, operationContext.getId());
+            TracingManager.linkCursorWithOperation(result, operationContext);
 
             return new CommandBatchCursor<>(getTimeoutMode(), result, batchSize, getMaxTimeForCursor(operationContext), decoder,
                     comment, source, connection);

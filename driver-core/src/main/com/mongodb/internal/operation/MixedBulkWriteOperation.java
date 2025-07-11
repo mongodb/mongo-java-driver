@@ -72,6 +72,7 @@ import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.internal.operation.OperationHelper.validateWriteRequests;
 import static com.mongodb.internal.operation.OperationHelper.validateWriteRequestsAndCompleteIfInvalid;
 import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndConnection;
+import static com.mongodb.internal.tracing.TracingManager.runWithTracing;
 
 /**
  * An operation to execute a series of write operations in bulk.
@@ -187,6 +188,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     @Override
     public BulkWriteResult execute(final WriteBinding binding) {
         TimeoutContext timeoutContext = binding.getOperationContext().getTimeoutContext();
+        OperationContext operationContext = binding.getOperationContext();
         /* We cannot use the tracking of attempts built in the `RetryState` class because conceptually we have to maintain multiple attempt
          * counters while executing a single bulk write operation:
          * - a counter that limits attempts to select server and checkout a connection before we created a batch;
@@ -196,12 +198,12 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
          * and the code related to the attempt tracking in `BulkWriteTracker` will be removed. */
         RetryState retryState = new RetryState(timeoutContext);
         BulkWriteTracker.attachNew(retryState, retryWrites, timeoutContext);
-        Supplier<BulkWriteResult> retryingBulkWrite = decorateWriteWithRetries(retryState, binding.getOperationContext(), () ->
+        Supplier<BulkWriteResult> retryingBulkWrite = decorateWriteWithRetries(retryState, operationContext, () ->
             withSourceAndConnection(binding::getWriteConnectionSource, true, (source, connection) -> {
                 ConnectionDescription connectionDescription = connection.getDescription();
                 // attach `maxWireVersion` ASAP because it is used to check whether we can retry
                 retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true);
-                SessionContext sessionContext = binding.getOperationContext().getSessionContext();
+                SessionContext sessionContext = operationContext.getSessionContext();
                 WriteConcern writeConcern = validateAndGetEffectiveWriteConcern(this.writeConcern, sessionContext);
                 if (!isRetryableWrite(retryWrites, writeConcern, connectionDescription, sessionContext)) {
                     handleMongoWriteConcernWithResponseException(retryState, true, timeoutContext);
@@ -210,13 +212,13 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 if (!retryState.attachment(AttachmentKeys.bulkWriteTracker()).orElseThrow(Assertions::fail).batch().isPresent()) {
                     BulkWriteTracker.attachNew(retryState, BulkWriteBatch.createBulkWriteBatch(namespace,
                             connectionDescription, ordered, writeConcern,
-                            bypassDocumentValidation, retryWrites, writeRequests, binding.getOperationContext(), comment, variables), timeoutContext);
+                            bypassDocumentValidation, retryWrites, writeRequests, operationContext, comment, variables), timeoutContext);
                 }
                 return executeBulkWriteBatch(retryState, writeConcern, binding, connection);
             })
         );
         try {
-            return retryingBulkWrite.get();
+            return runWithTracing(retryingBulkWrite, operationContext, "MixedBulkWriteOperation", namespace);
         } catch (MongoException e) {
             throw transformWriteException(e);
         }

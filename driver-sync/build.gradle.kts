@@ -39,7 +39,8 @@ dependencies {
     // lambda testing
     testImplementation(libs.aws.lambda.core)
 
-    testImplementation("io.micrometer:micrometer-tracing-test:1.4.5")
+    // Tracing
+    testImplementation(libs.bundles.micrometer.test)
 }
 
 configureMavenPublication {

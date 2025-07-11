@@ -29,7 +29,6 @@ import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
-import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;

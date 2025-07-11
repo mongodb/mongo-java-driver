@@ -613,11 +613,19 @@ public final class Entities {
             clientSettingsBuilder.serverApi(serverApiBuilder.build());
         }
 
-        if (entity.containsKey("tracing") && entity.getBoolean("tracing").getValue()) {
+        if (entity.containsKey("tracing")) {
+            boolean enableCommandPayload = entity.getDocument("tracing").get("enableCommandPayload", BsonBoolean.FALSE).asBoolean().getValue();
+            /* To enable Zipkin backend, uncomment the following lines and ensure you have the server started
+            (docker run -d -p 9411:9411 openzipkin/zipkin). The tests will fail but the captured spans will be
+             visible in the Zipkin UI at http://localhost:9411 for debugging purpose.
+             *
+             * Tracer tracer = ZipkinTracer.getTracer("UTR");
+             * putEntity(id + "-tracing", new SimpleTracer(), clientTracing);
+             */
             Tracer tracer = new SimpleTracer();
             putEntity(id + "-tracing", tracer, clientTracing);
 
-            clientSettingsBuilder.tracer(new MicrometerTracer(tracer));
+            clientSettingsBuilder.tracer(new MicrometerTracer(tracer, enableCommandPayload));
         }
 
         MongoClientSettings clientSettings = clientSettingsBuilder.build();

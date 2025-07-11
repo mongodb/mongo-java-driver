@@ -26,7 +26,6 @@ import com.mongodb.connection.ServerId;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.tracing.TracingManager;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
 import org.junit.jupiter.api.Test;

@@ -34,7 +34,7 @@ import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.DnsClient;
 import com.mongodb.spi.dns.InetAddressResolver;
-import com.mongodb.tracing.Tracer;
+import com.mongodb.internal.tracing.Tracer;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.BsonCodecProvider;
 import org.bson.codecs.BsonValueCodecProvider;
@@ -1186,6 +1186,6 @@ public final class MongoClientSettings {
         heartbeatConnectTimeoutSetExplicitly = builder.heartbeatConnectTimeoutMS != 0;
         contextProvider = builder.contextProvider;
         timeoutMS = builder.timeoutMS;
-        tracingManager = builder.tracingManager;
+        tracingManager = (builder.tracingManager == null) ? TracingManager.NO_OP : builder.tracingManager;
     }
 }

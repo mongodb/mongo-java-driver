@@ -32,7 +32,6 @@ import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
 import com.mongodb.internal.operation.ClientBulkWriteOperation;
 import com.mongodb.internal.operation.ClientBulkWriteOperation.ClientBulkWriteCommand.OpsAndNsInfo;
 import com.mongodb.internal.session.SessionContext;
-import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
