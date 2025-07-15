@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
@@ -25,6 +26,10 @@ import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.Updates;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.event.ServerHeartbeatStartedEvent;
+import com.mongodb.event.ServerHeartbeatSucceededEvent;
+import com.mongodb.event.TestServerMonitorListener;
+import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.junit.jupiter.api.AfterAll;
@@ -33,22 +38,28 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
+import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.assertions.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 // Prose tests for Sessions specification: https://github.com/mongodb/specifications/tree/master/source/sessions
 // Prose test README: https://github.com/mongodb/specifications/tree/master/source/sessions/tests/README.md
@@ -194,6 +205,60 @@ public abstract class AbstractSessionsProseTest {
         }
     }
 
+    // Test 20 from #20-drivers-do-not-gossip-clustertime-on-sdam-commands
+    @Test
+    public void shouldNotGossipClusterTimeInServerMonitors() throws InterruptedException, TimeoutException {
+        assumeTrue(!isStandalone());
+
+        TestServerMonitorListener serverMonitorListener =
+                new TestServerMonitorListener(asList("serverHeartbeatStartedEvent", "serverHeartbeatSucceededEvent",
+                        "serverHeartbeatFailedEvent"));
+
+        TestCommandListener commandListener = new TestCommandListener();
+
+        try (MongoClient client1 = getMongoClient(
+                getDirectPrimaryMongoClientSettingsBuilder()
+                        .addCommandListener(commandListener)
+                        .applyToServerSettings(builder -> builder
+                                .heartbeatFrequency(10, MILLISECONDS)
+                                .addServerMonitorListener(serverMonitorListener))
+                        .build());
+             MongoClient client2 = getMongoClient(getDirectPrimaryMongoClientSettingsBuilder()
+                     .build())) {
+
+            Document clusterTime = executePing(client1)
+                    .get("$clusterTime", Document.class);
+
+            client2.getDatabase("test")
+                    .getCollection("test")
+                    .insertOne(new Document("advance", "$clusterTime"));
+
+            serverMonitorListener.reset();
+            serverMonitorListener.waitForEvents(ServerHeartbeatStartedEvent.class, serverHeartbeatSucceededEvent -> true,
+                    1, Duration.ofMillis(20 + ClusterFixture.getPrimaryRTT()));
+            serverMonitorListener.waitForEvents(ServerHeartbeatSucceededEvent.class, serverHeartbeatSucceededEvent -> true,
+                    1, Duration.ofMillis(20 + ClusterFixture.getPrimaryRTT()));
+
+            List<CommandStartedEvent> commandStartedIsMasterEvents = commandListener.getCommandStartedEvents("isMaster");
+            List<CommandStartedEvent> commandStartedHelloEvents = commandListener.getCommandStartedEvents("hello");
+            assertFalse(containClusterTime(commandStartedIsMasterEvents, commandStartedHelloEvents));
+
+            commandListener.reset();
+            executePing(client1);
+
+            List<CommandStartedEvent> pingStartedEvents = commandListener.getCommandStartedEvents("ping");
+            assertEquals(1, pingStartedEvents.size());
+            BsonDocument sendClusterTime = pingStartedEvents.get(0).getCommand().getDocument("$clusterTime");
+
+            assertEquals(clusterTime.toBsonDocument(), sendClusterTime, "Cluster time should not have advanced after the first ping");
+        }
+    }
+
+    private static MongoClientSettings.Builder getDirectPrimaryMongoClientSettingsBuilder() {
+        return MongoClientSettings.builder()
+                .applyToClusterSettings(ClusterFixture::setDirectConnection);
+    }
+
     private static MongoClientSettings.Builder getMongocryptdMongoClientSettingsBuilder() {
         return MongoClientSettings.builder()
                 .applyToClusterSettings(builder ->
@@ -208,6 +273,21 @@ public abstract class AbstractSessionsProseTest {
         processBuilder.redirectErrorStream(true);
         processBuilder.redirectOutput(new File("/tmp/mongocryptd.log"));
         return processBuilder.start();
+    }
+
+    private static Document executePing(final MongoClient client1) {
+        return client1.getDatabase("admin")
+                .runCommand(new Document("ping", 1));
+    }
+
+
+    private static boolean containClusterTime(final List<CommandStartedEvent> commandStartedIsMasterEvents,
+                                              final List<CommandStartedEvent> commandStartedHelloEvents) {
+        return Stream.concat(
+                        commandStartedIsMasterEvents.stream(),
+                        commandStartedHelloEvents.stream()
+                ).map(CommandStartedEvent::getCommand).
+                anyMatch(bsonDocument -> bsonDocument.containsKey("$clusterTime"));
     }
 }
 
