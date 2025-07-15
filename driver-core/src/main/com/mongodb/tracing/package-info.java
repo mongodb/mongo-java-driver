@@ -15,7 +15,9 @@
  */
 
 /**
- * Contains classes related to sessions
+ * This package defines the API for MongoDB driver tracing.
+ *
+ * @since 5.6
  */
 @NonNullApi
 package com.mongodb.tracing;
