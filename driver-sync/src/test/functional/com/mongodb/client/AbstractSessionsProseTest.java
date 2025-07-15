@@ -213,12 +213,11 @@ public abstract class AbstractSessionsProseTest {
     public void shouldNotGossipClusterTimeInServerMonitors() throws InterruptedException, TimeoutException {
         assumeTrue(!isStandalone());
 
+        //given
         TestServerMonitorListener serverMonitorListener =
                 new TestServerMonitorListener(asList("serverHeartbeatStartedEvent", "serverHeartbeatSucceededEvent",
                         "serverHeartbeatFailedEvent"));
-
         TestCommandListener commandListener = new TestCommandListener();
-
         try (MongoClient client1 = getMongoClient(
                 getDirectPrimaryMongoClientSettingsBuilder()
                         .addCommandListener(commandListener)
@@ -232,6 +231,7 @@ public abstract class AbstractSessionsProseTest {
             Document clusterTime = executePing(client1)
                     .get("$clusterTime", Document.class);
 
+            //when
             client2.getDatabase("test")
                     .getCollection("test")
                     .insertOne(new Document("advance", "$clusterTime"));
@@ -246,6 +246,7 @@ public abstract class AbstractSessionsProseTest {
             commandListener.reset();
             executePing(client1);
 
+            //then
             List<CommandStartedEvent> pingStartedEvents = commandListener.getCommandStartedEvents("ping");
             assertEquals(1, pingStartedEvents.size());
             BsonDocument sentClusterTime = pingStartedEvents.get(0).getCommand().getDocument("$clusterTime");
