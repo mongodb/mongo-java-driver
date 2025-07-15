@@ -449,7 +449,10 @@ public class TimeoutContext {
         return this;
     }
 
-    public Timeout startWaitQueueTimeout(final StartTime checkoutStart) {
+    public Timeout startMaxWaitTimeout(final StartTime checkoutStart) {
+        if (hasTimeoutMS()) {
+            return assertNotNull(timeout);
+        }
         final long ms = getTimeoutSettings().getMaxWaitTimeMS();
         return checkoutStart.timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
     }
