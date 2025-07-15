@@ -47,7 +47,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.isStandalone;
@@ -256,7 +255,7 @@ public abstract class AbstractSessionsProseTest {
     }
 
     private static MongoClientSettings.Builder getDirectPrimaryMongoClientSettingsBuilder() {
-        return MongoClientSettings.builder()
+        return getMongoClientSettingsBuilder()
                 .applyToClusterSettings(ClusterFixture::setDirectConnection);
     }
 
