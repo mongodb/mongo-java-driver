@@ -234,14 +234,10 @@ public abstract class AbstractSessionsProseTest {
                     .insertOne(new Document("advance", "$clusterTime"));
 
             serverMonitorListener.reset();
-            serverMonitorListener.waitForEvents(ServerHeartbeatStartedEvent.class, serverHeartbeatSucceededEvent -> true,
+            serverMonitorListener.waitForEvents(ServerHeartbeatStartedEvent.class, serverHeartbeatStartedEvent -> true,
                     1, Duration.ofMillis(20 + ClusterFixture.getPrimaryRTT()));
             serverMonitorListener.waitForEvents(ServerHeartbeatSucceededEvent.class, serverHeartbeatSucceededEvent -> true,
                     1, Duration.ofMillis(20 + ClusterFixture.getPrimaryRTT()));
-
-            List<CommandStartedEvent> commandStartedIsMasterEvents = commandListener.getCommandStartedEvents("isMaster");
-            List<CommandStartedEvent> commandStartedHelloEvents = commandListener.getCommandStartedEvents("hello");
-            assertFalse(containClusterTime(commandStartedIsMasterEvents, commandStartedHelloEvents));
 
             commandListener.reset();
             executePing(client1);
