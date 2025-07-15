@@ -205,7 +205,10 @@ public abstract class AbstractSessionsProseTest {
         }
     }
 
-    // Test 20 from #20-drivers-do-not-gossip-clustertime-on-sdam-commands
+    /* Test 20 from #20-drivers-do-not-gossip-clustertime-on-sdam-commands
+      In this test, we check that the cluster time has not been advanced on client1 through the server monitors, after client2 advanced
+      the cluster time on the deployment/cluster.
+    */
     @Test
     public void shouldNotGossipClusterTimeInServerMonitors() throws InterruptedException, TimeoutException {
         assumeTrue(!isStandalone());
@@ -233,6 +236,7 @@ public abstract class AbstractSessionsProseTest {
                     .getCollection("test")
                     .insertOne(new Document("advance", "$clusterTime"));
 
+            // wait until the client1 processes the next pair of SDAM heartbeat started + succeeded events.
             serverMonitorListener.reset();
             serverMonitorListener.waitForEvents(ServerHeartbeatStartedEvent.class, serverHeartbeatStartedEvent -> true,
                     1, Duration.ofMillis(20 + ClusterFixture.getPrimaryRTT()));
@@ -244,9 +248,9 @@ public abstract class AbstractSessionsProseTest {
 
             List<CommandStartedEvent> pingStartedEvents = commandListener.getCommandStartedEvents("ping");
             assertEquals(1, pingStartedEvents.size());
-            BsonDocument sendClusterTime = pingStartedEvents.get(0).getCommand().getDocument("$clusterTime");
+            BsonDocument sentClusterTime = pingStartedEvents.get(0).getCommand().getDocument("$clusterTime");
 
-            assertEquals(clusterTime.toBsonDocument(), sendClusterTime, "Cluster time should not have advanced after the first ping");
+            assertEquals(clusterTime.toBsonDocument(), sentClusterTime, "Cluster time should not have advanced after the first ping");
         }
     }
 
