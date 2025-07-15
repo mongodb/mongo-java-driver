@@ -279,15 +279,5 @@ public abstract class AbstractSessionsProseTest {
         return client1.getDatabase("admin")
                 .runCommand(new Document("ping", 1));
     }
-
-
-    private static boolean containClusterTime(final List<CommandStartedEvent> commandStartedIsMasterEvents,
-                                              final List<CommandStartedEvent> commandStartedHelloEvents) {
-        return Stream.concat(
-                        commandStartedIsMasterEvents.stream(),
-                        commandStartedHelloEvents.stream()
-                ).map(CommandStartedEvent::getCommand).
-                anyMatch(bsonDocument -> bsonDocument.containsKey("$clusterTime"));
-    }
 }
 
