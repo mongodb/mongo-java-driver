@@ -32,6 +32,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.tracing.TracingManager;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -96,6 +97,7 @@ class AsyncCommandBatchCursorTest {
 
         connectionSource = mock(AsyncConnectionSource.class);
         operationContext = mock(OperationContext.class);
+        when(operationContext.getTracingManager()).thenReturn(TracingManager.NO_OP);
         timeoutContext = new TimeoutContext(TimeoutSettings.create(
                 MongoClientSettings.builder().timeout(TIMEOUT.toMillis(), MILLISECONDS).build()));
         serverDescription = mock(ServerDescription.class);
