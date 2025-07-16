@@ -29,6 +29,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.bulk.IndexRequest;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -100,19 +101,18 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     }
 
     @Override
-    public Void execute(final WriteBinding binding) {
+    public Void execute(final WriteBinding binding, final OperationContext operationContext) {
         try {
-            return executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(), writeConcernErrorTransformer(
-                    binding.getOperationContext().getTimeoutContext()));
+            return executeCommand(binding, operationContext,  namespace.getDatabaseName(), getCommandCreator(), writeConcernErrorTransformer(
+                    operationContext.getTimeoutContext()));
         } catch (MongoCommandException e) {
             throw checkForDuplicateKeyError(e);
         }
     }
 
     @Override
-    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        executeCommandAsync(binding, namespace.getDatabaseName(), getCommandCreator(), writeConcernErrorTransformerAsync(binding
-                        .getOperationContext().getTimeoutContext()),
+    public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<Void> callback) {
+        executeCommandAsync(binding, operationContext,  namespace.getDatabaseName(), getCommandCreator(), writeConcernErrorTransformerAsync(operationContext.getTimeoutContext()),
                 ((result, t) -> {
                     if (t != null) {
                         callback.onResult(null, translateException(t));

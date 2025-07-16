@@ -26,6 +26,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.FindOptions;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.MapReduceBatchCursor;
 import com.mongodb.internal.operation.MapReduceStatistics;
@@ -233,8 +234,8 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         }
 
         @Override
-        public BatchCursor<TResult> execute(final ReadBinding binding) {
-            return operation.execute(binding);
+        public BatchCursor<TResult> execute(final ReadBinding binding, final OperationContext operationContext) {
+            return operation.execute(binding, operationContext);
         }
     }
 }

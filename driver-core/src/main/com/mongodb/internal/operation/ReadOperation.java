@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.connection.OperationContext;
 
 /**
  * An operation that reads from a MongoDB server.
@@ -31,5 +32,5 @@ public interface ReadOperation<T> {
      * @param binding the binding to execute in the context of
      * @return T, the result of the execution
      */
-    T execute(ReadBinding binding);
+    T execute(ReadBinding binding, OperationContext operationContext);
 }

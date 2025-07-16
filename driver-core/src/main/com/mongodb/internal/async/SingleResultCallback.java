@@ -29,7 +29,7 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
  *<p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface SingleResultCallback<T> {
-    public static SingleResultCallback<Void> THEN_DO_NOTHING = (r, t) -> {};
+    SingleResultCallback<Void> THEN_DO_NOTHING = (r, t) -> {};
 
     /**
      * Called when the function completes. This method must not complete abruptly, see {@link AsyncCallbackFunction} for more details.

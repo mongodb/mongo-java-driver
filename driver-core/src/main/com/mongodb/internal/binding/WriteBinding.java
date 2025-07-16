@@ -16,6 +16,8 @@
 
 package com.mongodb.internal.binding;
 
+import com.mongodb.internal.connection.OperationContext;
+
 /**
  * A factory of connection sources to servers that can be written to, e.g, a standalone, a mongos, or a replica set primary.
  *
@@ -27,7 +29,7 @@ public interface WriteBinding extends BindingContext, ReferenceCounted {
      *
      * @return a connection source
      */
-    ConnectionSource getWriteConnectionSource();
+    ConnectionSource getWriteConnectionSource(OperationContext operationContext);
 
     @Override
     WriteBinding retain();

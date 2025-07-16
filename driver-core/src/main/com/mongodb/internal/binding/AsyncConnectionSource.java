@@ -20,6 +20,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.AsyncConnection;
+import com.mongodb.internal.connection.OperationContext;
 
 /**
  * A source of connections to a single MongoDB server.
@@ -42,12 +43,7 @@ public interface AsyncConnectionSource extends BindingContext, ReferenceCounted 
      */
     ReadPreference getReadPreference();
 
-    /**
-     * Gets a connection from this source.
-     *
-     * @param callback the to be passed the connection
-     */
-    void getConnection(SingleResultCallback<AsyncConnection> callback);
+    void getConnection(OperationContext operationContext, SingleResultCallback<AsyncConnection> callback);
 
     @Override
     AsyncConnectionSource retain();

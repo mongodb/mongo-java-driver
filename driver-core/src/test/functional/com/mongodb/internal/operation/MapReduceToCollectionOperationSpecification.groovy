@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation
 
+import com.mongodb.ClusterFixture
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoWriteConcernException
@@ -62,9 +63,12 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
     }
 
     def cleanup() {
-        new DropCollectionOperation(mapReduceInputNamespace, WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        def binding = getBinding()
+        def operationContext = ClusterFixture.getOperationContext(binding.getReadPreference())
+        new DropCollectionOperation(mapReduceInputNamespace, WriteConcern.ACKNOWLEDGED)
+                .execute(binding, operationContext)
         new DropCollectionOperation(mapReduceOutputNamespace, WriteConcern.ACKNOWLEDGED)
-                .execute(getBinding())
+                .execute(binding, operationContext)
     }
 
     def 'should have the correct defaults'() {

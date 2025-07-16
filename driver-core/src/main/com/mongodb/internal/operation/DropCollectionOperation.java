@@ -26,6 +26,7 @@ import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.AsyncConnection;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -87,13 +88,13 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
     }
 
     @Override
-    public Void execute(final WriteBinding binding) {
-        BsonDocument localEncryptedFields = getEncryptedFields((ReadWriteBinding) binding);
-        return withConnection(binding, connection -> {
+    public Void execute(final WriteBinding binding, final OperationContext operationContext) {
+        BsonDocument localEncryptedFields = getEncryptedFields((ReadWriteBinding) binding, operationContext);
+        return withConnection(binding, operationContext, (connection, operationContextWithMinRtt) -> {
             getCommands(localEncryptedFields).forEach(command -> {
                 try {
-                    executeCommand(binding, namespace.getDatabaseName(), command.get(),
-                            connection, writeConcernErrorTransformer(binding.getOperationContext().getTimeoutContext()));
+                    executeCommand(binding, operationContextWithMinRtt, namespace.getDatabaseName(), command.get(),
+                            connection, writeConcernErrorTransformer(operationContextWithMinRtt.getTimeoutContext()));
                 } catch (MongoCommandException e) {
                     rethrowIfNotNamespaceError(e);
                 }
@@ -103,17 +104,19 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
     }
 
     @Override
-    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
+    public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext,
+                             final SingleResultCallback<Void> callback) {
         SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        getEncryptedFields((AsyncReadWriteBinding) binding, (result, t) -> {
+        getEncryptedFields((AsyncReadWriteBinding) binding, operationContext, (result, t) -> {
             if (t != null) {
                 errHandlingCallback.onResult(null, t);
             } else {
-                withAsyncConnection(binding, (connection, t1) -> {
+                withAsyncConnection(binding, operationContext, (connection, operationContextWithMinRtt, t1) -> {
                     if (t1 != null) {
                         errHandlingCallback.onResult(null, t1);
                     } else {
-                        new ProcessCommandsCallback(binding, connection, getCommands(result), releasingCallback(errHandlingCallback,
+                        new ProcessCommandsCallback(binding, operationContextWithMinRtt, connection, getCommands(result),
+                                releasingCallback(errHandlingCallback,
                                 connection))
                                 .onResult(null, null);
                     }
@@ -173,9 +176,9 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
     }
 
     @Nullable
-    private BsonDocument getEncryptedFields(final ReadWriteBinding readWriteBinding) {
+    private BsonDocument getEncryptedFields(final ReadWriteBinding readWriteBinding, final OperationContext operationContext) {
         if (encryptedFields == null && autoEncryptedFields) {
-            try (BatchCursor<BsonValue> cursor =  listCollectionOperation().execute(readWriteBinding)) {
+            try (BatchCursor<BsonValue> cursor = listCollectionOperation().execute(readWriteBinding, operationContext)) {
                 return getCollectionEncryptedFields(encryptedFields, cursor.tryNext());
             }
         }
@@ -184,9 +187,10 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
 
     private void getEncryptedFields(
             final AsyncReadWriteBinding asyncReadWriteBinding,
+            final OperationContext operationContext,
             final SingleResultCallback<BsonDocument> callback) {
         if (encryptedFields == null && autoEncryptedFields) {
-            listCollectionOperation().executeAsync(asyncReadWriteBinding, (cursor, t) -> {
+            listCollectionOperation().executeAsync(asyncReadWriteBinding, operationContext, (cursor, t) -> {
                 if (t != null) {
                     callback.onResult(null, t);
                 } else {
@@ -224,15 +228,19 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
      */
     class ProcessCommandsCallback implements SingleResultCallback<Void> {
         private final AsyncWriteBinding binding;
+        private final OperationContext operationContext;
         private final AsyncConnection connection;
         private final SingleResultCallback<Void> finalCallback;
         private final Deque<Supplier<BsonDocument>> commands;
 
         ProcessCommandsCallback(
-                final AsyncWriteBinding binding, final AsyncConnection connection,
+                final AsyncWriteBinding binding,
+                final OperationContext operationContext,
+                final AsyncConnection connection,
                 final List<Supplier<BsonDocument>> commands,
                 final SingleResultCallback<Void> finalCallback) {
             this.binding = binding;
+            this.operationContext = operationContext;
             this.connection = connection;
             this.finalCallback = finalCallback;
             this.commands = new ArrayDeque<>(commands);
@@ -249,8 +257,8 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
                 finalCallback.onResult(null, null);
             } else {
                 try {
-                    executeCommandAsync(binding, namespace.getDatabaseName(), nextCommandFunction.get(),
-                            connection, writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()), this);
+                    executeCommandAsync(binding, operationContext,  namespace.getDatabaseName(), nextCommandFunction.get(),
+                            connection, writeConcernErrorTransformerAsync(operationContext.getTimeoutContext()), this);
                 } catch (MongoOperationTimeoutException operationTimeoutException) {
                     finalCallback.onResult(null, operationTimeoutException);
                 }

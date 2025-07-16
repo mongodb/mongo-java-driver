@@ -16,9 +16,6 @@
 
 package com.mongodb.internal.binding;
 
-import com.mongodb.internal.connection.OperationContext;
-
-
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
@@ -29,5 +26,5 @@ public interface BindingContext {
      *
      * @return the operation context for the binding context.
      */
-    OperationContext getOperationContext();
+    // OperationContext getOperationContext();
 }

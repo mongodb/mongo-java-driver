@@ -822,6 +822,37 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     /**
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
+    @DisplayName("KillCursors is not executed after getMore network error when timeout is not enabled")
+    @Test
+    public void test() {
+        long rtt = ClusterFixture.getPrimaryRTT();
+        collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions());
+        collectionHelper.insertDocuments(new Document(), new Document());
+        try (MongoClient mongoClient = createMongoClient(
+                getMongoClientSettingsBuilder()
+                        .timeout(100, TimeUnit.MINUTES)
+                        .retryReads(true)
+                        .applyToConnectionPoolSettings(builder ->
+                                builder.maxConnectionIdleTime(10, TimeUnit.MINUTES))
+                        .applyToClusterSettings(builder -> builder.serverSelectionTimeout(500, TimeUnit.MINUTES))
+                        .applyToSocketSettings(builder -> builder.readTimeout(500, TimeUnit.MILLISECONDS)))) {
+            MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
+                    .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
+
+            MongoCursor<Document> cursor = collection.find()
+                    .batchSize(1)
+                    .cursor();
+
+            sleep(500);
+            cursor.next();
+            sleep(500);
+            cursor.close();
+        }
+    }
+
+    /**
+     * Not a prose spec test. However, it is additional test case for better coverage.
+     */
     @DisplayName("KillCursors is not executed after getMore network error")
     @Test
     public void testKillCursorsIsNotExecutedAfterGetMoreNetworkError() {

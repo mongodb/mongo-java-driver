@@ -16,6 +16,7 @@
 
 package com.mongodb.client.internal;
 
+import com.mongodb.Function;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
@@ -30,8 +31,6 @@ import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.session.ClientSessionContext;
 
-import java.util.function.Supplier;
-
 import static com.mongodb.connection.ClusterType.LOAD_BALANCED;
 import static com.mongodb.connection.ClusterType.SHARDED;
 import static org.bson.assertions.Assertions.assertNotNull;
@@ -44,14 +43,14 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
     private final ClusterAwareReadWriteBinding wrapped;
     private final ClientSession session;
     private final boolean ownsSession;
-    private final OperationContext operationContext;
 
-    public ClientSessionBinding(final ClientSession session, final boolean ownsSession, final ClusterAwareReadWriteBinding wrapped) {
+    public ClientSessionBinding(final ClientSession session,
+                                final boolean ownsSession,
+                                final ClusterAwareReadWriteBinding wrapped) {
         this.wrapped = wrapped;
         wrapped.retain();
         this.session = notNull("session", session);
         this.ownsSession = ownsSession;
-        this.operationContext = wrapped.getOperationContext().withSessionContext(new SyncClientSessionContext(session));
     }
 
     @Override
@@ -84,32 +83,34 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
     }
 
     @Override
-    public ConnectionSource getReadConnectionSource() {
-        return new SessionBindingConnectionSource(getConnectionSource(wrapped::getReadConnectionSource));
+    public ConnectionSource getReadConnectionSource(final OperationContext operationContext) {
+        return new SessionBindingConnectionSource(getConnectionSource(wrapped::getReadConnectionSource, operationContext));
     }
 
     @Override
-    public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference) {
-        return new SessionBindingConnectionSource(getConnectionSource(() ->
-                wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference)));
-    }
+    public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference,
+                                                    final OperationContext operationContext) {
+        ConnectionSource connectionSource = getConnectionSource(
+                opContext -> wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference, opContext),
+                operationContext);
 
-    public ConnectionSource getWriteConnectionSource() {
-        return new SessionBindingConnectionSource(getConnectionSource(wrapped::getWriteConnectionSource));
+        return new SessionBindingConnectionSource(connectionSource);
     }
 
     @Override
-    public OperationContext getOperationContext() {
-        return operationContext;
+    public ConnectionSource getWriteConnectionSource(final OperationContext operationContext) {
+        ConnectionSource connectionSource = getConnectionSource(wrapped::getWriteConnectionSource, operationContext);
+        return new SessionBindingConnectionSource(connectionSource);
     }
 
-    private ConnectionSource getConnectionSource(final Supplier<ConnectionSource> wrappedConnectionSourceSupplier) {
+    private ConnectionSource getConnectionSource(final Function<OperationContext, ConnectionSource> wrappedConnectionSourceSupplier,
+                                                 final OperationContext operationContext) {
         if (!session.hasActiveTransaction()) {
-            return wrappedConnectionSourceSupplier.get();
+            return wrappedConnectionSourceSupplier.apply(operationContext);
         }
 
         if (TransactionContext.get(session) == null) {
-            ConnectionSource source = wrappedConnectionSourceSupplier.get();
+            ConnectionSource source = wrappedConnectionSourceSupplier.apply(operationContext);
             ClusterType clusterType = source.getServerDescription().getClusterType();
             if (clusterType == SHARDED || clusterType == LOAD_BALANCED) {
                 TransactionContext<Connection> transactionContext = new TransactionContext<>(clusterType);
@@ -118,7 +119,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
             }
             return source;
         } else {
-            return wrapped.getConnectionSource(assertNotNull(session.getPinnedServerAddress()));
+            return wrapped.getConnectionSource(assertNotNull(session.getPinnedServerAddress()), operationContext);
         }
     }
 
@@ -136,29 +137,24 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
         }
 
         @Override
-        public OperationContext getOperationContext() {
-            return operationContext;
-        }
-
-        @Override
         public ReadPreference getReadPreference() {
             return wrapped.getReadPreference();
         }
 
         @Override
-        public Connection getConnection() {
+        public Connection getConnection(final OperationContext operationContext) {
             TransactionContext<Connection> transactionContext = TransactionContext.get(session);
             if (transactionContext != null && transactionContext.isConnectionPinningRequired()) {
                 Connection pinnedConnection = transactionContext.getPinnedConnection();
                 if (pinnedConnection == null) {
-                    Connection connection = wrapped.getConnection();
+                    Connection connection = wrapped.getConnection(operationContext);
                     transactionContext.pinConnection(connection, Connection::markAsPinned);
                     return connection;
                 } else {
                     return pinnedConnection.retain();
                 }
             } else {
-                return wrapped.getConnection();
+                return wrapped.getConnection(operationContext);
             }
         }
 
@@ -184,13 +180,25 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
         }
     }
 
-    private final class SyncClientSessionContext extends ClientSessionContext {
+    public static final class SyncClientSessionContext extends ClientSessionContext {
 
         private final ClientSession clientSession;
+        private final boolean ownsSession;
+        private final ReadConcern inheritedReadConcern;
 
-        SyncClientSessionContext(final ClientSession clientSession) {
+        /**
+         * @param clientSession        the client session to use.
+         * @param inheritedReadConcern the read concern inherited from either {@link com.mongodb.client.MongoCollection},
+         *                             {@link com.mongodb.client.MongoDatabase} and etc.
+         * @param ownsSession          if true, the session is implicit.
+         */
+        SyncClientSessionContext(final ClientSession clientSession,
+                                 final ReadConcern inheritedReadConcern,
+                                 final boolean ownsSession) {
             super(clientSession);
             this.clientSession = clientSession;
+            this.ownsSession = ownsSession;
+            this.inheritedReadConcern = inheritedReadConcern;
         }
 
         @Override
@@ -215,7 +223,10 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
             } else if (isSnapshot()) {
                 return ReadConcern.SNAPSHOT;
             } else {
-               return wrapped.getOperationContext().getSessionContext().getReadConcern();
+                //COMMENT the read concern was specified on wrapped BindingContext was the one that was inherited from either MongoCollection, MongoDatabase, etc.
+                // since we removed the BindingContext, we can now embedd the parent read concern directly.
+                //return wrapped.getOperationContext().getSessionContext().getReadConcern();
+                return inheritedReadConcern;
             }
         }
     }

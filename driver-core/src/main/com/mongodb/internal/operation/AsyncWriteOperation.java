@@ -18,6 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
+import com.mongodb.internal.connection.OperationContext;
 
 /**
  * An operation which asynchronously writes to a MongoDB server.
@@ -34,5 +35,5 @@ public interface AsyncWriteOperation<T> {
      * @param binding the binding to execute in the context of
      * @param callback the callback to be called when the operation has been executed
      */
-    void executeAsync(AsyncWriteBinding binding, SingleResultCallback<T> callback);
+    void executeAsync(AsyncWriteBinding binding, OperationContext operationContext, SingleResultCallback<T> callback);
 }

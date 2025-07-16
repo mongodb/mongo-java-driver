@@ -19,12 +19,16 @@ package com.mongodb.internal.operation;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.connection.OperationContext;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
+import org.jetbrains.annotations.NotNull;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
+import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
 
 /**
@@ -48,14 +52,23 @@ public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOpera
     }
 
     @Override
-    public T execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, databaseName, commandCreator, decoder,
-                                    (result, source, connection) -> result, false);
+    public T execute(final ReadBinding binding, final OperationContext operationContext) {
+        return executeRetryableRead(binding, operationContext, databaseName, commandCreator, decoder,
+                transformer(), false);
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<T> callback) {
-        executeRetryableReadAsync(binding, databaseName, commandCreator, decoder,
-                                  (result, source, connection) -> result, false, callback);
+    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext,
+                             final SingleResultCallback<T> callback) {
+        executeRetryableReadAsync(binding, operationContext,  databaseName, commandCreator, decoder,
+                asyncTransformer(), false, callback);
+    }
+
+    private static <T> CommandReadTransformer<T, T> transformer() {
+        return (result, source, connection, operationContext) -> result;
+    }
+
+    private static <T> @NotNull CommandReadTransformerAsync<T, T> asyncTransformer() {
+        return (result, source, connection, operationContext) -> result;
     }
 }

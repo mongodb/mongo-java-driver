@@ -30,6 +30,7 @@ import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
 import com.mongodb.connection.ServerVersion
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.binding.AsyncReadWriteBinding
@@ -45,6 +46,7 @@ import com.mongodb.internal.binding.WriteBinding
 import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
+import com.mongodb.internal.connection.OperationContext
 import com.mongodb.internal.connection.ServerHelper
 import com.mongodb.internal.connection.SplittablePayload
 import com.mongodb.internal.operation.AsyncReadOperation
@@ -108,7 +110,7 @@ class OperationFunctionalSpecification extends Specification {
 
     void acknowledgeWrite(final SingleConnectionBinding binding) {
         new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(new BsonDocument())], true,
-                ACKNOWLEDGED, false).execute(binding)
+                ACKNOWLEDGED, false).execute(binding, OPERATION_CONTEXT)
         binding.release()
     }
 
@@ -151,8 +153,16 @@ class OperationFunctionalSpecification extends Specification {
         ClusterFixture.executeSync(operation, binding)
     }
 
+    def execute(operation, ReadWriteBinding binding, OperationContext operationContext) {
+        ClusterFixture.executeSync(operation, binding, operationContext)
+    }
+
     def execute(operation, AsyncReadWriteBinding binding) {
         ClusterFixture.executeAsync(operation, binding)
+    }
+
+    def execute(operation, AsyncReadWriteBinding binding, OperationContext operationContext) {
+        ClusterFixture.executeAsync(operation, binding, operationContext)
     }
 
     def executeAndCollectBatchCursorResults(operation, boolean async) {
@@ -284,10 +294,9 @@ class OperationFunctionalSpecification extends Specification {
         }
 
         def connectionSource = Stub(ConnectionSource) {
-            getConnection() >> {
+            getConnection(_ as OperationContext) >> {
                 connection
             }
-            getOperationContext() >> operationContext
             getReadPreference() >> readPreference
             getServerDescription() >> {
                 def builder = ServerDescription.builder().address(Stub(ServerAddress)).state(ServerConnectionState.CONNECTED)
@@ -300,11 +309,9 @@ class OperationFunctionalSpecification extends Specification {
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource(*_) >> connectionSource
             getReadPreference() >> readPreference
-            getOperationContext() >> operationContext
         }
         def writeBinding = Stub(WriteBinding) {
-            getWriteConnectionSource() >> connectionSource
-            getOperationContext() >> operationContext
+            getWriteConnectionSource(_) >> connectionSource
         }
 
         if (retryable) {
@@ -338,9 +345,9 @@ class OperationFunctionalSpecification extends Specification {
             1 * connection.release()
         }
         if (operation instanceof ReadOperation) {
-            operation.execute(readBinding)
+            operation.execute(readBinding, operationContext)
         } else if (operation instanceof WriteOperation) {
-            operation.execute(writeBinding)
+            operation.execute(writeBinding, operationContext)
         }
     }
 
@@ -361,9 +368,10 @@ class OperationFunctionalSpecification extends Specification {
         }
 
         def connectionSource = Stub(AsyncConnectionSource) {
-            getConnection(_) >> { it[0].onResult(connection, null) }
+            getConnection(_ as OperationContext, _ as SingleResultCallback) >> {
+                it[1].onResult(connection, null)
+            }
             getReadPreference() >> readPreference
-            getOperationContext() >> operationContext
             getServerDescription() >> {
                 def builder = ServerDescription.builder().address(Stub(ServerAddress)).state(ServerConnectionState.CONNECTED)
                 if (new ServerVersion(serverVersion).compareTo(new ServerVersion(3, 6)) >= 0) {
@@ -375,11 +383,11 @@ class OperationFunctionalSpecification extends Specification {
         def readBinding = Stub(AsyncReadBinding) {
             getReadConnectionSource(*_) >> { it.last().onResult(connectionSource, null) }
             getReadPreference() >> readPreference
-            getOperationContext() >> operationContext
         }
         def writeBinding = Stub(AsyncWriteBinding) {
-            getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
-            getOperationContext() >> operationContext
+            getWriteConnectionSource(_ as OperationContext, _ as SingleResultCallback) >> {
+                it[1].onResult(connectionSource, null)
+            }
         }
         def callback = new FutureResultCallback()
 
@@ -417,9 +425,9 @@ class OperationFunctionalSpecification extends Specification {
         }
 
         if (operation instanceof AsyncReadOperation) {
-            operation.executeAsync(readBinding, callback)
+            operation.executeAsync(readBinding, operationContext, callback)
         } else if (operation instanceof AsyncWriteOperation) {
-            operation.executeAsync(writeBinding, callback)
+            operation.executeAsync(writeBinding, operationContext, callback)
         }
          try {
              callback.get(1000, TimeUnit.MILLISECONDS)
@@ -449,18 +457,16 @@ class OperationFunctionalSpecification extends Specification {
                 })
 
         def connectionSource = Stub(ConnectionSource) {
-            getConnection() >> {
+            getConnection(_) >> {
                 if (serverVersions.isEmpty()){
                     throw new MongoSocketOpenException('No Server', new ServerAddress(), new Exception('no server'))
                 } else {
                     connection
                 }
             }
-            getOperationContext() >> operationContext
         }
         def writeBinding = Stub(WriteBinding) {
-            getWriteConnectionSource() >> connectionSource
-            getOperationContext() >> operationContext
+            getWriteConnectionSource(_) >> connectionSource
         }
 
         1 * connection.command(*_) >> {
@@ -468,7 +474,7 @@ class OperationFunctionalSpecification extends Specification {
         }
 
         expectedConnectionReleaseCount * connection.release()
-        operation.execute(writeBinding)
+        operation.execute(writeBinding, operationContext)
     }
 
     def testAyncRetryableOperationThrows(operation, Queue<List<Integer>> serverVersions, Queue<ServerType> serverTypes,
@@ -492,27 +498,25 @@ class OperationFunctionalSpecification extends Specification {
                 })
 
         def connectionSource = Stub(AsyncConnectionSource) {
-            getConnection(_) >> {
+            getConnection(_ as OperationContext, _ as SingleResultCallback) >> {
                 if (serverVersions.isEmpty()) {
-                    it[0].onResult(null,
+                    it[1].onResult(null,
                             new MongoSocketOpenException('No Server', new ServerAddress(), new Exception('no server')))
                 } else {
-                    it[0].onResult(connection, null)
+                    it[1].onResult(connection, null)
                 }
             }
-            getOperationContext() >> operationContext
         }
 
         def writeBinding = Stub(AsyncWriteBinding) {
-            getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
-            getOperationContext() >> operationContext
+            getWriteConnectionSource(_ as OperationContext, _ as SingleResultCallback) >> { it[1].onResult(connectionSource, null) }
         }
         def callback = new FutureResultCallback()
 
         1 * connection.commandAsync(*_) >> { it.last().onResult(null, exception) }
         expectedConnectionReleaseCount * connection.release()
 
-        operation.executeAsync(writeBinding, callback)
+        operation.executeAsync(writeBinding, operationContext, callback)
         callback.get(1000, TimeUnit.MILLISECONDS)
     }
 

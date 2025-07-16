@@ -21,6 +21,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -120,15 +121,16 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
     }
 
     @Override
-    public Long execute(final ReadBinding binding) {
-        try (BatchCursor<BsonDocument> cursor = getAggregateOperation().execute(binding)) {
+    public Long execute(final ReadBinding binding, final OperationContext operationContext) {
+        try (BatchCursor<BsonDocument> cursor = getAggregateOperation().execute(binding, operationContext)) {
             return cursor.hasNext() ? getCountFromAggregateResults(cursor.next()) : 0;
         }
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
-        getAggregateOperation().executeAsync(binding, (result, t) -> {
+    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext,
+                             final SingleResultCallback<Long> callback) {
+        getAggregateOperation().executeAsync(binding, operationContext, (result, t) -> {
             if (t != null) {
                 callback.onResult(null, t);
             } else {

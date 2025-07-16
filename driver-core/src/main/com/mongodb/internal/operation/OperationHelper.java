@@ -25,6 +25,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerType;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackFunction;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
@@ -192,10 +193,12 @@ public final class OperationHelper {
         return true;
     }
 
-    static void setNonTailableCursorMaxTimeSupplier(final TimeoutMode timeoutMode, final OperationContext operationContext) {
+    static OperationContext applyTimeoutModeToOperationContext(final TimeoutMode timeoutMode,
+                                                               final OperationContext operationContext) {
         if (timeoutMode == TimeoutMode.ITERATION) {
-            operationContext.getTimeoutContext().disableMaxTimeOverride();
+            return operationContext.withTimeoutContextOverride(TimeoutContext::withDisabledMaxTimeOverride);
         }
+        return operationContext;
     }
 
     /**

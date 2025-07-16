@@ -129,7 +129,6 @@ public final class CommandHelper {
     public static void applyMaxTimeMS(final TimeoutContext timeoutContext, final BsonDocument command) {
         if (!timeoutContext.hasTimeoutMS()) {
             command.append("maxTimeMS", new BsonInt64(timeoutContext.getTimeoutSettings().getMaxTimeMS()));
-            timeoutContext.disableMaxTimeOverride();
         }
     }
 

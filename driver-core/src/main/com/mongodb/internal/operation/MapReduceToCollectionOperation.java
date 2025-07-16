@@ -24,6 +24,7 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -209,17 +210,19 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
     }
 
     @Override
-    public MapReduceStatistics execute(final WriteBinding binding) {
-        return executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(), transformer(binding
-                .getOperationContext()
-                .getTimeoutContext()));
+    public MapReduceStatistics execute(final WriteBinding binding, final OperationContext operationContext) {
+        return executeCommand(binding,
+                operationContext,
+                namespace.getDatabaseName(),
+                getCommandCreator(),
+                transformer(operationContext.getTimeoutContext()));
     }
 
     @Override
-    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<MapReduceStatistics> callback) {
-        executeCommandAsync(binding, namespace.getDatabaseName(), getCommandCreator(), transformerAsync(binding
-                .getOperationContext()
-                .getTimeoutContext()), callback);
+    public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext,
+                             final SingleResultCallback<MapReduceStatistics> callback) {
+        executeCommandAsync(binding, operationContext,  namespace.getDatabaseName(), getCommandCreator(),
+                transformerAsync(operationContext.getTimeoutContext()), callback);
     }
 
     /**
@@ -243,7 +246,7 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
     }
 
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return new CommandReadOperation<>(getNamespace().getDatabaseName(),
+        return new ExplainCommandOperation<>(getNamespace().getDatabaseName(),
                 (operationContext, serverDescription, connectionDescription) -> {
                     BsonDocument command = getCommandCreator().create(operationContext, serverDescription, connectionDescription);
                     applyMaxTimeMS(operationContext.getTimeoutContext(), command);

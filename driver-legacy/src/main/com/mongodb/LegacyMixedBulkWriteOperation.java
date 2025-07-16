@@ -24,6 +24,7 @@ import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.InsertRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.bulk.WriteRequest;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.MixedBulkWriteOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
@@ -98,10 +99,10 @@ final class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcern
     }
 
     @Override
-    public WriteConcernResult execute(final WriteBinding binding) {
+    public WriteConcernResult execute(final WriteBinding binding, final OperationContext operationContext) {
         try {
             BulkWriteResult result = new MixedBulkWriteOperation(namespace, writeRequests, ordered, writeConcern, retryWrites)
-                    .bypassDocumentValidation(bypassDocumentValidation).execute(binding);
+                    .bypassDocumentValidation(bypassDocumentValidation).execute(binding, operationContext);
             if (result.wasAcknowledged()) {
                 return translateBulkWriteResult(result);
             } else {

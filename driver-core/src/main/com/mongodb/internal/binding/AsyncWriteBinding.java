@@ -17,6 +17,7 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.connection.OperationContext;
 
 /**
  * An asynchronous factory of connection sources to servers that can be written to, e.g, a standalone, a mongos, or a replica set primary.
@@ -30,7 +31,7 @@ public interface AsyncWriteBinding extends BindingContext, ReferenceCounted {
      *
      * @param callback the to be passed the connection source
      */
-    void getWriteConnectionSource(SingleResultCallback<AsyncConnectionSource> callback);
+    void getWriteConnectionSource(OperationContext operationContext, SingleResultCallback<AsyncConnectionSource> callback);
 
     @Override
     AsyncWriteBinding retain();

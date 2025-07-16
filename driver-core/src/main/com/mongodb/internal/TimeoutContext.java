@@ -32,7 +32,6 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.time.Timeout.ZeroSemantics.ZERO_DURATION_MEANS_INFINITE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * Timeout Context.
@@ -40,18 +39,15 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * <p>The context for handling timeouts in relation to the Client Side Operation Timeout specification.</p>
  */
 public class TimeoutContext {
-
-    private final boolean isMaintenanceContext;
     private final TimeoutSettings timeoutSettings;
-
     @Nullable
-    private Timeout timeout;
+    private final Timeout timeout;
     @Nullable
-    private Timeout computedServerSelectionTimeout;
-    private long minRoundTripTimeMS = 0;
-
+    private final Timeout computedServerSelectionTimeout;
     @Nullable
-    private MaxTimeSupplier maxTimeSupplier = null;
+    private final MaxTimeSupplier maxTimeSupplier;
+    private final boolean isMaintenanceContext;
+    private final long minRoundTripTimeMS;
 
     public static MongoOperationTimeoutException createMongoRoundTripTimeoutException() {
         return createMongoTimeoutException("Remaining timeoutMS is less than or equal to the server's minimum round trip time.");
@@ -110,17 +106,6 @@ public class TimeoutContext {
        return new TimeoutContext(timeoutSettings);
     }
 
-    // Creates a copy of the timeout context that can be reset without resetting the original.
-    public TimeoutContext copyTimeoutContext() {
-        return new TimeoutContext(getTimeoutSettings(), getTimeout());
-    }
-
-    public TimeoutContext withNewlyStartedTimeout() {
-        TimeoutContext newContext = copyTimeoutContext();
-        newContext.timeout = startTimeout(newContext.timeoutSettings.getTimeoutMS());
-        return newContext;
-    }
-
     public TimeoutContext(final TimeoutSettings timeoutSettings) {
         this(false, timeoutSettings, startTimeout(timeoutSettings.getTimeoutMS()));
     }
@@ -129,9 +114,41 @@ public class TimeoutContext {
         this(false, timeoutSettings, timeout);
     }
 
-    private TimeoutContext(final boolean isMaintenanceContext, final TimeoutSettings timeoutSettings, @Nullable final Timeout timeout) {
+    private TimeoutContext(final boolean isMaintenanceContext,
+                           final TimeoutSettings timeoutSettings,
+                           @Nullable final Timeout timeout) {
+        this(isMaintenanceContext,
+                null,
+                0,
+                timeoutSettings,
+                null,
+                timeout);
+    }
+
+    private TimeoutContext(final boolean isMaintenanceContext,
+                           @Nullable final Timeout computedServerSelectionTimeout,
+                           final long minRoundTripTimeMS,
+                           final TimeoutSettings timeoutSettings,
+                           @Nullable final MaxTimeSupplier maxTimeSupplier) {
+        this(isMaintenanceContext,
+                computedServerSelectionTimeout,
+                minRoundTripTimeMS,
+                timeoutSettings,
+                maxTimeSupplier,
+                startTimeout(timeoutSettings.getTimeoutMS()));
+    }
+
+    private TimeoutContext(final boolean isMaintenanceContext,
+                           @Nullable final Timeout computedServerSelectionTimeout,
+                           final long minRoundTripTimeMS,
+                           final TimeoutSettings timeoutSettings,
+                           @Nullable final MaxTimeSupplier maxTimeSupplier,
+                           @Nullable final Timeout timeout) {
         this.isMaintenanceContext = isMaintenanceContext;
         this.timeoutSettings = timeoutSettings;
+        this.computedServerSelectionTimeout = computedServerSelectionTimeout;
+        this.minRoundTripTimeMS = minRoundTripTimeMS;
+        this.maxTimeSupplier = maxTimeSupplier;
         this.timeout = timeout;
     }
 
@@ -150,17 +167,6 @@ public class TimeoutContext {
      */
     public void onExpired(final Runnable onExpired) {
         Timeout.nullAsInfinite(timeout).onExpired(onExpired);
-    }
-
-    /**
-     * Sets the recent min round trip time
-     * @param minRoundTripTimeMS the min round trip time
-     * @return this
-     */
-    public TimeoutContext minRoundTripTimeMS(final long minRoundTripTimeMS) {
-        isTrue("'minRoundTripTimeMS' must be a positive number", minRoundTripTimeMS >= 0);
-        this.minRoundTripTimeMS = minRoundTripTimeMS;
-        return this;
     }
 
     @Nullable
@@ -237,8 +243,19 @@ public class TimeoutContext {
         }
     }
 
-    public void resetToDefaultMaxTime() {
-        this.maxTimeSupplier = null;
+    /**
+     * Creates a new {@link TimeoutContext} with the same settings, but with the
+     * {@link TimeoutSettings#getMaxAwaitTimeMS()} as the maxTimeMS override which will be used
+     * in {@link #runMaxTimeMS(LongConsumer)}.
+     */
+    public TimeoutContext withMaxTimeAsMaxAwaitTimeOverride() {
+        return new TimeoutContext(
+                isMaintenanceContext,
+                computedServerSelectionTimeout,
+                minRoundTripTimeMS,
+                timeoutSettings,
+                timeoutSettings::getMaxAwaitTimeMS,
+                timeout);
     }
 
     /**
@@ -253,25 +270,76 @@ public class TimeoutContext {
      * If remaining CSOT timeout is less than this static timeout, then CSOT timeout will be used.
      *
      */
-    public void setMaxTimeOverride(final long maxTimeMS) {
-        this.maxTimeSupplier = () -> maxTimeMS;
+    public TimeoutContext withMaxTimeOverride(final long maxTimeMS) {
+        return new TimeoutContext(
+                isMaintenanceContext,
+                computedServerSelectionTimeout,
+                minRoundTripTimeMS,
+                timeoutSettings,
+                () -> maxTimeMS,
+                timeout);
+    }
+
+    /**
+     * Creates {@link TimeoutContext} with the default maxTimeMS behaviour in {@link #runMaxTimeMS(LongConsumer)}:
+     * - if timeoutMS is set, the remaining timeoutMS will be used as the maxTimeMS.
+     * - if timeoutMS is not set, the {@link TimeoutSettings#getMaxTimeMS()} will be used.
+     */
+    public TimeoutContext withDefaultMaxTime() {
+        return new TimeoutContext(
+                isMaintenanceContext,
+                computedServerSelectionTimeout,
+                minRoundTripTimeMS,
+                timeoutSettings,
+                null,
+                timeout);
     }
 
     /**
      * Disable the maxTimeMS override. This way the maxTimeMS will not
      * be appended to the command in the {@link CommandMessage}.
      */
-    public void disableMaxTimeOverride() {
-        this.maxTimeSupplier = () -> 0;
+    public TimeoutContext withDisabledMaxTimeOverride() {
+        return new TimeoutContext(
+                isMaintenanceContext,
+                computedServerSelectionTimeout,
+                minRoundTripTimeMS,
+                timeoutSettings,
+                () -> 0,
+                timeout);
     }
 
     /**
      * The override will be provided as the remaining value in
      * {@link #runMaxTimeMS}, where 0 is ignored.
      */
-    public void setMaxTimeOverrideToMaxCommitTime() {
-        this.maxTimeSupplier = () -> getMaxCommitTimeMS();
+    public TimeoutContext withMaxTimeOverrideAsMaxCommitTime() {
+        return new TimeoutContext(
+                isMaintenanceContext,
+                computedServerSelectionTimeout,
+                minRoundTripTimeMS,
+                timeoutSettings,
+                () -> getMaxCommitTimeMS(),
+                timeout);
     }
+
+
+    /**
+     * Creates {@link TimeoutContext} with the recent min round trip time.
+     *
+     * @param minRoundTripTimeMS the min round trip time
+     * @return this
+     */
+    public TimeoutContext withMinRoundTripTime(final long minRoundTripTimeMS) {
+        return new TimeoutContext(
+                isMaintenanceContext,
+                computedServerSelectionTimeout,
+                minRoundTripTimeMS,
+                timeoutSettings,
+                maxTimeSupplier,
+                timeout);
+    }
+
 
     @VisibleForTesting(otherwise = PRIVATE)
     public long getMaxCommitTimeMS() {
@@ -296,27 +364,44 @@ public class TimeoutContext {
     }
 
     /**
-     * @see #hasTimeoutMS()
-     */
-    @Deprecated // TODO-JAVA-5640 REMOVE method
-    public void resetTimeoutIfPresent() {
-        if (hasTimeoutMS()) {
-            timeout = startTimeout(timeoutSettings.getTimeoutMS());
-        }
-    }
-
-    /**
      * Resets the timeout if this timeout context is being used by pool maintenance
      */
-    @Deprecated // TODO-JAVA-5640 REMOVE method
-    public void resetMaintenanceTimeout() {
+    public TimeoutContext withNewlyStartedTimeoutMaintenanceTimeout() {
         if (!isMaintenanceContext) {
-            return;
+            return this;
         }
-        timeout = Timeout.nullAsInfinite(timeout).call(NANOSECONDS,
-                () -> timeout,
-                (ms) -> startTimeout(timeoutSettings.getTimeoutMS()),
-                () -> startTimeout(timeoutSettings.getTimeoutMS()));
+
+        return new TimeoutContext(
+                true,
+                computedServerSelectionTimeout,
+                minRoundTripTimeMS,
+                timeoutSettings,
+                maxTimeSupplier);
+    }
+
+
+    public TimeoutContext withMinRoundTripTimeMS(final long minRoundTripTimeMS) {
+        isTrue("'minRoundTripTimeMS' must be a positive number", minRoundTripTimeMS >= 0);
+        return new TimeoutContext(isMaintenanceContext,
+                computedServerSelectionTimeout,
+                minRoundTripTimeMS,
+                timeoutSettings,
+                maxTimeSupplier,
+                timeout);
+    }
+
+    // Creates a copy of the timeout context that can be reset without resetting the original.
+    public TimeoutContext copyTimeoutContext() {
+        return new TimeoutContext(getTimeoutSettings(), getTimeout());
+    }
+
+    public TimeoutContext withNewlyStartedTimeout() {
+        return new TimeoutContext(
+                isMaintenanceContext,
+                computedServerSelectionTimeout,
+                minRoundTripTimeMS,
+                timeoutSettings,
+                maxTimeSupplier);
     }
 
     public TimeoutContext withAdditionalReadTimeout(final int additionalReadTimeout) {
@@ -383,20 +468,11 @@ public class TimeoutContext {
      * @return the timeout context
      */
     public Timeout computeServerSelectionTimeout() {
-        Timeout serverSelectionTimeout = StartTime.now()
-                .timeoutAfterOrInfiniteIfNegative(getTimeoutSettings().getServerSelectionTimeoutMS(), MILLISECONDS);
-
-
-        if (isMaintenanceContext || !hasTimeoutMS()) {
-            return serverSelectionTimeout;
+        if (hasTimeoutMS()) {
+            return assertNotNull(timeout);
         }
 
-        if (timeout != null && Timeout.earliest(serverSelectionTimeout, timeout) == timeout) {
-            return timeout;
-        }
-
-        computedServerSelectionTimeout = serverSelectionTimeout;
-        return computedServerSelectionTimeout;
+        return StartTime.now().timeoutAfterOrInfiniteIfNegative(getTimeoutSettings().getServerSelectionTimeoutMS(), MILLISECONDS);
     }
 
     /**
@@ -404,10 +480,16 @@ public class TimeoutContext {
      *
      * @return a new timeout context with the cached computed server selection timeout if available or this
      */
-    public TimeoutContext withComputedServerSelectionTimeoutContext() {
-        if (this.hasTimeoutMS() && computedServerSelectionTimeout != null) {
-            return new TimeoutContext(false, timeoutSettings, computedServerSelectionTimeout);
+    public TimeoutContext withComputedServerSelectionTimeoutContextNew() {
+        if (this.hasTimeoutMS()) {
+            Timeout serverSelectionTimeout = StartTime.now()
+                    .timeoutAfterOrInfiniteIfNegative(getTimeoutSettings().getServerSelectionTimeoutMS(), MILLISECONDS);
+            if (isMaintenanceContext) {
+                return new TimeoutContext(false, timeoutSettings, serverSelectionTimeout);
+            }
+            return new TimeoutContext(false, timeoutSettings, Timeout.earliest(serverSelectionTimeout, timeout));
         }
+
         return this;
     }
 

@@ -22,6 +22,7 @@ import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -108,14 +109,14 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
     }
 
     @Override
-    public BatchCursor<T> execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, namespace.getDatabaseName(), getCommandCreator(), createCommandDecoder(),
+    public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
+        return executeRetryableRead(binding, operationContext, namespace.getDatabaseName(), getCommandCreator(), createCommandDecoder(),
                 singleBatchCursorTransformer(VALUES), retryReads);
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        executeRetryableReadAsync(binding, namespace.getDatabaseName(),
+    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+        executeRetryableReadAsync(binding, operationContext,  namespace.getDatabaseName(),
                                   getCommandCreator(), createCommandDecoder(), asyncSingleBatchCursorTransformer(VALUES), retryReads,
                                   errorHandlingCallback(callback, LOGGER));
     }

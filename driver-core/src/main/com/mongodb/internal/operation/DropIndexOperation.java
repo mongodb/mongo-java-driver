@@ -22,6 +22,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -65,11 +66,10 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
     }
 
     @Override
-    public Void execute(final WriteBinding binding) {
+    public Void execute(final WriteBinding binding, final OperationContext operationContext) {
         try {
-            executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(), writeConcernErrorTransformer(binding
-                    .getOperationContext()
-                    .getTimeoutContext()));
+            executeCommand(binding, operationContext, namespace.getDatabaseName(), getCommandCreator(), writeConcernErrorTransformer(
+                    operationContext.getTimeoutContext()));
         } catch (MongoCommandException e) {
             rethrowIfNotNamespaceError(e);
         }
@@ -77,9 +77,10 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
     }
 
     @Override
-    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        executeCommandAsync(binding, namespace.getDatabaseName(), getCommandCreator(),
-                writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()), (result, t) -> {
+    public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext,
+                             final SingleResultCallback<Void> callback) {
+        executeCommandAsync(binding, operationContext,  namespace.getDatabaseName(), getCommandCreator(),
+                writeConcernErrorTransformerAsync(operationContext.getTimeoutContext()), (result, t) -> {
             if (t != null && !isNamespaceError(t)) {
                 callback.onResult(null, t);
             } else {

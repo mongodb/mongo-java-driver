@@ -15,6 +15,7 @@
  */
 package com.mongodb.internal.connection;
 
+import com.mongodb.Function;
 import com.mongodb.MongoConnectionPoolClearedException;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
@@ -33,6 +34,7 @@ import com.mongodb.selector.ServerSelector;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.stream.Collectors.toList;
@@ -140,6 +142,14 @@ public class OperationContext {
     public OperationContext withNewlyStartedTimeout() {
         TimeoutContext tc = this.timeoutContext.withNewlyStartedTimeout();
         return this.withTimeoutContext(tc);
+    }
+
+    public OperationContext withMinRoundTripTime(final ServerDescription serverDescription) {
+        return this.withTimeoutContext(this.timeoutContext.withMinRoundTripTime(TimeUnit.NANOSECONDS.toMillis(serverDescription.getMinRoundTripTimeNanos())));
+    }
+
+    public OperationContext withTimeoutContextOverride(final Function<TimeoutContext, TimeoutContext> timeoutContextOverrideFunction) {
+        return this.withTimeoutContext(timeoutContextOverrideFunction.apply(timeoutContext));
     }
 
     public static final class ServerDeprioritization {

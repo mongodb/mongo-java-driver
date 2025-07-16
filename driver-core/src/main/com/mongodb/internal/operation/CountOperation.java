@@ -21,6 +21,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -110,23 +111,23 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
     }
 
     @Override
-    public Long execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, namespace.getDatabaseName(),
+    public Long execute(final ReadBinding binding, final OperationContext operationContext) {
+        return executeRetryableRead(binding, operationContext, namespace.getDatabaseName(),
                                     getCommandCreator(), DECODER, transformer(), retryReads);
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
-        executeRetryableReadAsync(binding, namespace.getDatabaseName(),
+    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<Long> callback) {
+        executeRetryableReadAsync(binding, operationContext,  namespace.getDatabaseName(),
                                   getCommandCreator(), DECODER, asyncTransformer(), retryReads, callback);
     }
 
     private CommandReadTransformer<BsonDocument, Long> transformer() {
-        return (result, source, connection) -> (result.getNumber("n")).longValue();
+        return (result, source, connection, operationContext) -> (result.getNumber("n")).longValue();
     }
 
     private CommandReadTransformerAsync<BsonDocument, Long> asyncTransformer() {
-        return (result, source, connection) -> (result.getNumber("n")).longValue();
+        return (result, source, connection, operationContext) -> (result.getNumber("n")).longValue();
     }
 
     private CommandCreator getCommandCreator() {

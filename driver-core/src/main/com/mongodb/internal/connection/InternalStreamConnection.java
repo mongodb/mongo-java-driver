@@ -75,8 +75,8 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.Authenticator.shouldAuthenticate;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
@@ -226,13 +226,15 @@ public class InternalStreamConnection implements InternalConnection {
     public void open(final OperationContext originalOperationContext) {
         isTrue("Open already called", stream == null);
         stream = streamFactory.create(serverId.getAddress());
+        OperationContext operationContext = originalOperationContext;
         try {
-            OperationContext operationContext = originalOperationContext
-                    .withTimeoutContext(originalOperationContext.getTimeoutContext().withComputedServerSelectionTimeoutContext());
-
+            //COMMENT given that we already use serverSelection timeout in SyncOperationHelper, this step is not needed.
+//            OperationContext operationContext = originalOperationContext
+//                    .withTimeoutContext(originalOperationContext.getTimeoutContext().withComputedServerSelectionTimeoutContext());
             stream.open(operationContext);
-
             InternalConnectionInitializationDescription initializationDescription = connectionInitializer.startHandshake(this, operationContext);
+
+            operationContext = operationContext.withTimeoutContextOverride(TimeoutContext::withNewlyStartedTimeoutMaintenanceTimeout);
             initAfterHandshakeStart(initializationDescription);
 
             initializationDescription = connectionInitializer.finishHandshake(this, initializationDescription, operationContext);
@@ -250,9 +252,11 @@ public class InternalStreamConnection implements InternalConnection {
     @Override
     public void openAsync(final OperationContext originalOperationContext, final SingleResultCallback<Void> callback) {
         assertNull(stream);
+        OperationContext operationContext = originalOperationContext;
         try {
-            OperationContext operationContext = originalOperationContext
-                    .withTimeoutContext(originalOperationContext.getTimeoutContext().withComputedServerSelectionTimeoutContext());
+            //COMMENT given that we already use serverSelection timeout in SyncOperationHelper, this step is not needed.
+//            OperationContext operationContext = originalOperationContext
+//                    .withTimeoutContext(originalOperationContext.getTimeoutContext().withComputedServerSelectionTimeoutContext());
 
             stream = streamFactory.create(serverId.getAddress());
             stream.openAsync(operationContext, new AsyncCompletionHandler<Void>() {
@@ -268,7 +272,8 @@ public class InternalStreamConnection implements InternalConnection {
                                         assertNotNull(initialResult);
                                         initAfterHandshakeStart(initialResult);
                                         connectionInitializer.finishHandshakeAsync(InternalStreamConnection.this,
-                                                initialResult, operationContext, (completedResult, completedException) ->  {
+                                                initialResult, operationContext.withTimeoutContextOverride(TimeoutContext::withNewlyStartedTimeoutMaintenanceTimeout),
+                                                (completedResult, completedException) ->  {
                                                         if (completedException != null) {
                                                             close();
                                                             callback.onResult(null, completedException);

@@ -25,6 +25,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.internal.connection.Server;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.selector.ReadPreferenceWithFallbackServerSelector;
@@ -33,7 +34,6 @@ import com.mongodb.internal.selector.WritableServerSelector;
 import com.mongodb.selector.ServerSelector;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * A simple ReadWriteBinding implementation that supplies write connection sources bound to a possibly different primary each time, and a
@@ -44,24 +44,17 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 public class AsyncClusterBinding extends AbstractReferenceCounted implements AsyncClusterAwareReadWriteBinding {
     private final Cluster cluster;
     private final ReadPreference readPreference;
-    private final ReadConcern readConcern;
-    private final OperationContext operationContext;
 
     /**
      * Creates an instance.
      *
      * @param cluster        a non-null Cluster which will be used to select a server to bind to
      * @param readPreference a non-null ReadPreference for read operations
-     * @param readConcern    a non-null read concern
-     * @param operationContext the operation context
      * <p>This class is not part of the public API and may be removed or changed at any time</p>
      */
-    public AsyncClusterBinding(final Cluster cluster, final ReadPreference readPreference, final ReadConcern readConcern,
-            final OperationContext operationContext) {
+    public AsyncClusterBinding(final Cluster cluster, final ReadPreference readPreference) {
         this.cluster = notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
-        this.readConcern = notNull("readConcern", readConcern);
-        this.operationContext = notNull("operationContext", operationContext);
     }
 
     @Override
@@ -76,21 +69,18 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
     }
 
     @Override
-    public OperationContext getOperationContext() {
-        return operationContext;
-    }
-
-    @Override
-    public void getReadConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
-        getAsyncClusterBindingConnectionSource(new ReadPreferenceServerSelector(readPreference), callback);
+    public void getReadConnectionSource(final OperationContext operationContext,
+                                        final SingleResultCallback<AsyncConnectionSource> callback) {
+        getAsyncClusterBindingConnectionSource(new ReadPreferenceServerSelector(readPreference), operationContext, callback);
     }
 
     @Override
     public void getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference,
+                                        final OperationContext operationContext,
             final SingleResultCallback<AsyncConnectionSource> callback) {
         // Assume 5.0+ for load-balanced mode
         if (cluster.getSettings().getMode() == ClusterConnectionMode.LOAD_BALANCED) {
-            getReadConnectionSource(callback);
+            getReadConnectionSource(operationContext, callback);
         } else {
             ReadPreferenceWithFallbackServerSelector readPreferenceWithFallbackServerSelector
                     = new ReadPreferenceWithFallbackServerSelector(readPreference, minWireVersion, fallbackReadPreference);
@@ -106,16 +96,19 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
     }
 
     @Override
-    public void getWriteConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
-        getAsyncClusterBindingConnectionSource(new WritableServerSelector(), callback);
+    public void getWriteConnectionSource(final OperationContext operationContext,
+                                         final SingleResultCallback<AsyncConnectionSource> callback) {
+        getAsyncClusterBindingConnectionSource(new WritableServerSelector(), operationContext, callback);
     }
 
     @Override
-    public void getConnectionSource(final ServerAddress serverAddress, final SingleResultCallback<AsyncConnectionSource> callback) {
-        getAsyncClusterBindingConnectionSource(new ServerAddressSelector(serverAddress), callback);
+    public void getConnectionSource(final ServerAddress serverAddress, final OperationContext operationContext,
+                                    final SingleResultCallback<AsyncConnectionSource> callback) {
+        getAsyncClusterBindingConnectionSource(new ServerAddressSelector(serverAddress), operationContext, callback);
     }
 
     private void getAsyncClusterBindingConnectionSource(final ServerSelector serverSelector,
+                                                        final OperationContext operationContext,
                                                         final SingleResultCallback<AsyncConnectionSource> callback) {
         cluster.selectServerAsync(serverSelector, operationContext, (result, t) -> {
             if (t != null) {
@@ -132,12 +125,14 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
         private final ServerDescription serverDescription;
         private final ReadPreference appliedReadPreference;
 
-        private AsyncClusterBindingConnectionSource(final Server server, final ServerDescription serverDescription,
-                final ReadPreference appliedReadPreference) {
+        private AsyncClusterBindingConnectionSource(final Server server,
+                                                    final ServerDescription serverDescription,
+                                                    final ReadPreference appliedReadPreference) {
             this.server = server;
             this.serverDescription = serverDescription;
             this.appliedReadPreference = appliedReadPreference;
-            operationContext.getTimeoutContext().minRoundTripTimeMS(NANOSECONDS.toMillis(serverDescription.getMinRoundTripTimeNanos()));
+            // TODO should be calculated externaly
+            // operationContext.getTimeoutContext().minRoundTripTimeMS(NANOSECONDS.toMillis(serverDescription.getMinRoundTripTimeNanos()));
             AsyncClusterBinding.this.retain();
         }
 
@@ -147,18 +142,17 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
         }
 
         @Override
-        public OperationContext getOperationContext() {
-            return operationContext;
-        }
-
-        @Override
         public ReadPreference getReadPreference() {
             return appliedReadPreference;
         }
 
         @Override
-        public void getConnection(final SingleResultCallback<AsyncConnection> callback) {
-            server.getConnectionAsync(operationContext, callback);
+        public void getConnection(final OperationContext operationContext, final SingleResultCallback<AsyncConnection> callback) {
+            // The first read in a causally consistent session MUST not send afterClusterTime to the server
+            // (because the operationTime has not yet been determined). Therefore, we use ReadConcernAwareNoOpSessionContext to
+            // so that we do not advance clusterTime on ClientSession in given operationContext because it might not be yet set.
+            ReadConcern readConcern = operationContext.getSessionContext().getReadConcern();
+            server.getConnectionAsync(operationContext.withSessionContext(new ReadConcernAwareNoOpSessionContext(readConcern)), callback);
         }
 
         public AsyncConnectionSource retain() {
