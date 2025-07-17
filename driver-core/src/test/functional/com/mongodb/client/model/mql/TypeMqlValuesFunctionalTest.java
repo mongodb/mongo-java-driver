@@ -33,6 +33,7 @@ import static com.mongodb.client.model.mql.MqlValues.of;
 import static com.mongodb.client.model.mql.MqlValues.ofIntegerArray;
 import static com.mongodb.client.model.mql.MqlValues.ofMap;
 import static com.mongodb.client.model.mql.MqlValues.ofNull;
+import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -223,6 +224,35 @@ class TypeMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
         assertExpression(
                 "2007-12-03T05:15:30.005-0500",
                 of(instant).asString(of("America/New_York"), of("%Y-%m-%dT%H:%M:%S.%L%z")));
+    }
+
+    /**
+     * Tests that with default format and non-UTC timezone, {@code $dateToString} won't output invalid ISO 8601 string ending with 'Z'.
+     * Ticket: JAVA-5044
+     */
+    @Test
+    void dateAsStringWithDefaultFormat() {
+        // the bug was reported on v6.0.3, but was fixed in v7.1 without backporting
+        // due to the concern that it is a breaking change.
+        assumeTrue(serverVersionAtLeast(7, 1));
+
+        final Instant instant = Instant.parse("2025-07-17T18:00:36.052Z");
+        MqlDate date = of(instant);
+        ZonedDateTime utcDateTime = ZonedDateTime.ofInstant(instant, ZoneId.of(ZoneOffset.UTC.getId()));
+
+        // UTC timezone's default format should be "%Y-%m-%dT%H:%M:%S.%LZ"
+        assertExpression(
+                utcDateTime.format(ISO_INSTANT),
+                date.asString(of("UTC")),
+                "{'$dateToString': {'date': {'$date': '2025-07-17T18:00:36.052Z'}, "
+                        + "'timezone': 'UTC'}}");
+
+        // non-UTC timezone's default format should be "%Y-%m-%dT%H:%M:%S.%L"
+        assertExpression(
+                utcDateTime.withZoneSameInstant(ZoneId.of("America/New_York")).format(ISO_LOCAL_DATE_TIME),
+                date.asString(of("America/New_York")),
+                "{'$dateToString': {'date': {'$date': '2025-07-17T18:00:36.052Z'}, "
+                        + "'timezone': 'America/New_York'}}");
     }
 
     // parse string
