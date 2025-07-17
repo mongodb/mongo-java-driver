@@ -94,7 +94,8 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "SyncClientEncryption",
       "BaseClientUpdateOptions",
       "BaseClientDeleteOptions",
-      "MongoBaseInterfaceAssertions"
+      "MongoBaseInterfaceAssertions",
+      "MicrometerTracer"
     )
     val scalaExclusions = Set(
       "BuildInfo",

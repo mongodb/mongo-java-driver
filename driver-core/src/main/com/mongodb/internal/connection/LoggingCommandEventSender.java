@@ -78,7 +78,7 @@ class LoggingCommandEventSender implements CommandEventSender {
             @Nullable final CommandListener commandListener,
             final OperationContext operationContext,
             final CommandMessage message,
-            final ByteBufferBsonOutput bsonOutput,
+            final BsonDocument commandDocument,
             final StructuredLogger logger,
             final LoggerSettings loggerSettings) {
         this.description = description;
@@ -88,7 +88,7 @@ class LoggingCommandEventSender implements CommandEventSender {
         this.loggerSettings = loggerSettings;
         this.startTimeNanos = System.nanoTime();
         this.message = message;
-        this.commandDocument = message.getCommandDocument(bsonOutput);
+        this.commandDocument = commandDocument;
         this.commandName = commandDocument.getFirstKey();
         this.redactionRequired = securitySensitiveCommands.contains(commandName)
                 || (securitySensitiveHelloCommands.contains(commandName) && commandDocument.containsKey("speculativeAuthenticate"));

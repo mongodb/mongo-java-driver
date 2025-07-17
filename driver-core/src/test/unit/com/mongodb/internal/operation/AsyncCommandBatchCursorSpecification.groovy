@@ -35,6 +35,7 @@ import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.OperationContext
+import com.mongodb.internal.tracing.TracingManager
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -50,6 +51,7 @@ import static OperationUnitSpecification.getMaxWireVersionForServerVersion
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CLOSED_AS_CURSOR
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CONCURRENT_OPERATION
+import static org.mockito.Mockito.when
 
 class AsyncCommandBatchCursorSpecification extends Specification {
 
@@ -524,6 +526,7 @@ class AsyncCommandBatchCursorSpecification extends Specification {
                     .build()
         }
         OperationContext operationContext = Mock(OperationContext)
+        operationContext.getTracingManager() >> TracingManager.NO_OP
         def timeoutContext = Spy(new TimeoutContext(TimeoutSettings.create(
                 MongoClientSettings.builder().timeout(3, TimeUnit.SECONDS).build())))
         operationContext.getTimeoutContext() >> timeoutContext

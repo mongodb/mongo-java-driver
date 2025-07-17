@@ -36,6 +36,7 @@ import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreat
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableWrite;
 import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErrorTransformer;
+import static com.mongodb.internal.tracing.TracingManager.runWithTracing;
 
 /**
  * A base class for transaction-related operations
@@ -57,9 +58,10 @@ public abstract class TransactionOperation implements AsyncWriteOperation<Void>,
     public Void execute(final WriteBinding binding) {
         isTrue("in transaction", binding.getOperationContext().getSessionContext().hasActiveTransaction());
         TimeoutContext timeoutContext = binding.getOperationContext().getTimeoutContext();
-        return executeRetryableWrite(binding, "admin", null, NoOpFieldNameValidator.INSTANCE,
-                                     new BsonDocumentCodec(), getCommandCreator(),
-                writeConcernErrorTransformer(timeoutContext), getRetryCommandModifier(timeoutContext));
+        // Add a span for 'commit' or 'abort' operation if tracing is enabled
+        return runWithTracing(() -> executeRetryableWrite(binding, "admin", null, NoOpFieldNameValidator.INSTANCE,
+                new BsonDocumentCodec(), getCommandCreator(),
+                writeConcernErrorTransformer(timeoutContext), getRetryCommandModifier(timeoutContext)), binding.getOperationContext(), getCommandName(), null);
     }
 
     @Override
