@@ -17,7 +17,6 @@
 package com.mongodb.client.model.mql;
 
 import com.mongodb.assertions.Assertions;
-import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -948,25 +947,20 @@ final class MqlExpression<T extends MqlValue>
     public MqlString asString(final MqlString timezone, final MqlString format) {
         Assertions.notNull("timezone", timezone);
         Assertions.notNull("format", format);
-        return doAsString(timezone, format);
+        return newMqlExpression((cr) -> astDoc("$dateToString", new BsonDocument()
+                .append("date", this.toBsonValue(cr))
+                .append("format", toBsonValue(cr, format))
+                .append("timezone", toBsonValue(cr, timezone))));
     }
 
     @Override
     public MqlString asString(final MqlString timezone) {
         Assertions.notNull("timezone", timezone);
-        return doAsString(timezone, null);
+        return newMqlExpression((cr) -> astDoc("$dateToString", new BsonDocument()
+                .append("date", this.toBsonValue(cr))
+                .append("timezone", toBsonValue(cr, timezone))));
     }
 
-    private MqlString doAsString(final MqlString timezone, @Nullable final MqlString format) {
-        return newMqlExpression((cr) -> {
-            BsonDocument document = new BsonDocument("date", this.toBsonValue(cr));
-            if (format != null) {
-                document.append("format", toBsonValue(cr, format));
-            }
-            document.append("timezone", toBsonValue(cr, timezone));
-            return astDoc("$dateToString", document);
-        });
-    }
 
     @Override
     public MqlDate parseDate(final MqlString timezone, final MqlString format) {
