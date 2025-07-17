@@ -227,7 +227,7 @@ class TypeMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
     }
 
     /**
-     * Tests that with default format and non-UTC timezone, {@code $dateToString} won't output invalid ISO 8601 string ending with 'Z'.
+     * Tests that with server default format and non-UTC timezone, {@code $dateToString} won't output invalid ISO 8601 string ending with 'Z'.
      * Ticket: JAVA-5044
      */
     @Test
