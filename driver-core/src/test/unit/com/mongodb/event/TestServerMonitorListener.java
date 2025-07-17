@@ -53,6 +53,16 @@ public final class TestServerMonitorListener implements ServerMonitorListener {
         events = new ArrayList<>();
     }
 
+    public void reset() {
+        lock.lock();
+        try {
+            events.clear();
+            condition.signalAll();
+        } finally {
+            lock.unlock();
+        }
+    }
+
     public void serverHearbeatStarted(final ServerHeartbeatStartedEvent event) {
         register(event);
     }
@@ -65,7 +75,7 @@ public final class TestServerMonitorListener implements ServerMonitorListener {
         register(event);
     }
 
-    public <T> void waitForEvents(final Class<T> type, final Predicate<? super T> matcher, final int count, final Duration duration)
+    public <T> void waitForEvents(final Class<T> type, final Predicate<? super T> matcher, final long count, final Duration duration)
             throws InterruptedException, TimeoutException {
         assertTrue(listenable(type));
         long remainingNanos = duration.toNanos();
