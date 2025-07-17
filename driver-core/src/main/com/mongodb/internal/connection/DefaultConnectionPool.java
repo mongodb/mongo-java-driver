@@ -345,7 +345,7 @@ final class DefaultConnectionPool implements ConnectionPool {
             }
             return new PooledConnection(internalConnection);
         } catch (MongoTimeoutException e) {
-            throw createTimeoutException(startTime);
+            throw createTimeoutException(startTime, e);
         }
     }
 
@@ -359,13 +359,14 @@ final class DefaultConnectionPool implements ConnectionPool {
         return internalConnection == null ? null : new PooledConnection(internalConnection);
     }
 
-    private MongoTimeoutException createTimeoutException(final StartTime startTime) {
+    private MongoTimeoutException createTimeoutException(final StartTime startTime, @Nullable final MongoTimeoutException cause) {
         long elapsedMs = startTime.elapsed().toMillis();
         int numPinnedToCursor = pinnedStatsManager.getNumPinnedToCursor();
         int numPinnedToTransaction = pinnedStatsManager.getNumPinnedToTransaction();
         if (numPinnedToCursor == 0 && numPinnedToTransaction == 0) {
             return new MongoTimeoutException(format("Timed out after %d ms while waiting for a connection to server %s.",
-                    elapsedMs, serverId.getAddress()));
+                    elapsedMs, serverId.getAddress()),
+                    cause);
         } else {
             int maxSize = pool.getMaxSize();
             int numInUse = pool.getInUseCount();
@@ -375,7 +376,7 @@ final class DefaultConnectionPool implements ConnectionPool {
              * - numInUse > 0
              *     we consider at least one of `numPinnedToCursor`, `numPinnedToTransaction` to be positive,
              *     so if we observe `numInUse` to be 0, we have to estimate it based on `numPinnedToCursor` and `numPinnedToTransaction`;
-             * - numInUse < maxSize
+             * - numInUse <= maxSize
              *     `numInUse` must not exceed the limit in situations when we estimate `numInUse`;
              * - numPinnedToCursor + numPinnedToTransaction <= numInUse
              *     otherwise the numbers do not make sense.
@@ -399,7 +400,8 @@ final class DefaultConnectionPool implements ConnectionPool {
                             + "connections in use by other operations: %d",
                     elapsedMs, serverId.getAddress(),
                     sizeToString(maxSize), numPinnedToCursor, numPinnedToTransaction,
-                    numOtherInUse));
+                    numOtherInUse),
+                    cause);
         }
     }
 
@@ -1067,7 +1069,7 @@ final class DefaultConnectionPool implements ConnectionPool {
                         & (availableConnection = tryGetAvailable ? tryGetAvailableConnection() : null) == null) {
 
                     Timeout.onExistsAndExpired(waitQueueTimeout, () -> {
-                        throw createTimeoutException(startTime);
+                        throw createTimeoutException(startTime, null);
                     });
                     waitQueueTimeout.awaitOn(permitAvailableOrHandedOverOrClosedOrPausedCondition,
                             () -> "acquiring permit or getting available opened connection");
@@ -1406,7 +1408,7 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         void failAsTimedOut() {
-            doComplete(() -> createTimeoutException(startTime));
+            doComplete(() -> createTimeoutException(startTime, null));
         }
 
         private void doComplete(final Supplier<RuntimeException> failureSupplier) {
