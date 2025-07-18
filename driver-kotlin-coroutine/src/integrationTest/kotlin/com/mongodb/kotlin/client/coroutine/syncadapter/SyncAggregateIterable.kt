@@ -74,4 +74,19 @@ data class SyncAggregateIterable<T : Any>(val wrapped: AggregateFlow<T>) :
     override fun <E : Any> explain(explainResultClass: Class<E>, verbosity: ExplainVerbosity): E = runBlocking {
         wrapped.explain(explainResultClass, verbosity)
     }
+
+    override fun explain(timeoutMS: Long): Document = runBlocking { wrapped.explain(timeoutMS) }
+
+    override fun explain(verbosity: ExplainVerbosity, timeoutMS: Long): Document = runBlocking {
+        wrapped.explain(verbosity, timeoutMS)
+    }
+
+    override fun <E : Any> explain(explainResultClass: Class<E>, timeoutMS: Long): E = runBlocking {
+        wrapped.explain(explainResultClass, timeoutMS)
+    }
+
+    override fun <E : Any> explain(explainResultClass: Class<E>, verbosity: ExplainVerbosity, timeoutMS: Long): E =
+        runBlocking {
+            wrapped.explain(explainResultClass, verbosity, timeoutMS)
+        }
 }

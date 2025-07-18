@@ -87,4 +87,14 @@ internal class SyncFindIterable<T : Any>(val wrapped: FindIterable<T>) :
 
     override fun <E : Any> explain(explainResultClass: Class<E>, verbosity: ExplainVerbosity): E =
         wrapped.explain(explainResultClass, verbosity)
+
+    override fun explain(timeoutMS: Long): Document = wrapped.explain(timeoutMS)
+
+    override fun explain(verbosity: ExplainVerbosity, timeoutMS: Long): Document = wrapped.explain(verbosity, timeoutMS)
+
+    override fun <E : Any> explain(explainResultClass: Class<E>, timeoutMS: Long): E =
+        wrapped.explain(explainResultClass, timeoutMS)
+
+    override fun <E : Any> explain(explainResultClass: Class<E>, verbosity: ExplainVerbosity, timeoutMS: Long): E =
+        wrapped.explain(explainResultClass, verbosity, timeoutMS)
 }

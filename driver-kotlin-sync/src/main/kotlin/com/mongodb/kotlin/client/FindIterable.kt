@@ -285,6 +285,49 @@ public class FindIterable<T : Any>(private val wrapped: JFindIterable<T>) : Mong
         if (verbosity == null) wrapped.explain(resultClass) else wrapped.explain(resultClass, verbosity)
 
     /**
+     * Explain the execution plan for this operation with the server's default verbosity level
+     *
+     * @param timeoutMS the timeout in milliseconds for the explain operation
+     * @return the execution plan
+     * @see [Explain command](https://www.mongodb.com/docs/manual/reference/command/explain/)
+     */
+    public fun explain(timeoutMS: Long): Document = wrapped.explain(timeoutMS)
+
+    /**
+     * Explain the execution plan for this operation with the given verbosity level
+     *
+     * @param verbosity the verbosity of the explanation
+     * @param timeoutMS the timeout in milliseconds for the explain operation
+     * @return the execution plan
+     * @see [Explain command](https://www.mongodb.com/docs/manual/reference/command/explain/)
+     */
+    public fun explain(verbosity: ExplainVerbosity, timeoutMS: Long): Document = wrapped.explain(verbosity, timeoutMS)
+
+    /**
+     * Explain the execution plan for this operation with the server's default verbosity level
+     *
+     * @param R the type of the document class
+     * @param resultClass the result document type.
+     * @param timeoutMS the timeout in milliseconds for the explain operation
+     * @return the execution plan
+     * @see [Explain command](https://www.mongodb.com/docs/manual/reference/command/explain/)
+     */
+    public fun <R : Any> explain(resultClass: Class<R>, timeoutMS: Long): R = wrapped.explain(resultClass, timeoutMS)
+
+    /**
+     * Explain the execution plan for this operation.
+     *
+     * @param R the type of the document class
+     * @param resultClass the result document type.
+     * @param verbosity the verbosity of the explanation
+     * @param timeoutMS the timeout in milliseconds for the explain operation
+     * @return the execution plan
+     * @see [Explain command](https://www.mongodb.com/docs/manual/reference/command/explain/)
+     */
+    public fun <R : Any> explain(resultClass: Class<R>, verbosity: ExplainVerbosity, timeoutMS: Long): R =
+        wrapped.explain(resultClass, verbosity, timeoutMS)
+
+    /**
      * Explain the execution plan for this operation with the given verbosity level
      *
      * @param R the type of the document class

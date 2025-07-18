@@ -183,6 +183,14 @@ public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) 
     public fun let(variables: Bson?): AggregateFlow<T> = apply { wrapped.let(variables) }
 
     /**
+     * Requests [AggregateFlow] to start streaming data according to the specified aggregation pipeline.
+     * - If the aggregation pipeline ends with an `$out` or `$merge` stage, then finds all documents in the affected
+     *   namespace and emits them. You may want to use [toCollection] instead.
+     * - Otherwise, emits no values.
+     */
+    public override suspend fun collect(collector: FlowCollector<T>): Unit = wrapped.asFlow().collect(collector)
+
+    /**
      * Explain the execution plan for this operation with the given verbosity level
      *
      * @param verbosity the verbosity of the explanation
@@ -217,10 +225,47 @@ public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) 
         explain(R::class.java, verbosity)
 
     /**
-     * Requests [AggregateFlow] to start streaming data according to the specified aggregation pipeline.
-     * - If the aggregation pipeline ends with an `$out` or `$merge` stage, then finds all documents in the affected
-     *   namespace and emits them. You may want to use [toCollection] instead.
-     * - Otherwise, emits no values.
+     * Explain the execution plan for this operation with the server's default verbosity level.
+     *
+     * @param timeoutMS the timeout in milliseconds for the explain operation.
+     * @return the execution plan.
+     * @see [Explain command](https://www.mongodb.com/docs/manual/reference/command/explain/)
      */
-    public override suspend fun collect(collector: FlowCollector<T>): Unit = wrapped.asFlow().collect(collector)
+    public suspend inline fun <reified R : Any> explain(timeoutMS: Long): R = explain(R::class.java, timeoutMS)
+
+    /**
+     * Explain the execution plan for this operation with the given verbosity level.
+     *
+     * @param verbosity the verbosity of the explanation.
+     * @param timeoutMS the timeout in milliseconds for the explain operation.
+     * @return the execution plan.
+     * @see [Explain command](https://www.mongodb.com/docs/manual/reference/command/explain/)
+     */
+    public suspend inline fun <reified R : Any> explain(verbosity: ExplainVerbosity, timeoutMS: Long): R =
+        explain(R::class.java, verbosity, timeoutMS)
+
+    /**
+     * Explain the execution plan for this operation with the server's default verbosity level.
+     *
+     * @param R the type of the document class.
+     * @param resultClass the document class to decode into.
+     * @param timeoutMS the timeout in milliseconds for the explain operation.
+     * @return the execution plan.
+     * @see [Explain command](https://www.mongodb.com/docs/manual/reference/command/explain/)
+     */
+    public suspend fun <R : Any> explain(resultClass: Class<R>, timeoutMS: Long): R =
+        wrapped.explain(resultClass, timeoutMS).awaitSingle()
+
+    /**
+     * Explain the execution plan for this operation with the given verbosity level.
+     *
+     * @param R the type of the document class.
+     * @param resultClass the document class to decode into.
+     * @param verbosity the verbosity of the explanation.
+     * @param timeoutMS the timeout in milliseconds for the explain operation.
+     * @return the execution plan.
+     * @see [Explain command](https://www.mongodb.com/docs/manual/reference/command/explain/)
+     */
+    public suspend fun <R : Any> explain(resultClass: Class<R>, verbosity: ExplainVerbosity, timeoutMS: Long): R =
+        wrapped.explain(resultClass, verbosity, timeoutMS).awaitSingle()
 }

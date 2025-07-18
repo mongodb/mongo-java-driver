@@ -338,4 +338,54 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * @mongodb.server.release 3.2
      */
     <E> Publisher<E> explain(Class<E> explainResultClass, ExplainVerbosity verbosity);
+
+    /**
+     * Explain the execution plan for this operation with the server's default verbosity level
+     *
+     * @param timeoutMS the timeout in milliseconds for the explain operation
+     * @return the execution plan
+     * @since 5.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.2
+     */
+    Publisher<Document> explain(long timeoutMS);
+
+    /**
+     * Explain the execution plan for this operation with the given verbosity level
+     *
+     * @param verbosity the verbosity of the explanation
+     * @param timeoutMS the timeout in milliseconds for the explain operation
+     * @return the execution plan
+     * @since 5.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.2
+     */
+    Publisher<Document> explain(ExplainVerbosity verbosity, long timeoutMS);
+
+    /**
+     * Explain the execution plan for this operation with the server's default verbosity level
+     *
+     * @param <E> the type of the document class
+     * @param explainResultClass the document class to decode into
+     * @param timeoutMS the timeout in milliseconds for the explain operation
+     * @return the execution plan
+     * @since 5.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.2
+     */
+    <E> Publisher<E> explain(Class<E> explainResultClass, long timeoutMS);
+
+    /**
+     * Explain the execution plan for this operation with the given verbosity level
+     *
+     * @param <E> the type of the document class
+     * @param explainResultClass the document class to decode into
+     * @param verbosity the verbosity of the explanation
+     * @param timeoutMS the timeout in milliseconds for the explain operation
+     * @return the execution plan
+     * @since 5.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.2
+     */
+    <E> Publisher<E> explain(Class<E> explainResultClass, ExplainVerbosity verbosity, long timeoutMS);
 }

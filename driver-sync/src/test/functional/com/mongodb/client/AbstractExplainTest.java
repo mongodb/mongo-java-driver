@@ -19,6 +19,7 @@ package com.mongodb.client;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.event.CommandStartedEvent;
@@ -39,6 +40,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 public abstract class AbstractExplainTest {
@@ -173,6 +175,70 @@ public abstract class AbstractExplainTest {
         assertNotNull(explainBsonDocument);
         assertTrue(explainBsonDocument.containsKey("queryPlanner"));
         assertFalse(explainBsonDocument.containsKey("executionStats"));
+    }
+
+    @Test
+    public void testExplainWithMaxTimeMS() {
+        // Create a collection with the namespace explain-test.collection
+        MongoCollection<Document> collection = client.getDatabase("explain-test")
+                .getCollection("collection");
+        collection.drop();
+
+        // Insert a test document
+        collection.insertOne(new Document("name", "john doe"));
+
+        // Reset command listener to capture only the explain command
+        commandListener.reset();
+
+        // Run an explained find with the query predicate { name: 'john doe' }
+        // Add a $where clause with JavaScript sleep to introduce delay that exceeds timeout
+        // Use a short timeout (50ms) with a longer sleep (100ms) to trigger timeout
+        FindIterable<Document> findIterable = collection.find(
+                Filters.and(
+                    Filters.eq("name", "john doe"),
+                    Filters.where("sleep(100) || true") // Sleep for 100ms to exceed the 50ms timeout
+                )
+        );
+
+        // Execute the explain with short timeoutMS - this should trigger a MongoOperationTimeoutException
+        try {
+            findIterable.explain(50L); // Use 50ms timeout to trigger timeout
+            fail("Expected MongoOperationTimeoutException but explain completed successfully");
+        } catch (MongoOperationTimeoutException e) {
+            // This is expected - the operation should timeout
+            assertTrue("Exception message should mention timeout",
+                    e.getMessage().contains("Operation exceeded the timeout limit: Timeout while receiving message") || e.getMessage().contains("Timeout"));
+
+            // Verify that the explain command was sent with maxTimeMS before timing out
+            // The command should have been started even though it timed out
+            assertFalse("At least one command should have been started", commandListener.getCommandStartedEvents().isEmpty());
+
+            CommandStartedEvent explainEvent = commandListener.getCommandStartedEvent("explain");
+            // Confirm that the explain command had maxTimeMS set
+            BsonDocument explainCommand = explainEvent.getCommand();
+            assertTrue("Explain command should contain maxTimeMS when timeoutMS is specified",
+                    explainCommand.containsKey("maxTimeMS"));
+
+            // The maxTimeMS value should be derived from the timeoutMS (may be less due to RTT calculation)
+            // Handle both INT32 and INT64 types
+            long maxTimeMSValue;
+            if (explainCommand.get("maxTimeMS").isInt32()) {
+                maxTimeMSValue = explainCommand.getInt32("maxTimeMS").getValue();
+            } else {
+                maxTimeMSValue = explainCommand.getInt64("maxTimeMS").getValue();
+            }
+            assertTrue("maxTimeMS should be positive", maxTimeMSValue > 0);
+            assertTrue("maxTimeMS should be <= timeoutMS", maxTimeMSValue <= 50);
+
+            // Verify the explain command structure
+            assertTrue("Explain command should contain explain field", explainCommand.containsKey("explain"));
+
+            // The inner find command should contain the correct filter
+            BsonDocument findCommand = explainCommand.getDocument("explain");
+            assertTrue("Find command should contain filter", findCommand.containsKey("filter"));
+            BsonDocument filter = findCommand.getDocument("filter");
+            assertTrue("Filter should contain $and", filter.containsKey("$and"));
+        }
     }
 
     // Post-MongoDB 7.0, sharded cluster responses move the explain plan document into a "shards" document, which a plan for each shard.

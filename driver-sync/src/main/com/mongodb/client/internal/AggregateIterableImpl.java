@@ -197,9 +197,37 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         return executeExplain(explainResultClass, notNull("verbosity", verbosity));
     }
 
+    @Override
+    public Document explain(final long timeoutMS) {
+        return executeExplainWithTimeout(Document.class, null, timeoutMS);
+    }
+
+    @Override
+    public Document explain(final ExplainVerbosity verbosity, final long timeoutMS) {
+        return executeExplainWithTimeout(Document.class, notNull("verbosity", verbosity), timeoutMS);
+    }
+
+    @Override
+    public <E> E explain(final Class<E> explainResultClass, final long timeoutMS) {
+        return executeExplainWithTimeout(explainResultClass, null, timeoutMS);
+    }
+
+    @Override
+    public <E> E explain(final Class<E> explainResultClass, final ExplainVerbosity verbosity, final long timeoutMS) {
+        return executeExplainWithTimeout(explainResultClass, notNull("verbosity", verbosity), timeoutMS);
+    }
+
     private <E> E executeExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
         notNull("explainDocumentClass", explainResultClass);
         return getExecutor().execute(
+                asAggregateOperation().asExplainableOperation(verbosity, codecRegistry.get(explainResultClass)), getReadPreference(),
+                getReadConcern(), getClientSession());
+    }
+
+    private <E> E executeExplainWithTimeout(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity, final long timeoutMS) {
+        notNull("explainDocumentClass", explainResultClass);
+        OperationExecutor timeoutExecutor =  getExecutor(operations.createTimeoutSettings(maxTimeMS, maxAwaitTimeMS).withTimeout(timeoutMS, TimeUnit.MILLISECONDS));
+        return timeoutExecutor.execute(
                 asAggregateOperation().asExplainableOperation(verbosity, codecRegistry.get(explainResultClass)), getReadPreference(),
                 getReadConcern(), getClientSession());
     }

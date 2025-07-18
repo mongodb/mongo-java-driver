@@ -200,4 +200,24 @@ class SyncFindIterable<T> extends SyncMongoIterable<T> implements FindIterable<T
     public <E> E explain(final Class<E> explainResultClass, final ExplainVerbosity verbosity) {
         return requireNonNull(Mono.from(wrapped.explain(explainResultClass, verbosity)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
+
+    @Override
+    public Document explain(final long timeoutMS) {
+        return requireNonNull(Mono.from(wrapped.explain(timeoutMS)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public Document explain(final ExplainVerbosity verbosity, final long timeoutMS) {
+        return requireNonNull(Mono.from(wrapped.explain(verbosity, timeoutMS)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public <E> E explain(final Class<E> explainResultClass, final long timeoutMS) {
+        return requireNonNull(Mono.from(wrapped.explain(explainResultClass, timeoutMS)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public <E> E explain(final Class<E> explainResultClass, final ExplainVerbosity verbosity, final long timeoutMS) {
+        return requireNonNull(Mono.from(wrapped.explain(explainResultClass, verbosity, timeoutMS)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
+    }
 }
