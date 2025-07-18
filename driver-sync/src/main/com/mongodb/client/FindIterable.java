@@ -331,4 +331,50 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      * @mongodb.server.release 3.2
      */
     <E> E explain(Class<E> explainResultClass, ExplainVerbosity verbosity);
+
+    /**
+     * Explain the execution plan for this operation with the server's default verbosity level and specified timeoutMS
+     *
+     * @param timeoutMS the timeout in milliseconds for the explain operation
+     * @return the execution plan
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.2
+     */
+    Document explain(long timeoutMS);
+
+    /**
+     * Explain the execution plan for this operation with the given verbosity level and specified timeoutMS
+     *
+     * @param verbosity the verbosity of the explanation
+     * @param timeoutMS the timeout in milliseconds for the explain operation
+     * @return the execution plan
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.2
+     */
+    Document explain(ExplainVerbosity verbosity, long timeoutMS);
+
+    /**
+     * Explain the execution plan for this operation with the server's default verbosity level and specified timeoutMS
+     *
+     * @param <E> the type of the document class
+     * @param explainResultClass the document class to decode into
+     * @param timeoutMS the timeout in milliseconds for the explain operation
+     * @return the execution plan
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.2
+     */
+    <E> E explain(Class<E> explainResultClass, long timeoutMS);
+
+    /**
+     * Explain the execution plan for this operation with the given verbosity level and specified timeoutMS
+     *
+     * @param <E> the type of the document class
+     * @param explainResultClass the document class to decode into
+     * @param verbosity the verbosity of the explanation
+     * @param timeoutMS the timeout in milliseconds for the explain operation
+     * @return the execution plan
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.2
+     */
+    <E> E explain(Class<E> explainResultClass, ExplainVerbosity verbosity, long timeoutMS);
 }

@@ -38,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements FindPublisher<T> {
     private final FindOptions findOptions;
@@ -213,12 +214,45 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
         return publishExplain(explainResultClass, notNull("verbosity", verbosity));
     }
 
+    @Override
+    public Publisher<Document> explain(final long timeoutMS) {
+        return publishExplainWithTimeout(Document.class, null, timeoutMS);
+    }
+
+    @Override
+    public Publisher<Document> explain(final ExplainVerbosity verbosity, final long timeoutMS) {
+        return publishExplainWithTimeout(Document.class, notNull("verbosity", verbosity), timeoutMS);
+    }
+
+    @Override
+    public <E> Publisher<E> explain(final Class<E> explainResultClass, final long timeoutMS) {
+        return publishExplainWithTimeout(explainResultClass, null, timeoutMS);
+    }
+
+    @Override
+    public <E> Publisher<E> explain(final Class<E> explainResultClass, final ExplainVerbosity verbosity, final long timeoutMS) {
+        return publishExplainWithTimeout(explainResultClass, notNull("verbosity", verbosity), timeoutMS);
+    }
+
     private <E> Publisher<E> publishExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
         notNull("explainDocumentClass", explainResultClass);
         return getMongoOperationPublisher().createReadOperationMono(
                 getTimeoutSettings(),
                 () -> asAsyncReadOperation(0)
-                        .asAsyncExplainableOperation(verbosity, getCodecRegistry().get(explainResultClass)), getClientSession());
+                        .asAsyncExplainableOperation(verbosity, getMongoOperationPublisher().getCodecRegistry().get(explainResultClass)),
+                getClientSession());
+    }
+
+    private <E> Publisher<E> publishExplainWithTimeout(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity, final long timeoutMS) {
+        notNull("explainDocumentClass", explainResultClass);
+        // Create timeout settings function with the specified timeoutMS
+        Function<AsyncOperations<?>, TimeoutSettings> timeoutSettingsFunction = (asyncOperations) ->
+                asyncOperations.getTimeoutSettings().withTimeout(timeoutMS, MILLISECONDS);
+        return getMongoOperationPublisher().createReadOperationMono(
+                timeoutSettingsFunction,
+                () -> asAsyncReadOperation(0)
+                        .asAsyncExplainableOperation(verbosity, getMongoOperationPublisher().getCodecRegistry().get(explainResultClass)),
+                getClientSession());
     }
 
     @Override

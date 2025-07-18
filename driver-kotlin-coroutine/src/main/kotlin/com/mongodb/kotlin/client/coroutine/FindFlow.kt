@@ -302,5 +302,51 @@ public class FindFlow<T : Any>(private val wrapped: FindPublisher<T>) : Flow<T> 
     public suspend inline fun <reified R : Any> explain(verbosity: ExplainVerbosity? = null): R =
         explain(R::class.java, verbosity)
 
+    /**
+     * Explain the execution plan for this operation with the given timeout duration.
+     *
+     * @param R the type of the document class.
+     * @param timeoutMS the timeout in milliseconds for the explain operation.
+     * @return the execution plan.
+     * @see [Explain command](https://www.mongodb.com/docs/manual/reference/command/explain/)
+     */
+    public suspend inline fun <reified R : Any> explain(timeoutMS: Long): R = explain(R::class.java, timeoutMS)
+
+    /**
+     * Explain the execution plan for this operation with the given verbosity level and timeout duration.
+     *
+     * @param verbosity the verbosity of the explanation.
+     * @param timeoutMS the timeout in milliseconds for the explain operation.
+     * @return the execution plan.
+     * @see [Explain command](https://www.mongodb.com/docs/manual/reference/command/explain/)
+     */
+    public suspend inline fun <reified R : Any> explain(verbosity: ExplainVerbosity, timeoutMS: Long): R =
+        explain(R::class.java, verbosity, timeoutMS)
+
+    /**
+     * Explain the execution plan for this operation with the default verbosity level and the given timeout duration.
+     *
+     * @param R the type of the document class.
+     * @param resultClass the document class to decode into.
+     * @param timeoutMS the timeout in milliseconds for the explain operation.
+     * @return the execution plan.
+     * @see [Explain command](https://www.mongodb.com/docs/manual/reference/command/explain/)
+     */
+    public suspend fun <R : Any> explain(resultClass: Class<R>, timeoutMS: Long): R =
+        wrapped.explain(resultClass, timeoutMS).awaitSingle()
+
+    /**
+     * Explain the execution plan for this operation.
+     *
+     * @param R the type of the document class.
+     * @param resultClass the document class to decode into.
+     * @param verbosity the verbosity of the explanation.
+     * @param timeoutMS the timeout in milliseconds for the explain operation.
+     * @return the execution plan.
+     * @see [Explain command](https://www.mongodb.com/docs/manual/reference/command/explain/)
+     */
+    public suspend fun <R : Any> explain(resultClass: Class<R>, verbosity: ExplainVerbosity, timeoutMS: Long): R =
+        wrapped.explain(resultClass, verbosity, timeoutMS).awaitSingle()
+
     public override suspend fun collect(collector: FlowCollector<T>): Unit = wrapped.asFlow().collect(collector)
 }

@@ -224,8 +224,8 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     }
 
     @Override
-    public <E> E explain(final Class<E> explainDocumentClass) {
-        return executeExplain(explainDocumentClass, null);
+    public <E> E explain(final Class<E> explainResultClass) {
+        return executeExplain(explainResultClass, null);
     }
 
     @Override
@@ -233,6 +233,25 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
         return executeExplain(explainResultClass, notNull("verbosity", verbosity));
     }
 
+    @Override
+    public Document explain(final long timeoutMS) {
+        return executeExplainWithTimeout(Document.class, null, timeoutMS);
+    }
+
+    @Override
+    public Document explain(final ExplainVerbosity verbosity, final long timeoutMS) {
+        return executeExplainWithTimeout(Document.class, notNull("verbosity", verbosity), timeoutMS);
+    }
+
+    @Override
+    public <E> E explain(final Class<E> explainResultClass, final long timeoutMS) {
+        return executeExplainWithTimeout(explainResultClass, null, timeoutMS);
+    }
+
+    @Override
+    public <E> E explain(final Class<E> explainResultClass, final ExplainVerbosity verbosity, final long timeoutMS) {
+        return executeExplainWithTimeout(explainResultClass, notNull("verbosity", verbosity), timeoutMS);
+    }
 
     protected OperationExecutor getExecutor() {
         return getExecutor(operations.createTimeoutSettings(findOptions));
@@ -244,8 +263,14 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
                 asReadOperation().asExplainableOperation(verbosity, codecRegistry.get(explainResultClass)), getReadPreference(), getReadConcern(), getClientSession());
     }
 
+    private <E> E executeExplainWithTimeout(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity, final long timeoutMS) {
+        notNull("explainDocumentClass", explainResultClass);
+        OperationExecutor timeoutExecutor =  getExecutor(operations.createTimeoutSettings(findOptions).withTimeout(timeoutMS, TimeUnit.MILLISECONDS));
+        return timeoutExecutor.execute(
+                asReadOperation().asExplainableOperation(verbosity, codecRegistry.get(explainResultClass)), getReadPreference(), getReadConcern(), getClientSession());
+    }
+
     public ExplainableReadOperation<BatchCursor<TResult>> asReadOperation() {
         return operations.find(filter, resultClass, findOptions);
     }
-
 }
