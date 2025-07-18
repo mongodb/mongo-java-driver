@@ -953,14 +953,13 @@ final class MqlExpression<T extends MqlValue>
                 .append("timezone", toBsonValue(cr, timezone))));
     }
 
-    @Override
     public MqlString asString(final MqlString timezone) {
-        Assertions.notNull("timezone", timezone);
-        return newMqlExpression((cr) -> astDoc("$dateToString", new BsonDocument()
-                .append("date", this.toBsonValue(cr))
-                .append("timezone", toBsonValue(cr, timezone))));
+        fail(); // intentionally not implemented, see DRIVERS-2620
     }
 
+    public MqlString asString() {
+        fail(); // intentionally not implemented, see DRIVERS-2620
+    }
 
     @Override
     public MqlDate parseDate(final MqlString timezone, final MqlString format) {
