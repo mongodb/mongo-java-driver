@@ -43,6 +43,7 @@ include(":driver-scala")
 
 include(":driver-benchmarks")
 include(":driver-lambda")
+include(":driver-workload-executor")
 if (providers.gradleProperty("includeGraalvm").isPresent) {
     include(":graalvm-native-image-app")
 }

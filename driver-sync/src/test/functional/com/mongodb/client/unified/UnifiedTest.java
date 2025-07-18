@@ -728,6 +728,10 @@ public abstract class UnifiedTest {
         }
     }
 
+    protected boolean terminateLoop() {
+        return true;
+    }
+
     private OperationResult executeCreateEntities(final BsonDocument operation) {
         entities.init(operation.getDocument("arguments").getArray("entities"),
                 startingClusterTime,

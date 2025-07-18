@@ -112,6 +112,7 @@ public final class Entities {
     private final Map<String, Long> iterationCounts = new HashMap<>();
     private final Map<String, BsonArray> errorDocumentsMap = new HashMap<>();
     private final Map<String, BsonArray> failureDocumentsMap = new HashMap<>();
+    private final Map<String, List<BsonDocument>> eventsMap = new HashMap<>();
 
     public boolean hasSuccessCount(final String id) {
         return successCounts.containsKey(id);
@@ -159,6 +160,14 @@ public final class Entities {
 
     public BsonArray getFailureDocuments(final String id) {
         return getEntity(id, failureDocumentsMap, "failureDocuments");
+    }
+
+    public boolean hasEvents(final String id) {
+        return eventsMap.containsKey(id);
+    }
+
+    public List<BsonDocument> getEvents(final String id) {
+        return getEntity(id, eventsMap, "events");
     }
 
     public void addResult(final String id, final BsonValue result) {
