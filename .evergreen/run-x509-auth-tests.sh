@@ -28,17 +28,17 @@ provision_keystores () {
 
   # Build the pkcs12 (keystore). We include the leaf-only certificate (with public key) and private key in the keystore,
   # assuming the signed certificate is already trusted by the Atlas as issuer is MongoDB dev CA.
- echo "Creating PKCS12 keystore from ca_and_pk.pem"
- openssl pkcs12 -export \
-   -in ca_and_pk.pem \
-   -out existing_user.p12 \
-   -password pass:test
+  echo "Creating PKCS12 keystore from ca_and_pk.pem"
+  openssl pkcs12 -export \
+    -in ca_and_pk.pem \
+    -out existing_user.p12 \
+    -password pass:test
 
- echo "Creating PKCS12 keystore from ca_and_pk_no_user.pem"
- openssl pkcs12 -export \
-   -in ca_and_pk_no_user.pem \
-   -out non_existing_user.p12 \
-   -password pass:test
+  echo "Creating PKCS12 keystore from ca_and_pk_no_user.pem"
+  openssl pkcs12 -export \
+    -in ca_and_pk_no_user.pem \
+    -out non_existing_user.p12 \
+    -password pass:test
 }
 
 ############################################
