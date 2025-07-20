@@ -28,6 +28,7 @@ import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -242,9 +243,14 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     }
 
     private CommandReadTransformer<BsonDocument, CommandBatchCursor<T>> transformer() {
-        return (result, source, connection) ->
-                new CommandBatchCursor<>(getTimeoutMode(), result, batchSize != null ? batchSize : 0,
-                        getMaxTimeForCursor(source.getOperationContext().getTimeoutContext()), decoder, comment, source, connection);
+        return (result, source, connection) -> {
+            OperationContext operationContext = source.getOperationContext();
+
+            // register cursor id with the operation context, so 'getMore' commands can be folded under the 'find' operation
+            TracingManager.linkCursorWithOperation(result, operationContext);
+            return new CommandBatchCursor<>(getTimeoutMode(), result, batchSize != null ? batchSize : 0,
+                    getMaxTimeForCursor(source.getOperationContext().getTimeoutContext()), decoder, comment, source, connection);
+        };
     }
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {

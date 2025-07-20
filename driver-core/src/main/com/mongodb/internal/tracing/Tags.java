@@ -30,7 +30,6 @@ public final class Tags {
     public static final String NAMESPACE = "db.namespace";
     public static final String COLLECTION = "db.collection.name";
     public static final String QUERY_SUMMARY = "db.query.summary";
-    public static final String QUERY_OPCODE = "db.query.opcode";
     public static final String QUERY_TEXT = "db.query.text";
     public static final String CURSOR_ID = "db.mongodb.cursor_id";
     public static final String SERVER_ADDRESS = "server.address";

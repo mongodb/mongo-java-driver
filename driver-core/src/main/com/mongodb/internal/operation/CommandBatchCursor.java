@@ -173,7 +173,9 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
     @Override
     public void close() {
-        operationContext.getTracingManager().removeCursorParentContext(cursorId);
+        if (cursorId != -1) {
+            operationContext.getTracingManager().removeCursorParentContext(cursorId);
+        }
         resourceManager.close();
     }
 

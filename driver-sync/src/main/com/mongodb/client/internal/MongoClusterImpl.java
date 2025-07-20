@@ -427,7 +427,7 @@ final class MongoClusterImpl implements MongoCluster {
                 if (actualClientSession.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
                     throw new MongoClientException("Read preference in a transaction must be primary");
                 }
-                return operation.execute(binding);
+                return TracingManager.runWithTracing(() -> operation.execute(binding), binding.getOperationContext());
             } catch (MongoException e) {
                 MongoException exceptionToHandle = OperationHelper.unwrap(e);
                 labelException(actualClientSession, exceptionToHandle);
@@ -449,7 +449,7 @@ final class MongoClusterImpl implements MongoCluster {
             WriteBinding binding = getWriteBinding(readConcern, actualClientSession, session == null, operation.getCommandName());
 
             try {
-                return operation.execute(binding);
+                return TracingManager.runWithTracing(() -> operation.execute(binding), binding.getOperationContext());
             } catch (MongoException e) {
                 MongoException exceptionToHandle = OperationHelper.unwrap(e);
                 labelException(actualClientSession, exceptionToHandle);

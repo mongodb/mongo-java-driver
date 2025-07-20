@@ -100,7 +100,6 @@ import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedE
 import static com.mongodb.internal.tracing.Tags.CLIENT_CONNECTION_ID;
 import static com.mongodb.internal.tracing.Tags.CURSOR_ID;
 import static com.mongodb.internal.tracing.Tags.NAMESPACE;
-import static com.mongodb.internal.tracing.Tags.QUERY_OPCODE;
 import static com.mongodb.internal.tracing.Tags.QUERY_SUMMARY;
 import static com.mongodb.internal.tracing.Tags.QUERY_TEXT;
 import static com.mongodb.internal.tracing.Tags.SERVER_ADDRESS;
@@ -1038,8 +1037,7 @@ public class InternalStreamConnection implements InternalConnection {
                 .addSpan("Command " + commandName, parentContext)
                 .tag(SYSTEM, "mongodb")
                 .tag(NAMESPACE, message.getNamespace().getDatabaseName())
-                .tag(QUERY_SUMMARY, command.toString())
-                .tag(QUERY_OPCODE, String.valueOf(message.getOpCode()));
+                .tag(QUERY_SUMMARY, command.toString());
 
         if (cursorId != -1) {
             span.tag(CURSOR_ID, cursorId);

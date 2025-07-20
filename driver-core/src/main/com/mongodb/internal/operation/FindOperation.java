@@ -62,7 +62,6 @@ import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTran
 import static com.mongodb.internal.operation.SyncOperationHelper.createReadCommandAndExecute;
 import static com.mongodb.internal.operation.SyncOperationHelper.decorateReadWithRetries;
 import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndConnection;
-import static com.mongodb.internal.tracing.TracingManager.runWithTracing;
 
 /**
  * An operation that queries a collection using the provided criteria.
@@ -298,14 +297,13 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         if (invalidTimeoutModeException != null) {
             throw invalidTimeoutModeException;
         }
-        OperationContext operationContext = binding.getOperationContext();
 
-        RetryState retryState = initialRetryState(retryReads,  operationContext.getTimeoutContext());
-        Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, operationContext, () ->
+        RetryState retryState = initialRetryState(retryReads,  binding.getOperationContext().getTimeoutContext());
+        Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, binding.getOperationContext(), () ->
             withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
-                retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), operationContext));
+                retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getOperationContext()));
                 try {
-                    return createReadCommandAndExecute(retryState, operationContext, source, namespace.getDatabaseName(),
+                    return createReadCommandAndExecute(retryState, binding.getOperationContext(), source, namespace.getDatabaseName(),
                                                        getCommandCreator(), CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
                                                        transformer(), connection);
                 } catch (MongoCommandException e) {
@@ -313,7 +311,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                 }
             })
         );
-        return runWithTracing(read, operationContext, "find", namespace);
+        return read.get();
     }
 
     @Override

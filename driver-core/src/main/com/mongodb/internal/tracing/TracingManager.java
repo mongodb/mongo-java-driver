@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.tracing;
 
-import com.mongodb.MongoNamespace;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import com.mongodb.session.ServerSession;
@@ -26,10 +25,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-import static com.mongodb.internal.tracing.Tags.COLLECTION;
+import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.tracing.Tags.CURSOR_ID;
-import static com.mongodb.internal.tracing.Tags.NAMESPACE;
 import static com.mongodb.internal.tracing.Tags.SYSTEM;
+import static java.lang.String.format;
 
 /**
  * Manages tracing spans for MongoDB driver activities.
@@ -106,6 +105,7 @@ public class TracingManager {
      */
     public Span addTransactionSpan(final ServerSession session) {
         Span span = tracer.nextSpan("transaction", parentContext);
+        span.tag(SYSTEM, "mongodb");
         transactions.put(getTransactionId(session), span.context());
         return span;
     }
@@ -176,16 +176,14 @@ public class TracingManager {
      *
      * @param supplier         The supplier to execute.
      * @param operationContext The operation context.
-     * @param opName           The name of the operation.
-     * @param namespace        The MongoDB namespace, or null if none exists.
      * @param <T>              The type of the result.
      * @return The result of the supplier.
      */
-    public static <T> T runWithTracing(final Supplier<T> supplier, final OperationContext operationContext, final String opName,
-            @Nullable final MongoNamespace namespace) {
+    public static <T> T runWithTracing(final Supplier<T> supplier, final OperationContext operationContext) {
         TracingManager tracingManager = operationContext.getTracingManager();
-        Span tracingSpan = tracingManager.addOperationSpan(buildSpanName(opName, namespace), operationContext);
-        addNamespaceTags(tracingSpan, namespace);
+        String opName = operationContext.getOperationName();
+        Span tracingSpan = tracingManager.addOperationSpan(opName == null ? "operation" : opName, operationContext);
+        tracingSpan.tag(SYSTEM, "mongodb");
 
         try {
             return supplier.get();
@@ -207,7 +205,9 @@ public class TracingManager {
      */
     public static void linkCursorWithOperation(final BsonDocument queryResult, final OperationContext operationContext) {
         long cursorId = queryResult.getDocument("cursor").getInt64("id").longValue();
-        operationContext.getTracingManager().addCursorParentContext(cursorId, operationContext.getId());
+        if (cursorId != 0) { // cursorId == 0 indicates no cursor is needed, all results are in the same first batch
+            operationContext.getTracingManager().addCursorParentContext(cursorId, operationContext.getId());
+        }
     }
 
     /**
@@ -244,36 +244,13 @@ public class TracingManager {
      * @param operationId The ID of the operation.
      */
     private void addCursorParentContext(final long cursorId, final long operationId) {
-        if (!operations.containsKey(operationId)) {
-            throw new IllegalArgumentException("Operation ID " + operationId + " does not exist.");
-        }
-        Span operationSpan = operations.get(operationId);
-        operationSpan.tag(CURSOR_ID, cursorId);
-        cursors.put(cursorId, operationSpan.context());
-    }
-
-    /**
-     * Builds a span name based on the operation name and namespace.
-     *
-     * @param opName    The name of the operation.
-     * @param namespace The MongoDB namespace, or null if none exists.
-     * @return The span name.
-     */
-    private static String buildSpanName(final String opName, @Nullable final MongoNamespace namespace) {
-        return namespace != null ? opName + " " + namespace.getFullName() : opName;
-    }
-
-    /**
-     * Adds namespace-related tags to the specified span.
-     *
-     * @param span      The span to add tags to.
-     * @param namespace The MongoDB namespace, or null if none exists.
-     */
-    private static void addNamespaceTags(final Span span, @Nullable final MongoNamespace namespace) {
-        span.tag(SYSTEM, "mongodb");
-        if (namespace != null) {
-            span.tag(NAMESPACE, namespace.getDatabaseName());
-            span.tag(COLLECTION, namespace.getCollectionName());
+        if (operations.containsKey(operationId)) {
+            Span operationSpan = operations.get(operationId);
+            operationSpan.tag(CURSOR_ID, cursorId);
+            cursors.put(cursorId, operationSpan.context());
+        } else {
+            // log warning message
+            LOGGER.warn(format("Trying to link cursor %s with non-existent operation %s", cursorId, operationId));
         }
     }
 

@@ -264,7 +264,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                             MongoException exceptionToHandle = OperationHelper.unwrap((MongoException) e);
                             if (exceptionToHandle.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)
                                     && ClientSessionClock.INSTANCE.now() - startTime < MAX_RETRY_TIME_LIMIT_MS) {
-                                spanFinalizing();
+                                spanFinalizing(false);
                                 continue;
                             }
                         }
@@ -285,7 +285,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                                             && e.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
                                         continue;
                                     } else if (e.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
-                                        spanFinalizing();
+                                        spanFinalizing(true);
                                         continue outer;
                                     }
                                 }
@@ -296,7 +296,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     return retVal;
                 }
         } finally {
-            spanFinalizing();
+            spanFinalizing(true);
         }
     }
 
@@ -351,13 +351,13 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
             } else {
                 // report error as Span error
                 transactionSpan.error(e);
+                tracingManager.cleanupTransactionContext(this.getServerSession());
             }
 
             if (!isConvenientTransaction) {
                 transactionSpan.end();
                 transactionSpan = null;
             }
-            tracingManager.cleanupTransactionContext(this.getServerSession());
         }
     }
 
@@ -374,15 +374,19 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         }
     }
 
-    private void spanFinalizing() {
+    private void spanFinalizing(final boolean cleanupTransactionContext) {
         if (transactionSpan != null) {
             if (lastSpanEvent != null) {
                 transactionSpan.error(lastSpanEvent);
             }
             transactionSpan.end();
         }
-        isConvenientTransaction = false;
         transactionSpan = null;
         lastSpanEvent = null;
+        // Don't clean-up transaction context if we're still retrying (we want the retries to fold under the original transaction span)
+        if (cleanupTransactionContext) {
+            tracingManager.cleanupTransactionContext(this.getServerSession());
+            isConvenientTransaction = false;
+        }
     }
 }
