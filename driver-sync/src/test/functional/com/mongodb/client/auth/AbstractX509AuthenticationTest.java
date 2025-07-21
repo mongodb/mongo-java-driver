@@ -146,10 +146,6 @@ public abstract class AbstractX509AuthenticationTest {
         return keyManagerFactory;
     }
 
-    private static boolean isX509TestsEnabled() {
-        return Boolean.parseBoolean(System.getProperty("org.mongodb.test.x509.auth.enabled"));
-    }
-
     private static String getKeystoreLocation() {
         return System.getProperty("org.mongodb.test.x509.auth.keystore.location");
     }
@@ -178,5 +174,9 @@ public abstract class AbstractX509AuthenticationTest {
                 return ConditionEvaluationResult.disabled("Test is disabled because x509 auth configuration is missing");
             }
         }
+    }
+
+    private static boolean isX509TestsEnabled() {
+        return Boolean.parseBoolean(System.getProperty("org.mongodb.test.x509.auth.enabled"));
     }
 }
