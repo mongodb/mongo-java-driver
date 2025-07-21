@@ -51,6 +51,9 @@ import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.time.Timeout;
+import com.mongodb.internal.tracing.Span;
+import com.mongodb.internal.tracing.TraceContext;
+import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
@@ -94,6 +97,18 @@ import static com.mongodb.internal.connection.ProtocolHelper.getSnapshotTimestam
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
 import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
 import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedException;
+import static com.mongodb.internal.tracing.Tags.CLIENT_CONNECTION_ID;
+import static com.mongodb.internal.tracing.Tags.CURSOR_ID;
+import static com.mongodb.internal.tracing.Tags.NAMESPACE;
+import static com.mongodb.internal.tracing.Tags.QUERY_SUMMARY;
+import static com.mongodb.internal.tracing.Tags.QUERY_TEXT;
+import static com.mongodb.internal.tracing.Tags.SERVER_ADDRESS;
+import static com.mongodb.internal.tracing.Tags.SERVER_CONNECTION_ID;
+import static com.mongodb.internal.tracing.Tags.SERVER_PORT;
+import static com.mongodb.internal.tracing.Tags.SERVER_TYPE;
+import static com.mongodb.internal.tracing.Tags.SESSION_ID;
+import static com.mongodb.internal.tracing.Tags.SYSTEM;
+import static com.mongodb.internal.tracing.Tags.TRANSACTION_NUMBER;
 import static java.util.Arrays.asList;
 
 /**
@@ -376,7 +391,7 @@ public class InternalStreamConnection implements InternalConnection {
                 message, decoder, operationContext);
         try {
             return sendAndReceiveInternal.get();
-        } catch (MongoCommandException e) {
+        } catch (Throwable e) {
             if (reauthenticationIsTriggered(e)) {
                 return reauthenticateAndRetry(sendAndReceiveInternal, operationContext);
             }
@@ -391,9 +406,8 @@ public class InternalStreamConnection implements InternalConnection {
 
         AsyncSupplier<T> sendAndReceiveAsyncInternal = c -> sendAndReceiveAsyncInternal(
                 message, decoder, operationContext, c);
-        beginAsync().<T>thenSupply(c -> {
-            sendAndReceiveAsyncInternal.getAsync(c);
-        }).onErrorIf(e -> reauthenticationIsTriggered(e), (t, c) -> {
+
+        beginAsync().thenSupply(sendAndReceiveAsyncInternal::getAsync).onErrorIf(this::reauthenticationIsTriggered, (t, c) -> {
             reauthenticateAndRetryAsync(sendAndReceiveAsyncInternal, operationContext, c);
         }).finish(callback);
     }
@@ -432,15 +446,31 @@ public class InternalStreamConnection implements InternalConnection {
     private <T> T sendAndReceiveInternal(final CommandMessage message, final Decoder<T> decoder,
             final OperationContext operationContext) {
         CommandEventSender commandEventSender;
+        Span tracingSpan = createTracingSpan(message, operationContext);
+
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
             message.encode(bsonOutput, operationContext);
-            commandEventSender = createCommandEventSender(message, bsonOutput, operationContext);
+            BsonDocument commandDocument = message.getCommandDocument(bsonOutput);
+
+            commandEventSender = createCommandEventSender(message, commandDocument, operationContext);
             commandEventSender.sendStartedEvent();
+
+            if (tracingSpan != null && operationContext.getTracingManager().isCommandPayloadEnabled()) {
+                tracingSpan.tag(QUERY_TEXT, commandDocument.toJson());
+            }
+
             try {
                 sendCommandMessage(message, bsonOutput, operationContext);
             } catch (Exception e) {
+                if (tracingSpan != null) {
+                    tracingSpan.error(e);
+                }
                 commandEventSender.sendFailedEvent(e);
                 throw e;
+            } finally {
+                if (tracingSpan != null) {
+                    tracingSpan.end();
+                }
             }
         }
 
@@ -553,7 +583,8 @@ public class InternalStreamConnection implements InternalConnection {
 
         try {
             message.encode(bsonOutput, operationContext);
-            CommandEventSender commandEventSender = createCommandEventSender(message, bsonOutput, operationContext);
+            BsonDocument commandDocument = message.getCommandDocument(bsonOutput);
+            CommandEventSender commandEventSender = createCommandEventSender(message, commandDocument, operationContext);
             commandEventSender.sendStartedEvent();
             Compressor localSendCompressor = sendCompressor;
             if (localSendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
@@ -952,7 +983,7 @@ public class InternalStreamConnection implements InternalConnection {
 
     private static final StructuredLogger COMMAND_PROTOCOL_LOGGER = new StructuredLogger("protocol.command");
 
-    private CommandEventSender createCommandEventSender(final CommandMessage message, final ByteBufferBsonOutput bsonOutput,
+    private CommandEventSender createCommandEventSender(final CommandMessage message, final BsonDocument commandDocument,
                                                         final OperationContext operationContext) {
         boolean listensOrLogs = commandListener != null || COMMAND_PROTOCOL_LOGGER.isRequired(DEBUG, getClusterId());
         if (!recordEverything && (isMonitoringConnection || !opened() || !authenticated.get() || !listensOrLogs)) {
@@ -960,11 +991,79 @@ public class InternalStreamConnection implements InternalConnection {
         }
         return new LoggingCommandEventSender(
                 SECURITY_SENSITIVE_COMMANDS, SECURITY_SENSITIVE_HELLO_COMMANDS, description, commandListener,
-                operationContext, message, bsonOutput,
+                operationContext, message, commandDocument,
                 COMMAND_PROTOCOL_LOGGER, loggerSettings);
     }
 
     private ClusterId getClusterId() {
         return description.getConnectionId().getServerId().getClusterId();
+    }
+
+    /**
+     * Creates a tracing span for the given command message.
+     * <p>
+     * The span is only created if tracing is enabled and the command is not security-sensitive.
+     * It attaches various tags to the span, such as database system, namespace, query summary, opcode,
+     * server address, port, server type, client and server connection IDs, and, if applicable,
+     * transaction number and session ID. For cursor fetching commands, the parent context is retrieved using the cursor ID.
+     * If command payload tracing is enabled, the command document is also attached as a tag.
+     *
+     * @param message          the command message to trace
+     * @param operationContext the operation context containing tracing and session information
+     * @return the created {@link Span}, or {@code null} if tracing is not enabled or the command is security-sensitive
+     */
+    @Nullable
+    private Span createTracingSpan(final CommandMessage message, final OperationContext operationContext) {
+        TracingManager tracingManager = operationContext.getTracingManager();
+        BsonDocument command = message.getCommand();
+        String commandName = command.getFirstKey();
+        if (!tracingManager.isEnabled()
+                || SECURITY_SENSITIVE_COMMANDS.contains(commandName)
+                || SECURITY_SENSITIVE_HELLO_COMMANDS.contains(commandName)) {
+            return null;
+        }
+
+        // Retrieving the appropriate parent context for the span.
+        TraceContext parentContext;
+        long cursorId = -1;
+        if (command.containsKey("getMore")) {
+            cursorId = command.getInt64("getMore").longValue();
+            parentContext = tracingManager.getCursorParentContext(cursorId);
+        } else {
+            parentContext = tracingManager.getParentContext(operationContext.getId());
+        }
+
+        Span span = tracingManager
+                .addSpan("Command " + commandName, parentContext)
+                .tag(SYSTEM, "mongodb")
+                .tag(NAMESPACE, message.getNamespace().getDatabaseName())
+                .tag(QUERY_SUMMARY, command.toString());
+
+        if (cursorId != -1) {
+            span.tag(CURSOR_ID, cursorId);
+        }
+
+        tagServerAndConnectionInfo(span, message);
+        tagSessionAndTransactionInfo(span, operationContext);
+
+        return span;
+    }
+
+    private void tagServerAndConnectionInfo(final Span span, final CommandMessage message) {
+        span.tag(SERVER_ADDRESS, serverId.getAddress().getHost())
+                .tag(SERVER_PORT, String.valueOf(serverId.getAddress().getPort()))
+                .tag(SERVER_TYPE, message.getSettings().getServerType().name())
+                .tag(CLIENT_CONNECTION_ID, this.description.getConnectionId().toString())
+                .tag(SERVER_CONNECTION_ID, String.valueOf(this.description.getConnectionId().getServerValue()));
+    }
+
+    private void tagSessionAndTransactionInfo(final Span span, final OperationContext operationContext) {
+        SessionContext sessionContext = operationContext.getSessionContext();
+        if (sessionContext.hasSession() && !sessionContext.isImplicitSession()) {
+            span.tag(TRANSACTION_NUMBER, String.valueOf(sessionContext.getTransactionNumber()))
+                    .tag(SESSION_ID, String.valueOf(sessionContext.getSessionId()
+                            .get(sessionContext.getSessionId().getFirstKey())
+                            .asBinary().asUuid()));
+        }
     }
 }

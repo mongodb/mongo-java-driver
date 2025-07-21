@@ -36,6 +36,9 @@ dependencies {
 
     // Encryption testing
     integrationTestImplementation(project(path = ":mongodb-crypt", configuration = "default"))
+
+    // Micrometer dependency for tracing
+    api(libs.micrometer)
 }
 
 configureMavenPublication {
