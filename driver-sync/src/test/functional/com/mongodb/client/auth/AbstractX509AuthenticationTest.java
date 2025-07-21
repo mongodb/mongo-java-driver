@@ -156,7 +156,7 @@ public abstract class AbstractX509AuthenticationTest {
 
     /**
      * The connection string is sourced from an environment variable populated from Secret Storage.
-     * We verify it still requires X.509 authentication before running these tests to ensure correctness.
+     * We verify it still requires X.509 authentication before running these tests to ensure test invariants.
      */
     private static void verifyX509AuthenticationIsRequired(final MongoClientSettings.Builder mongoClientSettingsBuilder) {
         com.mongodb.assertions.Assertions.assertTrue(
@@ -164,11 +164,11 @@ public abstract class AbstractX509AuthenticationTest {
                         .getAuthenticationMechanism() == MONGODB_X509);
     }
 
-    /*
+    /**
        This condition allows to skip initialization of method sources and test execution.
         - @EnableIf on the class, assumeTrue in the constructor - do not block method source initialization.
         - assumeTrue in the static block - fails the test.
-     */
+     **/
     public static class X509AuthenticationPropertyCondition implements ExecutionCondition {
         @Override
         public ConditionEvaluationResult evaluateExecutionCondition(final ExtensionContext context) {
