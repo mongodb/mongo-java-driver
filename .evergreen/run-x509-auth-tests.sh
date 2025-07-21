@@ -50,7 +50,7 @@ echo "Running X509 Authentication tests with Java ${JAVA_VERSION}"
 provision_keystores
 
 ./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} --info --continue \
- -Dorg.mongodb.test.x509.auth=true \
+ -Dorg.mongodb.test.x509.auth.enabled=true \
  -Dorg.mongodb.test.x509.auth.keystore.location="$(pwd)" \
  driver-sync:test --tests X509AuthenticationTest \
  driver-reactive-streams:test --tests X509AuthenticationTest

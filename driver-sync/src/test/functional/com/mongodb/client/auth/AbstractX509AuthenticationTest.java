@@ -24,6 +24,10 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.connection.NettyTransportSettings;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
+import org.junit.jupiter.api.extension.ConditionEvaluationResult;
+import org.junit.jupiter.api.extension.ExecutionCondition;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -44,17 +48,12 @@ import static com.mongodb.AuthenticationMechanism.MONGODB_X509;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+@ExtendWith(AbstractX509AuthenticationTest.X509AuthenticationPropertyCondition.class)
 public abstract class AbstractX509AuthenticationTest {
 
     private static final String KEYSTORE_PASSWORD = "test";
-
     protected abstract MongoClient createMongoClient(MongoClientSettings mongoClientSettings);
-
-    protected AbstractX509AuthenticationTest() {
-        assumeTrue(isX509TestsEnabled(), "X509 authentication tests are disabled");
-    }
 
     private static Stream<Arguments> shouldAuthenticateWithClientCertificate() throws Exception {
         String keystoreFileName = "existing_user.p12";
@@ -148,7 +147,7 @@ public abstract class AbstractX509AuthenticationTest {
     }
 
     private static boolean isX509TestsEnabled() {
-        return Boolean.parseBoolean(System.getProperty("org.mongodb.test.x509.auth"));
+        return Boolean.parseBoolean(System.getProperty("org.mongodb.test.x509.auth.enabled"));
     }
 
     private static String getKeystoreLocation() {
@@ -163,5 +162,21 @@ public abstract class AbstractX509AuthenticationTest {
         com.mongodb.assertions.Assertions.assertTrue(
                 com.mongodb.assertions.Assertions.assertNotNull(mongoClientSettingsBuilder.build().getCredential())
                         .getAuthenticationMechanism() == MONGODB_X509);
+    }
+
+    /*
+       This condition allows to skip initialization of method sources and test execution.
+        - @EnableIf on the class, assumeTrue in the constructor - do not block method source initialization.
+        - assumeTrue in the static block - fails the test.
+     */
+    public static class X509AuthenticationPropertyCondition implements ExecutionCondition {
+        @Override
+        public ConditionEvaluationResult evaluateExecutionCondition(final ExtensionContext context) {
+            if (isX509TestsEnabled()) {
+                return ConditionEvaluationResult.enabled("Test is enabled because x509 auth configuration exists");
+            } else {
+                return ConditionEvaluationResult.disabled("Test is disabled because x509 auth configuration is missing");
+            }
+        }
     }
 }
