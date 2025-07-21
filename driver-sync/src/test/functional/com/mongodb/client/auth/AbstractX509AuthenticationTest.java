@@ -155,7 +155,7 @@ public abstract class AbstractX509AuthenticationTest {
     }
 
     /**
-     * The connection string is sourced from an environment variable (Secret Storage).
+     * The connection string is sourced from an environment variable populated from Secret Storage.
      * We verify it still requires X.509 authentication before running these tests to ensure correctness.
      */
     private static void verifyX509AuthenticationIsRequired(final MongoClientSettings.Builder mongoClientSettingsBuilder) {
