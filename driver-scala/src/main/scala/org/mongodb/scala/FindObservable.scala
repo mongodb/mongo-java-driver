@@ -383,5 +383,36 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   )(implicit e: ExplainResult DefaultsTo Document, ct: ClassTag[ExplainResult]): SingleObservable[ExplainResult] =
     wrapped.explain[ExplainResult](ct, verbosity)
 
+  /**
+   * Explain the execution plan for this operation with the server's default verbosity level
+   *
+   * @tparam ExplainResult The type of the result
+   * @param timeoutMS the timeout in milliseconds
+   * @return the execution plan
+   * @since 5.6
+   * @note Requires MongoDB 3.2 or greater
+   */
+  def explain[ExplainResult](timeoutMS: Long)(
+      implicit e: ExplainResult DefaultsTo Document,
+      ct: ClassTag[ExplainResult]
+  ): SingleObservable[ExplainResult] =
+    wrapped.explain[ExplainResult](ct, timeoutMS)
+
+  /**
+   * Explain the execution plan for this operation with the given verbosity level
+   *
+   * @tparam ExplainResult The type of the result
+   * @param verbosity the verbosity of the explanation
+   * @param timeoutMS the timeout in milliseconds
+   * @return the execution plan
+   * @since 5.6
+   * @note Requires MongoDB 3.2 or greater
+   */
+  def explain[ExplainResult](
+      verbosity: ExplainVerbosity,
+      timeoutMS: Long
+  )(implicit e: ExplainResult DefaultsTo Document, ct: ClassTag[ExplainResult]): SingleObservable[ExplainResult] =
+    wrapped.explain[ExplainResult](ct, verbosity, timeoutMS)
+
   override def subscribe(observer: Observer[_ >: TResult]): Unit = wrapped.subscribe(observer)
 }

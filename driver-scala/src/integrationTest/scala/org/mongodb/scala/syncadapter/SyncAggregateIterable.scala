@@ -17,11 +17,10 @@ package org.mongodb.scala.syncadapter
 
 import com.mongodb.ExplainVerbosity
 import com.mongodb.client.AggregateIterable
-import org.mongodb.scala.TimeoutMode
 import com.mongodb.client.model.Collation
 import org.bson.conversions.Bson
 import org.bson.{ BsonValue, Document }
-import org.mongodb.scala.AggregateObservable
+import org.mongodb.scala.{ AggregateObservable, TimeoutMode }
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 
 import java.util.concurrent.TimeUnit
@@ -108,4 +107,21 @@ case class SyncAggregateIterable[T](wrapped: AggregateObservable[T])
       .explain[E](verbosity)(DefaultsTo.overrideDefault[E, org.mongodb.scala.Document], ClassTag(explainResultClass))
       .toFuture()
       .get()
+
+  override def explain(timeoutMS: Long): Document = wrapped.explain(timeoutMS).toFuture().get()
+
+  override def explain(verbosity: ExplainVerbosity, timeoutMS: Long): Document =
+    wrapped.explain(verbosity, timeoutMS).toFuture().get()
+
+  override def explain[E](explainResultClass: Class[E], timeoutMS: Long): E =
+    wrapped.explain[E](timeoutMS)(
+      DefaultsTo.overrideDefault[E, org.mongodb.scala.Document],
+      ClassTag(explainResultClass)
+    ).toFuture().get()
+
+  override def explain[E](explainResultClass: Class[E], verbosity: ExplainVerbosity, timeoutMS: Long): E =
+    wrapped.explain[E](verbosity, timeoutMS)(
+      DefaultsTo.overrideDefault[E, org.mongodb.scala.Document],
+      ClassTag(explainResultClass)
+    ).toFuture().get()
 }

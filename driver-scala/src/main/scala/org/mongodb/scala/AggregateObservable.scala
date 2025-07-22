@@ -264,6 +264,37 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
     wrapped.explain[ExplainResult](ct, verbosity)
 
   /**
+   * Explain the execution plan for this operation with the server's default verbosity level
+   *
+   * @tparam ExplainResult The type of the result
+   * @param timeoutMS the timeout in milliseconds
+   * @return the execution plan
+   * @since 5.6
+   * @note Requires MongoDB 3.6 or greater
+   */
+  def explain[ExplainResult](timeoutMS: Long)(
+      implicit e: ExplainResult DefaultsTo Document,
+      ct: ClassTag[ExplainResult]
+  ): SingleObservable[ExplainResult] =
+    wrapped.explain[ExplainResult](ct, timeoutMS)
+
+  /**
+   * Explain the execution plan for this operation with the given verbosity level
+   *
+   * @tparam ExplainResult The type of the result
+   * @param verbosity the verbosity of the explanation
+   * @param timeoutMS the timeout in milliseconds
+   * @return the execution plan
+   * @since 5.6
+   * @note Requires MongoDB 3.6 or greater
+   */
+  def explain[ExplainResult](
+      verbosity: ExplainVerbosity,
+      timeoutMS: Long
+  )(implicit e: ExplainResult DefaultsTo Document, ct: ClassTag[ExplainResult]): SingleObservable[ExplainResult] =
+    wrapped.explain[ExplainResult](ct, verbosity, timeoutMS)
+
+  /**
    * Requests [[AggregateObservable]] to start streaming data according to the specified aggregation pipeline.
    *
    *  - If the aggregation pipeline ends with an `\$out` or `\$merge` stage,

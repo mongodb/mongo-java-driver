@@ -192,13 +192,25 @@ public abstract class AbstractExplainTest {
         // Reset command listener to capture only the explain command
         commandListener.reset();
 
+        client.getDatabase("admin")
+                .runCommand(BsonDocument.parse("{"
+                + "    configureFailPoint: \"failCommand\","
+                + "    mode: {"
+                + "        times: 1"
+                + "    },"
+                + "    data: {"
+                + "        failCommands: [\"explain\"],"
+                + "        blockConnection: true,"
+                + "        blockTimeMS: 100"
+                + "    }"
+                + "}"));
+
         // Run an explained find with the query predicate { name: 'john doe' }
         // Add a $where clause with JavaScript sleep to introduce delay that exceeds timeout
         // Use a short timeout (50ms) with a longer sleep (100ms) to trigger timeout
         FindIterable<Document> findIterable = collection.find(
                 Filters.and(
-                    Filters.eq("name", "john doe"),
-                    Filters.where("sleep(200) || true") // Sleep for 100ms to exceed the 50ms timeout
+                    Filters.eq("name", "john doe")
                 )
         );
 

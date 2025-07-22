@@ -159,4 +159,27 @@ case class SyncFindIterable[T](wrapped: FindObservable[T]) extends SyncMongoIter
       .explain[E](verbosity)(DefaultsTo.overrideDefault[E, org.mongodb.scala.Document], ClassTag(explainResultClass))
       .toFuture()
       .get()
+
+  override def explain(timeoutMS: Long): Document = wrapped.explain(timeoutMS).toFuture().get()
+
+  override def explain(verbosity: ExplainVerbosity, timeoutMS: Long): Document =
+    wrapped.explain(verbosity, timeoutMS).toFuture().get()
+
+  override def explain[E](explainResultClass: Class[E], timeoutMS: Long): E = {
+    wrapped.explain[E](timeoutMS)(
+      DefaultsTo.overrideDefault[E, org.mongodb.scala.Document],
+      ClassTag(explainResultClass)
+    )
+      .toFuture()
+      .get()
+  }
+
+  override def explain[E](explainResultClass: Class[E], verbosity: ExplainVerbosity, timeoutMS: Long): E = {
+    wrapped.explain[E](verbosity, timeoutMS)(
+      DefaultsTo.overrideDefault[E, org.mongodb.scala.Document],
+      ClassTag(explainResultClass)
+    )
+      .toFuture()
+      .get()
+  }
 }
