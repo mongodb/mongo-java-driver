@@ -226,7 +226,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     private <E> E executeExplainWithTimeout(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity, final long timeoutMS) {
         notNull("explainDocumentClass", explainResultClass);
-        OperationExecutor timeoutExecutor =  getExecutor(operations.createTimeoutSettings(maxTimeMS, maxAwaitTimeMS).withTimeout(timeoutMS, TimeUnit.MILLISECONDS));
+        OperationExecutor timeoutExecutor = getExecutor(operations.createTimeoutSettings(maxTimeMS, maxAwaitTimeMS).withTimeout(timeoutMS, TimeUnit.MILLISECONDS));
         return timeoutExecutor.execute(
                 asAggregateOperation().asExplainableOperation(verbosity, codecRegistry.get(explainResultClass)), getReadPreference(),
                 getReadConcern(), getClientSession());

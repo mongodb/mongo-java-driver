@@ -265,7 +265,7 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
 
     private <E> E executeExplainWithTimeout(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity, final long timeoutMS) {
         notNull("explainDocumentClass", explainResultClass);
-        OperationExecutor timeoutExecutor =  getExecutor(operations.createTimeoutSettings(findOptions).withTimeout(timeoutMS, TimeUnit.MILLISECONDS));
+        OperationExecutor timeoutExecutor = getExecutor(operations.createTimeoutSettings(findOptions).withTimeout(timeoutMS, TimeUnit.MILLISECONDS));
         return timeoutExecutor.execute(
                 asReadOperation().asExplainableOperation(verbosity, codecRegistry.get(explainResultClass)), getReadPreference(), getReadConcern(), getClientSession());
     }

@@ -24,6 +24,8 @@ import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.Document;
@@ -44,7 +46,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 public abstract class AbstractExplainTest {
-
+    private static final Logger LOGGER = Loggers.getLogger(AbstractExplainTest.class.getSimpleName());
     private MongoClient client;
     private TestCommandListener commandListener;
 
@@ -196,7 +198,7 @@ public abstract class AbstractExplainTest {
         FindIterable<Document> findIterable = collection.find(
                 Filters.and(
                     Filters.eq("name", "john doe"),
-                    Filters.where("sleep(100) || true") // Sleep for 100ms to exceed the 50ms timeout
+                    Filters.where("sleep(200) || true") // Sleep for 100ms to exceed the 50ms timeout
                 )
         );
 
@@ -205,9 +207,11 @@ public abstract class AbstractExplainTest {
             findIterable.explain(50L); // Use 50ms timeout to trigger timeout
             fail("Expected MongoOperationTimeoutException but explain completed successfully");
         } catch (MongoOperationTimeoutException e) {
+            LOGGER.info("Reported error: ", e);
+
             // This is expected - the operation should timeout
             assertTrue("Exception message should mention timeout",
-                    e.getMessage().contains("Operation exceeded the timeout limit: Timeout while receiving message") || e.getMessage().contains("Timeout"));
+                    e.getMessage().toLowerCase().contains("operation exceeded the timeout limit") || e.getMessage().toLowerCase().contains("timeout"));
 
             // Verify that the explain command was sent with maxTimeMS before timing out
             // The command should have been started even though it timed out
