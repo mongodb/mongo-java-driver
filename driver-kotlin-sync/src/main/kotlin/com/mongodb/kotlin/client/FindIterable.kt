@@ -285,7 +285,7 @@ public class FindIterable<T : Any>(private val wrapped: JFindIterable<T>) : Mong
         if (verbosity == null) wrapped.explain(resultClass) else wrapped.explain(resultClass, verbosity)
 
     /**
-     * Explain the execution plan for this operation with the server's default verbosity level
+     * Explain the execution plan for this operation.
      *
      * @param timeoutMS the timeout in milliseconds for the explain operation
      * @return the execution plan
@@ -294,7 +294,7 @@ public class FindIterable<T : Any>(private val wrapped: JFindIterable<T>) : Mong
     public fun explain(timeoutMS: Long): Document = wrapped.explain(timeoutMS)
 
     /**
-     * Explain the execution plan for this operation with the given verbosity level
+     * Explain the execution plan for this operation.
      *
      * @param verbosity the verbosity of the explanation
      * @param timeoutMS the timeout in milliseconds for the explain operation
@@ -304,7 +304,7 @@ public class FindIterable<T : Any>(private val wrapped: JFindIterable<T>) : Mong
     public fun explain(verbosity: ExplainVerbosity, timeoutMS: Long): Document = wrapped.explain(verbosity, timeoutMS)
 
     /**
-     * Explain the execution plan for this operation with the server's default verbosity level
+     * Explain the execution plan for this operation.
      *
      * @param R the type of the document class
      * @param resultClass the result document type.

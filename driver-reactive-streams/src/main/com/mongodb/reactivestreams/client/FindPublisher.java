@@ -340,7 +340,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
     <E> Publisher<E> explain(Class<E> explainResultClass, ExplainVerbosity verbosity);
 
     /**
-     * Explain the execution plan for this operation with the server's default verbosity level
+     * Explain the execution plan for this operation.
      *
      * @param timeoutMS the timeout in milliseconds for the explain operation
      * @return the execution plan
@@ -351,7 +351,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
     Publisher<Document> explain(long timeoutMS);
 
     /**
-     * Explain the execution plan for this operation with the given verbosity level
+     * Explain the execution plan for this operation.
      *
      * @param verbosity the verbosity of the explanation
      * @param timeoutMS the timeout in milliseconds for the explain operation
@@ -363,7 +363,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
     Publisher<Document> explain(ExplainVerbosity verbosity, long timeoutMS);
 
     /**
-     * Explain the execution plan for this operation with the server's default verbosity level
+     * Explain the execution plan for this operation.
      *
      * @param <E> the type of the document class
      * @param explainResultClass the document class to decode into
@@ -376,7 +376,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
     <E> Publisher<E> explain(Class<E> explainResultClass, long timeoutMS);
 
     /**
-     * Explain the execution plan for this operation with the given verbosity level
+     * Explain the execution plan for this operation.
      *
      * @param <E> the type of the document class
      * @param explainResultClass the document class to decode into

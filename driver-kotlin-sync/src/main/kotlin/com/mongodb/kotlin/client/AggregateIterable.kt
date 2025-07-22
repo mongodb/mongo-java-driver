@@ -189,7 +189,7 @@ public class AggregateIterable<T : Any>(private val wrapped: JAggregateIterable<
     public fun let(variables: Bson?): AggregateIterable<T> = apply { wrapped.let(variables) }
 
     /**
-     * Explain the execution plan for this operation with the server's default verbosity level
+     * Explain the execution plan for this operation.
      *
      * @param timeoutMS the timeout in milliseconds for the explain operation
      * @return the execution plan
@@ -198,7 +198,7 @@ public class AggregateIterable<T : Any>(private val wrapped: JAggregateIterable<
     public fun explain(timeoutMS: Long): Document = wrapped.explain(timeoutMS)
 
     /**
-     * Explain the execution plan for this operation with the given verbosity level
+     * Explain the execution plan for this operation.
      *
      * @param verbosity the verbosity of the explanation
      * @param timeoutMS the timeout in milliseconds for the explain operation
@@ -208,7 +208,7 @@ public class AggregateIterable<T : Any>(private val wrapped: JAggregateIterable<
     public fun explain(verbosity: ExplainVerbosity, timeoutMS: Long): Document = wrapped.explain(verbosity, timeoutMS)
 
     /**
-     * Explain the execution plan for this operation with the server's default verbosity level
+     * Explain the execution plan for this operation.
      *
      * @param R the type of the document class
      * @param resultClass the result document type.
@@ -219,7 +219,7 @@ public class AggregateIterable<T : Any>(private val wrapped: JAggregateIterable<
     public fun <R : Any> explain(resultClass: Class<R>, timeoutMS: Long): R = wrapped.explain(resultClass, timeoutMS)
 
     /**
-     * Explain the execution plan for this operation with the given verbosity level
+     * Explain the execution plan for this operation.
      *
      * @param R the type of the document class
      * @param resultClass the result document type.
@@ -232,7 +232,7 @@ public class AggregateIterable<T : Any>(private val wrapped: JAggregateIterable<
         wrapped.explain(resultClass, verbosity, timeoutMS)
 
     /**
-     * Explain the execution plan for this operation with the server's default verbosity level
+     * Explain the execution plan for this operation.
      *
      * @param R the type of the document class
      * @param timeoutMS the timeout in milliseconds for the explain operation
@@ -242,7 +242,7 @@ public class AggregateIterable<T : Any>(private val wrapped: JAggregateIterable<
     public inline fun <reified R : Any> explain(timeoutMS: Long): R = explain(R::class.java, timeoutMS)
 
     /**
-     * Explain the execution plan for this operation with the given verbosity level
+     * Explain the execution plan for this operation.
      *
      * @param R the type of the document class
      * @param verbosity the verbosity of the explanation

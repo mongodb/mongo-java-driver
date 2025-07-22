@@ -20,8 +20,8 @@ import com.mongodb.client.AggregateIterable
 import com.mongodb.client.model.Collation
 import org.bson.conversions.Bson
 import org.bson.{ BsonValue, Document }
-import org.mongodb.scala.{ AggregateObservable, TimeoutMode }
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
+import org.mongodb.scala.{ AggregateObservable, TimeoutMode }
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration

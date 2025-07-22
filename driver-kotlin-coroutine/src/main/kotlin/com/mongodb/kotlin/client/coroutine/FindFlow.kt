@@ -303,7 +303,7 @@ public class FindFlow<T : Any>(private val wrapped: FindPublisher<T>) : Flow<T> 
         explain(R::class.java, verbosity)
 
     /**
-     * Explain the execution plan for this operation with the given timeout duration.
+     * Explain the execution plan for this operation.
      *
      * @param R the type of the document class.
      * @param timeoutMS the timeout in milliseconds for the explain operation.
@@ -313,7 +313,7 @@ public class FindFlow<T : Any>(private val wrapped: FindPublisher<T>) : Flow<T> 
     public suspend inline fun <reified R : Any> explain(timeoutMS: Long): R = explain(R::class.java, timeoutMS)
 
     /**
-     * Explain the execution plan for this operation with the given verbosity level and timeout duration.
+     * Explain the execution plan for this operation.
      *
      * @param verbosity the verbosity of the explanation.
      * @param timeoutMS the timeout in milliseconds for the explain operation.
@@ -324,7 +324,7 @@ public class FindFlow<T : Any>(private val wrapped: FindPublisher<T>) : Flow<T> 
         explain(R::class.java, verbosity, timeoutMS)
 
     /**
-     * Explain the execution plan for this operation with the default verbosity level and the given timeout duration.
+     * Explain the execution plan for this operation.
      *
      * @param R the type of the document class.
      * @param resultClass the document class to decode into.

@@ -239,8 +239,7 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
         return getMongoOperationPublisher().createReadOperationMono(
                 getTimeoutSettings(),
                 () -> asAsyncReadOperation(0)
-                        .asAsyncExplainableOperation(verbosity, getMongoOperationPublisher().getCodecRegistry().get(explainResultClass)),
-                getClientSession());
+                        .asAsyncExplainableOperation(verbosity, getCodecRegistry().get(explainResultClass)), getClientSession());
     }
 
     private <E> Publisher<E> publishExplainWithTimeout(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity, final long timeoutMS) {
@@ -251,7 +250,7 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
         return getMongoOperationPublisher().createReadOperationMono(
                 timeoutSettingsFunction,
                 () -> asAsyncReadOperation(0)
-                        .asAsyncExplainableOperation(verbosity, getMongoOperationPublisher().getCodecRegistry().get(explainResultClass)),
+                        .asAsyncExplainableOperation(verbosity, getCodecRegistry().get(explainResultClass)),
                 getClientSession());
     }
 

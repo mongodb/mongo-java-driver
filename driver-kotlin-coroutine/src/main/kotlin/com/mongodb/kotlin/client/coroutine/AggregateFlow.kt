@@ -225,7 +225,7 @@ public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) 
         explain(R::class.java, verbosity)
 
     /**
-     * Explain the execution plan for this operation with the server's default verbosity level.
+     * Explain the execution plan for this operation.
      *
      * @param timeoutMS the timeout in milliseconds for the explain operation.
      * @return the execution plan.
@@ -234,7 +234,7 @@ public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) 
     public suspend inline fun <reified R : Any> explain(timeoutMS: Long): R = explain(R::class.java, timeoutMS)
 
     /**
-     * Explain the execution plan for this operation with the given verbosity level.
+     * Explain the execution plan for this operation.
      *
      * @param verbosity the verbosity of the explanation.
      * @param timeoutMS the timeout in milliseconds for the explain operation.
@@ -245,7 +245,7 @@ public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) 
         explain(R::class.java, verbosity, timeoutMS)
 
     /**
-     * Explain the execution plan for this operation with the server's default verbosity level.
+     * Explain the execution plan for this operation.
      *
      * @param R the type of the document class.
      * @param resultClass the document class to decode into.
@@ -257,7 +257,7 @@ public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) 
         wrapped.explain(resultClass, timeoutMS).awaitSingle()
 
     /**
-     * Explain the execution plan for this operation with the given verbosity level.
+     * Explain the execution plan for this operation.
      *
      * @param R the type of the document class.
      * @param resultClass the document class to decode into.

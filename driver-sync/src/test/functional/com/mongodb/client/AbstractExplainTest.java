@@ -24,8 +24,6 @@ import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.Document;
@@ -46,7 +44,6 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 public abstract class AbstractExplainTest {
-    private static final Logger LOGGER = Loggers.getLogger(AbstractExplainTest.class.getSimpleName());
     private MongoClient client;
     private TestCommandListener commandListener;
 
@@ -205,9 +202,6 @@ public abstract class AbstractExplainTest {
                 + "    }"
                 + "}"));
 
-        // Run an explained find with the query predicate { name: 'john doe' }
-        // Add a $where clause with JavaScript sleep to introduce delay that exceeds timeout
-        // Use a short timeout (50ms) with a longer sleep (100ms) to trigger timeout
         FindIterable<Document> findIterable = collection.find(
                 Filters.and(
                     Filters.eq("name", "john doe")
@@ -219,8 +213,6 @@ public abstract class AbstractExplainTest {
             findIterable.explain(50L); // Use 50ms timeout to trigger timeout
             fail("Expected MongoOperationTimeoutException but explain completed successfully");
         } catch (MongoOperationTimeoutException e) {
-            LOGGER.info("Reported error: ", e);
-
             // This is expected - the operation should timeout
             assertTrue("Exception message should mention timeout",
                     e.getMessage().toLowerCase().contains("operation exceeded the timeout limit") || e.getMessage().toLowerCase().contains("timeout"));
