@@ -53,8 +53,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class MapReduceWithInlineResultsOperation<T> implements ReadOperation<MapReduceBatchCursor<T>>,
-        AsyncReadOperation<MapReduceAsyncBatchCursor<T>> {
+public class MapReduceWithInlineResultsOperation<T> implements ReadOperation<MapReduceBatchCursor<T>, MapReduceAsyncBatchCursor<T>> {
     private static final String COMMAND_NAME = "mapReduce";
     private final MongoNamespace namespace;
     private final BsonJavaScript mapFunction;
@@ -185,11 +184,7 @@ public class MapReduceWithInlineResultsOperation<T> implements ReadOperation<Map
                 asyncTransformer(), false, errHandlingCallback);
     }
 
-    public ReadOperation<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return createExplainableOperation(explainVerbosity);
-    }
-
-    public AsyncReadOperation<BsonDocument> asExplainableOperationAsync(final ExplainVerbosity explainVerbosity) {
+    public ReadOperationSimple<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
         return createExplainableOperation(explainVerbosity);
     }
 

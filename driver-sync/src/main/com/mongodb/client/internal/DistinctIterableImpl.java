@@ -24,9 +24,8 @@ import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.operation.BatchCursor;
-import com.mongodb.internal.operation.ReadOperation;
-import com.mongodb.internal.operation.SyncOperations;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperationCursor;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonString;
 import org.bson.BsonValue;
@@ -38,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 
 class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements DistinctIterable<TResult> {
-    private final SyncOperations<TDocument> operations;
+    private final Operations<TDocument> operations;
 
     private final Class<TResult> resultClass;
     private final String fieldName;
@@ -55,7 +54,7 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
                          final ReadConcern readConcern, final OperationExecutor executor, final String fieldName, final Bson filter,
                          final boolean retryReads, final TimeoutSettings timeoutSettings) {
         super(clientSession, executor, readConcern, readPreference, retryReads, timeoutSettings);
-        this.operations = new SyncOperations<>(namespace, documentClass, readPreference, codecRegistry, retryReads, timeoutSettings);
+        this.operations = new Operations<>(namespace, documentClass, readPreference, codecRegistry, retryReads, timeoutSettings);
         this.resultClass = notNull("resultClass", resultClass);
         this.fieldName = notNull("mapFunction", fieldName);
         this.filter = filter;
@@ -117,7 +116,7 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
     }
 
     @Override
-    public ReadOperation<BatchCursor<TResult>> asReadOperation() {
+    public ReadOperationCursor<TResult> asReadOperation() {
         return operations.distinct(fieldName, filter, resultClass, collation, comment, hint, hintString);
     }
 

@@ -32,7 +32,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOperation<T> {
+public class CommandReadOperation<T> implements ReadOperationSimple<T> {
     private final String commandName;
     private final String databaseName;
     private final CommandCreator commandCreator;

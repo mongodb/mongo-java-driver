@@ -51,7 +51,7 @@ import static com.mongodb.client.cursor.TimeoutMode.CURSOR_LIFETIME;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+public class ChangeStreamOperation<T> implements ReadOperationCursor<T> {
     private static final RawBsonDocumentCodec RAW_BSON_DOCUMENT_CODEC = new RawBsonDocumentCodec();
     private final AggregateOperationImpl<RawBsonDocument> wrapped;
     private final FullDocument fullDocument;

@@ -21,12 +21,12 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
-import com.mongodb.internal.operation.AsyncExplainableReadOperation;
-import com.mongodb.internal.operation.AsyncOperations;
-import com.mongodb.internal.operation.AsyncReadOperation;
+import com.mongodb.internal.operation.AggregateOperation;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperationCursor;
+import com.mongodb.internal.operation.ReadOperationSimple;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
@@ -146,7 +146,7 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
             throw new IllegalStateException("The last stage of the aggregation pipeline must be $out or $merge");
         }
         return getMongoOperationPublisher().createReadOperationMono(
-                (asyncOperations) -> asyncOperations.createTimeoutSettings(maxTimeMS, maxAwaitTimeMS),
+                operations -> operations.createTimeoutSettings(maxTimeMS, maxAwaitTimeMS),
                 this::getAggregateToCollectionOperation, getClientSession());
     }
 
@@ -173,21 +173,21 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
     private <E> Publisher<E> publishExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
         notNull("explainDocumentClass", explainResultClass);
         return getMongoOperationPublisher().createReadOperationMono(
-                AsyncOperations::getTimeoutSettings,
-                () -> asAggregateOperation(1).asAsyncExplainableOperation(verbosity,
+                Operations::getTimeoutSettings,
+                () -> asAggregateOperation(1).asExplainableOperation(verbosity,
                         getCodecRegistry().get(explainResultClass)), getClientSession());
     }
 
     @Override
-    AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
+    ReadOperationCursor<T> asReadOperation(final int initialBatchSize) {
         MongoNamespace outNamespace = getOutNamespace();
 
         if (outNamespace != null) {
-            AsyncReadOperation<Void> aggregateToCollectionOperation = getAggregateToCollectionOperation();
+            ReadOperationSimple<Void> aggregateToCollectionOperation = getAggregateToCollectionOperation();
 
             FindOptions findOptions = new FindOptions().collation(collation).comment(comment).batchSize(initialBatchSize);
 
-            AsyncReadOperation<AsyncBatchCursor<T>> findOperation =
+            ReadOperationCursor<T> findOperation =
                     getOperations().find(outNamespace, new BsonDocument(), getDocumentClass(), findOptions);
 
             return new VoidReadOperationThenCursorReadOperation<>(aggregateToCollectionOperation, findOperation);
@@ -197,17 +197,17 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
     }
 
     @Override
-    Function<AsyncOperations<?>, TimeoutSettings> getTimeoutSettings() {
-        return (asyncOperations -> asyncOperations.createTimeoutSettings(maxTimeMS, maxAwaitTimeMS));
+    Function<Operations<?>, TimeoutSettings> getTimeoutSettings() {
+        return (operations -> operations.createTimeoutSettings(maxTimeMS, maxAwaitTimeMS));
     }
 
-    private AsyncExplainableReadOperation<AsyncBatchCursor<T>> asAggregateOperation(final int initialBatchSize) {
+    private AggregateOperation<T> asAggregateOperation(final int initialBatchSize) {
         return getOperations()
                 .aggregate(pipeline, getDocumentClass(), getTimeoutMode(),
                            initialBatchSize, collation, hint, hintString, comment, variables, allowDiskUse, aggregationLevel);
     }
 
-    private AsyncReadOperation<Void> getAggregateToCollectionOperation() {
+    private ReadOperationSimple<Void> getAggregateToCollectionOperation() {
         return getOperations().aggregateToCollection(pipeline, getTimeoutMode(), allowDiskUse, bypassDocumentValidation,
                 collation, hint, hintString, comment, variables, aggregationLevel);
     }
