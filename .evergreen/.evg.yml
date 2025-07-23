@@ -232,6 +232,17 @@ functions:
           cd $DRIVERS_TOOLS/.evergreen/auth_aws
           ./setup_secrets.sh drivers/aws_auth
 
+  "add-atlas-connect-variables-to-file":
+    - command: shell.exec
+      type: "test"
+      params:
+        include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
+        shell: "bash"
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          ${DRIVERS_TOOLS}/.evergreen/secrets_handling/setup-secrets.sh drivers/atlas_connect
+
   "start-csfle-servers":
     - command: ec2.assume_role
       params:
@@ -1465,6 +1476,7 @@ tasks:
 
   - name: "atlas-connectivity-task"
     commands:
+      - func: "add-atlas-connect-variables-to-file"
       - command: shell.exec
         type: "test"
         params:
@@ -1473,7 +1485,7 @@ tasks:
           script: |
             # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
             # The connection strings are pipe-delimited
-            MONGODB_URIS="${atlas_free_tier_uri}|${atlas_replica_set_uri}|${atlas_sharded_uri}|${atlas_tls_v11_uri}|${atlas_tls_v12_uri}|${atlas_free_tier_uri_srv}|${atlas_replica_set_uri_srv}|${atlas_sharded_uri_srv}|${atlas_tls_v11_uri_srv}|${atlas_tls_v12_uri_srv}" \
+            MONGODB_URIS="${atlas_free}|${atlas_repl}|${atlas_shrd}|${atlas_tls11}|${atlas_tls12}|${atlas_srv_free}|${atlas_srv_repl}|${atlas_srv_shrd}|${atlas_srv_tls11}|${atlas_srv_tls12}" \
             JAVA_VERSION="8" \
             .evergreen/run-connectivity-tests.sh
 
