@@ -1476,6 +1476,7 @@ tasks:
 
   - name: "atlas-connectivity-task"
     commands:
+      - func: "assume-aws-test-secrets-role"
       - func: "add-atlas-connect-variables-to-file"
       - command: shell.exec
         type: "test"
