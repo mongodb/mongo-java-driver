@@ -1369,7 +1369,7 @@ final class DefaultConnectionPool implements ConnectionPool {
             try {
                 runnable.run();
             } catch (Throwable t) {
-                LOGGER.error(this + "stopped working. You may want to recreate the MongoClient", t);
+                LOGGER.error(this + " stopped working. You may want to recreate the MongoClient", t);
                 throw t;
             }
         }
