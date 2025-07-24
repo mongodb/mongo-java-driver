@@ -881,7 +881,7 @@ public class MongoClient implements Closeable {
                     binding.release();
                 }
             }
-        }  catch (Throwable t) {
+        } catch (Throwable t) {
             LOGGER.error(this + " stopped cleaning cursors. You may want to recreate the MongoClient", t);
             throw t;
         }
