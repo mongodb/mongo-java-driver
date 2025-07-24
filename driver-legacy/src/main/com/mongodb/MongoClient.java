@@ -856,29 +856,34 @@ public class MongoClient implements Closeable {
     }
 
     private void cleanCursors() {
-        ServerCursorAndNamespace cur;
-        while ((cur = orphanedCursors.poll()) != null) {
-            ReadWriteBinding binding = new SingleServerBinding(delegate.getCluster(), cur.serverCursor.getAddress(),
-                    new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
-                            new TimeoutContext(getTimeoutSettings()), options.getServerApi()));
-            try {
-                ConnectionSource source = binding.getReadConnectionSource();
+        try {
+            ServerCursorAndNamespace cur;
+            while ((cur = orphanedCursors.poll()) != null) {
+                ReadWriteBinding binding = new SingleServerBinding(delegate.getCluster(), cur.serverCursor.getAddress(),
+                        new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
+                                new TimeoutContext(getTimeoutSettings()), options.getServerApi()));
                 try {
-                    Connection connection = source.getConnection();
+                    ConnectionSource source = binding.getReadConnectionSource();
                     try {
-                        BsonDocument killCursorsCommand = new BsonDocument("killCursors", new BsonString(cur.namespace.getCollectionName()))
-                                .append("cursors", new BsonArray(singletonList(new BsonInt64(cur.serverCursor.getId()))));
-                        connection.command(cur.namespace.getDatabaseName(), killCursorsCommand, NoOpFieldNameValidator.INSTANCE,
-                                ReadPreference.primary(), new BsonDocumentCodec(), source.getOperationContext());
+                        Connection connection = source.getConnection();
+                        try {
+                            BsonDocument killCursorsCommand = new BsonDocument("killCursors", new BsonString(cur.namespace.getCollectionName()))
+                                    .append("cursors", new BsonArray(singletonList(new BsonInt64(cur.serverCursor.getId()))));
+                            connection.command(cur.namespace.getDatabaseName(), killCursorsCommand, NoOpFieldNameValidator.INSTANCE,
+                                    ReadPreference.primary(), new BsonDocumentCodec(), source.getOperationContext());
+                        } finally {
+                            connection.release();
+                        }
                     } finally {
-                        connection.release();
+                        source.release();
                     }
                 } finally {
-                    source.release();
+                    binding.release();
                 }
-            } finally {
-                binding.release();
             }
+        }  catch (Throwable t) {
+            LOGGER.error(this + " stopped cleaning cursors. You may want to recreate the MongoClient", t);
+            throw t;
         }
     }
 
