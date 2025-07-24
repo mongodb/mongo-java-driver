@@ -75,41 +75,46 @@ class DefaultDnsSrvRecordMonitor implements DnsSrvRecordMonitor {
 
         @Override
         public void run() {
-            while (!isClosed && shouldContinueMonitoring()) {
-                try {
-                    List<String> resolvedHostNames = dnsResolver.resolveHostFromSrvRecords(hostName, srvServiceName);
-                    Set<ServerAddress> hosts = createServerAddressSet(resolvedHostNames);
+            try {
+                while (!isClosed && shouldContinueMonitoring()) {
+                    try {
+                        List<String> resolvedHostNames = dnsResolver.resolveHostFromSrvRecords(hostName, srvServiceName);
+                        Set<ServerAddress> hosts = createServerAddressSet(resolvedHostNames);
 
-                    if (isClosed) {
-                        return;
-                    }
-
-                    if (!hosts.equals(currentHosts)) {
-                        try {
-                            dnsSrvRecordInitializer.initialize(unmodifiableSet(hosts));
-                            currentHosts = hosts;
-                        } catch (Exception e) {
-                            LOGGER.warn("Exception in monitor thread during notification of DNS resolution state change", e);
+                        if (isClosed) {
+                            return;
                         }
-                    }
-                } catch (MongoException e) {
-                    if (currentHosts.isEmpty()) {
-                        dnsSrvRecordInitializer.initialize(e);
-                    }
-                    LOGGER.info("Exception while resolving SRV records", e);
-                } catch (Exception e) {
-                    if (currentHosts.isEmpty()) {
-                        dnsSrvRecordInitializer.initialize(new MongoInternalException("Unexpected runtime exception", e));
-                    }
-                    LOGGER.info("Unexpected runtime exception while resolving SRV record", e);
-                }
 
-                try {
-                    Thread.sleep(getRescanFrequencyMillis());
-                } catch (InterruptedException closed) {
-                    // fall through
+                        if (!hosts.equals(currentHosts)) {
+                            try {
+                                dnsSrvRecordInitializer.initialize(unmodifiableSet(hosts));
+                                currentHosts = hosts;
+                            } catch (Exception e) {
+                                LOGGER.warn("Exception in monitor thread during notification of DNS resolution state change", e);
+                            }
+                        }
+                    } catch (MongoException e) {
+                        if (currentHosts.isEmpty()) {
+                            dnsSrvRecordInitializer.initialize(e);
+                        }
+                        LOGGER.info("Exception while resolving SRV records", e);
+                    } catch (Exception e) {
+                        if (currentHosts.isEmpty()) {
+                            dnsSrvRecordInitializer.initialize(new MongoInternalException("Unexpected runtime exception", e));
+                        }
+                        LOGGER.info("Unexpected runtime exception while resolving SRV record", e);
+                    }
+
+                    try {
+                        Thread.sleep(getRescanFrequencyMillis());
+                    } catch (InterruptedException closed) {
+                        // fall through
+                    }
+                    clusterType = dnsSrvRecordInitializer.getClusterType();
                 }
-                clusterType = dnsSrvRecordInitializer.getClusterType();
+            } catch (Throwable t) {
+                LOGGER.error(this + " stopped working. You may want to recreate the MongoClient", t);
+                throw t;
             }
         }
 

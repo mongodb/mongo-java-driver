@@ -363,55 +363,60 @@ final class LoadBalancedCluster implements Cluster {
 
     private final class WaitQueueHandler implements Runnable {
         public void run() {
-            List<ServerSelectionRequest> timeoutList = new ArrayList<>();
-            while (!(isClosed() || initializationCompleted)) {
-                lock.lock();
-                try {
-                    if (isClosed() || initializationCompleted) {
-                        break;
-                    }
-                    Timeout waitTimeNanos = Timeout.infinite();
-
-                    for (Iterator<ServerSelectionRequest> iterator = waitQueue.iterator(); iterator.hasNext();) {
-                        ServerSelectionRequest next = iterator.next();
-
-                        Timeout nextTimeout = next.getTimeout();
-                        Timeout waitTimeNanosFinal = waitTimeNanos;
-                        waitTimeNanos = nextTimeout.call(NANOSECONDS,
-                                () -> Timeout.earliest(waitTimeNanosFinal, nextTimeout),
-                                (ns) -> Timeout.earliest(waitTimeNanosFinal, nextTimeout),
-                                () -> {
-                                    timeoutList.add(next);
-                                    iterator.remove();
-                                    return waitTimeNanosFinal;
-                                });
-                    }
-                    if (timeoutList.isEmpty()) {
-                        try {
-                            waitTimeNanos.awaitOn(condition, () -> "ignored");
-                        } catch (MongoInterruptedException unexpected) {
-                            fail();
+            try {
+                List<ServerSelectionRequest> timeoutList = new ArrayList<>();
+                while (!(isClosed() || initializationCompleted)) {
+                    lock.lock();
+                    try {
+                        if (isClosed() || initializationCompleted) {
+                            break;
                         }
-                    }
-                } finally {
-                    lock.unlock();
-                }
-                timeoutList.forEach(request -> request.onError(createTimeoutException(request
-                        .getOperationContext()
-                        .getTimeoutContext())));
-                timeoutList.clear();
-            }
+                        Timeout waitTimeNanos = Timeout.infinite();
 
-            // This code is executed either after closing the LoadBalancedCluster or after initializing it. In the latter case,
-            // waitQueue is guaranteed to be empty (as DnsSrvRecordInitializer.initialize clears it and no thread adds new elements to
-            // it after that). So shutdownList is not empty iff LoadBalancedCluster is closed, in which case we need to complete the
-            // requests in it.
-            List<ServerSelectionRequest> shutdownList = Locks.withLock(lock, () -> {
-                ArrayList<ServerSelectionRequest> result = new ArrayList<>(waitQueue);
-                waitQueue.clear();
-                return result;
-            });
-            shutdownList.forEach(request -> request.onError(createShutdownException()));
+                        for (Iterator<ServerSelectionRequest> iterator = waitQueue.iterator(); iterator.hasNext();) {
+                            ServerSelectionRequest next = iterator.next();
+
+                            Timeout nextTimeout = next.getTimeout();
+                            Timeout waitTimeNanosFinal = waitTimeNanos;
+                            waitTimeNanos = nextTimeout.call(NANOSECONDS,
+                                    () -> Timeout.earliest(waitTimeNanosFinal, nextTimeout),
+                                    (ns) -> Timeout.earliest(waitTimeNanosFinal, nextTimeout),
+                                    () -> {
+                                        timeoutList.add(next);
+                                        iterator.remove();
+                                        return waitTimeNanosFinal;
+                                    });
+                        }
+                        if (timeoutList.isEmpty()) {
+                            try {
+                                waitTimeNanos.awaitOn(condition, () -> "ignored");
+                            } catch (MongoInterruptedException unexpected) {
+                                fail();
+                            }
+                        }
+                    } finally {
+                        lock.unlock();
+                    }
+                    timeoutList.forEach(request -> request.onError(createTimeoutException(request
+                            .getOperationContext()
+                            .getTimeoutContext())));
+                    timeoutList.clear();
+                }
+
+                // This code is executed either after closing the LoadBalancedCluster or after initializing it. In the latter case,
+                // waitQueue is guaranteed to be empty (as DnsSrvRecordInitializer.initialize clears it and no thread adds new elements to
+                // it after that). So shutdownList is not empty iff LoadBalancedCluster is closed, in which case we need to complete the
+                // requests in it.
+                List<ServerSelectionRequest> shutdownList = Locks.withLock(lock, () -> {
+                    ArrayList<ServerSelectionRequest> result = new ArrayList<>(waitQueue);
+                    waitQueue.clear();
+                    return result;
+                });
+                shutdownList.forEach(request -> request.onError(createShutdownException()));
+            } catch (Throwable t) {
+                LOGGER.error(this + " stopped working. You may want to recreate the MongoClient", t);
+                throw t;
+            }
         }
     }
 

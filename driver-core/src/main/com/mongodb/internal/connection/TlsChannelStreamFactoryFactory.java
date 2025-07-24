@@ -162,6 +162,9 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
                             LOGGER.warn("Exception in selector loop", e);
                         }
                     }
+                } catch (Throwable t) {
+                    LOGGER.error(this + " stopped working. You may want to recreate the MongoClient", t);
+                    throw t;
                 } finally {
                     try {
                         selector.close();
