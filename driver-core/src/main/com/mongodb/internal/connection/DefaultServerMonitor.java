@@ -546,8 +546,7 @@ class DefaultServerMonitor implements ServerMonitor {
             } catch (Throwable t) {
                 LOGGER.error(format("%s for %s stopped working. You may want to recreate the MongoClient", this, serverId), t);
                 throw t;
-            }
-            finally {
+            } finally {
                 if (connection != null) {
                     connection.close();
                 }
