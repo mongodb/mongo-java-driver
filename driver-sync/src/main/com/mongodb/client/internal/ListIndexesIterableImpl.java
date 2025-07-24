@@ -23,9 +23,8 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.operation.BatchCursor;
-import com.mongodb.internal.operation.ReadOperation;
-import com.mongodb.internal.operation.SyncOperations;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperationCursor;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -38,7 +37,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListIndexesIterable<TResult> {
-    private final SyncOperations<BsonDocument> operations;
+    private final Operations<BsonDocument> operations;
     private final Class<TResult> resultClass;
     private long maxTimeMS;
     private BsonValue comment;
@@ -47,7 +46,7 @@ class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implem
             final CodecRegistry codecRegistry, final ReadPreference readPreference, final OperationExecutor executor,
             final boolean retryReads, final TimeoutSettings timeoutSettings) {
         super(clientSession, executor, ReadConcern.DEFAULT, readPreference, retryReads, timeoutSettings);
-        this.operations = new SyncOperations<>(namespace, BsonDocument.class, readPreference, codecRegistry, retryReads, timeoutSettings);
+        this.operations = new Operations<>(namespace, BsonDocument.class, readPreference, codecRegistry, retryReads, timeoutSettings);
         this.resultClass = notNull("resultClass", resultClass);
     }
 
@@ -83,7 +82,7 @@ class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implem
     }
 
     @Override
-    public ReadOperation<BatchCursor<TResult>> asReadOperation() {
+    public ReadOperationCursor<TResult> asReadOperation() {
         return operations.listIndexes(resultClass, getBatchSize(), comment, getTimeoutMode());
     }
 

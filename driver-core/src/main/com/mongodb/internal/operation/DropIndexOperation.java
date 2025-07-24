@@ -40,7 +40,7 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+public class DropIndexOperation implements WriteOperation<Void> {
     private static final String COMMAND_NAME = "dropIndexes";
     private final MongoNamespace namespace;
     private final String indexName;

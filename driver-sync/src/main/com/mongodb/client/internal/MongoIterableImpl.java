@@ -25,7 +25,7 @@ import com.mongodb.client.MongoIterable;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.operation.BatchCursor;
-import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.ReadOperationCursor;
 import com.mongodb.lang.Nullable;
 
 import java.util.Collection;
@@ -58,7 +58,7 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
         this.timeoutSettings = timeoutSettings;
     }
 
-    public abstract ReadOperation<BatchCursor<TResult>> asReadOperation();
+    public abstract ReadOperationCursor<TResult> asReadOperation();
 
     @Nullable
     ClientSession getClientSession() {

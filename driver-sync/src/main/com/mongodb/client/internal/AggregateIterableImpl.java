@@ -28,10 +28,9 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
-import com.mongodb.internal.operation.BatchCursor;
-import com.mongodb.internal.operation.ExplainableReadOperation;
-import com.mongodb.internal.operation.ReadOperation;
-import com.mongodb.internal.operation.SyncOperations;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperationCursor;
+import com.mongodb.internal.operation.ReadOperationExplainable;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -46,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 
 class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements AggregateIterable<TResult> {
-    private final SyncOperations<TDocument> operations;
+    private final Operations<TDocument> operations;
     private final MongoNamespace namespace;
     private final Class<TDocument> documentClass;
     private final Class<TResult> resultClass;
@@ -81,7 +80,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel, final boolean retryReads,
             final TimeoutSettings timeoutSettings) {
         super(clientSession, executor, readConcern, readPreference, retryReads, timeoutSettings);
-        this.operations = new SyncOperations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
+        this.operations = new Operations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
                 true, retryReads, timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
@@ -205,7 +204,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    public ReadOperation<BatchCursor<TResult>> asReadOperation() {
+    public ReadOperationCursor<TResult> asReadOperation() {
         MongoNamespace outNamespace = getOutNamespace();
         if (outNamespace != null) {
             validateTimeoutMode();
@@ -229,7 +228,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         return getExecutor(operations.createTimeoutSettings(maxTimeMS, maxAwaitTimeMS));
     }
 
-    private ExplainableReadOperation<BatchCursor<TResult>> asAggregateOperation() {
+    private ReadOperationExplainable<TResult> asAggregateOperation() {
         return operations.aggregate(pipeline, resultClass, getTimeoutMode(), getBatchSize(), collation, hint, hintString, comment,
                 variables, allowDiskUse, aggregationLevel);
     }

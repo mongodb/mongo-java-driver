@@ -16,28 +16,13 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.binding.AsyncWriteBinding;
+import com.mongodb.ExplainVerbosity;
+import com.mongodb.lang.Nullable;
+import org.bson.codecs.Decoder;
 
 /**
- * An operation which asynchronously writes to a MongoDB server.
- *
- * @param <T> the operations result type.
- *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public interface AsyncWriteOperation<T> {
-
-    /**
-     * @return the command name of the operation, e.g. "insert", "update", "delete", "bulkWrite", etc.
-     */
-    String getCommandName();
-
-    /**
-     * General execute which can return anything of type T
-     *
-     * @param binding the binding to execute in the context of
-     * @param callback the callback to be called when the operation has been executed
-     */
-    void executeAsync(AsyncWriteBinding binding, SingleResultCallback<T> callback);
+public interface ReadOperationExplainable<T> extends ReadOperationCursor<T> {
+    <V> ReadOperationSimple<V> asExplainableOperation(@Nullable ExplainVerbosity verbosity, Decoder<V> resultDecoder);
 }

@@ -41,7 +41,7 @@ import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VE
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class AggregateOperation<T> implements AsyncExplainableReadOperation<AsyncBatchCursor<T>>, ExplainableReadOperation<BatchCursor<T>> {
+public class AggregateOperation<T> implements ReadOperationExplainable<T> {
     private final AggregateOperationImpl<T> wrapped;
 
     public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder) {
@@ -151,13 +151,7 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
     }
 
     @Override
-    public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
-        return createExplainableOperation(verbosity, resultDecoder);
-    }
-
-    @Override
-    public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
-                                                                 final Decoder<R> resultDecoder) {
+    public <R> ReadOperationSimple<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
         return createExplainableOperation(verbosity, resultDecoder);
     }
 

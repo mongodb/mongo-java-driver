@@ -78,7 +78,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteResult>, WriteOperation<BulkWriteResult> {
+public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> {
     private final MongoNamespace namespace;
     private final List<? extends WriteRequest> writeRequests;
     private final boolean ordered;

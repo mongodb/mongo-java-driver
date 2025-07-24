@@ -66,7 +66,7 @@ import static java.util.Collections.singletonList;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class CreateCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+public class CreateCollectionOperation implements WriteOperation<Void> {
     private static final String ENCRYPT_PREFIX = "enxcol_.";
     private static final BsonDocument ENCRYPT_CLUSTERED_INDEX = BsonDocument.parse("{key: {_id: 1}, unique: true}");
     private static final BsonArray SAFE_CONTENT_ARRAY = new BsonArray(

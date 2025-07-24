@@ -42,7 +42,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErr
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public abstract class TransactionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+public abstract class TransactionOperation implements WriteOperation<Void> {
     private final WriteConcern writeConcern;
 
     TransactionOperation(final WriteConcern writeConcern) {

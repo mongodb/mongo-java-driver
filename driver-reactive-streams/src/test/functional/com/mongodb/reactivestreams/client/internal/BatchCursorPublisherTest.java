@@ -21,8 +21,8 @@ import com.mongodb.ReadPreference;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.operation.AsyncOperations;
-import com.mongodb.internal.operation.AsyncReadOperation;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperationCursor;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -59,7 +59,7 @@ public class BatchCursorPublisherTest {
     private static final String ERROR_RETURNING_RESULTS = "Error returning results";
 
     @Mock
-    private AsyncReadOperation<AsyncBatchCursor<Document>> readOperation;
+    private ReadOperationCursor<Document> readOperation;
     @Mock
     private AsyncBatchCursor<Document> batchCursor;
 
@@ -169,13 +169,13 @@ public class BatchCursorPublisherTest {
         BatchCursorPublisher<Document> publisher = new BatchCursorPublisher<Document>(
                 null, OPERATION_PUBLISHER) {
             @Override
-            AsyncReadOperation<AsyncBatchCursor<Document>> asAsyncReadOperation(final int initialBatchSize) {
+            ReadOperationCursor<Document> asReadOperation(final int initialBatchSize) {
                 return readOperation;
             }
 
             @Override
-            Function<AsyncOperations<?>, TimeoutSettings> getTimeoutSettings() {
-                return (AsyncOperations::getTimeoutSettings);
+            Function<Operations<?>, TimeoutSettings> getTimeoutSettings() {
+                return (Operations::getTimeoutSettings);
             }
         };
 

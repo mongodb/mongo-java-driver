@@ -19,6 +19,8 @@ package com.mongodb;
 import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.WriteConcernError;
+import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.InsertRequest;
@@ -107,6 +109,11 @@ final class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcern
         } catch (MongoBulkWriteException e) {
             throw convertBulkWriteException(e);
         }
+    }
+
+    @Override
+    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<WriteConcernResult> callback) {
+        throw new UnsupportedOperationException("This operation is sync only");
     }
 
     private MongoException convertBulkWriteException(final MongoBulkWriteException e) {

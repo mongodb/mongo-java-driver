@@ -42,7 +42,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.singleBatchCurs
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+public class ListDatabasesOperation<T> implements ReadOperationCursor<T> {
     private static final String COMMAND_NAME = "listDatabases";
     private static final String DATABASES = "databases";
     private final Decoder<T> decoder;

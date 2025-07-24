@@ -146,7 +146,7 @@ import static java.util.stream.Collectors.toSet;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ClientBulkWriteOperation implements AsyncWriteOperation<ClientBulkWriteResult>, WriteOperation<ClientBulkWriteResult> {
+public final class ClientBulkWriteOperation implements WriteOperation<ClientBulkWriteResult> {
     private static final ConcreteClientBulkWriteOptions EMPTY_OPTIONS = new ConcreteClientBulkWriteOptions();
     private static final String BULK_WRITE_COMMAND_NAME = "bulkWrite";
     private static final EncoderContext DEFAULT_ENCODER_CONTEXT = EncoderContext.builder().build();

@@ -52,7 +52,7 @@ import static com.mongodb.internal.operation.OperationReadConcernHelper.appendRe
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
 
-class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
     private static final String COMMAND_NAME = "aggregate";
     private static final String RESULT = "result";
     private static final String CURSOR = "cursor";

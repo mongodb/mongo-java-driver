@@ -58,7 +58,7 @@ import static java.util.Arrays.asList;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistics>, WriteOperation<MapReduceStatistics> {
+public class MapReduceToCollectionOperation implements WriteOperation<MapReduceStatistics> {
     private static final String COMMAND_NAME = "mapReduce";
     private final MongoNamespace namespace;
     private final BsonJavaScript mapFunction;
@@ -234,17 +234,7 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
      * @param explainVerbosity the explain verbosity
      * @return a read operation that when executed will explain this operation
      */
-    public ReadOperation<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return createExplainableOperation(explainVerbosity);
-    }
-
-    /**
-     * Gets an operation whose execution explains this operation.
-     *
-     * @param explainVerbosity the explain verbosity
-     * @return a read operation that when executed will explain this operation
-     */
-    public AsyncReadOperation<BsonDocument> asExplainableOperationAsync(final ExplainVerbosity explainVerbosity) {
+    public ReadOperationSimple<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
         return createExplainableOperation(explainVerbosity);
     }
 

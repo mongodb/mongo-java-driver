@@ -45,7 +45,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.singleBatchCurs
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+public class DistinctOperation<T> implements ReadOperationCursor<T> {
     private static final String COMMAND_NAME = "distinct";
     private static final String VALUES = "values";
     private final MongoNamespace namespace;

@@ -19,23 +19,24 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
-import com.mongodb.internal.operation.AsyncReadOperation;
+import com.mongodb.internal.operation.ReadOperationCursor;
+import com.mongodb.internal.operation.ReadOperationSimple;
 
-class VoidReadOperationThenCursorReadOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>> {
-    private final AsyncReadOperation<Void> readOperation;
-    private final AsyncReadOperation<AsyncBatchCursor<T>> cursorReadOperation;
+class VoidReadOperationThenCursorReadOperation<T> implements ReadOperationCursorAsyncOnly<T> {
+    private final ReadOperationSimple<Void> readOperation;
+    private final ReadOperationCursor<T> cursorReadOperation;
 
-    VoidReadOperationThenCursorReadOperation(final AsyncReadOperation<Void> readOperation,
-            final AsyncReadOperation<AsyncBatchCursor<T>> cursorReadOperation) {
+    VoidReadOperationThenCursorReadOperation(final ReadOperationSimple<Void> readOperation,
+            final ReadOperationCursor<T> cursorReadOperation) {
         this.readOperation = readOperation;
         this.cursorReadOperation = cursorReadOperation;
     }
 
-    public AsyncReadOperation<Void> getReadOperation() {
+    public ReadOperationSimple<Void> getReadOperation() {
         return readOperation;
     }
 
-    public AsyncReadOperation<AsyncBatchCursor<T>> getCursorReadOperation() {
+    public ReadOperationCursor<T> getCursorReadOperation() {
         return cursorReadOperation;
     }
 

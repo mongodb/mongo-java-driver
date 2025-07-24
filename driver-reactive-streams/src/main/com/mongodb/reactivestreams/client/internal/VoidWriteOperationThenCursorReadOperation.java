@@ -20,15 +20,15 @@ import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.AsyncWriteBinding;
-import com.mongodb.internal.operation.AsyncReadOperation;
-import com.mongodb.internal.operation.AsyncWriteOperation;
+import com.mongodb.internal.operation.ReadOperationCursor;
+import com.mongodb.internal.operation.WriteOperation;
 
-class VoidWriteOperationThenCursorReadOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>> {
-    private final AsyncWriteOperation<Void> writeOperation;
-    private final AsyncReadOperation<AsyncBatchCursor<T>> cursorReadOperation;
+class VoidWriteOperationThenCursorReadOperation<T> implements ReadOperationCursorAsyncOnly<T> {
+    private final WriteOperation<Void> writeOperation;
+    private final ReadOperationCursor<T> cursorReadOperation;
 
-    VoidWriteOperationThenCursorReadOperation(final AsyncWriteOperation<Void> writeOperation,
-                                              final AsyncReadOperation<AsyncBatchCursor<T>> cursorReadOperation) {
+    VoidWriteOperationThenCursorReadOperation(final WriteOperation<Void> writeOperation,
+                                              final ReadOperationCursor<T> cursorReadOperation) {
         this.writeOperation = writeOperation;
         this.cursorReadOperation = cursorReadOperation;
     }
