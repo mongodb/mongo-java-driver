@@ -232,6 +232,17 @@ functions:
           cd $DRIVERS_TOOLS/.evergreen/auth_aws
           ./setup_secrets.sh drivers/aws_auth
 
+  "add-atlas-connect-variables-to-file":
+    - command: shell.exec
+      type: "test"
+      params:
+        include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
+        shell: "bash"
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          ${DRIVERS_TOOLS}/.evergreen/secrets_handling/setup-secrets.sh drivers/atlas_connect
+
   "start-csfle-servers":
     - command: ec2.assume_role
       params:
@@ -511,6 +522,16 @@ functions:
         script: |
           # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
           JAVA_VERSION="8" MONGODB_URI="${plain_auth_mongodb_uri}" .evergreen/run-plain-auth-test.sh
+
+  "run-x509-auth-test":
+    - command: shell.exec
+      type: "test"
+      params:
+        silent: true
+        working_dir: "src"
+        script: |
+          # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
+          JAVA_VERSION="8" .evergreen/run-x509-auth-tests.sh
 
   "run-aws-auth-test-with-regular-aws-credentials":
     - command: shell.exec
@@ -977,6 +998,13 @@ tasks:
   - name: "plain-auth-test-task"
     commands:
       - func: "run-plain-auth-test"
+
+    # Test that x509 auth using server with OpenSSL 3 succeeds.
+  - name: "atlas-x509-auth-test-task"
+    commands:
+      - func: "assume-aws-test-secrets-role"
+      - func: "add-atlas-connect-variables-to-file"
+      - func: "run-x509-auth-test"
 
   - name: "aws-auth-test-with-regular-aws-credentials-task"
     commands:
@@ -2254,6 +2282,7 @@ buildvariants:
       - name: "atlas-deployed-task-group"
       - name: "atlas-search-task"
       - name: "atlas-connectivity-task"
+      - name:  "atlas-x509-auth-test-task"
 
   - name: "atlas-data-lake-test"
     display_name: "Atlas Data Lake test"
