@@ -916,7 +916,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
      * - When doing `minPoolSize` maintenance, `connectTimeoutMS` is used as the timeout for socket establishment.
      */
     @Test
-    public void shouldUseConnectTimeoutMSWhenEstablishingConnectionInBackground() {
+    @DisplayName("Should use connectTimeoutMS when establishing connection in background")
+    public void shouldUseConnectTimeoutMsWhenEstablishingConnectionInBackground() {
         assumeTrue(serverVersionAtLeast(4, 4));
 
         collectionHelper.runAdminCommand("{"
@@ -929,15 +930,16 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "  }"
                 + "}");
 
-        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
+        try (MongoClient ignored = createMongoClient(getMongoClientSettingsBuilder()
                 .applyToConnectionPoolSettings(builder -> builder.minSize(1))
                 // Use a very short timeout to ensure that the connection establishment will fail on the first handshake command.
                 .timeout(1, TimeUnit.MILLISECONDS))) {
             InternalStreamConnection.setRecordEverything(true);
 
-            // Wait for the connection to start establishment in the background
+            // Wait for the connection to start establishment in the background.
             sleep(1000);
         }
+
         List<CommandStartedEvent> commandStartedEvents = commandListener.getCommandStartedEvents("isMaster");
         assertEquals(1, commandStartedEvents.size());
 
