@@ -23,9 +23,9 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
-import com.mongodb.internal.operation.AggregateOperation;
 import com.mongodb.internal.operation.Operations;
 import com.mongodb.internal.operation.ReadOperationCursor;
+import com.mongodb.internal.operation.ReadOperationExplainable;
 import com.mongodb.internal.operation.ReadOperationSimple;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
@@ -201,7 +201,7 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
         return (operations -> operations.createTimeoutSettings(maxTimeMS, maxAwaitTimeMS));
     }
 
-    private AggregateOperation<T> asAggregateOperation(final int initialBatchSize) {
+    private ReadOperationExplainable<T> asAggregateOperation(final int initialBatchSize) {
         return getOperations()
                 .aggregate(pipeline, getDocumentClass(), getTimeoutMode(),
                            initialBatchSize, collation, hint, hintString, comment, variables, allowDiskUse, aggregationLevel);

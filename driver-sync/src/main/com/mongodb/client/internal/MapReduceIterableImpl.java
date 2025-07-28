@@ -31,9 +31,9 @@ import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.MapReduceStatistics;
-import com.mongodb.internal.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.internal.operation.Operations;
 import com.mongodb.internal.operation.ReadOperationCursor;
+import com.mongodb.internal.operation.ReadOperationMapReduceCursor;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -199,7 +199,7 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     @Override
     public ReadOperationCursor<TResult> asReadOperation() {
         if (inline) {
-            MapReduceWithInlineResultsOperation<TResult> operation = operations.mapReduce(mapFunction, reduceFunction, finalizeFunction,
+            ReadOperationMapReduceCursor<TResult> operation = operations.mapReduce(mapFunction, reduceFunction, finalizeFunction,
                     resultClass, filter, limit, jsMode, scope, sort, verbose, collation);
             return new WrappedMapReduceReadOperation<>(operation);
         } else {
@@ -225,13 +225,13 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     // this could be inlined, but giving it a name so that it's unit-testable
     static class WrappedMapReduceReadOperation<TResult> implements ReadOperationCursor<TResult> {
-        private final MapReduceWithInlineResultsOperation<TResult> operation;
+        private final ReadOperationMapReduceCursor<TResult> operation;
 
-        MapReduceWithInlineResultsOperation<TResult> getOperation() {
+        ReadOperationMapReduceCursor<TResult> getOperation() {
             return operation;
         }
 
-        WrappedMapReduceReadOperation(final MapReduceWithInlineResultsOperation<TResult> operation) {
+        WrappedMapReduceReadOperation(final ReadOperationMapReduceCursor<TResult> operation) {
             this.operation = operation;
         }
 

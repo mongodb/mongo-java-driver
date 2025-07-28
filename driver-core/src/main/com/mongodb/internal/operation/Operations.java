@@ -21,6 +21,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.ClusteredIndexOptions;
@@ -55,6 +56,7 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
@@ -221,7 +223,7 @@ public final class Operations<T> {
         return timeoutSettings.withMaxTimeMS(options.getMaxTime(MILLISECONDS));
     }
 
-    public CountDocumentsOperation countDocuments(final Bson filter, final CountOptions options) {
+    public ReadOperationSimple<Long> countDocuments(final Bson filter, final CountOptions options) {
         CountDocumentsOperation operation = new CountDocumentsOperation(
                 assertNotNull(namespace))
                 .retryReads(retryReads)
@@ -238,24 +240,24 @@ public final class Operations<T> {
         return operation;
     }
 
-    public EstimatedDocumentCountOperation estimatedDocumentCount(final EstimatedDocumentCountOptions options) {
+    public ReadOperationSimple<Long> estimatedDocumentCount(final EstimatedDocumentCountOptions options) {
         return new EstimatedDocumentCountOperation(
                 assertNotNull(namespace))
                 .retryReads(retryReads)
                 .comment(options.getComment());
     }
 
-    public <R> FindOperation<R> findFirst(final Bson filter, final Class<R> resultClass,
+    public <R> ReadOperationCursor<R> findFirst(final Bson filter, final Class<R> resultClass,
                                                       final FindOptions options) {
         return createFindOperation(assertNotNull(namespace), filter, resultClass, options).batchSize(0).limit(-1);
     }
 
-    public <R> FindOperation<R> find(final Bson filter, final Class<R> resultClass,
+    public <R> ReadOperationExplainable<R> find(final Bson filter, final Class<R> resultClass,
                                                  final FindOptions options) {
         return createFindOperation(assertNotNull(namespace), filter, resultClass, options);
     }
 
-    public <R> FindOperation<R> find(final MongoNamespace findNamespace, @Nullable final Bson filter,
+    public <R> ReadOperationExplainable<R> find(final MongoNamespace findNamespace, @Nullable final Bson filter,
                                                  final Class<R> resultClass, final FindOptions options) {
         return createFindOperation(findNamespace, filter, resultClass, options);
     }
@@ -292,7 +294,7 @@ public final class Operations<T> {
         return operation;
     }
 
-    public <R> DistinctOperation<R> distinct(final String fieldName, @Nullable final Bson filter, final Class<R> resultClass,
+    public <R> ReadOperationCursor<R> distinct(final String fieldName, @Nullable final Bson filter, final Class<R> resultClass,
             final Collation collation, final BsonValue comment, @Nullable final Bson hint, @Nullable final String hintString) {
         DistinctOperation<R> operation = new DistinctOperation<>(assertNotNull(namespace),
                 fieldName, codecRegistry.get(resultClass))
@@ -309,7 +311,7 @@ public final class Operations<T> {
         return operation;
     }
 
-    public <R> AggregateOperation<R> aggregate(final List<? extends Bson> pipeline, final Class<R> resultClass,
+    public <R> ReadOperationExplainable<R> aggregate(final List<? extends Bson> pipeline, final Class<R> resultClass,
             @Nullable final TimeoutMode timeoutMode, @Nullable final Integer batchSize,
             final Collation collation, @Nullable final Bson hint, @Nullable final String hintString,
             final BsonValue comment, final Bson variables, final Boolean allowDiskUse, final AggregationLevel aggregationLevel) {
@@ -325,7 +327,7 @@ public final class Operations<T> {
                 .timeoutMode(timeoutMode);
     }
 
-    public AggregateToCollectionOperation aggregateToCollection(final List<? extends Bson> pipeline, @Nullable final TimeoutMode timeoutMode,
+    public ReadOperationSimple<Void>  aggregateToCollection(final List<? extends Bson> pipeline, @Nullable final TimeoutMode timeoutMode,
             final Boolean allowDiskUse, final Boolean bypassDocumentValidation, final Collation collation, @Nullable final Bson hint,
             @Nullable final String hintString, final BsonValue comment, final Bson variables, final AggregationLevel aggregationLevel) {
         return new AggregateToCollectionOperation(assertNotNull(namespace),
@@ -340,7 +342,7 @@ public final class Operations<T> {
     }
 
     @SuppressWarnings("deprecation")
-    public MapReduceToCollectionOperation mapReduceToCollection(final String databaseName, final String collectionName,
+    public WriteOperation<MapReduceStatistics> mapReduceToCollection(final String databaseName, final String collectionName,
                                                                 final String mapFunction, final String reduceFunction,
                                                                 @Nullable final String finalizeFunction, final Bson filter,
                                                                 final int limit, final boolean jsMode,
@@ -367,9 +369,9 @@ public final class Operations<T> {
         return operation;
     }
 
-    public <R> MapReduceWithInlineResultsOperation<R> mapReduce(final String mapFunction, final String reduceFunction,
-            @Nullable final String finalizeFunction, final Class<R> resultClass, final Bson filter, final int limit,
-            final boolean jsMode, final Bson scope, final Bson sort, final boolean verbose,
+    public <R> ReadOperationMapReduceCursor<R> mapReduce(final String mapFunction,
+            final String reduceFunction, @Nullable final String finalizeFunction, final Class<R> resultClass, final Bson filter,
+            final int limit, final boolean jsMode, final Bson scope, final Bson sort, final boolean verbose,
             final Collation collation) {
         MapReduceWithInlineResultsOperation<R> operation =
                 new MapReduceWithInlineResultsOperation<>(
@@ -388,7 +390,7 @@ public final class Operations<T> {
         return operation;
     }
 
-    public FindAndDeleteOperation<T> findOneAndDelete(final Bson filter, final FindOneAndDeleteOptions options) {
+    public WriteOperation<T> findOneAndDelete(final Bson filter, final FindOneAndDeleteOptions options) {
         return new FindAndDeleteOperation<>(
                 assertNotNull(namespace), writeConcern, retryWrites, getCodec())
                 .filter(toBsonDocument(filter))
@@ -401,7 +403,7 @@ public final class Operations<T> {
                 .let(toBsonDocument(options.getLet()));
     }
 
-    public FindAndReplaceOperation<T> findOneAndReplace(final Bson filter, final T replacement,
+    public WriteOperation<T> findOneAndReplace(final Bson filter, final T replacement,
                                                                 final FindOneAndReplaceOptions options) {
         return new FindAndReplaceOperation<>(
                 assertNotNull(namespace), writeConcern, retryWrites, getCodec(), documentToBsonDocument(replacement))
@@ -418,7 +420,7 @@ public final class Operations<T> {
                 .let(toBsonDocument(options.getLet()));
     }
 
-    public FindAndUpdateOperation<T> findOneAndUpdate(final Bson filter, final Bson update, final FindOneAndUpdateOptions options) {
+    public WriteOperation<T> findOneAndUpdate(final Bson filter, final Bson update, final FindOneAndUpdateOptions options) {
         return new FindAndUpdateOperation<>(
                 assertNotNull(namespace), writeConcern, retryWrites, getCodec(), assertNotNull(toBsonDocument(update)))
                 .filter(toBsonDocument(filter))
@@ -435,7 +437,7 @@ public final class Operations<T> {
                 .let(toBsonDocument(options.getLet()));
     }
 
-    public FindAndUpdateOperation<T> findOneAndUpdate(final Bson filter, final List<? extends Bson> update,
+    public WriteOperation<T> findOneAndUpdate(final Bson filter, final List<? extends Bson> update,
                                                        final FindOneAndUpdateOptions options) {
         return new FindAndUpdateOperation<>(
                 assertNotNull(namespace), writeConcern, retryWrites, getCodec(), assertNotNull(toBsonDocumentList(update)))
@@ -454,53 +456,53 @@ public final class Operations<T> {
     }
 
 
-    public MixedBulkWriteOperation insertOne(final T document, final InsertOneOptions options) {
+    public WriteOperation<BulkWriteResult> insertOne(final T document, final InsertOneOptions options) {
         return bulkWrite(singletonList(new InsertOneModel<>(document)),
                 new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation()).comment(options.getComment()));
     }
 
 
-    public MixedBulkWriteOperation replaceOne(final Bson filter, final T replacement, final ReplaceOptions options) {
+    public WriteOperation<BulkWriteResult> replaceOne(final Bson filter, final T replacement, final ReplaceOptions options) {
         return bulkWrite(singletonList(new ReplaceOneModel<>(filter, replacement, options)),
                 new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation())
                         .comment(options.getComment()).let(options.getLet()));
     }
 
-    public MixedBulkWriteOperation deleteOne(final Bson filter, final DeleteOptions options) {
+    public WriteOperation<BulkWriteResult> deleteOne(final Bson filter, final DeleteOptions options) {
         return bulkWrite(singletonList(new DeleteOneModel<>(filter, options)),
                 new BulkWriteOptions().comment(options.getComment()).let(options.getLet()));
     }
 
-    public MixedBulkWriteOperation deleteMany(final Bson filter, final DeleteOptions options) {
+    public WriteOperation<BulkWriteResult> deleteMany(final Bson filter, final DeleteOptions options) {
         return bulkWrite(singletonList(new DeleteManyModel<>(filter, options)),
                 new BulkWriteOptions().comment(options.getComment()).let(options.getLet()));
     }
 
-    public MixedBulkWriteOperation updateOne(final Bson filter, final Bson update, final UpdateOptions options) {
+    public WriteOperation<BulkWriteResult> updateOne(final Bson filter, final Bson update, final UpdateOptions options) {
         return bulkWrite(singletonList(new UpdateOneModel<>(filter, update, options)),
                 new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation())
                         .comment(options.getComment()).let(options.getLet()));
     }
 
-    public MixedBulkWriteOperation updateOne(final Bson filter, final List<? extends Bson> update, final UpdateOptions options) {
+    public WriteOperation<BulkWriteResult> updateOne(final Bson filter, final List<? extends Bson> update, final UpdateOptions options) {
         return bulkWrite(singletonList(new UpdateOneModel<>(filter, update, options)),
                 new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation())
                         .comment(options.getComment()).let(options.getLet()));
     }
 
-    public MixedBulkWriteOperation updateMany(final Bson filter, final Bson update, final UpdateOptions options) {
+    public WriteOperation<BulkWriteResult> updateMany(final Bson filter, final Bson update, final UpdateOptions options) {
         return bulkWrite(singletonList(new UpdateManyModel<>(filter, update, options)),
                 new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation())
                         .comment(options.getComment()).let(options.getLet()));
     }
 
-    public MixedBulkWriteOperation updateMany(final Bson filter, final List<? extends Bson> update, final UpdateOptions options) {
+    public WriteOperation<BulkWriteResult> updateMany(final Bson filter, final List<? extends Bson> update, final UpdateOptions options) {
         return bulkWrite(singletonList(new UpdateManyModel<>(filter, update, options)),
                 new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation())
                         .comment(options.getComment()).let(options.getLet()));
     }
 
-    public MixedBulkWriteOperation insertMany(final List<? extends T> documents, final InsertManyOptions options) {
+    public WriteOperation<BulkWriteResult> insertMany(final List<? extends T> documents, final InsertManyOptions options) {
         notNull("documents", documents);
         List<InsertRequest> requests = new ArrayList<>(documents.size());
         for (T document : documents) {
@@ -519,7 +521,8 @@ public final class Operations<T> {
                 .comment(options.getComment());
     }
 
-    public MixedBulkWriteOperation bulkWrite(final List<? extends WriteModel<? extends T>> requests, final BulkWriteOptions options) {
+    public WriteOperation<BulkWriteResult> bulkWrite(final List<? extends WriteModel<? extends T>> requests,
+            final BulkWriteOptions options) {
         notNull("requests", requests);
         List<WriteRequest> writeRequests = new ArrayList<>(requests.size());
         for (WriteModel<? extends T> writeModel : requests) {
@@ -589,7 +592,7 @@ public final class Operations<T> {
                 .let(toBsonDocument(options.getLet()));
     }
 
-    public <R> CommandReadOperation<R> commandRead(final Bson command, final Class<R> resultClass) {
+    public <R> ReadOperationSimple<R> commandRead(final Bson command, final Class<R> resultClass) {
         notNull("command", command);
         notNull("resultClass", resultClass);
         return new CommandReadOperation<>(assertNotNull(namespace).getDatabaseName(),
@@ -597,12 +600,12 @@ public final class Operations<T> {
     }
 
 
-    public DropDatabaseOperation dropDatabase() {
+    public WriteOperation<Void> dropDatabase() {
         return new DropDatabaseOperation(assertNotNull(namespace).getDatabaseName(),
                 getWriteConcern());
     }
 
-    public CreateCollectionOperation createCollection(final String collectionName, final CreateCollectionOptions createCollectionOptions,
+    public WriteOperation<Void> createCollection(final String collectionName, final CreateCollectionOptions createCollectionOptions,
             @Nullable final AutoEncryptionSettings autoEncryptionSettings) {
         CreateCollectionOperation operation = new CreateCollectionOperation(
                 assertNotNull(namespace).getDatabaseName(), collectionName, writeConcern)
@@ -644,7 +647,7 @@ public final class Operations<T> {
         return operation;
     }
 
-    public DropCollectionOperation dropCollection(
+    public WriteOperation<Void> dropCollection(
             final DropCollectionOptions dropCollectionOptions,
             @Nullable final AutoEncryptionSettings autoEncryptionSettings) {
         DropCollectionOperation operation = new DropCollectionOperation(
@@ -663,13 +666,13 @@ public final class Operations<T> {
     }
 
 
-    public RenameCollectionOperation renameCollection(final MongoNamespace newCollectionNamespace,
+    public WriteOperation<Void> renameCollection(final MongoNamespace newCollectionNamespace,
             final RenameCollectionOptions renameCollectionOptions) {
         return new RenameCollectionOperation(assertNotNull(namespace),
                 newCollectionNamespace, writeConcern).dropTarget(renameCollectionOptions.isDropTarget());
     }
 
-    public CreateViewOperation createView(final String viewName, final String viewOn, final List<? extends Bson> pipeline,
+    public WriteOperation<Void> createView(final String viewName, final String viewOn, final List<? extends Bson> pipeline,
             final CreateViewOptions createViewOptions) {
         notNull("options", createViewOptions);
         notNull("pipeline", pipeline);
@@ -677,7 +680,7 @@ public final class Operations<T> {
                 viewOn, assertNotNull(toBsonDocumentList(pipeline)), writeConcern).collation(createViewOptions.getCollation());
     }
 
-    public CreateIndexesOperation createIndexes(final List<IndexModel> indexes, final CreateIndexOptions createIndexOptions) {
+    public WriteOperation<Void> createIndexes(final List<IndexModel> indexes, final CreateIndexOptions createIndexOptions) {
         notNull("indexes", indexes);
         notNull("createIndexOptions", createIndexOptions);
         List<IndexRequest> indexRequests = new ArrayList<>(indexes.size());
@@ -712,7 +715,7 @@ public final class Operations<T> {
                 .commitQuorum(createIndexOptions.getCommitQuorum());
     }
 
-    public CreateSearchIndexesOperation createSearchIndexes(final List<SearchIndexModel> indexes) {
+    public WriteOperation<Void> createSearchIndexes(final List<SearchIndexModel> indexes) {
         List<SearchIndexRequest> indexRequests = indexes.stream()
                 .map(this::createSearchIndexRequest)
                 .collect(Collectors.toList());
@@ -731,26 +734,24 @@ public final class Operations<T> {
     }
 
 
-    public <R> ListSearchIndexesOperation<R> listSearchIndexes(final Class<R> resultClass,
+    public <R> ReadOperationExplainable<R> listSearchIndexes(final Class<R> resultClass,
             @Nullable final String indexName, @Nullable final Integer batchSize, @Nullable final Collation collation,
             @Nullable final BsonValue comment, @Nullable final Boolean allowDiskUse) {
         return new ListSearchIndexesOperation<>(assertNotNull(namespace),
                 codecRegistry.get(resultClass), indexName, batchSize, collation, comment, allowDiskUse, retryReads);
     }
 
-    public DropIndexOperation dropIndex(final String indexName, final DropIndexOptions ignoredOptions) {
+    public WriteOperation<Void> dropIndex(final String indexName, final DropIndexOptions ignoredOptions) {
         return new DropIndexOperation(assertNotNull(namespace), indexName, writeConcern);
     }
 
-    public DropIndexOperation dropIndex(final Bson keys, final DropIndexOptions ignoredOptions) {
+    public WriteOperation<Void> dropIndex(final Bson keys, final DropIndexOptions ignoredOptions) {
         return new DropIndexOperation(assertNotNull(namespace), keys.toBsonDocument(BsonDocument.class, codecRegistry), writeConcern);
     }
 
-    public <R> ListCollectionsOperation<R> listCollections(final String databaseName, final Class<R> resultClass,
-                                                                final Bson filter, final boolean collectionNamesOnly,
-                                                                final boolean authorizedCollections,
-                                                                @Nullable final Integer batchSize,
-                                                                final BsonValue comment, @Nullable final TimeoutMode timeoutMode) {
+    public <R> ReadOperationCursor<R> listCollections(final String databaseName, final Class<R> resultClass,
+            final Bson filter, final boolean collectionNamesOnly, final boolean authorizedCollections, @Nullable final Integer batchSize,
+            final BsonValue comment, @Nullable final TimeoutMode timeoutMode) {
         return new ListCollectionsOperation<>(databaseName, codecRegistry.get(resultClass))
                 .retryReads(retryReads)
                 .filter(toBsonDocument(filter))
@@ -761,7 +762,7 @@ public final class Operations<T> {
                 .timeoutMode(timeoutMode);
     }
 
-    public <R> ListDatabasesOperation<R> listDatabases(final Class<R> resultClass, final Bson filter,
+    public <R> ReadOperationCursor<R> listDatabases(final Class<R> resultClass, final Bson filter,
                                                             final Boolean nameOnly,
                                                             final Boolean authorizedDatabasesOnly, final BsonValue comment) {
         return new ListDatabasesOperation<>(codecRegistry.get(resultClass))
@@ -772,7 +773,7 @@ public final class Operations<T> {
                 .comment(comment);
     }
 
-    public <R> ListIndexesOperation<R> listIndexes(final Class<R> resultClass, @Nullable final Integer batchSize,
+    public <R> ReadOperationCursor<R> listIndexes(final Class<R> resultClass, @Nullable final Integer batchSize,
             final BsonValue comment, @Nullable final TimeoutMode timeoutMode) {
         return new ListIndexesOperation<>(assertNotNull(namespace),
                 codecRegistry.get(resultClass))
@@ -782,7 +783,7 @@ public final class Operations<T> {
                 .timeoutMode(timeoutMode);
     }
 
-    public <R> ChangeStreamOperation<R> changeStream(final FullDocument fullDocument,
+    public <R> ReadOperationCursor<R> changeStream(final FullDocument fullDocument,
             final FullDocumentBeforeChange fullDocumentBeforeChange, final List<? extends Bson> pipeline,
             final Decoder<R> decoder, final ChangeStreamLevel changeStreamLevel, @Nullable final Integer batchSize,
             final Collation collation, final BsonValue comment, final BsonDocument resumeToken,
@@ -802,7 +803,7 @@ public final class Operations<T> {
                 .retryReads(retryReads);
     }
 
-    public ClientBulkWriteOperation clientBulkWriteOperation(
+    public WriteOperation<ClientBulkWriteResult> clientBulkWriteOperation(
             final List<? extends ClientNamespacedWriteModel> clientWriteModels,
             @Nullable final ClientBulkWriteOptions options) {
         return new ClientBulkWriteOperation(clientWriteModels, options, writeConcern, retryWrites, codecRegistry);
