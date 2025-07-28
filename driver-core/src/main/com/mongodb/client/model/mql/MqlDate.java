@@ -139,20 +139,6 @@ public interface MqlDate extends MqlValue {
     MqlString asString(MqlString timezone, MqlString format);
 
     /**
-     * The string representation of {@code this} date as determined by the
-     * provided {@code timezone} with default format as below:
-     *
-     * <ul>
-     *     <li>If {@code timezone} is UTC timezone, {@code "%Y-%m-%dT%H:%M:%S.%LZ"} will be the default
-     *     <li>Otherwise the default format will be {@code "%Y-%m-%dT%H:%M:%S.%L"}
-     * </ul>
-     *
-     * @param timezone the UTC Offset or Olson Timezone Identifier.
-     * @return the resulting value.
-     */
-    MqlString asString(MqlString timezone);
-
-    /**
      * The result of passing {@code this} value to the provided function.
      * Equivalent to {@code f.apply(this)}, and allows lambdas and static,
      * user-defined functions to use the chaining syntax.
