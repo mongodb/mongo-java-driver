@@ -47,6 +47,7 @@ import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.event.ConnectionClosedEvent;
 import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionReadyEvent;
+import com.mongodb.internal.connection.InternalStreamConnection;
 import com.mongodb.internal.connection.ServerHelper;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
@@ -906,6 +907,43 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
         List<CommandFailedEvent> failedEvents = commandListener.getCommandFailedEvents("commitTransaction");
         assertEquals(1, failedEvents.size());
+    }
+
+    /**
+     * Not a prose spec test. However, it is additional test case for better coverage.
+     * <p>
+     * From the spec:
+     * - When doing `minPoolSize` maintenance, `connectTimeoutMS` is used as the timeout for socket establishment.
+     */
+    @Test
+    public void shouldUseConnectTimeoutMSWhenEstablishingConnectionInBackground() {
+        assumeTrue(serverVersionAtLeast(4, 4));
+
+        collectionHelper.runAdminCommand("{"
+                + "  configureFailPoint: \"failCommand\","
+                + "    mode: \"alwaysOn\","
+                + "  data: {"
+                + "    failCommands: [\"hello\", \"isMaster\"],"
+                + "    blockConnection: true,"
+                + "    blockTimeMS: " + 500
+                + "  }"
+                + "}");
+
+        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
+                .applyToConnectionPoolSettings(builder -> builder.minSize(1))
+                // Use a very short timeout to ensure that the connection establishment will fail on the first handshake command.
+                .timeout(1, TimeUnit.MILLISECONDS))) {
+            InternalStreamConnection.setRecordEverything(true);
+
+            // Wait for the connection to start establishment in the background
+            sleep(1000);
+        }
+        List<CommandStartedEvent> commandStartedEvents = commandListener.getCommandStartedEvents("isMaster");
+        assertEquals(1, commandStartedEvents.size());
+
+        List<CommandFailedEvent> commandFailedEvents = commandListener.getCommandFailedEvents("isMaster");
+        assertEquals(1, commandFailedEvents.size());
+        assertInstanceOf(MongoOperationTimeoutException.class, commandFailedEvents.get(0).getThrowable());
     }
 
     private static Stream<Arguments> test8ServerSelectionArguments() {
