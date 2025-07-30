@@ -1091,9 +1091,11 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             }
         }
 
-        executor.shutdownNow();
-        //noinspection ResultOfMethodCallIgnored
-        executor.awaitTermination(MAX_VALUE, NANOSECONDS);
+        if (executor != null) {
+            executor.shutdownNow();
+            //noinspection ResultOfMethodCallIgnored
+            executor.awaitTermination(MAX_VALUE, NANOSECONDS);
+        }
     }
 
     @AfterAll
