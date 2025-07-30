@@ -61,7 +61,6 @@ import java.util.stream.Stream;
 import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
@@ -76,7 +75,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
@@ -106,7 +104,6 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
             final Function<MongoCollection<Document>, R> operation, final String operationName, final boolean write)
             throws InterruptedException, ExecutionException, TimeoutException {
         assumeTrue(serverVersionAtLeast(4, 3) && !(write && isStandalone()));
-        assumeFalse(isServerlessTest());
         TestConnectionPoolListener connectionPoolListener = new TestConnectionPoolListener(asList(
                 "connectionCheckedOutEvent",
                 "poolClearedEvent",

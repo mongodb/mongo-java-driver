@@ -349,7 +349,7 @@ final class DefaultConnectionPool implements ConnectionPool {
             }
             return new PooledConnection(internalConnection);
         } catch (MongoTimeoutException e) {
-            throw createTimeoutException(startTime, timeoutContext);
+            throw createTimeoutException(startTime, e, timeoutContext);
         }
     }
 
@@ -363,7 +363,9 @@ final class DefaultConnectionPool implements ConnectionPool {
         return internalConnection == null ? null : new PooledConnection(internalConnection);
     }
 
-    private MongoTimeoutException createTimeoutException(final StartTime startTime, final TimeoutContext timeoutContext) {
+    private MongoTimeoutException createTimeoutException(final StartTime startTime,
+                                                         @Nullable final MongoTimeoutException cause,
+                                                         final TimeoutContext timeoutContext) {
         long elapsedMs = startTime.elapsed().toMillis();
         int numPinnedToCursor = pinnedStatsManager.getNumPinnedToCursor();
         int numPinnedToTransaction = pinnedStatsManager.getNumPinnedToTransaction();
@@ -381,7 +383,7 @@ final class DefaultConnectionPool implements ConnectionPool {
              * - numInUse > 0
              *     we consider at least one of `numPinnedToCursor`, `numPinnedToTransaction` to be positive,
              *     so if we observe `numInUse` to be 0, we have to estimate it based on `numPinnedToCursor` and `numPinnedToTransaction`;
-             * - numInUse < maxSize
+             * - numInUse <= maxSize
              *     `numInUse` must not exceed the limit in situations when we estimate `numInUse`;
              * - numPinnedToCursor + numPinnedToTransaction <= numInUse
              *     otherwise the numbers do not make sense.
@@ -408,7 +410,7 @@ final class DefaultConnectionPool implements ConnectionPool {
                     numOtherInUse);
         }
 
-        return timeoutContext.hasTimeoutMS() ? createMongoTimeoutException(errorMessage) : new MongoTimeoutException(errorMessage);
+        return timeoutContext.hasTimeoutMS() ? createMongoTimeoutException(errorMessage, cause) : new MongoTimeoutException(errorMessage, cause);
     }
 
     @VisibleForTesting(otherwise = PRIVATE)
@@ -1078,7 +1080,7 @@ final class DefaultConnectionPool implements ConnectionPool {
                         & (availableConnection = tryGetAvailable ? tryGetAvailableConnection() : null) == null) {
 
                     Timeout.onExistsAndExpired(maxWaitTimeout, () -> {
-                        throw createTimeoutException(startTime, timeoutContext);
+                        throw createTimeoutException(startTime, null, timeoutContext);
                     });
                     maxWaitTimeout.awaitOn(permitAvailableOrHandedOverOrClosedOrPausedCondition,
                             () -> "acquiring permit or getting available opened connection");
@@ -1422,7 +1424,7 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         void failAsTimedOut() {
-            doComplete(() -> createTimeoutException(startTime, timeoutContext));
+            doComplete(() -> createTimeoutException(startTime,null,  timeoutContext));
         }
 
         private void doComplete(final Supplier<RuntimeException> failureSupplier) {

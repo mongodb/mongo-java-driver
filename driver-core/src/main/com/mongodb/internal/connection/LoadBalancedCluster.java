@@ -63,7 +63,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.internal.connection.BaseCluster.logServerSelectionStarted;
 import static com.mongodb.internal.connection.BaseCluster.logServerSelectionSucceeded;
-import static com.mongodb.internal.connection.BaseCluster.logTopologyClosedEvent;
+import static com.mongodb.internal.connection.BaseCluster.logTopologyMonitoringStopping;
 import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
@@ -77,6 +77,7 @@ final class LoadBalancedCluster implements Cluster {
     private final ClusterId clusterId;
     private final ClusterSettings settings;
     private final ClusterClock clusterClock = new ClusterClock();
+    private final ClientMetadata clientMetadata;
     private final ClusterListener clusterListener;
     private ClusterDescription description;
     @Nullable
@@ -92,6 +93,7 @@ final class LoadBalancedCluster implements Cluster {
     private final Condition condition = lock.newCondition();
 
     LoadBalancedCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
+                        final ClientMetadata clientMetadata,
                         final DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory) {
         assertTrue(settings.getMode() == ClusterConnectionMode.LOAD_BALANCED);
         LOGGER.info(format("Cluster created with id %s and settings %s", clusterId, settings.getShortDescription()));
@@ -101,6 +103,7 @@ final class LoadBalancedCluster implements Cluster {
         this.clusterListener = singleClusterListener(settings);
         this.description = new ClusterDescription(settings.getMode(), ClusterType.UNKNOWN, emptyList(), settings,
                 serverFactory.getSettings());
+        this.clientMetadata = clientMetadata;
 
         if (settings.getSrvHost() == null) {
             dnsSrvRecordMonitor = null;
@@ -206,6 +209,11 @@ final class LoadBalancedCluster implements Cluster {
     }
 
     @Override
+    public ClientMetadata getClientMetadata() {
+        return clientMetadata;
+    }
+
+    @Override
     public ServerTuple selectServer(final ServerSelector serverSelector, final OperationContext operationContext) {
         isTrue("open", !isClosed());
         Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
@@ -214,9 +222,9 @@ final class LoadBalancedCluster implements Cluster {
             throw createResolvedToMultipleHostsException();
         }
         ClusterDescription curDescription = description;
-        logServerSelectionStarted(clusterId, operationContext.getId(), serverSelector, curDescription);
+        logServerSelectionStarted(operationContext, clusterId, serverSelector, curDescription);
         ServerTuple serverTuple = new ServerTuple(assertNotNull(server), curDescription.getServerDescriptions().get(0));
-        logServerSelectionSucceeded(clusterId, operationContext.getId(), serverTuple.getServerDescription().getAddress(),
+        logServerSelectionSucceeded(operationContext, clusterId, serverTuple.getServerDescription().getAddress(),
                 serverSelector, curDescription);
         return serverTuple;
     }
@@ -246,8 +254,8 @@ final class LoadBalancedCluster implements Cluster {
             return;
         }
         Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
-        ServerSelectionRequest serverSelectionRequest = new ServerSelectionRequest(operationContext.getId(), serverSelector,
-                operationContext, computedServerSelectionTimeout, callback);
+        ServerSelectionRequest serverSelectionRequest = new ServerSelectionRequest(serverSelector, operationContext,
+                computedServerSelectionTimeout, callback);
         if (initializationCompleted) {
             handleServerSelectionRequest(serverSelectionRequest);
         } else {
@@ -273,9 +281,9 @@ final class LoadBalancedCluster implements Cluster {
             if (localServer != null) {
                 localServer.close();
             }
+            logTopologyMonitoringStopping(clusterId);
             ClusterClosedEvent clusterClosedEvent = new ClusterClosedEvent(clusterId);
             clusterListener.clusterClosed(clusterClosedEvent);
-            logTopologyClosedEvent(clusterId, clusterClosedEvent);
         }
     }
 
@@ -301,9 +309,9 @@ final class LoadBalancedCluster implements Cluster {
         } else {
             ClusterDescription curDescription = description;
             logServerSelectionStarted(
-                    clusterId, serverSelectionRequest.operationId, serverSelectionRequest.serverSelector, curDescription);
+                    serverSelectionRequest.operationContext, clusterId, serverSelectionRequest.serverSelector, curDescription);
             ServerTuple serverTuple = new ServerTuple(assertNotNull(server), curDescription.getServerDescriptions().get(0));
-            logServerSelectionSucceeded(clusterId, serverSelectionRequest.operationId,
+            logServerSelectionSucceeded(serverSelectionRequest.operationContext, clusterId,
                     serverTuple.getServerDescription().getAddress(), serverSelectionRequest.serverSelector, curDescription);
             serverSelectionRequest.onSuccess(serverTuple);
         }
@@ -408,15 +416,13 @@ final class LoadBalancedCluster implements Cluster {
     }
 
     private static final class ServerSelectionRequest {
-        private final long operationId;
         private final ServerSelector serverSelector;
         private final SingleResultCallback<ServerTuple> callback;
         private final Timeout timeout;
         private final OperationContext operationContext;
 
-        private ServerSelectionRequest(final long operationId, final ServerSelector serverSelector, final OperationContext operationContext,
+        private ServerSelectionRequest(final ServerSelector serverSelector, final OperationContext operationContext,
                                        final Timeout timeout, final SingleResultCallback<ServerTuple> callback) {
-            this.operationId = operationId;
             this.serverSelector = serverSelector;
             this.timeout = timeout;
             this.operationContext = operationContext;

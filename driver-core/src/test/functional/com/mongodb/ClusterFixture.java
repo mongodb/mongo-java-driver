@@ -50,6 +50,7 @@ import com.mongodb.internal.binding.SessionBinding;
 import com.mongodb.internal.binding.SingleConnectionBinding;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.AsynchronousSocketChannelStreamFactory;
+import com.mongodb.internal.connection.ClientMetadata;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
 import com.mongodb.internal.connection.DefaultInetAddressResolver;
@@ -119,7 +120,6 @@ public final class ClusterFixture {
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
     public static final String MONGODB_API_VERSION = "org.mongodb.test.api.version";
     public static final String MONGODB_MULTI_MONGOS_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.multi.mongos.uri";
-    public static final String SERVERLESS_TEST_SYSTEM_PROPERTY_NAME = "org.mongodb.test.serverless";
     public static final String DATA_LAKE_TEST_SYSTEM_PROPERTY_NAME = "org.mongodb.test.data.lake";
     public static final String ATLAS_SEARCH_TEST_SYSTEM_PROPERTY_NAME = "org.mongodb.test.atlas.search";
     private static final String MONGODB_OCSP_SHOULD_SUCCEED = "org.mongodb.test.ocsp.tls.should.succeed";
@@ -127,6 +127,7 @@ public final class ClusterFixture {
     private static final int COMMAND_NOT_FOUND_ERROR_CODE = 59;
     public static final long TIMEOUT = 120L;
     public static final Duration TIMEOUT_DURATION = Duration.ofSeconds(TIMEOUT);
+    public static final ClientMetadata CLIENT_METADATA = new ClientMetadata("test", MongoDriverInformation.builder().build());
 
     public static final TimeoutSettings TIMEOUT_SETTINGS = new TimeoutSettings(30_000, 10_000, 0, null, SECONDS.toMillis(5));
     public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_TIMEOUT = TIMEOUT_SETTINGS.withTimeout(TIMEOUT, SECONDS);
@@ -293,10 +294,6 @@ public final class ClusterFixture {
         return getConnectionStringFromSystemProperty(MONGODB_MULTI_MONGOS_URI_SYSTEM_PROPERTY_NAME);
     }
 
-    public static boolean isServerlessTest() {
-        return System.getProperty(SERVERLESS_TEST_SYSTEM_PROPERTY_NAME, "").equals("true");
-    }
-
     public static synchronized boolean isDataLakeTest() {
         String isDataLakeSystemProperty = System.getProperty(DATA_LAKE_TEST_SYSTEM_PROPERTY_NAME);
         return "true".equals(isDataLakeSystemProperty);
@@ -382,11 +379,7 @@ public final class ClusterFixture {
     }
 
     public static OperationContext createNewOperationContext(final TimeoutSettings timeoutSettings) {
-        return new OperationContext(OPERATION_CONTEXT.getId(),
-                OPERATION_CONTEXT.getRequestContext(),
-                OPERATION_CONTEXT.getSessionContext(),
-                new TimeoutContext(timeoutSettings),
-                OPERATION_CONTEXT.getServerApi());
+        return OPERATION_CONTEXT.withTimeoutContext(new TimeoutContext(timeoutSettings));
     }
 
     private static ReadWriteBinding getBinding(final Cluster cluster,
@@ -842,10 +835,4 @@ public final class ClusterFixture {
         return builder.mode(ClusterConnectionMode.SINGLE).hosts(singletonList(getPrimary()));
     }
 
-    public static int applyTimeoutMultiplierForServerless(final int timeoutMs) {
-        if (ClusterFixture.isServerlessTest()) {
-            return timeoutMs * 2;
-        }
-        return timeoutMs;
-    }
 }

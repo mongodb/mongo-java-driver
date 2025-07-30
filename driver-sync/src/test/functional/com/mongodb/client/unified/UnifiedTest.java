@@ -91,7 +91,6 @@ import static com.mongodb.client.unified.UnifiedTestModifications.applyCustomiza
 import static com.mongodb.client.unified.UnifiedTestModifications.testDef;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -374,9 +373,7 @@ public abstract class UnifiedTest {
             }
 
             if (definition.containsKey("expectLogMessages")) {
-                ArrayList<LogMatcher.Tweak> tweaks = new ArrayList<>(singletonList(
-                        // `LogMessage.Entry.Name.OPERATION` is not supported, therefore we skip matching its value
-                        LogMatcher.Tweak.skip(LogMessage.Entry.Name.OPERATION)));
+                ArrayList<LogMatcher.Tweak> tweaks = new ArrayList<>();
                 if (getMongoClientSettings().getClusterSettings()
                         .getHosts().stream().anyMatch(serverAddress -> serverAddress instanceof UnixServerAddress)) {
                     tweaks.add(LogMatcher.Tweak.skip(LogMessage.Entry.Name.SERVER_PORT));
@@ -481,10 +478,11 @@ public abstract class UnifiedTest {
         for (BsonValue cur : definition.getArray("expectLogMessages")) {
             BsonDocument curLogMessagesForClient = cur.asDocument();
             boolean ignoreExtraMessages = curLogMessagesForClient.getBoolean("ignoreExtraMessages", BsonBoolean.FALSE).getValue();
+            BsonArray ignoreMessages = curLogMessagesForClient.getArray("ignoreMessages", new BsonArray());
             String clientId = curLogMessagesForClient.getString("client").getValue();
             TestLoggingInterceptor loggingInterceptor =
                     entities.getClientLoggingInterceptor(clientId);
-            rootContext.getLogMatcher().assertLogMessageEquality(clientId, ignoreExtraMessages,
+            rootContext.getLogMatcher().assertLogMessageEquality(clientId, ignoreMessages, ignoreExtraMessages,
                     curLogMessagesForClient.getArray("messages"), loggingInterceptor.getMessages(), tweaks);
         }
     }
@@ -723,6 +721,8 @@ public abstract class UnifiedTest {
                     return clientEncryptionHelper.executeEncrypt(operation);
                 case "decrypt":
                     return clientEncryptionHelper.executeDecrypt(operation);
+                case "appendMetadata":
+                    return crudHelper.executeUpdateClientMetadata(operation);
                 default:
                     throw new UnsupportedOperationException("Unsupported test operation: " + name);
             }

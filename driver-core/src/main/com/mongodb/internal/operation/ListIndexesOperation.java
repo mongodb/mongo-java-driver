@@ -49,8 +49,8 @@ import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNot
 import static com.mongodb.internal.operation.CursorHelper.getCursorDocumentFromBatchSize;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.setNonTailableCursorMaxTimeSupplier;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
+import static com.mongodb.internal.operation.OperationHelper.setNonTailableCursorMaxTimeSupplier;
 import static com.mongodb.internal.operation.SingleBatchCursor.createEmptySingleBatchCursor;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.createReadCommandAndExecute;
@@ -65,6 +65,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+    private static final String COMMAND_NAME = "listIndexes";
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private boolean retryReads;
@@ -117,6 +118,11 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
     }
 
     @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+    @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         RetryState retryState = initialRetryState(retryReads, binding.getOperationContext().getTimeoutContext());
         Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, binding.getOperationContext(), () ->
@@ -165,7 +171,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
 
     private CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
-            BsonDocument commandDocument = new BsonDocument("listIndexes", new BsonString(namespace.getCollectionName()))
+            BsonDocument commandDocument = new BsonDocument(getCommandName(), new BsonString(namespace.getCollectionName()))
                     .append("cursor", getCursorDocumentFromBatchSize(batchSize == 0 ? null : batchSize));
             setNonTailableCursorMaxTimeSupplier(timeoutMode, operationContext);
             putIfNotNull(commandDocument, "comment", comment);

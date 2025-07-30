@@ -74,7 +74,7 @@ time.
 ## Binaries
 
 Binaries and dependency information for Maven, Gradle, Ivy and others can be found at
-[http://search.maven.org](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.mongodb%22%20AND%20a%3A%22mongodb-driver-sync%22).
+[https://central.sonatype.com/search](https://central.sonatype.com/search?namespace=org.mongodb&name=mongodb-driver-sync).
 
 Example for Maven:
 
@@ -90,12 +90,19 @@ Snapshot builds are also published regulary via Sonatype.
 Example for Maven:
 
 ```xml
-    <repositories>
-        <repository>
-            <id>sonatype-snapshot</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </repository>
-    </repositories>
+<repositories>
+    <repository>
+        <name>Central Portal Snapshots</name>
+        <id>central-portal-snapshots</id>
+        <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+        <releases>
+            <enabled>false</enabled>
+        </releases>
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots>
+    </repository>
+</repositories>
 ```
 
 ## Build

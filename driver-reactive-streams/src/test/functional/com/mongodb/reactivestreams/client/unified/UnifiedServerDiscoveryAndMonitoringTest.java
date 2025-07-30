@@ -17,7 +17,6 @@
 package com.mongodb.reactivestreams.client.unified;
 
 import org.junit.jupiter.params.provider.Arguments;
-
 import java.util.Collection;
 
 final class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedReactiveStreamsTest {

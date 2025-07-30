@@ -38,6 +38,11 @@ final class DropSearchIndexOperation extends AbstractWriteSearchIndexOperation {
     }
 
     @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+    @Override
     <E extends Throwable> void swallowOrThrow(@Nullable final E mongoExecutionException) throws E {
         if (mongoExecutionException != null && !isNamespaceError(mongoExecutionException)) {
             throw mongoExecutionException;
@@ -46,7 +51,7 @@ final class DropSearchIndexOperation extends AbstractWriteSearchIndexOperation {
 
     @Override
     BsonDocument buildCommand() {
-        return new BsonDocument(COMMAND_NAME, new BsonString(getNamespace().getCollectionName()))
+        return new BsonDocument(getCommandName(), new BsonString(getNamespace().getCollectionName()))
                 .append("name", new BsonString(indexName));
     }
 }

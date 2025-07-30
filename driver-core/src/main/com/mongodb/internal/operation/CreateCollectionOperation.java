@@ -232,6 +232,11 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     }
 
     @Override
+    public String getCommandName() {
+        return "createCollection";
+    }
+
+    @Override
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, connection -> {
             checkEncryptedFieldsSupported(connection.getDescription());

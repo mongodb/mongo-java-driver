@@ -16,14 +16,14 @@
 package conventions
 
 import com.github.spotbugs.snom.SpotBugsTask
+import libs
 import org.gradle.kotlin.dsl.dependencies
-import project.libs
 
 // Performs quality checks on your project's Java source files using SpotBug
 // https://plugins.gradle.org/plugin/com.github.spotbugs
 plugins {
     id("java-library")
-    id("com.github.spotbugs")
+    alias(libs.plugins.spotbugs)
 }
 
 dependencies {

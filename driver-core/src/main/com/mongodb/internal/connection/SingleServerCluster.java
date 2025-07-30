@@ -49,8 +49,9 @@ public final class SingleServerCluster extends BaseCluster {
 
     private final AtomicReference<ClusterableServer> server;
 
-    public SingleServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
-        super(clusterId, settings, serverFactory);
+    public SingleServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
+                               final ClientMetadata clientMetadata) {
+        super(clusterId, settings, serverFactory, clientMetadata);
         isTrue("one server in a direct cluster", settings.getHosts().size() == 1);
         isTrue("connection mode is single", settings.getMode() == ClusterConnectionMode.SINGLE);
 
@@ -58,9 +59,9 @@ public final class SingleServerCluster extends BaseCluster {
         // synchronized in the constructor because the change listener is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
         withLock(() -> {
-            server.set(createServer(settings.getHosts().get(0)));
             publishDescription(ServerDescription.builder().state(CONNECTING).address(settings.getHosts().get(0))
                     .build());
+            server.set(createServer(settings.getHosts().get(0)));
         });
     }
 

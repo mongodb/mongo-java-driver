@@ -336,12 +336,12 @@ final class EventMatcher {
         BsonDocument expectedEventContents = getEventContents(expectedEvent);
         try {
             serverMonitorListener.waitForEvents(expectedEventType,
-                    event -> serverMonitorEventMatches(expectedEventContents, event, null), count, Duration.ofSeconds(10));
+                    event -> serverMonitorEventMatches(expectedEventContents, event, null), count, Duration.ofSeconds(15));
             context.pop();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } catch (TimeoutException e) {
-            fail(context.getMessage("Timed out waiting for server monitor events"));
+            fail(context.getMessage(e.getMessage()));
         }
     }
 

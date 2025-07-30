@@ -28,7 +28,9 @@ import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
@@ -38,12 +40,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static com.mongodb.client.CrudTestHelper.repeat;
 import static com.mongodb.client.WithWrapper.withWrapper;
-import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
-import static com.mongodb.internal.connection.ClientMetadataHelper.getOperatingSystemType;
+import static com.mongodb.internal.connection.ClientMetadata.getOperatingSystemType;
+import static java.util.Optional.ofNullable;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -52,8 +56,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * <p>
  * NOTE: This class also contains tests that aren't categorized as Prose tests.
  */
-public class ClientMetadataHelperProseTest {
+public class ClientMetadataTest {
     private static final String APP_NAME = "app name";
+    private static final MongoDriverInformation EMPTY_MONGO_DRIVER_INFORMATION = MongoDriverInformation.builder().build();
 
     @Test
     public void test01ValidAws() {
@@ -258,7 +263,7 @@ public class ClientMetadataHelperProseTest {
         BsonDocument expectedBase = createExpectedClientMetadataDocument(APP_NAME);
         expected.put("driver", expectedBase.get("driver"));
 
-        BsonDocument actual = createClientMetadataDocument(APP_NAME, driverInfo);
+        BsonDocument actual = new ClientMetadata(APP_NAME, driverInfo).getBsonDocument();
         assertEquals(expected, actual);
     }
 
@@ -274,7 +279,7 @@ public class ClientMetadataHelperProseTest {
         BsonDocument expectedBase = createExpectedClientMetadataDocument(APP_NAME);
         expected.put("platform", expectedBase.get("platform"));
 
-        BsonDocument actual = createClientMetadataDocument(APP_NAME, driverInfo);
+        BsonDocument actual = new ClientMetadata(APP_NAME, driverInfo).getBsonDocument();
         assertEquals(expected, actual);
     }
 
@@ -294,14 +299,14 @@ public class ClientMetadataHelperProseTest {
     @Test
     public void testApplicationNameUnderLimit() {
         String applicationName = repeat(126, "a") + "\u00A0";
-        BsonDocument client = createClientMetadataDocument(applicationName, null);
+        BsonDocument client = new ClientMetadata(applicationName, EMPTY_MONGO_DRIVER_INFORMATION).getBsonDocument();
         assertEquals(applicationName, client.getDocument("application").getString("name").getValue());
     }
 
     @Test
     public void testApplicationNameOverLimit() {
         String applicationName = repeat(127, "a") + "\u00A0";
-        assertThrows(IllegalArgumentException.class, () -> createClientMetadataDocument(applicationName, null));
+        assertThrows(IllegalArgumentException.class, () -> new ClientMetadata(applicationName, EMPTY_MONGO_DRIVER_INFORMATION));
     }
 
     @ParameterizedTest
@@ -312,10 +317,65 @@ public class ClientMetadataHelperProseTest {
             ", " + false,
     })
     public void testCreateClientMetadataDocument(@Nullable final String appName, final boolean hasDriverInfo) {
-        MongoDriverInformation driverInformation = hasDriverInfo ? createDriverInformation() : null;
+        MongoDriverInformation driverInformation = hasDriverInfo ? createDriverInformation() : EMPTY_MONGO_DRIVER_INFORMATION;
+        ClientMetadata clientMetadata = new ClientMetadata(appName, driverInformation);
         assertEquals(
                 createExpectedClientMetadataDocument(appName, driverInformation),
-                createClientMetadataDocument(appName, driverInformation));
+                clientMetadata.getBsonDocument());
+    }
+
+    public static java.util.stream.Stream<Arguments> provideDriverInformation() {
+        return Stream.of(
+                Arguments.of("1.0", "Framework", "Framework Platform"),
+                Arguments.of("1.0", "Framework", null),
+                Arguments.of(null, "Framework", "Framework Platform"),
+                Arguments.of(null, null, "Framework Platform"),
+                Arguments.of(null, "Framework", null)
+        );
+    }
+
+
+    @ParameterizedTest
+    @MethodSource("provideDriverInformation")
+    void testUpdateClientMetadataDocument(@Nullable final String driverVersion,
+                                          @Nullable final String driverName,
+                                          @Nullable final String driverPlatform) {
+        //given
+        MongoDriverInformation initialDriverInformation = MongoDriverInformation.builder()
+                .driverName("mongo-spark")
+                .driverVersion("2.0.0")
+                .driverPlatform("Scala 2.10 / Spark 2.0.0")
+                .build();
+
+        ClientMetadata clientMetadata = new ClientMetadata(null, initialDriverInformation);
+        BsonDocument initialClientMetadataDocument = clientMetadata.getBsonDocument();
+        assertEquals(
+                createExpectedClientMetadataDocument(null, initialDriverInformation),
+                initialClientMetadataDocument);
+
+        MongoDriverInformation.Builder builder;
+        builder = MongoDriverInformation.builder();
+        ofNullable(driverName).ifPresent(builder::driverName);
+        ofNullable(driverVersion).ifPresent(builder::driverVersion);
+        ofNullable(driverPlatform).ifPresent(builder::driverPlatform);
+        MongoDriverInformation metadataToAppend = builder.build();
+
+        //We pass metadataToAppend to a builder and prepend with initial driver information.
+        MongoDriverInformation expectedUpdatedMetadata = MongoDriverInformation.builder(metadataToAppend)
+                .driverName("mongo-spark")
+                .driverVersion("2.0.0")
+                .driverPlatform("Scala 2.10 / Spark 2.0.0")
+                .build();
+
+        //when
+        clientMetadata.append(metadataToAppend);
+        BsonDocument updatedClientMetadata = clientMetadata.getBsonDocument();
+
+        //then
+        assertEquals(
+                createExpectedClientMetadataDocument(null, expectedUpdatedMetadata),
+                updatedClientMetadata);
+        assertNotEquals(updatedClientMetadata, initialClientMetadataDocument);
     }
 
     @ParameterizedTest
@@ -343,7 +403,7 @@ public class ClientMetadataHelperProseTest {
     }
 
     private BsonDocument createActualClientMetadataDocument() {
-        return createClientMetadataDocument(APP_NAME, null);
+        return new ClientMetadata(APP_NAME, EMPTY_MONGO_DRIVER_INFORMATION).getBsonDocument();
     }
 
     private static MongoDriverInformation createDriverInformation() {

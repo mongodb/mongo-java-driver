@@ -88,12 +88,13 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
         return this;
     }
 
+    @Override
     protected FieldNameValidator getFieldNameValidator() {
         return NoOpFieldNameValidator.INSTANCE;
     }
 
+    @Override
     protected void specializeCommand(final BsonDocument commandDocument, final ConnectionDescription connectionDescription) {
         commandDocument.put("remove", BsonBoolean.TRUE);
     }
-
 }

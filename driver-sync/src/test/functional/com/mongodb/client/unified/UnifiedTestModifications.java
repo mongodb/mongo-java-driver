@@ -26,7 +26,6 @@ import java.util.function.Supplier;
 
 import static com.mongodb.ClusterFixture.isDataLakeTest;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.assertions.Assertions.assertNotNull;
@@ -90,10 +89,6 @@ public final class UnifiedTestModifications {
 
         // command-logging-and-monitoring
 
-        def.skipNoncompliant("") // TODO-JAVA-5711
-                .when(() -> !def.isReactive() && isServerlessTest()) // TODO-JAVA-5711 why reactive check?
-                .directory("command-logging-and-monitoring");
-
         def.skipNoncompliant("The driver has a hack where getLastError command "
                         + "is executed as part of the handshake in order to "
                         + "get a connectionId even when the hello command "
@@ -109,14 +104,12 @@ public final class UnifiedTestModifications {
                 .test("atlas-data-lake-testing", "getMore", "A successful find event with getMore");
 
         // connection-monitoring-and-pooling
-
-        // TODO-JAVA-5711 reason, jira
-        // added as part of https://jira.mongodb.org/browse/JAVA-4976 , but unknown Jira to complete
-        // The implementation of the functionality related to clearing the connection pool before closing the connection
-        // will be carried out once the specification is finalized and ready.
-        def.skipUnknownReason("")
+        def.skipNoncompliant("According to the test, we should clear the pool then close the connection. Our implementation"
+                        + "immediately closes the failed connection, then clears the pool.")
                 .test("connection-monitoring-and-pooling/tests/logging", "connection-logging", "Connection checkout fails due to error establishing connection");
-        def.skipUnknownReason("")
+
+
+        def.skipNoncompliant("Driver does not support waitQueueSize or waitQueueMultiple options")
                 .test("connection-monitoring-and-pooling/tests/logging", "connection-pool-options", "waitQueueSize should be included in connection pool created message when specified")
                 .test("connection-monitoring-and-pooling/tests/logging", "connection-pool-options", "waitQueueMultiple should be included in connection pool created message when specified");
 
@@ -238,11 +231,6 @@ public final class UnifiedTestModifications {
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5230")
                 .test("server-discovery-and-monitoring", "serverMonitoringMode", "connect with serverMonitoringMode=auto >=4.4")
                 .test("server-discovery-and-monitoring", "serverMonitoringMode", "connect with serverMonitoringMode=stream >=4.4");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-4770")
-                .file("server-discovery-and-monitoring", "standalone-logging")
-                .file("server-discovery-and-monitoring", "replicaset-logging")
-                .file("server-discovery-and-monitoring", "sharded-logging")
-                .file("server-discovery-and-monitoring", "loadbalanced-logging");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5564")
                 .test("server-discovery-and-monitoring", "serverMonitoringMode", "poll waits after successful heartbeat");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-4536")
@@ -538,7 +526,7 @@ public final class UnifiedTestModifications {
         /**
          * Ensuing matching methods are applied only when the condition is met.
          * For example, if tests should only be skipped (or modified) on
-         * serverless, check for serverless in the condition.
+         * sharded clusters, check for sharded in the condition.
          * Must be the first method called in the chain.
          * @param precondition the condition; methods are no-op when false.
          * @return this
