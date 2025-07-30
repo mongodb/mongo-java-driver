@@ -1424,7 +1424,7 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         void failAsTimedOut() {
-            doComplete(() -> createTimeoutException(startTime,null,  timeoutContext));
+            doComplete(() -> createTimeoutException(startTime, null,  timeoutContext));
         }
 
         private void doComplete(final Supplier<RuntimeException> failureSupplier) {
