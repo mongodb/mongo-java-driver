@@ -176,6 +176,37 @@ public final class UnifiedTestModifications {
                 .file("gridfs", "gridfs-deleteByName")
                 .file("gridfs", "gridfs-renameByName");
 
+        // Skip all rawData based tests
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5830 rawData support only added to Go and Node")
+                .file("collection-management", "listCollections-rawData")
+                .file("crud", "aggregate-rawData")
+                .file("crud", "aggregate-rawData")
+                .file("crud", "BulkWrite deleteMany-rawData")
+                .file("crud", "BulkWrite deleteOne-rawData")
+                .file("crud", "BulkWrite replaceOne-rawData")
+                .file("crud", "BulkWrite updateMany-rawData")
+                .file("crud", "BulkWrite updateOne-rawData")
+                .file("crud", "client bulkWrite delete-rawData")
+                .file("crud", "client bulkWrite replaceOne-rawData")
+                .file("crud", "client bulkWrite update-rawData")
+                .file("crud", "count-rawData")
+                .file("crud", "countDocuments-rawData")
+                .file("crud", "db-aggregate-rawdata")
+                .file("crud", "deleteMany-rawData")
+                .file("crud", "deleteOne-rawData")
+                .file("crud", "distinct-rawData")
+                .file("crud", "estimatedDocumentCount-rawData")
+                .file("crud", "find-rawData")
+                .file("crud", "findOneAndDelete-rawData")
+                .file("crud", "findOneAndReplace-rawData")
+                .file("crud", "findOneAndUpdate-rawData")
+                .file("crud", "insertMany-rawData")
+                .file("crud", "insertOne-rawData")
+                .file("crud", "replaceOne-rawData")
+                .file("crud", "updateMany-rawData")
+                .file("crud", "updateOne-rawData")
+                .file("index-management", "index management-rawData");
+
         // retryable-reads
 
         def.modify(WAIT_FOR_BATCH_CURSOR_CREATION, IGNORE_EXTRA_EVENTS)
