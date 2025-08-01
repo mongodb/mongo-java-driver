@@ -108,59 +108,7 @@ public final class Entities {
     private final Map<String, TestServerMonitorListener> serverMonitorListeners = new HashMap<>();
     private final Map<String, MongoCursor<BsonDocument>> cursors = new HashMap<>();
     private final Map<String, ClusterDescription> topologyDescriptions = new HashMap<>();
-    private final Map<String, Long> successCounts = new HashMap<>();
-    private final Map<String, Long> iterationCounts = new HashMap<>();
-    private final Map<String, BsonArray> errorDocumentsMap = new HashMap<>();
-    private final Map<String, BsonArray> failureDocumentsMap = new HashMap<>();
     private final Map<String, List<BsonDocument>> eventsMap = new HashMap<>();
-
-    public boolean hasSuccessCount(final String id) {
-        return successCounts.containsKey(id);
-    }
-
-    public void addSuccessCount(final String id, final long count) {
-        putEntity(id, count, successCounts);
-    }
-
-    public Long getSuccessCount(final String id) {
-        return getEntity(id, successCounts, "successCount");
-    }
-
-    public boolean hasIterationCount(final String id) {
-        return iterationCounts.containsKey(id);
-    }
-
-    public void addIterationCount(final String id, final long count) {
-        putEntity(id, count, iterationCounts);
-    }
-
-    public Long getIterationCount(final String id) {
-        return getEntity(id, iterationCounts, "successCount");
-    }
-
-    public boolean hasErrorDocuments(final String id) {
-        return errorDocumentsMap.containsKey(id);
-    }
-
-    public void addErrorDocuments(final String id, final BsonArray errorDocuments) {
-        putEntity(id, errorDocuments, errorDocumentsMap);
-    }
-
-    public BsonArray getErrorDocuments(final String id) {
-        return getEntity(id, errorDocumentsMap, "errorDocuments");
-    }
-
-    public boolean hasFailureDocuments(final String id) {
-        return failureDocumentsMap.containsKey(id);
-    }
-
-    public void addFailureDocuments(final String id, final BsonArray failureDocuments) {
-        putEntity(id, failureDocuments, failureDocumentsMap);
-    }
-
-    public BsonArray getFailureDocuments(final String id) {
-        return getEntity(id, failureDocumentsMap, "failureDocuments");
-    }
 
     public boolean hasEvents(final String id) {
         return eventsMap.containsKey(id);
