@@ -16,65 +16,97 @@
 
 package com.mongodb.internal.tracing;
 
-import com.mongodb.tracing.Tracer;
+import com.mongodb.lang.Nullable;
 
-import java.util.HashMap;
+import static com.mongodb.internal.tracing.Tags.SYSTEM;
+import static java.lang.System.getenv;
 
+/**
+ * Manages tracing spans for MongoDB driver activities.
+ * <p>
+ * This class provides methods to create and manage spans for commands, operations and transactions.
+ * It integrates with a {@link Tracer} to propagate tracing information and record telemetry.
+ * </p>
+ */
 public class TracingManager {
+    /**
+     * A no-op instance of the TracingManager used when tracing is disabled.
+     */
     public static final TracingManager NO_OP = new TracingManager(Tracer.NO_OP);
+    private static final String ENV_ALLOW_COMMAND_PAYLOAD = "MONGODB_TRACING_ALLOW_COMMAND_PAYLOAD";
 
     private final Tracer tracer;
     private final TraceContext parentContext;
+    private final boolean enableCommandPayload;
 
-    // Map a cursor id to its parent context (useful for folding getMore commands under the parent operation)
-    private final HashMap<Long, TraceContext> cursors = new HashMap<>();
-
-    // Map an operation's span context so the subsequent commands spans can fold under the parent operation
-    private final HashMap<Long, TraceContext> operationContexts = new HashMap<>();
-
+    /**
+     * Constructs a new TracingManager with the specified tracer.
+     *
+     * @param tracer The tracer to use for tracing operations.
+     */
     public TracingManager(final Tracer tracer) {
-        this.tracer = tracer;
-        this.parentContext = tracer.currentContext();
+        this(tracer, tracer.currentContext());
     }
 
+    /**
+     * Constructs a new TracingManager with the specified tracer and parent context.
+     * Setting the environment variable {@code MONGODB_TRACING_ALLOW_COMMAND_PAYLOAD} to "true" will enable command payload tracing.
+     *
+     * @param tracer        The tracer to use for tracing operations.
+     * @param parentContext The parent trace context.
+     */
     public TracingManager(final Tracer tracer, final TraceContext parentContext) {
         this.tracer = tracer;
         this.parentContext = parentContext;
+        String envAllowCommandPayload = getenv(ENV_ALLOW_COMMAND_PAYLOAD);
+        if (envAllowCommandPayload != null) {
+            this.enableCommandPayload = Boolean.parseBoolean(envAllowCommandPayload);
+        } else {
+            this.enableCommandPayload = tracer.includeCommandPayload();
+        }
     }
 
-    public Span addSpan(final String name, final Long operationId) {
-        Span span = tracer.nextSpan(name);
-        operationContexts.put(operationId, span.context());
-        return span;
-    }
-
-    public Span addSpan(final String name, final TraceContext parentContext) {
+    /**
+     * Creates a new span with the specified name and parent trace context.
+     * <p>
+     * This method is used to create a span that is linked to a parent context,
+     * enabling hierarchical tracing of operations.
+     * </p>
+     *
+     * @param name          The name of the span.
+     * @param parentContext The parent trace context to associate with the span.
+     * @return The created span.
+     */
+    public Span addSpan(final String name, @Nullable final TraceContext parentContext) {
         return tracer.nextSpan(name, parentContext);
     }
 
-    public void cleanContexts(final Long operationId) {
-        operationContexts.remove(operationId);
+    /**
+     * Creates a new transaction span for the specified server session.
+     *
+     * @return The created transaction span.
+     */
+    public Span addTransactionSpan() {
+        Span span = tracer.nextSpan("transaction", parentContext);
+        span.tag(SYSTEM, "mongodb");
+        return span;
     }
 
-    public TraceContext getParentContext(final Long operationId) {
-        assert operationContexts.containsKey(operationId);
-        return operationContexts.get(operationId);
-    }
-
-    public void addCursorParentContext(final long cursorId, final long operationId) {
-        assert operationContexts.containsKey(operationId);
-        cursors.put(cursorId, operationContexts.get(operationId));
-    }
-
-    public TraceContext getCursorParentContext(final long cursorId) {
-        return cursors.get(cursorId);
-    }
-
-    public void removeCursorParentContext(final long cursorId) {
-        cursors.remove(cursorId);
-    }
-
+    /**
+     * Checks whether tracing is enabled.
+     *
+     * @return True if tracing is enabled, false otherwise.
+     */
     public boolean isEnabled() {
         return tracer.enabled();
+    }
+
+    /**
+     * Checks whether command payload tracing is enabled.
+     *
+     * @return True if command payload tracing is enabled, false otherwise.
+     */
+    public boolean isCommandPayloadEnabled() {
+        return enableCommandPayload;
     }
 }

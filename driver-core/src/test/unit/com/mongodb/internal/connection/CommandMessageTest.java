@@ -32,7 +32,6 @@ import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
 import com.mongodb.internal.operation.ClientBulkWriteOperation;
 import com.mongodb.internal.operation.ClientBulkWriteOperation.ClientBulkWriteCommand.OpsAndNsInfo;
 import com.mongodb.internal.session.SessionContext;
-import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -164,7 +163,7 @@ class CommandMessageTest {
                     output,
                     new OperationContext(
                             IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
-                            new TimeoutContext(TimeoutSettings.DEFAULT), null, TracingManager.NO_OP));
+                            new TimeoutContext(TimeoutSettings.DEFAULT), null));
             BsonDocument actualCommandDocument = commandMessage.getCommandDocument(output);
             assertEquals(expectedCommandDocument, actualCommandDocument);
         }

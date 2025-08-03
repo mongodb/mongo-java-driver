@@ -27,6 +27,7 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.internal.tracing.TraceContext;
 import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
@@ -53,6 +54,8 @@ public class OperationContext {
     private final ServerApi serverApi;
     @Nullable
     private final String operationName;
+    @Nullable
+    private TraceContext tracingContext;
 
     public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
             @Nullable final ServerApi serverApi) {
@@ -66,7 +69,8 @@ public class OperationContext {
         this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, new ServerDeprioritization(),
                 tracingManager,
                 serverApi,
-                operationName);
+                operationName,
+                null);
     }
 
     public static OperationContext simpleOperationContext(
@@ -93,17 +97,17 @@ public class OperationContext {
 
     public OperationContext withSessionContext(final SessionContext sessionContext) {
         return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, tracingManager, serverApi,
-                operationName);
+                operationName, tracingContext);
     }
 
     public OperationContext withTimeoutContext(final TimeoutContext timeoutContext) {
         return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, tracingManager, serverApi,
-                operationName);
+                operationName, tracingContext);
     }
 
     public OperationContext withOperationName(final String operationName) {
         return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, tracingManager, serverApi,
-                operationName);
+                operationName, tracingContext);
     }
 
     public long getId() {
@@ -136,6 +140,15 @@ public class OperationContext {
         return operationName;
     }
 
+    @Nullable
+    public TraceContext getTracingSpanContext() {
+        return tracingContext != null ? tracingContext : null;
+    }
+
+    public void setTracingContext(final TraceContext tracingContext) {
+        this.tracingContext = tracingContext;
+    }
+
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
     public OperationContext(final long id,
             final RequestContext requestContext,
@@ -144,7 +157,9 @@ public class OperationContext {
             final ServerDeprioritization serverDeprioritization,
             final TracingManager tracingManager,
             @Nullable final ServerApi serverApi,
-            @Nullable final String operationName) {
+            @Nullable final String operationName,
+            @Nullable final TraceContext tracingContext) {
+
         this.id = id;
         this.serverDeprioritization = serverDeprioritization;
         this.requestContext = requestContext;
@@ -153,6 +168,7 @@ public class OperationContext {
         this.tracingManager = tracingManager;
         this.serverApi = serverApi;
         this.operationName = operationName;
+        this.tracingContext = tracingContext;
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
@@ -171,6 +187,7 @@ public class OperationContext {
         this.tracingManager = tracingManager;
         this.serverApi = serverApi;
         this.operationName = operationName;
+        this.tracingContext = null;
     }
 
 

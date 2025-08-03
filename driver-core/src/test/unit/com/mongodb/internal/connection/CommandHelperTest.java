@@ -26,7 +26,6 @@ import com.mongodb.connection.ServerId;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.tracing.TracingManager;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
 import org.junit.jupiter.api.Test;
@@ -121,6 +120,6 @@ public class CommandHelperTest {
 
     OperationContext createOperationContext() {
         return new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
-                new TimeoutContext(TimeoutSettings.DEFAULT), ServerApi.builder().version(ServerApiVersion.V1).build(), TracingManager.NO_OP);
+                new TimeoutContext(TimeoutSettings.DEFAULT), ServerApi.builder().version(ServerApiVersion.V1).build());
     }
 }

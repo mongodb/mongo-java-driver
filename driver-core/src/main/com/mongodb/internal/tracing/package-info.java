@@ -15,7 +15,7 @@
  */
 
 /**
- * Contains classes related to sessions
+ * Contains classes related to tracing
  */
 @NonNullApi
 package com.mongodb.internal.tracing;

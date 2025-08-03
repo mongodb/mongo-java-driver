@@ -75,7 +75,6 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     @Nullable
     private List<T> nextBatch;
     private boolean resetTimeoutWhenClosing;
-    private final long cursorId;
 
     CommandBatchCursor(
             final TimeoutMode timeoutMode,
@@ -96,13 +95,10 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         operationContext = connectionSource.getOperationContext();
         this.timeoutMode = timeoutMode;
 
-        ServerCursor serverCursor = commandCursorResult.getServerCursor();
-        this.cursorId = serverCursor != null ? serverCursor.getId() : -1;
-
         operationContext.getTimeoutContext().setMaxTimeOverride(maxTimeMS);
 
         Connection connectionToPin = connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER ? connection : null;
-        resourceManager = new ResourceManager(namespace, connectionSource, connectionToPin, serverCursor);
+        resourceManager = new ResourceManager(namespace, connectionSource, connectionToPin, commandCursorResult.getServerCursor());
         resetTimeoutWhenClosing = true;
     }
 
@@ -173,7 +169,6 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
     @Override
     public void close() {
-        operationContext.getTracingManager().removeCursorParentContext(cursorId);
         resourceManager.close();
     }
 

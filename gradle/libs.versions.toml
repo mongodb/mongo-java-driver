@@ -25,6 +25,8 @@ snappy = "1.1.10.3"
 zstd = "1.5.5-3"
 jetbrains-annotations = "26.0.2"
 micrometer = "1.4.5"
+zipkin-reporter = "2.16.3"
+opentelemetry-exporter-zipkin = "1.30.0"
 
 kotlin = "1.8.10"
 kotlinx-coroutines-bom = "1.6.4"
@@ -174,6 +176,12 @@ project-reactor-test = { module = "io.projectreactor:reactor-test" }
 reactive-streams-tck = { module = " org.reactivestreams:reactive-streams-tck", version.ref = "reactive-streams" }
 reflections = { module = "org.reflections:reflections", version.ref = "reflections" }
 
+micrometer-tracing-test = { module = " io.micrometer:micrometer-tracing-test", version.ref = "micrometer" }
+micrometer-tracing-bridge-brave = { module = " io.micrometer:micrometer-tracing-bridge-brave", version.ref = "micrometer" }
+micrometer-tracing = { module = " io.micrometer:micrometer-tracing", version.ref = "micrometer" }
+micrometer-tracing-bridge-otel = { module = " io.micrometer:micrometer-tracing-bridge-otel", version.ref = "micrometer" }
+zipkin-reporter = { module = " io.zipkin.reporter2:zipkin-reporter", version.ref = "zipkin-reporter" }
+opentelemetry-exporter-zipkin = { module = " io.opentelemetry:opentelemetry-exporter-zipkin", version.ref = "opentelemetry-exporter-zipkin" }
 
 [bundles]
 aws-java-sdk-v1 = ["aws-java-sdk-v1-core", "aws-java-sdk-v1-sts"]
@@ -199,6 +207,9 @@ scala-test-v2-v12 = ["scala-test-flatspec-v2-v12", "scala-test-shouldmatchers-v2
     "scala-test-junit-runner-v2-v12", "reflections"]
 scala-test-v2-v11 = ["scala-test-flatspec-v2-v11", "scala-test-shouldmatchers-v2-v11", "scala-test-mockito-v2-v11",
     "scala-test-junit-runner-v2-v11", "reflections"]
+
+micrometer-test = ["micrometer-tracing-test", "micrometer-tracing-bridge-brave", "micrometer-tracing-bridge-otel",
+    "micrometer-tracing", "zipkin-reporter", "opentelemetry-exporter-zipkin"]
 
 [plugins]
 kotlin-gradle = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

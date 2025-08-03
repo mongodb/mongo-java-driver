@@ -29,7 +29,6 @@ import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
-import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
@@ -71,7 +70,7 @@ public class ServerSessionPool {
     public ServerSessionPool(final Cluster cluster, final TimeoutSettings timeoutSettings, @Nullable final ServerApi serverApi) {
         this(cluster,
                 new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
-                        new TimeoutContext(timeoutSettings.connectionOnly()), serverApi, TracingManager.NO_OP));
+                        new TimeoutContext(timeoutSettings.connectionOnly()), serverApi));
     }
 
     public ServerSessionPool(final Cluster cluster, final OperationContext operationContext) {
