@@ -390,7 +390,7 @@ public class InternalStreamConnection implements InternalConnection {
                 message, decoder, operationContext);
         try {
             return sendAndReceiveInternal.get();
-        } catch (Throwable e) {
+        } catch (MongoCommandException e) {
             if (reauthenticationIsTriggered(e)) {
                 return reauthenticateAndRetry(sendAndReceiveInternal, operationContext);
             }
@@ -405,8 +405,9 @@ public class InternalStreamConnection implements InternalConnection {
 
         AsyncSupplier<T> sendAndReceiveAsyncInternal = c -> sendAndReceiveAsyncInternal(
                 message, decoder, operationContext, c);
-
-        beginAsync().thenSupply(sendAndReceiveAsyncInternal::getAsync).onErrorIf(this::reauthenticationIsTriggered, (t, c) -> {
+        beginAsync().<T>thenSupply(c -> {
+            sendAndReceiveAsyncInternal.getAsync(c);
+        }).onErrorIf(e -> reauthenticationIsTriggered(e), (t, c) -> {
             reauthenticateAndRetryAsync(sendAndReceiveAsyncInternal, operationContext, c);
         }).finish(callback);
     }
@@ -1034,9 +1035,8 @@ public class InternalStreamConnection implements InternalConnection {
         TracingManager tracingManager = operationContext.getTracingManager();
         BsonDocument command = message.getCommandDocument(bsonOutput);
 
-//        BsonDocument command = message.getCommand();
         String commandName = command.getFirstKey();
-//        Span newSpan = tracingManager.addSpan("_____Command_____[ " + commandName + " ]", myparentContext);
+
         if (!tracingManager.isEnabled()
                 || SECURITY_SENSITIVE_COMMANDS.contains(commandName)
                 || SECURITY_SENSITIVE_HELLO_COMMANDS.contains(commandName)) {

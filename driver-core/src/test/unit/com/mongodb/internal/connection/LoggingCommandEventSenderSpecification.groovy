@@ -66,7 +66,8 @@ class LoggingCommandEventSenderSpecification extends Specification {
         }
         def operationContext = OPERATION_CONTEXT
         def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener,
-                operationContext, message, bsonOutput, new StructuredLogger(logger), LoggerSettings.builder().build())
+                operationContext, message, message.getCommandDocument(bsonOutput),
+                new StructuredLogger(logger), LoggerSettings.builder().build())
 
         when:
         sender.sendStartedEvent()
@@ -111,7 +112,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
         }
         def operationContext = OPERATION_CONTEXT
         def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener,
-                operationContext, message, bsonOutput, new StructuredLogger(logger),
+                operationContext, message, message.getCommandDocument(bsonOutput), new StructuredLogger(logger),
                 LoggerSettings.builder().build())
         when:
         sender.sendStartedEvent()
@@ -169,7 +170,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def operationContext = OPERATION_CONTEXT
 
         def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, null, operationContext,
-                message, bsonOutput, new StructuredLogger(logger), LoggerSettings.builder().build())
+                message, message.getCommandDocument(bsonOutput), new StructuredLogger(logger), LoggerSettings.builder().build())
 
         when:
         sender.sendStartedEvent()
@@ -202,7 +203,8 @@ class LoggingCommandEventSenderSpecification extends Specification {
         }
         def operationContext = OPERATION_CONTEXT
         def sender = new LoggingCommandEventSender(['createUser'] as Set, [] as Set, connectionDescription, null,
-                operationContext, message, bsonOutput, new StructuredLogger(logger), LoggerSettings.builder().build())
+                operationContext, message, message.getCommandDocument(bsonOutput), new StructuredLogger(logger),
+                LoggerSettings.builder().build())
 
         when:
         sender.sendStartedEvent()

@@ -590,7 +590,7 @@ final class MongoClusterImpl implements MongoCluster {
          * @param commandName the name of the command
          */
         @Nullable
-        private Span createOperationSpan(ClientSession actualClientSession, BindingContext binding, String commandName) {
+        private Span createOperationSpan(final ClientSession actualClientSession, final BindingContext binding, final String commandName) {
             TracingManager tracingManager = binding.getOperationContext().getTracingManager();
             if (tracingManager.isEnabled()) {
                 TraceContext parentContext = null;
