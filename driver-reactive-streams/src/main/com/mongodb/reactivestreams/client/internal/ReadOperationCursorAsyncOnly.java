@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.operation;
+package com.mongodb.reactivestreams.client.internal;
 
-import com.mongodb.ExplainVerbosity;
-import com.mongodb.lang.Nullable;
-import org.bson.codecs.Decoder;
+import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.operation.BatchCursor;
+import com.mongodb.internal.operation.ReadOperationCursor;
 
-/**
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
- */
-public interface AsyncExplainableReadOperation<T> extends AsyncReadOperation<T> {
-    <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable ExplainVerbosity verbosity, Decoder<R> resultDecoder);
+public interface ReadOperationCursorAsyncOnly<T> extends ReadOperationCursor<T> {
+
+    default BatchCursor<T> execute(final ReadBinding binding) {
+        throw new UnsupportedOperationException("This operation is async only");
+    }
+
 }

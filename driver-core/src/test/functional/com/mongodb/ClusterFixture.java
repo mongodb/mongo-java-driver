@@ -64,8 +64,6 @@ import com.mongodb.internal.connection.StreamFactory;
 import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.internal.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.internal.connection.netty.NettyStreamFactoryFactory;
-import com.mongodb.internal.operation.AsyncReadOperation;
-import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.CommandReadOperation;
 import com.mongodb.internal.operation.DropDatabaseOperation;
@@ -696,34 +694,34 @@ public final class ClusterFixture {
     }
 
     @SuppressWarnings("overloads")
-    public static <T> T executeSync(final ReadOperation<T> op) {
+    public static <T> T executeSync(final ReadOperation<T, ?> op) {
         return executeSync(op, getBinding());
     }
 
     @SuppressWarnings("overloads")
-    public static <T> T executeSync(final ReadOperation<T> op, final ReadWriteBinding binding) {
+    public static <T> T executeSync(final ReadOperation<T, ?> op, final ReadWriteBinding binding) {
         return op.execute(binding);
     }
 
     @SuppressWarnings("overloads")
-    public static <T> T executeAsync(final AsyncWriteOperation<T> op) throws Throwable {
+    public static <T> T executeAsync(final WriteOperation<T> op) throws Throwable {
         return executeAsync(op, getAsyncBinding());
     }
 
     @SuppressWarnings("overloads")
-    public static <T> T executeAsync(final AsyncWriteOperation<T> op, final AsyncWriteBinding binding) throws Throwable {
+    public static <T> T executeAsync(final WriteOperation<T> op, final AsyncWriteBinding binding) throws Throwable {
         FutureResultCallback<T> futureResultCallback = new FutureResultCallback<>();
         op.executeAsync(binding, futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
     @SuppressWarnings("overloads")
-    public static <T> T executeAsync(final AsyncReadOperation<T> op) throws Throwable {
+    public static <T> T executeAsync(final ReadOperation<?, T> op) throws Throwable {
         return executeAsync(op, getAsyncBinding());
     }
 
     @SuppressWarnings("overloads")
-    public static <T> T executeAsync(final AsyncReadOperation<T> op, final AsyncReadBinding binding) throws Throwable {
+    public static <T> T executeAsync(final ReadOperation<?, T> op, final AsyncReadBinding binding) throws Throwable {
         FutureResultCallback<T> futureResultCallback = new FutureResultCallback<>();
         op.executeAsync(binding, futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
@@ -741,7 +739,7 @@ public final class ClusterFixture {
         }
     }
 
-    public static <T> void loopCursor(final AsyncReadOperation<AsyncBatchCursor<T>> op, final Block<T> block) throws Throwable {
+    public static <T> void loopCursor(final ReadOperation<?, AsyncBatchCursor<T>> op, final Block<T> block) throws Throwable {
         FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<>();
         loopCursor(executeAsync(op), block, futureResultCallback);
         futureResultCallback.get(TIMEOUT, SECONDS);
