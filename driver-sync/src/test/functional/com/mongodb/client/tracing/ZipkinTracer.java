@@ -35,7 +35,7 @@ import io.opentelemetry.semconv.ResourceAttributes;
  * A utility class to create a Zipkin tracer using OpenTelemetry protocol, useful for visualizing spans in Zipkin UI
  * This tracer can be used to send spans to a Zipkin server.
  * <p>
- * Spans are visible in the Zipkin UI at <a href="http://localhost:9411">...</a>.
+ * Spans are visible in the Zipkin UI at <a href="http://localhost:9411">http://localhost:9411</a>.
  * <p>
  * To Start Zipkin server, you can use the following command:
  * <pre>{@code

@@ -555,7 +555,7 @@ class MongoClientSettingsSpecification extends Specification {
                         'heartbeatConnectTimeoutMS', 'heartbeatSocketTimeoutMS', 'inetAddressResolver', 'loggerSettingsBuilder',
                         'readConcern', 'readPreference', 'retryReads',
                         'retryWrites', 'serverApi', 'serverSettingsBuilder', 'socketSettingsBuilder', 'sslSettingsBuilder',
-                        'timeoutMS', 'transportSettings', 'uuidRepresentation', 'writeConcern']
+                        'timeoutMS', 'tracer', 'transportSettings', 'uuidRepresentation', 'writeConcern']
 
         then:
         actual == expected
@@ -570,7 +570,7 @@ class MongoClientSettingsSpecification extends Specification {
                         'applyToSslSettings', 'autoEncryptionSettings', 'build', 'codecRegistry', 'commandListenerList',
                         'compressorList', 'contextProvider', 'credential', 'dnsClient', 'heartbeatConnectTimeoutMS',
                         'heartbeatSocketTimeoutMS', 'inetAddressResolver', 'readConcern', 'readPreference', 'retryReads', 'retryWrites',
-                        'serverApi', 'timeout', 'transportSettings', 'uuidRepresentation', 'writeConcern']
+                        'serverApi', 'timeout', 'tracer', 'transportSettings', 'uuidRepresentation', 'writeConcern']
 
         then:
         actual == expected

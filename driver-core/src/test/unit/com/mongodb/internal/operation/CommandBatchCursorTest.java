@@ -31,6 +31,7 @@ import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.tracing.TracingManager;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -94,6 +95,8 @@ class CommandBatchCursorTest {
 
         connectionSource = mock(ConnectionSource.class);
         operationContext = mock(OperationContext.class);
+        when(operationContext.getTracingManager()).thenReturn(TracingManager.NO_OP);
+
         timeoutContext = new TimeoutContext(TimeoutSettings.create(
                 MongoClientSettings.builder().timeout(TIMEOUT.toMillis(), MILLISECONDS).build()));
         serverDescription = mock(ServerDescription.class);
