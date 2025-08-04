@@ -118,7 +118,6 @@ public class CommandHelperTest {
         assertFalse(CommandHelper.isCommandOk(new BsonDocument()));
     }
 
-
     OperationContext createOperationContext() {
         return new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
                 new TimeoutContext(TimeoutSettings.DEFAULT), ServerApi.builder().version(ServerApiVersion.V1).build());

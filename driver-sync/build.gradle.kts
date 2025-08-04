@@ -38,6 +38,9 @@ dependencies {
 
     // lambda testing
     testImplementation(libs.aws.lambda.core)
+
+    // Tracing
+    testImplementation(libs.bundles.micrometer.test)
 }
 
 configureMavenPublication {
