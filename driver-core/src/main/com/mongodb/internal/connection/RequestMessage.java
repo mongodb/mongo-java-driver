@@ -38,7 +38,7 @@ abstract class RequestMessage {
 
     static final int MESSAGE_PROLOGUE_LENGTH = 16;
 
-    private final String collectionName;
+    private final String database;
     private final MessageSettings settings;
     private final int id;
     private final OpCode opCode;
@@ -69,13 +69,13 @@ abstract class RequestMessage {
     }
 
 
-    RequestMessage(final String collectionName, final OpCode opCode, final MessageSettings settings) {
-        this(collectionName, opCode, REQUEST_ID.getAndIncrement(), settings);
+    RequestMessage(final String database, final OpCode opCode, final MessageSettings settings) {
+        this(database, opCode, REQUEST_ID.getAndIncrement(), settings);
     }
 
-    private RequestMessage(@Nullable final String collectionName, final OpCode opCode, final int requestId,
+    private RequestMessage(@Nullable final String database, final OpCode opCode, final int requestId,
                            final MessageSettings settings) {
-        this.collectionName = collectionName;
+        this.database = database;
         this.settings = settings;
         id = requestId;
         this.opCode = opCode;
@@ -165,7 +165,7 @@ abstract class RequestMessage {
      *
      * @return the collection name
      */
-    protected String getCollectionName() {
-        return collectionName;
+    protected String getDatabase() {
+        return database;
     }
 }
