@@ -17,6 +17,7 @@ package com.mongodb;
 
 import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Reason;
+import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
@@ -56,7 +57,7 @@ public final class MongoOperationTimeoutException extends MongoTimeoutException 
      * @param message the message
      * @param cause the cause
      */
-    public MongoOperationTimeoutException(final String message, final Throwable cause) {
+    public MongoOperationTimeoutException(final String message, @Nullable final Throwable cause) {
         super(message, cause);
     }
 }
