@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.client.model.mql.MqlValues.of;
 import static com.mongodb.client.model.mql.MqlValues.ofNull;
 import static com.mongodb.client.model.mql.MqlValues.ofStringArray;
@@ -951,6 +952,10 @@ final class MqlExpression<T extends MqlValue>
                 .append("date", this.toBsonValue(cr))
                 .append("format", toBsonValue(cr, format))
                 .append("timezone", toBsonValue(cr, timezone))));
+    }
+
+    public MqlString asString(final MqlString timezone) {
+        throw fail(); // intentionally not implemented, see DRIVERS-2620
     }
 
     @Override
