@@ -52,7 +52,7 @@ class AggregatesSpec extends BaseSpec {
 
   "Aggregates" should "have the same methods as the wrapped Aggregates" in {
     val wrapped = classOf[com.mongodb.client.model.Aggregates].getDeclaredMethods
-      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers))
+      .filter(f => isPublic(f.getModifiers))
       .map(_.getName)
       .toSet
     val aliases = Set("filter")
@@ -66,7 +66,7 @@ class AggregatesSpec extends BaseSpec {
 
   it should "have the same methods as the wrapped Accumulators" in {
     val wrapped = classOf[com.mongodb.client.model.Accumulators].getDeclaredMethods
-      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers))
+      .filter(f => isPublic(f.getModifiers))
       .map(_.getName)
       .toSet
     val local = Accumulators.getClass.getDeclaredMethods.filter(f => isPublic(f.getModifiers)).map(_.getName).toSet

@@ -36,17 +36,13 @@ class ClientEncryptionSpec extends BaseSpec with MockitoSugar {
   val clientEncryption = ClientEncryption(wrapped)
 
   "ClientEncryption" should "have the same methods as the wrapped Filters" in {
-    val wrapped = classOf[JClientEncryption].getDeclaredMethods
-      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers))
-      .map(_.getName)
-      .toSet
-    val ignore = Set("toString", "apply", "unapply")
-    val local = ClientEncryption.getClass.getDeclaredMethods
-      .filter(f => isPublic(f.getModifiers))
-      .map(_.getName)
-      .toSet -- ignore
+    val wrapped = classOf[JClientEncryption].getDeclaredMethods.map(_.getName).toSet
+    val local = classOf[ClientEncryption].getDeclaredMethods.map(_.getName).toSet
 
-    local should equal(wrapped)
+    wrapped.foreach((name: String) => {
+      val cleanedName = name.stripPrefix("get")
+      assert(local.contains(name) || local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
+    })
   }
 
   it should "call createDataKey" in {

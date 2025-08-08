@@ -22,8 +22,15 @@ import com.mongodb.client.model.{ CreateCollectionOptions, CreateEncryptedCollec
 import java.io.Closeable
 import com.mongodb.reactivestreams.client.vault.{ ClientEncryption => JClientEncryption }
 import org.bson.{ BsonBinary, BsonDocument, BsonValue }
-import org.mongodb.scala.{ Document, MongoDatabase, SingleObservable, ToSingleObservablePublisher }
-import org.mongodb.scala.model.vault.{ DataKeyOptions, EncryptOptions }
+import org.mongodb.scala.bson.conversions.Bson
+import org.mongodb.scala.{ Document, FindObservable, MongoDatabase, SingleObservable, ToSingleObservablePublisher }
+import org.mongodb.scala.model.vault.{
+  DataKeyOptions,
+  EncryptOptions,
+  RewrapManyDataKeyOptions,
+  RewrapManyDataKeyResult
+}
+import org.mongodb.scala.result.DeleteResult
 
 /**
  * The Key vault.
@@ -40,7 +47,7 @@ case class ClientEncryption(private val wrapped: JClientEncryption) extends Clos
    * Creates a new key document and inserts into the key vault collection.
    *
    * @param kmsProvider the KMS provider
-   * @return a Publisher containing the identifier for the created data key
+   * @return an Observable containing the identifier for the created data key
    */
   def createDataKey(kmsProvider: String): SingleObservable[BsonBinary] = createDataKey(kmsProvider, DataKeyOptions())
 
@@ -51,7 +58,7 @@ case class ClientEncryption(private val wrapped: JClientEncryption) extends Clos
    *
    * @param kmsProvider    the KMS provider
    * @param dataKeyOptions the options for data key creation
-   * @return a Publisher containing the identifier for the created data key
+   * @return an Observable containing the identifier for the created data key
    */
   def createDataKey(kmsProvider: String, dataKeyOptions: DataKeyOptions): SingleObservable[BsonBinary] =
     wrapped.createDataKey(kmsProvider, dataKeyOptions)
@@ -62,7 +69,7 @@ case class ClientEncryption(private val wrapped: JClientEncryption) extends Clos
    *
    * @param value   the value to encrypt
    * @param options the options for data encryption
-   * @return a Publisher containing the encrypted value, a BSON binary of subtype 6
+   * @return an Observable containing the encrypted value, a BSON binary of subtype 6
    */
   def encrypt(value: BsonValue, options: EncryptOptions): SingleObservable[BsonBinary] =
     wrapped.encrypt(value, options)
@@ -86,7 +93,7 @@ case class ClientEncryption(private val wrapped: JClientEncryption) extends Clos
    * @note Requires MongoDB 8.0 or greater
    * @param expression the Match Expression or Aggregate Expression
    * @param options    the options
-   * @return a Publisher containing the queryable encrypted range expression
+   * @return an Observable containing the queryable encrypted range expression
    * @since 4.9
    */
   def encryptExpression(
@@ -99,9 +106,86 @@ case class ClientEncryption(private val wrapped: JClientEncryption) extends Clos
    * Decrypt the given value.
    *
    * @param value the value to decrypt, which must be of subtype 6
-   * @return a Publisher containing the decrypted value
+   * @return an Observable containing the decrypted value
    */
   def decrypt(value: BsonBinary): SingleObservable[BsonValue] = wrapped.decrypt(value)
+
+  /**
+   * Finds a single key document with the given UUID (BSON binary subtype 0x04).
+   *
+   * @param id the data key UUID (BSON binary subtype 0x04)
+   * @return an Observable containing the single key document or an empty publisher if there is no match
+   * @since 5.6
+   */
+  def getKey(id: BsonBinary): SingleObservable[BsonDocument] = wrapped.getKey(id)
+
+  /**
+   * Returns a key document in the key vault collection with the given keyAltName.
+   *
+   * @param keyAltName the alternative key name
+   * @return an Observable containing the matching key document or an empty publisher if there is no match
+   * @since 5.6
+   */
+  def getKeyByAltName(keyAltName: String): SingleObservable[BsonDocument] = wrapped.getKeyByAltName(keyAltName)
+
+  /**
+   * Finds all documents in the key vault collection.
+   *
+   * @return a find Observable for the documents in the key vault collection
+   * @since 5.6
+   */
+  def keys: FindObservable[BsonDocument] = FindObservable(wrapped.getKeys)
+
+  /**
+   * Adds a keyAltName to the keyAltNames array of the key document in the key vault collection with the given UUID.
+   *
+   * @param id         the data key UUID (BSON binary subtype 0x04)
+   * @param keyAltName the alternative key name to add to the keyAltNames array
+   * @return an Observable containing the previous version of the key document or an empty publisher if no match
+   * @since 5.6
+   */
+  def addKeyAltName(id: BsonBinary, keyAltName: String): SingleObservable[BsonDocument] =
+    wrapped.addKeyAltName(id, keyAltName)
+
+  /**
+   * Removes the key document with the given data key from the key vault collection.
+   *
+   * @param id the data key UUID (BSON binary subtype 0x04)
+   * @return an Observable containing the delete result
+   * @since 5.6
+   */
+  def deleteKey(id: BsonBinary): SingleObservable[DeleteResult] = wrapped.deleteKey(id)
+
+  /**
+   * Removes a keyAltName from the keyAltNames array of the key document in the key vault collection with the given id.
+   *
+   * @param id         the data key UUID (BSON binary subtype 0x04)
+   * @param keyAltName the alternative key name
+   * @return an Observable containing the previous version of the key document or an empty publisher if there is no match
+   * @since 5.6
+   */
+  def removeKeyAltName(id: BsonBinary, keyAltName: String): SingleObservable[BsonDocument] =
+    wrapped.removeKeyAltName(id, keyAltName)
+
+  /**
+   * Decrypts multiple data keys and (re-)encrypts them with the current masterKey.
+   *
+   * @param filter the filter
+   * @return an Observable containing the result
+   * @since 5.6
+   */
+  def rewrapManyDataKey(filter: Bson): SingleObservable[RewrapManyDataKeyResult] = wrapped.rewrapManyDataKey(filter)
+
+  /**
+   * Decrypts multiple data keys and (re-)encrypts them with a new masterKey, or with their current masterKey if a new one is not given.
+   *
+   * @param filter  the filter
+   * @param options the options
+   * @return an Observable containing the result
+   * @since 5.6
+   */
+  def rewrapManyDataKey(filter: Bson, options: RewrapManyDataKeyOptions): SingleObservable[RewrapManyDataKeyResult] =
+    wrapped.rewrapManyDataKey(filter, options)
 
   /**
    * Create a new collection with encrypted fields,
@@ -115,7 +199,7 @@ case class ClientEncryption(private val wrapped: JClientEncryption) extends Clos
    * @param collectionName The name for the collection to create.
    * @param createCollectionOptions Options for creating the collection.
    * @param createEncryptedCollectionParams Auxiliary parameters for creating an encrypted collection.
-   * @return A publisher of the (potentially updated) `encryptedFields` configuration that was used to create the collection.
+   * @return An Observable of the (potentially updated) `encryptedFields` configuration that was used to create the collection.
    * A user may use this document to configure `com.mongodb.AutoEncryptionSettings.getEncryptedFieldsMap`.
    *
    * Produces MongoUpdatedEncryptedFieldsException` if an exception happens after creating at least one data key.

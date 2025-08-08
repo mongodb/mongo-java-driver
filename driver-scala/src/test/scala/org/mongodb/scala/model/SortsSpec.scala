@@ -32,7 +32,7 @@ class SortsSpec extends BaseSpec {
 
   "Sorts" should "have the same methods as the wrapped Sorts" in {
     val wrapped = classOf[com.mongodb.client.model.Sorts].getDeclaredMethods
-      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers))
+      .filter(f => isPublic(f.getModifiers))
       .map(_.getName)
       .toSet
     val local = model.Sorts.getClass.getDeclaredMethods.filter(f => isPublic(f.getModifiers)).map(_.getName).toSet

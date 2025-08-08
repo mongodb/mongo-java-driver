@@ -33,6 +33,11 @@ public final class RewrapManyDataKeyOptions {
     private String provider;
     private BsonDocument masterKey;
 
+    /**
+     * Construct a new instance
+     */
+    public RewrapManyDataKeyOptions() {
+    }
 
     /**
      * Sets the provider name
