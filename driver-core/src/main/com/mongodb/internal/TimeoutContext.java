@@ -289,6 +289,10 @@ public class TimeoutContext {
 
     public int getConnectTimeoutMs() {
         final long connectTimeoutMS = getTimeoutSettings().getConnectTimeoutMS();
+        if (isMaintenanceContext) {
+            return (int) connectTimeoutMS;
+        }
+
         return Math.toIntExact(Timeout.nullAsInfinite(timeout).call(MILLISECONDS,
                 () -> connectTimeoutMS,
                 (ms) -> connectTimeoutMS == 0 ? ms : Math.min(ms, connectTimeoutMS),

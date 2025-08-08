@@ -79,11 +79,6 @@ final class SocketStreamHelper {
     static void configureSocket(final Socket socket, final OperationContext operationContext, final SocketSettings settings) throws SocketException {
         socket.setTcpNoDelay(true);
         socket.setKeepAlive(true);
-        int readTimeoutMS = (int) operationContext.getTimeoutContext().getReadTimeoutMS();
-        if (readTimeoutMS > 0) {
-            socket.setSoTimeout(readTimeoutMS);
-        }
-
         // Adding keep alive options for users of Java 11+. These options will be ignored for older Java versions.
         setExtendedSocketOptions(socket);
 
