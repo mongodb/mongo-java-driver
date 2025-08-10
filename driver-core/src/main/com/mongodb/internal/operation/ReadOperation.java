@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -31,6 +32,11 @@ public interface ReadOperation<T, R> {
      * @return the command name of the operation, e.g. "insert", "update", "delete", "bulkWrite", etc.
      */
     String getCommandName();
+
+    /**
+     * @return the namespace of the operation
+     */
+    MongoNamespace getNamespace();
 
     /**
      * General execute which can return anything of type T

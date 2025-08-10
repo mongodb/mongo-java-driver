@@ -183,6 +183,11 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     }
 
     @Override
+    public MongoNamespace getNamespace() {
+        return getNamespacedModel(models, 0).getNamespace();
+    }
+
+    @Override
     public ClientBulkWriteResult execute(final WriteBinding binding) throws ClientBulkWriteException {
         WriteConcern effectiveWriteConcern = validateAndGetEffectiveWriteConcern(binding.getOperationContext().getSessionContext());
         ResultAccumulator resultAccumulator = new ResultAccumulator();

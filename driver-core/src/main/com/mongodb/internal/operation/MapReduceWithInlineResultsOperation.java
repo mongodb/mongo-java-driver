@@ -76,6 +76,7 @@ public class MapReduceWithInlineResultsOperation<T> implements ReadOperationMapR
         this.decoder = notNull("decoder", decoder);
     }
 
+    @Override
     public MongoNamespace getNamespace() {
         return namespace;
     }

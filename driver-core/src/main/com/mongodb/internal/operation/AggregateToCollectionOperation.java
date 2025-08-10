@@ -158,6 +158,11 @@ public class AggregateToCollectionOperation implements ReadOperationSimple<Void>
     }
 
     @Override
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    @Override
     public Void execute(final ReadBinding binding) {
         return executeRetryableRead(binding,
                                     () -> binding.getReadConnectionSource(FIVE_DOT_ZERO_WIRE_VERSION, ReadPreference.primary()),

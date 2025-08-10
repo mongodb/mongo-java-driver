@@ -92,6 +92,11 @@ public class DropCollectionOperation implements WriteOperation<Void> {
     }
 
     @Override
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    @Override
     public Void execute(final WriteBinding binding) {
         BsonDocument localEncryptedFields = getEncryptedFields((ReadWriteBinding) binding);
         return withConnection(binding, connection -> {

@@ -99,6 +99,7 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
         this.decoder = notNull("decoder", decoder);
     }
 
+    @Override
     public MongoNamespace getNamespace() {
         return namespace;
     }

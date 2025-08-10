@@ -92,6 +92,7 @@ public abstract class BaseFindAndModifyOperation<T> implements WriteOperation<T>
                 FindAndModifyHelper.asyncTransformer(), cmd -> cmd, callback);
     }
 
+    @Override
     public MongoNamespace getNamespace() {
         return namespace;
     }
