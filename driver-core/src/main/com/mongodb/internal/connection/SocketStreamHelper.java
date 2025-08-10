@@ -71,12 +71,12 @@ final class SocketStreamHelper {
     static void initialize(final OperationContext operationContext, final Socket socket,
             final InetSocketAddress inetSocketAddress, final SocketSettings settings,
             final SslSettings sslSettings) throws IOException {
-        configureSocket(socket, operationContext, settings);
+        configureSocket(socket, settings);
         configureSslSocket(socket, sslSettings, inetSocketAddress);
         socket.connect(inetSocketAddress, operationContext.getTimeoutContext().getConnectTimeoutMs());
     }
 
-    static void configureSocket(final Socket socket, final OperationContext operationContext, final SocketSettings settings) throws SocketException {
+    static void configureSocket(final Socket socket, final SocketSettings settings) throws SocketException {
         socket.setTcpNoDelay(true);
         socket.setKeepAlive(true);
         // Adding keep alive options for users of Java 11+. These options will be ignored for older Java versions.

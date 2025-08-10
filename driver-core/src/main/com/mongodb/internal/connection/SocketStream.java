@@ -119,7 +119,7 @@ public class SocketStream implements Stream {
         final int serverPort = address.getPort();
 
         SocksSocket socksProxy = new SocksSocket(settings.getProxySettings());
-        configureSocket(socksProxy, operationContext, settings);
+        configureSocket(socksProxy, settings);
         InetSocketAddress inetSocketAddress = toSocketAddress(serverHost, serverPort);
         socksProxy.connect(inetSocketAddress, operationContext.getTimeoutContext().getConnectTimeoutMs());
 
@@ -141,7 +141,7 @@ public class SocketStream implements Stream {
 
     private Socket initializeSocketOverSocksProxy(final OperationContext operationContext) throws IOException {
         Socket createdSocket = socketFactory.createSocket();
-        configureSocket(createdSocket, operationContext, settings);
+        configureSocket(createdSocket, settings);
         /*
           Wrap the configured socket with SocksSocket to add extra functionality.
           Reason for separate steps: We can't directly extend Java 11 methods within 'SocksSocket'

@@ -56,7 +56,8 @@ class SocketStreamHelperSpecification extends Specification {
         then:
         socket.getTcpNoDelay()
         socket.getKeepAlive()
-        socket.getSoTimeout() == socketSettings.getReadTimeout(MILLISECONDS)
+        // We set SO_TIMEOUT on each SocketStream.read(), not during initialization, so it should be 0.
+        socket.getSoTimeout() == 0
 
         // If the Java 11+ extended socket options for keep alive probes are available, check those values.
         if (Arrays.stream(ExtendedSocketOptions.getDeclaredFields()).anyMatch{ f -> f.getName().equals('TCP_KEEPCOUNT') }) {
