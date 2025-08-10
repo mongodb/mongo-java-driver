@@ -16,6 +16,7 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -36,6 +37,11 @@ class VoidWriteOperationThenCursorReadOperation<T> implements ReadOperationCurso
     @Override
     public String getCommandName() {
         return writeOperation.getCommandName();
+    }
+
+    @Override
+    public MongoNamespace getNamespace() {
+        return writeOperation.getNamespace();
     }
 
     @Override

@@ -115,7 +115,7 @@ public final class Entities {
     private static final Set<String> SUPPORTED_CLIENT_ENTITY_OPTIONS = new HashSet<>(
             asList(
                     "id", "uriOptions", "serverApi", "useMultipleMongoses", "storeEventsAsEntities",
-                    "observeEvents", "observeLogMessages", "observeSensitiveCommands", "ignoreCommandMonitoringEvents", "tracing"));
+                    "observeEvents", "observeLogMessages", "observeSensitiveCommands", "ignoreCommandMonitoringEvents", "observeTracingMessages"));
     private final Set<String> entityNames = new HashSet<>();
     private final Map<String, ExecutorService> threads = new HashMap<>();
     private final Map<String, ArrayList<Future<?>>> tasks = new HashMap<>();
@@ -613,8 +613,8 @@ public final class Entities {
             clientSettingsBuilder.serverApi(serverApiBuilder.build());
         }
 
-        if (entity.containsKey("tracing")) {
-            boolean enableCommandPayload = entity.getDocument("tracing").get("enableCommandPayload", BsonBoolean.FALSE).asBoolean().getValue();
+        if (entity.containsKey("observeTracingMessages")) {
+            boolean enableCommandPayload = entity.getDocument("observeTracingMessages").get("enableCommandPayload", BsonBoolean.FALSE).asBoolean().getValue();
             /* To enable Zipkin backend, uncomment the following lines and ensure you have the server started
             (docker run -d -p 9411:9411 openzipkin/zipkin). The tests will fail but the captured spans will be
              visible in the Zipkin UI at http://localhost:9411 for debugging purpose.

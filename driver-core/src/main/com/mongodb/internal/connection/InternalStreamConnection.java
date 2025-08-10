@@ -30,6 +30,7 @@ import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoSocketWriteException;
 import com.mongodb.MongoSocketWriteTimeoutException;
 import com.mongodb.ServerAddress;
+import com.mongodb.UnixServerAddress;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -97,8 +98,11 @@ import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
 import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
 import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedException;
 import static com.mongodb.internal.tracing.Tags.CLIENT_CONNECTION_ID;
+import static com.mongodb.internal.tracing.Tags.COLLECTION;
+import static com.mongodb.internal.tracing.Tags.COMMAND_NAME;
 import static com.mongodb.internal.tracing.Tags.CURSOR_ID;
 import static com.mongodb.internal.tracing.Tags.NAMESPACE;
+import static com.mongodb.internal.tracing.Tags.NETWORK_TRANSPORT;
 import static com.mongodb.internal.tracing.Tags.QUERY_SUMMARY;
 import static com.mongodb.internal.tracing.Tags.QUERY_TEXT;
 import static com.mongodb.internal.tracing.Tags.SERVER_ADDRESS;
@@ -446,10 +450,10 @@ public class InternalStreamConnection implements InternalConnection {
     private <T> T sendAndReceiveInternal(final CommandMessage message, final Decoder<T> decoder,
             final OperationContext operationContext) {
         CommandEventSender commandEventSender;
-
+        Span tracingSpan;
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
             message.encode(bsonOutput, operationContext);
-            Span tracingSpan = createTracingSpan(message, operationContext, bsonOutput);
+            tracingSpan = createTracingSpan(message, operationContext, bsonOutput);
 
             boolean isLoggingCommandNeeded = isLoggingCommandNeeded();
             boolean isTracingCommandPayloadNeeded = tracingSpan != null && operationContext.getTracingManager().isCommandPayloadEnabled();
@@ -480,17 +484,16 @@ public class InternalStreamConnection implements InternalConnection {
                 }
                 commandEventSender.sendFailedEvent(e);
                 throw e;
-            } finally {
-                if (tracingSpan != null) {
-                    tracingSpan.end();
-                }
             }
         }
 
         if (message.isResponseExpected()) {
-            return receiveCommandMessageResponse(decoder, commandEventSender, operationContext);
+            return receiveCommandMessageResponse(decoder, commandEventSender, operationContext, tracingSpan);
         } else {
             commandEventSender.sendSucceededEventForOneWayCommand();
+            if (tracingSpan != null) {
+                tracingSpan.end();
+            }
             return null;
         }
     }
@@ -509,7 +512,7 @@ public class InternalStreamConnection implements InternalConnection {
     @Override
     public <T> T receive(final Decoder<T> decoder, final OperationContext operationContext) {
         isTrue("Response is expected", hasMoreToCome);
-        return receiveCommandMessageResponse(decoder, new NoOpCommandEventSender(), operationContext);
+        return receiveCommandMessageResponse(decoder, new NoOpCommandEventSender(), operationContext, null);
     }
 
     @Override
@@ -555,7 +558,7 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     private <T> T receiveCommandMessageResponse(final Decoder<T> decoder, final CommandEventSender commandEventSender,
-            final OperationContext operationContext) {
+            final OperationContext operationContext, @Nullable final Span tracingSpan) {
         boolean commandSuccessful = false;
         try (ResponseBuffers responseBuffers = receiveResponseBuffers(operationContext)) {
             updateSessionContext(operationContext.getSessionContext(), responseBuffers);
@@ -580,7 +583,14 @@ public class InternalStreamConnection implements InternalConnection {
             if (!commandSuccessful) {
                 commandEventSender.sendFailedEvent(e);
             }
+            if (tracingSpan != null) {
+                tracingSpan.error(e);
+            }
             throw e;
+        } finally {
+            if (tracingSpan != null) {
+                tracingSpan.end();
+            }
         }
     }
 
@@ -1043,14 +1053,22 @@ public class InternalStreamConnection implements InternalConnection {
             return null;
         }
 
+         Span operationSpan = operationContext.getTracingSpan();
          Span span = tracingManager
-                .addSpan("Command " + commandName, operationContext.getTracingSpanContext())
+                .addSpan("Command " + commandName,  operationSpan != null ? operationSpan.context() : null)
                 .tag(SYSTEM, "mongodb")
                 .tag(NAMESPACE, message.getNamespace().getDatabaseName())
-                .tag(QUERY_SUMMARY, commandName);
+                .tag(COLLECTION, message.getCollectionName())
+                .tag(QUERY_SUMMARY, commandName)
+                .tag(COMMAND_NAME, commandName)
+                .tag(NETWORK_TRANSPORT, getServerAddress() instanceof UnixServerAddress ? "unix" : "tcp");
 
         if (command.containsKey("getMore")) {
-            span.tag(CURSOR_ID, command.getInt64("getMore").longValue());
+            long cursorId = command.getInt64("getMore").longValue();
+            span.tag(CURSOR_ID, cursorId);
+            if (operationSpan != null) {
+                operationSpan.tag(CURSOR_ID, cursorId);
+            }
         }
 
         tagServerAndConnectionInfo(span, message);

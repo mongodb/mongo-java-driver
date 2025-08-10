@@ -29,14 +29,21 @@ public final class Tags {
     public static final String SYSTEM = "db.system";
     public static final String NAMESPACE = "db.namespace";
     public static final String COLLECTION = "db.collection.name";
+    public static final String OPERATION_NAME = "db.operation.name";
+    public static final String COMMAND_NAME = "db.command.name";
+    public static final String NETWORK_TRANSPORT = "network.transport";
+    public static final String OPERATION_SUMMARY = "db.operation.summary";
     public static final String QUERY_SUMMARY = "db.query.summary";
     public static final String QUERY_TEXT = "db.query.text";
     public static final String CURSOR_ID = "db.mongodb.cursor_id";
     public static final String SERVER_ADDRESS = "server.address";
     public static final String SERVER_PORT = "server.port";
     public static final String SERVER_TYPE = "server.type";
-    public static final String CLIENT_CONNECTION_ID = "db.mongodb.client_connection_id";
+    public static final String CLIENT_CONNECTION_ID = "db.mongodb.driver_connection_id";
     public static final String SERVER_CONNECTION_ID = "db.mongodb.server_connection_id";
     public static final String TRANSACTION_NUMBER = "db.mongodb.txnNumber";
     public static final String SESSION_ID = "db.mongodb.lsid";
+    public static final String EXCEPTION_STACKTRACE = "exception.stacktrace";
+    public static final String EXCEPTION_TYPE = "exception.type";
+    public static final String EXCEPTION_MESSAGE = "exception.message";
 }

@@ -21,6 +21,13 @@ import com.mongodb.internal.tracing.TraceContext;
 import com.mongodb.internal.tracing.Tracer;
 import com.mongodb.lang.Nullable;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
+import static com.mongodb.internal.tracing.Tags.EXCEPTION_MESSAGE;
+import static com.mongodb.internal.tracing.Tags.EXCEPTION_STACKTRACE;
+import static com.mongodb.internal.tracing.Tags.EXCEPTION_TYPE;
+
 /**
  * A {@link Tracer} implementation that delegates tracing operations to a Micrometer {@link io.micrometer.tracing.Tracer}.
  * <p>
@@ -148,6 +155,9 @@ public class MicrometerTracer implements Tracer {
 
         @Override
         public void error(final Throwable throwable) {
+            span.tag(EXCEPTION_MESSAGE, throwable.getMessage());
+            span.tag(EXCEPTION_TYPE, throwable.getClass().getName());
+            span.tag(EXCEPTION_STACKTRACE, getStackTraceAsString(throwable));
             span.error(throwable);
         }
 
@@ -159,6 +169,13 @@ public class MicrometerTracer implements Tracer {
         @Override
         public TraceContext context() {
             return new MicrometerTraceContext(span.context());
+        }
+
+        private String getStackTraceAsString(final Throwable throwable) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            throwable.printStackTrace(pw);
+            return sw.toString();
         }
     }
 }

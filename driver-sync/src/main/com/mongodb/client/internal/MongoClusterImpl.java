@@ -22,6 +22,7 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.MongoNamespace;
 import com.mongodb.MongoQueryException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
@@ -428,7 +429,7 @@ final class MongoClusterImpl implements MongoCluster {
             ReadBinding binding = getReadBinding(readPreference, readConcern, actualClientSession, session == null,
                     operation.getCommandName());
 
-            Span span = createOperationSpan(actualClientSession, binding, operation.getCommandName());
+            Span span = createOperationSpan(actualClientSession, binding, operation.getCommandName(), operation.getNamespace());
 
             try {
                 if (actualClientSession.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
@@ -461,7 +462,7 @@ final class MongoClusterImpl implements MongoCluster {
             ClientSession actualClientSession = getClientSession(session);
             WriteBinding binding = getWriteBinding(readConcern, actualClientSession, session == null, operation.getCommandName());
 
-            Span span = createOperationSpan(actualClientSession, binding, operation.getCommandName());
+            Span span = createOperationSpan(actualClientSession, binding, operation.getCommandName(), operation.getNamespace());
             try {
                 return operation.execute(binding);
             } catch (MongoException e) {
@@ -586,11 +587,13 @@ final class MongoClusterImpl implements MongoCluster {
          * Create a tracing span for the given operation, and set it on operation context.
          *
          * @param actualClientSession the session that the operation is part of
-         * @param binding the binding for the operation
-         * @param commandName the name of the command
+         * @param binding             the binding for the operation
+         * @param commandName         the name of the command
+         * @param namespace           the namespace of the command
+         * @return the created span, or null if tracing is not enabled
          */
         @Nullable
-        private Span createOperationSpan(final ClientSession actualClientSession, final BindingContext binding, final String commandName) {
+        private Span createOperationSpan(final ClientSession actualClientSession, final BindingContext binding, final String commandName, final MongoNamespace namespace) {
             TracingManager tracingManager = binding.getOperationContext().getTracingManager();
             if (tracingManager.isEnabled()) {
                 TraceContext parentContext = null;
@@ -598,13 +601,17 @@ final class MongoClusterImpl implements MongoCluster {
                 if (transactionSpan != null) {
                     parentContext = transactionSpan.getContext();
                 }
-
+                String name = commandName + " " + namespace.getFullName();
                 Span span = binding
                         .getOperationContext()
                         .getTracingManager()
-                        .addSpan(commandName, parentContext);
-                binding.getOperationContext().setTracingContext(span.context());
+                        .addSpan(name, parentContext);
+                binding.getOperationContext().setTracingSpan(span);
                 span.tag(Tags.SYSTEM, "mongodb");
+                span.tag(Tags.NAMESPACE, namespace.getDatabaseName());
+                span.tag(Tags.COLLECTION, namespace.getCollectionName());
+                span.tag(Tags.OPERATION_NAME, commandName);
+                span.tag(Tags.OPERATION_SUMMARY, name);
                 return span;
 
             } else {

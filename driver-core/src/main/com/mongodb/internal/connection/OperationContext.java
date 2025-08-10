@@ -27,7 +27,7 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.session.SessionContext;
-import com.mongodb.internal.tracing.TraceContext;
+import com.mongodb.internal.tracing.Span;
 import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
@@ -55,7 +55,7 @@ public class OperationContext {
     @Nullable
     private final String operationName;
     @Nullable
-    private TraceContext tracingContext;
+    private Span tracingSpan;
 
     public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
             @Nullable final ServerApi serverApi) {
@@ -97,17 +97,17 @@ public class OperationContext {
 
     public OperationContext withSessionContext(final SessionContext sessionContext) {
         return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, tracingManager, serverApi,
-                operationName, tracingContext);
+                operationName, tracingSpan);
     }
 
     public OperationContext withTimeoutContext(final TimeoutContext timeoutContext) {
         return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, tracingManager, serverApi,
-                operationName, tracingContext);
+                operationName, tracingSpan);
     }
 
     public OperationContext withOperationName(final String operationName) {
         return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, tracingManager, serverApi,
-                operationName, tracingContext);
+                operationName, tracingSpan);
     }
 
     public long getId() {
@@ -141,12 +141,12 @@ public class OperationContext {
     }
 
     @Nullable
-    public TraceContext getTracingSpanContext() {
-        return tracingContext != null ? tracingContext : null;
+    public Span getTracingSpan() {
+        return tracingSpan;
     }
 
-    public void setTracingContext(final TraceContext tracingContext) {
-        this.tracingContext = tracingContext;
+    public void setTracingSpan(final Span tracingSpan) {
+        this.tracingSpan = tracingSpan;
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
@@ -158,7 +158,7 @@ public class OperationContext {
             final TracingManager tracingManager,
             @Nullable final ServerApi serverApi,
             @Nullable final String operationName,
-            @Nullable final TraceContext tracingContext) {
+            @Nullable final Span tracingSpan) {
 
         this.id = id;
         this.serverDeprioritization = serverDeprioritization;
@@ -168,7 +168,7 @@ public class OperationContext {
         this.tracingManager = tracingManager;
         this.serverApi = serverApi;
         this.operationName = operationName;
-        this.tracingContext = tracingContext;
+        this.tracingSpan = tracingSpan;
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
@@ -187,7 +187,7 @@ public class OperationContext {
         this.tracingManager = tracingManager;
         this.serverApi = serverApi;
         this.operationName = operationName;
-        this.tracingContext = null;
+        this.tracingSpan = null;
     }
 
 

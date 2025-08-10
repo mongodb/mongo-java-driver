@@ -22,6 +22,6 @@ import java.util.Collection;
 
 final class MicrometerTracingTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() {
-        return getTestData("tracing/tests");
+        return getTestData("open-telemetry/tests");
     }
 }
