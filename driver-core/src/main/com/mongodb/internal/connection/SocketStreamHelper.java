@@ -71,14 +71,19 @@ final class SocketStreamHelper {
     static void initialize(final OperationContext operationContext, final Socket socket,
             final InetSocketAddress inetSocketAddress, final SocketSettings settings,
             final SslSettings sslSettings) throws IOException {
-        configureSocket(socket, settings);
+        configureSocket(socket, operationContext, settings);
         configureSslSocket(socket, sslSettings, inetSocketAddress);
         socket.connect(inetSocketAddress, operationContext.getTimeoutContext().getConnectTimeoutMs());
     }
 
-    static void configureSocket(final Socket socket, final SocketSettings settings) throws SocketException {
+    static void configureSocket(final Socket socket, final OperationContext operationContext, final SocketSettings settings) throws SocketException {
         socket.setTcpNoDelay(true);
         socket.setKeepAlive(true);
+        int readTimeoutMS = (int) operationContext.getTimeoutContext().getReadTimeoutMS();
+        if (readTimeoutMS > 0) {
+            socket.setSoTimeout(readTimeoutMS);
+        }
+
         // Adding keep alive options for users of Java 11+. These options will be ignored for older Java versions.
         setExtendedSocketOptions(socket);
 
