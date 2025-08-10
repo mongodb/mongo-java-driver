@@ -54,8 +54,8 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperation<MapReduceAsyncBatchCursor<T>>,
-                                                               ReadOperation<MapReduceBatchCursor<T>> {
+public class MapReduceWithInlineResultsOperation<T> implements ReadOperationMapReduceCursor<T> {
+    private static final String COMMAND_NAME = "mapReduce";
     private final MongoNamespace namespace;
     private final BsonJavaScript mapFunction;
     private final BsonJavaScript reduceFunction;
@@ -166,6 +166,11 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     }
 
     @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+    @Override
     public MapReduceBatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
         return executeRetryableRead(binding, operationContext, namespace.getDatabaseName(),
                 getCommandCreator(),
@@ -181,16 +186,12 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
                 asyncTransformer(), false, errHandlingCallback);
     }
 
-    public ReadOperation<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return createExplainableOperation(explainVerbosity);
-    }
-
-    public AsyncReadOperation<BsonDocument> asExplainableOperationAsync(final ExplainVerbosity explainVerbosity) {
+    public ReadOperationSimple<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
         return createExplainableOperation(explainVerbosity);
     }
 
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return new ExplainCommandOperation<>(namespace.getDatabaseName(),
+        return new ExplainCommandOperation<>(namespace.getDatabaseName(), getCommandName(),
                 (operationContext, serverDescription, connectionDescription) -> {
                     BsonDocument command = getCommandCreator().create(operationContext, serverDescription, connectionDescription);
                     applyMaxTimeMS(operationContext.getTimeoutContext(), command);
@@ -216,7 +217,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     private CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
 
-            BsonDocument commandDocument = new BsonDocument("mapReduce", new BsonString(namespace.getCollectionName()))
+            BsonDocument commandDocument = new BsonDocument(getCommandName(), new BsonString(namespace.getCollectionName()))
                     .append("map", getMapFunction())
                     .append("reduce", getReduceFunction())
                     .append("out", new BsonDocument("inline", new BsonInt32(1)));

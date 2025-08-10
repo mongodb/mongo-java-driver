@@ -45,7 +45,8 @@ import static java.util.Collections.singletonList;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
+public class EstimatedDocumentCountOperation implements ReadOperationSimple<Long> {
+    private static final String COMMAND_NAME = "count";
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
     private final MongoNamespace namespace;
     private boolean retryReads;
@@ -68,6 +69,11 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
     public EstimatedDocumentCountOperation comment(@Nullable final BsonValue comment) {
         this.comment = comment;
         return this;
+    }
+
+    @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
     }
 
     @Override
@@ -109,7 +115,7 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
 
     private CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
-            BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
+            BsonDocument document = new BsonDocument(getCommandName(), new BsonString(namespace.getCollectionName()));
             appendReadConcernToCommand(operationContext.getSessionContext(), connectionDescription.getMaxWireVersion(), document);
             if (comment != null) {
                 document.put("comment", comment);

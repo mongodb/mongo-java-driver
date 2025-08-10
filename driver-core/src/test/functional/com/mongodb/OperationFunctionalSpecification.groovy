@@ -49,8 +49,6 @@ import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.connection.OperationContext
 import com.mongodb.internal.connection.ServerHelper
 import com.mongodb.internal.connection.SplittablePayload
-import com.mongodb.internal.operation.AsyncReadOperation
-import com.mongodb.internal.operation.AsyncWriteOperation
 import com.mongodb.internal.operation.MixedBulkWriteOperation
 import com.mongodb.internal.operation.ReadOperation
 import com.mongodb.internal.operation.WriteOperation
@@ -424,9 +422,9 @@ class OperationFunctionalSpecification extends Specification {
             1 * connection.release()
         }
 
-        if (operation instanceof AsyncReadOperation) {
+        if (operation instanceof ReadOperation) {
             operation.executeAsync(readBinding, operationContext, callback)
-        } else if (operation instanceof AsyncWriteOperation) {
+        } else if (operation instanceof WriteOperation) {
             operation.executeAsync(writeBinding, operationContext, callback)
         }
          try {

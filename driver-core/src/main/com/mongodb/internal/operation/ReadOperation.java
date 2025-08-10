@@ -16,6 +16,8 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.OperationContext;
 
@@ -24,13 +26,28 @@ import com.mongodb.internal.connection.OperationContext;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public interface ReadOperation<T> {
+public interface ReadOperation<T, R> {
+
+    /**
+     * @return the command name of the operation, e.g. "insert", "update", "delete", "bulkWrite", etc.
+     */
+    String getCommandName();
 
     /**
      * General execute which can return anything of type T
      *
      * @param binding the binding to execute in the context of
+     * @param operationContext the operation context
      * @return T, the result of the execution
      */
     T execute(ReadBinding binding, OperationContext operationContext);
+
+    /**
+     * General execute which can return anything of type R
+     *
+     * @param binding the binding to execute in the context of
+     * @param operationContext the operation context
+     * @param callback the callback to be called when the operation has been executed
+     */
+    void executeAsync(AsyncReadBinding binding, OperationContext operationContext, SingleResultCallback<R> callback);
 }

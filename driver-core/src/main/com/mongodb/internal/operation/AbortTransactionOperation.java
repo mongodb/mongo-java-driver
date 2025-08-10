@@ -31,6 +31,7 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class AbortTransactionOperation extends TransactionOperation {
+    private static final String COMMAND_NAME = "abortTransaction";
     private BsonDocument recoveryToken;
 
     public AbortTransactionOperation(final WriteConcern writeConcern) {
@@ -43,8 +44,8 @@ public class AbortTransactionOperation extends TransactionOperation {
     }
 
     @Override
-    protected String getCommandName() {
-        return "abortTransaction";
+    public String getCommandName() {
+        return COMMAND_NAME;
     }
 
     @Override

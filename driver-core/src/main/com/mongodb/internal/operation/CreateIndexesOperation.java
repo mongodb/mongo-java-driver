@@ -58,7 +58,8 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+public class CreateIndexesOperation implements WriteOperation<Void> {
+    private static final String COMMAND_NAME = "createIndexes";
     private final MongoNamespace namespace;
     private final List<IndexRequest> requests;
     private final WriteConcern writeConcern;
@@ -98,6 +99,11 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     public CreateIndexesOperation commitQuorum(@Nullable final CreateIndexCommitQuorum commitQuorum) {
         this.commitQuorum = commitQuorum;
         return this;
+    }
+
+    @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
     }
 
     @Override
@@ -189,7 +195,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
 
     private CommandOperationHelper.CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
-            BsonDocument command = new BsonDocument("createIndexes", new BsonString(namespace.getCollectionName()));
+            BsonDocument command = new BsonDocument(getCommandName(), new BsonString(namespace.getCollectionName()));
             List<BsonDocument> values = new ArrayList<>();
             for (IndexRequest request : requests) {
                 values.add(getIndex(request));

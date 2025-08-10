@@ -42,7 +42,7 @@ import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VE
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class AggregateOperation<T> implements AsyncExplainableReadOperation<AsyncBatchCursor<T>>, ExplainableReadOperation<BatchCursor<T>> {
+public class AggregateOperation<T> implements ReadOperationExplainable<T> {
     private final AggregateOperationImpl<T> wrapped;
 
     public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder) {
@@ -137,6 +137,11 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
     }
 
     @Override
+    public String getCommandName() {
+        return wrapped.getCommandName();
+    }
+
+    @Override
     public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
         return wrapped.execute(binding, operationContext);
     }
@@ -146,17 +151,13 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
         wrapped.executeAsync(binding, operationContext, callback);
     }
 
-    public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
-        return createExplainableOperation(verbosity, resultDecoder);
-    }
-
-    public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
-                                                                 final Decoder<R> resultDecoder) {
+    @Override
+    public <R> ReadOperationSimple<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
         return createExplainableOperation(verbosity, resultDecoder);
     }
 
     <R> CommandReadOperation<R> createExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
-        return new ExplainCommandOperation<>(getNamespace().getDatabaseName(),
+        return new ExplainCommandOperation<>(getNamespace().getDatabaseName(), getCommandName(),
                 (operationContext, serverDescription, connectionDescription) -> {
                     BsonDocument command = wrapped.getCommand(operationContext, UNKNOWN_WIRE_VERSION);
                     applyMaxTimeMS(operationContext.getTimeoutContext(), command);
@@ -167,5 +168,4 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
     MongoNamespace getNamespace() {
         return wrapped.getNamespace();
     }
-
 }

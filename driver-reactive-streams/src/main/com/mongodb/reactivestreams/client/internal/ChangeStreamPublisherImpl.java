@@ -21,10 +21,9 @@ import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
-import com.mongodb.internal.operation.AsyncOperations;
-import com.mongodb.internal.operation.AsyncReadOperation;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperationCursor;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
@@ -138,13 +137,13 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
         return new BatchCursorPublisher<TDocument>(getClientSession(), getMongoOperationPublisher().withDocumentClass(clazz),
                 getBatchSize()) {
             @Override
-            AsyncReadOperation<AsyncBatchCursor<TDocument>> asAsyncReadOperation(final int initialBatchSize) {
+            ReadOperationCursor<TDocument> asReadOperation(final int initialBatchSize) {
                 return createChangeStreamOperation(getMongoOperationPublisher().getCodecRegistry().get(clazz), initialBatchSize);
             }
 
             @Override
-            Function<AsyncOperations<?>, TimeoutSettings> getTimeoutSettings() {
-                return (asyncOperations -> asyncOperations.createTimeoutSettings(0, maxAwaitTimeMS));
+            Function<Operations<?>, TimeoutSettings> getTimeoutSettings() {
+                return (operations -> operations.createTimeoutSettings(0, maxAwaitTimeMS));
             }
         };
     }
@@ -168,17 +167,17 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
     }
 
     @Override
-    AsyncReadOperation<AsyncBatchCursor<ChangeStreamDocument<T>>> asAsyncReadOperation(final int initialBatchSize) {
+    ReadOperationCursor<ChangeStreamDocument<T>> asReadOperation(final int initialBatchSize) {
         return createChangeStreamOperation(codec, initialBatchSize);
     }
 
 
     @Override
-    Function<AsyncOperations<?>, TimeoutSettings> getTimeoutSettings() {
-        return (asyncOperations -> asyncOperations.createTimeoutSettings(0, maxAwaitTimeMS));
+    Function<Operations<?>, TimeoutSettings> getTimeoutSettings() {
+        return (operations -> operations.createTimeoutSettings(0, maxAwaitTimeMS));
     }
 
-    private <S> AsyncReadOperation<AsyncBatchCursor<S>> createChangeStreamOperation(final Codec<S> codec, final int initialBatchSize) {
+    private <S> ReadOperationCursor<S> createChangeStreamOperation(final Codec<S> codec, final int initialBatchSize) {
         return getOperations().changeStream(fullDocument, fullDocumentBeforeChange, pipeline, codec, changeStreamLevel, initialBatchSize,
                 collation, comment, resumeToken, startAtOperationTime, startAfter, showExpandedEvents);
     }

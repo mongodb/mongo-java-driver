@@ -104,14 +104,12 @@ public final class UnifiedTestModifications {
                 .test("atlas-data-lake-testing", "getMore", "A successful find event with getMore");
 
         // connection-monitoring-and-pooling
-
-        // TODO-JAVA-5711 reason, jira
-        // added as part of https://jira.mongodb.org/browse/JAVA-4976 , but unknown Jira to complete
-        // The implementation of the functionality related to clearing the connection pool before closing the connection
-        // will be carried out once the specification is finalized and ready.
-        def.skipUnknownReason("")
+        def.skipNoncompliant("According to the test, we should clear the pool then close the connection. Our implementation"
+                        + "immediately closes the failed connection, then clears the pool.")
                 .test("connection-monitoring-and-pooling/tests/logging", "connection-logging", "Connection checkout fails due to error establishing connection");
-        def.skipUnknownReason("")
+
+
+        def.skipNoncompliant("Driver does not support waitQueueSize or waitQueueMultiple options")
                 .test("connection-monitoring-and-pooling/tests/logging", "connection-pool-options", "waitQueueSize should be included in connection pool created message when specified")
                 .test("connection-monitoring-and-pooling/tests/logging", "connection-pool-options", "waitQueueMultiple should be included in connection pool created message when specified");
 
@@ -177,6 +175,37 @@ public final class UnifiedTestModifications {
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5689")
                 .file("gridfs", "gridfs-deleteByName")
                 .file("gridfs", "gridfs-renameByName");
+
+        // Skip all rawData based tests
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5830 rawData support only added to Go and Node")
+                .file("collection-management", "listCollections-rawData")
+                .file("crud", "aggregate-rawData")
+                .file("crud", "aggregate-rawData")
+                .file("crud", "BulkWrite deleteMany-rawData")
+                .file("crud", "BulkWrite deleteOne-rawData")
+                .file("crud", "BulkWrite replaceOne-rawData")
+                .file("crud", "BulkWrite updateMany-rawData")
+                .file("crud", "BulkWrite updateOne-rawData")
+                .file("crud", "client bulkWrite delete-rawData")
+                .file("crud", "client bulkWrite replaceOne-rawData")
+                .file("crud", "client bulkWrite update-rawData")
+                .file("crud", "count-rawData")
+                .file("crud", "countDocuments-rawData")
+                .file("crud", "db-aggregate-rawdata")
+                .file("crud", "deleteMany-rawData")
+                .file("crud", "deleteOne-rawData")
+                .file("crud", "distinct-rawData")
+                .file("crud", "estimatedDocumentCount-rawData")
+                .file("crud", "find-rawData")
+                .file("crud", "findOneAndDelete-rawData")
+                .file("crud", "findOneAndReplace-rawData")
+                .file("crud", "findOneAndUpdate-rawData")
+                .file("crud", "insertMany-rawData")
+                .file("crud", "insertOne-rawData")
+                .file("crud", "replaceOne-rawData")
+                .file("crud", "updateMany-rawData")
+                .file("crud", "updateOne-rawData")
+                .file("index-management", "index management-rawData");
 
         // retryable-reads
 

@@ -31,9 +31,9 @@ import com.mongodb.internal.binding.AsyncClusterBinding;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
-import com.mongodb.internal.operation.AsyncReadOperation;
-import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.internal.operation.OperationHelper;
+import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.ReactiveContextProvider;
@@ -47,6 +47,7 @@ import java.util.Objects;
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
 import static com.mongodb.ReadPreference.primary;
+import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.TimeoutContext.createTimeoutContext;
 import static com.mongodb.reactivestreams.client.internal.MongoOperationPublisher.sinkToCallback;
@@ -71,8 +72,9 @@ public class OperationExecutorImpl implements OperationExecutor {
     }
 
     @Override
-    public <T> Mono<T> execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
+    public <T> Mono<T> execute(final ReadOperation<?, T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
             @Nullable final ClientSession session) {
+        isTrue("open", !mongoClient.getCluster().isClosed());
         notNull("operation", operation);
         notNull("readPreference", readPreference);
         notNull("readConcern", readConcern);
@@ -87,7 +89,7 @@ public class OperationExecutorImpl implements OperationExecutor {
                             AsyncReadWriteBinding binding =
                                     getReadWriteBinding(readPreference, actualClientSession, isImplicitSession(session));
                             RequestContext requestContext = getContext(subscriber);
-                            OperationContext operationContext = getOperationContext(requestContext, actualClientSession, readConcern)
+                            OperationContext operationContext = getOperationContext(requestContext, actualClientSession, readConcern, operation.getCommandName())
                                     .withSessionContext(new ClientSessionBinding.AsyncClientSessionContext(actualClientSession,
                                             isImplicitSession(session), readConcern));
 
@@ -112,8 +114,9 @@ public class OperationExecutorImpl implements OperationExecutor {
     }
 
     @Override
-    public <T> Mono<T> execute(final AsyncWriteOperation<T> operation, final ReadConcern readConcern,
+    public <T> Mono<T> execute(final WriteOperation<T> operation, final ReadConcern readConcern,
             @Nullable final ClientSession session) {
+        isTrue("open", !mongoClient.getCluster().isClosed());
         notNull("operation", operation);
         notNull("readConcern", readConcern);
 
@@ -126,7 +129,7 @@ public class OperationExecutorImpl implements OperationExecutor {
                         .flatMap(actualClientSession -> {
                                     AsyncReadWriteBinding binding = getReadWriteBinding(primary(), actualClientSession, session == null);
                                     RequestContext requestContext = getContext(subscriber);
-                                    OperationContext operationContext = getOperationContext(requestContext, actualClientSession, readConcern)
+                                    OperationContext operationContext = getOperationContext(requestContext, actualClientSession, readConcern, operation.getCommandName())
                                             .withSessionContext(new ClientSessionBinding.AsyncClientSessionContext(actualClientSession,
                                                     isImplicitSession(session), readConcern));
 
@@ -205,12 +208,13 @@ public class OperationExecutorImpl implements OperationExecutor {
     }
 
     private OperationContext getOperationContext(final RequestContext requestContext, final ClientSession session,
-            final ReadConcern readConcern) {
+            final ReadConcern readConcern, final String commandName) {
         return new OperationContext(
                 requestContext,
                 new ReadConcernAwareNoOpSessionContext(readConcern),
                 createTimeoutContext(session, timeoutSettings),
-                mongoClient.getSettings().getServerApi());
+                mongoClient.getSettings().getServerApi(),
+                commandName);
     }
 
     private ReadPreference getReadPreferenceForBinding(final ReadPreference readPreference, @Nullable final ClientSession session) {

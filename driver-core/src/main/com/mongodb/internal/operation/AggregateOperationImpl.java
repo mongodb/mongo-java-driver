@@ -52,7 +52,8 @@ import static com.mongodb.internal.operation.OperationReadConcernHelper.appendRe
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
 
-class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
+    private static final String COMMAND_NAME = "aggregate";
     private static final String RESULT = "result";
     private static final String CURSOR = "cursor";
     private static final String FIRST_BATCH = "firstBatch";
@@ -186,6 +187,11 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     }
 
     @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+    @Override
     public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
         return executeRetryableRead(binding, applyTimeoutModeToOperationContext(timeoutMode, operationContext), namespace.getDatabaseName(),
                 getCommandCreator(), CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT),
@@ -207,7 +213,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     }
 
     BsonDocument getCommand(final OperationContext operationContext, final int maxWireVersion) {
-        BsonDocument commandDocument = new BsonDocument("aggregate", aggregateTarget.create());
+        BsonDocument commandDocument = new BsonDocument(getCommandName(), aggregateTarget.create());
         appendReadConcernToCommand(operationContext.getSessionContext(), maxWireVersion, commandDocument);
         commandDocument.put("pipeline", pipelineCreator.create());
         BsonDocument cursor = new BsonDocument();

@@ -19,6 +19,8 @@ package com.mongodb;
 import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.WriteConcernError;
+import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.InsertRequest;
@@ -48,12 +50,8 @@ import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
  * Operation for bulk writes for the legacy API.
  */
 final class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcernResult> {
-    private final WriteConcern writeConcern;
-    private final MongoNamespace namespace;
-    private final List<? extends WriteRequest> writeRequests;
+    private final MixedBulkWriteOperation wrappedOperation;
     private final WriteRequest.Type type;
-    private final boolean ordered;
-    private final boolean retryWrites;
     private Boolean bypassDocumentValidation;
 
     static LegacyMixedBulkWriteOperation createBulkWriteOperationForInsert(final MongoNamespace namespace, final boolean ordered,
@@ -80,17 +78,14 @@ final class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcern
 
     private LegacyMixedBulkWriteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
             final boolean retryWrites, final List<? extends WriteRequest> writeRequests, final WriteRequest.Type type) {
-        isTrueArgument("writeRequests not empty", !writeRequests.isEmpty());
-        this.writeRequests = notNull("writeRequests", writeRequests);
+        notNull("writeRequests", writeRequests);
+        isTrueArgument("writeRequests is not an empty list", !writeRequests.isEmpty());
         this.type = type;
-        this.ordered = ordered;
-        this.namespace = notNull("namespace", namespace);
-        this.writeConcern = notNull("writeConcern", writeConcern);
-        this.retryWrites = retryWrites;
+        this.wrappedOperation = new MixedBulkWriteOperation(namespace, writeRequests, ordered, writeConcern, retryWrites);
     }
 
     List<? extends WriteRequest> getWriteRequests() {
-        return writeRequests;
+        return wrappedOperation.getWriteRequests();
     }
 
     LegacyMixedBulkWriteOperation bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
@@ -99,10 +94,14 @@ final class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcern
     }
 
     @Override
+    public String getCommandName() {
+        return wrappedOperation.getCommandName();
+    }
+
+    @Override
     public WriteConcernResult execute(final WriteBinding binding, final OperationContext operationContext) {
         try {
-            BulkWriteResult result = new MixedBulkWriteOperation(namespace, writeRequests, ordered, writeConcern, retryWrites)
-                    .bypassDocumentValidation(bypassDocumentValidation).execute(binding, operationContext);
+            BulkWriteResult result = wrappedOperation.bypassDocumentValidation(bypassDocumentValidation).execute(binding, operationContext);
             if (result.wasAcknowledged()) {
                 return translateBulkWriteResult(result);
             } else {
@@ -111,6 +110,11 @@ final class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcern
         } catch (MongoBulkWriteException e) {
             throw convertBulkWriteException(e);
         }
+    }
+
+    @Override
+    public void executeAsync(final AsyncWriteBinding binding,final OperationContext operationContext, final SingleResultCallback<WriteConcernResult> callback) {
+        throw new UnsupportedOperationException("This operation is sync only");
     }
 
     private MongoException convertBulkWriteException(final MongoBulkWriteException e) {

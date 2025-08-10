@@ -65,7 +65,8 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+public class ListIndexesOperation<T> implements ReadOperationCursor<T> {
+    private static final String COMMAND_NAME = "listIndexes";
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private boolean retryReads;
@@ -115,6 +116,11 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
             this.timeoutMode = timeoutMode;
         }
         return this;
+    }
+
+    @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
     }
 
     @Override
@@ -170,7 +176,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
 
     private CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
-            BsonDocument commandDocument = new BsonDocument("listIndexes", new BsonString(namespace.getCollectionName()))
+            BsonDocument commandDocument = new BsonDocument(getCommandName(), new BsonString(namespace.getCollectionName()))
                     .append("cursor", getCursorDocumentFromBatchSize(batchSize == 0 ? null : batchSize));
             putIfNotNull(commandDocument, "comment", comment);
             return commandDocument;

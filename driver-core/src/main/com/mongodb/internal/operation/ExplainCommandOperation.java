@@ -31,11 +31,11 @@ import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreat
 public class ExplainCommandOperation<T> extends CommandReadOperation<T> {
 
     public ExplainCommandOperation(final String databaseName, final BsonDocument command, final Decoder<T> decoder) {
-        super(databaseName, (operationContext, serverDescription, connectionDescription) -> command, decoder);
+        super(databaseName, command, decoder);
     }
 
-    public ExplainCommandOperation(final String databaseName, final CommandCreator commandCreator, final Decoder<T> decoder) {
-        super(databaseName, commandCreator, decoder);
+    public ExplainCommandOperation(final String databaseName, final String commandName, final CommandCreator commandCreator, final Decoder<T> decoder) {
+        super(databaseName, commandName, commandCreator, decoder);
     }
 
     @Override

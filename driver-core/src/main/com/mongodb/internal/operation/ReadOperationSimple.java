@@ -16,24 +16,10 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.binding.AsyncReadBinding;
-import com.mongodb.internal.connection.OperationContext;
-
 /**
- * An operation which asynchronously reads from a MongoDB server.
- *
- * @param <T> the operations result type.
+ * An operation that reads from a MongoDB server and returns the same type for sync and async.
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public interface AsyncReadOperation<T> {
-
-    /**
-     * General execute which can return anything of type T
-     *
-     * @param binding the binding to execute in the context of
-     * @param callback the callback to be called when the operation has been executed
-     */
-    void executeAsync(AsyncReadBinding binding, OperationContext operationContext, SingleResultCallback<T> callback);
+public interface ReadOperationSimple<T> extends ReadOperation<T, T> {
 }

@@ -43,8 +43,8 @@ import static java.util.Collections.singletonList;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public final class ListSearchIndexesOperation<T>
-        implements AsyncExplainableReadOperation<AsyncBatchCursor<T>>, ExplainableReadOperation<BatchCursor<T>> {
+public final class ListSearchIndexesOperation<T> implements ReadOperationExplainable<T> {
+    private static final String COMMAND_NAME = "aggregate";
     private static final String STAGE_LIST_SEARCH_INDEXES = "$listSearchIndexes";
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
@@ -75,6 +75,11 @@ public final class ListSearchIndexesOperation<T>
     }
 
     @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+    @Override
     public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
         try {
             return asAggregateOperation().execute(binding, operationContext);
@@ -102,14 +107,8 @@ public final class ListSearchIndexesOperation<T>
     }
 
     @Override
-    public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
+    public <R> ReadOperationSimple<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
         return asAggregateOperation().asExplainableOperation(verbosity, resultDecoder);
-    }
-
-    @Override
-    public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
-                                                                 final Decoder<R> resultDecoder) {
-        return asAggregateOperation().asAsyncExplainableOperation(verbosity, resultDecoder);
     }
 
     private AggregateOperation<T> asAggregateOperation() {

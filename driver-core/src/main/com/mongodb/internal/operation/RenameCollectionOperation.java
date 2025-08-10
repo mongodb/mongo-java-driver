@@ -48,7 +48,8 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class RenameCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+public class RenameCollectionOperation implements WriteOperation<Void> {
+    private static final String COMMAND_NAME = "renameCollection";
     private final MongoNamespace originalNamespace;
     private final MongoNamespace newNamespace;
     private final WriteConcern writeConcern;
@@ -75,6 +76,11 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
     }
 
     @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+    @Override
     public Void execute(final WriteBinding binding, final OperationContext operationContext) {
         return withConnection(binding, operationContext, (connection, operationContextWithMinRtt) ->
                 executeCommand(binding,
@@ -97,7 +103,7 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
     }
 
     private BsonDocument getCommand() {
-        BsonDocument commandDocument = new BsonDocument("renameCollection", new BsonString(originalNamespace.getFullName()))
+        BsonDocument commandDocument = new BsonDocument(getCommandName(), new BsonString(originalNamespace.getFullName()))
                                             .append("to", new BsonString(newNamespace.getFullName()))
                                             .append("dropTarget", BsonBoolean.valueOf(dropTarget));
         appendWriteConcernToCommand(writeConcern, commandDocument);

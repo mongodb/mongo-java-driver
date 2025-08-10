@@ -53,8 +53,8 @@ import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.internal.operation.OperationHelper;
+import com.mongodb.internal.operation.Operations;
 import com.mongodb.internal.operation.ReadOperation;
-import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
@@ -98,7 +98,7 @@ final class MongoClusterImpl implements MongoCluster {
     private final TimeoutSettings timeoutSettings;
     private final UuidRepresentation uuidRepresentation;
     private final WriteConcern writeConcern;
-    private final SyncOperations<BsonDocument> operations;
+    private final Operations<BsonDocument> operations;
 
     MongoClusterImpl(
             @Nullable final AutoEncryptionSettings autoEncryptionSettings, final Cluster cluster, final CodecRegistry codecRegistry,
@@ -123,7 +123,7 @@ final class MongoClusterImpl implements MongoCluster {
         this.timeoutSettings = timeoutSettings;
         this.uuidRepresentation = uuidRepresentation;
         this.writeConcern = writeConcern;
-        operations = new SyncOperations<>(
+        operations = new Operations<>(
                 null,
                 BsonDocument.class,
                 readPreference,
@@ -156,6 +156,7 @@ final class MongoClusterImpl implements MongoCluster {
     }
 
     @Override
+    @Nullable
     public Long getTimeout(final TimeUnit timeUnit) {
         Long timeoutMS = timeoutSettings.getTimeoutMS();
         return timeoutMS == null ? null : timeUnit.convert(timeoutMS, TimeUnit.MILLISECONDS);
@@ -398,7 +399,7 @@ final class MongoClusterImpl implements MongoCluster {
         }
 
         @Override
-        public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern) {
+        public <T> T execute(final ReadOperation<T, ?> operation, final ReadPreference readPreference, final ReadConcern readConcern) {
             return execute(operation, readPreference, readConcern, null);
         }
 
@@ -408,14 +409,14 @@ final class MongoClusterImpl implements MongoCluster {
         }
 
         @Override
-        public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
+        public <T> T execute(final ReadOperation<T, ?> operation, final ReadPreference readPreference, final ReadConcern readConcern,
                 @Nullable final ClientSession session) {
             if (session != null) {
                 session.notifyOperationInitiated(operation);
             }
 
             ClientSession actualClientSession = getClientSession(session);
-            OperationContext operationContext = getOperationContext(actualClientSession, readConcern)
+            OperationContext operationContext = getOperationContext(actualClientSession, readConcern, operation.getCommandName())
                     .withSessionContext(new ClientSessionBinding.SyncClientSessionContext(actualClientSession, readConcern, isImplicitSession(session)));
             ReadBinding binding = getReadBinding(readPreference, actualClientSession, isImplicitSession(session));
 
@@ -442,7 +443,7 @@ final class MongoClusterImpl implements MongoCluster {
             }
 
             ClientSession actualClientSession = getClientSession(session);
-            OperationContext operationContext = getOperationContext(actualClientSession, readConcern)
+            OperationContext operationContext = getOperationContext(actualClientSession, readConcern, operation.getCommandName())
                     .withSessionContext(new ClientSessionBinding.SyncClientSessionContext(actualClientSession, readConcern, isImplicitSession(session)));
             WriteBinding binding = getWriteBinding(actualClientSession, isImplicitSession(session));
 
@@ -492,12 +493,13 @@ final class MongoClusterImpl implements MongoCluster {
             return new ClientSessionBinding(session, ownsSession, readWriteBinding);
         }
 
-        private OperationContext getOperationContext(final ClientSession session, final ReadConcern readConcern) {
+        private OperationContext getOperationContext(final ClientSession session, final ReadConcern readConcern, final String commandName) {
             return new OperationContext(
                     getRequestContext(),
                     new ReadConcernAwareNoOpSessionContext(readConcern),
                     createTimeoutContext(session, executorTimeoutSettings),
-                    serverApi);
+                    serverApi,
+                    commandName);
         }
 
         private RequestContext getRequestContext() {

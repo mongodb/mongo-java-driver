@@ -46,7 +46,8 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
+public abstract class BaseFindAndModifyOperation<T> implements WriteOperation<T> {
+    private static final String COMMAND_NAME = "findAndModify";
     private final MongoNamespace namespace;
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
@@ -68,6 +69,12 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
         this.retryWrites = retryWrites;
         this.decoder = notNull("decoder", decoder);
     }
+
+    @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
 
     @Override
     public T execute(final WriteBinding binding, final OperationContext operationContext) {
@@ -185,7 +192,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
         return (operationContext, serverDescription, connectionDescription) -> {
             SessionContext sessionContext = operationContext.getSessionContext();
 
-            BsonDocument commandDocument = new BsonDocument("findAndModify", new BsonString(getNamespace().getCollectionName()));
+            BsonDocument commandDocument = new BsonDocument(getCommandName(), new BsonString(getNamespace().getCollectionName()));
             putIfNotNull(commandDocument, "query", getFilter());
             putIfNotNull(commandDocument, "fields", getProjection());
             putIfNotNull(commandDocument, "sort", getSort());

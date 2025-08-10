@@ -43,7 +43,8 @@ import static com.mongodb.internal.operation.SyncOperationHelper.singleBatchCurs
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+public class ListDatabasesOperation<T> implements ReadOperationCursor<T> {
+    private static final String COMMAND_NAME = "listDatabases";
     private static final String DATABASES = "databases";
     private final Decoder<T> decoder;
     private boolean retryReads;
@@ -103,6 +104,11 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
     }
 
     @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+    @Override
     public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
         return executeRetryableRead(binding, operationContext, "admin", getCommandCreator(),
                 CommandResultDocumentCodec.create(decoder, DATABASES),
@@ -118,7 +124,7 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
 
     private CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
-            BsonDocument commandDocument = new BsonDocument("listDatabases", new BsonInt32(1));
+            BsonDocument commandDocument = new BsonDocument(getCommandName(), new BsonInt32(1));
             putIfNotNull(commandDocument, "filter", filter);
             putIfNotNull(commandDocument, "nameOnly", nameOnly);
             putIfNotNull(commandDocument, "authorizedDatabases", authorizedDatabasesOnly);

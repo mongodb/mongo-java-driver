@@ -67,7 +67,8 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatchCursor<T>>, ExplainableReadOperation<BatchCursor<T>> {
+public class FindOperation<T> implements ReadOperationExplainable<T> {
+    private static final String COMMAND_NAME = "find";
     private static final String FIRST_BATCH = "firstBatch";
 
     private final MongoNamespace namespace;
@@ -285,6 +286,11 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     }
 
     @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+    @Override
     public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
         IllegalStateException invalidTimeoutModeException = invalidTimeoutModeException();
         if (invalidTimeoutModeException != null) {
@@ -371,19 +377,12 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     }
 
     @Override
-    public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity,
-                                                       final Decoder<R> resultDecoder) {
-        return createExplainableOperation(verbosity, resultDecoder);
-    }
-
-    @Override
-    public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
-                                                                 final Decoder<R> resultDecoder) {
+    public <R> CommandReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
         return createExplainableOperation(verbosity, resultDecoder);
     }
 
     <R> CommandReadOperation<R> createExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
-        return new ExplainCommandOperation<>(getNamespace().getDatabaseName(),
+        return new ExplainCommandOperation<>(getNamespace().getDatabaseName(), getCommandName(),
                 (operationContext, serverDescription, connectionDescription) -> {
                     BsonDocument command = getCommand(operationContext, UNKNOWN_WIRE_VERSION);
                     applyMaxTimeMS(operationContext.getTimeoutContext(), command);
@@ -392,7 +391,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     }
 
     private BsonDocument getCommand(final OperationContext operationContext, final int maxWireVersion) {
-        BsonDocument commandDocument = new BsonDocument("find", new BsonString(namespace.getCollectionName()));
+        BsonDocument commandDocument = new BsonDocument(getCommandName(), new BsonString(namespace.getCollectionName()));
 
         appendReadConcernToCommand(operationContext.getSessionContext(), maxWireVersion, commandDocument);
 

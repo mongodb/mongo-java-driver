@@ -25,13 +25,17 @@ import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.AsyncWriteBinding;
+import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.AsyncOperations;
-import com.mongodb.internal.operation.AsyncReadOperation;
-import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.internal.operation.MapReduceAsyncBatchCursor;
+import com.mongodb.internal.operation.MapReduceBatchCursor;
 import com.mongodb.internal.operation.MapReduceStatistics;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.ReadOperationCursor;
+import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import org.bson.BsonDocument;
@@ -168,7 +172,7 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
             throw new IllegalStateException("The options must specify a non-inline result");
         }
         return getMongoOperationPublisher().createWriteOperationMono(
-                (asyncOperations -> asyncOperations.createTimeoutSettings(maxTimeMS)),
+                (operations -> operations.createTimeoutSettings(maxTimeMS)),
                 this::createMapReduceToCollectionOperation,
                 getClientSession());
     }
@@ -189,12 +193,12 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
     }
 
     @Override
-    Function<AsyncOperations<?>, TimeoutSettings> getTimeoutSettings() {
-        return (asyncOperations -> asyncOperations.createTimeoutSettings(maxTimeMS));
+    Function<Operations<?>, TimeoutSettings> getTimeoutSettings() {
+        return (operations -> operations.createTimeoutSettings(maxTimeMS));
     }
 
     @Override
-    AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
+    public ReadOperationCursor<T> asReadOperation(final int initialBatchSize) {
         if (inline) {
             // initialBatchSize is ignored for map reduce operations.
             return createMapReduceInlineOperation();
@@ -215,22 +219,27 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
                         limit, jsMode, scope, sort, verbose, action, bypassDocumentValidation, collation));
     }
 
-    private AsyncReadOperation<AsyncBatchCursor<T>> createFindOperation(final int initialBatchSize) {
+    private ReadOperationCursor<T> createFindOperation(final int initialBatchSize) {
         String dbName = databaseName != null ? databaseName : getNamespace().getDatabaseName();
         FindOptions findOptions = new FindOptions().collation(collation).batchSize(initialBatchSize);
         return getOperations().find(new MongoNamespace(dbName, collectionName), new BsonDocument(), getDocumentClass(), findOptions);
     }
 
     // this could be inlined, but giving it a name so that it's unit-testable
-    static class WrappedMapReduceReadOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>> {
-        private final AsyncReadOperation<MapReduceAsyncBatchCursor<T>> operation;
+    static class WrappedMapReduceReadOperation<T> implements ReadOperationCursorAsyncOnly<T> {
+        private final ReadOperation<MapReduceBatchCursor<T>, MapReduceAsyncBatchCursor<T>> operation;
 
-        WrappedMapReduceReadOperation(final AsyncReadOperation<MapReduceAsyncBatchCursor<T>> operation) {
+        WrappedMapReduceReadOperation(final ReadOperation<MapReduceBatchCursor<T>, MapReduceAsyncBatchCursor<T>> operation) {
             this.operation = operation;
         }
 
-        AsyncReadOperation<MapReduceAsyncBatchCursor<T>> getOperation() {
+        ReadOperation<MapReduceBatchCursor<T>, MapReduceAsyncBatchCursor<T>> getOperation() {
             return operation;
+        }
+
+        @Override
+        public String getCommandName() {
+            return operation.getCommandName();
         }
 
         @Override
@@ -239,15 +248,25 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
         }
     }
 
-    static class WrappedMapReduceWriteOperation implements AsyncWriteOperation<Void> {
-        private final AsyncWriteOperation<MapReduceStatistics> operation;
+    static class WrappedMapReduceWriteOperation implements WriteOperation<Void> {
+        private final WriteOperation<MapReduceStatistics> operation;
 
-        WrappedMapReduceWriteOperation(final AsyncWriteOperation<MapReduceStatistics> operation) {
+        WrappedMapReduceWriteOperation(final WriteOperation<MapReduceStatistics> operation) {
             this.operation = operation;
         }
 
-        AsyncWriteOperation<MapReduceStatistics> getOperation() {
+        WriteOperation<MapReduceStatistics> getOperation() {
             return operation;
+        }
+
+        @Override
+        public String getCommandName() {
+            return operation.getCommandName();
+        }
+
+        @Override
+        public Void execute(final WriteBinding binding) {
+            throw new UnsupportedOperationException("This operation is async only");
         }
 
         @Override

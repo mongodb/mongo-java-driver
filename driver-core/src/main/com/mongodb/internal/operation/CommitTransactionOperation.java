@@ -47,6 +47,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class CommitTransactionOperation extends TransactionOperation {
+    private static final String COMMAND_NAME = "commitTransaction";
     private final boolean alreadyCommitted;
     private BsonDocument recoveryToken;
 
@@ -116,10 +117,9 @@ public class CommitTransactionOperation extends TransactionOperation {
         return false;
     }
 
-
     @Override
-    protected String getCommandName() {
-        return "commitTransaction";
+    public String getCommandName() {
+        return COMMAND_NAME;
     }
 
     @Override

@@ -46,7 +46,8 @@ import static com.mongodb.internal.operation.SyncOperationHelper.singleBatchCurs
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+public class DistinctOperation<T> implements ReadOperationCursor<T> {
+    private static final String COMMAND_NAME = "distinct";
     private static final String VALUES = "values";
     private final MongoNamespace namespace;
     private final String fieldName;
@@ -109,6 +110,11 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
     }
 
     @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+    @Override
     public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
         return executeRetryableRead(binding, operationContext, namespace.getDatabaseName(), getCommandCreator(), createCommandDecoder(),
                 singleBatchCursorTransformer(VALUES), retryReads);
@@ -127,7 +133,7 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
 
     private CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
-            BsonDocument commandDocument = new BsonDocument("distinct", new BsonString(namespace.getCollectionName()));
+            BsonDocument commandDocument = new BsonDocument(getCommandName(), new BsonString(namespace.getCollectionName()));
             appendReadConcernToCommand(operationContext.getSessionContext(), connectionDescription.getMaxWireVersion(), commandDocument);
             commandDocument.put("key", new BsonString(fieldName));
             putIfNotNull(commandDocument, "query", filter);

@@ -47,7 +47,6 @@ import com.mongodb.test.AfterBeforeParameterResolver;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.BsonValue;
@@ -91,7 +90,6 @@ import static com.mongodb.client.unified.UnifiedTestModifications.applyCustomiza
 import static com.mongodb.client.unified.UnifiedTestModifications.testDef;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -374,9 +372,7 @@ public abstract class UnifiedTest {
             }
 
             if (definition.containsKey("expectLogMessages")) {
-                ArrayList<LogMatcher.Tweak> tweaks = new ArrayList<>(singletonList(
-                        // `LogMessage.Entry.Name.OPERATION` is not supported, therefore we skip matching its value
-                        LogMatcher.Tweak.skip(LogMessage.Entry.Name.OPERATION)));
+                ArrayList<LogMatcher.Tweak> tweaks = new ArrayList<>();
                 if (getMongoClientSettings().getClusterSettings()
                         .getHosts().stream().anyMatch(serverAddress -> serverAddress instanceof UnixServerAddress)) {
                     tweaks.add(LogMatcher.Tweak.skip(LogMessage.Entry.Name.SERVER_PORT));
@@ -702,8 +698,6 @@ public abstract class UnifiedTest {
                     return gridFSHelper.executeUpload(operation);
                 case "runCommand":
                     return crudHelper.executeRunCommand(operation);
-                case "loop":
-                    return loop(context, operation);
                 case "createDataKey":
                     return clientEncryptionHelper.executeCreateDataKey(operation);
                 case "addKeyAltName":
@@ -732,67 +726,6 @@ public abstract class UnifiedTest {
         } finally {
             context.getAssertionContext().pop();
         }
-    }
-
-    private OperationResult loop(final UnifiedTestContext context, final BsonDocument operation) {
-        BsonDocument arguments = operation.getDocument("arguments");
-
-        int numIterations = 0;
-        int numSuccessfulOperations = 0;
-        boolean storeFailures = arguments.containsKey("storeFailuresAsEntity");
-        boolean storeErrors = arguments.containsKey("storeErrorsAsEntity");
-        BsonArray failureDescriptionDocuments = new BsonArray();
-        BsonArray errorDescriptionDocuments = new BsonArray();
-
-        while (!terminateLoop()) {
-            BsonArray array = arguments.getArray("operations");
-            for (int i = 0; i < array.size(); i++) {
-                BsonValue cur = array.get(i);
-                try {
-                    assertOperation(context, cur.asDocument().clone(), i);
-                    numSuccessfulOperations++;
-                } catch (AssertionError e) {
-                    if (storeFailures) {
-                        failureDescriptionDocuments.add(createDocumentFromException(e));
-                    } else if (storeErrors) {
-                        errorDescriptionDocuments.add(createDocumentFromException(e));
-                    } else {
-                        throw e;
-                    }
-                    break;
-                } catch (Exception e) {
-                    if (storeErrors) {
-                        errorDescriptionDocuments.add(createDocumentFromException(e));
-                    } else if (storeFailures) {
-                        failureDescriptionDocuments.add(createDocumentFromException(e));
-                    } else {
-                        throw e;
-                    }
-                    break;
-                }
-            }
-            numIterations++;
-        }
-
-        if (arguments.containsKey("storeSuccessesAsEntity")) {
-            entities.addSuccessCount(arguments.getString("storeSuccessesAsEntity").getValue(), numSuccessfulOperations);
-        }
-        if (arguments.containsKey("storeIterationsAsEntity")) {
-            entities.addIterationCount(arguments.getString("storeIterationsAsEntity").getValue(), numIterations);
-        }
-        if (storeFailures) {
-            entities.addFailureDocuments(arguments.getString("storeFailuresAsEntity").getValue(), failureDescriptionDocuments);
-        }
-        if (storeErrors) {
-            entities.addErrorDocuments(arguments.getString("storeErrorsAsEntity").getValue(), errorDescriptionDocuments);
-        }
-
-        return OperationResult.NONE;
-    }
-
-    private BsonDocument createDocumentFromException(final Throwable throwable) {
-        return new BsonDocument("error", new BsonString(throwable.toString()))
-                .append("time", new BsonDouble(System.currentTimeMillis() / 1000.0));
     }
 
     protected boolean terminateLoop() {

@@ -360,7 +360,7 @@ public class InternalStreamConnection implements InternalConnection {
     public void close() {
         // All but the first call is a no-op
         if (!isClosed.getAndSet(true) && (stream != null)) {
-                stream.close();
+            stream.close();
         }
     }
 
