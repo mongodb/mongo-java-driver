@@ -83,6 +83,7 @@ public final class CommandMessage extends RequestMessage {
     private final boolean exhaustAllowed;
     private final MessageSequences sequences;
     private final boolean responseExpected;
+    private final String database;
     /**
      * {@code null} iff either {@link #sequences} is not of the {@link DualMessageSequences} type,
      * or it is of that type, but it has not been {@linkplain #encodeMessageBodyWithMetadata(ByteBufferBsonOutput, OperationContext) encoded}.
@@ -119,7 +120,8 @@ public final class CommandMessage extends RequestMessage {
                    final boolean responseExpected, final boolean exhaustAllowed,
                    final MessageSequences sequences,
                    final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
-        super(database, getOpCode(settings, clusterConnectionMode, serverApi), settings);
+        super(getOpCode(settings, clusterConnectionMode, serverApi), settings);
+        this.database = database;
         this.command = command;
         this.commandFieldNameValidator = commandFieldNameValidator;
         this.readPreference = readPreference;
@@ -403,6 +405,15 @@ public final class CommandMessage extends RequestMessage {
 
     private static boolean isServerVersionKnown(final MessageSettings settings) {
         return settings.getMaxWireVersion() != UNKNOWN_WIRE_VERSION;
+    }
+
+    /**
+     * Gets the collection name, which may be null for some message types
+     *
+     * @return the collection name
+     */
+    public String getDatabase() {
+        return database;
     }
 
     @FunctionalInterface
