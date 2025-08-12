@@ -176,6 +176,9 @@ public final class CollectionHelper<T> {
                 case "size":
                     createCollectionOptions.sizeInBytes(createOptions.getNumber("size").longValue());
                     break;
+                case "encryptedFields":
+                    createCollectionOptions.encryptedFields(createOptions.getDocument("encryptedFields"));
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported create collection option: " + option);
             }
