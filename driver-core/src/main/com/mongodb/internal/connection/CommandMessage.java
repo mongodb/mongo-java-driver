@@ -35,6 +35,7 @@ import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.ByteBuf;
 import org.bson.FieldNameValidator;
+import org.bson.io.BsonOutput;
 
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
@@ -55,6 +56,8 @@ import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.connection.ServerType.STANDALONE;
 import static com.mongodb.internal.connection.BsonWriterHelper.appendElementsToDocument;
 import static com.mongodb.internal.connection.BsonWriterHelper.backpatchLength;
+import static com.mongodb.internal.connection.BsonWriterHelper.createBsonBinaryWriter;
+import static com.mongodb.internal.connection.BsonWriterHelper.encodeUsingRegistry;
 import static com.mongodb.internal.connection.BsonWriterHelper.writeDocumentsOfDualMessageSequences;
 import static com.mongodb.internal.connection.BsonWriterHelper.writePayload;
 import static com.mongodb.internal.connection.ByteBufBsonDocument.createList;
@@ -84,9 +87,11 @@ public final class CommandMessage extends RequestMessage {
     private final MessageSequences sequences;
     private final boolean responseExpected;
     private final String database;
+    private int firstDocumentPosition = -1;
+
     /**
      * {@code null} iff either {@link #sequences} is not of the {@link DualMessageSequences} type,
-     * or it is of that type, but it has not been {@linkplain #encodeMessageBodyWithMetadata(ByteBufferBsonOutput, OperationContext) encoded}.
+     * or it is of that type, but it has not been {@linkplain #encodeMessageBody(ByteBufferBsonOutput, OperationContext) encoded}.
      */
     @Nullable
     private Boolean dualMessageSequencesRequireResponse;
@@ -145,7 +150,7 @@ public final class CommandMessage extends RequestMessage {
         try {
             CompositeByteBuf byteBuf = new CompositeByteBuf(byteBuffers);
             try {
-                byteBuf.position(getEncodingMetadata().getFirstDocumentPosition());
+                byteBuf.position(firstDocumentPosition);
                 ByteBufBsonDocument byteBufBsonDocument = createOne(byteBuf);
 
                 // If true, it means there is at least one `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE` section in the OP_MSG
@@ -223,9 +228,8 @@ public final class CommandMessage extends RequestMessage {
     }
 
     @Override
-    protected EncodingMetadata encodeMessageBodyWithMetadata(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext) {
-        int commandStartPosition = useOpMsg() ? writeOpMsg(bsonOutput, operationContext) : writeOpQuery(bsonOutput);
-        return new EncodingMetadata(commandStartPosition);
+    protected void encodeMessageBody(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext) {
+        this.firstDocumentPosition = useOpMsg() ? writeOpMsg(bsonOutput, operationContext) : writeOpQuery(bsonOutput);
     }
 
     @SuppressWarnings("try")
@@ -237,7 +241,7 @@ public final class CommandMessage extends RequestMessage {
         int commandStartPosition = bsonOutput.getPosition();
         List<BsonElement> extraElements = getExtraElements(operationContext);
 
-        int commandDocumentSizeInBytes = writeDocument(command, bsonOutput, commandFieldNameValidator);
+        int commandDocumentSizeInBytes = writeCommand(bsonOutput);
         if (sequences instanceof SplittablePayload) {
             appendElementsToDocument(bsonOutput, commandStartPosition, extraElements);
             SplittablePayload payload = (SplittablePayload) sequences;
@@ -288,7 +292,7 @@ public final class CommandMessage extends RequestMessage {
             elements = new ArrayList<>(3);
             addServerApiElements(elements);
         }
-        writeDocument(command, bsonOutput, commandFieldNameValidator);
+        writeCommand(bsonOutput);
         appendElementsToDocument(bsonOutput, commandStartPosition, elements);
         return commandStartPosition;
     }
@@ -414,6 +418,13 @@ public final class CommandMessage extends RequestMessage {
      */
     public String getDatabase() {
         return database;
+    }
+
+    private int writeCommand(final BsonOutput bsonOutput) {
+        BsonBinaryWriter writer = createBsonBinaryWriter(bsonOutput, commandFieldNameValidator, getSettings());
+        int documentStart = bsonOutput.getPosition();
+        encodeUsingRegistry(writer, command);
+        return bsonOutput.getPosition() - documentStart;
     }
 
     @FunctionalInterface
