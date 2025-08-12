@@ -410,7 +410,9 @@ public final class CommandMessage extends RequestMessage {
     /**
      * Gets the collection name, which may be null for some message types
      *
-     * @return the collection name
+     * Gets the database name, which may be null for some message types
+     *
+     * @return the database name
      */
     public String getDatabase() {
         return database;
