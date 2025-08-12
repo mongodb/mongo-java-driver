@@ -38,7 +38,7 @@ public class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCu
             final long maxTimeMs,
             final OperationContext operationContext,
             final AsyncCoreCursor<T> wrapped) {
-        this.operationContext = operationContext.withTimeoutContextOverride(timeoutContext ->
+        this.operationContext = operationContext.withOverride(timeoutContext ->
                 timeoutContext.withMaxTimeOverride(maxTimeMs));
         this.timeoutMode = timeoutMode;
         this.wrapped = wrapped;
@@ -68,7 +68,7 @@ public class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCu
     @Override
     public void close() {
         wrapped.close(operationContext
-                .withTimeoutContextOverride(timeoutContext -> timeoutContext
+                .withOverride(timeoutContext -> timeoutContext
                         .withNewlyStartedTimeout()
                         .withDefaultMaxTime()
                 ));

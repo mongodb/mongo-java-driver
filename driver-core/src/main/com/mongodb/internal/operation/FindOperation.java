@@ -299,7 +299,7 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
 
         OperationContext findOperationContext;
         if (shouldDisableMaxTimeMS()) {
-            findOperationContext = operationContext.withTimeoutContextOverride(TimeoutContext::withDisabledMaxTimeOverride);
+            findOperationContext = operationContext.withOverride(TimeoutContext::withDisabledMaxTimeOverride);
         } else {
             findOperationContext = operationContext;
         }
@@ -335,7 +335,7 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
 
         OperationContext findOperationContext;
         if (shouldDisableMaxTimeMS()) {
-            findOperationContext = operationContext.withTimeoutContextOverride(TimeoutContext::withDisabledMaxTimeOverride);
+            findOperationContext = operationContext.withOverride(TimeoutContext::withDisabledMaxTimeOverride);
         } else {
             findOperationContext = operationContext;
         }

@@ -70,7 +70,7 @@ public class CommitTransactionOperation extends TransactionOperation {
         try {
             return super.execute(
                     binding,
-                    operationContext.withTimeoutContextOverride(TimeoutContext::withMaxTimeOverrideAsMaxCommitTime));
+                    operationContext.withOverride(TimeoutContext::withMaxTimeOverrideAsMaxCommitTime));
         } catch (MongoException e) {
             addErrorLabels(e);
             throw e;
@@ -81,7 +81,7 @@ public class CommitTransactionOperation extends TransactionOperation {
     public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<Void> callback) {
         super.executeAsync(
                 binding,
-                operationContext.withTimeoutContextOverride(TimeoutContext::withMaxTimeOverrideAsMaxCommitTime),
+                operationContext.withOverride(TimeoutContext::withMaxTimeOverrideAsMaxCommitTime),
                 (result, t) -> {
              if (t instanceof MongoException) {
                  addErrorLabels((MongoException) t);

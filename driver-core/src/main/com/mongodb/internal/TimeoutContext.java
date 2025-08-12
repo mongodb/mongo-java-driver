@@ -195,52 +195,35 @@ public class TimeoutContext {
         return timeoutSettings;
     }
 
+    @Nullable
+    public Timeout getTimeout() {
+        return timeout;
+    }
+
     public long getMaxAwaitTimeMS() {
         return timeoutSettings.getMaxAwaitTimeMS();
     }
 
-    public void runMaxTimeMS(final LongConsumer onRemaining) {
-        if (maxTimeSupplier != null) {
-            long maxTimeMS = maxTimeSupplier.get();
-            if (maxTimeMS > 0) {
-                runMinTimeout(onRemaining, maxTimeMS);
-            }
-            return;
-        }
-        if (timeout == null) {
-            runWithFixedTimeout(timeoutSettings.getMaxTimeMS(), onRemaining);
-            return;
-        }
-        assertNotNull(timeoutIncludingRoundTrip())
-                .run(MILLISECONDS,
-                        () -> {},
-                        onRemaining,
-                        () -> {
-                            throw createMongoRoundTripTimeoutException();
-                        });
-
+    @VisibleForTesting(otherwise = PRIVATE)
+    public long getMaxCommitTimeMS() {
+        Long maxCommitTimeMS = timeoutSettings.getMaxCommitTimeMS();
+        return timeoutOrAlternative(maxCommitTimeMS != null ? maxCommitTimeMS : 0);
     }
 
-    private void runMinTimeout(final LongConsumer onRemaining, final long fixedMs) {
-        Timeout timeout = timeoutIncludingRoundTrip();
-        if (timeout != null) {
-            timeout.run(MILLISECONDS, () -> {
-                        onRemaining.accept(fixedMs);
-                    },
-                    (renamingMs) -> {
-                        onRemaining.accept(Math.min(renamingMs, fixedMs));
-                    }, () -> {
-                        throwMongoTimeoutException("The operation exceeded the timeout limit.");
-                    });
-        } else {
-            onRemaining.accept(fixedMs);
-        }
+    public long getReadTimeoutMS() {
+        return timeoutOrAlternative(timeoutSettings.getReadTimeoutMS());
     }
 
-    private static void runWithFixedTimeout(final long ms, final LongConsumer onRemaining) {
-        if (ms != 0) {
-            onRemaining.accept(ms);
-        }
+    public long getWriteTimeoutMS() {
+        return timeoutOrAlternative(0);
+    }
+
+    public int getConnectTimeoutMs() {
+        final long connectTimeoutMS = getTimeoutSettings().getConnectTimeoutMS();
+        return Math.toIntExact(Timeout.nullAsInfinite(timeout).call(MILLISECONDS,
+                () -> connectTimeoutMS,
+                (ms) -> connectTimeoutMS == 0 ? ms : Math.min(ms, connectTimeoutMS),
+                () -> throwMongoTimeoutException("The operation exceeded the timeout limit.")));
     }
 
     /**
@@ -340,29 +323,6 @@ public class TimeoutContext {
                 timeout);
     }
 
-
-    @VisibleForTesting(otherwise = PRIVATE)
-    public long getMaxCommitTimeMS() {
-        Long maxCommitTimeMS = timeoutSettings.getMaxCommitTimeMS();
-        return timeoutOrAlternative(maxCommitTimeMS != null ? maxCommitTimeMS : 0);
-    }
-
-    public long getReadTimeoutMS() {
-        return timeoutOrAlternative(timeoutSettings.getReadTimeoutMS());
-    }
-
-    public long getWriteTimeoutMS() {
-        return timeoutOrAlternative(0);
-    }
-
-    public int getConnectTimeoutMs() {
-        final long connectTimeoutMS = getTimeoutSettings().getConnectTimeoutMS();
-        return Math.toIntExact(Timeout.nullAsInfinite(timeout).call(MILLISECONDS,
-                () -> connectTimeoutMS,
-                (ms) -> connectTimeoutMS == 0 ? ms : Math.min(ms, connectTimeoutMS),
-                () -> throwMongoTimeoutException("The operation exceeded the timeout limit.")));
-    }
-
     /**
      * Resets the timeout if this timeout context is being used by pool maintenance
      */
@@ -379,6 +339,23 @@ public class TimeoutContext {
                 maxTimeSupplier);
     }
 
+    /**
+     * Returns the timeout context to use for the handshake process
+     *
+     * @return a new timeout context with the cached computed server selection timeout if available or this
+     */
+    public TimeoutContext withComputedServerSelectionTimeout() {
+        if (this.hasTimeoutMS()) {
+            Timeout serverSelectionTimeout = StartTime.now()
+                    .timeoutAfterOrInfiniteIfNegative(getTimeoutSettings().getServerSelectionTimeoutMS(), MILLISECONDS);
+            if (isMaintenanceContext) {
+                return new TimeoutContext(false, timeoutSettings, serverSelectionTimeout);
+            }
+            return new TimeoutContext(false, timeoutSettings, Timeout.earliest(serverSelectionTimeout, timeout));
+        }
+
+        return this;
+    }
 
     public TimeoutContext withMinRoundTripTimeMS(final long minRoundTripTimeMS) {
         isTrue("'minRoundTripTimeMS' must be a positive number", minRoundTripTimeMS >= 0);
@@ -388,11 +365,6 @@ public class TimeoutContext {
                 timeoutSettings,
                 maxTimeSupplier,
                 timeout);
-    }
-
-    // Creates a copy of the timeout context that can be reset without resetting the original.
-    public TimeoutContext copyTimeoutContext() {
-        return new TimeoutContext(getTimeoutSettings(), getTimeout());
     }
 
     public TimeoutContext withNewlyStartedTimeout() {
@@ -415,6 +387,11 @@ public class TimeoutContext {
 
         long newReadTimeout = getReadTimeoutMS() + additionalReadTimeout;
         return new TimeoutContext(timeoutSettings.withReadTimeoutMS(newReadTimeout > 0 ? newReadTimeout : Long.MAX_VALUE));
+    }
+
+    // Creates a copy of the timeout context that can be reset without resetting the original.
+    public TimeoutContext copyTimeoutContext() {
+        return new TimeoutContext(getTimeoutSettings(), getTimeout());
     }
 
     @Override
@@ -475,32 +452,53 @@ public class TimeoutContext {
         return StartTime.now().timeoutAfterOrInfiniteIfNegative(getTimeoutSettings().getServerSelectionTimeoutMS(), MILLISECONDS);
     }
 
-    /**
-     * Returns the timeout context to use for the handshake process
-     *
-     * @return a new timeout context with the cached computed server selection timeout if available or this
-     */
-    public TimeoutContext withComputedServerSelectionTimeoutContextNew() {
-        if (this.hasTimeoutMS()) {
-            Timeout serverSelectionTimeout = StartTime.now()
-                    .timeoutAfterOrInfiniteIfNegative(getTimeoutSettings().getServerSelectionTimeoutMS(), MILLISECONDS);
-            if (isMaintenanceContext) {
-                return new TimeoutContext(false, timeoutSettings, serverSelectionTimeout);
-            }
-            return new TimeoutContext(false, timeoutSettings, Timeout.earliest(serverSelectionTimeout, timeout));
-        }
-
-        return this;
-    }
-
     public Timeout startWaitQueueTimeout(final StartTime checkoutStart) {
         final long ms = getTimeoutSettings().getMaxWaitTimeMS();
         return checkoutStart.timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
     }
 
-    @Nullable
-    public Timeout getTimeout() {
-        return timeout;
+    public void runMaxTimeMS(final LongConsumer onRemaining) {
+        if (maxTimeSupplier != null) {
+            long maxTimeMS = maxTimeSupplier.get();
+            if (maxTimeMS > 0) {
+                runMinTimeout(onRemaining, maxTimeMS);
+            }
+            return;
+        }
+        if (timeout == null) {
+            runWithFixedTimeout(timeoutSettings.getMaxTimeMS(), onRemaining);
+            return;
+        }
+        assertNotNull(timeoutIncludingRoundTrip())
+                .run(MILLISECONDS,
+                        () -> {},
+                        onRemaining,
+                        () -> {
+                            throw createMongoRoundTripTimeoutException();
+                        });
+
+    }
+
+    private void runMinTimeout(final LongConsumer onRemaining, final long fixedMs) {
+        Timeout timeout = timeoutIncludingRoundTrip();
+        if (timeout != null) {
+            timeout.run(MILLISECONDS, () -> {
+                        onRemaining.accept(fixedMs);
+                    },
+                    (renamingMs) -> {
+                        onRemaining.accept(Math.min(renamingMs, fixedMs));
+                    }, () -> {
+                        throwMongoTimeoutException("The operation exceeded the timeout limit.");
+                    });
+        } else {
+            onRemaining.accept(fixedMs);
+        }
+    }
+
+    private static void runWithFixedTimeout(final long ms, final LongConsumer onRemaining) {
+        if (ms != 0) {
+            onRemaining.accept(ms);
+        }
     }
 
     public interface MaxTimeSupplier {

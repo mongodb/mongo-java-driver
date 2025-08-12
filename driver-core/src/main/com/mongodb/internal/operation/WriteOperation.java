@@ -33,20 +33,20 @@ public interface WriteOperation<T> {
      */
     String getCommandName();
 
-    //TODO javadoc
     /**
      * General execute which can return anything of type T
      *
      * @param binding the binding to execute in the context of
+     * @param operationContext the operation context to use
      * @return T, the result of the execution
      */
     T execute(WriteBinding binding, OperationContext operationContext);
 
-    //TODO javadoc
     /**
      * General execute which can return anything of type T
      *
      * @param binding the binding to execute in the context of
+     * @param operationContext the operation context to use
      * @param callback the callback to be called when the operation has been executed
      */
     void executeAsync(AsyncWriteBinding binding, OperationContext operationContext, SingleResultCallback<T> callback);

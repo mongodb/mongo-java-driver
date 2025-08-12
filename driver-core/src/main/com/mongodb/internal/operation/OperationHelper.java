@@ -196,7 +196,7 @@ public final class OperationHelper {
     static OperationContext applyTimeoutModeToOperationContext(final TimeoutMode timeoutMode,
                                                                final OperationContext operationContext) {
         if (timeoutMode == TimeoutMode.ITERATION) {
-            return operationContext.withTimeoutContextOverride(TimeoutContext::withDisabledMaxTimeOverride);
+            return operationContext.withOverride(TimeoutContext::withDisabledMaxTimeOverride);
         }
         return operationContext;
     }

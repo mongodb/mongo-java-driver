@@ -110,8 +110,6 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
             this.server = serverTuple.getServer();
             this.serverDescription = serverTuple.getServerDescription();
             this.appliedReadPreference = appliedReadPreference;
-            //TODO THis has to be moved outside of the consutructor to the place where getConnectionSource is called to create a new OperationContet to use further
-            // operationContext.getTimeoutContext().minRoundTripTimeMS(NANOSECONDS.toMillis(serverDescription.getMinRoundTripTimeNanos()));
             ClusterBinding.this.retain();
         }
 

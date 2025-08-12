@@ -108,7 +108,7 @@ final class AsyncOperationHelper {
     static void withAsyncConnection(final AsyncWriteBinding binding,
                                     final OperationContext originalOperationContext,
                                     final AsyncCallableWithConnection callable) {
-        OperationContext serverSelectionOperationContext = originalOperationContext.withTimeoutContextOverride(TimeoutContext::withComputedServerSelectionTimeoutContextNew);
+        OperationContext serverSelectionOperationContext = originalOperationContext.withOverride(TimeoutContext::withComputedServerSelectionTimeout);
         binding.getWriteConnectionSource(
                 serverSelectionOperationContext,
                 errorHandlingCallback(
@@ -129,7 +129,7 @@ final class AsyncOperationHelper {
         SingleResultCallback<R> errorHandlingCallback = errorHandlingCallback(callback, OperationHelper.LOGGER);
 
         OperationContext serverSelectionOperationContext =
-                operationContext.withTimeoutContextOverride(TimeoutContext::withComputedServerSelectionTimeoutContextNew);
+                operationContext.withOverride(TimeoutContext::withComputedServerSelectionTimeout);
         withAsyncSuppliedResource(
                 sourceAsyncFunction,
                 wrapConnectionSourceException,

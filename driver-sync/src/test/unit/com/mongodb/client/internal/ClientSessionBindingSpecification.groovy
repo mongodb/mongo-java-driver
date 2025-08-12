@@ -119,7 +119,7 @@ class ClientSessionBindingSpecification extends Specification {
         0 * session.close()
     }
 
-    //TODO move to SessionContext test
+    // TODO-JAVA-5640 move to SessionContext test
 //    def 'owned session is implicit'() {
 //        given:
 //        def session = Mock(ClientSession)

@@ -20,7 +20,9 @@ import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.AsyncWriteBinding;
+import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ReadOperationCursor;
 import com.mongodb.internal.operation.WriteOperation;
 
@@ -37,6 +39,11 @@ class VoidWriteOperationThenCursorReadOperation<T> implements ReadOperationCurso
     @Override
     public String getCommandName() {
         return writeOperation.getCommandName();
+    }
+
+    @Override
+    public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
+        throw new UnsupportedOperationException("This operation is async only");
     }
 
     @Override

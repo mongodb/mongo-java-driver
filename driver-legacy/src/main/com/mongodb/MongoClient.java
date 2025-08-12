@@ -864,7 +864,7 @@ public class MongoClient implements Closeable {
 
                 ReadWriteBinding binding = new SingleServerBinding(delegate.getCluster(), cur.serverCursor.getAddress());
                 try {
-                    OperationContext serverSelectionOperationContext = operationContext.withTimeoutContextOverride(TimeoutContext::withComputedServerSelectionTimeoutContextNew);
+                    OperationContext serverSelectionOperationContext = operationContext.withOverride(TimeoutContext::withComputedServerSelectionTimeout);
                     ConnectionSource source = binding.getReadConnectionSource(serverSelectionOperationContext);
                     try {
                         Connection connection = source.getConnection(serverSelectionOperationContext);

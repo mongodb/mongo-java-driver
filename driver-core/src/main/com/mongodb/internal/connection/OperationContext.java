@@ -171,7 +171,7 @@ public class OperationContext {
         return this.withTimeoutContext(this.timeoutContext.withMinRoundTripTime(TimeUnit.NANOSECONDS.toMillis(serverDescription.getMinRoundTripTimeNanos())));
     }
 
-    public OperationContext withTimeoutContextOverride(final Function<TimeoutContext, TimeoutContext> timeoutContextOverrideFunction) {
+    public OperationContext withOverride(final TimeoutContextOverride timeoutContextOverrideFunction) {
         return this.withTimeoutContext(timeoutContextOverrideFunction.apply(timeoutContext));
     }
 
@@ -235,5 +235,7 @@ public class OperationContext {
             }
         }
     }
+
+    public interface TimeoutContextOverride extends Function<TimeoutContext, TimeoutContext> {}
 }
 

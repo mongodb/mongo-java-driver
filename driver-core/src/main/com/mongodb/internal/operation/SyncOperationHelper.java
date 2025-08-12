@@ -101,7 +101,7 @@ final class SyncOperationHelper {
                                           final OperationContext operationContext,
                                           final CallableWithSource<T> callable) {
         OperationContext serverSelectionOperationContext =
-                operationContext.withTimeoutContextOverride(TimeoutContext::withComputedServerSelectionTimeoutContextNew);
+                operationContext.withOverride(TimeoutContext::withComputedServerSelectionTimeout);
         ConnectionSource source = binding.getReadConnectionSource(serverSelectionOperationContext);
         try {
             return callable.call(source, operationContext.withMinRoundTripTime(source.getServerDescription()));
@@ -132,7 +132,7 @@ final class SyncOperationHelper {
                                          final ExecutionFunction<R> function,
                                          final OperationContext originalOperationContext) throws ResourceSupplierInternalException {
         OperationContext serverSelectionOperationContext =
-                originalOperationContext.withTimeoutContextOverride(TimeoutContext::withComputedServerSelectionTimeoutContextNew);
+                originalOperationContext.withOverride(TimeoutContext::withComputedServerSelectionTimeout);
 
         return withSuppliedResource(
                 sourceFunction,

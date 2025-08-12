@@ -131,8 +131,6 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
             this.server = server;
             this.serverDescription = serverDescription;
             this.appliedReadPreference = appliedReadPreference;
-            // TODO should be calculated externaly
-            // operationContext.getTimeoutContext().minRoundTripTimeMS(NANOSECONDS.toMillis(serverDescription.getMinRoundTripTimeNanos()));
             AsyncClusterBinding.this.retain();
         }
 

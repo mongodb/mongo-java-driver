@@ -172,7 +172,6 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
                                             final AsyncConnection connection) {
             this.serverDescription = serverDescription;
             this.connection = connection;
-            //TODO do we need to retain and release those references properly?
             AsyncSingleConnectionBinding.this.retain();
         }
 

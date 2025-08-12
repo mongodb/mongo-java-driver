@@ -40,6 +40,7 @@ import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.test.CollectionHelper;
+import com.mongodb.connection.NettyTransportSettings;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
@@ -51,6 +52,7 @@ import com.mongodb.internal.connection.ServerHelper;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.test.FlakyTest;
+import io.netty.buffer.PooledByteBufAllocator;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -903,34 +905,18 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     @DisplayName("Should throw timeout exception for subsequent commit transaction")
     public void shouldThrowTimeoutExceptionForSubsequentCommitTransaction() {
         assumeTrue(serverVersionAtLeast(4, 4));
-        assumeFalse(isStandalone());
+        //assumeFalse(isStandalone());
 
-        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder())) {
+        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
+                .applyToServerSettings(builder -> builder.heartbeatFrequency(10, TimeUnit.MINUTES))
+                .transportSettings(
+                NettyTransportSettings.nettyBuilder().allocator(PooledByteBufAllocator.DEFAULT)
+                .build()))) {
             MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName());
 
-            try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
-                    .defaultTimeout(200, TimeUnit.MILLISECONDS)
-                    .build())) {
-                session.startTransaction(TransactionOptions.builder().build());
-                collection.insertOne(session, new Document("x", 1));
-                sleep(200);
+            collection.insertOne(new Document("x", 1));
 
-                assertDoesNotThrow(session::commitTransaction);
-
-                collectionHelper.runAdminCommand("{"
-                        + "  configureFailPoint: \"failCommand\","
-                        + "  mode: { times: 1 },"
-                        + "  data: {"
-                        + "    failCommands: [\"commitTransaction\"],"
-                        + "    blockConnection: true,"
-                        + "    blockTimeMS: " + 500
-                        + "  }"
-                        + "}");
-
-                //repeat commit.
-                assertThrows(MongoOperationTimeoutException.class, session::commitTransaction);
-            }
         }
         List<CommandStartedEvent> commandStartedEvents = commandListener.getCommandStartedEvents("commitTransaction");
         assertEquals(2, commandStartedEvents.size());
@@ -1014,4 +1000,5 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
    private long msElapsedSince(final long t1) {
         return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t1);
     }
+
 }

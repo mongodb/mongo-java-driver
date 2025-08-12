@@ -67,10 +67,10 @@ abstract class AbstractWriteSearchIndexOperation implements WriteOperation<Void>
                                 writeConcernErrorTransformerAsync(operationContextWithMinRtt.getTimeoutContext()), (result, commandExecutionError) -> {
                                     try {
                                         swallowOrThrow(commandExecutionError);
-                                        //TODO why call callback and not cb?
+                                        // TODO-JAVA-5640 why call callback and not cb?
                                         callback.onResult(result, null);
                                     } catch (Throwable mongoCommandException) {
-                                        //TODO why call callback and not cb?
+                                        // TODO-JAVA-5640 why call callback and not cb?
                                         callback.onResult(null, mongoCommandException);
                                     }
                                 }
