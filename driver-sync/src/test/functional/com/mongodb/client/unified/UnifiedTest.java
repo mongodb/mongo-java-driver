@@ -1106,6 +1106,6 @@ public abstract class UnifiedTest {
     }
 
     public enum Language {
-        JAVA, KOTLIN
+        JAVA, KOTLIN, SCALA
     }
 }
