@@ -88,6 +88,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.connection.ClusterConnectionMode.LOAD_BALANCED;
@@ -276,6 +277,11 @@ public final class ClusterFixture {
     public static String getEnv(final String name, final String defaultValue) {
         String value = getEnv(name);
         return value == null ? defaultValue : value;
+    }
+
+    public static Optional<String> cryptSharedLibPathSysPropValue() {
+        String value = getEnv("CRYPT_SHARED_LIB_PATH", "");
+        return value.isEmpty() ? Optional.empty() : Optional.of(value);
     }
 
     @Nullable
