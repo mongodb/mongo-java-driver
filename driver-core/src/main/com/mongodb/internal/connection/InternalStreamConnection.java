@@ -228,13 +228,10 @@ public class InternalStreamConnection implements InternalConnection {
         stream = streamFactory.create(serverId.getAddress());
         OperationContext operationContext = originalOperationContext;
         try {
-            //COMMENT given that we already use serverSelection timeout in SyncOperationHelper, this step is not needed.
-//            OperationContext operationContext = originalOperationContext
-//                    .withTimeoutContext(originalOperationContext.getTimeoutContext().withComputedServerSelectionTimeoutContext());
             stream.open(operationContext);
             InternalConnectionInitializationDescription initializationDescription = connectionInitializer.startHandshake(this, operationContext);
 
-            operationContext = operationContext.withTimeoutContextOverride(TimeoutContext::withNewlyStartedTimeoutMaintenanceTimeout);
+            operationContext = operationContext.withOverride(TimeoutContext::withNewlyStartedTimeoutMaintenanceTimeout);
             initAfterHandshakeStart(initializationDescription);
 
             initializationDescription = connectionInitializer.finishHandshake(this, initializationDescription, operationContext);
@@ -254,10 +251,6 @@ public class InternalStreamConnection implements InternalConnection {
         assertNull(stream);
         OperationContext operationContext = originalOperationContext;
         try {
-            //COMMENT given that we already use serverSelection timeout in SyncOperationHelper, this step is not needed.
-//            OperationContext operationContext = originalOperationContext
-//                    .withTimeoutContext(originalOperationContext.getTimeoutContext().withComputedServerSelectionTimeoutContext());
-
             stream = streamFactory.create(serverId.getAddress());
             stream.openAsync(operationContext, new AsyncCompletionHandler<Void>() {
 
@@ -272,7 +265,7 @@ public class InternalStreamConnection implements InternalConnection {
                                         assertNotNull(initialResult);
                                         initAfterHandshakeStart(initialResult);
                                         connectionInitializer.finishHandshakeAsync(InternalStreamConnection.this,
-                                                initialResult, operationContext.withTimeoutContextOverride(TimeoutContext::withNewlyStartedTimeoutMaintenanceTimeout),
+                                                initialResult, operationContext.withOverride(TimeoutContext::withNewlyStartedTimeoutMaintenanceTimeout),
                                                 (completedResult, completedException) ->  {
                                                         if (completedException != null) {
                                                             close();

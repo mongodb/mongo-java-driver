@@ -125,9 +125,10 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
 
         @Override
         public Connection getConnection(final OperationContext operationContext) {
-            // The first read in a causally consistent session MUST not send afterClusterTime to the server
-            // (because the operationTime has not yet been determined). Therefore, we use ReadConcernAwareNoOpSessionContext to
-            // so that we do not advance clusterTime on ClientSession in given operationContext because it might not be yet set.
+            /* The first read in a causally consistent session MUST not send afterClusterTime to the server
+              (because the operationTime has not yet been determined). Therefore, we use ReadConcernAwareNoOpSessionContext to
+             so that we do not advance clusterTime on ClientSession in given operationContext because it might not be yet set.
+             */
             ReadConcern readConcern = operationContext.getSessionContext().getReadConcern();
             return server.getConnection(operationContext.withSessionContext(new ReadConcernAwareNoOpSessionContext(readConcern)));
         }

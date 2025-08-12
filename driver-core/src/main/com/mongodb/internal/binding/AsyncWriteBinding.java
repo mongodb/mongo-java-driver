@@ -24,11 +24,12 @@ import com.mongodb.internal.connection.OperationContext;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public interface AsyncWriteBinding extends BindingContext, ReferenceCounted {
+public interface AsyncWriteBinding extends ReferenceCounted {
 
     /**
      * Supply a connection source to a server that can be written to
      *
+     * @param operationContext the operation context to use
      * @param callback the to be passed the connection source
      */
     void getWriteConnectionSource(OperationContext operationContext, SingleResultCallback<AsyncConnectionSource> callback);

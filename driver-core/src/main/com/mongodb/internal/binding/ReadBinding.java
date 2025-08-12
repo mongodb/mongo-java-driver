@@ -24,7 +24,7 @@ import com.mongodb.internal.connection.OperationContext;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public interface ReadBinding extends BindingContext, ReferenceCounted {
+public interface ReadBinding extends ReferenceCounted {
     ReadPreference getReadPreference();
 
     /**

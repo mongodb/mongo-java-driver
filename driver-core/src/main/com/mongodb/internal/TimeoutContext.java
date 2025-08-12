@@ -39,6 +39,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * <p>The context for handling timeouts in relation to the Client Side Operation Timeout specification.</p>
  */
 public class TimeoutContext {
+    private static final int NO_ROUND_TRIP_TIME_MS = 0;
     private final TimeoutSettings timeoutSettings;
     @Nullable
     private final Timeout timeout;
@@ -119,7 +120,7 @@ public class TimeoutContext {
                            @Nullable final Timeout timeout) {
         this(isMaintenanceContext,
                 null,
-                0,
+                NO_ROUND_TRIP_TIME_MS,
                 timeoutSettings,
                 null,
                 timeout);
@@ -176,6 +177,8 @@ public class TimeoutContext {
 
     /**
      * Returns the remaining {@code timeoutMS} if set or the {@code alternativeTimeoutMS}.
+     *
+     * zero means infinite timeout.
      *
      * @param alternativeTimeoutMS the alternative timeout.
      * @return timeout to use.

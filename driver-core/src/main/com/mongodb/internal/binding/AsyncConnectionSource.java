@@ -27,7 +27,7 @@ import com.mongodb.internal.connection.OperationContext;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public interface AsyncConnectionSource extends BindingContext, ReferenceCounted {
+public interface AsyncConnectionSource extends ReferenceCounted {
 
     /**
      * Gets the current description of this source.
@@ -39,10 +39,16 @@ public interface AsyncConnectionSource extends BindingContext, ReferenceCounted 
     /**
      * Gets the read preference that was applied when selecting this source.
      *
-     * @see AsyncReadBinding#getReadConnectionSource(int, ReadPreference, SingleResultCallback)
+     * @see AsyncReadBinding#getReadConnectionSource(int, ReadPreference, OperationContext, SingleResultCallback)
      */
     ReadPreference getReadPreference();
 
+    /**
+     * Gets a connection from this source.
+     *
+     * @param operationContext the operation context to use
+     * @param callback the to be passed the connection
+     */
     void getConnection(OperationContext operationContext, SingleResultCallback<AsyncConnection> callback);
 
     @Override
