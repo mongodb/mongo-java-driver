@@ -408,9 +408,7 @@ public final class CommandMessage extends RequestMessage {
     }
 
     /**
-     * Gets the collection name, which may be null for some message types
-     *
-     * Gets the database name, which may be null for some message types
+     * Gets the database name
      *
      * @return the database name
      */
