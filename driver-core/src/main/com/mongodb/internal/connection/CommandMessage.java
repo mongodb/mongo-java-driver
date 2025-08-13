@@ -87,7 +87,8 @@ public final class CommandMessage extends RequestMessage {
     private final MessageSequences sequences;
     private final boolean responseExpected;
     private final String database;
-    private int firstDocumentPosition = -1;
+    private static final int UNINITIALIZED_POSITION = -1;
+    private int firstDocumentPosition = UNINITIALIZED_POSITION;
 
     /**
      * {@code null} iff either {@link #sequences} is not of the {@link DualMessageSequences} type,
