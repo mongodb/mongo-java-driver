@@ -231,7 +231,7 @@ public class InternalStreamConnection implements InternalConnection {
             stream.open(operationContext);
             InternalConnectionInitializationDescription initializationDescription = connectionInitializer.startHandshake(this, operationContext);
 
-            operationContext = operationContext.withOverride(TimeoutContext::withNewlyStartedTimeoutMaintenanceTimeout);
+            operationContext = operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout);
             initAfterHandshakeStart(initializationDescription);
 
             initializationDescription = connectionInitializer.finishHandshake(this, initializationDescription, operationContext);
@@ -264,18 +264,10 @@ public class InternalStreamConnection implements InternalConnection {
                                     } else {
                                         assertNotNull(initialResult);
                                         initAfterHandshakeStart(initialResult);
-                                        connectionInitializer.finishHandshakeAsync(InternalStreamConnection.this,
-                                                initialResult, operationContext.withOverride(TimeoutContext::withNewlyStartedTimeoutMaintenanceTimeout),
-                                                (completedResult, completedException) ->  {
-                                                        if (completedException != null) {
-                                                            close();
-                                                            callback.onResult(null, completedException);
-                                                        } else {
-                                                            assertNotNull(completedResult);
-                                                            initAfterHandshakeFinish(completedResult);
-                                                            callback.onResult(null, null);
-                                                        }
-                                                });
+                                        finishHandshakeAsync(
+                                                initialResult,
+                                                operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout),
+                                                callback);
                                     }
                             });
                 }
@@ -290,6 +282,22 @@ public class InternalStreamConnection implements InternalConnection {
             close();
             callback.onResult(null, t);
         }
+    }
+
+    private void finishHandshakeAsync(final InternalConnectionInitializationDescription initialResult,
+                                      final OperationContext operationContext,
+                                      final SingleResultCallback<Void> callback) {
+        connectionInitializer.finishHandshakeAsync(InternalStreamConnection.this, initialResult, operationContext,
+                (completedResult, completedException) ->  {
+                    if (completedException != null) {
+                        close();
+                        callback.onResult(null, completedException);
+                    } else {
+                        assertNotNull(completedResult);
+                        initAfterHandshakeFinish(completedResult);
+                        callback.onResult(null, null);
+                    }
+                });
     }
 
     private void initAfterHandshakeStart(final InternalConnectionInitializationDescription initializationDescription) {

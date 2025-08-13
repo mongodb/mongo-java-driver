@@ -73,7 +73,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
                 BsonDocument responseDocument = connection.opened() ? null : getSpeculativeAuthenticateResponse();
                 if (responseDocument == null) {
                     responseDocument = getNextSaslResponse(saslClient, connection, operationContext);
-                    operationContext = operationContext.withOverride(TimeoutContext::withNewlyStartedTimeoutMaintenanceTimeout);
+                    operationContext = operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout);
                 }
 
                 BsonInt32 conversationId = responseDocument.getInt32("conversationId");
@@ -88,7 +88,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
                     }
 
                     responseDocument = sendSaslContinue(conversationId, response, connection, operationContext);
-                    operationContext = operationContext.withOverride(TimeoutContext::withNewlyStartedTimeoutMaintenanceTimeout);
+                    operationContext = operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout);
                 }
                 if (!saslClient.isComplete()) {
                     saslClient.evaluateChallenge((responseDocument.getBinary("payload")).getData());
@@ -166,7 +166,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
                         verifySaslClientComplete(saslClient, result, errHandlingCallback);
                     } else {
                         OperationContext saslContinueOperationContext =
-                                operationContext.withOverride(TimeoutContext::withNewlyStartedTimeoutMaintenanceTimeout);
+                                operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout);
                         new Continuator(saslClient, result, connection, saslContinueOperationContext, errHandlingCallback).start();
                     }
                 });
@@ -340,7 +340,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
                 verifySaslClientComplete(saslClient, result, callback);
                 disposeOfSaslClient(saslClient);
             } else {
-                operationContext = operationContext.withOverride(TimeoutContext::withNewlyStartedTimeoutMaintenanceTimeout);
+                operationContext = operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout);
                 continueConversation(result);
             }
         }

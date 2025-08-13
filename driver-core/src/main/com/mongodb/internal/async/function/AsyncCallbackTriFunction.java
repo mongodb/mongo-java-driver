@@ -26,6 +26,7 @@ import com.mongodb.lang.Nullable;
  *
  * @param <P1> The type of the first parameter to the function.
  * @param <P2> The type of the second parameter to the function.
+ * @param <P3> The type of the third parameter to the function.
  * @param <R> See {@link AsyncCallbackFunction}
  * @see AsyncCallbackFunction
  */
@@ -34,6 +35,7 @@ public interface AsyncCallbackTriFunction<P1, P2, P3, R> {
     /**
      * @param p1 The first {@code @}{@link Nullable} argument of the asynchronous function.
      * @param p2 The second {@code @}{@link Nullable} argument of the asynchronous function.
+     * @param p3 The second {@code @}{@link Nullable} argument of the asynchronous function.
      * @see AsyncCallbackFunction#apply(Object, SingleResultCallback)
      */
     void apply(P1 p1, P2 p2, P3 p3, SingleResultCallback<R> callback);

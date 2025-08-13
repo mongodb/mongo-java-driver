@@ -67,7 +67,7 @@ public final class RetryState {
      * </p>
      *
      * @param retries A positive number of allowed retries. {@link Integer#MAX_VALUE} is a special value interpreted as being unlimited.
-     * @param retryUntilTimeoutThrowsException // TODO-JAVA-5640 shouldn't a timeout always stop retries?
+     * @param retryUntilTimeoutThrowsException If {@code true}, then if a {@link MongoOperationTimeoutException} is throws then retrying stops.
      * @see #attempts()
      */
     public static RetryState withRetryableState(final int retries, final boolean retryUntilTimeoutThrowsException) {
@@ -397,7 +397,7 @@ public final class RetryState {
      * <ul>
      *     <li>0 if the number of retries is {@linkplain #RetryState(TimeoutContext) unlimited};</li>
      *     <li>1 if no retries are allowed;</li>
-     *     <li>{@link #RetryState(int, TimeoutContext) retries} + 1 otherwise.</li>
+     *     <li>{@link #RetryState(int, boolean) retries} + 1 otherwise.</li>
      * </ul>
      *
      * @see #attempt()

@@ -451,7 +451,7 @@ final class DefaultConnectionPool implements ConnectionPool {
     }
 
     private boolean shouldEnsureMinSize() {
-        return settings.getMinSize() > -1;
+        return settings.getMinSize() > 0;
     }
 
     private boolean shouldPrune(final UsageTrackingInternalConnection connection) {

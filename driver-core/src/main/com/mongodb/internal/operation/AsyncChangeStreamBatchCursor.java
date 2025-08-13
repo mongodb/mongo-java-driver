@@ -187,7 +187,6 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
                                      final SingleResultCallback<List<T>> callback,
                                      final OperationContext operationContext,
                                      final boolean tryNext) {
-        //timeoutContext.resetTimeoutIfPresent(); //FIXme it was a bug, we reset timeout on retry which is against the spec. Moved to next() method.
         SingleResultCallback<List<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         if (isClosed()) {
             errHandlingCallback.onResult(null, new MongoException(format("%s called after the cursor was closed.",

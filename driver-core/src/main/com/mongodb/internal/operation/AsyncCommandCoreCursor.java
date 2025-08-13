@@ -96,7 +96,6 @@ class AsyncCommandCoreCursor<T> implements AsyncCoreCursor<T> {
     @Override
     public void next(final OperationContext operationContext, final SingleResultCallback<List<T>> callback) {
         resourceManager.execute(funcCallback -> {
-           //checkTimeoutModeAndResetTimeoutContextIfIteration(); //FIXME it was a bug? we should have reset the timeout when next was request to execute connection checkout and subsequent read wait on one timeout
             ServerCursor localServerCursor = resourceManager.getServerCursor();
             boolean serverCursorIsNull = localServerCursor == null;
             List<T> batchResults = emptyList();
@@ -211,7 +210,7 @@ class AsyncCommandCoreCursor<T> implements AsyncCoreCursor<T> {
     }
 
     @ThreadSafe
-    private final class ResourceManager extends CursorResourceManagerNew<AsyncConnectionSource, AsyncConnection> {
+    private final class ResourceManager extends CursorResourceManager<AsyncConnectionSource, AsyncConnection> {
         ResourceManager(
                 final MongoNamespace namespace,
                 final AsyncConnectionSource connectionSource,

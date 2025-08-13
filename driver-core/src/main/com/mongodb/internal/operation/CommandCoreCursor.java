@@ -251,7 +251,7 @@ class CommandCoreCursor<T> implements CoreCursor<T> {
 
 
     @ThreadSafe
-    private final class ResourceManager extends CursorResourceManagerNew<ConnectionSource, Connection> {
+    private final class ResourceManager extends CursorResourceManager<ConnectionSource, Connection> {
         ResourceManager(
                 final MongoNamespace namespace,
                 final ConnectionSource connectionSource,

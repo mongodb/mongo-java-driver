@@ -171,7 +171,9 @@ public class AggregateToCollectionOperation implements ReadOperationSimple<Void>
                                 serverSelectionOperationContext),
                 namespace.getDatabaseName(),
                 getCommandCreator(),
-                new BsonDocumentCodec(), transformer(), false);
+                new BsonDocumentCodec(),
+                transformer(),
+                false);
     }
 
     @Override

@@ -44,8 +44,6 @@ public class TimeoutContext {
     @Nullable
     private final Timeout timeout;
     @Nullable
-    private final Timeout computedServerSelectionTimeout;
-    @Nullable
     private final MaxTimeSupplier maxTimeSupplier;
     private final boolean isMaintenanceContext;
     private final long minRoundTripTimeMS;
@@ -119,7 +117,6 @@ public class TimeoutContext {
                            final TimeoutSettings timeoutSettings,
                            @Nullable final Timeout timeout) {
         this(isMaintenanceContext,
-                null,
                 NO_ROUND_TRIP_TIME_MS,
                 timeoutSettings,
                 null,
@@ -127,12 +124,10 @@ public class TimeoutContext {
     }
 
     private TimeoutContext(final boolean isMaintenanceContext,
-                           @Nullable final Timeout computedServerSelectionTimeout,
                            final long minRoundTripTimeMS,
                            final TimeoutSettings timeoutSettings,
                            @Nullable final MaxTimeSupplier maxTimeSupplier) {
         this(isMaintenanceContext,
-                computedServerSelectionTimeout,
                 minRoundTripTimeMS,
                 timeoutSettings,
                 maxTimeSupplier,
@@ -140,14 +135,12 @@ public class TimeoutContext {
     }
 
     private TimeoutContext(final boolean isMaintenanceContext,
-                           @Nullable final Timeout computedServerSelectionTimeout,
                            final long minRoundTripTimeMS,
                            final TimeoutSettings timeoutSettings,
                            @Nullable final MaxTimeSupplier maxTimeSupplier,
                            @Nullable final Timeout timeout) {
         this.isMaintenanceContext = isMaintenanceContext;
         this.timeoutSettings = timeoutSettings;
-        this.computedServerSelectionTimeout = computedServerSelectionTimeout;
         this.minRoundTripTimeMS = minRoundTripTimeMS;
         this.maxTimeSupplier = maxTimeSupplier;
         this.timeout = timeout;
@@ -237,7 +230,6 @@ public class TimeoutContext {
     public TimeoutContext withMaxTimeAsMaxAwaitTimeOverride() {
         return new TimeoutContext(
                 isMaintenanceContext,
-                computedServerSelectionTimeout,
                 minRoundTripTimeMS,
                 timeoutSettings,
                 timeoutSettings::getMaxAwaitTimeMS,
@@ -259,7 +251,6 @@ public class TimeoutContext {
     public TimeoutContext withMaxTimeOverride(final long maxTimeMS) {
         return new TimeoutContext(
                 isMaintenanceContext,
-                computedServerSelectionTimeout,
                 minRoundTripTimeMS,
                 timeoutSettings,
                 () -> maxTimeMS,
@@ -274,7 +265,6 @@ public class TimeoutContext {
     public TimeoutContext withDefaultMaxTime() {
         return new TimeoutContext(
                 isMaintenanceContext,
-                computedServerSelectionTimeout,
                 minRoundTripTimeMS,
                 timeoutSettings,
                 null,
@@ -288,7 +278,6 @@ public class TimeoutContext {
     public TimeoutContext withDisabledMaxTimeOverride() {
         return new TimeoutContext(
                 isMaintenanceContext,
-                computedServerSelectionTimeout,
                 minRoundTripTimeMS,
                 timeoutSettings,
                 () -> 0,
@@ -302,7 +291,6 @@ public class TimeoutContext {
     public TimeoutContext withMaxTimeOverrideAsMaxCommitTime() {
         return new TimeoutContext(
                 isMaintenanceContext,
-                computedServerSelectionTimeout,
                 minRoundTripTimeMS,
                 timeoutSettings,
                 () -> getMaxCommitTimeMS(),
@@ -319,7 +307,6 @@ public class TimeoutContext {
     public TimeoutContext withMinRoundTripTime(final long minRoundTripTimeMS) {
         return new TimeoutContext(
                 isMaintenanceContext,
-                computedServerSelectionTimeout,
                 minRoundTripTimeMS,
                 timeoutSettings,
                 maxTimeSupplier,
@@ -329,14 +316,13 @@ public class TimeoutContext {
     /**
      * Resets the timeout if this timeout context is being used by pool maintenance
      */
-    public TimeoutContext withNewlyStartedTimeoutMaintenanceTimeout() {
+    public TimeoutContext withNewlyStartedMaintenanceTimeout() {
         if (!isMaintenanceContext) {
             return this;
         }
 
         return new TimeoutContext(
                 true,
-                computedServerSelectionTimeout,
                 minRoundTripTimeMS,
                 timeoutSettings,
                 maxTimeSupplier);
@@ -363,7 +349,6 @@ public class TimeoutContext {
     public TimeoutContext withMinRoundTripTimeMS(final long minRoundTripTimeMS) {
         isTrue("'minRoundTripTimeMS' must be a positive number", minRoundTripTimeMS >= 0);
         return new TimeoutContext(isMaintenanceContext,
-                computedServerSelectionTimeout,
                 minRoundTripTimeMS,
                 timeoutSettings,
                 maxTimeSupplier,
@@ -373,7 +358,6 @@ public class TimeoutContext {
     public TimeoutContext withNewlyStartedTimeout() {
         return new TimeoutContext(
                 isMaintenanceContext,
-                computedServerSelectionTimeout,
                 minRoundTripTimeMS,
                 timeoutSettings,
                 maxTimeSupplier);
