@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -30,7 +29,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ProtocolHelper.getMessageSettings;
 
 class CommandProtocolImpl<T> implements CommandProtocol<T> {
-    private final MongoNamespace namespace;
+    private final String database;
     private final BsonDocument command;
     private final MessageSequences sequences;
     private final ReadPreference readPreference;
@@ -44,7 +43,7 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
             @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final boolean responseExpected,
             final MessageSequences sequences, final ClusterConnectionMode clusterConnectionMode, final OperationContext operationContext) {
         notNull("database", database);
-        this.namespace = new MongoNamespace(notNull("database", database), MongoNamespace.COMMAND_COLLECTION_NAME);
+        this.database = notNull("database", database);
         this.command = notNull("command", command);
         this.commandFieldNameValidator = notNull("commandFieldNameValidator", commandFieldNameValidator);
         this.readPreference = readPreference;
@@ -79,13 +78,13 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
 
     @Override
     public CommandProtocolImpl<T> withSessionContext(final SessionContext sessionContext) {
-        return new CommandProtocolImpl<>(namespace.getDatabaseName(), command, commandFieldNameValidator, readPreference,
+        return new CommandProtocolImpl<>(database, command, commandFieldNameValidator, readPreference,
                 commandResultDecoder, responseExpected, sequences, clusterConnectionMode,
                 operationContext.withSessionContext(sessionContext));
     }
 
     private CommandMessage getCommandMessage(final InternalConnection connection) {
-        return new CommandMessage(namespace, command, commandFieldNameValidator, readPreference,
+        return new CommandMessage(database, command, commandFieldNameValidator, readPreference,
                     getMessageSettings(connection.getDescription(), connection.getInitialServerDescription()), responseExpected,
                 sequences, clusterConnectionMode, operationContext.getServerApi());
     }

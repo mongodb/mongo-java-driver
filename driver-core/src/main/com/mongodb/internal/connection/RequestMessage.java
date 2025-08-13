@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
@@ -38,7 +37,6 @@ abstract class RequestMessage {
 
     static final int MESSAGE_PROLOGUE_LENGTH = 16;
 
-    private final String collectionName;
     private final MessageSettings settings;
     private final int id;
     private final OpCode opCode;
@@ -64,18 +62,11 @@ abstract class RequestMessage {
         return REQUEST_ID.get();
     }
 
+    RequestMessage(final OpCode opCode, final MessageSettings settings) {
+        this(opCode, REQUEST_ID.getAndIncrement(), settings);
+    }
+
     RequestMessage(final OpCode opCode, final int requestId, final MessageSettings settings) {
-        this(null, opCode, requestId, settings);
-    }
-
-
-    RequestMessage(final String collectionName, final OpCode opCode, final MessageSettings settings) {
-        this(collectionName, opCode, REQUEST_ID.getAndIncrement(), settings);
-    }
-
-    private RequestMessage(@Nullable final String collectionName, final OpCode opCode, final int requestId,
-                           final MessageSettings settings) {
-        this.collectionName = collectionName;
         this.settings = settings;
         id = requestId;
         this.opCode = opCode;
@@ -158,14 +149,5 @@ abstract class RequestMessage {
         int documentStart = bsonOutput.getPosition();
         encodeUsingRegistry(writer, document);
         return bsonOutput.getPosition() - documentStart;
-    }
-
-    /**
-     * Gets the collection name, which may be null for some message types
-     *
-     * @return the collection name
-     */
-    protected String getCollectionName() {
-        return collectionName;
     }
 }

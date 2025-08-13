@@ -69,7 +69,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
             final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel, final boolean retryReads,
             final TimeoutSettings timeoutSettings) {
-        this(clientSession, new MongoNamespace(databaseName, "ignored"), documentClass, resultClass, codecRegistry, readPreference,
+        this(clientSession, new MongoNamespace(databaseName, "_ignored"), documentClass, resultClass, codecRegistry, readPreference,
                 readConcern, writeConcern, executor, pipeline, aggregationLevel, retryReads, timeoutSettings);
     }
 
