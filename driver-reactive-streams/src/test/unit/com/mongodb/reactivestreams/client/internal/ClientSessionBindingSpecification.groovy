@@ -16,7 +16,6 @@
 
 package com.mongodb.reactivestreams.client.internal
 
-
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
@@ -29,7 +28,6 @@ import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.connection.Cluster
 import com.mongodb.internal.connection.Server
 import com.mongodb.internal.connection.ServerTuple
-import com.mongodb.internal.session.ClientSessionContext
 import com.mongodb.reactivestreams.client.ClientSession
 import spock.lang.Specification
 

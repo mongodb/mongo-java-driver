@@ -113,7 +113,7 @@ final class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcern
     }
 
     @Override
-    public void executeAsync(final AsyncWriteBinding binding,final OperationContext operationContext, final SingleResultCallback<WriteConcernResult> callback) {
+    public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<WriteConcernResult> callback) {
         throw new UnsupportedOperationException("This operation is sync only");
     }
 

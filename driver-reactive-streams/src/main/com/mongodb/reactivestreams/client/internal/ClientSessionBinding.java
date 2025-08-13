@@ -242,9 +242,6 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
             } else if (isSnapshot()) {
                 return ReadConcern.SNAPSHOT;
             } else {
-                //COMMENT the read concern was specified on wrapped BindingContext was the one that was inherited from either MongoCollection, MongoDatabase, etc.
-                // since we removed the BindingContext, we can now embedd the parent read concern directly.
-                //return wrapped.getOperationContext().getSessionContext().getReadConcern();
                 return inheritedReadConcern;
             }
         }
