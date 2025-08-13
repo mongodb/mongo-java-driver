@@ -80,6 +80,8 @@ public final class CommandMessage extends RequestMessage {
      */
     private static final byte PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE = 1;
 
+    private static final int UNINITIALIZED_POSITION = -1;
+
     private final BsonDocument command;
     private final FieldNameValidator commandFieldNameValidator;
     private final ReadPreference readPreference;
@@ -87,7 +89,6 @@ public final class CommandMessage extends RequestMessage {
     private final MessageSequences sequences;
     private final boolean responseExpected;
     private final String database;
-    private static final int UNINITIALIZED_POSITION = -1;
     private int firstDocumentPosition = UNINITIALIZED_POSITION;
 
     /**
