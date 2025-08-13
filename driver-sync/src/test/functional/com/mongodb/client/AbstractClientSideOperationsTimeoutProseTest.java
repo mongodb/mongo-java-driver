@@ -777,9 +777,9 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     /**
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
-    @DisplayName("KillCursors is not executed after getMore network error when timeout is not enabled")
+    @DisplayName("KillCursors is not executed after getMore network error when timeoutMs is not enabled")
     @Test
-    public void testKillCursorsIsNotExecutedAfterGetMoreNetworkErrorWhenTimeoutIsNotEnabled() {
+    public void testKillCursorsIsNotExecutedAfterGetMoreNetworkErrorWhenTimeoutMsIsNotEnabled() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeTrue(isLoadBalanced());
 
@@ -819,37 +819,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("find")).count());
         assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("getMore")).count());
 
-    }
-
-    /**
-     * Not a prose spec test. However, it is additional test case for better coverage.
-     */
-    @DisplayName("KillCursors is not executed after getMore network error when timeout is not enabled")
-    @Test
-    public void test() {
-        long rtt = ClusterFixture.getPrimaryRTT();
-        collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions());
-        collectionHelper.insertDocuments(new Document(), new Document());
-        try (MongoClient mongoClient = createMongoClient(
-                getMongoClientSettingsBuilder()
-                        .timeout(100, TimeUnit.MINUTES)
-                        .retryReads(true)
-                        .applyToConnectionPoolSettings(builder ->
-                                builder.maxConnectionIdleTime(10, TimeUnit.MINUTES))
-                        .applyToClusterSettings(builder -> builder.serverSelectionTimeout(500, TimeUnit.MINUTES))
-                        .applyToSocketSettings(builder -> builder.readTimeout(500, TimeUnit.MILLISECONDS)))) {
-            MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
-                    .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
-
-            MongoCursor<Document> cursor = collection.find()
-                    .batchSize(1)
-                    .cursor();
-
-            sleep(500);
-            cursor.next();
-            sleep(500);
-            cursor.close();
-        }
     }
 
     /**
@@ -905,18 +874,34 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     @DisplayName("Should throw timeout exception for subsequent commit transaction")
     public void shouldThrowTimeoutExceptionForSubsequentCommitTransaction() {
         assumeTrue(serverVersionAtLeast(4, 4));
-        //assumeFalse(isStandalone());
+        assumeFalse(isStandalone());
 
-        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
-                .applyToServerSettings(builder -> builder.heartbeatFrequency(10, TimeUnit.MINUTES))
-                .transportSettings(
-                NettyTransportSettings.nettyBuilder().allocator(PooledByteBufAllocator.DEFAULT)
-                .build()))) {
+        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder())) {
             MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName());
 
-            collection.insertOne(new Document("x", 1));
+            try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
+                    .defaultTimeout(200, TimeUnit.MILLISECONDS)
+                    .build())) {
+                session.startTransaction(TransactionOptions.builder().build());
+                collection.insertOne(session, new Document("x", 1));
+                sleep(200);
 
+                assertDoesNotThrow(session::commitTransaction);
+
+                collectionHelper.runAdminCommand("{"
+                        + "  configureFailPoint: \"failCommand\","
+                        + "  mode: { times: 1 },"
+                        + "  data: {"
+                        + "    failCommands: [\"commitTransaction\"],"
+                        + "    blockConnection: true,"
+                        + "    blockTimeMS: " + 500
+                        + "  }"
+                        + "}");
+
+                //repeat commit.
+                assertThrows(MongoOperationTimeoutException.class, session::commitTransaction);
+            }
         }
         List<CommandStartedEvent> commandStartedEvents = commandListener.getCommandStartedEvents("commitTransaction");
         assertEquals(2, commandStartedEvents.size());
