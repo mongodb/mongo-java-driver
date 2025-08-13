@@ -42,7 +42,7 @@ public class ExplainCommandOperation<T> extends CommandReadOperation<T> {
     public T execute(final ReadBinding binding, final OperationContext operationContext) {
         return super.execute(binding, operationContext.withOverride(timeoutContext -> {
             if (!timeoutContext.hasTimeoutMS()) {
-                return timeoutContext.withDisabledMaxTimeOverride();
+                return timeoutContext.withDisabledMaxTime();
             }
 
             return timeoutContext;
@@ -54,7 +54,7 @@ public class ExplainCommandOperation<T> extends CommandReadOperation<T> {
                              final SingleResultCallback<T> callback) {
         super.executeAsync(binding, operationContext.withOverride(timeoutContext -> {
             if (!timeoutContext.hasTimeoutMS()) {
-                return timeoutContext.withDisabledMaxTimeOverride();
+                return timeoutContext.withDisabledMaxTime();
             }
 
             return timeoutContext;

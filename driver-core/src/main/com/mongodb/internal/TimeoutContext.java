@@ -275,7 +275,7 @@ public class TimeoutContext {
      * Disable the maxTimeMS override. This way the maxTimeMS will not
      * be appended to the command in the {@link CommandMessage}.
      */
-    public TimeoutContext withDisabledMaxTimeOverride() {
+    public TimeoutContext withDisabledMaxTime() {
         return new TimeoutContext(
                 isMaintenanceContext,
                 minRoundTripTimeMS,
@@ -288,7 +288,7 @@ public class TimeoutContext {
      * The override will be provided as the remaining value in
      * {@link #runMaxTimeMS}, where 0 is ignored.
      */
-    public TimeoutContext withMaxTimeOverrideAsMaxCommitTime() {
+    public TimeoutContext withMaxTimeAsMaxCommitTime() {
         return new TimeoutContext(
                 isMaintenanceContext,
                 minRoundTripTimeMS,
