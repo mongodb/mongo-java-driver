@@ -938,6 +938,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
             // Wait for the connection to start establishment in the background.
             sleep(1000);
+        } finally {
+            InternalStreamConnection.setRecordEverything(false);
         }
 
         List<CommandStartedEvent> commandStartedEvents = commandListener.getCommandStartedEvents("isMaster");
@@ -987,7 +989,10 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
             // Wait for the connection to start establishment in the background.
             sleep(1000);
+        } finally {
+            InternalStreamConnection.setRecordEverything(false);
         }
+
         List<CommandStartedEvent> commandStartedEvents = commandListener.getCommandStartedEvents("isMaster");
         assertEquals(0, commandStartedEvents.size());
     }
