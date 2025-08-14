@@ -253,6 +253,10 @@ public final class UnifiedTestModifications {
                 .when(() -> def.isReactive() && UnifiedTest.Language.KOTLIN.equals(def.getLanguage()))
                 .file("crud", "findOne");
 
+        def.skipNoncompliant("Scala Mono pulls the data and sets the batch size https://jira.mongodb.org/browse/JAVA-5838")
+                .when(() -> UnifiedTest.Language.SCALA.equals(def.getLanguage()))
+                .file("crud", "findOne");
+
         def.skipNoncompliant("Updates and Replace bulk operations are split in the java driver")
                         .file("crud", "bulkWrite-comment");
 

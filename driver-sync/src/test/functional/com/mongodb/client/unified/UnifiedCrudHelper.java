@@ -57,6 +57,7 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.DropCollectionOptions;
 import com.mongodb.client.model.DropIndexOptions;
 import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
@@ -77,6 +78,7 @@ import com.mongodb.client.model.TimeSeriesOptions;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
 import com.mongodb.client.model.bulk.ClientBulkWriteResult;
@@ -1364,12 +1366,21 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         String collectionName = arguments.getString("collection").getValue();
 
-        if (operation.getDocument("arguments").size() > 1) {
-            throw new UnsupportedOperationException("Unexpected arguments " + operation.get("arguments"));
+        DropCollectionOptions dropCollectionOptions = new DropCollectionOptions();
+        for (Map.Entry<String, BsonValue> entry : arguments.entrySet()) {
+            switch (entry.getKey()) {
+                case "collection":
+                    break;
+                case "encryptedFields":
+                    dropCollectionOptions.encryptedFields(entry.getValue().asDocument());
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported drop collections option: " + entry.getKey());
+            }
         }
 
         return resultOf(() -> {
-            database.getCollection(collectionName).drop();
+            database.getCollection(collectionName).drop(dropCollectionOptions);
             return null;
         });
     }
@@ -1428,6 +1439,14 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                         break;
                     case "clusteredIndex":
                         options.clusteredIndexOptions(createClusteredIndexOptions(cur.getValue().asDocument()));
+                        break;
+                    case "encryptedFields":
+                        options.encryptedFields(cur.getValue().asDocument());
+                        break;
+                    case "validator":
+                        ValidationOptions validationOptions = new ValidationOptions();
+                        validationOptions.validator(cur.getValue().asDocument());
+                        options.validationOptions(validationOptions);
                         break;
                     default:
                         throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
