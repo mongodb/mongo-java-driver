@@ -186,7 +186,7 @@ class MongoClusterSpecification extends Specification {
     def 'should create ChangeStreamIterable correctly'() {
         given:
         def executor = new TestOperationExecutor([])
-        def namespace = new MongoNamespace('admin', 'ignored')
+        def namespace = new MongoNamespace('admin', '_ignored')
         def settings = MongoClientSettings.builder()
                 .readPreference(secondary())
                 .readConcern(ReadConcern.MAJORITY)

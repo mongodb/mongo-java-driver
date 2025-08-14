@@ -382,7 +382,7 @@ class MongoDatabaseSpecification extends Specification {
     def 'should create ChangeStreamIterable correctly'() {
         given:
         def executor = new TestOperationExecutor([])
-        def namespace = new MongoNamespace(name, 'ignored')
+        def namespace = new MongoNamespace(name, '_ignored')
         def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false,
                 readConcern,  JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
         def watchMethod = database.&watch
