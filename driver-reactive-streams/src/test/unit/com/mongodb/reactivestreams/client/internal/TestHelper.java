@@ -26,8 +26,8 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.bulk.IndexRequest;
 import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.client.model.FindOptions;
-import com.mongodb.internal.operation.AsyncReadOperation;
-import com.mongodb.internal.operation.AsyncWriteOperation;
+import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonReader;
@@ -113,10 +113,10 @@ public class TestHelper {
 
     public static void assertOperationIsTheSameAs(@Nullable final Object expectedOperation, @Nullable final Object actualOperation) {
 
-        if (expectedOperation instanceof AsyncReadOperation) {
-            assertTrue(actualOperation instanceof AsyncReadOperation, "Both async read operations");
+        if (expectedOperation instanceof ReadOperation) {
+            assertTrue(actualOperation instanceof ReadOperation, "Both async read operations");
         } else {
-            assertTrue(actualOperation instanceof AsyncWriteOperation, "Both async write operations");
+            assertTrue(actualOperation instanceof WriteOperation, "Both async write operations");
         }
 
         Map<String, Object> expectedMap = getClassGetterValues(unwrapOperation(expectedOperation));
@@ -132,7 +132,7 @@ public class TestHelper {
     }
 
     private static Object unwrapOperation(@Nullable final Object operation) {
-        assertTrue(operation instanceof AsyncReadOperation || operation instanceof AsyncWriteOperation,
+        assertTrue(operation instanceof ReadOperation || operation instanceof WriteOperation,
                    "Must be a read or write operation");
         if (operation instanceof MapReducePublisherImpl.WrappedMapReduceReadOperation) {
             return ((MapReducePublisherImpl.WrappedMapReduceReadOperation<?>) operation).getOperation();
@@ -178,7 +178,7 @@ public class TestHelper {
 
     private static Object checkValueTypes(final Object instance) {
         Object actual = instance instanceof Optional ? ((Optional<Object>) instance).orElse(instance) : instance;
-        if (actual instanceof AsyncReadOperation || actual instanceof AsyncWriteOperation) {
+        if (actual instanceof ReadOperation || actual instanceof WriteOperation) {
             return getClassPrivateFieldValues(actual);
         } else if (actual.getClass().getSimpleName().equals("ChangeStreamDocumentCodec")) {
             return getClassGetterValues(actual);

@@ -22,8 +22,9 @@ import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.AsyncBatchCursor;
-import com.mongodb.internal.operation.AsyncOperations;
-import com.mongodb.internal.operation.AsyncReadOperation;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.ReadOperationCursor;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -57,11 +58,11 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
         this.batchSize = batchSize;
     }
 
-    abstract AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(int initialBatchSize);
-    abstract Function<AsyncOperations<?>, TimeoutSettings> getTimeoutSettings();
+    abstract ReadOperationCursor<T> asReadOperation(int initialBatchSize);
+    abstract Function<Operations<?>, TimeoutSettings> getTimeoutSettings();
 
-    AsyncReadOperation<AsyncBatchCursor<T>> asAsyncFirstReadOperation() {
-        return asAsyncReadOperation(1);
+    ReadOperationCursor<T> asReadOperationFirst() {
+        return asReadOperation(1);
     }
 
     @Nullable
@@ -73,7 +74,7 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
         return mongoOperationPublisher;
     }
 
-    AsyncOperations<T> getOperations() {
+    Operations<T> getOperations() {
         return mongoOperationPublisher.getOperations();
     }
 
@@ -122,7 +123,7 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
     }
 
     public Publisher<T> first() {
-        return batchCursor(this::asAsyncFirstReadOperation)
+        return batchCursor(this::asReadOperationFirst)
                 .flatMap(batchCursor -> {
                     batchCursor.setBatchSize(1);
                     return Mono.from(batchCursor.next())
@@ -142,13 +143,12 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
     }
 
     public Mono<BatchCursor<T>> batchCursor(final int initialBatchSize) {
-        return batchCursor(() -> asAsyncReadOperation(initialBatchSize));
+        return batchCursor(() -> asReadOperation(initialBatchSize));
     }
 
-    Mono<BatchCursor<T>> batchCursor(final Supplier<AsyncReadOperation<AsyncBatchCursor<T>>> supplier) {
+    Mono<BatchCursor<T>> batchCursor(final Supplier<ReadOperation<?, AsyncBatchCursor<T>>> supplier) {
         return mongoOperationPublisher.createReadOperationMono(getTimeoutSettings(), supplier, clientSession).map(BatchCursor::new);
     }
-
 
     protected long validateMaxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);

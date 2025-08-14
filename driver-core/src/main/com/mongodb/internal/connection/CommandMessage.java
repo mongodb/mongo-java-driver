@@ -77,13 +77,13 @@ public final class CommandMessage extends RequestMessage {
      */
     private static final byte PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE = 1;
 
-    private final MongoNamespace namespace;
     private final BsonDocument command;
     private final FieldNameValidator commandFieldNameValidator;
     private final ReadPreference readPreference;
     private final boolean exhaustAllowed;
     private final MessageSequences sequences;
     private final boolean responseExpected;
+    private final String database;
     /**
      * {@code null} iff either {@link #sequences} is not of the {@link DualMessageSequences} type,
      * or it is of that type, but it has not been {@linkplain #encodeMessageBodyWithMetadata(ByteBufferBsonOutput, OperationContext) encoded}.
@@ -93,35 +93,35 @@ public final class CommandMessage extends RequestMessage {
     private final ClusterConnectionMode clusterConnectionMode;
     private final ServerApi serverApi;
 
-    CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
+    CommandMessage(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final ClusterConnectionMode clusterConnectionMode,
                    @Nullable final ServerApi serverApi) {
-        this(namespace, command, commandFieldNameValidator, readPreference, settings, true, EmptyMessageSequences.INSTANCE,
+        this(database, command, commandFieldNameValidator, readPreference, settings, true, EmptyMessageSequences.INSTANCE,
                 clusterConnectionMode, serverApi);
     }
 
-    CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
+    CommandMessage(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final boolean exhaustAllowed,
                    final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
-        this(namespace, command, commandFieldNameValidator, readPreference, settings, true, exhaustAllowed, EmptyMessageSequences.INSTANCE,
+        this(database, command, commandFieldNameValidator, readPreference, settings, true, exhaustAllowed, EmptyMessageSequences.INSTANCE,
                 clusterConnectionMode, serverApi);
     }
 
-    CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
+    CommandMessage(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final boolean responseExpected,
                    final MessageSequences sequences,
                    final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
-        this(namespace, command, commandFieldNameValidator, readPreference, settings, responseExpected, false,
+        this(database, command, commandFieldNameValidator, readPreference, settings, responseExpected, false,
                 sequences, clusterConnectionMode, serverApi);
     }
 
-    CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
+    CommandMessage(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings,
                    final boolean responseExpected, final boolean exhaustAllowed,
                    final MessageSequences sequences,
                    final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
-        super(namespace.getFullName(), getOpCode(settings, clusterConnectionMode, serverApi), settings);
-        this.namespace = namespace;
+        super(getOpCode(settings, clusterConnectionMode, serverApi), settings);
+        this.database = database;
         this.command = command;
         this.commandFieldNameValidator = commandFieldNameValidator;
         this.readPreference = readPreference;
@@ -222,10 +222,6 @@ public final class CommandMessage extends RequestMessage {
         }
     }
 
-    MongoNamespace getNamespace() {
-        return namespace;
-    }
-
     @Override
     protected EncodingMetadata encodeMessageBodyWithMetadata(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext) {
         int commandStartPosition = useOpMsg() ? writeOpMsg(bsonOutput, operationContext) : writeOpQuery(bsonOutput);
@@ -281,7 +277,7 @@ public final class CommandMessage extends RequestMessage {
 
     private int writeOpQuery(final ByteBufferBsonOutput bsonOutput) {
         bsonOutput.writeInt32(0);
-        bsonOutput.writeCString(namespace.getFullName());
+        bsonOutput.writeCString(new MongoNamespace(getDatabase(), "$cmd").getFullName());
         bsonOutput.writeInt32(0);
         bsonOutput.writeInt32(-1);
 
@@ -328,7 +324,7 @@ public final class CommandMessage extends RequestMessage {
                    extraElements.add(new BsonElement("maxTimeMS", new BsonInt64(maxTimeMS)))
            );
         }
-        extraElements.add(new BsonElement("$db", new BsonString(new MongoNamespace(getCollectionName()).getDatabaseName())));
+        extraElements.add(new BsonElement("$db", new BsonString(getDatabase())));
         if (sessionContext.getClusterTime() != null) {
             extraElements.add(new BsonElement("$clusterTime", sessionContext.getClusterTime()));
         }
@@ -409,6 +405,15 @@ public final class CommandMessage extends RequestMessage {
 
     private static boolean isServerVersionKnown(final MessageSettings settings) {
         return settings.getMaxWireVersion() != UNKNOWN_WIRE_VERSION;
+    }
+
+    /**
+     * Gets the database name
+     *
+     * @return the database name
+     */
+    public String getDatabase() {
+        return database;
     }
 
     @FunctionalInterface

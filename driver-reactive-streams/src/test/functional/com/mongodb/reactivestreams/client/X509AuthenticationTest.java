@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.operation;
+package com.mongodb.reactivestreams.client;
 
-import com.mongodb.ExplainVerbosity;
-import com.mongodb.lang.Nullable;
-import org.bson.codecs.Decoder;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.auth.AbstractX509AuthenticationTest;
+import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 
-/**
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
- */
-public interface ExplainableReadOperation<T> extends ReadOperation<T> {
-    <R> ReadOperation<R> asExplainableOperation(@Nullable ExplainVerbosity verbosity, Decoder<R> resultDecoder);
+public class X509AuthenticationTest extends AbstractX509AuthenticationTest {
+    @Override
+    protected com.mongodb.client.MongoClient createMongoClient(final MongoClientSettings mongoClientSettings) {
+        return new SyncMongoClient(MongoClients.create(mongoClientSettings));
+    }
 }
