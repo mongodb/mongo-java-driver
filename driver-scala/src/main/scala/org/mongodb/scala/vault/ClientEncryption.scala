@@ -114,7 +114,7 @@ case class ClientEncryption(private val wrapped: JClientEncryption) extends Clos
    * Finds a single key document with the given UUID (BSON binary subtype 0x04).
    *
    * @param id the data key UUID (BSON binary subtype 0x04)
-   * @return an Observable containing the single key document or an empty publisher if there is no match
+   * @return an Observable containing the single key document or an empty Observable if there is no match
    * @since 5.6
    */
   def getKey(id: BsonBinary): SingleObservable[BsonDocument] = wrapped.getKey(id)
