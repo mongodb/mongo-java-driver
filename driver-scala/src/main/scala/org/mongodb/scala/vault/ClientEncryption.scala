@@ -161,7 +161,7 @@ case class ClientEncryption(private val wrapped: JClientEncryption) extends Clos
    *
    * @param id         the data key UUID (BSON binary subtype 0x04)
    * @param keyAltName the alternative key name
-   * @return an Observable containing the previous version of the key document or an empty publisher if there is no match
+   * @return an Observable containing the previous version of the key document or an empty Observable if there is no match
    * @since 5.6
    */
   def removeKeyAltName(id: BsonBinary, keyAltName: String): SingleObservable[BsonDocument] =
