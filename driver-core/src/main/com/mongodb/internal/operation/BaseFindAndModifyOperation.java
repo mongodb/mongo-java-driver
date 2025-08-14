@@ -45,7 +45,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
+public abstract class BaseFindAndModifyOperation<T> implements WriteOperation<T> {
     private static final String COMMAND_NAME = "findAndModify";
     private final MongoNamespace namespace;
     private final WriteConcern writeConcern;

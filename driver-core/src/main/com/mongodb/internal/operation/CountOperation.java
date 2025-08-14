@@ -41,7 +41,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
+public class CountOperation implements  ReadOperationSimple<Long> {
     private static final String COMMAND_NAME = "count";
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
     private final MongoNamespace namespace;

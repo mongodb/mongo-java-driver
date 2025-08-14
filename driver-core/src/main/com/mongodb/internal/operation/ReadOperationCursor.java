@@ -16,13 +16,12 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.ExplainVerbosity;
-import com.mongodb.lang.Nullable;
-import org.bson.codecs.Decoder;
+import com.mongodb.internal.async.AsyncBatchCursor;
 
 /**
+ * An operation that reads from a MongoDB server and returns a cursor.
+ *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public interface AsyncExplainableReadOperation<T> extends AsyncReadOperation<T> {
-    <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable ExplainVerbosity verbosity, Decoder<R> resultDecoder);
+public interface ReadOperationCursor<T> extends ReadOperation<BatchCursor<T>, AsyncBatchCursor<T>> {
 }

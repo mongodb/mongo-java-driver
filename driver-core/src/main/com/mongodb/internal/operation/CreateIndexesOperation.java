@@ -57,7 +57,7 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+public class CreateIndexesOperation implements WriteOperation<Void> {
     private static final String COMMAND_NAME = "createIndexes";
     private final MongoNamespace namespace;
     private final List<IndexRequest> requests;

@@ -69,7 +69,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+public class ListCollectionsOperation<T> implements ReadOperationCursor<T> {
     private static final String COMMAND_NAME = "listCollections";
     private final String databaseName;
     private final Decoder<T> decoder;
