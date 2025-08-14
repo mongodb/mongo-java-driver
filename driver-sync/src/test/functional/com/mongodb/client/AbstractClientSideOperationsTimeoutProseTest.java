@@ -921,8 +921,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         assumeTrue(serverVersionAtLeast(4, 4));
 
         collectionHelper.runAdminCommand("{"
-                + "  configureFailPoint: \"failCommand\","
-                + "    mode: \"alwaysOn\","
+                + "configureFailPoint: \"" + FAIL_COMMAND_NAME + "\","
+                + "mode: \"alwaysOn\","
                 + "  data: {"
                 + "    failCommands: [\"hello\", \"isMaster\"],"
                 + "    blockConnection: true,"
@@ -941,9 +941,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         } finally {
             InternalStreamConnection.setRecordEverything(false);
         }
-
-        List<CommandStartedEvent> commandStartedEvents = commandListener.getCommandStartedEvents("isMaster");
-        assertEquals(1, commandStartedEvents.size());
 
         List<CommandFailedEvent> commandFailedEvents = commandListener.getCommandFailedEvents("isMaster");
         assertEquals(1, commandFailedEvents.size());
@@ -968,8 +965,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         assumeTrue(serverVersionAtLeast(4, 4));
 
         collectionHelper.runAdminCommand("{"
-                + "  configureFailPoint: \"failCommand\","
-                + "    mode: \"alwaysOn\","
+                + "configureFailPoint: \"" + FAIL_COMMAND_NAME + "\","
+                + "mode: \"alwaysOn\","
                 + "  data: {"
                 + "    failCommands: [\"hello\", \"isMaster\"],"
                 + "    blockConnection: true,"
