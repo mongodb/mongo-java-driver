@@ -56,6 +56,59 @@ class ClientEncryptionSpec extends BaseSpec with MockitoSugar {
     verify(wrapped).createDataKey(kmsProvider, options)
   }
 
+  it should "call getKey" in {
+    val bsonBinary = BsonBinary(Array[Byte](1, 2, 3))
+
+    clientEncryption.getKey(bsonBinary)
+    verify(wrapped).getKey(same(bsonBinary))
+  }
+
+  it should "call getKeyByAltName" in {
+    val altKeyName = "altKeyName"
+
+    clientEncryption.getKeyByAltName(altKeyName)
+    verify(wrapped).getKeyByAltName(same(altKeyName))
+  }
+
+  it should "call getKeys" in {
+    clientEncryption.keys
+    verify(wrapped).getKeys
+  }
+
+  it should "call addKeyAltName" in {
+    val bsonBinary = BsonBinary(Array[Byte](1, 2, 3))
+    val altKeyName = "altKeyName"
+
+    clientEncryption.addKeyAltName(bsonBinary, altKeyName)
+    verify(wrapped).addKeyAltName(same(bsonBinary), same(altKeyName))
+  }
+
+  it should "call deleteKey" in {
+    val bsonBinary = BsonBinary(Array[Byte](1, 2, 3))
+
+    clientEncryption.deleteKey(bsonBinary)
+    verify(wrapped).deleteKey(same(bsonBinary))
+  }
+
+  it should "call removeKeyAltName" in {
+    val bsonBinary = BsonBinary(Array[Byte](1, 2, 3))
+    val altKeyName = "altKeyName"
+
+    clientEncryption.removeKeyAltName(bsonBinary, altKeyName)
+    verify(wrapped).removeKeyAltName(same(bsonBinary), same(altKeyName))
+  }
+
+  it should "call rewrapManyDataKey" in {
+    val bsonDocument = Document()
+    val options = RewrapManyDataKeyOptions()
+
+    clientEncryption.rewrapManyDataKey(bsonDocument)
+    verify(wrapped).rewrapManyDataKey(same(bsonDocument))
+
+    clientEncryption.rewrapManyDataKey(bsonDocument, options)
+    verify(wrapped).rewrapManyDataKey(same(bsonDocument), same(options))
+  }
+
   it should "call encrypt" in {
     val bsonValue = BsonString("")
     val options = EncryptOptions("algorithm")
@@ -96,5 +149,11 @@ class ClientEncryptionSpec extends BaseSpec with MockitoSugar {
       same(createCollectionOptions),
       same(createEncryptedCollectionParams)
     )
+  }
+
+  it should "call close" in {
+    clientEncryption.close()
+
+    verify(wrapped).close()
   }
 }
