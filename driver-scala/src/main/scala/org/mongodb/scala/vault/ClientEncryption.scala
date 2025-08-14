@@ -123,7 +123,7 @@ case class ClientEncryption(private val wrapped: JClientEncryption) extends Clos
    * Returns a key document in the key vault collection with the given keyAltName.
    *
    * @param keyAltName the alternative key name
-   * @return an Observable containing the matching key document or an empty publisher if there is no match
+   * @return an Observable containing the matching key document or an empty Observable if there is no match
    * @since 5.6
    */
   def getKeyByAltName(keyAltName: String): SingleObservable[BsonDocument] = wrapped.getKeyByAltName(keyAltName)
