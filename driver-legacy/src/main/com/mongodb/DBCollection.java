@@ -1890,7 +1890,7 @@ public class DBCollection {
      * key name and type must be specified.
      *
      * @param index the specification of the index to drop
-     * @throws MongoException if the index does not exist
+     * @throws MongoException if the index does not exist and the server version is less than 8.3
      * @mongodb.driver.manual core/indexes/ Indexes
      */
     public void dropIndex(final DBObject index) {
@@ -1906,7 +1906,7 @@ public class DBCollection {
      * Drops the index with the given name from this collection.
      *
      * @param indexName name of index to drop
-     * @throws MongoException if the index does not exist
+     * @throws MongoException if the index does not exist and the server version is less than 8.3
      * @mongodb.driver.manual core/indexes/ Indexes
      */
     public void dropIndex(final String indexName) {
@@ -1930,7 +1930,7 @@ public class DBCollection {
      * Drops the index with the given name from this collection.  This method is exactly the same as {@code dropIndex(indexName)}.
      *
      * @param indexName name of index to drop
-     * @throws MongoException if the index does not exist
+     * @throws MongoException if the index does not exist and the server version is less than 8.3
      * @mongodb.driver.manual core/indexes/ Indexes
      */
     public void dropIndexes(final String indexName) {
