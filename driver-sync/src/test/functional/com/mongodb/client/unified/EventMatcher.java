@@ -37,7 +37,6 @@ import com.mongodb.event.ServerHeartbeatStartedEvent;
 import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.TestServerMonitorListener;
 import com.mongodb.internal.connection.TestClusterListener;
-import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.internal.connection.TestServerListener;
 import com.mongodb.lang.NonNull;
@@ -219,26 +218,6 @@ final class EventMatcher {
             context.pop();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
-        } catch (TimeoutException e) {
-            fail(context.getMessage("Timed out waiting for connection pool events"));
-        }
-    }
-
-    public void waitForCommandEvents(final String clientId, final BsonDocument expectedCommandEvent, int count,
-                                     final TestCommandListener clientCommandListener) {
-        context.push(ContextElement.ofWaitForCommandEvents(clientId, expectedCommandEvent, count));
-        try {
-            switch (expectedCommandEvent.getFirstKey()) {
-                case "commandStartedEvent":
-                    BsonDocument properties = expectedCommandEvent.getDocument(expectedCommandEvent.getFirstKey());
-                    String commandName = properties.getString("commandName").getValue();
-                    clientCommandListener.waitForEvents(CommandStartedEvent.class, commandStartedEvent ->
-                            commandName.equals(commandStartedEvent.getCommandName()), count);
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unsupported event: " + expectedCommandEvent.getFirstKey());
-            }
-            context.pop();
         } catch (TimeoutException e) {
             fail(context.getMessage("Timed out waiting for connection pool events"));
         }

@@ -779,9 +779,6 @@ public abstract class UnifiedTest {
                 context.getEventMatcher().waitForServerMonitorEvents(clientId, TestServerMonitorListener.eventType(eventName), event, count,
                         entities.getServerMonitorListener(clientId));
                 break;
-            case "commandStartedEvent":
-                context.getEventMatcher().waitForCommandEvents(clientId, event, count, entities.getClientCommandListener(clientId));
-                break;
             default:
                 throw new UnsupportedOperationException("Unsupported event: " + eventName);
         }

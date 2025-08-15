@@ -40,7 +40,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -64,7 +63,6 @@ public class TestCommandListener implements CommandListener {
     private final TestListener listener;
     private final Lock lock = new ReentrantLock();
     private final Condition commandCompletedCondition = lock.newCondition();
-    private final Condition commandAnyEventCondition = lock.newCondition();
     private final boolean observeSensitiveCommands;
     private boolean ignoreNextSucceededOrFailedEvent;
     private static final CodecRegistry CODEC_REGISTRY_HACK;
@@ -225,12 +223,22 @@ public class TestCommandListener implements CommandListener {
         }
     }
 
-    private <T extends CommandEvent> long getEventCount(final Class<T> eventClass, final Predicate<T> matcher) {
-        return getEvents().stream()
-                .filter(eventClass::isInstance)
-                .map(eventClass::cast)
-                .filter(matcher)
-                .count();
+    public List<CommandStartedEvent> waitForStartedEvents(final int numEvents) {
+        lock.lock();
+        try {
+            while (!hasCompletedEvents(numEvents)) {
+                try {
+                    if (!commandCompletedCondition.await(TIMEOUT, TimeUnit.SECONDS)) {
+                        throw new MongoTimeoutException("Timeout waiting for event");
+                    }
+                } catch (InterruptedException e) {
+                    throw interruptAndCreateMongoInterruptedException("Interrupted waiting for event", e);
+                }
+            }
+            return getEvents(CommandStartedEvent.class, numEvents);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void waitForFirstCommandCompletion() {
@@ -279,7 +287,6 @@ public class TestCommandListener implements CommandListener {
             addEvent(new CommandStartedEvent(event.getRequestContext(), event.getOperationId(), event.getRequestId(),
                     event.getConnectionDescription(), event.getDatabaseName(), event.getCommandName(),
                     event.getCommand() == null ? null : getWritableClone(event.getCommand())));
-            commandAnyEventCondition.signal();
         } finally {
             lock.unlock();
         }
@@ -305,7 +312,6 @@ public class TestCommandListener implements CommandListener {
                     event.getResponse() == null ? null : event.getResponse().clone(),
                     event.getElapsedTime(TimeUnit.NANOSECONDS)));
             commandCompletedCondition.signal();
-            commandAnyEventCondition.signal();
         } finally {
             lock.unlock();
         }
@@ -328,7 +334,6 @@ public class TestCommandListener implements CommandListener {
         try {
             addEvent(event);
             commandCompletedCondition.signal();
-            commandAnyEventCondition.signal();
         } finally {
             lock.unlock();
         }
@@ -422,23 +427,5 @@ public class TestCommandListener implements CommandListener {
     private void assertEquivalence(final CommandStartedEvent actual, final CommandStartedEvent expected) {
         assertEquals(expected.getDatabaseName(), actual.getDatabaseName());
         assertEquals(expected.getCommand(), actual.getCommand());
-    }
-
-    public <T extends CommandEvent> void waitForEvents(final Class<T> eventClass, final Predicate<T> matcher, final int count)
-            throws TimeoutException {
-        lock.lock();
-        try {
-            while (getEventCount(eventClass, matcher) < count) {
-                try {
-                    if (!commandAnyEventCondition.await(TIMEOUT, TimeUnit.SECONDS)) {
-                        throw new MongoTimeoutException("Timeout waiting for command event");
-                    }
-                } catch (InterruptedException e) {
-                    throw interruptAndCreateMongoInterruptedException("Interrupted waiting for event", e);
-                }
-            }
-        } finally {
-            lock.unlock();
-        }
     }
 }
