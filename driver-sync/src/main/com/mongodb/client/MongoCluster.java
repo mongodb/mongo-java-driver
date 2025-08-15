@@ -169,6 +169,9 @@ public interface MongoCluster {
      *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
      * </ul>
      *
+     *  <p><strong>NOTE:</strong> This timeout does not limit socket writes, therefore there is a possibility that the
+     *  operation might not be timed out when expected.
+     *
      * @param timeout the timeout, which must be greater than or equal to 0
      * @param timeUnit the time unit
      * @return a new MongoCluster instance with the set time limit for the full execution of an operation.

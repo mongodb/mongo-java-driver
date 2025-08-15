@@ -292,6 +292,9 @@ public final class TransactionOptions {
          *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
          * </ul>
          *
+         *  <p><strong>NOTE:</strong> When using synchronous API, this timeout does not limit socket writes, therefore there is a possibility that the
+         *  operation might not be timed out when expected. This limitation does not apply to the reactive streams API.
+         *
          * @param timeout the timeout
          * @param timeUnit the time unit
          * @return this
