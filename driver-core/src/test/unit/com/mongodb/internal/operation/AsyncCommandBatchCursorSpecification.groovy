@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation
 
+
 import com.mongodb.MongoClientSettings
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoException
@@ -29,11 +30,13 @@ import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
 import com.mongodb.connection.ServerVersion
+import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.TimeoutSettings
 import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.connection.AsyncConnection
+import com.mongodb.internal.connection.NoOpSessionContext
 import com.mongodb.internal.connection.OperationContext
 import org.bson.BsonArray
 import org.bson.BsonDocument
@@ -58,7 +61,8 @@ class AsyncCommandBatchCursorSpecification extends Specification {
         def initialConnection = referenceCountedAsyncConnection()
         def connection = referenceCountedAsyncConnection()
         def connectionSource = getAsyncConnectionSource(connection)
-        def timeoutContext = connectionSource.getOperationContext().getTimeoutContext()
+        def operationContext = getOperationContext()
+        def timeoutContext = operationContext.getTimeoutContext()
         def firstBatch = createCommandResult([])
         def expectedCommand = new BsonDocument('getMore': new BsonInt64(CURSOR_ID))
                 .append('collection', new BsonString(NAMESPACE.getCollectionName()))
@@ -69,10 +73,10 @@ class AsyncCommandBatchCursorSpecification extends Specification {
         def reply =  getMoreResponse([], 0)
 
         when:
-        def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, firstBatch, batchSize, maxTimeMS, CODEC,
-                null, connectionSource, initialConnection)
+        def commandCoreCursor = new AsyncCommandCoreCursor<>(firstBatch, batchSize, CODEC, null, connectionSource, initialConnection)
+        def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, maxTimeMS, operationContext, commandCoreCursor)
         then:
-        1 * timeoutContext.setMaxTimeOverride(*_)
+        1 * timeoutContext.withMaxTimeOverride(*_)
 
         when:
         def batch = nextBatch(cursor)
@@ -107,15 +111,17 @@ class AsyncCommandBatchCursorSpecification extends Specification {
         def serverVersion = new ServerVersion([3, 6, 0])
         def connection = referenceCountedAsyncConnection(serverVersion)
         def connectionSource = getAsyncConnectionSource(connection)
-        def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, firstBatch, 0, 0, CODEC,
-                null, connectionSource, initialConnection)
+        def operationContext = getOperationContext()
+        def commandCoreCursor = new AsyncCommandCoreCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
+        def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
 
         when:
         cursor.close()
 
         then:
-        if (cursor.getServerCursor() != null) {
-            1 * connection.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(cursor.getServerCursor()), _, primary(), *_) >> {
+        if (commandCoreCursor.getServerCursor() != null) {
+            1 * connection.commandAsync(NAMESPACE.databaseName,
+                    createKillCursorsDocument(commandCoreCursor.getServerCursor()), _, primary(), *_) >> {
                 it.last().onResult(null, null)
             }
         }
@@ -137,8 +143,8 @@ class AsyncCommandBatchCursorSpecification extends Specification {
 
         when:
         def firstBatch = createCommandResult(FIRST_BATCH, 0)
-        def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, firstBatch, 0, 0, CODEC,
-                null, connectionSource, initialConnection)
+        def commandCoreCursor = new AsyncCommandCoreCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
+        def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
 
         then:
         nextBatch(cursor) == FIRST_BATCH
@@ -167,8 +173,8 @@ class AsyncCommandBatchCursorSpecification extends Specification {
 
         when:
         def firstBatch = createCommandResult([], CURSOR_ID)
-        def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, firstBatch, 0, 0, CODEC,
-                null, connectionSource, initialConnection)
+        def commandCoreCursor = new AsyncCommandCoreCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
+        def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
         def batch = nextBatch(cursor)
 
         then:
@@ -213,8 +219,8 @@ class AsyncCommandBatchCursorSpecification extends Specification {
         def firstBatch = createCommandResult()
 
         when:
-        def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, firstBatch, 0, 0, CODEC,
-                null, connectionSource, initialConnection)
+        def commandCoreCursor = new AsyncCommandCoreCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
+        def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
         def batch = nextBatch(cursor)
 
         then:
@@ -267,8 +273,9 @@ class AsyncCommandBatchCursorSpecification extends Specification {
         def connectionSource = getAsyncConnectionSource(connectionA, connectionB)
 
         when:
-        def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, createCommandResult(FIRST_BATCH, 42), 0, 0, CODEC,
-                null, connectionSource, initialConnection)
+        def commandCoreCursor = new AsyncCommandCoreCursor<>(createCommandResult(FIRST_BATCH, 42), 0,
+                CODEC, null, connectionSource, initialConnection)
+        def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
         def batch = nextBatch(cursor)
 
         then:
@@ -303,8 +310,8 @@ class AsyncCommandBatchCursorSpecification extends Specification {
         def firstBatch = createCommandResult()
 
         when:
-        def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, firstBatch, 0, 0, CODEC,
-                null, connectionSource, initialConnection)
+        def commandCoreCursor = new AsyncCommandCoreCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
+        def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
         def batch = nextBatch(cursor)
 
         then:
@@ -343,8 +350,8 @@ class AsyncCommandBatchCursorSpecification extends Specification {
         def initialConnection = referenceCountedAsyncConnection()
         def connectionSource = getAsyncConnectionSourceWithResult(ServerType.STANDALONE) { [null, MONGO_EXCEPTION] }
         def firstBatch = createCommandResult()
-        def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, firstBatch, 0, 0, CODEC,
-                null, connectionSource, initialConnection)
+        def commandCoreCursor = new AsyncCommandCoreCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
+        def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
 
         when:
         cursor.close()
@@ -363,8 +370,8 @@ class AsyncCommandBatchCursorSpecification extends Specification {
 
         when:
         def firstBatch = createCommandResult()
-        def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, firstBatch, 0, 0, CODEC,
-                null, connectionSource, initialConnection)
+        def commandCoreCursor = new AsyncCommandCoreCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
+        def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
 
         then:
         nextBatch(cursor)
@@ -390,8 +397,8 @@ class AsyncCommandBatchCursorSpecification extends Specification {
 
         when:
         def firstBatch = createCommandResult()
-        def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, firstBatch, 0, 0, CODEC,
-                null, connectionSource, initialConnection)
+        def commandCoreCursor = new AsyncCommandCoreCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
+        def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
 
         then:
         connectionSource.getCount() == 1
@@ -523,17 +530,12 @@ class AsyncCommandBatchCursorSpecification extends Specification {
                     .state(ServerConnectionState.CONNECTED)
                     .build()
         }
-        OperationContext operationContext = Mock(OperationContext)
-        def timeoutContext = Spy(new TimeoutContext(TimeoutSettings.create(
-                MongoClientSettings.builder().timeout(3, TimeUnit.SECONDS).build())))
-        operationContext.getTimeoutContext() >> timeoutContext
-        mock.getOperationContext() >> operationContext
-        mock.getConnection(_) >> {
+        mock.getConnection(_ as OperationContext, _ as SingleResultCallback<AsyncConnection>) >> {
             if (counter == 0) {
                 throw new IllegalStateException('Tried to use released AsyncConnectionSource')
             }
             def (result, error) = connectionCallbackResults()
-            it[0].onResult(result, error)
+            it[1].onResult(result, error)
         }
         mock.retain() >> {
             if (released) {
@@ -554,5 +556,14 @@ class AsyncCommandBatchCursorSpecification extends Specification {
         }
         mock.getCount() >> { counter }
         mock
+    }
+
+    OperationContext getOperationContext() {
+        def timeoutContext = Spy(new TimeoutContext(TimeoutSettings.create(
+                MongoClientSettings.builder().timeout(3, TimeUnit.SECONDS).build())))
+        Spy(new OperationContext(
+                IgnorableRequestContext.INSTANCE,
+                NoOpSessionContext.INSTANCE,
+                timeoutContext, null))
     }
 }

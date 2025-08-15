@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection
 
-
 import com.mongodb.MongoException
 import com.mongodb.MongoNodeIsRecoveringException
 import com.mongodb.MongoNotPrimaryException
@@ -351,7 +350,7 @@ class DefaultServerSpecification extends Specification {
         clusterClock.advance(clusterClockClusterTime)
         def server = new DefaultServer(serverId, SINGLE, Mock(ConnectionPool), new TestConnectionFactory(), Mock(ServerMonitor),
                 Mock(SdamServerDescriptionManager), Mock(ServerListener), Mock(CommandListener), clusterClock, false)
-        def testConnection = (TestConnection) server.getConnection()
+        def testConnection = (TestConnection) server.getConnection(OPERATION_CONTEXT)
         def sessionContext = new TestSessionContext(initialClusterTime)
         def response = BsonDocument.parse(
                 '''{
