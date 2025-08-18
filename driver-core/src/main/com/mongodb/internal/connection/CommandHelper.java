@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoNamespace;
 import com.mongodb.MongoServerException;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -31,7 +30,6 @@ import org.bson.codecs.BsonDocumentCodec;
 
 import java.util.Locale;
 
-import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 
@@ -107,7 +105,7 @@ public final class CommandHelper {
                                                     final InternalConnection internalConnection,
                                                     final ClusterConnectionMode clusterConnectionMode,
                                                     @Nullable final ServerApi serverApi) {
-        return new CommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME), command, NoOpFieldNameValidator.INSTANCE, primary(),
+        return new CommandMessage(database, command, NoOpFieldNameValidator.INSTANCE, primary(),
                 MessageSettings
                         .builder()
                          // Note: server version will be 0.0 at this point when called from InternalConnectionInitializer,
