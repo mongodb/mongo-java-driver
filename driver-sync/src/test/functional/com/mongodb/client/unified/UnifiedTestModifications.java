@@ -62,6 +62,10 @@ public final class UnifiedTestModifications {
                 .test("change-streams", "change-streams-errors", "Change Stream should error when an invalid aggregation stage is passed in")
                 .test("change-streams", "change-streams-errors", "The watch helper must not throw a custom exception when executed against a single server topology, but instead depend on a server error");
 
+        // Client side encryption (QE)
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5675 Support QE with Client.bulkWrite")
+                .file("client-side-encryption/tests/unified", "client bulkWrite with queryable encryption");
+
         // client-side-operation-timeout (CSOT)
 
         def.skipNoncompliantReactive("No good way to fulfill tryNext() requirement with a Publisher<T>")
@@ -77,7 +81,6 @@ public final class UnifiedTestModifications {
                       "timeoutMS applied to entire download, not individual parts");
 
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5491")
-                .testContains("client-side-operations-timeout", "dropIndex")
                 .when(() -> !serverVersionLessThan(8, 3))
                 .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
                         "socketTimeoutMS is ignored if timeoutMS is set - dropIndex on collection")
