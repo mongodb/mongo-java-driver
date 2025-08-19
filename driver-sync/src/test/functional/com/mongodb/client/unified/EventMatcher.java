@@ -224,7 +224,7 @@ final class EventMatcher {
         }
     }
 
-    public void waitForCommandEvents(final String clientId, final BsonDocument expectedCommandEvent, int count,
+    public void waitForCommandEvents(final String clientId, final BsonDocument expectedCommandEvent, final int count,
                                      final TestCommandListener clientCommandListener) {
         context.push(ContextElement.ofWaitForCommandEvents(clientId, expectedCommandEvent, count));
         try {
