@@ -23,6 +23,7 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
+import java.util.Collections;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -58,6 +59,31 @@ public class CommandCursorResult<T> {
         this.cursorId = cursorDocument.getNumber("id").longValue();
         this.operationTime = cursorDocument.getTimestamp(OPERATION_TIME, null);
         this.postBatchResumeToken = cursorDocument.getDocument(POST_BATCH_RESUME_TOKEN, null);
+    }
+
+    private CommandCursorResult(
+            final ServerAddress serverAddress,
+            final List<T> results,
+            final MongoNamespace namespace,
+            final long cursorId,
+            @Nullable final BsonTimestamp operationTime,
+            @Nullable final BsonDocument postBatchResumeToken) {
+        this.serverAddress = serverAddress;
+        this.results = results;
+        this.namespace = namespace;
+        this.cursorId = cursorId;
+        this.operationTime = operationTime;
+        this.postBatchResumeToken = postBatchResumeToken;
+    }
+
+    public static <T> CommandCursorResult<T> withEmptyResults(final CommandCursorResult<T> commandCursorResult) {
+        return new CommandCursorResult<>(
+                commandCursorResult.getServerAddress(),
+                Collections.emptyList(),
+                commandCursorResult.getNamespace(),
+                commandCursorResult.getCursorId(),
+                commandCursorResult.getOperationTime(),
+                commandCursorResult.getPostBatchResumeToken());
     }
 
     /**
