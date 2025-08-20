@@ -170,7 +170,7 @@ case class SyncMongoDatabase(wrapped: MongoDatabase) extends JMongoDatabase {
   }
 
   override def createView(viewName: String, viewOn: String, pipeline: java.util.List[_ <: Bson]): Unit = {
-    throw new UnsupportedOperationException
+    wrapped.createView(viewName, viewOn, pipeline.asScala.toList).toFuture().get()
   }
 
   override def createView(
@@ -179,7 +179,7 @@ case class SyncMongoDatabase(wrapped: MongoDatabase) extends JMongoDatabase {
       pipeline: java.util.List[_ <: Bson],
       createViewOptions: CreateViewOptions
   ): Unit = {
-    throw new UnsupportedOperationException
+    wrapped.createView(viewName, viewOn, pipeline.asScala.toList, createViewOptions).toFuture().get()
   }
 
   override def createView(
@@ -188,7 +188,7 @@ case class SyncMongoDatabase(wrapped: MongoDatabase) extends JMongoDatabase {
       viewOn: String,
       pipeline: java.util.List[_ <: Bson]
   ): Unit = {
-    throw new UnsupportedOperationException
+    wrapped.createView(unwrap(clientSession), viewName, viewOn, pipeline.asScala.toList).toFuture().get()
   }
 
   override def createView(
@@ -198,7 +198,13 @@ case class SyncMongoDatabase(wrapped: MongoDatabase) extends JMongoDatabase {
       pipeline: java.util.List[_ <: Bson],
       createViewOptions: CreateViewOptions
   ): Unit = {
-    throw new UnsupportedOperationException
+    wrapped.createView(
+      unwrap(clientSession),
+      viewName,
+      viewOn,
+      pipeline.asScala.toList,
+      createViewOptions
+    ).toFuture().get()
   }
 
   override def watch = new SyncChangeStreamIterable[Document](wrapped.watch[Document]())

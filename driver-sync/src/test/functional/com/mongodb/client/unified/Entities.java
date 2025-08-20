@@ -16,6 +16,7 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.ConnectionString;
@@ -87,8 +88,8 @@ import static org.junit.Assume.assumeTrue;
 public final class Entities {
     private static final Set<String> SUPPORTED_CLIENT_ENTITY_OPTIONS = new HashSet<>(
             asList(
-                    "id", "uriOptions", "serverApi", "useMultipleMongoses", "observeEvents",
-                    "observeLogMessages", "observeSensitiveCommands", "ignoreCommandMonitoringEvents"));
+                    "id", "autoEncryptOpts", "uriOptions", "serverApi", "useMultipleMongoses", "storeEventsAsEntities",
+                    "observeEvents", "observeLogMessages", "observeSensitiveCommands", "ignoreCommandMonitoringEvents"));
     private final Set<String> entityNames = new HashSet<>();
     private final Map<String, ExecutorService> threads = new HashMap<>();
     private final Map<String, ArrayList<Future<?>>> tasks = new HashMap<>();
@@ -499,6 +500,59 @@ public final class Entities {
             }
             clientSettingsBuilder.serverApi(serverApiBuilder.build());
         }
+        if (entity.containsKey("autoEncryptOpts")) {
+            AutoEncryptionSettings.Builder builder = AutoEncryptionSettings.builder();
+            for (Map.Entry<String, BsonValue> entry : entity.getDocument("autoEncryptOpts").entrySet()) {
+                switch (entry.getKey()) {
+                    case "bypassAutoEncryption":
+                        builder.bypassAutoEncryption(entry.getValue().asBoolean().getValue());
+                        break;
+                    case "bypassQueryAnalysis":
+                        builder.bypassQueryAnalysis(entry.getValue().asBoolean().getValue());
+                        break;
+                    case "schemaMap":
+                        Map<String, BsonDocument> schemaMap = new HashMap<>();
+                        for (Map.Entry<String, BsonValue> entries : entry.getValue().asDocument().entrySet()) {
+                            schemaMap.put(entries.getKey(), entries.getValue().asDocument());
+                        }
+                        builder.schemaMap(schemaMap);
+                        break;
+                    case "encryptedFieldsMap":
+                        Map<String, BsonDocument> encryptedFieldsMap = new HashMap<>();
+                        for (Map.Entry<String, BsonValue> entries : entry.getValue().asDocument().entrySet()) {
+                            encryptedFieldsMap.put(entries.getKey(), entries.getValue().asDocument());
+                        }
+                        builder.encryptedFieldsMap(encryptedFieldsMap);
+                        break;
+                    case "extraOptions":
+                        Map<String, Object> extraOptions = new HashMap<>();
+                        for (Map.Entry<String, BsonValue> extraOptionsEntry : entry.getValue().asDocument().entrySet()) {
+                            switch (extraOptionsEntry.getKey()) {
+                                case "mongocryptdBypassSpawn":
+                                    extraOptions.put(extraOptionsEntry.getKey(), extraOptionsEntry.getValue().asBoolean().getValue());
+                                    break;
+                                default:
+                                    throw new UnsupportedOperationException("Unsupported extra encryption option: " + extraOptionsEntry.getKey());
+                            }
+                        }
+                        builder.extraOptions(extraOptions);
+                        break;
+                    case "keyVaultNamespace":
+                        builder.keyVaultNamespace(entry.getValue().asString().getValue());
+                        break;
+                    case "kmsProviders":
+                        builder.kmsProviders(createKmsProvidersMap(entry.getValue().asDocument()));
+                        break;
+                    case "keyExpirationMS":
+                        builder.keyExpiration(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unsupported client encryption option: " + entry.getKey());
+                }
+            }
+            clientSettingsBuilder.autoEncryptionSettings(builder.build());
+        }
+
         MongoClientSettings clientSettings = clientSettingsBuilder.build();
 
         if (entity.containsKey("observeLogMessages")) {
