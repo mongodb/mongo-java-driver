@@ -88,7 +88,7 @@ public final class ClientBulkWriteException extends MongoServerException {
             @Nullable final Map<Integer, WriteError> writeErrors,
             @Nullable final ClientBulkWriteResult partialResult,
             final ServerAddress serverAddress) {
-        return "Client-level bulk write operation error on server " + serverAddress + "."
+        return "Client-level bulk write operation error on MongoDB server " + serverAddress + "."
                 + (error == null ? "" : " Top-level error: " + error + ".")
                 + (writeErrors == null || writeErrors.isEmpty() ? "" : " Write errors: " + writeErrors + ".")
                 + (writeConcernErrors == null || writeConcernErrors.isEmpty() ? "" : " Write concern errors: " + writeConcernErrors + ".")

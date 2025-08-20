@@ -48,7 +48,7 @@ public class MongoCommandException extends MongoServerException {
      */
     public MongoCommandException(final BsonDocument response, final ServerAddress address) {
         super(extractErrorCode(response), extractErrorCodeName(response),
-              format("Command failed with error %s: '%s' on server %s. The full response is %s", extractErrorCodeAndName(response),
+              format("Command execution failed on MongoDB server with error %s: '%s' on server %s. The full response is %s", extractErrorCodeAndName(response),
                      extractErrorMessage(response), address, getResponseAsJson(response)), address);
         this.response = response;
         addLabels(extractErrorLabelsAsBson(response));
