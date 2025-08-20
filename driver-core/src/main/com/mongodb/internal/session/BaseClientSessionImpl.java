@@ -222,7 +222,7 @@ public class BaseClientSessionImpl implements ClientSession {
 
     protected void resetTimeout() {
         if (timeoutContext != null) {
-            timeoutContext.resetTimeoutIfPresent();
+            timeoutContext = timeoutContext.withNewlyStartedTimeout();
         }
     }
 

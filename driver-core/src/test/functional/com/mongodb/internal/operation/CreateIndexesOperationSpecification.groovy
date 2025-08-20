@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation
 
+import com.mongodb.ClusterFixture
 import com.mongodb.CreateIndexCommitQuorum
 import com.mongodb.DuplicateKeyException
 import com.mongodb.MongoClientException
@@ -34,7 +35,6 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ClusterFixture.serverVersionLessThan
@@ -491,7 +491,10 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
 
     List<Document> getIndexes() {
         def indexes = []
-        def cursor = new ListIndexesOperation(getNamespace(), new DocumentCodec()).execute(getBinding())
+
+        def binding = ClusterFixture.getBinding()
+        def cursor = new ListIndexesOperation(getNamespace(), new DocumentCodec())
+                .execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
         while (cursor.hasNext()) {
             indexes.addAll(cursor.next())
         }

@@ -1,3 +1,5 @@
+package com.mongodb.internal.operation;
+
 /*
  * Copyright 2008-present MongoDB, Inc.
  *
@@ -14,14 +16,13 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.operation;
-
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ServerCursor;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.internal.connection.Connection;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.locks.Lock;
@@ -34,23 +35,6 @@ import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CONCURRENT_OPERATION;
 
-/**
- * This is the resource manager for {@link CommandBatchCursor} or {@link AsyncCommandBatchCursor} implementations.
- * <p>
- * This class maintains all resources that must be released in {@link CommandBatchCursor#close()} /
- * {@link AsyncCommandBatchCursor#close()}. The abstract {@linkplain #doClose() deferred close action} is such that it is totally
- * ordered with other operations of {@link CommandBatchCursor} / {@link AsyncCommandBatchCursor} (methods {@link #tryStartOperation()}/
- * {@link #endOperation()} must be used properly to enforce the order) despite the method {@link CommandBatchCursor#close()} /
- * {@link AsyncCommandBatchCursor#close()} being called concurrently with those operations.
- * <p>
- * This total order induces the happens-before order.
- * <p>
- * The deferred close action does not violate externally observable idempotence of {@link CommandBatchCursor#close()} /
- * {@link AsyncCommandBatchCursor#close()}, because the close method is allowed to release resources "eventually".
- * <p>
- * Only methods explicitly documented as thread-safe are thread-safe,
- * others are not and rely on the total order mentioned above.
- */
 @ThreadSafe
 abstract class CursorResourceManager<CS extends ReferenceCounted, C extends ReferenceCounted> {
     private final Lock lock;
@@ -158,7 +142,7 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
     /**
      * Thread-safe.
      */
-    void endOperation() {
+    void endOperation(final OperationContext operationContext) {
         boolean doClose = withLock(lock, () -> {
             State localState = state;
             if (localState == State.OPERATION_IN_PROGRESS) {
@@ -172,17 +156,17 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
             return false;
         });
         if (doClose) {
-            doClose();
+            doClose(operationContext);
         }
     }
 
     /**
      * Thread-safe.
      */
-    void close() {
+    void close(final OperationContext operationContext) {
         boolean doClose = withLock(lock, () -> {
             State localState = state;
-            if (localState.inProgress()) {
+            if (localState.isOperationInProgress()) {
                 state = State.CLOSE_PENDING;
             } else if (localState != State.CLOSED) {
                 state = State.CLOSED;
@@ -191,15 +175,15 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
             return false;
         });
         if (doClose) {
-            doClose();
+            doClose(operationContext);
         }
     }
 
     /**
      * This method is never executed concurrently with either itself or other operations
-     * demarcated by {@link #tryStartOperation()}/{@link #endOperation()}.
+     * demarcated by {@link #tryStartOperation()}/{@link #endOperation(OperationContext)}.
      */
-    abstract void doClose();
+    abstract void doClose(OperationContext operationContext);
 
     void onCorruptedConnection(@Nullable final C corruptedConnection, final MongoSocketException e) {
         // if `pinnedConnection` is corrupted, then we cannot kill `serverCursor` via such a connection
@@ -221,7 +205,7 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
     }
 
     void setServerCursor(@Nullable final ServerCursor serverCursor) {
-        assertTrue(state.inProgress());
+        assertTrue(state.isOperationInProgress());
         assertNotNull(this.serverCursor);
         // without `connectionSource` we will not be able to kill `serverCursor` later
         assertNotNull(connectionSource);
@@ -259,19 +243,20 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
         CLOSED(false, false);
 
         private final boolean operable;
-        private final boolean inProgress;
+        private final boolean operationInProgress;
 
-        State(final boolean operable, final boolean inProgress) {
+        State(final boolean operable, final boolean operationInProgress) {
             this.operable = operable;
-            this.inProgress = inProgress;
+            this.operationInProgress = operationInProgress;
         }
 
         boolean operable() {
             return operable;
         }
 
-        boolean inProgress() {
-            return inProgress;
+        boolean isOperationInProgress() {
+            return operationInProgress;
         }
     }
 }
+

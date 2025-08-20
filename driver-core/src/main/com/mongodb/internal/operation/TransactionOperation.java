@@ -22,6 +22,7 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -54,19 +55,19 @@ public abstract class TransactionOperation implements WriteOperation<Void> {
     }
 
     @Override
-    public Void execute(final WriteBinding binding) {
-        isTrue("in transaction", binding.getOperationContext().getSessionContext().hasActiveTransaction());
-        TimeoutContext timeoutContext = binding.getOperationContext().getTimeoutContext();
-        return executeRetryableWrite(binding, "admin", null, NoOpFieldNameValidator.INSTANCE,
+    public Void execute(final WriteBinding binding, final OperationContext operationContext) {
+        isTrue("in transaction", operationContext.getSessionContext().hasActiveTransaction());
+        TimeoutContext timeoutContext = operationContext.getTimeoutContext();
+        return executeRetryableWrite(binding, operationContext,  "admin", null, NoOpFieldNameValidator.INSTANCE,
                                      new BsonDocumentCodec(), getCommandCreator(),
                 writeConcernErrorTransformer(timeoutContext), getRetryCommandModifier(timeoutContext));
     }
 
     @Override
-    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        isTrue("in transaction", binding.getOperationContext().getSessionContext().hasActiveTransaction());
-        TimeoutContext timeoutContext = binding.getOperationContext().getTimeoutContext();
-        executeRetryableWriteAsync(binding, "admin", null, NoOpFieldNameValidator.INSTANCE,
+    public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<Void> callback) {
+        isTrue("in transaction", operationContext.getSessionContext().hasActiveTransaction());
+        TimeoutContext timeoutContext = operationContext.getTimeoutContext();
+        executeRetryableWriteAsync(binding, operationContext, "admin", null, NoOpFieldNameValidator.INSTANCE,
                                    new BsonDocumentCodec(), getCommandCreator(),
                 writeConcernErrorTransformerAsync(timeoutContext), getRetryCommandModifier(timeoutContext),
                                    errorHandlingCallback(callback, LOGGER));
