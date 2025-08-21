@@ -475,7 +475,9 @@ public final class ClusterFixture {
     }
 
     private static Cluster createCluster(final ConnectionString connectionString, final StreamFactory streamFactory) {
-        MongoClientSettings mongoClientSettings = MongoClientSettings.builder().applyConnectionString(connectionString).build();
+        MongoClientSettings mongoClientSettings = MongoClientSettings.builder().applyConnectionString(connectionString)
+                .applyToServerSettings(builder -> builder.heartbeatFrequency(1, SECONDS).minHeartbeatFrequency(1, MILLISECONDS))
+                .build();
 
         return new DefaultClusterFactory().createCluster(mongoClientSettings.getClusterSettings(),
                 mongoClientSettings.getServerSettings(), mongoClientSettings.getConnectionPoolSettings(),
@@ -570,7 +572,7 @@ public final class ClusterFixture {
         return serverDescriptions.get(0).getAddress();
     }
 
-    public static void sleep(final int sleepMS) {
+    public static void sleep(final long sleepMS) {
         try {
             Thread.sleep(sleepMS);
         } catch (InterruptedException e) {

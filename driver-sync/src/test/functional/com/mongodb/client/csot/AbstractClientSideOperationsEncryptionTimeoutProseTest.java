@@ -173,12 +173,12 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
 
         try (ClientEncryption clientEncryption = createClientEncryption(getClientEncryptionSettingsBuilder(rtt + 400))) {
             keyVaultCollectionHelper.runAdminCommand("{"
-                    + "    configureFailPoint: \"" + FAIL_COMMAND_NAME + "\","
+                    + "  configureFailPoint: \"" + FAIL_COMMAND_NAME + "\","
                     + "  mode: { times: 1 },"
                     + "  data: {"
                     + "    failCommands: [\"find\"],"
                     + "    blockConnection: true,"
-                    + "    blockTimeMS: " + (rtt + 500)
+                    + "    blockTimeMS: " + 500
                     + "  }"
                     + "}");
             commandListener.reset();
@@ -206,7 +206,7 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
                 + "  data: {"
                 + "    failCommands: [\"insert\", \"find\", \"listCollections\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + (rtt + 10)
+                + "    blockTimeMS: " + 10
                 + "  }"
                 + "}");
 
