@@ -146,6 +146,10 @@ abstract class ContextElement {
         };
     }
 
+    public static ContextElement ofWaitForCommandEvents(final String client, final BsonDocument commandEvent, final int count) {
+        return new EventCountContext("Wait For Command Events", client, commandEvent, count);
+    }
+
     public static ContextElement ofTopologyEvents(final String client, final BsonArray expectedEvents,
             final List<?> actualEvents) {
         return new ContextElement() {
