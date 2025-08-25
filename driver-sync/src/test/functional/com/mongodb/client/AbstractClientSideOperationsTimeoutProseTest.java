@@ -1058,7 +1058,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
     protected MongoClientSettings.Builder getMongoClientSettingsBuilder() {
         commandListener.reset();
-        System.err.println("CONNECTION STRING TO USE" + ClusterFixture.getConnectionString());
         MongoClientSettings.Builder mongoClientSettingsBuilder = Fixture.getMongoClientSettingsBuilder();
         return mongoClientSettingsBuilder
                 .readConcern(ReadConcern.MAJORITY)

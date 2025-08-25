@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
+import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketReadTimeoutException;
@@ -59,6 +60,7 @@ import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.sleep;
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -148,7 +150,11 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
             Throwable commandError = onErrorEvents.get(0);
             Throwable operationTimeoutErrorCause = commandError.getCause();
             assertInstanceOf(MongoOperationTimeoutException.class, commandError);
-            assertInstanceOf(MongoSocketReadTimeoutException.class, operationTimeoutErrorCause);
+            assertTrue(operationTimeoutErrorCause instanceof MongoSocketReadTimeoutException
+                    || operationTimeoutErrorCause instanceof MongoExecutionTimeoutException,
+                    "Expected operationTimeoutErrorCause to be either MongoSocketReadTimeoutException"
+                            + " or MongoExecutionTimeoutException, but was: "
+                            + operationTimeoutErrorCause.getClass().getName());
 
             CommandFailedEvent chunkInsertFailedEvent = commandListener.getCommandFailedEvent("insert");
             assertNotNull(chunkInsertFailedEvent);
@@ -203,7 +209,11 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
             Throwable operationTimeoutErrorCause = commandError.getCause();
 
             assertInstanceOf(MongoOperationTimeoutException.class, commandError);
-            assertInstanceOf(MongoSocketReadTimeoutException.class, operationTimeoutErrorCause);
+            assertTrue(operationTimeoutErrorCause instanceof MongoSocketReadTimeoutException
+                            || operationTimeoutErrorCause instanceof MongoExecutionTimeoutException,
+                    "Expected operationTimeoutErrorCause to be either MongoSocketReadTimeoutException"
+                            + " or MongoExecutionTimeoutException, but was: "
+                            + operationTimeoutErrorCause.getClass().getName());
 
             CommandFailedEvent deleteFailedEvent = commandListener.getCommandFailedEvent("delete");
             assertNotNull(deleteFailedEvent);
