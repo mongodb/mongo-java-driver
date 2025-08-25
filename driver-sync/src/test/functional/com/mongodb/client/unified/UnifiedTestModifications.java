@@ -63,6 +63,18 @@ public final class UnifiedTestModifications {
                 .test("change-streams", "change-streams-errors", "The watch helper must not throw a custom exception when executed against a single server topology, but instead depend on a server error");
 
         // client-side-operation-timeout (CSOT)
+        def.retry("Unified CSOT tests do not account for RTT which varies in TLS vs non-TLS runs")
+                .whenFailureContains("timeout")
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for non-tailable cursors",
+                        "timeoutMS is refreshed for getMore if timeoutMode is iteration - success");
+
+        def.retry("Unified CSOT tests do not account for RTT which varies in TLS vs non-TLS runs")
+                .whenFailureContains("timeout")
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for tailable non-awaitData cursors",
+                        "timeoutMS is refreshed for getMore - success");
+
 
         def.skipNoncompliantReactive("No good way to fulfill tryNext() requirement with a Publisher<T>")
                 .test("client-side-operations-timeout", "timeoutMS behaves correctly for tailable awaitData cursors",

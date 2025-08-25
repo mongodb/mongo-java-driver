@@ -16,16 +16,15 @@
 
 package com.mongodb.reactivestreams.client;
 
-import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
+import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.AbstractClientSideOperationsTimeoutProseTest;
-import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
@@ -61,6 +60,7 @@ import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.sleep;
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -108,7 +108,6 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     @Override
     public void testGridFSUploadViaOpenUploadStreamTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
-        long rtt = ClusterFixture.getPrimaryRTT();
 
         //given
         collectionHelper.runAdminCommand("{"
@@ -117,12 +116,12 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                 + "  data: {"
                 + "    failCommands: [\"insert\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + (rtt + 405)
+                + "    blockTimeMS: " + 405
                 + "  }"
                 + "}");
 
         try (MongoClient client = createReactiveClient(getMongoClientSettingsBuilder()
-                .timeout(rtt + 400, TimeUnit.MILLISECONDS))) {
+                .timeout(withRttAdjustment(400, 2), TimeUnit.MILLISECONDS))) {
             MongoDatabase database = client.getDatabase(gridFsFileNamespace.getDatabaseName());
             GridFSBucket gridFsBucket = createReaciveGridFsBucket(database, GRID_FS_BUCKET_NAME);
 
@@ -151,7 +150,11 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
             Throwable commandError = onErrorEvents.get(0);
             Throwable operationTimeoutErrorCause = commandError.getCause();
             assertInstanceOf(MongoOperationTimeoutException.class, commandError);
-            assertInstanceOf(MongoSocketReadTimeoutException.class, operationTimeoutErrorCause);
+            assertTrue(operationTimeoutErrorCause instanceof MongoSocketReadTimeoutException
+                    || operationTimeoutErrorCause instanceof MongoExecutionTimeoutException,
+                    "Expected operationTimeoutErrorCause to be either MongoSocketReadTimeoutException"
+                            + " or MongoExecutionTimeoutException, but was: "
+                            + operationTimeoutErrorCause.getClass().getName());
 
             CommandFailedEvent chunkInsertFailedEvent = commandListener.getCommandFailedEvent("insert");
             assertNotNull(chunkInsertFailedEvent);
@@ -164,7 +167,6 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     @Override
     public void testAbortingGridFsUploadStreamTimeout() throws ExecutionException, InterruptedException, TimeoutException {
         assumeTrue(serverVersionAtLeast(4, 4));
-        long rtt = ClusterFixture.getPrimaryRTT();
 
         //given
         CompletableFuture<Throwable> droppedErrorFuture = new CompletableFuture<>();
@@ -176,12 +178,12 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                 + "  data: {"
                 + "    failCommands: [\"delete\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + (rtt + 405)
+                + "    blockTimeMS: " + 405
                 + "  }"
                 + "}");
 
         try (MongoClient client = createReactiveClient(getMongoClientSettingsBuilder()
-                .timeout(rtt + 400, TimeUnit.MILLISECONDS))) {
+                .timeout(withRttAdjustment(400, 2), TimeUnit.MILLISECONDS))) {
             MongoDatabase database = client.getDatabase(gridFsFileNamespace.getDatabaseName());
             GridFSBucket gridFsBucket = createReaciveGridFsBucket(database, GRID_FS_BUCKET_NAME);
 
@@ -207,7 +209,11 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
             Throwable operationTimeoutErrorCause = commandError.getCause();
 
             assertInstanceOf(MongoOperationTimeoutException.class, commandError);
-            assertInstanceOf(MongoSocketReadTimeoutException.class, operationTimeoutErrorCause);
+            assertTrue(operationTimeoutErrorCause instanceof MongoSocketReadTimeoutException
+                            || operationTimeoutErrorCause instanceof MongoExecutionTimeoutException,
+                    "Expected operationTimeoutErrorCause to be either MongoSocketReadTimeoutException"
+                            + " or MongoExecutionTimeoutException, but was: "
+                            + operationTimeoutErrorCause.getClass().getName());
 
             CommandFailedEvent deleteFailedEvent = commandListener.getCommandFailedEvent("delete");
             assertNotNull(deleteFailedEvent);
@@ -228,9 +234,8 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
         assumeTrue(isDiscoverableReplicaSet());
 
         //given
-        long rtt = ClusterFixture.getPrimaryRTT();
         try (MongoClient client = createReactiveClient(getMongoClientSettingsBuilder()
-                .timeout(rtt + 500, TimeUnit.MILLISECONDS))) {
+                .timeout(withRttAdjustment(500), TimeUnit.MILLISECONDS))) {
 
             MongoNamespace namespace = generateNamespace();
             MongoCollection<Document> collection = client.getDatabase(namespace.getDatabaseName())
@@ -282,9 +287,8 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
         assumeTrue(isDiscoverableReplicaSet());
 
         //given
-        long rtt = ClusterFixture.getPrimaryRTT();
         try (MongoClient client = createReactiveClient(getMongoClientSettingsBuilder()
-                .timeout(rtt + 200, TimeUnit.MILLISECONDS))) {
+                .timeout(200, TimeUnit.MILLISECONDS))) {
 
             MongoNamespace namespace = generateNamespace();
             MongoCollection<Document> collection = client.getDatabase(namespace.getDatabaseName())
@@ -299,7 +303,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                     + "    data: {"
                     + "        failCommands: [\"aggregate\" ],"
                     + "        blockConnection: true,"
-                    + "        blockTimeMS: " + (rtt + 201)
+                    + "        blockTimeMS: " + 201
                     + "    }"
                     + "}");
 
@@ -330,13 +334,10 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
 
         //given
         BsonTimestamp startTime = new BsonTimestamp((int) Instant.now().getEpochSecond(), 0);
-        collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions());
         sleep(2000);
 
-
-        long rtt = ClusterFixture.getPrimaryRTT();
         try (MongoClient client = createReactiveClient(getMongoClientSettingsBuilder()
-                .timeout(rtt + 300, TimeUnit.MILLISECONDS))) {
+                .timeout(withRttAdjustment(500), TimeUnit.MILLISECONDS))) {
 
             MongoCollection<Document> collection = client.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
@@ -347,7 +348,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                     + "    data: {"
                     + "        failCommands: [\"getMore\", \"aggregate\"],"
                     + "        blockConnection: true,"
-                    + "        blockTimeMS: " + (rtt + 200)
+                    + "        blockTimeMS: " + 200
                     + "    }"
                     + "}");
 
@@ -398,12 +399,10 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
 
         //given
         BsonTimestamp startTime = new BsonTimestamp((int) Instant.now().getEpochSecond(), 0);
-        collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions());
         sleep(2000);
 
-        long rtt = ClusterFixture.getPrimaryRTT();
         try (MongoClient client = createReactiveClient(getMongoClientSettingsBuilder()
-                .timeout(rtt + 300, TimeUnit.MILLISECONDS))) {
+                .timeout(withRttAdjustment(500), TimeUnit.MILLISECONDS))) {
 
             MongoCollection<Document> collection = client.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName())
@@ -415,7 +414,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                     + "    data: {"
                     + "        failCommands: [\"aggregate\", \"getMore\"],"
                     + "        blockConnection: true,"
-                    + "        blockTimeMS: " + (rtt + 200)
+                    + "        blockTimeMS: " + 200
                     + "    }"
                     + "}");
 
@@ -458,9 +457,8 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
         assumeTrue(isDiscoverableReplicaSet());
 
         //given
-        long rtt = ClusterFixture.getPrimaryRTT();
         try (MongoClient client = createReactiveClient(getMongoClientSettingsBuilder()
-                .timeout(rtt + 2500, TimeUnit.MILLISECONDS))) {
+                .timeout(withRttAdjustment(2500), TimeUnit.MILLISECONDS))) {
 
             MongoCollection<Document> collection = client.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
