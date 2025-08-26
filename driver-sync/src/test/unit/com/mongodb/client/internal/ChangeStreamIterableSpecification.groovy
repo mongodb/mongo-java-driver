@@ -209,7 +209,7 @@ class ChangeStreamIterableSpecification extends Specification {
         def count = 0
         def cannedResults = ['{_id: { _data: 1}}', '{_id: {_data: 2}}', '{_id: {_data: 3}}'].collect { RawBsonDocument.parse(it) }
         def executor = new TestOperationExecutor([cursor(cannedResults.collect()), cursor(cannedResults.collect()), cursor(cannedResults.collect()),
-                                                  cursor(cannedResults.collect())])
+                                                  cursor(cannedResults.collect()), cursor(cannedResults.collect())])
         def mongoIterable = new ChangeStreamIterableImpl(null, namespace, codecRegistry, readPreference, readConcern, executor, [],
                 Document, ChangeStreamLevel.COLLECTION, true, TIMEOUT_SETTINGS).withDocumentClass(RawBsonDocument)
 
