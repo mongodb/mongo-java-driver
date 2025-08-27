@@ -406,7 +406,7 @@ public class OidcAuthenticationProseTests {
         MongoClientSettings clientSettings = createSettings(callback);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
             assertCause(MongoCommandException.class,
-                    "Command failed with error 18 (AuthenticationFailed):",
+                    "Command execution failed on MongoDB server with error 18 (AuthenticationFailed):",
                     () -> performFind(mongoClient));
         }
     }
@@ -424,7 +424,7 @@ public class OidcAuthenticationProseTests {
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
             failCommand(20, 1, "saslStart");
             assertCause(MongoCommandException.class,
-                    "Command failed with error 20",
+                    "Command execution failed on MongoDB server with error 20",
                     () -> performFind(mongoClient));
 
             assertEquals(Arrays.asList(
@@ -471,7 +471,7 @@ public class OidcAuthenticationProseTests {
             performFind(mongoClient);
             failCommand(391, 1, "find");
             assertCause(MongoCommandException.class,
-                    "Command failed with error 18",
+                    "Command execution failed on MongoDB server with error 18",
                     () -> performFind(mongoClient));
         }
         assertEquals(2, wrappedCallback.invocations.get());
@@ -492,7 +492,7 @@ public class OidcAuthenticationProseTests {
             performInsert(mongoClient);
             failCommand(391, 1, "insert");
             assertCause(MongoCommandException.class,
-                    "Command failed with error 18",
+                    "Command execution failed on MongoDB server with error 18",
                     () -> performInsert(mongoClient));
         }
         assertEquals(2, wrappedCallback.invocations.get());
@@ -740,7 +740,7 @@ public class OidcAuthenticationProseTests {
         TestCommandListener commandListener = new TestCommandListener(listener);
         assertFindFails(createHumanSettings(createHumanCallback(), commandListener),
                 MongoCommandException.class,
-                "Command failed with error 18");
+                "Command execution failed on MongoDB server with error 18");
         assertEquals(Arrays.asList(
                 "isMaster started",
                 "isMaster succeeded",
@@ -833,7 +833,7 @@ public class OidcAuthenticationProseTests {
             assertEquals(1, callback1.getInvocations());
             failCommand(391, 1, "find");
             assertCause(MongoCommandException.class,
-                    "Command failed with error 18",
+                    "Command execution failed on MongoDB server with error 18",
                     () -> performFind(mongoClient));
             assertEquals(3, callback1.getInvocations());
         }
