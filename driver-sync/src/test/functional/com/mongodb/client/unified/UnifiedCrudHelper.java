@@ -1364,18 +1364,14 @@ final class UnifiedCrudHelper extends UnifiedHelper {
     public OperationResult executeDropCollection(final BsonDocument operation) {
         MongoDatabase database = getMongoDatabase(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
-        String collectionName = arguments.getString("collection").getValue();
+        String collectionName = arguments.remove("collection").asString().getValue();
 
         DropCollectionOptions dropCollectionOptions = new DropCollectionOptions();
         for (Map.Entry<String, BsonValue> entry : arguments.entrySet()) {
-            switch (entry.getKey()) {
-                case "collection":
-                    break;
-                case "encryptedFields":
-                    dropCollectionOptions.encryptedFields(entry.getValue().asDocument());
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unsupported drop collections option: " + entry.getKey());
+            if (entry.getKey().equals("encryptedFields")) {
+                dropCollectionOptions.encryptedFields(entry.getValue().asDocument());
+            } else {
+                throw new UnsupportedOperationException("Unsupported drop collections option: " + entry.getKey());
             }
         }
 
