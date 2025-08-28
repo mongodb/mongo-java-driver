@@ -51,13 +51,15 @@ case class SyncMongoDatabase(wrapped: MongoDatabase) extends JMongoDatabase {
   override def withCodecRegistry(codecRegistry: CodecRegistry) =
     SyncMongoDatabase(wrapped.withCodecRegistry(codecRegistry))
 
-  override def withReadPreference(readPreference: ReadPreference) = throw new UnsupportedOperationException
+  override def withReadPreference(readPreference: ReadPreference) =
+    SyncMongoDatabase(wrapped.withReadPreference(readPreference))
 
-  override def withWriteConcern(writeConcern: WriteConcern) = throw new UnsupportedOperationException
+  override def withWriteConcern(writeConcern: WriteConcern) = SyncMongoDatabase(wrapped.withWriteConcern(writeConcern))
 
-  override def withReadConcern(readConcern: ReadConcern) = throw new UnsupportedOperationException
+  override def withReadConcern(readConcern: ReadConcern) = SyncMongoDatabase(wrapped.withReadConcern(readConcern))
 
-  override def withTimeout(timeout: Long, timeUnit: TimeUnit) = throw new UnsupportedOperationException
+  override def withTimeout(timeout: Long, timeUnit: TimeUnit) =
+    SyncMongoDatabase(wrapped.withTimeout(timeout, timeUnit))
 
   override def getCollection(collectionName: String) =
     SyncMongoCollection[Document](wrapped.getCollection(collectionName))
