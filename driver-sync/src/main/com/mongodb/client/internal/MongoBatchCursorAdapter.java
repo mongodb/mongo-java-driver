@@ -97,6 +97,7 @@ public class MongoBatchCursorAdapter<T> implements MongoCursor<T> {
 
     private T getNextInBatch() {
         T nextInBatch = curBatch.get(curPos);
+        curBatch.set(curPos, null);
         if (curPos < curBatch.size() - 1) {
             curPos++;
         } else {

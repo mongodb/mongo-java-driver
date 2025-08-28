@@ -112,6 +112,7 @@ public class MongoChangeStreamCursorImpl<T> implements MongoChangeStreamCursor<T
 
     private T getNextInBatch() {
         RawBsonDocument nextInBatch = curBatch.get(curPos);
+        curBatch.set(curPos, null);
         resumeToken = nextInBatch.getDocument("_id");
         if (curPos < curBatch.size() - 1) {
             curPos++;

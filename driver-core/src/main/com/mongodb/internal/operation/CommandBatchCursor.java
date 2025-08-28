@@ -144,6 +144,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
         List<T> retVal = nextBatch;
         nextBatch = null;
+        commandCursorResult = CommandCursorResult.withEmptyResults(commandCursorResult);
         return retVal;
     }
 
