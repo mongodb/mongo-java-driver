@@ -33,6 +33,11 @@ public interface MongoCryptContext extends Closeable {
      */
     enum State {
         /**
+         *  There has been an error
+         */
+        ERROR(CAPI.MONGOCRYPT_CTX_ERROR),
+
+        /**
          *  Needs collection information from the cluster encrypting to
          */
         NEED_MONGO_COLLINFO(CAPI.MONGOCRYPT_CTX_NEED_MONGO_COLLINFO),
