@@ -98,8 +98,7 @@ public final class UnifiedClientEncryptionHelper {
                             kmsProviderMap,
                             kmsProviderOptions,
                             "endpoint",
-                            () -> getEnv("org.mongodb.test.kmipEndpoint", "localhost:5698"),
-                            null);
+                            () -> getEnv("org.mongodb.test.kmipEndpoint", "localhost:5698"));
                     break;
                 case "local":
                 case "local:name1":
@@ -107,16 +106,14 @@ public final class UnifiedClientEncryptionHelper {
                             kmsProviderMap,
                             kmsProviderOptions,
                             "key",
-                            UnifiedClientEncryptionHelper::localKmsProviderKey,
-                            null);
+                            UnifiedClientEncryptionHelper::localKmsProviderKey);
                     break;
                 case "local:name2":
                     setKmsProviderProperty(
                             kmsProviderMap,
                             kmsProviderOptions,
                             "key",
-                            null,
-                            () -> decodeLocalKmsProviderKey(kmsProviderOptions.getString("key").getValue()));
+                            () -> decodeKmsProviderString(kmsProviderOptions.getString("key").getValue()));
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported KMS provider: " + kmsProviderKey);
@@ -127,14 +124,13 @@ public final class UnifiedClientEncryptionHelper {
     }
 
     public static byte[] localKmsProviderKey() {
-        return decodeLocalKmsProviderKey("Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZ"
+        return decodeKmsProviderString("Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZ"
                 + "GJkTXVyZG9uSjFk");
     }
 
-    public static byte[] decodeLocalKmsProviderKey(final String key) {
+    public static byte[] decodeKmsProviderString(final String key) {
         return Base64.getDecoder().decode(key);
     }
-
 
     private static void setKmsProviderProperty(final Map<String, Object> kmsProviderMap,
             final BsonDocument kmsProviderOptions, final String key, final String propertyName) {
@@ -147,14 +143,12 @@ public final class UnifiedClientEncryptionHelper {
                         return getEnv(propertyName);
                     }
                     throw new UnsupportedOperationException("Missing system property for: " + key);
-                },
-                null);
+                });
     }
 
     private static void setKmsProviderProperty(final Map<String, Object> kmsProviderMap,
                                                final BsonDocument kmsProviderOptions, final String key,
-                                               @Nullable final Supplier<Object> placeholderPropertySupplier,
-                                               @Nullable final Supplier<Object> explicitPropertySupplier) {
+                                               @Nullable final Supplier<Object> placeholderPropertySupplier) {
         if (kmsProviderOptions.containsKey(key)) {
             boolean isPlaceholderValue = kmsProviderOptions.get(key).equals(PLACEHOLDER);
             if (isPlaceholderValue) {
@@ -165,10 +159,11 @@ public final class UnifiedClientEncryptionHelper {
                 return;
             }
 
-            if (explicitPropertySupplier == null) {
-                kmsProviderMap.put(key, kmsProviderOptions.get(key));
+            BsonValue kmsValue = kmsProviderOptions.get(key);
+            if (kmsValue.isString()) {
+                kmsProviderMap.put(key, decodeKmsProviderString(kmsValue.asString().getValue()));
             } else {
-                kmsProviderMap.put(key, explicitPropertySupplier.get());
+                kmsProviderMap.put(key, kmsValue);
             }
         }
     }
