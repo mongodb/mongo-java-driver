@@ -112,7 +112,7 @@ public final class UnifiedClientEncryptionHelper {
                     setKmsProviderProperty(
                             kmsProviderMap,
                             kmsProviderOptions,
-                            "key", 
+                            "key",
                             () -> decodeKmsProviderString(kmsProviderOptions.getString("key").getValue()));
                     break;
                 default:
