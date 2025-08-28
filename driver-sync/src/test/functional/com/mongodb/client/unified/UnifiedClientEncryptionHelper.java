@@ -112,7 +112,8 @@ public final class UnifiedClientEncryptionHelper {
                     setKmsProviderProperty(
                             kmsProviderMap,
                             kmsProviderOptions,
-                            "key", () -> decodeKmsProviderString(kmsProviderOptions.getString("key").getValue()));
+                            "key", 
+                            () -> decodeKmsProviderString(kmsProviderOptions.getString("key").getValue()));
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported KMS provider: " + kmsProviderKey);
