@@ -64,7 +64,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+public class ListIndexesOperation<T> implements ReadOperationCursor<T> {
     private static final String COMMAND_NAME = "listIndexes";
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;

@@ -290,7 +290,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     def 'should be able to explain an empty pipeline'() {
         given:
         def operation = new AggregateOperation(getNamespace(), [], new BsonDocumentCodec())
-        operation = async ? operation.asAsyncExplainableOperation(QUERY_PLANNER, new BsonDocumentCodec()) :
+        operation = async ? operation.asExplainableOperation(QUERY_PLANNER, new BsonDocumentCodec()) :
                             operation.asExplainableOperation(QUERY_PLANNER, new BsonDocumentCodec())
 
         when:

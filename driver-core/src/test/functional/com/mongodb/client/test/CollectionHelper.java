@@ -176,6 +176,14 @@ public final class CollectionHelper<T> {
                 case "size":
                     createCollectionOptions.sizeInBytes(createOptions.getNumber("size").longValue());
                     break;
+                case "encryptedFields":
+                    createCollectionOptions.encryptedFields(createOptions.getDocument("encryptedFields"));
+                    break;
+                case "validator":
+                    ValidationOptions validationOptions = new ValidationOptions();
+                    validationOptions.validator(createOptions.getDocument("validator"));
+                    createCollectionOptions.validationOptions(validationOptions);
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported create collection option: " + option);
             }
@@ -194,6 +202,10 @@ public final class CollectionHelper<T> {
         IndexOptionDefaults indexOptionDefaults = options.getIndexOptionDefaults();
         if (indexOptionDefaults.getStorageEngine() != null) {
             operation.indexOptionDefaults(new BsonDocument("storageEngine", toBsonDocument(indexOptionDefaults.getStorageEngine())));
+        }
+        Bson encryptedFields = options.getEncryptedFields();
+        if (encryptedFields != null) {
+            operation.encryptedFields(encryptedFields.toBsonDocument());
         }
         ValidationOptions validationOptions = options.getValidationOptions();
         if (validationOptions.getValidator() != null) {

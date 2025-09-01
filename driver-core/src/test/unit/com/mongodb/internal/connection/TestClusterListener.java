@@ -32,7 +32,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
-import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.Locks.withLock;
 
@@ -48,15 +47,17 @@ public final class TestClusterListener implements ClusterListener {
 
     @Override
     public void clusterOpening(final ClusterOpeningEvent event) {
-        isTrue("clusterOpeningEvent is null", clusterOpeningEvent == null);
-        clusterOpeningEvent = event;
+        if (clusterOpeningEvent == null) {
+            clusterOpeningEvent = event;
+        }
     }
 
     @Override
     public void clusterClosed(final ClusterClosedEvent event) {
-        isTrue("clusterClosingEvent is null", clusterClosingEvent == null);
-        closedLatch.countDown();
-        clusterClosingEvent = event;
+        if (clusterClosingEvent == null) {
+            closedLatch.countDown();
+            clusterClosingEvent = event;
+        }
     }
 
     @Override

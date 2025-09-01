@@ -201,9 +201,9 @@ class OperationUnitSpecification extends Specification {
 
         1 * connection.release()
 
-        if (operation instanceof AsyncReadOperation) {
+        if (operation instanceof ReadOperation) {
             operation.executeAsync(readBinding, callback)
-        } else if (operation instanceof AsyncWriteOperation) {
+        } else if (operation instanceof WriteOperation) {
             operation.executeAsync(writeBinding, callback)
         }
          try {

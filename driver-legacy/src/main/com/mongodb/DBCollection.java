@@ -50,7 +50,7 @@ import com.mongodb.internal.operation.MapReduceStatistics;
 import com.mongodb.internal.operation.MapReduceToCollectionOperation;
 import com.mongodb.internal.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.internal.operation.MixedBulkWriteOperation;
-import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.ReadOperationCursor;
 import com.mongodb.internal.operation.RenameCollectionOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
@@ -1038,7 +1038,7 @@ public class DBCollection {
                                                 options.getReadPreference() != null ? options.getReadPreference() : getReadPreference(),
                                                 retryReads, DBCollection.this.getTimeoutSettings()) {
             @Override
-            public ReadOperation<BatchCursor<BsonValue>> asReadOperation() {
+            public ReadOperationCursor<BsonValue> asReadOperation() {
                 return new DistinctOperation<>(getNamespace(), fieldName, new BsonValueCodec())
                                .filter(wrapAllowNull(options.getFilter()))
                                .collation(options.getCollation())
@@ -1873,7 +1873,7 @@ public class DBCollection {
         return new MongoIterableImpl<DBObject>(null, executor, ReadConcern.DEFAULT, primary(), retryReads,
                 DBCollection.this.getTimeoutSettings()) {
             @Override
-            public ReadOperation<BatchCursor<DBObject>> asReadOperation() {
+            public ReadOperationCursor<DBObject> asReadOperation() {
                 return new ListIndexesOperation<>(getNamespace(), getDefaultDBObjectCodec())
                         .retryReads(retryReads);
             }
@@ -1890,7 +1890,7 @@ public class DBCollection {
      * key name and type must be specified.
      *
      * @param index the specification of the index to drop
-     * @throws MongoException if the index does not exist
+     * @throws MongoException if the index does not exist and the server version is less than 8.3
      * @mongodb.driver.manual core/indexes/ Indexes
      */
     public void dropIndex(final DBObject index) {
@@ -1906,7 +1906,7 @@ public class DBCollection {
      * Drops the index with the given name from this collection.
      *
      * @param indexName name of index to drop
-     * @throws MongoException if the index does not exist
+     * @throws MongoException if the index does not exist and the server version is less than 8.3
      * @mongodb.driver.manual core/indexes/ Indexes
      */
     public void dropIndex(final String indexName) {
@@ -1930,7 +1930,7 @@ public class DBCollection {
      * Drops the index with the given name from this collection.  This method is exactly the same as {@code dropIndex(indexName)}.
      *
      * @param indexName name of index to drop
-     * @throws MongoException if the index does not exist
+     * @throws MongoException if the index does not exist and the server version is less than 8.3
      * @mongodb.driver.manual core/indexes/ Indexes
      */
     public void dropIndexes(final String indexName) {

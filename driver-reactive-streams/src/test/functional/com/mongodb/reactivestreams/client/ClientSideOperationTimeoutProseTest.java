@@ -514,7 +514,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
 
     @Override
     @AfterEach
-    public void tearDown() {
+    public void tearDown() throws InterruptedException {
         super.tearDown();
         SyncMongoClient.disableSleep();
     }

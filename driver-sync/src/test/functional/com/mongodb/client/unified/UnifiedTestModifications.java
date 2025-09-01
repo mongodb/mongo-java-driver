@@ -76,9 +76,97 @@ public final class UnifiedTestModifications {
                 .test("client-side-operations-timeout", "timeoutMS behaves correctly for GridFS download operations",
                       "timeoutMS applied to entire download, not individual parts");
 
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5815")
-                .test("client-side-operations-timeout", "WaitQueueTimeoutError does not clear the pool",
-                        "WaitQueueTimeoutError does not clear the pool");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5491")
+                .testContains("client-side-operations-timeout", "dropIndex")
+                .when(() -> !serverVersionLessThan(8, 3))
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "socketTimeoutMS is ignored if timeoutMS is set - dropIndex on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "wTimeoutMS is ignored if timeoutMS is set - dropIndex on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "maxTimeMS is ignored if timeoutMS is set - dropIndex on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "socketTimeoutMS is ignored if timeoutMS is set - dropIndexes on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "wTimeoutMS is ignored if timeoutMS is set - dropIndexes on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "maxTimeMS is ignored if timeoutMS is set - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoDatabase",
+                        "timeoutMS can be configured on a MongoDatabase - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoDatabase",
+                        "timeoutMS can be set to 0 on a MongoDatabase - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoDatabase",
+                        "timeoutMS can be configured on a MongoDatabase - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoDatabase",
+                        "timeoutMS can be set to 0 on a MongoDatabase - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoCollection",
+                        "timeoutMS can be configured on a MongoCollection - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoCollection",
+                        "timeoutMS can be set to 0 on a MongoCollection - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoCollection",
+                        "timeoutMS can be configured on a MongoCollection - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoCollection",
+                        "timeoutMS can be set to 0 on a MongoCollection - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for an operation",
+                        "timeoutMS can be configured for an operation - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for an operation",
+                        "timeoutMS can be set to 0 for an operation - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for an operation",
+                        "timeoutMS can be configured for an operation - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for an operation",
+                        "timeoutMS can be set to 0 for an operation - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
+                        "timeoutMS can be configured on a MongoClient - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
+                        "timeoutMS can be set to 0 on a MongoClient - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
+                        "timeoutMS can be configured on a MongoClient - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
+                        "timeoutMS can be set to 0 on a MongoClient - dropIndexes on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "socketTimeoutMS is ignored if timeoutMS is set - dropIndex on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "wTimeoutMS is ignored if timeoutMS is set - dropIndex on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "maxTimeMS is ignored if timeoutMS is set - dropIndex on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "socketTimeoutMS is ignored if timeoutMS is set - dropIndexes on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "wTimeoutMS is ignored if timeoutMS is set - dropIndexes on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "maxTimeMS is ignored if timeoutMS is set - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoDatabase",
+                        "timeoutMS can be configured on a MongoDatabase - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoDatabase",
+                        "timeoutMS can be set to 0 on a MongoDatabase - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoDatabase",
+                        "timeoutMS can be configured on a MongoDatabase - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoDatabase",
+                        "timeoutMS can be set to 0 on a MongoDatabase - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoCollection",
+                        "timeoutMS can be configured on a MongoCollection - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoCollection",
+                        "timeoutMS can be set to 0 on a MongoCollection - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoCollection",
+                        "timeoutMS can be configured on a MongoCollection - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoCollection",
+                        "timeoutMS can be set to 0 on a MongoCollection - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for an operation",
+                        "timeoutMS can be configured for an operation - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for an operation",
+                        "timeoutMS can be set to 0 for an operation - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for an operation",
+                        "timeoutMS can be configured for an operation - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for an operation",
+                        "timeoutMS can be set to 0 for an operation - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
+                        "timeoutMS can be configured on a MongoClient - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
+                        "timeoutMS can be set to 0 on a MongoClient - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
+                        "timeoutMS can be configured on a MongoClient - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
+                        "timeoutMS can be set to 0 on a MongoClient - dropIndexes on collection");
 
         // TODO-JAVA-5712
 
@@ -161,6 +249,10 @@ public final class UnifiedTestModifications {
                 .when(() -> def.isReactive() && UnifiedTest.Language.KOTLIN.equals(def.getLanguage()))
                 .file("crud", "findOne");
 
+        def.skipNoncompliant("Scala Mono pulls the data and sets the batch size https://jira.mongodb.org/browse/JAVA-5838")
+                .when(() -> UnifiedTest.Language.SCALA.equals(def.getLanguage()))
+                .file("crud", "findOne");
+
         def.skipNoncompliant("Updates and Replace bulk operations are split in the java driver")
                         .file("crud", "bulkWrite-comment");
 
@@ -175,6 +267,37 @@ public final class UnifiedTestModifications {
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5689")
                 .file("gridfs", "gridfs-deleteByName")
                 .file("gridfs", "gridfs-renameByName");
+
+        // Skip all rawData based tests
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5830 rawData support only added to Go and Node")
+                .file("collection-management", "listCollections-rawData")
+                .file("crud", "aggregate-rawData")
+                .file("crud", "aggregate-rawData")
+                .file("crud", "BulkWrite deleteMany-rawData")
+                .file("crud", "BulkWrite deleteOne-rawData")
+                .file("crud", "BulkWrite replaceOne-rawData")
+                .file("crud", "BulkWrite updateMany-rawData")
+                .file("crud", "BulkWrite updateOne-rawData")
+                .file("crud", "client bulkWrite delete-rawData")
+                .file("crud", "client bulkWrite replaceOne-rawData")
+                .file("crud", "client bulkWrite update-rawData")
+                .file("crud", "count-rawData")
+                .file("crud", "countDocuments-rawData")
+                .file("crud", "db-aggregate-rawdata")
+                .file("crud", "deleteMany-rawData")
+                .file("crud", "deleteOne-rawData")
+                .file("crud", "distinct-rawData")
+                .file("crud", "estimatedDocumentCount-rawData")
+                .file("crud", "find-rawData")
+                .file("crud", "findOneAndDelete-rawData")
+                .file("crud", "findOneAndReplace-rawData")
+                .file("crud", "findOneAndUpdate-rawData")
+                .file("crud", "insertMany-rawData")
+                .file("crud", "insertOne-rawData")
+                .file("crud", "replaceOne-rawData")
+                .file("crud", "updateMany-rawData")
+                .file("crud", "updateOne-rawData")
+                .file("index-management", "index management-rawData");
 
         // retryable-reads
 

@@ -24,13 +24,12 @@ import com.mongodb.client.model.DBCreateViewOptions;
 import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.CommandReadOperation;
 import com.mongodb.internal.operation.CreateCollectionOperation;
 import com.mongodb.internal.operation.CreateViewOperation;
 import com.mongodb.internal.operation.DropDatabaseOperation;
 import com.mongodb.internal.operation.ListCollectionsOperation;
-import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.ReadOperationCursor;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
@@ -223,7 +222,7 @@ public class DB {
                 new MongoIterableImpl<DBObject>(null, executor, ReadConcern.DEFAULT, primary(),
                                                 mongo.getMongoClientOptions().getRetryReads(), DB.this.getTimeoutSettings()) {
                     @Override
-                    public ReadOperation<BatchCursor<DBObject>> asReadOperation() {
+                    public ReadOperationCursor<DBObject> asReadOperation() {
                         return new ListCollectionsOperation<>(name, commandCodec).nameOnly(true);
                     }
 

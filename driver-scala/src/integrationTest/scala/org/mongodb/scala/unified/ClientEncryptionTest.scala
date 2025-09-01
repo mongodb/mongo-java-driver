@@ -14,15 +14,8 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.operation;
+package org.mongodb.scala.unified
 
-import com.mongodb.ExplainVerbosity;
-import com.mongodb.lang.Nullable;
-import org.bson.codecs.Decoder;
-
-/**
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
- */
-public interface ExplainableReadOperation<T> extends ReadOperation<T> {
-    <R> ReadOperation<R> asExplainableOperation(@Nullable ExplainVerbosity verbosity, Decoder<R> resultDecoder);
+object ClientEncryptionTest extends UnifiedTest {
+  val directory = "client-side-encryption/tests/unified"
 }

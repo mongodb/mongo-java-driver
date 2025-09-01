@@ -501,39 +501,44 @@ abstract class BaseCluster implements Cluster {
         }
 
         public void run() {
-            while (!isClosed) {
-                CountDownLatch currentPhase = phase.get();
-                ClusterDescription curDescription = description;
+            try {
+                while (!isClosed) {
+                    CountDownLatch currentPhase = phase.get();
+                    ClusterDescription curDescription = description;
 
-                Timeout timeout = Timeout.infinite();
-                boolean someWaitersNotSatisfied = false;
-                for (Iterator<ServerSelectionRequest> iter = waitQueue.iterator(); iter.hasNext();) {
-                    ServerSelectionRequest currentRequest = iter.next();
-                    if (handleServerSelectionRequest(currentRequest, currentPhase, curDescription)) {
-                        iter.remove();
-                    } else {
-                        someWaitersNotSatisfied = true;
-                        timeout = Timeout.earliest(
-                                timeout,
-                                currentRequest.getTimeout(),
-                                startMinWaitHeartbeatTimeout());
+                    Timeout timeout = Timeout.infinite();
+                    boolean someWaitersNotSatisfied = false;
+                    for (Iterator<ServerSelectionRequest> iter = waitQueue.iterator(); iter.hasNext();) {
+                        ServerSelectionRequest currentRequest = iter.next();
+                        if (handleServerSelectionRequest(currentRequest, currentPhase, curDescription)) {
+                            iter.remove();
+                        } else {
+                            someWaitersNotSatisfied = true;
+                            timeout = Timeout.earliest(
+                                    timeout,
+                                    currentRequest.getTimeout(),
+                                    startMinWaitHeartbeatTimeout());
+                        }
+                    }
+
+                    if (someWaitersNotSatisfied) {
+                        connect();
+                    }
+
+                    try {
+                        timeout.awaitOn(currentPhase, () -> "ignored");
+                    } catch (MongoInterruptedException closed) {
+                        // The cluster has been closed and the while loop will exit.
                     }
                 }
-
-                if (someWaitersNotSatisfied) {
-                    connect();
+                // Notify all remaining waiters that a shutdown is in progress
+                for (Iterator<ServerSelectionRequest> iter = waitQueue.iterator(); iter.hasNext();) {
+                    iter.next().onResult(null, new MongoClientException("Shutdown in progress"));
+                    iter.remove();
                 }
-
-                try {
-                    timeout.awaitOn(currentPhase, () -> "ignored");
-                } catch (MongoInterruptedException closed) {
-                    // The cluster has been closed and the while loop will exit.
-                }
-            }
-            // Notify all remaining waiters that a shutdown is in progress
-            for (Iterator<ServerSelectionRequest> iter = waitQueue.iterator(); iter.hasNext();) {
-                iter.next().onResult(null, new MongoClientException("Shutdown in progress"));
-                iter.remove();
+            } catch (Throwable t) {
+                LOGGER.error(this + " stopped working. You may want to recreate the MongoClient", t);
+                throw t;
             }
         }
     }
