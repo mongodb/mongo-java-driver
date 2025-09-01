@@ -69,6 +69,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.mongodb.AuthenticationMechanism.MONGODB_OIDC;
+import static com.mongodb.ClusterFixture.getEnv;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.isLoadBalanced;
 import static com.mongodb.ClusterFixture.isSharded;
@@ -502,7 +503,15 @@ public final class Entities {
         }
         if (entity.containsKey("autoEncryptOpts")) {
             AutoEncryptionSettings.Builder builder = AutoEncryptionSettings.builder();
-            for (Map.Entry<String, BsonValue> entry : entity.getDocument("autoEncryptOpts").entrySet()) {
+            BsonDocument autoEncryptOpts = entity.getDocument("autoEncryptOpts");
+
+            String cryptSharedLibPath = getEnv("CRYPT_SHARED_LIB_PATH", "");
+            if (!cryptSharedLibPath.isEmpty()) {
+                BsonDocument extraOptions = autoEncryptOpts.getDocument("extraOptions", new BsonDocument());
+                autoEncryptOpts.put("extraOptions", extraOptions.append("cryptSharedLibPath", new BsonString(cryptSharedLibPath)));
+            }
+
+            for (Map.Entry<String, BsonValue> entry : autoEncryptOpts.entrySet()) {
                 switch (entry.getKey()) {
                     case "bypassAutoEncryption":
                         builder.bypassAutoEncryption(entry.getValue().asBoolean().getValue());
@@ -530,6 +539,9 @@ public final class Entities {
                             switch (extraOptionsEntry.getKey()) {
                                 case "mongocryptdBypassSpawn":
                                     extraOptions.put(extraOptionsEntry.getKey(), extraOptionsEntry.getValue().asBoolean().getValue());
+                                    break;
+                                case "cryptSharedLibPath":
+                                    extraOptions.put(extraOptionsEntry.getKey(), extraOptionsEntry.getValue().asString().getValue());
                                     break;
                                 default:
                                     throw new UnsupportedOperationException("Unsupported extra encryption option: " + extraOptionsEntry.getKey());
@@ -740,6 +752,9 @@ public final class Entities {
     public void close() {
         cursors.values().forEach(MongoCursor::close);
         sessions.values().forEach(ClientSession::close);
+        collections.values().forEach(MongoCollection::drop);
+        databases.values().stream().filter(d -> !d.getName().equals("admin")).forEach(MongoDatabase::drop);
+        clientEncryptions.values().forEach(ClientEncryption::close);
         clients.values().forEach(MongoClient::close);
         clientLoggingInterceptors.values().forEach(TestLoggingInterceptor::close);
         threads.values().forEach(ExecutorService::shutdownNow);
