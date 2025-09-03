@@ -32,7 +32,9 @@ public class DiscriminatorWithGetterModel {
 
     @Override
     public boolean equals(final Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final DiscriminatorWithGetterModel that = (DiscriminatorWithGetterModel) o;
         return Objects.equals(getDiscriminatorKey(), that.getDiscriminatorKey());
     }
