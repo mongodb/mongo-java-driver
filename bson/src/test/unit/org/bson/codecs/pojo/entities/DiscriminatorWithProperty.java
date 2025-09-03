@@ -34,7 +34,9 @@ public class DiscriminatorWithProperty {
 
     @Override
     public boolean equals(final Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || getClass() != o.getClass()){
+            return false;
+        }
         final DiscriminatorWithProperty that = (DiscriminatorWithProperty) o;
         return Objects.equals(getDiscriminator(), that.getDiscriminator());
     }
