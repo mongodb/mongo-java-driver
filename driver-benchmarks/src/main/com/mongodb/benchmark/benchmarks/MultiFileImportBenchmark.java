@@ -45,6 +45,10 @@ public class MultiFileImportBenchmark extends AbstractMongoBenchmark {
     private ExecutorService fileReadingService;
     private ExecutorService documentWritingService;
 
+    public MultiFileImportBenchmark() {
+        super("LDJSON multi-file import");
+    }
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -78,12 +82,6 @@ public class MultiFileImportBenchmark extends AbstractMongoBenchmark {
     }
 
     @Override
-    public String getName() {
-        return "LDJSON multi-file import";
-    }
-
-
-    @Override
     public void run() throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(500);
 
@@ -95,42 +93,29 @@ public class MultiFileImportBenchmark extends AbstractMongoBenchmark {
     }
 
     private Runnable importJsonFile(final CountDownLatch latch, final int fileId) {
-        final RawBsonDocumentCodec codec = new RawBsonDocumentCodec();
-        return new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    String resourcePath = "parallel/ldjson_multi/ldjson" + String.format("%03d", fileId) + ".txt";
-                    BufferedReader reader = new BufferedReader(readFromRelativePath(resourcePath), 1024 * 64);
-                    try {
-                        String json;
-                        List<RawBsonDocument> documents = new ArrayList<RawBsonDocument>(1000);
-                        while ((json = reader.readLine()) != null) {
-                            RawBsonDocument document = codec.decode(new JsonReader(json), DecoderContext.builder().build());
-                            documents.add(document);
-                            if (documents.size() == 1000) {
-                                final List<RawBsonDocument> documentsToInsert = documents;
-                                documentWritingService.submit(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        collection.insertMany(documentsToInsert, new InsertManyOptions().ordered(false));
-                                        latch.countDown();
-                                    }
-                                });
-                                documents = new ArrayList<RawBsonDocument>(1000);
-                            }
-                        }
-                        if (!documents.isEmpty()) {
-                            throw new IllegalStateException("Document count not a multiple of 1000");
-                        }
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } finally {
-                        reader.close();
+        RawBsonDocumentCodec codec = new RawBsonDocumentCodec();
+        return () -> {
+            String resourcePath = "parallel/ldjson_multi/ldjson" + String.format("%03d", fileId) + ".txt";
+            try (BufferedReader reader = new BufferedReader(readFromRelativePath(resourcePath), 1024 * 64)) {
+                String json;
+                List<RawBsonDocument> documents = new ArrayList<>(1000);
+                while ((json = reader.readLine()) != null) {
+                    RawBsonDocument document = codec.decode(new JsonReader(json), DecoderContext.builder().build());
+                    documents.add(document);
+                    if (documents.size() == 1000) {
+                        List<RawBsonDocument> documentsToInsert = documents;
+                        documentWritingService.submit(() -> {
+                            collection.insertMany(documentsToInsert, new InsertManyOptions().ordered(false));
+                            latch.countDown();
+                        });
+                        documents = new ArrayList<>(1000);
                     }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
+                if (!documents.isEmpty()) {
+                    throw new IllegalStateException("Document count not a multiple of 1000");
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         };
     }

@@ -16,9 +16,11 @@
 
 package org.mongodb.scala
 
-import java.util.concurrent.TimeUnit
+import com.mongodb.annotations.{ Alpha, Reason }
 
+import java.util.concurrent.TimeUnit
 import com.mongodb.reactivestreams.client.DistinctPublisher
+import org.mongodb.scala.bson.BsonValue
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Collation
 
@@ -36,7 +38,7 @@ case class DistinctObservable[TResult](private val wrapped: DistinctPublisher[TR
   /**
    * Sets the query filter to apply to the query.
    *
-   * [[http://docs.mongodb.org/manual/reference/method/db.collection.find/ Filter]]
+   * [[https://www.mongodb.com/docs/manual/reference/method/db.collection.find/ Filter]]
    * @param filter the filter, which may be null.
    * @return this
    */
@@ -48,7 +50,7 @@ case class DistinctObservable[TResult](private val wrapped: DistinctPublisher[TR
   /**
    * Sets the maximum execution time on the server for this operation.
    *
-   * [[http://docs.mongodb.org/manual/reference/operator/meta/maxTimeMS/ Max Time]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/ Max Time]]
    * @param duration the duration
    * @return this
    */
@@ -80,6 +82,73 @@ case class DistinctObservable[TResult](private val wrapped: DistinctPublisher[TR
    */
   def batchSize(batchSize: Int): DistinctObservable[TResult] = {
     wrapped.batchSize(batchSize)
+    this
+  }
+
+  /**
+   * Sets the comment for this operation. A null value means no comment is set.
+   *
+   * @param comment the comment
+   * @return this
+   * @since 4.6
+   * @note Requires MongoDB 4.4 or greater
+   */
+  def comment(comment: String): DistinctObservable[TResult] = {
+    wrapped.comment(comment)
+    this
+  }
+
+  /**
+   * Sets the comment for this operation. A null value means no comment is set.
+   *
+   * @param comment the comment
+   * @return this
+   * @since 4.6
+   * @note Requires MongoDB 4.4 or greater
+   */
+  def comment(comment: BsonValue): DistinctObservable[TResult] = {
+    wrapped.comment(comment)
+    this
+  }
+
+  /**
+   * Sets the hint for this operation. A null value means no hint is set.
+   *
+   * @param hint the hint
+   * @return this
+   * @note if [[hint]] is set that will be used instead of any hint string.
+   * @since 5.3
+   */
+  def hint(hint: Bson): DistinctObservable[TResult] = {
+    wrapped.hint(hint)
+    this
+  }
+
+  /**
+   * Sets the hint for this operation. A null value means no hint is set.
+   *
+   * @param hint the name of the index which should be used for the operation
+   * @return this
+   * @since 5.3
+   */
+  def hintString(hint: String): DistinctObservable[TResult] = {
+    wrapped.hintString(hint)
+    this
+  }
+
+  /**
+   * Sets the timeoutMode for the cursor.
+   *
+   * Requires the `timeout` to be set, either in the [[MongoClientSettings]],
+   * via [[MongoDatabase]] or via [[MongoCollection]]
+   *
+   * @param timeoutMode the timeout mode
+   * @return this
+   * @since 5.2
+   */
+  @Alpha(Array(Reason.CLIENT))
+  def timeoutMode(timeoutMode: TimeoutMode): DistinctObservable[TResult] = {
+    wrapped.timeoutMode(timeoutMode)
     this
   }
 

@@ -41,6 +41,16 @@ public abstract class OutputBuffer extends OutputStream implements BsonOutput {
     public void close() {
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The {@link #flush()} method of {@link OutputBuffer} does nothing.</p>
+     */
+    @Override
+    public void flush() throws IOException {
+        super.flush();
+    }
+
     @Override
     public void write(final byte[] bytes, final int offset, final int length) {
         writeBytes(bytes, offset, length);
@@ -60,6 +70,7 @@ public abstract class OutputBuffer extends OutputStream implements BsonOutput {
     }
 
     @Override
+    @Deprecated
     public void writeInt32(final int position, final int value) {
         write(position, value >> 0);
         write(position + 1, value >> 8);
@@ -122,7 +133,10 @@ public abstract class OutputBuffer extends OutputStream implements BsonOutput {
      * Get a list of byte buffers that are prepared to be read from; in other words, whose position is 0 and whose limit is the number of
      * bytes that should read. <p> Note that the byte buffers may be read-only. </p>
      *
-     * @return the non-null list of byte buffers, in LITTLE_ENDIAN order
+     * @return the non-null list of byte buffers, in LITTLE_ENDIAN order. The returned {@link ByteBuf}s must eventually be
+     * {@linkplain ByteBuf#release() released} explicitly, calling {@link OutputBuffer#close()} may be not enough to release them.
+     * The caller must not use the {@link ByteBuf}s after closing this {@link OutputBuffer},
+     * though releasing them is allowed to be done after closing this {@link OutputBuffer}.
      */
     public abstract List<ByteBuf> getByteBuffers();
 
@@ -183,7 +197,15 @@ public abstract class OutputBuffer extends OutputStream implements BsonOutput {
         writeInt64(value);
     }
 
-    private int writeCharacters(final String str, final boolean checkForNullCharacters) {
+    /**
+     * Writes the characters of a string to the buffer as UTF-8 bytes.
+     *
+     * @param str the string to write.
+     * @param checkForNullCharacters if true, check for and disallow null characters in the string.
+     * @return the total number of bytes written.
+     * @throws BsonSerializationException if checkForNullCharacters is true and the string contains a null character.
+     */
+    protected int writeCharacters(final String str, final boolean checkForNullCharacters) {
         int len = str.length();
         int total = 0;
 

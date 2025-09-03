@@ -31,4 +31,12 @@ public interface PropertySerialization<T> {
      * @return true if the value should be serialized
      */
     boolean shouldSerialize(T value);
+
+    /**
+     * @return true if serialized inline
+     * @since 4.6
+     */
+    default boolean inline() {
+        return false;
+    }
 }

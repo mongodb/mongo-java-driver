@@ -22,18 +22,16 @@ import org.bson.BsonString;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import static com.mongodb.internal.HexUtils.hexMD5;
 
 /**
  * Utility class for working with MongoDB native authentication.
  *
- * <p>This class should not be considered a part of the public API.</p>
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class NativeAuthenticationHelper {
-
-    private static final Charset UTF_8_CHARSET = Charset.forName("UTF-8");
 
     /**
      * Creates a hash of the given user name and password, which is the hex encoding of
@@ -47,9 +45,9 @@ public final class NativeAuthenticationHelper {
     public static String createAuthenticationHash(final String userName, final char[] password) {
         ByteArrayOutputStream bout = new ByteArrayOutputStream(userName.length() + 20 + password.length);
         try {
-            bout.write(userName.getBytes(UTF_8_CHARSET));
-            bout.write(":mongo:".getBytes(UTF_8_CHARSET));
-            bout.write(new String(password).getBytes(UTF_8_CHARSET));
+            bout.write(userName.getBytes(StandardCharsets.UTF_8));
+            bout.write(":mongo:".getBytes(StandardCharsets.UTF_8));
+            bout.write(new String(password).getBytes(StandardCharsets.UTF_8));
         } catch (IOException ioe) {
             throw new RuntimeException("impossible", ioe);
         }
@@ -68,7 +66,7 @@ public final class NativeAuthenticationHelper {
         cmd.put("authenticate", new BsonInt32(1));
         cmd.put("user", new BsonString(userName));
         cmd.put("nonce", new BsonString(nonce));
-        cmd.put("key", new BsonString(hexMD5(key.getBytes(UTF_8_CHARSET))));
+        cmd.put("key", new BsonString(hexMD5(key.getBytes(StandardCharsets.UTF_8))));
 
         return cmd;
     }

@@ -19,9 +19,8 @@ package org.mongodb.scala.bson.collections
 import org.mongodb.scala.bson._
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.bson.collection.mutable
-import org.scalatest.{ FlatSpec, Matchers }
 
-class DocumentImplicitTypeConversion extends FlatSpec with Matchers {
+class DocumentImplicitTypeConversion extends BaseSpec {
 
   val emptyDoc: Document = Document.empty
 

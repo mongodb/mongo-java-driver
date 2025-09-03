@@ -38,11 +38,11 @@ public abstract class InsertOneResult {
     public abstract boolean wasAcknowledged();
 
     /**
-     * If the _id of the inserted document if available, otherwise null
+     * If the _id of the inserted document is available, otherwise null
      *
      * <p>Note: Inserting RawBsonDocuments does not generate an _id value.</p>
      *
-     * @return if _id of the inserted document if available, otherwise null
+     * @return if _id of the inserted document is available, otherwise null
      */
     @Nullable
     public abstract BsonValue getInsertedId();

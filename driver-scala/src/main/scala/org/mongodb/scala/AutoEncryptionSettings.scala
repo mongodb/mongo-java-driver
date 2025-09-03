@@ -18,7 +18,7 @@ package org.mongodb.scala
 import com.mongodb.{ AutoEncryptionSettings => JAutoEncryptionSettings }
 
 /**
- * The client-side automatic encryption settings. Client side encryption enables an application to specify what fields in a collection
+ * The client-side automatic encryption settings. In-use encryption enables an application to specify what fields in a collection
  * must be encrypted, and the driver automatically encrypts commands sent to MongoDB and decrypts responses.
  *
  * Automatic encryption is an enterprise only feature that only applies to operations on a collection. Automatic encryption is not
@@ -37,6 +37,9 @@ import com.mongodb.{ AutoEncryptionSettings => JAutoEncryptionSettings }
  * maxMessageSizeBytes of 6MB) and may have a negative performance impact.
  *
  * Automatic encryption requires the authenticated user to have the listCollections privilege action.
+ *
+ * Supplying an `encryptedFieldsMap` provides more security than relying on an encryptedFields obtained from the server.
+ * It protects against a malicious server advertising false encryptedFields.
  *
  * @since 2.7
  */

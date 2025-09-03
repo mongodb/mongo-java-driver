@@ -30,7 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.ClusterFixture.isClientSideEncryptionTest;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static junit.framework.TestCase.assertTrue;
@@ -42,10 +42,7 @@ public class ClientSideEncryptionViewAreProhibitedTest {
 
     @Before
     public void setUp() {
-        assumeTrue(serverVersionAtLeast(4, 1));
-        assumeTrue("Encryption test with external keyVault is disabled",
-                System.getProperty("org.mongodb.test.awsAccessKeyId") != null
-                        && !System.getProperty("org.mongodb.test.awsAccessKeyId").isEmpty());
+        assumeTrue("Encryption test with external keyVault is disabled", isClientSideEncryptionTest());
 
         MongoClient client = getMongoClient();
 
@@ -53,8 +50,8 @@ public class ClientSideEncryptionViewAreProhibitedTest {
         db.getCollection("view").drop();
         db.createView("view", "coll", Collections.<BsonDocument>emptyList());
 
-        Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>();
-        Map<String, Object> localMasterkey = new HashMap<String, Object>();
+        Map<String, Map<String, Object>> kmsProviders = new HashMap<>();
+        Map<String, Object> localMasterkey = new HashMap<>();
 
         byte[] localMasterkeyBytes = Base64.getDecoder().decode("Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBM"
                 + "UN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk");

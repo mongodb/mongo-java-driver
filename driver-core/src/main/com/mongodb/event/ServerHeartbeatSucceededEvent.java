@@ -17,6 +17,7 @@
 package com.mongodb.event;
 
 import com.mongodb.connection.ConnectionId;
+import com.mongodb.connection.ServerMonitoringMode;
 import org.bson.BsonDocument;
 
 import java.util.concurrent.TimeUnit;
@@ -39,20 +40,7 @@ public final class ServerHeartbeatSucceededEvent {
      * Construct an instance.
      *
      * @param connectionId the non-null connectionId
-     * @param reply the non-null reply to an isMaster command
-     * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds
-     * @deprecated Prefer {@link #ServerHeartbeatSucceededEvent(ConnectionId, BsonDocument, long, boolean)}
-     */
-    @Deprecated
-    public ServerHeartbeatSucceededEvent(final ConnectionId connectionId, final BsonDocument reply, final long elapsedTimeNanos) {
-        this(connectionId, reply, elapsedTimeNanos, false);
-    }
-
-    /**
-     * Construct an instance.
-     *
-     * @param connectionId the non-null connectionId
-     * @param reply the non-null reply to an isMaster command
+     * @param reply the non-null reply to an hello command
      * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds
      * @param awaited true if the response was awaited
      * @since 4.1
@@ -76,7 +64,7 @@ public final class ServerHeartbeatSucceededEvent {
     }
 
     /**
-     * Gets the reply to the isMaster command executed for this heartbeat.
+     * Gets the reply to the hello command executed for this heartbeat.
      *
      * @return the reply
      */
@@ -100,6 +88,7 @@ public final class ServerHeartbeatSucceededEvent {
      * to the server and the time that the server waited before sending a response.
      *
      * @return whether the response was awaited
+     * @see ServerMonitoringMode#STREAM
      * @since 4.1
      * @mongodb.server.release 4.4
      */
@@ -111,6 +100,8 @@ public final class ServerHeartbeatSucceededEvent {
     public String toString() {
         return "ServerHeartbeatSucceededEvent{"
                 + "connectionId=" + connectionId
+                + ", server=" + connectionId.getServerId().getAddress()
+                + ", clusterId=" + connectionId.getServerId().getClusterId()
                 + ", reply=" + reply
                 + ", elapsedTimeNanos=" + elapsedTimeNanos
                 + ", awaited=" + awaited

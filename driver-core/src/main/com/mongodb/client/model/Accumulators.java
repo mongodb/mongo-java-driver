@@ -20,10 +20,13 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.Document;
+import org.bson.conversions.Bson;
 
 import java.util.List;
 
 import static java.util.stream.Collectors.toList;
+import static org.bson.assertions.Assertions.notNull;
 
 /**
  * Builders for accumulators used in the group pipeline stage of an aggregation pipeline.
@@ -65,6 +68,51 @@ public final class Accumulators {
     }
 
     /**
+     * Returns a combination of a computed field and an accumulator that generates a BSON {@link org.bson.BsonType#ARRAY Array}
+     * containing computed values from the given {@code inExpression} based on the provided {@code pExpression}, which represents an array
+     * of percentiles of interest within a group, where each element is a numeric value between 0.0 and 1.0 (inclusive).
+     *
+     * @param fieldName      The field computed by the accumulator.
+     * @param inExpression   The input expression.
+     * @param pExpression    The expression representing a percentiles of interest.
+     * @param method         The method to be used for computing the percentiles.
+     * @param <InExpression> The type of the input expression.
+     * @param <PExpression>  The type of the percentile expression.
+     * @return The requested {@link BsonField}.
+     * @mongodb.driver.manual reference/operator/aggregation/percentile/ $percentile
+     * @since 4.10
+     * @mongodb.server.release 7.0
+     */
+    public static <InExpression, PExpression> BsonField percentile(final String fieldName, final InExpression inExpression,
+                                                                   final PExpression pExpression, final QuantileMethod method) {
+        notNull("fieldName", fieldName);
+        notNull("inExpression", inExpression);
+        notNull("pExpression", inExpression);
+        notNull("method", method);
+        return quantileAccumulator("$percentile", fieldName, inExpression, pExpression, method);
+    }
+
+    /**
+     * Returns a combination of a computed field and an accumulator that generates a BSON {@link org.bson.BsonType#DOUBLE Double }
+     * representing the median value computed from the given {@code inExpression} within a group.
+     *
+     * @param fieldName The field computed by the accumulator.
+     * @param inExpression The input expression.
+     * @param method The method to be used for computing the median.
+     * @param <InExpression> The type of the input expression.
+     * @return The requested {@link BsonField}.
+     * @mongodb.driver.manual reference/operator/aggregation/median/ $median
+     * @since 4.10
+     * @mongodb.server.release 7.0
+     */
+    public static <InExpression> BsonField median(final String fieldName, final InExpression inExpression,  final QuantileMethod method) {
+        notNull("fieldName", fieldName);
+        notNull("inExpression", inExpression);
+        notNull("method", method);
+        return quantileAccumulator("$median", fieldName, inExpression, null, method);
+    }
+
+    /**
      * Gets a field name for a $group operation representing the value of the given expression when applied to the first member of
      * the group.
      *
@@ -76,6 +124,69 @@ public final class Accumulators {
      */
     public static <TExpression> BsonField first(final String fieldName, final TExpression expression) {
         return accumulatorOperator("$first", fieldName, expression);
+    }
+
+    /**
+     * Returns a combination of a computed field and an accumulator that produces a BSON {@link org.bson.BsonType#ARRAY Array}
+     * of values of the given {@code inExpression} computed for the first {@code N} elements within a presorted group,
+     * where {@code N} is the positive integral value of the {@code nExpression}.
+     *
+     * @param fieldName The field computed by the accumulator.
+     * @param inExpression The input expression.
+     * @param nExpression The expression limiting the number of produced values.
+     * @param <InExpression> The type of the input expression.
+     * @param <NExpression> The type of the limiting expression.
+     * @return The requested {@link BsonField}.
+     * @mongodb.driver.manual reference/operator/aggregation/firstN/ $firstN
+     * @since 4.7
+     * @mongodb.server.release 5.2
+     */
+    public static <InExpression, NExpression> BsonField firstN(
+            final String fieldName, final InExpression inExpression, final NExpression nExpression) {
+        return pickNAccumulator(notNull("fieldName", fieldName), "$firstN",
+                notNull("inExpression", inExpression), notNull("nExpression", nExpression));
+    }
+
+    /**
+     * Returns a combination of a computed field and an accumulator that produces
+     * a value of the given {@code outExpression} computed for the top element within a group
+     * sorted according to the provided {@code sortBy} specification.
+     *
+     * @param fieldName The field computed by the accumulator.
+     * @param sortBy The {@linkplain Sorts sort specification}. The syntax is identical to the one expected by {@link Aggregates#sort(Bson)}.
+     * @param outExpression The output expression.
+     * @param <OutExpression> The type of the output expression.
+     * @return The requested {@link BsonField}.
+     * @mongodb.driver.manual reference/operator/aggregation/top/ $top
+     * @since 4.7
+     * @mongodb.server.release 5.2
+     */
+    public static <OutExpression> BsonField top(final String fieldName, final Bson sortBy, final OutExpression outExpression) {
+        return sortingPickAccumulator(notNull("fieldName", fieldName), "$top",
+                notNull("sortBy", sortBy), notNull("outExpression", outExpression));
+    }
+
+    /**
+     * Returns a combination of a computed field and an accumulator that produces a BSON {@link org.bson.BsonType#ARRAY Array}
+     * of values of the given {@code outExpression} computed for the top {@code N} elements within a group
+     * sorted according to the provided {@code sortBy} specification,
+     * where {@code N} is the positive integral value of the {@code nExpression}.
+     *
+     * @param fieldName The field computed by the accumulator.
+     * @param sortBy The {@linkplain Sorts sort specification}. The syntax is identical to the one expected by {@link Aggregates#sort(Bson)}.
+     * @param outExpression The output expression.
+     * @param nExpression The expression limiting the number of produced values.
+     * @param <OutExpression> The type of the output expression.
+     * @param <NExpression> The type of the limiting expression.
+     * @return The requested {@link BsonField}.
+     * @mongodb.driver.manual reference/operator/aggregation/topN/ $topN
+     * @since 4.7
+     * @mongodb.server.release 5.2
+     */
+    public static <OutExpression, NExpression> BsonField topN(
+            final String fieldName, final Bson sortBy, final OutExpression outExpression, final NExpression nExpression) {
+        return sortingPickNAccumulator(notNull("fieldName", fieldName), "$topN",
+                notNull("sortBy", sortBy), notNull("outExpression", outExpression), notNull("nExpression", nExpression));
     }
 
     /**
@@ -93,6 +204,69 @@ public final class Accumulators {
     }
 
     /**
+     * Returns a combination of a computed field and an accumulator that produces a BSON {@link org.bson.BsonType#ARRAY Array}
+     * of values of the given {@code inExpression} computed for the last {@code N} elements within a presorted group,
+     * where {@code N} is the positive integral value of the {@code nExpression}.
+     *
+     * @param fieldName The field computed by the accumulator.
+     * @param inExpression The input expression.
+     * @param nExpression The expression limiting the number of produced values.
+     * @param <InExpression> The type of the input expression.
+     * @param <NExpression> The type of the limiting expression.
+     * @return The requested {@link BsonField}.
+     * @mongodb.driver.manual reference/operator/aggregation/lastN/ $lastN
+     * @since 4.7
+     * @mongodb.server.release 5.2
+     */
+    public static <InExpression, NExpression> BsonField lastN(
+            final String fieldName, final InExpression inExpression, final NExpression nExpression) {
+        return pickNAccumulator(notNull("fieldName", fieldName), "$lastN",
+                notNull("inExpression", inExpression), notNull("nExpression", nExpression));
+    }
+
+    /**
+     * Returns a combination of a computed field and an accumulator that produces
+     * a value of the given {@code outExpression} computed for the bottom element within a group
+     * sorted according to the provided {@code sortBy} specification.
+     *
+     * @param fieldName The field computed by the accumulator.
+     * @param sortBy The {@linkplain Sorts sort specification}. The syntax is identical to the one expected by {@link Aggregates#sort(Bson)}.
+     * @param outExpression The output expression.
+     * @param <OutExpression> The type of the output expression.
+     * @return The requested {@link BsonField}.
+     * @mongodb.driver.manual reference/operator/aggregation/bottom/ $bottom
+     * @since 4.7
+     * @mongodb.server.release 5.2
+     */
+    public static <OutExpression> BsonField bottom(final String fieldName, final Bson sortBy, final OutExpression outExpression) {
+        return sortingPickAccumulator(notNull("fieldName", fieldName), "$bottom",
+                notNull("sortBy", sortBy), notNull("outExpression", outExpression));
+    }
+
+    /**
+     * Returns a combination of a computed field and an accumulator that produces a BSON {@link org.bson.BsonType#ARRAY Array}
+     * of values of the given {@code outExpression} computed for the bottom {@code N} elements within a group
+     * sorted according to the provided {@code sortBy} specification,
+     * where {@code N} is the positive integral value of the {@code nExpression}.
+     *
+     * @param fieldName The field computed by the accumulator.
+     * @param sortBy The {@linkplain Sorts sort specification}. The syntax is identical to the one expected by {@link Aggregates#sort(Bson)}.
+     * @param outExpression The output expression.
+     * @param nExpression The expression limiting the number of produced values.
+     * @param <OutExpression> The type of the output expression.
+     * @param <NExpression> The type of the limiting expression.
+     * @return The requested {@link BsonField}.
+     * @mongodb.driver.manual reference/operator/aggregation/bottomN/ $bottomN
+     * @since 4.7
+     * @mongodb.server.release 5.2
+     */
+    public static <OutExpression, NExpression> BsonField bottomN(
+            final String fieldName, final Bson sortBy, final OutExpression outExpression, final NExpression nExpression) {
+        return sortingPickNAccumulator(notNull("fieldName", fieldName), "$bottomN",
+                notNull("sortBy", sortBy), notNull("outExpression", outExpression), notNull("nExpression", nExpression));
+    }
+
+    /**
      * Gets a field name for a $group operation representing the maximum of the values of the given expression when applied to all
      * members of the group.
      *
@@ -107,6 +281,27 @@ public final class Accumulators {
     }
 
     /**
+     * Returns a combination of a computed field and an accumulator that produces a BSON {@link org.bson.BsonType#ARRAY Array}
+     * of {@code N} largest values of the given {@code inExpression},
+     * where {@code N} is the positive integral value of the {@code nExpression}.
+     *
+     * @param fieldName The field computed by the accumulator.
+     * @param inExpression The input expression.
+     * @param nExpression The expression limiting the number of produced values.
+     * @param <InExpression> The type of the input expression.
+     * @param <NExpression> The type of the limiting expression.
+     * @return The requested {@link BsonField}.
+     * @mongodb.driver.manual reference/operator/aggregation/maxN/ $maxN
+     * @since 4.7
+     * @mongodb.server.release 5.2
+     */
+    public static <InExpression, NExpression> BsonField maxN(
+            final String fieldName, final InExpression inExpression, final NExpression nExpression) {
+        return pickNAccumulator(notNull("fieldName", fieldName), "$maxN",
+                notNull("inExpression", inExpression), notNull("nExpression", nExpression));
+    }
+
+    /**
      * Gets a field name for a $group operation representing the minimum of the values of the given expression when applied to all
      * members of the group.
      *
@@ -118,6 +313,27 @@ public final class Accumulators {
      */
     public static <TExpression> BsonField min(final String fieldName, final TExpression expression) {
         return accumulatorOperator("$min", fieldName, expression);
+    }
+
+    /**
+     * Returns a combination of a computed field and an accumulator that produces a BSON {@link org.bson.BsonType#ARRAY Array}
+     * of {@code N} smallest values of the given {@code inExpression},
+     * where {@code N} is the positive integral value of the {@code nExpression}.
+     *
+     * @param fieldName The field computed by the accumulator.
+     * @param inExpression The input expression.
+     * @param nExpression The expression limiting the number of produced values.
+     * @param <InExpression> The type of the input expression.
+     * @param <NExpression> The type of the limiting expression.
+     * @return The requested {@link BsonField}.
+     * @mongodb.driver.manual reference/operator/aggregation/minN/ $minN
+     * @since 4.7
+     * @mongodb.server.release 5.2
+     */
+    public static <InExpression, NExpression> BsonField minN(
+            final String fieldName, final InExpression inExpression, final NExpression nExpression) {
+        return pickNAccumulator(notNull("fieldName", fieldName), "$minN",
+                notNull("inExpression", inExpression), notNull("nExpression", nExpression));
     }
 
     /**
@@ -146,6 +362,23 @@ public final class Accumulators {
      */
     public static <TExpression> BsonField addToSet(final String fieldName, final TExpression expression) {
         return accumulatorOperator("$addToSet", fieldName, expression);
+    }
+
+
+    /**
+     * Gets a field name for a $group operation representing the result of merging the fields of the documents.
+     * If documents to merge include the same field name, the field, in the resulting document, has the value from the last document
+     * merged for the field.
+     *
+     * @param fieldName the field name
+     * @param expression the expression
+     * @param <TExpression> the expression type
+     * @return the field
+     * @since 4.4
+     * @mongodb.driver.manual reference/operator/aggregation/mergeObjects/ $mergeObjects
+     */
+    public static <TExpression> BsonField mergeObjects(final String fieldName, final TExpression expression) {
+        return accumulatorOperator("$mergeObjects", fieldName, expression);
     }
 
     /**
@@ -301,7 +534,36 @@ public final class Accumulators {
     }
 
     private static <TExpression> BsonField accumulatorOperator(final String name, final String fieldName, final TExpression expression) {
-        return new BsonField(fieldName, new SimpleExpression<TExpression>(name, expression));
+        return new BsonField(fieldName, new SimpleExpression<>(name, expression));
+    }
+
+    private static <InExpression, NExpression> BsonField pickNAccumulator(
+            final String fieldName, final String accumulatorName, final InExpression inExpression, final NExpression nExpression) {
+        return new BsonField(fieldName, new Document(accumulatorName, new Document("input", inExpression).append("n", nExpression)));
+    }
+
+    private static <OutExpression> BsonField sortingPickAccumulator(
+            final String fieldName, final String accumulatorName, final Bson sort, final OutExpression outExpression) {
+        return new BsonField(fieldName, new Document(accumulatorName, new Document("sortBy", sort).append("output", outExpression)));
+    }
+
+    private static <OutExpression, NExpression> BsonField sortingPickNAccumulator(
+            final String fieldName, final String accumulatorName,
+            final Bson sort, final OutExpression outExpression, final NExpression nExpression) {
+        return new BsonField(fieldName, new Document(accumulatorName, new Document("sortBy", sort)
+                .append("output", outExpression)
+                .append("n", nExpression)));
+    }
+
+    private static <InExpression, PExpression> BsonField quantileAccumulator(final String quantileAccumulatorName,
+                                                                             final String fieldName, final InExpression inExpression,
+                                                                             @Nullable final PExpression pExpression, final QuantileMethod method) {
+        Document document = new Document("input", inExpression)
+                .append("method", method.toBsonValue());
+        if (pExpression != null) {
+            document.append("p", pExpression);
+        }
+        return accumulatorOperator(quantileAccumulatorName, fieldName, document);
     }
 
     private Accumulators() {

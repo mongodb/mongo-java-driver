@@ -16,9 +16,8 @@
 
 package com.mongodb.internal.event;
 
-import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.ConnectionCheckOutFailedEvent;
+import com.mongodb.event.ConnectionCheckOutStartedEvent;
 import com.mongodb.event.ConnectionCheckedInEvent;
 import com.mongodb.event.ConnectionCheckedOutEvent;
 import com.mongodb.event.ConnectionClosedEvent;
@@ -27,7 +26,10 @@ import com.mongodb.event.ConnectionPoolClearedEvent;
 import com.mongodb.event.ConnectionPoolClosedEvent;
 import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
+import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +37,6 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static java.lang.String.format;
 
-@SuppressWarnings("deprecation")
 final class ConnectionPoolListenerMulticaster implements ConnectionPoolListener {
     private static final Logger LOGGER = Loggers.getLogger("protocol.event");
 
@@ -43,20 +44,7 @@ final class ConnectionPoolListenerMulticaster implements ConnectionPoolListener 
 
     ConnectionPoolListenerMulticaster(final List<ConnectionPoolListener> connectionPoolListeners) {
         isTrue("All ConnectionPoolListener instances are non-null", !connectionPoolListeners.contains(null));
-        this.connectionPoolListeners = new ArrayList<ConnectionPoolListener>(connectionPoolListeners);
-    }
-
-    @Override
-    public void connectionPoolOpened(final com.mongodb.event.ConnectionPoolOpenedEvent event) {
-        for (ConnectionPoolListener cur : connectionPoolListeners) {
-            try {
-                cur.connectionPoolOpened(event);
-            } catch (Exception e) {
-                if (LOGGER.isWarnEnabled()) {
-                    LOGGER.warn(format("Exception thrown raising connection pool opened event to listener %s", cur), e);
-                }
-            }
-        }
+        this.connectionPoolListeners = new ArrayList<>(connectionPoolListeners);
     }
 
     @Override
@@ -86,6 +74,19 @@ final class ConnectionPoolListenerMulticaster implements ConnectionPoolListener 
     }
 
     @Override
+    public void connectionPoolReady(final ConnectionPoolReadyEvent event) {
+        for (ConnectionPoolListener cur : connectionPoolListeners) {
+            try {
+                cur.connectionPoolReady(event);
+            } catch (Exception e) {
+                if (LOGGER.isWarnEnabled()) {
+                    LOGGER.warn(format("Exception thrown raising connection pool ready event to listener %s", cur), e);
+                }
+            }
+        }
+    }
+
+    @Override
     public void connectionPoolClosed(final ConnectionPoolClosedEvent event) {
         for (ConnectionPoolListener cur : connectionPoolListeners) {
             try {
@@ -93,6 +94,19 @@ final class ConnectionPoolListenerMulticaster implements ConnectionPoolListener 
             } catch (Exception e) {
                 if (LOGGER.isWarnEnabled()) {
                     LOGGER.warn(format("Exception thrown raising connection pool closed event to listener %s", cur), e);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void connectionCheckOutStarted(final ConnectionCheckOutStartedEvent event) {
+        for (ConnectionPoolListener cur : connectionPoolListeners) {
+            try {
+                cur.connectionCheckOutStarted(event);
+            } catch (Exception e) {
+                if (LOGGER.isWarnEnabled()) {
+                    LOGGER.warn(format("Exception thrown raising connection check out started event to listener %s", cur), e);
                 }
             }
         }
@@ -132,32 +146,6 @@ final class ConnectionPoolListenerMulticaster implements ConnectionPoolListener 
             } catch (Exception e) {
                 if (LOGGER.isWarnEnabled()) {
                     LOGGER.warn(format("Exception thrown raising connection pool checked in event to listener %s", cur), e);
-                }
-            }
-        }
-    }
-
-    @Override
-    public void connectionRemoved(final com.mongodb.event.ConnectionRemovedEvent event) {
-        for (ConnectionPoolListener cur : connectionPoolListeners) {
-            try {
-                cur.connectionRemoved(event);
-            } catch (Exception e) {
-                if (LOGGER.isWarnEnabled()) {
-                    LOGGER.warn(format("Exception thrown raising connection pool connection removed event to listener %s", cur), e);
-                }
-            }
-        }
-    }
-
-    @Override
-    public void connectionAdded(final com.mongodb.event.ConnectionAddedEvent event) {
-        for (ConnectionPoolListener cur : connectionPoolListeners) {
-            try {
-                cur.connectionAdded(event);
-            } catch (Exception e) {
-                if (LOGGER.isWarnEnabled()) {
-                    LOGGER.warn(format("Exception thrown raising connection pool connection added event to listener %s", cur), e);
                 }
             }
         }

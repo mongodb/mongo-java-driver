@@ -16,6 +16,8 @@
 
 package org.bson.codecs.pojo.entities;
 
+import java.util.Objects;
+
 public class NestedSimpleIdModel {
     private String id;
     private SimpleIdModel nestedSimpleIdModel;
@@ -59,10 +61,10 @@ public class NestedSimpleIdModel {
 
         NestedSimpleIdModel that = (NestedSimpleIdModel) o;
 
-        if (id != null ? !id.equals(that.id) : that.id != null) {
+        if (!Objects.equals(id, that.id)) {
             return false;
         }
-        return nestedSimpleIdModel != null ? nestedSimpleIdModel.equals(that.nestedSimpleIdModel) : that.nestedSimpleIdModel == null;
+        return Objects.equals(nestedSimpleIdModel, that.nestedSimpleIdModel);
     }
 
     @Override

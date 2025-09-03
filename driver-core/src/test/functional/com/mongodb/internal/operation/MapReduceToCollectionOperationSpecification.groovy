@@ -29,7 +29,6 @@ import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonDouble
 import org.bson.BsonInt32
-import org.bson.BsonInt64
 import org.bson.BsonJavaScript
 import org.bson.BsonString
 import org.bson.Document
@@ -40,18 +39,16 @@ import spock.lang.IgnoreIf
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.ClusterFixture.serverVersionGreaterThan
 import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.client.model.Filters.gte
-import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpecification {
     def mapReduceInputNamespace = new MongoNamespace(getDatabaseName(), 'mapReduceInput')
     def mapReduceOutputNamespace = new MongoNamespace(getDatabaseName(), 'mapReduceOutput')
     def mapReduceOperation = new MapReduceToCollectionOperation(mapReduceInputNamespace,
-                                                                new BsonJavaScript('function(){ emit( this.name , 1 ); }'),
-                                                                new BsonJavaScript('function(key, values){ return values.length; }'),
-                                                                mapReduceOutputNamespace.getCollectionName())
+            new BsonJavaScript('function(){ emit( this.name , 1 ); }'),
+            new BsonJavaScript('function(key, values){ return values.length; }'),
+            mapReduceOutputNamespace.getCollectionName(), null)
     def expectedResults = [new BsonDocument('_id', new BsonString('Pete')).append('value', new BsonDouble(2.0)),
                            new BsonDocument('_id', new BsonString('Sam')).append('value', new BsonDouble(1.0))] as Set
     def helper = new CollectionHelper<BsonDocument>(new BsonDocumentCodec(), mapReduceOutputNamespace)
@@ -65,8 +62,9 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
     }
 
     def cleanup() {
-        new DropCollectionOperation(mapReduceInputNamespace).execute(getBinding())
-        new DropCollectionOperation(mapReduceOutputNamespace).execute(getBinding())
+        new DropCollectionOperation(mapReduceInputNamespace, WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        new DropCollectionOperation(mapReduceOutputNamespace, WriteConcern.ACKNOWLEDGED)
+                .execute(getBinding())
     }
 
     def 'should have the correct defaults'() {
@@ -76,7 +74,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         def out = 'outCollection'
 
         when:
-        def operation =  new MapReduceToCollectionOperation(getNamespace(), mapF, reduceF, out)
+        def operation =  new MapReduceToCollectionOperation(getNamespace(), mapF, reduceF, out, null)
 
         then:
         operation.getMapFunction() == mapF
@@ -90,13 +88,10 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         operation.getLimit() == 0
         operation.getScope() == null
         operation.getSort() == null
-        operation.getMaxTime(MILLISECONDS) == 0
         operation.getBypassDocumentValidation() == null
         operation.getCollation() == null
         !operation.isJsMode()
         !operation.isVerbose()
-        !operation.isSharded()
-        !operation.isNonAtomic()
     }
 
     def 'should set optional values correctly'(){
@@ -121,7 +116,6 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
                 .limit(10)
                 .scope(scope)
                 .sort(sort)
-                .maxTime(1, MILLISECONDS)
                 .bypassDocumentValidation(true)
                 .collation(defaultCollation)
 
@@ -136,12 +130,11 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         operation.getLimit() == 10
         operation.getScope() == scope
         operation.getSort() == sort
-        operation.getMaxTime(MILLISECONDS) == 1
         operation.getBypassDocumentValidation() == true
         operation.getCollation() == defaultCollation
     }
 
-    @IgnoreIf({ serverVersionGreaterThan('4.2') })
+    @IgnoreIf({ serverVersionAtLeast(4, 4) })
     def 'should return the correct statistics and save the results'() {
         when:
         MapReduceStatistics results = execute(mapReduceOperation, async)
@@ -157,7 +150,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan('4.3') })
+    @IgnoreIf({ serverVersionLessThan(4, 4) })
     def 'should return zero-valued statistics and save the results'() {
         when:
         MapReduceStatistics results = execute(mapReduceOperation, async)
@@ -174,7 +167,6 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
     }
 
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should support bypassDocumentValidation'() {
         given:
         def collectionOutHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'collectionOut'))
@@ -186,7 +178,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         def operation = new MapReduceToCollectionOperation(mapReduceInputNamespace,
                 new BsonJavaScript('function(){ emit( "level" , 1 ); }'),
                 new BsonJavaScript('function(key, values){ return values.length; }'),
-                'collectionOut')
+                'collectionOut', null)
         execute(operation, async)
 
         then:
@@ -213,7 +205,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         getCollectionHelper().insertDocuments(new BsonDocument())
@@ -249,8 +241,9 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         def dbName = 'dbName'
 
         when:
-        def operation =  new MapReduceToCollectionOperation(getNamespace(), mapF, reduceF, out, WriteConcern.MAJORITY)
-        def expectedCommand = new BsonDocument('mapreduce', new BsonString(getCollectionName()))
+        def operation = new MapReduceToCollectionOperation(getNamespace(), mapF, reduceF, out,
+                WriteConcern.MAJORITY)
+        def expectedCommand = new BsonDocument('mapReduce', new BsonString(getCollectionName()))
                 .append('map', mapF)
                 .append('reduce', reduceF)
                 .append('out', BsonDocument.parse('{replace: "outCollection"}'))
@@ -264,14 +257,15 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
                 ReadPreference.primary(), false)
 
         when:
-        operation.action(action)
+        operation = new MapReduceToCollectionOperation(getNamespace(), mapF, reduceF, out,
+                WriteConcern.MAJORITY)
+                .action(action)
                 .databaseName(dbName)
                 .finalizeFunction(finalizeF)
                 .filter(filter)
                 .limit(10)
                 .scope(scope)
                 .sort(sort)
-                .maxTime(10, MILLISECONDS)
                 .bypassDocumentValidation(true)
                 .verbose(true)
 
@@ -282,7 +276,6 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
                 .append('scope', scope)
                 .append('verbose', BsonBoolean.TRUE)
                 .append('limit', new BsonInt32(10))
-                .append('maxTimeMS', new BsonInt64(10))
 
         if (includeCollation) {
             operation.collation(defaultCollation)
@@ -300,28 +293,8 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         serverVersion | includeBypassValidation | includeWriteConcern | includeCollation | async
         [3, 4, 0]     | true                    | true                | true             | true
         [3, 4, 0]     | true                    | true                | true             | false
-        [3, 2, 0]     | true                    | false               | false            | true
-        [3, 2, 0]     | true                    | false               | false            | false
-        [3, 0, 0]     | false                   | false               | false            | true
-        [3, 0, 0]     | false                   | false               | false            | false
     }
 
-    def 'should throw an exception when passing an unsupported collation'() {
-        given:
-        def operation = mapReduceOperation.collation(defaultCollation)
-
-        when:
-        testOperationThrows(operation, [3, 2, 0], async)
-
-        then:
-        def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by wire version:')
-
-        where:
-        async << [false, false]
-    }
-
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should support collation'() {
         given:
         def outCollectionHelper = getCollectionHelper(new MongoNamespace(mapReduceInputNamespace.getDatabaseName(), 'collectionOut'))
@@ -332,7 +305,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         def operation = new MapReduceToCollectionOperation(mapReduceInputNamespace,
                 new BsonJavaScript('function(){ emit( this._id, this.str ); }'),
                 new BsonJavaScript('function(key, values){ return values; }'),
-                'collectionOut')
+                'collectionOut', null)
                 .filter(BsonDocument.parse('{str: "FOO"}'))
                 .collation(caseInsensitiveCollation)
 

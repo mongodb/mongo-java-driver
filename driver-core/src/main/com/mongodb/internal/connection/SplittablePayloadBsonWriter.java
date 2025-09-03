@@ -22,11 +22,14 @@ import org.bson.io.BsonOutput;
 
 import static com.mongodb.internal.connection.BsonWriterHelper.writePayloadArray;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class SplittablePayloadBsonWriter extends LevelCountingBsonWriter {
     private final BsonWriter writer;
     private final BsonOutput bsonOutput;
     private final SplittablePayload payload;
-    private int maxSplittableDocumentSize;
+    private final int maxSplittableDocumentSize;
     private final MessageSettings settings;
     private final int messageStartPosition;
 
@@ -60,7 +63,7 @@ public class SplittablePayloadBsonWriter extends LevelCountingBsonWriter {
 
     @Override
     public void writeEndDocument() {
-        if (getCurrentLevel() == 0 && payload.hasPayload()) {
+        if (getCurrentLevel() == DEFAULT_INITIAL_LEVEL + 1 && payload.hasPayload()) {
             writePayloadArray(writer, bsonOutput, settings, messageStartPosition, payload, maxSplittableDocumentSize);
         }
         super.writeEndDocument();

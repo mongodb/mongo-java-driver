@@ -23,8 +23,8 @@ import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerSettings
 import com.mongodb.internal.connection.Cluster
 import com.mongodb.internal.connection.Connection
-import com.mongodb.internal.connection.NoOpSessionContext
 import com.mongodb.internal.connection.Server
+import com.mongodb.internal.connection.ServerTuple
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonArray
 import org.bson.BsonBinarySubType
@@ -32,6 +32,9 @@ import org.bson.BsonDocument
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
+import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ReadPreference.primaryPreferred
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterType.REPLICA_SET
@@ -68,7 +71,7 @@ class ServerSessionPoolSpecification extends Specification {
         def cluster = Stub(Cluster) {
             getCurrentDescription() >> connectedDescription
         }
-        def pool = new ServerSessionPool(cluster)
+        def pool = new ServerSessionPool(cluster, TIMEOUT_SETTINGS, getServerApi())
 
         when:
         def session = pool.get()
@@ -82,7 +85,7 @@ class ServerSessionPoolSpecification extends Specification {
         def cluster = Stub(Cluster) {
             getCurrentDescription() >> connectedDescription
         }
-        def pool = new ServerSessionPool(cluster)
+        def pool = new ServerSessionPool(cluster, TIMEOUT_SETTINGS, getServerApi())
         pool.close()
 
         when:
@@ -97,7 +100,7 @@ class ServerSessionPoolSpecification extends Specification {
         def cluster = Stub(Cluster) {
             getCurrentDescription() >> connectedDescription
         }
-        def pool = new ServerSessionPool(cluster)
+        def pool = new ServerSessionPool(cluster, TIMEOUT_SETTINGS, getServerApi())
         def session = pool.get()
 
         when:
@@ -108,62 +111,16 @@ class ServerSessionPoolSpecification extends Specification {
         session == pooledSession
     }
 
-    def 'should prune sessions on release'() {
-        given:
-        def cluster = Mock(Cluster) {
-            getCurrentDescription() >> connectedDescription
-        }
-        def clock = Stub(ServerSessionPool.Clock) {
-            millis() >>> [0, 0,                          // first get
-                          1, 1,                          // second get
-                          2, 2,                          // third get
-                          3,                             // first release
-                          MINUTES.toMillis(29),       // second release
-                          MINUTES.toMillis(29) + 2,   // third release
-                          MINUTES.toMillis(29) + 2,
-                          MINUTES.toMillis(29) + 2
-            ]
-        }
-        def pool = new ServerSessionPool(cluster, clock)
-        def sessionOne = pool.get()
-        def sessionTwo = pool.get()
-        def sessionThree = pool.get()
-
-        when:
-        pool.release(sessionOne)
-
-        then:
-        !sessionOne.closed
-
-        when:
-        pool.release(sessionTwo)
-
-        then:
-        !sessionOne.closed
-        !sessionTwo.closed
-
-        when:
-        pool.release(sessionThree)
-
-        then:
-        sessionOne.closed
-        sessionTwo.closed
-        !sessionThree.closed
-        0 * cluster.selectServer(_)
-    }
-
     def 'should prune sessions when getting'() {
         given:
         def cluster = Mock(Cluster) {
             getCurrentDescription() >> connectedDescription
         }
         def clock = Stub(ServerSessionPool.Clock) {
-            millis() >>> [0, 0,                          // first get
-                          0,                             // first release
-                          MINUTES.toMillis(29) + 1,   // second get
+            millis() >>> [0, MINUTES.toMillis(29) + 1,
             ]
         }
-        def pool = new ServerSessionPool(cluster, clock)
+        def pool = new ServerSessionPool(cluster, OPERATION_CONTEXT, clock)
         def sessionOne = pool.get()
 
         when:
@@ -189,7 +146,7 @@ class ServerSessionPoolSpecification extends Specification {
         def clock = Stub(ServerSessionPool.Clock) {
             millis() >>> [0, 0, 0]
         }
-        def pool = new ServerSessionPool(cluster, clock)
+        def pool = new ServerSessionPool(cluster, OPERATION_CONTEXT, clock)
         def session = pool.get()
 
         when:
@@ -208,7 +165,7 @@ class ServerSessionPoolSpecification extends Specification {
         def clock = Stub(ServerSessionPool.Clock) {
             millis() >> 42
         }
-        def pool = new ServerSessionPool(cluster, clock)
+        def pool = new ServerSessionPool(cluster, OPERATION_CONTEXT, clock)
 
         when:
         def session = pool.get() as ServerSessionPool.ServerSessionImpl
@@ -230,7 +187,7 @@ class ServerSessionPoolSpecification extends Specification {
         def clock = Stub(ServerSessionPool.Clock) {
             millis() >> 42
         }
-        def pool = new ServerSessionPool(cluster, clock)
+        def pool = new ServerSessionPool(cluster, OPERATION_CONTEXT, clock)
 
         when:
         def session = pool.get() as ServerSessionPool.ServerSessionImpl
@@ -245,41 +202,28 @@ class ServerSessionPoolSpecification extends Specification {
         given:
         def connection = Mock(Connection)
         def server = Stub(Server) {
-            getConnection() >> connection
+            getConnection(_) >> connection
         }
         def cluster = Mock(Cluster) {
             getCurrentDescription() >> connectedDescription
         }
-        def pool = new ServerSessionPool(cluster)
-        // check out sessions up the the endSessions batch size
+        def pool = new ServerSessionPool(cluster, TIMEOUT_SETTINGS, getServerApi())
         def sessions = []
-        10000.times { sessions.add(pool.get()) }
-        // and then check out one more
-        def oneOverBatchSizeSession = pool.get()
+        10.times { sessions.add(pool.get()) }
 
-        // now release them all before closing the pool
         for (def cur : sessions) {
             pool.release(cur)
         }
-        pool.release(oneOverBatchSizeSession)
 
         when:
         pool.close()
 
         then:
-        // first batch is the first 10K sessions, final batch is the last one
-        1 * cluster.selectServer(_)  >> server
+        1 * cluster.selectServer(_, _)  >> new ServerTuple(server, connectedDescription.serverDescriptions[0])
         1 * connection.command('admin',
                 new BsonDocument('endSessions', new BsonArray(sessions*.getIdentifier())),
                 { it instanceof NoOpFieldNameValidator }, primaryPreferred(),
-                { it instanceof BsonDocumentCodec }, NoOpSessionContext.INSTANCE) >> new BsonDocument()
-        1 * connection.release()
-
-        1 * cluster.selectServer(_)  >> server
-        1 * connection.command('admin',
-                new BsonDocument('endSessions', new BsonArray([oneOverBatchSizeSession.getIdentifier()])),
-                { it instanceof NoOpFieldNameValidator }, primaryPreferred(),
-                { it instanceof BsonDocumentCodec }, NoOpSessionContext.INSTANCE) >> new BsonDocument()
+                { it instanceof BsonDocumentCodec }, _) >> new BsonDocument()
         1 * connection.release()
     }
 }

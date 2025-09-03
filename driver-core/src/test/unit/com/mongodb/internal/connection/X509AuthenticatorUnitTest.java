@@ -20,6 +20,7 @@ import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.FutureResultCallback;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerId;
@@ -29,9 +30,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
+import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.internal.connection.MessageHelper.buildSuccessfulReply;
+import static com.mongodb.internal.connection.MessageHelper.getApiVersionField;
+import static com.mongodb.internal.connection.MessageHelper.getDbField;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -46,7 +50,7 @@ public class X509AuthenticatorUnitTest {
         connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
         connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
         credential = MongoCredential.createMongoX509Credential("CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US");
-        subject = new X509Authenticator(new MongoCredentialWithCache(credential));
+        subject = new X509Authenticator(new MongoCredentialWithCache(credential), ClusterConnectionMode.MULTIPLE, getServerApi());
     }
 
     @Test
@@ -54,7 +58,7 @@ public class X509AuthenticatorUnitTest {
         enqueueFailedAuthenticationReply();
 
         try {
-            subject.authenticate(connection, connectionDescription);
+            subject.authenticate(connection, connectionDescription, OPERATION_CONTEXT);
             fail();
         } catch (MongoSecurityException e) {
             // all good
@@ -65,8 +69,8 @@ public class X509AuthenticatorUnitTest {
     public void testFailedAuthenticationAsync() {
         enqueueFailedAuthenticationReply();
 
-        FutureResultCallback<Void> futureCallback = new FutureResultCallback<Void>();
-        subject.authenticateAsync(connection, connectionDescription, futureCallback);
+        FutureResultCallback<Void> futureCallback = new FutureResultCallback<>();
+        subject.authenticateAsync(connection, connectionDescription, OPERATION_CONTEXT, futureCallback);
 
         try {
             futureCallback.get();
@@ -88,17 +92,17 @@ public class X509AuthenticatorUnitTest {
     public void testSuccessfulAuthentication() {
         enqueueSuccessfulAuthenticationReply();
 
-        subject.authenticate(connection, connectionDescription);
+        subject.authenticate(connection, connectionDescription, OPERATION_CONTEXT);
 
         validateMessages();
     }
 
     @Test
-    public void testSuccessfulAuthenticationAsync() throws ExecutionException, InterruptedException {
+    public void testSuccessfulAuthenticationAsync() {
         enqueueSuccessfulAuthenticationReply();
 
-        FutureResultCallback<Void> futureCallback = new FutureResultCallback<Void>();
-        subject.authenticateAsync(connection, connectionDescription, futureCallback);
+        FutureResultCallback<Void> futureCallback = new FutureResultCallback<>();
+        subject.authenticateAsync(connection, connectionDescription, OPERATION_CONTEXT, futureCallback);
 
         futureCallback.get();
 
@@ -113,7 +117,7 @@ public class X509AuthenticatorUnitTest {
                 + "user: \"CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US\", "
                 + "mechanism: \"MONGODB-X509\", db: \"$external\"}");
         subject.setSpeculativeAuthenticateResponse(BsonDocument.parse(speculativeAuthenticateResponse));
-        subject.authenticate(connection, connectionDescription);
+        subject.authenticate(connection, connectionDescription, OPERATION_CONTEXT);
 
         assertEquals(connection.getSent().size(), 0);
         assertEquals(expectedSpeculativeAuthenticateCommand, subject.createSpeculativeAuthenticateCommand(connection));
@@ -128,7 +132,10 @@ public class X509AuthenticatorUnitTest {
         String command = MessageHelper.decodeCommandAsJson(sent.get(0));
         String expectedCommand = "{\"authenticate\": 1, "
                 + "\"user\": \"CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US\", "
-                + "\"mechanism\": \"MONGODB-X509\"}";
+                + "\"mechanism\": \"MONGODB-X509\""
+                + getDbField("$external")
+                + getApiVersionField()
+                + "}";
 
         assertEquals(expectedCommand, command);
     }

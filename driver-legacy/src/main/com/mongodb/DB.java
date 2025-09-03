@@ -23,14 +23,13 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.DBCreateViewOptions;
 import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
-import com.mongodb.connection.BufferProvider;
-import com.mongodb.internal.operation.BatchCursor;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.operation.CommandReadOperation;
 import com.mongodb.internal.operation.CreateCollectionOperation;
 import com.mongodb.internal.operation.CreateViewOperation;
 import com.mongodb.internal.operation.DropDatabaseOperation;
 import com.mongodb.internal.operation.ListCollectionsOperation;
-import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.ReadOperationCursor;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
@@ -82,8 +81,8 @@ public class DB {
         this.mongo = mongo;
         this.name = name;
         this.executor = executor;
-        this.collectionCache = new ConcurrentHashMap<String, DBCollection>();
-        this.commandCodec = MongoClient.getCommandCodec();
+        this.collectionCache = new ConcurrentHashMap<>();
+        this.commandCodec = new DBObjectCodec(mongo.getCodecRegistry());
     }
 
     /**
@@ -221,20 +220,19 @@ public class DB {
     public Set<String> getCollectionNames() {
         List<String> collectionNames =
                 new MongoIterableImpl<DBObject>(null, executor, ReadConcern.DEFAULT, primary(),
-                        mongo.getMongoClientOptions().getRetryReads()) {
+                                                mongo.getMongoClientOptions().getRetryReads(), DB.this.getTimeoutSettings()) {
                     @Override
-                    public ReadOperation<BatchCursor<DBObject>> asReadOperation() {
-                        return new ListCollectionsOperation<DBObject>(name, commandCodec)
-                                .nameOnly(true);
+                    public ReadOperationCursor<DBObject> asReadOperation() {
+                        return new ListCollectionsOperation<>(name, commandCodec).nameOnly(true);
                     }
-                }.map(new Function<DBObject, String>() {
-                            @Override
-                            public String apply(final DBObject result) {
-                                return (String) result.get("name");
-                            }
-                        }).into(new ArrayList<String>());
+
+                    @Override
+                    protected OperationExecutor getExecutor() {
+                        return executor;
+                    }
+                }.map(result -> (String) result.get("name")).into(new ArrayList<>());
         Collections.sort(collectionNames);
-        return new LinkedHashSet<String>(collectionNames);
+        return new LinkedHashSet<>(collectionNames);
     }
 
     /**
@@ -310,8 +308,9 @@ public class DB {
         try {
             notNull("options", options);
             DBCollection view = getCollection(viewName);
-            executor.execute(new CreateViewOperation(name, viewName, viewOn, view.preparePipeline(pipeline), writeConcern)
-                                     .collation(options.getCollation()), getReadConcern());
+            executor.execute(new CreateViewOperation(name, viewName, viewOn,
+                    view.preparePipeline(pipeline), writeConcern)
+                    .collation(options.getCollation()), getReadConcern());
             return view;
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
@@ -386,7 +385,8 @@ public class DB {
             validationAction = ValidationAction.fromString((String) options.get("validationAction"));
         }
         Collation collation = DBObjectCollationHelper.createCollationFromOptions(options);
-        return new CreateCollectionOperation(getName(), collectionName, getWriteConcern())
+        return new CreateCollectionOperation(getName(), collectionName,
+                getWriteConcern())
                    .capped(capped)
                    .collation(collation)
                    .sizeInBytes(sizeInBytes)
@@ -453,7 +453,7 @@ public class DB {
         try {
             return executeCommand(wrap(command, encoder), getCommandReadPreference(command, readPreference));
         } catch (MongoCommandException ex) {
-            return new CommandResult(ex.getResponse(), ex.getServerAddress());
+            return new CommandResult(ex.getResponse(), getDefaultDBObjectCodec(), ex.getServerAddress());
         }
     }
 
@@ -519,28 +519,27 @@ public class DB {
     }
 
     CommandResult executeCommand(final BsonDocument commandDocument, final ReadPreference readPreference) {
-        return new CommandResult(executor.execute(new CommandReadOperation<BsonDocument>(getName(), commandDocument,
-                                                                                         new BsonDocumentCodec()),
-                                                  readPreference, getReadConcern()));
+        return new CommandResult(executor.execute(
+                new CommandReadOperation<>(getName(), commandDocument,
+                        new BsonDocumentCodec()), readPreference, getReadConcern(), null), getDefaultDBObjectCodec());
     }
 
     OperationExecutor getExecutor() {
         return executor;
     }
-
-    BufferProvider getBufferPool() {
-        return getMongoClient().getBufferProvider();
+    TimeoutSettings getTimeoutSettings() {
+        return mongo.getTimeoutSettings();
     }
 
     private BsonDocument wrap(final DBObject document) {
-        return new BsonDocumentWrapper<DBObject>(document, commandCodec);
+        return new BsonDocumentWrapper<>(document, commandCodec);
     }
 
     private BsonDocument wrap(final DBObject document, @Nullable final DBEncoder encoder) {
         if (encoder == null) {
             return wrap(document);
         } else {
-            return new BsonDocumentWrapper<DBObject>(document, new DBEncoderAdapter(encoder));
+            return new BsonDocumentWrapper<>(document, new DBEncoderAdapter(encoder));
         }
     }
 
@@ -557,15 +556,27 @@ public class DB {
         boolean primaryRequired = !OBEDIENT_COMMANDS.contains(comString);
 
         if (primaryRequired) {
-            return ReadPreference.primary();
+            return primary();
         } else if (requestedPreference == null) {
-            return ReadPreference.primary();
+            return primary();
         } else {
             return requestedPreference;
         }
     }
 
-    private static final Set<String> OBEDIENT_COMMANDS = new HashSet<String>();
+    Codec<DBObject> getDefaultDBObjectCodec() {
+        return new DBObjectCodec(getMongoClient().getCodecRegistry(),
+                DBObjectCodec.getDefaultBsonTypeClassMap(),
+                new DBCollectionObjectFactory())
+                .withUuidRepresentation(getMongoClient().getMongoClientOptions().getUuidRepresentation());
+    }
+
+    @Nullable
+    Long getTimeoutMS() {
+        return mongo.getMongoClientOptions().getTimeout();
+    }
+
+    private static final Set<String> OBEDIENT_COMMANDS = new HashSet<>();
 
     static {
         OBEDIENT_COMMANDS.add("aggregate");

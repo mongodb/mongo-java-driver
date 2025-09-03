@@ -41,6 +41,8 @@ import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+
 class OperationUnitSpecification extends Specification {
 
     // Have to add to this map for every server release
@@ -53,11 +55,20 @@ class OperationUnitSpecification extends Specification {
             [4, 0]: 7,
             [4, 1]: 8,
             [4, 2]: 8,
-            [4, 3]: 9,
-            [4, 4]: 9
+            [4, 4]: 9,
+            [5, 0]: 13,
+            [5, 1]: 14,
+            [5, 2]: 15,
+            [5, 3]: 16,
+            [6, 0]: 17,
+            [6, 1]: 18,
+            [6, 2]: 19,
+            [6, 3]: 20,
+            [7, 0]: 21,
+            [9, 0]: 25,
     ]
 
-    static int getMaxWireVersionForServerVersion(List<Integer> serverVersion) {
+    static Integer getMaxWireVersionForServerVersion(List<Integer> serverVersion) {
         def maxWireVersion = SERVER_TO_WIRE_VERSION_MAP[serverVersion.subList(0, 2)]
 
         if (maxWireVersion == null) {
@@ -73,7 +84,7 @@ class OperationUnitSpecification extends Specification {
         test(operation, serverVersion, result, true, expectedCommand)
     }
 
-    void testOperationSlaveOk(operation, List<Integer> serverVersion, ReadPreference readPreference, boolean async, result = null) {
+    void testOperationSecondaryOk(operation, List<Integer> serverVersion, ReadPreference readPreference, boolean async, result = null) {
         def test = async ? this.&testAsyncOperation : this.&testSyncOperation
         test(operation, serverVersion, result, false, null, true, readPreference)
     }
@@ -85,7 +96,13 @@ class OperationUnitSpecification extends Specification {
 
     def testSyncOperation(operation, List<Integer> serverVersion, result, Boolean checkCommand=true,
                           BsonDocument expectedCommand=null,
-                          Boolean checkSlaveOk=false, ReadPreference readPreference=ReadPreference.primary()) {
+                          Boolean checkSecondaryOk=false, ReadPreference readPreference=ReadPreference.primary()) {
+        def operationContext = OPERATION_CONTEXT
+                .withSessionContext(Stub(SessionContext) {
+                    hasActiveTransaction() >> false
+                    getReadConcern() >> ReadConcern.DEFAULT
+                })
+
         def connection = Mock(Connection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
                 getMaxWireVersion() >> getMaxWireVersionForServerVersion(serverVersion)
@@ -94,17 +111,17 @@ class OperationUnitSpecification extends Specification {
 
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> connection
+            getReadPreference() >> readPreference
+            getOperationContext() >> operationContext
         }
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
-            getSessionContext() >> Stub(SessionContext) {
-                hasActiveTransaction() >> false
-                getReadConcern() >> ReadConcern.DEFAULT
-            }
+            getOperationContext() >> operationContext
         }
         def writeBinding = Stub(WriteBinding) {
             getWriteConnectionSource() >> connectionSource
+            getOperationContext() >> operationContext
         }
 
         if (checkCommand) {
@@ -112,14 +129,14 @@ class OperationUnitSpecification extends Specification {
                 assert(it[1] == expectedCommand)
                 result
             }
-        } else if (checkSlaveOk) {
+        } else if (checkSecondaryOk) {
             1 * connection.command(*_) >> {
                 assert(it[3] == readPreference)
                 result
             }
         }
 
-        0 * connection.command(_, _, _, _, _, _) >> {
+        0 * connection.command(*_) >> {
             // Unexpected Command
             result
         }
@@ -135,7 +152,14 @@ class OperationUnitSpecification extends Specification {
 
     def testAsyncOperation(operation, List<Integer> serverVersion, result = null,
                            Boolean checkCommand=true, BsonDocument expectedCommand=null,
-                           Boolean checkSlaveOk=false, ReadPreference readPreference=ReadPreference.primary()) {
+                           Boolean checkSecondaryOk=false, ReadPreference readPreference=ReadPreference.primary()) {
+
+        def operationContext = OPERATION_CONTEXT
+                .withSessionContext(Stub(SessionContext) {
+                    hasActiveTransaction() >> false
+                    getReadConcern() >> ReadConcern.DEFAULT
+                })
+
         def connection = Mock(AsyncConnection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
                 getMaxWireVersion() >> getMaxWireVersionForServerVersion(serverVersion)
@@ -144,17 +168,17 @@ class OperationUnitSpecification extends Specification {
 
         def connectionSource = Stub(AsyncConnectionSource) {
             getConnection(_) >> { it[0].onResult(connection, null) }
+            getReadPreference() >> readPreference
+            getOperationContext() >> getOperationContext() >> operationContext
         }
         def readBinding = Stub(AsyncReadBinding) {
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
             getReadPreference() >> readPreference
-            getSessionContext() >> Stub(SessionContext) {
-                hasActiveTransaction() >> false
-                getReadConcern() >> ReadConcern.DEFAULT
-            }
+            getOperationContext() >> operationContext
         }
         def writeBinding = Stub(AsyncWriteBinding) {
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+            getOperationContext() >> operationContext
         }
         def callback = new FutureResultCallback()
 
@@ -163,23 +187,23 @@ class OperationUnitSpecification extends Specification {
                 assert(it[1] == expectedCommand)
                 it.last().onResult(result, null)
             }
-        } else if (checkSlaveOk) {
+        } else if (checkSecondaryOk) {
             1 * connection.commandAsync(*_) >> {
                 assert(it[3] == readPreference)
                 it.last().onResult(result, null)
             }
         }
 
-        0 * connection.commandAsync(_, _, _, _, _, _, _) >> {
+        0 * connection.commandAsync(_, _, _, _, _, _, _, _) >> {
             // Unexpected Command
-            it[6].onResult(result, null)
+            it.last().onResult(result, null)
         }
 
         1 * connection.release()
 
-        if (operation instanceof AsyncReadOperation) {
+        if (operation instanceof ReadOperation) {
             operation.executeAsync(readBinding, callback)
-        } else if (operation instanceof AsyncWriteOperation) {
+        } else if (operation instanceof WriteOperation) {
             operation.executeAsync(writeBinding, callback)
         }
          try {

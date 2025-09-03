@@ -118,4 +118,89 @@ class MongoBatchCursorAdapterSpecification extends Specification {
         cursor.tryNext() == secondBatch[0]
         cursor.tryNext() == null
     }
+
+    def 'should report available documents'() {
+        given:
+        def firstBatch = [new Document('x', 1), new Document('x', 1)]
+        def secondBatch = [new Document('x', 2)]
+
+        def batchCursor = Stub(BatchCursor)
+
+        batchCursor.hasNext() >>> [true, true, true, true, false]
+        batchCursor.next() >>> [firstBatch, secondBatch]
+        batchCursor.available() >>> [2, 2, 0, 0, 0, 1, 0, 0, 0]
+
+        when:
+        def cursor = new MongoBatchCursorAdapter(batchCursor)
+
+        then:
+        cursor.available() == 2
+
+        when:
+        cursor.hasNext()
+
+        then:
+        cursor.available() == 2
+
+        when:
+        cursor.next()
+
+        then:
+        cursor.available() == 1
+
+        when:
+        cursor.hasNext()
+
+        then:
+        cursor.available() == 1
+
+        when:
+        cursor.next()
+
+        then:
+        cursor.available() == 0
+
+        when:
+        cursor.hasNext()
+
+        then:
+        cursor.available() == 1
+
+        when:
+        cursor.next()
+
+        then:
+        cursor.available() == 0    // fail
+
+        when:
+        cursor.hasNext()
+
+        then:
+        cursor.available() == 0
+
+        when:
+        cursor.close()
+
+        then:
+        cursor.available() == 0
+    }
+
+    def 'should close cursor in forEachRemaining if there is an exception'() {
+        given:
+        def firstBatch = [new Document('x', 1)]
+
+        def batchCursor = Mock(BatchCursor)
+        batchCursor.hasNext() >>> [true, true]
+        batchCursor.next() >>> [firstBatch]
+        def cursor = new MongoBatchCursorAdapter(batchCursor)
+
+        when:
+        cursor.forEachRemaining {
+            throw new IllegalStateException('test')
+        }
+
+        then:
+        thrown(IllegalStateException)
+        1 * batchCursor.close()
+    }
 }

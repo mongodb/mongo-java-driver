@@ -21,6 +21,8 @@ import org.bson.UuidRepresentation;
 
 import java.util.List;
 
+import static com.mongodb.ClusterFixture.getClusterDescription;
+import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
 
 /**
@@ -38,15 +40,18 @@ public final class Fixture {
 
     public static synchronized com.mongodb.MongoClient getMongoClient() {
         if (mongoClient == null) {
-            MongoClientURI mongoURI = new MongoClientURI(getMongoClientURIString(),
-                    MongoClientOptions.builder().uuidRepresentation(UuidRepresentation.STANDARD));
+            MongoClientOptions.Builder builder = MongoClientOptions.builder().uuidRepresentation(UuidRepresentation.STANDARD);
+            if (getServerApi() != null) {
+                builder.serverApi(getServerApi());
+            }
+            MongoClientURI mongoURI = new MongoClientURI(getMongoClientURIString(), builder);
             mongoClient = new MongoClient(mongoURI);
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
         return mongoClient;
     }
 
-    public static int getServerSessionPoolInUseCount() {
+    public static long getServerSessionPoolInUseCount() {
         return getMongoClient().getServerSessionPool().getInUseCount();
     }
 
@@ -81,6 +86,9 @@ public final class Fixture {
     }
 
     public static synchronized MongoClientURI getMongoClientURI(final MongoClientOptions.Builder builder) {
+        if (getServerApi() != null) {
+            builder.serverApi(getServerApi());
+        }
         return new MongoClientURI(getMongoClientURIString(), builder);
     }
 
@@ -90,10 +98,10 @@ public final class Fixture {
 
     public static ServerAddress getPrimary() throws InterruptedException {
         getMongoClient();
-        List<ServerDescription> serverDescriptions = getPrimaries(mongoClient.getCluster().getDescription());
+        List<ServerDescription> serverDescriptions = getPrimaries(getClusterDescription(mongoClient.getCluster()));
         while (serverDescriptions.isEmpty()) {
             Thread.sleep(100);
-            serverDescriptions = getPrimaries(mongoClient.getCluster().getDescription());
+            serverDescriptions = getPrimaries(getClusterDescription(mongoClient.getCluster()));
         }
         return serverDescriptions.get(0).getAddress();
     }

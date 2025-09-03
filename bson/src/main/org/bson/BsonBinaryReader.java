@@ -394,24 +394,34 @@ public class BsonBinaryReader extends AbstractBsonReader {
         return new Mark();
     }
 
+    /**
+     * An implementation of {@code AbstractBsonReader.Mark}.
+     */
     protected class Mark extends AbstractBsonReader.Mark {
         private final int startPosition;
         private final int size;
         private final BsonInputMark bsonInputMark;
 
+        /**
+         * Construct an instance.
+         */
         protected Mark() {
-            super();
             startPosition = BsonBinaryReader.this.getContext().startPosition;
             size = BsonBinaryReader.this.getContext().size;
             bsonInputMark = BsonBinaryReader.this.bsonInput.getMark(Integer.MAX_VALUE);
         }
 
+        @Override
         public void reset() {
             super.reset();
             bsonInputMark.reset();
             BsonBinaryReader.this.setContext(new Context((Context) getParentContext(), getContextType(), startPosition, size));
         }
     }
+
+    /**
+     * An implementation of {@code AbstractBsonReader.Context}.
+     */
     protected class Context extends AbstractBsonReader.Context {
         private final int startPosition;
         private final int size;

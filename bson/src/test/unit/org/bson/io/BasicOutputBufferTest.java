@@ -16,13 +16,14 @@
 
 package org.bson.io;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 // for tests that are too slow to run in Groovy
 public class BasicOutputBufferTest {
@@ -42,7 +43,7 @@ public class BasicOutputBufferTest {
 
             // then
             byte[] bytes = getBytes(bsonOutput);
-            assertArrayEquals("failed with code point " + codePoint, str.getBytes("UTF-8"), Arrays.copyOfRange(bytes, 0, bytes.length - 1));
+            assertArrayEquals(str.getBytes(StandardCharsets.UTF_8), Arrays.copyOfRange(bytes, 0, bytes.length - 1), "failed with code point " + codePoint);
         }
     }
 

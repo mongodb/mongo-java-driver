@@ -16,7 +16,10 @@
 
 package org.bson.codecs.pojo;
 
+import org.bson.BsonType;
 import org.bson.codecs.Codec;
+
+import java.util.Objects;
 
 /**
  * Represents a property on a class and stores various metadata such as generic parameters
@@ -35,10 +38,11 @@ public final class PropertyModel<T> {
     private final PropertyAccessor<T> propertyAccessor;
     private final String error;
     private volatile Codec<T> cachedCodec;
+    private final BsonType bsonRepresentation;
 
     PropertyModel(final String name, final String readName, final String writeName, final TypeData<T> typeData,
                   final Codec<T> codec, final PropertySerialization<T> propertySerialization, final Boolean useDiscriminator,
-                  final PropertyAccessor<T> propertyAccessor, final String error) {
+                  final PropertyAccessor<T> propertyAccessor, final String error, final BsonType bsonRepresentation) {
         this.name = name;
         this.readName = readName;
         this.writeName = writeName;
@@ -49,6 +53,7 @@ public final class PropertyModel<T> {
         this.useDiscriminator = useDiscriminator;
         this.propertyAccessor = propertyAccessor;
         this.error = error;
+        this.bsonRepresentation = bsonRepresentation;
     }
 
     /**
@@ -57,7 +62,7 @@ public final class PropertyModel<T> {
      * @return the builder
      */
     public static <T> PropertyModelBuilder<T> builder() {
-        return new PropertyModelBuilder<T>();
+        return new PropertyModelBuilder<>();
     }
 
     /**
@@ -111,6 +116,15 @@ public final class PropertyModel<T> {
      */
     public Codec<T> getCodec() {
         return codec;
+    }
+
+    /**
+     * @return the BsonRepresentation of the field
+     *
+     * @since 4.2
+     */
+    public BsonType getBsonRepresentation() {
+        return bsonRepresentation;
     }
 
     /**
@@ -177,7 +191,7 @@ public final class PropertyModel<T> {
                 .getPropertySerialization() != null) {
             return false;
         }
-        if (useDiscriminator != null ? !useDiscriminator.equals(that.useDiscriminator) : that.useDiscriminator != null) {
+        if (!Objects.equals(useDiscriminator, that.useDiscriminator)) {
             return false;
         }
         if (getPropertyAccessor() != null ? !getPropertyAccessor().equals(that.getPropertyAccessor())

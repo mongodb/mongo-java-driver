@@ -19,9 +19,11 @@ package com.mongodb.client;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
+import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
+import org.bson.BsonValue;
 
 import java.util.concurrent.TimeUnit;
 
@@ -53,6 +55,17 @@ public interface ChangeStreamIterable<TResult> extends MongoIterable<ChangeStrea
      * @return this
      */
     ChangeStreamIterable<TResult> fullDocument(FullDocument fullDocument);
+
+
+    /**
+     * Sets the fullDocumentBeforeChange value.
+     *
+     * @param fullDocumentBeforeChange the fullDocumentBeforeChange
+     * @return this
+     * @since 4.7
+     * @mongodb.server.release 6.0
+     */
+    ChangeStreamIterable<TResult> fullDocumentBeforeChange(FullDocumentBeforeChange fullDocumentBeforeChange);
 
     /**
      * Sets the logical starting point for the new change stream.
@@ -129,4 +142,40 @@ public interface ChangeStreamIterable<TResult> extends MongoIterable<ChangeStrea
      * @mongodb.driver.manual changeStreams/#change-stream-start-after
      */
     ChangeStreamIterable<TResult> startAfter(BsonDocument startAfter);
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 3.6
+     */
+    ChangeStreamIterable<TResult> comment(@Nullable String comment);
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * <p>The comment can be any valid BSON type for server versions 4.4 and above.
+     * Server versions between 3.6 and 4.2 only support string as comment,
+     * and providing a non-string type will result in a server-side error.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 3.6
+     */
+    ChangeStreamIterable<TResult> comment(@Nullable BsonValue comment);
+
+    /**
+     * Sets whether to include expanded change stream events, which are:
+     * createIndexes, dropIndexes, modify, create, shardCollection,
+     * reshardCollection, refineCollectionShardKey. False by default.
+     *
+     * @param showExpandedEvents true to include expanded events
+     * @return this
+     * @since 4.7
+     * @mongodb.server.release 6.0
+     */
+    ChangeStreamIterable<TResult> showExpandedEvents(boolean showExpandedEvents);
 }

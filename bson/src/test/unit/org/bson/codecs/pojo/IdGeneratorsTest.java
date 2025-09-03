@@ -18,9 +18,9 @@ package org.bson.codecs.pojo;
 
 import org.bson.BsonObjectId;
 import org.bson.types.ObjectId;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class IdGeneratorsTest {
 
@@ -38,6 +38,14 @@ public class IdGeneratorsTest {
 
         assertEquals(BsonObjectId.class, idGenerator.getType());
         assertEquals(BsonObjectId.class, idGenerator.generate().getClass());
+    }
+
+    @Test
+    public void testStringIdGenerator() {
+        IdGenerator<String> idGenerator = IdGenerators.STRING_ID_GENERATOR;
+
+        assertEquals(String.class, idGenerator.getType());
+        assertEquals(String.class, idGenerator.generate().getClass());
     }
 
 }

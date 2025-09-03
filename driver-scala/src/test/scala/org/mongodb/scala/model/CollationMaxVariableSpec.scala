@@ -31,7 +31,7 @@ class CollationMaxVariableSpec extends BaseSpec {
       collationMaxVariableClass.getDeclaredFields.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
     val wrappedMethods =
       collationMaxVariableClass.getDeclaredMethods.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
-    val exclusions = Set("$VALUES", "valueOf", "values")
+    val exclusions = Set("$VALUES", "$values", "valueOf", "values")
 
     val wrapped = (wrappedFields ++ wrappedMethods) -- exclusions
     val local = CollationMaxVariable.getClass.getDeclaredMethods.map(_.getName).toSet -- Set(

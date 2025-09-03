@@ -16,14 +16,13 @@
 
 package com.mongodb.internal.async;
 
-import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.lang.Nullable;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * This class is not part of the public API and may be removed or changed at any time.
- *
- * @param <T> the result type
+ * <p>This class is not part of the public API and may be removed or changed at any time.</p>
  */
 public class ErrorHandlingResultCallback<T> implements SingleResultCallback<T> {
     private final SingleResultCallback<T> wrapped;
@@ -33,7 +32,7 @@ public class ErrorHandlingResultCallback<T> implements SingleResultCallback<T> {
         if (callback instanceof ErrorHandlingResultCallback) {
             return callback;
         } else {
-            return new ErrorHandlingResultCallback<T>(callback, logger);
+            return new ErrorHandlingResultCallback<>(callback, logger);
         }
     }
 
@@ -43,7 +42,7 @@ public class ErrorHandlingResultCallback<T> implements SingleResultCallback<T> {
     }
 
     @Override
-    public void onResult(final T result, final Throwable t) {
+    public void onResult(@Nullable final T result, @Nullable final Throwable t) {
         try {
             wrapped.onResult(result, t);
         } catch (Throwable e) {

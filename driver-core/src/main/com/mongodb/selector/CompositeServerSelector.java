@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -44,7 +45,7 @@ public final class CompositeServerSelector implements ServerSelector {
         if (serverSelectors.isEmpty()) {
             throw new IllegalArgumentException("Server selectors can not be an empty list");
         }
-        ArrayList<ServerSelector> mergedServerSelectors = new ArrayList<ServerSelector>();
+        ArrayList<ServerSelector> mergedServerSelectors = new ArrayList<>();
         for (ServerSelector cur : serverSelectors) {
             if (cur == null) {
                 throw new IllegalArgumentException("Can not have a null server selector in the list of composed selectors");
@@ -76,7 +77,7 @@ public final class CompositeServerSelector implements ServerSelector {
                                                                   clusterDescription.getServerSettings());
         }
 
-        return choices;
+        return assertNotNull(choices);
     }
 
     @Override
@@ -102,7 +103,7 @@ public final class CompositeServerSelector implements ServerSelector {
 
     @Override
     public String toString() {
-        return "{"
+        return "CompositeServerSelector{"
                + "serverSelectors=" + serverSelectors
                + '}';
     }

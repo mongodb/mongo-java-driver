@@ -16,7 +16,9 @@
 
 package com.mongodb.event;
 
+import com.mongodb.RequestContext;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.lang.Nullable;
 
 /**
  * An event representing a MongoDB database command.
@@ -24,21 +26,44 @@ import com.mongodb.connection.ConnectionDescription;
  * @since 3.1
  */
 public abstract class CommandEvent {
+    @Nullable
+    private final RequestContext requestContext;
     private final int requestId;
     private final ConnectionDescription connectionDescription;
     private final String commandName;
+    private final String databaseName;
+
+    private final long operationId;
 
     /**
      * Construct an instance.
-     * @param requestId the request id
+     *
+     * @param requestContext        the request context
+     * @param operationId           the operation id
+     * @param requestId             the request id
      * @param connectionDescription the connection description
-     * @param commandName the command name
+     * @param databaseName          the database name
+     * @param commandName           the command name
+     * @since 4.11
      */
-    public CommandEvent(final int requestId, final ConnectionDescription connectionDescription,
-                        final String commandName) {
+    public CommandEvent(@Nullable final RequestContext requestContext, final long operationId, final int requestId,
+            final ConnectionDescription connectionDescription, final String databaseName, final String commandName) {
+        this.requestContext = requestContext;
         this.requestId = requestId;
         this.connectionDescription = connectionDescription;
         this.commandName = commandName;
+        this.databaseName = databaseName;
+        this.operationId = operationId;
+    }
+
+    /**
+     * Gets the operation identifier
+     *
+     * @return the operation identifier
+     * @since 4.10
+     */
+    public long getOperationId() {
+        return operationId;
     }
 
     /**
@@ -66,6 +91,27 @@ public abstract class CommandEvent {
      */
     public String getCommandName() {
         return commandName;
+    }
+
+    /**
+     * Gets the database on which the operation will be executed.
+     *
+     * @return the database name
+     * @since 4.11
+     */
+    public String getDatabaseName() {
+        return databaseName;
+    }
+
+    /**
+     * Gets the request context associated with this event.
+     *
+     * @return the request context
+     * @since 4.4
+     */
+    @Nullable
+    public RequestContext getRequestContext() {
+        return requestContext;
     }
 }
 

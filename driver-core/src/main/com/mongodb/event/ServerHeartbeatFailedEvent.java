@@ -17,6 +17,7 @@
 package com.mongodb.event;
 
 import com.mongodb.connection.ConnectionId;
+import com.mongodb.connection.ServerMonitoringMode;
 
 import java.util.concurrent.TimeUnit;
 
@@ -33,19 +34,6 @@ public final class ServerHeartbeatFailedEvent {
     private final long elapsedTimeNanos;
     private final boolean awaited;
     private final Throwable throwable;
-
-    /**
-     * Construct an instance.
-     *
-     * @param connectionId the non-null connectionId
-     * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds
-     * @param throwable the non-null exception that caused the failure
-     * @deprecated Prefer {@link #ServerHeartbeatFailedEvent(ConnectionId, long, boolean, Throwable)}
-     */
-    @Deprecated
-    public ServerHeartbeatFailedEvent(final ConnectionId connectionId, final long elapsedTimeNanos, final Throwable throwable) {
-        this(connectionId, elapsedTimeNanos, false, throwable);
-    }
 
     /**
      * Construct an instance.
@@ -90,6 +78,7 @@ public final class ServerHeartbeatFailedEvent {
      * to the server and the time that the server waited before sending a response.
      *
      * @return whether the response was awaited
+     * @see ServerMonitoringMode#STREAM
      * @since 4.1
      * @mongodb.server.release 4.4
      */
@@ -110,6 +99,8 @@ public final class ServerHeartbeatFailedEvent {
     public String toString() {
         return "ServerHeartbeatFailedEvent{"
                 + "connectionId=" + connectionId
+                + ", server=" + connectionId.getServerId().getAddress()
+                + ", clusterId=" + connectionId.getServerId().getClusterId()
                 + ", elapsedTimeNanos=" + elapsedTimeNanos
                 + ", awaited=" + awaited
                 + ", throwable=" + throwable

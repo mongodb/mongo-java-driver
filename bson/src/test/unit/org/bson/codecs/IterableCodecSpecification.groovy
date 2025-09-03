@@ -23,6 +23,8 @@ import org.bson.types.Binary
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.time.Instant
+
 import static org.bson.BsonDocument.parse
 import static org.bson.UuidRepresentation.C_SHARP_LEGACY
 import static org.bson.UuidRepresentation.JAVA_LEGACY
@@ -36,11 +38,12 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 class IterableCodecSpecification extends Specification {
 
     static final REGISTRY = fromRegistries(fromCodecs(new UuidCodec(JAVA_LEGACY)),
-            fromProviders(new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider(), new IterableCodecProvider()))
+            fromProviders(new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider(),
+                    new IterableCodecProvider(), new MapCodecProvider()))
 
     def 'should have Iterable encoding class'() {
         given:
-        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap())
+        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap(), null)
 
         expect:
         codec.getEncoderClass() == Iterable
@@ -48,7 +51,7 @@ class IterableCodecSpecification extends Specification {
 
     def 'should encode an Iterable to a BSON array'() {
         given:
-        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap())
+        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap(), null)
         def writer = new BsonDocumentWriter(new BsonDocument())
 
         when:
@@ -63,7 +66,7 @@ class IterableCodecSpecification extends Specification {
 
     def 'should decode a BSON array to an Iterable'() {
         given:
-        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap())
+        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap(), null)
         def reader = new BsonDocumentReader(parse('{array : [1, 2, 3, null]}'))
 
         when:
@@ -78,7 +81,7 @@ class IterableCodecSpecification extends Specification {
 
     def 'should decode a BSON array of arrays to an Iterable of Iterables'() {
         given:
-        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap())
+        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap(), null)
         def reader = new BsonDocumentReader(parse('{array : [[1, 2], [3, 4, 5]]}'))
 
         when:
@@ -113,7 +116,7 @@ class IterableCodecSpecification extends Specification {
     def 'should decode binary subtype 3 for UUID'() {
         given:
         def reader = new BsonDocumentReader(parse(document))
-        def codec = new IterableCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()), new BsonTypeClassMap())
+        def codec = new IterableCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()), new BsonTypeClassMap(), null)
                 .withUuidRepresentation(representation)
 
         when:
@@ -139,7 +142,7 @@ class IterableCodecSpecification extends Specification {
     def 'should decode binary subtype 4 for UUID'() {
         given:
         def reader = new BsonDocumentReader(parse(document))
-        def codec = new IterableCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()), new BsonTypeClassMap())
+        def codec = new IterableCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()), new BsonTypeClassMap(), null)
                 .withUuidRepresentation(representation)
 
         when:
@@ -158,5 +161,14 @@ class IterableCodecSpecification extends Specification {
         C_SHARP_LEGACY | [new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[])] | '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "4" }]}'
         PYTHON_LEGACY  | [new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[])] | '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "4" }]}'
         UNSPECIFIED    | [new Binary((byte) 4, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as byte[])] | '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "4" }]}'
+    }
+
+    @SuppressWarnings('unused')
+    static class Container {
+        private final List<Map<String, List<Instant>>> instants = []
+
+        List<Map<String, List<Instant>>> getInstants() {
+            instants
+        }
     }
 }

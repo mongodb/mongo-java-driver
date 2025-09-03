@@ -18,6 +18,7 @@ package org.bson;
 
 /**
  * A general runtime exception raised in BSON processing.
+ * @serial exclude
  */
 public class BSONException extends RuntimeException {
 

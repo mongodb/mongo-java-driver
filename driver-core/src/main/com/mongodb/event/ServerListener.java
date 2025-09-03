@@ -20,7 +20,11 @@ import java.util.EventListener;
 
 /**
  * A listener for server-related events
- *
+ * <p>
+ * See {@link ClusterListener} for the details regarding the order of events and memory synchronization.
+ * </p>
+ * @see ClusterListener
+ * @see ServerMonitorListener
  * @since 3.3
  */
 public interface ServerListener extends EventListener {

@@ -26,21 +26,21 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 import org.bson.json.JsonReader;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 // Don't convert to Spock, as Groovy intercepts equals/hashCode methods that we are trying to test
 public class DocumentTest {
@@ -58,14 +58,14 @@ public class DocumentTest {
 
     @Test
     public void shouldBeEqualToItself() {
-        assertTrue(emptyDocument.equals(emptyDocument));
-        assertTrue(document.equals(document));
+        assertEquals(emptyDocument, emptyDocument);
+        assertEquals(document, document);
     }
 
     @Test
     public void shouldNotBeEqualToDifferentBsonDocument() {
         // expect
-        assertFalse(emptyDocument.equals(document));
+        assertNotEquals(emptyDocument, document);
     }
 
     @Test
@@ -75,8 +75,7 @@ public class DocumentTest {
 
     @Test
     public void toJsonShouldReturnEquivalent() {
-        assertEquals(new DocumentCodec().decode(new JsonReader(document.toJson()), DecoderContext.builder().build()),
-                     document);
+        assertEquals(new DocumentCodec().decode(new JsonReader(document.toJson()), DecoderContext.builder().build()), document);
     }
 
     // Test to ensure that toJson does not reorder _id field
@@ -99,22 +98,22 @@ public class DocumentTest {
 
         // when the key is found
         int x = d.get("x", 2);
-        List<String> y = d.get("y", Arrays.asList("three", "four"));
+        List<String> y = d.get("y", asList("three", "four"));
         String z = d.get("z", "bar");
 
         // then it returns the value
         assertEquals(1, x);
-        assertEquals(Arrays.asList("one"), y);
+        assertEquals(asList("one"), y);
         assertEquals("foo", z);
 
         // when the key is not found
         int x2 = d.get("x2", 2);
-        List<String> y2 = d.get("y2", Arrays.asList("three", "four"));
+        List<String> y2 = d.get("y2", asList("three", "four"));
         String z2 = d.get("z2", "bar");
 
         // then it returns the default value
         assertEquals(2, x2);
-        assertEquals(Arrays.asList("three", "four"), y2);
+        assertEquals(asList("three", "four"), y2);
         assertEquals("bar", z2);
     }
 
@@ -129,6 +128,27 @@ public class DocumentTest {
         }
 
         assertEquals("{\"database\": {\"name\": \"MongoDB\"}}", customDocument.toJson(customDocumentCodec));
+    }
+
+    @Test
+    public void toBsonDocumentShouldCreateBsonDocument() {
+        BsonDocument expected = new BsonDocument()
+                .append("a", new BsonInt32(1))
+                .append("b", new BsonInt32(2))
+                .append("c", new BsonDocument("x", BsonBoolean.TRUE))
+                .append("d", new BsonArray(asList(new BsonDocument("y", BsonBoolean.FALSE), new BsonInt32(1))));
+
+        assertEquals(expected, document.toBsonDocument(BsonDocument.class, Bson.DEFAULT_CODEC_REGISTRY));
+        assertEquals(expected, document.toBsonDocument());
+    }
+
+    @Test
+    public void toJsonShouldRenderUuidAsStandard() {
+        UUID uuid = UUID.randomUUID();
+        Document doc = new Document("_id", uuid);
+
+        String json = doc.toJson();
+        assertEquals(new BsonDocument("_id", new BsonBinary(uuid)), BsonDocument.parse(json));
     }
 
     public class Name {

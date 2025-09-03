@@ -17,34 +17,32 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.internal.session.SessionContext;
 
 /**
  * A factory of connection sources to servers that can be read from and that satisfy the specified read preference.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public interface ReadBinding extends ReferenceCounted {
-    /**
-     * The read preference that all connection sources returned by this instance will satisfy.
-     * @return the non-null read preference
-     */
+public interface ReadBinding extends BindingContext, ReferenceCounted {
     ReadPreference getReadPreference();
 
     /**
-     * Returns a connection source to a server that satisfies the specified read preference.
+     * Returns a connection source to a server that satisfies the read preference with which this instance is configured.
      * @return the connection source
      */
     ConnectionSource getReadConnectionSource();
 
     /**
-     * Gets the session context for this binding.
+     * Return a connection source that satisfies the read preference with which this instance is configured, if all connected servers have
+     * a maxWireVersion >= the given minWireVersion.  Otherwise, return a connection source that satisfied the given
+     * fallbackReadPreference.
+     * <p>
+     * This is useful for operations that are able to execute on a secondary on later server versions, but must execute on the primary on
+     * earlier server versions.
      *
-     * @return the session context, which may not be null
-     *
-     * @since 3.6
+     * @see com.mongodb.internal.operation.AggregateToCollectionOperation
      */
-    SessionContext getSessionContext();
+    ConnectionSource getReadConnectionSource(int minWireVersion, ReadPreference fallbackReadPreference);
 
     @Override
     ReadBinding retain();

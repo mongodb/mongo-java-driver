@@ -33,7 +33,7 @@ public class BasicDBObjectBuilder {
      * Creates a builder intialized with an empty document.
      */
     public BasicDBObjectBuilder() {
-        _stack = new LinkedList<DBObject>();
+        _stack = new LinkedList<>();
         _stack.add(new BasicDBObject());
     }
 
@@ -99,7 +99,7 @@ public class BasicDBObjectBuilder {
     }
 
     /**
-     * Creates an new empty object and inserts it into the current object with the given key. The new child object becomes the active one.
+     * Creates a new empty object and inserts it into the current object with the given key. The new child object becomes the active one.
      *
      * @param key the field name
      * @return {@code this} so calls can be chained

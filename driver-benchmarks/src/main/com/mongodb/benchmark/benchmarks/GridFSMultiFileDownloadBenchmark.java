@@ -34,6 +34,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+
 public class GridFSMultiFileDownloadBenchmark extends AbstractMongoBenchmark {
 
     private GridFSBucket bucket;
@@ -43,9 +44,8 @@ public class GridFSMultiFileDownloadBenchmark extends AbstractMongoBenchmark {
 
     private File tempDirectory;
 
-    @Override
-    public String getName() {
-        return "GridFS multi-file download";
+    public GridFSMultiFileDownloadBenchmark() {
+        super("GridFS multi-file download");
     }
 
     @Override
@@ -104,25 +104,19 @@ public class GridFSMultiFileDownloadBenchmark extends AbstractMongoBenchmark {
     }
 
     private Runnable exportFile(final CountDownLatch latch, final int fileId) {
-        return new Runnable() {
-            @Override
-            public void run() {
-                final UnsafeByteArrayOutputStream outputStream = new UnsafeByteArrayOutputStream(5242880);
-                bucket.downloadToStream(GridFSMultiFileDownloadBenchmark.this.getFileName(fileId), outputStream);
-                fileService.submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            FileOutputStream fos = new FileOutputStream(new File(tempDirectory, String.format("%02d", fileId) + ".txt"));
-                            fos.write(outputStream.getByteArray());
-                            fos.close();
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                        latch.countDown();
-                    }
-                });
-            }
+        return () -> {
+            UnsafeByteArrayOutputStream outputStream = new UnsafeByteArrayOutputStream(5242880);
+            bucket.downloadToStream(GridFSMultiFileDownloadBenchmark.this.getFileName(fileId), outputStream);
+            fileService.submit(() -> {
+                try {
+                    FileOutputStream fos = new FileOutputStream(new File(tempDirectory, String.format("%02d", fileId) + ".txt"));
+                    fos.write(outputStream.getByteArray());
+                    fos.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                latch.countDown();
+            });
         };
     }
 
@@ -137,18 +131,15 @@ public class GridFSMultiFileDownloadBenchmark extends AbstractMongoBenchmark {
     }
 
     private Runnable importFile(final CountDownLatch latch, final int fileId) {
-        return new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    String fileName = GridFSMultiFileDownloadBenchmark.this.getFileName(fileId);
-                    String resourcePath = "parallel/gridfs_multi/" + fileName;
-                    bucket.uploadFromStream(fileName, streamFromRelativePath(resourcePath),
-                            new GridFSUploadOptions().chunkSizeBytes(ONE_MB));
-                    latch.countDown();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+        return () -> {
+            try {
+                String fileName = GridFSMultiFileDownloadBenchmark.this.getFileName(fileId);
+                String resourcePath = "parallel/gridfs_multi/" + fileName;
+                bucket.uploadFromStream(fileName, streamFromRelativePath(resourcePath),
+                        new GridFSUploadOptions().chunkSizeBytes(ONE_MB));
+                latch.countDown();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         };
     }

@@ -20,6 +20,7 @@ import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionPoolSettings
 import com.mongodb.connection.ServerId
+import com.mongodb.internal.inject.SameObjectProvider
 import com.mongodb.management.JMXConnectionPoolListener
 import spock.lang.Specification
 import spock.lang.Subject
@@ -27,6 +28,9 @@ import spock.lang.Unroll
 
 import javax.management.ObjectName
 import java.lang.management.ManagementFactory
+
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT_FACTORY
 
 class JMXConnectionPoolListenerSpecification extends Specification {
     private static final ServerId SERVER_ID = new ServerId(new ClusterId(), new ServerAddress('host1', 27018))
@@ -42,12 +46,12 @@ class JMXConnectionPoolListenerSpecification extends Specification {
         given:
         provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                 ConnectionPoolSettings.builder().minSize(0).maxSize(5)
-                        .addConnectionPoolListener(jmxListener).build())
-        provider.start();
+                        .addConnectionPoolListener(jmxListener).build(), mockSdamProvider(), OPERATION_CONTEXT_FACTORY)
+        provider.ready()
 
         when:
-        provider.get()
-        provider.get().close()
+        provider.get(OPERATION_CONTEXT)
+        provider.get(OPERATION_CONTEXT).close()
 
         then:
         with(jmxListener.getMBean(SERVER_ID)) {
@@ -67,8 +71,7 @@ class JMXConnectionPoolListenerSpecification extends Specification {
         when:
         provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                 ConnectionPoolSettings.builder().minSize(0).maxSize(5)
-                        .addConnectionPoolListener(jmxListener).build())
-        provider.start();
+                        .addConnectionPoolListener(jmxListener).build(), mockSdamProvider(), OPERATION_CONTEXT_FACTORY)
 
         then:
         ManagementFactory.getPlatformMBeanServer().isRegistered(
@@ -82,8 +85,7 @@ class JMXConnectionPoolListenerSpecification extends Specification {
         given:
         provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                 ConnectionPoolSettings.builder().minSize(0).maxSize(5)
-                        .addConnectionPoolListener(jmxListener).build())
-        provider.start();
+                        .addConnectionPoolListener(jmxListener).build(), mockSdamProvider(), OPERATION_CONTEXT_FACTORY)
 
         when:
         provider.close()
@@ -95,7 +97,7 @@ class JMXConnectionPoolListenerSpecification extends Specification {
 
     def 'should create a valid ObjectName for hostname'() {
         given:
-        String beanName = jmxListener.getMBeanObjectName(SERVER_ID);
+        String beanName = jmxListener.getMBeanObjectName(SERVER_ID)
 
         when:
         ObjectName objectName = new ObjectName(beanName)
@@ -165,5 +167,9 @@ class JMXConnectionPoolListenerSpecification extends Specification {
         'cluster?Id'  | '"cluster\\?Id"'      | 'host?name'  | '"host\\?name"'  | 'client? description'  | '"client\\? description"'
         'cluster\\Id' | '"cluster\\\\Id"'     | 'host\\name' | '"host\\\\name"' | 'client\\ description' | '"client\\\\ description"'
         'cluster\nId' | '"cluster\\nId"'      | 'host\nname' | '"host\\nname"'  | 'client\n description' | '"client\\n description"'
+    }
+
+    private mockSdamProvider() {
+        SameObjectProvider.initialized(Mock(SdamServerDescriptionManager))
     }
 }

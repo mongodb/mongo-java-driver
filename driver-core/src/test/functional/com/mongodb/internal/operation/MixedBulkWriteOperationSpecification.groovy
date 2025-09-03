@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-import category.Slow
 import com.mongodb.MongoBulkWriteException
 import com.mongodb.MongoClientException
 import com.mongodb.MongoNamespace
@@ -34,6 +33,7 @@ import com.mongodb.internal.bulk.DeleteRequest
 import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.bulk.UpdateRequest
 import com.mongodb.internal.bulk.WriteRequest
+import com.mongodb.spock.Slow
 import org.bson.BsonBinary
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -46,7 +46,6 @@ import org.bson.RawBsonDocument
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import org.bson.types.ObjectId
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.configureFailPoint
@@ -56,7 +55,7 @@ import static com.mongodb.ClusterFixture.enableOnPrimaryTransactionalWriteFailPo
 import static com.mongodb.ClusterFixture.getAsyncSingleConnectionBinding
 import static com.mongodb.ClusterFixture.getSingleConnectionBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.client.model.Filters.eq
@@ -100,8 +99,8 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'when no document with the same id exists, should insert the document'() {
         given:
-        def operation = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))],
-                ordered, ACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(getNamespace(),
+                [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))], ordered, ACKNOWLEDGED, false)
 
         when:
         BulkWriteResult result = execute(operation, async)
@@ -120,7 +119,8 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         given:
         def document = new BsonDocument('_id', new BsonInt32(1))
         getCollectionHelper().insertDocuments(document)
-        def operation = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(document)], ordered, ACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(document)], ordered,
+                ACKNOWLEDGED, false)
 
         when:
         execute(operation, async)
@@ -135,8 +135,8 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'RawBsonDocument should not generate an _id'() {
         given:
-        def operation = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(RawBsonDocument.parse('{_id: 1}'))],
-                ordered, ACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(getNamespace(),
+                [new InsertRequest(RawBsonDocument.parse('{_id: 1}'))], ordered, ACKNOWLEDGED, false)
 
         when:
         BulkWriteResult result = execute(operation, async)
@@ -352,7 +352,44 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         execute(operation, async)
 
         then:
-        thrown(IllegalArgumentException)
+        def e = thrown(IllegalArgumentException)
+        e.getMessage() == 'All update operators must start with \'$\', but \'a\' does not'
+
+        where:
+        [async, ordered] << [[true, false], [true, false]].combinations()
+    }
+
+    def 'when replacing an invalid document, replace should throw IllegalArgumentException'() {
+        given:
+        def id = new ObjectId()
+        def operation = new MixedBulkWriteOperation(getNamespace(),
+                [new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)),
+                        new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))), REPLACE)],
+                true, ACKNOWLEDGED, false)
+
+        when:
+        execute(operation, async)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.getMessage() == 'Field names in a replacement document can not start with \'$\' but \'$set\' does'
+
+        where:
+        [async, ordered] << [[true, false], [true, false]].combinations()
+    }
+
+    @IgnoreIf({ serverVersionLessThan(5, 0) })
+    def 'when inserting a document with a field starting with a dollar sign, insert should not throw'() {
+        given:
+        def operation = new MixedBulkWriteOperation(getNamespace(),
+                [new InsertRequest(new BsonDocument('$inc', new BsonDocument('x', new BsonInt32(1))))],
+                true, ACKNOWLEDGED, false)
+
+        when:
+        execute(operation, async)
+
+        then:
+        notThrown(IllegalArgumentException)
 
         where:
         [async, ordered] << [[true, false], [true, false]].combinations()
@@ -362,11 +399,11 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         given:
         def id = new ObjectId()
         def operation = new MixedBulkWriteOperation(getNamespace(),
-                                             [new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)),
-                                                                new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))),
-                                                                REPLACE)
-                                                      .upsert(true)],
-                                             true, ACKNOWLEDGED, false)
+                [new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)),
+                        new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))),
+                        REPLACE)
+                         .upsert(true)],
+                true, ACKNOWLEDGED, false)
 
         when:
         execute(operation, async)
@@ -483,7 +520,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
-    @Category(Slow)
+    @Slow
     def 'when a replacement document is 16MB, the document is still replaced'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
@@ -504,20 +541,20 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         async << [true, false]
     }
 
-    @Category(Slow)
+    @Slow
     def 'when two update documents together exceed 16MB, the documents are still updated'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1), new Document('_id', 2))
         def operation = new MixedBulkWriteOperation(getNamespace(),
-                                             [new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
-                                                                new BsonDocument('_id', new BsonInt32(1))
-                                                                        .append('x', new BsonBinary(new byte[1024 * 1024 * 16 - 30])),
-                                                                REPLACE),
-                                              new UpdateRequest(new BsonDocument('_id', new BsonInt32(2)),
-                                                                new BsonDocument('_id', new BsonInt32(2))
-                                                                        .append('x', new BsonBinary(new byte[1024 * 1024 * 16 - 30])),
-                                                                REPLACE)],
-                                             true, ACKNOWLEDGED, false)
+                [new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
+                        new BsonDocument('_id', new BsonInt32(1))
+                                .append('x', new BsonBinary(new byte[1024 * 1024 * 16 - 30])),
+                        REPLACE),
+                 new UpdateRequest(new BsonDocument('_id', new BsonInt32(2)),
+                         new BsonDocument('_id', new BsonInt32(2))
+                                 .append('x', new BsonBinary(new byte[1024 * 1024 * 16 - 30])),
+                         REPLACE)],
+                true, ACKNOWLEDGED, false)
 
         when:
         BulkWriteResult result = execute(operation, async)
@@ -530,7 +567,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         async << [true, false]
     }
 
-    @Category(Slow)
+    @Slow
     def 'when documents together are just below the max message size, the documents are still inserted'() {
         given:
         def bsonBinary = new BsonBinary(new byte[16 * 1000 * 1000 - (getCollectionName().length() + 33)])
@@ -551,7 +588,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         getCollectionHelper().count() == 3
     }
 
-    @Category(Slow)
+    @Slow
     def 'when documents together are just above the max message size, the documents are still inserted'() {
         given:
         def bsonBinary = new BsonBinary(new byte[16 * 1000 * 1000 - (getCollectionName().length() + 32)])
@@ -599,13 +636,14 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'should handle multi-length runs of UNACKNOWLEDGED insert, update, replace, and remove'() {
         given:
         getCollectionHelper().insertDocuments(getTestInserts())
-        def operation = new MixedBulkWriteOperation(getNamespace(),  getTestWrites(), ordered, UNACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(getNamespace(),  getTestWrites(), ordered, UNACKNOWLEDGED,
+                false)
         def binding = async ? getAsyncSingleConnectionBinding() : getSingleConnectionBinding()
 
         when:
         def result = execute(operation, binding)
-        execute(new InsertOperation(namespace, true, ACKNOWLEDGED, false,
-                [new InsertRequest(new BsonDocument('_id', new BsonInt32(9)))]), binding)
+        execute(new MixedBulkWriteOperation(namespace,
+                [new InsertRequest(new BsonDocument('_id', new BsonInt32(9)))], true, ACKNOWLEDGED, false,), binding)
 
         then:
         !result.wasAcknowledged()
@@ -623,11 +661,11 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
-    @Category(Slow)
+    @Slow
     def 'should split the number of writes is larger than the match write batch size'() {
         given:
         def binding = async ? getAsyncSingleConnectionBinding() : getSingleConnectionBinding()
-        def maxWriteBatchSize = getCollectionHelper().isMaster().getInteger('maxWriteBatchSize').intValue()
+        def maxWriteBatchSize = getCollectionHelper().hello().getInteger('maxWriteBatchSize').intValue()
         def numberOfWrites = maxWriteBatchSize + 100
         def writes = []
 
@@ -673,12 +711,12 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'error details should have correct index on ordered write failure'() {
         given:
         def operation = new MixedBulkWriteOperation(getNamespace(),
-                                             [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
-                                              new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
-                                                                new BsonDocument('$set', new BsonDocument('x', new BsonInt32(3))),
-                                                                UPDATE),
-                                              new InsertRequest(new BsonDocument('_id', new BsonInt32(1))) // this should fail with index 2
-                                             ], true, ACKNOWLEDGED, false)
+                [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
+                 new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
+                         new BsonDocument('$set', new BsonDocument('x', new BsonInt32(3))),
+                         UPDATE),
+                 new InsertRequest(new BsonDocument('_id', new BsonInt32(1))) // this should fail with index 2
+                ], true, ACKNOWLEDGED, false)
         when:
         execute(operation, async)
 
@@ -696,12 +734,12 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         given:
         getCollectionHelper().insertDocuments(getTestInserts())
         def operation = new MixedBulkWriteOperation(getNamespace(),
-                                             [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
-                                              new UpdateRequest(new BsonDocument('_id', new BsonInt32(2)),
-                                                                new BsonDocument('$set', new BsonDocument('x', new BsonInt32(3))),
-                                                                UPDATE),
-                                              new InsertRequest(new BsonDocument('_id', new BsonInt32(3))) // this should fail with index 2
-                                             ], false, ACKNOWLEDGED, false)
+                [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
+                 new UpdateRequest(new BsonDocument('_id', new BsonInt32(2)),
+                         new BsonDocument('$set', new BsonDocument('x', new BsonInt32(3))),
+                         UPDATE),
+                 new InsertRequest(new BsonDocument('_id', new BsonInt32(3))) // this should fail with index 2
+                ], false, ACKNOWLEDGED, false)
         when:
         execute(operation, async)
 
@@ -767,8 +805,8 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'should throw bulk write exception with a write concern error when wtimeout is exceeded'() {
         given:
         def operation = new MixedBulkWriteOperation(getNamespace(),
-                                             [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))],
-                                             false, new WriteConcern(5, 1), false)
+                [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))],
+                false, new WriteConcern(5, 1), false)
         when:
         execute(operation, async)
 
@@ -786,9 +824,9 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         given:
         getCollectionHelper().insertDocuments(getTestInserts())
         def operation = new MixedBulkWriteOperation(getNamespace(),
-                                             [new InsertRequest(new BsonDocument('_id', new BsonInt32(7))),
-                                              new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))   // duplicate key
-                                             ], false, new WriteConcern(4, 1), false)
+                [new InsertRequest(new BsonDocument('_id', new BsonInt32(7))),
+                 new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))   // duplicate key
+                ], false, new WriteConcern(4, 1), false)
 
         when:
         execute(operation, async)  // This is assuming that it won't be able to replicate to 4 servers in 1 ms
@@ -804,19 +842,19 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 8) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should throw on write concern error on multiple failpoint'() {
         given:
         getCollectionHelper().insertDocuments(getTestInserts())
         def operation = new MixedBulkWriteOperation(getNamespace(),
-                [new InsertRequest(new BsonDocument('_id', new BsonInt32(7))),
-                 new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))   // duplicate key
-                ], false, ACKNOWLEDGED, true)
+                [new DeleteRequest(new BsonDocument('_id', new BsonInt32(2))), // existing key
+                 new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))  // existing (duplicate) key
+                ], true, ACKNOWLEDGED, true)
 
         def failPoint = BsonDocument.parse('''{
             "configureFailPoint": "failCommand",
             "mode": {"times": 2 },
-            "data": { "failCommands": ["insert"],
+            "data": { "failCommands": ["delete"],
                       "writeConcernError": {"code": 91, "errmsg": "Replication is being shut down"}}}''')
         configureFailPoint(failPoint)
 
@@ -849,7 +887,6 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         ordered << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should throw if bypassDocumentValidation is set and writeConcern is UNACKNOWLEDGED'() {
         given:
         def operation = new MixedBulkWriteOperation(getNamespace(),
@@ -866,7 +903,6 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         [async, bypassDocumentValidation] << [[false, false], [true, false]].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should throw if collation is set and write is UNACKNOWLEDGED'() {
         given:
         def operation = new MixedBulkWriteOperation(getNamespace(),
@@ -882,15 +918,14 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         [async, bypassDocumentValidation] << [[true, false], [true, false]].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should honour the bypass validation flag for inserts'() {
         given:
         def namespace = new MongoNamespace(getDatabaseName(), 'collection')
         def collectionHelper = getCollectionHelper(namespace)
         collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions().validationOptions(
                 new ValidationOptions().validator(gte('level', 10))))
-        def operation = new MixedBulkWriteOperation(namespace, [new InsertRequest(BsonDocument.parse('{ level: 9 }'))], ordered,
-                ACKNOWLEDGED, false)
+        def operation = new MixedBulkWriteOperation(namespace,
+                [new InsertRequest(BsonDocument.parse('{ level: 9 }'))], ordered, ACKNOWLEDGED, false)
 
         when:
         execute(operation, async)
@@ -916,7 +951,6 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should honour the bypass validation flag for updates'() {
         given:
         def namespace = new MongoNamespace(getDatabaseName(), 'collection')
@@ -948,36 +982,6 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
-    @IgnoreIf({ serverVersionAtLeast(3, 4) })
-    def 'should throw an exception when using an unsupported Collation'() {
-        given:
-        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', 1), new Document('y', 1),
-                new Document('z', 1))
-        def operation = new MixedBulkWriteOperation(namespace, requests, false, ACKNOWLEDGED, false)
-
-        when:
-        execute(operation, async)
-
-        then:
-        def exception = thrown(Exception)
-        exception instanceof IllegalArgumentException
-        exception.getMessage().startsWith('Collation not supported by wire version:')
-        getCollectionHelper().count() == 3
-
-        where:
-        [async, requests] << [
-                [true, false],
-                [[new DeleteRequest(BsonDocument.parse('{x: 1}}')).collation(defaultCollation)],
-                 [new UpdateRequest(BsonDocument.parse('{x: 1}}'), BsonDocument.parse('{x: 10}}'), REPLACE),
-                  new UpdateRequest(BsonDocument.parse('{y: 1}}'), BsonDocument.parse('{x: 10}}'), REPLACE).collation(defaultCollation)],
-                 [new DeleteRequest(BsonDocument.parse('{x: 1}}')),
-                  new DeleteRequest(BsonDocument.parse('{y: 1}}')).collation(defaultCollation)],
-                 [new DeleteRequest(BsonDocument.parse('{x: 1}}')),
-                  new UpdateRequest(BsonDocument.parse('{y: 1}}'), BsonDocument.parse('{x: 10}}'), REPLACE).collation(defaultCollation)]]
-        ].combinations()
-    }
-
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should support collation'() {
         given:
         getCollectionHelper().insertDocuments(Document.parse('{str: "foo"}'), Document.parse('{str: "bar"}'))
@@ -1005,7 +1009,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def operation = new MixedBulkWriteOperation(getNamespace(), testWrites, true, ACKNOWLEDGED, true)
 
         when:
-        if (serverVersionAtLeast(3, 6) && isDiscoverableReplicaSet()) {
+        if (isDiscoverableReplicaSet()) {
             enableOnPrimaryTransactionalWriteFailPoint(BsonDocument.parse(failPoint))
         }
         BulkWriteResult result = executeWithSession(operation, async)
@@ -1040,7 +1044,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         ].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should fail as expected with retryWrites and failPoints'() {
         given:
         def testWrites = getTestWrites()
@@ -1065,7 +1069,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         ].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should not fail with unacknowledged writes, retryWrites and failPoints'() {
         given:
         def testWrites = getTestWrites()
@@ -1090,7 +1094,6 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         ].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should retry if the connection initially fails'() {
         when:
         def cannedResult = BsonDocument.parse('{ok: 1.0, n: 1}')
@@ -1114,24 +1117,16 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def originalException = new MongoSocketException('Some failure', new ServerAddress())
 
         when:
-        testRetryableOperationThrowsOriginalError(operation, [[3, 6, 0], [3, 6, 0], [3, 4, 0]],
-                [REPLICA_SET_PRIMARY, REPLICA_SET_PRIMARY], originalException, async)
+        testRetryableOperationThrowsOriginalError(operation, [[3, 6, 0], [3, 6, 0], [3, 6, 0]],
+                [REPLICA_SET_PRIMARY, REPLICA_SET_PRIMARY, STANDALONE], originalException, async)
 
         then:
         Exception commandException = thrown()
         commandException == originalException
 
         when:
-        testRetryableOperationThrowsOriginalError(operation, [[3, 6, 0], [3, 6, 0], [3, 6, 0]],
-                [REPLICA_SET_PRIMARY, STANDALONE], originalException, async)
-
-        then:
-        commandException = thrown()
-        commandException == originalException
-
-        when:
         testRetryableOperationThrowsOriginalError(operation, [[3, 6, 0], [3, 6, 0]],
-                [REPLICA_SET_PRIMARY], originalException, async)
+                [REPLICA_SET_PRIMARY, REPLICA_SET_PRIMARY], originalException, async, 1)
 
         then:
         commandException = thrown()
@@ -1141,7 +1136,6 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should not request retryable write for multi updates or deletes'() {
         given:
         def operation = new MixedBulkWriteOperation(getNamespace(), writes, true, ACKNOWLEDGED, true)
@@ -1179,7 +1173,6 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         ].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should support array filters'() {
         given:
         def documentOne = BsonDocument.parse('{_id: 1, y: [ {b: 3}, {b: 1}]}')
@@ -1207,69 +1200,11 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionAtLeast(3, 6) })
-    def 'should throw IllegalArgumentException if array filters is set and server version is less than 3.6'() {
-        given:
-        def requests = [
-                new UpdateRequest(new BsonDocument(), BsonDocument.parse('{ $set: {"y.$[i].b": 2}}'), UPDATE)
-                        .arrayFilters([BsonDocument.parse('{"i.b": 3}')])
-        ]
-        def operation = new MixedBulkWriteOperation(namespace, requests, true, ACKNOWLEDGED, false)
-
-        when:
-        execute(operation, async)
-
-        then:
-        thrown(IllegalArgumentException)
-
-        where:
-        async << [true, false]
-    }
-
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should throw if array filters is set and write concern is UNACKNOWLEDGED'() {
         given:
         def requests = [
                 new UpdateRequest(new BsonDocument(), BsonDocument.parse('{ $set: {"y.$[i].b": 2}}'), UPDATE)
                         .arrayFilters([BsonDocument.parse('{"i.b": 3}')])
-        ]
-        def operation = new MixedBulkWriteOperation(namespace, requests, true, UNACKNOWLEDGED, false)
-
-        when:
-        execute(operation, async)
-
-        then:
-        thrown(MongoClientException)
-
-        where:
-        async << [true, false]
-    }
-
-    @IgnoreIf({ serverVersionAtLeast(3, 4) })
-    def 'should throw IllegalArgumentException if hint is set and server version is less than 3.4'() {
-        given:
-        def requests = [
-                new UpdateRequest(new BsonDocument(), BsonDocument.parse('{ $set: {"y.$[i].b": 2}}'), UPDATE)
-                        .hint(BsonDocument.parse('{ _id: 1 }'))
-        ]
-        def operation = new MixedBulkWriteOperation(namespace, requests, true, ACKNOWLEDGED, false)
-
-        when:
-        execute(operation, async)
-
-        then:
-        thrown(IllegalArgumentException)
-
-        where:
-        async << [true, false]
-    }
-
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || serverVersionAtLeast(4, 2) })
-    def 'should throw if hint is set and write concern is UNACKNOWLEDGED'() {
-        given:
-        def requests = [
-                new UpdateRequest(new BsonDocument(), BsonDocument.parse('{ $set: {"y.$[i].b": 2}}'), UPDATE)
-                        .hintString('_id')
         ]
         def operation = new MixedBulkWriteOperation(namespace, requests, true, UNACKNOWLEDGED, false)
 

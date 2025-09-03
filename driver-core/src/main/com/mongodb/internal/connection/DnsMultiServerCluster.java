@@ -21,22 +21,32 @@ import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
+import com.mongodb.connection.ServerDescription;
+import com.mongodb.lang.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
-import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class DnsMultiServerCluster extends AbstractMultiServerCluster {
     private final DnsSrvRecordMonitor dnsSrvRecordMonitor;
     private volatile MongoException srvResolutionException;
 
-
-    public DnsMultiServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
+    public DnsMultiServerCluster(final ClusterId clusterId, final ClusterSettings settings,
+                                 final ClusterableServerFactory serverFactory,
+                                 final ClientMetadata clientMetadata,
                                  final DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory) {
-        super(clusterId, settings, serverFactory);
-        notNull("srvHost", settings.getSrvHost());
-        dnsSrvRecordMonitor = dnsSrvRecordMonitorFactory.create(settings.getSrvHost(), new DnsSrvRecordInitializer() {
+        super(clusterId, settings, serverFactory, clientMetadata);
+        dnsSrvRecordMonitor = dnsSrvRecordMonitorFactory.create(assertNotNull(settings.getSrvHost()), settings.getSrvServiceName(),
+                new DnsSrvRecordInitializer() {
             private volatile boolean initialized;
 
             @Override
@@ -44,17 +54,46 @@ public final class DnsMultiServerCluster extends AbstractMultiServerCluster {
                 srvResolutionException = null;
                 if (!initialized) {
                     initialized = true;
-                    DnsMultiServerCluster.this.initialize(hosts);
+                    DnsMultiServerCluster.this.initialize(applySrvMaxHosts(hosts));
                 } else {
-                    DnsMultiServerCluster.this.onChange(hosts);
+                    DnsMultiServerCluster.this.onChange(applySrvMaxHosts(hosts));
                 }
+            }
+
+            private Collection<ServerAddress> applySrvMaxHosts(final Collection<ServerAddress> latestSrvHosts) {
+                Integer srvMaxHosts = getSettings().getSrvMaxHosts();
+                if (srvMaxHosts == null || srvMaxHosts <= 0 || latestSrvHosts.size() <= srvMaxHosts) {
+                    return new ArrayList<>(latestSrvHosts);
+                }
+                List<ServerAddress> activeHosts = getActivePriorHosts(latestSrvHosts);
+                int numNewHostsToAdd = srvMaxHosts - activeHosts.size();
+                activeHosts.addAll(addShuffledHosts(latestSrvHosts, activeHosts, numNewHostsToAdd));
+
+                return activeHosts;
+            }
+
+            private List<ServerAddress> getActivePriorHosts(final Collection<ServerAddress> latestSrvHosts) {
+                List<ServerAddress> priorHosts = DnsMultiServerCluster.this.getCurrentDescription().getServerDescriptions().stream()
+                        .map(ServerDescription::getAddress).collect(Collectors.toList());
+                priorHosts.removeIf(host -> !latestSrvHosts.contains(host));
+
+                return priorHosts;
+            }
+
+            private List<ServerAddress> addShuffledHosts(final Collection<ServerAddress> latestSrvHosts,
+                    final List<ServerAddress> activePriorHosts, final int numNewHostsToAdd) {
+                List<ServerAddress> addedHosts = new ArrayList<>(latestSrvHosts);
+                addedHosts.removeAll(activePriorHosts);
+                Collections.shuffle(addedHosts, ThreadLocalRandom.current());
+
+                return addedHosts.subList(0, numNewHostsToAdd);
             }
 
             @Override
             public void initialize(final MongoException initializationException) {
                 if (!initialized) {
                     srvResolutionException = initializationException;
-                    DnsMultiServerCluster.this.initialize(Collections.<ServerAddress>emptyList());
+                    DnsMultiServerCluster.this.initialize(Collections.emptyList());
                 }
             }
 
@@ -66,6 +105,7 @@ public final class DnsMultiServerCluster extends AbstractMultiServerCluster {
         dnsSrvRecordMonitor.start();
     }
 
+    @Nullable
     @Override
     protected MongoException getSrvResolutionException() {
         return srvResolutionException;

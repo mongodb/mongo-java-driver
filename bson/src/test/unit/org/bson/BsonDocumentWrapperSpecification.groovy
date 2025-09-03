@@ -26,7 +26,7 @@ class BsonDocumentWrapperSpecification extends Specification {
             .append('a', 1)
             .append('b', 2)
             .append('c', asList('x', true))
-            .append('d', asList(new Document('y', false), 1));
+            .append('d', asList(new Document('y', false), 1))
 
     def wrapper = new BsonDocumentWrapper(document, new DocumentCodec())
 

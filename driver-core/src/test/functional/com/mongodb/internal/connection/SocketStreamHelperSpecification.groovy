@@ -30,7 +30,11 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import java.lang.reflect.Method
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
+import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.ClusterFixture.getPrimary
+import static com.mongodb.internal.connection.ServerAddressHelper.getSocketAddresses
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -43,8 +47,11 @@ class SocketStreamHelperSpecification extends Specification {
                 .readTimeout(10, SECONDS)
                 .build()
 
+        def operationContext = createOperationContext(TIMEOUT_SETTINGS.withReadTimeoutMS(socketSettings.getReadTimeout(MILLISECONDS)))
+
         when:
-        SocketStreamHelper.initialize(socket, getPrimary().getSocketAddress(), socketSettings, SslSettings.builder().build())
+        SocketStreamHelper.initialize(operationContext, socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
+                socketSettings, SslSettings.builder().build())
 
         then:
         socket.getTcpNoDelay()
@@ -53,10 +60,18 @@ class SocketStreamHelperSpecification extends Specification {
 
         // If the Java 11+ extended socket options for keep alive probes are available, check those values.
         if (Arrays.stream(ExtendedSocketOptions.getDeclaredFields()).anyMatch{ f -> f.getName().equals('TCP_KEEPCOUNT') }) {
-            Method getOptionMethod = Socket.getMethod('getOption', SocketOption);
-            getOptionMethod.invoke(socket, ExtendedSocketOptions.getDeclaredField('TCP_KEEPCOUNT').get(null)) == 9
-            getOptionMethod.invoke(socket, ExtendedSocketOptions.getDeclaredField('TCP_KEEPIDLE').get(null)) == 120
-            getOptionMethod.invoke(socket, ExtendedSocketOptions.getDeclaredField('TCP_KEEPINTERVAL').get(null)) == 10
+            Method getOptionMethod
+            try {
+                getOptionMethod = Socket.getMethod('getOption', SocketOption)
+            } catch (NoSuchMethodException e) {
+                // ignore, the `Socket.getOption` method was added in Java SE 9 and does not exist in Java SE 8
+                getOptionMethod = null
+            }
+            if (getOptionMethod != null) {
+                getOptionMethod.invoke(socket, ExtendedSocketOptions.getDeclaredField('TCP_KEEPCOUNT').get(null)) == 9
+                getOptionMethod.invoke(socket, ExtendedSocketOptions.getDeclaredField('TCP_KEEPIDLE').get(null)) == 120
+                getOptionMethod.invoke(socket, ExtendedSocketOptions.getDeclaredField('TCP_KEEPINTERVAL').get(null)) == 10
+            }
         }
 
         cleanup:
@@ -68,7 +83,7 @@ class SocketStreamHelperSpecification extends Specification {
         Socket socket = SocketFactory.default.createSocket()
 
         when:
-        SocketStreamHelper.initialize(socket, getPrimary().getSocketAddress(),
+        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
                 SocketSettings.builder().build(), SslSettings.builder().build())
 
         then:
@@ -84,7 +99,8 @@ class SocketStreamHelperSpecification extends Specification {
         SSLSocket socket = SSLSocketFactory.default.createSocket()
 
         when:
-        SocketStreamHelper.initialize(socket, getPrimary().getSocketAddress(), SocketSettings.builder().build(), sslSettings)
+        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
+                SocketSettings.builder().build(), sslSettings)
 
         then:
         socket.getSSLParameters().endpointIdentificationAlgorithm == (sslSettings.invalidHostNameAllowed ? null : 'HTTPS')
@@ -104,7 +120,8 @@ class SocketStreamHelperSpecification extends Specification {
         SSLSocket socket = SSLSocketFactory.default.createSocket()
 
         when:
-        SocketStreamHelper.initialize(socket, getPrimary().getSocketAddress(), SocketSettings.builder().build(), sslSettings)
+        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
+                SocketSettings.builder().build(), sslSettings)
 
         then:
         socket.getSSLParameters().getServerNames() == [new SNIHostName(getPrimary().getHost())]
@@ -122,8 +139,8 @@ class SocketStreamHelperSpecification extends Specification {
         Socket socket = SocketFactory.default.createSocket()
 
         when:
-        SocketStreamHelper.initialize(socket, getPrimary().getSocketAddress(), SocketSettings.builder().build(),
-                SslSettings.builder().enabled(true).build())
+        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
+                SocketSettings.builder().build(), SslSettings.builder().enabled(true).build())
 
         then:
         thrown(MongoInternalException)

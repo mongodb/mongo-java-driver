@@ -18,7 +18,11 @@ package org.bson.codecs;
 
 import org.bson.BsonBinaryReader;
 import org.bson.BsonBinaryWriter;
+import org.bson.BsonDocument;
+import org.bson.BsonDocumentReader;
+import org.bson.BsonDocumentWriter;
 import org.bson.BsonType;
+import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.ByteBufNIO;
 import org.bson.Document;
@@ -32,7 +36,7 @@ import java.util.HashMap;
 
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 abstract class CodecTestCase {
 
@@ -44,8 +48,25 @@ abstract class CodecTestCase {
         return fromProviders(asList(new ValueCodecProvider(), getDocumentCodecProvider()));
     }
 
+    <T> T getDecodedValue(final BsonValue bsonValue, final Decoder<T> decoder) {
+        BsonDocument document = new BsonDocument("val", bsonValue);
+        BsonDocumentReader reader = new BsonDocumentReader(document);
+        reader.readStartDocument();
+        reader.readName("val");
+        return decoder.decode(reader, DecoderContext.builder().build());
+    }
+
+    <T> BsonValue getEncodedValue(final T value, final Encoder<T> encoder) {
+        BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+        writer.writeStartDocument();
+        writer.writeName("val");
+        encoder.encode(writer, value, EncoderContext.builder().build());
+        writer.writeEndDocument();
+        return writer.getDocument().get("val");
+    }
+
     <T> void roundTrip(final T value) {
-        roundTrip(value, new DefaultComparator<T>(value));
+        roundTrip(value, new DefaultComparator<>(value));
     }
 
     <T> void roundTrip(final T value, final Comparator<T> comparator) {
@@ -61,12 +82,7 @@ abstract class CodecTestCase {
     }
 
     public void roundTrip(final Document input, final Document expected) {
-        roundTrip(input, new Comparator<Document>() {
-            @Override
-            public void apply(final Document result) {
-                assertEquals("Codec Round Trip", expected, result);
-            }
-        });
+        roundTrip(input, result -> assertEquals(expected, result));
     }
 
     <T> OutputBuffer encode(final Codec<T> codec, final T value) {
@@ -82,7 +98,7 @@ abstract class CodecTestCase {
     }
 
     DocumentCodecProvider getSpecificNumberDocumentCodecProvider(final Class<? extends Number> clazz) {
-        HashMap<BsonType, Class<?>> replacements = new HashMap<BsonType, Class<?>>();
+        HashMap<BsonType, Class<?>> replacements = new HashMap<>();
         replacements.put(BsonType.DOUBLE, clazz);
         replacements.put(BsonType.INT32, clazz);
         replacements.put(BsonType.INT64, clazz);
@@ -103,7 +119,7 @@ abstract class CodecTestCase {
 
         @Override
         public void apply(final T result) {
-            assertEquals("Codec Round Trip", original, result);
+            assertEquals(original, result);
         }
     }
 

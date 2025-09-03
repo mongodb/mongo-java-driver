@@ -35,10 +35,16 @@ import static java.util.Arrays.asList;
  */
 @Immutable
 public final class MongoNamespace {
+    /**
+     * The collection name in which to execute a command.
+     * @deprecated there is no replacement for this constant, as it is only needed for the OP_QUERY wire protocol message, which has
+     * been replaced by OP_MSG
+     */
+    @Deprecated
     public static final String COMMAND_COLLECTION_NAME = "$cmd";
 
     private static final Set<Character> PROHIBITED_CHARACTERS_IN_DATABASE_NAME =
-            new HashSet<Character>(asList('\0', '/', '\\', ' ', '"', '.'));
+            new HashSet<>(asList('\0', '/', '\\', ' ', '"', '.'));
 
     private final String databaseName;
     private final String collectionName;

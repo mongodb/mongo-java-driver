@@ -19,50 +19,46 @@ package com.mongodb.internal.binding;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.Server;
+import com.mongodb.internal.connection.ServerTuple;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
+import com.mongodb.internal.selector.ReadPreferenceWithFallbackServerSelector;
 import com.mongodb.internal.selector.ServerAddressSelector;
 import com.mongodb.internal.selector.WritableServerSelector;
-import com.mongodb.internal.session.SessionContext;
-import com.mongodb.selector.ServerSelector;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * A simple ReadWriteBinding implementation that supplies write connection sources bound to a possibly different primary each time, and a
  * read connection source bound to a possible different server each time.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ClusterBinding extends AbstractReferenceCounted implements ClusterAwareReadWriteBinding {
     private final Cluster cluster;
     private final ReadPreference readPreference;
     private final ReadConcern readConcern;
+    private final OperationContext operationContext;
 
     /**
      * Creates an instance.
-     * @param cluster        a non-null Cluster which will be used to select a server to bind to
-     * @param readPreference a non-null ReadPreference for read operations
-     * @param readConcern    a non-null read concern
-     * @since 3.8
+     * @param cluster          a non-null Cluster which will be used to select a server to bind to
+     * @param readPreference   a non-null ReadPreference for read operations
+     * @param readConcern      a non-null read concern
+     * @param operationContext the operation context
      */
-    public ClusterBinding(final Cluster cluster, final ReadPreference readPreference, final ReadConcern readConcern) {
+    public ClusterBinding(final Cluster cluster, final ReadPreference readPreference, final ReadConcern readConcern,
+                          final OperationContext operationContext) {
         this.cluster = notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
         this.readConcern = notNull("readConcern", readConcern);
-    }
-
-    /**
-     * Return the cluster.
-     * @return the cluster
-     * @since 3.11
-     */
-    public Cluster getCluster() {
-        return cluster;
+        this.operationContext = notNull("operationContext", operationContext);
     }
 
     @Override
@@ -77,46 +73,69 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
     }
 
     @Override
-    public SessionContext getSessionContext() {
-        return new ReadConcernAwareNoOpSessionContext(readConcern);
+    public OperationContext getOperationContext() {
+        return operationContext;
     }
 
     @Override
     public ConnectionSource getReadConnectionSource() {
-        return new ClusterBindingConnectionSource(new ReadPreferenceServerSelector(readPreference));
+        return new ClusterBindingConnectionSource(cluster.selectServer(new ReadPreferenceServerSelector(readPreference), operationContext), readPreference);
+    }
+
+    @Override
+    public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference) {
+        // Assume 5.0+ for load-balanced mode
+        if (cluster.getSettings().getMode() == ClusterConnectionMode.LOAD_BALANCED) {
+            return getReadConnectionSource();
+        } else {
+            ReadPreferenceWithFallbackServerSelector readPreferenceWithFallbackServerSelector
+                    = new ReadPreferenceWithFallbackServerSelector(readPreference, minWireVersion, fallbackReadPreference);
+            ServerTuple serverTuple = cluster.selectServer(readPreferenceWithFallbackServerSelector, operationContext);
+            return new ClusterBindingConnectionSource(serverTuple, readPreferenceWithFallbackServerSelector.getAppliedReadPreference());
+        }
     }
 
     @Override
     public ConnectionSource getWriteConnectionSource() {
-        return new ClusterBindingConnectionSource(new WritableServerSelector());
+        return new ClusterBindingConnectionSource(cluster.selectServer(new WritableServerSelector(), operationContext), readPreference);
     }
 
     @Override
     public ConnectionSource getConnectionSource(final ServerAddress serverAddress) {
-        return new ClusterBindingConnectionSource(new ServerAddressSelector(serverAddress));
+        return new ClusterBindingConnectionSource(cluster.selectServer(new ServerAddressSelector(serverAddress), operationContext), readPreference);
     }
 
     private final class ClusterBindingConnectionSource extends AbstractReferenceCounted implements ConnectionSource {
         private final Server server;
+        private final ServerDescription serverDescription;
+        private final ReadPreference appliedReadPreference;
 
-        private ClusterBindingConnectionSource(final ServerSelector serverSelector) {
-            this.server = cluster.selectServer(serverSelector);
+        private ClusterBindingConnectionSource(final ServerTuple serverTuple, final ReadPreference appliedReadPreference) {
+            this.server = serverTuple.getServer();
+            this.serverDescription = serverTuple.getServerDescription();
+            this.appliedReadPreference = appliedReadPreference;
+            operationContext.getTimeoutContext().minRoundTripTimeMS(NANOSECONDS.toMillis(serverDescription.getMinRoundTripTimeNanos()));
             ClusterBinding.this.retain();
         }
 
         @Override
         public ServerDescription getServerDescription() {
-            return server.getDescription();
+            return serverDescription;
         }
 
         @Override
-        public SessionContext getSessionContext() {
-            return new ReadConcernAwareNoOpSessionContext(readConcern);
+        public OperationContext getOperationContext() {
+            return operationContext;
+        }
+
+        @Override
+        public ReadPreference getReadPreference() {
+            return appliedReadPreference;
         }
 
         @Override
         public Connection getConnection() {
-            return server.getConnection();
+            return server.getConnection(operationContext);
         }
 
         public ConnectionSource retain() {
@@ -126,9 +145,10 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
         }
 
         @Override
-        public void release() {
-            super.release();
+        public int release() {
+            int count = super.release();
             ClusterBinding.this.release();
+            return count;
         }
     }
 }

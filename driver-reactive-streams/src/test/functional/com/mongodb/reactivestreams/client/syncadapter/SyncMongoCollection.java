@@ -27,12 +27,13 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.ListIndexesIterable;
-import com.mongodb.client.MapReduceIterable;
+import com.mongodb.client.ListSearchIndexesIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.DropCollectionOptions;
 import com.mongodb.client.model.DropIndexOptions;
 import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
@@ -44,6 +45,7 @@ import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
@@ -53,14 +55,19 @@ import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
 import static java.util.Objects.requireNonNull;
 
 class SyncMongoCollection<T> implements MongoCollection<T> {
 
-    private com.mongodb.reactivestreams.client.MongoCollection<T> wrapped;
+    private final com.mongodb.reactivestreams.client.MongoCollection<T> wrapped;
 
     SyncMongoCollection(final com.mongodb.reactivestreams.client.MongoCollection<T> wrapped) {
         this.wrapped = wrapped;
@@ -97,6 +104,11 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
     }
 
     @Override
+    public Long getTimeout(final TimeUnit timeUnit) {
+        return wrapped.getTimeout(timeUnit);
+    }
+
+    @Override
     public <NewTDocument> MongoCollection<NewTDocument> withDocumentClass(final Class<NewTDocument> clazz) {
         return new SyncMongoCollection<>(wrapped.withDocumentClass(clazz));
     }
@@ -122,59 +134,48 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
     }
 
     @Override
+    public MongoCollection<T> withTimeout(final long timeout, final TimeUnit timeUnit) {
+        return new SyncMongoCollection<>(wrapped.withTimeout(timeout, timeUnit));
+    }
+
+    @Override
     public long countDocuments() {
-        SingleResultSubscriber<Long> subscriber = new SingleResultSubscriber<>();
-        wrapped.countDocuments().subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.countDocuments()).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public long countDocuments(final Bson filter) {
-        SingleResultSubscriber<Long> subscriber = new SingleResultSubscriber<>();
-        wrapped.countDocuments(filter).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.countDocuments(filter)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public long countDocuments(final Bson filter, final CountOptions options) {
-        SingleResultSubscriber<Long> subscriber = new SingleResultSubscriber<>();
-        wrapped.countDocuments(filter, options).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.countDocuments(filter, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public long countDocuments(final ClientSession clientSession) {
-        SingleResultSubscriber<Long> subscriber = new SingleResultSubscriber<>();
-        wrapped.countDocuments(unwrap(clientSession)).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.countDocuments(unwrap(clientSession))).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public long countDocuments(final ClientSession clientSession, final Bson filter) {
-        SingleResultSubscriber<Long> subscriber = new SingleResultSubscriber<>();
-        wrapped.countDocuments(unwrap(clientSession), filter).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.countDocuments(unwrap(clientSession), filter)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public long countDocuments(final ClientSession clientSession, final Bson filter, final CountOptions options) {
-        SingleResultSubscriber<Long> subscriber = new SingleResultSubscriber<>();
-        wrapped.countDocuments(unwrap(clientSession), filter, options).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.countDocuments(unwrap(clientSession), filter, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public long estimatedDocumentCount() {
-        SingleResultSubscriber<Long> subscriber = new SingleResultSubscriber<>();
-        wrapped.estimatedDocumentCount().subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.estimatedDocumentCount()).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public long estimatedDocumentCount(final EstimatedDocumentCountOptions options) {
-        SingleResultSubscriber<Long> subscriber = new SingleResultSubscriber<>();
-        wrapped.estimatedDocumentCount(options).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.estimatedDocumentCount(options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
@@ -188,14 +189,16 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
     }
 
     @Override
-    public <TResult> DistinctIterable<TResult> distinct(final ClientSession clientSession, final String fieldName,
-                                                        final Class<TResult> resultClass) {
+    public <TResult> DistinctIterable<TResult> distinct(
+            final ClientSession clientSession, final String fieldName,
+            final Class<TResult> resultClass) {
         return new SyncDistinctIterable<>(wrapped.distinct(unwrap(clientSession), fieldName, resultClass));
     }
 
     @Override
-    public <TResult> DistinctIterable<TResult> distinct(final ClientSession clientSession, final String fieldName, final Bson filter,
-                                                        final Class<TResult> resultClass) {
+    public <TResult> DistinctIterable<TResult> distinct(
+            final ClientSession clientSession, final String fieldName, final Bson filter,
+            final Class<TResult> resultClass) {
         return new SyncDistinctIterable<>(wrapped.distinct(unwrap(clientSession), fieldName, filter, resultClass));
     }
 
@@ -255,8 +258,9 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
     }
 
     @Override
-    public <TResult> AggregateIterable<TResult> aggregate(final ClientSession clientSession, final List<? extends Bson> pipeline,
-                                                          final Class<TResult> resultClass) {
+    public <TResult> AggregateIterable<TResult> aggregate(
+            final ClientSession clientSession, final List<? extends Bson> pipeline,
+            final Class<TResult> resultClass) {
         return new SyncAggregateIterable<>(wrapped.aggregate(unwrap(clientSession), pipeline, resultClass));
     }
 
@@ -272,7 +276,7 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
 
     @Override
     public ChangeStreamIterable<T> watch(final List<? extends Bson> pipeline) {
-        return new SyncChangeStreamIterable<>(wrapped.watch(wrapped.getDocumentClass()));
+        return new SyncChangeStreamIterable<>(wrapped.watch(pipeline, wrapped.getDocumentClass()));
     }
 
     @Override
@@ -297,476 +301,422 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
     }
 
     @Override
-    public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final List<? extends Bson> pipeline,
-                                                         final Class<TResult> resultClass) {
+    public <TResult> ChangeStreamIterable<TResult> watch(
+            final ClientSession clientSession, final List<? extends Bson> pipeline,
+            final Class<TResult> resultClass) {
         return new SyncChangeStreamIterable<>(wrapped.watch(unwrap(clientSession), pipeline, resultClass));
     }
 
     @Override
-    public MapReduceIterable<T> mapReduce(final String mapFunction, final String reduceFunction) {
+    @SuppressWarnings("deprecation")
+    public com.mongodb.client.MapReduceIterable<T> mapReduce(final String mapFunction, final String reduceFunction) {
         return new SyncMapReduceIterable<>(wrapped.mapReduce(mapFunction, reduceFunction, wrapped.getDocumentClass()));
     }
 
     @Override
-    public <TResult> MapReduceIterable<TResult> mapReduce(final String mapFunction, final String reduceFunction,
-                                                          final Class<TResult> resultClass) {
+    @SuppressWarnings("deprecation")
+    public <TResult> com.mongodb.client.MapReduceIterable<TResult> mapReduce(
+            final String mapFunction, final String reduceFunction,
+            final Class<TResult> resultClass) {
         return new SyncMapReduceIterable<>(wrapped.mapReduce(mapFunction, reduceFunction, resultClass));
     }
 
     @Override
-    public MapReduceIterable<T> mapReduce(final ClientSession clientSession, final String mapFunction, final String reduceFunction) {
+    @SuppressWarnings("deprecation")
+    public com.mongodb.client.MapReduceIterable<T> mapReduce(final ClientSession clientSession, final String mapFunction,
+            final String reduceFunction) {
         return new SyncMapReduceIterable<>(wrapped.mapReduce(unwrap(clientSession), mapFunction, reduceFunction,
-                wrapped.getDocumentClass()));
+                                                             wrapped.getDocumentClass()));
     }
 
     @Override
-    public <TResult> MapReduceIterable<TResult> mapReduce(final ClientSession clientSession, final String mapFunction,
-                                                          final String reduceFunction, final Class<TResult> resultClass) {
+    @SuppressWarnings("deprecation")
+    public <TResult> com.mongodb.client.MapReduceIterable<TResult> mapReduce(
+            final ClientSession clientSession, final String mapFunction,
+            final String reduceFunction, final Class<TResult> resultClass) {
         return new SyncMapReduceIterable<>(wrapped.mapReduce(unwrap(clientSession), mapFunction, reduceFunction, resultClass));
     }
 
     @Override
     public BulkWriteResult bulkWrite(final List<? extends WriteModel<? extends T>> requests) {
-        SingleResultSubscriber<BulkWriteResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.bulkWrite(requests).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.bulkWrite(requests)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public BulkWriteResult bulkWrite(final List<? extends WriteModel<? extends T>> requests, final BulkWriteOptions options) {
-        SingleResultSubscriber<BulkWriteResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.bulkWrite(requests, options).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.bulkWrite(requests, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public BulkWriteResult bulkWrite(final ClientSession clientSession, final List<? extends WriteModel<? extends T>> requests) {
-        SingleResultSubscriber<BulkWriteResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.bulkWrite(unwrap(clientSession), requests).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.bulkWrite(unwrap(clientSession), requests)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
-    public BulkWriteResult bulkWrite(final ClientSession clientSession, final List<? extends WriteModel<? extends T>> requests,
-                                     final BulkWriteOptions options) {
-        SingleResultSubscriber<BulkWriteResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.bulkWrite(unwrap(clientSession), requests, options).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+    public BulkWriteResult bulkWrite(
+            final ClientSession clientSession, final List<? extends WriteModel<? extends T>> requests,
+            final BulkWriteOptions options) {
+        return requireNonNull(Mono.from(wrapped.bulkWrite(unwrap(clientSession), requests, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public InsertOneResult insertOne(final T t) {
-        SingleResultSubscriber<InsertOneResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.insertOne(t).subscribe(subscriber);
-        return subscriber.get();
+        return requireNonNull(Mono.from(wrapped.insertOne(t)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public InsertOneResult insertOne(final T t, final InsertOneOptions options) {
-        SingleResultSubscriber<InsertOneResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.insertOne(t, options).subscribe(subscriber);
-        return subscriber.get();
+        return requireNonNull(Mono.from(wrapped.insertOne(t, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public InsertOneResult insertOne(final ClientSession clientSession, final T t) {
-        SingleResultSubscriber<InsertOneResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.insertOne(unwrap(clientSession), t).subscribe(subscriber);
-        return subscriber.get();
+        return requireNonNull(Mono.from(wrapped.insertOne(unwrap(clientSession), t)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public InsertOneResult insertOne(final ClientSession clientSession, final T t, final InsertOneOptions options) {
-        SingleResultSubscriber<InsertOneResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.insertOne(unwrap(clientSession), t, options).subscribe(subscriber);
-        return subscriber.get();
+        return requireNonNull(Mono.from(wrapped.insertOne(unwrap(clientSession), t, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public InsertManyResult insertMany(final List<? extends T> documents) {
-        SingleResultSubscriber<InsertManyResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.insertMany(documents).subscribe(subscriber);
-        return subscriber.get();
+        return requireNonNull(Mono.from(wrapped.insertMany(documents)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public InsertManyResult insertMany(final List<? extends T> documents, final InsertManyOptions options) {
-        SingleResultSubscriber<InsertManyResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.insertMany(documents, options).subscribe(subscriber);
-        return subscriber.get();
+        return requireNonNull(Mono.from(wrapped.insertMany(documents, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public InsertManyResult insertMany(final ClientSession clientSession, final List<? extends T> documents) {
-        SingleResultSubscriber<InsertManyResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.insertMany(unwrap(clientSession), documents).subscribe(subscriber);
-        return subscriber.get();
+        return requireNonNull(Mono.from(wrapped.insertMany(unwrap(clientSession), documents)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
-    public InsertManyResult insertMany(final ClientSession clientSession, final List<? extends T> documents,
-                                       final InsertManyOptions options) {
-        SingleResultSubscriber<InsertManyResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.insertMany(unwrap(clientSession), documents, options).subscribe(subscriber);
-        return subscriber.get();
+    public InsertManyResult insertMany(
+            final ClientSession clientSession, final List<? extends T> documents,
+            final InsertManyOptions options) {
+        return requireNonNull(Mono.from(wrapped.insertMany(unwrap(clientSession), documents, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public DeleteResult deleteOne(final Bson filter) {
-        SingleResultSubscriber<DeleteResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.deleteOne(filter).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.deleteOne(filter)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public DeleteResult deleteOne(final Bson filter, final DeleteOptions options) {
-        SingleResultSubscriber<DeleteResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.deleteOne(filter, options).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.deleteOne(filter, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public DeleteResult deleteOne(final ClientSession clientSession, final Bson filter) {
-        SingleResultSubscriber<DeleteResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.deleteOne(unwrap(clientSession), filter).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.deleteOne(unwrap(clientSession), filter)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public DeleteResult deleteOne(final ClientSession clientSession, final Bson filter, final DeleteOptions options) {
-        SingleResultSubscriber<DeleteResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.deleteOne(unwrap(clientSession), filter, options).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.deleteOne(unwrap(clientSession), filter, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public DeleteResult deleteMany(final Bson filter) {
-        SingleResultSubscriber<DeleteResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.deleteMany(filter).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.deleteMany(filter)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public DeleteResult deleteMany(final Bson filter, final DeleteOptions options) {
-        SingleResultSubscriber<DeleteResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.deleteMany(filter, options).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.deleteMany(filter, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public DeleteResult deleteMany(final ClientSession clientSession, final Bson filter) {
-        SingleResultSubscriber<DeleteResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.deleteMany(unwrap(clientSession), filter).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.deleteMany(unwrap(clientSession), filter)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public DeleteResult deleteMany(final ClientSession clientSession, final Bson filter, final DeleteOptions options) {
-        SingleResultSubscriber<DeleteResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.deleteMany(unwrap(clientSession), filter, options).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.deleteMany(unwrap(clientSession), filter, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult replaceOne(final Bson filter, final T replacement) {
-        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.replaceOne(filter, replacement).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.replaceOne(filter, replacement)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult replaceOne(final Bson filter, final T replacement, final ReplaceOptions replaceOptions) {
-        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.replaceOne(filter, replacement, replaceOptions).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.replaceOne(filter, replacement, replaceOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult replaceOne(final ClientSession clientSession, final Bson filter, final T replacement) {
-        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.replaceOne(unwrap(clientSession), filter, replacement).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.replaceOne(unwrap(clientSession), filter, replacement)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
-    public UpdateResult replaceOne(final ClientSession clientSession, final Bson filter, final T replacement,
-                                   final ReplaceOptions replaceOptions) {
-        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.replaceOne(unwrap(clientSession), filter, replacement, replaceOptions).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+    public UpdateResult replaceOne(
+            final ClientSession clientSession, final Bson filter, final T replacement,
+            final ReplaceOptions replaceOptions) {
+        return requireNonNull(Mono.from(wrapped.replaceOne(unwrap(clientSession), filter, replacement, replaceOptions))
+                                      .contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateOne(final Bson filter, final Bson update) {
-        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.updateOne(filter, update).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.updateOne(filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateOne(final Bson filter, final Bson update, final UpdateOptions updateOptions) {
-        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.updateOne(filter, update, updateOptions).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.updateOne(filter, update, updateOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateOne(final ClientSession clientSession, final Bson filter, final Bson update) {
-        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.updateOne(unwrap(clientSession), filter, update).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.updateOne(unwrap(clientSession), filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
-    public UpdateResult updateOne(final ClientSession clientSession, final Bson filter, final Bson update,
-                                  final UpdateOptions updateOptions) {
-        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.updateOne(unwrap(clientSession), filter, update, updateOptions).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+    public UpdateResult updateOne(
+            final ClientSession clientSession, final Bson filter, final Bson update,
+            final UpdateOptions updateOptions) {
+        return requireNonNull(Mono.from(wrapped.updateOne(unwrap(clientSession), filter, update, updateOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateOne(final Bson filter, final List<? extends Bson> update) {
-        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.updateOne(filter, update).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.updateOne(filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateOne(final Bson filter, final List<? extends Bson> update, final UpdateOptions updateOptions) {
-        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.updateOne(filter, update, updateOptions).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.updateOne(filter, update, updateOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateOne(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update) {
-        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.updateOne(unwrap(clientSession), filter, update).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.updateOne(unwrap(clientSession), filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
-    public UpdateResult updateOne(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
-                                  final UpdateOptions updateOptions) {
-        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.updateOne(unwrap(clientSession), filter, update, updateOptions).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+    public UpdateResult updateOne(
+            final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
+            final UpdateOptions updateOptions) {
+        return requireNonNull(Mono.from(wrapped.updateOne(unwrap(clientSession), filter, update, updateOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateMany(final Bson filter, final Bson update) {
-        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.updateMany(filter, update).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.updateMany(filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateMany(final Bson filter, final Bson update, final UpdateOptions updateOptions) {
-        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.updateMany(filter, update, updateOptions).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.updateMany(filter, update, updateOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateMany(final ClientSession clientSession, final Bson filter, final Bson update) {
-        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.updateMany(unwrap(clientSession), filter, update).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.updateMany(unwrap(clientSession), filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
-    public UpdateResult updateMany(final ClientSession clientSession, final Bson filter, final Bson update,
-                                   final UpdateOptions updateOptions) {
-        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.updateMany(unwrap(clientSession), filter, update, updateOptions).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+    public UpdateResult updateMany(
+            final ClientSession clientSession, final Bson filter, final Bson update,
+            final UpdateOptions updateOptions) {
+        return requireNonNull(Mono.from(wrapped.updateMany(unwrap(clientSession), filter, update, updateOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateMany(final Bson filter, final List<? extends Bson> update) {
-        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.updateMany(filter, update).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.updateMany(filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateMany(final Bson filter, final List<? extends Bson> update, final UpdateOptions updateOptions) {
-        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.updateMany(filter, update, updateOptions).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.updateMany(filter, update, updateOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public UpdateResult updateMany(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update) {
-        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.updateMany(unwrap(clientSession), filter, update).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.updateMany(unwrap(clientSession), filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
-    public UpdateResult updateMany(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
-                                   final UpdateOptions updateOptions) {
-        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.updateMany(unwrap(clientSession), filter, update, updateOptions).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+    public UpdateResult updateMany(
+            final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
+            final UpdateOptions updateOptions) {
+        return requireNonNull(Mono.from(wrapped.updateMany(unwrap(clientSession), filter, update, updateOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public T findOneAndDelete(final Bson filter) {
-        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
-        wrapped.findOneAndDelete(filter).subscribe(subscriber);
-        return subscriber.get();
+        return Mono.from(wrapped.findOneAndDelete(filter)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndDelete(final Bson filter, final FindOneAndDeleteOptions options) {
-        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
-        wrapped.findOneAndDelete(filter, options).subscribe(subscriber);
-        return subscriber.get();
+        return Mono.from(wrapped.findOneAndDelete(filter, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndDelete(final ClientSession clientSession, final Bson filter) {
-        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
-        wrapped.findOneAndDelete(unwrap(clientSession), filter).subscribe(subscriber);
-        return subscriber.get();
+        return Mono.from(wrapped.findOneAndDelete(unwrap(clientSession), filter)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndDelete(final ClientSession clientSession, final Bson filter, final FindOneAndDeleteOptions options) {
-        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
-        wrapped.findOneAndDelete(unwrap(clientSession), filter, options).subscribe(subscriber);
-        return subscriber.get();
+        return Mono.from(wrapped.findOneAndDelete(unwrap(clientSession), filter, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndReplace(final Bson filter, final T replacement) {
-        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
-        wrapped.findOneAndReplace(filter, replacement).subscribe(subscriber);
-        return subscriber.get();
+        return Mono.from(wrapped.findOneAndReplace(filter, replacement)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndReplace(final Bson filter, final T replacement, final FindOneAndReplaceOptions options) {
-        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
-        wrapped.findOneAndReplace(filter, replacement, options).subscribe(subscriber);
-        return subscriber.get();
+        return Mono.from(wrapped.findOneAndReplace(filter, replacement, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndReplace(final ClientSession clientSession, final Bson filter, final T replacement) {
-        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
-        wrapped.findOneAndReplace(unwrap(clientSession), filter, replacement).subscribe(subscriber);
-        return subscriber.get();
+        return Mono.from(wrapped.findOneAndReplace(unwrap(clientSession), filter, replacement)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
-    public T findOneAndReplace(final ClientSession clientSession, final Bson filter, final T replacement,
-                               final FindOneAndReplaceOptions options) {
-        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
-        wrapped.findOneAndReplace(unwrap(clientSession), filter, replacement, options).subscribe(subscriber);
-        return subscriber.get();
+    public T findOneAndReplace(
+            final ClientSession clientSession, final Bson filter, final T replacement,
+            final FindOneAndReplaceOptions options) {
+        return Mono.from(wrapped.findOneAndReplace(unwrap(clientSession), filter, replacement, options))
+                                      .contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndUpdate(final Bson filter, final Bson update) {
-        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
-        wrapped.findOneAndUpdate(filter, update).subscribe(subscriber);
-        return subscriber.get();
+        return Mono.from(wrapped.findOneAndUpdate(filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndUpdate(final Bson filter, final Bson update, final FindOneAndUpdateOptions options) {
-        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
-        wrapped.findOneAndUpdate(filter, update, options).subscribe(subscriber);
-        return subscriber.get();
+        return Mono.from(wrapped.findOneAndUpdate(filter, update, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndUpdate(final ClientSession clientSession, final Bson filter, final Bson update) {
-        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
-        wrapped.findOneAndUpdate(unwrap(clientSession), filter, update).subscribe(subscriber);
-        return subscriber.get();
+        return Mono.from(wrapped.findOneAndUpdate(unwrap(clientSession), filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
-    public T findOneAndUpdate(final ClientSession clientSession, final Bson filter, final Bson update,
-                              final FindOneAndUpdateOptions options) {
-        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
-        wrapped.findOneAndUpdate(unwrap(clientSession), filter, update, options).subscribe(subscriber);
-        return subscriber.get();
+    public T findOneAndUpdate(
+            final ClientSession clientSession, final Bson filter, final Bson update,
+            final FindOneAndUpdateOptions options) {
+        return Mono.from(wrapped.findOneAndUpdate(unwrap(clientSession), filter, update, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndUpdate(final Bson filter, final List<? extends Bson> update) {
-        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
-        wrapped.findOneAndUpdate(filter, update).subscribe(subscriber);
-        return subscriber.get();
+        return Mono.from(wrapped.findOneAndUpdate(filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndUpdate(final Bson filter, final List<? extends Bson> update, final FindOneAndUpdateOptions options) {
-        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
-        wrapped.findOneAndUpdate(filter, update, options).subscribe(subscriber);
-        return subscriber.get();
+        return Mono.from(wrapped.findOneAndUpdate(filter, update, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public T findOneAndUpdate(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update) {
-        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
-        wrapped.findOneAndUpdate(unwrap(clientSession), filter, update).subscribe(subscriber);
-        return subscriber.get();
+        return Mono.from(wrapped.findOneAndUpdate(unwrap(clientSession), filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
-    public T findOneAndUpdate(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
-                              final FindOneAndUpdateOptions options) {
-        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
-        wrapped.findOneAndUpdate(unwrap(clientSession), filter, update).subscribe(subscriber);
-        return subscriber.get();
+    public T findOneAndUpdate(
+            final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
+            final FindOneAndUpdateOptions options) {
+        return Mono.from(wrapped.findOneAndUpdate(unwrap(clientSession), filter, update)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void drop() {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.drop().subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.drop()).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void drop(final ClientSession clientSession) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.drop(unwrap(clientSession)).subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.drop(unwrap(clientSession))).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
+    }
+
+    @Override
+    public void drop(final DropCollectionOptions dropCollectionOptions) {
+        Mono.from(wrapped.drop(dropCollectionOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
+    }
+
+    @Override
+    public void drop(final ClientSession clientSession, final DropCollectionOptions dropCollectionOptions) {
+        Mono.from(wrapped.drop(unwrap(clientSession), dropCollectionOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
+    }
+
+    @Override
+    public String createSearchIndex(final String name, final Bson definition) {
+        return requireNonNull(Mono.from(wrapped.createSearchIndex(name, definition)).contextWrite(CONTEXT)
+                .block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public String createSearchIndex(final Bson definition) {
+        return requireNonNull(Mono.from(wrapped.createSearchIndex(definition)).contextWrite(CONTEXT)
+                .block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public List<String> createSearchIndexes(final List<SearchIndexModel> searchIndexModels) {
+        return requireNonNull(Flux.from(wrapped.createSearchIndexes(searchIndexModels)).contextWrite(CONTEXT).collectList()
+                .block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public void updateSearchIndex(final String name, final Bson definition) {
+        Mono.from(wrapped.updateSearchIndex(name, definition)).contextWrite(CONTEXT)
+                .block(TIMEOUT_DURATION);
+    }
+
+    @Override
+    public void dropSearchIndex(final String indexName) {
+        Mono.from(wrapped.dropSearchIndex(indexName)).contextWrite(CONTEXT)
+                .block(TIMEOUT_DURATION);
+    }
+
+    @Override
+    public ListSearchIndexesIterable<Document> listSearchIndexes() {
+        return listSearchIndexes(Document.class);
+    }
+
+    @Override
+    public <TResult> ListSearchIndexesIterable<TResult> listSearchIndexes(final Class<TResult> tResultClass) {
+        return new SyncListSearchIndexesIterable<>(wrapped.listSearchIndexes(tResultClass));
     }
 
     @Override
     public String createIndex(final Bson keys) {
-        SingleResultSubscriber<String> subscriber = new SingleResultSubscriber<>();
-        wrapped.createIndex(keys).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.createIndex(keys)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public String createIndex(final Bson keys, final IndexOptions indexOptions) {
-        SingleResultSubscriber<String> subscriber = new SingleResultSubscriber<>();
-        wrapped.createIndex(keys, indexOptions).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.createIndex(keys, indexOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public String createIndex(final ClientSession clientSession, final Bson keys) {
-        SingleResultSubscriber<String> subscriber = new SingleResultSubscriber<>();
-        wrapped.createIndex(unwrap(clientSession), keys).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.createIndex(unwrap(clientSession), keys)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public String createIndex(final ClientSession clientSession, final Bson keys, final IndexOptions indexOptions) {
-        SingleResultSubscriber<String> subscriber = new SingleResultSubscriber<>();
-        wrapped.createIndex(unwrap(clientSession), keys, indexOptions).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.createIndex(unwrap(clientSession), keys, indexOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
@@ -785,14 +735,15 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
     }
 
     @Override
-    public List<String> createIndexes(final ClientSession clientSession, final List<IndexModel> indexes,
-                                      final CreateIndexOptions createIndexOptions) {
+    public List<String> createIndexes(
+            final ClientSession clientSession, final List<IndexModel> indexes,
+            final CreateIndexOptions createIndexOptions) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public ListIndexesIterable<Document> listIndexes() {
-        throw new UnsupportedOperationException();
+        return listIndexes(Document.class);
     }
 
     @Override
@@ -802,109 +753,94 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
 
     @Override
     public ListIndexesIterable<Document> listIndexes(final ClientSession clientSession) {
-        throw new UnsupportedOperationException();
+        return listIndexes(clientSession, Document.class);
     }
 
     @Override
     public <TResult> ListIndexesIterable<TResult> listIndexes(final ClientSession clientSession, final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        return new SyncListIndexesIterable<>(wrapped.listIndexes(unwrap(clientSession), resultClass));
     }
 
     @Override
     public void dropIndex(final String indexName) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.dropIndex(indexName).subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.dropIndex(indexName)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndex(final String indexName, final DropIndexOptions dropIndexOptions) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.dropIndex(indexName, dropIndexOptions).subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.dropIndex(indexName, dropIndexOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndex(final Bson keys) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.dropIndex(keys).subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.dropIndex(keys)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndex(final Bson keys, final DropIndexOptions dropIndexOptions) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.dropIndex(keys, dropIndexOptions).subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.dropIndex(keys, dropIndexOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndex(final ClientSession clientSession, final String indexName) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.dropIndex(unwrap(clientSession), indexName).subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.dropIndex(unwrap(clientSession), indexName)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndex(final ClientSession clientSession, final Bson keys) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.dropIndex(unwrap(clientSession), keys).subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.dropIndex(unwrap(clientSession), keys)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndex(final ClientSession clientSession, final String indexName, final DropIndexOptions dropIndexOptions) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.dropIndex(unwrap(clientSession), indexName, dropIndexOptions).subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.dropIndex(unwrap(clientSession), indexName, dropIndexOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndex(final ClientSession clientSession, final Bson keys, final DropIndexOptions dropIndexOptions) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.dropIndex(unwrap(clientSession), keys, dropIndexOptions).subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.dropIndex(unwrap(clientSession), keys, dropIndexOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndexes() {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.dropIndexes()).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndexes(final ClientSession clientSession) {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.dropIndexes(unwrap(clientSession))).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndexes(final DropIndexOptions dropIndexOptions) {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.dropIndexes(dropIndexOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void dropIndexes(final ClientSession clientSession, final DropIndexOptions dropIndexOptions) {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.dropIndexes(unwrap(clientSession), dropIndexOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void renameCollection(final MongoNamespace newCollectionNamespace) {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.renameCollection(newCollectionNamespace)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void renameCollection(final MongoNamespace newCollectionNamespace, final RenameCollectionOptions renameCollectionOptions) {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.renameCollection(newCollectionNamespace, renameCollectionOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void renameCollection(final ClientSession clientSession, final MongoNamespace newCollectionNamespace) {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.renameCollection(unwrap(clientSession), newCollectionNamespace)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
-    public void renameCollection(final ClientSession clientSession, final MongoNamespace newCollectionNamespace,
-                                 final RenameCollectionOptions renameCollectionOptions) {
-        throw new UnsupportedOperationException();
+    public void renameCollection(
+            final ClientSession clientSession, final MongoNamespace newCollectionNamespace,
+            final RenameCollectionOptions renameCollectionOptions) {
+        Mono.from(wrapped.renameCollection(unwrap(clientSession), newCollectionNamespace, renameCollectionOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     private com.mongodb.reactivestreams.client.ClientSession unwrap(final ClientSession clientSession) {

@@ -19,15 +19,14 @@ package com.mongodb.internal.binding;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadPreference;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Cluster;
-import com.mongodb.internal.connection.NoOpSessionContext;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.Server;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.selector.WritableServerSelector;
-import com.mongodb.internal.session.SessionContext;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -47,91 +46,71 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     private AsyncConnection writeConnection;
     private volatile Server readServer;
     private volatile Server writeServer;
-
-    /**
-     * Create a new binding with the given cluster.
-     *
-     * @param cluster     a non-null Cluster which will be used to select a server to bind to
-     * @param maxWaitTime the maximum time to wait for a connection to become available.
-     * @param timeUnit    a non-null TimeUnit for the maxWaitTime
-     */
-    public AsyncSingleConnectionBinding(final Cluster cluster, final long maxWaitTime, final TimeUnit timeUnit) {
-        this(cluster, primary(), maxWaitTime, timeUnit);
-    }
+    private volatile ServerDescription readServerDescription;
+    private volatile ServerDescription writeServerDescription;
+    private final OperationContext operationContext;
 
     /**
      * Create a new binding with the given cluster.
      *
      * @param cluster        a non-null Cluster which will be used to select a server to bind to
      * @param readPreference the readPreference for reads, if not primary a separate connection will be used for reads
-     * @param maxWaitTime    the maximum time to wait for a connection to become available.
-     * @param timeUnit       a non-null TimeUnit for the maxWaitTime
+     * @param operationContext the operation context
      */
-    public AsyncSingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference,
-                                        final long maxWaitTime, final TimeUnit timeUnit) {
-
+    public AsyncSingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference, final OperationContext operationContext) {
         notNull("cluster", cluster);
+        this.operationContext = operationContext;
         this.readPreference = notNull("readPreference", readPreference);
-        final CountDownLatch latch = new CountDownLatch(2);
-        cluster.selectServerAsync(new WritableServerSelector(), new SingleResultCallback<Server>() {
-            @Override
-            public void onResult(final Server result, final Throwable t) {
-                if (t == null) {
-                    writeServer = result;
-                    latch.countDown();
-                }
+        CountDownLatch latch = new CountDownLatch(2);
+        cluster.selectServerAsync(new WritableServerSelector(), operationContext, (result, t) -> {
+            if (t == null) {
+                writeServer = result.getServer();
+                writeServerDescription = result.getServerDescription();
+                latch.countDown();
             }
         });
-        cluster.selectServerAsync(new ReadPreferenceServerSelector(readPreference), new SingleResultCallback<Server>() {
-            @Override
-            public void onResult(final Server result, final Throwable t) {
-                if (t == null) {
-                    readServer = result;
-                    latch.countDown();
-                }
+        cluster.selectServerAsync(new ReadPreferenceServerSelector(readPreference), operationContext, (result, t) -> {
+            if (t == null) {
+                readServer = result.getServer();
+                readServerDescription = result.getServerDescription();
+                latch.countDown();
             }
         });
 
-        awaitLatch(maxWaitTime, timeUnit, latch);
+        awaitLatch(latch);
 
         if (writeServer == null || readServer == null) {
             throw new MongoInternalException("Failure to select server");
         }
 
-        final CountDownLatch writeServerLatch = new CountDownLatch(1);
-        writeServer.getConnectionAsync(new SingleResultCallback<AsyncConnection>() {
-            @Override
-            public void onResult(final AsyncConnection result, final Throwable t) {
-                writeConnection = result;
-                writeServerLatch.countDown();
-            }
+        CountDownLatch writeServerLatch = new CountDownLatch(1);
+        writeServer.getConnectionAsync(operationContext, (result, t) -> {
+            writeConnection = result;
+            writeServerLatch.countDown();
         });
 
-        awaitLatch(maxWaitTime, timeUnit, writeServerLatch);
+        awaitLatch(writeServerLatch);
 
         if (writeConnection == null) {
             throw new MongoInternalException("Failure to get connection");
         }
 
-        final CountDownLatch readServerLatch = new CountDownLatch(1);
+        CountDownLatch readServerLatch = new CountDownLatch(1);
 
-        readServer.getConnectionAsync(new SingleResultCallback<AsyncConnection>() {
-            @Override
-            public void onResult(final AsyncConnection result, final Throwable t) {
-                readConnection = result;
-                readServerLatch.countDown();
-            }
+        readServer.getConnectionAsync(operationContext, (result, t) -> {
+            readConnection = result;
+            readServerLatch.countDown();
         });
-        awaitLatch(maxWaitTime, timeUnit, readServerLatch);
+        awaitLatch(readServerLatch);
 
         if (readConnection == null) {
             throw new MongoInternalException("Failure to get connection");
         }
     }
 
-    private void awaitLatch(final long maxWaitTime, final TimeUnit timeUnit, final CountDownLatch latch) {
+    private void awaitLatch(final CountDownLatch latch) {
         try {
-            if (!latch.await(maxWaitTime, timeUnit)) {
+            if (!latch.await(operationContext.getTimeoutContext().timeoutOrAlternative(10000), TimeUnit.MILLISECONDS)) {
                 throw new MongoTimeoutException("Failed to get servers");
             }
         } catch (InterruptedException e) {
@@ -151,8 +130,8 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     }
 
     @Override
-    public SessionContext getSessionContext() {
-        return NoOpSessionContext.INSTANCE;
+    public OperationContext getOperationContext() {
+        return operationContext;
     }
 
     @Override
@@ -161,48 +140,61 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
         if (readPreference == primary()) {
             getWriteConnectionSource(callback);
         } else {
-            callback.onResult(new SingleAsyncConnectionSource(readServer, readConnection), null);
+            callback.onResult(new SingleAsyncConnectionSource(readServerDescription, readConnection), null);
         }
+    }
+
+    @Override
+    public void getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference,
+            final SingleResultCallback<AsyncConnectionSource> callback) {
+        getReadConnectionSource(callback);
     }
 
     @Override
     public void getWriteConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
         isTrue("open", getCount() > 0);
-        callback.onResult(new SingleAsyncConnectionSource(writeServer, writeConnection), null);
+        callback.onResult(new SingleAsyncConnectionSource(writeServerDescription, writeConnection), null);
     }
 
     @Override
-    public void release() {
-        super.release();
-        if (getCount() == 0) {
+    public int release() {
+        int count = super.release();
+        if (count == 0) {
             readConnection.release();
             writeConnection.release();
         }
+        return count;
     }
 
     private final class SingleAsyncConnectionSource extends AbstractReferenceCounted implements AsyncConnectionSource {
-        private final Server server;
+        private final ServerDescription serverDescription;
         private final AsyncConnection connection;
 
-        private SingleAsyncConnectionSource(final Server server, final AsyncConnection connection) {
-            this.server = server;
+        private SingleAsyncConnectionSource(final ServerDescription serverDescription,
+                                            final AsyncConnection connection) {
+            this.serverDescription = serverDescription;
             this.connection = connection;
             AsyncSingleConnectionBinding.this.retain();
         }
 
         @Override
         public ServerDescription getServerDescription() {
-            return server.getDescription();
+            return serverDescription;
         }
 
         @Override
-        public SessionContext getSessionContext() {
-            return NoOpSessionContext.INSTANCE;
+        public OperationContext getOperationContext() {
+            return operationContext;
+        }
+
+        @Override
+        public ReadPreference getReadPreference() {
+            return readPreference;
         }
 
         @Override
         public void getConnection(final SingleResultCallback<AsyncConnection> callback) {
-            isTrue("open", super.getCount() > 0);
+            isTrue("open", getCount() > 0);
             callback.onResult(connection.retain(), null);
         }
 
@@ -212,11 +204,12 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
         }
 
         @Override
-        public void release() {
-            super.release();
-            if (super.getCount() == 0) {
+        public int release() {
+            int count = super.release();
+            if (count == 0) {
                 AsyncSingleConnectionBinding.this.release();
             }
+            return count;
         }
     }
 }

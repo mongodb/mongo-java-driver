@@ -36,9 +36,7 @@ import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeTrue;
 import static reactivestreams.helpers.SubscriberHelpers.ObservableSubscriber;
 import static reactivestreams.helpers.SubscriberHelpers.OperationSubscriber;
 
@@ -48,9 +46,7 @@ public class ClientSideEncryptionBypassAutoEncryptionTest {
 
     @Before
     public void setUp() throws Throwable {
-        assumeTrue(serverVersionAtLeast(4, 1));
-
-        final byte[] localMasterKey = new byte[96];
+        byte[] localMasterKey = new byte[96];
         new SecureRandom().nextBytes(localMasterKey);
 
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{

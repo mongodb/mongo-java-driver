@@ -26,9 +26,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
- * This class is not part of the public API and may be removed or changed at any time.
- *
- * @param <T> the result type
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class MongoBatchCursorAdapter<T> implements MongoCursor<T> {
     private final BatchCursor<T> batchCursor;
@@ -65,6 +63,15 @@ public class MongoBatchCursorAdapter<T> implements MongoCursor<T> {
         }
 
         return getNextInBatch();
+    }
+
+    @Override
+    public int available() {
+        int available = batchCursor.available();
+        if (curBatch != null) {
+            available += (curBatch.size() - curPos);
+        }
+        return available;
     }
 
     @Nullable

@@ -17,10 +17,31 @@
 package com.mongodb.internal.connection;
 
 
+import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoSocketException;
 import com.mongodb.ServerAddress;
 import com.mongodb.UnixServerAddress;
+import com.mongodb.lang.Nullable;
+import com.mongodb.spi.dns.InetAddressResolver;
+import com.mongodb.spi.dns.InetAddressResolverProvider;
 
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.List;
+import java.util.ServiceLoader;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class ServerAddressHelper {
+    @Nullable
+    private static final InetAddressResolver LOCATED_INET_ADDRESS_RESOLVER = StreamSupport.stream(
+            ServiceLoader.load(InetAddressResolverProvider.class).spliterator(), false)
+            .findFirst()
+            .map(InetAddressResolverProvider::create)
+            .orElse(null);
 
     public static ServerAddress createServerAddress(final String host) {
         return createServerAddress(host, ServerAddress.defaultPort());
@@ -31,6 +52,27 @@ public final class ServerAddressHelper {
             return new UnixServerAddress(host);
         } else {
             return new ServerAddress(host, port);
+        }
+    }
+
+    public static InetAddressResolver getInetAddressResolver(final MongoClientSettings settings) {
+        InetAddressResolver explicitInetAddressResolver = settings.getInetAddressResolver();
+        if (explicitInetAddressResolver != null) {
+            return explicitInetAddressResolver;
+        } else if (LOCATED_INET_ADDRESS_RESOLVER != null) {
+            return LOCATED_INET_ADDRESS_RESOLVER;
+        } else {
+            return new DefaultInetAddressResolver();
+        }
+    }
+
+    public static List<InetSocketAddress> getSocketAddresses(final ServerAddress serverAddress, final InetAddressResolver resolver) {
+        try {
+            return resolver.lookupByName(serverAddress.getHost())
+                    .stream()
+                    .map(inetAddress -> new InetSocketAddress(inetAddress, serverAddress.getPort())).collect(Collectors.toList());
+        } catch (UnknownHostException e) {
+            throw new MongoSocketException(e.getMessage(), serverAddress, e);
         }
     }
 

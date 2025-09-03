@@ -22,6 +22,7 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoException;
+import com.mongodb.lang.Nullable;
 import org.bson.types.ObjectId;
 
 import java.io.ByteArrayInputStream;
@@ -49,7 +50,6 @@ import java.util.List;
  *
  * @mongodb.driver.manual core/gridfs/ GridFS
  */
-@SuppressWarnings("rawtypes")
 public class GridFS {
 
     /**
@@ -148,6 +148,7 @@ public class GridFS {
      * @return a gridfs file
      * @throws com.mongodb.MongoException if the operation fails
      */
+    @Nullable
     public GridFSDBFile find(final ObjectId objectId) {
         return findOne(objectId);
     }
@@ -159,6 +160,7 @@ public class GridFS {
      * @return a gridfs file
      * @throws com.mongodb.MongoException if the operation fails
      */
+    @Nullable
     public GridFSDBFile findOne(final ObjectId objectId) {
         return findOne(new BasicDBObject("_id", objectId));
     }
@@ -170,6 +172,7 @@ public class GridFS {
      * @return the gridfs db file
      * @throws com.mongodb.MongoException if the operation fails
      */
+    @Nullable
     public GridFSDBFile findOne(final String filename) {
         return findOne(new BasicDBObject("filename", filename));
     }
@@ -181,6 +184,7 @@ public class GridFS {
      * @return a gridfs file
      * @throws com.mongodb.MongoException if the operation fails
      */
+    @Nullable
     public GridFSDBFile findOne(final DBObject query) {
         return injectGridFSInstance(filesCollection.findOne(query));
     }
@@ -227,8 +231,8 @@ public class GridFS {
      * @return list of gridfs files
      * @throws com.mongodb.MongoException if the operation fails
      */
-    public List<GridFSDBFile> find(final DBObject query, final DBObject sort) {
-        List<GridFSDBFile> files = new ArrayList<GridFSDBFile>();
+    public List<GridFSDBFile> find(final DBObject query, @Nullable final DBObject sort) {
+        List<GridFSDBFile> files = new ArrayList<>();
 
         DBCursor cursor = filesCollection.find(query);
         if (sort != null) {
@@ -245,7 +249,8 @@ public class GridFS {
         return Collections.unmodifiableList(files);
     }
 
-    private GridFSDBFile injectGridFSInstance(final Object o) {
+    @Nullable
+    private GridFSDBFile injectGridFSInstance(@Nullable final Object o) {
         if (o == null) {
             return null;
         }
@@ -353,7 +358,7 @@ public class GridFS {
      * @param filename the file name as stored in the db
      * @return a gridfs input file
      */
-    public GridFSInputFile createFile(final InputStream in, final String filename) {
+    public GridFSInputFile createFile(final InputStream in, @Nullable final String filename) {
         return new GridFSInputFile(this, in, filename);
     }
 
@@ -365,7 +370,7 @@ public class GridFS {
      * @param closeStreamOnPersist indicate the passed in input stream should be closed once the data chunk persisted
      * @return a gridfs input file
      */
-    public GridFSInputFile createFile(final InputStream in, final String filename, final boolean closeStreamOnPersist) {
+    public GridFSInputFile createFile(final InputStream in, @Nullable final String filename, final boolean closeStreamOnPersist) {
         return new GridFSInputFile(this, in, filename, closeStreamOnPersist);
     }
 

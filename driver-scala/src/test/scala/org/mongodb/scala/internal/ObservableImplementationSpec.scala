@@ -59,7 +59,17 @@ class ObservableImplementationSpec extends BaseSpec with TableDrivenPropertyChec
     forAll(failingObservables) { (observable: Observable[Int]) =>
       {
         var thrown = false
-        observable.subscribe((res: Int) => (), (t: Throwable) => thrown = true)
+        observable.subscribe(_ => (), _ => thrown = true)
+        thrown should equal(true)
+      }
+    }
+  }
+
+  it should "be well behaved when errors are caused by passed in function and call onError" in {
+    forAll(failingFunctionsObservables) { (observable: Observable[Int]) =>
+      {
+        var thrown = false
+        observable.subscribe(_ => (), _ => thrown = true)
         thrown should equal(true)
       }
     }
@@ -208,73 +218,130 @@ class ObservableImplementationSpec extends BaseSpec with TableDrivenPropertyChec
 
   val failOn = 30
 
-  def failingObservables =
+  private def failingObservables =
     Table(
       "observable",
-      TestObservable[Int](failOn = failOn),
-      AndThenObservable[Int, Int](TestObservable[Int](failOn = failOn), {
-        case Success(r)  => 1000
-        case Failure(ex) => 0
-      }),
-      FilterObservable[Int](TestObservable[Int](failOn = failOn), (i: Int) => i % 2 != 0),
-      FlatMapObservable[Int, Int](TestObservable[Int](), (i: Int) => TestObservable[Int](failOn = failOn)),
-      FoldLeftObservable(TestObservable[Int](1 to 100, failOn = failOn), 0, (v: Int, i: Int) => v + i),
-      MapObservable[Int, Int](TestObservable[Int](failOn = failOn), (i: Int) => i * 100),
-      RecoverObservable[Int, Int](TestObservable[Int](failOn = failOn), { case e: ArithmeticException => 999 }),
-      RecoverWithObservable[Int, Int](TestObservable[Int](failOn = failOn), {
-        case e: ArithmeticException => TestObservable[Int]()
-      }),
-      RecoverWithObservable[Int, Int](TestObservable[Int](failOn = failOn), {
-        case e => TestObservable[Int](failOn = failOn)
-      }),
-      ZipObservable[Int, Int](TestObservable[Int](), TestObservable[Int](failOn = failOn)).map[Int](a => a._1),
-      ZipObservable[Int, Int](TestObservable[Int](failOn = failOn), TestObservable[Int]()).map[Int](a => a._1)
+      TestObservable(failOn = failOn),
+      AndThenObservable[Int, Int](
+        TestObservable(failOn = failOn),
+        {
+          case Success(r)  => 1000
+          case Failure(ex) => 0
+        }
+      ),
+      FilterObservable[Int](TestObservable(failOn = failOn), (i: Int) => i % 2 != 0),
+      FlatMapObservable[Int, Int](TestObservable(), (i: Int) => TestObservable(failOn = failOn)),
+      FoldLeftObservable(TestObservable(1 to 100, failOn = failOn), 0, (v: Int, i: Int) => v + i),
+      MapObservable[Int, Int](TestObservable(failOn = failOn), (i: Int) => i * 100),
+      RecoverObservable[Int, Int](TestObservable(failOn = failOn), { case e: ArithmeticException => 999 }),
+      RecoverWithObservable[Int, Int](
+        TestObservable(failOn = failOn),
+        {
+          case e: ArithmeticException => TestObservable()
+        }
+      ),
+      RecoverWithObservable[Int, Int](
+        TestObservable(failOn = failOn),
+        {
+          case e => TestObservable(failOn = failOn)
+        }
+      ),
+      ZipObservable[Int, Int](TestObservable(), TestObservable(failOn = failOn)).map[Int](a => a._1),
+      ZipObservable[Int, Int](TestObservable(failOn = failOn), TestObservable()).map[Int](a => a._1)
+    )
+
+  private def failingFunctionsObservables =
+    Table(
+      "observable",
+      FilterObservable[Int](
+        TestObservable(),
+        (i: Int) => {
+          if (i > 10) {
+            throw new RuntimeException("Error")
+          }
+          i % 2 == 0
+        }
+      ),
+      FlatMapObservable[Int, Int](
+        TestObservable(),
+        (i: Int) => {
+          if (i > 10) {
+            throw new RuntimeException("Error")
+          }
+          TestObservable(1 to 2)
+        }
+      ),
+      FoldLeftObservable(
+        TestObservable(1 to 100),
+        0,
+        (v: Int, i: Int) => {
+          if (i > 10) {
+            throw new RuntimeException("Error")
+          }
+          v + i
+        }
+      ),
+      MapObservable[Int, Int](
+        TestObservable(),
+        (i: Int) => {
+          if (i > 10) {
+            throw new RuntimeException("Error")
+          }
+          i * 100
+        }
+      )
     )
 
   private def happyObservables =
     Table(
       ("observable", "observer"),
-      (TestObservable[Int](), TestObserver[Int]()),
-      (AndThenObservable[Int, Int](TestObservable[Int](), {
-        case Success(r)  => 1000
-        case Failure(ex) => 0
-      }), TestObserver[Int]()),
-      (FilterObservable[Int](TestObservable[Int](), (i: Int) => i % 2 != 0), TestObserver[Int]()),
+      (TestObservable(), TestObserver[Int]()),
       (
-        FlatMapObservable[Int, Int](TestObservable[Int](), (i: Int) => TestObservable[Int](1 to 1)),
+        AndThenObservable[Int, Int](
+          TestObservable(),
+          {
+            case Success(r)  => 1000
+            case Failure(ex) => 0
+          }
+        ),
+        TestObserver[Int]()
+      ),
+      (FilterObservable[Int](TestObservable(), (i: Int) => i % 2 != 0), TestObserver[Int]()),
+      (
+        FlatMapObservable[Int, Int](TestObservable(), (i: Int) => TestObservable(1 to 1)),
         TestObserver[Int]()
       ),
       (
-        FlatMapObservable[Int, Int](TestObservable[Int](1 to 1), (i: Int) => TestObservable[Int]()),
+        FlatMapObservable[Int, Int](TestObservable(1 to 1), (i: Int) => TestObservable()),
         TestObserver[Int]()
       ),
-      (FoldLeftObservable(TestObservable[Int](1 to 100), 0, (v: Int, i: Int) => v + i), TestObserver[Int]()),
-      (MapObservable[Int, Int](TestObservable[Int](), (i: Int) => i * 100), TestObserver[Int]()),
-      (RecoverObservable[Int, Int](TestObservable[Int](), { case e: ArithmeticException => 999 }), TestObserver[Int]()),
+      (FoldLeftObservable(TestObservable(1 to 100), 0, (v: Int, i: Int) => v + i), TestObserver[Int]()),
+      (MapObservable[Int, Int](TestObservable(), (i: Int) => i * 100), TestObserver[Int]()),
+      (RecoverObservable[Int, Int](TestObservable(), { case e: ArithmeticException => 999 }), TestObserver[Int]()),
       (
-        RecoverWithObservable[Int, Int](TestObservable[Int](), { case t => TestObservable[Int]() }),
+        RecoverWithObservable[Int, Int](TestObservable(), { case t => TestObservable() }),
         TestObserver[Int]()
       ),
       (
-        RecoverWithObservable[Int, Int](TestObservable[Int](1 to 10, failOn = 1), { case t => TestObservable[Int]() }),
+        RecoverWithObservable[Int, Int](TestObservable(1 to 10, failOn = 1), { case t => TestObservable() }),
         TestObserver[Int]()
       ),
       (IterableObservable((1 to 100).toStream), TestObserver[Int]()),
-      (ZipObservable[Int, Int](TestObservable[Int](), TestObservable[Int]()).map[Int](a => a._1), TestObserver[Int]())
+      (ZipObservable[Int, Int](TestObservable(), TestObservable()).map[Int](a => a._1), TestObserver[Int]())
     )
 
   private def zippedObservables =
     Table[Observable[(Int, Int)]](
       "observable",
-      ZipObservable[Int, Int](TestObservable[Int](1 to 50), TestObservable[Int]()),
-      ZipObservable[Int, Int](TestObservable[Int](), TestObservable[Int](1 to 50))
+      ZipObservable[Int, Int](TestObservable(1 to 50), TestObservable()),
+      ZipObservable[Int, Int](TestObservable(), TestObservable(1 to 50))
     )
 
   private def zippedObservablesWithEmptyObservable =
     Table[Observable[(Int, Int)]](
       "observable",
-      ZipObservable[Int, Int](TestObservable[Int](1 to 50), TestObservable[Int](List())),
-      ZipObservable[Int, Int](TestObservable[Int](List()), TestObservable[Int](1 to 50))
+      ZipObservable[Int, Int](TestObservable(1 to 50), TestObservable(List())),
+      ZipObservable[Int, Int](TestObservable(List()), TestObservable(1 to 50))
     )
 
   private def overRequestingObservables =
@@ -282,60 +349,58 @@ class ObservableImplementationSpec extends BaseSpec with TableDrivenPropertyChec
       ("observable", "observer", "expected"),
       (
         FlatMapObservable[Int, Int](
-          OverRequestedObservable(TestObservable[Int](1 to 10)),
-          (i: Int) => TestObservable[Int](1 to 10)
+          OverRequestedObservable(TestObservable(1 to 10)),
+          (i: Int) => TestObservable(1 to 10)
         ),
         TestObserver[Int](),
         100
       ),
       (
         RecoverWithObservable[Int, Int](
-          TestObservable[Int](1 to 10, failOn = 1),
-          { case t => OverRequestedObservable(TestObservable[Int](1 to 10)) }
+          TestObservable(1 to 10, failOn = 1),
+          { case t => OverRequestedObservable(TestObservable(1 to 10)) }
         ),
         TestObserver[Int](),
         10
       )
     )
 
-  case class OverRequestedObservable(observable: TestObservable[Int] = TestObservable[Int]()) extends Observable[Int] {
+  case class OverRequestedObservable(observable: TestObservable = TestObservable()) extends Observable[Int] {
 
     var totalRequested = 0L
     override def subscribe(observer: Observer[_ >: Int]): Unit = {
       observable.subscribe(
-        SubscriptionCheckingObserver(
-          new Observer[Int] {
+        new Observer[Int] {
 
-            var completed = false
-            override def onError(throwable: Throwable): Unit = observer.onError(throwable)
+          var completed = false
+          override def onError(throwable: Throwable): Unit = observer.onError(throwable)
 
-            override def onSubscribe(subscription: Subscription): Unit = {
-              val masterSub = new Subscription() {
-                override def isUnsubscribed: Boolean = subscription.isUnsubscribed
+          override def onSubscribe(subscription: Subscription): Unit = {
+            val masterSub = new Subscription() {
+              override def isUnsubscribed: Boolean = subscription.isUnsubscribed
 
-                override def request(n: Long): Unit = {
-                  if (!completed) {
-                    var demand = n + 1
-                    if (demand < 0) demand = Long.MaxValue
-                    totalRequested += demand
-                    subscription.request(demand)
-                  }
+              override def request(n: Long): Unit = {
+                if (!completed) {
+                  var demand = n + 1
+                  if (demand < 0) demand = Long.MaxValue
+                  totalRequested += demand
+                  subscription.request(demand)
                 }
-                override def unsubscribe(): Unit = subscription.unsubscribe()
               }
-              observer.onSubscribe(masterSub)
+              override def unsubscribe(): Unit = subscription.unsubscribe()
             }
-
-            override def onComplete(): Unit = {
-              completed = true
-              observer.onComplete()
-            }
-
-            override def onNext(tResult: Int): Unit = {
-              observer.onNext(tResult)
-            }
+            observer.onSubscribe(masterSub)
           }
-        )
+
+          override def onComplete(): Unit = {
+            completed = true
+            observer.onComplete()
+          }
+
+          override def onNext(tResult: Int): Unit = {
+            observer.onNext(tResult)
+          }
+        }
       )
     }
   }

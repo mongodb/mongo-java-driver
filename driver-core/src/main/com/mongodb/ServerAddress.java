@@ -22,9 +22,6 @@ import com.mongodb.lang.Nullable;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Represents the location of a Mongo server - i.e. server name and port number
@@ -33,7 +30,13 @@ import java.util.List;
 public class ServerAddress implements Serializable {
     private static final long serialVersionUID = 4027873363095395504L;
 
+    /**
+     * The host.
+     */
     private final String host;
+    /**
+     * The port.
+     */
     private final int port;
 
     /**
@@ -100,7 +103,7 @@ public class ServerAddress implements Serializable {
         if (hostToUse.startsWith("[")) {
             int idx = host.indexOf("]");
             if (idx == -1) {
-                throw new IllegalArgumentException("an IPV6 address must be encosed with '[' and ']'"
+                throw new IllegalArgumentException("an IPV6 address must be enclosed with '[' and ']'"
                                                    + " according to RFC 2732.");
             }
 
@@ -176,40 +179,6 @@ public class ServerAddress implements Serializable {
      */
     public int getPort() {
         return port;
-    }
-
-    /**
-     * Gets the underlying socket address
-     *
-     * @return socket address
-     */
-    public InetSocketAddress getSocketAddress() {
-        try {
-            return new InetSocketAddress(InetAddress.getByName(host), port);
-        } catch (UnknownHostException e) {
-            throw new MongoSocketException(e.getMessage(), this, e);
-        }
-    }
-
-    /**
-     * Gets all underlying socket addresses
-     *
-     * @return array of socket addresses
-     *
-     * @since 3.9
-     */
-    public List<InetSocketAddress> getSocketAddresses() {
-        try {
-            InetAddress[] inetAddresses = InetAddress.getAllByName(host);
-            List<InetSocketAddress> inetSocketAddressList = new ArrayList<InetSocketAddress>();
-            for (InetAddress inetAddress : inetAddresses) {
-                inetSocketAddressList.add(new InetSocketAddress(inetAddress, port));
-            }
-
-            return inetSocketAddressList;
-        } catch (UnknownHostException e) {
-            throw new MongoSocketException(e.getMessage(), this, e);
-        }
     }
 
     @Override

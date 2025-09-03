@@ -55,7 +55,7 @@ import java.util.Map;
 public class BsonValueCodecProvider implements CodecProvider {
     private static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP;
 
-    private final Map<Class<?>, Codec<?>> codecs = new HashMap<Class<?>, Codec<?>>();
+    private final Map<Class<?>, Codec<?>> codecs = new HashMap<>();
 
     /**
      * Construct a new instance with the default codec for each BSON type.
@@ -144,7 +144,7 @@ public class BsonValueCodecProvider implements CodecProvider {
     }
 
     static {
-        Map<BsonType, Class<?>> map = new HashMap<BsonType, Class<?>>();
+        Map<BsonType, Class<?>> map = new HashMap<>();
 
         map.put(BsonType.NULL, BsonNull.class);
         map.put(BsonType.ARRAY, BsonArray.class);
@@ -169,5 +169,10 @@ public class BsonValueCodecProvider implements CodecProvider {
         map.put(BsonType.UNDEFINED, BsonUndefined.class);
 
         DEFAULT_BSON_TYPE_CLASS_MAP = new BsonTypeClassMap(map);
+    }
+
+    @Override
+    public String toString() {
+        return "BsonValueCodecProvider{}";
     }
 }

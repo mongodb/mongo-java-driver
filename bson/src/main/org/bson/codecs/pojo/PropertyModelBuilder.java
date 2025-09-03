@@ -16,6 +16,7 @@
 
 package org.bson.codecs.pojo;
 
+import org.bson.BsonType;
 import org.bson.codecs.Codec;
 
 import java.lang.annotation.Annotation;
@@ -46,6 +47,7 @@ public final class PropertyModelBuilder<T> {
     private List<Annotation> writeAnnotations = emptyList();
     private Boolean discriminatorEnabled;
     private String error;
+    private BsonType bsonRepresentation;
 
     PropertyModelBuilder() {
     }
@@ -230,6 +232,28 @@ public final class PropertyModelBuilder<T> {
     }
 
     /**
+     * Returns the BsonRepresentation
+     *
+     * @return the BsonRepresentation
+     * @since 4.2
+     */
+    public BsonType getBsonRepresentation() {
+        return bsonRepresentation;
+    }
+
+    /**
+     * Sets the BsonRepresentation
+     *
+     * @param bsonRepresentation the BsonRepresentation
+     * @return this
+     * @since 4.2
+     */
+    public PropertyModelBuilder<T> bsonRepresentation(final BsonType bsonRepresentation) {
+        this.bsonRepresentation = bsonRepresentation;
+        return this;
+    }
+
+    /**
      * Creates the {@link PropertyModel}.
      *
      * @return the PropertyModel
@@ -248,7 +272,8 @@ public final class PropertyModelBuilder<T> {
                 stateNotNull("propertySerialization", propertySerialization),
                 discriminatorEnabled,
                 stateNotNull("propertyAccessor", propertyAccessor),
-                error);
+                error,
+                bsonRepresentation);
     }
 
     @Override

@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static java.lang.String.format;
 
 final class DiscriminatorLookup {
-    private final Map<String, Class<?>> discriminatorClassMap = new ConcurrentHashMap<String, Class<?>>();
+    private final Map<String, Class<?>> discriminatorClassMap = new ConcurrentHashMap<>();
     private final Set<String> packages;
 
     DiscriminatorLookup(final Map<Class<?>, ClassModel<?>> classModels, final Set<String> packages) {
@@ -65,7 +65,7 @@ final class DiscriminatorLookup {
         Class<?> clazz = null;
         try {
             clazz = Class.forName(discriminator);
-        } catch (final ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             // Ignore
         }
         return clazz;

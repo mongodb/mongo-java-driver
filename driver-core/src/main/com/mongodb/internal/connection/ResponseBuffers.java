@@ -22,6 +22,9 @@ import org.bson.codecs.Decoder;
 
 import java.io.Closeable;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class ResponseBuffers implements Closeable {
     private final ReplyHeader replyHeader;
     private final ByteBuf bodyByteBuffer;
@@ -44,19 +47,21 @@ public class ResponseBuffers implements Closeable {
     }
 
     <T extends BsonDocument> T getResponseDocument(final int messageId, final Decoder<T> decoder) {
-        ReplyMessage<T> replyMessage = new ReplyMessage<T>(this, decoder, messageId);
+        ReplyMessage<T> replyMessage = new ReplyMessage<>(this, decoder, messageId);
         reset();
-        return replyMessage.getDocuments().get(0);
+        return replyMessage.getDocument();
     }
 
     /**
-     * Returns a read-only buffer containing the response body.  Care should be taken to not use the returned buffer after this instance has
+     * Returns a buffer containing the response body.  Care should be taken to not use the returned buffer after this instance has
      * been closed.
      *
-     * @return a read-only buffer containing the response body
+     * NOTE: do not modify this buffer, it is being made writable for performance reasons to avoid redundant copying.
+     *
+     * @return a buffer containing the response body
      */
     public ByteBuf getBodyByteBuffer() {
-        return bodyByteBuffer.asReadOnly();
+        return bodyByteBuffer;
     }
 
     public void reset() {

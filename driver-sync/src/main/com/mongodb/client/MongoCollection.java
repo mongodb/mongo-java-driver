@@ -20,12 +20,15 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.DropCollectionOptions;
 import com.mongodb.client.model.DropIndexOptions;
 import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
@@ -37,6 +40,7 @@ import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
@@ -49,6 +53,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The MongoCollection interface.
@@ -111,6 +116,37 @@ public interface MongoCollection<TDocument> {
     ReadConcern getReadConcern();
 
     /**
+     * The time limit for the full execution of an operation.
+     *
+     * <p>If not null the following deprecated options will be ignored:
+     * {@code waitQueueTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS} and {@code maxCommitTimeMS}</p>
+     *
+     * <ul>
+     *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
+     *    <ul>
+     *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
+     *        available</li>
+     *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
+     *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
+     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
+     *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
+     *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+     *        See: {@link com.mongodb.TransactionOptions#getMaxCommitTime}.</li>
+     *   </ul>
+     *   </li>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @param timeUnit the time unit
+     * @return the timeout in the given time unit
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    @Nullable
+    Long getTimeout(TimeUnit timeUnit);
+
+    /**
      * Create a new MongoCollection instance with a different default class to cast any documents returned from the database into..
      *
      * @param clazz the default class to cast any documents returned from the database into.
@@ -122,8 +158,14 @@ public interface MongoCollection<TDocument> {
     /**
      * Create a new MongoCollection instance with a different codec registry.
      *
+     * <p>The {@link CodecRegistry} configured by this method is effectively treated by the driver as an instance of
+     * {@link org.bson.codecs.configuration.CodecProvider}, which {@link CodecRegistry} extends. So there is no benefit to defining
+     * a class that implements {@link CodecRegistry}. Rather, an application should always create {@link CodecRegistry} instances
+     * using the factory methods in {@link org.bson.codecs.configuration.CodecRegistries}.</p>
+     *
      * @param codecRegistry the new {@link org.bson.codecs.configuration.CodecRegistry} for the collection
      * @return a new MongoCollection instance with the different codec registry
+     * @see org.bson.codecs.configuration.CodecRegistries
      */
     MongoCollection<TDocument> withCodecRegistry(CodecRegistry codecRegistry);
 
@@ -153,6 +195,23 @@ public interface MongoCollection<TDocument> {
      * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     MongoCollection<TDocument> withReadConcern(ReadConcern readConcern);
+
+    /**
+     * Create a new MongoCollection instance with the set time limit for the full execution of an operation.
+     *
+     * <ul>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @param timeout the timeout, which must be greater than or equal to 0
+     * @param timeUnit the time unit
+     * @return a new MongoCollection instance with the set time limit for the full execution of an operation
+     * @since 5.2
+     * @see #getTimeout
+     */
+    @Alpha(Reason.CLIENT)
+    MongoCollection<TDocument> withTimeout(long timeout, TimeUnit timeUnit);
 
     /**
      * Counts the number of documents in the collection.
@@ -319,17 +378,27 @@ public interface MongoCollection<TDocument> {
     /**
      * Gets an estimate of the count of documents in a collection using collection metadata.
      *
+     * <p>
+     * Implementation note: this method is implemented using the MongoDB server's count command
+     * </p>
+     *
      * @return the number of documents in the collection
      * @since 3.8
+     * @mongodb.driver.manual manual/reference/command/count/#behavior
      */
     long estimatedDocumentCount();
 
     /**
      * Gets an estimate of the count of documents in a collection using collection metadata.
      *
+     * <p>
+     * Implementation note: this method is implemented using the MongoDB server's count command
+     * </p>
+     *
      * @param options the options describing the count
      * @return the number of documents in the collection
      * @since 3.8
+     * @mongodb.driver.manual manual/reference/command/count/#behavior
      */
     long estimatedDocumentCount(EstimatedDocumentCountOptions options);
 
@@ -620,7 +689,9 @@ public interface MongoCollection<TDocument> {
      * @param reduceFunction A JavaScript function that "reduces" to a single object all the values associated with a particular key.
      * @return an iterable containing the result of the map-reduce operation
      * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
+     * @deprecated Superseded by aggregate
      */
+    @Deprecated
     MapReduceIterable<TDocument> mapReduce(String mapFunction, String reduceFunction);
 
     /**
@@ -632,7 +703,9 @@ public interface MongoCollection<TDocument> {
      * @param <TResult>      the target document type of the iterable.
      * @return an iterable containing the result of the map-reduce operation
      * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
+     * @deprecated Superseded by aggregate
      */
+    @Deprecated
     <TResult> MapReduceIterable<TResult> mapReduce(String mapFunction, String reduceFunction, Class<TResult> resultClass);
 
     /**
@@ -645,7 +718,9 @@ public interface MongoCollection<TDocument> {
      * @since 3.6
      * @mongodb.server.release 3.6
      * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
+     * @deprecated Superseded by aggregate
      */
+    @Deprecated
     MapReduceIterable<TDocument> mapReduce(ClientSession clientSession, String mapFunction, String reduceFunction);
 
     /**
@@ -660,7 +735,9 @@ public interface MongoCollection<TDocument> {
      * @since 3.6
      * @mongodb.server.release 3.6
      * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
+     * @deprecated Superseded by aggregate
      */
+    @Deprecated
     <TResult> MapReduceIterable<TResult> mapReduce(ClientSession clientSession, String mapFunction, String reduceFunction,
                                                    Class<TResult> resultClass);
 
@@ -795,6 +872,7 @@ public interface MongoCollection<TDocument> {
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
      * @throws com.mongodb.MongoCommandException   if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException          if the write failed due some other failure
+     * @throws IllegalArgumentException            if the documents list is null or empty, or any of the documents in the list are null
      * @see com.mongodb.client.MongoCollection#bulkWrite
      */
     InsertManyResult insertMany(List<? extends TDocument> documents);
@@ -809,6 +887,7 @@ public interface MongoCollection<TDocument> {
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
      * @throws com.mongodb.MongoCommandException   if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException          if the write failed due some other failure
+     * @throws IllegalArgumentException            if the documents list is null or empty, or any of the documents in the list are null
      */
     InsertManyResult insertMany(List<? extends TDocument> documents, InsertManyOptions options);
 
@@ -822,6 +901,7 @@ public interface MongoCollection<TDocument> {
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
      * @throws com.mongodb.MongoCommandException   if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException          if the write failed due some other failure
+     * @throws IllegalArgumentException            if the documents list is null or empty, or any of the documents in the list are null
      * @see com.mongodb.client.MongoCollection#bulkWrite
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -839,6 +919,7 @@ public interface MongoCollection<TDocument> {
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
      * @throws com.mongodb.MongoCommandException   if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException          if the write failed due some other failure
+     * @throws IllegalArgumentException            if the documents list is null or empty, or any of the documents in the list are null
      * @since 3.6
      * @mongodb.server.release 3.6
      */
@@ -849,7 +930,7 @@ public interface MongoCollection<TDocument> {
      * modified.
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @return the result of the remove one operation
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
      * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
@@ -863,7 +944,7 @@ public interface MongoCollection<TDocument> {
      * modified.
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @param options  the options to apply to the delete operation
      * @return the result of the remove one operation
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
@@ -880,7 +961,7 @@ public interface MongoCollection<TDocument> {
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @return the result of the remove one operation
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
      * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
@@ -897,7 +978,7 @@ public interface MongoCollection<TDocument> {
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @param options  the options to apply to the delete operation
      * @return the result of the remove one operation
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
@@ -912,7 +993,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
      *
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @return the result of the remove many operation
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
      * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
@@ -924,7 +1005,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
      *
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @param options  the options to apply to the delete operation
      * @return the result of the remove many operation
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
@@ -939,7 +1020,7 @@ public interface MongoCollection<TDocument> {
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @return the result of the remove many operation
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
      * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
@@ -954,7 +1035,7 @@ public interface MongoCollection<TDocument> {
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @param options  the options to apply to the delete operation
      * @return the result of the remove many operation
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
@@ -973,7 +1054,7 @@ public interface MongoCollection<TDocument> {
      * the corresponding {@link #updateOne(Bson, Bson)} method.</p>
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @return the result of the replace one operation
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
@@ -992,7 +1073,7 @@ public interface MongoCollection<TDocument> {
      * the corresponding {@link #updateOne(Bson, Bson, UpdateOptions)} method.</p>
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
-     * @param filter        the query filter to apply the the replace operation
+     * @param filter        the query filter to apply the replace operation
      * @param replacement   the replacement document
      * @param replaceOptions the options to apply to the replace operation
      * @return the result of the replace one operation
@@ -1014,7 +1095,7 @@ public interface MongoCollection<TDocument> {
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @return the result of the replace one operation
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
@@ -1036,7 +1117,7 @@ public interface MongoCollection<TDocument> {
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
-     * @param filter        the query filter to apply the the replace operation
+     * @param filter        the query filter to apply the replace operation
      * @param replacement   the replacement document
      * @param replaceOptions the options to apply to the replace operation
      * @return the result of the replace one operation
@@ -1411,7 +1492,7 @@ public interface MongoCollection<TDocument> {
      * the corresponding {@link #findOneAndUpdate(Bson, Bson)} method.</p>
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @return the document that was replaced.  Depending on the value of the {@code returnOriginal} property, this will either be the
      * document as it was before the update or as it is after the update.  If no documents matched the query filter, then null will be
@@ -1428,7 +1509,7 @@ public interface MongoCollection<TDocument> {
      * the corresponding {@link #findOneAndUpdate(Bson, Bson, FindOneAndUpdateOptions)} method.</p>
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @param options     the options to apply to the operation
      * @return the document that was replaced.  Depending on the value of the {@code returnOriginal} property, this will either be the
@@ -1447,7 +1528,7 @@ public interface MongoCollection<TDocument> {
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @return the document that was replaced.  Depending on the value of the {@code returnOriginal} property, this will either be the
      * document as it was before the update or as it is after the update.  If no documents matched the query filter, then null will be
@@ -1467,7 +1548,7 @@ public interface MongoCollection<TDocument> {
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @param options     the options to apply to the operation
      * @return the document that was replaced.  Depending on the value of the {@code returnOriginal} property, this will either be the
@@ -1642,6 +1723,105 @@ public interface MongoCollection<TDocument> {
      * @mongodb.server.release 3.6
      */
     void drop(ClientSession clientSession);
+
+    /**
+     * Drops this collection from the Database.
+     *
+     * @param dropCollectionOptions various options for dropping the collection
+     * @mongodb.driver.manual reference/command/drop/ Drop Collection
+     * @since 4.7
+     * @mongodb.server.release 6.0
+     */
+    void drop(DropCollectionOptions dropCollectionOptions);
+
+    /**
+     * Drops this collection from the Database.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param dropCollectionOptions various options for dropping the collection
+     * @mongodb.driver.manual reference/command/drop/ Drop Collection
+     * @since 4.7
+     * @mongodb.server.release 6.0
+     */
+    void drop(ClientSession clientSession, DropCollectionOptions dropCollectionOptions);
+
+    /**
+     * Create an Atlas Search index for the collection.
+     *
+     * @param indexName  the name of the search index to create.
+     * @param definition the search index mapping definition.
+     * @return the search index name.
+     * @mongodb.server.release 6.0
+     * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
+     * @since 4.11
+     */
+    String createSearchIndex(String indexName, Bson definition);
+
+    /**
+     * Create an Atlas Search index with {@code "default"} name for the collection.
+     *
+     * @param definition the search index mapping definition.
+     * @return the search index name.
+     * @mongodb.server.release 6.0
+     * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
+     * @since 4.11
+     */
+    String createSearchIndex(Bson definition);
+
+    /**
+     * Create one or more Atlas Search indexes for the collection.
+     * <p>
+     * The name can be omitted for a single index, in which case a name will be {@code "default"}.
+     * </p>
+     *
+     * @param searchIndexModels the search index models.
+     * @return the search index names in the order specified by the given list of {@link SearchIndexModel}s.
+     * @mongodb.server.release 6.0
+     * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
+     * @since 4.11
+     */
+    List<String> createSearchIndexes(List<SearchIndexModel> searchIndexModels);
+
+    /**
+     * Update an Atlas Search index in the collection.
+     *
+     * @param indexName  the name of the search index to update.
+     * @param definition the search index mapping definition.
+     * @mongodb.server.release 6.0
+     * @mongodb.driver.manual reference/command/updateSearchIndex/ Update Search index
+     * @since 4.11
+     */
+    void updateSearchIndex(String indexName, Bson definition);
+
+    /**
+     * Drop an Atlas Search index given its name.
+     *
+     * @param indexName the name of the search index to drop.
+     * @mongodb.server.release 6.0
+     * @mongodb.driver.manual reference/command/dropSearchIndex/ Drop Search index
+     * @since 4.11
+     */
+    void dropSearchIndex(String indexName);
+
+    /**
+     * Get all Atlas Search indexes in this collection.
+     *
+     * @return the list search indexes iterable interface.
+     * @since 4.11
+     * @mongodb.server.release 6.0
+     */
+    ListSearchIndexesIterable<Document> listSearchIndexes();
+
+    /**
+     * Get all Atlas Search indexes in this collection.
+     *
+     * @param resultClass the class to decode each document into.
+     * @param <TResult>   the target document type of the iterable.
+     * @return the list search indexes iterable interface.
+     * @since 4.11
+     * @mongodb.server.release 6.0
+     */
+    <TResult> ListSearchIndexesIterable<TResult> listSearchIndexes(Class<TResult> resultClass);
 
     /**
      * Create an index with the given keys.

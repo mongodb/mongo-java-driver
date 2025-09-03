@@ -49,6 +49,12 @@ object Observable {
  *
  * Extends the `Publisher` interface and adds helpers to make Observables composable and simple to Subscribe to.
  *
+ * Special parameterizations:
+ *
+ *   - `Observable[Unit]` must emit exactly one item by signalling [[Observer.onNext]]
+ *   if it terminates successfully by signalling [[Observer.onComplete]].
+ *   - `Observable[Void]` cannot emit an item. It is not exposed by the driver API because it is not convenient to work with in Scala.
+ *
  * @define forComprehensionExamples
  *         Example:
  *
@@ -226,6 +232,22 @@ trait Observable[T] extends Publisher[T] {
     FoldLeftObservable(this, ListBuffer[T](), (l: ListBuffer[T], v: T) => l += v).map(_.toSeq)
 
   /**
+   * Builds a new [[Observable]] by applying a partial function to all elements.
+   *
+   * Example:
+   * {{{
+   *  val justStrings = Observable(Iterable("this", 1, 2, "that")).collect{ case s: String => s }
+   * }}}
+   *
+   * @param  pf function that transforms each result of the receiver into an Observable and passes each result of that
+   *            Observable to the returned Observable.
+   * @tparam S the resulting type of each item in the Observable
+   * @return    an Observable with transformed results and / or error.
+   */
+  def collect[S](pf: PartialFunction[T, S]): Observable[S] =
+    CollectObservable(this, pf)
+
+  /**
    * Creates a new [[Observable]] that contains the single result of the applied accumulator function.
    *
    * The first item emitted by the Observable is passed to the supplied accumulator function alongside the initial value, then all other
@@ -279,7 +301,7 @@ trait Observable[T] extends Publisher[T] {
    * == Ensuring results from a Single Observer ==
    *
    * `recoverWith` can potentially emit results from either Observer. This often isn't desirable, so to ensure only a single Observable
-   * issues results combine with the [[collect]] method eg:
+   * issues results combine with the [[[collect[S]()*]]] method eg:
    *
    * {{{
    *  val results = Observable(1 to 100)
@@ -323,7 +345,7 @@ trait Observable[T] extends Publisher[T] {
    * == Ensuring results from a Single Observer ==
    *
    * `fallbackTo` can potentially emit results from either Observer. This often isn't desirable, so to ensure only a single Observable
-   * issues results combine with the [[collect]] method eg:
+   * issues results combine with the [[[collect[S]()*]]] method eg:
    *
    * {{{
    *  val results = Observable(1 to 100).collect() fallbackTo Observable(200 to 300).collect()
@@ -364,7 +386,7 @@ trait Observable[T] extends Publisher[T] {
   def andThen[U](pf: PartialFunction[Try[T], U]): Observable[T] = AndThenObservable(this, pf)
 
   /**
-   * Returns the head of the [[Observable]] in a [[scala.concurrent.Future]].
+   * Returns the head of the [[Observable]] in a `scala.concurrent.Future`.
    *
    * @return the head result of the [[Observable]].
    */
@@ -376,7 +398,7 @@ trait Observable[T] extends Publisher[T] {
   }
 
   /**
-   * Returns the head option of the [[Observable]] in a [[scala.concurrent.Future]].
+   * Returns the head option of the [[Observable]] in a `scala.concurrent.Future`.
    *
    * @return the head option result of the [[Observable]].
    * @since 2.2
@@ -395,20 +417,29 @@ trait Observable[T] extends Publisher[T] {
       }
 
       override def onError(throwable: Throwable): Unit =
-        completeWith("onError", { () =>
-          promise.failure(throwable)
-        })
+        completeWith(
+          "onError",
+          { () =>
+            promise.failure(throwable)
+          }
+        )
 
       override def onComplete(): Unit = {
-        if (!terminated) completeWith("onComplete", { () =>
-          promise.success(None)
-        }) // Completed with no values
+        if (!terminated) completeWith(
+          "onComplete",
+          { () =>
+            promise.success(None)
+          }
+        ) // Completed with no values
       }
 
       override def onNext(tResult: T): Unit = {
-        completeWith("onNext", { () =>
-          promise.success(Some(tResult))
-        })
+        completeWith(
+          "onNext",
+          { () =>
+            promise.success(Some(tResult))
+          }
+        )
       }
 
       private def completeWith(method: String, action: () => Any): Unit = {
@@ -429,4 +460,19 @@ trait Observable[T] extends Publisher[T] {
    * @return an Observable that uses the specified execution context
    */
   def observeOn(context: ExecutionContext): Observable[T] = ExecutionContextObservable(this, context)
+
+  /**
+   * Convert this observable so that it emits a single Unit to [[Observer.onNext]] before calling [[Observer.onComplete]].
+   *
+   * If the underlying observable errors then that is propagated to the `Observer`. This method is especially useful for chaining
+   * `Observable[Void]` in for comprehensions.
+   *
+   * @return a single observable which emits Unit before completion.
+   * @since 4.4
+   */
+  @deprecated(
+    "Is no longer needed because of the `ToSingleObservableUnit` implicit class. Scheduled for removal in a major release",
+    "5.0"
+  )
+  def completeWithUnit(): SingleObservable[Unit] = UnitObservable(this)
 }

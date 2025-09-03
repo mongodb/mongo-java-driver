@@ -16,8 +16,26 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ServerId;
+import com.mongodb.lang.NonNull;
+import org.bson.types.ObjectId;
 
+@ThreadSafe
 interface InternalConnectionFactory {
-    InternalConnection create(ServerId serverId);
+    default InternalConnection create(ServerId serverId) {
+        return create(serverId, new ConnectionGenerationSupplier() {
+            @Override
+            public int getGeneration() {
+                return 0;
+            }
+
+            @Override
+            public int getGeneration(@NonNull final ObjectId serviceId) {
+                return 0;
+            }
+        });
+    }
+
+    InternalConnection create(ServerId serverId, ConnectionGenerationSupplier connectionGenerationSupplier);
 }

@@ -17,7 +17,6 @@
 package org.mongodb.scala
 
 import com.mongodb.{ MongoCredential => JMongoCredential }
-import org.scalatest.{ FlatSpec, Matchers }
 
 class MongoCredentialSpec extends BaseSpec {
 
@@ -27,7 +26,7 @@ class MongoCredentialSpec extends BaseSpec {
 
     wrapped.foreach((name: String) => {
       val cleanedName = name.stripPrefix("get")
-      assert(local.contains(name) | local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
+      assert(local.contains(name) || local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
     })
   }
 

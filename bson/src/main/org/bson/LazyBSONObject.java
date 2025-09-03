@@ -122,8 +122,7 @@ public class LazyBSONObject implements BSONObject {
 
     @Override
     public boolean containsField(final String s) {
-        BsonBinaryReader reader = getBsonReader();
-        try {
+        try (BsonBinaryReader reader = getBsonReader()) {
             reader.readStartDocument();
             while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 if (reader.readName().equals(s)) {
@@ -132,25 +131,20 @@ public class LazyBSONObject implements BSONObject {
                     reader.skipValue();
                 }
             }
-        } finally {
-            reader.close();
         }
         return false;
     }
 
     @Override
     public Set<String> keySet() {
-        Set<String> keys = new LinkedHashSet<String>();
-        BsonBinaryReader reader = getBsonReader();
-        try {
+        Set<String> keys = new LinkedHashSet<>();
+        try (BsonBinaryReader reader = getBsonReader()) {
             reader.readStartDocument();
             while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 keys.add(reader.readName());
                 reader.skipValue();
             }
             reader.readEndDocument();
-        } finally {
-            reader.close();
         }
         return Collections.unmodifiableSet(keys);
     }
@@ -292,16 +286,13 @@ public class LazyBSONObject implements BSONObject {
      * @return then entry set
      */
     public Set<Map.Entry<String, Object>> entrySet() {
-        final List<Map.Entry<String, Object>> entries = new ArrayList<Map.Entry<String, Object>>();
-        BsonBinaryReader reader = getBsonReader();
-        try {
+        List<Map.Entry<String, Object>> entries = new ArrayList<>();
+        try (BsonBinaryReader reader = getBsonReader()) {
             reader.readStartDocument();
             while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-                entries.add(new AbstractMap.SimpleImmutableEntry<String, Object>(reader.readName(), readValue(reader)));
+                entries.add(new AbstractMap.SimpleImmutableEntry<>(reader.readName(), readValue(reader)));
             }
             reader.readEndDocument();
-        } finally {
-            reader.close();
         }
         return new Set<Map.Entry<String, Object>>() {
             @Override
@@ -471,7 +462,7 @@ public class LazyBSONObject implements BSONObject {
     @Override
     @SuppressWarnings("rawtypes")
     public Map toMap() {
-        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        Map<String, Object> map = new LinkedHashMap<>();
         for (final Map.Entry<String, Object> entry : entrySet()) {
             map.put(entry.getKey(), entry.getValue());
         }

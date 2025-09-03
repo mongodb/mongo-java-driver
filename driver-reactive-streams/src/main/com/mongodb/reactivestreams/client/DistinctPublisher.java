@@ -16,8 +16,12 @@
 
 package com.mongodb.reactivestreams.client;
 
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
 
@@ -63,7 +67,7 @@ public interface DistinctPublisher<TResult> extends Publisher<TResult> {
     /**
      * Sets the number of documents to return per batch.
      *
-     * <p>Overrides the {@link org.reactivestreams.Subscription#request(long)} value for setting the batch size, allowing for fine grained
+     * <p>Overrides the {@link org.reactivestreams.Subscription#request(long)} value for setting the batch size, allowing for fine-grained
      * control over the underlying cursor.</p>
      *
      * @param batchSize the batch size
@@ -72,6 +76,58 @@ public interface DistinctPublisher<TResult> extends Publisher<TResult> {
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     DistinctPublisher<TResult> batchSize(int batchSize);
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    DistinctPublisher<TResult> comment(@Nullable String comment);
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    DistinctPublisher<TResult> comment(@Nullable BsonValue comment);
+
+    /**
+     * Sets the hint for which index to use. A null value means no hint is set.
+     *
+     * @param hint the hint
+     * @return this
+     * @since 5.3
+     */
+    DistinctPublisher<TResult> hint(@Nullable Bson hint);
+
+    /**
+     * Sets the hint for which index to use. A null value means no hint is set.
+     *
+     * @param hint the name of the index which should be used for the operation
+     * @return this
+     * @since 5.3
+     */
+    DistinctPublisher<TResult> hintString(@Nullable String hint);
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * <p>
+     *     Requires the {@code timeout} to be set, either in the {@link com.mongodb.MongoClientSettings},
+     *     via {@link MongoDatabase} or via {@link MongoCollection}
+     * </p>
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    DistinctPublisher<TResult> timeoutMode(TimeoutMode timeoutMode);
 
     /**
      * Helper to return a publisher limited to the first result.

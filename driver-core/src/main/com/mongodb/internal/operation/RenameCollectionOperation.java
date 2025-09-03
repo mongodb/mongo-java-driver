@@ -19,27 +19,24 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
-import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.internal.connection.Connection;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformer;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorWriteTransformer;
-import static com.mongodb.internal.operation.OperationHelper.AsyncCallableWithConnection;
-import static com.mongodb.internal.operation.OperationHelper.CallableWithConnection;
+import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncConnection;
+import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
-import static com.mongodb.internal.operation.OperationHelper.withConnection;
+import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
+import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
+import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErrorTransformer;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 
 /**
@@ -48,108 +45,65 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * <p>If the new name is the same as an existing collection and dropTarget is true, this existing collection will be dropped. If
  * dropTarget is false and the newCollectionName is the same as an existing collection, a MongoServerException will be thrown.</p>
  *
- * @mongodb.driver.manual reference/command/renameCollection renameCollection
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class RenameCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+public class RenameCollectionOperation implements WriteOperation<Void> {
+    private static final String COMMAND_NAME = "renameCollection";
     private final MongoNamespace originalNamespace;
     private final MongoNamespace newNamespace;
     private final WriteConcern writeConcern;
     private boolean dropTarget;
 
-    /**
-     * @param originalNamespace the name of the collection to rename
-     * @param newNamespace      the desired new name for the collection
-     */
-    public RenameCollectionOperation(final MongoNamespace originalNamespace, final MongoNamespace newNamespace) {
-        this(originalNamespace, newNamespace, null);
-    }
-
-    /**
-     * @param originalNamespace the name of the collection to rename
-     * @param newNamespace      the desired new name for the collection
-     * @param writeConcern      the writeConcern
-     *
-     * @since 3.4
-     */
     public RenameCollectionOperation(final MongoNamespace originalNamespace, final MongoNamespace newNamespace,
-                                     final WriteConcern writeConcern) {
+            @Nullable final WriteConcern writeConcern) {
         this.originalNamespace = notNull("originalNamespace", originalNamespace);
         this.newNamespace = notNull("newNamespace", newNamespace);
         this.writeConcern = writeConcern;
     }
 
-    /**
-     * Gets the write concern.
-     *
-     * @return the write concern, which may be null
-     *
-     * @since 3.4
-     */
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }
 
-    /**
-     * Gets if mongod should drop the target of renameCollection prior to renaming the collection.
-     *
-     * @return true if mongod should drop the target of renameCollection prior to renaming the collection.
-     */
     public boolean isDropTarget() {
         return dropTarget;
     }
 
-    /**
-     * Sets if mongod should drop the target of renameCollection prior to renaming the collection.
-     *
-     * @param dropTarget true if mongod should drop the target of renameCollection prior to renaming the collection.
-     * @return this
-     */
     public RenameCollectionOperation dropTarget(final boolean dropTarget) {
         this.dropTarget = dropTarget;
         return this;
     }
 
-    /**
-     * Rename the collection with {@code oldCollectionName} in database {@code databaseName} to the {@code newCollectionName}.
-     *
-     * @param binding the binding
-     * @return a void result
-     * @throws com.mongodb.MongoServerException if you provide a newCollectionName that is the name of an existing collection and dropTarget
-     *                                          is false, or if the oldCollectionName is the name of a collection that doesn't exist
-     */
+    @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(binding, new CallableWithConnection<Void>() {
-            @Override
-            public Void call(final Connection connection) {
-                return executeCommand(binding, "admin", getCommand(connection.getDescription()), connection,
-                        writeConcernErrorTransformer());
-            }
-        });
+        return withConnection(binding, connection -> executeCommand(binding, "admin", getCommand(), connection,
+                writeConcernErrorTransformer(binding.getOperationContext().getTimeoutContext())));
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(binding, new AsyncCallableWithConnection() {
-            @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-                if (t != null) {
-                    errHandlingCallback.onResult(null, t);
-                } else {
-                    executeCommandAsync(binding, "admin", getCommand(connection.getDescription()), connection,
-                            writeConcernErrorWriteTransformer(), releasingCallback(errHandlingCallback, connection));
-                }
+        withAsyncConnection(binding, (connection, t) -> {
+            SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+            if (t != null) {
+                errHandlingCallback.onResult(null, t);
+            } else {
+                executeCommandAsync(binding, "admin", getCommand(), assertNotNull(connection),
+                        writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()),
+                        releasingCallback(errHandlingCallback, connection));
             }
         });
     }
 
-    private BsonDocument getCommand(final ConnectionDescription description) {
-        BsonDocument commandDocument = new BsonDocument("renameCollection", new BsonString(originalNamespace.getFullName()))
+    private BsonDocument getCommand() {
+        BsonDocument commandDocument = new BsonDocument(getCommandName(), new BsonString(originalNamespace.getFullName()))
                                             .append("to", new BsonString(newNamespace.getFullName()))
                                             .append("dropTarget", BsonBoolean.valueOf(dropTarget));
-        appendWriteConcernToCommand(writeConcern, commandDocument, description);
+        appendWriteConcernToCommand(writeConcern, commandDocument);
         return commandDocument;
     }
 }

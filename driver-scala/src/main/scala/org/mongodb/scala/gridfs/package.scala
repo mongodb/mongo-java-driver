@@ -16,6 +16,12 @@
 
 package org.mongodb.scala
 
+import com.mongodb.reactivestreams.client.gridfs.GridFSUploadPublisher
+import org.bson.BsonValue
+import org.mongodb.scala.bson.ObjectId
+import org.reactivestreams.Subscriber
+import reactor.core.publisher.Flux
+
 package object gridfs extends ObservableImplicits {
 
   /**
@@ -41,4 +47,23 @@ package object gridfs extends ObservableImplicits {
    * Controls the selection of the revision to download
    */
   type GridFSDownloadOptions = com.mongodb.client.gridfs.model.GridFSDownloadOptions
+
+  /**
+   * A `GridFSUploadPublisher`` that emits
+   *
+   *   - exactly one item, if the wrapped `Publisher` does not signal an error, even if the represented stream is empty;
+   *   - no items if the wrapped `Publisher` signals an error.
+   *
+   * @param pub A `Publisher` representing a finite stream.
+   */
+  implicit class ToGridFSUploadPublisherUnit(pub: => GridFSUploadPublisher[Void]) extends GridFSUploadPublisher[Unit] {
+    val publisher = pub
+
+    override def subscribe(observer: Subscriber[_ >: Unit]): Unit =
+      Flux.from(publisher).reduce((), (_: Unit, _: Void) => ()).subscribe(observer)
+
+    override def getObjectId: ObjectId = publisher.getObjectId
+
+    override def getId: BsonValue = publisher.getId
+  }
 }

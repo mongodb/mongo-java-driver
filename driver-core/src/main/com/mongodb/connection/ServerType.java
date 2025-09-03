@@ -93,6 +93,16 @@ public enum ServerType {
     },
 
     /**
+     *
+     */
+    LOAD_BALANCER {
+        @Override
+        public ClusterType getClusterType() {
+            return ClusterType.LOAD_BALANCED;
+        }
+    },
+
+    /**
      * The server type is not yet known.
      */
     UNKNOWN {
@@ -109,4 +119,3 @@ public enum ServerType {
      */
     public abstract ClusterType getClusterType();
 }
-

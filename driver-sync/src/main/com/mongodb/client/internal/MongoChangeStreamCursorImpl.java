@@ -29,6 +29,9 @@ import org.bson.codecs.Decoder;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class MongoChangeStreamCursorImpl<T> implements MongoChangeStreamCursor<T> {
     private final AggregateResponseBatchCursor<RawBsonDocument> batchCursor;
     private final Decoder<T> decoder;
@@ -69,6 +72,15 @@ public class MongoChangeStreamCursorImpl<T> implements MongoChangeStreamCursor<T
         }
 
         return getNextInBatch();
+    }
+
+    @Override
+    public int available() {
+        int available = batchCursor.available();
+        if (curBatch != null) {
+            available += (curBatch.size() - curPos);
+        }
+        return available;
     }
 
     @Nullable

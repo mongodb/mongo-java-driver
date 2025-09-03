@@ -18,6 +18,9 @@ package com.mongodb.internal.binding;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public abstract class AbstractReferenceCounted implements ReferenceCounted {
     private final AtomicInteger referenceCount = new AtomicInteger(1);
     @Override
@@ -34,9 +37,11 @@ public abstract class AbstractReferenceCounted implements ReferenceCounted {
     }
 
     @Override
-    public void release() {
-        if (referenceCount.decrementAndGet() < 0) {
+    public int release() {
+        int decrementedValue = referenceCount.decrementAndGet();
+        if (decrementedValue < 0) {
             throw new IllegalStateException("Attempted to decrement the reference count below 0");
         }
+        return decrementedValue;
     }
 }

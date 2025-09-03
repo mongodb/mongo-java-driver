@@ -20,6 +20,7 @@ import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.util.List;
+import java.util.Objects;
 
 public class CollectionSpecificReturnTypeCreatorModel extends AbstractCollectionSpecificReturnTypeCreatorModel {
     private final ImmutableList<String> properties;
@@ -44,7 +45,7 @@ public class CollectionSpecificReturnTypeCreatorModel extends AbstractCollection
 
         CollectionSpecificReturnTypeCreatorModel that = (CollectionSpecificReturnTypeCreatorModel) o;
 
-        return properties != null ? properties.equals(that.properties) : that.properties == null;
+        return Objects.equals(properties, that.properties);
     }
 
     @Override

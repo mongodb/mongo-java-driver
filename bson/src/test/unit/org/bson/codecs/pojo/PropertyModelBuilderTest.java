@@ -18,23 +18,24 @@ package org.bson.codecs.pojo;
 
 import org.bson.codecs.IntegerCodec;
 import org.bson.codecs.pojo.annotations.BsonProperty;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.List;
 
-import static junit.framework.TestCase.assertTrue;
 import static org.bson.codecs.pojo.PojoBuilderHelper.createPropertyModelBuilder;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class PropertyModelBuilderTest {
 
     private static final String FIELD_NAME = "myFieldName";
     private static final PropertyMetadata<Integer> PROPERTY_METADATA =
-            new PropertyMetadata<Integer>(FIELD_NAME, "MyClass", TypeData.builder(Integer.class).build());
+            new PropertyMetadata<>(FIELD_NAME, "MyClass", TypeData.builder(Integer.class).build());
 
     @Test
     public void testFieldMapping() throws NoSuchFieldException {
@@ -67,15 +68,16 @@ public final class PropertyModelBuilderTest {
         assertFalse(propertyModelBuilder.isDiscriminatorEnabled());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testMustBeReadableOrWritable() {
-        createPropertyModelBuilder(PROPERTY_METADATA)
+        assertThrows(IllegalStateException.class, () ->
+                createPropertyModelBuilder(PROPERTY_METADATA)
                 .readName(null)
                 .writeName(null)
-                .build();
+                .build());
     }
 
-    private static final List<Annotation> ANNOTATIONS = Collections.<Annotation>singletonList(
+    private static final List<Annotation> ANNOTATIONS = Collections.singletonList(
             new BsonProperty() {
                 @Override
                 public Class<? extends Annotation> annotationType() {
@@ -93,12 +95,7 @@ public final class PropertyModelBuilderTest {
                 }
             });
 
-    private static final PropertySerialization<Integer> CUSTOM_SERIALIZATION = new PropertySerialization<Integer>() {
-        @Override
-        public boolean shouldSerialize(final Integer value) {
-            return false;
-        }
-    };
+    private static final PropertySerialization<Integer> CUSTOM_SERIALIZATION = value -> false;
 
     private static final PropertyAccessor<Integer> FIELD_ACCESSOR = new PropertyAccessor<Integer>() {
         @Override

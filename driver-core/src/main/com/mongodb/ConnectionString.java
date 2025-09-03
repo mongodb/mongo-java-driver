@@ -16,14 +16,29 @@
 
 package com.mongodb;
 
-import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
+import com.mongodb.connection.ClusterSettings;
+import com.mongodb.connection.ConnectionPoolSettings;
+import com.mongodb.connection.ServerMonitoringMode;
+import com.mongodb.connection.ServerSettings;
+import com.mongodb.connection.SocketSettings;
+import com.mongodb.event.ConnectionCheckOutStartedEvent;
+import com.mongodb.event.ConnectionCheckedInEvent;
+import com.mongodb.event.ConnectionCheckedOutEvent;
+import com.mongodb.event.ConnectionCreatedEvent;
+import com.mongodb.event.ConnectionReadyEvent;
+import com.mongodb.internal.connection.ServerMonitoringModeUtil;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.dns.DefaultDnsResolver;
 import com.mongodb.lang.Nullable;
+import com.mongodb.spi.dns.DnsClient;
 import org.bson.UuidRepresentation;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,16 +49,21 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static com.mongodb.MongoCredential.ALLOWED_HOSTS_KEY;
+import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateCreateOidcCredential;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
 
 
 /**
- * <p>Represents a <a href="http://www.mongodb.org/display/DOCS/Connections">Connection String</a>. The Connection String describes the
- * hosts to be used and options.</p>
+ * <p>Represents a <a href="https://www.mongodb.com/docs/manual/reference/connection-string/">Connection String</a>.
+ * The Connection String describes the hosts to be used and options.</p>
  *
  * <p>The format of the Connection String is:</p>
  * <pre>
@@ -61,8 +81,7 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code :portX} is optional and defaults to :27017 if not provided.</li>
  * <li>{@code /database} is the name of the database to login to and thus is only relevant if the
  * {@code username:password@} syntax is used. If not specified the "admin" database will be used by default.</li>
- * <li>{@code ?options} are connection options. Note that if {@code database} is absent there is still a {@code /}
- * required between the last host and the {@code ?} introducing the options. Options are name=value pairs and the pairs
+ * <li>{@code ?options} are connection options. Options are name=value pairs and the pairs
  * are separated by "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;",
  * but should be considered as deprecated.</li>
  * </ul>
@@ -76,12 +95,12 @@ import static java.util.Collections.unmodifiableList;
  * connecting to a database server.  For some authentication mechanisms, only the username is specified and the password is not,
  * in which case the ":" after the username is left off as well</li>
  * <li>{@code host} is the only required part of the URI.  It identifies a single host name for which SRV records are looked up
- * from a Domain Name Server after prefixing the host name with {@code "_mongodb._tcp"}.  The host/port for each SRV record becomes the
+ * from a Domain Name Server after prefixing the host name with, by default, {@code "_mongodb._tcp"} ({@code "mongodb"} is the default SRV
+ * service name, but can be replaced via the {@code srvServiceName} query parameter),  The host/port for each SRV record becomes the
  * seed list used to connect, as if each one were provided as host/port pair in a URI using the normal mongodb protocol.</li>
  * <li>{@code /database} is the name of the database to login to and thus is only relevant if the
  * {@code username:password@} syntax is used. If not specified the "admin" database will be used by default.</li>
- * <li>{@code ?options} are connection options. Note that if {@code database} is absent there is still a {@code /}
- * required between the last host and the {@code ?} introducing the options. Options are name=value pairs and the pairs
+ * <li>{@code ?options} are connection options. Options are name=value pairs and the pairs
  * are separated by "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;",
  * but should be considered as deprecated. Additionally with the mongodb+srv protocol, TXT records are looked up from a Domain Name
  * Server for the given host, and the text value of each one is prepended to any options on the URI itself.  Because the last specified
@@ -100,6 +119,13 @@ import static java.util.Collections.unmodifiableList;
  * <ul>
  * <li>{@code heartbeatFrequencyMS=ms}: The frequency that the driver will attempt to determine the current state of each server in the
  * cluster.</li>
+ * <li>{@code serverMonitoringMode=enum}: The server monitoring mode, which defines the monitoring protocol to use. Enumerated values:
+ *  <ul>
+ *      <li>{@code stream};</li>
+ *      <li>{@code poll};</li>
+ *      <li>{@code auto} - the default.</li>
+ *  </ul>
+ * </li>
  * </ul>
  * <p>Replica set configuration:</p>
  * <ul>
@@ -116,16 +142,33 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for TLS connections.</li>
  * <li>{@code tlsAllowInvalidHostnames=true|false}: Whether to allow invalid host names for TLS connections. Supersedes the
  * sslInvalidHostNameAllowed option</li>
+ * <li>{@code timeoutMS=ms}: Time limit for the full execution of an operation. Note: This parameter is part of an {@linkplain Alpha Alpha API} and may be
+ * subject to changes or even removal in future releases.</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
- * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li>
+ * <li>{@code socketTimeoutMS=ms}: How long a receive on a socket can take before timing out.
+ * This option is the same as {@link SocketSettings#getReadTimeout(TimeUnit)}.
+ * Deprecated, use {@code timeoutMS} instead.</li>
  * <li>{@code maxIdleTimeMS=ms}: Maximum idle time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * <li>{@code maxLifeTimeMS=ms}: Maximum life time of a pooled connection. A connection that exceeds this limit will be closed</li>
+ * </ul>
+ * <p>Proxy Configuration:</p>
+ * <ul>
+ * <li>{@code proxyHost=string}: The SOCKS5 proxy host to establish a connection through.
+ * It can be provided as a valid IPv4 address, IPv6 address, or a domain name. Required if either proxyPassword, proxyUsername or
+ * proxyPort are specified</li>
+ * <li>{@code proxyPort=n}: The port number for the SOCKS5 proxy server. Must be a non-negative integer.</li>
+ * <li>{@code proxyUsername=string}: Username for authenticating with the proxy server. Required if proxyPassword is specified.</li>
+ * <li>{@code proxyPassword=string}: Password for authenticating with the proxy server. Required if proxyUsername is specified.</li>
  * </ul>
  * <p>Connection pool configuration:</p>
  * <ul>
  * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
- * <li>{@code waitQueueTimeoutMS=ms}: The maximum wait time in milliseconds that a thread may wait for a connection to
- * become available.</li>
+ * <li>{@code minPoolSize=n}: The minimum number of connections in the connection pool.</li>
+ * <li>{@code waitQueueTimeoutMS=ms}: The maximum duration to wait until either:
+ * an {@linkplain ConnectionCheckedOutEvent in-use connection} becomes {@linkplain ConnectionCheckedInEvent available},
+ * or a {@linkplain ConnectionCreatedEvent connection is created} and begins to be {@linkplain ConnectionReadyEvent established}.
+ * See {@link #getMaxWaitTime()} for more details. . Deprecated, use {@code timeoutMS} instead.</li>
+ * <li>{@code maxConnecting=n}: The maximum number of connections a pool may be establishing concurrently.</li>
  * </ul>
  * <p>Write concern configuration:</p>
  * <ul>
@@ -152,7 +195,7 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code wtimeoutMS=ms}
  * <ul>
  * <li>The driver adds { wtimeout : ms } to all write commands. Implies {@code safe=true}.</li>
- * <li>Used in combination with {@code w}</li>
+ * <li>Used in combination with {@code w}. Deprecated, use {@code timeoutMS} instead</li>
  * </ul>
  * </li>
  * </ul>
@@ -181,7 +224,7 @@ import static java.util.Collections.unmodifiableList;
  * </ul>
  * </li>
  * <li>{@code maxStalenessSeconds=seconds}. The maximum staleness in seconds. For use with any non-primary read preference, the driver
- * estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses, and selects only those
+ * estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses, and selects only those
  * secondaries whose staleness is less than or equal to maxStalenessSeconds.  Not providing the parameter or explicitly setting it to -1
  * indicates that there should be no max staleness check. The maximum staleness feature is designed to prevent badly-lagging servers from
  * being selected. The staleness estimate is imprecise and shouldn't be used to try to select "up-to-date" secondaries.  The minimum value
@@ -190,9 +233,9 @@ import static java.util.Collections.unmodifiableList;
  * </ul>
  * <p>Authentication configuration:</p>
  * <ul>
- * <li>{@code authMechanism=MONGO-CR|GSSAPI|PLAIN|MONGODB-X509}: The authentication mechanism to use if a credential was supplied.
+ * <li>{@code authMechanism=MONGO-CR|GSSAPI|PLAIN|MONGODB-X509|MONGODB-OIDC}: The authentication mechanism to use if a credential was supplied.
  * The default is unspecified, in which case the client will pick the most secure mechanism available based on the sever version.  For the
- * GSSAPI and MONGODB-X509 mechanisms, no password is accepted, only the username.
+ * GSSAPI, MONGODB-X509, and MONGODB-OIDC mechanisms, no password is accepted, only the username.
  * </li>
  * <li>{@code authSource=string}: The source of the authentication credentials.  This is typically the database that
  * the credentials have been created.  The value defaults to the database specified in the path portion of the connection string.
@@ -218,6 +261,11 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code zlibCompressionLevel=integer}: Integer value from -1 to 9 representing the zlib compression level. Lower values will make
  * compression faster, while higher values will make compression better.</li>
  * </ul>
+ * <p>SRV configuration:</p>
+ * <ul>
+ * <li>{@code srvServiceName=string}: The SRV service name. See {@link ClusterSettings#getSrvServiceName()} for details.</li>
+ * <li>{@code srvMaxHosts=number}: The maximum number of hosts from the SRV record to connect to.</li>
+ * </ul>
  * <p>General configuration:</p>
  * <ul>
  * <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
@@ -228,6 +276,7 @@ import static java.util.Collections.unmodifiableList;
  * {@link MongoClientSettings#getUuidRepresentation()} for documentation of semantics of this parameter.  Defaults to "javaLegacy", but
  * will change to "unspecified" in the next major release.</li>
  * <li>{@code directConnection=true|false}. If true the driver will set the connection to be a direct connection to the host.</li>
+ * <li>{@code loadBalanced=true|false}. If true the driver will assume that it's connecting to MongoDB through a load balancer.</li>
  * </ul>
  *
  * @mongodb.driver.manual reference/connection-string Connection String Format
@@ -237,10 +286,12 @@ public class ConnectionString {
 
     private static final String MONGODB_PREFIX = "mongodb://";
     private static final String MONGODB_SRV_PREFIX = "mongodb+srv://";
-    private static final Set<String> ALLOWED_OPTIONS_IN_TXT_RECORD = new HashSet<String>(asList("authsource", "replicaset"));
-    private static final String UTF_8 = "UTF-8";
-
+    private static final Set<String> ALLOWED_OPTIONS_IN_TXT_RECORD =
+            new HashSet<>(asList("authsource", "replicaset", "loadbalanced"));
     private static final Logger LOGGER = Loggers.getLogger("uri");
+    private static final List<String> MECHANISM_KEYS_DISALLOWED_IN_CONNECTION_STRING = Stream.of(ALLOWED_HOSTS_KEY)
+            .map(k -> k.toLowerCase())
+            .collect(Collectors.toList());
 
     private final MongoCredential credential;
     private final boolean isSrvProtocol;
@@ -249,7 +300,10 @@ public class ConnectionString {
     private final String collection;
     private final String connectionString;
 
+    private Integer srvMaxHosts;
+    private String srvServiceName;
     private Boolean directConnection;
+    private Boolean loadBalanced;
     private ReadPreference readPreference;
     private WriteConcern writeConcern;
     private Boolean retryWrites;
@@ -261,14 +315,21 @@ public class ConnectionString {
     private Integer maxWaitTime;
     private Integer maxConnectionIdleTime;
     private Integer maxConnectionLifeTime;
+    private Integer maxConnecting;
     private Integer connectTimeout;
+    private Long timeout;
     private Integer socketTimeout;
     private Boolean sslEnabled;
     private Boolean sslInvalidHostnameAllowed;
+    private String proxyHost;
+    private Integer proxyPort;
+    private String proxyUsername;
+    private String proxyPassword;
     private String requiredReplicaSetName;
     private Integer serverSelectionTimeout;
     private Integer localThreshold;
     private Integer heartbeatFrequency;
+    private ServerMonitoringMode serverMonitoringMode;
     private String applicationName;
     private List<MongoCompressor> compressorList;
     private UuidRepresentation uuidRepresentation;
@@ -280,6 +341,21 @@ public class ConnectionString {
      * @since 3.0
      */
     public ConnectionString(final String connectionString) {
+        this(connectionString, null);
+    }
+
+    /**
+     * Creates a ConnectionString from the given string with the given {@link DnsClient}.
+     *
+     * <p>If setting {@link MongoClientSettings#getDnsClient()} explicitly, care should be taken to call this constructor with the same
+     * {@link DnsClient}.
+     *
+     * @param connectionString the connection string
+     * @param dnsClient        the DNS client with which to resolve TXT record for the mongodb+srv protocol
+     * @since 4.10
+     * @see MongoClientSettings#getDnsClient()
+     */
+    public ConnectionString(final String connectionString, @Nullable final DnsClient dnsClient) {
         this.connectionString = connectionString;
         boolean isMongoDBProtocol = connectionString.startsWith(MONGODB_PREFIX);
         isSrvProtocol = connectionString.startsWith(MONGODB_SRV_PREFIX);
@@ -297,16 +373,18 @@ public class ConnectionString {
 
         // Split out the user and host information
         String userAndHostInformation;
-        int idx = unprocessedConnectionString.indexOf("/");
-        if (idx == -1) {
-            if (unprocessedConnectionString.contains("?")) {
-                throw new IllegalArgumentException("The connection string contains options without trailing slash");
-            }
+        int firstForwardSlashIdx = unprocessedConnectionString.indexOf("/");
+        int firstQuestionMarkIdx = unprocessedConnectionString.indexOf("?");
+        if (firstQuestionMarkIdx == -1 && firstForwardSlashIdx == -1) {
             userAndHostInformation = unprocessedConnectionString;
             unprocessedConnectionString = "";
+        } else if (firstQuestionMarkIdx != -1 && (firstForwardSlashIdx == -1 || firstQuestionMarkIdx < firstForwardSlashIdx)) {
+            // there is a question mark, and there is no slash or the question mark comes before any slash
+            userAndHostInformation = unprocessedConnectionString.substring(0, firstQuestionMarkIdx);
+            unprocessedConnectionString = unprocessedConnectionString.substring(firstQuestionMarkIdx);
         } else {
-            userAndHostInformation = unprocessedConnectionString.substring(0, idx);
-            unprocessedConnectionString = unprocessedConnectionString.substring(idx + 1);
+            userAndHostInformation = unprocessedConnectionString.substring(0, firstForwardSlashIdx);
+            unprocessedConnectionString = unprocessedConnectionString.substring(firstForwardSlashIdx + 1);
         }
 
         // Split the user and host information
@@ -314,7 +392,7 @@ public class ConnectionString {
         String hostIdentifier;
         String userName = null;
         char[] password = null;
-        idx = userAndHostInformation.lastIndexOf("@");
+        int idx = userAndHostInformation.lastIndexOf("@");
         if (idx > 0) {
             userInfo = userAndHostInformation.substring(0, idx).replace("+", "%2B");
             hostIdentifier = userAndHostInformation.substring(idx + 1);
@@ -378,20 +456,28 @@ public class ConnectionString {
         }
 
         String txtRecordsQueryParameters = isSrvProtocol
-                ? new DefaultDnsResolver().resolveAdditionalQueryParametersFromTxtRecords(unresolvedHosts.get(0)) : "";
-        String connectionStringQueryParamenters = unprocessedConnectionString;
+                ? new DefaultDnsResolver(dnsClient).resolveAdditionalQueryParametersFromTxtRecords(unresolvedHosts.get(0)) : "";
+        String connectionStringQueryParameters = unprocessedConnectionString;
 
-        Map<String, List<String>> connectionStringOptionsMap = parseOptions(connectionStringQueryParamenters);
+        Map<String, List<String>> connectionStringOptionsMap = parseOptions(connectionStringQueryParameters);
         Map<String, List<String>> txtRecordsOptionsMap = parseOptions(txtRecordsQueryParameters);
         if (!ALLOWED_OPTIONS_IN_TXT_RECORD.containsAll(txtRecordsOptionsMap.keySet())) {
             throw new MongoConfigurationException(format("A TXT record is only permitted to contain the keys %s, but the TXT record for "
             + "'%s' contains the keys %s", ALLOWED_OPTIONS_IN_TXT_RECORD, unresolvedHosts.get(0), txtRecordsOptionsMap.keySet()));
         }
         Map<String, List<String>> combinedOptionsMaps = combineOptionsMaps(txtRecordsOptionsMap, connectionStringOptionsMap);
-        if (isSrvProtocol && !combinedOptionsMaps.containsKey("ssl")) {
-            combinedOptionsMaps.put("ssl", singletonList("true"));
+        if (isSrvProtocol && !(combinedOptionsMaps.containsKey("tls") || combinedOptionsMaps.containsKey("ssl"))) {
+            combinedOptionsMaps.put("tls", singletonList("true"));
         }
         translateOptions(combinedOptionsMaps);
+
+        if (!isSrvProtocol && srvMaxHosts != null) {
+            throw new IllegalArgumentException("srvMaxHosts can only be specified with mongodb+srv protocol");
+        }
+
+        if (!isSrvProtocol && srvServiceName != null) {
+            throw new IllegalArgumentException("srvServiceName can only be specified with mongodb+srv protocol");
+        }
 
         if (directConnection != null && directConnection) {
             if (isSrvProtocol) {
@@ -401,25 +487,48 @@ public class ConnectionString {
             }
         }
 
+        if (loadBalanced != null && loadBalanced) {
+            if (directConnection != null && directConnection) {
+                throw new IllegalArgumentException("directConnection=true can not be specified with loadBalanced=true");
+            }
+            if (requiredReplicaSetName != null) {
+                throw new IllegalArgumentException("replicaSet can not be specified with loadBalanced=true");
+            }
+            if (hosts.size() > 1) {
+                throw new IllegalArgumentException("Only one host can be specified with loadBalanced=true");
+            }
+            if (srvMaxHosts != null && srvMaxHosts > 0) {
+                throw new IllegalArgumentException("srvMaxHosts can not be specified with loadBalanced=true");
+            }
+        }
+
+        if (requiredReplicaSetName != null && srvMaxHosts != null && srvMaxHosts > 0) {
+            throw new IllegalArgumentException("srvMaxHosts can not be specified with replica set name");
+        }
+
+        validateProxyParameters(combinedOptionsMaps);
+
         credential = createCredentials(combinedOptionsMaps, userName, password);
         warnOnUnsupportedOptions(combinedOptionsMaps);
     }
 
-    private static final Set<String> GENERAL_OPTIONS_KEYS = new LinkedHashSet<String>();
-    private static final Set<String> AUTH_KEYS = new HashSet<String>();
-    private static final Set<String> READ_PREFERENCE_KEYS = new HashSet<String>();
-    private static final Set<String> WRITE_CONCERN_KEYS = new HashSet<String>();
-    private static final Set<String> COMPRESSOR_KEYS = new HashSet<String>();
-    private static final Set<String> ALL_KEYS = new HashSet<String>();
+    private static final Set<String> GENERAL_OPTIONS_KEYS = new LinkedHashSet<>();
+    private static final Set<String> AUTH_KEYS = new HashSet<>();
+    private static final Set<String> READ_PREFERENCE_KEYS = new HashSet<>();
+    private static final Set<String> WRITE_CONCERN_KEYS = new HashSet<>();
+    private static final Set<String> COMPRESSOR_KEYS = new HashSet<>();
+    private static final Set<String> ALL_KEYS = new HashSet<>();
 
     static {
         GENERAL_OPTIONS_KEYS.add("minpoolsize");
         GENERAL_OPTIONS_KEYS.add("maxpoolsize");
+        GENERAL_OPTIONS_KEYS.add("timeoutms");
+        GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
         GENERAL_OPTIONS_KEYS.add("waitqueuetimeoutms");
         GENERAL_OPTIONS_KEYS.add("connecttimeoutms");
         GENERAL_OPTIONS_KEYS.add("maxidletimems");
         GENERAL_OPTIONS_KEYS.add("maxlifetimems");
-        GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
+        GENERAL_OPTIONS_KEYS.add("maxconnecting");
 
         // Order matters here: Having tls after ssl means than the tls option will supersede the ssl option when both are set
         GENERAL_OPTIONS_KEYS.add("ssl");
@@ -434,12 +543,19 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("sslinvalidhostnameallowed");
         GENERAL_OPTIONS_KEYS.add("tlsallowinvalidhostnames");
 
+        //Socks5 proxy settings
+        GENERAL_OPTIONS_KEYS.add("proxyhost");
+        GENERAL_OPTIONS_KEYS.add("proxyport");
+        GENERAL_OPTIONS_KEYS.add("proxyusername");
+        GENERAL_OPTIONS_KEYS.add("proxypassword");
+
         GENERAL_OPTIONS_KEYS.add("replicaset");
         GENERAL_OPTIONS_KEYS.add("readconcernlevel");
 
         GENERAL_OPTIONS_KEYS.add("serverselectiontimeoutms");
         GENERAL_OPTIONS_KEYS.add("localthresholdms");
         GENERAL_OPTIONS_KEYS.add("heartbeatfrequencyms");
+        GENERAL_OPTIONS_KEYS.add("servermonitoringmode");
         GENERAL_OPTIONS_KEYS.add("retrywrites");
         GENERAL_OPTIONS_KEYS.add("retryreads");
 
@@ -448,6 +564,10 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("uuidrepresentation");
 
         GENERAL_OPTIONS_KEYS.add("directconnection");
+        GENERAL_OPTIONS_KEYS.add("loadbalanced");
+
+        GENERAL_OPTIONS_KEYS.add("srvmaxhosts");
+        GENERAL_OPTIONS_KEYS.add("srvservicename");
 
         COMPRESSOR_KEYS.add("compressors");
         COMPRESSOR_KEYS.add("zlibcompressionlevel");
@@ -477,21 +597,18 @@ public class ConnectionString {
     // even for options which multiple values, e.g. readPreferenceTags
     private Map<String, List<String>> combineOptionsMaps(final Map<String, List<String>> txtRecordsOptionsMap,
                                                          final Map<String, List<String>> connectionStringOptionsMap) {
-        Map<String, List<String>> combinedOptionsMaps = new HashMap<String, List<String>>(txtRecordsOptionsMap);
-        for (Map.Entry<String, List<String>> entry : connectionStringOptionsMap.entrySet()) {
-            combinedOptionsMaps.put(entry.getKey(), entry.getValue());
-        }
+        Map<String, List<String>> combinedOptionsMaps = new HashMap<>(txtRecordsOptionsMap);
+        combinedOptionsMaps.putAll(connectionStringOptionsMap);
         return combinedOptionsMaps;
     }
 
 
     private void warnOnUnsupportedOptions(final Map<String, List<String>> optionsMap) {
-        for (final String key : optionsMap.keySet()) {
-            if (!ALL_KEYS.contains(key)) {
-                if (LOGGER.isWarnEnabled()) {
-                    LOGGER.warn(format("Connection string contains unsupported option '%s'.", key));
-                }
-            }
+        if (LOGGER.isWarnEnabled()) {
+            optionsMap.keySet()
+                    .stream()
+                    .filter(k -> !ALL_KEYS.contains(k))
+                    .forEach(k -> LOGGER.warn(format("Connection string contains unsupported option '%s'.", k)));
         }
     }
 
@@ -504,53 +621,111 @@ public class ConnectionString {
             if (value == null) {
                 continue;
             }
-            if (key.equals("maxpoolsize")) {
-                maxConnectionPoolSize = parseInteger(value, "maxpoolsize");
-            } else if (key.equals("minpoolsize")) {
-                minConnectionPoolSize = parseInteger(value, "minpoolsize");
-            } else if (key.equals("maxidletimems")) {
-                maxConnectionIdleTime = parseInteger(value, "maxidletimems");
-            } else if (key.equals("maxlifetimems")) {
-                maxConnectionLifeTime = parseInteger(value, "maxlifetimems");
-            } else if (key.equals("waitqueuetimeoutms")) {
-                maxWaitTime = parseInteger(value, "waitqueuetimeoutms");
-            } else if (key.equals("connecttimeoutms")) {
-                connectTimeout = parseInteger(value, "connecttimeoutms");
-            } else if (key.equals("sockettimeoutms")) {
-                socketTimeout = parseInteger(value, "sockettimeoutms");
-            } else if (key.equals("tlsallowinvalidhostnames")) {
-                sslInvalidHostnameAllowed = parseBoolean(value, "tlsAllowInvalidHostnames");
-                tlsAllowInvalidHostnamesSet = true;
-            } else if (key.equals("sslinvalidhostnameallowed")) {
-                sslInvalidHostnameAllowed = parseBoolean(value, "sslinvalidhostnameallowed");
-                tlsAllowInvalidHostnamesSet = true;
-            } else if (key.equals("tlsinsecure")) {
-                sslInvalidHostnameAllowed = parseBoolean(value, "tlsinsecure");
-                tlsInsecureSet = true;
-            } else if (key.equals("ssl")) {
-                initializeSslEnabled("ssl", value);
-            } else if (key.equals("tls")) {
-                initializeSslEnabled("tls", value);
-            } else if (key.equals("replicaset")) {
-                requiredReplicaSetName = value;
-            } else if (key.equals("readconcernlevel")) {
-                readConcern = new ReadConcern(ReadConcernLevel.fromString(value));
-            } else if (key.equals("serverselectiontimeoutms")) {
-                serverSelectionTimeout = parseInteger(value, "serverselectiontimeoutms");
-            } else if (key.equals("localthresholdms")) {
-                localThreshold = parseInteger(value, "localthresholdms");
-            } else if (key.equals("heartbeatfrequencyms")) {
-                heartbeatFrequency = parseInteger(value, "heartbeatfrequencyms");
-            } else if (key.equals("appname")) {
-                applicationName = value;
-            } else if (key.equals("retrywrites")) {
-                retryWrites = parseBoolean(value, "retrywrites");
-            } else if (key.equals("retryreads")) {
-                retryReads = parseBoolean(value, "retryreads");
-            } else if (key.equals("uuidrepresentation")) {
-                uuidRepresentation = createUuidRepresentation(value);
-            } else if (key.equals("directconnection")) {
-                directConnection = parseBoolean(value, "directconnection");
+            switch (key) {
+                case "maxpoolsize":
+                    maxConnectionPoolSize = parseInteger(value, "maxpoolsize");
+                    break;
+                case "minpoolsize":
+                    minConnectionPoolSize = parseInteger(value, "minpoolsize");
+                    break;
+                case "maxidletimems":
+                    maxConnectionIdleTime = parseInteger(value, "maxidletimems");
+                    break;
+                case "maxlifetimems":
+                    maxConnectionLifeTime = parseInteger(value, "maxlifetimems");
+                    break;
+                case "maxconnecting":
+                    maxConnecting = parseInteger(value, "maxConnecting");
+                    break;
+                case "waitqueuetimeoutms":
+                    maxWaitTime = parseInteger(value, "waitqueuetimeoutms");
+                    break;
+                case "connecttimeoutms":
+                    connectTimeout = parseInteger(value, "connecttimeoutms");
+                    break;
+                case "sockettimeoutms":
+                    socketTimeout = parseInteger(value, "sockettimeoutms");
+                    break;
+                case "timeoutms":
+                    timeout = parseLong(value, "timeoutms");
+                    break;
+                case "proxyhost":
+                    proxyHost = value;
+                    break;
+                case "proxyport":
+                    proxyPort = parseInteger(value, "proxyPort");
+                    break;
+                case "proxyusername":
+                    proxyUsername = value;
+                    break;
+                case "proxypassword":
+                    proxyPassword = value;
+                    break;
+                case "tlsallowinvalidhostnames":
+                    sslInvalidHostnameAllowed = parseBoolean(value, "tlsAllowInvalidHostnames");
+                    tlsAllowInvalidHostnamesSet = true;
+                    break;
+                case "sslinvalidhostnameallowed":
+                    sslInvalidHostnameAllowed = parseBoolean(value, "sslinvalidhostnameallowed");
+                    tlsAllowInvalidHostnamesSet = true;
+                    break;
+                case "tlsinsecure":
+                    sslInvalidHostnameAllowed = parseBoolean(value, "tlsinsecure");
+                    tlsInsecureSet = true;
+                    break;
+                case "ssl":
+                    initializeSslEnabled("ssl", value);
+                    break;
+                case "tls":
+                    initializeSslEnabled("tls", value);
+                    break;
+                case "replicaset":
+                    requiredReplicaSetName = value;
+                    break;
+                case "readconcernlevel":
+                    readConcern = new ReadConcern(ReadConcernLevel.fromString(value));
+                    break;
+                case "serverselectiontimeoutms":
+                    serverSelectionTimeout = parseInteger(value, "serverselectiontimeoutms");
+                    break;
+                case "localthresholdms":
+                    localThreshold = parseInteger(value, "localthresholdms");
+                    break;
+                case "heartbeatfrequencyms":
+                    heartbeatFrequency = parseInteger(value, "heartbeatfrequencyms");
+                    break;
+                case "servermonitoringmode":
+                    serverMonitoringMode = ServerMonitoringModeUtil.fromString(value);
+                    break;
+                case "appname":
+                    applicationName = value;
+                    break;
+                case "retrywrites":
+                    retryWrites = parseBoolean(value, "retrywrites");
+                    break;
+                case "retryreads":
+                    retryReads = parseBoolean(value, "retryreads");
+                    break;
+                case "uuidrepresentation":
+                    uuidRepresentation = createUuidRepresentation(value);
+                    break;
+                case "directconnection":
+                    directConnection = parseBoolean(value, "directconnection");
+                    break;
+                case "loadbalanced":
+                    loadBalanced = parseBoolean(value, "loadbalanced");
+                    break;
+                case "srvmaxhosts":
+                    srvMaxHosts = parseInteger(value, "srvmaxhosts");
+                    if (srvMaxHosts < 0) {
+                        throw new IllegalArgumentException("srvMaxHosts must be >= 0");
+                    }
+                    break;
+                case "srvservicename":
+                    srvServiceName = value;
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -592,7 +767,7 @@ public class ConnectionString {
     }
 
     private List<MongoCompressor> buildCompressors(final String compressors, @Nullable final Integer zlibCompressionLevel) {
-        List<MongoCompressor> compressorsList = new ArrayList<MongoCompressor>();
+        List<MongoCompressor> compressorsList = new ArrayList<>();
 
         for (String cur : compressors.split(",")) {
             if (cur.equals("zlib")) {
@@ -626,14 +801,21 @@ public class ConnectionString {
                 continue;
             }
 
-            if (key.equals("safe")) {
-                safe = parseBoolean(value, "safe");
-            } else if (key.equals("w")) {
-                w = value;
-            } else if (key.equals("wtimeoutms")) {
-                wTimeout = Integer.parseInt(value);
-            } else if (key.equals("journal")) {
-                journal = parseBoolean(value, "journal");
+            switch (key) {
+                case "safe":
+                    safe = parseBoolean(value, "safe");
+                    break;
+                case "w":
+                    w = value;
+                    break;
+                case "wtimeoutms":
+                    wTimeout = Integer.parseInt(value);
+                    break;
+                case "journal":
+                    journal = parseBoolean(value, "journal");
+                    break;
+                default:
+                    break;
             }
         }
         return buildWriteConcern(safe, w, wTimeout, journal);
@@ -642,7 +824,7 @@ public class ConnectionString {
     @Nullable
     private ReadPreference createReadPreference(final Map<String, List<String>> optionsMap) {
         String readPreferenceType = null;
-        List<TagSet> tagSetList = new ArrayList<TagSet>();
+        List<TagSet> tagSetList = new ArrayList<>();
         long maxStalenessSeconds = -1;
 
         for (final String key : READ_PREFERENCE_KEYS) {
@@ -651,15 +833,21 @@ public class ConnectionString {
                 continue;
             }
 
-            if (key.equals("readpreference")) {
-                readPreferenceType = value;
-            } else if (key.equals("maxstalenessseconds")) {
-                 maxStalenessSeconds = parseInteger(value, "maxstalenessseconds");
-            } else if (key.equals("readpreferencetags")) {
-                for (final String cur : optionsMap.get(key)) {
-                    TagSet tagSet = getTags(cur.trim());
-                    tagSetList.add(tagSet);
-                }
+            switch (key) {
+                case "readpreference":
+                    readPreferenceType = value;
+                    break;
+                case "maxstalenessseconds":
+                    maxStalenessSeconds = parseInteger(value, "maxstalenessseconds");
+                    break;
+                case "readpreferencetags":
+                    for (final String cur : optionsMap.get(key)) {
+                        TagSet tagSet = getTags(cur.trim());
+                        tagSetList.add(tagSet);
+                    }
+                    break;
+                default:
+                    break;
             }
         }
         return buildReadPreference(readPreferenceType, tagSetList, maxStalenessSeconds);
@@ -699,27 +887,33 @@ public class ConnectionString {
                 continue;
             }
 
-            if (key.equals("authmechanism")) {
-                if (value.equals("MONGODB-CR")) {
-                    if (userName == null) {
-                        throw new IllegalArgumentException("username can not be null");
+            switch (key) {
+                case "authmechanism":
+                    if (value.equals("MONGODB-CR")) {
+                        if (userName == null) {
+                            throw new IllegalArgumentException("username can not be null");
+                        }
+                        LOGGER.warn("Deprecated MONGDOB-CR authentication mechanism used in connection string");
+                    } else {
+                        mechanism = AuthenticationMechanism.fromMechanismName(value);
                     }
-                    LOGGER.warn("Deprecated MONGDOB-CR authentication mechanism used in connection string");
-                } else {
-                    mechanism = AuthenticationMechanism.fromMechanismName(value);
-                }
-            } else if (key.equals("authsource")) {
-                if (value.equals("")) {
-                    throw new IllegalArgumentException("authSource can not be an empty string");
-                }
-                authSource = value;
-            } else if (key.equals("gssapiservicename")) {
-                gssapiServiceName = value;
-            } else if (key.equals("authmechanismproperties")) {
-                authMechanismProperties = value;
+                    break;
+                case "authsource":
+                    if (value.equals("")) {
+                        throw new IllegalArgumentException("authSource can not be an empty string");
+                    }
+                    authSource = value;
+                    break;
+                case "gssapiservicename":
+                    gssapiServiceName = value;
+                    break;
+                case "authmechanismproperties":
+                    authMechanismProperties = value;
+                    break;
+                default:
+                    break;
             }
         }
-
 
         MongoCredential credential = null;
         if (mechanism != null) {
@@ -731,13 +925,18 @@ public class ConnectionString {
 
         if (credential != null && authMechanismProperties != null) {
             for (String part : authMechanismProperties.split(",")) {
-                String[] mechanismPropertyKeyValue = part.split(":");
+                String[] mechanismPropertyKeyValue = part.split(":", 2);
                 if (mechanismPropertyKeyValue.length != 2) {
                     throw new IllegalArgumentException(format("The connection string contains invalid authentication properties. "
                             + "'%s' is not a key value pair", part));
                 }
                 String key = mechanismPropertyKeyValue[0].trim().toLowerCase();
                 String value = mechanismPropertyKeyValue[1].trim();
+                if (MECHANISM_KEYS_DISALLOWED_IN_CONNECTION_STRING.contains(key)) {
+                    throw new IllegalArgumentException(format("The connection string contains disallowed mechanism properties. "
+                            + "'%s' must be set on the credential programmatically.", key));
+                }
+
                 if (key.equals("canonicalize_host_name")) {
                     credential = credential.withMechanismProperty(key, Boolean.valueOf(value));
                 } else {
@@ -797,6 +996,10 @@ public class ConnectionString {
             case MONGODB_AWS:
                 credential = MongoCredential.createAwsCredential(userName, password);
                 break;
+            case MONGODB_OIDC:
+                validateCreateOidcCredential(password);
+                credential = MongoCredential.createOidcCredential(userName);
+                break;
             default:
                 throw new UnsupportedOperationException(format("The connection string contains an invalid authentication mechanism'. "
                                                                        + "'%s' is not a supported authentication mechanism",
@@ -823,13 +1026,13 @@ public class ConnectionString {
     }
 
     private Map<String, List<String>> parseOptions(final String optionsPart) {
-        Map<String, List<String>> optionsMap = new HashMap<String, List<String>>();
-        if (optionsPart.length() == 0) {
+        Map<String, List<String>> optionsMap = new HashMap<>();
+        if (optionsPart.isEmpty()) {
             return optionsMap;
         }
 
         for (final String part : optionsPart.split("&|;")) {
-            if (part.length() == 0) {
+            if (part.isEmpty()) {
                 continue;
             }
             int idx = part.indexOf("=");
@@ -838,7 +1041,7 @@ public class ConnectionString {
                 String value = part.substring(idx + 1);
                 List<String> valueList = optionsMap.get(key);
                 if (valueList == null) {
-                    valueList = new ArrayList<String>(1);
+                    valueList = new ArrayList<>(1);
                 }
                 valueList.add(urldecode(value));
                 optionsMap.put(key, valueList);
@@ -853,16 +1056,6 @@ public class ConnectionString {
             optionsMap.put("wtimeoutms", optionsMap.remove("wtimeout"));
             if (LOGGER.isWarnEnabled()) {
                 LOGGER.warn("Uri option 'wtimeout' has been deprecated, use 'wtimeoutms' instead.");
-            }
-        }
-        // handle legacy slaveok settings
-        String slaveok = getLastValue(optionsMap, "slaveok");
-        if (slaveok != null && !optionsMap.containsKey("readpreference")) {
-            String readPreference = Boolean.TRUE.equals(parseBoolean(slaveok, "slaveok"))
-                                    ? "secondaryPreferred" : "primary";
-            optionsMap.put("readpreference", singletonList(readPreference));
-            if (LOGGER.isWarnEnabled()) {
-                LOGGER.warn("Uri option 'slaveok' has been deprecated, use 'readpreference' instead.");
             }
         }
         // handle legacy j settings
@@ -927,7 +1120,7 @@ public class ConnectionString {
     }
 
     private TagSet getTags(final String tagSetString) {
-        List<Tag> tagList = new ArrayList<Tag>();
+        List<Tag> tagList = new ArrayList<>();
         if (tagSetString.length() > 0) {
             for (final String tag : tagSetString.split(",")) {
                 String[] tagKeyValuePair = tag.split(":");
@@ -941,8 +1134,8 @@ public class ConnectionString {
         return new TagSet(tagList);
     }
 
-    private static final Set<String> TRUE_VALUES = new HashSet<String>(asList("true", "yes", "1"));
-    private static final Set<String> FALSE_VALUES = new HashSet<String>(asList("false", "no", "0"));
+    private static final Set<String> TRUE_VALUES = new HashSet<>(asList("true", "yes", "1"));
+    private static final Set<String> FALSE_VALUES = new HashSet<>(asList("false", "no", "0"));
 
     @Nullable
     private Boolean parseBoolean(final String input, final String key) {
@@ -976,11 +1169,20 @@ public class ConnectionString {
         }
     }
 
+    private long parseLong(final String input, final String key) {
+        try {
+            return Long.parseLong(input);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(format("The connection string contains an invalid value for '%s'. "
+                    + "'%s' is not a valid long", key, input));
+        }
+    }
+
     private List<String> parseHosts(final List<String> rawHosts) {
         if (rawHosts.size() == 0){
             throw new IllegalArgumentException("The connection string must contain at least one host");
         }
-        List<String> hosts = new ArrayList<String>();
+        List<String> hosts = new ArrayList<>();
         for (String host : rawHosts) {
             if (host.length() == 0) {
                 throw new IllegalArgumentException(format("The connection string contains an empty host '%s'. ", rawHosts));
@@ -993,7 +1195,7 @@ public class ConnectionString {
                 }
                 int idx = host.indexOf("]:");
                 if (idx != -1) {
-                    validatePort(host, host.substring(idx + 2));
+                    validatePort(host.substring(idx + 2));
                 }
             } else {
                 int colonCount = countOccurrences(host, ":");
@@ -1002,7 +1204,7 @@ public class ConnectionString {
                             + "Reserved characters such as ':' must be escaped according RFC 2396. "
                             + "Any IPv6 address literal must be enclosed in '[' and ']' according to RFC 2732.", host));
                 } else if (colonCount == 1) {
-                    validatePort(host, host.substring(host.indexOf(":") + 1));
+                    validatePort(host.substring(host.indexOf(":") + 1));
                 }
             }
             hosts.add(host);
@@ -1011,20 +1213,70 @@ public class ConnectionString {
         return hosts;
     }
 
-    private void validatePort(final String host, final String port) {
-        boolean invalidPort = false;
+    private void validatePort(final String port) {
         try {
             int portInt = Integer.parseInt(port);
             if (portInt <= 0 || portInt > 65535) {
-                invalidPort = true;
+                throw new IllegalArgumentException("The connection string contains an invalid host and port. "
+                        + "The port must be an integer between 0 and 65535.");
             }
         } catch (NumberFormatException e) {
-            invalidPort = true;
+            throw new IllegalArgumentException("The connection string contains an invalid host and port. "
+                    + "The port contains non-digit characters, it must be an integer between 0 and 65535. "
+                    + "Hint: username and password must be escaped according to RFC 3986.");
         }
-        if (invalidPort) {
-            throw new IllegalArgumentException(format("The connection string contains an invalid host '%s'. "
-                    + "The port '%s' is not a valid, it must be an integer between 0 and 65535", host, port));
+    }
+
+    private void validateProxyParameters(final Map<String, List<String>> optionsMap) {
+        if (proxyHost == null) {
+            if (proxyPort != null) {
+                throw new IllegalArgumentException("proxyPort can only be specified with proxyHost");
+            } else if (proxyUsername != null) {
+                throw new IllegalArgumentException("proxyUsername can only be specified with proxyHost");
+            } else if (proxyPassword != null) {
+                throw new IllegalArgumentException("proxyPassword can only be specified with proxyHost");
+            }
         }
+        if (proxyPort != null && (proxyPort < 0 || proxyPort > 65535)) {
+            throw new IllegalArgumentException("proxyPort should be within the valid range (0 to 65535)");
+        }
+        if (proxyUsername != null) {
+            if (proxyUsername.isEmpty()) {
+                throw new IllegalArgumentException("proxyUsername cannot be empty");
+            }
+            if (proxyUsername.getBytes(StandardCharsets.UTF_8).length >= 255) {
+                throw new IllegalArgumentException("username's length in bytes cannot be greater than 255");
+            }
+        }
+        if (proxyPassword != null) {
+            if (proxyPassword.isEmpty()) {
+                throw new IllegalArgumentException("proxyPassword cannot be empty");
+            }
+            if (proxyPassword.getBytes(StandardCharsets.UTF_8).length >= 255) {
+                throw new IllegalArgumentException("password's length in bytes cannot be greater than 255");
+            }
+        }
+        if (proxyUsername == null ^ proxyPassword == null) {
+            throw new IllegalArgumentException(
+                    "Both proxyUsername and proxyPassword must be set together. They cannot be set individually");
+        }
+
+        if (containsDuplicatedOptions("proxyhost", optionsMap)) {
+            throw new IllegalArgumentException("Duplicated values for proxyHost: " + optionsMap.get("proxyhost"));
+        }
+        if (containsDuplicatedOptions("proxyport", optionsMap)) {
+            throw new IllegalArgumentException("Duplicated values for proxyPort: " + optionsMap.get("proxyport"));
+        }
+        if (containsDuplicatedOptions("proxypassword", optionsMap)) {
+            throw new IllegalArgumentException("Duplicated values for proxyPassword: " + optionsMap.get("proxypassword"));
+        }
+        if (containsDuplicatedOptions("proxyusername", optionsMap)) {
+            throw new IllegalArgumentException("Duplicated values for proxyUsername: " + optionsMap.get("proxyusername"));
+        }
+    }
+
+    private static boolean containsDuplicatedOptions(final String optionName, final Map<String, List<String>> optionsMap) {
+        return optionsMap.getOrDefault(optionName, emptyList()).size() > 1;
     }
 
     private int countOccurrences(final String haystack, final String needle) {
@@ -1037,7 +1289,7 @@ public class ConnectionString {
 
     private String urldecode(final String input, final boolean password) {
         try {
-            return URLDecoder.decode(input, UTF_8);
+            return URLDecoder.decode(input, StandardCharsets.UTF_8.name());
         } catch (UnsupportedEncodingException e) {
             if (password) {
                 throw new IllegalArgumentException("The connection string contained unsupported characters in the password.");
@@ -1080,6 +1332,30 @@ public class ConnectionString {
     }
 
     /**
+     * Gets the maximum number of hosts to connect to when using SRV protocol.
+     *
+     * @return the maximum number of hosts to connect to when using SRV protocol.  Defaults to null.
+     * @since 4.4
+     */
+    @Nullable
+    public Integer getSrvMaxHosts() {
+        return srvMaxHosts;
+    }
+
+    /**
+     * Gets the SRV service name.
+     *
+     * @return the SRV service name.  Defaults to null in the connection string, but defaults to {@code "mongodb"} in
+     * {@link ClusterSettings}.
+     * @since 4.5
+     * @see ClusterSettings#getSrvServiceName()
+     */
+    @Nullable
+    public String getSrvServiceName() {
+        return srvServiceName;
+    }
+
+    /**
      * Gets the list of hosts
      *
      * @return the host list
@@ -1117,6 +1393,17 @@ public class ConnectionString {
     @Nullable
     public Boolean isDirectConnection() {
         return directConnection;
+    }
+
+    /**
+     * Indicates if the connection is through a load balancer.
+     *
+     * @return true if a load-balanced connection
+     * @since 4.3
+     */
+    @Nullable
+    public Boolean isLoadBalanced() {
+        return loadBalanced;
     }
 
     /**
@@ -1207,6 +1494,7 @@ public class ConnectionString {
     /**
      * Gets the maximum connection pool size specified in the connection string.
      * @return the maximum connection pool size
+     * @see ConnectionPoolSettings#getMaxSize()
      */
     @Nullable
     public Integer getMaxConnectionPoolSize() {
@@ -1214,8 +1502,34 @@ public class ConnectionString {
     }
 
     /**
-     * Gets the maximum wait time of a thread waiting for a connection specified in the connection string.
-     * @return the maximum wait time of a thread waiting for a connection
+     * The maximum duration to wait until either:
+     * <ul>
+     *     <li>
+     *         an {@linkplain ConnectionCheckedOutEvent in-use connection} becomes {@linkplain ConnectionCheckedInEvent available}; or
+     *     </li>
+     *     <li>
+     *         a {@linkplain ConnectionCreatedEvent connection is created} and begins to be {@linkplain ConnectionReadyEvent established}.
+     *         The time between {@linkplain ConnectionCheckOutStartedEvent requesting} a connection
+     *         and it being created is limited by this maximum duration.
+     *         The maximum time between it being created and {@linkplain ConnectionCheckedOutEvent successfully checked out},
+     *         which includes the time to {@linkplain ConnectionReadyEvent establish} the created connection,
+     *         is affected by {@link SocketSettings#getConnectTimeout(TimeUnit)}, {@link SocketSettings#getReadTimeout(TimeUnit)}
+     *         among others, and is not affected by this maximum duration.
+     *     </li>
+     * </ul>
+     * The reasons it is not always possible to create and start establishing a connection
+     * whenever there is no available connection:
+     * <ul>
+     *     <li>
+     *         the number of connections per pool is limited by {@link #getMaxConnectionPoolSize()};
+     *     </li>
+     *     <li>
+     *         the number of connections a pool may be establishing concurrently is limited by {@link #getMaxConnecting()}.
+     *     </li>
+     * </ul>
+     *
+     * @return The value of the {@code waitQueueTimeoutMS} option, if specified.
+     * @see ConnectionPoolSettings#getMaxWaitTime(TimeUnit)
      */
     @Nullable
     public Integer getMaxWaitTime() {
@@ -1232,12 +1546,57 @@ public class ConnectionString {
     }
 
     /**
-     * Gets the maximum connection life time specified in the connection string.
-     * @return the maximum connection life time
+     * Gets the maximum connection lifetime specified in the connection string.
+     *
+     * @return the maximum connection lifetime
      */
     @Nullable
     public Integer getMaxConnectionLifeTime() {
         return maxConnectionLifeTime;
+    }
+
+    /**
+     * Gets the maximum number of connections a pool may be establishing concurrently specified in the connection string.
+     * @return The maximum number of connections a pool may be establishing concurrently
+     * if the {@code maxConnecting} option is specified in the connection string, or {@code null} otherwise.
+     * @see ConnectionPoolSettings#getMaxConnecting()
+     * @since 4.4
+     */
+    @Nullable
+    public Integer getMaxConnecting() {
+        return maxConnecting;
+    }
+
+    /**
+     * The time limit for the full execution of an operation in milliseconds.
+     *
+     * <p>If set the following deprecated options will be ignored:
+     * {@code waitQueueTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS} and {@code maxCommitTimeMS}</p>
+     *
+     * <ul>
+     *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
+     *    <ul>
+     *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
+     *        available</li>
+     *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
+     *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
+     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
+     *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
+     *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+     *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
+     *   </ul>
+     *   </li>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @return the time limit for the full execution of an operation in milliseconds or null.
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    @Nullable
+    public Long getTimeout() {
+        return timeout;
     }
 
     /**
@@ -1267,6 +1626,49 @@ public class ConnectionString {
         return sslEnabled;
     }
 
+    /**
+     * Gets the SOCKS5 proxy host specified in the connection string.
+     *
+     * @return the proxy host value.
+     * @since 4.11
+     */
+    @Nullable
+    public String getProxyHost() {
+        return proxyHost;
+    }
+
+    /**
+     * Gets the SOCKS5 proxy port specified in the connection string.
+     *
+     * @return the proxy port value.
+     * @since 4.11
+     */
+    @Nullable
+    public Integer getProxyPort() {
+        return proxyPort;
+    }
+
+    /**
+     * Gets the SOCKS5 proxy username specified in the connection string.
+     *
+     * @return the proxy username value.
+     * @since 4.11
+     */
+    @Nullable
+    public String getProxyUsername() {
+        return proxyUsername;
+    }
+
+    /**
+     * Gets the SOCKS5 proxy password specified in the connection string.
+     *
+     * @return the proxy password value.
+     * @since 4.11
+     */
+    @Nullable
+    public String getProxyPassword() {
+        return proxyPassword;
+    }
     /**
      * Gets the SSL invalidHostnameAllowed value specified in the connection string.
      *
@@ -1315,6 +1717,20 @@ public class ConnectionString {
     @Nullable
     public Integer getHeartbeatFrequency() {
         return heartbeatFrequency;
+    }
+
+    /**
+     * The server monitoring mode, which defines the monitoring protocol to use.
+     * <p>
+     * Default is {@link ServerMonitoringMode#AUTO}.</p>
+     *
+     * @return The {@link ServerMonitoringMode}, or {@code null} if unset and the default is to be used.
+     * @see ServerSettings#getServerMonitoringMode()
+     * @since 5.1
+     */
+    @Nullable
+    public ServerMonitoringMode getServerMonitoringMode() {
+        return serverMonitoringMode;
     }
 
     /**
@@ -1368,7 +1784,7 @@ public class ConnectionString {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final ConnectionString that = (ConnectionString) o;
+        ConnectionString that = (ConnectionString) o;
         return isSrvProtocol == that.isSrvProtocol
                 && Objects.equals(directConnection, that.directConnection)
                 && Objects.equals(credential, that.credential)
@@ -1385,25 +1801,35 @@ public class ConnectionString {
                 && Objects.equals(maxWaitTime, that.maxWaitTime)
                 && Objects.equals(maxConnectionIdleTime, that.maxConnectionIdleTime)
                 && Objects.equals(maxConnectionLifeTime, that.maxConnectionLifeTime)
+                && Objects.equals(maxConnecting, that.maxConnecting)
                 && Objects.equals(connectTimeout, that.connectTimeout)
+                && Objects.equals(timeout, that.timeout)
                 && Objects.equals(socketTimeout, that.socketTimeout)
+                && Objects.equals(proxyHost, that.proxyHost)
+                && Objects.equals(proxyPort, that.proxyPort)
+                && Objects.equals(proxyUsername, that.proxyUsername)
+                && Objects.equals(proxyPassword, that.proxyPassword)
                 && Objects.equals(sslEnabled, that.sslEnabled)
                 && Objects.equals(sslInvalidHostnameAllowed, that.sslInvalidHostnameAllowed)
                 && Objects.equals(requiredReplicaSetName, that.requiredReplicaSetName)
                 && Objects.equals(serverSelectionTimeout, that.serverSelectionTimeout)
                 && Objects.equals(localThreshold, that.localThreshold)
                 && Objects.equals(heartbeatFrequency, that.heartbeatFrequency)
+                && Objects.equals(serverMonitoringMode, that.serverMonitoringMode)
                 && Objects.equals(applicationName, that.applicationName)
                 && Objects.equals(compressorList, that.compressorList)
-                && Objects.equals(uuidRepresentation, that.uuidRepresentation);
+                && Objects.equals(uuidRepresentation, that.uuidRepresentation)
+                && Objects.equals(srvServiceName, that.srvServiceName)
+                && Objects.equals(srvMaxHosts, that.srvMaxHosts);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(credential, isSrvProtocol, hosts, database, collection, directConnection, readPreference,
                 writeConcern, retryWrites, retryReads, readConcern, minConnectionPoolSize, maxConnectionPoolSize, maxWaitTime,
-                maxConnectionIdleTime, maxConnectionLifeTime, connectTimeout, socketTimeout, sslEnabled, sslInvalidHostnameAllowed,
-                requiredReplicaSetName, serverSelectionTimeout, localThreshold, heartbeatFrequency, applicationName, compressorList,
-                uuidRepresentation);
+                maxConnectionIdleTime, maxConnectionLifeTime, maxConnecting, connectTimeout, timeout, socketTimeout, sslEnabled,
+                sslInvalidHostnameAllowed, requiredReplicaSetName, serverSelectionTimeout, localThreshold, heartbeatFrequency,
+                serverMonitoringMode, applicationName, compressorList, uuidRepresentation, srvServiceName, srvMaxHosts, proxyHost,
+                proxyPort, proxyUsername, proxyPassword);
     }
 }

@@ -16,19 +16,63 @@
 
 package com.mongodb.internal.binding
 
+import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
+import com.mongodb.connection.ServerConnectionState
+import com.mongodb.connection.ServerDescription
+import com.mongodb.connection.ServerType
 import com.mongodb.internal.connection.Cluster
+import com.mongodb.internal.connection.Server
+import com.mongodb.internal.connection.ServerTuple
 import spock.lang.Specification
+
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 
 class SingleServerBindingSpecification extends Specification {
 
+    def 'should implement getters'() {
+        given:
+        def cluster = Mock(Cluster) {
+            selectServer(_, _) >> new ServerTuple(Mock(Server),
+                    ServerDescription.builder()
+                            .type(ServerType.STANDALONE)
+                            .state(ServerConnectionState.CONNECTED)
+                            .address(new ServerAddress())
+                            .build())
+        }
+        def address = new ServerAddress()
+        def operationContext = OPERATION_CONTEXT
+
+        when:
+
+        def binding = new SingleServerBinding(cluster, address, operationContext)
+
+        then:
+        binding.readPreference == ReadPreference.primary()
+        binding.getOperationContext() == operationContext
+
+
+        when:
+        def source = binding.getReadConnectionSource()
+
+        then:
+        source.getOperationContext() == operationContext
+    }
+
     def 'should increment and decrement reference counts'() {
         given:
-        def cluster = Mock(Cluster)
+        def cluster = Mock(Cluster) {
+            selectServer(_, _) >> new ServerTuple(Mock(Server),
+                    ServerDescription.builder()
+                            .type(ServerType.STANDALONE)
+                            .state(ServerConnectionState.CONNECTED)
+                            .address(new ServerAddress())
+                            .build())
+        }
         def address = new ServerAddress()
 
         when:
-        def binding = new SingleServerBinding(cluster, address)
+        def binding = new SingleServerBinding(cluster, address, OPERATION_CONTEXT)
 
         then:
         binding.count == 1

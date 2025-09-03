@@ -32,7 +32,7 @@ class IndexesSpec extends BaseSpec {
 
   "Indexes" should "have the same methods as the wrapped Updates" in {
     val wrapped = classOf[com.mongodb.client.model.Indexes].getDeclaredMethods
-      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers))
+      .filter(f => isPublic(f.getModifiers))
       .map(_.getName)
       .toSet
     val local = model.Indexes.getClass.getDeclaredMethods.filter(f => isPublic(f.getModifiers)).map(_.getName).toSet
@@ -57,10 +57,6 @@ class IndexesSpec extends BaseSpec {
 
   it should "geo2d" in {
     toBson(geo2d("x")) should equal(Document("""{x : "2d"}"""))
-  }
-
-  it should "geoHaystack" in {
-    toBson(geoHaystack("x", descending("b"))) should equal(Document("""{x : "geoHaystack", b: -1}"""))
   }
 
   it should "text" in {

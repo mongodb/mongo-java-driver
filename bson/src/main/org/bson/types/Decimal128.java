@@ -18,19 +18,18 @@ package org.bson.types;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.HashSet;
-import java.util.Set;
-
 import static java.math.MathContext.DECIMAL128;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A binary integer decimal representation of a 128-bit decimal value, supporting 34 decimal digits of significand and an exponent range
  * of -6143 to +6144.
  *
  * @since 3.4
- * @see <a href="https://github.com/mongodb/specifications/blob/master/source/bson-decimal128/decimal128.rst">BSON Decimal128
+ * @see <a href="https://github.com/mongodb/specifications/blob/master/source/bson-decimal128/decimal128.md">BSON Decimal128
  * specification</a>
  * @see <a href="https://en.wikipedia.org/wiki/Binary_Integer_Decimal">binary integer decimal</a>
  * @see <a href="https://en.wikipedia.org/wiki/Decimal128_floating-point_format">decimal128 floating-point format</a>
@@ -53,10 +52,10 @@ public final class Decimal128 extends Number implements Comparable<Decimal128> {
     private static final BigInteger BIG_INT_ONE = new BigInteger("1");
     private static final BigInteger BIG_INT_ZERO = new BigInteger("0");
 
-    private static final Set<String> NaN_STRINGS = new HashSet<String>(singletonList("nan"));
-    private static final Set<String> NEGATIVE_NaN_STRINGS = new HashSet<String>(singletonList("-nan"));
-    private static final Set<String> POSITIVE_INFINITY_STRINGS = new HashSet<String>(asList("inf", "+inf", "infinity", "+infinity"));
-    private static final Set<String> NEGATIVE_INFINITY_STRINGS = new HashSet<String>(asList("-inf", "-infinity"));
+    private static final Set<String> NaN_STRINGS = new HashSet<>(singletonList("nan"));
+    private static final Set<String> NEGATIVE_NaN_STRINGS = new HashSet<>(singletonList("-nan"));
+    private static final Set<String> POSITIVE_INFINITY_STRINGS = new HashSet<>(asList("inf", "+inf", "infinity", "+infinity"));
+    private static final Set<String> NEGATIVE_INFINITY_STRINGS = new HashSet<>(asList("-inf", "-infinity"));
 
     /**
      * A constant holding the positive infinity of type {@code Decimal128}.  It is equal to the value return by
@@ -83,7 +82,7 @@ public final class Decimal128 extends Number implements Comparable<Decimal128> {
     public static final Decimal128 NaN = fromIEEE754BIDEncoding(NaN_MASK, 0);
 
     /**
-     * A constant holding a postive zero value of type {@code Decimal128}.  It is equal to the value return by
+     * A constant holding a positive zero value of type {@code Decimal128}.  It is equal to the value return by
      * {@code Decimal128.valueOf("0")}.
      */
     public static final Decimal128 POSITIVE_ZERO = fromIEEE754BIDEncoding(0x3040000000000000L, 0x0000000000000000L);
@@ -94,7 +93,13 @@ public final class Decimal128 extends Number implements Comparable<Decimal128> {
      */
     public static final Decimal128 NEGATIVE_ZERO = fromIEEE754BIDEncoding(0xb040000000000000L, 0x0000000000000000L);
 
+    /**
+     * The high bits.
+     */
     private final long high;
+    /**
+     * The low bits.
+     */
     private final long low;
 
     /**
@@ -104,7 +109,7 @@ public final class Decimal128 extends Number implements Comparable<Decimal128> {
      * @return the Decimal128 value representing the given String
      * @throws NumberFormatException if the value is out of the Decimal128 range
      * @see
-     * <a href="https://github.com/mongodb/specifications/blob/master/source/bson-decimal128/decimal128.rst#from-string-representation">
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/bson-decimal128/decimal128.md#from-string-representation">
      *     From-String Specification</a>
      */
     public static Decimal128 parse(final String value) {
@@ -559,7 +564,7 @@ public final class Decimal128 extends Number implements Comparable<Decimal128> {
      * Returns the String representation of the Decimal128 value.
      *
      * @return the String representation
-     * @see <a href="https://github.com/mongodb/specifications/blob/master/source/bson-decimal128/decimal128.rst#to-string-representation">
+     * @see <a href="https://github.com/mongodb/specifications/blob/master/source/bson-decimal128/decimal128.md#to-string-representation">
      *     To-String Sprecification</a>
      */
     @Override

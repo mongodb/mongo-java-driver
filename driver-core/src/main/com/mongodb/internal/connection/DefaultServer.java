@@ -16,183 +16,148 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
-import com.mongodb.MongoNodeIsRecoveringException;
-import com.mongodb.MongoNotPrimaryException;
-import com.mongodb.MongoSecurityException;
-import com.mongodb.MongoSocketException;
-import com.mongodb.MongoSocketReadTimeoutException;
+import com.mongodb.MongoServerUnavailableException;
+import com.mongodb.ReadPreference;
 import com.mongodb.connection.ClusterConnectionMode;
-import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerId;
-import com.mongodb.connection.TopologyVersion;
-import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ServerClosedEvent;
-import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerOpeningEvent;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.connection.SdamServerDescriptionManager.SdamIssue;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
+import org.bson.BsonDocument;
+import org.bson.FieldNameValidator;
+import org.bson.codecs.Decoder;
 
-import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.connection.ServerConnectionState.CONNECTING;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.connection.ClusterableServer.ConnectionState.AFTER_HANDSHAKE;
-import static com.mongodb.internal.connection.ClusterableServer.ConnectionState.BEFORE_HANDSHAKE;
-import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_TWO_WIRE_VERSION;
-import static java.util.Arrays.asList;
+import static com.mongodb.internal.connection.ServerDescriptionHelper.unknownConnectingServerDescription;
 
 class DefaultServer implements ClusterableServer {
     private static final Logger LOGGER = Loggers.getLogger("connection");
-    private static final List<Integer> SHUTDOWN_CODES = asList(91, 11600);
     private final ServerId serverId;
     private final ConnectionPool connectionPool;
     private final ClusterConnectionMode clusterConnectionMode;
     private final ConnectionFactory connectionFactory;
     private final ServerMonitor serverMonitor;
-    private final ChangeListener<ServerDescription> serverStateListener;
+    private final SdamServerDescriptionManager sdam;
     private final ServerListener serverListener;
     private final CommandListener commandListener;
     private final ClusterClock clusterClock;
-    private volatile ServerDescription description;
+    @Nullable
+    private final AtomicInteger operationCount;
     private volatile boolean isClosed;
 
     DefaultServer(final ServerId serverId, final ClusterConnectionMode clusterConnectionMode, final ConnectionPool connectionPool,
-                  final ConnectionFactory connectionFactory, final ServerMonitorFactory serverMonitorFactory,
-                  final ServerListener serverListener, final CommandListener commandListener, final ClusterClock clusterClock) {
+            final ConnectionFactory connectionFactory, final ServerMonitor serverMonitor,
+            final SdamServerDescriptionManager sdam, final ServerListener serverListener,
+            final CommandListener commandListener, final ClusterClock clusterClock, final boolean trackOperationCount) {
+        this.sdam = assertNotNull(sdam);
         this.serverListener = notNull("serverListener", serverListener);
         this.commandListener = commandListener;
         this.clusterClock = notNull("clusterClock", clusterClock);
         notNull("serverAddress", serverId);
-        notNull("serverMonitorFactory", serverMonitorFactory);
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
         this.connectionFactory = notNull("connectionFactory", connectionFactory);
         this.connectionPool = notNull("connectionPool", connectionPool);
-        this.serverStateListener = new DefaultServerStateListener();
 
         this.serverId = serverId;
-
         serverListener.serverOpening(new ServerOpeningEvent(this.serverId));
 
-        description = ServerDescription.builder().state(CONNECTING).address(serverId.getAddress()).build();
-        serverMonitor = serverMonitorFactory.create(serverStateListener);
-        serverMonitor.start();
+        this.serverMonitor = serverMonitor;
+        operationCount = trackOperationCount ? new AtomicInteger() : null;
     }
 
     @Override
-    public Connection getConnection() {
-        isTrue("open", !isClosed());
+    public Connection getConnection(final OperationContext operationContext) {
+        if (isClosed) {
+            throw new MongoServerUnavailableException(String.format("The server at %s is no longer available", serverId.getAddress()));
+        }
+        SdamIssue.Context exceptionContext = sdam.context();
+        operationBegin();
         try {
-            return connectionFactory.create(connectionPool.get(), new DefaultServerProtocolExecutor(), clusterConnectionMode);
-        } catch (MongoSecurityException e) {
-            connectionPool.invalidate();
-            throw e;
-        } catch (MongoSocketException e) {
-            invalidate(ConnectionState.BEFORE_HANDSHAKE, e, connectionPool.getGeneration(), description.getMaxWireVersion());
+            return OperationCountTrackingConnection.decorate(this,
+                    connectionFactory.create(connectionPool.get(operationContext), new DefaultServerProtocolExecutor(), clusterConnectionMode));
+        } catch (Throwable e) {
+            try {
+                operationEnd();
+                if (e instanceof MongoException) {
+                    sdam.handleExceptionBeforeHandshake(SdamIssue.of(e, exceptionContext));
+                }
+            } catch (Exception suppressed) {
+                e.addSuppressed(suppressed);
+            }
             throw e;
         }
     }
 
     @Override
-    public void getConnectionAsync(final SingleResultCallback<AsyncConnection> callback) {
-        isTrue("open", !isClosed());
-        connectionPool.getAsync(new SingleResultCallback<InternalConnection>() {
-            @Override
-            public void onResult(final InternalConnection result, final Throwable t) {
-                if (t instanceof MongoSecurityException) {
-                    connectionPool.invalidate();
-                } else if (t instanceof MongoSocketException) {
-                    invalidate(ConnectionState.BEFORE_HANDSHAKE, t, connectionPool.getGeneration(), description.getMaxWireVersion());
-                }
-                if (t != null) {
+    public void getConnectionAsync(final OperationContext operationContext, final SingleResultCallback<AsyncConnection> callback) {
+        if (isClosed) {
+            callback.onResult(null, new MongoServerUnavailableException(
+                    String.format("The server at %s is no longer available", serverId.getAddress())));
+            return;
+        }
+        SdamIssue.Context exceptionContext = sdam.context();
+        operationBegin();
+        connectionPool.getAsync(operationContext, (result, t) -> {
+            if (t != null) {
+                try {
+                    operationEnd();
+                    sdam.handleExceptionBeforeHandshake(SdamIssue.of(t, exceptionContext));
+                } catch (Exception suppressed) {
+                    t.addSuppressed(suppressed);
+                } finally {
                     callback.onResult(null, t);
-                } else {
-                    callback.onResult(connectionFactory.createAsync(result, new DefaultServerProtocolExecutor(), clusterConnectionMode),
-                                      null);
                 }
+            } else {
+                callback.onResult(AsyncOperationCountTrackingConnection.decorate(DefaultServer.this,
+                        connectionFactory.createAsync(assertNotNull(result), new DefaultServerProtocolExecutor(), clusterConnectionMode)),
+                        null);
             }
         });
     }
 
     @Override
-    public ServerDescription getDescription() {
-        isTrue("open", !isClosed());
-        return description;
+    public int operationCount() {
+        return operationCount == null ? -1 : operationCount.get();
+    }
+
+    private void operationBegin() {
+        if (operationCount != null) {
+            operationCount.incrementAndGet();
+        }
+    }
+
+    private void operationEnd() {
+        if (operationCount != null) {
+            assertTrue(operationCount.decrementAndGet() >= 0);
+        }
     }
 
     @Override
-    public void resetToConnecting() {
-        serverStateListener.stateChanged(new ChangeEvent<>(description, ServerDescription.builder()
-                .state(CONNECTING).address(serverId.getAddress()).build()));
+    public void resetToConnecting(final MongoException cause) {
+        sdam.updateToUnknown(unknownConnectingServerDescription(serverId, cause));
     }
 
     @Override
-    public synchronized void invalidate() {
+    public void invalidate(final MongoException cause) {
         if (!isClosed()) {
-            serverStateListener.stateChanged(new ChangeEvent<>(description, ServerDescription.builder()
-                    .state(CONNECTING).address(serverId.getAddress()).build()));
-            connect();
-            if (description.getMaxWireVersion() < FOUR_DOT_TWO_WIRE_VERSION) {
-                connectionPool.invalidate();
-            }
+            sdam.handleExceptionAfterHandshake(SdamIssue.of(cause, sdam.context()));
         }
-    }
-
-    @Override
-    public synchronized void invalidate(final ConnectionState connectionState, final Throwable t, final int connectionGeneration,
-                                        final int maxWireVersion) {
-        if (!isClosed()) {
-            if (connectionGeneration < connectionPool.getGeneration()) {
-                return;
-            }
-            if (t instanceof MongoSocketException
-                    && (!(t instanceof MongoSocketReadTimeoutException) || connectionState == BEFORE_HANDSHAKE)) {
-                serverStateListener.stateChanged(new ChangeEvent<>(description, ServerDescription.builder()
-                        .state(CONNECTING).address(serverId.getAddress()).exception(t).build()));
-                connectionPool.invalidate();
-                serverMonitor.cancelCurrentCheck();
-            } else if (t instanceof MongoNotPrimaryException || t instanceof MongoNodeIsRecoveringException) {
-                if (isStale(((MongoCommandException) t))) {
-                    return;
-                }
-                serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(description, ServerDescription.builder()
-                        .state(CONNECTING).address(serverId.getAddress()).exception(t).build()));
-                connect();
-
-                if (maxWireVersion < FOUR_DOT_TWO_WIRE_VERSION || SHUTDOWN_CODES.contains(((MongoCommandException) t).getErrorCode())) {
-                    connectionPool.invalidate();
-                }
-            }
-        }
-    }
-
-    private boolean isStale(final MongoCommandException t) {
-        if (!t.getResponse().containsKey("topologyVersion")) {
-            return false;
-        }
-        return isStale(description.getTopologyVersion(), new TopologyVersion(t.getResponse().getDocument("topologyVersion")));
-    }
-
-    private boolean isStale(final TopologyVersion currentTopologyVersion, final TopologyVersion candidateTopologyVersion) {
-        if (candidateTopologyVersion == null || currentTopologyVersion == null) {
-            return false;
-        }
-
-        if (!candidateTopologyVersion.getProcessId().equals(currentTopologyVersion.getProcessId())) {
-            return false;
-        }
-
-        if (candidateTopologyVersion.getCounter() <= currentTopologyVersion.getCounter()) {
-            return true;
-        }
-
-        return false;
     }
 
     @Override
@@ -215,53 +180,45 @@ class DefaultServer implements ClusterableServer {
         serverMonitor.connect();
     }
 
+    @VisibleForTesting(otherwise = PRIVATE)
     ConnectionPool getConnectionPool() {
         return connectionPool;
     }
 
-    private class DefaultServerProtocolExecutor implements ProtocolExecutor {
-        @Override
-        public <T> T execute(final LegacyProtocol<T> protocol, final InternalConnection connection) {
-            try {
-                protocol.setCommandListener(commandListener);
-                return protocol.execute(connection);
-            } catch (MongoException e) {
-                invalidate(AFTER_HANDSHAKE, e, connection.getGeneration(), connection.getDescription().getMaxWireVersion());
-                throw e;
-            }
-        }
+    @VisibleForTesting(otherwise = PRIVATE)
+    SdamServerDescriptionManager sdamServerDescriptionManager() {
+        return sdam;
+    }
 
-        @Override
-        public <T> void executeAsync(final LegacyProtocol<T> protocol, final InternalConnection connection,
-                                     final SingleResultCallback<T> callback) {
-            protocol.setCommandListener(commandListener);
-            protocol.executeAsync(connection, errorHandlingCallback(new SingleResultCallback<T>() {
-                @Override
-                public void onResult(final T result, final Throwable t) {
-                    if (t != null) {
-                        invalidate(AFTER_HANDSHAKE, t, connection.getGeneration(), connection.getDescription().getMaxWireVersion());
-                    }
-                    callback.onResult(result, t);
-                }
-            }, LOGGER));
-        }
+    @VisibleForTesting(otherwise = PRIVATE)
+    ServerId serverId() {
+        return serverId;
+    }
+
+    private class DefaultServerProtocolExecutor extends AbstractProtocolExecutor {
 
         @SuppressWarnings("unchecked")
         @Override
         public <T> T execute(final CommandProtocol<T> protocol, final InternalConnection connection,
                              final SessionContext sessionContext) {
             try {
-                protocol.sessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock));
-                return protocol.execute(connection);
-            } catch (MongoWriteConcernWithResponseException e) {
-                invalidate();
-                return (T) e.getResponse();
+                return protocol
+                        .withSessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock))
+                        .execute(connection);
             } catch (MongoException e) {
-                invalidate(AFTER_HANDSHAKE, e, connection.getGeneration(), connection.getDescription().getMaxWireVersion());
-                if (e instanceof MongoSocketException && sessionContext.hasSession()) {
-                    sessionContext.markSessionDirty();
+                try {
+                    sdam.handleExceptionAfterHandshake(SdamIssue.of(e, sdam.context(connection)));
+                } catch (Exception suppressed) {
+                    e.addSuppressed(suppressed);
                 }
-                throw e;
+                if (e instanceof MongoWriteConcernWithResponseException) {
+                    return (T) ((MongoWriteConcernWithResponseException) e).getResponse();
+                } else {
+                    if (shouldMarkSessionDirty(e, sessionContext)) {
+                        sessionContext.markSessionDirty();
+                       }
+                    throw e;
+                }
             }
         }
 
@@ -269,55 +226,152 @@ class DefaultServer implements ClusterableServer {
         @Override
         public <T> void executeAsync(final CommandProtocol<T> protocol, final InternalConnection connection,
                                      final SessionContext sessionContext, final SingleResultCallback<T> callback) {
-            protocol.sessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock));
-            protocol.executeAsync(connection, errorHandlingCallback(new SingleResultCallback<T>() {
-                @Override
-                public void onResult(final T result, final Throwable t) {
-                    if (t != null) {
+            protocol.withSessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock))
+                    .executeAsync(connection, errorHandlingCallback((result, t) -> {
+                if (t != null) {
+                    try {
+                        sdam.handleExceptionAfterHandshake(SdamIssue.of(t, sdam.context(connection)));
+                    } catch (Exception suppressed) {
+                        t.addSuppressed(suppressed);
+                    } finally {
                         if (t instanceof MongoWriteConcernWithResponseException) {
-                            invalidate();
                             callback.onResult((T) ((MongoWriteConcernWithResponseException) t).getResponse(), null);
                         } else {
-                            invalidate(AFTER_HANDSHAKE, t, connection.getGeneration(), connection.getDescription().getMaxWireVersion());
-                            if (t instanceof MongoSocketException && sessionContext.hasSession()) {
+                            if (shouldMarkSessionDirty(t, sessionContext)) {
                                 sessionContext.markSessionDirty();
                             }
                             callback.onResult(null, t);
                         }
-                    } else {
-                        callback.onResult(result, null);
                     }
+                } else {
+                    callback.onResult(result, null);
                 }
             }, LOGGER));
         }
     }
 
-    private final class DefaultServerStateListener implements ChangeListener<ServerDescription> {
-        @Override
-        public void stateChanged(final ChangeEvent<ServerDescription> event) {
-            ServerDescription oldDescription = description;
-            if (shouldReplace(oldDescription, event.getNewValue())) {
-                description = event.getNewValue();
-                serverListener.serverDescriptionChanged(new ServerDescriptionChangedEvent(serverId, description, oldDescription));
-            }
+    private static final class OperationCountTrackingConnection implements Connection {
+        private final DefaultServer server;
+        private final Connection wrapped;
+
+        static Connection decorate(final DefaultServer server, final Connection connection) {
+            return server.operationCount() < 0
+                    ? connection
+                    : new OperationCountTrackingConnection(server, connection);
         }
 
-        private boolean shouldReplace(final ServerDescription oldDescription, final ServerDescription newDescription) {
-            TopologyVersion oldTopologyVersion = oldDescription.getTopologyVersion();
-            TopologyVersion newTopologyVersion = newDescription.getTopologyVersion();
-            if (newTopologyVersion == null || oldTopologyVersion == null) {
-                return true;
-            }
+        private OperationCountTrackingConnection(final DefaultServer server, final Connection connection) {
+            this.server = server;
+            wrapped = connection;
+        }
 
-            if (!newTopologyVersion.getProcessId().equals(oldTopologyVersion.getProcessId())) {
-                return true;
-            }
+        @Override
+        public int getCount() {
+            return wrapped.getCount();
+        }
 
-            if (newTopologyVersion.getCounter() >= oldTopologyVersion.getCounter()) {
-                return true;
+        @Override
+        public int release() {
+            int count = wrapped.release();
+            if (count == 0) {
+                server.operationEnd();
             }
+            return count;
+        }
 
-            return false;
+        @Override
+        public Connection retain() {
+            wrapped.retain();
+            return this;
+        }
+
+        @Override
+        public ConnectionDescription getDescription() {
+            return wrapped.getDescription();
+        }
+
+        @Override
+        public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
+                @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
+                final OperationContext operationContext) {
+            return wrapped.command(database, command, fieldNameValidator, readPreference, commandResultDecoder, operationContext);
+        }
+
+        @Override
+        public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
+                @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
+                final OperationContext operationContext, final boolean responseExpected,
+                final MessageSequences sequences) {
+            return wrapped.command(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, operationContext,
+                    responseExpected, sequences);
+        }
+
+        @Override
+        public void markAsPinned(final PinningMode pinningMode) {
+            wrapped.markAsPinned(pinningMode);
+        }
+    }
+
+    private static final class AsyncOperationCountTrackingConnection implements AsyncConnection {
+        private final DefaultServer server;
+        private final AsyncConnection wrapped;
+
+        static AsyncConnection decorate(final DefaultServer server, final AsyncConnection connection) {
+            return server.operationCount() < 0
+                    ? connection
+                    : new AsyncOperationCountTrackingConnection(server, connection);
+        }
+
+        AsyncOperationCountTrackingConnection(final DefaultServer server, final AsyncConnection connection) {
+            this.server = server;
+            wrapped = connection;
+        }
+
+        @Override
+        public int getCount() {
+            return wrapped.getCount();
+        }
+
+        @Override
+        public int release() {
+            int count = wrapped.release();
+            if (count == 0) {
+                server.operationEnd();
+            }
+            return count;
+        }
+
+        @Override
+        public AsyncConnection retain() {
+            wrapped.retain();
+            return this;
+        }
+
+        @Override
+        public ConnectionDescription getDescription() {
+            return wrapped.getDescription();
+        }
+
+        @Override
+        public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
+                @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
+                final OperationContext operationContext, final SingleResultCallback<T> callback) {
+            wrapped.commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder,
+                    operationContext, callback);
+        }
+
+        @Override
+        public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
+                @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
+                final OperationContext operationContext, final boolean responseExpected, final MessageSequences sequences,
+                final SingleResultCallback<T> callback) {
+            wrapped.commandAsync(database, command, commandFieldNameValidator, readPreference, commandResultDecoder,
+                    operationContext, responseExpected, sequences, callback);
+        }
+
+        @Override
+        public void markAsPinned(final Connection.PinningMode pinningMode) {
+            wrapped.markAsPinned(pinningMode);
         }
     }
 }

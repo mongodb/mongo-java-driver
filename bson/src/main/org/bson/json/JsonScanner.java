@@ -181,15 +181,12 @@ class JsonScanner {
                 case INVALID:
                     throw new JsonParseException("Invalid JSON regular expression. Position: %d.", buffer.getPosition());
                 default:
-                    switch (state) {
-                        case IN_OPTIONS:
-                            if (c != '/') {
-                                optionsBuilder.append((char) c);
-                            }
-                            break;
-                        default:
-                            patternBuilder.append((char) c);
-                            break;
+                    if (state == RegularExpressionState.IN_OPTIONS) {
+                        if (c != '/') {
+                            optionsBuilder.append((char) c);
+                        }
+                    } else {
+                        patternBuilder.append((char) c);
                     }
             }
         }
@@ -405,7 +402,7 @@ class JsonScanner {
                     break;
                 case SAW_MINUS_I:
                     boolean sawMinusInfinity = true;
-                    char[] nfinity = new char[]{'n', 'f', 'i', 'n', 'i', 't', 'y'};
+                    char[] nfinity = {'n', 'f', 'i', 'n', 'i', 't', 'y'};
                     for (int i = 0; i < nfinity.length; i++) {
                         if (c != nfinity[i]) {
                             sawMinusInfinity = false;
@@ -475,59 +472,56 @@ class JsonScanner {
 
         while (true) {
             int c = buffer.read();
-            switch (c) {
-                case '\\':
-                    c = buffer.read();
-                    switch (c) {
-                        case '\'':
-                            sb.append('\'');
-                            break;
-                        case '"':
-                            sb.append('"');
-                            break;
-                        case '\\':
-                            sb.append('\\');
-                            break;
-                        case '/':
-                            sb.append('/');
-                            break;
-                        case 'b':
-                            sb.append('\b');
-                            break;
-                        case 'f':
-                            sb.append('\f');
-                            break;
-                        case 'n':
-                            sb.append('\n');
-                            break;
-                        case 'r':
-                            sb.append('\r');
-                            break;
-                        case 't':
-                            sb.append('\t');
-                            break;
-                        case 'u':
-                            int u1 = buffer.read();
-                            int u2 = buffer.read();
-                            int u3 = buffer.read();
-                            int u4 = buffer.read();
-                            if (u4 != -1) {
-                                String hex = new String(new char[]{(char) u1, (char) u2, (char) u3, (char) u4});
-                                sb.append((char) Integer.parseInt(hex, 16));
-                            }
-                            break;
-                        default:
-                            throw new JsonParseException("Invalid escape sequence in JSON string '\\%c'.", c);
-                    }
-                    break;
-
-                default:
-                    if (c == quoteCharacter) {
-                        return new JsonToken(JsonTokenType.STRING, sb.toString());
-                    }
-                    if (c != -1) {
-                        sb.append((char) c);
-                    }
+            if (c == '\\') {
+                c = buffer.read();
+                switch (c) {
+                    case '\'':
+                        sb.append('\'');
+                        break;
+                    case '"':
+                        sb.append('"');
+                        break;
+                    case '\\':
+                        sb.append('\\');
+                        break;
+                    case '/':
+                        sb.append('/');
+                        break;
+                    case 'b':
+                        sb.append('\b');
+                        break;
+                    case 'f':
+                        sb.append('\f');
+                        break;
+                    case 'n':
+                        sb.append('\n');
+                        break;
+                    case 'r':
+                        sb.append('\r');
+                        break;
+                    case 't':
+                        sb.append('\t');
+                        break;
+                    case 'u':
+                        int u1 = buffer.read();
+                        int u2 = buffer.read();
+                        int u3 = buffer.read();
+                        int u4 = buffer.read();
+                        if (u4 != -1) {
+                            String hex = new String(new char[]{(char) u1, (char) u2, (char) u3, (char) u4});
+                            sb.append((char) Integer.parseInt(hex, 16));
+                        }
+                        break;
+                    default:
+                        throw new JsonParseException("Invalid escape sequence in JSON string '\\%c'.", c);
+                }
+            } else {
+                if (c == quoteCharacter) {
+                    return new JsonToken(JsonTokenType.STRING, sb.toString());
+                }
+                if (c != -1) {
+                    sb.append((char) c);
+                }
             }
             if (c == -1) {
                 throw new JsonParseException("End of file in JSON string.");

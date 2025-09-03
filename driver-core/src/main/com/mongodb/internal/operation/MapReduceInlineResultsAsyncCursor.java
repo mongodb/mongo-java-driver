@@ -16,26 +16,51 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.internal.connection.QueryResult;
+import com.mongodb.internal.async.SingleResultCallback;
+
+import java.util.List;
 
 /**
  * Cursor representation of the results of an inline map-reduce operation.  This allows users to iterate over the results that were returned
  * from the operation, and also provides access to the statistics returned in the results.
- *
- * @param <T> the operations result type.
- * @since 3.0
  */
-class MapReduceInlineResultsAsyncCursor<T> extends AsyncSingleBatchQueryCursor<T> implements MapReduceAsyncBatchCursor<T> {
+class MapReduceInlineResultsAsyncCursor<T> implements MapReduceAsyncBatchCursor<T> {
 
+    private final AsyncSingleBatchCursor<T> delegate;
     private final MapReduceStatistics statistics;
 
-    MapReduceInlineResultsAsyncCursor(final QueryResult<T> queryResult, final MapReduceStatistics statistics) {
-        super(queryResult);
+    MapReduceInlineResultsAsyncCursor(final AsyncSingleBatchCursor<T> delegate, final MapReduceStatistics statistics) {
+        this.delegate = delegate;
         this.statistics = statistics;
     }
 
     @Override
     public MapReduceStatistics getStatistics() {
         return statistics;
+    }
+
+    @Override
+    public void next(final SingleResultCallback<List<T>> callback) {
+        delegate.next(callback);
+    }
+
+    @Override
+    public void setBatchSize(final int batchSize) {
+        delegate.setBatchSize(batchSize);
+    }
+
+    @Override
+    public int getBatchSize() {
+        return delegate.getBatchSize();
+    }
+
+    @Override
+    public boolean isClosed() {
+        return delegate.isClosed();
+    }
+
+    @Override
+    public void close() {
+        delegate.close();
     }
 }

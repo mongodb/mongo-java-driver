@@ -16,57 +16,105 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.async.client.AsyncDistinctIterable;
+import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperationCursor;
+import com.mongodb.lang.Nullable;
+import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.DistinctPublisher;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.conversions.Bson;
-import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
+final class DistinctPublisherImpl<T> extends BatchCursorPublisher<T> implements DistinctPublisher<T> {
 
-final class DistinctPublisherImpl<TResult> implements DistinctPublisher<TResult> {
+    private final String fieldName;
+    private Bson filter;
+    private long maxTimeMS;
+    private Collation collation;
+    private BsonValue comment;
+    private Bson hint;
+    private String hintString;
 
-    private final AsyncDistinctIterable<TResult> wrapped;
-
-    DistinctPublisherImpl(final AsyncDistinctIterable<TResult> wrapped) {
-        this.wrapped = notNull("wrapped", wrapped);
+    DistinctPublisherImpl(
+            @Nullable final ClientSession clientSession,
+            final MongoOperationPublisher<T> mongoOperationPublisher,
+            final String fieldName, final Bson filter) {
+        super(clientSession, mongoOperationPublisher);
+        this.fieldName = notNull("fieldName", fieldName);
+        this.filter = notNull("filter", filter);
     }
 
     @Override
-    public DistinctPublisher<TResult> filter(final Bson filter) {
-        wrapped.filter(filter);
+    public DistinctPublisher<T> filter(@Nullable final Bson filter) {
+        this.filter = filter;
         return this;
     }
 
     @Override
-    public DistinctPublisher<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        wrapped.maxTime(maxTime, timeUnit);
+    public DistinctPublisher<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
     @Override
-    public DistinctPublisher<TResult> collation(final Collation collation) {
-        wrapped.collation(collation);
+    public DistinctPublisher<T> batchSize(final int batchSize) {
+        super.batchSize(batchSize);
         return this;
     }
 
     @Override
-    public DistinctPublisher<TResult> batchSize(final int batchSize) {
-        wrapped.batchSize(batchSize);
+    public DistinctPublisher<T> collation(@Nullable final Collation collation) {
+        this.collation = collation;
         return this;
     }
 
     @Override
-    public Publisher<TResult> first() {
-        return Publishers.publish(wrapped::first);
+    public DistinctPublisher<T> comment(@Nullable final String comment) {
+        this.comment = comment != null ? new BsonString(comment) : null;
+        return this;
     }
 
     @Override
-    public void subscribe(final Subscriber<? super TResult> s) {
-        Publishers.publish(wrapped).subscribe(s);
+    public DistinctPublisher<T> comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
+    @Override
+    public DistinctPublisher<T> hint(@Nullable final Bson hint) {
+        this.hint = hint;
+        return this;
+    }
+
+    @Override
+    public DistinctPublisher<T> hintString(@Nullable final String hint) {
+        this.hintString = hint;
+        return this;
+    }
+
+    @Override
+    public DistinctPublisher<T> timeoutMode(final TimeoutMode timeoutMode) {
+        super.timeoutMode(timeoutMode);
+        return this;
+    }
+
+    @Override
+    ReadOperationCursor<T> asReadOperation(final int initialBatchSize) {
+        // initialBatchSize is ignored for distinct operations.
+        return getOperations().distinct(fieldName, filter, getDocumentClass(), collation, comment, hint, hintString);
+    }
+
+    @Override
+    Function<Operations<?>, TimeoutSettings> getTimeoutSettings() {
+        return (operations -> operations.createTimeoutSettings(maxTimeMS));
     }
 }

@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection
 
+import com.mongodb.LoggerSettings
 import com.mongodb.MongoSocketException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ServerAddress
@@ -27,15 +28,20 @@ import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerSettings
 import com.mongodb.connection.ServerType
 import com.mongodb.connection.SocketSettings
-import com.mongodb.connection.SocketStreamFactory
+import com.mongodb.internal.inject.SameObjectProvider
 import org.bson.types.ObjectId
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
+import static com.mongodb.ClusterFixture.CLIENT_METADATA
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT_FACTORY
+import static com.mongodb.ClusterFixture.getClusterConnectionMode
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
+import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.connection.ServerConnectionState.CONNECTED
 import static com.mongodb.connection.ServerConnectionState.CONNECTING
 import static com.mongodb.connection.ServerDescription.builder
@@ -75,75 +81,75 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
 
     def 'should log state change if significant properties have changed'() {
         given:
-        ServerDescription.Builder builder = createBuilder();
-        ServerDescription description = builder.build();
+        ServerDescription.Builder builder = createBuilder()
+        ServerDescription description = builder.build()
         ServerDescription otherDescription
 
         expect:
         !shouldLogStageChange(description, builder.build())
 
         when:
-        otherDescription = createBuilder().address(new ServerAddress('localhost:27018')).build();
+        otherDescription = createBuilder().address(new ServerAddress('localhost:27018')).build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().type(ServerType.STANDALONE).build();
+        otherDescription = createBuilder().type(ServerType.STANDALONE).build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().tagSet(null).build();
+        otherDescription = createBuilder().tagSet(null).build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().setName('test2').build();
+        otherDescription = createBuilder().setName('test2').build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().primary('localhost:27018').build();
+        otherDescription = createBuilder().primary('localhost:27018').build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().canonicalAddress('localhost:27018').build();
+        otherDescription = createBuilder().canonicalAddress('localhost:27018').build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().hosts(new HashSet<String>(asList('localhost:27018'))).build();
+        otherDescription = createBuilder().hosts(new HashSet<String>(asList('localhost:27018'))).build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().arbiters(new HashSet<String>(asList('localhost:27018'))).build();
+        otherDescription = createBuilder().arbiters(new HashSet<String>(asList('localhost:27018'))).build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().passives(new HashSet<String>(asList('localhost:27018'))).build();
+        otherDescription = createBuilder().passives(new HashSet<String>(asList('localhost:27018'))).build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().ok(false).build();
+        otherDescription = createBuilder().ok(false).build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().state(CONNECTING).build();
+        otherDescription = createBuilder().state(CONNECTING).build()
 
         then:
         shouldLogStageChange(description, otherDescription)
@@ -152,13 +158,13 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().electionId(new ObjectId()).build();
+        otherDescription = createBuilder().electionId(new ObjectId()).build()
 
         then:
         shouldLogStageChange(description, otherDescription)
 
         when:
-        otherDescription = createBuilder().setVersion(3).build();
+        otherDescription = createBuilder().setVersion(3).build()
 
         then:
         shouldLogStageChange(description, otherDescription)
@@ -187,20 +193,48 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
     }
 
     def initializeServerMonitor(ServerAddress address) {
+        SdamServerDescriptionManager sdam = new SdamServerDescriptionManager() {
+            @Override
+            void monitorUpdate(final ServerDescription candidateDescription) {
+                assert candidateDescription != null
+                newDescription = candidateDescription
+                latch.countDown()
+            }
+
+            @Override
+            void updateToUnknown(final ServerDescription candidateDescription) {
+                assert candidateDescription != null
+                newDescription = candidateDescription
+                latch.countDown()
+            }
+
+            @Override
+            void handleExceptionBeforeHandshake(final SdamServerDescriptionManager.SdamIssue sdamIssue) {
+                throw new UnsupportedOperationException()
+            }
+
+            @Override
+            void handleExceptionAfterHandshake(final SdamServerDescriptionManager.SdamIssue sdamIssue) {
+                throw new UnsupportedOperationException()
+            }
+
+            @Override
+            SdamServerDescriptionManager.SdamIssue.Context context() {
+                throw new UnsupportedOperationException()
+            }
+
+            @Override
+            SdamServerDescriptionManager.SdamIssue.Context context(final InternalConnection connection) {
+                throw new UnsupportedOperationException()
+            }
+        }
         serverMonitor = new DefaultServerMonitor(new ServerId(new ClusterId(), address), ServerSettings.builder().build(),
-                new ClusterClock(),
-                new ChangeListener<ServerDescription>() {
-                    @Override
-                    void stateChanged(final ChangeEvent<ServerDescription> event) {
-                        newDescription = event.newValue
-                        latch.countDown()
-                    }
-                },
-                new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder()
-                        .connectTimeout(500, TimeUnit.MILLISECONDS)
-                        .build(),
-                        getSslSettings()), getCredentialWithCache(), null, null, [], null),
-                new TestConnectionPool())
+                        new InternalStreamConnectionFactory(SINGLE, new SocketStreamFactory(new DefaultInetAddressResolver(),
+                        SocketSettings.builder().connectTimeout(500, TimeUnit.MILLISECONDS).build(), getSslSettings()),
+                        getCredentialWithCache(), CLIENT_METADATA, [], LoggerSettings.builder().build(), null,
+                        getServerApi()),
+                getClusterConnectionMode(), getServerApi(), false, SameObjectProvider.initialized(sdam),
+                OPERATION_CONTEXT_FACTORY)
         serverMonitor.start()
         serverMonitor
     }

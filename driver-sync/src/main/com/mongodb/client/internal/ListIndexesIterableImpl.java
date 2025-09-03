@@ -21,11 +21,14 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListIndexesIterable;
-import com.mongodb.internal.operation.BatchCursor;
-import com.mongodb.internal.operation.ReadOperation;
-import com.mongodb.internal.operation.SyncOperations;
+import com.mongodb.client.cursor.TimeoutMode;
+import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperationCursor;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.concurrent.TimeUnit;
@@ -34,20 +37,16 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListIndexesIterable<TResult> {
-    private final SyncOperations<BsonDocument> operations;
+    private final Operations<BsonDocument> operations;
     private final Class<TResult> resultClass;
     private long maxTimeMS;
+    private BsonValue comment;
 
     ListIndexesIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TResult> resultClass,
-                            final CodecRegistry codecRegistry, final ReadPreference readPreference, final OperationExecutor executor) {
-        this(clientSession, namespace, resultClass, codecRegistry, readPreference, executor, true);
-    }
-
-    ListIndexesIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TResult> resultClass,
-                            final CodecRegistry codecRegistry, final ReadPreference readPreference, final OperationExecutor executor,
-                            final boolean retryReads) {
-        super(clientSession, executor, ReadConcern.DEFAULT, readPreference, retryReads);
-        this.operations = new SyncOperations<BsonDocument>(namespace, BsonDocument.class, readPreference, codecRegistry, retryReads);
+            final CodecRegistry codecRegistry, final ReadPreference readPreference, final OperationExecutor executor,
+            final boolean retryReads, final TimeoutSettings timeoutSettings) {
+        super(clientSession, executor, ReadConcern.DEFAULT, readPreference, retryReads, timeoutSettings);
+        this.operations = new Operations<>(namespace, BsonDocument.class, readPreference, codecRegistry, retryReads, timeoutSettings);
         this.resultClass = notNull("resultClass", resultClass);
     }
 
@@ -65,7 +64,29 @@ class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implem
     }
 
     @Override
-    public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return operations.listIndexes(resultClass, getBatchSize(), maxTimeMS);
+    public ListIndexesIterable<TResult> timeoutMode(final TimeoutMode timeoutMode) {
+        super.timeoutMode(timeoutMode);
+        return this;
+    }
+
+    @Override
+    public ListIndexesIterable<TResult> comment(@Nullable final String comment) {
+        this.comment = comment != null ? new BsonString(comment) : null;
+        return this;
+    }
+
+    @Override
+    public ListIndexesIterable<TResult> comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
+    @Override
+    public ReadOperationCursor<TResult> asReadOperation() {
+        return operations.listIndexes(resultClass, getBatchSize(), comment, getTimeoutMode());
+    }
+
+    protected OperationExecutor getExecutor() {
+        return getExecutor(operations.createTimeoutSettings(maxTimeMS));
     }
 }

@@ -43,7 +43,7 @@ class CommandResultArrayCodec<T> extends BsonArrayCodec {
     public BsonArray decode(final BsonReader reader, final DecoderContext decoderContext) {
         reader.readStartArray();
 
-        List<T> list = new ArrayList<T>();
+        List<T> list = new ArrayList<>();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             if (reader.getCurrentBsonType() == BsonType.NULL) {
                 reader.readNull();
@@ -54,13 +54,13 @@ class CommandResultArrayCodec<T> extends BsonArrayCodec {
         }
         reader.readEndArray();
 
-        return new BsonArrayWrapper<T>(list);
+        return new BsonArrayWrapper<>(list);
     }
 
     @Override
     protected BsonValue readValue(final BsonReader reader, final DecoderContext decoderContext) {
         if (reader.getCurrentBsonType() == DOCUMENT) {
-            return new BsonDocumentWrapper<T>(decoder.decode(reader, decoderContext), null);
+            return new BsonDocumentWrapper<>(decoder.decode(reader, decoderContext), null);
         } else {
             return super.readValue(reader, decoderContext);
         }

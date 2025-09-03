@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>EmptyDefaultConstructor:UnifiedCrudTest.kt$UnifiedCrudTest$()</ID>
+    <ID>EmptyDefaultConstructor:UnifiedTest.kt$UnifiedTest$()</ID>
+    <ID>EmptyFunctionBlock:SyncMongoCursor.kt$SyncMongoCursor${}</ID>
+    <ID>IteratorNotThrowingNoSuchElementException:MongoCursor.kt$MongoCursor&lt;T : Any> : IteratorCloseable</ID>
+    <ID>LargeClass:MongoCollectionTest.kt$MongoCollectionTest</ID>
+    <ID>LongMethod:FindFlowTest.kt$FindFlowTest$@Test fun shouldCallTheUnderlyingMethods()</ID>
+    <ID>LongMethod:FindIterableTest.kt$FindIterableTest$@Test fun shouldCallTheUnderlyingMethods()</ID>
+    <ID>LongMethod:KotlinSerializerCodecTest.kt$KotlinSerializerCodecTest$@Test fun testDataClassOptionalBsonValues()</ID>
+    <ID>MaxLineLength:ListCollectionNamesFlow.kt$ListCollectionNamesFlow$*</ID>
+    <ID>MaxLineLength:ListCollectionNamesIterable.kt$ListCollectionNamesIterable$*</ID>
+    <ID>MaxLineLength:ListCollectionsFlow.kt$ListCollectionsFlow$*</ID>
+    <ID>MaxLineLength:ListCollectionsIterable.kt$ListCollectionsIterable$*</ID>
+    <ID>MaxLineLength:MapReduceFlow.kt$MapReduceFlow$*</ID>
+    <ID>MaxLineLength:MapReduceIterable.kt$MapReduceIterable$*</ID>
+    <ID>SwallowedException:MockitoHelper.kt$MockitoHelper.DeepReflectionEqMatcher$e: Throwable</ID>
+    <ID>TooManyFunctions:ClientSession.kt$ClientSession : jClientSession</ID>
+    <ID>TooManyFunctions:FindFlow.kt$FindFlow&lt;T : Any> : Flow</ID>
+    <ID>TooManyFunctions:FindIterable.kt$FindIterable&lt;T : Any> : MongoIterable</ID>
+    <ID>TooManyFunctions:MongoCollection.kt$MongoCollection&lt;T : Any></ID>
+    <ID>TooManyFunctions:MongoDatabase.kt$MongoDatabase</ID>
+    <ID>TooManyFunctions:SyncClientSession.kt$SyncClientSession : JClientSession</ID>
+    <ID>TooManyFunctions:SyncFindIterable.kt$SyncFindIterable&lt;T : Any> : JFindIterableSyncMongoIterable</ID>
+    <ID>TooManyFunctions:SyncMongoCluster.kt$SyncMongoCluster : JMongoCluster</ID>
+    <ID>TooManyFunctions:SyncMongoCollection.kt$SyncMongoCollection&lt;T : Any> : JMongoCollection</ID>
+    <ID>TooManyFunctions:SyncMongoDatabase.kt$SyncMongoDatabase : JMongoDatabase</ID>
+    <ID>UnnecessaryAbstractClass:UnifiedTest.kt$UnifiedTest$UnifiedTest</ID>
+    <ID>UnsafeCallOnNullableType:SmokeTests.kt$SmokeTests$collection!!</ID>
+    <ID>UnusedPrivateMember:SyncMongoIterable.kt$SyncMongoIterable$private var timeoutMode: TimeoutMode? = null</ID>
+    <ID>VarCouldBeVal:SyncMongoIterable.kt$SyncMongoIterable$private var timeoutMode: TimeoutMode? = null</ID>
+    <ID>WildcardImport:SyncMongoDatabase.kt$import com.mongodb.client.*</ID>
+  </CurrentIssues>
+</SmellBaseline>

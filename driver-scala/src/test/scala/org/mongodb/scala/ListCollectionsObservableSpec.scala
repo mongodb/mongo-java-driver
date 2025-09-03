@@ -16,25 +16,25 @@
 
 package org.mongodb.scala
 
-import java.util.concurrent.TimeUnit
-
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.reactivestreams.client.ListCollectionsPublisher
+import org.mockito.Mockito.{ verify, verifyNoMoreInteractions }
 import org.reactivestreams.Publisher
-import org.scalamock.scalatest.proxy.MockFactory
-import org.scalatest.{ FlatSpec, Matchers }
+import org.scalatestplus.mockito.MockitoSugar
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
 
-class ListCollectionsObservableSpec extends BaseSpec with MockFactory {
+class ListCollectionsObservableSpec extends BaseSpec with MockitoSugar {
 
-  "ListCollectionsObservable" should "have the same methods as the wrapped ListCollectionsObservable" in {
+  "ListCollectionsObservable" should "have the same methods as the wrapped ListCollectionsPublisher" in {
     val mongoPublisher: Set[String] = classOf[Publisher[Document]].getMethods.map(_.getName).toSet
     val wrapped = classOf[ListCollectionsPublisher[Document]].getMethods.map(_.getName).toSet -- mongoPublisher
     val local = classOf[ListCollectionsObservable[Document]].getMethods.map(_.getName).toSet
 
     wrapped.foreach((name: String) => {
       val cleanedName = name.stripPrefix("get")
-      assert(local.contains(name) | local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
+      assert(local.contains(name) || local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
     })
   }
 
@@ -46,12 +46,16 @@ class ListCollectionsObservableSpec extends BaseSpec with MockFactory {
     val duration = Duration(1, TimeUnit.SECONDS)
     val batchSize = 10
 
-    wrapper.expects(Symbol("filter"))(filter).once()
-    wrapper.expects(Symbol("maxTime"))(duration.toMillis, TimeUnit.MILLISECONDS).once()
-    wrapper.expects(Symbol("batchSize"))(batchSize).once()
-
     observable.filter(filter)
     observable.maxTime(duration)
     observable.batchSize(batchSize)
+    observable.timeoutMode(TimeoutMode.ITERATION)
+
+    verify(wrapper).filter(filter)
+    verify(wrapper).maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
+    verify(wrapper).batchSize(batchSize)
+    verify(wrapper).timeoutMode(TimeoutMode.ITERATION)
+
+    verifyNoMoreInteractions(wrapper)
   }
 }

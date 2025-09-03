@@ -17,12 +17,25 @@
 package com.mongodb.reactivestreams.client;
 
 import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
-import com.mongodb.internal.async.client.AsyncMongoClient;
-import com.mongodb.internal.async.client.AsyncMongoClients;
+import com.mongodb.connection.SocketSettings;
+import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.connection.Cluster;
+import com.mongodb.internal.connection.DefaultClusterFactory;
+import com.mongodb.internal.connection.InternalConnectionPoolSettings;
+import com.mongodb.internal.connection.StreamFactory;
+import com.mongodb.internal.connection.StreamFactoryFactory;
+import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.internal.MongoClientImpl;
+import com.mongodb.spi.dns.InetAddressResolver;
 import org.bson.codecs.configuration.CodecRegistry;
+
+import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.ServerAddressHelper.getInetAddressResolver;
+import static com.mongodb.internal.connection.StreamFactoryHelper.getAsyncStreamFactoryFactory;
+import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
 
 
 /**
@@ -65,13 +78,14 @@ public final class MongoClients {
      *
      * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
      *
-     * @param connectionString the settings
+     * @param connectionString       the settings
      * @param mongoDriverInformation any driver information to associate with the MongoClient
      * @return the client
      * @since 1.3
      */
-    public static MongoClient create(final ConnectionString connectionString, final MongoDriverInformation mongoDriverInformation) {
-        return create(AsyncMongoClients.create(connectionString, wrapMongoDriverInformation(mongoDriverInformation)));
+    public static MongoClient create(final ConnectionString connectionString,
+            @Nullable final MongoDriverInformation mongoDriverInformation) {
+        return create(MongoClientSettings.builder().applyConnectionString(connectionString).build(), mongoDriverInformation);
     }
 
     /**
@@ -90,13 +104,22 @@ public final class MongoClients {
      *
      * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
      *
-     * @param settings the settings
+     * @param settings               the settings
      * @param mongoDriverInformation any driver information to associate with the MongoClient
      * @return the client
      * @since 1.8
      */
-    public static MongoClient create(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation) {
-        return create(AsyncMongoClients.create(settings, wrapMongoDriverInformation(mongoDriverInformation)));
+    public static MongoClient create(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
+        if (settings.getSocketSettings().getProxySettings().isProxyEnabled()) {
+            throw new MongoClientException("Proxy is not supported for reactive clients");
+        }
+        InetAddressResolver inetAddressResolver = getInetAddressResolver(settings);
+        StreamFactoryFactory streamFactoryFactory = getAsyncStreamFactoryFactory(settings, inetAddressResolver);
+        StreamFactory streamFactory = getStreamFactory(streamFactoryFactory, settings, false);
+        StreamFactory heartbeatStreamFactory = getStreamFactory(streamFactoryFactory, settings, true);
+        MongoDriverInformation wrappedMongoDriverInformation = wrapMongoDriverInformation(mongoDriverInformation);
+        Cluster cluster = createCluster(settings, wrappedMongoDriverInformation, streamFactory, heartbeatStreamFactory);
+        return new MongoClientImpl(settings, wrappedMongoDriverInformation, cluster, streamFactoryFactory);
     }
 
     /**
@@ -107,16 +130,32 @@ public final class MongoClients {
      * @since 1.4
      */
     public static CodecRegistry getDefaultCodecRegistry() {
-        return AsyncMongoClients.getDefaultCodecRegistry();
+        return MongoClientSettings.getDefaultCodecRegistry();
     }
 
-    private static MongoClient create(final AsyncMongoClient asyncMongoClient) {
-        return new MongoClientImpl(asyncMongoClient);
+    private static Cluster createCluster(final MongoClientSettings settings,
+                                         @Nullable final MongoDriverInformation mongoDriverInformation,
+                                         final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory) {
+        notNull("settings", settings);
+        return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
+                settings.getConnectionPoolSettings(), InternalConnectionPoolSettings.builder().prestartAsyncWorkManager(true).build(),
+                TimeoutSettings.create(settings), streamFactory, TimeoutSettings.createHeartbeatSettings(settings), heartbeatStreamFactory,
+                settings.getCredential(), settings.getLoggerSettings(), getCommandListener(settings.getCommandListeners()),
+                settings.getApplicationName(), mongoDriverInformation, settings.getCompressorList(), settings.getServerApi(),
+                settings.getDnsClient());
     }
 
-    private static MongoDriverInformation wrapMongoDriverInformation(final MongoDriverInformation mongoDriverInformation) {
+    private static MongoDriverInformation wrapMongoDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation) {
         return (mongoDriverInformation == null ? MongoDriverInformation.builder() : MongoDriverInformation.builder(mongoDriverInformation))
                 .driverName("reactive-streams").build();
+    }
+
+    private static StreamFactory getStreamFactory(
+            final StreamFactoryFactory streamFactoryFactory, final MongoClientSettings settings,
+            final boolean isHeartbeat) {
+        SocketSettings socketSettings = isHeartbeat
+                ? settings.getHeartbeatSocketSettings() : settings.getSocketSettings();
+        return streamFactoryFactory.create(socketSettings, settings.getSslSettings());
     }
 
     private MongoClients() {

@@ -21,9 +21,11 @@ import org.bson.io.BsonOutput;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
-import java.util.Stack;
 
+import static java.lang.Math.max;
 import static java.lang.String.format;
 import static org.bson.assertions.Assertions.notNull;
 
@@ -36,8 +38,37 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     private final BsonBinaryWriterSettings binaryWriterSettings;
 
     private final BsonOutput bsonOutput;
-    private final Stack<Integer> maxDocumentSizeStack = new Stack<Integer>();
+    private final Deque<Integer> maxDocumentSizeStack = new ArrayDeque<>();
+    private static final int ARRAY_INDEXES_CACHE_SIZE = 1000;
+    private static final byte[] ARRAY_INDEXES_BUFFER;
+    private static final int[] ARRAY_INDEXES_OFFSETS;
+    private static final int[] ARRAY_INDEXES_LENGTHS;
     private Mark mark;
+
+    static {
+        ARRAY_INDEXES_LENGTHS = new int[ARRAY_INDEXES_CACHE_SIZE];
+        ARRAY_INDEXES_OFFSETS = new int[ARRAY_INDEXES_CACHE_SIZE];
+        int totalSize = 0;
+        for (int i = 0; i < ARRAY_INDEXES_CACHE_SIZE; i++) {
+            totalSize += (int) (Math.log10(max(i, 1))
+                    + 1 // number of digits
+                    + 1); // +1 for null terminator
+        }
+        ARRAY_INDEXES_BUFFER = new byte[totalSize];
+
+        // Fill buffer
+        int offset = 0;
+        for (int i = 0; i < ARRAY_INDEXES_CACHE_SIZE; i++) {
+            String string = Integer.toString(i);
+            int length = string.length();
+            for (int j = 0; j < length; j++) {
+                ARRAY_INDEXES_BUFFER[offset++] = (byte) string.charAt(j);
+            }
+            ARRAY_INDEXES_BUFFER[offset++] = 0;
+            ARRAY_INDEXES_OFFSETS[i] = offset - (length + 1);
+            ARRAY_INDEXES_LENGTHS[i] = length + 1;  // +1 for null terminator
+        }
+    }
 
     /**
      * Construct an instance.
@@ -67,7 +98,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
      */
     public BsonBinaryWriter(final BsonWriterSettings settings, final BsonBinaryWriterSettings binaryWriterSettings,
                             final BsonOutput bsonOutput) {
-        this(settings, binaryWriterSettings, bsonOutput, new NoOpFieldNameValidator());
+        this(settings, binaryWriterSettings, bsonOutput, NoOpFieldNameValidator.INSTANCE);
     }
 
     /**
@@ -106,10 +137,6 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
      */
     public BsonBinaryWriterSettings getBinaryWriterSettings() {
         return binaryWriterSettings;
-    }
-
-    @Override
-    public void flush() {
     }
 
     @Override
@@ -263,7 +290,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     public void doWriteObjectId(final ObjectId value) {
         bsonOutput.writeByte(BsonType.OBJECT_ID.getValue());
         writeCurrentName();
-        bsonOutput.writeBytes(value.toByteArray());
+        bsonOutput.writeObjectId(value);
     }
 
     @Override
@@ -401,7 +428,14 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
 
     private void writeCurrentName() {
         if (getContext().getContextType() == BsonContextType.ARRAY) {
-            bsonOutput.writeCString(Integer.toString(getContext().index++));
+            int index = getContext().index++;
+            if (index >= ARRAY_INDEXES_CACHE_SIZE) {
+                bsonOutput.writeCString(Integer.toString(index));
+            } else {
+                bsonOutput.writeBytes(ARRAY_INDEXES_BUFFER,
+                        ARRAY_INDEXES_OFFSETS[index],
+                        ARRAY_INDEXES_LENGTHS[index]);
+            }
         } else {
             bsonOutput.writeCString(getName());
         }
@@ -420,6 +454,9 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
         }
     }
 
+    /**
+     * An implementation of {@code AbstractBsonWriter.Context}.
+     */
     protected class Context extends AbstractBsonWriter.Context {
         private final int startPosition;
         private int index; // used when contextType is an array
@@ -458,6 +495,9 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
         }
     }
 
+    /**
+     * An implementation of {@code AbstractBsonWriter.Mark}.
+     */
     protected class Mark extends AbstractBsonWriter.Mark {
         private final int position;
 

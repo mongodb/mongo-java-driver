@@ -50,7 +50,7 @@ class ProjectionsSpecification extends Specification {
         toBson(exclude(['x', 'y'])) == parse('{x : 0, y : 0}')
     }
 
-    def 'excludeId'() {
+    def 'excludeId helper'() {
         expect:
         toBson(excludeId()) == parse('{_id : 0}')
     }

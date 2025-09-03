@@ -18,15 +18,16 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.session.SessionContext;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
 
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
 /**
@@ -36,42 +37,52 @@ class UsageTrackingInternalConnection implements InternalConnection {
     private static final Logger LOGGER = Loggers.getLogger("connection");
     private volatile long openedAt;
     private volatile long lastUsedAt;
-    private final int generation;
+    private volatile boolean closeSilently;
     private final InternalConnection wrapped;
+    private final DefaultConnectionPool.ServiceStateManager serviceStateManager;
 
-    UsageTrackingInternalConnection(final InternalConnection wrapped, final int generation) {
+    UsageTrackingInternalConnection(final InternalConnection wrapped, final DefaultConnectionPool.ServiceStateManager serviceStateManager) {
         this.wrapped = wrapped;
-        this.generation = generation;
+        this.serviceStateManager = serviceStateManager;
         openedAt = Long.MAX_VALUE;
         lastUsedAt = openedAt;
     }
 
     @Override
-    public void open() {
-        wrapped.open();
+    public void open(final OperationContext operationContext) {
+        wrapped.open(operationContext);
         openedAt = System.currentTimeMillis();
         lastUsedAt = openedAt;
+        if (getDescription().getServiceId() != null) {
+            serviceStateManager.addConnection(assertNotNull(getDescription().getServiceId()));
+        }
     }
 
     @Override
-    public void openAsync(final SingleResultCallback<Void> callback) {
-        wrapped.openAsync(new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    openedAt = System.currentTimeMillis();
-                    lastUsedAt = openedAt;
-                    callback.onResult(null, null);
+    public void openAsync(final OperationContext operationContext, final SingleResultCallback<Void> callback) {
+        wrapped.openAsync(operationContext, (result, t) -> {
+            if (t != null) {
+                callback.onResult(null, t);
+            } else {
+                openedAt = System.currentTimeMillis();
+                lastUsedAt = openedAt;
+                if (getDescription().getServiceId() != null) {
+                    serviceStateManager.addConnection(getDescription().getServiceId());
                 }
+                callback.onResult(null, null);
             }
         });
     }
 
     @Override
     public void close() {
-        wrapped.close();
+        try {
+            wrapped.close();
+        } finally {
+            if (openedAt != Long.MAX_VALUE && getDescription().getServiceId() != null) {
+                serviceStateManager.removeConnection(assertNotNull(getDescription().getServiceId()));
+            }
+        }
     }
 
     @Override
@@ -90,39 +101,27 @@ class UsageTrackingInternalConnection implements InternalConnection {
     }
 
     @Override
-    public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
-        wrapped.sendMessage(byteBuffers, lastRequestId);
+    public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId, final OperationContext operationContext) {
+        wrapped.sendMessage(byteBuffers, lastRequestId, operationContext);
         lastUsedAt = System.currentTimeMillis();
     }
 
     @Override
-    public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
-        T result = wrapped.sendAndReceive(message, decoder, sessionContext);
-        lastUsedAt = System.currentTimeMillis();
-        return result;
-    }
-
-    @Override
-    public <T> void send(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
-        wrapped.send(message, decoder, sessionContext);
-        lastUsedAt = System.currentTimeMillis();
-    }
-
-    @Override
-    public <T> T receive(final Decoder<T> decoder, final SessionContext sessionContext) {
-        T result = wrapped.receive(decoder, sessionContext);
+    public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
+        T result = wrapped.sendAndReceive(message, decoder, operationContext);
         lastUsedAt = System.currentTimeMillis();
         return result;
     }
 
     @Override
-    public boolean supportsAdditionalTimeout() {
-        return wrapped.supportsAdditionalTimeout();
+    public <T> void send(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
+        wrapped.send(message, decoder, operationContext);
+        lastUsedAt = System.currentTimeMillis();
     }
 
     @Override
-    public <T> T receive(final Decoder<T> decoder, final SessionContext sessionContext, final int additionalTimeout) {
-        T result = wrapped.receive(decoder, sessionContext, additionalTimeout);
+    public <T> T receive(final Decoder<T> decoder, final OperationContext operationContext) {
+        T result = wrapped.receive(decoder, operationContext);
         lastUsedAt = System.currentTimeMillis();
         return result;
     }
@@ -133,47 +132,40 @@ class UsageTrackingInternalConnection implements InternalConnection {
     }
 
     @Override
-    public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
-                                        final SessionContext sessionContext, final SingleResultCallback<T> callback) {
-        SingleResultCallback<T> errHandlingCallback = errorHandlingCallback(new SingleResultCallback<T>() {
-            @Override
-            public void onResult(final T result, final Throwable t) {
-                lastUsedAt = System.currentTimeMillis();
-                callback.onResult(result, t);
-            }
+    public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext,
+            final SingleResultCallback<T> callback) {
+        SingleResultCallback<T> errHandlingCallback = errorHandlingCallback((result, t) -> {
+            lastUsedAt = System.currentTimeMillis();
+            callback.onResult(result, t);
         }, LOGGER);
-        wrapped.sendAndReceiveAsync(message, decoder, sessionContext, errHandlingCallback);
+        wrapped.sendAndReceiveAsync(message, decoder, operationContext, errHandlingCallback);
     }
 
     @Override
-    public ResponseBuffers receiveMessage(final int responseTo) {
-        ResponseBuffers responseBuffers = wrapped.receiveMessage(responseTo);
+    public ResponseBuffers receiveMessage(final int responseTo, final OperationContext operationContext) {
+        ResponseBuffers responseBuffers = wrapped.receiveMessage(responseTo, operationContext);
         lastUsedAt = System.currentTimeMillis();
         return responseBuffers;
     }
 
     @Override
-    public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
-        SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final Throwable t) {
-                lastUsedAt = System.currentTimeMillis();
-                callback.onResult(result, t);
-            }
+    public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final OperationContext operationContext,
+            final SingleResultCallback<Void> callback) {
+        SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback((result, t) -> {
+            lastUsedAt = System.currentTimeMillis();
+            callback.onResult(result, t);
         }, LOGGER);
-        wrapped.sendMessageAsync(byteBuffers, lastRequestId, errHandlingCallback);
+        wrapped.sendMessageAsync(byteBuffers, lastRequestId, operationContext, errHandlingCallback);
     }
 
     @Override
-    public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
-        SingleResultCallback<ResponseBuffers> errHandlingCallback = errorHandlingCallback(new SingleResultCallback<ResponseBuffers>() {
-            @Override
-            public void onResult(final ResponseBuffers result, final Throwable t) {
-                lastUsedAt = System.currentTimeMillis();
-                callback.onResult(result, t);
-            }
+    public void receiveMessageAsync(final int responseTo, final OperationContext operationContext,
+            final SingleResultCallback<ResponseBuffers> callback) {
+        SingleResultCallback<ResponseBuffers> errHandlingCallback = errorHandlingCallback((result, t) -> {
+            lastUsedAt = System.currentTimeMillis();
+            callback.onResult(result, t);
         }, LOGGER);
-        wrapped.receiveMessageAsync(responseTo, errHandlingCallback);
+        wrapped.receiveMessageAsync(responseTo, operationContext, errHandlingCallback);
     }
 
     @Override
@@ -188,7 +180,7 @@ class UsageTrackingInternalConnection implements InternalConnection {
 
     @Override
     public int getGeneration() {
-        return generation;
+        return wrapped.getGeneration();
     }
 
     /**
@@ -207,5 +199,24 @@ class UsageTrackingInternalConnection implements InternalConnection {
      */
     long getLastUsedAt() {
         return lastUsedAt;
+    }
+
+    /**
+     * This method must be used if and only if {@link ConnectionCreatedEvent} was not sent for the connection.
+     * Must not throw {@link Exception}s.
+     *
+     * @see #isCloseSilently()
+     */
+    void setCloseSilently() {
+        closeSilently = true;
+    }
+
+    /**
+     * Must not throw {@link Exception}s.
+     *
+     * @see #setCloseSilently()
+     */
+    boolean isCloseSilently() {
+        return closeSilently;
     }
 }

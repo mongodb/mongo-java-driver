@@ -48,7 +48,7 @@ object Document extends SpecificIterableFactory[(String, BsonValue), Document] {
    * @param json the JSON string
    * @return a corresponding `Document` object
    * @see org.bson.json.JsonReader
-   * @see [[http://docs.mongodb.com/manual/reference/mongodb-extended-json/ MongoDB Extended JSON]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/mongodb-extended-json/ MongoDB Extended JSON]]
    */
   def apply(json: String): Document = Document(BsonDocument(json))
 
@@ -140,7 +140,7 @@ case class Document(protected[scala] val underlying: BsonDocument)
   @inline final def ++(suffix: IterableOnce[(String, BsonValue)]): Document = concat(suffix)
   // scalastyle:on method.name
   def map[B](f: ((String, BsonValue)) => (String, BsonValue)): Document = strictOptimizedMap(newSpecificBuilder, f)
-  //TODO other operations
+  // TODO other operations
 
   // scalastyle:off method.name
   /**

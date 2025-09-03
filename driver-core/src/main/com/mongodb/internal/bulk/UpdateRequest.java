@@ -17,9 +17,9 @@
 package com.mongodb.internal.bulk;
 
 import com.mongodb.client.model.Collation;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
-import org.bson.conversions.Bson;
 
 import java.util.List;
 
@@ -28,26 +28,21 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * An update to one or more documents.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class UpdateRequest extends WriteRequest {
     private final BsonValue update;
     private final Type updateType;
     private final BsonDocument filter;
-    private boolean isMulti = true;
+    private boolean isMulti;
     private boolean isUpsert = false;
     private Collation collation;
     private List<BsonDocument> arrayFilters;
-    private Bson hint;
-    private String hintString;
+    @Nullable private BsonDocument hint;
+    @Nullable private String hintString;
+    @Nullable private BsonDocument sort;
 
-    /**
-     * Construct a new instance.
-     * @param filter the non-null query filter
-     * @param update the non-null update operations
-     * @param updateType the update type, which must be either UPDATE or REPLACE
-     */
-    public UpdateRequest(final BsonDocument filter, final BsonValue update, final Type updateType) {
+    public UpdateRequest(final BsonDocument filter, @Nullable final BsonValue update, final Type updateType) {
         if (updateType != Type.UPDATE && updateType != Type.REPLACE) {
             throw new IllegalArgumentException("Update type must be UPDATE or REPLACE");
         }
@@ -66,41 +61,18 @@ public final class UpdateRequest extends WriteRequest {
         return updateType;
     }
 
-    /**
-     * Gets the query filter for the update.
-     *
-     * @return the filter
-     */
     public BsonDocument getFilter() {
         return filter;
     }
 
-    /**
-     * Gets the update.
-     * Note: Starting with server version 4.2+, the update can be either a document or a pipeline.
-     *
-     * @return the update
-     * @since 3.11
-     */
     public BsonValue getUpdateValue() {
         return update;
     }
 
-    /**
-     * Gets whether this update will update all documents matching the filter.  The default is true.
-     *
-     * @return whether this update will update all documents matching the filter
-     */
     public boolean isMulti() {
         return isMulti;
     }
 
-    /**
-     * Sets whether this will update all documents matching the query filter.
-     *
-     * @param isMulti whether this will update all documents matching the query filter
-     * @return this
-     */
     public UpdateRequest multi(final boolean isMulti) {
         if (isMulti && updateType == Type.REPLACE) {
             throw new IllegalArgumentException("Replacements can not be multi");
@@ -109,110 +81,62 @@ public final class UpdateRequest extends WriteRequest {
         return this;
     }
 
-    /**
-     * Gets whether this update will insert a new document if no documents match the filter.  The default is false.
-     * @return whether this update will insert a new document if no documents match the filter
-     */
     public boolean isUpsert() {
         return isUpsert;
     }
 
-    /**
-     * Sets whether this update will insert a new document if no documents match the filter.
-     * @param isUpsert whether this update will insert a new document if no documents match the filter
-     * @return this
-     */
     public UpdateRequest upsert(final boolean isUpsert) {
         this.isUpsert = isUpsert;
         return this;
     }
 
-    /**
-     * Returns the collation options
-     *
-     * @return the collation options
-     * @since 3.4
-     * @mongodb.server.release 3.4
-     */
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
 
-    /**
-     * Sets the collation options
-     *
-     * <p>A null value represents the server default.</p>
-     * @param collation the collation options to use
-     * @return this
-     * @since 3.4
-     * @mongodb.server.release 3.4
-     */
-    public UpdateRequest collation(final Collation collation) {
+    public UpdateRequest collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
 
-    /**
-     * Sets the array filters option
-     *
-     * @param arrayFilters the array filters, which may be null
-     * @return this
-     * @since 3.6
-     * @mongodb.server.release 3.6
-     */
-    public UpdateRequest arrayFilters(final List<BsonDocument> arrayFilters) {
+    public UpdateRequest arrayFilters(@Nullable final List<BsonDocument> arrayFilters) {
         this.arrayFilters = arrayFilters;
         return this;
     }
 
-    /**
-     * Returns the array filters option
-     *
-     * @return the array filters, which may be null
-     * @since 3.6
-     * @mongodb.server.release 3.6
-     */
+    @Nullable
     public List<BsonDocument> getArrayFilters() {
         return arrayFilters;
     }
 
-    /**
-     * Returns the hint for which index to use. The default is not to set a hint.
-     *
-     * @return the hint
-     */
-    public Bson getHint() {
+    @Nullable
+    public BsonDocument getHint() {
         return hint;
     }
 
-    /**
-     * Sets the hint for which index to use. A null value means no hint is set.
-     *
-     * @param hint the hint
-     * @return this
-     */
-    public UpdateRequest hint(final Bson hint) {
+    public UpdateRequest hint(@Nullable final BsonDocument hint) {
         this.hint = hint;
         return this;
     }
 
-    /**
-     * Gets the hint string to apply.
-     *
-     * @return the hint string, which should be the name of an existing index
-     */
+    @Nullable
     public String getHintString() {
         return hintString;
     }
 
-    /**
-     * Sets the hint to apply.
-     *
-     * @param hint the name of the index which should be used for the operation
-     * @return this
-     */
-    public UpdateRequest hintString(final String hint) {
+    public UpdateRequest hintString(@Nullable final String hint) {
         this.hintString = hint;
+        return this;
+    }
+
+    @Nullable
+    public BsonDocument getSort() {
+        return sort;
+    }
+
+    public UpdateRequest sort(@Nullable final BsonDocument sort) {
+        this.sort = sort;
         return this;
     }
 }

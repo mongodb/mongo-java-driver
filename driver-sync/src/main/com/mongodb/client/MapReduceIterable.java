@@ -16,8 +16,10 @@
 
 package com.mongodb.client;
 
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.MapReduceAction;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
@@ -25,24 +27,53 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Iterable for map-reduce.
- *
- * <p>By default the {@code MapReduceIterable} returns the results inline. You can write map-reduce output to a collection by using the
- * {@link MapReduceIterable#collectionName(String)} method.</p>
+ * <p>
+ * By default, the {@code MapReduceIterable} produces the results inline. You can write map-reduce output to a collection by using the
+ * {@link #collectionName(String)} and {@link #toCollection()} methods.</p>
  *
  * @param <TResult> The type of the result.
  * @since 3.0
+ * @deprecated Superseded by aggregate
  */
+@Deprecated
 public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
 
     /**
-     * Aggregates documents to a collection according to the specified map-reduce function with the given options, which must specify a
-     * non-inline result.
+     * Aggregates documents to a collection according to the specified map-reduce function with the given options, which must not produce
+     * results inline. This method is the preferred alternative to {@link #iterator()}, {@link #cursor()},
+     * because this method does what is explicitly requested without executing implicit operations.
      *
-     * @throws IllegalStateException if a collection name to write the results to has not been specified
+     * @throws IllegalStateException if a {@linkplain #collectionName(String) collection name} to write the results to has not been specified
      * @see #collectionName(String)
      * @since 3.4
      */
     void toCollection();
+
+    /**
+     * Aggregates documents according to the specified map-reduce function with the given options.
+     * <ul>
+     *     <li>
+     *     If the aggregation produces results inline, then {@linkplain MongoCollection#find() finds all} documents in the
+     *     affected namespace and returns a {@link MongoCursor} over them. You may want to use {@link #toCollection()} instead.</li>
+     *     <li>
+     *     Otherwise, returns a {@link MongoCursor} producing no elements.</li>
+     * </ul>
+     */
+    @Override
+    MongoCursor<TResult> iterator();
+
+    /**
+     * Aggregates documents according to the specified map-reduce function with the given options.
+     * <ul>
+     *     <li>
+     *     If the aggregation produces results inline, then {@linkplain MongoCollection#find() finds all} documents in the
+     *     affected namespace and returns a {@link MongoCursor} over them. You may want to use {@link #toCollection()} instead.</li>
+     *     <li>
+     *     Otherwise, returns a {@link MongoCursor} producing no elements.</li>
+     * </ul>
+     */
+    @Override
+    MongoCursor<TResult> cursor();
 
     /**
      * Sets the collectionName for the output of the MapReduce
@@ -51,6 +82,7 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
      *
      * @param collectionName the name of the collection that you want the map-reduce operation to write its output.
      * @return this
+     * @see #toCollection()
      */
     MapReduceIterable<TResult> collectionName(String collectionName);
 
@@ -131,10 +163,10 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
     /**
      * Specify the {@code MapReduceAction} to be used when writing to a collection.
      *
-     * @param action an {@link MapReduceAction} to perform on the collection
+     * @param action an {@link com.mongodb.client.model.MapReduceAction} to perform on the collection
      * @return this
      */
-    MapReduceIterable<TResult> action(MapReduceAction action);
+    MapReduceIterable<TResult> action(com.mongodb.client.model.MapReduceAction action);
 
     /**
      * Sets the name of the database to output into.
@@ -144,30 +176,6 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
      * @mongodb.driver.manual reference/command/mapReduce/#output-to-a-collection-with-an-action output with an action
      */
     MapReduceIterable<TResult> databaseName(@Nullable String databaseName);
-
-    /**
-     * Sets if the output database is sharded
-     *
-     * @param sharded if the output database is sharded
-     * @return this
-     * @mongodb.driver.manual reference/command/mapReduce/#output-to-a-collection-with-an-action output with an action
-     * @deprecated this option will no longer be supported in MongoDB 4.4.
-     */
-    @Deprecated
-    MapReduceIterable<TResult> sharded(boolean sharded);
-
-    /**
-     * Sets if the post-processing step will prevent MongoDB from locking the database.
-     *
-     * Valid only with the {@code MapReduceAction.MERGE} or {@code MapReduceAction.REDUCE} actions.
-     *
-     * @param nonAtomic if the post-processing step will prevent MongoDB from locking the database.
-     * @return this
-     * @mongodb.driver.manual reference/command/mapReduce/#output-to-a-collection-with-an-action output with an action
-     * @deprecated this option will no longer be supported in MongoDB 4.4 as it will no longer hold a global or database level write lock.
-     */
-    @Deprecated
-    MapReduceIterable<TResult> nonAtomic(boolean nonAtomic);
 
     /**
      * Sets the number of documents to return per batch.
@@ -202,4 +210,18 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
      * @mongodb.server.release 3.4
      */
     MapReduceIterable<TResult> collation(@Nullable Collation collation);
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * <p>
+     *     Requires the {@code timeout} to be set, either in the {@link com.mongodb.MongoClientSettings},
+     *     via {@link MongoDatabase} or via {@link MongoCollection}
+     * </p>
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    MapReduceIterable<TResult> timeoutMode(TimeoutMode timeoutMode);
 }

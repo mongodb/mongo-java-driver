@@ -38,9 +38,11 @@ import com.mongodb.client.model.CollationCaseFirst;
 import com.mongodb.client.model.CollationMaxVariable;
 import com.mongodb.client.model.CollationStrength;
 import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.DropCollectionOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
@@ -54,11 +56,13 @@ import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
+import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
@@ -85,7 +89,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.client.Fixture.getMongoClient;
 import static java.lang.String.format;
+import static org.junit.Assert.assertEquals;
 
 public class JsonPoweredCrudTestHelper {
     private final String description;
@@ -119,22 +125,43 @@ public class JsonPoweredCrudTestHelper {
 
         String methodName = createMethodName(operation.getString("name").getValue(),
                 operation.getString("object", new BsonString("")).getValue());
-        try {
-            Method method = getClass().getDeclaredMethod(methodName, BsonDocument.class, BsonDocument.class, ClientSession.class);
-            return (BsonDocument) method.invoke(this, collectionOptions, arguments, clientSession);
-        } catch (NoSuchMethodException e) {
-            throw new UnsupportedOperationException("No handler for operation " + methodName);
-        } catch (InvocationTargetException e) {
-            if (e.getTargetException() instanceof MongoException) {
-                throw (MongoException) e.getTargetException();
-            }
-            throw (RuntimeException) e.getTargetException();
-        } catch (IllegalAccessException e) {
-            throw new UnsupportedOperationException("Invalid handler access for operation " + methodName);
+
+        switch (methodName) {
+            case "assertCollectionExists":
+                assertCollectionExists(operation, true);
+                return new BsonDocument();
+            case "assertCollectionNotExists":
+                assertCollectionExists(operation, false);
+                return new BsonDocument();
+            case "assertIndexExists":
+                assertIndexExists(operation, true);
+                return new BsonDocument();
+            case "assertIndexNotExists":
+                assertIndexExists(operation, false);
+                return new BsonDocument();
+            case "wait":
+                return executeWait(operation);
+            default:
+                try {
+                    Method method = getClass().getDeclaredMethod(methodName, BsonDocument.class, BsonDocument.class, ClientSession.class);
+                    return (BsonDocument) method.invoke(this, collectionOptions, arguments, clientSession);
+                } catch (NoSuchMethodException e) {
+                    throw new UnsupportedOperationException("No handler for operation " + methodName);
+                } catch (InvocationTargetException e) {
+                    if (e.getTargetException() instanceof MongoException) {
+                        throw (MongoException) e.getTargetException();
+                    }
+                    throw (RuntimeException) e.getTargetException();
+                } catch (IllegalAccessException e) {
+                    throw new UnsupportedOperationException("Invalid handler access for operation " + methodName);
+                }
         }
     }
 
     private String createMethodName(final String name, final String object) {
+        if (object.equals("testRunner")) {
+            return name;
+        }
         StringBuilder builder = new StringBuilder();
         builder.append("get");
         if (!object.isEmpty() && !object.equals("collection") && !object.equals("gridfsbucket")) {
@@ -162,7 +189,7 @@ public class JsonPoweredCrudTestHelper {
     }
 
     BsonDocument toResult(final MongoIterable<BsonDocument> results) {
-        return toResult(new BsonArray(results.into(new ArrayList<BsonDocument>())));
+        return toResult(new BsonArray(results.into(new ArrayList<>())));
     }
 
     BsonDocument toResult(final String key, final BsonValue value) {
@@ -221,6 +248,50 @@ public class JsonPoweredCrudTestHelper {
         return new BsonDocument("result", results != null ? results : BsonNull.VALUE);
     }
 
+    private BsonDocument executeWait(final BsonDocument operation) {
+        try {
+            Thread.sleep(operation.getDocument("arguments").getNumber("ms").longValue());
+            return new BsonDocument();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void assertCollectionExists(final BsonDocument operation, final boolean shouldExist) {
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+        String databaseName = arguments.getString("database").getValue();
+        String collection = arguments.getString("collection").getValue();
+        assertEquals(shouldExist, collectionExists(databaseName, collection));
+    }
+
+    private boolean collectionExists(final String databaseName, final String collectionName) {
+        return getMongoClient().getDatabase(databaseName).listCollectionNames().into(new ArrayList<>()).contains(collectionName);
+    }
+
+    private void assertIndexExists(final BsonDocument operation, final boolean shouldExist) {
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+        String db = arguments.getString("database").getValue();
+        String collection = arguments.getString("collection").getValue();
+        String index = arguments.getString("index").getValue();
+        assertEquals(shouldExist, indexExists(db, collection, index));
+    }
+
+    private boolean indexExists(final String databaseName, final String collectionName, final String indexName) {
+        List<Document> indexes = getMongoClient()
+                .getDatabase(databaseName)
+                .getCollection(collectionName)
+                .listIndexes()
+                .into(new ArrayList<>());
+        return indexes.stream().anyMatch(document -> document.get("name").equals(indexName));
+    }
+
+    @NonNull
+    private List<String> getCollectionNames(final BsonDocument arguments, @Nullable final ClientSession clientSession) {
+        MongoDatabase database = mongoClient.getDatabase(arguments.getString("database").getValue());
+        MongoIterable<String> collectionNames = clientSession != null ? database.listCollectionNames(clientSession) : database.listCollectionNames();
+        return collectionNames.into(new ArrayList<>());
+    }
+
     BsonDocument getDatabaseRunCommandResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                              @Nullable final ClientSession clientSession) {
         return getRunCommandResult(collectionOptions, arguments, clientSession);
@@ -245,17 +316,16 @@ public class JsonPoweredCrudTestHelper {
                 response = database.runCommand(clientSession, command, readPreference, BsonDocument.class);
             }
         }
-        response.remove("ok");
-        response.remove("operationTime");
-        response.remove("opTime");
-        response.remove("electionId");
-        response.remove("$clusterTime");
+        if (response.containsKey("ok")) {
+            // The server response to the command may contain a double value for the "ok" field, but the expected result is an integer.
+            response.put("ok", new BsonInt32((int) response.get("ok").asDouble().getValue()));
+        }
         return toResult(response);
     }
 
     BsonDocument getAggregateResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                     @Nullable final ClientSession clientSession) {
-        List<BsonDocument> pipeline = new ArrayList<BsonDocument>();
+        List<BsonDocument> pipeline = new ArrayList<>();
         for (BsonValue stage : arguments.getArray("pipeline")) {
             pipeline.add(stage.asDocument());
         }
@@ -281,7 +351,7 @@ public class JsonPoweredCrudTestHelper {
 
     BsonDocument getDatabaseAggregateResult(final BsonDocument operationOptions, final BsonDocument arguments,
                                             @Nullable final ClientSession clientSession) {
-        List<BsonDocument> pipeline = new ArrayList<BsonDocument>();
+        List<BsonDocument> pipeline = new ArrayList<>();
         for (BsonValue stage : arguments.getArray("pipeline")) {
             pipeline.add(stage.asDocument());
         }
@@ -385,11 +455,19 @@ public class JsonPoweredCrudTestHelper {
 
     BsonDocument getDatabaseCreateCollectionResult(final BsonDocument databaseOptions, final BsonDocument arguments,
                                                    @Nullable final ClientSession clientSession) {
-        String index;
+        String collectionName = arguments.getString("collection").getValue();
+        CreateCollectionOptions createCollectionOptions = new CreateCollectionOptions();
+        if (arguments.containsKey("encryptedFields")) {
+            createCollectionOptions.encryptedFields(arguments.getDocument("encryptedFields"));
+        }
+        if (arguments.containsKey("validator")) {
+            createCollectionOptions.validationOptions(new ValidationOptions().validator(arguments.getDocument("validator")));
+        }
+
         if (clientSession == null) {
-            database.createCollection(arguments.getString("collection").getValue());
+            database.createCollection(collectionName, createCollectionOptions);
         } else {
-            database.createCollection(clientSession, arguments.getString("collection").getValue());
+            database.createCollection(clientSession, collectionName, createCollectionOptions);
         }
         return new BsonDocument("ok", new BsonInt32(1));
     }
@@ -406,10 +484,16 @@ public class JsonPoweredCrudTestHelper {
 
     BsonDocument getDatabaseDropCollectionResult(final BsonDocument databaseOptions, final BsonDocument arguments,
                                                  @Nullable final ClientSession clientSession) {
+        String collectionName = arguments.getString("collection").getValue();
+        DropCollectionOptions dropCollectionOptions = new DropCollectionOptions();
+        if (arguments.containsKey("encryptedFields")) {
+            dropCollectionOptions.encryptedFields(arguments.getDocument("encryptedFields"));
+        }
+
         if (clientSession == null) {
-            database.getCollection(arguments.getString("collection").getValue()).drop();
+            database.getCollection(collectionName).drop(dropCollectionOptions);
         } else {
-            database.getCollection(arguments.getString("collection").getValue()).drop(clientSession);
+            database.getCollection(collectionName).drop(clientSession, dropCollectionOptions);
         }
         return new BsonDocument("ok", new BsonInt32(1));
     }
@@ -552,6 +636,7 @@ public class JsonPoweredCrudTestHelper {
         return iterable;
     }
 
+    @SuppressWarnings("deprecation")
     BsonDocument getMapReduceResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                     @Nullable final ClientSession clientSession) {
         MapReduceIterable<BsonDocument> iterable;
@@ -793,7 +878,7 @@ public class JsonPoweredCrudTestHelper {
             }
             // Test results are expecting this to look just like bulkWrite error, so translate to InsertOneModel so the result
             // translation code can be reused.
-            List<InsertOneModel<BsonDocument>> writeModels = new ArrayList<InsertOneModel<BsonDocument>>();
+            List<InsertOneModel<BsonDocument>> writeModels = new ArrayList<>();
             for (BsonValue document : arguments.getArray("documents")) {
                 writeModels.add(new InsertOneModel<>(document.asDocument()));
             }
@@ -880,7 +965,6 @@ public class JsonPoweredCrudTestHelper {
         return toResult(updateResult);
     }
 
-    @SuppressWarnings("unchecked")
     BsonDocument getUpdateOneResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                     @Nullable final ClientSession clientSession) {
         UpdateOptions options = new UpdateOptions();
@@ -927,42 +1011,42 @@ public class JsonPoweredCrudTestHelper {
     }
 
     BsonDocument getBulkWriteResult(final BsonDocument collectionOptions, final BsonDocument arguments,
-                                    final @Nullable ClientSession clientSession) {
-        List<WriteModel<BsonDocument>> writeModels = new ArrayList<WriteModel<BsonDocument>>();
+                                    @Nullable final ClientSession clientSession) {
+        List<WriteModel<BsonDocument>> writeModels = new ArrayList<>();
         for (BsonValue bsonValue : arguments.getArray("requests")) {
             BsonDocument cur = bsonValue.asDocument();
             String name = cur.getString("name").getValue();
             BsonDocument requestArguments = cur.getDocument("arguments");
             if (name.equals("insertOne")) {
-                writeModels.add(new InsertOneModel<BsonDocument>(requestArguments.getDocument("document")));
+                writeModels.add(new InsertOneModel<>(requestArguments.getDocument("document")));
             } else if (name.equals("updateOne")) {
                 if (requestArguments.isDocument("update")) {
-                    writeModels.add(new UpdateOneModel<BsonDocument>(requestArguments.getDocument("filter"),
+                    writeModels.add(new UpdateOneModel<>(requestArguments.getDocument("filter"),
                             requestArguments.getDocument("update"),
                             getUpdateOptions(requestArguments)));
                 } else {  // update is a pipeline
-                    writeModels.add(new UpdateOneModel<BsonDocument>(requestArguments.getDocument("filter"),
+                    writeModels.add(new UpdateOneModel<>(requestArguments.getDocument("filter"),
                             getListOfDocuments(requestArguments.getArray("update")),
                             getUpdateOptions(requestArguments)));
                 }
             } else if (name.equals("updateMany")) {
                 if (requestArguments.isDocument("update")) {
-                    writeModels.add(new UpdateManyModel<BsonDocument>(requestArguments.getDocument("filter"),
+                    writeModels.add(new UpdateManyModel<>(requestArguments.getDocument("filter"),
                             requestArguments.getDocument("update"),
                             getUpdateOptions(requestArguments)));
                 } else {  // update is a pipeline
-                    writeModels.add(new UpdateManyModel<BsonDocument>(requestArguments.getDocument("filter"),
+                    writeModels.add(new UpdateManyModel<>(requestArguments.getDocument("filter"),
                             getListOfDocuments(requestArguments.getArray("update")),
                             getUpdateOptions(requestArguments)));
                 }
             } else if (name.equals("deleteOne")) {
-                writeModels.add(new DeleteOneModel<BsonDocument>(requestArguments.getDocument("filter"),
+                writeModels.add(new DeleteOneModel<>(requestArguments.getDocument("filter"),
                         getDeleteOptions(requestArguments)));
             } else if (name.equals("deleteMany")) {
-                writeModels.add(new DeleteManyModel<BsonDocument>(requestArguments.getDocument("filter"),
+                writeModels.add(new DeleteManyModel<>(requestArguments.getDocument("filter"),
                         getDeleteOptions(requestArguments)));
             } else if (name.equals("replaceOne")) {
-                writeModels.add(new ReplaceOneModel<BsonDocument>(requestArguments.getDocument("filter"),
+                writeModels.add(new ReplaceOneModel<>(requestArguments.getDocument("filter"),
                         requestArguments.getDocument("replacement"), getReplaceOptions(requestArguments)));
             } else {
                 throw new UnsupportedOperationException(format("Unsupported write request type: %s", name));
@@ -984,7 +1068,7 @@ public class JsonPoweredCrudTestHelper {
                 bulkWriteResult = getCollection(collectionOptions).bulkWrite(clientSession, writeModels, options);
             }
 
-            return toResult(bulkWriteResult, writeModels, Collections.<BulkWriteError>emptyList());
+            return toResult(bulkWriteResult, writeModels, Collections.emptyList());
         } catch (MongoBulkWriteException e) {
             BsonDocument result = toResult(e.getWriteResult(), writeModels, e.getWriteErrors());
             result.put("error", BsonBoolean.TRUE);
@@ -1084,19 +1168,43 @@ public class JsonPoweredCrudTestHelper {
     BsonDocument getClientWatchResult(final BsonDocument collectionOptions, final BsonDocument rawArguments,
                                       @Nullable final ClientSession clientSession) {
         MongoCursor<ChangeStreamDocument<Document>> cursor = mongoClient.watch().iterator();
-        return new BsonDocument("ok", new BsonInt32(1));
+        //noinspection TryFinallyCanBeTryWithResources
+        try {
+            return new BsonDocument("ok", new BsonInt32(1));
+        } finally {
+            cursor.close();
+        }
     }
 
     BsonDocument getWatchResult(final BsonDocument collectionOptions, final BsonDocument rawArguments,
                                       @Nullable final ClientSession clientSession) {
         MongoCursor<ChangeStreamDocument<BsonDocument>> cursor = baseCollection.watch().iterator();
-        return new BsonDocument("ok", new BsonInt32(1));
+        //noinspection TryFinallyCanBeTryWithResources
+        try {
+            return new BsonDocument("ok", new BsonInt32(1));
+        } finally {
+            cursor.close();
+        }
     }
 
     BsonDocument getDatabaseWatchResult(final BsonDocument collectionOptions, final BsonDocument rawArguments,
                                         @Nullable final ClientSession clientSession) {
         MongoCursor<ChangeStreamDocument<Document>> cursor = database.watch().iterator();
-        return new BsonDocument("ok", new BsonInt32(1));
+        //noinspection TryFinallyCanBeTryWithResources
+        try {
+            return new BsonDocument("ok", new BsonInt32(1));
+        } finally {
+            cursor.close();
+        }
+    }
+
+    BsonDocument wait(final BsonDocument options, final BsonDocument rawArguments, @Nullable final ClientSession clientSession) {
+        try {
+            Thread.sleep(rawArguments.getNumber("ms").longValue());
+            return new BsonDocument();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     Collation getCollation(final BsonDocument bsonCollation) {
@@ -1193,7 +1301,7 @@ public class JsonPoweredCrudTestHelper {
         if (bsonArray == null) {
             return null;
         }
-        List<BsonDocument> arrayFilters = new ArrayList<BsonDocument>(bsonArray.size());
+        List<BsonDocument> arrayFilters = new ArrayList<>(bsonArray.size());
         for (BsonValue cur : bsonArray) {
             arrayFilters.add(cur.asDocument());
         }
@@ -1257,7 +1365,8 @@ public class JsonPoweredCrudTestHelper {
         return document;
     }
 
+    public static final Document LEGACY_HELLO_COMMAND = Document.parse("{isMaster: 1}");
     boolean isSharded() {
-        return database.runCommand(Document.parse("{isMaster: 1}")).get("msg", "").equals("isdbgrid");
+        return database.runCommand(LEGACY_HELLO_COMMAND).get("msg", "").equals("isdbgrid");
     }
 }

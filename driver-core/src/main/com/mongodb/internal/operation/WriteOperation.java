@@ -16,16 +16,22 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 
 /**
  * An operation which writes to a MongoDB server.
  *
- * @param <T> the operations result type.
- *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface WriteOperation<T> {
+
+    /**
+     * @return the command name of the operation, e.g. "insert", "update", "delete", "bulkWrite", etc.
+     */
+    String getCommandName();
+
     /**
      * General execute which can return anything of type T
      *
@@ -33,4 +39,12 @@ public interface WriteOperation<T> {
      * @return T, the result of the execution
      */
     T execute(WriteBinding binding);
+
+    /**
+     * General execute which can return anything of type T
+     *
+     * @param binding the binding to execute in the context of
+     * @param callback the callback to be called when the operation has been executed
+     */
+    void executeAsync(AsyncWriteBinding binding, SingleResultCallback<T> callback);
 }

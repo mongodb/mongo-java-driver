@@ -16,51 +16,92 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
-import com.mongodb.internal.async.client.AsyncListCollectionsIterable;
+import com.mongodb.ReadConcern;
+import com.mongodb.client.cursor.TimeoutMode;
+import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperationCursor;
+import com.mongodb.lang.Nullable;
+import com.mongodb.reactivestreams.client.ClientSession;
+import com.mongodb.reactivestreams.client.ListCollectionNamesPublisher;
 import com.mongodb.reactivestreams.client.ListCollectionsPublisher;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.conversions.Bson;
-import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+final class ListCollectionsPublisherImpl<T> extends BatchCursorPublisher<T> implements ListCollectionsPublisher<T> {
 
-final class ListCollectionsPublisherImpl<TResult> implements ListCollectionsPublisher<TResult> {
+    private final boolean collectionNamesOnly;
+    private boolean authorizedCollections;
+    private Bson filter;
+    private long maxTimeMS;
+    private BsonValue comment;
 
-    private final AsyncListCollectionsIterable<TResult> wrapped;
-
-    ListCollectionsPublisherImpl(final AsyncListCollectionsIterable<TResult> wrapped) {
-        this.wrapped = notNull("wrapped", wrapped);
+    ListCollectionsPublisherImpl(
+            @Nullable final ClientSession clientSession,
+            final MongoOperationPublisher<T> mongoOperationPublisher,
+            final boolean collectionNamesOnly) {
+        super(clientSession, mongoOperationPublisher.withReadConcern(ReadConcern.DEFAULT));
+        this.collectionNamesOnly = collectionNamesOnly;
     }
 
-    @Override
-    public ListCollectionsPublisher<TResult> filter(final Bson filter) {
-        wrapped.filter(filter);
-        return this;
-    }
-
-    @Override
-    public ListCollectionsPublisher<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public ListCollectionsPublisher<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
-        wrapped.maxTime(maxTime, timeUnit);
+        this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
+        return this;
+    }
+
+    public ListCollectionsPublisher<T> batchSize(final int batchSize) {
+        super.batchSize(batchSize);
+        return this;
+    }
+
+    public ListCollectionsPublisher<T> filter(@Nullable final Bson filter) {
+        this.filter = filter;
         return this;
     }
 
     @Override
-    public ListCollectionsPublisher<TResult> batchSize(final int batchSize) {
-        wrapped.batchSize(batchSize);
+    public ListCollectionsPublisher<T> comment(@Nullable final String comment) {
+        this.comment = comment != null ? new BsonString(comment) : null;
         return this;
     }
 
     @Override
-    public Publisher<TResult> first() {
-        return Publishers.publish(wrapped::first);
+    public ListCollectionsPublisher<T> comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
+
+    @SuppressWarnings("ReactiveStreamsUnusedPublisher")
+    @Override
+    public ListCollectionsPublisher<T> timeoutMode(final TimeoutMode timeoutMode) {
+        super.timeoutMode(timeoutMode);
+        return this;
+    }
+
+    /**
+     * @see ListCollectionNamesPublisher#authorizedCollections(boolean)
+     */
+    void authorizedCollections(final boolean authorizedCollections) {
+        this.authorizedCollections = authorizedCollections;
+    }
+
+
+    ReadOperationCursor<T> asReadOperation(final int initialBatchSize) {
+        return getOperations().listCollections(getNamespace().getDatabaseName(), getDocumentClass(), filter, collectionNamesOnly,
+                authorizedCollections, initialBatchSize, comment, getTimeoutMode());
     }
 
     @Override
-    public void subscribe(final Subscriber<? super TResult> s) {
-        Publishers.publish(wrapped).subscribe(s);
+    Function<Operations<?>, TimeoutSettings> getTimeoutSettings() {
+        return (operations -> operations.createTimeoutSettings(maxTimeMS));
     }
 }

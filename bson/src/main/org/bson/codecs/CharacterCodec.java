@@ -16,11 +16,10 @@
 
 package org.bson.codecs;
 
-import org.bson.BsonInvalidOperationException;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
+import org.bson.internal.StringCodecHelper;
 
-import static java.lang.String.format;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
@@ -38,13 +37,7 @@ public class CharacterCodec implements Codec<Character> {
 
     @Override
     public Character decode(final BsonReader reader, final DecoderContext decoderContext) {
-        String string = reader.readString();
-        if (string.length() != 1) {
-            throw new BsonInvalidOperationException(format("Attempting to decode the string '%s' to a character, but its length is not "
-                                                           + "equal to one", string));
-        }
-
-        return string.charAt(0);
+        return StringCodecHelper.decodeChar(reader);
     }
 
     @Override

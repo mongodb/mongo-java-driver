@@ -23,8 +23,6 @@ import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.vault.EncryptOptions;
-import com.mongodb.client.result.InsertOneResult;
-import com.mongodb.reactivestreams.client.Fixture.ObservableSubscriber;
 import com.mongodb.reactivestreams.client.vault.ClientEncryption;
 import com.mongodb.reactivestreams.client.vault.ClientEncryptions;
 import org.bson.BsonBinary;
@@ -36,20 +34,18 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import reactor.core.publisher.Mono;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static com.mongodb.internal.async.client.Fixture.getMongoClientBuilderFromConnectionString;
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.ClusterFixture.isClientSideEncryptionTest;
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClient;
+import static com.mongodb.reactivestreams.client.Fixture.getMongoClientBuilderFromConnectionString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 import static util.JsonPoweredTestHelper.getTestDocument;
@@ -66,23 +62,16 @@ public class ClientSideEncryptionExternalKeyVaultTest {
 
     @Before
     public void setUp() throws Throwable {
-        assumeTrue(serverVersionAtLeast(4, 1));
-        assumeTrue("Encryption test with external keyVault is disabled",
-                System.getProperty("org.mongodb.test.awsAccessKeyId") != null
-                        && !System.getProperty("org.mongodb.test.awsAccessKeyId").isEmpty());
+        assumeTrue("Encryption test with external keyVault is disabled", isClientSideEncryptionTest());
 
         /* Step 1: get unencrypted client and recreate keys collection */
         MongoClient client = getMongoClient();
         MongoDatabase keyvaultDatabase = client.getDatabase("keyvault");
         MongoCollection<BsonDocument> datakeys = keyvaultDatabase.getCollection("datakeys", BsonDocument.class)
                 .withWriteConcern(WriteConcern.MAJORITY);
-        ObservableSubscriber<Void> subscriber = new ObservableSubscriber<>();
-        datakeys.drop().subscribe(subscriber);
-        subscriber.await(5, TimeUnit.SECONDS);
+        Mono.from(datakeys.drop()).block(TIMEOUT_DURATION);
 
-        ObservableSubscriber<InsertOneResult> insertOneSubscriber = new ObservableSubscriber<>();
-        datakeys.insertOne(bsonDocumentFromPath("external-key.json")).subscribe(insertOneSubscriber);
-        insertOneSubscriber.await(5, TimeUnit.SECONDS);
+        Mono.from(datakeys.insertOne(bsonDocumentFromPath("external-key.json"))).block(TIMEOUT_DURATION);
 
         /* Step 2: create encryption objects. */
         Map<String, Map<String, Object>> kmsProviders = new HashMap<>();
@@ -129,15 +118,13 @@ public class ClientSideEncryptionExternalKeyVaultTest {
     }
 
     @Test
-    public void testExternal() throws Throwable {
+    public void testExternal() {
         boolean authExceptionThrown = false;
         MongoCollection<BsonDocument> coll = clientEncrypted
                 .getDatabase("db")
                 .getCollection("coll", BsonDocument.class);
         try {
-            ObservableSubscriber<InsertOneResult> subscriber = new ObservableSubscriber<>();
-            coll.insertOne(new BsonDocument().append("encrypted", new BsonString("test"))).subscribe(subscriber);
-            subscriber.await(5, TimeUnit.SECONDS);
+            Mono.from(coll.insertOne(new BsonDocument().append("encrypted", new BsonString("test")))).block(TIMEOUT_DURATION);
         } catch (MongoSecurityException mse) {
             authExceptionThrown = true;
         }
@@ -147,18 +134,15 @@ public class ClientSideEncryptionExternalKeyVaultTest {
                 .keyId(new BsonBinary(BsonBinarySubType.UUID_STANDARD, Base64.getDecoder().decode("LOCALAAAAAAAAAAAAAAAAA==")));
         authExceptionThrown = false;
         try {
-            ObservableSubscriber<BsonBinary> subscriber = new ObservableSubscriber<>();
-            clientEncryption.encrypt(new BsonString("test"), encryptOptions).subscribe(subscriber);
-            subscriber.await(5, TimeUnit.SECONDS);
+            Mono.from(clientEncryption.encrypt(new BsonString("test"), encryptOptions)).block(TIMEOUT_DURATION);
         } catch (MongoSecurityException mse) {
             authExceptionThrown = true;
         }
         assertEquals(authExceptionThrown, withExternalKeyVault);
     }
 
-    private static BsonDocument bsonDocumentFromPath(final String path) throws IOException, URISyntaxException {
-        return getTestDocument(new File(ClientSideEncryptionExternalKeyVaultTest.class
-                .getResource("/client-side-encryption-external/" + path).toURI()));
+    private static BsonDocument bsonDocumentFromPath(final String path) {
+        return getTestDocument("client-side-encryption/external/" + path);
     }
 
     @Parameterized.Parameters(name = "withExternalKeyVault: {0}")

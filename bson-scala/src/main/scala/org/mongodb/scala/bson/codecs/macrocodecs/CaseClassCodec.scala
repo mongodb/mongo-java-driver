@@ -17,11 +17,9 @@
 package org.mongodb.scala.bson.codecs.macrocodecs
 
 import scala.reflect.macros.whitebox
-
 import org.bson.codecs.Codec
 import org.bson.codecs.configuration.CodecRegistry
-
-import org.mongodb.scala.bson.annotations.BsonProperty
+import org.mongodb.scala.bson.annotations.{ BsonIgnore, BsonProperty }
 
 private[codecs] object CaseClassCodec {
 
@@ -87,14 +85,18 @@ private[codecs] object CaseClassCodec {
     val codecName = TypeName(s"${classTypeName}MacroCodec")
 
     // Type checkers
-    def isCaseClass(t: Type): Boolean =
+    def isCaseClass(t: Type): Boolean = {
+      // https://github.com/scala/bug/issues/7755
+      val _ = t.typeSymbol.typeSignature
       t.typeSymbol.isClass && t.typeSymbol.asClass.isCaseClass && !t.typeSymbol.isModuleClass
+    }
+
+    def isCaseObject(t: Type): Boolean = t.typeSymbol.isModuleClass && t.typeSymbol.asClass.isCaseClass
     def isMap(t: Type): Boolean = t.baseClasses.contains(mapTypeSymbol)
     def isOption(t: Type): Boolean = t.typeSymbol == definitions.OptionClass
     def isTuple(t: Type): Boolean = definitions.TupleClass.seq.contains(t.typeSymbol)
     def isSealed(t: Type): Boolean = t.typeSymbol.isClass && t.typeSymbol.asClass.isSealed
     def isAbstractSealed(t: Type): Boolean = isSealed(t) && t.typeSymbol.isAbstract
-    def isCaseClassOrSealed(t: Type): Boolean = isCaseClass(t) || isSealed(t)
 
     def allSubclasses(s: Symbol): Set[Symbol] = {
       val directSubClasses = s.asClass.knownDirectSubclasses
@@ -102,7 +104,8 @@ private[codecs] object CaseClassCodec {
         allSubclasses(s)
       })
     }
-    val subClasses: List[Type] = allSubclasses(mainType.typeSymbol).map(_.asClass.toType).filter(isCaseClass).toList
+    val subClasses: List[Type] =
+      allSubclasses(mainType.typeSymbol).map(_.asClass.toType).filter(t => isCaseClass(t) || isCaseObject(t)).toList
     if (isSealed(mainType) && subClasses.isEmpty) {
       c.abort(
         c.enclosingPosition,
@@ -128,18 +131,15 @@ private[codecs] object CaseClassCodec {
 
     val fields: Map[Type, List[(TermName, Type)]] = {
       knownTypes
-        .map(
-          t =>
-            (
-              t,
-              t.members.sorted
-                .filter(_.isMethod)
-                .map(_.asMethod)
-                .filter(m => m.isGetter && m.isParamAccessor)
-                .map(
-                  m => (m.name, m.returnType.asSeenFrom(t, t.typeSymbol))
-                )
-            )
+        .map(t =>
+          (
+            t,
+            t.members.sorted
+              .filter(_.isMethod)
+              .map(_.asMethod)
+              .filter(m => m.isGetter && m.isParamAccessor)
+              .map(m => (m.name, m.returnType.asSeenFrom(t, t.typeSymbol)))
+          )
         )
         .toMap
     }
@@ -155,6 +155,36 @@ private[codecs] object CaseClassCodec {
             })
         })
         .toMap
+    }
+
+    val ignoredFields: Map[Type, Seq[(TermName, Tree)]] = {
+      knownTypes.map { tpe =>
+        if (!isCaseClass(tpe)) {
+          (tpe, Nil)
+        } else {
+          val constructor = tpe.decl(termNames.CONSTRUCTOR)
+          if (!constructor.isMethod) c.abort(c.enclosingPosition, "No constructor, unsupported class type")
+
+          val defaults = constructor.asMethod.paramLists.head
+            .map(_.asTerm)
+            .zipWithIndex
+            .filter(_._1.annotations.exists(_.tree.tpe == typeOf[BsonIgnore]))
+            .map {
+              case (p, i) =>
+                if (p.isParamWithDefault) {
+                  val getterName = TermName("apply$default$" + (i + 1))
+                  p.name -> q"${tpe.typeSymbol.companion}.$getterName"
+                } else {
+                  c.abort(
+                    c.enclosingPosition,
+                    s"Field [${p.name}] with BsonIgnore annotation must have a default value"
+                  )
+                }
+            }
+
+          tpe -> defaults
+        }
+      }.toMap
     }
 
     // Data converters
@@ -213,9 +243,9 @@ private[codecs] object CaseClassCodec {
           q"""
             typeArgs += ($key -> {
               val tpeArgs = mutable.ListBuffer.empty[Class[_]]
-              ..${flattenTypeArgs(f).map(
-            t => q"tpeArgs += classOf[${if (isCaseClass(t)) t.finalResultType else t.finalResultType.erasure}]"
-          )}
+              ..${flattenTypeArgs(f).map(t =>
+              q"tpeArgs += classOf[${if (isCaseClass(t)) t.finalResultType else t.finalResultType.erasure}]"
+            )}
               tpeArgs.toList
             })"""
       })
@@ -264,10 +294,9 @@ private[codecs] object CaseClassCodec {
      */
     def classToCaseClassMap = {
       val flattenedFieldTypes = fields.flatMap({ case (t, types) => types.map(f => f._2) :+ t })
-      val setClassToCaseClassMap = flattenedFieldTypes.map(
-        t =>
-          q"""classToCaseClassMap ++= ${flattenTypeArgs(t).map(
-            t => q"(classOf[${t.finalResultType.erasure}], ${isCaseClassOrSealed(t)})"
+      val setClassToCaseClassMap = flattenedFieldTypes.map(t =>
+        q"""classToCaseClassMap ++= ${flattenTypeArgs(t).map(t =>
+            q"(classOf[${t.finalResultType.erasure}], ${isCaseClass(t) || isCaseObject(t) || isSealed(t)})"
           )}"""
       )
 
@@ -284,12 +313,14 @@ private[codecs] object CaseClassCodec {
      * @param fields the list of fields
      * @return the tree that writes the case class fields
      */
-    def writeClassValues(fields: List[(TermName, Type)]): List[Tree] = {
-      fields.map({
-        case (name, f) =>
-          val key = keyNameTerm(name)
-          f match {
-            case optional if isOption(optional) => q"""
+    def writeClassValues(fields: List[(TermName, Type)], ignoredFields: Seq[(TermName, Tree)]): List[Tree] = {
+      fields
+        .filterNot { case (name, _) => ignoredFields.exists { case (iname, _) => name == iname } }
+        .map({
+          case (name, f) =>
+            val key = keyNameTerm(name)
+            f match {
+              case optional if isOption(optional) => q"""
               val localVal = instanceValue.$name
               if (localVal.isDefined) {
                 writer.writeName($key)
@@ -298,13 +329,13 @@ private[codecs] object CaseClassCodec {
                 writer.writeName($key)
                 this.writeFieldValue($key, writer, this.bsonNull, encoderContext)
               }"""
-            case _                              => q"""
+              case _ => q"""
               val localVal = instanceValue.$name
               writer.writeName($key)
               this.writeFieldValue($key, writer, localVal, encoderContext)
               """
-          }
-      })
+            }
+        })
     }
 
     /*
@@ -312,11 +343,14 @@ private[codecs] object CaseClassCodec {
      */
     def writeValue: Tree = {
       val cases: Seq[Tree] = {
-        fields.map(field => cq""" ${keyName(field._1)} =>
-            val instanceValue = value.asInstanceOf[${field._1}]
-            ..${writeClassValues(field._2)}""").toSeq
-      }
-
+        fields.map {
+          case (classType, _) if isCaseObject(classType) => cq""" ${keyName(classType)} =>"""
+          case (classType, fields) =>
+            cq""" ${keyName(classType)} =>
+                  val instanceValue = value.asInstanceOf[${classType}]
+                  ..${writeClassValues(fields, ignoredFields(classType))}"""
+        }.toSeq
+      } :+ cq"""_ => throw new BsonInvalidOperationException("Unexpected class type: " + className)"""
       q"""
         writer.writeStartDocument()
         this.writeClassFieldName(writer, className, encoderContext)
@@ -325,23 +359,34 @@ private[codecs] object CaseClassCodec {
       """
     }
 
-    def fieldSetters(fields: List[(TermName, Type)]) = {
+    def fieldSetters(fields: List[(TermName, Type)], ignoredFields: Seq[(TermName, Tree)]) = {
       fields.map({
         case (name, f) =>
           val key = keyNameTerm(name)
           val missingField = Literal(Constant(s"Missing field: $key"))
-          f match {
-            case optional if isOption(optional) =>
-              q"$name = (if (fieldData.contains($key)) Option(fieldData($key)) else None).asInstanceOf[$f]"
-            case _ =>
-              q"""$name = fieldData.getOrElse($key, throw new BsonInvalidOperationException($missingField)).asInstanceOf[$f]"""
+
+          ignoredFields.find { case (iname, _) => name == iname }.map(_._2) match {
+            case Some(default) =>
+              q"$name = $default"
+            case None =>
+              f match {
+                case optional if isOption(optional) =>
+                  q"$name = (if (fieldData.contains($key)) Option(fieldData($key)) else None).asInstanceOf[$f]"
+                case _ =>
+                  q"""$name = fieldData.getOrElse($key, throw new BsonInvalidOperationException($missingField)).asInstanceOf[$f]"""
+              }
           }
       })
     }
 
     def getInstance = {
       val cases = knownTypes.map { st =>
-        cq"${keyName(st)} => new $st(..${fieldSetters(fields(st))})"
+        if (isCaseObject(st)) {
+          val instance = st.typeSymbol.asClass.module
+          cq"${keyName(st)} => $instance"
+        } else {
+          cq"${keyName(st)} => new $st(..${fieldSetters(fields(st), ignoredFields(st))})"
+        }
       } :+ cq"""_ => throw new BsonInvalidOperationException("Unexpected class type: " + className)"""
       q"className match { case ..$cases }"
     }

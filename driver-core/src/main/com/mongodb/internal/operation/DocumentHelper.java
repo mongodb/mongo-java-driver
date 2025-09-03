@@ -16,10 +16,12 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 
 final class DocumentHelper {
@@ -39,15 +41,27 @@ final class DocumentHelper {
         }
     }
 
-    static void putIfNotNullOrEmpty(final BsonDocument command, final String key, final BsonDocument documentValue) {
+    static void putIfNotNullOrEmpty(final BsonDocument command, final String key, @Nullable final BsonDocument documentValue) {
         if (documentValue != null && !documentValue.isEmpty()) {
             command.put(key, documentValue);
         }
     }
 
-    static void putIfNotNull(final BsonDocument command, final String key, final BsonValue value) {
+    static void putIfNotNull(final BsonDocument command, final String key, @Nullable final BsonValue value) {
         if (value != null) {
             command.put(key, value);
+        }
+    }
+
+    static void putIfNotNull(final BsonDocument command, final String key, @Nullable final String value) {
+        if (value != null) {
+            command.put(key, new BsonString(value));
+        }
+    }
+
+    static void putIfNotNull(final BsonDocument command, final String key, @Nullable final Boolean value) {
+        if (value != null) {
+            command.put(key, new BsonBoolean(value));
         }
     }
 

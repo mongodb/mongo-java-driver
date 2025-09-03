@@ -17,14 +17,14 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
-import com.mongodb.connection.BufferProvider;
+import com.mongodb.ServerAddress;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
+import com.mongodb.connection.ServerConnectionState;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerType;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
 import org.bson.ByteBuf;
@@ -44,6 +44,7 @@ import java.util.List;
 
 import static com.mongodb.internal.connection.ProtocolHelper.getCommandFailureException;
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
+import static com.mongodb.internal.operation.ServerVersionHelper.LATEST_WIRE_VERSION;
 
 class TestInternalConnection implements InternalConnection {
 
@@ -54,6 +55,7 @@ class TestInternalConnection implements InternalConnection {
     }
 
     private final ConnectionDescription description;
+    private final ServerDescription serverDescription;
     private final BufferProvider bufferProvider;
     private final Deque<Interaction> replies;
     private final List<BsonInput> sent;
@@ -61,12 +63,20 @@ class TestInternalConnection implements InternalConnection {
     private boolean closed;
 
     TestInternalConnection(final ServerId serverId) {
-        this.description = new ConnectionDescription(new ConnectionId(serverId), 0, ServerType.UNKNOWN, 0, 0, 0,
-                Collections.<String>emptyList());
+        this(serverId, ServerType.UNKNOWN);
+    }
+
+    TestInternalConnection(final ServerId serverId, final ServerType serverType) {
+        this.description = new ConnectionDescription(new ConnectionId(serverId), LATEST_WIRE_VERSION, serverType, 0, 0, 0,
+                Collections.emptyList());
+        this.serverDescription = ServerDescription.builder()
+                .address(new ServerAddress("localhost", 27017))
+                .type(serverType)
+                .state(ServerConnectionState.CONNECTED).build();
         this.bufferProvider = new SimpleBufferProvider();
 
-        this.replies = new LinkedList<Interaction>();
-        this.sent = new LinkedList<BsonInput>();
+        this.replies = new LinkedList<>();
+        this.sent = new LinkedList<>();
     }
 
     public void enqueueReply(final ResponseBuffers responseBuffers) {
@@ -98,15 +108,15 @@ class TestInternalConnection implements InternalConnection {
 
     @Override
     public ServerDescription getInitialServerDescription() {
-        throw new UnsupportedOperationException();
+        return serverDescription;
     }
 
-    public void open() {
+    public void open(final OperationContext operationContext) {
         opened = true;
     }
 
     @Override
-    public void openAsync(final SingleResultCallback<Void> callback) {
+    public void openAsync(final OperationContext operationContext, final SingleResultCallback<Void> callback) {
         opened = true;
         callback.onResult(null, null);
     }
@@ -127,7 +137,12 @@ class TestInternalConnection implements InternalConnection {
     }
 
     @Override
-    public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
+    public int getGeneration() {
+        return 0;
+    }
+
+    @Override
+    public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId, final OperationContext operationContext) {
         // repackage all byte buffers into a single byte buffer...
         int totalSize = 0;
         for (ByteBuf buf : byteBuffers) {
@@ -154,35 +169,29 @@ class TestInternalConnection implements InternalConnection {
     }
 
     @Override
-    public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
-        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this);
-        try {
-            message.encode(bsonOutput, sessionContext);
-            sendMessage(bsonOutput.getByteBuffers(), message.getId());
-        } finally {
-            bsonOutput.close();
+    public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
+        try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
+            message.encode(bsonOutput, operationContext);
+            sendMessage(bsonOutput.getByteBuffers(), message.getId(), operationContext);
         }
-        ResponseBuffers responseBuffers = receiveMessage(message.getId());
-        try {
+        try (ResponseBuffers responseBuffers = receiveMessage(message.getId(), operationContext)) {
             boolean commandOk = isCommandOk(new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer())));
             responseBuffers.reset();
             if (!commandOk) {
                 throw getCommandFailureException(getResponseDocument(responseBuffers, message, new BsonDocumentCodec()),
-                        description.getServerAddress());
+                        description.getServerAddress(), operationContext.getTimeoutContext());
             }
-            return new ReplyMessage<T>(responseBuffers, decoder, message.getId()).getDocuments().get(0);
-        } finally {
-            responseBuffers.close();
+            return new ReplyMessage<>(responseBuffers, decoder, message.getId()).getDocument();
         }
     }
 
     @Override
-    public <T> void send(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+    public <T> void send(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public <T> T receive(final Decoder<T> decoder, final SessionContext sessionContext) {
+    public <T> T receive(final Decoder<T> decoder, final OperationContext operationContext) {
         throw new UnsupportedOperationException();
     }
 
@@ -193,16 +202,16 @@ class TestInternalConnection implements InternalConnection {
 
     private <T extends BsonDocument> T getResponseDocument(final ResponseBuffers responseBuffers,
                                                            final CommandMessage commandMessage, final Decoder<T> decoder) {
-        ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, decoder, commandMessage.getId());
+        ReplyMessage<T> replyMessage = new ReplyMessage<>(responseBuffers, decoder, commandMessage.getId());
         responseBuffers.reset();
-        return replyMessage.getDocuments().get(0);
+        return replyMessage.getDocument();
     }
 
     @Override
-    public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
-                                        final SessionContext sessionContext, final SingleResultCallback<T> callback) {
+    public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext,
+            final SingleResultCallback<T> callback) {
         try {
-            T result = sendAndReceive(message, decoder, sessionContext);
+            T result = sendAndReceive(message, decoder, operationContext);
             callback.onResult(result, null);
         } catch (MongoException ex) {
             callback.onResult(null, ex);
@@ -216,10 +225,10 @@ class TestInternalConnection implements InternalConnection {
         headerByteBuffer.putInt(header.getRequestId());
         headerByteBuffer.putInt(responseTo);
         headerByteBuffer.putInt(1);
-        headerByteBuffer.putInt(header.getResponseFlags());
-        headerByteBuffer.putLong(header.getCursorId());
-        headerByteBuffer.putInt(header.getStartingFrom());
-        headerByteBuffer.putInt(header.getNumberReturned());
+        headerByteBuffer.putInt(0);
+        headerByteBuffer.putLong(0);
+        headerByteBuffer.putInt(0);
+        headerByteBuffer.putInt(1);
         ((Buffer) headerByteBuffer).flip();
 
         ByteBufNIO buffer = new ByteBufNIO(headerByteBuffer);
@@ -227,7 +236,7 @@ class TestInternalConnection implements InternalConnection {
         return new ReplyHeader(buffer, messageHeader);    }
 
     @Override
-    public ResponseBuffers receiveMessage(final int responseTo) {
+    public ResponseBuffers receiveMessage(final int responseTo, final OperationContext operationContext) {
         if (this.replies.isEmpty()) {
             throw new MongoException("Test was not setup properly as too many calls to receiveMessage occured.");
         }
@@ -241,19 +250,21 @@ class TestInternalConnection implements InternalConnection {
     }
 
     @Override
-    public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
+    public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final OperationContext operationContext,
+            final SingleResultCallback<Void> callback) {
         try {
-            sendMessage(byteBuffers, lastRequestId);
+            sendMessage(byteBuffers, lastRequestId, operationContext);
             callback.onResult(null, null);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             callback.onResult(null, e);
         }
     }
 
     @Override
-    public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
+    public void receiveMessageAsync(final int responseTo, final OperationContext operationContext,
+            final SingleResultCallback<ResponseBuffers> callback) {
         try {
-            ResponseBuffers buffers = receiveMessage(responseTo);
+            ResponseBuffers buffers = receiveMessage(responseTo, operationContext);
             callback.onResult(buffers, null);
         } catch (MongoException ex) {
             callback.onResult(null, ex);

@@ -16,21 +16,26 @@
 
 package com.mongodb.client.internal;
 
+import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.ClientSession;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
-import com.mongodb.internal.operation.BatchCursor;
-import com.mongodb.internal.operation.ReadOperation;
-import com.mongodb.internal.operation.SyncOperations;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperationCursor;
+import com.mongodb.internal.operation.ReadOperationExplainable;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.BsonValue;
+import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -40,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 
 class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements AggregateIterable<TResult> {
-    private SyncOperations<TDocument> operations;
+    private final Operations<TDocument> operations;
     private final MongoNamespace namespace;
     private final Class<TDocument> documentClass;
     private final Class<TResult> resultClass;
@@ -53,32 +58,30 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     private long maxAwaitTimeMS;
     private Boolean bypassDocumentValidation;
     private Collation collation;
-    private String comment;
+    private BsonValue comment;
     private Bson hint;
+    private String hintString;
+    private Bson variables;
 
+    @SuppressWarnings("checkstyle:ParameterNumber")
     AggregateIterableImpl(@Nullable final ClientSession clientSession, final String databaseName, final Class<TDocument> documentClass,
-                          final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                          final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
-                          final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel) {
-        this(clientSession, new MongoNamespace(databaseName, "ignored"), documentClass, resultClass, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, pipeline, aggregationLevel, true);
+            final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
+            final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
+            final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel, final boolean retryReads,
+            final TimeoutSettings timeoutSettings) {
+        this(clientSession, new MongoNamespace(databaseName, "_ignored"), documentClass, resultClass, codecRegistry, readPreference,
+                readConcern, writeConcern, executor, pipeline, aggregationLevel, retryReads, timeoutSettings);
     }
 
-    AggregateIterableImpl(@Nullable final ClientSession clientSession, final String databaseName, final Class<TDocument> documentClass,
-                          final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                          final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
-                          final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel, final boolean retryReads) {
-        this(clientSession, new MongoNamespace(databaseName, "ignored"), documentClass, resultClass, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, pipeline, aggregationLevel, retryReads);
-    }
-
+    @SuppressWarnings("checkstyle:ParameterNumber")
     AggregateIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
-                          final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                          final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
-                          final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel, final boolean retryReads) {
-        super(clientSession, executor, readConcern, readPreference, retryReads);
-        this.operations = new SyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
-                true, retryReads);
+            final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
+            final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
+            final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel, final boolean retryReads,
+            final TimeoutSettings timeoutSettings) {
+        super(clientSession, executor, readConcern, readPreference, retryReads, timeoutSettings);
+        this.operations = new Operations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
+                true, retryReads, timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);
@@ -94,8 +97,10 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             throw new IllegalStateException("The last stage of the aggregation pipeline must be $out or $merge");
         }
 
-        getExecutor().execute(operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint,
-                comment, aggregationLevel), getReadConcern(), getClientSession());
+        getExecutor().execute(
+                operations.aggregateToCollection(pipeline, getTimeoutMode(), allowDiskUse,
+                        bypassDocumentValidation, collation, hint, hintString, comment, variables, aggregationLevel),
+                getReadPreference(), getReadConcern(), getClientSession());
     }
 
     @Override
@@ -111,6 +116,12 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
+    public AggregateIterable<TResult> timeoutMode(final TimeoutMode timeoutMode) {
+        super.timeoutMode(timeoutMode);
+        return this;
+    }
+
+    @Override
     public AggregateIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
@@ -119,8 +130,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     @Override
     public AggregateIterable<TResult> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxAwaitTimeMS = TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
+        this.maxAwaitTimeMS = validateMaxAwaitTime(maxAwaitTime, timeUnit);
         return this;
     }
 
@@ -138,6 +148,12 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     @Override
     public AggregateIterable<TResult> comment(@Nullable final String comment) {
+        this.comment = comment == null ? null : new BsonString(comment);
+        return this;
+    }
+
+    @Override
+    public AggregateIterable<TResult> comment(@Nullable final BsonValue comment) {
         this.comment = comment;
         return this;
     }
@@ -149,11 +165,53 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    public ReadOperation<BatchCursor<TResult>> asReadOperation() {
+    public AggregateIterable<TResult> hintString(@Nullable final String hint) {
+        this.hintString = hint;
+        return this;
+    }
+
+    @Override
+    public AggregateIterable<TResult> let(@Nullable final Bson variables) {
+        this.variables = variables;
+        return this;
+    }
+
+    @Override
+    public Document explain() {
+        return executeExplain(Document.class, null);
+    }
+
+    @Override
+    public Document explain(final ExplainVerbosity verbosity) {
+        return executeExplain(Document.class, notNull("verbosity", verbosity));
+    }
+
+    @Override
+    public <E> E explain(final Class<E> explainDocumentClass) {
+        return executeExplain(explainDocumentClass, null);
+    }
+
+    @Override
+    public <E> E explain(final Class<E> explainResultClass, final ExplainVerbosity verbosity) {
+        return executeExplain(explainResultClass, notNull("verbosity", verbosity));
+    }
+
+    private <E> E executeExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
+        notNull("explainDocumentClass", explainResultClass);
+        return getExecutor().execute(
+                asAggregateOperation().asExplainableOperation(verbosity, codecRegistry.get(explainResultClass)), getReadPreference(),
+                getReadConcern(), getClientSession());
+    }
+
+    @Override
+    public ReadOperationCursor<TResult> asReadOperation() {
         MongoNamespace outNamespace = getOutNamespace();
         if (outNamespace != null) {
-            getExecutor().execute(operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation,
-                    hint, comment, aggregationLevel), getReadConcern(), getClientSession());
+            validateTimeoutMode();
+            getExecutor().execute(
+                    operations.aggregateToCollection(pipeline, getTimeoutMode(), allowDiskUse,
+                            bypassDocumentValidation, collation, hint, hintString, comment, variables, aggregationLevel),
+                    getReadPreference(), getReadConcern(), getClientSession());
 
             FindOptions findOptions = new FindOptions().collation(collation);
             Integer batchSize = getBatchSize();
@@ -162,9 +220,17 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             }
             return operations.find(outNamespace, new BsonDocument(), resultClass, findOptions);
         } else {
-            return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, getBatchSize(), collation,
-                    hint, comment, allowDiskUse, aggregationLevel);
+            return asAggregateOperation();
         }
+    }
+
+    protected OperationExecutor getExecutor() {
+        return getExecutor(operations.createTimeoutSettings(maxTimeMS, maxAwaitTimeMS));
+    }
+
+    private ReadOperationExplainable<TResult> asAggregateOperation() {
+        return operations.aggregate(pipeline, resultClass, getTimeoutMode(), getBatchSize(), collation, hint, hintString, comment,
+                variables, allowDiskUse, aggregationLevel);
     }
 
     @Nullable
@@ -197,16 +263,29 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
                         + "is not a string or namespace document");
             }
         } else if (lastPipelineStage.containsKey("$merge")) {
-            BsonDocument mergeDocument = lastPipelineStage.getDocument("$merge");
-            if (mergeDocument.isDocument("into")) {
-                BsonDocument intoDocument = mergeDocument.getDocument("into");
-                return new MongoNamespace(intoDocument.getString("db", new BsonString(namespace.getDatabaseName())).getValue(),
-                        intoDocument.getString("coll").getValue());
-            } else if (mergeDocument.isString("into")) {
-                return new MongoNamespace(namespace.getDatabaseName(), mergeDocument.getString("into").getValue());
+            if (lastPipelineStage.isString("$merge")) {
+                return new MongoNamespace(namespace.getDatabaseName(), lastPipelineStage.getString("$merge").getValue());
+            } else if (lastPipelineStage.isDocument("$merge")) {
+                BsonDocument mergeDocument = lastPipelineStage.getDocument("$merge");
+                if (mergeDocument.isDocument("into")) {
+                    BsonDocument intoDocument = mergeDocument.getDocument("into");
+                    return new MongoNamespace(intoDocument.getString("db", new BsonString(namespace.getDatabaseName())).getValue(),
+                            intoDocument.getString("coll").getValue());
+                } else if (mergeDocument.isString("into")) {
+                    return new MongoNamespace(namespace.getDatabaseName(), mergeDocument.getString("into").getValue());
+                }
+            } else {
+                throw new IllegalStateException("Cannot return a cursor when the value for $merge stage is not a string or a document");
             }
         }
 
         return null;
+    }
+
+    private void validateTimeoutMode() {
+        if (getTimeoutMode() == TimeoutMode.ITERATION) {
+            throw new IllegalArgumentException("Aggregations that output to a collection do not support the ITERATION value for the "
+                    + "timeoutMode option.");
+        }
     }
 }

@@ -18,14 +18,18 @@ package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.Immutable;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
+import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize;
+import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION;
 
 /**
  * A description of a connection to a MongoDB server.
@@ -34,6 +38,7 @@ import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize
  */
 @Immutable
 public class ConnectionDescription {
+    @Nullable private final ObjectId serviceId;
     private final ConnectionId connectionId;
     private final int maxWireVersion;
     private final ServerType serverType;
@@ -42,6 +47,7 @@ public class ConnectionDescription {
     private final int maxMessageSize;
     private final List<String> compressors;
     private final BsonArray saslSupportedMechanisms;
+    private final Integer logicalSessionTimeoutMinutes;
 
     private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
     private static final int DEFAULT_MAX_WRITE_BATCH_SIZE = 512;
@@ -52,8 +58,8 @@ public class ConnectionDescription {
      * @param serverId   the server address
      */
     public ConnectionDescription(final ServerId serverId) {
-        this(new ConnectionId(serverId), 0, ServerType.UNKNOWN, DEFAULT_MAX_WRITE_BATCH_SIZE,
-             getDefaultMaxDocumentSize(), DEFAULT_MAX_MESSAGE_SIZE, Collections.<String>emptyList());
+        this(new ConnectionId(serverId), UNKNOWN_WIRE_VERSION, ServerType.UNKNOWN, DEFAULT_MAX_WRITE_BATCH_SIZE,
+             getDefaultMaxDocumentSize(), DEFAULT_MAX_MESSAGE_SIZE, Collections.emptyList());
     }
 
     /**
@@ -89,17 +95,72 @@ public class ConnectionDescription {
      */
     public ConnectionDescription(final ConnectionId connectionId, final int maxWireVersion,
                                  final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
-                                 final int maxMessageSize, final List<String> compressors, final BsonArray saslSupportedMechanisms) {
+                                 final int maxMessageSize, final List<String> compressors,
+                                 @Nullable final BsonArray saslSupportedMechanisms) {
+        this(null, connectionId, maxWireVersion, serverType, maxBatchCount, maxDocumentSize, maxMessageSize, compressors,
+                saslSupportedMechanisms);
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param connectionId    the connection id
+     * @param maxWireVersion  the max wire version
+     * @param serverType      the server type
+     * @param maxBatchCount   the max batch count
+     * @param maxDocumentSize the max document size in bytes
+     * @param maxMessageSize  the max message size in bytes
+     * @param compressors     the available compressors on the connection
+     * @param saslSupportedMechanisms the supported SASL mechanisms
+     * @param logicalSessionTimeoutMinutes the logical session timeout, in minutes
+     * @since 4.10
+     */
+    public ConnectionDescription(final ConnectionId connectionId, final int maxWireVersion,
+            final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
+            final int maxMessageSize, final List<String> compressors,
+            @Nullable final BsonArray saslSupportedMechanisms,
+            @Nullable final Integer logicalSessionTimeoutMinutes) {
+        this(null, connectionId, maxWireVersion, serverType, maxBatchCount, maxDocumentSize, maxMessageSize, compressors,
+                saslSupportedMechanisms, logicalSessionTimeoutMinutes);
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param serviceId       the service id, which may be null
+     * @param connectionId    the connection id
+     * @param maxWireVersion  the max wire version
+     * @param serverType      the server type
+     * @param maxBatchCount   the max batch count
+     * @param maxDocumentSize the max document size in bytes
+     * @param maxMessageSize  the max message size in bytes
+     * @param compressors     the available compressors on the connection
+     * @param saslSupportedMechanisms the supported SASL mechanisms
+     * @since 4.3
+     */
+    public ConnectionDescription(@Nullable final ObjectId serviceId, final ConnectionId connectionId, final int maxWireVersion,
+                                 final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
+                                 final int maxMessageSize, final List<String> compressors,
+                                 @Nullable final BsonArray saslSupportedMechanisms) {
+        this(serviceId, connectionId, maxWireVersion, serverType, maxBatchCount, maxDocumentSize, maxMessageSize, compressors,
+                saslSupportedMechanisms, null);
+    }
+
+    private ConnectionDescription(@Nullable final ObjectId serviceId, final ConnectionId connectionId, final int maxWireVersion,
+            final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
+            final int maxMessageSize, final List<String> compressors,
+            @Nullable final BsonArray saslSupportedMechanisms, @Nullable final Integer logicalSessionTimeoutMinutes) {
+        this.serviceId = serviceId;
         this.connectionId = connectionId;
         this.serverType = serverType;
         this.maxBatchCount = maxBatchCount;
         this.maxDocumentSize = maxDocumentSize;
         this.maxMessageSize = maxMessageSize;
         this.maxWireVersion = maxWireVersion;
-        this.compressors = notNull("compressors", Collections.unmodifiableList(new ArrayList<String>(compressors)));
+        this.compressors = notNull("compressors", Collections.unmodifiableList(new ArrayList<>(compressors)));
         this.saslSupportedMechanisms = saslSupportedMechanisms;
+        this.logicalSessionTimeoutMinutes = logicalSessionTimeoutMinutes;
     }
-
     /**
      * Creates a new connection description with the set connection id
      *
@@ -109,8 +170,21 @@ public class ConnectionDescription {
      */
     public ConnectionDescription withConnectionId(final ConnectionId connectionId) {
         notNull("connectionId", connectionId);
-        return new ConnectionDescription(connectionId, maxWireVersion, serverType, maxBatchCount, maxDocumentSize, maxMessageSize,
-                compressors, saslSupportedMechanisms);
+        return new ConnectionDescription(serviceId, connectionId, maxWireVersion, serverType, maxBatchCount, maxDocumentSize,
+                maxMessageSize, compressors, saslSupportedMechanisms, logicalSessionTimeoutMinutes);
+    }
+
+    /**
+     * Creates a new connection description with the given service id
+     *
+     * @param serviceId the service id
+     * @return the new connection description
+     * @since 4.3
+     */
+    public ConnectionDescription withServiceId(final ObjectId serviceId) {
+        notNull("serviceId", serviceId);
+        return new ConnectionDescription(serviceId, connectionId, maxWireVersion, serverType, maxBatchCount, maxDocumentSize,
+                maxMessageSize, compressors, saslSupportedMechanisms, logicalSessionTimeoutMinutes);
     }
 
     /**
@@ -129,6 +203,17 @@ public class ConnectionDescription {
      */
     public ConnectionId getConnectionId() {
         return connectionId;
+    }
+
+    /**
+     * Gets the id of the service this connection is to
+     *
+     * @return the service id, which may be null
+     * @since 4.3
+     */
+    @Nullable
+    public ObjectId getServiceId() {
+        return serviceId;
     }
 
     /**
@@ -192,10 +277,22 @@ public class ConnectionDescription {
      * @return the supported SASL mechanisms.
      * @since 4.1
      */
+    @Nullable
     public BsonArray getSaslSupportedMechanisms() {
         return saslSupportedMechanisms;
     }
 
+    /**
+     * Gets the session timeout in minutes.
+     *
+     * @return the session timeout in minutes, or null if sessions are not supported by this connection
+     * @mongodb.server.release 3.6
+     * @since 4.10
+     */
+    @Nullable
+    public Integer getLogicalSessionTimeoutMinutes() {
+        return logicalSessionTimeoutMinutes;
+    }
     /**
      * Get the default maximum message size.
      *
@@ -226,6 +323,9 @@ public class ConnectionDescription {
 
         ConnectionDescription that = (ConnectionDescription) o;
 
+        if (maxWireVersion != that.maxWireVersion) {
+            return false;
+        }
         if (maxBatchCount != that.maxBatchCount) {
             return false;
         }
@@ -235,31 +335,36 @@ public class ConnectionDescription {
         if (maxMessageSize != that.maxMessageSize) {
             return false;
         }
+        if (!Objects.equals(serviceId, that.serviceId)) {
+            return false;
+        }
         if (!connectionId.equals(that.connectionId)) {
             return false;
         }
         if (serverType != that.serverType) {
             return false;
         }
-        if (maxWireVersion != that.maxWireVersion) {
-            return false;
-        }
         if (!compressors.equals(that.compressors)) {
             return false;
         }
-
-        return true;
+        if (!Objects.equals(logicalSessionTimeoutMinutes, that.logicalSessionTimeoutMinutes)) {
+            return false;
+        }
+        return Objects.equals(saslSupportedMechanisms, that.saslSupportedMechanisms);
     }
 
     @Override
     public int hashCode() {
         int result = connectionId.hashCode();
-        result = 31 * result + maxBatchCount;
+        result = 31 * result + maxWireVersion;
         result = 31 * result + serverType.hashCode();
         result = 31 * result + maxBatchCount;
         result = 31 * result + maxDocumentSize;
         result = 31 * result + maxMessageSize;
         result = 31 * result + compressors.hashCode();
+        result = 31 * result + (serviceId != null ? serviceId.hashCode() : 0);
+        result = 31 * result + (saslSupportedMechanisms != null ? saslSupportedMechanisms.hashCode() : 0);
+        result = 31 * result + (logicalSessionTimeoutMinutes != null ? logicalSessionTimeoutMinutes.hashCode() : 0);
         return result;
     }
 
@@ -273,6 +378,8 @@ public class ConnectionDescription {
                 + ", maxDocumentSize=" + maxDocumentSize
                 + ", maxMessageSize=" + maxMessageSize
                 + ", compressors=" + compressors
+                + ", logicialSessionTimeoutMinutes=" + logicalSessionTimeoutMinutes
+                + ", serviceId=" + serviceId
                 + '}';
     }
 }

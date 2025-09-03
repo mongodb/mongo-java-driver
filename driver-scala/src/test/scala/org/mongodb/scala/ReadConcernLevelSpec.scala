@@ -21,7 +21,6 @@ import java.lang.reflect.Modifier._
 import scala.util.{ Success, Try }
 
 import org.scalatest.prop.TableDrivenPropertyChecks._
-import org.scalatest.{ FlatSpec, Matchers }
 
 class ReadConcernLevelSpec extends BaseSpec {
 
@@ -32,7 +31,7 @@ class ReadConcernLevelSpec extends BaseSpec {
       .filter(f => isStatic(f.getModifiers))
       .map(_.getName)
       .toSet
-    val exclusions = Set("$VALUES", "valueOf", "values")
+    val exclusions = Set("$VALUES", "$values", "valueOf", "values")
 
     val wrapped = (wrappedFields ++ wrappedMethods) -- exclusions
     val local = ReadConcernLevel.getClass.getDeclaredMethods.map(_.getName).toSet -- Set(

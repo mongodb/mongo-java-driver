@@ -25,23 +25,17 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.WriteConcern;
-import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
-import com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
-import org.bson.BsonInt32;
-import org.bson.BsonInt64;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
-import static com.mongodb.assertions.Assertions.isTrueArgument;
-import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.CommandOperationHelper.RETRYABLE_WRITE_ERROR_LABEL;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -49,82 +43,25 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 /**
  * An operation that commits a transaction.
  *
- * @since 3.8
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class CommitTransactionOperation extends TransactionOperation {
+    private static final String COMMAND_NAME = "commitTransaction";
     private final boolean alreadyCommitted;
     private BsonDocument recoveryToken;
-    private Long maxCommitTimeMS;
 
-    /**
-     * Construct an instance.
-     *
-     * @param writeConcern the write concern
-     */
     public CommitTransactionOperation(final WriteConcern writeConcern) {
         this(writeConcern, false);
     }
 
-    /**
-     * Construct an instance.
-     *
-     * @param writeConcern the write concern
-     * @param alreadyCommitted if the transaction has already been committed.
-     * @since 3.11
-     */
     public CommitTransactionOperation(final WriteConcern writeConcern, final boolean alreadyCommitted) {
         super(writeConcern);
         this.alreadyCommitted = alreadyCommitted;
     }
 
-    /**
-     * Set the recovery token.
-     *
-     * @param recoveryToken the recovery token
-     * @return the CommitTransactionOperation
-     * @since 3.11
-     */
-    public CommitTransactionOperation recoveryToken(final BsonDocument recoveryToken) {
+    public CommitTransactionOperation recoveryToken(@Nullable final BsonDocument recoveryToken) {
         this.recoveryToken = recoveryToken;
         return this;
-    }
-
-    /**
-     * Sets the maximum execution time on the server for the commitTransaction operation.
-     *
-     * @param maxCommitTime  the max commit time, which must be either null or greater than zero, in the given time unit
-     * @param timeUnit the time unit, which may not be null
-     * @return this
-     * @since 3.11
-     * @mongodb.server.release 4.2
-     */
-    public CommitTransactionOperation maxCommitTime(@Nullable final Long maxCommitTime, final TimeUnit timeUnit) {
-        if (maxCommitTime == null) {
-            this.maxCommitTimeMS = null;
-        } else {
-            notNull("timeUnit", timeUnit);
-            isTrueArgument("maxCommitTime > 0", maxCommitTime > 0);
-            this.maxCommitTimeMS = MILLISECONDS.convert(maxCommitTime, timeUnit);
-        }
-        return this;
-    }
-
-    /**
-     * Gets the maximum amount of time to allow a single commitTransaction command to execute.  The default is 0, which places no limit on
-     * the execution time.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum execution time in the given time unit
-     * @since 3.11
-     * @mongodb.server.release 4.2
-     */
-    @Nullable
-    public Long getMaxCommitTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        if (maxCommitTimeMS == null) {
-            return null;
-        }
-        return timeUnit.convert(maxCommitTimeMS, MILLISECONDS);
     }
 
     @Override
@@ -139,14 +76,11 @@ public class CommitTransactionOperation extends TransactionOperation {
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        super.executeAsync(binding, new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final Throwable t) {
-                 if (t instanceof MongoException) {
-                     addErrorLabels((MongoException) t);
-                 }
-                 callback.onResult(result, t);
-            }
+        super.executeAsync(binding, (result, t) -> {
+             if (t instanceof MongoException) {
+                 addErrorLabels((MongoException) t);
+             }
+             callback.onResult(result, t);
         });
     }
 
@@ -177,61 +111,43 @@ public class CommitTransactionOperation extends TransactionOperation {
         return false;
     }
 
-
     @Override
-    protected String getCommandName() {
-        return "commitTransaction";
+    public String getCommandName() {
+        return COMMAND_NAME;
     }
 
     @Override
     CommandCreator getCommandCreator() {
-        final CommandCreator creator = new CommandCreator() {
-            @Override
-            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                BsonDocument command = CommitTransactionOperation.super.getCommandCreator().create(serverDescription,
-                        connectionDescription);
-                if (maxCommitTimeMS != null) {
-                    command.append("maxTimeMS",
-                            maxCommitTimeMS > Integer.MAX_VALUE
-                            ? new BsonInt64(maxCommitTimeMS) : new BsonInt32(maxCommitTimeMS.intValue()));
-                }
-                return command;
-            }
+        CommandCreator creator = (operationContext, serverDescription, connectionDescription) -> {
+            BsonDocument command = CommitTransactionOperation.super.getCommandCreator()
+                    .create(operationContext, serverDescription, connectionDescription);
+            operationContext.getTimeoutContext().setMaxTimeOverrideToMaxCommitTime();
+            return command;
         };
         if (alreadyCommitted) {
-            return new CommandCreator() {
-                @Override
-                public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                    return getRetryCommandModifier().apply(creator.create(serverDescription, connectionDescription));
-                }
-            };
+            return (operationContext, serverDescription, connectionDescription) ->
+                    getRetryCommandModifier(operationContext.getTimeoutContext())
+                            .apply(creator.create(operationContext, serverDescription, connectionDescription));
         } else if (recoveryToken != null) {
-                return new CommandCreator() {
-                    @Override
-                    public BsonDocument create(final ServerDescription serverDescription,
-                                               final ConnectionDescription connectionDescription) {
-                        return creator.create(serverDescription, connectionDescription).append("recoveryToken", recoveryToken);
-                    }
-                };
+                return (operationContext, serverDescription, connectionDescription) ->
+                        creator.create(operationContext, serverDescription, connectionDescription)
+                                .append("recoveryToken", recoveryToken);
         }
         return creator;
     }
 
     @Override
-    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier() {
-        return new Function<BsonDocument, BsonDocument>() {
-            @Override
-            public BsonDocument apply(final BsonDocument command) {
-                WriteConcern retryWriteConcern = getWriteConcern().withW("majority");
-                if (retryWriteConcern.getWTimeout(TimeUnit.MILLISECONDS) == null) {
-                    retryWriteConcern = retryWriteConcern.withWTimeout(10000, TimeUnit.MILLISECONDS);
-                }
-                command.put("writeConcern", retryWriteConcern.asDocument());
-                if (recoveryToken != null) {
-                    command.put("recoveryToken", recoveryToken);
-                }
-                return command;
+    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier(final TimeoutContext timeoutContext) {
+        return command -> {
+            WriteConcern retryWriteConcern = getWriteConcern().withW("majority");
+            if (retryWriteConcern.getWTimeout(MILLISECONDS) == null && !timeoutContext.hasTimeoutMS()) {
+                retryWriteConcern = retryWriteConcern.withWTimeout(10000, MILLISECONDS);
             }
+            command.put("writeConcern", retryWriteConcern.asDocument());
+            if (recoveryToken != null) {
+                command.put("recoveryToken", recoveryToken);
+            }
+            return command;
         };
     }
 }

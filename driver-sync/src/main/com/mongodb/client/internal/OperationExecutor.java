@@ -19,6 +19,7 @@ package com.mongodb.client.internal;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
@@ -26,27 +27,27 @@ import com.mongodb.lang.Nullable;
 /**
  * An interface describing the execution of a read or a write operation.
  *
- * This class is not part of the public API and may be removed or changed at any time.
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 @SuppressWarnings("overloads")
 public interface OperationExecutor {
     /**
      * Execute the read operation with the given read preference.
      *
-     * @param <T> the operations result type.
-     * @param operation the read operation.
+     * @param <T>            the operations result type.
+     * @param operation      the read operation.
      * @param readPreference the read preference.
-     * @param readConcern the read concern
+     * @param readConcern    the read concern
      * @return the result of executing the operation.
      */
-    <T> T execute(ReadOperation<T> operation, ReadPreference readPreference, ReadConcern readConcern);
+    <T> T execute(ReadOperation<T, ?> operation, ReadPreference readPreference, ReadConcern readConcern);
 
     /**
      * Execute the write operation.
      *
-     * @param operation the write operation.
+     * @param <T>         the operations result type.
+     * @param operation   the write operation.
      * @param readConcern the read concern
-     * @param <T> the operations result type.
      * @return the result of executing the operation.
      */
     <T> T execute(WriteOperation<T> operation, ReadConcern readConcern);
@@ -54,23 +55,40 @@ public interface OperationExecutor {
     /**
      * Execute the read operation with the given read preference.
      *
-     * @param <T> the operations result type.
-     * @param operation the read operation.
+     * @param <T>            the operations result type.
+     * @param operation      the read operation.
      * @param readPreference the read preference.
-     * @param readConcern the read concern
-     * @param session the session to associate this operation with
+     * @param readConcern    the read concern
+     * @param session        the session to associate this operation with
      * @return the result of executing the operation.
      */
-    <T> T execute(ReadOperation<T> operation, ReadPreference readPreference, ReadConcern readConcern, @Nullable ClientSession session);
+    <T> T execute(ReadOperation<T, ?> operation, ReadPreference readPreference, ReadConcern readConcern, @Nullable ClientSession session);
 
     /**
      * Execute the write operation.
      *
-     * @param operation the write operation.
+     * @param <T>         the operations result type.
+     * @param operation   the write operation.
      * @param readConcern the read concern
-     * @param session the session to associate this operation with
-     * @param <T> the operations result type.
+     * @param session     the session to associate this operation with
      * @return the result of executing the operation.
      */
     <T> T execute(WriteOperation<T> operation, ReadConcern readConcern, @Nullable ClientSession session);
+
+    /**
+     * Create a new OperationExecutor with a specific timeout settings
+     *
+     * @param timeoutSettings the TimeoutContext to use for the operations
+     * @return the new operation executor with the set timeout context
+     * @since 5.2
+     */
+    OperationExecutor withTimeoutSettings(TimeoutSettings timeoutSettings);
+
+    /**
+     * Returns the current timeout settings
+     *
+     * @return the timeout settings
+     * @since 5.2
+     */
+    TimeoutSettings getTimeoutSettings();
 }

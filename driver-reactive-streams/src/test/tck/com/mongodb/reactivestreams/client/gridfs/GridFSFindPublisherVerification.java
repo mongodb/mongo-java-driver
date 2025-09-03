@@ -21,6 +21,7 @@ import com.mongodb.reactivestreams.client.MongoFixture;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.tck.PublisherVerification;
 import org.reactivestreams.tck.TestEnvironment;
+import reactor.core.publisher.Flux;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -28,7 +29,6 @@ import java.util.Collections;
 import static com.mongodb.reactivestreams.client.MongoFixture.DEFAULT_TIMEOUT_MILLIS;
 import static com.mongodb.reactivestreams.client.MongoFixture.PUBLISHER_REFERENCE_CLEANUP_TIMEOUT_MILLIS;
 import static com.mongodb.reactivestreams.client.MongoFixture.run;
-import static com.mongodb.reactivestreams.client.internal.Publishers.publishAndFlatten;
 
 public class GridFSFindPublisherVerification extends PublisherVerification<GridFSFile> {
 
@@ -45,7 +45,7 @@ public class GridFSFindPublisherVerification extends PublisherVerification<GridF
 
         for (long i = 0; i < elements; i++) {
             run(GridFSBuckets.create(MongoFixture.getDefaultDatabase()).uploadFromPublisher("test" + i,
-                    publishAndFlatten(callback -> callback.onResult(Collections.singletonList(ByteBuffer.wrap("test".getBytes())), null))));
+                    Flux.fromIterable(Collections.singletonList(ByteBuffer.wrap("test".getBytes())))));
         }
 
         return bucket.find();

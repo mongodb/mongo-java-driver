@@ -16,8 +16,9 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.connection.BufferProvider;
-import com.mongodb.internal.connection.ConcurrentPool.Prune;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.thread.DaemonThreadFactory;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
 
@@ -26,20 +27,48 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Power-of-two buffer pool implementation.
- *
- * <p>This class should not be considered a part of the public API.</p>
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class PowerOfTwoBufferPool implements BufferProvider {
+    private static final Logger LOGGER = Loggers.getLogger("connection");
 
-    private final Map<Integer, ConcurrentPool<ByteBuffer>> powerOfTwoToPoolMap = new HashMap<Integer, ConcurrentPool<ByteBuffer>>();
+    /**
+     * The global default pool.  Pruning is enabled on this pool. Idle buffers are pruned after one minute.
+     */
+    public static final PowerOfTwoBufferPool DEFAULT = new PowerOfTwoBufferPool().enablePruning();
+
+    private static final class IdleTrackingByteBuffer {
+        private final long lastUsedNanos;
+        private final ByteBuffer buffer;
+
+        private IdleTrackingByteBuffer(final ByteBuffer buffer) {
+            this.lastUsedNanos = System.nanoTime();
+            this.buffer = buffer;
+        }
+
+        public long getLastUsedNanos() {
+            return lastUsedNanos;
+        }
+
+        public ByteBuffer getBuffer() {
+            return buffer;
+        }
+    }
+
+    private final Map<Integer, BufferPool> powerOfTwoToPoolMap = new HashMap<>();
+    private final long maxIdleTimeNanos;
+    private final ScheduledExecutorService pruner;
 
     /**
      * Construct an instance with a highest power of two of 24.
      */
-    public PowerOfTwoBufferPool() {
+    PowerOfTwoBufferPool() {
         this(24);
     }
 
@@ -48,28 +77,38 @@ public class PowerOfTwoBufferPool implements BufferProvider {
      *
      * @param highestPowerOfTwo the highest power of two buffer size that will be pooled
      */
-    public PowerOfTwoBufferPool(final int highestPowerOfTwo) {
+    PowerOfTwoBufferPool(final int highestPowerOfTwo) {
+        this(highestPowerOfTwo, 1, TimeUnit.MINUTES);
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param highestPowerOfTwo the highest power of two buffer size that will be pooled
+     * @param maxIdleTime max idle time when pruning is enabled
+     * @param timeUnit time unit of maxIdleTime
+     */
+    PowerOfTwoBufferPool(final int highestPowerOfTwo, final long maxIdleTime, final TimeUnit timeUnit) {
         int powerOfTwo = 1;
         for (int i = 0; i <= highestPowerOfTwo; i++) {
-            final int size = powerOfTwo;
-            powerOfTwoToPoolMap.put(i, new ConcurrentPool<ByteBuffer>(Integer.MAX_VALUE,
-                                                                         new ConcurrentPool.ItemFactory<ByteBuffer>() {
-                                                                             @Override
-                                                                             public ByteBuffer create(final boolean initialize) {
-                                                                                 return createNew(size);
-                                                                             }
-
-                                                                             @Override
-                                                                             public void close(final ByteBuffer byteBuffer) {
-                                                                             }
-
-                                                                             @Override
-                                                                             public Prune shouldPrune(final ByteBuffer byteBuffer) {
-                                                                                 return Prune.STOP;
-                                                                             }
-                                                                         }));
+            int size = powerOfTwo;
+            powerOfTwoToPoolMap.put(i, new BufferPool(size));
             powerOfTwo = powerOfTwo << 1;
         }
+        maxIdleTimeNanos = timeUnit.toNanos(maxIdleTime);
+        pruner = Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory("BufferPoolPruner"));
+    }
+
+    /**
+     * Call this method at most once to enable a background thread that prunes idle buffers from the pool
+     */
+    PowerOfTwoBufferPool enablePruning() {
+        pruner.scheduleAtFixedRate(this::prune, maxIdleTimeNanos, maxIdleTimeNanos / 2, TimeUnit.NANOSECONDS);
+        return this;
+    }
+
+    void disablePruning() {
+        pruner.shutdownNow();
     }
 
     @Override
@@ -78,8 +117,8 @@ public class PowerOfTwoBufferPool implements BufferProvider {
     }
 
     public ByteBuffer getByteBuffer(final int size) {
-        ConcurrentPool<ByteBuffer> pool = powerOfTwoToPoolMap.get(log2(roundUpToNextHighestPowerOfTwo(size)));
-        ByteBuffer byteBuffer = (pool == null) ? createNew(size) : pool.get();
+        BufferPool pool = powerOfTwoToPoolMap.get(log2(roundUpToNextHighestPowerOfTwo(size)));
+        ByteBuffer byteBuffer = (pool == null) ? createNew(size) : pool.get().getBuffer();
 
         ((Buffer) byteBuffer).clear();
         ((Buffer) byteBuffer).limit(size);
@@ -87,15 +126,25 @@ public class PowerOfTwoBufferPool implements BufferProvider {
     }
 
     private ByteBuffer createNew(final int size) {
-        ByteBuffer buf = ByteBuffer.allocate(size);  // TODO: configure whether this uses allocateDirect or allocate
+        ByteBuffer buf = ByteBuffer.allocate(size);
         buf.order(ByteOrder.LITTLE_ENDIAN);
         return buf;
     }
 
     public void release(final ByteBuffer buffer) {
-        ConcurrentPool<ByteBuffer> pool = powerOfTwoToPoolMap.get(log2(roundUpToNextHighestPowerOfTwo(buffer.capacity())));
+        BufferPool pool =
+                powerOfTwoToPoolMap.get(log2(roundUpToNextHighestPowerOfTwo(buffer.capacity())));
         if (pool != null) {
-            pool.release(buffer);
+            pool.release(new IdleTrackingByteBuffer(buffer));
+        }
+    }
+
+    private void prune() {
+        try {
+            powerOfTwoToPoolMap.values().forEach(BufferPool::prune);
+        } catch (Throwable t) {
+            LOGGER.error(this + " stopped pruning idle buffer pools. You may want to recreate the MongoClient", t);
+            throw t;
         }
     }
 
@@ -128,6 +177,32 @@ public class PowerOfTwoBufferPool implements BufferProvider {
             if (getReferenceCount() == 0) {
                 PowerOfTwoBufferPool.this.release(wrapped);
             }
+        }
+    }
+
+    private final class BufferPool {
+        private final int bufferSize;
+        private final ConcurrentLinkedDeque<IdleTrackingByteBuffer> available = new ConcurrentLinkedDeque<>();
+
+        BufferPool(final int bufferSize) {
+            this.bufferSize = bufferSize;
+        }
+
+        IdleTrackingByteBuffer get() {
+            IdleTrackingByteBuffer buffer = available.pollLast();
+            if (buffer != null) {
+                return buffer;
+            }
+            return new IdleTrackingByteBuffer(createNew(bufferSize));
+        }
+
+        void release(final IdleTrackingByteBuffer t) {
+            available.addLast(t);
+        }
+
+        void prune() {
+            long now = System.nanoTime();
+            available.removeIf(cur -> now - cur.getLastUsedNanos() >= maxIdleTimeNanos);
         }
     }
 }

@@ -47,6 +47,10 @@ import java.lang.annotation.Target;
         ElementType.PACKAGE,
         ElementType.TYPE })
 @Documented
-@Beta
+@Beta(Reason.CLIENT)
 public @interface Beta {
+    /**
+     * @return The reason an API element is marked with {@link Beta}.
+     */
+    Reason[] value();
 }

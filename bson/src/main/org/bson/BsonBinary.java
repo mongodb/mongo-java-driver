@@ -18,9 +18,12 @@ package org.bson;
 
 import org.bson.assertions.Assertions;
 import org.bson.internal.UuidHelper;
+import org.bson.internal.vector.BinaryVectorHelper;
 
 import java.util.Arrays;
 import java.util.UUID;
+
+import static org.bson.internal.vector.BinaryVectorHelper.encodeVectorToBinary;
 
 /**
  * A representation of the BSON Binary type.  Note that for performance reasons instances of this class are not immutable,
@@ -90,6 +93,20 @@ public class BsonBinary extends BsonValue {
     }
 
     /**
+     * Constructs a {@linkplain BsonBinarySubType#VECTOR subtype 9} {@link BsonBinary} from the given {@link BinaryVector}.
+     *
+     * @param vector the {@link BinaryVector}
+     * @since 5.3
+     */
+    public BsonBinary(final BinaryVector vector) {
+        if (vector == null) {
+            throw new IllegalArgumentException("Vector must not be null");
+        }
+        this.data = encodeVectorToBinary(vector);
+        type = BsonBinarySubType.VECTOR.getValue();
+    }
+
+    /**
      * Construct a new instance from the given UUID and UuidRepresentation
      *
      * @param uuid the UUID
@@ -128,6 +145,21 @@ public class BsonBinary extends BsonValue {
     }
 
     /**
+     * Returns the binary as a {@link BinaryVector}. The {@linkplain #getType() subtype} must be {@linkplain BsonBinarySubType#VECTOR 9}.
+     *
+     * @return the vector
+     * @throws BsonInvalidOperationException if the binary subtype is not {@link BsonBinarySubType#VECTOR}.
+     * @since 5.3
+     */
+    public BinaryVector asVector() {
+        if (type != BsonBinarySubType.VECTOR.getValue()) {
+            throw new BsonInvalidOperationException("type must be a Vector subtype.");
+        }
+
+        return BinaryVectorHelper.decodeBinaryToVector(this.data);
+    }
+
+    /**
      * Returns the binary as a UUID.
      *
      * @param uuidRepresentation the UUID representation
@@ -137,7 +169,7 @@ public class BsonBinary extends BsonValue {
     public UUID asUuid(final UuidRepresentation uuidRepresentation) {
         Assertions.notNull("uuidRepresentation", uuidRepresentation);
 
-        final byte uuidType = uuidRepresentation == UuidRepresentation.STANDARD
+        byte uuidType = uuidRepresentation == UuidRepresentation.STANDARD
                 ? BsonBinarySubType.UUID_STANDARD.getValue()
                 : BsonBinarySubType.UUID_LEGACY.getValue();
 
@@ -164,7 +196,7 @@ public class BsonBinary extends BsonValue {
 
     /**
      * Gets the data of this Binary.
-     *
+     * <p>
      * This method returns the internal copy of the byte array, so only modify the contents of the returned array if the intention is to
      * change the state of this instance.
      *
@@ -197,7 +229,7 @@ public class BsonBinary extends BsonValue {
 
     @Override
     public int hashCode() {
-        int result = (int) type;
+        int result = type;
         result = 31 * result + Arrays.hashCode(data);
         return result;
     }

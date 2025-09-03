@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
@@ -24,17 +25,28 @@ import org.bson.BsonDocument;
  * <p>
  * An application should ensure that a cursor is closed in all circumstances, e.g. using a try-with-resources statement:
  * </p>
- * <blockquote><pre>
- * try (MongoChangeStreamCursor&lt;Document&gt; cursor = collection.find().cursor()) {
+ * <pre>{@code
+ * try (MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch().cursor()) {
  *     while (cursor.hasNext()) {
  *         System.out.println(cursor.next());
  *     }
  * }
- * </pre></blockquote>
+ * }</pre>
+ *
+ *
+ * <p>
+ * A {@link com.mongodb.MongoOperationTimeoutException} does not invalidate the {@link MongoChangeStreamCursor}, but is immediately
+ * propagated to the caller. Subsequent method call will attempt to resume operation by establishing a new change stream on the server,
+ * without doing {@code getMore} request first. </p>
+ * <p>
+ * If a {@link com.mongodb.MongoOperationTimeoutException} occurs before any events are received, it indicates that the server
+ * has timed out before it could finish processing the existing oplog. In such cases, it is recommended to close the current stream
+ * and recreate it with a higher timeout setting.
  *
  * @since 3.11
  * @param <TResult> The type of documents the cursor contains
  */
+@NotThreadSafe
 public interface MongoChangeStreamCursor<TResult> extends MongoCursor<TResult> {
     /**
      * Returns the resume token. If a batch has been iterated to the last change stream document in the batch

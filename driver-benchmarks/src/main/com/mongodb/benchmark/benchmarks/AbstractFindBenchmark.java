@@ -32,21 +32,15 @@ import java.util.List;
 public abstract class AbstractFindBenchmark<T> extends AbstractMongoBenchmark {
     protected MongoCollection<T> collection;
 
-    private final String name;
     private final String resourcePath;
     private final Class<T> clazz;
 
     private int fileLength;
 
     public AbstractFindBenchmark(final String name, final String resourcePath, final Class<T> clazz) {
-        this.name = name;
+        super(name);
         this.resourcePath = resourcePath;
         this.clazz = clazz;
-    }
-
-    @Override
-    public String getName() {
-        return name;
     }
 
     public void setUp() throws Exception {
@@ -72,7 +66,7 @@ public abstract class AbstractFindBenchmark<T> extends AbstractMongoBenchmark {
 
     private void insertCopiesOfDocument(final MongoCollection<BsonDocument> collection,
                                         final BsonDocument document) {
-        List<BsonDocument> documents = new ArrayList<BsonDocument>(NUM_INTERNAL_ITERATIONS);
+        List<BsonDocument> documents = new ArrayList<>(NUM_INTERNAL_ITERATIONS);
         for (int i = 0; i < NUM_INTERNAL_ITERATIONS; i++) {
             BsonDocument copy = document.clone();
             copy.put("_id", new BsonInt32(i));

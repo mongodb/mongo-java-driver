@@ -17,6 +17,7 @@
 package org.bson.codecs.pojo;
 
 import org.bson.BsonDocument;
+import org.bson.codecs.SimpleEnum;
 import org.bson.codecs.pojo.entities.AbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.CollectionNestedPojoModel;
 import org.bson.codecs.pojo.entities.CollectionSpecificReturnTypeCreatorModel;
@@ -27,6 +28,7 @@ import org.bson.codecs.pojo.entities.ConcreteInterfaceGenericModel;
 import org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ContainsAlternativeMapAndCollectionModel;
 import org.bson.codecs.pojo.entities.ConventionModel;
+import org.bson.codecs.pojo.entities.DuplicateAnnotationAllowedModel;
 import org.bson.codecs.pojo.entities.FieldAndPropertyTypeMismatchModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.GenericTreeModel;
@@ -65,19 +67,22 @@ import org.bson.codecs.pojo.entities.ShapeHolderModel;
 import org.bson.codecs.pojo.entities.ShapeModelAbstract;
 import org.bson.codecs.pojo.entities.ShapeModelCircle;
 import org.bson.codecs.pojo.entities.ShapeModelRectangle;
-import org.bson.codecs.pojo.entities.SimpleEnum;
 import org.bson.codecs.pojo.entities.SimpleEnumModel;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleIdImmutableModel;
 import org.bson.codecs.pojo.entities.SimpleIdModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
+import org.bson.codecs.pojo.entities.SimpleWithStaticModel;
 import org.bson.codecs.pojo.entities.TreeWithIdModel;
 import org.bson.codecs.pojo.entities.UpperBoundsConcreteModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationBsonPropertyIdModel;
+import org.bson.codecs.pojo.entities.conventions.BsonExtraElementsMapModel;
+import org.bson.codecs.pojo.entities.conventions.BsonExtraElementsModel;
 import org.bson.codecs.pojo.entities.conventions.BsonIgnoreDuplicatePropertyMultipleTypes;
 import org.bson.codecs.pojo.entities.conventions.BsonIgnoreInvalidMapModel;
 import org.bson.codecs.pojo.entities.conventions.BsonIgnoreSyntheticProperty;
+import org.bson.codecs.pojo.entities.conventions.BsonRepresentationModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionDiscriminatorAbstractClassesModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionDiscriminatorInterfacesModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorAllFinalFieldsModel;
@@ -90,7 +95,6 @@ import org.bson.codecs.pojo.entities.conventions.CreatorInSuperClassModelImpl;
 import org.bson.codecs.pojo.entities.conventions.CreatorMethodModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorNoArgsConstructorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorNoArgsMethodModel;
-import org.bson.codecs.pojo.entities.DuplicateAnnotationAllowedModel;
 import org.bson.codecs.pojo.entities.conventions.InterfaceModel;
 import org.bson.codecs.pojo.entities.conventions.InterfaceModelImplA;
 import org.bson.codecs.pojo.entities.conventions.InterfaceModelImplB;
@@ -98,44 +102,36 @@ import org.bson.codecs.pojo.entities.conventions.Subclass1Model;
 import org.bson.codecs.pojo.entities.conventions.Subclass2Model;
 import org.bson.codecs.pojo.entities.conventions.SuperClassModel;
 import org.bson.types.ObjectId;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
-@RunWith(Parameterized.class)
 public final class PojoRoundTripTest extends PojoTestCase {
 
-    private final String name;
-    private final Object model;
-    private final PojoCodecProvider.Builder builder;
-    private final String json;
-
-    public PojoRoundTripTest(final String name, final Object model, final String json, final PojoCodecProvider.Builder builder) {
-        this.name = name;
-        this.model = model;
-        this.json = json;
-        this.builder = builder;
-    }
-
-    @Test
-    public void test() {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("data")
+    public void test(final String name, final Object model, final String json, final PojoCodecProvider.Builder builder) {
         roundTrip(builder, model, json);
+        threadedRoundTrip(builder, model, json);
     }
 
     private static List<TestData> testCases() {
-        List<TestData> data = new ArrayList<TestData>();
+        List<TestData> data = new ArrayList<>();
         data.add(new TestData("Simple model", getSimpleModel(), PojoCodecProvider.builder().register(SimpleModel.class),
+                SIMPLE_MODEL_JSON));
+
+        data.add(new TestData("Simple model with statics", new SimpleWithStaticModel(42, "myString"),
+                PojoCodecProvider.builder().register(SimpleWithStaticModel.class),
                 SIMPLE_MODEL_JSON));
 
         data.add(new TestData("Property selection model", new PropertySelectionModel(),
@@ -198,12 +194,12 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 "{'collection': [1, null, 3], 'list': [4, null, 6], 'linked': [null, 8, 9], 'map': {'A': 1.1, 'B': null, 'C': 3.3}}"));
 
         data.add(new TestData("Concrete specific return collection type model through BsonCreator",
-                new CollectionSpecificReturnTypeCreatorModel(Arrays.asList("foo", "bar")),
+                new CollectionSpecificReturnTypeCreatorModel(asList("foo", "bar")),
                 getPojoCodecProviderBuilder(CollectionSpecificReturnTypeCreatorModel.class),
                 "{'properties': ['foo', 'bar']}"));
 
         data.add(new TestData("Concrete specific return collection type model through getter and setter",
-                new CollectionSpecificReturnTypeModel(Arrays.asList("foo", "bar")),
+                new CollectionSpecificReturnTypeModel(asList("foo", "bar")),
                 getPojoCodecProviderBuilder(CollectionSpecificReturnTypeModel.class),
                 "{'properties': ['foo', 'bar']}"));
 
@@ -222,6 +218,7 @@ public final class PojoRoundTripTest extends PojoTestCase {
                         + "'listListSimple': [[" + SIMPLE_MODEL_JSON + "]],"
                         + "'setSimple': [" + SIMPLE_MODEL_JSON + "],"
                         + "'setSetSimple': [[" + SIMPLE_MODEL_JSON + "]],"
+                        + "'sortedSetSimple': [" + SIMPLE_MODEL_JSON + "],"
                         + "'mapSimple': {'s': " + SIMPLE_MODEL_JSON + "},"
                         + "'mapMapSimple': {'ms': {'s': " + SIMPLE_MODEL_JSON + "}},"
                         + "'mapListSimple': {'ls': [" + SIMPLE_MODEL_JSON + "]},"
@@ -277,7 +274,7 @@ public final class PojoRoundTripTest extends PojoTestCase {
                         + "'right': {'field1': 'right', 'field2': 4, 'left': {'field1': 'left', 'field2': 5}}}}"));
 
         data.add(new TestData("Nested multiple level",
-                new NestedMultipleLevelGenericModel(42, new MultipleLevelGenericModel<String>("string", getGenericTreeModel())),
+                new NestedMultipleLevelGenericModel(42, new MultipleLevelGenericModel<>("string", getGenericTreeModel())),
                 getPojoCodecProviderBuilder(NestedMultipleLevelGenericModel.class, MultipleLevelGenericModel.class, GenericTreeModel.class),
                 "{'intField': 42, 'nested': {'stringField': 'string', 'nested': {'field1': 'top', 'field2': 1, "
                         + "'left': {'field1': 'left', 'field2': 2, 'left': {'field1': 'left', 'field2': 3}}, "
@@ -292,7 +289,7 @@ public final class PojoRoundTripTest extends PojoTestCase {
                         + "         'myLongField': {'$numberLong': '42' }}}"));
 
         data.add(new TestData("Nested property reusing type parameter",
-                new NestedFieldReusingClassTypeParameter(new PropertyReusingClassTypeParameter<String>(getGenericTreeModelStrings())),
+                new NestedFieldReusingClassTypeParameter(new PropertyReusingClassTypeParameter<>(getGenericTreeModelStrings())),
                 getPojoCodecProviderBuilder(NestedFieldReusingClassTypeParameter.class, PropertyReusingClassTypeParameter.class,
                         GenericTreeModel.class),
                 "{'nested': {'tree': {'field1': 'top', 'field2': '1', "
@@ -383,7 +380,7 @@ public final class PojoRoundTripTest extends PojoTestCase {
         data.add(new TestData("Collection of discriminators interfaces", new CollectionDiscriminatorInterfacesModel().setList(
                 asList(new InterfaceModelImplA().setName("abc").setValue(true),
                        new InterfaceModelImplB().setInteger(234).setValue(false))).setMap(
-                Collections.<String, InterfaceModel>singletonMap("key", new InterfaceModelImplB().setInteger(123).setValue(true))),
+                Collections.singletonMap("key", new InterfaceModelImplB().setInteger(123).setValue(true))),
                 getPojoCodecProviderBuilder(CollectionDiscriminatorInterfacesModel.class, InterfaceModelImplA.class,
                         InterfaceModelImplB.class, InterfaceModel.class),
                 "{list: [{_t: 'org.bson.codecs.pojo.entities.conventions.InterfaceModelImplA', value: true, name: 'abc'},"
@@ -507,20 +504,40 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 getPojoCodecProviderBuilder(MapListGenericExtendedModel.class),
                 "{values: {a: [1, 2, 3], b: [4, 5, 6]}}"));
 
+        data.add(new TestData("BsonRepresentation is encoded and decoded correctly", new BsonRepresentationModel(1),
+                getPojoCodecProviderBuilder(BsonRepresentationModel.class),
+                "{'_id': {'$oid': '111111111111111111111111'}, 'age': 1}"));
+
+        data.add(new TestData("BsonExtraElements with no extra data",
+                new BsonExtraElementsModel(42, "myString", null),
+                getPojoCodecProviderBuilder(BsonExtraElementsModel.class),
+                "{'integerField': 42, 'stringField': 'myString'}"));
+
+        data.add(new TestData("BsonExtraElements are encoded and decoded correctly",
+                new BsonExtraElementsModel(42, "myString", BsonDocument.parse("{a: 1, b: 2, c: [1, 2, {a: 1}]}")),
+                getPojoCodecProviderBuilder(BsonExtraElementsModel.class),
+                "{'integerField': 42, 'stringField': 'myString', 'a': 1, 'b': 2,  c: [1, 2, {a: 1}]}"));
+
+        Map<String, String> stringMap = new HashMap<>();
+        stringMap.put("a", "a");
+        stringMap.put("b", "b");
+        data.add(new TestData("BsonExtraElements are encoded and decoded correctly to a Map",
+                new BsonExtraElementsMapModel(42, "myString", stringMap),
+                getPojoCodecProviderBuilder(BsonExtraElementsMapModel.class),
+                "{'integerField': 42, 'stringField': 'myString', 'a': 'a', 'b': 'b'}"));
 
         return data;
     }
 
-    @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() {
-        List<Object[]> data = new ArrayList<Object[]>();
+    public static Stream<Arguments> data() {
+        List<Arguments> data = new ArrayList<>();
 
         for (TestData testData : testCases()) {
-            data.add(new Object[]{format("%s", testData.getName()), testData.getModel(), testData.getJson(), testData.getBuilder()});
-            data.add(new Object[]{format("%s [Auto]", testData.getName()), testData.getModel(), testData.getJson(), AUTOMATIC_BUILDER});
-            data.add(new Object[]{format("%s [Package]", testData.getName()), testData.getModel(), testData.getJson(), PACKAGE_BUILDER});
+            data.add(Arguments.of(format("%s", testData.getName()), testData.getModel(), testData.getJson(), testData.getBuilder()));
+            data.add(Arguments.of(format("%s [Auto]", testData.getName()), testData.getModel(), testData.getJson(), AUTOMATIC_BUILDER));
+            data.add(Arguments.of(format("%s [Package]", testData.getName()), testData.getModel(), testData.getJson(), PACKAGE_BUILDER));
         }
-        return data;
+        return data.stream();
     }
 
     private static final PojoCodecProvider.Builder AUTOMATIC_BUILDER = PojoCodecProvider.builder().automatic(true);

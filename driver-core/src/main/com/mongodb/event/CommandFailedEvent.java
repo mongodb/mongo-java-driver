@@ -16,7 +16,9 @@
 
 package com.mongodb.event;
 
+import com.mongodb.RequestContext;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
@@ -34,15 +36,21 @@ public final class CommandFailedEvent extends CommandEvent {
 
     /**
      * Construct an instance.
-     * @param requestId the requestId
+     *
+     * @param requestContext        the request context
+     * @param operationId           the operation id
+     * @param requestId             the request id
      * @param connectionDescription the connection description
-     * @param commandName the command name
-     * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds for the operation to complete
-     * @param throwable the throwable cause of the failure
+     * @param databaseName          the database name
+     * @param commandName           the command name
+     * @param elapsedTimeNanos      the non-negative elapsed time in nanoseconds for the operation to complete
+     * @param throwable             the throwable cause of the failure
+     * @since 4.11
      */
-    public CommandFailedEvent(final int requestId, final ConnectionDescription connectionDescription, final String commandName,
-                              final long elapsedTimeNanos, final Throwable throwable) {
-        super(requestId, connectionDescription, commandName);
+    public CommandFailedEvent(@Nullable final RequestContext requestContext, final long operationId, final int requestId,
+            final ConnectionDescription connectionDescription, final String databaseName, final String commandName,
+            final long elapsedTimeNanos, final Throwable throwable) {
+        super(requestContext, operationId, requestId, connectionDescription, databaseName, commandName);
         isTrueArgument("elapsed time is not negative", elapsedTimeNanos >= 0);
         this.elapsedTimeNanos = elapsedTimeNanos;
         this.throwable = throwable;
@@ -61,7 +69,7 @@ public final class CommandFailedEvent extends CommandEvent {
     /**
      * Gets the throwable cause of the failure
      *
-     * @return the throwable cause of the failuer
+     * @return the throwable cause of the failure
      */
     public Throwable getThrowable() {
         return throwable;

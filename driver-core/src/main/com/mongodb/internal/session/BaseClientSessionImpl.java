@@ -16,36 +16,60 @@
 
 package com.mongodb.internal.session;
 
+import com.mongodb.ClientSessionOptions;
+import com.mongodb.MongoClientException;
 import com.mongodb.ServerAddress;
+import com.mongodb.TransactionOptions;
+import com.mongodb.WriteConcern;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
-import com.mongodb.ClientSessionOptions;
 import com.mongodb.session.ServerSession;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
-import static com.mongodb.assertions.Assertions.isTrue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.assertions.Assertions.isTrue;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class BaseClientSessionImpl implements ClientSession {
     private static final String CLUSTER_TIME_KEY = "clusterTime";
 
     private final ServerSessionPool serverSessionPool;
-    private final ServerSession serverSession;
+    private ServerSession serverSession;
     private final Object originator;
     private final ClientSessionOptions options;
+    private final AtomicBoolean closed = new AtomicBoolean(false);
     private BsonDocument clusterTime;
     private BsonTimestamp operationTime;
+    private BsonTimestamp snapshotTimestamp;
     private ServerAddress pinnedServerAddress;
     private BsonDocument recoveryToken;
-    private volatile boolean closed;
+    private ReferenceCounted transactionContext;
+    @Nullable
+    private TimeoutContext timeoutContext;
+
+    protected static boolean hasTimeoutMS(@Nullable final TimeoutContext timeoutContext) {
+        return timeoutContext != null && timeoutContext.hasTimeoutMS();
+    }
+
+    protected static boolean hasWTimeoutMS(@Nullable final WriteConcern writeConcern) {
+        return writeConcern != null && writeConcern.getWTimeout(TimeUnit.MILLISECONDS) != null;
+    }
 
     public BaseClientSessionImpl(final ServerSessionPool serverSessionPool, final Object originator, final ClientSessionOptions options) {
         this.serverSessionPool = serverSessionPool;
-        this.serverSession = serverSessionPool.get();
         this.originator = originator;
         this.options = options;
         this.pinnedServerAddress = null;
-        closed = false;
     }
 
     @Override
@@ -55,9 +79,25 @@ public class BaseClientSessionImpl implements ClientSession {
     }
 
     @Override
-    public void setPinnedServerAddress(@Nullable final ServerAddress address) {
-        isTrue("pinned mongos null check", address == null || pinnedServerAddress == null);
+    public Object getTransactionContext() {
+        return transactionContext;
+    }
+
+    @Override
+    public void setTransactionContext(final ServerAddress address, final Object transactionContext) {
+        assertTrue(transactionContext instanceof ReferenceCounted);
         pinnedServerAddress = address;
+        this.transactionContext = (ReferenceCounted) transactionContext;
+        this.transactionContext.retain();
+    }
+
+    @Override
+    public void clearTransactionContext() {
+        pinnedServerAddress = null;
+        if (transactionContext != null) {
+            transactionContext.release();
+            transactionContext = null;
+        }
     }
 
     @Override
@@ -78,7 +118,7 @@ public class BaseClientSessionImpl implements ClientSession {
     @Override
     public boolean isCausallyConsistent() {
         Boolean causallyConsistent = options.isCausallyConsistent();
-        return causallyConsistent == null ? true : causallyConsistent;
+        return causallyConsistent == null || causallyConsistent;
     }
 
     @Override
@@ -98,23 +138,45 @@ public class BaseClientSessionImpl implements ClientSession {
 
     @Override
     public ServerSession getServerSession() {
-        isTrue("open", !closed);
+        isTrue("open", !closed.get());
+        if (serverSession == null) {
+            serverSession = serverSessionPool.get();
+        }
         return serverSession;
     }
 
     @Override
-    public void advanceOperationTime(final BsonTimestamp newOperationTime) {
-        isTrue("open", !closed);
+    public void advanceOperationTime(@Nullable final BsonTimestamp newOperationTime) {
+        isTrue("open", !closed.get());
         this.operationTime = greaterOf(newOperationTime);
     }
 
     @Override
-    public void advanceClusterTime(final BsonDocument newClusterTime) {
-        isTrue("open", !closed);
+    public void advanceClusterTime(@Nullable final BsonDocument newClusterTime) {
+        isTrue("open", !closed.get());
         this.clusterTime = greaterOf(newClusterTime);
     }
 
-    private BsonDocument greaterOf(final BsonDocument newClusterTime) {
+    @Override
+    public void setSnapshotTimestamp(@Nullable final BsonTimestamp snapshotTimestamp) {
+        isTrue("open", !closed.get());
+        if (snapshotTimestamp != null) {
+            if (this.snapshotTimestamp != null && !snapshotTimestamp.equals(this.snapshotTimestamp)) {
+                throw new MongoClientException("Snapshot timestamps should not change during the lifetime of the session.  Current "
+                        + "timestamp is " + this.snapshotTimestamp + ", and attempting to set it to " + snapshotTimestamp);
+            }
+            this.snapshotTimestamp = snapshotTimestamp;
+        }
+    }
+
+    @Override
+    @Nullable
+    public BsonTimestamp getSnapshotTimestamp() {
+        isTrue("open", !closed.get());
+        return snapshotTimestamp;
+    }
+
+    private BsonDocument greaterOf(@Nullable final BsonDocument newClusterTime) {
         if (newClusterTime == null) {
             return clusterTime;
         } else if (clusterTime == null) {
@@ -125,7 +187,7 @@ public class BaseClientSessionImpl implements ClientSession {
         }
     }
 
-    private BsonTimestamp greaterOf(final BsonTimestamp newOperationTime) {
+    private BsonTimestamp greaterOf(@Nullable final BsonTimestamp newOperationTime) {
         if (newOperationTime == null) {
             return operationTime;
         } else if (operationTime == null) {
@@ -137,10 +199,47 @@ public class BaseClientSessionImpl implements ClientSession {
 
     @Override
     public void close() {
-        if (!closed) {
-            closed = true;
-            serverSessionPool.release(serverSession);
-            pinnedServerAddress = null;
+        // While the interface implemented by this class  is documented as not thread safe, it's still useful to provide thread safety here
+        // in order to prevent the code within the conditional from executing more than once. Doing so protects the server session pool from
+        // corruption, by preventing the same server session from being released to the pool more than once.
+        if (closed.compareAndSet(false, true)) {
+            if (serverSession != null) {
+                serverSessionPool.release(serverSession);
+            }
+            clearTransactionContext();
         }
+    }
+
+    @Override
+    @Nullable
+    public TimeoutContext getTimeoutContext() {
+        return timeoutContext;
+    }
+
+    protected void setTimeoutContext(@Nullable final TimeoutContext timeoutContext) {
+        this.timeoutContext = timeoutContext;
+    }
+
+    protected void resetTimeout() {
+        if (timeoutContext != null) {
+            timeoutContext.resetTimeoutIfPresent();
+        }
+    }
+
+    protected TimeoutSettings getTimeoutSettings(final TransactionOptions transactionOptions, final TimeoutSettings timeoutSettings) {
+        Long transactionTimeoutMS = transactionOptions.getTimeout(MILLISECONDS);
+        Long defaultTimeoutMS = getOptions().getDefaultTimeout(MILLISECONDS);
+        Long clientTimeoutMS =  timeoutSettings.getTimeoutMS();
+
+        Long timeoutMS = transactionTimeoutMS != null ? transactionTimeoutMS
+                : defaultTimeoutMS != null ? defaultTimeoutMS : clientTimeoutMS;
+
+        return timeoutSettings
+                .withMaxCommitMS(transactionOptions.getMaxCommitTime(MILLISECONDS))
+                .withTimeout(timeoutMS, MILLISECONDS);
+    }
+
+    protected enum TransactionState {
+        NONE, IN, COMMITTED, ABORTED
     }
 }

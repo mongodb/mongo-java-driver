@@ -16,26 +16,17 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
-import com.mongodb.WriteConcernResult;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.bulk.DeleteRequest;
-import com.mongodb.internal.bulk.InsertRequest;
-import com.mongodb.internal.bulk.UpdateRequest;
-import com.mongodb.internal.session.SessionContext;
+import com.mongodb.internal.async.SingleResultCallback;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 
-import java.util.List;
-
-@SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
+@SuppressWarnings({"rawtypes", "unchecked"})
 class TestConnection implements Connection, AsyncConnection {
     private final InternalConnection internalConnection;
     private final ProtocolExecutor executor;
-    private LegacyProtocol enqueuedLegacyProtocol;
     private CommandProtocol enqueuedCommandProtocol;
 
     TestConnection(final InternalConnection internalConnection, final ProtocolExecutor executor) {
@@ -54,7 +45,8 @@ class TestConnection implements Connection, AsyncConnection {
     }
 
     @Override
-    public void release() {
+    public int release() {
+        return 1;
     }
 
     @Override
@@ -63,135 +55,47 @@ class TestConnection implements Connection, AsyncConnection {
     }
 
     @Override
-    public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered,
-                                     final InsertRequest insertRequest) {
-        return executeEnqueuedLegacyProtocol();
-    }
-
-    @Override
-    public void insertAsync(final MongoNamespace namespace, final boolean ordered,
-                            final InsertRequest insertRequest, final SingleResultCallback<WriteConcernResult> callback) {
-        executeEnqueuedLegacyProtocolAsync(callback);
-    }
-
-    @Override
-    public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered,
-                                     final UpdateRequest updateRequest) {
-        return executeEnqueuedLegacyProtocol();
-    }
-
-    @Override
-    public void updateAsync(final MongoNamespace namespace, final boolean ordered,
-                            final UpdateRequest updateRequest, final SingleResultCallback<WriteConcernResult> callback) {
-        executeEnqueuedLegacyProtocolAsync(callback);
-    }
-
-    @Override
-    public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered,
-                                     final DeleteRequest deleteRequest) {
-        return executeEnqueuedLegacyProtocol();
-    }
-
-    @Override
-    public void deleteAsync(final MongoNamespace namespace, final boolean ordered,
-                            final DeleteRequest deleteRequest,
-                            final SingleResultCallback<WriteConcernResult> callback) {
-        executeEnqueuedLegacyProtocolAsync(callback);
-    }
-
-    @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-                         final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext) {
-        return executeEnqueuedCommandBasedProtocol(sessionContext);
+                         final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
+                         final OperationContext operationContext) {
+        return executeEnqueuedCommandBasedProtocol(operationContext);
     }
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                         final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
-                         final boolean responseExpected, final SplittablePayload payload,
-                         final FieldNameValidator payloadFieldNameValidator) {
-        return executeEnqueuedCommandBasedProtocol(sessionContext);
+            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final OperationContext operationContext,
+            final boolean responseExpected, final MessageSequences sequences) {
+        return executeEnqueuedCommandBasedProtocol(operationContext);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-                                 final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, final SingleResultCallback<T> callback) {
-        executeEnqueuedCommandBasedProtocolAsync(sessionContext, callback);
+            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final OperationContext operationContext,
+            final SingleResultCallback<T> callback) {
+        executeEnqueuedCommandBasedProtocolAsync(operationContext, callback);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                                 final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final SessionContext sessionContext, final boolean responseExpected, final SplittablePayload payload,
-                                 final FieldNameValidator payloadFieldNameValidator, final SingleResultCallback<T> callback) {
-        executeEnqueuedCommandBasedProtocolAsync(sessionContext, callback);
+            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final OperationContext operationContext,
+            final boolean responseExpected, final MessageSequences sequences, final SingleResultCallback<T> callback) {
+        executeEnqueuedCommandBasedProtocolAsync(operationContext, callback);
     }
 
     @Override
-    public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
-                                    final int skip, final int limit,
-                                    final int batchSize, final boolean slaveOk, final boolean tailableCursor, final boolean awaitData,
-                                    final boolean noCursorTimeout,
-                                    final boolean partial, final boolean oplogReplay, final Decoder<T> resultDecoder) {
-        return executeEnqueuedLegacyProtocol();
-    }
-
-    @Override
-    public <T> void queryAsync(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields, final int skip,
-                               final int limit,
-                               final int batchSize, final boolean slaveOk, final boolean tailableCursor, final boolean awaitData,
-                               final boolean noCursorTimeout,
-                               final boolean partial, final boolean oplogReplay, final Decoder<T> resultDecoder,
-                               final SingleResultCallback<QueryResult<T>> callback) {
-        executeEnqueuedLegacyProtocolAsync(callback);
-    }
-
-    @Override
-    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
-                                      final Decoder<T> resultDecoder) {
-        return executeEnqueuedLegacyProtocol();
-    }
-
-    @Override
-    public <T> void getMoreAsync(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
-                                 final Decoder<T> resultDecoder,
-                                 final SingleResultCallback<QueryResult<T>> callback) {
-        executeEnqueuedLegacyProtocolAsync(callback);
-    }
-
-    @Override
-    public void killCursor(final MongoNamespace namespace, final List<Long> cursors) {
-        executeEnqueuedLegacyProtocol();
-    }
-
-    @Override
-    public void killCursorAsync(final MongoNamespace namespace, final List<Long> cursors, final SingleResultCallback<Void> callback) {
-        executeEnqueuedLegacyProtocolAsync(callback);
+    public void markAsPinned(final PinningMode pinningMode) {
+        throw new UnsupportedOperationException();
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T executeEnqueuedLegacyProtocol() {
-        return (T) executor.execute(enqueuedLegacyProtocol, internalConnection);
+    private <T> T executeEnqueuedCommandBasedProtocol(final OperationContext operationContext) {
+        return (T) executor.execute(enqueuedCommandProtocol, internalConnection, operationContext.getSessionContext());
     }
 
     @SuppressWarnings("unchecked")
-    private <T> void executeEnqueuedLegacyProtocolAsync(final SingleResultCallback<T> callback) {
-        executor.executeAsync(enqueuedLegacyProtocol, internalConnection, callback);
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> T executeEnqueuedCommandBasedProtocol(final SessionContext sessionContext) {
-        return (T) executor.execute(enqueuedCommandProtocol, internalConnection, sessionContext);
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> void executeEnqueuedCommandBasedProtocolAsync(final SessionContext sessionContext, final SingleResultCallback<T> callback) {
-        executor.executeAsync(enqueuedCommandProtocol, internalConnection, sessionContext, callback);
-    }
-
-    void enqueueProtocol(final LegacyProtocol protocol) {
-        enqueuedLegacyProtocol = protocol;
+    private <T> void executeEnqueuedCommandBasedProtocolAsync(final OperationContext operationContext,
+            final SingleResultCallback<T> callback) {
+        executor.executeAsync(enqueuedCommandProtocol, internalConnection, operationContext.getSessionContext(), callback);
     }
 
     void enqueueProtocol(final CommandProtocol protocol) {

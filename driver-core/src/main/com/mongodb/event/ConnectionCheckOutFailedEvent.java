@@ -16,8 +16,12 @@
 
 package com.mongodb.event;
 
+import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerId;
 
+import java.util.concurrent.TimeUnit;
+
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -53,17 +57,25 @@ public final class ConnectionCheckOutFailedEvent {
     }
 
     private final ServerId serverId;
+    private final long operationId;
     private final Reason reason;
+    private final long elapsedTimeNanos;
 
     /**
-     * Construct an instance
+     * Constructs an instance.
      *
-     * @param serverId the server id
-     * @param reason the reason the connection check out failed
+     * @param serverId The server ID. See {@link #getServerId()}.
+     * @param operationId The operation ID. See {@link #getOperationId()}.
+     * @param reason The reason the connection check out failed. See {@link #getReason()}.
+     * @param elapsedTimeNanos The time it took while trying to check out the connection. See {@link #getElapsedTime(TimeUnit)}.
+     * @since 4.11
      */
-    public ConnectionCheckOutFailedEvent(final ServerId serverId, final Reason reason) {
+    public ConnectionCheckOutFailedEvent(final ServerId serverId, final long operationId, final Reason reason, final long elapsedTimeNanos) {
         this.serverId = notNull("serverId", serverId);
+        this.operationId = operationId;
         this.reason = notNull("reason", reason);
+        isTrueArgument("waited time is not negative", elapsedTimeNanos >= 0);
+        this.elapsedTimeNanos = elapsedTimeNanos;
     }
 
     /**
@@ -75,11 +87,53 @@ public final class ConnectionCheckOutFailedEvent {
         return serverId;
     }
 
+    /**
+     * Gets the operation identifier
+     *
+     * @return the operation identifier
+     * @since 4.10
+     */
+    public long getOperationId() {
+        return operationId;
+    }
+
+    /**
+     * Gets the reason for the check out failure.
+     *
+     * @return the reason
+     * @since 4.3
+     */
+    public Reason getReason() {
+        return reason;
+    }
+
+    /**
+     * The time it took to check out the connection.
+     * More specifically, the time elapsed between emitting a {@link ConnectionCheckOutStartedEvent}
+     * and emitting this event as part of the same checking out.
+     * <p>
+     * Naturally, if a new connection was not {@linkplain ConnectionCreatedEvent created}
+     * and {@linkplain ConnectionReadyEvent established} as part of checking out,
+     * this duration is usually not greater than {@link ConnectionPoolSettings#getMaxWaitTime(TimeUnit)},
+     * but may occasionally be greater than that, because the driver does not provide hard real-time guarantees.</p>
+     *
+     * @param timeUnit The time unit of the result.
+     * {@link TimeUnit#convert(long, TimeUnit)} specifies how the conversion from nanoseconds to {@code timeUnit} is done.
+     * @return The time it took to establish the connection.
+     * @since 4.11
+     */
+    public long getElapsedTime(final TimeUnit timeUnit) {
+        return timeUnit.convert(elapsedTimeNanos, TimeUnit.NANOSECONDS);
+    }
+
     @Override
     public String toString() {
         return "ConnectionCheckOutFailedEvent{"
-                       + "serverId=" + serverId
-                       + " reason=" + reason
-                       + '}';
+                + "server=" + serverId.getAddress()
+                + ", clusterId=" + serverId.getClusterId()
+                + ", operationId=" + operationId
+                + ", reason=" + reason
+                + ", elapsedTimeNanos=" + elapsedTimeNanos
+                + '}';
     }
 }

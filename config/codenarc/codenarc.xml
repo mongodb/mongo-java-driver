@@ -34,18 +34,15 @@
         <exclude name="ComparisonWithSelf"/>
     </ruleset-ref>
     <ruleset-ref path='rulesets/braces.xml'/>
-    <ruleset-ref path='rulesets/concurrency.xml'>
-        <rule-config name='BusyWait'>
-            <property name='doNotApplyToFileNames' value='AsyncQueryBatchCursorFunctionalSpecification.groovy'/>
-        </rule-config>
-
-    </ruleset-ref>
     <ruleset-ref path='rulesets/convention.xml'>
         <rule-config name='NoDef'>
             <property name='doNotApplyToFilesMatching' value='.*Specification.groovy'/>
         </rule-config>
         <rule-config name='HashtableIsObsolete'>
             <property name='doNotApplyToFileNames' value='MongoClientFactorySpecification.groovy'/>
+        </rule-config>
+        <rule-config name='VectorIsObsolete'>
+            <property name='doNotApplyToFileNames' value='AggregatesSpecification.groovy'/>
         </rule-config>
         <exclude name="TrailingComma"/>
         <exclude name="CouldBeSwitchStatement"/>
@@ -55,6 +52,13 @@
         <exclude name='MethodParameterTypeRequired'/>
         <exclude name='FieldTypeRequired '/>
         <exclude name="VariableTypeRequired"/>
+        <exclude name="CompileStatic"/>
+        <exclude name="ImplicitClosureParameter"/>
+        <exclude name="NoJavaUtilDate"/>
+        <exclude name="ImplicitReturnStatement"/>
+        <exclude name="StaticFieldsBeforeInstanceFields"/>
+        <exclude name="StaticMethodsBeforeInstanceMethods"/>
+        <exclude name="PublicMethodsBeforeNonPublicMethods"/>
     </ruleset-ref>
     <ruleset-ref path='rulesets/design.xml'>
         <rule-config name='BuilderMethodWithSideEffects'>
@@ -81,6 +85,7 @@
         <rule-config name='LineLength'>
             <property name='length' value='140'/>
             <property name='doNotApplyToFileNames' value='ClientSideEncryptionProseTestSpecification.groovy'/>
+            <property name='doNotApplyToFileNames' value='BsonValueSpecification.groovy'/>
         </rule-config>
         <!-- this check is failing '})' when it shouldn't -->
         <exclude name='SpaceAfterClosingBrace'/>
@@ -91,6 +96,9 @@
         <exclude name='ConsecutiveBlankLines'/>
         <exclude name='FileEndsWithoutNewline'/>
         <exclude name='Indentation'/>
+        <exclude name="ClassEndsWithBlankLine"/>
+        <exclude name="ClassStartsWithBlankLine"/>
+        <exclude name="SpaceAroundOperator"/>
     </ruleset-ref>
     <ruleset-ref path='rulesets/generic.xml'/>
     <ruleset-ref path='rulesets/groovyism.xml'>
@@ -118,6 +126,9 @@
         <rule-config name='NestedBlockDepth'>
             <property name='doNotApplyToFilesMatching' value='.*Specification.groovy'/>
         </rule-config>
+        <rule-config name='ClassSize'>
+            <property name='doNotApplyToFilesMatching' value='.*Specification.groovy'/>
+        </rule-config>
         <exclude name='CrapMetric'/>
         <exclude name='AbcMetric'/>
         <exclude name='MethodSize'/>
@@ -130,6 +141,7 @@
         <exclude name="UnnecessaryObjectReferences"/>
         <exclude name="UnnecessaryBigDecimalInstantiation"/>
         <exclude name="UnnecessarySetter"/>
+        <exclude name="UnnecessaryGString"/>
     </ruleset-ref>
     <ruleset-ref path='rulesets/unused.xml'>
         <rule-config name='UnusedObject'>
@@ -138,4 +150,3 @@
     </ruleset-ref>
 
 </ruleset>
-

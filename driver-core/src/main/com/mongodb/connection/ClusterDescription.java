@@ -26,6 +26,7 @@ import com.mongodb.lang.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getServersByPredicate;
@@ -44,6 +45,7 @@ public class ClusterDescription {
     private final ClusterSettings clusterSettings;
     private final ServerSettings serverSettings;
     private final MongoException srvResolutionException;
+    private final Integer logicalSessionTimeoutMinutes;
 
     /**
      * Creates a new ClusterDescription.
@@ -69,8 +71,8 @@ public class ClusterDescription {
      */
     public ClusterDescription(final ClusterConnectionMode connectionMode, final ClusterType type,
                               final List<ServerDescription> serverDescriptions,
-                              final ClusterSettings clusterSettings,
-                              final ServerSettings serverSettings) {
+                              @Nullable final ClusterSettings clusterSettings,
+                              @Nullable final ServerSettings serverSettings) {
         this(connectionMode, type, null, serverDescriptions, clusterSettings, serverSettings);
     }
 
@@ -86,17 +88,18 @@ public class ClusterDescription {
      * @since 3.10
      */
     public ClusterDescription(final ClusterConnectionMode connectionMode, final ClusterType type,
-                              final MongoException srvResolutionException,
+                              @Nullable final MongoException srvResolutionException,
                               final List<ServerDescription> serverDescriptions,
-                              final ClusterSettings clusterSettings,
-                              final ServerSettings serverSettings) {
+                              @Nullable final ClusterSettings clusterSettings,
+                              @Nullable final ServerSettings serverSettings) {
         notNull("all", serverDescriptions);
         this.connectionMode = notNull("connectionMode", connectionMode);
         this.type = notNull("type", type);
         this.srvResolutionException = srvResolutionException;
-        this.serverDescriptions = new ArrayList<ServerDescription>(serverDescriptions);
+        this.serverDescriptions = new ArrayList<>(serverDescriptions);
         this.clusterSettings = clusterSettings;
         this.serverSettings = serverSettings;
+        this.logicalSessionTimeoutMinutes = calculateLogicalSessionTimeoutMinutes();
     }
 
     /**
@@ -237,22 +240,7 @@ public class ClusterDescription {
      */
     @Nullable
     public Integer getLogicalSessionTimeoutMinutes() {
-        Integer retVal = null;
-
-        for (ServerDescription cur : getServersByPredicate(this, serverDescription ->
-                serverDescription.isPrimary() || serverDescription.isSecondary())) {
-
-            Integer logicalSessionTimeoutMinutes = cur.getLogicalSessionTimeoutMinutes();
-            if (logicalSessionTimeoutMinutes == null) {
-                return null;
-            }
-            if (retVal == null) {
-                retVal = logicalSessionTimeoutMinutes;
-            } else {
-                retVal = Math.min(retVal, logicalSessionTimeoutMinutes);
-            }
-        }
-        return retVal;
+        return logicalSessionTimeoutMinutes;
     }
 
     @Override
@@ -283,13 +271,13 @@ public class ClusterDescription {
         // Compare class equality and message as exceptions rarely override equals
         Class<?> thisExceptionClass = srvResolutionException != null ? srvResolutionException.getClass() : null;
         Class<?> thatExceptionClass = that.srvResolutionException != null ? that.srvResolutionException.getClass() : null;
-        if (thisExceptionClass != null ? !thisExceptionClass.equals(thatExceptionClass) : thatExceptionClass != null) {
+        if (!Objects.equals(thisExceptionClass, thatExceptionClass)) {
             return false;
         }
 
         String thisExceptionMessage = srvResolutionException != null ? srvResolutionException.getMessage() : null;
         String thatExceptionMessage = that.srvResolutionException != null ? that.srvResolutionException.getMessage() : null;
-        if (thisExceptionMessage != null ? !thisExceptionMessage.equals(thatExceptionMessage) : thatExceptionMessage != null) {
+        if (!Objects.equals(thisExceptionMessage, thatExceptionMessage)) {
             return false;
         }
 
@@ -332,5 +320,25 @@ public class ClusterDescription {
         }  else {
             return format("{type=%s, srvResolutionException=%s, servers=[%s]", type, srvResolutionException, serverDescriptions);
         }
+    }
+
+    @Nullable
+    private Integer calculateLogicalSessionTimeoutMinutes() {
+        Integer retVal = null;
+
+        for (ServerDescription cur : getServersByPredicate(this, serverDescription ->
+                serverDescription.isPrimary() || serverDescription.isSecondary())) {
+
+            Integer logicalSessionTimeoutMinutes = cur.getLogicalSessionTimeoutMinutes();
+            if (logicalSessionTimeoutMinutes == null) {
+                return null;
+            }
+            if (retVal == null) {
+                retVal = logicalSessionTimeoutMinutes;
+            } else {
+                retVal = Math.min(retVal, logicalSessionTimeoutMinutes);
+            }
+        }
+        return retVal;
     }
 }

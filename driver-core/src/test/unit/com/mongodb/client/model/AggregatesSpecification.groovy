@@ -17,31 +17,46 @@
 package com.mongodb.client.model
 
 import com.mongodb.MongoNamespace
+import com.mongodb.client.model.fill.FillOutputField
+import com.mongodb.client.model.search.SearchCollector
+import com.mongodb.client.model.search.SearchOperator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document
+import org.bson.BinaryVector
 import org.bson.conversions.Bson
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import static BucketGranularity.R5
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static MongoTimeUnit.DAY
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.client.model.Accumulators.accumulator
 import static com.mongodb.client.model.Accumulators.addToSet
 import static com.mongodb.client.model.Accumulators.avg
+import static com.mongodb.client.model.Accumulators.bottom
+import static com.mongodb.client.model.Accumulators.bottomN
 import static com.mongodb.client.model.Accumulators.first
+import static com.mongodb.client.model.Accumulators.firstN
 import static com.mongodb.client.model.Accumulators.last
+import static com.mongodb.client.model.Accumulators.lastN
 import static com.mongodb.client.model.Accumulators.max
+import static com.mongodb.client.model.Accumulators.maxN
+import static com.mongodb.client.model.Accumulators.mergeObjects
 import static com.mongodb.client.model.Accumulators.min
+import static com.mongodb.client.model.Accumulators.minN
 import static com.mongodb.client.model.Accumulators.push
 import static com.mongodb.client.model.Accumulators.stdDevPop
 import static com.mongodb.client.model.Accumulators.stdDevSamp
 import static com.mongodb.client.model.Accumulators.sum
+import static com.mongodb.client.model.Accumulators.top
+import static com.mongodb.client.model.Accumulators.topN
 import static com.mongodb.client.model.Aggregates.addFields
 import static com.mongodb.client.model.Aggregates.bucket
 import static com.mongodb.client.model.Aggregates.bucketAuto
 import static com.mongodb.client.model.Aggregates.count
-import static com.mongodb.client.model.Aggregates.facet
+import static com.mongodb.client.model.Aggregates.densify
+import static com.mongodb.client.model.Aggregates.fill
 import static com.mongodb.client.model.Aggregates.graphLookup
 import static com.mongodb.client.model.Aggregates.group
 import static com.mongodb.client.model.Aggregates.limit
@@ -53,11 +68,16 @@ import static com.mongodb.client.model.Aggregates.project
 import static com.mongodb.client.model.Aggregates.replaceRoot
 import static com.mongodb.client.model.Aggregates.replaceWith
 import static com.mongodb.client.model.Aggregates.sample
+import static com.mongodb.client.model.Aggregates.search
+import static com.mongodb.client.model.Aggregates.searchMeta
+import static com.mongodb.client.model.Aggregates.set
+import static com.mongodb.client.model.Aggregates.setWindowFields
 import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.sortByCount
 import static com.mongodb.client.model.Aggregates.unionWith
 import static com.mongodb.client.model.Aggregates.unwind
+import static com.mongodb.client.model.Aggregates.vectorSearch
 import static com.mongodb.client.model.BsonHelper.toBson
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Filters.expr
@@ -66,19 +86,34 @@ import static com.mongodb.client.model.Projections.fields
 import static com.mongodb.client.model.Projections.include
 import static com.mongodb.client.model.Sorts.ascending
 import static com.mongodb.client.model.Sorts.descending
+import static com.mongodb.client.model.Windows.Bound.CURRENT
+import static com.mongodb.client.model.Windows.Bound.UNBOUNDED
+import static com.mongodb.client.model.Windows.documents
+import static com.mongodb.client.model.densify.DensifyRange.fullRangeWithStep
+import static com.mongodb.client.model.fill.FillOptions.fillOptions
+import static com.mongodb.client.model.search.SearchCollector.facet
+import static com.mongodb.client.model.search.SearchCount.total
+import static com.mongodb.client.model.search.SearchFacet.stringFacet
+import static com.mongodb.client.model.search.SearchHighlight.paths
+import static com.mongodb.client.model.search.SearchOperator.exists
+import static com.mongodb.client.model.search.SearchOptions.searchOptions
+import static com.mongodb.client.model.search.SearchPath.fieldPath
+import static com.mongodb.client.model.search.SearchPath.wildcardPath
+import static com.mongodb.client.model.search.VectorSearchOptions.approximateVectorSearchOptions
+import static com.mongodb.client.model.search.VectorSearchOptions.exactVectorSearchOptions
 import static java.util.Arrays.asList
 import static org.bson.BsonDocument.parse
 
 class AggregatesSpecification extends Specification {
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 3) })
+    @IgnoreIf({ serverVersionLessThan(4, 4) })
     def 'should render $accumulator'() {
         given:
-        def initFunction = 'function() { return { count : 0, sum : 0 } }';
-        def initFunctionWithArgs = 'function(initCount, initSun) { return { count : parseInt(initCount), sum : parseInt(initSun) } }';
-        def accumulateFunction = 'function(state, numCopies) { return { count : state.count + 1, sum : state.sum + numCopies } }';
-        def mergeFunction = 'function(state1, state2) { return { count : state1.count + state2.count, sum : state1.sum + state2.sum } }';
-        def finalizeFunction = 'function(state) { return (state.sum / state.count) }';
+        def initFunction = 'function() { return { count : 0, sum : 0 } }'
+        def initFunctionWithArgs = 'function(initCount, initSun) { return { count : parseInt(initCount), sum : parseInt(initSun) } }'
+        def accumulateFunction = 'function(state, numCopies) { return { count : state.count + 1, sum : state.sum + numCopies } }'
+        def mergeFunction = 'function(state1, state2) { return { count : state1.count + state2.count, sum : state1.sum + state2.sum } }'
+        def finalizeFunction = 'function(state) { return (state.sum / state.count) }'
 
         expect:
         toBson(group(null, accumulator('test', initFunction, accumulateFunction, mergeFunction))) ==
@@ -106,7 +141,6 @@ class AggregatesSpecification extends Specification {
                         '", finalize: "' + finalizeFunction + '", lang: "js"}}}}')
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should render $addFields'() {
         expect:
         toBson(addFields(new Field('newField', null))) == parse('{$addFields: {newField: null}}')
@@ -118,6 +152,19 @@ class AggregatesSpecification extends Specification {
                 '{$addFields: {alt3: {$lt: ["$a", 3]}}}')
         toBson(addFields(new Field('b', 3), new Field('c', 5))) == parse('{$addFields: {b: 3, c: 5}}')
         toBson(addFields(asList(new Field('b', 3), new Field('c', 5)))) == parse('{$addFields: {b: 3, c: 5}}')
+    }
+
+    def 'should render $set'() {
+        expect:
+        toBson(set(new Field('newField', null))) == parse('{$set: {newField: null}}')
+        toBson(set(new Field('newField', 'hello'))) == parse('{$set: {newField: "hello"}}')
+        toBson(set(new Field('this', '$$CURRENT'))) == parse('{$set: {this: "$$CURRENT"}}')
+        toBson(set(new Field('myNewField', new Document('c', 3)
+                .append('d', 4)))) == parse('{$set: {myNewField: {c: 3, d: 4}}}')
+        toBson(set(new Field('alt3', new Document('$lt', asList('$a', 3))))) == parse(
+                '{$set: {alt3: {$lt: ["$a", 3]}}}')
+        toBson(set(new Field('b', 3), new Field('c', 5))) == parse('{$set: {b: 3, c: 5}}')
+        toBson(set(asList(new Field('b', 3), new Field('c', 5)))) == parse('{$set: {b: 3, c: 5}}')
     }
 
     def 'should render $bucket'() {
@@ -258,7 +305,7 @@ class AggregatesSpecification extends Specification {
 
     def 'should render $facet'() {
         expect:
-        toBson(facet(
+        toBson(Aggregates.facet(
                 new Facet('Screen Sizes',
                                unwind('$attributes'),
                                match(eq('attributes.name', 'screen size')),
@@ -300,9 +347,9 @@ class AggregatesSpecification extends Specification {
             as: "socialNetwork", maxDepth: 1 } }''')
 
         // with depthField
-        toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions().depthField('master'))) ==
+        toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions().depthField('depth'))) ==
                 parse('''{ $graphLookup: { from: "contacts", startWith: "$friends", connectFromField: "friends", connectToField: "name",
-            as: "socialNetwork", depthField: "master" } }''')
+            as: "socialNetwork", depthField: "depth" } }''')
 
         // with restrictSearchWithMatch
         toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
@@ -312,15 +359,15 @@ class AggregatesSpecification extends Specification {
 
         // with maxDepth and depthField
         toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .maxDepth(1).depthField('master'))) ==
+                .maxDepth(1).depthField('depth'))) ==
         parse('''{ $graphLookup: { from: "contacts", startWith: "$friends", connectFromField: "friends", connectToField: "name",
-            as: "socialNetwork", maxDepth: 1, depthField: "master" } }''')
+            as: "socialNetwork", maxDepth: 1, depthField: "depth" } }''')
 
         // with all options
         toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .maxDepth(1).depthField('master').restrictSearchWithMatch(eq('hobbies', 'golf')))) ==
+                .maxDepth(1).depthField('depth').restrictSearchWithMatch(eq('hobbies', 'golf')))) ==
                 parse('''{ $graphLookup: { from: "contacts", startWith: "$friends", connectFromField: "friends", connectToField: "name",
-            as: "socialNetwork", maxDepth: 1, depthField: "master", restrictSearchWithMatch : { "hobbies" : "golf" } } }''')
+            as: "socialNetwork", maxDepth: 1, depthField: "depth", restrictSearchWithMatch : { "hobbies" : "golf" } } }''')
     }
 
     def 'should render $skip'() {
@@ -413,31 +460,462 @@ class AggregatesSpecification extends Specification {
 
         def groupDocument = parse('''{
                             $group : {
-                                      _id : null,
+                                      _id : { gid: "$groupByField"},
                                       sum: { $sum: { $multiply: [ "$price", "$quantity" ] } },
                                       avg: { $avg: "$quantity" },
                                       min: { $min: "$quantity" },
+                                      minN: { $minN: { input: "$quantity",
+                                        n: { $cond: { if: { $eq: ["$gid", true] }, then: 2, else: 1 } } } },
                                       max: { $max: "$quantity" },
+                                      maxN: { $maxN: { input: "$quantity", n: 2 } },
                                       first: { $first: "$quantity" },
+                                      firstN: { $firstN: { input: "$quantity", n: 2 } },
+                                      top: { $top: { sortBy: { quantity: 1 }, output: "$quantity" } },
+                                      topN: { $topN: { sortBy: { quantity: 1 }, output: "$quantity", n: 2 } },
                                       last: { $last: "$quantity" },
+                                      lastN: { $lastN: { input: "$quantity", n: 2 } },
+                                      bottom: { $bottom: { sortBy: { quantity: 1 }, output: ["$quantity", "$quality"] } },
+                                      bottomN: { $bottomN: { sortBy: { quantity: 1 }, output: ["$quantity", "$quality"],
+                                        n: { $cond: { if: { $eq: ["$gid", true] }, then: 2, else: 1 } } } },
                                       all: { $push: "$quantity" },
+                                      merged: { $mergeObjects: "$quantity" },
                                       unique: { $addToSet: "$quantity" },
                                       stdDevPop: { $stdDevPop: "$quantity" },
                                       stdDevSamp: { $stdDevSamp: "$quantity" }
                                      }
                                   }''')
-        toBson(group(null,
+        toBson(group(new Document('gid', '$groupByField'),
                      sum('sum', parse('{ $multiply: [ "$price", "$quantity" ] }')),
                      avg('avg', '$quantity'),
                      min('min', '$quantity'),
+                     minN('minN', '$quantity',
+                             new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                     .append('then', 2).append('else', 1))),
                      max('max', '$quantity'),
+                     maxN('maxN', '$quantity', 2),
                      first('first', '$quantity'),
+                     firstN('firstN', '$quantity', 2),
+                     top('top', ascending('quantity'), '$quantity'),
+                     topN('topN', ascending('quantity'), '$quantity', 2),
                      last('last', '$quantity'),
+                     lastN('lastN', '$quantity', 2),
+                     bottom('bottom', ascending('quantity'), ['$quantity', '$quality']),
+                     bottomN('bottomN', ascending('quantity'), ['$quantity', '$quality'],
+                             new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                     .append('then', 2).append('else', 1))),
                      push('all', '$quantity'),
+                     mergeObjects('merged', '$quantity'),
                      addToSet('unique', '$quantity'),
                      stdDevPop('stdDevPop', '$quantity'),
                      stdDevSamp('stdDevSamp', '$quantity')
         )) == groupDocument
+    }
+
+    def 'should render $setWindowFields'() {
+        given:
+        Window window = documents(1, 2)
+        BsonDocument setWindowFieldsBson = toBson(setWindowFields(
+                new Document('gid', '$partitionByField'), ascending('sortByField'), asList(
+                WindowOutputFields.of(new BsonField('newField00', new Document('$sum', '$field00')
+                        .append('window', Windows.of(new Document('range', asList(1, 'current')))))),
+                WindowOutputFields.sum('newField01', '$field01', Windows.range(1, CURRENT)),
+                WindowOutputFields.avg('newField02', '$field02', Windows.range(UNBOUNDED, 1)),
+                WindowOutputFields.stdDevSamp('newField03', '$field03', window),
+                WindowOutputFields.stdDevPop('newField04', '$field04', window),
+                WindowOutputFields.min('newField05', '$field05', window),
+                WindowOutputFields.minN('newField05N', '$field05N',
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1)),
+                        window),
+                WindowOutputFields.max('newField06', '$field06', window),
+                WindowOutputFields.maxN('newField06N', '$field06N', 2, window),
+                WindowOutputFields.count('newField07', window),
+                WindowOutputFields.derivative('newField08', '$field08', window),
+                WindowOutputFields.timeDerivative('newField09', '$field09', window, DAY),
+                WindowOutputFields.integral('newField10', '$field10', window),
+                WindowOutputFields.timeIntegral('newField11', '$field11', window, DAY),
+                WindowOutputFields.timeIntegral('newField11', '$field11', window, DAY),
+                WindowOutputFields.covarianceSamp('newField12', '$field12_1', '$field12_2', window),
+                WindowOutputFields.covariancePop('newField13', '$field13_1', '$field13_2', window),
+                WindowOutputFields.expMovingAvg('newField14', '$field14', 3),
+                WindowOutputFields.expMovingAvg('newField15', '$field15', 0.5),
+                WindowOutputFields.push('newField16', '$field16', window),
+                WindowOutputFields.addToSet('newField17', '$field17', window),
+                WindowOutputFields.first('newField18', '$field18', window),
+                WindowOutputFields.firstN('newField18N', '$field18N', 2, window),
+                WindowOutputFields.last('newField19', '$field19', window),
+                WindowOutputFields.lastN('newField19N', '$field19N', 2, window),
+                WindowOutputFields.shift('newField20', '$field20', 'defaultConstantValue', -3),
+                WindowOutputFields.documentNumber('newField21'),
+                WindowOutputFields.rank('newField22'),
+                WindowOutputFields.denseRank('newField23'),
+                WindowOutputFields.bottom('newField24', descending('sortByField'), '$field24', window),
+                WindowOutputFields.bottomN('newField24N', descending('sortByField'), '$field24N',
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1)),
+                        window),
+                WindowOutputFields.top('newField25', ascending('sortByField'), '$field25', window),
+                WindowOutputFields.topN('newField25N', ascending('sortByField'), '$field25N', 2, window),
+                WindowOutputFields.locf('newField26', '$field26'),
+                WindowOutputFields.linearFill('newField27', '$field27')
+        )))
+
+        expect:
+        setWindowFieldsBson == parse('''{
+                "$setWindowFields": {
+                    "partitionBy": { "gid": "$partitionByField" },
+                    "sortBy": { "sortByField" : 1 },
+                    "output": {
+                        "newField00": { "$sum": "$field00", "window": { "range": [{"$numberInt": "1"}, "current"] } },
+                        "newField01": { "$sum": "$field01", "window": { "range": [{"$numberLong": "1"}, "current"] } },
+                        "newField02": { "$avg": "$field02", "window": { "range": ["unbounded", {"$numberLong": "1"}] } },
+                        "newField03": { "$stdDevSamp": "$field03", "window": { "documents": [1, 2] } },
+                        "newField04": { "$stdDevPop": "$field04", "window": { "documents": [1, 2] } },
+                        "newField05": { "$min": "$field05", "window": { "documents": [1, 2] } },
+                        "newField05N": {
+                            "$minN": { "input": "$field05N", "n": { "$cond": { "if": { "$eq": ["$gid", true] }, "then": 2, "else": 1 } } },
+                            "window": { "documents": [1, 2] } },
+                        "newField06": { "$max": "$field06", "window": { "documents": [1, 2] } },
+                        "newField06N": { "$maxN": { "input": "$field06N", "n": 2 }, "window": { "documents": [1, 2] } },
+                        "newField07": { "$count": {}, "window": { "documents": [1, 2] } },
+                        "newField08": { "$derivative": { "input": "$field08" }, "window": { "documents": [1, 2] } },
+                        "newField09": { "$derivative": { "input": "$field09", "unit": "day" }, "window": { "documents": [1, 2] } },
+                        "newField10": { "$integral": { "input": "$field10"}, "window": { "documents": [1, 2] } },
+                        "newField11": { "$integral": { "input": "$field11", "unit": "day" }, "window": { "documents": [1, 2] } },
+                        "newField12": { "$covarianceSamp": ["$field12_1", "$field12_2"], "window": { "documents": [1, 2] } },
+                        "newField13": { "$covariancePop": ["$field13_1", "$field13_2"], "window": { "documents": [1, 2] } },
+                        "newField14": { "$expMovingAvg": { "input": "$field14", "N": 3 } },
+                        "newField15": { "$expMovingAvg": { "input": "$field15", "alpha": 0.5 } },
+                        "newField16": { "$push": "$field16", "window": { "documents": [1, 2] } },
+                        "newField17": { "$addToSet": "$field17", "window": { "documents": [1, 2] } },
+                        "newField18": { "$first": "$field18", "window": { "documents": [1, 2] } },
+                        "newField18N": { "$firstN": { "input": "$field18N", "n": 2 }, "window": { "documents": [1, 2] } },
+                        "newField19": { "$last": "$field19", "window": { "documents": [1, 2] } },
+                        "newField19N": { "$lastN": { "input": "$field19N", "n": 2 }, "window": { "documents": [1, 2] } },
+                        "newField20": { "$shift": { "output": "$field20", "by": -3, "default": "defaultConstantValue" } },
+                        "newField21": { "$documentNumber": {} },
+                        "newField22": { "$rank": {} },
+                        "newField23": { "$denseRank": {} },
+                        "newField24": {
+                            "$bottom": { "sortBy": { "sortByField": -1 }, "output": "$field24"},
+                            "window": { "documents": [1, 2] } },
+                        "newField24N": {
+                            "$bottomN": { "sortBy": { "sortByField": -1 }, "output": "$field24N",
+                                "n": { "$cond": { "if": { "$eq": ["$gid", true] }, "then": 2, "else": 1 } } },
+                            "window": { "documents": [1, 2] } },
+                        "newField25": {
+                            "$top": { "sortBy": { "sortByField": 1 }, "output": "$field25"},
+                            "window": { "documents": [1, 2] } },
+                        "newField25N": {
+                            "$topN": { "sortBy": { "sortByField": 1 }, "output": "$field25N", "n": 2 },
+                            "window": { "documents": [1, 2] } },
+                        "newField26": { "$locf": "$field26" },
+                        "newField27": { "$linearFill": "$field27" }
+                    }
+                }
+        }''')
+    }
+
+    def 'should render $setWindowFields with no partitionBy/sortBy'() {
+        given:
+        BsonDocument setWindowFields = toBson(setWindowFields(null, null, asList(
+                WindowOutputFields.sum('newField01', '$field01', documents(1, 2)))
+        ))
+
+        expect:
+        setWindowFields == parse('''{
+                "$setWindowFields": {
+                    "output": {
+                        "newField01": { "$sum": "$field01", "window": { "documents": [1, 2] } }
+                    }
+                }
+        }''')
+    }
+
+    def 'should render $densify'() {
+        when:
+        BsonDocument densifyDoc = toBson(
+                densify(
+                        'fieldName',
+                        fullRangeWithStep(1))
+        )
+
+        then:
+        densifyDoc == parse('''{
+                "$densify": {
+                    "field": "fieldName",
+                    "range": { "bounds": "full", "step": 1 }
+                }
+        }''')
+    }
+
+    def 'should render $fill'() {
+        when:
+        BsonDocument fillDoc = toBson(
+                fill(fillOptions().sortBy(ascending('fieldName3')),
+                        FillOutputField.linear('fieldName1'),
+                        FillOutputField.locf('fieldName2'))
+        )
+
+        then:
+        fillDoc == parse('''{
+                "$fill": {
+                    "output": {
+                        "fieldName1": { "method" : "linear" }
+                        "fieldName2": { "method" : "locf" }
+                    }
+                    "sortBy": { "fieldName3": 1 }
+                }
+        }''')
+    }
+
+    def 'should render $search'() {
+        when:
+        BsonDocument searchDoc = toBson(
+                search(
+                        (SearchOperator) exists(fieldPath('fieldName')),
+                        searchOptions()
+                )
+        )
+
+        then:
+        searchDoc == parse('''{
+                "$search": {
+                    "exists": { "path": "fieldName" }
+                }
+        }''')
+
+        when:
+        searchDoc = toBson(
+                search(
+                        (SearchCollector) facet(
+                                exists(fieldPath('fieldName')),
+                                [stringFacet('stringFacetName', fieldPath('fieldName1'))]),
+                        searchOptions()
+                                .index('indexName')
+                                .count(total())
+                                .highlight(paths(
+                                        fieldPath('fieldName1'),
+                                        fieldPath('fieldName2').multi('analyzerName'),
+                                        wildcardPath('field.name*')))
+                )
+        )
+
+        then:
+        searchDoc == parse('''{
+                "$search": {
+                    "facet": {
+                        "operator": { "exists": { "path": "fieldName" } },
+                        "facets": {
+                            "stringFacetName": { "type" : "string", "path": "fieldName1" }
+                        }
+                    },
+                    "index": "indexName",
+                    "count": { "type": "total" },
+                    "highlight": {
+                        "path": [
+                            "fieldName1",
+                            { "value": "fieldName2", "multi": "analyzerName" },
+                            { "wildcard": "field.name*" }
+                        ]
+                    }
+                }
+        }''')
+    }
+
+    def 'should render $search with no options'() {
+        when:
+        BsonDocument searchDoc = toBson(
+                search(
+                        (SearchOperator) exists(fieldPath('fieldName'))
+                )
+        )
+
+        then:
+        searchDoc == parse('''{
+                "$search": {
+                    "exists": { "path": "fieldName" }
+                }
+        }''')
+
+        when:
+        searchDoc = toBson(
+                search(
+                        (SearchCollector) facet(
+                                exists(fieldPath('fieldName')),
+                                [stringFacet('facetName', fieldPath('fieldName')).numBuckets(3)])
+                )
+        )
+
+        then:
+        searchDoc == parse('''{
+                "$search": {
+                    "facet": {
+                        "operator": { "exists": { "path": "fieldName" } },
+                        "facets": {
+                          "facetName": { "type": "string", "path": "fieldName", "numBuckets": 3 }
+                        }
+                    }
+                }
+        }''')
+    }
+
+    def 'should render $searchMeta'() {
+        when:
+        BsonDocument searchDoc = toBson(
+                searchMeta(
+                        (SearchOperator) exists(fieldPath('fieldName')),
+                        searchOptions()
+                )
+        )
+
+        then:
+        searchDoc == parse('''{
+                "$searchMeta": {
+                    "exists": { "path": "fieldName" }
+                }
+        }''')
+
+        when:
+        searchDoc = toBson(
+                searchMeta(
+                        (SearchCollector) facet(
+                                exists(fieldPath('fieldName')),
+                                [stringFacet('stringFacetName', fieldPath('fieldName1'))]),
+                        searchOptions()
+                                .index('indexName')
+                                .count(total())
+                                .highlight(paths(
+                                        fieldPath('fieldName1'),
+                                        fieldPath('fieldName2').multi('analyzerName'),
+                                        wildcardPath('field.name*')))
+                )
+        )
+
+        then:
+        searchDoc == parse('''{
+                "$searchMeta": {
+                    "facet": {
+                        "operator": { "exists": { "path": "fieldName" } },
+                        "facets": {
+                            "stringFacetName": { "type" : "string", "path": "fieldName1" }
+                        }
+                    },
+                    "index": "indexName",
+                    "count": { "type": "total" },
+                    "highlight": {
+                        "path": [
+                            "fieldName1",
+                            { "value": "fieldName2", "multi": "analyzerName" },
+                            { "wildcard": "field.name*" }
+                        ]
+                    }
+                }
+        }''')
+    }
+
+    def 'should render $searchMeta with no options'() {
+        when:
+        BsonDocument searchDoc = toBson(
+                searchMeta(
+                        (SearchOperator) exists(fieldPath('fieldName'))
+                )
+        )
+
+        then:
+        searchDoc == parse('''{
+                "$searchMeta": {
+                    "exists": { "path": "fieldName" }
+                }
+        }''')
+
+        when:
+        searchDoc = toBson(
+                searchMeta(
+                        (SearchCollector) facet(
+                                exists(fieldPath('fieldName')),
+                                [stringFacet('facetName', fieldPath('fieldName')).numBuckets(3)])
+                )
+        )
+
+        then:
+        searchDoc == parse('''{
+                "$searchMeta": {
+                    "facet": {
+                        "operator": { "exists": { "path": "fieldName" } },
+                        "facets": {
+                          "facetName": { "type": "string", "path": "fieldName", "numBuckets": 3 }
+                        }
+                    }
+                }
+        }''')
+    }
+
+    def 'should render approximate $vectorSearch'() {
+        when:
+        BsonDocument vectorSearchDoc = toBson(
+                vectorSearch(
+                        fieldPath('fieldName').multi('ignored'),
+                        vector,
+                        'indexName',
+                        1,
+                        approximateVectorSearchOptions(2)
+                                .filter(Filters.ne("fieldName", "fieldValue"))
+
+                )
+        )
+
+        then:
+        vectorSearchDoc == parse('''{
+                "$vectorSearch": {
+                    "path": "fieldName",
+                    "queryVector": ''' + queryVector + ''',
+                    "index": "indexName",
+                    "numCandidates": {"$numberLong": "2"},
+                    "limit": {"$numberLong": "1"},
+                    "filter": {"fieldName": {"$ne": "fieldValue"}}
+                }
+        }''')
+
+        where:
+        vector                                               | queryVector
+        BinaryVector.int8Vector([127, 7] as byte[])                | '{"$binary": {"base64": "AwB/Bw==", "subType": "09"}}'
+        BinaryVector.floatVector([127.0f, 7.0f] as float[])        | '{"$binary": {"base64": "JwAAAP5CAADgQA==", "subType": "09"}}'
+        BinaryVector.packedBitVector([127, 7] as byte[], (byte) 0) | '{"$binary": {"base64": "EAB/Bw==", "subType": "09"}}'
+        [1.0d, 2.0d]                                         | "[1.0, 2.0]"
+    }
+
+    def 'should render exact $vectorSearch'() {
+        when:
+        BsonDocument vectorSearchDoc = toBson(
+                vectorSearch(
+                        fieldPath('fieldName').multi('ignored'),
+                        vector,
+                        'indexName',
+                        1,
+                        exactVectorSearchOptions()
+                                .filter(Filters.ne("fieldName", "fieldValue"))
+
+                )
+        )
+
+        then:
+        vectorSearchDoc == parse('''{
+                "$vectorSearch": {
+                    "path": "fieldName",
+                     "queryVector": ''' + queryVector + ''',
+                    "index": "indexName",
+                    "exact": true,
+                    "limit": {"$numberLong": "1"},
+                    "filter": {"fieldName": {"$ne": "fieldValue"}}
+                }
+        }''')
+
+        where:
+        vector                                        | queryVector
+        BinaryVector.int8Vector([127, 7] as byte[])         | '{"$binary": {"base64": "AwB/Bw==", "subType": "09"}}'
+        BinaryVector.floatVector([127.0f, 7.0f] as float[]) | '{"$binary": {"base64": "JwAAAP5CAADgQA==", "subType": "09"}}'
+        [1.0d, 2.0d]                                  | "[1.0, 2.0]"
     }
 
     def 'should create string representation for simple stages'() {
@@ -562,9 +1040,9 @@ class AggregatesSpecification extends Specification {
                 .equals(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork',
                 new GraphLookupOptions().maxDepth(1)))
 
-        graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions().depthField('master'))
+        graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions().depthField('depth'))
                 .equals(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork',
-                new GraphLookupOptions().depthField('master')))
+                new GraphLookupOptions().depthField('depth')))
 
         graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
                 .restrictSearchWithMatch(eq('hobbies', 'golf')))
@@ -572,14 +1050,14 @@ class AggregatesSpecification extends Specification {
                 .restrictSearchWithMatch(eq('hobbies', 'golf'))))
 
         graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .maxDepth(1).depthField('master'))
+                .maxDepth(1).depthField('depth'))
                 .equals(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .maxDepth(1).depthField('master')))
+                .maxDepth(1).depthField('depth')))
 
         graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .maxDepth(1).depthField('master').restrictSearchWithMatch(eq('hobbies', 'golf')))
+                .maxDepth(1).depthField('depth').restrictSearchWithMatch(eq('hobbies', 'golf')))
                 .equals(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .maxDepth(1).depthField('master').restrictSearchWithMatch(eq('hobbies', 'golf'))))
+                .maxDepth(1).depthField('depth').restrictSearchWithMatch(eq('hobbies', 'golf'))))
     }
 
     def 'should test hashCode for GraphLookupStage'() {
@@ -592,10 +1070,10 @@ class AggregatesSpecification extends Specification {
                 graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork',
                 new GraphLookupOptions().maxDepth(1)).hashCode()
 
-        graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions().depthField('master'))
+        graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions().depthField('depth'))
                 .hashCode() ==
                 graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork',
-                new GraphLookupOptions().depthField('master')).hashCode()
+                new GraphLookupOptions().depthField('depth')).hashCode()
 
         graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
                 .restrictSearchWithMatch(eq('hobbies', 'golf'))).hashCode() ==
@@ -603,14 +1081,14 @@ class AggregatesSpecification extends Specification {
                 .restrictSearchWithMatch(eq('hobbies', 'golf'))).hashCode()
 
         graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .maxDepth(1).depthField('master')).hashCode() ==
+                .maxDepth(1).depthField('depth')).hashCode() ==
                 graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .maxDepth(1).depthField('master')).hashCode()
+                .maxDepth(1).depthField('depth')).hashCode()
 
         graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .maxDepth(1).depthField('master').restrictSearchWithMatch(eq('hobbies', 'golf'))).hashCode() ==
+                .maxDepth(1).depthField('depth').restrictSearchWithMatch(eq('hobbies', 'golf'))).hashCode() ==
                 graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .maxDepth(1).depthField('master').restrictSearchWithMatch(eq('hobbies', 'golf'))).hashCode()
+                .maxDepth(1).depthField('depth').restrictSearchWithMatch(eq('hobbies', 'golf'))).hashCode()
     }
 
     def 'should test equals for GroupStage'() {
@@ -625,10 +1103,23 @@ class AggregatesSpecification extends Specification {
                 sum('sum', parse('{ $multiply: [ "$price", "$quantity" ] }')),
                 avg('avg', '$quantity'),
                 min('min', '$quantity'),
+                minN('minN', '$quantity',
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1))),
                 max('max', '$quantity'),
+                maxN('maxN', '$quantity', 2),
                 first('first', '$quantity'),
+                firstN('firstN', '$quantity', 2),
+                top('top', ascending('quantity'), '$quantity'),
+                topN('topN', ascending('quantity'), '$quantity', 2),
                 last('last', '$quantity'),
+                lastN('lastN', '$quantity', 2),
+                bottom('bottom', ascending('quantity'), ['$quantity', '$quality']),
+                bottomN('bottomN', ascending('quantity'), ['$quantity', '$quality'],
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1))),
                 push('all', '$quantity'),
+                mergeObjects('merged', '$quantity'),
                 addToSet('unique', '$quantity'),
                 stdDevPop('stdDevPop', '$quantity'),
                 stdDevSamp('stdDevSamp', '$quantity')
@@ -636,10 +1127,23 @@ class AggregatesSpecification extends Specification {
                 sum('sum', parse('{ $multiply: [ "$price", "$quantity" ] }')),
                 avg('avg', '$quantity'),
                 min('min', '$quantity'),
+                minN('minN', '$quantity',
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1))),
                 max('max', '$quantity'),
+                maxN('maxN', '$quantity', 2),
                 first('first', '$quantity'),
+                firstN('firstN', '$quantity', 2),
+                top('top', ascending('quantity'), '$quantity'),
+                topN('topN', ascending('quantity'), '$quantity', 2),
                 last('last', '$quantity'),
+                lastN('lastN', '$quantity', 2),
+                bottom('bottom', ascending('quantity'), ['$quantity', '$quality']),
+                bottomN('bottomN', ascending('quantity'), ['$quantity', '$quality'],
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1))),
                 push('all', '$quantity'),
+                mergeObjects('merged', '$quantity'),
                 addToSet('unique', '$quantity'),
                 stdDevPop('stdDevPop', '$quantity'),
                 stdDevSamp('stdDevSamp', '$quantity')
@@ -658,10 +1162,23 @@ class AggregatesSpecification extends Specification {
                 sum('sum', parse('{ $multiply: [ "$price", "$quantity" ] }')),
                 avg('avg', '$quantity'),
                 min('min', '$quantity'),
+                minN('minN', '$quantity',
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1))),
                 max('max', '$quantity'),
+                maxN('maxN', '$quantity', 2),
                 first('first', '$quantity'),
+                firstN('firstN', '$quantity', 2),
+                top('top', ascending('quantity'), '$quantity'),
+                topN('topN', ascending('quantity'), '$quantity', 2),
                 last('last', '$quantity'),
+                lastN('lastN', '$quantity', 2),
+                bottom('bottom', ascending('quantity'), ['$quantity', '$quality']),
+                bottomN('bottomN', ascending('quantity'), ['$quantity', '$quality'],
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1))),
                 push('all', '$quantity'),
+                mergeObjects('merged', '$quantity'),
                 addToSet('unique', '$quantity'),
                 stdDevPop('stdDevPop', '$quantity'),
                 stdDevSamp('stdDevSamp', '$quantity')
@@ -670,10 +1187,23 @@ class AggregatesSpecification extends Specification {
                 sum('sum', parse('{ $multiply: [ "$price", "$quantity" ] }')),
                 avg('avg', '$quantity'),
                 min('min', '$quantity'),
+                minN('minN', '$quantity',
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1))),
                 max('max', '$quantity'),
+                maxN('maxN', '$quantity', 2),
                 first('first', '$quantity'),
+                firstN('firstN', '$quantity', 2),
+                top('top', ascending('quantity'), '$quantity'),
+                topN('topN', ascending('quantity'), '$quantity', 2),
                 last('last', '$quantity'),
+                lastN('lastN', '$quantity', 2),
+                bottom('bottom', ascending('quantity'), ['$quantity', '$quality']),
+                bottomN('bottomN', ascending('quantity'), ['$quantity', '$quality'],
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1))),
                 push('all', '$quantity'),
+                mergeObjects('merged', '$quantity'),
                 addToSet('unique', '$quantity'),
                 stdDevPop('stdDevPop', '$quantity'),
                 stdDevSamp('stdDevSamp', '$quantity')).hashCode()
@@ -693,7 +1223,7 @@ class AggregatesSpecification extends Specification {
 
     def 'should test equals for FacetStage'() {
         expect:
-        facet(
+        Aggregates.facet(
                 new Facet('Screen Sizes',
                         unwind('$attributes'),
                         match(eq('attributes.name', 'screen size')),
@@ -703,7 +1233,7 @@ class AggregatesSpecification extends Specification {
                         group('$attributes.value', sum('count', 1)),
                         sort(descending('count')),
                         limit(5)))
-                .equals(facet(
+                .equals(Aggregates.facet(
                 new Facet('Screen Sizes',
                         unwind('$attributes'),
                         match(eq('attributes.name', 'screen size')),
@@ -717,7 +1247,7 @@ class AggregatesSpecification extends Specification {
 
     def 'should test hashCode for FacetStage'() {
         expect:
-        facet(
+        Aggregates.facet(
                 new Facet('Screen Sizes',
                         unwind('$attributes'),
                         match(eq('attributes.name', 'screen size')),
@@ -727,7 +1257,7 @@ class AggregatesSpecification extends Specification {
                         group('$attributes.value', sum('count', 1)),
                         sort(descending('count')),
                         limit(5))).hashCode() ==
-                facet(
+                Aggregates.facet(
                 new Facet('Screen Sizes',
                         unwind('$attributes'),
                         match(eq('attributes.name', 'screen size')),
@@ -769,15 +1299,15 @@ class AggregatesSpecification extends Specification {
                 addFields(asList(new Field('b', 3), new Field('c', 5))).hashCode()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 3) })
+    @IgnoreIf({ serverVersionLessThan(4, 4) })
     def 'should test equals for accumulator operator'() {
         given:
-        def initFunction = 'function() { return { count : 0, sum : 0 } }';
-        def initFunctionWithArgs = 'function(initCount, initSun) { return { count : parseInt(initCount), sum : parseInt(initSun) } }';
+        def initFunction = 'function() { return { count : 0, sum : 0 } }'
+        def initFunctionWithArgs = 'function(initCount, initSun) { return { count : parseInt(initCount), sum : parseInt(initSun) } }'
         def initArgs = ['0', '0']
-        def accumulateFunction = 'function(state, numCopies) { return { count : state.count + 1, sum : state.sum + numCopies } }';
-        def mergeFunction = 'function(state1, state2) { return { count : state1.count + state2.count, sum : state1.sum + state2.sum } }';
-        def finalizeFunction = 'function(state) { return (state.sum / state.count) }';
+        def accumulateFunction = 'function(state, numCopies) { return { count : state.count + 1, sum : state.sum + numCopies } }'
+        def mergeFunction = 'function(state1, state2) { return { count : state1.count + state2.count, sum : state1.sum + state2.sum } }'
+        def finalizeFunction = 'function(state) { return (state.sum / state.count) }'
 
         expect:
         accumulator('test', initFunction, accumulateFunction, mergeFunction)
@@ -794,15 +1324,15 @@ class AggregatesSpecification extends Specification {
                         finalizeFunction, 'js'))
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 3) })
+    @IgnoreIf({ serverVersionLessThan(4, 4) })
     def 'should test hashCode for accumulator operator'() {
         given:
-        def initFunction = 'function() { return { count : 0, sum : 0 } }';
-        def initFunctionWithArgs = 'function(initCount, initSun) { return { count : parseInt(initCount), sum : parseInt(initSun) } }';
+        def initFunction = 'function() { return { count : 0, sum : 0 } }'
+        def initFunctionWithArgs = 'function(initCount, initSun) { return { count : parseInt(initCount), sum : parseInt(initSun) } }'
         def initArgs = ['0', '0']
-        def accumulateFunction = 'function(state, numCopies) { return { count : state.count + 1, sum : state.sum + numCopies } }';
-        def mergeFunction = 'function(state1, state2) { return { count : state1.count + state2.count, sum : state1.sum + state2.sum } }';
-        def finalizeFunction = 'function(state) { return (state.sum / state.count) }';
+        def accumulateFunction = 'function(state, numCopies) { return { count : state.count + 1, sum : state.sum + numCopies } }'
+        def mergeFunction = 'function(state1, state2) { return { count : state1.count + state2.count, sum : state1.sum + state2.sum } }'
+        def finalizeFunction = 'function(state) { return (state.sum / state.count) }'
 
         expect:
         accumulator('test', initFunction, accumulateFunction, mergeFunction).hashCode() ==

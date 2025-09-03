@@ -65,7 +65,7 @@ public final class Indexes {
     }
 
     /**
-     * Create an index key for an ascending index on the given fields.
+     * Create an index key for an descending index on the given fields.
      *
      * @param fieldNames the field names, which must contain at least one
      * @return the index specification
@@ -76,7 +76,7 @@ public final class Indexes {
     }
 
     /**
-     * Create an index key for an ascending index on the given fields.
+     * Create an index key for an descending index on the given fields.
      *
      * @param fieldNames the field names, which must contain at least one
      * @return the index specification
@@ -99,7 +99,7 @@ public final class Indexes {
     }
 
     /**
-     * Create an index key for an ascending index on the given fields.
+     * Create an index key for an 2dsphere index on the given fields.
      *
      * @param fieldNames the field names, which must contain at least one
      * @return the index specification
@@ -125,25 +125,6 @@ public final class Indexes {
     public static Bson geo2d(final String fieldName) {
         notNull("fieldName", fieldName);
         return new BsonDocument(fieldName, new BsonString("2d"));
-    }
-
-    /**
-     * Create an index key for a geohaystack index on the given field.
-     *
-     * <p>
-     * <strong>Note: </strong>For queries that use spherical geometry, a 2dsphere index is a better option than a haystack index.
-     * 2dsphere indexes allow field reordering; geoHaystack indexes require the first field to be the location field. Also, geoHaystack
-     * indexes are only usable via commands and so always return all results at once..
-     * </p>
-     *
-     * @param fieldName the field to create a geoHaystack index on
-     * @param additional the additional field that forms the geoHaystack index key
-     * @return the index specification
-     * @mongodb.driver.manual core/geohaystack geoHaystack index
-     */
-    public static Bson geoHaystack(final String fieldName, final Bson additional) {
-        notNull("fieldName", fieldName);
-        return compoundIndex(new BsonDocument(fieldName, new BsonString("geoHaystack")), additional);
     }
 
     /**

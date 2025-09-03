@@ -49,7 +49,10 @@ import static java.lang.String.format;
 public class BsonDocument extends BsonValue implements Map<String, BsonValue>, Cloneable, Bson, Serializable {
     private static final long serialVersionUID = 1L;
 
-    private final Map<String, BsonValue> map = new LinkedHashMap<String, BsonValue>();
+    /**
+     * The underlying map.
+     */
+    private final Map<String, BsonValue> map;
 
     /**
      * Parses a string in MongoDB Extended JSON format to a {@code BsonDocument}
@@ -69,6 +72,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
      * @param bsonElements a list of {@code BsonElement}
      */
     public BsonDocument(final List<BsonElement> bsonElements) {
+        this(bsonElements.size());
         for (BsonElement cur : bsonElements) {
             put(cur.getName(), cur.getValue());
         }
@@ -81,13 +85,26 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
      * @param value the value
      */
     public BsonDocument(final String key, final BsonValue value) {
+        this();
         put(key, value);
+    }
+
+    /**
+     * Construct an empty document with the specified initial capacity.
+     *
+     * @param  initialCapacity the initial capacity
+     * @throws IllegalArgumentException if the initial capacity is negative
+     * @since 4.3
+     */
+    public BsonDocument(final int initialCapacity) {
+        map = new LinkedHashMap<>(initialCapacity);
     }
 
     /**
      * Construct an empty document.
      */
     public BsonDocument() {
+         map = new LinkedHashMap<>();
     }
 
     @Override
@@ -721,10 +738,6 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
         if (value == null) {
             throw new IllegalArgumentException(format("The value for key %s can not be null", key));
         }
-        if (key.contains("\0")) {
-            throw new BSONException(format("BSON cstring '%s' is not valid because it contains a null character at index %d", key,
-                                           key.indexOf('\0')));
-        }
         return map.put(key, value);
     }
 
@@ -821,7 +834,6 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
      * @see #toJson(JsonWriterSettings)
      * @see JsonWriterSettings
      */
-    @SuppressWarnings("deprecation")
     public String toJson() {
         return toJson(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
     }
@@ -844,7 +856,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
 
     @Override
     public BsonDocument clone() {
-        BsonDocument to = new BsonDocument();
+        BsonDocument to = new BsonDocument(this.size());
         for (Entry<String, BsonValue> cur : entrySet()) {
             switch (cur.getValue().getBsonType()) {
                 case DOCUMENT:
@@ -872,12 +884,29 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
         }
     }
 
-    // see https://docs.oracle.com/javase/6/docs/platform/serialization/spec/output.html
+    /**
+     * Write the replacement object.
+     *
+     * <p>
+     * See https://docs.oracle.com/javase/6/docs/platform/serialization/spec/output.html
+     * </p>
+     *
+     * @return a proxy for the document
+     */
     private Object writeReplace() {
         return new SerializationProxy(this);
     }
 
-    // see https://docs.oracle.com/javase/6/docs/platform/serialization/spec/input.html
+    /**
+     * Prevent normal deserialization.
+     *
+     * <p>
+     * See https://docs.oracle.com/javase/6/docs/platform/serialization/spec/input.html
+     * </p>
+     *
+     * @param stream the stream
+     * @throws InvalidObjectException in all cases
+     */
     private void readObject(final ObjectInputStream stream) throws InvalidObjectException {
         throw new InvalidObjectException("Proxy required");
     }

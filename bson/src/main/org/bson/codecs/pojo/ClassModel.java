@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * This model represents the metadata for a class and all its properties.
@@ -48,13 +49,13 @@ public final class ClassModel<T> {
         this.type = clazz;
         this.hasTypeParameters = clazz.getTypeParameters().length > 0;
         this.propertyNameToTypeParameterMap = Collections.unmodifiableMap(
-                new HashMap<String, TypeParameterMap>(propertyNameToTypeParameterMap));
+                new HashMap<>(propertyNameToTypeParameterMap));
         this.instanceCreatorFactory = instanceCreatorFactory;
         this.discriminatorEnabled = discriminatorEnabled;
         this.discriminatorKey = discriminatorKey;
         this.discriminator = discriminator;
         this.idPropertyModelHolder = idPropertyModelHolder;
-        this.propertyModels = Collections.unmodifiableList(new ArrayList<PropertyModel<?>>(propertyModels));
+        this.propertyModels = Collections.unmodifiableList(new ArrayList<>(propertyModels));
     }
 
     /**
@@ -65,7 +66,7 @@ public final class ClassModel<T> {
      * @return a new Class Model builder instance using reflection on the {@code clazz}.
      */
     public static <S> ClassModelBuilder<S> builder(final Class<S> type) {
-        return new ClassModelBuilder<S>(type);
+        return new ClassModelBuilder<>(type);
     }
 
     /**
@@ -194,8 +195,7 @@ public final class ClassModel<T> {
         if (getDiscriminator() != null ? !getDiscriminator().equals(that.getDiscriminator()) : that.getDiscriminator() != null) {
             return false;
         }
-        if (idPropertyModelHolder != null ? !idPropertyModelHolder.equals(that.idPropertyModelHolder)
-                : that.idPropertyModelHolder != null) {
+        if (!Objects.equals(idPropertyModelHolder, that.idPropertyModelHolder)) {
             return false;
         }
         if (!getPropertyModels().equals(that.getPropertyModels())) {

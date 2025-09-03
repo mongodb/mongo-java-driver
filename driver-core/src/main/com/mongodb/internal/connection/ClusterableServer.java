@@ -16,35 +16,29 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoException;
+
+import java.util.List;
+
+import static java.util.Arrays.asList;
+
 /**
  * A logical connection to a MongoDB server that supports clustering along with other servers.
  */
 interface ClusterableServer extends Server {
 
-    enum ConnectionState {
-        BEFORE_HANDSHAKE,
-        AFTER_HANDSHAKE
-    }
+    List<Integer> SHUTDOWN_CODES = asList(91, 11600);
 
     /**
      * Reset server description to connecting state
      */
-    void resetToConnecting();
+    void resetToConnecting(MongoException cause);
 
     /**
      * Invalidate the description of this server.  Implementation of this method should not block, but rather trigger an asynchronous
      * attempt to connect with the server in order to determine its current status.
      */
-    void invalidate();
-
-    /**
-     * Invalidate the description of this server due to the passed in reason.
-     * @param connectionState the connection state
-     * @param reason the reason for invalidation.
-     * @param connectionGeneration the connection pool's generation of the connection from which the error arose
-     * @param maxWireVersion the maxWireVersion from the connection from which the error arose
-     */
-    void invalidate(ConnectionState connectionState, Throwable reason, int connectionGeneration, int maxWireVersion);
+    void invalidate(MongoException cause);
 
     /**
      * <p>Closes the server.  Instances that have been closed will no longer be available for use.</p>

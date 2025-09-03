@@ -16,20 +16,17 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoCompressor;
+import com.mongodb.LoggerSettings;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterConnectionMode;
-import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
-import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
-import com.mongodb.connection.SocketStreamFactory;
+import com.mongodb.internal.selector.ServerAddressSelector;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
-import com.mongodb.selector.ServerSelector;
 import org.bson.BsonDocument;
 import org.bson.BsonDouble;
 import org.bson.BsonString;
@@ -38,12 +35,15 @@ import org.junit.After;
 import org.junit.Test;
 
 import java.util.Collections;
-import java.util.List;
 
+import static com.mongodb.ClusterFixture.CLIENT_METADATA;
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT_FACTORY;
 import static com.mongodb.ClusterFixture.getCredential;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.getPrimary;
 import static com.mongodb.ClusterFixture.getSecondary;
+import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.ClusterFixture.getSslSettings;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
 import static java.util.Collections.singletonList;
@@ -56,7 +56,7 @@ public class SingleServerClusterTest {
 
 
     private void setUpCluster(final ServerAddress serverAddress) {
-        SocketStreamFactory streamFactory = new SocketStreamFactory(SocketSettings.builder().build(),
+        SocketStreamFactory streamFactory = new SocketStreamFactory(new DefaultInetAddressResolver(), SocketSettings.builder().build(),
                 getSslSettings());
         ClusterId clusterId = new ClusterId();
         ClusterSettings clusterSettings = ClusterSettings.builder()
@@ -65,12 +65,11 @@ public class SingleServerClusterTest {
                 .build();
         cluster = new SingleServerCluster(clusterId,
                 clusterSettings,
-                new DefaultClusterableServerFactory(clusterId, clusterSettings, ServerSettings.builder().build(),
-                        ConnectionPoolSettings.builder().maxSize(1).build(),
-                        streamFactory, streamFactory, getCredential(),
-
-                        null, null, null,
-                        Collections.<MongoCompressor>emptyList()));
+                new DefaultClusterableServerFactory(ServerSettings.builder().build(),
+                        ConnectionPoolSettings.builder().maxSize(1).build(), InternalConnectionPoolSettings.builder().build(),
+                        OPERATION_CONTEXT_FACTORY, streamFactory, OPERATION_CONTEXT_FACTORY, streamFactory, getCredential(),
+                        LoggerSettings.builder().build(), null,
+                        Collections.emptyList(), getServerApi(), false), CLIENT_METADATA);
     }
 
     @After
@@ -79,22 +78,13 @@ public class SingleServerClusterTest {
     }
 
     @Test
-    public void shouldGetDescription() {
-        // given
-        setUpCluster(getPrimary());
-
-        // expect
-        assertNotNull(cluster.getDescription());
-    }
-
-    @Test
     public void descriptionShouldIncludeSettings() {
         // given
         setUpCluster(getPrimary());
 
         // expect
-        assertNotNull(cluster.getDescription().getClusterSettings());
-        assertNotNull(cluster.getDescription().getServerSettings());
+        assertNotNull(cluster.getCurrentDescription().getClusterSettings());
+        assertNotNull(cluster.getCurrentDescription().getServerSettings());
     }
 
     @Test
@@ -103,28 +93,25 @@ public class SingleServerClusterTest {
         setUpCluster(getPrimary());
 
         // when
-        Server server = cluster.selectServer(new ServerSelector() {
-            @Override
-            public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-                return getPrimaries(clusterDescription);
-            }
-        });
+        ServerTuple serverTuple = cluster.selectServer(clusterDescription -> getPrimaries(clusterDescription), OPERATION_CONTEXT);
 
         // then
-        assertTrue(server.getDescription().isOk());
+        assertTrue(serverTuple.getServerDescription().isOk());
     }
 
     @Test
     public void shouldSuccessfullyQueryASecondaryWithPrimaryReadPreference() {
         // given
+        OperationContext operationContext = OPERATION_CONTEXT;
         ServerAddress secondary = getSecondary();
         setUpCluster(secondary);
         String collectionName = getClass().getName();
-        Connection connection = cluster.getServer(secondary).getConnection();
+        Connection connection = cluster.selectServer(new ServerAddressSelector(secondary), operationContext).getServer()
+                .getConnection(operationContext);
 
         // when
         BsonDocument result = connection.command(getDefaultDatabaseName(), new BsonDocument("count", new BsonString(collectionName)),
-                new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(), NoOpSessionContext.INSTANCE);
+                NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(), operationContext);
 
         // then
         assertEquals(new BsonDouble(1.0).intValue(), result.getNumber("ok").intValue());

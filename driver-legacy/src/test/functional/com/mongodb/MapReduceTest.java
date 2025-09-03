@@ -29,7 +29,6 @@ import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
@@ -40,16 +39,16 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.isA;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
-import static org.junit.Assume.assumeTrue;
 
+@SuppressWarnings("deprecation")
 public class MapReduceTest extends DatabaseTestCase {
 
     private static final String MR_DATABASE = "output-" + System.nanoTime();
@@ -107,7 +106,6 @@ public class MapReduceTest extends DatabaseTestCase {
     @Test
     public void testWriteConcern() {
         assumeThat(isDiscoverableReplicaSet(), is(true));
-        assumeTrue(serverVersionAtLeast(3, 4));
         DBCollection collection = database.getCollection("testWriteConcernForMapReduce");
         collection.insert(new BasicDBObject("x", new String[]{"a", "b"}).append("s", 1));
         collection.setWriteConcern(new WriteConcern(5));
@@ -129,7 +127,7 @@ public class MapReduceTest extends DatabaseTestCase {
 
         assertNotNull(output.results());
 
-        Map<String, Integer> map = new HashMap<String, Integer>();
+        Map<String, Integer> map = new HashMap<>();
         for (final DBObject r : output.results()) {
             map.put(r.get("_id").toString(), ((Number) (r.get("value"))).intValue());
         }
@@ -170,7 +168,7 @@ public class MapReduceTest extends DatabaseTestCase {
                                                         MapReduceCommand.OutputType.INLINE,
                                                         null);
 
-        Map<String, Object> scope = new HashMap<String, Object>();
+        Map<String, Object> scope = new HashMap<>();
         scope.put("exclude", "a");
         command.setScope(scope);
 
@@ -310,7 +308,7 @@ public class MapReduceTest extends DatabaseTestCase {
         MapReduceOutput output = collection.mapReduce(command);
 
         //then
-        if (serverVersionLessThan(4, 3)) {
+        if (serverVersionLessThan(4, 4)) {
             assertThat(output.getEmitCount(), is(6));
             assertThat(output.getInputCount(), is(3));
             assertThat(output.getOutputCount(), is(4));
@@ -334,7 +332,7 @@ public class MapReduceTest extends DatabaseTestCase {
         MapReduceOutput output = collection.mapReduce(command);
 
         //then
-        if (serverVersionLessThan(4, 3)) {
+        if (serverVersionLessThan(4, 4)) {
             assertThat(output.getDuration(), is(greaterThanOrEqualTo(0)));
             assertThat(output.getEmitCount(), is(6));
             assertThat(output.getInputCount(), is(3));
@@ -351,7 +349,7 @@ public class MapReduceTest extends DatabaseTestCase {
     //TODO: test read preferences - always go to primary for non-inline.  Presumably do whatever if inline
 
     private List<DBObject> toList(final Iterable<DBObject> results) {
-        List<DBObject> resultsAsList = new ArrayList<DBObject>();
+        List<DBObject> resultsAsList = new ArrayList<>();
         for (final DBObject result : results) {
             resultsAsList.add(result);
         }
@@ -359,7 +357,7 @@ public class MapReduceTest extends DatabaseTestCase {
     }
 
     private Map<String, Object> toMap(final Iterable<DBObject> result) {
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
         for (final DBObject document : result) {
             map.put((String) document.get("_id"), document.get("value"));
         }

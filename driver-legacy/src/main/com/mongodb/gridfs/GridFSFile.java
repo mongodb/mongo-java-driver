@@ -49,7 +49,7 @@ public abstract class GridFSFile implements DBObject {
     private static final CodecRegistry DEFAULT_REGISTRY =
             fromProviders(asList(new ValueCodecProvider(), new BsonValueCodecProvider(), new DBObjectCodecProvider()));
 
-    private static final Set<String> VALID_FIELDS = Collections.unmodifiableSet(new HashSet<String>(asList("_id",
+    private static final Set<String> VALID_FIELDS = Collections.unmodifiableSet(new HashSet<>(asList("_id",
             "filename",
             "contentType",
             "length",
@@ -221,7 +221,7 @@ public abstract class GridFSFile implements DBObject {
 
     @Override
     public Set<String> keySet() {
-        Set<String> keys = new HashSet<String>();
+        Set<String> keys = new HashSet<>();
         keys.addAll(VALID_FIELDS);
         keys.addAll(extra.keySet());
         return keys;

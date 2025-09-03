@@ -17,7 +17,6 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.UnixServerAddress;
-import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import jnr.unixsocket.UnixSocketAddress;
@@ -27,17 +26,20 @@ import javax.net.SocketFactory;
 import java.io.IOException;
 import java.net.Socket;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class UnixSocketChannelStream extends SocketStream {
     private final UnixServerAddress address;
 
     public UnixSocketChannelStream(final UnixServerAddress address, final SocketSettings settings, final SslSettings sslSettings,
                             final BufferProvider bufferProvider) {
-        super(address, settings, sslSettings, SocketFactory.getDefault(), bufferProvider);
+        super(address, new DefaultInetAddressResolver(), settings, sslSettings, SocketFactory.getDefault(), bufferProvider);
         this.address = address;
     }
 
     @Override
-    protected Socket initializeSocket() throws IOException {
-        return UnixSocketChannel.open((UnixSocketAddress) address.getUnixSocketAddress()).socket();
+    protected Socket initializeSocket(final OperationContext operationContext) throws IOException {
+        return UnixSocketChannel.open(new UnixSocketAddress(address.getHost())).socket();
     }
 }

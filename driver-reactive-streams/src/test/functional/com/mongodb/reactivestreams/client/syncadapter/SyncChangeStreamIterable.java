@@ -25,15 +25,19 @@ import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
+import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
+import org.bson.BsonValue;
 
 import java.util.concurrent.TimeUnit;
 
 class SyncChangeStreamIterable<T> extends SyncMongoIterable<ChangeStreamDocument<T>> implements ChangeStreamIterable<T> {
-    private ChangeStreamPublisher<T> wrapped;
+    private final ChangeStreamPublisher<T> wrapped;
+    @Nullable
+    private Integer batchSize;
 
     SyncChangeStreamIterable(final ChangeStreamPublisher<T> wrapped) {
         super(wrapped);
@@ -41,7 +45,7 @@ class SyncChangeStreamIterable<T> extends SyncMongoIterable<ChangeStreamDocument
     }
 
     public MongoChangeStreamCursor<ChangeStreamDocument<T>> cursor() {
-        final MongoCursor<ChangeStreamDocument<T>> wrapped = super.cursor();
+        MongoCursor<ChangeStreamDocument<T>> wrapped = super.cursor();
         return new MongoChangeStreamCursor<ChangeStreamDocument<T>>() {
             @Override
             public BsonDocument getResumeToken() {
@@ -61,6 +65,11 @@ class SyncChangeStreamIterable<T> extends SyncMongoIterable<ChangeStreamDocument
             @Override
             public ChangeStreamDocument<T> next() {
                 return wrapped.next();
+            }
+
+            @Override
+            public int available() {
+                return wrapped.available();
             }
 
             @Override
@@ -87,6 +96,12 @@ class SyncChangeStreamIterable<T> extends SyncMongoIterable<ChangeStreamDocument
     }
 
     @Override
+    public ChangeStreamIterable<T> fullDocumentBeforeChange(final FullDocumentBeforeChange fullDocumentBeforeChange) {
+        wrapped.fullDocumentBeforeChange(fullDocumentBeforeChange);
+        return this;
+    }
+
+    @Override
     public ChangeStreamIterable<T> resumeAfter(final BsonDocument resumeToken) {
         wrapped.resumeAfter(resumeToken);
         return this;
@@ -95,6 +110,8 @@ class SyncChangeStreamIterable<T> extends SyncMongoIterable<ChangeStreamDocument
     @Override
     public ChangeStreamIterable<T> batchSize(final int batchSize) {
         wrapped.batchSize(batchSize);
+        this.batchSize = batchSize;
+        super.batchSize(batchSize);
         return this;
     }
 
@@ -112,7 +129,11 @@ class SyncChangeStreamIterable<T> extends SyncMongoIterable<ChangeStreamDocument
 
     @Override
     public <TDocument> MongoIterable<TDocument> withDocumentClass(final Class<TDocument> clazz) {
-        throw new UnsupportedOperationException();
+        SyncMongoIterable<TDocument> result = new SyncMongoIterable<>(wrapped.withDocumentClass(clazz));
+        if (batchSize != null) {
+            result.batchSize(batchSize);
+        }
+        return result;
     }
 
     @Override
@@ -124,6 +145,24 @@ class SyncChangeStreamIterable<T> extends SyncMongoIterable<ChangeStreamDocument
     @Override
     public ChangeStreamIterable<T> startAfter(final BsonDocument startAfter) {
         wrapped.startAfter(startAfter);
+        return this;
+    }
+
+    @Override
+    public ChangeStreamIterable<T> comment(@Nullable final String comment) {
+        wrapped.comment(comment);
+        return this;
+    }
+
+    @Override
+    public ChangeStreamIterable<T> comment(@Nullable final BsonValue comment) {
+        wrapped.comment(comment);
+        return this;
+    }
+
+    @Override
+    public ChangeStreamIterable<T> showExpandedEvents(final boolean showExpandedEvents) {
+        wrapped.showExpandedEvents(showExpandedEvents);
         return this;
     }
 }

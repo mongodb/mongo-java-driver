@@ -16,27 +16,33 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ClientSessionOptions;
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
-
+import com.mongodb.TransactionOptions;
 import com.mongodb.client.internal.ClientSessionClock;
+import com.mongodb.client.model.Sorts;
 import org.bson.Document;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.TimeUnit;
+
+import static com.mongodb.ClusterFixture.TIMEOUT;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-// See https://github.com/mongodb/specifications/tree/master/source/transactions-convenient-api/tests/README.rst#prose-tests
+// See https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#prose-tests
 public class WithTransactionProseTest extends DatabaseTestCase {
     private static final long START_TIME_MS = 1L;
     private static final long ERROR_GENERATING_INTERVAL = 121000L;
 
-    @Before
+    @BeforeEach
     @Override
     public void setUp() {
         assumeTrue(canRunTests());
@@ -54,20 +60,14 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     @Test
     public void testCallbackRaisesCustomError() {
         final String exceptionMessage = "NotTransientOrUnknownError";
-        ClientSession session = client.startSession();
-        try {
-            session.withTransaction(new TransactionBody<Void>() {
-                @Override
-                public Void execute() {
-                    throw new MongoException(exceptionMessage);
-                }
+        try (ClientSession session = client.startSession()) {
+            session.withTransaction((TransactionBody<Void>) () -> {
+                throw new MongoException(exceptionMessage);
             });
             // should not get here
             fail("Test should have thrown an exception.");
         } catch (MongoException e) {
             assertEquals(exceptionMessage, e.getMessage());
-        } finally {
-            session.close();
         }
     }
 
@@ -77,19 +77,13 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     //
     @Test
     public void testCallbackReturnsValue() {
-        ClientSession session = client.startSession();
-        final String msg = "Inserted document";
-        try {
-            String returnValueFromCallback = session.withTransaction(new TransactionBody<String>() {
-                @Override
-                public String execute() {
-                    collection.insertOne(Document.parse("{ _id : 1 }"));
-                    return msg;
-                }
+        try (ClientSession session = client.startSession()) {
+            final String msg = "Inserted document";
+            String returnValueFromCallback = session.withTransaction(() -> {
+                collection.insertOne(Document.parse("{ _id : 1 }"));
+                return msg;
             });
             assertEquals(msg, returnValueFromCallback);
-        } finally {
-            session.close();
         }
     }
 
@@ -101,24 +95,18 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     public void testRetryTimeoutEnforcedTransientTransactionError() {
         final String errorMessage = "transient transaction error";
 
-        ClientSession session = client.startSession();
-        ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
-        try {
-            session.withTransaction(new TransactionBody<Void>() {
-                @Override
-                public Void execute() {
+        try (ClientSession session = client.startSession()) {
+            ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
+            session.withTransaction((TransactionBody<Void>) () -> {
                 ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
-                    MongoException e = new MongoException(112, errorMessage);
-                    e.addLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL);
-                    throw e;
-                }
+                MongoException e = new MongoException(112, errorMessage);
+                e.addLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL);
+                throw e;
             });
             fail("Test should have thrown an exception.");
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             assertEquals(errorMessage, e.getMessage());
             assertTrue(((MongoException) e).getErrorLabels().contains(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL));
-        } finally {
-            session.close();
         }
     }
 
@@ -128,28 +116,23 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     //
     @Test
     public void testRetryTimeoutEnforcedUnknownTransactionCommit() {
-        final MongoDatabase failPointAdminDb = client.getDatabase("admin");
+        MongoDatabase failPointAdminDb = client.getDatabase("admin");
         failPointAdminDb.runCommand(
                 Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 2}, "
                         + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 91, 'closeConnection': false}}"));
 
-        final ClientSession session = client.startSession();
-        ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
-        try {
-            session.withTransaction(new TransactionBody<Void>() {
-                @Override
-                public Void execute() {
-                    ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
-                    collection.insertOne(session, new Document("_id", 2));
-                    return null;
-                }
+        try (ClientSession session = client.startSession()) {
+            ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
+            session.withTransaction((TransactionBody<Void>) () -> {
+                ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
+                collection.insertOne(session, new Document("_id", 2));
+                return null;
             });
             fail("Test should have thrown an exception.");
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             assertEquals(91, ((MongoException) e).getCode());
             assertTrue(((MongoException) e).getErrorLabels().contains(MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL));
         } finally {
-            session.close();
             failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': 'off'}"));
         }
     }
@@ -161,40 +144,66 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     //
     @Test
     public void testRetryTimeoutEnforcedTransientTransactionErrorOnCommit() {
-        final MongoDatabase failPointAdminDb = client.getDatabase("admin");
+        MongoDatabase failPointAdminDb = client.getDatabase("admin");
         failPointAdminDb.runCommand(
                 Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 2}, "
                         + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 251, 'codeName': 'NoSuchTransaction', "
                         + "'errmsg': 'Transaction 0 has been aborted', 'closeConnection': false}}"));
 
-        final ClientSession session = client.startSession();
-        ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
-        try {
-            session.withTransaction(new TransactionBody<Void>() {
-                @Override
-                public Void execute() {
-                    ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
-                    collection.insertOne(session, Document.parse("{ _id : 1 }"));
-                    return null;
-                }
+        try (ClientSession session = client.startSession()) {
+            ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
+            session.withTransaction((TransactionBody<Void>) () -> {
+                ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
+                collection.insertOne(session, Document.parse("{ _id : 1 }"));
+                return null;
             });
             fail("Test should have thrown an exception.");
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             assertEquals(251, ((MongoException) e).getCode());
             assertTrue(((MongoException) e).getErrorLabels().contains(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL));
         } finally {
-            session.close();
             failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': 'off'}"));
         }
     }
 
-    private boolean canRunTests() {
-        if (isSharded()) {
-            return serverVersionAtLeast(4, 1);
-        } else if (isDiscoverableReplicaSet()) {
-            return serverVersionAtLeast(4, 0);
-        } else {
-            return false;
+    //
+    // Ensure cannot override timeout in transaction
+    //
+    @Test
+    public void testTimeoutMS() {
+        try (ClientSession session = client.startSession(ClientSessionOptions.builder()
+                .defaultTransactionOptions(TransactionOptions.builder().timeout(TIMEOUT, TimeUnit.SECONDS).build())
+                .build())) {
+            assertThrows(MongoClientException.class, () -> session.withTransaction(() -> {
+                collection.insertOne(session, Document.parse("{ _id : 1 }"));
+                collection.withTimeout(2, TimeUnit.MINUTES).find(session).first();
+                return -1;
+            }));
         }
+    }
+
+    //
+    // Ensure legacy settings don't cause issues in sessions
+    //
+    @Test
+    public void testTimeoutMSAndLegacySettings() {
+        try (ClientSession session = client.startSession(ClientSessionOptions.builder()
+                .defaultTransactionOptions(TransactionOptions.builder().timeout(TIMEOUT, TimeUnit.SECONDS).build())
+                .build())) {
+            Document document = Document.parse("{ _id : 1 }");
+            Document returnValueFromCallback = session.withTransaction(() -> {
+                collection.insertOne(session, document);
+                Document found = collection.find(session)
+                        .maxAwaitTime(1, TimeUnit.MINUTES)
+                        .sort(Sorts.descending("_id"))
+                        .first();
+                return found != null ? found : new Document();
+            });
+            assertEquals(document, returnValueFromCallback);
+        }
+    }
+
+    private boolean canRunTests() {
+        return isSharded() || isDiscoverableReplicaSet();
     }
 }

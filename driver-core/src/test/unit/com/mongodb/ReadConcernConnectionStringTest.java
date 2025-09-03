@@ -19,18 +19,12 @@ package com.mongodb;
 import junit.framework.TestCase;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonValue;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import util.JsonPoweredTestHelper;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 // See https://github.com/mongodb/specifications/tree/master/source/read-write-concern/tests/
 @RunWith(Parameterized.class)
@@ -39,7 +33,8 @@ public class ReadConcernConnectionStringTest extends TestCase {
     private final String input;
     private final BsonDocument definition;
 
-    public ReadConcernConnectionStringTest(final String description, final String input, final BsonDocument definition) {
+    public ReadConcernConnectionStringTest(@SuppressWarnings("unused") final String fileName, final String description,
+            final String input, final BsonDocument definition) {
         this.description = description;
         this.input = input;
         this.definition = definition;
@@ -59,16 +54,7 @@ public class ReadConcernConnectionStringTest extends TestCase {
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        List<Object[]> data = new ArrayList<Object[]>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/read-concern/connection-string")) {
-            BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
-            for (BsonValue test : testDocument.getArray("tests")) {
-                data.add(new Object[]{test.asDocument().getString("description").getValue(),
-                        test.asDocument().getString("uri").getValue(),
-                        test.asDocument()});
-            }
-        }
-        return data;
+    public static Collection<Object[]> data() {
+        return JsonPoweredTestHelper.getTestData("read-write-concern/tests/connection-string/read-concern.json");
     }
 }

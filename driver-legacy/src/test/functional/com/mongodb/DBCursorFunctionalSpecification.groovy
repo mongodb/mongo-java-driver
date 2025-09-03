@@ -20,10 +20,7 @@ import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationStrength
 import com.mongodb.internal.operation.BatchCursor
-import spock.lang.IgnoreIf
 import spock.lang.Subject
-
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 
 class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
@@ -51,7 +48,6 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         1 * decoder.decode(_ as byte[], collection)
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 0) })
     def 'should use provided hints for queries mongod > 3.0'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
@@ -73,8 +69,26 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
     def 'should use provided hint for count'() {
         expect:
-        collection.createIndex(new BasicDBObject('a', 1));
+        collection.createIndex(new BasicDBObject('a', 1))
+        collection.find().hint('a_1').count() == 1
         collection.find().hint(new BasicDBObject('a', 1)).count() == 1
+    }
+
+    def 'should use provided hints for find'() {
+        given:
+        collection.createIndex(new BasicDBObject('a', 1))
+
+        when:
+        dbCursor = collection.find().hint(new BasicDBObject('a', 1))
+
+        then:
+        dbCursor.one()
+
+        when:
+        dbCursor = collection.find().hint('a_1')
+
+        then:
+        dbCursor.one()
     }
 
     def 'should use provided hints for count'() {
@@ -85,10 +99,38 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         collection.find().count() == 2
 
         when:
-        collection.createIndex(new BasicDBObject('x', 1), new BasicDBObject('sparse', true));
+        collection.createIndex(new BasicDBObject('a', 1))
 
         then:
-        collection.find(new BasicDBObject('a', 1)).hint(new BasicDBObject('x', 1)).count() == 0
+        collection.find(new BasicDBObject('a', 1)).hint('_id_').count() == 1
+        collection.find().hint('_id_').count() == 2
+
+        when:
+        collection.createIndex(new BasicDBObject('x', 1), new BasicDBObject('sparse', true))
+
+        then:
+        collection.find(new BasicDBObject('a', 1)).hint('x_1').count() == 0
+        collection.find().hint('a_1').count() == 2
+    }
+
+    def 'should throw with bad hint'() {
+        when:
+        collection.find(new BasicDBObject('a', 1)).hint('BAD HINT').count()
+
+        then:
+        thrown(MongoException)
+
+        when:
+        collection.find(new BasicDBObject('a', 1)).hint('BAD HINT').one()
+
+        then:
+        thrown(MongoException)
+
+        when:
+        collection.find(new BasicDBObject('a', 1)).hint(new BasicDBObject('BAD HINT', 1)).one()
+
+        then:
+        thrown(MongoException)
     }
 
     def 'should return results in the order they are on disk when natural sort applied'() {
@@ -185,6 +227,11 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
                     List<DBObject> next() { null }
 
                     @Override
+                    int available() {
+                        0
+                    }
+
+                    @Override
                     void setBatchSize(final int batchSize) { }
 
                     @Override
@@ -222,34 +269,6 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         executor.getReadPreference() == ReadPreference.secondaryPreferred()
     }
 
-    @IgnoreIf({ serverVersionAtLeast(3, 4) })
-    def 'should throw an exception when using an unsupported Collation'() {
-        given:
-        dbCursor = collection.find().setCollation(caseInsensitiveCollation)
-
-        when:
-        dbCursor.count()
-
-        then:
-        def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by wire version:')
-
-        when:
-        dbCursor.one()
-
-        then:
-        exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by wire version:')
-
-        when:
-        ++dbCursor.iterator()
-
-        then:
-        exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by wire version:')
-    }
-
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should support collation'() {
         when:
         def document = BasicDBObject.parse('{_id: 1, str: "foo"}')
@@ -269,10 +288,17 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
     def caseInsensitiveCollation = Collation.builder().locale('en').collationStrength(CollationStrength.SECONDARY).build()
 
     static DBObject getKeyPattern(DBObject explainPlan) {
-        if (explainPlan.queryPlanner.winningPlan.inputStage != null) {
+        if (explainPlan.queryPlanner.winningPlan.queryPlan?.inputStage != null) {
+            return explainPlan.queryPlanner.winningPlan.queryPlan.inputStage.keyPattern
+        } else if (explainPlan.queryPlanner.winningPlan.inputStage != null) {
             return explainPlan.queryPlanner.winningPlan.inputStage.keyPattern
         } else if (explainPlan.queryPlanner.winningPlan.shards != null) {
-            return explainPlan.queryPlanner.winningPlan.shards[0].winningPlan.inputStage.keyPattern
+            def winningPlan = explainPlan.queryPlanner.winningPlan.shards[0].winningPlan
+            if (winningPlan.queryPlan?.inputStage != null) {
+                return winningPlan.queryPlan.inputStage.keyPattern
+            } else if (winningPlan.inputStage != null) {
+                return winningPlan.inputStage.keyPattern
+            }
         }
     }
 }

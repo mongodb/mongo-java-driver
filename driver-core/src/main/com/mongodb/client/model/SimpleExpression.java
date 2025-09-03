@@ -21,6 +21,8 @@ import org.bson.BsonDocumentWriter;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
+import java.util.Objects;
+
 class SimpleExpression<TExpression> implements Bson {
     private final String name;
     private final TExpression expression;
@@ -53,10 +55,10 @@ class SimpleExpression<TExpression> implements Bson {
 
         SimpleExpression<?> that = (SimpleExpression<?>) o;
 
-        if (name != null ? !name.equals(that.name) : that.name != null) {
+        if (!Objects.equals(name, that.name)) {
             return false;
         }
-        return expression != null ? expression.equals(that.expression) : that.expression == null;
+        return Objects.equals(expression, that.expression);
     }
 
     @Override

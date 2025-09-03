@@ -16,44 +16,35 @@
 
 package com.mongodb.internal.operation
 
-import category.Async
-import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.ServerCursor
-import com.mongodb.internal.async.AsyncBatchCursor
+import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.connection.ConnectionDescription
+import com.mongodb.internal.async.AsyncBatchCursor
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.binding.ReadBinding
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
-import com.mongodb.internal.connection.QueryResult
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonDouble
 import org.bson.BsonInt64
-import org.bson.BsonRegularExpression
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
-import org.junit.experimental.categories.Category
-import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
-import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
-import static com.mongodb.ClusterFixture.isSharded
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class ListCollectionsOperationSpecification extends OperationFunctionalSpecification {
 
@@ -73,7 +64,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         collectionHelper.dropDatabase(madeUpDatabase)
     }
 
-    @Category(Async)
+
     def 'should return empty cursor if database does not exist asynchronously'() {
         given:
         def operation = new ListCollectionsOperation(madeUpDatabase, new DocumentCodec())
@@ -84,15 +75,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         cursor.next(callback)
 
         then:
-        callback.get() == null
-
-        when:
-        cursor = executeAsync(operation)
-        callback = new FutureResultCallback()
-        cursor.tryNext(callback)
-
-        then:
-        callback.get() == null
+        callback.get() == []
 
         cleanup:
         collectionHelper.dropDatabase(madeUpDatabase)
@@ -116,19 +99,6 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         names.containsAll([collectionName, 'collection2'])
         !names.contains(null)
         names.findAll { it.contains('$') }.isEmpty()
-    }
-
-    @IgnoreIf({ serverVersionAtLeast(3, 0) })
-    def 'should throw if filtering on name with something other than a string'() {
-        given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
-                .filter(new BsonDocument('name', new BsonRegularExpression('^[^$]*$')))
-
-        when:
-        operation.execute(getBinding())
-
-        then:
-        thrown(IllegalArgumentException)
     }
 
     def 'should filter collection names if a name filter is specified'() {
@@ -170,21 +140,6 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         !names.contains(collectionName)
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || serverVersionAtLeast(4, 0) })
-    def 'should get all fields when nameOnly is not requested'() {
-        given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
-        getCollectionHelper().create('collection4', new CreateCollectionOptions())
-
-        when:
-        def cursor = operation.execute(getBinding())
-        def collection = cursor.next()[0]
-
-        then:
-        collection.size() > 2
-    }
-
-    @IgnoreIf({ !serverVersionAtLeast(4, 0) })
     def 'should only get collection names when nameOnly is requested'() {
         given:
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
@@ -199,12 +154,27 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         collection.size() == 2
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || serverVersionAtLeast(4, 0) })
-    def 'should only get all field names when nameOnly is requested on server versions that do not support nameOnly'() {
+    def 'should only get collection names when nameOnly and authorizedCollections are requested'() {
         given:
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
                 .nameOnly(true)
+                .authorizedCollections(true)
         getCollectionHelper().create('collection6', new CreateCollectionOptions())
+
+        when:
+        def cursor = operation.execute(getBinding())
+        def collection = cursor.next()[0]
+
+        then:
+        collection.size() == 2
+    }
+
+    def 'should get all fields when authorizedCollections is requested and nameOnly is not requested'() {
+        given:
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+                .nameOnly(false)
+                .authorizedCollections(true)
+        getCollectionHelper().create('collection8', new CreateCollectionOptions())
 
         when:
         def cursor = operation.execute(getBinding())
@@ -214,7 +184,6 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         collection.size() > 2
     }
 
-    @Category(Async)
     def 'should return collection names if a collection exists asynchronously'() {
         given:
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
@@ -238,7 +207,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should filter indexes when calling hasNext before next'() {
         given:
-        new DropDatabaseOperation(databaseName).execute(getBinding())
+        new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
         addSeveralIndexes()
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
 
@@ -254,7 +223,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should filter indexes without calling hasNext before next'() {
         given:
-        new DropDatabaseOperation(databaseName).execute(getBinding())
+        new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
         addSeveralIndexes()
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
 
@@ -276,7 +245,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should filter indexes when calling hasNext before tryNext'() {
         given:
-        new DropDatabaseOperation(databaseName).execute(getBinding())
+        new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
         addSeveralIndexes()
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
 
@@ -298,7 +267,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should filter indexes without calling hasNext before tryNext'() {
         given:
-        new DropDatabaseOperation(databaseName).execute(getBinding())
+        new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
         addSeveralIndexes()
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
 
@@ -312,10 +281,10 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         cursor.tryNext() == null
     }
 
-    @Category(Async)
+
     def 'should filter indexes asynchronously'() {
         given:
-        new DropDatabaseOperation(databaseName).execute(getBinding())
+        new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
         addSeveralIndexes()
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
 
@@ -359,7 +328,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         cursor?.close()
     }
 
-    @Category(Async)
+
     def 'should use the set batchSize of collections asynchronously'() {
         given:
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
@@ -388,104 +357,58 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         cursor.getBatchSize() == 2
 
         cleanup:
-        consumeAsyncResults(cursor)
+        cursor?.close()
     }
 
-    @IgnoreIf({ isSharded() })
-    def 'should throw execution timeout exception from execute'() {
-        given:
-        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).maxTime(1000, MILLISECONDS)
-
-        enableMaxTimeFailPoint()
-
-        when:
-        operation.execute(getBinding())
-
-        then:
-        thrown(MongoExecutionTimeoutException)
-
-        cleanup:
-        disableMaxTimeFailPoint()
-    }
-
-    @Category(Async)
-    @IgnoreIf({ isSharded() })
-    def 'should throw execution timeout exception from executeAsync'() {
-        given:
-        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).maxTime(1000, MILLISECONDS)
-
-        enableMaxTimeFailPoint()
-
-        when:
-        executeAsync(operation);
-
-        then:
-        thrown(MongoExecutionTimeoutException)
-
-        cleanup:
-        disableMaxTimeFailPoint()
-    }
-
-    def 'should use the ReadBindings readPreference to set slaveOK'() {
+    def 'should use the readPreference to set secondaryOk'() {
         given:
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> connection
+            getReadPreference() >> readPreference
+            getOperationContext() >> OPERATION_CONTEXT
         }
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
+            getOperationContext() >> OPERATION_CONTEXT
         }
         def operation = new ListCollectionsOperation(helper.dbName, helper.decoder)
 
-        when:
+        when: '3.6.0'
         operation.execute(readBinding)
 
         then:
-        _ * connection.getDescription() >> helper.twoSixConnectionDescription
-        1 * connection.query(_, _, _, _, _, _, readPreference.isSlaveOk(), _, _, _, _, _, _) >> helper.queryResult
-        1 * connection.release()
-
-        when: '3.0.0'
-        operation.execute(readBinding)
-
-        then:
-        _ * connection.getDescription() >> helper.threeZeroConnectionDescription
-        1 * connection.command(_, _, _, readPreference, _, _) >> helper.commandResult
+        _ * connection.getDescription() >> helper.threeSixConnectionDescription
+        1 * connection.command(_, _, _, readPreference, _, OPERATION_CONTEXT) >> helper.commandResult
         1 * connection.release()
 
         where:
         readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
     }
 
-    def 'should use the AsyncReadBindings readPreference to set slaveOK'() {
+    def 'should use the readPreference to set secondaryOk in async'() {
         given:
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
             getConnection(_) >> { it[0].onResult(connection, null) }
+            getReadPreference() >> readPreference
+            getOperationContext() >> OPERATION_CONTEXT
         }
         def readBinding = Stub(AsyncReadBinding) {
-            getReadPreference() >> readPreference
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+            getReadPreference() >> readPreference
+            getOperationContext() >> OPERATION_CONTEXT
         }
         def operation = new ListCollectionsOperation(helper.dbName, helper.decoder)
 
-        when:
+        when: '3.6.0'
         operation.executeAsync(readBinding, Stub(SingleResultCallback))
 
         then:
-        _ * connection.getDescription() >> helper.twoSixConnectionDescription
-        1 * connection.queryAsync(_, _, _, _, _, _, readPreference.isSlaveOk(), _, _, _, _, _, _, _) >> {
-            it[13].onResult(helper.queryResult, null) }
-
-        when: '3.0.0'
-        operation.executeAsync(readBinding, Stub(SingleResultCallback))
-
-        then:
-        _ * connection.getDescription() >> helper.threeZeroConnectionDescription
-        1 * connection.commandAsync(helper.dbName, _, _, readPreference, _, _, _) >> { it[6].onResult(helper.commandResult, null) }
+        _ * connection.getDescription() >> helper.threeSixConnectionDescription
+        1 * connection.commandAsync(helper.dbName, _, _, readPreference, _, OPERATION_CONTEXT, *_) >> {
+            it.last().onResult(helper.commandResult, null) }
 
         where:
         readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
@@ -494,13 +417,10 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
     def helper = [
         dbName: 'db',
         decoder: Stub(Decoder),
-        twoSixConnectionDescription : Stub(ConnectionDescription) {
-            getMaxWireVersion() >> 2
-        },
-        threeZeroConnectionDescription : Stub(ConnectionDescription) {
+        threeSixConnectionDescription : Stub(ConnectionDescription) {
             getMaxWireVersion() >> 3
         },
-        queryResult: Stub(QueryResult) {
+        queryResult: Stub(CommandCursorResult) {
             getNamespace() >> new MongoNamespace('db', 'coll')
             getResults() >> []
             getCursor() >> new ServerCursor(1, Stub(ServerAddress))
@@ -534,7 +454,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         while (true) {
             def next = cursor.tryNext()
             if (next == null) {
-                break;
+                break
             }
             list += next
         }
@@ -542,9 +462,12 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
     }
 
     def asyncCursorToList(AsyncBatchCursor cursor) {
+        if (cursor.isClosed()) {
+            return []
+        }
         def callback = new FutureResultCallback()
         cursor.next(callback)
-        def next = callback.get();
+        def next = callback.get()
         if (next == null) {
             return []
         }

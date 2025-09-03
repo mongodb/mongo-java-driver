@@ -32,7 +32,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 /**
  * A server selector that accepts only servers within the given ping-time latency difference from the faster of the servers.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class LatencyMinimizingServerSelector implements ServerSelector {
 
@@ -108,7 +108,7 @@ public class LatencyMinimizingServerSelector implements ServerSelector {
 
     private List<ServerDescription> getServersWithAcceptableLatencyDifference(final List<ServerDescription> servers,
                                                                               final long bestPingTime) {
-        List<ServerDescription> goodSecondaries = new ArrayList<ServerDescription>(servers.size());
+        List<ServerDescription> goodSecondaries = new ArrayList<>(servers.size());
         for (final ServerDescription cur : servers) {
             if (!cur.isOk()) {
                 continue;

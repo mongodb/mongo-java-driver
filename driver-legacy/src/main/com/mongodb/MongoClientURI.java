@@ -24,7 +24,7 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * Represents a <a href="http://www.mongodb.org/display/DOCS/Connections">URI</a>
+ * Represents a <a href="https://www.mongodb.com/docs/manual/reference/connection-string/">URI</a>
  * which can be used to create a MongoClient instance. The URI describes the hosts to
  * be used and options.
  * <p>The format of the URI is:
@@ -42,8 +42,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <li>{@code :portX} is optional and defaults to :27017 if not provided.</li>
  * <li>{@code /database} is the name of the database to login to and thus is only relevant if the
  * {@code username:password@} syntax is used. If not specified the "admin" database will be used by default.</li>
- * <li>{@code ?options} are connection options. Note that if {@code database} is absent there is still a {@code /}
- * required between the last host and the {@code ?} introducing the options. Options are name=value pairs and the pairs
+ * <li>{@code ?options} are connection options. Options are name=value pairs and the pairs
  * are separated by "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;",
  * but should be considered as deprecated.</li>
  * </ul>
@@ -57,12 +56,12 @@ import static com.mongodb.assertions.Assertions.notNull;
  * connecting to a database server.  For some authentication mechanisms, only the username is specified and the password is not,
  * in which case the ":" after the username is left off as well</li>
  * <li>{@code host} is the only required part of the URI.  It identifies a single host name for which SRV records are looked up
- * from a Domain Name Server after prefixing the host name with {@code "_mongodb._tcp"}.  The host/port for each SRV record becomes the
+ * from a Domain Name Server after prefixing the host name with, by default, {@code "_mongodb._tcp"} ({@code "mongodb"} is the default SRV
+ * service name, but can be replaced via the {@code srvServiceName} query parameter),  The host/port for each SRV record becomes the
  * seed list used to connect, as if each one were provided as host/port pair in a URI using the normal mongodb protocol.</li>
  * <li>{@code /database} is the name of the database to login to and thus is only relevant if the
  * {@code username:password@} syntax is used. If not specified the "admin" database will be used by default.</li>
- * <li>{@code ?options} are connection options. Note that if {@code database} is absent there is still a {@code /}
- * required between the last host and the {@code ?} introducing the options. Options are name=value pairs and the pairs
+ * <li>{@code ?options} are connection options. Options are name=value pairs and the pairs
  * are separated by "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;",
  * but should be considered as deprecated. Additionally with the mongodb+srv protocol, TXT records are looked up from a Domain Name
  * Server for the given host, and the text value of each one is prepended to any options on the URI itself.  Because the last specified
@@ -99,14 +98,25 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <li>{@code tlsAllowInvalidHostnames=true|false}: Whether to allow invalid host names for TLS connections. Supersedes the
  * sslInvalidHostNameAllowed option</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
- * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li>
+ * <li>{@code socketTimeoutMS=ms}: How long a receive on a socket can take before timing out.
+ * This option is the same as {@link MongoClientOptions#getSocketTimeout()}.
+ * Deprecated, use {@code timeoutMS} instead.</li>
  * <li>{@code maxIdleTimeMS=ms}: Maximum idle time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * <li>{@code maxLifeTimeMS=ms}: Maximum life time of a pooled connection. A connection that exceeds this limit will be closed</li>
+ * </ul>
+ *
+ * <p>SRV configuration:</p>
+ * <ul>
+ * <li>{@code srvServiceName=string}: The SRV service name. See {@link MongoClientOptions#getSrvServiceName()} for details.</li>
+ * <li>{@code srvMaxHosts=number}: The maximum number of hosts from the SRV record to connect to.</li>
  * </ul>
  *
  * <p>Connection pool configuration:</p>
  * <ul>
  * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
+ * <li>{@code maxConnecting=n}: The maximum number of connections a pool may be establishing concurrently.</li>
+ * <li>{@code waitQueueTimeoutMS=ms}: The maximum wait time in milliseconds that a thread may wait for a connection to
+ *      become available. Deprecated, use {@code timeoutMS} instead.</li>
  * </ul>
  *
  * <p>Write concern configuration:</p>
@@ -131,7 +141,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * {@code "majority"}</li>
  *      </ul>
  *  </li>
- *  <li>{@code wtimeoutMS=ms}
+ *  <li>{@code wtimeoutMS=ms}. Deprecated, use {@code timeoutMS} instead.
  *      <ul>
  *          <li>The driver adds { wtimeout : ms } to all write commands. Implies {@code safe=true}.</li>
  *          <li>Used in combination with {@code w}</li>
@@ -146,8 +156,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * <p>Read preference configuration:</p>
  * <ul>
- * <li>{@code slaveOk=true|false}: Whether a driver connected to a replica set will send reads to slaves/secondaries.</li>
- * <li>{@code readPreference=enum}: The read preference for this connection.  If set, it overrides any slaveOk value.
+ * <li>{@code readPreference=enum}: The read preference for this connection.
  * <ul>
  * <li>Enumerated values:
  * <ul>
@@ -170,7 +179,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * </ul>
  * </li>
  * <li>{@code maxStalenessSeconds=seconds}. The maximum staleness in seconds. For use with any non-primary read preference, the driver
- * estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses, and selects only those
+ * estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses, and selects only those
  * secondaries whose staleness is less than or equal to maxStalenessSeconds.  Not providing the parameter or explicitly setting it to -1
  * indicates that there should be no max staleness check.  The maximum staleness feature is designed to prevent badly-lagging servers from
  * being selected. The staleness estimate is imprecise and shouldn't be used to try to select "up-to-date" secondaries.  The minimum value
@@ -326,6 +335,30 @@ public class MongoClientURI {
     }
 
     /**
+     * Gets the maximum number of hosts to connect to when using SRV protocol.
+     *
+     * @return the maximum number of hosts to connect to when using SRV protocol.  Defaults to null.
+     * @since 4.5
+     */
+    @Nullable
+    public Integer getSrvMaxHosts() {
+        return proxied.getSrvMaxHosts();
+    }
+
+    /**
+     * Gets the SRV service name.
+     *
+     * @return the SRV service name.  Defaults to null in the connection string, but defaults to {@code "mongodb"} in
+     * {@link MongoClientOptions}.
+     * @since 4.5
+     * @see MongoClientOptions#getSrvServiceName()
+     */
+    @Nullable
+    public String getSrvServiceName() {
+        return proxied.getSrvServiceName();
+    }
+
+    /**
      * Gets the options
      *
      * @return the MongoClientOptions based on this URI.
@@ -374,6 +407,10 @@ public class MongoClientURI {
         if (maxConnectionLifeTime != null) {
             builder.maxConnectionLifeTime(maxConnectionLifeTime);
         }
+        Integer maxConnecting = proxied.getMaxConnecting();
+        if (maxConnecting != null) {
+            builder.maxConnecting(maxConnecting);
+        }
         Integer socketTimeout = proxied.getSocketTimeout();
         if (socketTimeout != null) {
             builder.socketTimeout(socketTimeout);
@@ -416,6 +453,18 @@ public class MongoClientURI {
         UuidRepresentation uuidRepresentation = proxied.getUuidRepresentation();
         if (uuidRepresentation != null) {
             builder.uuidRepresentation(uuidRepresentation);
+        }
+        Integer srvMaxHosts = proxied.getSrvMaxHosts();
+        if (srvMaxHosts != null) {
+            builder.srvMaxHosts(srvMaxHosts);
+        }
+        String srvServiceName = proxied.getSrvServiceName();
+        if (srvServiceName != null) {
+            builder.srvServiceName(srvServiceName);
+        }
+        Long timeout = proxied.getTimeout();
+        if (timeout != null) {
+            builder.timeout(timeout);
         }
         return builder.build();
     }

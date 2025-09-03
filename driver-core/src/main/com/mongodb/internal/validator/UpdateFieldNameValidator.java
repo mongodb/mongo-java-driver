@@ -18,34 +18,48 @@ package com.mongodb.internal.validator;
 
 import org.bson.FieldNameValidator;
 
+import static com.mongodb.assertions.Assertions.assertFalse;
+import static java.lang.String.format;
+
 /**
  * A field name validator for update documents.  It ensures that all top-level fields start with a '$'.
  *
- * <p>This class should not be considered a part of the public API.</p>
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class UpdateFieldNameValidator implements org.bson.FieldNameValidator {
-    private int numFields = 0;
+public final class UpdateFieldNameValidator implements org.bson.FieldNameValidator {
+    private boolean encounteredField = false;
 
     @Override
     public boolean validate(final String fieldName) {
-        numFields++;
+        encounteredField = true;
         return fieldName.startsWith("$");
     }
 
     @Override
+    public String getValidationErrorMessage(final String fieldName) {
+        assertFalse(fieldName.startsWith("$"));
+        return format("All update operators must start with '$', but '%s' does not", fieldName);
+    }
+
+    @Override
     public FieldNameValidator getValidatorForField(final String fieldName) {
-        return new NoOpFieldNameValidator();
+        return NoOpFieldNameValidator.INSTANCE;
     }
 
     @Override
     public void start() {
-        numFields = 0;
+        reset();
     }
 
     @Override
     public void end() {
-        if (numFields == 0) {
+        if (!encounteredField) {
             throw new IllegalArgumentException("Invalid BSON document for an update. The document may not be empty.");
         }
+    }
+
+    public UpdateFieldNameValidator reset() {
+        encounteredField = false;
+        return this;
     }
 }

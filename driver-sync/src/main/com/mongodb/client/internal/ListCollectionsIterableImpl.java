@@ -19,12 +19,16 @@ package com.mongodb.client.internal;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
+import com.mongodb.client.ListCollectionNamesIterable;
 import com.mongodb.client.ListCollectionsIterable;
-import com.mongodb.internal.operation.BatchCursor;
-import com.mongodb.internal.operation.ReadOperation;
-import com.mongodb.internal.operation.SyncOperations;
+import com.mongodb.client.cursor.TimeoutMode;
+import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperationCursor;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -34,26 +38,21 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListCollectionsIterable<TResult> {
-    private final SyncOperations<BsonDocument> operations;
+    private final Operations<BsonDocument> operations;
     private final String databaseName;
     private final Class<TResult> resultClass;
-
     private Bson filter;
     private final boolean collectionNamesOnly;
+    private boolean authorizedCollections;
     private long maxTimeMS;
+    private BsonValue comment;
 
     ListCollectionsIterableImpl(@Nullable final ClientSession clientSession, final String databaseName, final boolean collectionNamesOnly,
                                 final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                                final OperationExecutor executor) {
-        this(clientSession, databaseName, collectionNamesOnly, resultClass, codecRegistry, readPreference, executor, true);
-    }
-
-    ListCollectionsIterableImpl(@Nullable final ClientSession clientSession, final String databaseName, final boolean collectionNamesOnly,
-                                final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                                final OperationExecutor executor, final boolean retryReads) {
-        super(clientSession, executor, ReadConcern.DEFAULT, readPreference, retryReads); // TODO: read concern?
+                                final OperationExecutor executor, final boolean retryReads,  final TimeoutSettings timeoutSettings) {
+        super(clientSession, executor, ReadConcern.DEFAULT, readPreference, retryReads, timeoutSettings); // TODO: read concern?
         this.collectionNamesOnly = collectionNamesOnly;
-        this.operations = new SyncOperations<BsonDocument>(BsonDocument.class, readPreference, codecRegistry, retryReads);
+        this.operations = new Operations<>(BsonDocument.class, readPreference, codecRegistry, retryReads, timeoutSettings);
         this.databaseName = notNull("databaseName", databaseName);
         this.resultClass = notNull("resultClass", resultClass);
     }
@@ -78,7 +77,39 @@ class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> im
     }
 
     @Override
-    public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, getBatchSize(), maxTimeMS);
+    public ListCollectionsIterable<TResult> timeoutMode(final TimeoutMode timeoutMode) {
+        super.timeoutMode(timeoutMode);
+        return this;
+    }
+
+    @Override
+    public ListCollectionsIterable<TResult> comment(@Nullable final String comment) {
+        this.comment = comment != null ? new BsonString(comment) : null;
+        return this;
+    }
+
+    @Override
+    public ListCollectionsIterable<TResult> comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
+    /**
+     * @see ListCollectionNamesIterable#authorizedCollections(boolean)
+     */
+    ListCollectionsIterableImpl<TResult> authorizedCollections(final boolean authorizedCollections) {
+        this.authorizedCollections = authorizedCollections;
+        return this;
+    }
+
+    @Override
+    public ReadOperationCursor<TResult> asReadOperation() {
+        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, authorizedCollections,
+                getBatchSize(), comment, getTimeoutMode());
+    }
+
+
+    protected OperationExecutor getExecutor() {
+        return getExecutor(operations.createTimeoutSettings(maxTimeMS));
     }
 }

@@ -18,6 +18,7 @@
 package reactivestreams.tour;
 
 import com.mongodb.AutoEncryptionSettings;
+import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.reactivestreams.client.MongoClient;
@@ -39,7 +40,7 @@ public class ClientSideEncryptionSimpleTour {
 
     /**
      * Run this main method to see the output of this quick example.
-     *
+     * <p>
      * Requires the mongodb-crypt library in the class path and mongocryptd on the system path.
      * Assumes the schema has already been created in MongoDB.
      *
@@ -48,7 +49,7 @@ public class ClientSideEncryptionSimpleTour {
     public static void main(final String[] args) {
 
         // This would have to be the same master key as was used to create the encryption key
-        final byte[] localMasterKey = new byte[96];
+        byte[] localMasterKey = new byte[96];
         new SecureRandom().nextBytes(localMasterKey);
 
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
@@ -64,7 +65,10 @@ public class ClientSideEncryptionSimpleTour {
                 .kmsProviders(kmsProviders)
                 .build();
 
-        MongoClientSettings clientSettings = MongoClientSettings.builder()
+        MongoClientSettings clientSettings = (
+                args.length == 0
+                        ? MongoClientSettings.builder()
+                        : MongoClientSettings.builder().applyConnectionString(new ConnectionString(args[0])))
                 .autoEncryptionSettings(autoEncryptionSettings)
                 .build();
 

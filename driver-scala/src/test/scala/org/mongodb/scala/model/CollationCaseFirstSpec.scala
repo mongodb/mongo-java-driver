@@ -31,7 +31,7 @@ class CollationCaseFirstSpec extends BaseSpec {
       collationCaseFirstClass.getDeclaredFields.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
     val wrappedMethods =
       collationCaseFirstClass.getDeclaredMethods.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
-    val exclusions = Set("$VALUES", "valueOf", "values")
+    val exclusions = Set("$VALUES", "$values", "valueOf", "values")
 
     val wrapped = (wrappedFields ++ wrappedMethods) -- exclusions
     val local = CollationCaseFirst.getClass.getDeclaredMethods.map(_.getName).toSet -- Set(

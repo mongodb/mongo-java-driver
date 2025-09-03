@@ -16,39 +16,50 @@
 
 package com.mongodb.client;
 
-import com.mongodb.Block;
 import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
-import com.mongodb.client.internal.MongoClientImpl;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.connection.ServerSettings;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
+import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Helper class for the acceptance tests.
  */
 public final class Fixture {
-    private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
     private static final long MIN_HEARTBEAT_FREQUENCY_MS = 50L;
 
     private static MongoClient mongoClient;
-    private static MongoClientSettings mongoClientSettings;
     private static MongoDatabase defaultDatabase;
 
     private Fixture() {
     }
 
     public static synchronized MongoClient getMongoClient() {
-        if (mongoClient == null) {
-            mongoClient = MongoClients.create(getMongoClientSettings());
-            Runtime.getRuntime().addShutdownHook(new ShutdownHook());
+        if (mongoClient != null) {
+            return mongoClient;
         }
+        MongoClientSettings mongoClientSettings = getMongoClientSettings();
+        mongoClient = MongoClients.create(mongoClientSettings);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            synchronized (Fixture.class) {
+                if (mongoClient == null) {
+                    return;
+                }
+                if (defaultDatabase != null) {
+                    defaultDatabase.drop();
+                }
+                mongoClient.close();
+                mongoClient = null;
+            }
+        }));
         return mongoClient;
     }
 
@@ -60,53 +71,46 @@ public final class Fixture {
     }
 
     public static String getDefaultDatabaseName() {
-        return DEFAULT_DATABASE_NAME;
+        return ClusterFixture.getDefaultDatabaseName();
     }
 
-    static class ShutdownHook extends Thread {
-        @Override
-        public void run() {
-            synchronized (Fixture.class) {
-                if (mongoClient != null) {
-                    if (defaultDatabase != null) {
-                        defaultDatabase.drop();
-                    }
-                    mongoClient.close();
-                    mongoClient = null;
-                }
-            }
-        }
-    }
-
-    private static synchronized String getConnectionStringProperty() {
-        return ClusterFixture.getConnectionString().getConnectionString();
-    }
-
-    public static synchronized MongoClientSettings getMongoClientSettings() {
-        if (mongoClientSettings == null) {
-            MongoClientSettings.Builder builder = MongoClientSettings.builder()
-                    .applyConnectionString(new ConnectionString(getConnectionStringProperty()))
-                    .applyToServerSettings(new Block<ServerSettings.Builder>() {
-                        @Override
-                        public void apply(final ServerSettings.Builder builder) {
-                            builder.minHeartbeatFrequency(MIN_HEARTBEAT_FREQUENCY_MS, TimeUnit.MILLISECONDS);
-                        }
-                    });
-            mongoClientSettings = builder.build();
-        }
-        return mongoClientSettings;
+    public static MongoClientSettings getMongoClientSettings() {
+        return getMongoClientSettingsBuilder().build();
     }
 
     public static MongoClientSettings.Builder getMongoClientSettingsBuilder() {
-        return MongoClientSettings.builder(getMongoClientSettings());
+        return getMongoClientSettings(ClusterFixture.getConnectionString());
     }
 
+    public static MongoClientSettings.Builder getMultiMongosMongoClientSettingsBuilder() {
+        return getMongoClientSettings(requireNonNull(getMultiMongosConnectionString()));
+    }
+
+    public static MongoClientSettings.Builder getMongoClientSettings(final ConnectionString connectionString) {
+        MongoClientSettings.Builder builder = MongoClientSettings.builder()
+                .applyConnectionString(connectionString)
+                .applyToSocketSettings(socketSettingsBuilder -> {
+                    socketSettingsBuilder.readTimeout(5, TimeUnit.MINUTES);
+                })
+                .applyToServerSettings(serverSettingsBuilder -> {
+                    serverSettingsBuilder.minHeartbeatFrequency(MIN_HEARTBEAT_FREQUENCY_MS, TimeUnit.MILLISECONDS);
+                });
+        if (getServerApi() != null) {
+            builder.serverApi(getServerApi());
+        }
+        return builder;
+    }
+
+    /**
+     * Beware of a potential race condition hiding here: the primary you discover may differ from the one used by the {@code client}
+     * when performing some operations, as the primary may change.
+     */
     public static ServerAddress getPrimary() throws InterruptedException {
-        getMongoClient();
-        List<ServerDescription> serverDescriptions = getPrimaries(((MongoClientImpl) mongoClient).getCluster().getDescription());
+        MongoClient client = getMongoClient();
+        List<ServerDescription> serverDescriptions = getPrimaries(client.getClusterDescription());
         while (serverDescriptions.isEmpty()) {
             Thread.sleep(100);
-            serverDescriptions = getPrimaries(((MongoClientImpl) mongoClient).getCluster().getDescription());
+            serverDescriptions = getPrimaries(client.getClusterDescription());
         }
         return serverDescriptions.get(0).getAddress();
     }

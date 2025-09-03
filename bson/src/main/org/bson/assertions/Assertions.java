@@ -17,6 +17,8 @@
 
 package org.bson.assertions;
 
+import javax.annotation.Nullable;
+
 /**
  * <p>Design by contract assertions.</p> <p>This class is not part of the public API and may be removed or changed at any time.</p>
  */
@@ -80,6 +82,63 @@ public final class Assertions {
             throw new IllegalArgumentException("state should be: " + name);
         }
         return value;
+    }
+
+    /**
+     * @return Never completes normally. The return type is {@link AssertionError} to allow writing {@code throw fail()}.
+     * This may be helpful in non-{@code void} methods.
+     * @throws AssertionError Always
+     */
+    public static AssertionError fail() throws AssertionError {
+        throw new AssertionError();
+    }
+
+    /**
+     * @param msg The failure message.
+     * @return Never completes normally. The return type is {@link AssertionError} to allow writing {@code throw fail("failure message")}.
+     * This may be helpful in non-{@code void} methods.
+     * @throws AssertionError Always
+     */
+    public static AssertionError fail(final String msg) throws AssertionError {
+        throw new AssertionError(assertNotNull(msg));
+    }
+
+    /**
+     * @param msg The failure message.
+     * @param cause The underlying cause
+     * @return Never completes normally. The return type is {@link AssertionError} to allow writing
+     * {@code throw fail("failure message", throwable)}.
+     * This may be helpful in non-{@code void} methods.
+     * @throws AssertionError Always
+     */
+    public static AssertionError fail(final String msg, final Throwable cause) throws AssertionError {
+        throw new AssertionError(assertNotNull(msg), assertNotNull(cause));
+    }
+
+    /**
+     * @param value A value to check.
+     * @param <T>   The type of {@code value}.
+     * @return {@code value}
+     * @throws AssertionError If {@code value} is {@code null}.
+     */
+    public static <T> T assertNotNull(@Nullable final T value) throws AssertionError {
+        if (value == null) {
+            throw new AssertionError();
+        }
+        return value;
+    }
+
+    /**
+     * Throw AssertionError if the condition if false.
+     *
+     * @param name      the name of the state that is being checked
+     * @param condition the condition about the parameter to check
+     * @throws AssertionError if the condition is false
+     */
+    public static void assertTrue(final String name, final boolean condition) {
+        if (!condition) {
+            throw new AssertionError("state should be: " + assertNotNull(name));
+        }
     }
 
     /**

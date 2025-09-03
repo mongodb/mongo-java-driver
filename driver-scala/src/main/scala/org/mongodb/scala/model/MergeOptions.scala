@@ -64,7 +64,7 @@ object MergeOptions {
   }
 
   /**
-   * The behavior of `/$merge` if a result document does not match an existing document in the out collection.
+   * The behavior of `\$merge` if a result document does not match an existing document in the out collection.
    */
   object WhenNotMatched {
 
@@ -74,7 +74,7 @@ object MergeOptions {
     val INSERT = JMergeOptions.WhenNotMatched.INSERT
 
     /**
-     * Discard the document; i.e. $merge does not insert the document into the output collection.
+     * Discard the document; i.e. `\$merge` does not insert the document into the output collection.
      */
     val DISCARD = JMergeOptions.WhenNotMatched.DISCARD
 
@@ -105,7 +105,7 @@ case class MergeOptions(wrapped: JMergeOptions = new JMergeOptions()) {
   }
 
   /**
-   * Sets the behavior of $merge if a result document and an existing document in the collection have the same value for the specified
+   * Sets the behavior of `\$merge` if a result document and an existing document in the collection have the same value for the specified
    * on field(s).
    *
    * @param whenMatched when matched
@@ -140,7 +140,7 @@ case class MergeOptions(wrapped: JMergeOptions = new JMergeOptions()) {
   }
 
   /**
-   * Sets the behavior of $merge if a result document does not match an existing document in the out collection.
+   * Sets the behavior of `\$merge` if a result document does not match an existing document in the out collection.
    *
    * @param whenNotMatched when not matched
    * @return this

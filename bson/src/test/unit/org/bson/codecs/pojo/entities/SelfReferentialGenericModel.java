@@ -16,6 +16,8 @@
 
 package org.bson.codecs.pojo.entities;
 
+import java.util.Objects;
+
 public final class SelfReferentialGenericModel<T, V> {
     private T t;
     private V v;
@@ -65,13 +67,13 @@ public final class SelfReferentialGenericModel<T, V> {
 
         SelfReferentialGenericModel<?, ?> that = (SelfReferentialGenericModel<?, ?>) o;
 
-        if (t != null ? !t.equals(that.t) : that.t != null) {
+        if (!Objects.equals(t, that.t)) {
             return false;
         }
-        if (v != null ? !v.equals(that.v) : that.v != null) {
+        if (!Objects.equals(v, that.v)) {
             return false;
         }
-        if (child != null ? !child.equals(that.child) : that.child != null) {
+        if (!Objects.equals(child, that.child)) {
             return false;
         }
 

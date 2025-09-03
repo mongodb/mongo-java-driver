@@ -24,68 +24,25 @@ import com.mongodb.connection.ConnectionDescription;
  */
 public final class ServerVersionHelper {
 
-    public static final int THREE_DOT_ZERO_WIRE_VERSION = 3;
-    public static final int THREE_DOT_TWO_WIRE_VERSION = 4;
-    public static final int THREE_DOT_FOUR_WIRE_VERSION = 5;
-    public static final int THREE_DOT_SIX_WIRE_VERSION = 6;
-    public static final int FOUR_DOT_ZERO_WIRE_VERSION = 7;
+    public static final int UNKNOWN_WIRE_VERSION = 0;
     public static final int FOUR_DOT_TWO_WIRE_VERSION = 8;
     public static final int FOUR_DOT_FOUR_WIRE_VERSION = 9;
-
-    public static boolean serverIsAtLeastVersionThreeDotZero(final ConnectionDescription description) {
-        return description.getMaxWireVersion() >= THREE_DOT_ZERO_WIRE_VERSION;
-    }
-
-    public static boolean serverIsAtLeastVersionThreeDotTwo(final ConnectionDescription description) {
-        return description.getMaxWireVersion() >= THREE_DOT_TWO_WIRE_VERSION;
-    }
-
-    public static boolean serverIsAtLeastVersionThreeDotFour(final ConnectionDescription description) {
-        return description.getMaxWireVersion() >= THREE_DOT_FOUR_WIRE_VERSION;
-    }
-
-    public static boolean serverIsAtLeastVersionThreeDotSix(final ConnectionDescription description) {
-        return description.getMaxWireVersion() >= THREE_DOT_SIX_WIRE_VERSION;
-    }
-
-    public static boolean serverIsAtLeastVersionFourDotZero(final ConnectionDescription description) {
-        return description.getMaxWireVersion() >= FOUR_DOT_ZERO_WIRE_VERSION;
-    }
-
-    public static boolean serverIsAtLeastVersionFourDotTwo(final ConnectionDescription description) {
-        return description.getMaxWireVersion() >= FOUR_DOT_TWO_WIRE_VERSION;
-    }
+    public static final int FIVE_DOT_ZERO_WIRE_VERSION = 13;
+    public static final int SIX_DOT_ZERO_WIRE_VERSION = 17;
+    public static final int SEVEN_DOT_ZERO_WIRE_VERSION = 21;
+    public static final int EIGHT_DOT_ZERO_WIRE_VERSION = 25;
+    public static final int LATEST_WIRE_VERSION = EIGHT_DOT_ZERO_WIRE_VERSION;
 
     public static boolean serverIsAtLeastVersionFourDotFour(final ConnectionDescription description) {
         return description.getMaxWireVersion() >= FOUR_DOT_FOUR_WIRE_VERSION;
     }
 
-    public static boolean serverIsLessThanVersionThreeDotZero(final ConnectionDescription description) {
-        return description.getMaxWireVersion() < THREE_DOT_ZERO_WIRE_VERSION;
-    }
-
-    public static boolean serverIsLessThanVersionThreeDotTwo(final ConnectionDescription description) {
-        return description.getMaxWireVersion() < THREE_DOT_TWO_WIRE_VERSION;
-    }
-
-    public static boolean serverIsLessThanVersionThreeDotFour(final ConnectionDescription description) {
-        return description.getMaxWireVersion() < THREE_DOT_FOUR_WIRE_VERSION;
-    }
-
-    public static boolean serverIsLessThanVersionThreeDotSix(final ConnectionDescription description) {
-        return description.getMaxWireVersion() < THREE_DOT_SIX_WIRE_VERSION;
-    }
-
-    public static boolean serverIsLessThanVersionFourDotZero(final ConnectionDescription description) {
-        return description.getMaxWireVersion() < FOUR_DOT_ZERO_WIRE_VERSION;
-    }
-
-    public static boolean serverIsLessThanVersionFourDotTwo(final ConnectionDescription description) {
-        return description.getMaxWireVersion() < FOUR_DOT_TWO_WIRE_VERSION;
-    }
-
     public static boolean serverIsLessThanVersionFourDotFour(final ConnectionDescription description) {
         return description.getMaxWireVersion() < FOUR_DOT_FOUR_WIRE_VERSION;
+    }
+
+    public static boolean serverIsLessThanVersionSevenDotZero(final ConnectionDescription description) {
+        return description.getMaxWireVersion() < SEVEN_DOT_ZERO_WIRE_VERSION;
     }
 
     private ServerVersionHelper() {

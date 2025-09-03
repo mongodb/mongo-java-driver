@@ -17,58 +17,53 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync;
+import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
 
 /**
  * An operation that executes an arbitrary command that reads from the server.
  *
- * @param <T> the operations result type.
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOperation<T> {
+public class CommandReadOperation<T> implements ReadOperationSimple<T> {
+    private final String commandName;
     private final String databaseName;
-    private final BsonDocument command;
+    private final CommandCreator commandCreator;
     private final Decoder<T> decoder;
 
-    /**
-     * Construct a new instance.
-     *
-     * @param databaseName the name of the database for the operation.
-     * @param command the command to execute.
-     * @param decoder the decoder for the result documents.
-     */
-    public CommandReadOperation(final String databaseName, final BsonDocument command, final Decoder<T> decoder) {
+    public CommandReadOperation(final String databaseName,  final BsonDocument command, final Decoder<T> decoder) {
+        this(databaseName, command.getFirstKey(), (operationContext, serverDescription, connectionDescription) -> command, decoder);
+    }
+
+    public CommandReadOperation(final String databaseName, final String commandName, final CommandCreator commandCreator,
+                                final Decoder<T> decoder) {
+        this.commandName = notNull("commandName", commandName);
         this.databaseName = notNull("databaseName", databaseName);
-        this.command = notNull("command", command);
+        this.commandCreator = notNull("commandCreator", commandCreator);
         this.decoder = notNull("decoder", decoder);
     }
 
     @Override
+    public String getCommandName() {
+        return commandName;
+    }
+
+    @Override
     public T execute(final ReadBinding binding) {
-        return executeCommand(binding, databaseName, getCommandCreator(), decoder, false);
+        return executeRetryableRead(binding, databaseName, commandCreator, decoder,
+                                    (result, source, connection) -> result, false);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<T> callback) {
-        executeCommandAsync(binding, databaseName, getCommandCreator(), decoder, false, callback);
-    }
-
-    private CommandCreator getCommandCreator() {
-        return new CommandCreator() {
-            @Override
-            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                return command;
-            }
-        };
+        executeRetryableReadAsync(binding, databaseName, commandCreator, decoder,
+                                  (result, source, connection) -> result, false, callback);
     }
 }

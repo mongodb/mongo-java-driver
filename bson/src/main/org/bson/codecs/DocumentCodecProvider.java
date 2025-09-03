@@ -22,6 +22,8 @@ import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.CodeWithScope;
 
+import java.util.Objects;
+
 import static org.bson.assertions.Assertions.notNull;
 import static org.bson.codecs.BsonTypeClassMap.DEFAULT_BSON_TYPE_CLASS_MAP;
 
@@ -102,7 +104,7 @@ public class DocumentCodecProvider implements CodecProvider {
         if (!bsonTypeClassMap.equals(that.bsonTypeClassMap)) {
             return false;
         }
-        if (valueTransformer != null ? !valueTransformer.equals(that.valueTransformer) : that.valueTransformer != null) {
+        if (!Objects.equals(valueTransformer, that.valueTransformer)) {
             return false;
         }
 
@@ -114,5 +116,10 @@ public class DocumentCodecProvider implements CodecProvider {
         int result = bsonTypeClassMap.hashCode();
         result = 31 * result + (valueTransformer != null ? valueTransformer.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "DocumentCodecProvider{}";
     }
 }

@@ -31,6 +31,7 @@ import spock.lang.Specification
 
 import java.util.function.Consumer
 
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -46,9 +47,9 @@ class ListIndexesIterableSpecification extends Specification {
 
     def 'should build the expected listIndexesOperation'() {
         given:
-        def executor = new TestOperationExecutor([null, null]);
-        def listIndexesIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference, executor)
-                .batchSize(100).maxTime(1000, MILLISECONDS)
+        def executor = new TestOperationExecutor([null, null])
+        def listIndexesIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference,
+                executor, true, TIMEOUT_SETTINGS).batchSize(100)
 
         when: 'default input should be as expected'
         listIndexesIterable.iterator()
@@ -58,19 +59,19 @@ class ListIndexesIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new ListIndexesOperation<Document>(namespace, new DocumentCodec())
-                .batchSize(100).maxTime(1000, MILLISECONDS).retryReads(true))
+                .batchSize(100).retryReads(true))
         readPreference == secondary()
 
         when: 'overriding initial options'
         listIndexesIterable.batchSize(99)
-                .maxTime(999, MILLISECONDS)
+                .maxTime(100, MILLISECONDS)
                 .iterator()
 
         operation = executor.getReadOperation() as ListIndexesOperation<Document>
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new ListIndexesOperation<Document>(namespace, new DocumentCodec())
-                .batchSize(99).maxTime(999, MILLISECONDS).retryReads(true))
+                .batchSize(99).retryReads(true))
     }
 
     def 'should use ClientSession'() {
@@ -78,9 +79,9 @@ class ListIndexesIterableSpecification extends Specification {
         def batchCursor = Stub(BatchCursor) {
             _ * hasNext() >> { false }
         }
-        def executor = new TestOperationExecutor([batchCursor, batchCursor]);
+        def executor = new TestOperationExecutor([batchCursor, batchCursor])
         def listIndexesIterable = new ListIndexesIterableImpl<Document>(clientSession, namespace, Document, codecRegistry, readPreference,
-                executor)
+                executor, true, TIMEOUT_SETTINGS)
 
         when:
         listIndexesIterable.first()
@@ -105,7 +106,7 @@ class ListIndexesIterableSpecification extends Specification {
         def cursor = {
             Stub(BatchCursor) {
                 def count = 0
-                def results;
+                def results
                 def getResult = {
                     count++
                     results = count == 1 ? cannedResults : null
@@ -119,8 +120,9 @@ class ListIndexesIterableSpecification extends Specification {
                 }
             }
         }
-        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
-        def mongoIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference, executor)
+        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()])
+        def mongoIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference,
+                executor, true, TIMEOUT_SETTINGS)
 
         when:
         def results = mongoIterable.first()
@@ -164,7 +166,7 @@ class ListIndexesIterableSpecification extends Specification {
         when:
         def batchSize = 5
         def mongoIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference,
-                Stub(OperationExecutor))
+                Stub(OperationExecutor), true, TIMEOUT_SETTINGS)
 
         then:
         mongoIterable.getBatchSize() == null

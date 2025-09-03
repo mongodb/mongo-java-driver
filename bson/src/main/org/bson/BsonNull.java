@@ -23,6 +23,9 @@ package org.bson;
  */
 public final class BsonNull extends BsonValue {
 
+    /**
+     * A singleton instance of the null value.
+     */
     public static final BsonNull VALUE = new BsonNull();
 
     @Override

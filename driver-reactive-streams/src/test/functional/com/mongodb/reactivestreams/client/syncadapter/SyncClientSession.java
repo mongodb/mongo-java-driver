@@ -21,10 +21,17 @@ import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.TransactionBody;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.lang.Nullable;
 import com.mongodb.session.ServerSession;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
+import reactor.core.publisher.Mono;
+
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.getSleepAfterSessionClose;
 
 class SyncClientSession implements ClientSession {
     private final com.mongodb.reactivestreams.client.ClientSession wrapped;
@@ -45,8 +52,18 @@ class SyncClientSession implements ClientSession {
     }
 
     @Override
-    public void setPinnedServerAddress(@Nullable final ServerAddress address) {
-        wrapped.setPinnedServerAddress(address);
+    public Object getTransactionContext() {
+        return wrapped.getTransactionContext();
+    }
+
+    @Override
+    public void setTransactionContext(final ServerAddress address, final Object transactionContext) {
+        wrapped.setTransactionContext(address, transactionContext);
+    }
+
+    @Override
+    public void clearTransactionContext() {
+        wrapped.clearTransactionContext();
     }
 
     @Override
@@ -95,6 +112,17 @@ class SyncClientSession implements ClientSession {
     }
 
     @Override
+    public void setSnapshotTimestamp(final BsonTimestamp snapshotTimestamp) {
+        wrapped.setSnapshotTimestamp(snapshotTimestamp);
+    }
+
+    @Override
+    @Nullable
+    public BsonTimestamp getSnapshotTimestamp() {
+        return wrapped.getSnapshotTimestamp();
+    }
+
+    @Override
     public BsonDocument getClusterTime() {
         return wrapped.getClusterTime();
     }
@@ -102,6 +130,7 @@ class SyncClientSession implements ClientSession {
     @Override
     public void close() {
         wrapped.close();
+        sleep(getSleepAfterSessionClose());
     }
 
     @Override
@@ -112,6 +141,11 @@ class SyncClientSession implements ClientSession {
     @Override
     public boolean notifyMessageSent() {
         return wrapped.notifyMessageSent();
+    }
+
+    @Override
+    public void notifyOperationInitiated(final Object operation) {
+        wrapped.notifyOperationInitiated(operation);
     }
 
     @Override
@@ -131,16 +165,12 @@ class SyncClientSession implements ClientSession {
 
     @Override
     public void commitTransaction() {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.commitTransaction().subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.commitTransaction()).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void abortTransaction() {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.abortTransaction().subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.abortTransaction()).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
@@ -151,5 +181,18 @@ class SyncClientSession implements ClientSession {
     @Override
     public <T> T withTransaction(final TransactionBody<T> transactionBody, final TransactionOptions options) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public TimeoutContext getTimeoutContext() {
+        return wrapped.getTimeoutContext();
+    }
+
+    private static void sleep(final long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            throw interruptAndCreateMongoInterruptedException(null, e);
+        }
     }
 }

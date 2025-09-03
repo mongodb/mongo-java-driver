@@ -25,7 +25,6 @@ import static com.mongodb.client.model.Indexes.compoundIndex
 import static com.mongodb.client.model.Indexes.descending
 import static com.mongodb.client.model.Indexes.geo2d
 import static com.mongodb.client.model.Indexes.geo2dsphere
-import static com.mongodb.client.model.Indexes.geoHaystack
 import static com.mongodb.client.model.Indexes.hashed
 import static com.mongodb.client.model.Indexes.text
 import static org.bson.BsonDocument.parse
@@ -58,12 +57,7 @@ class IndexesSpecification extends Specification {
         toBson(geo2d('x')) == parse('{x : "2d"}')
     }
 
-    def 'geoHaystack'() {
-        expect:
-        toBson(geoHaystack('x', descending('b'))) == parse('{x : "geoHaystack", b: -1}')
-    }
-
-    def 'text'() {
+    def 'text helper'() {
         expect:
         toBson(text('x')) == parse('{x : "text"}')
         toBson(text()) == parse('{ "$**" : "text"}')

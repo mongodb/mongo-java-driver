@@ -88,4 +88,9 @@ public class DBObjectCodecProvider implements CodecProvider {
     public int hashCode() {
         return getClass().hashCode();
     }
+
+    @Override
+    public String toString() {
+        return "DBObjectCodecProvider{}";
+    }
 }

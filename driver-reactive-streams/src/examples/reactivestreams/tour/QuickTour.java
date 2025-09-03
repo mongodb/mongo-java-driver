@@ -25,11 +25,11 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
+import org.bson.Document;
 import reactivestreams.helpers.SubscriberHelpers.ObservableSubscriber;
 import reactivestreams.helpers.SubscriberHelpers.OperationSubscriber;
 import reactivestreams.helpers.SubscriberHelpers.PrintDocumentSubscriber;
 import reactivestreams.helpers.SubscriberHelpers.PrintSubscriber;
-import org.bson.Document;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,7 +75,7 @@ public class QuickTour {
         MongoDatabase database = mongoClient.getDatabase("mydb");
 
         // get a handle to the "test" collection
-        final MongoCollection<Document> collection = database.getCollection("test");
+        MongoCollection<Document> collection = database.getCollection("test");
 
         // drop all the data in it
         ObservableSubscriber<Void> successSubscriber = new OperationSubscriber<>();
@@ -127,12 +127,12 @@ public class QuickTour {
         // now use a range query to get a larger subset
         documentSubscriber = new PrintDocumentSubscriber();
         collection.find(gt("i", 50)).subscribe(documentSubscriber);
-        successSubscriber.await();
+        documentSubscriber.await();
 
         // range query with multiple constraints
         documentSubscriber = new PrintDocumentSubscriber();
         collection.find(and(gt("i", 50), lte("i", 100))).subscribe(documentSubscriber);
-        successSubscriber.await();
+        documentSubscriber.await();
 
         // Sorting
         documentSubscriber = new PrintDocumentSubscriber();

@@ -17,11 +17,10 @@
 package org.mongodb.scala
 
 import java.util.concurrent.TimeUnit
-
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher
-import org.mongodb.scala.bson.BsonTimestamp
+import org.mongodb.scala.bson.{ BsonTimestamp, BsonValue }
 import org.mongodb.scala.model.Collation
-import org.mongodb.scala.model.changestream.{ ChangeStreamDocument, FullDocument }
+import org.mongodb.scala.model.changestream.{ ChangeStreamDocument, FullDocument, FullDocumentBeforeChange }
 
 import scala.concurrent.duration.Duration
 
@@ -29,7 +28,7 @@ import scala.concurrent.duration.Duration
  * Observable for change streams.
  *
  * '''Note:''' The `ChangeStreamDocument` class will not be applicable for all change stream outputs.
- * If using custom pipelines that radically change the result, the the [[ChangeStreamObservable#withDocumentClass]] method should be used
+ * If using custom pipelines that radically change the result, the [[ChangeStreamObservable#withDocumentClass]] method should be used
  * to provide an alternative document format.
  *
  * @param wrapped the underlying java ChangeStreamIterable
@@ -48,6 +47,19 @@ case class ChangeStreamObservable[TResult](private val wrapped: ChangeStreamPubl
    */
   def fullDocument(fullDocument: FullDocument): ChangeStreamObservable[TResult] = {
     wrapped.fullDocument(fullDocument)
+    this
+  }
+
+  /**
+   * Sets the fullDocumentBeforeChange value.
+   *
+   * @param fullDocumentBeforeChange the fullDocumentBeforeChange
+   * @return this
+   * @since 4.7
+   * @note Requires MongoDB 6.0 or greater
+   */
+  def fullDocumentBeforeChange(fullDocumentBeforeChange: FullDocumentBeforeChange): ChangeStreamObservable[TResult] = {
+    wrapped.fullDocumentBeforeChange(fullDocumentBeforeChange)
     this
   }
 
@@ -90,7 +102,7 @@ case class ChangeStreamObservable[TResult](private val wrapped: ChangeStreamPubl
    * @since 2.7
    * @note Requires MongoDB 4.2 or greater
    * @note The server will report an error if both `startAfter` and `resumeAfter` are specified.
-   * @see [[http://docs.mongodb.org/manual/changeStreams/#change-stream-start-after Change stream start after]]
+   * @see [[https://www.mongodb.com/docs/manual/changeStreams/#change-stream-start-after Change stream start after]]
    */
   def startAfter(startAfter: Document): ChangeStreamObservable[TResult] = {
     wrapped.startAfter(startAfter.underlying)
@@ -111,7 +123,7 @@ case class ChangeStreamObservable[TResult](private val wrapped: ChangeStreamPubl
   /**
    * Sets the maximum await execution time on the server for this operation.
    *
-   * [[http://docs.mongodb.org/manual/reference/operator/meta/maxTimeMS/ Max Time]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/ Max Time]]
    * @param duration the duration
    * @return this
    */
@@ -130,6 +142,49 @@ case class ChangeStreamObservable[TResult](private val wrapped: ChangeStreamPubl
    */
   def collation(collation: Collation): ChangeStreamObservable[TResult] = {
     wrapped.collation(collation)
+    this
+  }
+
+  /**
+   * Sets the comment for this operation. A null value means no comment is set.
+   *
+   * @param comment the comment
+   * @return this
+   * @since 4.6
+   * @note Requires MongoDB 3.6 or greater
+   */
+  def comment(comment: String): ChangeStreamObservable[TResult] = {
+    wrapped.comment(comment)
+    this
+  }
+
+  /**
+   * Sets the comment for this operation. A null value means no comment is set.
+   *
+   * @param comment the comment
+   * @return this
+   * @since 4.6
+   * @note The comment can be any valid BSON type for server versions 4.4 and above.
+   *       Server versions between 3.6 and 4.2 only support
+   *       string as comment, and providing a non-string type will result in a server-side error.
+   */
+  def comment(comment: BsonValue): ChangeStreamObservable[TResult] = {
+    wrapped.comment(comment)
+    this
+  }
+
+  /**
+   * Sets whether to include expanded change stream events, which are:
+   * createIndexes, dropIndexes, modify, create, shardCollection,
+   * reshardCollection, refineCollectionShardKey. False by default.
+   *
+   * @param showExpandedEvents true to include expanded events
+   * @return this
+   * @since 4.7
+   * @note Requires MongoDB 6.0 or greater
+   */
+  def showExpandedEvents(showExpandedEvents: Boolean): ChangeStreamObservable[TResult] = {
+    wrapped.showExpandedEvents(showExpandedEvents)
     this
   }
 

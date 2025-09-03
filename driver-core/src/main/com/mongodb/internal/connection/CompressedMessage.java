@@ -16,9 +16,7 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.internal.session.SessionContext;
 import org.bson.ByteBuf;
-import org.bson.io.BsonOutput;
 
 import java.util.List;
 
@@ -38,7 +36,7 @@ class CompressedMessage extends RequestMessage {
     }
 
     @Override
-    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final SessionContext sessionContext) {
+    protected void encodeMessageBody(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext) {
         bsonOutput.writeInt32(wrappedOpcode.getValue());
         bsonOutput.writeInt32(getWrappedMessageSize(wrappedMessageBuffers) - MESSAGE_HEADER_LENGTH);
         bsonOutput.writeByte(compressor.getId());
@@ -47,8 +45,6 @@ class CompressedMessage extends RequestMessage {
                 .position(getFirstWrappedMessageBuffer(wrappedMessageBuffers).position() + MESSAGE_HEADER_LENGTH);
 
         compressor.compress(wrappedMessageBuffers, bsonOutput);
-
-        return new EncodingMetadata(0);
     }
 
     private static int getWrappedMessageSize(final List<ByteBuf> wrappedMessageBuffers) {

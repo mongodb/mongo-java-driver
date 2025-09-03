@@ -23,8 +23,10 @@ import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.bulk.WriteRequestWithIndex;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
+import org.bson.BsonObjectId;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
+import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Encoder;
@@ -36,6 +38,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.SplittablePayload.Type.INSERT;
@@ -49,19 +53,15 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
  * <p>The command will consume as much of the payload as possible. The {@link #hasAnotherSplit()} method will return true if there is
  * another split to consume, {@link #getNextSplit} method will return the next SplittablePayload.</p>
  *
- * @see Connection#command(String, org.bson.BsonDocument, org.bson.FieldNameValidator, com.mongodb.ReadPreference,
- * org.bson.codecs.Decoder, com.mongodb.session.SessionContext, boolean, SplittablePayload,
- * org.bson.FieldNameValidator)
- * @see AsyncConnection#commandAsync(String, org.bson.BsonDocument, org.bson.FieldNameValidator,
- * com.mongodb.ReadPreference, org.bson.codecs.Decoder, com.mongodb.session.SessionContext, boolean,
- * SplittablePayload, org.bson.FieldNameValidator, com.mongodb.internal.async.SingleResultCallback)
- * @since 3.6
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public final class SplittablePayload {
+public final class SplittablePayload extends MessageSequences {
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
+    private final FieldNameValidator fieldNameValidator;
     private final WriteRequestEncoder writeRequestEncoder = new WriteRequestEncoder();
     private final Type payloadType;
     private final List<WriteRequestWithIndex> writeRequestWithIndexes;
+    private final boolean ordered;
     private final Map<Integer, BsonValue> insertedIds = new HashMap<>();
     private int position = 0;
 
@@ -96,9 +96,19 @@ public final class SplittablePayload {
      * @param payloadType the payload type
      * @param writeRequestWithIndexes the writeRequests
      */
-    public SplittablePayload(final Type payloadType, final List<WriteRequestWithIndex> writeRequestWithIndexes) {
+    public SplittablePayload(
+            final Type payloadType,
+            final List<WriteRequestWithIndex> writeRequestWithIndexes,
+            final boolean ordered,
+            final FieldNameValidator fieldNameValidator) {
         this.payloadType = notNull("batchType", payloadType);
         this.writeRequestWithIndexes = notNull("writeRequests", writeRequestWithIndexes);
+        this.ordered = ordered;
+        this.fieldNameValidator = notNull("fieldNameValidator", fieldNameValidator);
+    }
+
+    public FieldNameValidator getFieldNameValidator() {
+        return fieldNameValidator;
     }
 
     /**
@@ -122,7 +132,7 @@ public final class SplittablePayload {
     }
 
     boolean hasPayload() {
-        return writeRequestWithIndexes.size() > 0;
+        return !writeRequestWithIndexes.isEmpty();
     }
 
     public int size() {
@@ -140,10 +150,6 @@ public final class SplittablePayload {
         return writeRequestWithIndexes.stream().map(wri ->
                     new BsonDocumentWrapper<>(wri, writeRequestEncoder))
                     .collect(Collectors.toList());
-    }
-
-    public List<WriteRequestWithIndex> getWriteRequestWithIndexes() {
-        return writeRequestWithIndexes;
     }
 
     /**
@@ -165,7 +171,13 @@ public final class SplittablePayload {
      * @return true if there are more values after the current position
      */
     public boolean hasAnotherSplit() {
+        // this method must be not called before this payload having been encoded
+        assertTrue(position > 0);
         return writeRequestWithIndexes.size() > position;
+    }
+
+    boolean isOrdered() {
+        return ordered;
     }
 
     /**
@@ -174,7 +186,7 @@ public final class SplittablePayload {
     public SplittablePayload getNextSplit() {
         isTrue("hasAnotherSplit", hasAnotherSplit());
         List<WriteRequestWithIndex> nextPayLoad = writeRequestWithIndexes.subList(position, writeRequestWithIndexes.size());
-        return new SplittablePayload(payloadType, nextPayLoad);
+        return new SplittablePayload(payloadType, nextPayLoad, ordered, fieldNameValidator);
     }
 
     /**
@@ -196,10 +208,24 @@ public final class SplittablePayload {
                 InsertRequest insertRequest = (InsertRequest) writeRequestWithIndex.getWriteRequest();
                 BsonDocument document = insertRequest.getDocument();
 
-                IdHoldingBsonWriter idHoldingBsonWriter = new IdHoldingBsonWriter(writer);
-                getCodec(document).encode(idHoldingBsonWriter, document,
-                        EncoderContext.builder().isEncodingCollectibleDocument(true).build());
-                insertedIds.put(writeRequestWithIndex.getIndex(), idHoldingBsonWriter.getId());
+                BsonValue documentId = insertedIds.compute(
+                        writeRequestWithIndex.getIndex(),
+                        (writeRequestIndex, writeRequestDocumentId) -> {
+                            IdHoldingBsonWriter idHoldingBsonWriter = new IdHoldingBsonWriter(
+                                    writer,
+                                    // Reuse `writeRequestDocumentId` if it may have been generated
+                                    // by `IdHoldingBsonWriter` in a previous attempt.
+                                    // If its type is not `BsonObjectId`, which happens only if `_id` was specified by the application,
+                                    // we know it could not have been generated.
+                                    writeRequestDocumentId instanceof BsonObjectId ? writeRequestDocumentId.asObjectId() : null);
+                            getCodec(document).encode(idHoldingBsonWriter, document,
+                                    EncoderContext.builder().isEncodingCollectibleDocument(true).build());
+                            return idHoldingBsonWriter.getId();
+                        });
+                if (documentId == null) {
+                    // we must add an entry anyway because we rely on all the indexes being present
+                    insertedIds.put(writeRequestWithIndex.getIndex(), null);
+                }
             } else if (writeRequestWithIndex.getType() == WriteRequest.Type.UPDATE
                     || writeRequestWithIndex.getType() == WriteRequest.Type.REPLACE) {
                 UpdateRequest update = (UpdateRequest) writeRequestWithIndex.getWriteRequest();
@@ -232,29 +258,34 @@ public final class SplittablePayload {
                 }
 
                 if (update.isMulti()) {
-                    writer.writeBoolean("multi", update.isMulti());
+                    writer.writeBoolean("multi", true);
                 }
                 if (update.isUpsert()) {
-                    writer.writeBoolean("upsert", update.isUpsert());
+                    writer.writeBoolean("upsert", true);
                 }
                 if (update.getCollation() != null) {
                     writer.writeName("collation");
-                    BsonDocument collation = update.getCollation().asDocument();
+                    BsonDocument collation = assertNotNull(update.getCollation()).asDocument();
                     getCodec(collation).encode(writer, collation, EncoderContext.builder().build());
                 }
                 if (update.getArrayFilters() != null) {
                     writer.writeStartArray("arrayFilters");
-                    for (BsonDocument cur: update.getArrayFilters()) {
+                    for (BsonDocument cur: assertNotNull(update.getArrayFilters())) {
                         getCodec(cur).encode(writer, cur, EncoderContext.builder().build());
                     }
                     writer.writeEndArray();
                 }
                 if (update.getHint() != null) {
                     writer.writeName("hint");
-                    BsonDocument hint = update.getHint().toBsonDocument(BsonDocument.class, null);
-                    getCodec(hint).encode(writer, hint, EncoderContext.builder().build());
+                    getCodec(assertNotNull(update.getHint())).encode(writer, assertNotNull(update.getHint()),
+                            EncoderContext.builder().build());
                 } else if (update.getHintString() != null) {
                     writer.writeString("hint", update.getHintString());
+                }
+                if (update.getSort() != null) {
+                    writer.writeName("sort");
+                    getCodec(assertNotNull(update.getSort())).encode(writer, assertNotNull(update.getSort()),
+                            EncoderContext.builder().build());
                 }
                 writer.writeEndDocument();
             } else {
@@ -265,12 +296,12 @@ public final class SplittablePayload {
                 writer.writeInt32("limit", deleteRequest.isMulti() ? 0 : 1);
                 if (deleteRequest.getCollation() != null) {
                     writer.writeName("collation");
-                    BsonDocument collation = deleteRequest.getCollation().asDocument();
+                    BsonDocument collation = assertNotNull(deleteRequest.getCollation()).asDocument();
                     getCodec(collation).encode(writer, collation, EncoderContext.builder().build());
                 }
                 if (deleteRequest.getHint() != null) {
                     writer.writeName("hint");
-                    BsonDocument hint = deleteRequest.getHint().toBsonDocument(BsonDocument.class, null);
+                    BsonDocument hint = assertNotNull(deleteRequest.getHint());
                     getCodec(hint).encode(writer, hint, EncoderContext.builder().build());
                 } else if (deleteRequest.getHintString() != null) {
                     writer.writeString("hint", deleteRequest.getHintString());

@@ -18,15 +18,19 @@ package com.mongodb.internal.session;
 
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.IgnorableRequestContext;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.connection.Cluster;
-import com.mongodb.internal.connection.ConcurrentPool;
-import com.mongodb.internal.connection.ConcurrentPool.Prune;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.NoOpSessionContext;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
+import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
 import com.mongodb.session.ServerSession;
 import org.bson.BsonArray;
@@ -42,122 +46,118 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.LongAdder;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public class ServerSessionPool {
-    private static final int END_SESSIONS_BATCH_SIZE = 10000;
-
-    private final ConcurrentPool<ServerSessionImpl> serverSessionPool =
-            new ConcurrentPool<ServerSessionImpl>(Integer.MAX_VALUE, new ServerSessionItemFactory());
+    private final ConcurrentLinkedDeque<ServerSessionImpl> available = new ConcurrentLinkedDeque<>();
     private final Cluster cluster;
     private final ServerSessionPool.Clock clock;
-    private volatile boolean closing;
     private volatile boolean closed;
-    private final List<BsonDocument> closedSessionIdentifiers = new ArrayList<BsonDocument>();
+    private final OperationContext operationContext;
+    private final LongAdder inUseCount = new LongAdder();
 
     interface Clock {
         long millis();
     }
 
-    public ServerSessionPool(final Cluster cluster) {
-        this(cluster, new Clock() {
-            @Override
-            public long millis() {
-                return System.currentTimeMillis();
-            }
-        });
+    public ServerSessionPool(final Cluster cluster, final TimeoutSettings timeoutSettings, @Nullable final ServerApi serverApi) {
+        this(cluster,
+                new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
+                        new TimeoutContext(timeoutSettings.connectionOnly()), serverApi));
     }
 
-    public ServerSessionPool(final Cluster cluster, final Clock clock) {
+    public ServerSessionPool(final Cluster cluster, final OperationContext operationContext) {
+        this(cluster, operationContext, System::currentTimeMillis);
+    }
+
+    public ServerSessionPool(final Cluster cluster, final OperationContext operationContext, final Clock clock) {
         this.cluster = cluster;
+        this.operationContext = operationContext;
         this.clock = clock;
     }
 
     public ServerSession get() {
         isTrue("server session pool is open", !closed);
-        ServerSessionImpl serverSession = serverSessionPool.get();
-        while (shouldPrune(serverSession)) {
-            serverSessionPool.release(serverSession, true);
-            serverSession = serverSessionPool.get();
+        ServerSessionImpl serverSession = available.pollLast();
+        while (serverSession != null && shouldPrune(serverSession)) {
+            serverSession.close();
+            serverSession = available.pollLast();
         }
+        if (serverSession == null) {
+            serverSession = new ServerSessionImpl();
+        }
+        inUseCount.increment();
         return serverSession;
     }
 
     public void release(final ServerSession serverSession) {
-        serverSessionPool.release((ServerSessionImpl) serverSession);
-        serverSessionPool.prune();
+        inUseCount.decrement();
+        ServerSessionImpl serverSessionImpl = (ServerSessionImpl) serverSession;
+        if (serverSessionImpl.isMarkedDirty()) {
+            serverSessionImpl.close();
+        } else {
+            available.addLast(serverSessionImpl);
+        }
+    }
+
+    public long getInUseCount() {
+        return inUseCount.sum();
     }
 
     public void close() {
-        try {
-            closing = true;
-            serverSessionPool.close();
-
-            List<BsonDocument> identifiers;
-            synchronized (this) {
-                identifiers = new ArrayList<BsonDocument>(closedSessionIdentifiers);
-                closedSessionIdentifiers.clear();
-            }
-            endClosedSessions(identifiers);
-        } finally {
-            closed = true;
-        }
+        closed = true;
+        endClosedSessions();
     }
 
-    public int getInUseCount() {
-        return serverSessionPool.getInUseCount();
-    }
-
-    private void closeSession(final ServerSessionImpl serverSession) {
-        serverSession.close();
-        // only track closed sessions when pool is in the process of closing
-        if (!closing) {
-            return;
-        }
-
-        List<BsonDocument> identifiers = null;
-        synchronized (this) {
-            closedSessionIdentifiers.add(serverSession.getIdentifier());
-            if (closedSessionIdentifiers.size() == END_SESSIONS_BATCH_SIZE) {
-                identifiers = new ArrayList<BsonDocument>(closedSessionIdentifiers);
-                closedSessionIdentifiers.clear();
-            }
-        }
-        if (identifiers != null) {
-            endClosedSessions(identifiers);
-        }
-    }
-
-    private void endClosedSessions(final List<BsonDocument> identifiers) {
+    private void endClosedSessions() {
+        List<BsonDocument> identifiers = drainPool();
         if (identifiers.isEmpty()) {
             return;
         }
 
-        final List<ServerDescription> primaryPreferred = new ReadPreferenceServerSelector(ReadPreference.primaryPreferred())
+        ReadPreference primaryPreferred = ReadPreference.primaryPreferred();
+        List<ServerDescription> primaryPreferredServers = new ReadPreferenceServerSelector(primaryPreferred)
                 .select(cluster.getCurrentDescription());
-        if (primaryPreferred.isEmpty()) {
+        if (primaryPreferredServers.isEmpty()) {
+            // Skip doing server selection if we anticipate that no server is readily selectable.
+            // This approach is racy, and it is still possible to become blocked selecting a server
+            // even if `primaryPreferredServers` is not empty.
             return;
         }
 
         Connection connection = null;
         try {
-            connection = cluster.selectServer(new ServerSelector() {
-                @Override
-                public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-                    for (ServerDescription cur : clusterDescription.getServerDescriptions()) {
-                        if (cur.getAddress().equals(primaryPreferred.get(0).getAddress())) {
-                            return Collections.singletonList(cur);
+            connection = cluster.selectServer(
+                    new ServerSelector() {
+                        @Override
+                        public List<ServerDescription> select(final ClusterDescription clusterDescription) {
+                            for (ServerDescription cur : clusterDescription.getServerDescriptions()) {
+                                if (cur.getAddress().equals(primaryPreferredServers.get(0).getAddress())) {
+                                    return Collections.singletonList(cur);
+                                }
+                            }
+                            return Collections.emptyList();
                         }
-                    }
-                    return Collections.emptyList();
-                }
-            }).getConnection();
+
+                        @Override
+                        public String toString() {
+                            return "ReadPreferenceServerSelector{"
+                                    + "readPreference=" + primaryPreferred
+                                    + '}';
+                        }
+                    },
+                    operationContext).getServer().getConnection(operationContext);
 
             connection.command("admin",
-                    new BsonDocument("endSessions", new BsonArray(identifiers)), new NoOpFieldNameValidator(),
-                    ReadPreference.primaryPreferred(), new BsonDocumentCodec(), NoOpSessionContext.INSTANCE);
+                    new BsonDocument("endSessions", new BsonArray(identifiers)), NoOpFieldNameValidator.INSTANCE,
+                    ReadPreference.primaryPreferred(), new BsonDocumentCodec(), operationContext);
         } catch (MongoException e) {
             // ignore exceptions
         } finally {
@@ -167,21 +167,41 @@ public class ServerSessionPool {
         }
     }
 
+    /**
+     * Drain the pool, returning a list of the identifiers of all drained sessions.
+     */
+    private List<BsonDocument> drainPool() {
+        List<BsonDocument> identifiers = new ArrayList<>(available.size());
+        ServerSessionImpl nextSession = available.pollFirst();
+        while (nextSession != null) {
+            identifiers.add(nextSession.getIdentifier());
+            nextSession = available.pollFirst();
+        }
+        return identifiers;
+    }
+
     private boolean shouldPrune(final ServerSessionImpl serverSession) {
         Integer logicalSessionTimeoutMinutes = cluster.getCurrentDescription().getLogicalSessionTimeoutMinutes();
         // if the server no longer supports sessions, prune the session
         if (logicalSessionTimeoutMinutes == null) {
             return false;
         }
-        if (serverSession.isMarkedDirty()) {
-            return true;
-        }
         long currentTimeMillis = clock.millis();
-        final long timeSinceLastUse = currentTimeMillis - serverSession.getLastUsedAtMillis();
-        final long oneMinuteFromTimeout = MINUTES.toMillis(logicalSessionTimeoutMinutes - 1);
+        long timeSinceLastUse = currentTimeMillis - serverSession.getLastUsedAtMillis();
+        long oneMinuteFromTimeout = MINUTES.toMillis(logicalSessionTimeoutMinutes - 1);
         return timeSinceLastUse > oneMinuteFromTimeout;
     }
 
+    private BsonBinary createNewServerSessionIdentifier() {
+        UuidCodec uuidCodec = new UuidCodec(UuidRepresentation.STANDARD);
+        BsonDocument holder = new BsonDocument();
+        BsonDocumentWriter bsonDocumentWriter = new BsonDocumentWriter(holder);
+        bsonDocumentWriter.writeStartDocument();
+        bsonDocumentWriter.writeName("id");
+        uuidCodec.encode(bsonDocumentWriter, UUID.randomUUID(), EncoderContext.builder().build());
+        bsonDocumentWriter.writeEndDocument();
+        return holder.getBinary("id");
+    }
 
     final class ServerSessionImpl implements ServerSession {
         private final BsonDocument identifier;
@@ -190,8 +210,8 @@ public class ServerSessionPool {
         private volatile boolean closed;
         private volatile boolean dirty = false;
 
-        ServerSessionImpl(final BsonBinary identifier) {
-            this.identifier = new BsonDocument("id", identifier);
+        ServerSessionImpl() {
+            identifier = new BsonDocument("id", createNewServerSessionIdentifier());
         }
 
         void close() {
@@ -232,34 +252,6 @@ public class ServerSessionPool {
         @Override
         public boolean isMarkedDirty() {
             return dirty;
-        }
-    }
-
-    private final class ServerSessionItemFactory implements ConcurrentPool.ItemFactory<ServerSessionImpl> {
-        @Override
-        public ServerSessionImpl create(final boolean initialize) {
-            return new ServerSessionImpl(createNewServerSessionIdentifier());
-        }
-
-        @Override
-        public void close(final ServerSessionImpl serverSession) {
-            closeSession(serverSession);
-        }
-
-        @Override
-        public Prune shouldPrune(final ServerSessionImpl serverSession) {
-            return ServerSessionPool.this.shouldPrune(serverSession) ? Prune.YES : Prune.STOP;
-        }
-
-        private BsonBinary createNewServerSessionIdentifier() {
-            UuidCodec uuidCodec = new UuidCodec(UuidRepresentation.STANDARD);
-            BsonDocument holder = new BsonDocument();
-            BsonDocumentWriter bsonDocumentWriter = new BsonDocumentWriter(holder);
-            bsonDocumentWriter.writeStartDocument();
-            bsonDocumentWriter.writeName("id");
-            uuidCodec.encode(bsonDocumentWriter, UUID.randomUUID(), EncoderContext.builder().build());
-            bsonDocumentWriter.writeEndDocument();
-            return holder.getBinary("id");
         }
     }
 }

@@ -17,8 +17,8 @@
 package com.mongodb.client.model
 
 import org.bson.BsonDocument
-import org.bson.Document;
-import spock.lang.Specification;
+import org.bson.Document
+import spock.lang.Specification
 
 class DeleteOptionsSpecification extends Specification {
 

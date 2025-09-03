@@ -16,14 +16,12 @@
 
 package com.mongodb.internal.operation
 
-import category.Async
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.configureFailPoint
@@ -31,7 +29,6 @@ import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 
 class DropDatabaseOperationSpecification extends OperationFunctionalSpecification {
 
@@ -42,63 +39,41 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
         assert databaseNameExists(databaseName)
 
         when:
-        new DropDatabaseOperation(databaseName).execute(getBinding())
+        execute(new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED), async)
 
         then:
         !databaseNameExists(databaseName)
+
+        where:
+        async << [true, false]
     }
 
-    @Category(Async)
-    @IgnoreIf({ isSharded() })
-    def 'should drop a database that exists asynchronously'() {
-        given:
-        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentTo', 'createTheCollection'))
-        assert databaseNameExists(databaseName)
-
-        when:
-        executeAsync(new DropDatabaseOperation(databaseName))
-
-        then:
-        !databaseNameExists(databaseName)
-    }
 
     def 'should not error when dropping a collection that does not exist'() {
         given:
         def dbName = 'nonExistingDatabase'
 
         when:
-        new DropDatabaseOperation(dbName).execute(getBinding())
+        execute(new DropDatabaseOperation(dbName, WriteConcern.ACKNOWLEDGED), async)
 
         then:
         !databaseNameExists(dbName)
+
+        where:
+        async << [true, false]
     }
 
-    @Category(Async)
-    def 'should not error when dropping a collection that does not exist asynchronously'() {
-        given:
-        def dbName = 'nonExistingDatabase'
-
-        when:
-        executeAsync(new DropDatabaseOperation(dbName))
-
-        then:
-        !databaseNameExists(dbName)
-    }
-
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentTo', 'createTheCollection'))
 
-        // On servers older than 4.0 that don't support this failpoint, use a crazy w value instead
-        def w = serverVersionAtLeast(4, 0) ? 2 : 5
+        def w = 2
         def operation = new DropDatabaseOperation(databaseName, new WriteConcern(w))
-        if (serverVersionAtLeast(4, 0)) {
-            configureFailPoint(BsonDocument.parse('{ configureFailPoint: "failCommand", ' +
-                    'mode : {times : 1}, ' +
-                    'data : {failCommands : ["dropDatabase"], ' +
-                    'writeConcernError : {code : 100, errmsg : "failed"}}}'))
-        }
+        configureFailPoint(BsonDocument.parse('{ configureFailPoint: "failCommand", ' +
+                'mode : {times : 1}, ' +
+                'data : {failCommands : ["dropDatabase"], ' +
+                'writeConcernError : {code : 100, errmsg : "failed"}}}'))
 
         when:
         async ? executeAsync(operation) : operation.execute(getBinding())
@@ -113,7 +88,7 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
     }
 
     def databaseNameExists(String databaseName) {
-        new ListDatabasesOperation(new DocumentCodec()).execute(getBinding()).next()*.name.contains(databaseName);
+        new ListDatabasesOperation(new DocumentCodec()).execute(getBinding()).next()*.name.contains(databaseName)
     }
 
 }

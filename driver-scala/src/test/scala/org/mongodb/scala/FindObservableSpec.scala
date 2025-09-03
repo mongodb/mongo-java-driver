@@ -16,17 +16,18 @@
 
 package org.mongodb.scala
 
-import java.util.concurrent.TimeUnit
-
-import com.mongodb.CursorType
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.reactivestreams.client.FindPublisher
+import com.mongodb.{ CursorType, ExplainVerbosity }
+import org.mockito.Mockito.{ verify, verifyNoMoreInteractions }
 import org.mongodb.scala.model.Collation
 import org.reactivestreams.Publisher
-import org.scalamock.scalatest.proxy.MockFactory
+import org.scalatestplus.mockito.MockitoSugar
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
 
-class FindObservableSpec extends BaseSpec with MockFactory {
+class FindObservableSpec extends BaseSpec with MockitoSugar {
 
   "FindObservable" should "have the same methods as the wrapped FindPublisher" in {
     val mongoPublisher: Set[String] = classOf[Publisher[Document]].getMethods.map(_.getName).toSet
@@ -35,7 +36,7 @@ class FindObservableSpec extends BaseSpec with MockFactory {
 
     wrapped.foreach((name: String) => {
       val cleanedName = name.stripPrefix("get")
-      assert(local.contains(name) | local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
+      assert(local.contains(name) || local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
     })
   }
 
@@ -52,26 +53,11 @@ class FindObservableSpec extends BaseSpec with MockFactory {
     val sort = Document("sort" -> 1)
     val collation = Collation.builder().locale("en").build()
     val batchSize = 10
+    val ct = classOf[Document]
+    val verbosity = ExplainVerbosity.QUERY_PLANNER
 
-    wrapper.expects(Symbol("first"))().once()
     observable.first()
-
-    wrapper.expects(Symbol("collation"))(collation).once()
-    wrapper.expects(Symbol("cursorType"))(CursorType.NonTailable).once()
-    wrapper.expects(Symbol("filter"))(filter).once()
-    wrapper.expects(Symbol("limit"))(1).once()
-    wrapper.expects(Symbol("hint"))(hint).once()
-    wrapper.expects(Symbol("hintString"))(hintString).once()
-    wrapper.expects(Symbol("maxAwaitTime"))(maxDuration.toMillis, TimeUnit.MILLISECONDS).once()
-    wrapper.expects(Symbol("maxTime"))(duration.toMillis, TimeUnit.MILLISECONDS).once()
-    wrapper.expects(Symbol("noCursorTimeout"))(true).once()
-    wrapper.expects(Symbol("oplogReplay"))(true).once()
-    wrapper.expects(Symbol("partial"))(true).once()
-    wrapper.expects(Symbol("projection"))(projection).once()
-    wrapper.expects(Symbol("skip"))(1).once()
-    wrapper.expects(Symbol("sort"))(sort).once()
-    wrapper.expects(Symbol("batchSize"))(batchSize).once()
-    wrapper.expects(Symbol("allowDiskUse"))(true).once()
+    verify(wrapper).first()
 
     observable.collation(collation)
     observable.cursorType(CursorType.NonTailable)
@@ -82,12 +68,35 @@ class FindObservableSpec extends BaseSpec with MockFactory {
     observable.maxAwaitTime(maxDuration)
     observable.maxTime(duration)
     observable.noCursorTimeout(true)
-    observable.oplogReplay(true)
     observable.partial(true)
     observable.projection(projection)
     observable.skip(1)
     observable.sort(sort)
     observable.batchSize(batchSize)
     observable.allowDiskUse(true)
+    observable.explain[Document]()
+    observable.explain[Document](verbosity)
+    observable.timeoutMode(TimeoutMode.ITERATION)
+
+    verify(wrapper).collation(collation)
+    verify(wrapper).cursorType(CursorType.NonTailable)
+    verify(wrapper).filter(filter)
+    verify(wrapper).limit(1)
+    verify(wrapper).hint(hint)
+    verify(wrapper).hintString(hintString)
+    verify(wrapper).maxAwaitTime(maxDuration.toMillis, TimeUnit.MILLISECONDS)
+    verify(wrapper).maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
+    verify(wrapper).noCursorTimeout(true)
+    verify(wrapper).partial(true)
+    verify(wrapper).projection(projection)
+    verify(wrapper).skip(1)
+    verify(wrapper).sort(sort)
+    verify(wrapper).batchSize(batchSize)
+    verify(wrapper).allowDiskUse(true)
+    verify(wrapper).explain(ct)
+    verify(wrapper).explain(ct, verbosity)
+    verify(wrapper).timeoutMode(TimeoutMode.ITERATION)
+
+    verifyNoMoreInteractions(wrapper)
   }
 }

@@ -38,6 +38,7 @@ import spock.lang.Specification
 
 import java.util.function.Consumer
 
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -56,7 +57,7 @@ class GridFSFindIterableSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null, null])
         def underlying = new FindIterableImpl(null, namespace, GridFSFile, GridFSFile, codecRegistry, readPreference, readConcern, executor,
-                new Document())
+                new Document(), true, TIMEOUT_SETTINGS)
         def findIterable = new GridFSFindIterableImpl(underlying)
 
         when: 'default input should be as expected'
@@ -67,13 +68,13 @@ class GridFSFindIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new FindOperation<GridFSFile>(namespace, gridFSFileCodec)
-                .filter(new BsonDocument()).slaveOk(true).retryReads(true))
+                .filter(new BsonDocument()).retryReads(true))
         readPreference == secondary()
 
         when: 'overriding initial options'
         findIterable.filter(new Document('filter', 2))
                 .sort(new Document('sort', 2))
-                .maxTime(999, MILLISECONDS)
+                .maxTime(100, MILLISECONDS)
                 .batchSize(99)
                 .limit(99)
                 .skip(9)
@@ -87,12 +88,10 @@ class GridFSFindIterableSpecification extends Specification {
         expect operation, isTheSameAs(new FindOperation<GridFSFile>(namespace, gridFSFileCodec)
                 .filter(new BsonDocument('filter', new BsonInt32(2)))
                 .sort(new BsonDocument('sort', new BsonInt32(2)))
-                .maxTime(999, MILLISECONDS)
                 .batchSize(99)
                 .limit(99)
                 .skip(9)
                 .noCursorTimeout(true)
-                .slaveOk(true)
                 .collation(collation)
                 .retryReads(true)
         )
@@ -102,7 +101,7 @@ class GridFSFindIterableSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null, null])
         def findIterable = new FindIterableImpl(null, namespace, GridFSFile, GridFSFile, codecRegistry, readPreference, readConcern,
-                executor, new Document('filter', 1))
+                executor, new Document('filter', 1), true, TIMEOUT_SETTINGS)
 
         when:
         findIterable.filter(new Document('filter', 1))
@@ -116,7 +115,6 @@ class GridFSFindIterableSpecification extends Specification {
                 .filter(new BsonDocument('filter', new BsonInt32(1)))
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
                 .cursorType(CursorType.NonTailable)
-                .slaveOk(true)
                 .retryReads(true)
         )
     }
@@ -134,7 +132,7 @@ class GridFSFindIterableSpecification extends Specification {
         def cursor = {
             Stub(BatchCursor) {
                 def count = 0
-                def results;
+                def results
                 def getResult = {
                     count++
                     results = count == 1 ? cannedResults : null
@@ -148,9 +146,9 @@ class GridFSFindIterableSpecification extends Specification {
                 }
             }
         }
-        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
+        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()])
         def underlying = new FindIterableImpl(null, namespace, GridFSFile, GridFSFile, codecRegistry, readPreference, readConcern, executor,
-                new Document())
+                new Document(), true, TIMEOUT_SETTINGS)
         def mongoIterable = new GridFSFindIterableImpl(underlying)
 
         when:

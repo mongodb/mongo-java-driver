@@ -22,8 +22,9 @@ import com.mongodb.async.FutureResultCallback
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerId
+import com.mongodb.connection.ServerType
+import com.mongodb.internal.TimeoutSettings
 import org.bson.BsonDocument
-import org.bson.internal.Base64
 import spock.lang.Specification
 
 import javax.security.sasl.SaslException
@@ -32,12 +33,15 @@ import java.util.concurrent.TimeUnit
 
 import static com.mongodb.MongoCredential.createScramSha1Credential
 import static com.mongodb.MongoCredential.createScramSha256Credential
-import static org.junit.Assert.assertEquals
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.internal.connection.MessageHelper.buildSuccessfulReply
+import static com.mongodb.internal.connection.OperationContext.simpleOperationContext
+import static org.junit.Assert.assertEquals
 
 class ScramShaAuthenticatorSpecification extends Specification {
     def serverId = new ServerId(new ClusterId(), new ServerAddress('localhost', 27017))
     def connectionDescription = new ConnectionDescription(serverId)
+    def operationContext = simpleOperationContext(TimeoutSettings.DEFAULT, null)
     private final static MongoCredentialWithCache SHA1_CREDENTIAL =
             new MongoCredentialWithCache(createScramSha1Credential('user', 'database', 'pencil' as char[]))
     private final static MongoCredentialWithCache SHA256_CREDENTIAL =
@@ -57,7 +61,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
 
         when:
         def credential = new MongoCredentialWithCache(createScramSha1Credential(user, 'database', password as char[]))
-        def authenticator = new ScramShaAuthenticator(credential, { 'fyko+d2lbbFgONRv9qkxdawL' }, { preppedPassword })
+        def authenticator = new ScramShaAuthenticator(credential, { 'fyko+d2lbbFgONRv9qkxdawL' }, { preppedPassword }, SINGLE, null)
 
         then:
         validateAuthentication(payloads, authenticator, async, emptyExchange)
@@ -78,14 +82,14 @@ class ScramShaAuthenticatorSpecification extends Specification {
         def firstClientChallenge = 'n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL'
         def expectedSpeculativeAuthenticateCommand = BsonDocument.parse('{ saslStart: 1, mechanism: "SCRAM-SHA-1", '
                 + "payload: BinData(0, '${encode64(firstClientChallenge)}'), "
-                + 'db: "admin", options: { skipEmptyExchange: true }}')
+                + 'db: "database", options: { skipEmptyExchange: true }}')
         def serverResponse = 'r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096'
         def speculativeAuthenticateResponse =
                 BsonDocument.parse("{ conversationId: 1, payload: BinData(0, '${encode64(serverResponse)}'), done: false }")
 
         when:
         def credential = new MongoCredentialWithCache(createScramSha1Credential(user, 'database', password as char[]))
-        def authenticator = new ScramShaAuthenticator(credential, { 'fyko+d2lbbFgONRv9qkxdawL' }, { preppedPassword })
+        def authenticator = new ScramShaAuthenticator(credential, { 'fyko+d2lbbFgONRv9qkxdawL' }, { preppedPassword }, SINGLE, null)
 
         then:
         def speculativeAuthenticateCommand =
@@ -111,7 +115,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
 
         when:
         def credential = new MongoCredentialWithCache(createScramSha256Credential(user, 'database', password as char[]))
-        def authenticator = new ScramShaAuthenticator(credential, { 'rOprNGfwEbeRWgbNEkqO' }, { preppedPassword })
+        def authenticator = new ScramShaAuthenticator(credential, { 'rOprNGfwEbeRWgbNEkqO' }, { preppedPassword }, SINGLE, null)
 
         then:
         validateAuthentication(payloads, authenticator, async, emptyExchange)
@@ -132,14 +136,14 @@ class ScramShaAuthenticatorSpecification extends Specification {
         def firstClientChallenge = 'n,,n=user,r=rOprNGfwEbeRWgbNEkqO'
         def expectedSpeculativeAuthenticateCommand = BsonDocument.parse('{ saslStart: 1, mechanism: "SCRAM-SHA-256", '
                 + "payload: BinData(0, '${encode64(firstClientChallenge)}'), "
-                + 'db: "admin", options: { skipEmptyExchange: true }}')
+                + 'db: "database", options: { skipEmptyExchange: true }}')
         def serverResponse = 'r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096'
         def speculativeAuthenticateResponse =
                 BsonDocument.parse("{ conversationId: 1, payload: BinData(0, '${encode64(serverResponse)}'), done: false }")
 
         when:
         def credential = new MongoCredentialWithCache(createScramSha256Credential(user, 'database', password as char[]))
-        def authenticator = new ScramShaAuthenticator(credential, { 'rOprNGfwEbeRWgbNEkqO' }, { preppedPassword })
+        def authenticator = new ScramShaAuthenticator(credential, { 'rOprNGfwEbeRWgbNEkqO' }, { preppedPassword }, SINGLE, null)
 
         then:
         def speculativeAuthenticateCommand =
@@ -165,7 +169,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
 
         when:
         def credential = new MongoCredentialWithCache(createScramSha1Credential(user, 'database', password as char[]))
-        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
+        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword }, SINGLE, null)
 
         then:
         validateAuthentication(payloads, authenticator, async, emptyExchange)
@@ -188,7 +192,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
 
         when:
         def credential = new MongoCredentialWithCache(createScramSha1Credential(user, 'database', password as char[]))
-        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
+        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword }, SINGLE, null)
 
         then:
         validateAuthentication(payloads, authenticator, async, emptyExchange)
@@ -211,7 +215,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
 
         when:
         def credential = new MongoCredentialWithCache(createScramSha1Credential(user, 'database', password as char[]))
-        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
+        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword }, SINGLE, null)
 
         then:
         validateAuthentication(payloads, authenticator, async, emptyExchange)
@@ -234,7 +238,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
 
         when:
         def credential = new MongoCredentialWithCache(createScramSha256Credential(user, 'database', password as char[]))
-        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
+        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword }, SINGLE, null)
 
         then:
         validateAuthentication(payloads, authenticator, async, emptyExchange)
@@ -257,7 +261,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
 
         when:
         def credential = new MongoCredentialWithCache(createScramSha256Credential(user, 'database', password as char[]))
-        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
+        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword }, SINGLE, null)
 
         then:
         validateAuthentication(payloads, authenticator, async, emptyExchange)
@@ -280,7 +284,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
 
         when:
         def credential = new MongoCredentialWithCache(createScramSha256Credential(user, 'database', password as char[]))
-        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
+        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword }, SINGLE, null)
 
         then:
         validateAuthentication(payloads, authenticator, async, emptyExchange)
@@ -303,7 +307,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
 
         when:
         def credential = new MongoCredentialWithCache(createScramSha256Credential(user, 'database', password as char[]))
-        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
+        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword }, SINGLE, null)
 
         then:
         validateAuthentication(payloads, authenticator, async, emptyExchange)
@@ -326,7 +330,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
 
         when:
         def credential = new MongoCredentialWithCache(createScramSha256Credential(user, 'database', password as char[]))
-        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
+        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword }, SINGLE, null)
 
         then:
         validateAuthentication(payloads, authenticator, async, emptyExchange)
@@ -338,7 +342,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
     def 'should throw if invalid r value from server'() {
         when:
         def serverResponses = ['r=InvalidRValue,s=MYSALT,i=4096']
-        def authenticator = new ScramShaAuthenticator(credential, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' })
+        def authenticator = new ScramShaAuthenticator(credential, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' }, SINGLE, null)
         authenticate(createConnection(serverResponses), authenticator, async)
 
         then:
@@ -353,7 +357,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
     def 'should throw if iteration count is below the minimium allowed count'() {
         when:
         def serverResponses = createMessages('S: r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=QSXCR+Q6sek8bf92,i=4095').last()
-        def authenticator = new ScramShaAuthenticator(credential, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' })
+        def authenticator = new ScramShaAuthenticator(credential, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' }, SINGLE, null)
         authenticate(createConnection(serverResponses), authenticator, async)
 
         then:
@@ -371,7 +375,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
             S: r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=QSXCR+Q6sek8bf92,i=4096
             S: v=InvalidServerSignature
         ''').last()
-        def authenticator = new ScramShaAuthenticator(credential, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' })
+        def authenticator = new ScramShaAuthenticator(credential, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' }, SINGLE, null)
         authenticate(createConnection(serverResponses), authenticator, async)
 
         then:
@@ -390,7 +394,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
             S: v=rmF9pqV8S7suAoZWja4dJRkFsKQ=
             S: z=ExtraStep
         ''').last()
-        def authenticator = new ScramShaAuthenticator(SHA1_CREDENTIAL, { 'fyko+d2lbbFgONRv9qkxdawL' }, { 'pencil' })
+        def authenticator = new ScramShaAuthenticator(SHA1_CREDENTIAL, { 'fyko+d2lbbFgONRv9qkxdawL' }, { 'pencil' }, SINGLE, null)
         authenticate(createConnection(serverResponses), authenticator, async)
 
         then:
@@ -409,7 +413,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
             S: v=6rriTRBi23WpRR/wtup+mMhUZUn/dB5nLTJRsjl95G4=
             S: z=ExtraStep
         ''', true).last()
-        def authenticator = new ScramShaAuthenticator(SHA256_CREDENTIAL, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' })
+        def authenticator = new ScramShaAuthenticator(SHA256_CREDENTIAL, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' }, SINGLE, null)
         authenticate(createConnection(serverResponses), authenticator, async)
 
         then:
@@ -427,7 +431,8 @@ class ScramShaAuthenticatorSpecification extends Specification {
             S: r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096
             S: v=6rriTRBi23WpRR/wtup+mMhUZUn/dB5nLTJRsjl95G4=
         ''').last()
-        def authenticator = new ScramShaAuthenticator(SHA256_CREDENTIAL, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' })
+        def authenticator = new ScramShaAuthenticator(SHA256_CREDENTIAL, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' },
+                SINGLE, null)
 
         when:
         // server sends done=true on first response, client is not complete after processing response
@@ -454,7 +459,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
             S: r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096
             S: v=invalidResponse
         ''').last()
-        def authenticator = new ScramShaAuthenticator(SHA256_CREDENTIAL, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' })
+        def authenticator = new ScramShaAuthenticator(SHA256_CREDENTIAL, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' }, SINGLE, null)
 
         when:
         // server sends done=true on second response, client throws exception on invalid server response
@@ -470,7 +475,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
     }
 
     def createConnection(List<String> serverResponses, int responseWhereDoneIsTrue = -1) {
-        TestInternalConnection connection = new TestInternalConnection(serverId)
+        TestInternalConnection connection = new TestInternalConnection(serverId, ServerType.STANDALONE)
         serverResponses.eachWithIndex { response, index ->
             def isDone = (index == responseWhereDoneIsTrue).booleanValue()
             connection.enqueueReply(
@@ -491,7 +496,8 @@ class ScramShaAuthenticatorSpecification extends Specification {
             def sentMessage = sent.get(it)
             def messageStart = speculativeAuthenticate || it != 0 ? 'saslContinue: 1, conversationId: 1'
                     : "saslStart: 1, mechanism:'$mechanism', options: {skipEmptyExchange: true}"
-            def expectedMessage = BsonDocument.parse("{$messageStart, payload: BinData(0, '${encode64(clientMessages.get(it))}')}")
+            def expectedMessage = BsonDocument.parse(
+                    "{$messageStart, payload: BinData(0, '${encode64(clientMessages.get(it))}'), \$db: \"database\"}")
             assertEquals(expectedMessage, sentMessage)
         }
     }
@@ -519,16 +525,16 @@ class ScramShaAuthenticatorSpecification extends Specification {
     def authenticate(TestInternalConnection connection, ScramShaAuthenticator authenticator, boolean async) {
         if (async) {
             FutureResultCallback<Void> futureCallback = new FutureResultCallback<Void>()
-            authenticator.authenticateAsync(connection, connectionDescription, futureCallback)
+            authenticator.authenticateAsync(connection, connectionDescription, operationContext, futureCallback)
             futureCallback.get(5, TimeUnit.SECONDS)
         } else {
-            authenticator.authenticate(connection, connectionDescription)
+            authenticator.authenticate(connection, connectionDescription, operationContext)
         }
     }
 
 
     def encode64(String string) {
-        Base64.encode(string.getBytes(Charset.forName('UTF-8')))
+        Base64.getEncoder().encodeToString(string.getBytes(Charset.forName('UTF-8')))
     }
 
     def createMessages(String messages, boolean emptyExchange = true) {

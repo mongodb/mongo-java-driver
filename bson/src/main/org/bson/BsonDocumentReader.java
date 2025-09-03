@@ -42,7 +42,6 @@ public class BsonDocumentReader extends AbstractBsonReader {
      * @param document the document to read from
      */
     public BsonDocumentReader(final BsonDocument document) {
-        super();
         setContext(new Context(null, BsonContextType.TOP_LEVEL, document));
         currentValue = document;
     }
@@ -243,17 +242,24 @@ public class BsonDocumentReader extends AbstractBsonReader {
     protected Context getContext() {
         return (Context) super.getContext();
     }
+
+    /**
+     * An implementation of {@code AbstractBsonReader.Mark}.
+     */
     protected class Mark extends AbstractBsonReader.Mark {
         private final BsonValue currentValue;
         private final Context context;
 
+        /**
+         * Construct an instance.
+         */
         protected Mark() {
-            super();
             currentValue = BsonDocumentReader.this.currentValue;
             context = BsonDocumentReader.this.getContext();
             context.mark();
         }
 
+        @Override
         public void reset() {
             super.reset();
             BsonDocumentReader.this.currentValue = currentValue;
@@ -264,8 +270,8 @@ public class BsonDocumentReader extends AbstractBsonReader {
 
     private static class BsonDocumentMarkableIterator<T> implements Iterator<T> {
 
-        private Iterator<T> baseIterator;
-        private List<T> markIterator = new ArrayList<T>();
+        private final Iterator<T> baseIterator;
+        private final List<T> markIterator = new ArrayList<>();
         private int curIndex; // index of the cursor
         private boolean marking;
 
@@ -325,21 +331,43 @@ public class BsonDocumentReader extends AbstractBsonReader {
         }
     }
 
+    /**
+     * An implementation of {@code AbstractBsonReader.Context}.
+     */
     protected class Context extends AbstractBsonReader.Context {
 
         private BsonDocumentMarkableIterator<Map.Entry<String, BsonValue>> documentIterator;
         private BsonDocumentMarkableIterator<BsonValue> arrayIterator;
 
+        /**
+         * Construct an instance.
+         *
+         * @param parentContext the parent context
+         * @param contextType the context type
+         * @param array the array context
+         */
         protected Context(final Context parentContext, final BsonContextType contextType, final BsonArray array) {
             super(parentContext, contextType);
-            arrayIterator = new BsonDocumentMarkableIterator<BsonValue>(array.iterator());
+            arrayIterator = new BsonDocumentMarkableIterator<>(array.iterator());
         }
 
+        /**
+         * Construct an instance.
+         *
+         * @param parentContext the parent context
+         * @param contextType the context type
+         * @param document the document context
+         */
         protected Context(final Context parentContext, final BsonContextType contextType, final BsonDocument document) {
             super(parentContext, contextType);
-            documentIterator = new BsonDocumentMarkableIterator<Map.Entry<String, BsonValue>>(document.entrySet().iterator());
+            documentIterator = new BsonDocumentMarkableIterator<>(document.entrySet().iterator());
         }
 
+        /**
+         * Gets the next element.
+         *
+         * @return the next element, which may be null
+         */
         public Map.Entry<String, BsonValue> getNextElement() {
             if (documentIterator.hasNext()) {
                 return documentIterator.next();
@@ -347,6 +375,10 @@ public class BsonDocumentReader extends AbstractBsonReader {
                 return null;
             }
         }
+
+        /**
+         * Create a mark.
+         */
         protected void mark() {
             if (documentIterator != null) {
                 documentIterator.mark();
@@ -359,6 +391,9 @@ public class BsonDocumentReader extends AbstractBsonReader {
             }
         }
 
+        /**
+         * Reset the context.
+         */
         protected void reset() {
             if (documentIterator != null) {
                 documentIterator.reset();
@@ -371,6 +406,11 @@ public class BsonDocumentReader extends AbstractBsonReader {
             }
         }
 
+        /**
+         * Gets the next value.
+         *
+         * @return the next value, which may be null
+         */
         public BsonValue getNextValue() {
             if (arrayIterator.hasNext()) {
                 return arrayIterator.next();

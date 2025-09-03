@@ -18,6 +18,8 @@ package org.bson.types;
 
 import org.bson.Document;
 
+import java.util.Objects;
+
 /**
  * A representation of the JavaScript Code with Scope BSON type.
  *
@@ -25,6 +27,9 @@ import org.bson.Document;
  */
 public class CodeWithScope extends Code {
 
+    /**
+     * The scope document.
+     */
     private final Document scope;
 
     private static final long serialVersionUID = -6284832275113680002L;
@@ -41,7 +46,7 @@ public class CodeWithScope extends Code {
     }
 
     /**
-     * Gets the scope, which is is a mapping from identifiers to values, representing the scope in which the code should be evaluated.
+     * Gets the scope, which is a mapping from identifiers to values, representing the scope in which the code should be evaluated.
      *
      * @return the scope
      */
@@ -63,7 +68,7 @@ public class CodeWithScope extends Code {
 
         CodeWithScope that = (CodeWithScope) o;
 
-        if (scope != null ? !scope.equals(that.scope) : that.scope != null) {
+        if (!Objects.equals(scope, that.scope)) {
             return false;
         }
 

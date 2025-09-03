@@ -19,42 +19,19 @@ package com.mongodb.internal.bulk;
 /**
  * An abstract base class for a write request.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public abstract class WriteRequest {
 
-    /**
-     * The type of write.
-     */
     public enum Type {
-        /**
-         * An insert.
-         */
         INSERT,
-
-        /**
-         * An update that uses update operators.
-         */
         UPDATE,
-
-        /**
-         * An update that replaces the existing document.
-         */
         REPLACE,
-
-        /**
-         * A delete.
-         */
         DELETE
     }
 
     WriteRequest() {
     }
 
-    /**
-     * Gets the type of the write.
-     *
-     * @return the type
-     */
     public abstract Type getType();
 }

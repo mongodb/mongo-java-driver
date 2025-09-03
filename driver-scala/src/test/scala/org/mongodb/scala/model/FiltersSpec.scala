@@ -32,7 +32,7 @@ class FiltersSpec extends BaseSpec {
 
   "Filters" should "have the same methods as the wrapped Filters" in {
     val wrapped = classOf[com.mongodb.client.model.Filters].getDeclaredMethods
-      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers))
+      .filter(f => isPublic(f.getModifiers))
       .map(_.getName)
       .toSet
     val aliases = Set("equal", "notEqual", "bsonType")
@@ -220,7 +220,9 @@ class FiltersSpec extends BaseSpec {
     toBson(model.Filters.text("mongoDB for GIANT ideas", new TextSearchOptions().caseSensitive(true))) should equal(
       Document("""{$text : {$search : "mongoDB for GIANT ideas", $caseSensitive : true} }""")
     )
-    toBson(model.Filters.text("mongoDB for GIANT ideas", new TextSearchOptions().diacriticSensitive(false))) should equal(
+    toBson(
+      model.Filters.text("mongoDB for GIANT ideas", new TextSearchOptions().diacriticSensitive(false))
+    ) should equal(
       Document("""{$text : {$search : "mongoDB for GIANT ideas", $diacriticSensitive : false} }""")
     )
     toBson(
@@ -764,6 +766,12 @@ class FiltersSpec extends BaseSpec {
   it should "render $jsonSchema" in {
     toBson(model.Filters.jsonSchema(Document("{bsonType: 'object'}"))) should equal(
       Document("""{$jsonSchema: {bsonType:  "object"}}""")
+    )
+  }
+
+  it should "render an empty document" in {
+    toBson(model.Filters.empty()) should equal(
+      Document("""{}""")
     )
   }
 

@@ -18,6 +18,8 @@ package com.mongodb.client.model;
 
 import com.mongodb.lang.Nullable;
 
+import java.util.Objects;
+
 /**
  * The options for an unwind aggregation pipeline stage
  *
@@ -78,5 +80,25 @@ public final class UnwindOptions {
                 + "preserveNullAndEmptyArrays=" + preserveNullAndEmptyArrays
                 + ", includeArrayIndex='" + includeArrayIndex + '\''
                 + '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        UnwindOptions that = (UnwindOptions) o;
+        return Objects.equals(preserveNullAndEmptyArrays, that.preserveNullAndEmptyArrays) && Objects.equals(includeArrayIndex, that.includeArrayIndex);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(preserveNullAndEmptyArrays);
+        result = 31 * result + Objects.hashCode(includeArrayIndex);
+        return result;
     }
 }

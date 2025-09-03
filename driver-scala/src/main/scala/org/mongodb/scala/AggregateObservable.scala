@@ -16,13 +16,19 @@
 
 package org.mongodb.scala
 
-import java.util.concurrent.TimeUnit
+import com.mongodb.ExplainVerbosity
+import com.mongodb.annotations.{ Alpha, Reason }
 
+import java.util.concurrent.TimeUnit
 import com.mongodb.reactivestreams.client.AggregatePublisher
+import org.mongodb.scala.bson.BsonValue
+import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Collation
+import org.reactivestreams.Subscriber
 
 import scala.concurrent.duration.Duration
+import scala.reflect.ClassTag
 
 /**
  * Observable for aggregate
@@ -36,7 +42,7 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
   /**
    * Enables writing to temporary files. A null value indicates that it's unspecified.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/aggregate/ Aggregation]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/aggregate/ Aggregation]]
    *
    * @param allowDiskUse true if writing to temporary files is enabled
    * @return this
@@ -49,7 +55,7 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
   /**
    * Sets the maximum execution time on the server for this operation.
    *
-   * [[http://docs.mongodb.org/manual/reference/operator/meta/maxTimeMS/ Max Time]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/ Max Time]]
    * @param duration the duration
    * @return this
    */
@@ -61,7 +67,7 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
   /**
    * Sets the maximum await execution time on the server for this operation.
    *
-   * [[http://docs.mongodb.org/manual/reference/operator/meta/maxTimeMS/ Max Time]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/ Max Time]]
    * @param duration the duration
    * @return this
    * @since 2.2
@@ -77,7 +83,7 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
    *
    * '''Note:''': This only applies when an `\$out` stage is specified.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/aggregate/ Aggregation]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/aggregate/ Aggregation]]
    * @note Requires MongoDB 3.2 or greater
    * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
    * @return this
@@ -103,7 +109,7 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
   }
 
   /**
-   * Sets the comment to the aggregation. A null value means no comment is set.
+   * Sets the comment for this operation. A null value means no comment is set.
    *
    * @param comment the comment
    * @return this
@@ -112,6 +118,39 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
    */
   def comment(comment: String): AggregateObservable[TResult] = {
     wrapped.comment(comment)
+    this
+  }
+
+  /**
+   * Sets the comment for this operation. A null value means no comment is set.
+   *
+   * @param comment the comment
+   * @return this
+   * @since 4.6
+   * @note The comment can be any valid BSON type for server versions 4.4 and above.
+   *       Server versions between 3.6 and 4.2 only support
+   *       string as comment, and providing a non-string type will result in a server-side error.
+   */
+  def comment(comment: BsonValue): AggregateObservable[TResult] = {
+    wrapped.comment(comment)
+    this
+  }
+
+  /**
+   * Add top-level variables to the aggregation.
+   *
+   * For MongoDB 5.0+, the aggregate command accepts a "let" option. This option is a document consisting of zero or more
+   * fields representing variables that are accessible to the aggregation pipeline.  The key is the name of the variable and the value is
+   * a constant in the aggregate expression language. Each parameter name is then usable to access the value of the corresponding
+   * expression with the "$$" syntax within aggregate expression contexts which may require the use of '\$expr' or a pipeline.
+   *
+   * @param variables the variables
+   * @return this
+   * @since 4.3
+   * @note Requires MongoDB 5.0 or greater
+   */
+  def let(variables: Bson): AggregateObservable[TResult] = {
+    wrapped.let(variables)
     this
   }
 
@@ -129,6 +168,19 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
   }
 
   /**
+   * Sets the hint for which index to use. A null value means no hint is set.
+   *
+   * @param hint the hint
+   * @return this
+   * @since 4.4
+   * @note Requires MongoDB 3.6 or greater
+   */
+  def hintString(hint: String): AggregateObservable[TResult] = {
+    wrapped.hintString(hint)
+    this
+  }
+
+  /**
    * Sets the number of documents to return per batch.
    *
    * @param batchSize the batch size
@@ -141,12 +193,39 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
   }
 
   /**
-   * Aggregates documents according to the specified aggregation pipeline, which must end with a `\$out` stage.
+   * Aggregates documents according to the specified aggregation pipeline, which must end with an `\$out` or `\$merge` stage.
+   * Calling this method and then `subscribing` to the returned [[SingleObservable]]
+   * is the preferred alternative to subscribing to this [[AggregateObservable]],
+   * because this method does what is explicitly requested without executing implicit operations.
    *
-   * [[http://docs.mongodb.org/manual/aggregation/ Aggregation]]
-   * @return an empty Observable that indicates when the operation has completed
+   * [[https://www.mongodb.com/docs/manual/aggregation/ Aggregation]]
+   *
+   * @throws java.lang.IllegalStateException if the pipeline does not end with an `\$out` or `\$merge` stage
+   * @return an Observable that indicates when the operation has completed.
    */
-  def toCollection(): SingleObservable[Void] = wrapped.toCollection()
+  def toCollection(): SingleObservable[Unit] = wrapped.toCollection()
+
+  /**
+   * Sets the timeoutMode for the cursor.
+   *
+   * Requires the `timeout` to be set, either in the [[MongoClientSettings]],
+   * via [[MongoDatabase]] or via [[MongoCollection]]
+   *
+   * If the `timeout` is set then:
+   *
+   * - For non-tailable cursors, the default value of timeoutMode is `TimeoutMode.CURSOR_LIFETIME`
+   * - For tailable cursors, the default value of timeoutMode is `TimeoutMode.ITERATION` and its an error
+   *   to configure it as: `TimeoutMode.CURSOR_LIFETIME`
+   *
+   * @param timeoutMode the timeout mode
+   * @return this
+   * @since 5.2
+   */
+  @Alpha(Array(Reason.CLIENT))
+  def timeoutMode(timeoutMode: TimeoutMode): AggregateObservable[TResult] = {
+    wrapped.timeoutMode(timeoutMode)
+    this
+  }
 
   /**
    * Helper to return a single observable limited to the first result.
@@ -156,5 +235,51 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
    */
   def first(): SingleObservable[TResult] = wrapped.first()
 
+  /**
+   * Explain the execution plan for this operation with the server's default verbosity level
+   *
+   * @tparam ExplainResult The type of the result
+   * @return the execution plan
+   * @since 4.2
+   * @note Requires MongoDB 3.6 or greater
+   */
+  def explain[ExplainResult]()(
+      implicit e: ExplainResult DefaultsTo Document,
+      ct: ClassTag[ExplainResult]
+  ): SingleObservable[ExplainResult] =
+    wrapped.explain[ExplainResult](ct)
+
+  /**
+   * Explain the execution plan for this operation with the given verbosity level
+   *
+   * @tparam ExplainResult The type of the result
+   * @param verbosity the verbosity of the explanation
+   * @return the execution plan
+   * @since 4.2
+   * @note Requires MongoDB 3.6 or greater
+   */
+  def explain[ExplainResult](
+      verbosity: ExplainVerbosity
+  )(implicit e: ExplainResult DefaultsTo Document, ct: ClassTag[ExplainResult]): SingleObservable[ExplainResult] =
+    wrapped.explain[ExplainResult](ct, verbosity)
+
+  /**
+   * Requests [[AggregateObservable]] to start streaming data according to the specified aggregation pipeline.
+   *
+   *  - If the aggregation pipeline ends with an `\$out` or `\$merge` stage,
+   *    then finds all documents in the affected namespace and produces them.
+   *    You may want to use [[toCollection]] instead.
+   *  - Otherwise, produces no elements.
+   */
   override def subscribe(observer: Observer[_ >: TResult]): Unit = wrapped.subscribe(observer)
+
+  /**
+   * Requests [[AggregateObservable]] to start streaming data according to the specified aggregation pipeline.
+   *
+   *  - If the aggregation pipeline ends with an `\$out` or `\$merge` stage,
+   *    then finds all documents in the affected namespace and produces them.
+   *    You may want to use [[toCollection]] instead.
+   *  - Otherwise, produces no elements.
+   */
+  override def subscribe(observer: Subscriber[_ >: TResult]): Unit = wrapped.subscribe(observer)
 }

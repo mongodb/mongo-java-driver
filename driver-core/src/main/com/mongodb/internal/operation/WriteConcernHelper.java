@@ -22,32 +22,48 @@ import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.bulk.WriteConcernError;
-import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.connection.ProtocolHelper;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabel;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotFour;
 
 /**
  * This class is NOT part of the public API. It may change at any time without notification.
  */
 public final class WriteConcernHelper {
 
-    public static void appendWriteConcernToCommand(final WriteConcern writeConcern, final BsonDocument commandDocument,
-                                                   final ConnectionDescription description) {
-        if (writeConcern != null && !writeConcern.isServerDefault() && serverIsAtLeastVersionThreeDotFour(description)) {
+    public static void appendWriteConcernToCommand(final WriteConcern writeConcern, final BsonDocument commandDocument) {
+        if (writeConcern != null && !writeConcern.isServerDefault()) {
             commandDocument.put("writeConcern", writeConcern.asDocument());
         }
     }
+    @Nullable
+    public static WriteConcern cloneWithoutTimeout(@Nullable final WriteConcern writeConcern) {
+        if (writeConcern == null || writeConcern.getWTimeout(TimeUnit.MILLISECONDS) == null) {
+            return writeConcern;
+        }
 
-    public static void throwOnWriteConcernError(final BsonDocument result, final ServerAddress serverAddress, final int maxWireVersion) {
+        WriteConcern mapped;
+        Object w = writeConcern.getWObject();
+        if (w == null) {
+            mapped = WriteConcern.ACKNOWLEDGED;
+        } else {
+            mapped = w instanceof Integer ? new WriteConcern((Integer) w) : new WriteConcern((String) w);
+        }
+        return mapped.withJournal(writeConcern.getJournal());
+    }
+
+    public static void throwOnWriteConcernError(final BsonDocument result, final ServerAddress serverAddress,
+                                                final int maxWireVersion, final TimeoutContext timeoutContext) {
         if (hasWriteConcernError(result)) {
-            MongoException exception = ProtocolHelper.createSpecialException(result, serverAddress, "errmsg");
+            MongoException exception = ProtocolHelper.createSpecialException(result, serverAddress, "errmsg", timeoutContext);
             if (exception == null) {
                 exception = createWriteConcernException(result, serverAddress);
             }
@@ -63,16 +79,16 @@ public final class WriteConcernHelper {
     public static MongoWriteConcernException createWriteConcernException(final BsonDocument result, final ServerAddress serverAddress) {
         return new MongoWriteConcernException(
                 createWriteConcernError(result.getDocument("writeConcernError")),
-                WriteConcernResult.acknowledged(0, false, null), serverAddress);
+                WriteConcernResult.acknowledged(0, false, null), serverAddress,
+                result.getArray("errorLabels", new BsonArray()).stream().map(i -> i.asString().getValue())
+                        .collect(Collectors.toSet()));
     }
 
     public static WriteConcernError createWriteConcernError(final BsonDocument writeConcernErrorDocument) {
         return new WriteConcernError(writeConcernErrorDocument.getNumber("code").intValue(),
                 writeConcernErrorDocument.getString("codeName", new BsonString("")).getValue(),
                 writeConcernErrorDocument.getString("errmsg").getValue(),
-                writeConcernErrorDocument.getDocument("errInfo", new BsonDocument()),
-                writeConcernErrorDocument.getArray("errorLabels", new BsonArray()).stream().map(i -> i.asString().getValue())
-                        .collect(Collectors.toSet()));
+                writeConcernErrorDocument.getDocument("errInfo", new BsonDocument()));
     }
 
     private WriteConcernHelper() {

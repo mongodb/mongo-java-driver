@@ -50,7 +50,7 @@ public class ClientSideEncryptionExplicitEncryptionOnlyTour {
 
     /**
      * Run this main method to see the output of this quick example.
-     *
+     * <p>
      * Requires the mongodb-crypt library in the class path and mongocryptd on the system path.
      * Assumes the schema has already been created in MongoDB.
      *
@@ -59,7 +59,7 @@ public class ClientSideEncryptionExplicitEncryptionOnlyTour {
     public static void main(final String[] args) {
 
         // This would have to be the same master key as was used to create the encryption key
-        final byte[] localMasterKey = new byte[96];
+        byte[] localMasterKey = new byte[96];
         new SecureRandom().nextBytes(localMasterKey);
 
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
@@ -69,8 +69,12 @@ public class ClientSideEncryptionExplicitEncryptionOnlyTour {
         }};
 
         MongoNamespace keyVaultNamespace = new MongoNamespace("encryption.testKeyVault");
-
-        MongoClientSettings clientSettings = MongoClientSettings.builder()
+        MongoClientSettings commonClientSettings = (
+                args.length == 0
+                        ? MongoClientSettings.builder()
+                        : MongoClientSettings.builder().applyConnectionString(new ConnectionString(args[0])))
+                .build();
+        MongoClientSettings clientSettings = MongoClientSettings.builder(commonClientSettings)
                 .autoEncryptionSettings(AutoEncryptionSettings.builder()
                         .keyVaultNamespace(keyVaultNamespace.getFullName())
                         .kmsProviders(kmsProviders)
@@ -102,9 +106,7 @@ public class ClientSideEncryptionExplicitEncryptionOnlyTour {
 
         // Create the ClientEncryption instance
         ClientEncryptionSettings clientEncryptionSettings = ClientEncryptionSettings.builder()
-                .keyVaultMongoClientSettings(MongoClientSettings.builder()
-                        .applyConnectionString(new ConnectionString("mongodb://localhost"))
-                        .build())
+                .keyVaultMongoClientSettings(commonClientSettings)
                 .keyVaultNamespace(keyVaultNamespace.getFullName())
                 .kmsProviders(kmsProviders)
                 .build();

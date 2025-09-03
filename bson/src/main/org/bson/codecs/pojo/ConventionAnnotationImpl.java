@@ -16,13 +16,15 @@
 
 package org.bson.codecs.pojo;
 
-
+import org.bson.BsonType;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonDiscriminator;
+import org.bson.codecs.pojo.annotations.BsonExtraElements;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 import org.bson.codecs.pojo.annotations.BsonProperty;
+import org.bson.codecs.pojo.annotations.BsonRepresentation;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -30,6 +32,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static java.lang.String.format;
 import static java.lang.reflect.Modifier.isPublic;
@@ -85,6 +88,12 @@ final class ConventionAnnotationImpl implements Convention {
                 classModelBuilder.idPropertyName(propertyModelBuilder.getName());
             } else if (annotation instanceof BsonIgnore) {
                 propertyModelBuilder.readName(null);
+            } else if (annotation instanceof BsonRepresentation) {
+                BsonRepresentation bsonRepresentation = (BsonRepresentation) annotation;
+                BsonType bsonRep =  bsonRepresentation.value();
+                propertyModelBuilder.bsonRepresentation(bsonRep);
+            } else if (annotation instanceof BsonExtraElements) {
+                processBsonExtraElementsAnnotation(propertyModelBuilder);
             }
         }
 
@@ -111,7 +120,7 @@ final class ConventionAnnotationImpl implements Convention {
                         if (creatorExecutable != null) {
                             throw new CodecConfigurationException("Found multiple constructors annotated with @BsonCreator");
                         }
-                        creatorExecutable = new CreatorExecutable<T>(clazz, (Constructor<T>) constructor);
+                        creatorExecutable = new CreatorExecutable<>(clazz, (Constructor<T>) constructor);
                     }
                 }
             }
@@ -131,7 +140,7 @@ final class ConventionAnnotationImpl implements Convention {
                                         format("Invalid method annotated with @BsonCreator. Returns '%s', expected %s",
                                                 method.getReturnType(), bsonCreatorClass));
                             }
-                            creatorExecutable = new CreatorExecutable<T>(clazz, method);
+                            creatorExecutable = new CreatorExecutable<>(clazz, method);
                             foundStaticBsonCreatorMethod = true;
                         }
                     }
@@ -157,6 +166,12 @@ final class ConventionAnnotationImpl implements Convention {
                 PropertyModelBuilder<?> propertyModelBuilder = null;
 
                 if (isIdProperty) {
+                    if (classModelBuilder.getIdPropertyName() == null) {
+                        throw new CodecConfigurationException("A @BsonId annotation has been used with @BsonCreator "
+                                + "but there is no known Id property.\n"
+                                + "Please either use the @BsonProperty annotation in the creator or "
+                                + "annotate the corresponding property in the class with the @BsonId.");
+                    }
                     propertyModelBuilder = classModelBuilder.getProperty(classModelBuilder.getIdPropertyName());
                 } else {
                     BsonProperty bsonProperty = properties.get(i);
@@ -195,7 +210,7 @@ final class ConventionAnnotationImpl implements Convention {
                         propertyModelBuilder.getWriteName(), propertyModelBuilder.getTypeData().getType(), parameterType));
                 }
             }
-            classModelBuilder.instanceCreatorFactory(new InstanceCreatorFactoryImpl<T>(creatorExecutable));
+            classModelBuilder.instanceCreatorFactory(new InstanceCreatorFactoryImpl<>(creatorExecutable));
         }
     }
 
@@ -213,14 +228,14 @@ final class ConventionAnnotationImpl implements Convention {
     private <T, S> PropertyModelBuilder<S> addCreatorPropertyToClassModelBuilder(final ClassModelBuilder<T> classModelBuilder,
                                                                                  final String name,
                                                                                  final Class<S> clazz) {
-        PropertyModelBuilder<S> propertyModelBuilder = createPropertyModelBuilder(new PropertyMetadata<S>(name,
-            classModelBuilder.getType().getSimpleName(), TypeData.builder(clazz).build())).readName(null).writeName(name);
+        PropertyModelBuilder<S> propertyModelBuilder = createPropertyModelBuilder(new PropertyMetadata<>(name,
+                classModelBuilder.getType().getSimpleName(), TypeData.builder(clazz).build())).readName(null).writeName(name);
         classModelBuilder.addProperty(propertyModelBuilder);
         return propertyModelBuilder;
     }
 
     private void cleanPropertyBuilders(final ClassModelBuilder<?> classModelBuilder) {
-        List<String> propertiesToRemove = new ArrayList<String>();
+        List<String> propertiesToRemove = new ArrayList<>();
         for (PropertyModelBuilder<?> propertyModelBuilder : classModelBuilder.getPropertyModelBuilders()) {
             if (!propertyModelBuilder.isReadable() && !propertyModelBuilder.isWritable()) {
                 propertiesToRemove.add(propertyModelBuilder.getName());
@@ -229,5 +244,23 @@ final class ConventionAnnotationImpl implements Convention {
         for (String propertyName : propertiesToRemove) {
             classModelBuilder.removeProperty(propertyName);
         }
+    }
+
+    private <T> void processBsonExtraElementsAnnotation(final PropertyModelBuilder<T> propertyModelBuilder) {
+        PropertyAccessor<T> propertyAccessor = propertyModelBuilder.getPropertyAccessor();
+        if (!(propertyAccessor instanceof PropertyAccessorImpl)) {
+            throw new CodecConfigurationException(format("The @BsonExtraElements annotation is not compatible with "
+                            + "propertyModelBuilder instances that have custom implementations of org.bson.codecs.pojo.PropertyAccessor: %s",
+                    propertyModelBuilder.getPropertyAccessor().getClass().getName()));
+        }
+
+        if (!Map.class.isAssignableFrom(propertyModelBuilder.getTypeData().getType())) {
+            throw new CodecConfigurationException(format("The @BsonExtraElements annotation is not compatible with "
+                            + "propertyModelBuilder with the following type: %s. "
+                            + "Please use a Document, BsonDocument or Map<String, Object> type.",
+                    propertyModelBuilder.getTypeData()));
+        }
+        propertyModelBuilder.propertySerialization(new PropertyModelSerializationInlineImpl<>(propertyModelBuilder.getPropertySerialization()));
+        propertyModelBuilder.propertyAccessor(new FieldPropertyAccessor<>((PropertyAccessorImpl<T>) propertyAccessor));
     }
 }

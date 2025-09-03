@@ -16,36 +16,18 @@
 
 package org.mongodb.scala.internal
 
-import scala.util.{ Failure, Success, Try }
-
 import org.mongodb.scala._
+import reactor.core.publisher.{ Flux, Mono }
 
 private[scala] case class RecoverObservable[T, U >: T](
     observable: Observable[T],
     pf: PartialFunction[Throwable, U]
 ) extends Observable[U] {
 
-  override def subscribe(observer: Observer[_ >: U]): Unit = {
-    observable.subscribe(
-      SubscriptionCheckingObserver(
-        new Observer[U] {
-          override def onError(throwable: Throwable): Unit = {
-            Try(pf(throwable)) match {
-              case Success(res) => {
-                observer.onNext(res)
-                observer.onComplete()
-              }
-              case Failure(ex) => observer.onError(throwable)
-            }
-          }
+  override def subscribe(observer: Observer[_ >: U]): Unit =
+    Flux
+      .from(observable)
+      .onErrorResume((t: Throwable) => Mono.fromCallable(() => pf(t).asInstanceOf[T]))
+      .subscribe(observer)
 
-          override def onSubscribe(subscription: Subscription): Unit = observer.onSubscribe(subscription)
-
-          override def onComplete(): Unit = observer.onComplete()
-
-          override def onNext(tResult: U): Unit = observer.onNext(tResult)
-        }
-      )
-    )
-  }
 }

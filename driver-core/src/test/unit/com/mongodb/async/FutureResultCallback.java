@@ -41,7 +41,7 @@ public class FutureResultCallback<T> implements SingleResultCallback<T>, Future<
 
     public FutureResultCallback() {
         latch = new CountDownLatch(1);
-        result = new CallbackResultHolder<T>();
+        result = new CallbackResultHolder<>();
     }
 
     @Override
@@ -57,6 +57,14 @@ public class FutureResultCallback<T> implements SingleResultCallback<T>, Future<
     @Override
     public boolean isDone() {
         return result.isDone();
+    }
+
+    public boolean isCompletedExceptionally() {
+        return result.hasError();
+    }
+
+    public boolean wasInvokedMultipleTimes() {
+        return result.wasInvokedMultipleTimes();
     }
 
     @Override

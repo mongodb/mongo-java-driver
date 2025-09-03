@@ -19,20 +19,26 @@ package com.mongodb.client.model.changestream
 import org.bson.BsonDocument
 import spock.lang.Specification
 
+import static java.util.Collections.emptyList
+import static java.util.Collections.singletonList
+
 class UpdateDescriptionSpecification extends Specification {
 
     def 'should create the expected UpdateDescription'() {
        when:
-       def description = new UpdateDescription(removedFields, updatedFields)
+       def description = new UpdateDescription(removedFields, updatedFields, truncatedArrays, disambiguatedPaths)
 
         then:
         description.getRemovedFields() == removedFields
         description.getUpdatedFields() == updatedFields
+        description.getTruncatedArrays() == (truncatedArrays ?: emptyList())
+        description.getDisambiguatedPaths() == disambiguatedPaths
 
         where:
-        removedFields | updatedFields
-        ['a', 'b']    | null
-        null          | BsonDocument.parse('{c: 1}')
-        ['a', 'b']    | BsonDocument.parse('{c: 1}')
+        removedFields | updatedFields                | truncatedArrays                             | disambiguatedPaths
+        ['a', 'b']    | null                         | null                                        | null
+        null          | BsonDocument.parse('{c: 1}') | []                                          | null
+        ['a', 'b']    | BsonDocument.parse('{c: 1}') | singletonList(new TruncatedArray('d', 1))   | null
+        ['a', 'b']    | BsonDocument.parse('{c: 1}') | singletonList(new TruncatedArray('d', 1))   | BsonDocument.parse('{e: 1}')
     }
 }

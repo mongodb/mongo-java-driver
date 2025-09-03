@@ -17,43 +17,65 @@
 package org.bson.internal;
 
 import org.bson.codecs.Codec;
-import org.bson.codecs.configuration.CodecConfigurationException;
 
+import java.lang.reflect.Type;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static java.lang.String.format;
+import static org.bson.assertions.Assertions.assertNotNull;
 
 final class CodecCache {
-    private final ConcurrentMap<Class<?>, Optional<? extends Codec<?>>> codecCache =
-            new ConcurrentHashMap<Class<?>, Optional<? extends Codec<?>>>();
 
-    public boolean containsKey(final Class<?> clazz) {
-        return codecCache.containsKey(clazz);
-    }
+    static final class CodecCacheKey {
+        private final Class<?> clazz;
+        private final List<Type> types;
 
-    public void put(final Class<?> clazz, final Codec<?> codec){
-        codecCache.put(clazz, Optional.of(codec));
-    }
-
-    @SuppressWarnings("unchecked")
-    public synchronized <T> Codec<T> putIfMissing(final Class<T> clazz, final Codec<T> codec){
-        if (codecCache.containsKey(clazz)) {
-            return (Codec<T>) codecCache.get(clazz).get();
-        } else {
-            codecCache.put(clazz, Optional.of(codec));
-            return codec;
+        CodecCacheKey(final Class<?> clazz, final List<Type> types) {
+            this.clazz = clazz;
+            this.types = types;
         }
-    }
 
-    @SuppressWarnings("unchecked")
-    public <T> Codec<T> getOrThrow(final Class<T> clazz) {
-        if (codecCache.containsKey(clazz)) {
-            Optional<? extends Codec<?>> optionalCodec = codecCache.get(clazz);
-            if (!optionalCodec.isEmpty()) {
-                return (Codec<T>) optionalCodec.get();
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
             }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            CodecCacheKey that = (CodecCacheKey) o;
+            return clazz.equals(that.clazz) && Objects.equals(types, that.types);
         }
-        throw new CodecConfigurationException(format("Can't find a codec for %s.", clazz));
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(clazz, types);
+        }
+
+        @Override
+        public String toString() {
+            return "CodecCacheKey{"
+                    + "clazz=" + clazz
+                    + ", types=" + types
+                    + '}';
+        }
+    }
+
+    private final ConcurrentMap<CodecCacheKey, Codec<?>> codecCache = new ConcurrentHashMap<>();
+
+    public <T> Codec<T> putIfAbsent(final CodecCacheKey codecCacheKey, final Codec<T> codec) {
+        assertNotNull(codec);
+        @SuppressWarnings("unchecked")
+        Codec<T> prevCodec = (Codec<T>) codecCache.putIfAbsent(codecCacheKey, codec);
+        return prevCodec == null ? codec : prevCodec;
+    }
+
+    public <T> Optional<Codec<T>> get(final CodecCacheKey codecCacheKey) {
+        @SuppressWarnings("unchecked")
+        Codec<T> codec = (Codec<T>) codecCache.get(codecCacheKey);
+        return Optional.ofNullable(codec);
     }
 }

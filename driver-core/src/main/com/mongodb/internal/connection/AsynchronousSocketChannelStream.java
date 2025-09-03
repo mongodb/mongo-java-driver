@@ -21,7 +21,8 @@ import com.mongodb.MongoSocketOpenException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
-import com.mongodb.connection.Stream;
+import com.mongodb.lang.Nullable;
+import com.mongodb.spi.dns.InetAddressResolver;
 
 import java.io.IOException;
 import java.net.SocketAddress;
@@ -37,27 +38,42 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.internal.connection.ServerAddressHelper.getSocketAddresses;
 
-public final class AsynchronousSocketChannelStream extends AsynchronousChannelStream implements Stream {
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
+public final class AsynchronousSocketChannelStream extends AsynchronousChannelStream {
     private final ServerAddress serverAddress;
+    private final InetAddressResolver inetAddressResolver;
     private final SocketSettings settings;
+    @Nullable
     private final AsynchronousChannelGroup group;
 
-    public AsynchronousSocketChannelStream(final ServerAddress serverAddress, final SocketSettings settings,
-                                          final PowerOfTwoBufferPool bufferProvider, final AsynchronousChannelGroup group) {
+    AsynchronousSocketChannelStream(
+            final ServerAddress serverAddress, final InetAddressResolver inetAddressResolver,
+            final SocketSettings settings, final PowerOfTwoBufferPool bufferProvider) {
+        this(serverAddress, inetAddressResolver, settings, bufferProvider, null);
+    }
+
+    public AsynchronousSocketChannelStream(
+            final ServerAddress serverAddress, final InetAddressResolver inetAddressResolver,
+            final SocketSettings settings, final PowerOfTwoBufferPool bufferProvider,
+            @Nullable final AsynchronousChannelGroup group) {
         super(serverAddress, settings, bufferProvider);
         this.serverAddress = serverAddress;
+        this.inetAddressResolver = inetAddressResolver;
         this.settings = settings;
         this.group = group;
     }
 
     @Override
-    public void openAsync(final AsyncCompletionHandler<Void> handler) {
+    public void openAsync(final OperationContext operationContext, final AsyncCompletionHandler<Void> handler) {
         isTrue("unopened", getChannel() == null);
         Queue<SocketAddress> socketAddressQueue;
 
         try {
-            socketAddressQueue = new LinkedList<SocketAddress>(serverAddress.getSocketAddresses());
+            socketAddressQueue = new LinkedList<>(getSocketAddresses(serverAddress, inetAddressResolver));
         } catch (Throwable t) {
             handler.failed(t);
             return;
@@ -73,7 +89,10 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
             SocketAddress socketAddress = socketAddressQueue.poll();
 
             try {
-                AsynchronousSocketChannel attemptConnectionChannel = AsynchronousSocketChannel.open(group);
+                AsynchronousSocketChannel attemptConnectionChannel;
+                attemptConnectionChannel = group == null
+                        ? AsynchronousSocketChannel.open()
+                        : AsynchronousSocketChannel.open(group);
                 attemptConnectionChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
                 attemptConnectionChannel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
                 if (settings.getReceiveBufferSize() > 0) {
@@ -93,18 +112,14 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
         }
     }
 
-    public AsynchronousChannelGroup getGroup() {
-        return group;
-    }
-
     private class OpenCompletionHandler implements CompletionHandler<Void, Object>  {
-        private AtomicReference<AsyncCompletionHandler<Void>> handlerReference;
+        private final AtomicReference<AsyncCompletionHandler<Void>> handlerReference;
         private final Queue<SocketAddress> socketAddressQueue;
         private final AsynchronousSocketChannel attemptConnectionChannel;
 
         OpenCompletionHandler(final AsyncCompletionHandler<Void> handler, final Queue<SocketAddress> socketAddressQueue,
                               final AsynchronousSocketChannel attemptConnectionChannel) {
-            this.handlerReference = new AtomicReference<AsyncCompletionHandler<Void>>(handler);
+            this.handlerReference = new AtomicReference<>(handler);
             this.socketAddressQueue = socketAddressQueue;
             this.attemptConnectionChannel = attemptConnectionChannel;
         }
@@ -139,14 +154,14 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
         }
 
         @Override
-        public <A> void read(final ByteBuffer dst, final long timeout, final TimeUnit unit, final A attach,
+        public <A> void read(final ByteBuffer dst, final long timeout, final TimeUnit unit, @Nullable final A attach,
                              final CompletionHandler<Integer, ? super A> handler) {
             channel.read(dst, timeout, unit, attach, handler);
         }
 
         @Override
         public <A> void read(final ByteBuffer[] dsts, final int offset, final int length, final long timeout, final TimeUnit unit,
-                             final A attach, final CompletionHandler<Long, ? super A> handler) {
+                             @Nullable final A attach, final CompletionHandler<Long, ? super A> handler) {
             channel.read(dsts, offset, length, timeout, unit, attach, handler);
         }
 

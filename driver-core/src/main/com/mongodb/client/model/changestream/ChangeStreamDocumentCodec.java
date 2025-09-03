@@ -35,20 +35,21 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 @SuppressWarnings({"unchecked", "rawtypes"})
 final class ChangeStreamDocumentCodec<TResult> implements Codec<ChangeStreamDocument<TResult>> {
 
-    private static final OperationTypeCodec OPERATION_TYPE_CODEC = new OperationTypeCodec();
-
     private final Codec<ChangeStreamDocument<TResult>> codec;
 
     ChangeStreamDocumentCodec(final Class<TResult> fullDocumentClass, final CodecRegistry codecRegistry) {
 
         ClassModelBuilder<ChangeStreamDocument> classModelBuilder = ClassModel.builder(ChangeStreamDocument.class);
         ((PropertyModelBuilder<TResult>) classModelBuilder.getProperty("fullDocument")).codec(codecRegistry.get(fullDocumentClass));
-        ((PropertyModelBuilder<OperationType>) classModelBuilder.getProperty("operationType")).codec(OPERATION_TYPE_CODEC);
+        ((PropertyModelBuilder<TResult>) classModelBuilder.getProperty("fullDocumentBeforeChange"))
+                .codec(codecRegistry.get(fullDocumentClass));
         ClassModel<ChangeStreamDocument> changeStreamDocumentClassModel = classModelBuilder.build();
 
         PojoCodecProvider provider = PojoCodecProvider.builder()
                 .register(MongoNamespace.class)
                 .register(UpdateDescription.class)
+                .register(SplitEvent.class)
+                .register(TruncatedArray.class)
                 .register(changeStreamDocumentClassModel)
                 .build();
 

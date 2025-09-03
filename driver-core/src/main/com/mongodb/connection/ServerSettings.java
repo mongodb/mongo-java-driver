@@ -24,6 +24,7 @@ import com.mongodb.event.ServerMonitorListener;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -38,6 +39,7 @@ import static java.util.Collections.unmodifiableList;
 public class ServerSettings {
     private final long heartbeatFrequencyMS;
     private final long minHeartbeatFrequencyMS;
+    private final ServerMonitoringMode serverMonitoringMode;
     private final List<ServerListener> serverListeners;
     private final List<ServerMonitorListener> serverMonitorListeners;
 
@@ -68,8 +70,9 @@ public class ServerSettings {
     public static final class Builder {
         private long heartbeatFrequencyMS = 10000;
         private long minHeartbeatFrequencyMS = 500;
-        private List<ServerListener> serverListeners = new ArrayList<ServerListener>();
-        private List<ServerMonitorListener> serverMonitorListeners = new ArrayList<ServerMonitorListener>();
+        private ServerMonitoringMode serverMonitoringMode = ServerMonitoringMode.AUTO;
+        private List<ServerListener> serverListeners = new ArrayList<>();
+        private List<ServerMonitorListener> serverMonitorListeners = new ArrayList<>();
 
         private Builder() {
         }
@@ -87,8 +90,9 @@ public class ServerSettings {
             notNull("serverSettings", serverSettings);
             heartbeatFrequencyMS = serverSettings.heartbeatFrequencyMS;
             minHeartbeatFrequencyMS = serverSettings.minHeartbeatFrequencyMS;
-            serverListeners = new ArrayList<ServerListener>(serverSettings.serverListeners);
-            serverMonitorListeners = new ArrayList<ServerMonitorListener>(serverSettings.serverMonitorListeners);
+            serverMonitoringMode = serverSettings.serverMonitoringMode;
+            serverListeners = new ArrayList<>(serverSettings.serverListeners);
+            serverMonitorListeners = new ArrayList<>(serverSettings.serverMonitorListeners);
             return this;
         }
 
@@ -118,6 +122,20 @@ public class ServerSettings {
         }
 
         /**
+         * Sets the server monitoring mode, which defines the monitoring protocol to use.
+         * The default value is {@link ServerMonitoringMode#AUTO}.
+         *
+         * @param serverMonitoringMode The {@link ServerMonitoringMode}.
+         * @return {@code this}.
+         * @see #getServerMonitoringMode()
+         * @since 5.1
+         */
+        public Builder serverMonitoringMode(final ServerMonitoringMode serverMonitoringMode) {
+            this.serverMonitoringMode = notNull("serverMonitoringMode", serverMonitoringMode);
+            return this;
+        }
+
+        /**
          * Add a server listener.
          *
          * @param serverListener the non-null server listener
@@ -127,6 +145,19 @@ public class ServerSettings {
         public Builder addServerListener(final ServerListener serverListener) {
             notNull("serverListener", serverListener);
             serverListeners.add(serverListener);
+            return this;
+        }
+
+        /**
+         * Sets the server listeners.
+         *
+         * @param serverListeners list of server listeners
+         * @return this
+         * @since 4.5
+         */
+        public Builder serverListenerList(final List<ServerListener> serverListeners) {
+            notNull("serverListeners", serverListeners);
+            this.serverListeners = new ArrayList<>(serverListeners);
             return this;
         }
 
@@ -144,6 +175,19 @@ public class ServerSettings {
         }
 
         /**
+         * Sets the server monitor listeners.
+         *
+         * @param serverMonitorListeners list of server monitor listeners
+         * @return this
+         * @since 4.5
+         */
+        public Builder serverMonitorListenerList(final List<ServerMonitorListener> serverMonitorListeners) {
+            notNull("serverMonitorListeners", serverMonitorListeners);
+            this.serverMonitorListeners = new ArrayList<>(serverMonitorListeners);
+            return this;
+        }
+
+        /**
          * Takes the settings from the given {@code ConnectionString} and applies them to the builder
          *
          * @param connectionString the connection string containing details of how to connect to MongoDB
@@ -154,6 +198,10 @@ public class ServerSettings {
             Integer heartbeatFrequency = connectionString.getHeartbeatFrequency();
             if (heartbeatFrequency != null) {
                 heartbeatFrequencyMS = heartbeatFrequency;
+            }
+            ServerMonitoringMode serverMonitoringMode = connectionString.getServerMonitoringMode();
+            if (serverMonitoringMode != null) {
+                this.serverMonitoringMode = serverMonitoringMode;
             }
             return this;
         }
@@ -190,6 +238,19 @@ public class ServerSettings {
     }
 
     /**
+     * Gets the server monitoring mode, which defines the monitoring protocol to use.
+     * The default value is {@link ServerMonitoringMode#AUTO}.
+     *
+     * @return The {@link ServerMonitoringMode}.
+     * @see Builder#serverMonitoringMode(ServerMonitoringMode)
+     * @see ConnectionString#getServerMonitoringMode()
+     * @since 5.1
+     */
+    public ServerMonitoringMode getServerMonitoringMode() {
+        return serverMonitoringMode;
+    }
+
+    /**
      * Gets the server listeners.  The default value is an empty list.
      *
      * @return the server listeners
@@ -217,33 +278,22 @@ public class ServerSettings {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
-        ServerSettings that = (ServerSettings) o;
-
-        if (heartbeatFrequencyMS != that.heartbeatFrequencyMS) {
-            return false;
-        }
-        if (minHeartbeatFrequencyMS != that.minHeartbeatFrequencyMS) {
-            return false;
-        }
-
-        if (!serverListeners.equals(that.serverListeners)) {
-            return false;
-        }
-        if (!serverMonitorListeners.equals(that.serverMonitorListeners)) {
-            return false;
-        }
-
-        return true;
+        final ServerSettings that = (ServerSettings) o;
+        return heartbeatFrequencyMS == that.heartbeatFrequencyMS
+                && minHeartbeatFrequencyMS == that.minHeartbeatFrequencyMS
+                && serverMonitoringMode == that.serverMonitoringMode
+                && Objects.equals(serverListeners, that.serverListeners)
+                && Objects.equals(serverMonitorListeners, that.serverMonitorListeners);
     }
 
     @Override
     public int hashCode() {
-        int result = (int) (heartbeatFrequencyMS ^ (heartbeatFrequencyMS >>> 32));
-        result = 31 * result + (int) (minHeartbeatFrequencyMS ^ (minHeartbeatFrequencyMS >>> 32));
-        result = 31 * result + serverListeners.hashCode();
-        result = 31 * result + serverMonitorListeners.hashCode();
-        return result;
+        return Objects.hash(
+                heartbeatFrequencyMS,
+                minHeartbeatFrequencyMS,
+                serverMonitoringMode,
+                serverListeners,
+                serverMonitorListeners);
     }
 
     @Override
@@ -251,6 +301,7 @@ public class ServerSettings {
         return "ServerSettings{"
                + "heartbeatFrequencyMS=" + heartbeatFrequencyMS
                + ", minHeartbeatFrequencyMS=" + minHeartbeatFrequencyMS
+               + ", serverMonitoringMode=" + serverMonitoringMode
                + ", serverListeners='" + serverListeners + '\''
                + ", serverMonitorListeners='" + serverMonitorListeners + '\''
                + '}';
@@ -259,6 +310,7 @@ public class ServerSettings {
     ServerSettings(final Builder builder) {
         heartbeatFrequencyMS = builder.heartbeatFrequencyMS;
         minHeartbeatFrequencyMS = builder.minHeartbeatFrequencyMS;
+        serverMonitoringMode = builder.serverMonitoringMode;
         serverListeners = unmodifiableList(builder.serverListeners);
         serverMonitorListeners = unmodifiableList(builder.serverMonitorListeners);
     }

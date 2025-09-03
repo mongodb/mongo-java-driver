@@ -24,9 +24,9 @@ import com.mongodb.ServerCursor;
 final class QueryHelper {
     static MongoQueryException translateCommandException(final MongoCommandException commandException, final ServerCursor cursor) {
         if (commandException.getErrorCode() == 43) {
-            return new MongoCursorNotFoundException(cursor.getId(), cursor.getAddress());
+            return new MongoCursorNotFoundException(cursor.getId(), commandException.getResponse(), cursor.getAddress());
         } else {
-            return new MongoQueryException(commandException);
+            return new MongoQueryException(commandException.getResponse(), commandException.getServerAddress());
         }
     }
 

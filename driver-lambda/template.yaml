@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Java driver lambda function test
+Parameters:
+  MongoDbUri:
+    Type: String
+    Description: The MongoDB connection string.
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 128
+    Tracing: Active
+  Api:
+    TracingEnabled: false
+
+Resources:
+  MongoDBFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      SkipBuild: True
+    Properties:
+      CodeUri: build/libs/lambdatest-all.jar
+      Handler: com.mongodb.lambdatest.LambdaTestApp::handleRequest
+      Runtime: java11
+      Environment:
+        Variables:
+          MONGODB_URI: !Ref MongoDbUri
+          JAVA_TOOL_OPTIONS: -XX:+TieredCompilation -XX:TieredStopAtLevel=1
+      Architectures:
+      - x86_64
+      MemorySize: 512
+      Events:
+        LambdaTest:
+          Type: Api
+          Properties:
+            Path: /mongodb
+            Method: get
+Outputs:
+  LambdaTestApi:
+    Description: API Gateway endpoint URL for Prod stage for Lambda Test function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/mongodb/"
+  MongoDBFunction:
+    Description: Lambda Test Lambda Function ARN
+    Value: !GetAtt MongoDBFunction.Arn
+  MongoDBFunctionIamRole:
+    Description: Implicit IAM Role created for Lambda Test function
+    Value: !GetAtt MongoDBFunctionRole.Arn

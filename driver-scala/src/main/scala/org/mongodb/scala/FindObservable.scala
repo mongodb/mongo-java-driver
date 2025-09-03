@@ -16,14 +16,17 @@
 
 package org.mongodb.scala
 
-import java.util.concurrent.TimeUnit
-
-import com.mongodb.CursorType
+import com.mongodb.annotations.{ Alpha, Reason }
 import com.mongodb.reactivestreams.client.FindPublisher
+import com.mongodb.{ CursorType, ExplainVerbosity }
+import org.mongodb.scala.bson.BsonValue
+import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Collation
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
+import scala.reflect.ClassTag
 
 /**
  * Observable interface for Find.
@@ -37,7 +40,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   /**
    * Helper to return a Observable limited to just the first result the query.
    *
-   * **Note:** Sets limit in the background so only returns 1.
+   * '''Note:''' Sets limit in the background so only returns 1.
    *
    * @return a Observable which will return the first item
    */
@@ -46,7 +49,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   /**
    * Sets the query filter to apply to the query.
    *
-   * [[http://docs.mongodb.org/manual/reference/method/db.collection.find/ Filter]]
+   * [[https://www.mongodb.com/docs/manual/reference/method/db.collection.find/ Filter]]
    * @param filter the filter, which may be null.
    * @return this
    */
@@ -58,7 +61,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   /**
    * Sets the limit to apply.
    *
-   * [[http://docs.mongodb.org/manual/reference/method/cursor.limit/#cursor.limit Limit]]
+   * [[https://www.mongodb.com/docs/manual/reference/method/cursor.limit/#cursor.limit Limit]]
    * @param limit the limit, which may be null
    * @return this
    */
@@ -70,7 +73,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   /**
    * Sets the number of documents to skip.
    *
-   * [[http://docs.mongodb.org/manual/reference/method/cursor.skip/#cursor.skip Skip]]
+   * [[https://www.mongodb.com/docs/manual/reference/method/cursor.skip/#cursor.skip Skip]]
    * @param skip the number of documents to skip
    * @return this
    */
@@ -82,7 +85,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   /**
    * Sets the maximum execution time on the server for this operation.
    *
-   * [[http://docs.mongodb.org/manual/reference/operator/meta/maxTimeMS/ Max Time]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/ Max Time]]
    * @param duration the duration
    * @return this
    */
@@ -103,7 +106,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
    *
    * A zero value will be ignored.
    *
-   * [[http://docs.mongodb.org/manual/reference/operator/meta/maxTimeMS/ Max Time]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/ Max Time]]
    * @param duration the duration
    * @return the maximum await execution time in the given time unit
    * @since 1.1
@@ -116,9 +119,10 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   /**
    * Sets a document describing the fields to return for all matching documents.
    *
-   * [[http://docs.mongodb.org/manual/reference/method/db.collection.find/ Projection]]
+   * [[https://www.mongodb.com/docs/manual/reference/method/db.collection.find/ Projection]]
    * @param projection the project document, which may be null.
    * @return this
+   * @see [[org.mongodb.scala.model.Projections]]
    */
   def projection(projection: Bson): FindObservable[TResult] = {
     wrapped.projection(projection)
@@ -128,7 +132,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   /**
    * Sets the sort criteria to apply to the query.
    *
-   * [[http://docs.mongodb.org/manual/reference/method/cursor.sort/ Sort]]
+   * [[https://www.mongodb.com/docs/manual/reference/method/cursor.sort/ Sort]]
    * @param sort the sort criteria, which may be null.
    * @return this
    */
@@ -146,17 +150,6 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
    */
   def noCursorTimeout(noCursorTimeout: Boolean): FindObservable[TResult] = {
     wrapped.noCursorTimeout(noCursorTimeout)
-    this
-  }
-
-  /**
-   * Users should not set this under normal circumstances.
-   *
-   * @param oplogReplay if oplog replay is enabled
-   * @return this
-   */
-  def oplogReplay(oplogReplay: Boolean): FindObservable[TResult] = {
-    wrapped.oplogReplay(oplogReplay)
     this
   }
 
@@ -209,6 +202,21 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   }
 
   /**
+   * Sets the comment for this operation. A null value means no comment is set.
+   *
+   * @param comment the comment
+   * @return this
+   * @since 4.6
+   * @note The comment can be any valid BSON type for server versions 4.4 and above.
+   *       Server versions between 3.6 and 4.2 only support
+   *       string as comment, and providing a non-string type will result in a server-side error.
+   */
+  def comment(comment: BsonValue): FindObservable[TResult] = {
+    wrapped.comment(comment)
+    this
+  }
+
+  /**
    * Sets the hint for which index to use. A null value means no hint is set.
    *
    * @param hint the hint
@@ -230,6 +238,21 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
    */
   def hintString(hint: String): FindObservable[TResult] = {
     wrapped.hintString(hint)
+    this
+  }
+
+  /**
+   * Add top-level variables to the operation. A null value means no variables are set.
+   *
+   * Allows for improved command readability by separating the variables from the query text.
+   *
+   * @param let the top-level variables for the find operation or null
+   * @return this
+   * @since 4.6
+   * @note Requires MongoDB 5.0 or greater
+   */
+  def let(let: Bson): FindObservable[TResult] = {
+    wrapped.let(let)
     this
   }
 
@@ -309,6 +332,56 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
     wrapped.allowDiskUse(allowDiskUse)
     this
   }
+
+  /**
+   * Sets the timeoutMode for the cursor.
+   *
+   * Requires the `timeout` to be set, either in the [[MongoClientSettings]],
+   * via [[MongoDatabase]] or via [[MongoCollection]]
+   *
+   * If the `timeout` is set then:
+   *
+   * - For non-tailable cursors, the default value of timeoutMode is `TimeoutMode.CURSOR_LIFETIME`
+   * - For tailable cursors, the default value of timeoutMode is `TimeoutMode.ITERATION` and its an error
+   * to configure it as: `TimeoutMode.CURSOR_LIFETIME`
+   *
+   * @param timeoutMode the timeout mode
+   * @return this
+   * @since 5.2
+   */
+  @Alpha(Array(Reason.CLIENT))
+  def timeoutMode(timeoutMode: TimeoutMode): FindObservable[TResult] = {
+    wrapped.timeoutMode(timeoutMode)
+    this
+  }
+
+  /**
+   * Explain the execution plan for this operation with the server's default verbosity level
+   *
+   * @tparam ExplainResult The type of the result
+   * @return the execution plan
+   * @since 4.2
+   * @note Requires MongoDB 3.2 or greater
+   */
+  def explain[ExplainResult]()(
+      implicit e: ExplainResult DefaultsTo Document,
+      ct: ClassTag[ExplainResult]
+  ): SingleObservable[ExplainResult] =
+    wrapped.explain[ExplainResult](ct)
+
+  /**
+   * Explain the execution plan for this operation with the given verbosity level
+   *
+   * @tparam ExplainResult The type of the result
+   * @param verbosity the verbosity of the explanation
+   * @return the execution plan
+   * @since 4.2
+   * @note Requires MongoDB 3.2 or greater
+   */
+  def explain[ExplainResult](
+      verbosity: ExplainVerbosity
+  )(implicit e: ExplainResult DefaultsTo Document, ct: ClassTag[ExplainResult]): SingleObservable[ExplainResult] =
+    wrapped.explain[ExplainResult](ct, verbosity)
 
   override def subscribe(observer: Observer[_ >: TResult]): Unit = wrapped.subscribe(observer)
 }

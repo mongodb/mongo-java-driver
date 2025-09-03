@@ -17,6 +17,7 @@
 package org.bson.codecs.pojo;
 
 import org.bson.BsonObjectId;
+import org.bson.BsonType;
 import org.bson.types.ObjectId;
 
 final class ConventionObjectIdGeneratorsImpl implements Convention {
@@ -30,6 +31,9 @@ final class ConventionObjectIdGeneratorsImpl implements Convention {
                    classModelBuilder.idGenerator(IdGenerators.OBJECT_ID_GENERATOR);
                } else if (classModelBuilder.getIdGenerator() == null && idType.equals(BsonObjectId.class)) {
                    classModelBuilder.idGenerator(IdGenerators.BSON_OBJECT_ID_GENERATOR);
+               } else if (classModelBuilder.getIdGenerator() == null && idType.equals(String.class)
+                       && idProperty.getBsonRepresentation() == BsonType.OBJECT_ID) {
+                   classModelBuilder.idGenerator(IdGenerators.STRING_ID_GENERATOR);
                }
            }
        }

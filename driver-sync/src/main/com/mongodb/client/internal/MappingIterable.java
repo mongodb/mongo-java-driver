@@ -24,19 +24,22 @@ import com.mongodb.lang.Nullable;
 import java.util.Collection;
 import java.util.function.Consumer;
 
-class MappingIterable<U, V> implements MongoIterable<V> {
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
+public class MappingIterable<U, V> implements MongoIterable<V> {
 
     private final MongoIterable<U> iterable;
     private final Function<U, V> mapper;
 
-    MappingIterable(final MongoIterable<U> iterable, final Function<U, V> mapper) {
+    public MappingIterable(final MongoIterable<U> iterable, final Function<U, V> mapper) {
         this.iterable = iterable;
         this.mapper = mapper;
     }
 
     @Override
     public MongoCursor<V> iterator() {
-        return new MongoMappingCursor<U, V>(iterable.iterator(), mapper);
+        return new MongoMappingCursor<>(iterable.iterator(), mapper);
     }
 
     @Override
@@ -56,22 +59,12 @@ class MappingIterable<U, V> implements MongoIterable<V> {
 
     @Override
     public void forEach(final Consumer<? super V> block) {
-        iterable.forEach(new Consumer<U>() {
-            @Override
-            public void accept(final U document) {
-                block.accept(mapper.apply(document));
-            }
-        });
+        iterable.forEach(document -> block.accept(mapper.apply(document)));
     }
 
     @Override
     public <A extends Collection<? super V>> A into(final A target) {
-        forEach(new Consumer<V>() {
-            @Override
-            public void accept(final V v) {
-                target.add(v);
-            }
-        });
+        forEach(v -> target.add(v));
         return target;
     }
 
@@ -83,7 +76,7 @@ class MappingIterable<U, V> implements MongoIterable<V> {
 
     @Override
     public <W> MongoIterable<W> map(final Function<V, W> newMap) {
-        return new MappingIterable<V, W>(this, newMap);
+        return new MappingIterable<>(this, newMap);
     }
 
     MongoIterable<U> getMapped() {

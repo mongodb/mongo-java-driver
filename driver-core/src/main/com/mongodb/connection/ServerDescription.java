@@ -18,8 +18,10 @@ package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.TagSet;
+import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.annotations.Reason;
 import com.mongodb.internal.connection.DecimalFormatHelper;
 import com.mongodb.internal.connection.Time;
 import com.mongodb.lang.Nullable;
@@ -28,11 +30,13 @@ import org.bson.types.ObjectId;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerConnectionState.CONNECTED;
+import static com.mongodb.connection.ServerType.LOAD_BALANCER;
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
 import static com.mongodb.connection.ServerType.REPLICA_SET_SECONDARY;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
@@ -51,23 +55,27 @@ public class ServerDescription {
      * The minimum supported driver server version
      * @since 3.8
      */
-    public static final String MIN_DRIVER_SERVER_VERSION = "2.6";
+    public static final String MIN_DRIVER_SERVER_VERSION = "4.2";
     /**
      * The minimum supported driver wire version
      * @since 3.8
      */
-    public static final int MIN_DRIVER_WIRE_VERSION = 2;
+    public static final int MIN_DRIVER_WIRE_VERSION = 8;
     /**
      * The maximum supported driver wire version
      * @since 3.8
      */
-    public static final int MAX_DRIVER_WIRE_VERSION = 9;
+    public static final int MAX_DRIVER_WIRE_VERSION = 25;
 
     private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
 
     private final ServerAddress address;
 
     private final ServerType type;
+    /**
+     * Identifies whether the server is a mongocryptd.
+     */
+    private final boolean cryptd;
     private final String canonicalAddress;
     private final Set<String> hosts;
     private final Set<String> passives;
@@ -77,6 +85,7 @@ public class ServerDescription {
     private final TagSet tagSet;
     private final String setName;
     private final long roundTripTimeNanos;
+    private final long minRoundTripTimeNanos;
     private final boolean ok;
     private final ServerConnectionState state;
 
@@ -93,6 +102,7 @@ public class ServerDescription {
     private final Integer logicalSessionTimeoutMinutes;
 
     private final Throwable exception;
+    private final boolean helloOk;
 
     /**
      * Gets a Builder for creating a new ServerDescription instance.
@@ -116,10 +126,11 @@ public class ServerDescription {
 
     /**
      * Gets the string representing the host name and port that this member of a replica set was configured with,
-     * e.g. {@code "somehost:27019"}. This is typically derived from the "me" field from the "isMaster" command response.
+     * e.g. {@code "somehost:27019"}. This is typically derived from the "me" field from the "hello" command response.
      *
      * @return the host name and port that this replica set member is configured with.
      */
+    @Nullable
     public String getCanonicalAddress() {
         return canonicalAddress;
     }
@@ -136,6 +147,18 @@ public class ServerDescription {
         return logicalSessionTimeoutMinutes;
     }
 
+
+    /**
+     * Gets whether this server supports the "hello" command. The default is {@code false}.
+     *
+     * @return true if this server supports the "hello" command.
+     * @mongodb.server.release 5.0
+     * @since 4.3
+     */
+    public boolean isHelloOk() {
+        return helloOk;
+    }
+
     /**
      * A builder for creating ServerDescription.
      */
@@ -143,6 +166,7 @@ public class ServerDescription {
     public static class Builder {
         private ServerAddress address;
         private ServerType type = UNKNOWN;
+        private boolean cryptd = false;
         private String canonicalAddress;
         private Set<String> hosts = Collections.emptySet();
         private Set<String> passives = Collections.emptySet();
@@ -152,6 +176,7 @@ public class ServerDescription {
         private TagSet tagSet = new TagSet();
         private String setName;
         private long roundTripTimeNanos;
+        private long minRoundTripTimeNanos;
         private boolean ok;
         private ServerConnectionState state;
         private int minWireVersion = 0;
@@ -162,6 +187,7 @@ public class ServerDescription {
         private Date lastWriteDate;
         private long lastUpdateTimeNanos = Time.nanoTime();
         private Integer logicalSessionTimeoutMinutes;
+        private boolean helloOk;
 
         private Throwable exception;
 
@@ -171,6 +197,7 @@ public class ServerDescription {
         Builder(final ServerDescription serverDescription) {
             this.address = serverDescription.address;
             this.type = serverDescription.type;
+            this.cryptd = serverDescription.cryptd;
             this.canonicalAddress = serverDescription.canonicalAddress;
             this.hosts = serverDescription.hosts;
             this.passives = serverDescription.passives;
@@ -205,14 +232,14 @@ public class ServerDescription {
         }
 
         /**
-         * Sets the canonical host name and port of this server. This is typically derived from the "me" field contained in the "isMaster"
+         * Sets the canonical host name and port of this server. This is typically derived from the "me" field contained in the "hello"
          * command. response.
          *
          * @param canonicalAddress the host name and port as a string
          *
          * @return this
          */
-        public Builder canonicalAddress(final String canonicalAddress) {
+        public Builder canonicalAddress(@Nullable final String canonicalAddress) {
             this.canonicalAddress = canonicalAddress;
             return this;
         }
@@ -229,14 +256,25 @@ public class ServerDescription {
         }
 
         /**
+         * Sets whether this server is a <a href="https://www.mongodb.com/docs/manual/core/queryable-encryption/reference/mongocryptd/">mongocryptd</a>.
+         *
+         * @param cryptd true if this server is a mongocryptd.
+         * @return this
+         */
+        public Builder cryptd(final boolean cryptd) {
+            this.cryptd = cryptd;
+            return this;
+        }
+
+        /**
          * Sets all members of the replica set that are neither hidden, passive, nor arbiters.
          *
          * @param hosts A Set of strings in the format of "[hostname]:[port]" that contains all members of the replica set that are neither
          *              hidden, passive, nor arbiters.
          * @return this
          */
-        public Builder hosts(final Set<String> hosts) {
-            this.hosts = hosts == null ? Collections.<String>emptySet() : Collections.unmodifiableSet(new HashSet<String>(hosts));
+        public Builder hosts(@Nullable final Set<String> hosts) {
+            this.hosts = hosts == null ? Collections.emptySet() : Collections.unmodifiableSet(new HashSet<>(hosts));
             return this;
         }
 
@@ -247,8 +285,8 @@ public class ServerDescription {
          *                 priority of 0.
          * @return this
          */
-        public Builder passives(final Set<String> passives) {
-            this.passives = passives == null ? Collections.<String>emptySet() : Collections.unmodifiableSet(new HashSet<String>(passives));
+        public Builder passives(@Nullable final Set<String> passives) {
+            this.passives = passives == null ? Collections.emptySet() : Collections.unmodifiableSet(new HashSet<>(passives));
             return this;
         }
 
@@ -259,8 +297,8 @@ public class ServerDescription {
          *                 arbiters.
          * @return this
          */
-        public Builder arbiters(final Set<String> arbiters) {
-            this.arbiters = arbiters == null ? Collections.<String>emptySet() : Collections.unmodifiableSet(new HashSet<String>(arbiters));
+        public Builder arbiters(@Nullable final Set<String> arbiters) {
+            this.arbiters = arbiters == null ? Collections.emptySet() : Collections.unmodifiableSet(new HashSet<>(arbiters));
             return this;
         }
 
@@ -270,7 +308,7 @@ public class ServerDescription {
          * @param primary A string in the format of "[hostname]:[port]" listing the current primary member of the replica set.
          * @return this
          */
-        public Builder primary(final String primary) {
+        public Builder primary(@Nullable final String primary) {
             this.primary = primary;
             return this;
         }
@@ -292,13 +330,13 @@ public class ServerDescription {
          * @param tagSet a TagSet with all the tags for this server.
          * @return this
          */
-        public Builder tagSet(final TagSet tagSet) {
+        public Builder tagSet(@Nullable final TagSet tagSet) {
             this.tagSet = tagSet == null ? new TagSet() : tagSet;
             return this;
         }
 
         /**
-         * Set the time it took to make the round trip for requesting this information from the server
+         * Set the weighted average time it took to make the round trip for requesting this information from the server
          *
          * @param roundTripTime the time taken
          * @param timeUnit      the units of the time taken
@@ -309,13 +347,28 @@ public class ServerDescription {
             return this;
         }
 
+
+        /**
+         * Set the recent min time it took to make the round trip for requesting this information from the server
+         *
+         * @param minRoundTripTime the minimum time taken
+         * @param timeUnit         the units of the time taken
+         * @return this
+         * @since 5.2
+         */
+        @Alpha(Reason.CLIENT)
+        public Builder minRoundTripTime(final long minRoundTripTime, final TimeUnit timeUnit) {
+            this.minRoundTripTimeNanos = timeUnit.toNanos(minRoundTripTime);
+            return this;
+        }
+
         /**
          * Sets the name of the replica set
          *
          * @param setName the name of the replica set
          * @return this
          */
-        public Builder setName(final String setName) {
+        public Builder setName(@Nullable final String setName) {
             this.setName = setName;
             return this;
         }
@@ -370,7 +423,7 @@ public class ServerDescription {
          * @param electionId the electionId
          * @return this
          */
-        public Builder electionId(final ObjectId electionId) {
+        public Builder electionId(@Nullable final ObjectId electionId) {
             this.electionId = electionId;
             return this;
         }
@@ -381,7 +434,7 @@ public class ServerDescription {
          * @param setVersion the set version
          * @return this
          */
-        public Builder setVersion(final Integer setVersion) {
+        public Builder setVersion(@Nullable final Integer setVersion) {
             this.setVersion = setVersion;
             return this;
         }
@@ -394,7 +447,7 @@ public class ServerDescription {
          * @since 4.1
          * @mongodb.server.release 4.4
          */
-        public Builder topologyVersion(final TopologyVersion topologyVersion) {
+        public Builder topologyVersion(@Nullable final TopologyVersion topologyVersion) {
             this.topologyVersion = topologyVersion;
             return this;
         }
@@ -440,6 +493,18 @@ public class ServerDescription {
             return this;
         }
 
+        /**
+         * Sets whether this server supports the "hello" command. The default is {@code false}.
+         *
+         * @param helloOk helloOk
+         * @return this
+         * @mongodb.server.release 5.0
+         * @since 4.3
+         */
+        public Builder helloOk(final boolean helloOk) {
+            this.helloOk = helloOk;
+            return this;
+        }
 
         /**
          * Sets the exception thrown while attempting to determine the server description.
@@ -466,9 +531,17 @@ public class ServerDescription {
      * Return whether the server is compatible with the driver. An incompatible server is one that has a min wire version greater that the
      * driver's max wire version or a max wire version less than the driver's min wire version.
      *
+     * <p>
+     * A load balancer is always deemed to be compatible.
+     * </p>
+     *
      * @return true if the server is compatible with the driver.
      */
     public boolean isCompatibleWithDriver() {
+        if (type == LOAD_BALANCER) {
+            return true;
+        }
+
         if (isIncompatiblyOlderThanDriver()) {
             return false;
         }
@@ -484,22 +557,30 @@ public class ServerDescription {
      * Return whether the server is compatible with the driver. An incompatible server is one that has a min wire version greater that the
      * driver's max wire version or a max wire version less than the driver's min wire version.
      *
+     * <p>
+     * A load balancer is always deemed to be compatible.
+     * </p>
+     *
      * @return true if the server is compatible with the driver.
      * @since 3.6
      */
     public boolean isIncompatiblyNewerThanDriver() {
-        return ok && minWireVersion > MAX_DRIVER_WIRE_VERSION;
+        return ok && type != LOAD_BALANCER && minWireVersion > MAX_DRIVER_WIRE_VERSION;
     }
 
     /**
      * Return whether the server is compatible with the driver. An incompatible server is one that has a min wire version greater that the
      * driver's max wire version or a max wire version less than the driver's min wire version.
      *
+     * <p>
+     * A load balancer is always deemed to be compatible.
+     * </p>
+     *
      * @return true if the server is compatible with the driver.
      * @since 3.6
      */
     public boolean isIncompatiblyOlderThanDriver() {
-        return ok && maxWireVersion < MIN_DRIVER_WIRE_VERSION;
+        return ok && type != LOAD_BALANCER && maxWireVersion < MIN_DRIVER_WIRE_VERSION;
     }
 
     /**
@@ -568,19 +649,28 @@ public class ServerDescription {
     /**
      * Returns whether this can be treated as a primary server.
      *
-     * @return true if this server is the primary in a replica set, is a mongos, or is a single standalone server
+     * @return true if this server is the primary in a replica set, is a mongos, a load balancer, or is a single standalone server
      */
     public boolean isPrimary() {
-        return ok && (type == REPLICA_SET_PRIMARY || type == SHARD_ROUTER || type == STANDALONE);
+        return ok && (type == REPLICA_SET_PRIMARY || type == SHARD_ROUTER || type == STANDALONE || type == LOAD_BALANCER);
     }
 
     /**
      * Returns whether this can be treated as a secondary server.
      *
-     * @return true if this server is a secondary in a replica set, is a mongos, or is a single standalone server
+     * @return true if this server is a secondary in a replica set, is a mongos, a load balancer, or is a single standalone server
      */
     public boolean isSecondary() {
-        return ok && (type == REPLICA_SET_SECONDARY || type == SHARD_ROUTER || type == STANDALONE);
+        return ok && (type == REPLICA_SET_SECONDARY || type == SHARD_ROUTER || type == STANDALONE || type == LOAD_BALANCER);
+    }
+
+    /**
+     * Returns whether this server is <a href="https://www.mongodb.com/docs/manual/core/queryable-encryption/reference/mongocryptd/">mongocryptd</a>.
+     *
+     * @return true if this server is a mongocryptd.
+     */
+    public boolean isCryptd() {
+        return cryptd;
     }
 
     /**
@@ -616,6 +706,7 @@ public class ServerDescription {
      *
      * @return A string in the format of "[hostname]:[port]" listing the current primary member of the replica set.
      */
+    @Nullable
     public String getPrimary() {
         return primary;
     }
@@ -683,6 +774,7 @@ public class ServerDescription {
      * @since 4.1
      * @mongodb.server.release 4.4
      */
+    @Nullable
     public TopologyVersion getTopologyVersion() {
         return topologyVersion;
     }
@@ -735,6 +827,7 @@ public class ServerDescription {
      *
      * @return the name of the replica set
      */
+    @Nullable
     public String getSetName() {
         return setName;
     }
@@ -776,12 +869,23 @@ public class ServerDescription {
     }
 
     /**
-     * Get the time it took to make the round trip for requesting this information from the server in nanoseconds.
+     * Get the weighted average time it took to make the round trip for requesting this information from the server in nanoseconds.
      *
      * @return the time taken to request the information, in nano seconds
      */
     public long getRoundTripTimeNanos() {
         return roundTripTimeNanos;
+    }
+
+    /**
+     * Get the recent min time it took to make the round trip for requesting this information from the server in nanoseconds.
+     *
+     * @return the recent min time taken to request the information, in nano seconds
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    public long getMinRoundTripTimeNanos() {
+        return minRoundTripTimeNanos;
     }
 
     /**
@@ -795,12 +899,6 @@ public class ServerDescription {
         return exception;
     }
 
-    /**
-     * Returns true if this instance is equals to @code{o}.  Note that equality is defined to NOT include the round trip time.
-     *
-     * @param o the object to compare to
-     * @return true if this instance is equals to @code{o}
-     */
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -809,7 +907,6 @@ public class ServerDescription {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
         ServerDescription that = (ServerDescription) o;
 
         if (maxDocumentSize != that.maxDocumentSize) {
@@ -824,7 +921,7 @@ public class ServerDescription {
         if (!arbiters.equals(that.arbiters)) {
             return false;
         }
-        if (canonicalAddress != null ? !canonicalAddress.equals(that.canonicalAddress) : that.canonicalAddress != null) {
+        if (!Objects.equals(canonicalAddress, that.canonicalAddress)) {
             return false;
         }
         if (!hosts.equals(that.hosts)) {
@@ -833,10 +930,10 @@ public class ServerDescription {
         if (!passives.equals(that.passives)) {
             return false;
         }
-        if (primary != null ? !primary.equals(that.primary) : that.primary != null) {
+        if (!Objects.equals(primary, that.primary)) {
             return false;
         }
-        if (setName != null ? !setName.equals(that.setName) : that.setName != null) {
+        if (!Objects.equals(setName, that.setName)) {
             return false;
         }
         if (state != that.state) {
@@ -854,17 +951,17 @@ public class ServerDescription {
         if (maxWireVersion != that.maxWireVersion) {
             return false;
         }
-        if (electionId != null ? !electionId.equals(that.electionId) : that.electionId != null) {
+        if (!Objects.equals(electionId, that.electionId)) {
             return false;
         }
-        if (setVersion != null ? !setVersion.equals(that.setVersion) : that.setVersion != null) {
+        if (!Objects.equals(setVersion, that.setVersion)) {
             return false;
         }
-        if (topologyVersion != null ? !topologyVersion.equals(that.topologyVersion) : that.topologyVersion != null) {
+        if (!Objects.equals(topologyVersion, that.topologyVersion)) {
             return false;
         }
 
-        if (lastWriteDate != null ? !lastWriteDate.equals(that.lastWriteDate) : that.lastWriteDate != null) {
+        if (!Objects.equals(lastWriteDate, that.lastWriteDate)) {
             return false;
         }
 
@@ -872,22 +969,28 @@ public class ServerDescription {
             return false;
         }
 
-        if (logicalSessionTimeoutMinutes != null
-                    ? !logicalSessionTimeoutMinutes.equals(that.logicalSessionTimeoutMinutes)
-                    : that.logicalSessionTimeoutMinutes != null) {
+        if (!Objects.equals(logicalSessionTimeoutMinutes, that.logicalSessionTimeoutMinutes)) {
+            return false;
+        }
+
+        if (helloOk != that.helloOk) {
+            return false;
+        }
+
+        if (cryptd != that.cryptd) {
             return false;
         }
 
         // Compare class equality and message as exceptions rarely override equals
         Class<?> thisExceptionClass = exception != null ? exception.getClass() : null;
         Class<?> thatExceptionClass = that.exception != null ? that.exception.getClass() : null;
-        if (thisExceptionClass != null ? !thisExceptionClass.equals(thatExceptionClass) : thatExceptionClass != null) {
+        if (!Objects.equals(thisExceptionClass, thatExceptionClass)) {
             return false;
         }
 
         String thisExceptionMessage = exception != null ? exception.getMessage() : null;
         String thatExceptionMessage = that.exception != null ? that.exception.getMessage() : null;
-        if (thisExceptionMessage != null ? !thisExceptionMessage.equals(thatExceptionMessage) : thatExceptionMessage != null) {
+        if (!Objects.equals(thisExceptionMessage, thatExceptionMessage)) {
             return false;
         }
 
@@ -896,29 +999,9 @@ public class ServerDescription {
 
     @Override
     public int hashCode() {
-        int result = address.hashCode();
-        result = 31 * result + type.hashCode();
-        result = 31 * result + (canonicalAddress != null ? canonicalAddress.hashCode() : 0);
-        result = 31 * result + hosts.hashCode();
-        result = 31 * result + passives.hashCode();
-        result = 31 * result + arbiters.hashCode();
-        result = 31 * result + (primary != null ? primary.hashCode() : 0);
-        result = 31 * result + maxDocumentSize;
-        result = 31 * result + tagSet.hashCode();
-        result = 31 * result + (setName != null ? setName.hashCode() : 0);
-        result = 31 * result + (electionId != null ? electionId.hashCode() : 0);
-        result = 31 * result + (setVersion != null ? setVersion.hashCode() : 0);
-        result = 31 * result + (topologyVersion != null ? topologyVersion.hashCode() : 0);
-        result = 31 * result + (lastWriteDate != null ? lastWriteDate.hashCode() : 0);
-        result = 31 * result + (int) (lastUpdateTimeNanos ^ (lastUpdateTimeNanos >>> 32));
-        result = 31 * result + (ok ? 1 : 0);
-        result = 31 * result + state.hashCode();
-        result = 31 * result + minWireVersion;
-        result = 31 * result + maxWireVersion;
-        result = 31 * result + (logicalSessionTimeoutMinutes != null ? logicalSessionTimeoutMinutes.hashCode() : 0);
-        result = 31 * result + (exception == null ? 0 : exception.getClass().hashCode());
-        result = 31 * result + (exception == null ? 0 : exception.getMessage().hashCode());
-        return result;
+        return Objects.hash(address, type, cryptd, canonicalAddress, hosts, passives, arbiters, primary, maxDocumentSize, tagSet, setName,
+                roundTripTimeNanos, minRoundTripTimeNanos, ok, state, minWireVersion, maxWireVersion, electionId, setVersion,
+                topologyVersion, lastWriteDate, lastUpdateTimeNanos, logicalSessionTimeoutMinutes, exception, helloOk);
     }
 
     @Override
@@ -926,6 +1009,7 @@ public class ServerDescription {
         return "ServerDescription{"
                + "address=" + address
                + ", type=" + type
+               + ", cryptd=" + cryptd
                + ", state=" + state
                + (state == CONNECTED
                   ?
@@ -935,6 +1019,7 @@ public class ServerDescription {
                   + ", maxDocumentSize=" + maxDocumentSize
                   + ", logicalSessionTimeoutMinutes=" + logicalSessionTimeoutMinutes
                   + ", roundTripTimeNanos=" + roundTripTimeNanos
+                  + ", minRoundTripTimeNanos=" + minRoundTripTimeNanos
                   : "")
                + (isReplicaSetMember()
                   ?
@@ -996,6 +1081,7 @@ public class ServerDescription {
     ServerDescription(final Builder builder) {
         address = notNull("address", builder.address);
         type = notNull("type", builder.type);
+        cryptd = builder.cryptd;
         state = notNull("state", builder.state);
         canonicalAddress = builder.canonicalAddress;
         hosts = builder.hosts;
@@ -1006,6 +1092,7 @@ public class ServerDescription {
         tagSet = builder.tagSet;
         setName = builder.setName;
         roundTripTimeNanos = builder.roundTripTimeNanos;
+        minRoundTripTimeNanos = builder.minRoundTripTimeNanos;
         ok = builder.ok;
         minWireVersion = builder.minWireVersion;
         maxWireVersion = builder.maxWireVersion;
@@ -1015,6 +1102,7 @@ public class ServerDescription {
         lastWriteDate = builder.lastWriteDate;
         lastUpdateTimeNanos = builder.lastUpdateTimeNanos;
         logicalSessionTimeoutMinutes = builder.logicalSessionTimeoutMinutes;
+        helloOk = builder.helloOk;
         exception = builder.exception;
     }
 }

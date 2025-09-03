@@ -16,8 +16,8 @@
 
 package org.bson;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -25,14 +25,15 @@ import java.io.InputStream;
 
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class LazyBSONDecoderTest {
     private BSONDecoder bsonDecoder;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         bsonDecoder = new LazyBSONDecoder();
     }
@@ -50,7 +51,7 @@ public class LazyBSONDecoderTest {
 
     @Test
     public void testDecodingFromByteArray() throws IOException {
-        byte[] bytes = new byte[]{12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0};
+        byte[] bytes = {12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0};
         BSONObject document = bsonDecoder.readObject(bytes);
         assertNotNull(document);
         assertThat(document, instanceOf(LazyBSONObject.class));
@@ -59,10 +60,10 @@ public class LazyBSONDecoderTest {
         assertEquals(1, document.get("a"));
     }
 
-    @Test(expected = BSONException.class)
+    @Test
     public void testDecodingFromInvalidInput() {
-        byte[] bytes = new byte[]{16, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0};
-        bsonDecoder.readObject(bytes);
+        byte[] bytes = {16, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0};
+        assertThrows(BSONException.class, () -> bsonDecoder.readObject(bytes));
     }
 
 }

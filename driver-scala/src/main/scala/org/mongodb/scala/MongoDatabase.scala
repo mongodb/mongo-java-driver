@@ -16,6 +16,7 @@
 
 package org.mongodb.scala
 
+import com.mongodb.annotations.{ Alpha, Reason }
 import com.mongodb.client.model.{ CreateCollectionOptions, CreateViewOptions }
 import com.mongodb.reactivestreams.client.{ MongoDatabase => JMongoDatabase }
 import org.bson.codecs.configuration.CodecRegistry
@@ -23,6 +24,7 @@ import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.conversions.Bson
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration.{ Duration, MILLISECONDS }
 import scala.reflect.ClassTag
 
 /**
@@ -70,10 +72,40 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   lazy val readConcern: ReadConcern = wrapped.getReadConcern
 
   /**
+   * The time limit for the full execution of an operation.
+   *
+   * If not null the following deprecated options will be ignored: `waitQueueTimeoutMS`, `socketTimeoutMS`,
+   * `wTimeoutMS`, `maxTimeMS` and `maxCommitTimeMS`.
+   *
+   *   - `null` means that the timeout mechanism for operations will defer to using:
+   *      - `waitQueueTimeoutMS`: The maximum wait time in milliseconds that a thread may wait for a connection to become available
+   *      - `socketTimeoutMS`: How long a send or receive on a socket can take before timing out.
+   *      - `wTimeoutMS`: How long the server will wait for  the write concern to be fulfilled before timing out.
+   *      - `maxTimeMS`: The time limit for processing operations on a cursor.
+   *        See: [cursor.maxTimeMS](https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS").
+   *      - `maxCommitTimeMS`: The maximum amount of time to allow a single `commitTransaction` command to execute.
+   *   - `0` means infinite timeout.
+   *   - `> 0` The time limit to use for the full execution of an operation.
+   *
+   * @return the optional timeout duration
+   * @since 5.2
+   */
+  @Alpha(Array(Reason.CLIENT))
+  lazy val timeout: Option[Duration] =
+    Option.apply(wrapped.getTimeout(MILLISECONDS)).map(t => Duration(t, MILLISECONDS))
+
+  /**
    * Create a new MongoDatabase instance with a different codec registry.
+   *
+   * The { @link CodecRegistry} configured by this method is effectively treated by the driver as an
+   * instance of { @link CodecProvider}, which { @link CodecRegistry} extends.
+   * So there is no benefit to defining a class that implements { @link CodecRegistry}. Rather, an
+   * application should always create { @link CodecRegistry} instances using the factory methods in
+   * { @link CodecRegistries}.
    *
    * @param codecRegistry the new { @link org.bson.codecs.configuration.CodecRegistry} for the collection
    * @return a new MongoDatabase instance with the different codec registry
+   * @see CodecRegistries
    */
   def withCodecRegistry(codecRegistry: CodecRegistry): MongoDatabase =
     MongoDatabase(wrapped.withCodecRegistry(codecRegistry))
@@ -107,6 +139,20 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
     MongoDatabase(wrapped.withReadConcern(readConcern))
 
   /**
+   * Sets the time limit for the full execution of an operation.
+   *
+   * - `0` means infinite timeout.
+   * - `> 0` The time limit to use for the full execution of an operation.
+   *
+   * @param timeout the timeout, which must be greater than or equal to 0
+   * @return a new MongoDatabase instance with the set time limit for operations
+   * @since 5.2
+   */
+  @Alpha(Array(Reason.CLIENT))
+  def withTimeout(timeout: Duration): MongoDatabase =
+    MongoDatabase(wrapped.withTimeout(timeout.toMillis, MILLISECONDS))
+
+  /**
    * Gets a collection, with a specific default document class.
    *
    * @param collectionName the name of the collection to return
@@ -121,6 +167,9 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Executes command in the context of the current database using the primary server.
    *
+   * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and the
+   * `timeoutMS` setting has been set.
+   *
    * @param command  the command to be run
    * @tparam TResult the type of the class to use instead of [[Document]].
    * @return a Observable containing the command result
@@ -133,20 +182,25 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Executes command in the context of the current database.
    *
+   * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and the
+   * `timeoutMS` setting has been set.
+   *
    * @param command        the command to be run
    * @param readPreference the [[ReadPreference]] to be used when executing the command
    * @tparam TResult       the type of the class to use instead of [[Document]].
    * @return a Observable containing the command result
    */
   def runCommand[TResult](command: Bson, readPreference: ReadPreference)(
-      implicit
-      e: TResult DefaultsTo Document,
+      implicit e: TResult DefaultsTo Document,
       ct: ClassTag[TResult]
   ): SingleObservable[TResult] =
     wrapped.runCommand(command, readPreference, ct)
 
   /**
    * Executes command in the context of the current database using the primary server.
+   *
+   * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and the
+   * `timeoutMS` setting has been set.
    *
    * @param clientSession the client session with which to associate this operation
    * @param command  the command to be run
@@ -156,14 +210,16 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @note Requires MongoDB 3.6 or greater
    */
   def runCommand[TResult](clientSession: ClientSession, command: Bson)(
-      implicit
-      e: TResult DefaultsTo Document,
+      implicit e: TResult DefaultsTo Document,
       ct: ClassTag[TResult]
   ): SingleObservable[TResult] =
     wrapped.runCommand[TResult](clientSession, command, ct)
 
   /**
    * Executes command in the context of the current database.
+   *
+   * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and the
+   * `timeoutMS` setting has been set.
    *
    * @param command        the command to be run
    * @param readPreference the [[ReadPreference]] to be used when executing the command
@@ -173,8 +229,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @note Requires MongoDB 3.6 or greater
    */
   def runCommand[TResult](clientSession: ClientSession, command: Bson, readPreference: ReadPreference)(
-      implicit
-      e: TResult DefaultsTo Document,
+      implicit e: TResult DefaultsTo Document,
       ct: ClassTag[TResult]
   ): SingleObservable[TResult] =
     wrapped.runCommand(clientSession, command, readPreference, ct)
@@ -182,33 +237,35 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Drops this database.
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/dropDatabase/#dbcmd.dropDatabase Drop database]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/dropDatabase/#dbcmd.dropDatabase Drop database]]
    * @return a Observable identifying when the database has been dropped
    */
-  def drop(): SingleObservable[Void] = wrapped.drop()
+  def drop(): SingleObservable[Unit] = wrapped.drop()
 
   /**
    * Drops this database.
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/dropDatabase/#dbcmd.dropDatabase Drop database]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/dropDatabase/#dbcmd.dropDatabase Drop database]]
    * @param clientSession the client session with which to associate this operation
    * @return a Observable identifying when the database has been dropped
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def drop(clientSession: ClientSession): SingleObservable[Void] = wrapped.drop(clientSession)
+  def drop(clientSession: ClientSession): SingleObservable[Unit] = wrapped.drop(clientSession)
 
   /**
    * Gets the names of all the collections in this database.
    *
+   * [[https://www.mongodb.com/docs/manual/reference/command/listCollections listCollections]]
    * @return a Observable with all the names of all the collections in this database
    */
-  def listCollectionNames(): Observable[String] = wrapped.listCollectionNames()
+  def listCollectionNames(): ListCollectionNamesObservable =
+    ListCollectionNamesObservable(wrapped.listCollectionNames())
 
   /**
    * Finds all the collections in this database.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/listCollections listCollections]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/listCollections listCollections]]
    * @tparam TResult the target document type of the iterable.
    * @return the fluent list collections interface
    */
@@ -221,17 +278,19 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Gets the names of all the collections in this database.
    *
+   * [[https://www.mongodb.com/docs/manual/reference/command/listCollections listCollections]]
    * @param clientSession the client session with which to associate this operation
    * @return a Observable with all the names of all the collections in this database
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def listCollectionNames(clientSession: ClientSession): Observable[String] = wrapped.listCollectionNames(clientSession)
+  def listCollectionNames(clientSession: ClientSession): ListCollectionNamesObservable =
+    ListCollectionNamesObservable(wrapped.listCollectionNames(clientSession))
 
   /**
    * Finds all the collections in this database.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/listCollections listCollections]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/listCollections listCollections]]
    * @param clientSession the client session with which to associate this operation
    * @tparam TResult the target document type of the iterable.
    * @return the fluent list collections interface
@@ -239,8 +298,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @note Requires MongoDB 3.6 or greater
    */
   def listCollections[TResult](clientSession: ClientSession)(
-      implicit
-      e: TResult DefaultsTo Document,
+      implicit e: TResult DefaultsTo Document,
       ct: ClassTag[TResult]
   ): ListCollectionsObservable[TResult] =
     ListCollectionsObservable(wrapped.listCollections(clientSession, ct))
@@ -248,41 +306,41 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Create a new collection with the given name.
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/create Create Command]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/create Create Command]]
    * @param collectionName the name for the new collection to create
    * @return a Observable identifying when the collection has been created
    */
-  def createCollection(collectionName: String): SingleObservable[Void] =
+  def createCollection(collectionName: String): SingleObservable[Unit] =
     wrapped.createCollection(collectionName)
 
   /**
    * Create a new collection with the selected options
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/create Create Command]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/create Create Command]]
    * @param collectionName the name for the new collection to create
    * @param options        various options for creating the collection
    * @return a Observable identifying when the collection has been created
    */
-  def createCollection(collectionName: String, options: CreateCollectionOptions): SingleObservable[Void] =
+  def createCollection(collectionName: String, options: CreateCollectionOptions): SingleObservable[Unit] =
     wrapped.createCollection(collectionName, options)
 
   /**
    * Create a new collection with the given name.
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/create Create Command]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/create Create Command]]
    * @param clientSession the client session with which to associate this operation
    * @param collectionName the name for the new collection to create
    * @return a Observable identifying when the collection has been created
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def createCollection(clientSession: ClientSession, collectionName: String): SingleObservable[Void] =
+  def createCollection(clientSession: ClientSession, collectionName: String): SingleObservable[Unit] =
     wrapped.createCollection(clientSession, collectionName)
 
   /**
    * Create a new collection with the selected options
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/create Create Command]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/create Create Command]]
    * @param clientSession the client session with which to associate this operation
    * @param collectionName the name for the new collection to create
    * @param options        various options for creating the collection
@@ -294,26 +352,26 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
       clientSession: ClientSession,
       collectionName: String,
       options: CreateCollectionOptions
-  ): SingleObservable[Void] =
+  ): SingleObservable[Unit] =
     wrapped.createCollection(clientSession, collectionName, options)
 
   /**
    * Creates a view with the given name, backing collection/view name, and aggregation pipeline that defines the view.
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/create Create Command]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/create Create Command]]
    * @param viewName the name of the view to create
    * @param viewOn   the backing collection/view for the view
    * @param pipeline the pipeline that defines the view
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
    */
-  def createView(viewName: String, viewOn: String, pipeline: Seq[Bson]): SingleObservable[Void] =
+  def createView(viewName: String, viewOn: String, pipeline: Seq[Bson]): SingleObservable[Unit] =
     wrapped.createView(viewName, viewOn, pipeline.asJava)
 
   /**
    * Creates a view with the given name, backing collection/view name, aggregation pipeline, and options that defines the view.
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/create Create Command]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/create Create Command]]
    * @param viewName          the name of the view to create
    * @param viewOn            the backing collection/view for the view
    * @param pipeline          the pipeline that defines the view
@@ -326,13 +384,13 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
       viewOn: String,
       pipeline: Seq[Bson],
       createViewOptions: CreateViewOptions
-  ): SingleObservable[Void] =
+  ): SingleObservable[Unit] =
     wrapped.createView(viewName, viewOn, pipeline.asJava, createViewOptions)
 
   /**
    * Creates a view with the given name, backing collection/view name, and aggregation pipeline that defines the view.
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/create Create Command]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/create Create Command]]
    * @param clientSession the client session with which to associate this operation
    * @param viewName the name of the view to create
    * @param viewOn   the backing collection/view for the view
@@ -345,13 +403,13 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
       viewName: String,
       viewOn: String,
       pipeline: Seq[Bson]
-  ): SingleObservable[Void] =
+  ): SingleObservable[Unit] =
     wrapped.createView(clientSession, viewName, viewOn, pipeline.asJava)
 
   /**
    * Creates a view with the given name, backing collection/view name, aggregation pipeline, and options that defines the view.
    *
-   * [[http://docs.mongodb.org/manual/reference/commands/create Create Command]]
+   * [[https://www.mongodb.com/docs/manual/reference/commands/create Create Command]]
    * @param clientSession the client session with which to associate this operation
    * @param viewName          the name of the view to create
    * @param viewOn            the backing collection/view for the view
@@ -366,7 +424,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
       viewOn: String,
       pipeline: Seq[Bson],
       createViewOptions: CreateViewOptions
-  ): SingleObservable[Void] =
+  ): SingleObservable[Unit] =
     wrapped.createView(clientSession, viewName, viewOn, pipeline.asJava, createViewOptions)
 
   /**
@@ -427,7 +485,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    *
    * @param pipeline the aggregate pipeline
    * @return a Observable containing the result of the aggregation operation
-   *         [[http://docs.mongodb.org/manual/aggregation/ Aggregation]]
+   *         [[https://www.mongodb.com/docs/manual/aggregation/ Aggregation]]
    * @since 2.6
    * @note Requires MongoDB 3.6 or greater
    */
@@ -440,7 +498,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @param clientSession the client session with which to associate this operation
    * @param pipeline the aggregate pipeline
    * @return a Observable containing the result of the aggregation operation
-   *         [[http://docs.mongodb.org/manual/aggregation/ Aggregation]]
+   *         [[https://www.mongodb.com/docs/manual/aggregation/ Aggregation]]
    * @since 2.6
    * @note Requires MongoDB 3.6 or greater
    */

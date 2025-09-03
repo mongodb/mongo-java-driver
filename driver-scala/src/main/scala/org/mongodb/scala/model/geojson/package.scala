@@ -267,7 +267,7 @@ package object geojson {
     /**
      * A custom MongoDB EPSG:4326 Coordinate Reference System that uses a strict counter-clockwise winding order.
      *
-     * [[http://docs.mongodb.org/manual/reference/operator/query/geometry/ Strict Winding]]
+     * [[https://www.mongodb.com/docs/manual/reference/operator/query/geometry/ Strict Winding]]
      */
     val EPSG_4326_STRICT_WINDING: NamedCoordinateReferenceSystem =
       Jgeojson.NamedCoordinateReferenceSystem.EPSG_4326_STRICT_WINDING

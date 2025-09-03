@@ -38,12 +38,10 @@ import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeTrue;
 
 public class ClientSideEncryptionBypassAutoEncryptionTest {
     private MongoClient clientEncrypted;
@@ -51,11 +49,9 @@ public class ClientSideEncryptionBypassAutoEncryptionTest {
 
     @Before
     public void setUp() {
-        assumeTrue(serverVersionAtLeast(4, 1));
-
         MongoClient mongoClient = getMongoClient();
 
-        final byte[] localMasterKey = new byte[96];
+        byte[] localMasterKey = new byte[96];
         new SecureRandom().nextBytes(localMasterKey);
 
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{

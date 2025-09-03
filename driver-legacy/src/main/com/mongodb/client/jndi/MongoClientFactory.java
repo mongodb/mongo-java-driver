@@ -19,8 +19,8 @@ package com.mongodb.client.jndi;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.MongoException;
-import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 
 import javax.naming.Context;
 import javax.naming.Name;
@@ -55,7 +55,7 @@ public class MongoClientFactory implements ObjectFactory {
      *
      * Specification of the connection string in the {@code environment} parameter takes precedence over specification in the {@code obj}
      * parameter.  The {@code name} and {@code nameCtx} parameters are ignored.
-     *
+     * <p>
      * If a non-empty connection string is not specified in either of these two ways, a {@link MongoException} is thrown.
      * @return an instance of {@link MongoClient} based on the specified connection string
      * @throws MongoException
@@ -63,8 +63,7 @@ public class MongoClientFactory implements ObjectFactory {
      * Note: Not all options that can be specified via {@link com.mongodb.MongoClientOptions} can be specified via the connection string.
      */
     @Override
-    public Object getObjectInstance(final Object obj, final Name name, final Context nameCtx, final Hashtable<?, ?> environment)
-            throws Exception {
+    public Object getObjectInstance(final Object obj, final Name name, final Context nameCtx, final Hashtable<?, ?> environment) {
 
         // Some app servers, e.g. Wildfly, use the environment to pass location information to an ObjectFactory
         String connectionString = null;

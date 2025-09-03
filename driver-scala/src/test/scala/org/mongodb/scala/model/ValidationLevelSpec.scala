@@ -31,7 +31,7 @@ class ValidationLevelSpec extends BaseSpec {
       validationLevelClass.getDeclaredFields.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
     val wrappedMethods =
       validationLevelClass.getDeclaredMethods.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
-    val exclusions = Set("$VALUES", "valueOf", "values")
+    val exclusions = Set("$VALUES", "$values", "valueOf", "values")
 
     val wrapped = (wrappedFields ++ wrappedMethods) -- exclusions
     val local = ValidationLevel.getClass.getDeclaredMethods.map(_.getName).toSet -- Set(

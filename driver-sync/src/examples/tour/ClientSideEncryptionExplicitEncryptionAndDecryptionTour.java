@@ -52,7 +52,7 @@ public class ClientSideEncryptionExplicitEncryptionAndDecryptionTour {
     public static void main(final String[] args) {
 
         // This would have to be the same master key as was used to create the encryption key
-        final byte[] localMasterKey = new byte[96];
+        byte[] localMasterKey = new byte[96];
         new SecureRandom().nextBytes(localMasterKey);
 
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
@@ -60,9 +60,12 @@ public class ClientSideEncryptionExplicitEncryptionAndDecryptionTour {
                 put("key", localMasterKey);
             }});
         }};
-
-        MongoClientSettings clientSettings = MongoClientSettings.builder().build();
-        MongoClient mongoClient = MongoClients.create(clientSettings);
+        MongoClientSettings commonClientSettings = (
+                args.length == 0
+                        ? MongoClientSettings.builder()
+                        : MongoClientSettings.builder().applyConnectionString(new ConnectionString(args[0])))
+                .build();
+        MongoClient mongoClient = MongoClients.create(commonClientSettings);
 
         // Set up the key vault for this example
         MongoNamespace keyVaultNamespace = new MongoNamespace("encryption.testKeyVault");
@@ -81,9 +84,7 @@ public class ClientSideEncryptionExplicitEncryptionAndDecryptionTour {
 
         // Create the ClientEncryption instance
         ClientEncryptionSettings clientEncryptionSettings = ClientEncryptionSettings.builder()
-                .keyVaultMongoClientSettings(MongoClientSettings.builder()
-                        .applyConnectionString(new ConnectionString("mongodb://localhost"))
-                        .build())
+                .keyVaultMongoClientSettings(commonClientSettings)
                 .keyVaultNamespace(keyVaultNamespace.getFullName())
                 .kmsProviders(kmsProviders)
                 .build();
@@ -102,7 +103,9 @@ public class ClientSideEncryptionExplicitEncryptionAndDecryptionTour {
         System.out.println(doc.toJson());
 
         // Explicitly decrypt the field
-        System.out.println(clientEncryption.decrypt(new BsonBinary(doc.get("encryptedField", Binary.class).getData())));
+        Binary encryptedField = doc.get("encryptedField", Binary.class);
+        BsonString decryptedField = clientEncryption.decrypt(new BsonBinary(encryptedField.getType(), encryptedField.getData())).asString();
+        System.out.println(decryptedField.getValue());
 
         // release resources
         clientEncryption.close();

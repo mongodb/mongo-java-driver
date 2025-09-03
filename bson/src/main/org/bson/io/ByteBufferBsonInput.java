@@ -21,7 +21,7 @@ import org.bson.ByteBuf;
 import org.bson.types.ObjectId;
 
 import java.nio.ByteOrder;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import static java.lang.String.format;
 
@@ -31,9 +31,15 @@ import static java.lang.String.format;
  * @since 3.0
  */
 public class ByteBufferBsonInput implements BsonInput {
-    private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
     private static final String[] ONE_BYTE_ASCII_STRINGS = new String[Byte.MAX_VALUE + 1];
+    /* A dynamically sized scratch buffer, that is reused across BSON String reads:
+     * 1. Reduces garbage collection by avoiding new byte array creation.
+     * 2. Improves cache utilization through temporal locality.
+     * 3. Avoids JVM allocation and zeroing cost for new memory allocations.
+     */
+    private byte[] scratchBuffer;
+
 
     static {
         for (int b = 0; b < ONE_BYTE_ASCII_STRINGS.length; b++) {
@@ -128,45 +134,121 @@ public class ByteBufferBsonInput implements BsonInput {
 
     @Override
     public String readCString() {
-        int mark = buffer.position();
-        skipCString();
-        int size = buffer.position() - mark;
-        buffer.position(mark);
+        ensureOpen();
+        int size = computeCStringLength(buffer.position());
         return readString(size);
     }
 
-    private String readString(final int size) {
-        if (size == 2) {
+    private String readString(final int bsonStringSize) {
+        if (bsonStringSize == 2) {
             byte asciiByte = buffer.get();               // if only one byte in the string, it must be ascii.
             byte nullByte = buffer.get();                // read null terminator
             if (nullByte != 0) {
                 throw new BsonSerializationException("Found a BSON string that is not null-terminated");
             }
             if (asciiByte < 0) {
-                return UTF8_CHARSET.newDecoder().replacement();
+                return StandardCharsets.UTF_8.newDecoder().replacement();
             }
             return ONE_BYTE_ASCII_STRINGS[asciiByte];  // this will throw if asciiByte is negative
         } else {
-            byte[] bytes = new byte[size - 1];
-            buffer.get(bytes);
-            byte nullByte = buffer.get();
-            if (nullByte != 0) {
-                throw new BsonSerializationException("Found a BSON string that is not null-terminated");
+            if (buffer.isBackedByArray()) {
+                int position = buffer.position();
+                int arrayOffset = buffer.arrayOffset();
+                int newPosition = position + bsonStringSize;
+                buffer.position(newPosition);
+
+                byte[] array = buffer.array();
+                if (array[arrayOffset + newPosition - 1] != 0) {
+                    throw new BsonSerializationException("Found a BSON string that is not null-terminated");
+                }
+                return new String(array, arrayOffset + position, bsonStringSize - 1, StandardCharsets.UTF_8);
+            } else if (scratchBuffer == null || bsonStringSize > scratchBuffer.length) {
+                int scratchBufferSize = bsonStringSize + (bsonStringSize >>> 1); //1.5 times the size
+                scratchBuffer = new byte[scratchBufferSize];
             }
-            return new String(bytes, UTF8_CHARSET);
+
+            buffer.get(scratchBuffer, 0, bsonStringSize);
+            if (scratchBuffer[bsonStringSize - 1] != 0) {
+                throw new BsonSerializationException("BSON string not null-terminated");
+            }
+            return new String(scratchBuffer, 0, bsonStringSize - 1, StandardCharsets.UTF_8);
         }
     }
 
     @Override
     public void skipCString() {
         ensureOpen();
-        boolean checkNext = true;
-        while (checkNext) {
-            if (!buffer.hasRemaining()) {
-                throw new BsonSerializationException("Found a BSON string that is not null-terminated");
+        int pos = buffer.position();
+        int length = computeCStringLength(pos);
+        buffer.position(pos + length);
+    }
+
+    /**
+     * Detects the position of the first NULL (0x00) byte in a 64-bit word using SWAR technique.
+     * <a href="https://en.wikipedia.org/wiki/SWAR">
+     */
+    private int computeCStringLength(final int prevPos) {
+        int pos = prevPos;
+        int limit = buffer.limit();
+
+        // `>>> 3` means dividing without remainder by `Long.BYTES` because `Long.BYTES` is 2^3
+        int chunks = (limit - pos) >>> 3;
+        // `<< 3` means multiplying by `Long.BYTES` because `Long.BYTES` is 2^3
+        int toPos = pos + (chunks << 3);
+        for (; pos < toPos; pos += Long.BYTES) {
+            long chunk = buffer.getLong(pos);
+            /*
+              Subtract 0x0101010101010101L to cause a borrow on 0x00 bytes.
+              if original byte is 00000000, then 00000000 - 00000001 = 11111111 (borrow causes the most significant bit set to 1).
+             */
+            long mask = chunk - 0x0101010101010101L;
+            /*
+              mask will only have the most significant bit in each byte set iff it was a 0x00 byte (0x00 becomes 0xFF because of the borrow).
+              ~chunk will have bits that were originally 0 set to 1.
+              mask & ~chunk will have the most significant bit in each byte set iff original byte was 0x00.
+             */
+            mask &= ~chunk;
+            /*
+               0x8080808080808080:
+               10000000 10000000 10000000 10000000 10000000 10000000 10000000 10000000
+
+               mask:
+               00000000 00000000 11111111 00000000 00000001 00000001 00000000 00000111
+
+               ANDing mask with 0x8080808080808080 isolates the most significant bit in each byte where
+               the original byte was 0x00, thereby setting the most significant bit to 1 in each 0x00 original byte.
+
+               result:
+               00000000 00000000 10000000 00000000 00000000 00000000 00000000 00000000
+                                 ^^^^^^^^
+               The most significant bit is set in each 0x00 byte, and only there.
+             */
+            mask &= 0x8080808080808080L;
+            if (mask != 0) {
+                /*
+                The UTF-8 data is endian-independent and stored in left-to-right order in the buffer, with the first byte at the lowest index.
+                After calling getLong() in little-endian mode, the first UTF-8 byte ends up in the least significant byte of the long (bits 0–7),
+                and the last one in the most significant byte (bits 56–63).
+
+                numberOfTrailingZeros scans from the least significant bit, which aligns with the position of the first UTF-8 byte.
+                We then use >>> 3, which means dividing without remainder by Long.BYTES because Long.BYTES is 2^3, computing the byte offset
+                of the NULL terminator in the original UTF-8 data.
+                 */
+                int offset = Long.numberOfTrailingZeros(mask) >>> 3;
+                // Find the NULL terminator at pos + offset
+                return (pos - prevPos) + offset + 1;
             }
-            checkNext = buffer.get() != 0;
         }
+
+        // Process remaining bytes one by one.
+        while (pos < limit) {
+            if (buffer.get(pos++) == 0) {
+                return (pos - prevPos);
+            }
+        }
+
+        buffer.position(pos);
+        throw new BsonSerializationException("Found a BSON string that is not null-terminated");
     }
 
     @Override
@@ -178,7 +260,7 @@ public class ByteBufferBsonInput implements BsonInput {
     @Override
     public BsonInputMark getMark(final int readLimit) {
         return new BsonInputMark() {
-            private int mark = buffer.position();
+            private final int mark = buffer.position();
             @Override
             public void reset() {
                 ensureOpen();

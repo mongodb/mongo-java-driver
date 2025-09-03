@@ -25,13 +25,14 @@ import java.lang.annotation.Target;
 /**
  * An annotation that configures a property to be ignored when reading and writing to BSON
  *
- * <p>Note: Requires the {@link org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION}</p>
+ * <p>For POJOs, requires the {@link org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION}</p>
+ * <p>For Java records, the annotation is not supported.</p>
  *
  * @since 3.5
  * @see org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION
  */
 @Documented
-@Target({ElementType.METHOD, ElementType.FIELD})
+@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface BsonIgnore {
 }

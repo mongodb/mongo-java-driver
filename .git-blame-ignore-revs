@@ -1,0 +1,11 @@
+# .git-blame-ignore-revs
+# Checkstyle fixes
+94780bc8b72c62d9bc09beaa9ac62b942debab5f
+# Copyright fixes
+0aa2ec20d5215c0ac727602dd2cd891c22c69ba8
+# Scala spotless changes
+fd21430c967571ed172259cc4100f291257a9a01
+# IntelliJ automated code cleanup
+d9aa6044e1a6b440bcb013c330497f2813484050
+# Remove `final` in catch clauses
+4b3b48546fb0457e5c515ccfe8780e373ad7de5f

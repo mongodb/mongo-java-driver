@@ -16,13 +16,18 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
+
 /**
  * An exception indicating that some error has been raised by a MongoDB server in response to an operation.
  *
  * @since 2.13
+ * @serial exclude
  */
 public abstract class MongoServerException extends MongoException {
     private static final long serialVersionUID = -5213859742051776206L;
+    @Nullable
+    private final String errorCodeName;
     private final ServerAddress serverAddress;
 
     /**
@@ -34,6 +39,7 @@ public abstract class MongoServerException extends MongoException {
     public MongoServerException(final String message, final ServerAddress serverAddress) {
         super(message);
         this.serverAddress = serverAddress;
+        this.errorCodeName = null;
     }
 
     /**
@@ -46,6 +52,23 @@ public abstract class MongoServerException extends MongoException {
     public MongoServerException(final int code, final String message, final ServerAddress serverAddress) {
         super(code, message);
         this.serverAddress = serverAddress;
+        this.errorCodeName = null;
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param code the error code from the server
+     * @param errorCodeName the error code name from the server
+     * @param message the message from the server
+     * @param serverAddress the address of the server
+     * @since 4.6
+     */
+    public MongoServerException(final int code, @Nullable final String errorCodeName, final String message,
+                                final ServerAddress serverAddress) {
+        super(code, message);
+        this.errorCodeName = errorCodeName;
+        this.serverAddress = serverAddress;
     }
 
     /**
@@ -55,5 +78,17 @@ public abstract class MongoServerException extends MongoException {
      */
     public ServerAddress getServerAddress() {
         return serverAddress;
+    }
+
+    /**
+     * Get the error code name, which may be null
+     *
+     * @return the error code nam
+     * @mongodb.server.release 3.4
+     * @since 4.6
+     */
+    @Nullable
+    public String getErrorCodeName() {
+        return errorCodeName;
     }
 }

@@ -16,27 +16,71 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.internal.binding.ConnectionSource;
-import com.mongodb.internal.connection.QueryResult;
-import org.bson.codecs.Decoder;
+import com.mongodb.ServerAddress;
+import com.mongodb.ServerCursor;
+
+import java.util.List;
 
 /**
  * Cursor representation of the results of an inline map-reduce operation.  This allows users to iterate over the results that were returned
  * from the operation, and also provides access to the statistics returned in the results.
- *
- * @param <T> the operations result type.
  */
-class MapReduceInlineResultsCursor<T> extends QueryBatchCursor<T> implements MapReduceBatchCursor<T> {
+class MapReduceInlineResultsCursor<T> implements MapReduceBatchCursor<T> {
+    private final BatchCursor<T> delegate;
     private final MapReduceStatistics statistics;
 
-    MapReduceInlineResultsCursor(final QueryResult<T> queryResult, final Decoder<T> decoder, final ConnectionSource connectionSource,
-                                 final MapReduceStatistics statistics) {
-        super(queryResult, 0, 0, decoder, connectionSource);
+    MapReduceInlineResultsCursor(final BatchCursor<T> delegate, final MapReduceStatistics statistics) {
+        this.delegate = delegate;
         this.statistics = statistics;
     }
 
     @Override
     public MapReduceStatistics getStatistics() {
         return statistics;
+    }
+
+    @Override
+    public boolean hasNext() {
+        return delegate.hasNext();
+    }
+
+    @Override
+    public List<T> next() {
+        return delegate.next();
+    }
+
+    @Override
+    public int available() {
+        return delegate.available();
+    }
+
+    @Override
+    public void setBatchSize(final int batchSize) {
+        delegate.setBatchSize(batchSize);
+    }
+
+    @Override
+    public int getBatchSize() {
+        return delegate.getBatchSize();
+    }
+
+    @Override
+    public List<T> tryNext() {
+        return delegate.tryNext();
+    }
+
+    @Override
+    public ServerCursor getServerCursor() {
+        return delegate.getServerCursor();
+    }
+
+    @Override
+    public ServerAddress getServerAddress() {
+        return delegate.getServerAddress();
+    }
+
+    @Override
+    public void close() {
+        delegate.close();
     }
 }

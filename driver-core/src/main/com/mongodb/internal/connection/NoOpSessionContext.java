@@ -18,13 +18,14 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
 /**
  * A SessionContext implementation that does nothing and reports that it has no session.
  *
- * <p>This class should not be considered a part of the public API.</p>
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class NoOpSessionContext implements SessionContext {
 
@@ -68,22 +69,39 @@ public class NoOpSessionContext implements SessionContext {
         return false;
     }
 
+    @Nullable
     @Override
     public BsonTimestamp getOperationTime() {
         return null;
     }
 
     @Override
-    public void advanceOperationTime(final BsonTimestamp operationTime) {
+    public void advanceOperationTime(@Nullable final BsonTimestamp operationTime) {
     }
 
+    @Nullable
     @Override
     public BsonDocument getClusterTime() {
         return null;
     }
 
     @Override
-    public void advanceClusterTime(final BsonDocument clusterTime) {
+    public void advanceClusterTime(@Nullable final BsonDocument clusterTime) {
+    }
+
+    @Override
+    public boolean isSnapshot() {
+        return false;
+    }
+
+    @Override
+    public void setSnapshotTimestamp(@Nullable final BsonTimestamp snapshotTimestamp) {
+    }
+
+    @Override
+    @Nullable
+    public BsonTimestamp getSnapshotTimestamp() {
+        return null;
     }
 
     @Override
@@ -102,7 +120,7 @@ public class NoOpSessionContext implements SessionContext {
     }
 
     @Override
-    public void unpinServerAddress() {
+    public void clearTransactionContext() {
         throw new UnsupportedOperationException();
     }
 

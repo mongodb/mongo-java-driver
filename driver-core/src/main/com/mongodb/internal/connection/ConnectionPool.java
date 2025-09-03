@@ -16,24 +16,64 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoConnectionPoolClearedException;
+import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.lang.Nullable;
+import org.bson.types.ObjectId;
 
 import java.io.Closeable;
-import java.util.concurrent.TimeUnit;
 
+/**
+ * An instance of an implementation must be created in the {@linkplain #invalidate(Throwable) paused} state.
+ */
+@ThreadSafe
 interface ConnectionPool extends Closeable {
+    /**
+     * @param operationContext the operation context
+     * @throws MongoConnectionPoolClearedException If detects that the pool is {@linkplain #invalidate(Throwable) paused}.
+     */
+    InternalConnection get(OperationContext operationContext) throws MongoConnectionPoolClearedException;
 
-    // Start any maintenance task background tasks associated with the connection pool
-    void start();
+    /**
+     * Completes the {@code callback} with a {@link MongoConnectionPoolClearedException}
+     * if detects that the pool is {@linkplain #invalidate(Throwable) paused}.
+     */
+    void getAsync(OperationContext operationContext, SingleResultCallback<InternalConnection> callback);
 
-    InternalConnection get();
+    /**
+     * Mark the pool as paused, unblock all threads waiting in {@link #get(OperationContext) get…} methods, unless they are blocked
+     * doing an IO operation, increment {@linkplain #getGeneration() generation} to lazily clear all connections managed by the pool
+     * (this is done via {@link #get(OperationContext) get…} and {@linkplain InternalConnection#close() check in} methods, and may also be done
+     * by a background task). In the paused state, connections can be created neither in the background
+     * nor via {@link #get(OperationContext) get…} methods.
+     * If the pool is paused, the method does nothing except for recording the specified {@code cause}.
+     *
+     * @see #ready()
+     */
+    void invalidate(@Nullable Throwable cause);
 
-    InternalConnection get(long timeout, TimeUnit timeUnit);
+    /**
+     * Unlike {@link #invalidate(Throwable)}, this method neither marks the pool as paused,
+     * nor affects the {@linkplain #getGeneration() generation}.
+     *
+     * @param generation The expected service-specific generation.
+     *                   If the expected {@code generation} does not match the current generation for the service
+     *                   identified by {@code serviceId}, the method does nothing.
+     */
+    void invalidate(ObjectId serviceId, int generation);
 
-    void getAsync(SingleResultCallback<InternalConnection> callback);
+    /**
+     * Mark the pool as ready, allowing connections to be created in the background and via {@link #get(OperationContext) get…} methods.
+     * If the pool is ready, the method does nothing.
+     *
+     * @see #invalidate(Throwable)
+     */
+    void ready();
 
-    void invalidate();
-
+    /**
+     * Mark the pool as closed, release the underlying resources and render the pool unusable.
+     */
     void close();
 
     int getGeneration();

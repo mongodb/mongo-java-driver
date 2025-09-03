@@ -16,23 +16,29 @@
 
 package org.mongodb.scala
 
-import java.util.concurrent.TimeUnit
+import com.mongodb.annotations.{ Alpha, Reason }
 
+import java.util.concurrent.TimeUnit
 import com.mongodb.client.model.MapReduceAction
 import com.mongodb.reactivestreams.client.MapReducePublisher
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Collation
+import org.reactivestreams.Subscriber
 
 import scala.concurrent.duration.Duration
 
 /**
  * Observable for map reduce.
  *
- * @define docsRef http://docs.mongodb.org/manual/reference
+ * By default, the [[MapReduceObservable]] produces the results inline. You can write map-reduce output to a collection by using the
+ * [[collectionName]] and [[toCollection]] methods.
+ *
+ * @define docsRef https://www.mongodb.com/docs/manual/reference
  *
  * @tparam TResult The type of the result.
  * @since 1.0
  */
+@deprecated("Superseded by aggregate", "4.4.0")
 case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) extends Observable[TResult] {
 
   /**
@@ -42,6 +48,7 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
    *
    * @param collectionName the name of the collection that you want the map-reduce operation to write its output.
    * @return this
+   * @see [[toCollection]]
    */
   def collectionName(collectionName: String): MapReduceObservable[TResult] = {
     wrapped.collectionName(collectionName)
@@ -51,7 +58,7 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
   /**
    * Sets the JavaScript function that follows the reduce method and modifies the output.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/mapReduce#mapreduce-finalize-cmd Requirements for the finalize Function]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/mapReduce#mapreduce-finalize-cmd Requirements for the finalize Function]]
    * @param finalizeFunction the JavaScript function that follows the reduce method and modifies the output.
    * @return this
    */
@@ -63,7 +70,7 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
   /**
    * Sets the global variables that are accessible in the map, reduce and finalize functions.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/mapReduce mapReduce]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/mapReduce mapReduce]]
    * @param scope the global variables that are accessible in the map, reduce and finalize functions.
    * @return this
    */
@@ -75,7 +82,7 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
   /**
    * Sets the sort criteria to apply to the query.
    *
-   * [[http://docs.mongodb.org/manual/reference/method/cursor.sort/ Sort]]
+   * [[https://www.mongodb.com/docs/manual/reference/method/cursor.sort/ Sort]]
    * @param sort the sort criteria, which may be null.
    * @return this
    */
@@ -87,7 +94,7 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
   /**
    * Sets the query filter to apply to the query.
    *
-   * [[http://docs.mongodb.org/manual/reference/method/db.collection.find/ Filter]]
+   * [[https://www.mongodb.com/docs/manual/reference/method/db.collection.find/ Filter]]
    * @param filter the filter to apply to the query.
    * @return this
    */
@@ -99,7 +106,7 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
   /**
    * Sets the limit to apply.
    *
-   * [[http://docs.mongodb.org/manual/reference/method/cursor.limit/#cursor.limit Limit]]
+   * [[https://www.mongodb.com/docs/manual/reference/method/cursor.limit/#cursor.limit Limit]]
    * @param limit the limit, which may be null
    * @return this
    */
@@ -112,7 +119,7 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
    * Sets the flag that specifies whether to convert intermediate data into BSON format between the execution of the map and reduce
    * functions. Defaults to false.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/mapReduce mapReduce]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/mapReduce mapReduce]]
    * @param jsMode the flag that specifies whether to convert intermediate data into BSON format between the execution of the map and
    *               reduce functions
    * @return jsMode
@@ -136,7 +143,7 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
   /**
    * Sets the maximum execution time on the server for this operation.
    *
-   * [[http://docs.mongodb.org/manual/reference/operator/meta/maxTimeMS/ Max Time]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/ Max Time]]
    * @param duration the duration
    * @return this
    */
@@ -159,7 +166,7 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
   /**
    * Sets the name of the database to output into.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/mapReduce#output-to-a-collection-with-an-action output with an action]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/mapReduce#output-to-a-collection-with-an-action output with an action]]
    * @param databaseName the name of the database to output into.
    * @return this
    */
@@ -169,42 +176,11 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
   }
 
   /**
-   * Sets if the output database is sharded
-   *
-   * [[http://docs.mongodb.org/manual/reference/command/mapReduce#output-to-a-collection-with-an-action output with an action]]
-   * @param sharded if the output database is sharded
-   * @return this
-   */
-  @deprecated("This option will no longer be supported in MongoDB 4.4.", "4.1.0")
-  def sharded(sharded: Boolean): MapReduceObservable[TResult] = {
-    wrapped.sharded(sharded)
-    this
-  }
-
-  /**
-   * Sets if the post-processing step will prevent MongoDB from locking the database.
-   *
-   * Valid only with the `MapReduceAction.MERGE` or `MapReduceAction.REDUCE` actions.
-   *
-   * [[http://docs.mongodb.org/manual/reference/command/mapReduce/#output-to-a-collection-with-an-action Output with an action]]
-   * @param nonAtomic if the post-processing step will prevent MongoDB from locking the database.
-   * @return this
-   */
-  @deprecated(
-    "This option will no longer be supported in MongoDB 4.4 as it will no longer hold a global or database level write lock",
-    "4.1.0"
-  )
-  def nonAtomic(nonAtomic: Boolean): MapReduceObservable[TResult] = {
-    wrapped.nonAtomic(nonAtomic)
-    this
-  }
-
-  /**
    * Sets the bypass document level validation flag.
    *
    * '''Note:''': This only applies when an `\$out` stage is specified.
    *
-   * [[http://docs.mongodb.org/manual/reference/command/mapReduce#output-to-a-collection-with-an-action output with an action]]
+   * [[https://www.mongodb.com/docs/manual/reference/command/mapReduce#output-to-a-collection-with-an-action output with an action]]
    *
    * @note Requires MongoDB 3.2 or greater
    * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
@@ -243,13 +219,33 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
   }
 
   /**
-   * Aggregates documents to a collection according to the specified map-reduce function with the given options, which must specify a
-   * non-inline result.
+   * Aggregates documents to a collection according to the specified map-reduce function with the given options, which must not produce
+   * results inline. Calling this method and then subscribing to the returned [[SingleObservable]] is the preferred alternative to
+   * subscribing to this [[MapReduceObservable]],
+   * because this method does what is explicitly requested without executing implicit operations.
    *
-   * @return an empty Observable that indicates when the operation has completed
-   * [[http://docs.mongodb.org/manual/aggregation/ Aggregation]]
+   * @return an Observable that indicates when the operation has completed
+   * [[https://www.mongodb.com/docs/manual/aggregation/ Aggregation]]
+   * @throws java.lang.IllegalStateException if a collection name to write the results to has not been specified
+   * @see [[collectionName]]
    */
-  def toCollection(): SingleObservable[Void] = wrapped.toCollection()
+  def toCollection(): SingleObservable[Unit] = wrapped.toCollection()
+
+  /**
+   * Sets the timeoutMode for the cursor.
+   *
+   * Requires the `timeout` to be set, either in the [[MongoClientSettings]],
+   * via [[MongoDatabase]] or via [[MongoCollection]]
+   *
+   * @param timeoutMode the timeout mode
+   * @return this
+   * @since 5.2
+   */
+  @Alpha(Array(Reason.CLIENT))
+  def timeoutMode(timeoutMode: TimeoutMode): MapReduceObservable[TResult] = {
+    wrapped.timeoutMode(timeoutMode)
+    this
+  }
 
   /**
    * Helper to return a single observable limited to the first result.
@@ -259,5 +255,21 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
    */
   def first(): SingleObservable[TResult] = wrapped.first()
 
+  /**
+   * Requests [[MapReduceObservable]] to start streaming data according to the specified map-reduce function with the given options.
+   *
+   *  - If the aggregation produces results inline, then finds all documents in the
+   *    affected namespace and produces them. You may want to use [[toCollection]] instead.
+   *  - Otherwise, produces no elements.
+   */
   override def subscribe(observer: Observer[_ >: TResult]): Unit = wrapped.subscribe(observer)
+
+  /**
+   * Requests [[MapReduceObservable]] to start streaming data according to the specified map-reduce function with the given options.
+   *
+   *  - If the aggregation produces results inline, then finds all documents in the
+   *    affected namespace and produces them. You may want to use [[toCollection]] instead.
+   *  - Otherwise, produces no elements.
+   */
+  override def subscribe(observer: Subscriber[_ >: TResult]): Unit = wrapped.subscribe(observer)
 }

@@ -16,15 +16,19 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
+
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * Options for creating a collection
  *
- * @mongodb.driver.manual reference/method/db.createCollection/ Create Collection
+ * @mongodb.driver.manual reference/command/create/ Create Collection
+ * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
  * @since 3.0
  */
 public class CreateCollectionOptions {
@@ -35,6 +39,40 @@ public class CreateCollectionOptions {
     private IndexOptionDefaults indexOptionDefaults = new IndexOptionDefaults();
     private ValidationOptions validationOptions = new ValidationOptions();
     private Collation collation;
+    private long expireAfterSeconds;
+    private TimeSeriesOptions timeSeriesOptions;
+    private ChangeStreamPreAndPostImagesOptions changeStreamPreAndPostImagesOptions;
+    private ClusteredIndexOptions clusteredIndexOptions;
+    private Bson encryptedFields;
+
+    /**
+     * Construct a new instance
+     */
+    public CreateCollectionOptions() {
+    }
+
+    /**
+     * A shallow copy constructor.
+     *
+     * @param options The options to copy.
+     *
+     * @since 4.9
+     */
+    public CreateCollectionOptions(final CreateCollectionOptions options) {
+        notNull("options", options);
+        maxDocuments = options.maxDocuments;
+        capped = options.capped;
+        sizeInBytes = options.sizeInBytes;
+        storageEngineOptions = options.storageEngineOptions;
+        indexOptionDefaults = options.indexOptionDefaults;
+        validationOptions = options.validationOptions;
+        collation = options.collation;
+        expireAfterSeconds = options.expireAfterSeconds;
+        timeSeriesOptions = options.timeSeriesOptions;
+        changeStreamPreAndPostImagesOptions = options.changeStreamPreAndPostImagesOptions;
+        clusteredIndexOptions = options.clusteredIndexOptions;
+        encryptedFields = options.encryptedFields;
+    }
 
     /**
      * Gets the maximum number of documents allowed in a capped collection.
@@ -194,6 +232,147 @@ public class CreateCollectionOptions {
         return this;
     }
 
+    /**
+     * Returns the expire-after option.  The default value is 0, which indicates no expiration.
+     *
+     * @param timeUnit the time unit
+     * @return the expire-after option, which may be null.
+     * @since 4.3
+     * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
+     */
+    public long getExpireAfter(final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        return timeUnit.convert(expireAfterSeconds, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Sets the expire-after option.
+     *
+     * <p>
+     * A duration indicating after how long old time-series data should be deleted. Partial seconds are ignored.
+     * </p>
+     * <p>
+     * Currently applies only to time-series collections, so if this value is set then so must the time-series options
+     * </p>
+     * @param expireAfter the expire-after duration.  After conversion to seconds using
+     * {@link TimeUnit#convert(long, java.util.concurrent.TimeUnit)}, the value must be &gt;= 0.  A value of 0 indicates no expiration.
+     * @param timeUnit the time unit
+     * @return this
+     * @since 4.3
+     * @see #timeSeriesOptions(TimeSeriesOptions)
+     * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
+     */
+    public CreateCollectionOptions expireAfter(final long expireAfter, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        long asSeconds = TimeUnit.SECONDS.convert(expireAfter, timeUnit);
+        if (asSeconds < 0) {
+            throw new IllegalArgumentException("expireAfter, after conversion to seconds, must be >= 0");
+        }
+        this.expireAfterSeconds = asSeconds;
+        return this;
+    }
+
+    /**
+     * Gets the time series collection options.
+     *
+     * @return the options for a time-series collection
+     * @since 4.3
+     * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
+     */
+    @Nullable
+    public TimeSeriesOptions getTimeSeriesOptions() {
+        return timeSeriesOptions;
+    }
+
+    /**
+     * Sets the time-series collection options.
+     *
+     * @param timeSeriesOptions the time-series options
+     * @return this
+     * @since 4.3
+     * @mongodb.driver.manual core/timeseries-collections/ Time-series collections
+     */
+    public CreateCollectionOptions timeSeriesOptions(final TimeSeriesOptions timeSeriesOptions) {
+        this.timeSeriesOptions = timeSeriesOptions;
+        return this;
+    }
+
+    /**
+     * Gets the clustered index collection options.
+     *
+     * @return the options for a clustered index
+     * @since 4.7
+     */
+    @Nullable
+    public ClusteredIndexOptions getClusteredIndexOptions() {
+        return clusteredIndexOptions;
+    }
+
+    /**
+     * Sets the clustered index collection options.
+     *
+     * @param clusteredIndexOptions the clustered index options
+     * @return this
+     * @since 4.7
+     */
+    public CreateCollectionOptions clusteredIndexOptions(final ClusteredIndexOptions clusteredIndexOptions) {
+        this.clusteredIndexOptions = clusteredIndexOptions;
+        return this;
+    }
+
+    /**
+     * Gets change stream pre- and post- images options.
+     *
+     * @return the options for change stream pre- and post- images
+     * @since 4.7
+     */
+    @Nullable
+    public ChangeStreamPreAndPostImagesOptions getChangeStreamPreAndPostImagesOptions() {
+        return changeStreamPreAndPostImagesOptions;
+    }
+
+    /**
+     * Sets the change stream pre- and post- images options.
+     *
+     * @param changeStreamPreAndPostImagesOptions the change stream pre- and post- images options
+     * @return this
+     * @since 4.7
+     */
+    public CreateCollectionOptions changeStreamPreAndPostImagesOptions(
+            final ChangeStreamPreAndPostImagesOptions changeStreamPreAndPostImagesOptions) {
+        this.changeStreamPreAndPostImagesOptions = changeStreamPreAndPostImagesOptions;
+        return this;
+    }
+
+    /**
+     * Gets any explicitly set encrypted fields.
+     *
+     * <p>Note: If not set the driver will lookup the namespace in {@link AutoEncryptionSettings#getEncryptedFieldsMap()}</p>
+     * @return the encrypted fields document
+     * @since 4.7
+     * @mongodb.server.release 7.0
+     */
+    @Nullable
+    public Bson getEncryptedFields() {
+        return encryptedFields;
+    }
+
+    /**
+     * Sets the encrypted fields
+     *
+     * <p>Explicitly set encrypted fields.</p>
+     * <p>Note: If not set the driver will lookup the namespace in {@link AutoEncryptionSettings#getEncryptedFieldsMap()}</p>
+     * @param encryptedFields the encrypted fields document
+     * @return this
+     * @since 4.7
+     * @mongodb.driver.manual core/security-client-side-encryption/ In-use encryption
+     * @mongodb.server.release 7.0
+     */
+    public CreateCollectionOptions encryptedFields(@Nullable final Bson encryptedFields) {
+        this.encryptedFields = encryptedFields;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "CreateCollectionOptions{"
@@ -204,6 +383,10 @@ public class CreateCollectionOptions {
                 + ", indexOptionDefaults=" + indexOptionDefaults
                 + ", validationOptions=" + validationOptions
                 + ", collation=" + collation
+                + ", expireAfterSeconds=" + expireAfterSeconds
+                + ", timeSeriesOptions=" + timeSeriesOptions
+                + ", changeStreamPreAndPostImagesOptions=" + changeStreamPreAndPostImagesOptions
+                + ", encryptedFields=" + encryptedFields
                 + '}';
     }
 }

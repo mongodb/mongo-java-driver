@@ -23,9 +23,9 @@ import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.NestedGenericHolderModel;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleIdModel;
-import org.bson.codecs.pojo.entities.UpperBoundsModel;
 import org.bson.codecs.pojo.entities.UpperBoundsConcreteModel;
-import org.junit.Test;
+import org.bson.codecs.pojo.entities.UpperBoundsModel;
+import org.junit.jupiter.api.Test;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -37,10 +37,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("rawtypes")
 public final class ClassModelBuilderTest {
@@ -54,7 +55,7 @@ public final class ClassModelBuilderTest {
             assertEquals(field.getName(), builder.getProperty(field.getName()).getWriteName());
         }
 
-        Map<String, TypeParameterMap> fieldNameToTypeParameterMap = new HashMap<String, TypeParameterMap>();
+        Map<String, TypeParameterMap> fieldNameToTypeParameterMap = new HashMap<>();
         fieldNameToTypeParameterMap.put("myIntegerField", TypeParameterMap.builder().build());
         fieldNameToTypeParameterMap.put("myGenericField", TypeParameterMap.builder().addIndex(0).build());
         fieldNameToTypeParameterMap.put("myListField", TypeParameterMap.builder().addIndex(0, 1).build());
@@ -117,7 +118,7 @@ public final class ClassModelBuilderTest {
 
     @Test
     public void testOverrides() throws NoSuchFieldException {
-        ClassModelBuilder<SimpleGenericsModel> builder = ClassModel.<SimpleGenericsModel>builder(SimpleGenericsModel.class)
+        ClassModelBuilder<SimpleGenericsModel> builder = ClassModel.builder(SimpleGenericsModel.class)
                 .annotations(TEST_ANNOTATIONS)
                 .conventions(TEST_CONVENTIONS)
                 .discriminatorKey("_cls")
@@ -148,35 +149,39 @@ public final class ClassModelBuilderTest {
         assertEquals(3, builder.getPropertyModelBuilders().size());
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test()
     public void testValidationIdProperty() {
-        ClassModel.builder(SimpleGenericsModel.class).idPropertyName("ID").build();
+        assertThrows(CodecConfigurationException.class, () ->
+                ClassModel.builder(SimpleGenericsModel.class).idPropertyName("ID").build());
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test()
     public void testValidationDuplicateDocumentFieldName() {
-        ClassModelBuilder<SimpleGenericsModel> builder = ClassModel.builder(SimpleGenericsModel.class);
-        builder.getProperty("myIntegerField").writeName("myGenericField");
-        builder.build();
+        assertThrows(CodecConfigurationException.class, () -> {
+            ClassModelBuilder<SimpleGenericsModel> builder = ClassModel.builder(SimpleGenericsModel.class);
+            builder.getProperty("myIntegerField").writeName("myGenericField");
+            builder.build();
+        });
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test()
     public void testDifferentTypeIdGenerator() {
-        ClassModel.builder(SimpleIdModel.class)
-                .idGenerator(new IdGenerator<String>() {
-                    @Override
-                    public String generate() {
-                        return "id";
-                    }
+        assertThrows(CodecConfigurationException.class, () ->
+                ClassModel.builder(SimpleIdModel.class)
+                        .idGenerator(new IdGenerator<String>() {
+                            @Override
+                            public String generate() {
+                                return "id";
+                            }
 
-                    @Override
-                    public Class<String> getType() {
-                        return String.class;
-                    }
-                }).build();
+                            @Override
+                            public Class<String> getType() {
+                                return String.class;
+                            }
+                        }).build());
     }
 
-    private static final List<Annotation> TEST_ANNOTATIONS = Collections.<Annotation>singletonList(
+    private static final List<Annotation> TEST_ANNOTATIONS = Collections.singletonList(
             new BsonProperty() {
                 @Override
                 public Class<? extends Annotation> annotationType() {
@@ -194,18 +199,10 @@ public final class ClassModelBuilderTest {
                 }
             });
 
-    private static final List<Convention> TEST_CONVENTIONS = Collections.<Convention>singletonList(
-            new Convention() {
-                @Override
-                public void apply(final ClassModelBuilder<?> builder) {
-                }
+    private static final List<Convention> TEST_CONVENTIONS = Collections.singletonList(
+            builder -> {
             });
 
     private static final InstanceCreatorFactory<SimpleGenericsModel> TEST_INSTANCE_CREATOR_FACTORY =
-            new InstanceCreatorFactory<SimpleGenericsModel>() {
-                @Override
-                public InstanceCreator<SimpleGenericsModel> create() {
-                    return null;
-                }
-            };
+            () -> null;
 }

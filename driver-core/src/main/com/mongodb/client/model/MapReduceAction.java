@@ -27,7 +27,9 @@ package com.mongodb.client.model;
  * @since 3.0
  * @mongodb.driver.manual reference/command/mapReduce/ mapReduce Command
  * @mongodb.driver.manual core/map-reduce/ mapReduce Overview
+ * @deprecated Superseded by aggregate
  */
+@Deprecated
 public enum MapReduceAction {
     /**
      * Replace the contents of the {@code collectionName} if the collection with the {@code collectionName} exists.

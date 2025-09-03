@@ -49,13 +49,25 @@ public class BsonArray extends BsonValue implements List<BsonValue>, Cloneable {
      * Construct an empty BsonArray
      */
     public BsonArray() {
-        this(new ArrayList<BsonValue>(), false);
+        this(new ArrayList<>(), false);
+    }
+
+    /**
+     * Construct an empty BsonArray with the specified initial capacity.
+     *
+     * @param  initialCapacity  the initial capacity of the BsonArray
+     * @throws IllegalArgumentException if the specified initial capacity
+     *         is negative
+     * @since 4.3
+     */
+    public BsonArray(final int initialCapacity) {
+        this(new ArrayList<>(initialCapacity), false);
     }
 
     @SuppressWarnings("unchecked")
     BsonArray(final List<? extends BsonValue> values, final boolean copy) {
         if (copy) {
-            this.values = new ArrayList<BsonValue>(values);
+            this.values = new ArrayList<>(values);
         } else {
             this.values = (List<BsonValue>) values;
         }
@@ -225,13 +237,13 @@ public class BsonArray extends BsonValue implements List<BsonValue>, Cloneable {
     @Override
     public String toString() {
         return "BsonArray{"
-               + "values=" + values
+               + "values=" + getValues()
                + '}';
     }
 
     @Override
     public BsonArray clone() {
-        BsonArray to = new BsonArray();
+        BsonArray to = new BsonArray(this.size());
         for (BsonValue cur : this) {
             switch (cur.getBsonType()) {
                 case DOCUMENT:

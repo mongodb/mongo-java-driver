@@ -16,87 +16,124 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.Function;
 import com.mongodb.MongoChangeStreamException;
 import com.mongodb.MongoException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
-import com.mongodb.internal.binding.ConnectionSource;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.binding.ReadBinding;
-import com.mongodb.internal.operation.OperationHelper.CallableWithSource;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 import org.bson.RawBsonDocument;
+import org.bson.codecs.Decoder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
-import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isRetryableError;
-import static com.mongodb.internal.operation.OperationHelper.withReadConnectionSource;
+import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isResumableError;
+import static com.mongodb.internal.operation.SyncOperationHelper.withReadConnectionSource;
 
+/**
+ * A change stream cursor that wraps {@link CommandBatchCursor} with automatic resumption capabilities in the event
+ * of timeouts or transient errors.
+ * <p>
+ * Upon encountering a resumable error during {@code hasNext()}, {@code next()}, or {@code tryNext()} calls, the {@link ChangeStreamBatchCursor}
+ * attempts to establish a new change stream on the server.
+ * </p>
+ * If an error occurring during any of these method calls is not resumable, it is immediately propagated to the caller, and the {@link ChangeStreamBatchCursor}
+ * is closed and invalidated on the server. Server errors that occur during this invalidation process are not propagated to the caller.
+ * <p>
+ * A {@link MongoOperationTimeoutException} does not invalidate the {@link ChangeStreamBatchCursor}, but is immediately propagated to the caller.
+ * Subsequent method call will attempt to resume operation by establishing a new change stream on the server, without doing {@code getMore}
+ * request first.
+ * </p>
+ */
 final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private final ReadBinding binding;
     private final ChangeStreamOperation<T> changeStreamOperation;
     private final int maxWireVersion;
-
-    private AggregateResponseBatchCursor<RawBsonDocument> wrapped;
+    private final TimeoutContext timeoutContext;
+    private CommandBatchCursor<RawBsonDocument> wrapped;
     private BsonDocument resumeToken;
-    private volatile boolean closed;
+    private final AtomicBoolean closed;
+
+    /**
+     * This flag is used to manage change stream resumption logic after a timeout error.
+     * Indicates whether the last {@code hasNext()}, {@code next()}, or {@code tryNext()} call resulted in a {@link MongoOperationTimeoutException}.
+     * If {@code true}, indicates a timeout occurred, prompting an attempt to resume the change stream on the subsequent call.
+     */
+    private boolean lastOperationTimedOut;
 
     ChangeStreamBatchCursor(final ChangeStreamOperation<T> changeStreamOperation,
-                            final AggregateResponseBatchCursor<RawBsonDocument> wrapped,
+                            final CommandBatchCursor<RawBsonDocument> wrapped,
                             final ReadBinding binding,
-                            final BsonDocument resumeToken,
+                            @Nullable final BsonDocument resumeToken,
                             final int maxWireVersion) {
+        this.timeoutContext = binding.getOperationContext().getTimeoutContext();
         this.changeStreamOperation = changeStreamOperation;
         this.binding = binding.retain();
         this.wrapped = wrapped;
         this.resumeToken = resumeToken;
         this.maxWireVersion = maxWireVersion;
+        closed = new AtomicBoolean();
+        lastOperationTimedOut = false;
     }
 
-    AggregateResponseBatchCursor<RawBsonDocument> getWrapped() {
+    CommandBatchCursor<RawBsonDocument> getWrapped() {
         return wrapped;
     }
 
     @Override
     public boolean hasNext() {
-        return resumeableOperation(new Function<AggregateResponseBatchCursor<RawBsonDocument>, Boolean>() {
-            @Override
-            public Boolean apply(final AggregateResponseBatchCursor<RawBsonDocument> queryBatchCursor) {
-                return queryBatchCursor.hasNext();
+        return resumeableOperation(commandBatchCursor -> {
+            try {
+                return commandBatchCursor.hasNext();
+            } finally {
+                cachePostBatchResumeToken(commandBatchCursor);
             }
         });
     }
 
     @Override
     public List<T> next() {
-        return resumeableOperation(new Function<AggregateResponseBatchCursor<RawBsonDocument>, List<T>>() {
-            @Override
-            public List<T> apply(final AggregateResponseBatchCursor<RawBsonDocument> queryBatchCursor) {
-                List<T> results = convertResults(queryBatchCursor.next());
-                cachePostBatchResumeToken(queryBatchCursor);
-                return results;
+        return resumeableOperation(commandBatchCursor -> {
+            try {
+                return convertAndProduceLastId(commandBatchCursor.next(), changeStreamOperation.getDecoder(),
+                        lastId -> resumeToken = lastId);
+            } finally {
+                cachePostBatchResumeToken(commandBatchCursor);
             }
         });
     }
 
     @Override
+    public int available() {
+        return wrapped.available();
+    }
+
+    @Override
     public List<T> tryNext() {
-        return resumeableOperation(new Function<AggregateResponseBatchCursor<RawBsonDocument>, List<T>>() {
-            @Override
-            public List<T> apply(final AggregateResponseBatchCursor<RawBsonDocument> queryBatchCursor) {
-                List<T> results = convertResults(queryBatchCursor.tryNext());
-                cachePostBatchResumeToken(queryBatchCursor);
-                return results;
+        return resumeableOperation(commandBatchCursor -> {
+            try {
+                List<RawBsonDocument> tryNext = commandBatchCursor.tryNext();
+                return tryNext == null ? null
+                        : convertAndProduceLastId(tryNext, changeStreamOperation.getDecoder(), lastId -> resumeToken = lastId);
+            } finally {
+                cachePostBatchResumeToken(commandBatchCursor);
             }
         });
     }
 
     @Override
     public void close() {
-        if (!closed) {
-            closed = true;
+        if (!closed.getAndSet(true)) {
+            timeoutContext.resetTimeoutIfPresent();
             wrapped.close();
             binding.release();
         }
@@ -147,47 +184,77 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         return maxWireVersion;
     }
 
-    private void cachePostBatchResumeToken(final AggregateResponseBatchCursor<RawBsonDocument> queryBatchCursor) {
-        if (queryBatchCursor.getPostBatchResumeToken() != null) {
-            resumeToken = queryBatchCursor.getPostBatchResumeToken();
+    private void cachePostBatchResumeToken(final AggregateResponseBatchCursor<RawBsonDocument> commandBatchCursor) {
+        if (commandBatchCursor.getPostBatchResumeToken() != null) {
+            resumeToken = commandBatchCursor.getPostBatchResumeToken();
         }
     }
 
-    private List<T> convertResults(final List<RawBsonDocument> rawDocuments) {
-        List<T> results = null;
-        if (rawDocuments != null) {
-            results = new ArrayList<T>();
-            for (RawBsonDocument rawDocument : rawDocuments) {
-                if (!rawDocument.containsKey("_id")) {
-                    throw new MongoChangeStreamException("Cannot provide resume functionality when the resume token is missing.");
-                }
-                results.add(rawDocument.decode(changeStreamOperation.getDecoder()));
+    /**
+     * @param lastIdConsumer Is {@linkplain Consumer#accept(Object) called} iff {@code rawDocuments} is successfully converted
+     *                       and the returned {@link List} is neither {@code null} nor {@linkplain List#isEmpty() empty}.
+     */
+    static <T> List<T> convertAndProduceLastId(final List<RawBsonDocument> rawDocuments,
+                                               final Decoder<T> decoder,
+                                               final Consumer<BsonDocument> lastIdConsumer) {
+        List<T> results = new ArrayList<>();
+        for (RawBsonDocument rawDocument : assertNotNull(rawDocuments)) {
+            if (!rawDocument.containsKey("_id")) {
+                throw new MongoChangeStreamException("Cannot provide resume functionality when the resume token is missing.");
             }
-            resumeToken = rawDocuments.get(rawDocuments.size() - 1).getDocument("_id");
+            results.add(rawDocument.decode(decoder));
+        }
+        if (!rawDocuments.isEmpty()) {
+            lastIdConsumer.accept(rawDocuments.get(rawDocuments.size() - 1).getDocument("_id"));
         }
         return results;
     }
 
     <R> R resumeableOperation(final Function<AggregateResponseBatchCursor<RawBsonDocument>, R> function) {
+        timeoutContext.resetTimeoutIfPresent();
+        try {
+            R result = execute(function);
+            lastOperationTimedOut = false;
+            return result;
+        } catch (Throwable exception) {
+            lastOperationTimedOut = isTimeoutException(exception);
+            throw exception;
+        }
+    }
+
+    private <R> R execute(final Function<AggregateResponseBatchCursor<RawBsonDocument>, R> function) {
+        boolean shouldBeResumed = hasPreviousNextTimedOut();
         while (true) {
+            if (shouldBeResumed) {
+                resumeChangeStream();
+            }
             try {
                 return function.apply(wrapped);
             } catch (Throwable t) {
-                if (!isRetryableError(t, maxWireVersion)) {
+                if (!isResumableError(t, maxWireVersion)) {
                     throw MongoException.fromThrowableNonNull(t);
                 }
+                shouldBeResumed = true;
             }
-            wrapped.close();
-
-            withReadConnectionSource(binding, new CallableWithSource<Void>() {
-                @Override
-                public Void call(final ConnectionSource source) {
-                    changeStreamOperation.setChangeStreamOptionsForResume(resumeToken, source.getServerDescription().getMaxWireVersion());
-                    return null;
-                }
-            });
-            wrapped = ((ChangeStreamBatchCursor<T>) changeStreamOperation.execute(binding)).getWrapped();
-            binding.release(); // release the new change stream batch cursor's reference to the binding
         }
+    }
+
+    private void resumeChangeStream() {
+        wrapped.close();
+
+        withReadConnectionSource(binding, source -> {
+            changeStreamOperation.setChangeStreamOptionsForResume(resumeToken, source.getServerDescription().getMaxWireVersion());
+            return null;
+        });
+        wrapped = ((ChangeStreamBatchCursor<T>) changeStreamOperation.execute(binding)).getWrapped();
+        binding.release(); // release the new change stream batch cursor's reference to the binding
+    }
+
+    private boolean hasPreviousNextTimedOut() {
+        return lastOperationTimedOut && !closed.get();
+    }
+
+    private static boolean isTimeoutException(final Throwable exception) {
+        return exception instanceof MongoOperationTimeoutException;
     }
 }

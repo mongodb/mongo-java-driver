@@ -1,0 +1,6 @@
+[
+{
+  "name":"com.mongodb.internal.graalvm.NativeImageApp",
+  "methods":[{"name":"main","parameterTypes":["java.lang.String[]"] }]
+}
+]

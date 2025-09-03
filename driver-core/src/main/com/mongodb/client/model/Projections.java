@@ -16,6 +16,12 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.client.model.search.FieldSearchPath;
+import com.mongodb.client.model.search.SearchCollector;
+import com.mongodb.client.model.search.SearchCount;
+import com.mongodb.client.model.search.SearchOperator;
+import com.mongodb.client.model.search.SearchOptions;
+import com.mongodb.client.model.search.VectorSearchOptions;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -25,6 +31,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.List;
+import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
@@ -44,17 +51,45 @@ public final class Projections {
     }
 
     /**
-     * Creates a projection of a field whose value is computed from the given expression.  Projection with an expression is only supported
-     * using the $project aggregation pipeline stage.
+     * Creates a projection of a field whose value is computed from the given expression. Projection with an expression can be used in the
+     * following contexts:
+     * <ul>
+     *   <li>$project aggregation pipeline stage.</li>
+     *   <li>Starting from MongoDB 4.4, it's also accepted in various find-related methods within the
+     *   {@code MongoCollection}-based API where projection is supported, for example:
+     *     <ul>
+     *       <li>{@code find()}</li>
+     *       <li>{@code findOneAndReplace()}</li>
+     *       <li>{@code findOneAndUpdate()}</li>
+     *       <li>{@code findOneAndDelete()}</li>
+     *     </ul>
+     *   </li>
+     * </ul>
      *
      * @param fieldName     the field name
      * @param expression    the expression
      * @param <TExpression> the expression type
      * @return the projection
+     * @see #computedSearchMeta(String)
      * @see Aggregates#project(Bson)
      */
     public static <TExpression> Bson computed(final String fieldName, final TExpression expression) {
-        return new SimpleExpression<TExpression>(fieldName, expression);
+        return new SimpleExpression<>(fieldName, expression);
+    }
+
+    /**
+     * Creates a projection of a field whose value is equal to the {@code $$SEARCH_META} variable,
+     * for use with {@link Aggregates#search(SearchOperator, SearchOptions)} / {@link Aggregates#search(SearchCollector, SearchOptions)}.
+     * Calling this method is equivalent to calling {@link #computed(String, Object)} with {@code "$$SEARCH_META"} as the second argument.
+     *
+     * @param fieldName the field name
+     * @return the projection
+     * @see SearchCount
+     * @see SearchCollector
+     * @since 4.7
+     */
+    public static Bson computedSearchMeta(final String fieldName) {
+        return computed(fieldName, "$$SEARCH_META");
     }
 
     /**
@@ -138,8 +173,12 @@ public final class Projections {
      * @param fieldName the field name
      * @param metaFieldName the meta field name
      * @return the projection
-     * @mongodb.driver.manual reference/operator/projection/meta/#projection
+     * @mongodb.driver.manual reference/operator/aggregation/meta/
      * @since 4.1
+     * @see #metaTextScore(String)
+     * @see #metaSearchScore(String)
+     * @see #metaVectorSearchScore(String)
+     * @see #metaSearchHighlights(String)
      */
     public static Bson meta(final String fieldName, final String metaFieldName) {
         return new BsonDocument(fieldName, new BsonDocument("$meta", new BsonString(metaFieldName)));
@@ -147,13 +186,59 @@ public final class Projections {
 
     /**
      * Creates a projection to the given field name of the textScore, for use with text queries.
+     * Calling this method is equivalent to calling {@link #meta(String, String)} with {@code "textScore"} as the second argument.
      *
      * @param fieldName the field name
      * @return the projection
-     * @mongodb.driver.manual reference/operator/projection/meta/#projection textScore
+     * @see Filters#text(String, TextSearchOptions)
+     * @mongodb.driver.manual reference/operator/aggregation/meta/#text-score-metadata--meta---textscore- textScore
      */
     public static Bson metaTextScore(final String fieldName) {
         return meta(fieldName, "textScore");
+    }
+
+    /**
+     * Creates a projection to the given field name of the searchScore,
+     * for use with {@link Aggregates#search(SearchOperator, SearchOptions)} / {@link Aggregates#search(SearchCollector, SearchOptions)}.
+     * Calling this method is equivalent to calling {@link #meta(String, String)} with {@code "searchScore"} as the second argument.
+     *
+     * @param fieldName the field name
+     * @return the projection
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @since 4.7
+     */
+    public static Bson metaSearchScore(final String fieldName) {
+        return meta(fieldName, "searchScore");
+    }
+
+    /**
+     * Creates a projection to the given field name of the vectorSearchScore,
+     * for use with {@link Aggregates#vectorSearch(FieldSearchPath, Iterable, String, long, VectorSearchOptions)} .
+     * Calling this method is equivalent to calling {@link #meta(String, String)} with {@code "vectorSearchScore"} as the second argument.
+     *
+     * @param fieldName the field name
+     * @return the projection
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @mongodb.server.release 6.0.10
+     * @since 4.11
+     */
+    public static Bson metaVectorSearchScore(final String fieldName) {
+        return meta(fieldName, "vectorSearchScore");
+    }
+
+    /**
+     * Creates a projection to the given field name of the searchHighlights,
+     * for use with {@link Aggregates#search(SearchOperator, SearchOptions)} / {@link Aggregates#search(SearchCollector, SearchOptions)}.
+     * Calling this method is equivalent to calling {@link #meta(String, String)} with {@code "searchHighlights"} as the second argument.
+     *
+     * @param fieldName the field name
+     * @return the projection
+     * @see com.mongodb.client.model.search.SearchHighlight
+     * @mongodb.atlas.manual atlas-search/highlighting/ Highlighting
+     * @since 4.7
+     */
+    public static Bson metaSearchHighlights(final String fieldName) {
+        return meta(fieldName, "searchHighlights");
     }
 
     /**
@@ -235,7 +320,7 @@ public final class Projections {
 
             FieldsProjection that = (FieldsProjection) o;
 
-            return projections != null ? projections.equals(that.projections) : that.projections == null;
+            return Objects.equals(projections, that.projections);
         }
 
         @Override
@@ -277,10 +362,10 @@ public final class Projections {
 
             ElemMatchFilterProjection that = (ElemMatchFilterProjection) o;
 
-            if (fieldName != null ? !fieldName.equals(that.fieldName) : that.fieldName != null) {
+            if (!Objects.equals(fieldName, that.fieldName)) {
                 return false;
             }
-            return filter != null ? filter.equals(that.filter) : that.filter == null;
+            return Objects.equals(filter, that.filter);
         }
 
         @Override

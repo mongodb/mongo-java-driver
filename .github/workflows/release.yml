@@ -1,0 +1,139 @@
+name: "Release New Version"
+run-name: "Release ${{ inputs.version }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "The version to be released (e.g. 1.2.3)"
+        required: true
+        type: "string"
+
+jobs:
+  prepare-release:
+    environment: release
+    name: "Prepare release"
+    runs-on: ubuntu-latest
+    permissions:
+      # Write permission for id-token is necessary to generate a new token for the GitHub App
+      id-token: write
+      # Write permission for contents is to ensure we're allowed to push to the repository
+      contents: write
+
+    steps:
+      - name: "Create release output"
+        run: echo '🎬 Release process for version ${{ env.RELEASE_VERSION }} started by @${{ github.triggering_actor }}' >> $GITHUB_STEP_SUMMARY
+
+      - uses: mongodb-labs/drivers-github-tools/secure-checkout@v2
+        with:
+          app_id: ${{ vars.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: "Store version numbers in env variables"
+        # The awk command to increase the version number was copied from
+        # StackOverflow: https://stackoverflow.com/a/61921674/3959933
+        # Variables set here:
+        # RELEASE_VERSION: The version the deployment is expected to create
+        # RELEASE_VERSION_WITHOUT_SUFFIX: The version without any stability
+        #   suffixes. Example: 5.2.0-beta0 => 5.2.0
+        # NEXT_VERSION: The next version to be released. For pre-releases, the
+        #   next version is a snapshot of the pre-release version. Examples:
+        #   5.2.0 => 5.2.1; 5.2.0-beta0 => 5.2.0
+        # RELEASE_BRANCH: The name of the stable branch for this release series
+        #   Example: 5.2.0 => 5.2.x
+        #   Example: 5.2.0-beta1 => <current branch>
+        run: |
+          echo RELEASE_VERSION=${{ inputs.version }} >> $GITHUB_ENV
+          echo RELEASE_VERSION_WITHOUT_SUFFIX=$(echo ${{ inputs.version }} | awk -F- '{print $1}') >> $GITHUB_ENV
+          if [[ "${{ inputs.version }}" =~ (alpha|beta|rc)[0-9]+$ ]]; then
+            echo NEXT_VERSION=$(echo ${{ inputs.version }} | awk -F- '{print $1}') >> $GITHUB_ENV
+            echo RELEASE_BRANCH=${{ github.ref_name }} >> $GITHUB_ENV
+          else
+            echo NEXT_VERSION=$(echo ${{ inputs.version }} | awk -F. -v OFS=. '{$NF += 1 ; print}') >> $GITHUB_ENV
+            echo RELEASE_BRANCH=$(echo ${{ inputs.version }} | awk -F. -v OFS=. '{$NF = "x" ; print}') >> $GITHUB_ENV
+          fi
+
+      - name: "Ensure current snapshot version matches release version"
+        run: |
+          grep -q "version=${{ env.RELEASE_VERSION_WITHOUT_SUFFIX }}-SNAPSHOT" gradle.properties
+          if [[ $? != 0 ]]; then
+            echo '❌ Release failed: version in gradle.properties is not a snapshot for release version ${{ inputs.version }}' >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: "Ensure release tag does not already exist"
+        run: |
+          if [[ $(git tag -l r${{ env.RELEASE_VERSION }}) == r${{ env.RELEASE_VERSION }} ]]; then
+            echo '❌ Release failed: tag for version ${{ inputs.version }} already exists' >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      # For patch releases (A.B.C where C != 0), we expect the release to be
+      # triggered from the A.B.x maintenance branch. We use the release version
+      # without suffixes to avoid mistakes when making pre-releases
+      - name: "Fail if patch release is created from wrong release branch"
+        if: ${{ !endsWith(env.RELEASE_VERSION_WITHOUT_SUFFIX, '.0') && env.RELEASE_BRANCH != github.ref_name }}
+        run: |
+          echo '❌ Release failed due to branch mismatch: expected ${{ inputs.version }} to be released from ${{ env.RELEASE_BRANCH }}, got ${{ github.ref_name }}' >> $GITHUB_STEP_SUMMARY
+          exit 1
+
+      # For non-patch releases (A.B.C where C == 0), we expect the release to
+      # be triggered from main or the A.B.x maintenance branch. This includes
+      # pre-releases for any non-patch releases, e.g. 5.2.0-beta1
+      - name: "Fail if non-patch release is created from wrong release branch"
+        if: ${{ endsWith(env.RELEASE_VERSION_WITHOUT_SUFFIX, '.0') && env.RELEASE_BRANCH != github.ref_name && github.ref_name != 'main' }}
+        run: |
+          echo '❌ Release failed due to branch mismatch: expected ${{ inputs.version }} to be released from ${{ env.RELEASE_BRANCH }} or main, got ${{ github.ref_name }}' >> $GITHUB_STEP_SUMMARY
+          exit 1
+
+      # Set commit author information to the user that triggered the release workflow
+      - name: "Set git author information"
+        run: |
+          GITHUB_USER_NAME=$(gh api users/${{ github.actor }} --jq '.name')
+          GITHUB_USER_ID=$(gh api users/${{ github.actor }} --jq '.id')
+          git config user.name "${GITHUB_USER_NAME}"
+          git config user.email "${GITHUB_USER_ID}+${{ github.actor }}@users.noreply.github.com"
+
+      # If a non-patch release is created from a branch other than its
+      # maintenance branch, create that branch from the current one and push it
+      # Pre-releases don't have this behaviour, so we can check the full release
+      # version including stability suffixes to exclude those
+      - name: "Create new release branch for non-patch release"
+        if: ${{ endsWith(env.RELEASE_VERSION, '.0') && env.RELEASE_BRANCH != github.ref_name }}
+        run: |
+          echo '🆕 Creating new release branch ${{ env.RELEASE_BRANCH }} from ${{ github.ref_name }}' >> $GITHUB_STEP_SUMMARY
+          git checkout -b ${{ env.RELEASE_BRANCH }}
+          NEXT_MINOR_VERSION=$(echo "${{ env.RELEASE_VERSION }}" | awk -F. -v OFS=. '{$2 += 1 ; $NF = 0 ; print}')
+          echo "➡️ Bumping version for ${{ github.ref_name }} branch to ${NEXT_MINOR_VERSION}" >> $GITHUB_STEP_SUMMARY
+          git checkout ${{ github.ref_name }}
+          .github/workflows/bump-version.sh "${{ env.RELEASE_VERSION_WITHOUT_SUFFIX }}-SNAPSHOT" "${NEXT_MINOR_VERSION}-SNAPSHOT"
+          git push origin ${{ github.ref_name }}
+          git checkout ${{ env.RELEASE_BRANCH }}
+
+      # This step bumps version numbers in gradle.properties and creates git artifacts for the release
+      - name: "Bump version numbers and create release tag"
+        run: .github/workflows/bump-and-tag.sh "${{ env.RELEASE_VERSION_WITHOUT_SUFFIX }}" "${{ env.RELEASE_VERSION }}" "${{ env.NEXT_VERSION }}"
+
+      - name: "Push release branch and tag"
+        run: |
+          git push origin ${{ env.RELEASE_BRANCH }}
+          git push origin r${{ env.RELEASE_VERSION }}
+
+      - name: "Create draft release with generated changelog"
+        run: |
+          if [[ "${{ inputs.version }}" =~ (alpha|beta|rc) ]]; then
+            PRERELEASE="--prerelease --latest=false"
+          fi
+          echo "RELEASE_URL=$(\
+          gh release create r${RELEASE_VERSION} \
+            ${PRERELEASE} \
+            --target ${{ env.RELEASE_BRANCH }} \
+            --title "Java Driver ${{ env.RELEASE_VERSION }} ($(date '+%B %d, %Y'))" \
+            --generate-notes \
+            --draft\
+          )" >> "$GITHUB_ENV"
+
+      - name: "Set summary"
+        run: |
+          echo '🚀 Created tag and drafted release for version [${{ env.RELEASE_VERSION }}](${{ env.RELEASE_URL }})' >> $GITHUB_STEP_SUMMARY
+          echo '✍️ You may now update the release notes and publish the release when ready' >> $GITHUB_STEP_SUMMARY

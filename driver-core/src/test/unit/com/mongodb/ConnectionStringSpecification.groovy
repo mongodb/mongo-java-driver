@@ -35,7 +35,11 @@ import static com.mongodb.ReadPreference.secondaryPreferred
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
+/**
+ * Update {@link ConnectionStringUnitTest} instead.
+ */
 class ConnectionStringSpecification extends Specification {
+    static final LONG_STRING = new String((1..256).collect { (byte) 1 } as byte[])
 
     @Unroll
     def 'should parse #connectionString into correct components'() {
@@ -53,17 +57,19 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://10.0.0.1')       | 1   | ['10.0.0.1']       | null     | null       | null     | null
         new ConnectionString('mongodb://[::1]')          | 1   | ['[::1]']          | null     | null       | null     | null
         new ConnectionString('mongodb://%2Ftmp%2Fmongo'
-                + 'db-27017.sock')                       | 1   | ['/tmp/mongodb'
-                                                                  + '-27017.sock']  | null     | null       | null     | null
+                + 'db-27017.sock')                       | 1   | ['/tmp/mongodb' +
+                                                                  '-27017.sock']    | null     | null       | null     | null
         new ConnectionString('mongodb://foo/bar')        | 1   | ['foo']            | 'bar'    | null       | null     | null
         new ConnectionString('mongodb://10.0.0.1/bar')   | 1   | ['10.0.0.1']       | 'bar'    | null       | null     | null
         new ConnectionString('mongodb://[::1]/bar')      | 1   | ['[::1]']          | 'bar'    | null       | null     | null
         new ConnectionString('mongodb://%2Ftmp%2Fmongo'
-                + 'db-27017.sock/bar')                   | 1   | ['/tmp/mongodb'
-                                                                  + '-27017.sock']  | 'bar'    | null       | null     | null
+                + 'db-27017.sock/bar')                   | 1   | ['/tmp/mongodb' +
+                                                                  '-27017.sock']    | 'bar'    | null       | null     | null
         new ConnectionString('mongodb://localhost/' +
                                    'test.my.coll')       | 1   | ['localhost']      | 'test'   | 'my.coll'  | null     | null
         new ConnectionString('mongodb://foo/bar.goo')    | 1   | ['foo']            | 'bar'    | 'goo'      | null     | null
+        new ConnectionString('mongodb://foo/s,db')       | 1   | ['foo']            | 's,db'| null      | null     | null
+        new ConnectionString('mongodb://foo/s%2Cdb')     | 1   | ['foo']            | 's,db'| null      | null     | null
         new ConnectionString('mongodb://user:pass@' +
                                    'host/bar')           | 1   | ['host']           | 'bar'    | null       | 'user'   | 'pass' as char[]
         new ConnectionString('mongodb://user:pass@' +
@@ -135,6 +141,28 @@ class ConnectionStringSpecification extends Specification {
                 .withWTimeout(5, MILLISECONDS).withJournal(true)
     }
 
+    @Unroll
+    def 'should treat trailing slash before query parameters as optional'() {
+        expect:
+        uri.getApplicationName() == appName
+        uri.getDatabase() == db
+
+        where:
+        uri                                                              | appName | db
+        new ConnectionString('mongodb://mongodb.com')                    | null    | null
+        new ConnectionString('mongodb://mongodb.com?')                   | null    | null
+        new ConnectionString('mongodb://mongodb.com/')                   | null    | null
+        new ConnectionString('mongodb://mongodb.com/?')                  | null    | null
+        new ConnectionString('mongodb://mongodb.com/test')               | null    | "test"
+        new ConnectionString('mongodb://mongodb.com/test?')              | null    | "test"
+        new ConnectionString('mongodb://mongodb.com/?appName=a1')        | "a1"    | null
+        new ConnectionString('mongodb://mongodb.com?appName=a1')         | "a1"    | null
+        new ConnectionString('mongodb://mongodb.com/?appName=a1/a2')     | "a1/a2" | null
+        new ConnectionString('mongodb://mongodb.com?appName=a1/a2')      | "a1/a2" | null
+        new ConnectionString('mongodb://mongodb.com/test?appName=a1')    | "a1"    | "test"
+        new ConnectionString('mongodb://mongodb.com/test?appName=a1/a2') | "a1/a2" | "test"
+    }
+
     def 'should correctly parse different UUID representations'() {
         expect:
         uri.getUuidRepresentation() == uuidRepresentation
@@ -196,14 +224,15 @@ class ConnectionStringSpecification extends Specification {
     def 'should correctly parse URI options for #type'() {
         expect:
         connectionString.getMinConnectionPoolSize() == 5
-        connectionString.getMaxConnectionPoolSize() == 10;
-        connectionString.getMaxWaitTime() == 150;
+        connectionString.getMaxConnectionPoolSize() == 10
+        connectionString.getMaxWaitTime() == 150
         connectionString.getMaxConnectionIdleTime() == 200
         connectionString.getMaxConnectionLifeTime() == 300
-        connectionString.getConnectTimeout() == 2500;
-        connectionString.getSocketTimeout() == 5500;
-        connectionString.getWriteConcern() == new WriteConcern(1, 2500);
-        connectionString.getReadPreference() == primary() ;
+        connectionString.getMaxConnecting() == 1
+        connectionString.getConnectTimeout() == 2500
+        connectionString.getSocketTimeout() == 5500
+        connectionString.getWriteConcern() == new WriteConcern(1, 2500)
+        connectionString.getReadPreference() == primary()
         connectionString.getRequiredReplicaSetName() == 'test'
         connectionString.getSslEnabled()
         connectionString.getSslInvalidHostnameAllowed()
@@ -215,7 +244,7 @@ class ConnectionStringSpecification extends Specification {
         where:
         connectionString <<
                 [new ConnectionString('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueTimeoutMS=150&'
-                                            + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test&'
+                                            + 'maxIdleTimeMS=200&maxLifeTimeMS=300&maxConnecting=1&replicaSet=test&'
                                             + 'connectTimeoutMS=2500&socketTimeoutMS=5500&'
                                             + 'safe=false&w=1&wtimeout=2500&readPreference=primary&ssl=true&'
                                             + 'sslInvalidHostNameAllowed=true&'
@@ -224,7 +253,7 @@ class ConnectionStringSpecification extends Specification {
                                             + 'heartbeatFrequencyMS=20000&'
                                             + 'appName=app1'),
                  new ConnectionString('mongodb://localhost/?minPoolSize=5;maxPoolSize=10;waitQueueTimeoutMS=150;'
-                                            + 'maxIdleTimeMS=200;maxLifeTimeMS=300;replicaSet=test;'
+                                            + 'maxIdleTimeMS=200;maxLifeTimeMS=300;maxConnecting=1;replicaSet=test;'
                                             + 'connectTimeoutMS=2500;socketTimeoutMS=5500;'
                                             + 'safe=false;w=1;wtimeout=2500;readPreference=primary;ssl=true;'
                                             + 'sslInvalidHostNameAllowed=true;'
@@ -233,7 +262,7 @@ class ConnectionStringSpecification extends Specification {
                                             + 'heartbeatFrequencyMS=20000;'
                                             + 'appName=app1'),
                  new ConnectionString('mongodb://localhost/test?minPoolSize=5;maxPoolSize=10;waitQueueTimeoutMS=150;'
-                                            + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test;'
+                                            + 'maxIdleTimeMS=200&maxLifeTimeMS=300&maxConnecting=1&replicaSet=test;'
                                             + 'connectTimeoutMS=2500;'
                                             + 'socketTimeoutMS=5500&'
                                             + 'safe=false&w=1;wtimeout=2500;readPreference=primary;ssl=true;'
@@ -375,9 +404,85 @@ class ConnectionStringSpecification extends Specification {
     }
 
     @Unroll
+    def 'should throw IllegalArgumentException when the proxy settings are invalid'() {
+        when:
+        new ConnectionString(connectionString)
+
+        then:
+        IllegalArgumentException exception = thrown(IllegalArgumentException)
+        assert exception.message == cause
+
+        where:
+        cause                                                    | connectionString
+        'proxyPort can only be specified with proxyHost'         | 'mongodb://localhost:27017/?proxyPort=1'
+        'proxyPort should be within the valid range (0 to 65535)'| 'mongodb://localhost:27017/?proxyHost=a&proxyPort=-1'
+        'proxyPort should be within the valid range (0 to 65535)'| 'mongodb://localhost:27017/?proxyHost=a&proxyPort=65536'
+        'proxyUsername can only be specified with proxyHost'     | 'mongodb://localhost:27017/?proxyUsername=1'
+        'proxyUsername cannot be empty'                          | 'mongodb://localhost:27017/?proxyHost=a&proxyUsername='
+        'proxyPassword can only be specified with proxyHost'     | 'mongodb://localhost:27017/?proxyPassword=1'
+        'proxyPassword cannot be empty'                          | 'mongodb://localhost:27017/?proxyHost=a&proxyPassword='
+        'username\'s length in bytes cannot be greater than 255' | 'mongodb://localhost:27017/?proxyHost=a&proxyUsername=' + LONG_STRING
+        'password\'s length in bytes cannot be greater than 255' | 'mongodb://localhost:27017/?proxyHost=a&proxyPassword=' + LONG_STRING
+        'Both proxyUsername' +
+                ' and proxyPassword must be set together.' +
+                ' They cannot be set individually'               | 'mongodb://localhost:27017/?proxyHost=a&proxyPassword=1'
+    }
+
+    @Unroll
+    def 'should create connection string with valid proxy socket settings'() {
+        when:
+        def connectionString = new ConnectionString(uri)
+
+        then:
+        assert connectionString.getProxyHost() == proxyHost
+        assert connectionString.getProxyPort() == 1081
+
+        where:
+        uri                                                                               |  proxyHost
+        'mongodb://localhost:27017/?proxyHost=2001:db8:85a3::8a2e:370:7334&proxyPort=1081'| '2001:db8:85a3::8a2e:370:7334'
+        'mongodb://localhost:27017/?proxyHost=::5000&proxyPort=1081'                      | '::5000'
+        'mongodb://localhost:27017/?proxyHost=%3A%3A5000&proxyPort=1081'                  | '::5000'
+        'mongodb://localhost:27017/?proxyHost=0::1&proxyPort=1081'                        | '0::1'
+        'mongodb://localhost:27017/?proxyHost=hyphen-domain.com&proxyPort=1081'           | 'hyphen-domain.com'
+        'mongodb://localhost:27017/?proxyHost=sub.domain.c.com.com&proxyPort=1081'        | 'sub.domain.c.com.com'
+        'mongodb://localhost:27017/?proxyHost=192.168.0.1&proxyPort=1081'                 | '192.168.0.1'
+    }
+
+    @Unroll
+    def 'should create connection string with valid proxy credentials settings'() {
+        when:
+        def connectionString = new ConnectionString(uri)
+
+        then:
+        assert connectionString.getProxyPassword() == proxyPassword
+        assert connectionString.getProxyUsername() == proxyUsername
+
+        where:
+        uri                                                                                               |  proxyPassword | proxyUsername
+        'mongodb://localhost:27017/?proxyHost=test4&proxyPassword=pass%21wor%24&proxyUsername=user%21name'| 'pass!wor$'    | 'user!name'
+        'mongodb://localhost:27017/?proxyHost=::5000&proxyPassword=pass!wor$&proxyUsername=user!name'     | 'pass!wor$'    | 'user!name'
+    }
+
+    def 'should set proxy settings properties'() {
+        when:
+        def connectionString =  new ConnectionString('mongodb+srv://test5.cc/?'
+                + 'proxyPort=1080'
+                + '&proxyHost=proxy.com'
+                + '&proxyUsername=username'
+                + '&proxyPassword=password')
+
+        then:
+        connectionString.getProxyHost() == 'proxy.com'
+        connectionString.getProxyPort() == 1080
+        connectionString.getProxyUsername() == 'username'
+        connectionString.getProxyPassword() == 'password'
+    }
+
+
+    @Unroll
     def 'should throw IllegalArgumentException when the string #cause'() {
         when:
-        new ConnectionString(connectionString);
+        new ConnectionString(connectionString)
 
         then:
         thrown(IllegalArgumentException)
@@ -390,7 +495,6 @@ class ConnectionStringSpecification extends Specification {
         'has an empty host'                             | 'mongodb://localhost:27017,,localhost:27019'
         'has an malformed IPv6 host'                    | 'mongodb://[::1'
         'has unescaped colons'                          | 'mongodb://locahost::1'
-        'is missing a slash'                            | 'mongodb://localhost?wTimeout=5'
         'contains an invalid port string'               | 'mongodb://localhost:twenty'
         'contains an invalid port negative'             | 'mongodb://localhost:-1'
         'contains an invalid port out of range'         | 'mongodb://localhost:1000000'
@@ -417,13 +521,14 @@ class ConnectionStringSpecification extends Specification {
         def connectionString = new ConnectionString('mongodb://localhost')
 
         then:
-        connectionString.getMaxConnectionPoolSize() == null;
-        connectionString.getMaxWaitTime() == null;
-        connectionString.getConnectTimeout() == null;
-        connectionString.getSocketTimeout() == null;
-        connectionString.getWriteConcern() == null;
-        connectionString.getReadConcern() == null;
-        connectionString.getReadPreference() == null;
+        connectionString.getMaxConnectionPoolSize() == null
+        connectionString.getMaxWaitTime() == null
+        connectionString.getMaxConnecting() == null
+        connectionString.getConnectTimeout() == null
+        connectionString.getSocketTimeout() == null
+        connectionString.getWriteConcern() == null
+        connectionString.getReadConcern() == null
+        connectionString.getReadPreference() == null
         connectionString.getRequiredReplicaSetName() == null
         connectionString.getSslEnabled() == null
         connectionString.getSslInvalidHostnameAllowed() == null
@@ -517,7 +622,7 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://jeff@localhost/?' +
                              'authMechanism=GSSAPI' +
                              '&authMechanismProperties=' +
-                             'SERVICE_NAME:foo:bar')
+                             'SERVICE_NAMEbar') // missing =
 
         then:
         thrown(IllegalArgumentException)
@@ -526,7 +631,7 @@ class ConnectionStringSpecification extends Specification {
     @Unroll
     def 'should correct parse read preference for #readPreference'() {
         expect:
-        uri.getReadPreference() == readPreference;
+        uri.getReadPreference() == readPreference
 
         where:
         uri                                                              | readPreference
@@ -537,9 +642,6 @@ class ConnectionStringSpecification extends Specification {
                 '?readPreference=secondary')                             | secondary()
         new ConnectionString('mongodb://localhost/' +
                                    '?readPreference=secondaryPreferred') | secondaryPreferred()
-        new ConnectionString('mongodb://localhost/?slaveOk=true')        | secondaryPreferred()
-        new ConnectionString('mongodb://localhost/?slaveOk=false')       | primary()
-        new ConnectionString('mongodb://localhost/?slaveOk=foo')         | primary()
         new ConnectionString('mongodb://localhost/' +
                                    '?readPreference=secondaryPreferred' +
                                    '&readPreferenceTags=dc:ny,rack:1' +
@@ -565,7 +667,7 @@ class ConnectionStringSpecification extends Specification {
     @Unroll
     def 'should correct parse read concern for #readConcern'() {
         expect:
-        uri.getReadConcern() == readConcern;
+        uri.getReadConcern() == readConcern
 
         where:
         uri                                                                     | readConcern
@@ -613,12 +715,23 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://ross:123@localhost/?'
                              + 'authMechanism=SCRAM-SHA-1')         | new ConnectionString('mongodb://ross:123@localhost/?'
                                                                                            + 'authMechanism=SCRAM-SHA-1')
+        new ConnectionString('mongodb://ross:123@localhost/?'
+                + 'proxyHost=proxy.com'
+                + '&proxyPort=1080'
+                + '&proxyUsername=username'
+                + '&proxyPassword=password')                         |         new ConnectionString('mongodb://ross:123@localhost/?'
+                                                                                            + 'proxyHost=proxy.com'
+                                                                                            + '&proxyPort=1080'
+                                                                                            + '&proxyUsername=username'
+                                                                                            + '&proxyPassword=password')
+
         new ConnectionString('mongodb://localhost/db.coll'
                              + '?minPoolSize=5;'
                              + 'maxPoolSize=10;'
                              + 'waitQueueTimeoutMS=150;'
                              + 'maxIdleTimeMS=200;'
                              + 'maxLifeTimeMS=300;replicaSet=test;'
+                             + 'maxConnecting=1;'
                              + 'connectTimeoutMS=2500;'
                              + 'socketTimeoutMS=5500;'
                              + 'safe=false;w=1;wtimeout=2500;'
@@ -628,7 +741,9 @@ class ConnectionStringSpecification extends Specification {
                                                                                              + 'maxPoolSize=10;'
                                                                                              + 'waitQueueTimeoutMS=150;'
                                                                                              + 'maxIdleTimeMS=200&maxLifeTimeMS=300'
-                                                                                             + '&replicaSet=test;connectTimeoutMS=2500;'
+                                                                                             + '&replicaSet=test;'
+                                                                                             + 'maxConnecting=1;'
+                                                                                             + 'connectTimeoutMS=2500;'
                                                                                              + 'socketTimeoutMS=5500&safe=false&w=1;'
                                                                                              + 'wtimeout=2500;fsync=true'
                                                                                              + '&directConnection=true'
@@ -653,14 +768,27 @@ class ConnectionStringSpecification extends Specification {
                            + '?readPreference=secondaryPreferred'
                            + '&readPreferenceTags=dc:ny,rack:1'
                            + '&readPreferenceTags=dc:ny'
-                           + '&readPreferenceTags=')                  | new ConnectionString('mongodb://localhost/'
+                           + '&readPreferenceTags='
+                           + '&maxConnecting=1')                | new ConnectionString('mongodb://localhost/'
                                                                                            + '?readPreference=secondaryPreferred'
                                                                                            + '&readPreferenceTags=dc:ny'
                                                                                            + '&readPreferenceTags=dc:ny, rack:1'
-                                                                                           + '&readPreferenceTags=')
+                                                                                           + '&readPreferenceTags='
+                                                                                           + '&maxConnecting=2')
         new ConnectionString('mongodb://ross:123@localhost/?'
-                           + 'authMechanism=SCRAM-SHA-1')            | new ConnectionString('mongodb://ross:123@localhost/?'
+                           + 'authMechanism=SCRAM-SHA-1')             | new ConnectionString('mongodb://ross:123@localhost/?'
                                                                                           + 'authMechanism=GSSAPI')
+        new ConnectionString('mongodb://ross:123@localhost/?'
+                + 'proxyHost=proxy.com')                              |     new ConnectionString('mongodb://ross:123@localhost/?'
+                                                                                        + 'proxyHost=1proxy.com')
+        new ConnectionString('mongodb://ross:123@localhost/?'
+                + 'proxyHost=proxy.com&proxyPort=1080')               |     new ConnectionString('mongodb://ross:123@localhost/?'
+                                                                                         + 'proxyHost=proxy.com1.com&proxyPort=1081')
+        new ConnectionString('mongodb://ross:123@localhost/?'
+                + 'proxyHost=proxy.com&proxyPassword=password'
+                + '&proxyUsername=username')                            |     new ConnectionString('mongodb://ross:123@localhost/?'
+                                                                                         + 'proxyHost=proxy.com&proxyPassword=password1'
+                                                                                         + '&proxyUsername=username')
     }
 
     def 'should recognize SRV protocol'() {
@@ -670,6 +798,20 @@ class ConnectionStringSpecification extends Specification {
         then:
         connectionString.isSrvProtocol()
         connectionString.hosts == ['test5.test.build.10gen.cc']
+    }
+
+    // sslEnabled defaults to true with mongodb+srv but can be overridden via query parameter
+    def 'should set sslEnabled property with SRV protocol'() {
+        expect:
+        connectionString.getSslEnabled() == sslEnabled
+
+        where:
+        connectionString                                                           | sslEnabled
+        new ConnectionString('mongodb+srv://test5.test.build.10gen.cc')            | true
+        new ConnectionString('mongodb+srv://test5.test.build.10gen.cc/?tls=true')  | true
+        new ConnectionString('mongodb+srv://test5.test.build.10gen.cc/?ssl=true')  | true
+        new ConnectionString('mongodb+srv://test5.test.build.10gen.cc/?tls=false') | false
+        new ConnectionString('mongodb+srv://test5.test.build.10gen.cc/?ssl=false') | false
     }
 
 
@@ -691,5 +833,16 @@ class ConnectionStringSpecification extends Specification {
 
         expect:
         uri.credential == createCredential('bob', 'otherDB', 'pwd'.toCharArray())
+    }
+
+    def 'should use DnsClient to resolve TXT record'() {
+        given:
+        def dnsClient = { def name, def type -> ['replicaSet=java'] }
+
+        when:
+        def connectionString = new ConnectionString('mongodb+srv://free-java.mongodb-dev.net', dnsClient);
+
+        then:
+        connectionString.getRequiredReplicaSetName() == 'java'
     }
 }

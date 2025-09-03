@@ -41,7 +41,7 @@ public interface BsonInput extends Closeable {
     byte readByte();
 
     /**
-     * Reads the specified number of bytes into the given byte array. This is equivalent to to {@code readBytes(bytes, 0, bytes.length)}.
+     * Reads the specified number of bytes into the given byte array. This is equivalent to {@code readBytes(bytes, 0, bytes.length)}.
      *
      * @param bytes the byte array to write into
      */

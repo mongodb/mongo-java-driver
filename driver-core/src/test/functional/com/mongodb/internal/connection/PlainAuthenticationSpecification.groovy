@@ -25,18 +25,20 @@ import com.mongodb.async.FutureResultCallback
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.SocketSettings
-import com.mongodb.connection.SocketStreamFactory
-import com.mongodb.connection.netty.NettyStreamFactory
+import com.mongodb.internal.connection.netty.NettyStreamFactory
 import org.bson.BsonDocument
 import org.bson.BsonString
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import static com.mongodb.AuthenticationMechanism.PLAIN
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.getClusterConnectionMode
 import static com.mongodb.ClusterFixture.getConnectionString
 import static com.mongodb.ClusterFixture.getCredential
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.MongoCredential.createPlainCredential
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.internal.connection.CommandHelper.executeCommand
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -49,7 +51,8 @@ class PlainAuthenticationSpecification extends Specification {
 
         when:
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
+                getClusterConnectionMode(), null, connection, OPERATION_CONTEXT)
 
         then:
         thrown(MongoCommandException)
@@ -67,7 +70,8 @@ class PlainAuthenticationSpecification extends Specification {
 
         when:
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
+                getClusterConnectionMode(), null, connection, OPERATION_CONTEXT)
 
         then:
         true
@@ -85,7 +89,8 @@ class PlainAuthenticationSpecification extends Specification {
 
         when:
         openConnection(connection, async)
-        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')), connection)
+        executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
+                getClusterConnectionMode(), null, connection, OPERATION_CONTEXT)
 
         then:
         thrown(MongoSecurityException)
@@ -102,24 +107,26 @@ class PlainAuthenticationSpecification extends Specification {
     }
 
     private static InternalStreamConnection createConnection(final boolean async, final MongoCredential credential) {
-        new InternalStreamConnection(
+        new InternalStreamConnection(SINGLE,
                 new ServerId(new ClusterId(), new ServerAddress(getConnectionString().getHosts().get(0))),
+                new TestConnectionGenerationSupplier(),
                 async ? new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings())
-                        : new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()), [], null,
-                new InternalStreamConnectionInitializer(createAuthenticator(credential), null, []))
+                        : new SocketStreamFactory(new DefaultInetAddressResolver(), SocketSettings.builder().build(), getSslSettings()),
+                [], null, new InternalStreamConnectionInitializer(SINGLE, createAuthenticator(credential), null, [], null)
+        )
     }
 
     private static Authenticator createAuthenticator(final MongoCredential credential) {
-        credential == null ? null : new PlainAuthenticator(new MongoCredentialWithCache(credential))
+        credential == null ? null : new PlainAuthenticator(new MongoCredentialWithCache(credential), clusterConnectionMode, null)
     }
 
     private static void openConnection(final InternalConnection connection, final boolean async) {
         if (async) {
-            FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>();
-            connection.openAsync(futureResultCallback)
-            futureResultCallback.get(ClusterFixture.TIMEOUT, SECONDS);
+            FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>()
+            connection.openAsync(OPERATION_CONTEXT, futureResultCallback)
+            futureResultCallback.get(ClusterFixture.TIMEOUT, SECONDS)
         } else {
-            connection.open()
+            connection.open(OPERATION_CONTEXT)
         }
     }
 }

@@ -20,6 +20,8 @@ import org.bson.Transformer;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import java.util.Objects;
+
 import static org.bson.assertions.Assertions.notNull;
 import static org.bson.codecs.BsonTypeClassMap.DEFAULT_BSON_TYPE_CLASS_MAP;
 
@@ -72,7 +74,7 @@ public class IterableCodecProvider implements CodecProvider {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "deprecation"})
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
         if (Iterable.class.isAssignableFrom(clazz)) {
             return (Codec<T>) new IterableCodec(registry, bsonTypeClassMap, valueTransformer);
@@ -95,7 +97,7 @@ public class IterableCodecProvider implements CodecProvider {
         if (!bsonTypeClassMap.equals(that.bsonTypeClassMap)) {
             return false;
         }
-        if (valueTransformer != null ? !valueTransformer.equals(that.valueTransformer) : that.valueTransformer != null) {
+        if (!Objects.equals(valueTransformer, that.valueTransformer)) {
             return false;
         }
 
@@ -107,5 +109,10 @@ public class IterableCodecProvider implements CodecProvider {
         int result = bsonTypeClassMap.hashCode();
         result = 31 * result + (valueTransformer != null ? valueTransformer.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "IterableCodecProvider{}";
     }
 }

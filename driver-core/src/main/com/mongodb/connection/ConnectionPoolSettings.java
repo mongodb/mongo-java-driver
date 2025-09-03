@@ -19,7 +19,12 @@ package com.mongodb.connection;
 import com.mongodb.ConnectionString;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.event.ConnectionCheckOutStartedEvent;
+import com.mongodb.event.ConnectionCheckedInEvent;
+import com.mongodb.event.ConnectionCheckedOutEvent;
+import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
+import com.mongodb.event.ConnectionReadyEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +51,7 @@ public class ConnectionPoolSettings {
     private final long maxConnectionIdleTimeMS;
     private final long maintenanceInitialDelayMS;
     private final long maintenanceFrequencyMS;
+    private final int maxConnecting;
 
     /**
      * Gets a Builder for creating a new ConnectionPoolSettings instance.
@@ -72,7 +78,7 @@ public class ConnectionPoolSettings {
      */
     @NotThreadSafe
     public static final class Builder {
-        private List<ConnectionPoolListener> connectionPoolListeners = new ArrayList<ConnectionPoolListener>();
+        private List<ConnectionPoolListener> connectionPoolListeners = new ArrayList<>();
         private int maxSize = 100;
         private int minSize;
         private long maxWaitTimeMS = 1000 * 60 * 2;
@@ -80,6 +86,7 @@ public class ConnectionPoolSettings {
         private long maxConnectionIdleTimeMS;
         private long maintenanceInitialDelayMS;
         private long maintenanceFrequencyMS = MILLISECONDS.convert(1, MINUTES);
+        private int maxConnecting = 2;
 
         Builder() {
         }
@@ -95,7 +102,7 @@ public class ConnectionPoolSettings {
          */
         public Builder applySettings(final ConnectionPoolSettings connectionPoolSettings) {
             notNull("connectionPoolSettings", connectionPoolSettings);
-            connectionPoolListeners = new ArrayList<ConnectionPoolListener>(connectionPoolSettings.connectionPoolListeners);
+            connectionPoolListeners = new ArrayList<>(connectionPoolSettings.connectionPoolListeners);
             maxSize = connectionPoolSettings.maxSize;
             minSize = connectionPoolSettings.minSize;
             maxWaitTimeMS = connectionPoolSettings.maxWaitTimeMS;
@@ -103,6 +110,7 @@ public class ConnectionPoolSettings {
             maxConnectionIdleTimeMS = connectionPoolSettings.maxConnectionIdleTimeMS;
             maintenanceInitialDelayMS = connectionPoolSettings.maintenanceInitialDelayMS;
             maintenanceFrequencyMS = connectionPoolSettings.maintenanceFrequencyMS;
+            maxConnecting = connectionPoolSettings.maxConnecting;
             return this;
         }
 
@@ -112,8 +120,10 @@ public class ConnectionPoolSettings {
          *
          * <p>Default is 100.</p>
          *
-         * @param maxSize the maximum number of connections in the pool.
+         * @param maxSize the maximum number of connections in the pool; if 0, then there is no limit.
          * @return this
+         * @see #getMaxSize()
+         * @see #getMaxWaitTime(TimeUnit)
          */
         public Builder maxSize(final int maxSize) {
             this.maxSize = maxSize;
@@ -135,13 +145,38 @@ public class ConnectionPoolSettings {
         }
 
         /**
-         * <p>The maximum time that a thread may wait for a connection to become available.</p>
+         * The maximum duration to wait until either:
+         * <ul>
+         *     <li>
+         *         an {@linkplain ConnectionCheckedOutEvent in-use connection} becomes {@linkplain ConnectionCheckedInEvent available}; or
+         *     </li>
+         *     <li>
+         *         a {@linkplain ConnectionCreatedEvent connection is created} and begins to be {@linkplain ConnectionReadyEvent established}.
+         *         The time between {@linkplain ConnectionCheckOutStartedEvent requesting} a connection
+         *         and it being created is limited by this maximum duration.
+         *         The maximum time between it being created and {@linkplain ConnectionCheckedOutEvent successfully checked out},
+         *         which includes the time to {@linkplain ConnectionReadyEvent establish} the created connection,
+         *         is affected by {@link SocketSettings#getConnectTimeout(TimeUnit)}, {@link SocketSettings#getReadTimeout(TimeUnit)}
+         *         among others, and is not affected by this maximum duration.
+         *     </li>
+         * </ul>
+         * The reasons it is not always possible to create and start establishing a connection
+         * whenever there is no available connection:
+         * <ul>
+         *     <li>
+         *         the number of connections per pool is limited by {@link #getMaxSize()};
+         *     </li>
+         *     <li>
+         *         the number of connections a pool may be establishing concurrently is limited by {@link #getMaxConnecting()}.
+         *     </li>
+         * </ul>
          *
          * <p>Default is 2 minutes. A value of 0 means that it will not wait.  A negative value means it will wait indefinitely.</p>
          *
          * @param maxWaitTime the maximum amount of time to wait
          * @param timeUnit    the TimeUnit for this wait period
          * @return this
+         * @see #getMaxWaitTime(TimeUnit)
          */
         public Builder maxWaitTime(final long maxWaitTime, final TimeUnit timeUnit) {
             this.maxWaitTimeMS = MILLISECONDS.convert(maxWaitTime, timeUnit);
@@ -211,6 +246,33 @@ public class ConnectionPoolSettings {
         }
 
         /**
+         * Sets the connection pool listeners.
+         *
+         * @param connectionPoolListeners list of connection pool listeners
+         * @return this
+         * @since 4.5
+         */
+        public Builder connectionPoolListenerList(final List<ConnectionPoolListener> connectionPoolListeners) {
+            notNull("connectionPoolListeners", connectionPoolListeners);
+            this.connectionPoolListeners = new ArrayList<>(connectionPoolListeners);
+            return this;
+        }
+
+        /**
+         * The maximum number of connections a pool may be establishing concurrently.
+         *
+         * @param maxConnecting The maximum number of connections a pool may be establishing concurrently. Must be positive.
+         * @return {@code this}.
+         * @see ConnectionPoolSettings#getMaxConnecting()
+         * @see #getMaxWaitTime(TimeUnit)
+         * @since 4.4
+         */
+        public Builder maxConnecting(final int maxConnecting) {
+            this.maxConnecting = maxConnecting;
+            return this;
+        }
+
+        /**
          * Creates a new ConnectionPoolSettings object with the settings initialised on this builder.
          *
          * @return a new ConnectionPoolSettings object
@@ -251,6 +313,11 @@ public class ConnectionPoolSettings {
                 maxConnectionLifeTime(maxConnectionLifeTime, MILLISECONDS);
             }
 
+            Integer maxConnecting = connectionString.getMaxConnecting();
+            if (maxConnecting != null) {
+                maxConnecting(maxConnecting);
+            }
+
             return this;
         }
     }
@@ -261,7 +328,10 @@ public class ConnectionPoolSettings {
      *
      * <p>Default is 100.</p>
      *
-     * @return the maximum number of connections in the pool.
+     * @return the maximum number of connections in the pool; if 0, then there is no limit.
+     * @see Builder#maxSize(int)
+     * @see ConnectionString#getMaxConnectionPoolSize()
+     * @see #getMaxWaitTime(TimeUnit)
      */
     public int getMaxSize() {
         return maxSize;
@@ -280,12 +350,38 @@ public class ConnectionPoolSettings {
     }
 
     /**
-     * <p>The maximum time that a thread may wait for a connection to become available.</p>
+     * The maximum duration to wait until either:
+     * <ul>
+     *     <li>
+     *         an {@linkplain ConnectionCheckedOutEvent in-use connection} becomes {@linkplain ConnectionCheckedInEvent available}; or
+     *     </li>
+     *     <li>
+     *         a {@linkplain ConnectionCreatedEvent connection is created} and begins to be {@linkplain ConnectionReadyEvent established}.
+     *         The time between {@linkplain ConnectionCheckOutStartedEvent requesting} a connection
+     *         and it being created is limited by this maximum duration.
+     *         The maximum time between it being created and {@linkplain ConnectionCheckedOutEvent successfully checked out},
+     *         which includes the time to {@linkplain ConnectionReadyEvent establish} the created connection,
+     *         is affected by {@link SocketSettings#getConnectTimeout(TimeUnit)}, {@link SocketSettings#getReadTimeout(TimeUnit)}
+     *         among others, and is not affected by this maximum duration.
+     *     </li>
+     * </ul>
+     * The reasons it is not always possible to create and start establishing a connection
+     * whenever there is no available connection:
+     * <ul>
+     *     <li>
+     *         the number of connections per pool is limited by {@link #getMaxSize()};
+     *     </li>
+     *     <li>
+     *         the number of connections a pool may be establishing concurrently is limited by {@link #getMaxConnecting()}.
+     *     </li>
+     * </ul>
      *
      * <p>Default is 2 minutes. A value of 0 means that it will not wait.  A negative value means it will wait indefinitely.</p>
      *
      * @param timeUnit the TimeUnit for this wait period
      * @return the maximum amount of time to wait in the given TimeUnits
+     * @see Builder#maxWaitTime(long, TimeUnit)
+     * @see ConnectionString#getMaxWaitTime()
      */
     public long getMaxWaitTime(final TimeUnit timeUnit) {
         return timeUnit.convert(maxWaitTimeMS, MILLISECONDS);
@@ -327,7 +423,7 @@ public class ConnectionPoolSettings {
      * Returns the time period between runs of the maintenance job.
      *
      * @param timeUnit the TimeUnit to use for this time period
-     * @return the time period between runs of the maintainance job in the given units
+     * @return the time period between runs of the maintenance job in the given units
      */
     public long getMaintenanceFrequency(final TimeUnit timeUnit) {
         return timeUnit.convert(maintenanceFrequencyMS, MILLISECONDS);
@@ -341,6 +437,23 @@ public class ConnectionPoolSettings {
      */
     public List<ConnectionPoolListener> getConnectionPoolListeners() {
         return connectionPoolListeners;
+    }
+
+    /**
+     * The maximum number of connections a pool may be establishing concurrently.
+     * Establishment of a connection is a part of its life cycle
+     * starting after a {@link ConnectionCreatedEvent} and ending before a {@link ConnectionReadyEvent}.
+     * <p>
+     * Default is 2.</p>
+     *
+     * @return The maximum number of connections a pool may be establishing concurrently.
+     * @see Builder#maxConnecting(int)
+     * @see ConnectionString#getMaxConnecting()
+     * @see #getMaxWaitTime(TimeUnit)
+     * @since 4.4
+     */
+    public int getMaxConnecting() {
+        return maxConnecting;
     }
 
     @Override
@@ -378,7 +491,9 @@ public class ConnectionPoolSettings {
         if (!connectionPoolListeners.equals(that.connectionPoolListeners)) {
             return false;
         }
-
+        if (maxConnecting != that.maxConnecting) {
+            return false;
+        }
         return true;
     }
 
@@ -392,31 +507,34 @@ public class ConnectionPoolSettings {
         result = 31 * result + (int) (maintenanceInitialDelayMS ^ (maintenanceInitialDelayMS >>> 32));
         result = 31 * result + (int) (maintenanceFrequencyMS ^ (maintenanceFrequencyMS >>> 32));
         result = 31 * result + connectionPoolListeners.hashCode();
+        result = 31 * result + maxConnecting;
         return result;
     }
 
     @Override
     public String toString() {
         return "ConnectionPoolSettings{"
-               + "maxSize=" + maxSize
-               + ", minSize=" + minSize
-               + ", maxWaitTimeMS=" + maxWaitTimeMS
-               + ", maxConnectionLifeTimeMS=" + maxConnectionLifeTimeMS
-               + ", maxConnectionIdleTimeMS=" + maxConnectionIdleTimeMS
-               + ", maintenanceInitialDelayMS=" + maintenanceInitialDelayMS
-               + ", maintenanceFrequencyMS=" + maintenanceFrequencyMS
-               + ", connectionPoolListeners=" + connectionPoolListeners
-               + '}';
+                + "maxSize=" + maxSize
+                + ", minSize=" + minSize
+                + ", maxWaitTimeMS=" + maxWaitTimeMS
+                + ", maxConnectionLifeTimeMS=" + maxConnectionLifeTimeMS
+                + ", maxConnectionIdleTimeMS=" + maxConnectionIdleTimeMS
+                + ", maintenanceInitialDelayMS=" + maintenanceInitialDelayMS
+                + ", maintenanceFrequencyMS=" + maintenanceFrequencyMS
+                + ", connectionPoolListeners=" + connectionPoolListeners
+                + ", maxConnecting=" + maxConnecting
+                + '}';
     }
 
     ConnectionPoolSettings(final Builder builder) {
-        isTrue("maxSize > 0", builder.maxSize > 0);
+        isTrue("maxSize >= 0", builder.maxSize >= 0);
         isTrue("minSize >= 0", builder.minSize >= 0);
         isTrue("maintenanceInitialDelayMS >= 0", builder.maintenanceInitialDelayMS >= 0);
         isTrue("maxConnectionLifeTime >= 0", builder.maxConnectionLifeTimeMS >= 0);
         isTrue("maxConnectionIdleTime >= 0", builder.maxConnectionIdleTimeMS >= 0);
         isTrue("sizeMaintenanceFrequency > 0", builder.maintenanceFrequencyMS > 0);
         isTrue("maxSize >= minSize", builder.maxSize >= builder.minSize);
+        isTrue("maxConnecting > 0", builder.maxConnecting > 0);
 
         maxSize = builder.maxSize;
         minSize = builder.minSize;
@@ -426,5 +544,6 @@ public class ConnectionPoolSettings {
         maintenanceInitialDelayMS = builder.maintenanceInitialDelayMS;
         maintenanceFrequencyMS = builder.maintenanceFrequencyMS;
         connectionPoolListeners = unmodifiableList(builder.connectionPoolListeners);
+        maxConnecting = builder.maxConnecting;
     }
 }

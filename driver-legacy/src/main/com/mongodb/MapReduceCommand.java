@@ -28,7 +28,9 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * This class groups the argument for a map/reduce operation and can build the underlying command object
  *
  * @mongodb.driver.manual applications/map-reduce Map-Reduce
+ * @deprecated Superseded by aggregate
  */
+@Deprecated
 public class MapReduceCommand {
 
     private final String mapReduce;
@@ -220,7 +222,7 @@ public class MapReduceCommand {
     /**
      * Sets the max execution time for this command, in the given time unit.
      *
-     * @param maxTime  the maximum execution time. A non-zero value requires a server version &gt;= 2.6
+     * @param maxTime  the maximum execution time.
      * @param timeUnit the time unit that maxTime is specified in
      * @since 2.12.0
      */
@@ -264,7 +266,7 @@ public class MapReduceCommand {
      * @param jsMode Specifies whether to convert intermediate data into BSON format between the execution of the map and reduce functions
      * @since 2.13
      */
-    public void setJsMode(final @Nullable Boolean jsMode) {
+    public void setJsMode(@Nullable final Boolean jsMode) {
         this.jsMode = jsMode;
     }
 
@@ -417,7 +419,6 @@ public class MapReduceCommand {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
-    @Nullable
     public void setCollation(final Collation collation) {
         this.collation = collation;
     }

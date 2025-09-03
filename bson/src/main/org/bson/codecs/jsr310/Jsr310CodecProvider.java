@@ -39,17 +39,12 @@ import java.util.Map;
  * @since 3.7
  */
 public class Jsr310CodecProvider implements CodecProvider {
-    private static final Map<Class<?>, Codec<?>> JSR310_CODEC_MAP = new HashMap<Class<?>, Codec<?>>();
+    private static final Map<Class<?>, Codec<?>> JSR310_CODEC_MAP = new HashMap<>();
     static {
-        try {
-            Class.forName("java.time.Instant"); // JSR-310 support canary test.
-            putCodec(new InstantCodec());
-            putCodec(new LocalDateCodec());
-            putCodec(new LocalDateTimeCodec());
-            putCodec(new LocalTimeCodec());
-        } catch (ClassNotFoundException e) {
-            // No JSR-310 support
-        }
+        putCodec(new InstantCodec());
+        putCodec(new LocalDateCodec());
+        putCodec(new LocalDateTimeCodec());
+        putCodec(new LocalTimeCodec());
     }
 
     private static void putCodec(final Codec<?> codec) {
@@ -60,5 +55,10 @@ public class Jsr310CodecProvider implements CodecProvider {
     @Override
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
         return (Codec<T>) JSR310_CODEC_MAP.get(clazz);
+    }
+
+    @Override
+    public String toString() {
+        return "Jsr310CodecProvider{}";
     }
 }

@@ -40,6 +40,7 @@ import static com.mongodb.client.model.Filters.bitsAllSet
 import static com.mongodb.client.model.Filters.bitsAnyClear
 import static com.mongodb.client.model.Filters.bitsAnySet
 import static com.mongodb.client.model.Filters.elemMatch
+import static com.mongodb.client.model.Filters.empty
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Filters.expr
 import static com.mongodb.client.model.Filters.geoIntersects
@@ -161,7 +162,7 @@ class FiltersSpecification extends Specification {
 
     def 'and should render $and with clashing keys'() {
         expect:
-        toBson(and([eq('a', 1), eq('a', 2)])) == parse('{$and: [{a: 1}, {a: 2}]}');
+        toBson(and([eq('a', 1), eq('a', 2)])) == parse('{$and: [{a: 1}, {a: 2}]}')
     }
 
     def 'and should not flatten nested'() {
@@ -657,6 +658,11 @@ class FiltersSpecification extends Specification {
                                                                                           bsonType : "object"
                                                                                        }
                                                                                     }''')
+    }
+
+    def 'should render an empty document'() {
+        expect:
+        toBson(empty()) == parse('''{}''')
     }
 
     def 'should render with iterable value'() {

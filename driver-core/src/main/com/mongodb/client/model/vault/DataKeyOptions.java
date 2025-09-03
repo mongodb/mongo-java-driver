@@ -16,8 +16,10 @@
 
 package com.mongodb.client.model.vault;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -28,6 +30,7 @@ import java.util.List;
 public class DataKeyOptions {
     private List<String> keyAltNames;
     private BsonDocument masterKey;
+    private byte[] keyMaterial;
 
     /**
      * Set the alternate key names.
@@ -54,6 +57,23 @@ public class DataKeyOptions {
     }
 
     /**
+     * Sets the key material
+     *
+     * <p>An optional BinData of 96 bytes to use as custom key material for the data key being created.
+     * If set the custom key material is used for encrypting and decrypting data. Otherwise, the key material for the new data key is
+     * generated from a cryptographically secure random device.</p>
+     *
+     * @param keyMaterial the optional custom key material for the data key
+     * @return this
+     * @since 4.7
+     * @see #getKeyMaterial()
+     */
+    public DataKeyOptions keyMaterial(final byte[] keyMaterial) {
+        this.keyMaterial = keyMaterial;
+        return this;
+    }
+
+    /**
      * Gets the alternate key names.
      *
      * <p>
@@ -63,6 +83,7 @@ public class DataKeyOptions {
      *
      * @return the list of alternate key names
      */
+    @Nullable
     public List<String> getKeyAltNames() {
         return keyAltNames;
     }
@@ -71,20 +92,69 @@ public class DataKeyOptions {
      * Gets the master key document
      *
      * <p>
-     * The masterKey identifies a KMS-specific key used to encrypt the new data key. If the kmsProvider is "aws" it is required and
-     * must have the following fields:
+     * The masterKey identifies a KMS-specific key used to encrypt the new data key.
+     * </p>
+     * <p>
+     *     If the kmsProvider type is "aws" the master key is required and must contain the following fields:
      * </p>
      * <ul>
      *   <li>region: a String containing the AWS region in which to locate the master key</li>
      *   <li>key: a String containing the Amazon Resource Name (ARN) to the AWS customer master key</li>
      * </ul>
      * <p>
-     * If the kmsProvider is "local" the masterKey is not applicable.
+     *     If the kmsProvider type is "azure" the master key is required and must contain the following fields:
+     * </p>
+     * <ul>
+     *   <li>keyVaultEndpoint: a String with the host name and an optional port. Example: "example.vault.azure.net".</li>
+     *   <li>keyName: a String</li>
+     *   <li>keyVersion: an optional String, the specific version of the named key, defaults to using the key's primary version.</li>
+     * </ul>
+     * <p>
+     *     If the kmsProvidertype type is "gcp" the master key is required and must contain the following fields:
+     * </p>
+     * <ul>
+     *   <li>projectId: a String</li>
+     *   <li>location: String</li>
+     *   <li>keyRing: String</li>
+     *   <li>keyName: String</li>
+     *   <li>keyVersion: an optional String, the specific version of the named key, defaults to using the key's primary version.</li>
+     *   <li>endpoint: an optional String, with the host with optional port. Defaults to "cloudkms.googleapis.com".</li>
+     * </ul>
+     * <p>
+     *     If the kmsProvider type is "kmip" the master key is required and must contain the following fields:
+     * </p>
+     * <ul>
+     *   <li>keyId: optional String, keyId is the KMIP Unique Identifier to a 96 byte KMIP Secret Data managed object. If keyId is
+     *   omitted, the driver creates a random 96 byte KMIP Secret Data managed object.</li>
+     *   <li>endpoint: a String, the endpoint as a host with required port. e.g. "example.com:443". If endpoint is not provided, it
+     *   defaults to the required endpoint from the KMS providers map.</li>
+     *   <li>delegated: If true (recommended), the KMIP server will perform
+     *   encryption and decryption. If delegated is not provided, defaults
+     *   to false.</li>
+     * </ul>
+     * <p>
+     * If the kmsProvider type is "local" the masterKey is not applicable.
      * </p>
      * @return the master key document
      */
+    @Nullable
     public BsonDocument getMasterKey() {
         return masterKey;
+    }
+
+    /**
+     * Gets the custom key material if set.
+     *
+     * <p>The optional BinData of 96 bytes to use as custom key material for the data key being created.
+     * If set the custom key material is used for encrypting and decrypting data. Otherwise, the key material for the new data key is
+     * generated from a cryptographically secure random device.</p>
+
+     * @return the custom key material for the data key or null
+     * @since 4.7
+     */
+    @Nullable
+    public byte[] getKeyMaterial() {
+        return keyMaterial;
     }
 
     @Override
@@ -92,6 +162,7 @@ public class DataKeyOptions {
         return "DataKeyOptions{"
                 + "keyAltNames=" + keyAltNames
                 + ", masterKey=" + masterKey
+                + ", keyMaterial=" + Arrays.toString(keyMaterial)
                 + '}';
     }
 }

@@ -16,15 +16,20 @@
 
 package org.bson.codecs.pojo;
 
+import org.bson.BsonType;
 import org.bson.codecs.configuration.CodecConfigurationException;
+import org.bson.codecs.pojo.entities.BsonIdModel;
+import org.bson.codecs.pojo.entities.ConventionModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationBsonPropertyIdModel;
+import org.bson.codecs.pojo.entities.conventions.AnnotationBsonRepresentation;
 import org.bson.codecs.pojo.entities.conventions.AnnotationCollision;
 import org.bson.codecs.pojo.entities.conventions.AnnotationDefaultsModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationNameCollision;
 import org.bson.codecs.pojo.entities.conventions.AnnotationWithObjectIdModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationWriteCollision;
 import org.bson.codecs.pojo.entities.conventions.BsonIgnoreDuplicatePropertyMultipleTypes;
+import org.bson.codecs.pojo.entities.conventions.CreatorConstructorNoKnownIdModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidConstructorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMethodModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMethodReturnTypeModel;
@@ -33,18 +38,19 @@ import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMultipleCreatorsM
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMultipleStaticCreatorsModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidTypeConstructorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidTypeMethodModel;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static java.util.Collections.singletonList;
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertTrue;
 import static org.bson.codecs.pojo.Conventions.ANNOTATION_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.CLASS_AND_PROPERTY_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;
 import static org.bson.codecs.pojo.Conventions.NO_CONVENTIONS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class ConventionsTest {
 
@@ -104,6 +110,28 @@ public final class ConventionsTest {
     }
 
     @Test
+    public void testBsonRepresentation() {
+        ClassModel<AnnotationBsonRepresentation> classModel = ClassModel.builder(AnnotationBsonRepresentation.class).build();
+        assertEquals(classModel.getPropertyModel("id").getBsonRepresentation(), BsonType.OBJECT_ID);
+        assertEquals(classModel.getPropertyModel("parentId").getBsonRepresentation(), BsonType.OBJECT_ID);
+        assertNull(classModel.getPropertyModel("friendId").getBsonRepresentation());
+        assertNull(classModel.getPropertyModel("age").getBsonRepresentation());
+    }
+
+    @Test
+    public void testIdGeneratorChoice() {
+        ClassModel<AnnotationBsonRepresentation> stringIdObjectRep = ClassModel.builder(AnnotationBsonRepresentation.class).build();
+        assertEquals(stringIdObjectRep.getIdPropertyModelHolder().getIdGenerator(), IdGenerators.STRING_ID_GENERATOR);
+
+        ClassModel<ConventionModel> stringIdStringRep = ClassModel.builder(ConventionModel.class).build();
+        assertNull(stringIdStringRep.getIdPropertyModelHolder().getIdGenerator());
+
+        ClassModel<BsonIdModel> bsonId = ClassModel.builder(BsonIdModel.class).build();
+        assertEquals(bsonId.getIdPropertyModelHolder().getIdGenerator(), IdGenerators.BSON_OBJECT_ID_GENERATOR);
+    }
+
+
+    @Test
     @SuppressWarnings("unchecked")
     public void testClassAndFieldConventionDoesNotOverwrite() {
         ClassModelBuilder<SimpleModel> builder = ClassModel.builder(SimpleModel.class)
@@ -111,24 +139,19 @@ public final class ConventionsTest {
                 .discriminatorKey("_cls")
                 .discriminator("Simples")
                 .conventions(singletonList(CLASS_AND_PROPERTY_CONVENTION))
-                .instanceCreatorFactory(new InstanceCreatorFactory<SimpleModel>() {
-                    @Override
-                    public InstanceCreator<SimpleModel> create() {
-                        return null;
-                    }
-                });
+                .instanceCreatorFactory(() -> null);
 
         PropertyModelBuilder<Integer> propertyModelBuilder = (PropertyModelBuilder<Integer>) builder.getProperty("integerField");
         propertyModelBuilder.writeName("id")
-                .propertySerialization(new PropertyModelSerializationImpl<Integer>())
-                .propertyAccessor(new PropertyAccessorTest<Integer>());
+                .propertySerialization(new PropertyModelSerializationImpl<>())
+                .propertyAccessor(new PropertyAccessorTest<>());
 
         PropertyModelBuilder<String> propertyModelBuilder2 = (PropertyModelBuilder<String>) builder.getProperty("stringField");
         propertyModelBuilder2.writeName("_id")
-                .propertySerialization(new PropertyModelSerializationImpl<String>())
-                .propertyAccessor(new PropertyAccessorTest<String>());
+                .propertySerialization(new PropertyModelSerializationImpl<>())
+                .propertyAccessor(new PropertyAccessorTest<>());
 
-        ClassModel<SimpleModel> classModel  = builder.idPropertyName("stringField").build();
+        ClassModel<SimpleModel> classModel = builder.idPropertyName("stringField").build();
 
         assertTrue(classModel.useDiscriminator());
         assertEquals("_cls", classModel.getDiscriminatorKey());
@@ -141,74 +164,93 @@ public final class ConventionsTest {
         assertNull(idPropertyModel.useDiscriminator());
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testAnnotationCollision() {
-        ClassModel.builder(AnnotationCollision.class).conventions(DEFAULT_CONVENTIONS).build();
+        assertThrows(CodecConfigurationException.class, () ->
+                ClassModel.builder(AnnotationCollision.class).conventions(DEFAULT_CONVENTIONS).build());
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testAnnotationWriteCollision() {
-        ClassModel.builder(AnnotationWriteCollision.class).conventions(DEFAULT_CONVENTIONS).build();
+        assertThrows(CodecConfigurationException.class, () ->
+                ClassModel.builder(AnnotationWriteCollision.class).conventions(DEFAULT_CONVENTIONS).build());
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testAnnotationNameCollision() {
-        ClassModel.builder(AnnotationNameCollision.class)
-                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+        assertThrows(CodecConfigurationException.class, () ->
+                ClassModel.builder(AnnotationNameCollision.class)
+                        .conventions(singletonList(ANNOTATION_CONVENTION)).build());
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testCreatorInvalidConstructorModel() {
-        ClassModel.builder(CreatorInvalidConstructorModel.class)
-                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+        assertThrows(CodecConfigurationException.class, () ->
+                ClassModel.builder(CreatorInvalidConstructorModel.class)
+                        .conventions(singletonList(ANNOTATION_CONVENTION)).build());
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testCreatorInvalidMethodModel() {
-        ClassModel.builder(CreatorInvalidMethodModel.class)
-                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+        assertThrows(CodecConfigurationException.class, () ->
+                ClassModel.builder(CreatorInvalidMethodModel.class)
+                        .conventions(singletonList(ANNOTATION_CONVENTION)).build());
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testCreatorInvalidMultipleConstructorsModel() {
-        ClassModel.builder(CreatorInvalidMultipleConstructorsModel.class)
-                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+        assertThrows(CodecConfigurationException.class, () ->
+                ClassModel.builder(CreatorInvalidMultipleConstructorsModel.class)
+                        .conventions(singletonList(ANNOTATION_CONVENTION)).build());
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testCreatorInvalidMultipleCreatorsModel() {
-        ClassModel.builder(CreatorInvalidMultipleCreatorsModel.class)
-                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+        assertThrows(CodecConfigurationException.class, () ->
+                ClassModel.builder(CreatorInvalidMultipleCreatorsModel.class)
+                        .conventions(singletonList(ANNOTATION_CONVENTION)).build());
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testCreatorInvalidMultipleStaticCreatorsModel() {
-        ClassModel.builder(CreatorInvalidMultipleStaticCreatorsModel.class)
-                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+        assertThrows(CodecConfigurationException.class, () ->
+                ClassModel.builder(CreatorInvalidMultipleStaticCreatorsModel.class)
+                        .conventions(singletonList(ANNOTATION_CONVENTION)).build());
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testCreatorInvalidMethodReturnTypeModel() {
-        ClassModel.builder(CreatorInvalidMethodReturnTypeModel.class)
-                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+        assertThrows(CodecConfigurationException.class, () ->
+                ClassModel.builder(CreatorInvalidMethodReturnTypeModel.class)
+                        .conventions(singletonList(ANNOTATION_CONVENTION)).build());
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testCreatorInvalidTypeConstructorModel() {
-        ClassModel.builder(CreatorInvalidTypeConstructorModel.class)
-                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+        assertThrows(CodecConfigurationException.class, () ->
+                ClassModel.builder(CreatorInvalidTypeConstructorModel.class)
+                        .conventions(singletonList(ANNOTATION_CONVENTION)).build());
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testCreatorInvalidTypeMethodModel() {
-        ClassModel.builder(CreatorInvalidTypeMethodModel.class)
-                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+        assertThrows(CodecConfigurationException.class, () ->
+                ClassModel.builder(CreatorInvalidTypeMethodModel.class)
+                        .conventions(singletonList(ANNOTATION_CONVENTION)).build());
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
+    public void testCreatorConstructorNoKnownIdModel() {
+        assertThrows(CodecConfigurationException.class, () ->
+                ClassModel.builder(CreatorConstructorNoKnownIdModel.class)
+                        .conventions(singletonList(ANNOTATION_CONVENTION)).build());
+    }
+
+    @Test
     public void testBsonIgnoreDuplicatePropertyMultipleTypesModel() {
-        ClassModel.builder(BsonIgnoreDuplicatePropertyMultipleTypes.class)
-                .conventions(NO_CONVENTIONS).build();
+        assertThrows(CodecConfigurationException.class, () ->
+                ClassModel.builder(BsonIgnoreDuplicatePropertyMultipleTypes.class)
+                        .conventions(NO_CONVENTIONS).build());
     }
 
     private class PropertyAccessorTest<T> implements PropertyAccessor<T> {

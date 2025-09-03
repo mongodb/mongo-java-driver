@@ -17,4 +17,7 @@
 /**
  * Contains classes that determine how to select the server to connect to in order to send commands or queries.
  */
+@NonNullApi
 package com.mongodb.selector;
+
+import com.mongodb.lang.NonNullApi;

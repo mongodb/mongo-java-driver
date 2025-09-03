@@ -16,9 +16,7 @@
 
 package com.mongodb;
 
-import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.EncoderContext;
@@ -26,12 +24,16 @@ import org.bson.json.JsonWriter;
 
 import java.io.StringWriter;
 
+import static com.mongodb.internal.ExceptionUtils.MongoCommandExceptionUtils.extractErrorCode;
+import static com.mongodb.internal.ExceptionUtils.MongoCommandExceptionUtils.extractErrorCodeName;
+import static com.mongodb.internal.ExceptionUtils.MongoCommandExceptionUtils.extractErrorLabelsAsBson;
 import static java.lang.String.format;
 
 /**
  * An exception indicating that a command sent to a MongoDB server returned a failure.
  *
  * @since 2.13
+ * @serial exclude
  */
 public class MongoCommandException extends MongoServerException {
     private static final long serialVersionUID = 8160676451944215078L;
@@ -45,11 +47,11 @@ public class MongoCommandException extends MongoServerException {
      * @param address the address of the server that generated the response
      */
     public MongoCommandException(final BsonDocument response, final ServerAddress address) {
-        super(extractErrorCode(response),
-              format("Command failed with error %s: '%s' on server %s. The full response is %s", extractErrorCodeAndName(response),
+        super(extractErrorCode(response), extractErrorCodeName(response),
+              format("Command execution failed on MongoDB server with error %s: '%s' on server %s. The full response is %s", extractErrorCodeAndName(response),
                      extractErrorMessage(response), address, getResponseAsJson(response)), address);
         this.response = response;
-        addLabels(response.getArray("errorLabels", new BsonArray()));
+        addLabels(extractErrorLabelsAsBson(response));
     }
 
     /**
@@ -69,7 +71,7 @@ public class MongoCommandException extends MongoServerException {
      * @mongodb.server.release 3.4
      */
     public String getErrorCodeName() {
-        return extractErrorCodeName(response);
+        return super.getErrorCodeName();
     }
 
     /**
@@ -82,9 +84,10 @@ public class MongoCommandException extends MongoServerException {
     }
 
     /**
-     * For internal use only.
+     * Gets the full server response document describing the error.
      *
      * @return the full response to the command failure.
+     * @since 4.8
      */
     public BsonDocument getResponse() {
         return response;
@@ -103,16 +106,8 @@ public class MongoCommandException extends MongoServerException {
         if (errorCodeName.isEmpty()) {
             return Integer.toString(errorCode);
         } else {
-            return String.format("%d (%s)", errorCode, errorCodeName);
+            return format("%d (%s)", errorCode, errorCodeName);
         }
-    }
-
-    private static int extractErrorCode(final BsonDocument response) {
-        return response.getNumber("code", new BsonInt32(-1)).intValue();
-    }
-
-    private static String extractErrorCodeName(final BsonDocument response) {
-        return response.getString("codeName", new BsonString("")).getValue();
     }
 
     private static String extractErrorMessage(final BsonDocument response) {

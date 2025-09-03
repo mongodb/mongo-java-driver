@@ -17,6 +17,8 @@
 package com.mongodb.client.model;
 
 import com.mongodb.lang.Nullable;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 /**
@@ -33,6 +35,9 @@ public class ReplaceOptions {
     private Collation collation;
     private Bson hint;
     private String hintString;
+    private BsonValue comment;
+    private Bson variables;
+    private Bson sort;
 
     /**
      * Returns true if a new document should be inserted if there are no matches to the query filter.  The default is false.
@@ -55,7 +60,7 @@ public class ReplaceOptions {
     }
 
     /**
-     * Gets the the bypass document level validation flag
+     * Gets the bypass document level validation flag
      *
      * @return the bypass document level validation flag
      * @mongodb.server.release 3.2
@@ -67,6 +72,8 @@ public class ReplaceOptions {
 
     /**
      * Sets the bypass document level validation flag.
+     *
+     * <p>For bulk operations use: {@link BulkWriteOptions#bypassDocumentValidation(Boolean)}</p>
      *
      * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
      * @return this
@@ -146,6 +153,111 @@ public class ReplaceOptions {
         this.hintString = hint;
         return this;
     }
+    /**
+     * @return the comment for this operation. A null value means no comment is set.
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    @Nullable
+    public BsonValue getComment() {
+        return comment;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * <p>For bulk operations use: {@link BulkWriteOptions#comment(String)}</p>
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public ReplaceOptions comment(@Nullable final String comment) {
+        this.comment = comment != null ? new BsonString(comment) : null;
+        return this;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * <p>For bulk operations use: {@link BulkWriteOptions#comment(BsonValue)}</p>
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public ReplaceOptions comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+    /**
+     * Add top-level variables to the operation
+     *
+     * <p>The value of let will be passed to all update and delete, but not insert, commands.
+     *
+     * @return the top level variables if set or null.
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    @Nullable
+    public Bson getLet() {
+        return variables;
+    }
+
+    /**
+     * Add top-level variables for the operation
+     *
+     * <p>Allows for improved command readability by separating the variables from the query text.
+     * <p>For bulk operations use: {@link BulkWriteOptions#let(Bson)}
+     *
+     * @param variables for the operation or null
+     * @return this
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    public ReplaceOptions let(final Bson variables) {
+        this.variables = variables;
+        return this;
+    }
+
+    /**
+     * Gets the sort criteria to apply to the operation.
+     *
+     * <p>
+     * The sort criteria determines which document the operation replaces if the query matches multiple documents.
+     * The first document matched by the sort criteria will be replaced.
+     * The default is null, which means no specific sort criteria is applied.
+     *
+     * @return a document describing the sort criteria, or null if no sort is specified.
+     * @mongodb.driver.manual reference/method/db.collection.replaceOne/ Sort
+     * @mongodb.server.release 8.0
+     * @since 5.3
+     * @see #sort(Bson)
+     */
+    @Nullable
+    public Bson getSort() {
+        return sort;
+    }
+
+    /**
+     * Sets the sort criteria to apply to the operation. A null value means no sort criteria is set.
+     *
+     * <p>
+     * The sort criteria determines which document the operation replaces if the query matches multiple documents.
+     * The first document matched by the specified sort criteria will be replaced.
+     *
+     * @param sort the sort criteria, which may be null.
+     * @return this
+     * @mongodb.driver.manual reference/method/db.collection.replaceOne/ Sort
+     * @mongodb.server.release 8.0
+     * @since 5.3
+     */
+    public ReplaceOptions sort(@Nullable final Bson sort) {
+        this.sort = sort;
+        return this;
+    }
 
     @Override
     public String toString() {
@@ -155,6 +267,9 @@ public class ReplaceOptions {
                 + ", collation=" + collation
                 + ", hint=" + hint
                 + ", hintString=" + hintString
+                + ", comment=" + comment
+                + ", let=" + variables
+                + ", sort=" + sort
                 + '}';
     }
 }

@@ -21,6 +21,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
+import org.bson.codecs.Codec;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
@@ -33,53 +34,58 @@ import static org.junit.Assert.fail;
 
 public class CommandResultTest {
 
+    private static final Codec<DBObject> DECODER = MongoClientSettings.getDefaultCodecRegistry().get(DBObject.class);
+
     @Test
     public void shouldBeOkWhenOkFieldIsTrue() throws UnknownHostException {
-        CommandResult commandResult = new CommandResult(new BsonDocument("ok", BsonBoolean.TRUE));
+        CommandResult commandResult =
+        new CommandResult(
+            new BsonDocument("ok", BsonBoolean.TRUE), DECODER);
         assertTrue(commandResult.ok());
     }
 
     @Test
     public void shouldNotBeOkWithNoOkField() throws UnknownHostException {
-        CommandResult commandResult = new CommandResult(new BsonDocument());
+        CommandResult commandResult = new CommandResult(new BsonDocument(), DECODER);
         assertFalse(commandResult.ok());
     }
 
     @Test
     public void shouldNotBeOkWhenOkFieldIsFalse() throws UnknownHostException {
-        CommandResult commandResult = new CommandResult(new BsonDocument());
+        CommandResult commandResult = new CommandResult(new BsonDocument(), DECODER);
         commandResult.put("ok", false);
         assertFalse(commandResult.ok());
     }
 
     @Test
     public void shouldBeOkWhenOkFieldIsOne() throws UnknownHostException {
-        CommandResult commandResult = new CommandResult(new BsonDocument("ok", new BsonDouble(1.0)));
+        CommandResult commandResult = new CommandResult(new BsonDocument("ok", new BsonDouble(1.0)), DECODER);
         assertTrue(commandResult.ok());
     }
 
     @Test
     public void shouldNotBeOkWhenOkFieldIsZero() throws UnknownHostException {
-        CommandResult commandResult = new CommandResult(new BsonDocument("ok", new BsonDouble(0.0)));
+        CommandResult commandResult = new CommandResult(new BsonDocument("ok", new BsonDouble(0.0)), DECODER);
         assertFalse(commandResult.ok());
     }
 
     @Test
     public void shouldNotHaveExceptionWhenOkIsTrue() throws UnknownHostException {
-        CommandResult commandResult = new CommandResult(new BsonDocument("ok", new BsonBoolean(true)));
+        CommandResult commandResult = new CommandResult(new BsonDocument("ok", new BsonBoolean(true)), DECODER);
         assertNull(commandResult.getException());
     }
 
     @Test
     public void shouldNotBeOkWhenOkFieldTypeIsNotBooleanOrNumber() throws UnknownHostException {
-        CommandResult commandResult = new CommandResult(new BsonDocument("ok", new BsonString("1")));
+        CommandResult commandResult = new CommandResult(new BsonDocument("ok", new BsonString("1")), DECODER);
         assertFalse(commandResult.ok());
     }
 
     @Test
     public void testNullErrorCode() throws UnknownHostException {
         try {
-            new CommandResult(new BsonDocument("ok", new BsonInt32(0)), new ServerAddress()).throwOnError();
+            new CommandResult(new BsonDocument("ok", new BsonInt32(0)), DECODER, new ServerAddress())
+                    .throwOnError();
             fail("Should throw");
         } catch (MongoCommandException e) {
             assertEquals(-1, e.getCode());
@@ -91,7 +97,8 @@ public class CommandResultTest {
         try {
             new CommandResult(new BsonDocument("ok", new BsonInt32(0))
                               .append("errmsg", new BsonString("ns not found"))
-                              .append("code", new BsonInt32(5000)), new ServerAddress()).throwOnError();
+                              .append("code", new BsonInt32(5000)), DECODER, new ServerAddress())
+                    .throwOnError();
             fail("Should throw");
         } catch (MongoCommandException e) {
             assertEquals(5000, e.getCode());

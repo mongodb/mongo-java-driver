@@ -20,21 +20,23 @@ import java.nio.ByteBuffer
 import java.util
 import java.util.Date
 
-import scala.collection.JavaConverters._
-import scala.reflect.ClassTag
 import org.bson._
 import org.bson.codecs.configuration.{ CodecProvider, CodecRegistries, CodecRegistry }
 import org.bson.codecs.{ Codec, DecoderContext, EncoderContext }
 import org.bson.io.{ BasicOutputBuffer, ByteBufferBsonInput, OutputBuffer }
 import org.bson.types.ObjectId
-import org.mongodb.scala.bson.annotations.BsonProperty
-import org.mongodb.scala.bson.codecs.Registry.DEFAULT_CODEC_REGISTRY
+import org.mongodb.scala.bson.BaseSpec
+import org.mongodb.scala.bson.annotations.{ BsonIgnore, BsonProperty }
 import org.mongodb.scala.bson.codecs.Macros.{ createCodecProvider, createCodecProviderIgnoreNone }
+import org.mongodb.scala.bson.codecs.Registry.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.collection.immutable.Document
-import org.scalatest.{ FlatSpec, Matchers }
+import scala.collection.immutable.Vector
+
+import scala.collection.JavaConverters._
+import scala.reflect.ClassTag
 
 //scalastyle:off
-class MacrosSpec extends FlatSpec with Matchers {
+class MacrosSpec extends BaseSpec {
 
   case class Empty()
   case class Person(firstName: String, lastName: String)
@@ -42,6 +44,7 @@ class MacrosSpec extends FlatSpec with Matchers {
   case class SeqOfStrings(name: String, value: Seq[String])
   case class RecursiveSeq(name: String, value: Seq[RecursiveSeq])
   case class AnnotatedClass(@BsonProperty("annotated_name") name: String)
+  case class IgnoredFieldClass(name: String, @BsonIgnore meta: String = "ignored_default")
 
   case class Binary(binary: Array[Byte]) {
 
@@ -102,6 +105,11 @@ class MacrosSpec extends FlatSpec with Matchers {
   case class Branch(@BsonProperty("l1") b1: Tree, @BsonProperty("r1") b2: Tree, value: Int) extends Tree
   case class Leaf(value: Int) extends Tree
 
+  sealed trait WithIgnored
+  case class MetaIgnoredField(data: String, @BsonIgnore meta: Seq[String] = Vector("ignore_me")) extends WithIgnored
+  case class LeafCountIgnoredField(branchCount: Int, @BsonIgnore leafCount: Int = 100) extends WithIgnored
+  case class ContainsIgnoredField(list: Seq[WithIgnored])
+
   case class ContainsADT(name: String, tree: Tree)
   case class ContainsSeqADT(name: String, trees: Seq[Tree])
   case class ContainsNestedSeqADT(name: String, trees: Seq[Seq[Tree]])
@@ -137,11 +145,11 @@ class MacrosSpec extends FlatSpec with Matchers {
   }
 
   sealed trait CaseObjectEnum
-  object CaseObjectEnum {
-    case object Alpha extends CaseObjectEnum
-    case object Bravo extends CaseObjectEnum
-    case object Charlie extends CaseObjectEnum
-  }
+  case object Alpha extends CaseObjectEnum
+  case object Bravo extends CaseObjectEnum
+  case object Charlie extends CaseObjectEnum
+
+  case class ContainsEnumADT(name: String, enum: CaseObjectEnum)
 
   sealed class SealedClass
   case class SealedClassA(stringField: String) extends SealedClass
@@ -172,50 +180,14 @@ class MacrosSpec extends FlatSpec with Matchers {
   case class SealedTraitB(intField: Int) extends SealedTrait
   case class ContainsSealedTrait(list: List[SealedTrait])
 
-  object CaseObjectEnumCodecProvider extends CodecProvider {
-    def isCaseObjectEnum[T](clazz: Class[T]): Boolean = {
-      clazz.isInstance(CaseObjectEnum.Alpha) || clazz.isInstance(CaseObjectEnum.Bravo) || clazz.isInstance(
-        CaseObjectEnum.Charlie
-      )
-    }
+  sealed class SingleSealedClass
+  case class SingleSealedClassImpl() extends SingleSealedClass
 
-    override def get[T](clazz: Class[T], registry: CodecRegistry): Codec[T] = {
-      if (isCaseObjectEnum(clazz)) {
-        CaseObjectEnumCodec.asInstanceOf[Codec[T]]
-      } else {
-        null
-      }
-    }
+  sealed abstract class SingleSealedAbstractClass
+  case class SingleSealedAbstractClassImpl() extends SingleSealedAbstractClass
 
-    object CaseObjectEnumCodec extends Codec[CaseObjectEnum] {
-      val identifier = "_t"
-      override def decode(reader: BsonReader, decoderContext: DecoderContext): CaseObjectEnum = {
-        reader.readStartDocument()
-        val enumName = reader.readString(identifier)
-        reader.readEndDocument()
-        enumName match {
-          case "Alpha"   => CaseObjectEnum.Alpha
-          case "Bravo"   => CaseObjectEnum.Bravo
-          case "Charlie" => CaseObjectEnum.Charlie
-          case _         => throw new BsonInvalidOperationException(s"$enumName is an invalid value for a MyEnum object")
-        }
-      }
-
-      override def encode(writer: BsonWriter, value: CaseObjectEnum, encoderContext: EncoderContext): Unit = {
-        val name = value match {
-          case CaseObjectEnum.Alpha   => "Alpha"
-          case CaseObjectEnum.Bravo   => "Bravo"
-          case CaseObjectEnum.Charlie => "Charlie"
-        }
-        writer.writeStartDocument()
-        writer.writeString(identifier, name)
-        writer.writeEndDocument()
-      }
-
-      override def getEncoderClass: Class[CaseObjectEnum] = CaseObjectEnum.getClass.asInstanceOf[Class[CaseObjectEnum]]
-    }
-  }
-  case class ContainsMyEnum(myEnum: CaseObjectEnum)
+  sealed trait SingleSealedTrait
+  case class SingleSealedTraitImpl() extends SingleSealedTrait
 
   "Macros" should "be able to round trip simple case classes" in {
     roundTrip(Empty(), "{}", classOf[Empty])
@@ -266,6 +238,23 @@ class MacrosSpec extends FlatSpec with Matchers {
       ContainsStream("Bob", Stream("Tom", "Charlie")),
       """{name: "Bob", friends: ["Tom","Charlie"]}""",
       Macros.createCodecProvider(classOf[ContainsStream])
+    )
+  }
+
+  it should "be able to ignore fields" in {
+    roundTrip(
+      IgnoredFieldClass("Bob", "singer"),
+      IgnoredFieldClass("Bob"),
+      """{name: "Bob"}""",
+      classOf[IgnoredFieldClass]
+    )
+
+    roundTrip(
+      ContainsIgnoredField(Vector(MetaIgnoredField("Bob", List("singer")), LeafCountIgnoredField(1, 10))),
+      ContainsIgnoredField(Vector(MetaIgnoredField("Bob"), LeafCountIgnoredField(1))),
+      """{"list" : [{"_t" : "MetaIgnoredField", "data" : "Bob" }, {"_t" : "LeafCountIgnoredField", "branchCount": 1}]}""",
+      classOf[ContainsIgnoredField],
+      classOf[WithIgnored]
     )
   }
 
@@ -341,8 +330,8 @@ class MacrosSpec extends FlatSpec with Matchers {
 
   it should "be able to round trip nested case classes in maps" in {
     roundTrip(
-      ContainsMapOfCaseClasses("Bob", Map("mother" -> Person("Jane", "Jones"))),
-      """{name: "Bob", friends: {mother: {firstName: "Jane", lastName: "Jones"}}}""",
+      ContainsMapOfCaseClasses("Bob", Map("name" -> Person("Jane", "Jones"))),
+      """{name: "Bob", friends: {name: {firstName: "Jane", lastName: "Jones"}}}""",
       classOf[ContainsMapOfCaseClasses],
       classOf[Person]
     )
@@ -496,6 +485,16 @@ class MacrosSpec extends FlatSpec with Matchers {
     )
   }
 
+  it should "write the type of sealed classes and traits with only one subclass" in {
+    roundTrip(SingleSealedClassImpl(), """{ "_t" : "SingleSealedClassImpl" }""".stripMargin, classOf[SingleSealedClass])
+    roundTrip(
+      SingleSealedAbstractClassImpl(),
+      """{ "_t" : "SingleSealedAbstractClassImpl" }""".stripMargin,
+      classOf[SingleSealedAbstractClass]
+    )
+    roundTrip(SingleSealedTraitImpl(), """{ "_t" : "SingleSealedTraitImpl" }""".stripMargin, classOf[SingleSealedTrait])
+  }
+
   it should "support optional values in ADT sealed classes" in {
     val nodeA = Node("nodeA", None)
     val nodeB = Node("nodeB", Some(nodeA))
@@ -532,6 +531,7 @@ class MacrosSpec extends FlatSpec with Matchers {
   }
 
   it should "support tagged types in case classes" in {
+    assume(!scala.util.Properties.versionNumberString.startsWith("2.11"))
     val a = 1.asInstanceOf[Int with Tag]
     val b = "b".asInstanceOf[String with Tag]
     val c = Map("c" -> 0).asInstanceOf[Map[String with Tag, Int with Tag] with Tag]
@@ -567,6 +567,19 @@ class MacrosSpec extends FlatSpec with Matchers {
       """{id: 1, myString: 'string value'}""",
       classOf[ContainsValueClass],
       valueClassCodecProvider
+    )
+  }
+
+  it should "support case object enum types" in {
+    roundTrip(Alpha, """{_t:"Alpha"}""", classOf[CaseObjectEnum])
+    roundTrip(Bravo, """{_t:"Bravo"}""", classOf[CaseObjectEnum])
+    roundTrip(Charlie, """{_t:"Charlie"}""", classOf[CaseObjectEnum])
+
+    roundTrip(
+      ContainsEnumADT("Bob", Alpha),
+      """{name:"Bob", enum:{_t:"Alpha"}}""",
+      classOf[ContainsEnumADT],
+      classOf[CaseObjectEnum]
     )
   }
 
@@ -617,12 +630,6 @@ class MacrosSpec extends FlatSpec with Matchers {
   it should "not compile if there are no concrete implementations of a sealed class or trait" in {
     "Macros.createCodecProvider(classOf[NotImplementedSealedClass])" shouldNot compile
     "Macros.createCodecProvider(classOf[NotImplementedSealedTrait])" shouldNot compile
-    "Macros.createCodecProvider(classOf[SealedClassCaseObject])" shouldNot compile
-  }
-
-  it should "not compile if passing a case object" in {
-    "Macros.createCodecProvider(classOf[CaseObjectEnum])" shouldNot compile
-    "Macros.createCodecProvider(CaseObjectEnum.Alpha.getClass)" shouldNot compile
   }
 
   it should "error when reading unexpected lists" in {
@@ -656,6 +663,15 @@ class MacrosSpec extends FlatSpec with Matchers {
     roundTripCodec(value, Document(expected), codec)
   }
 
+  def roundTrip[T](value: T, decodedValue: T, expected: String, provider: CodecProvider, providers: CodecProvider*)(
+      implicit ct: ClassTag[T]
+  ): Unit = {
+    val codecProviders: util.List[CodecProvider] = (provider +: providers).asJava
+    val registry = CodecRegistries.fromRegistries(CodecRegistries.fromProviders(codecProviders), DEFAULT_CODEC_REGISTRY)
+    val codec = registry.get(ct.runtimeClass).asInstanceOf[Codec[T]]
+    roundTripCodec(value, decodedValue, Document(expected), codec)
+  }
+
   def roundTripCodec[T](value: T, expected: Document, codec: Codec[T]): Unit = {
     val encoded = encode(codec, value)
     val actual = decode(documentCodec, encoded)
@@ -663,6 +679,18 @@ class MacrosSpec extends FlatSpec with Matchers {
 
     val roundTripped = decode(codec, encode(codec, value))
     assert(roundTripped == value, s"Round Tripped case class: ($roundTripped) did not equal the original: ($value)")
+  }
+
+  def roundTripCodec[T](value: T, decodedValue: T, expected: Document, codec: Codec[T]): Unit = {
+    val encoded = encode(codec, value)
+    val actual = decode(documentCodec, encoded)
+    assert(expected == actual, s"Encoded document: (${actual.toJson()}) did not equal: (${expected.toJson()})")
+
+    val roundTripped = decode(codec, encode(codec, value))
+    assert(
+      roundTripped == decodedValue,
+      s"Round Tripped case class: ($roundTripped) did not equal the expected: ($decodedValue)"
+    )
   }
 
   def encode[T](codec: Codec[T], value: T): OutputBuffer = {

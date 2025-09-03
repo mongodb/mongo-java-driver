@@ -24,6 +24,7 @@ import com.mongodb.bulk.BulkWriteInsert;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.BulkWriteUpsert;
 import com.mongodb.bulk.WriteConcernError;
+import com.mongodb.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -36,7 +37,7 @@ import static java.util.Collections.singletonList;
 import static java.util.Comparator.comparingInt;
 
 /**
- * This class is not part of the public API.  It may be changed or removed at any time.
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class BulkWriteBatchCombiner {
     private final ServerAddress serverAddress;
@@ -159,23 +160,27 @@ public class BulkWriteBatchCombiner {
      * Gets the combined errors as an exception
      * @return the bulk write exception, or null if there were no errors
      */
+    @Nullable
     public MongoBulkWriteException getError() {
         if (!hasErrors()) {
             return null;
         }
+        return getErrorNonNullable();
+    }
+
+    private MongoBulkWriteException getErrorNonNullable() {
         return new MongoBulkWriteException(createResult(), new ArrayList<>(writeErrors),
                 writeConcernErrors.isEmpty() ? null : writeConcernErrors.get(writeConcernErrors.size() - 1),
                 serverAddress, errorLabels);
     }
 
-    private void mergeWriteConcernError(final WriteConcernError writeConcernError) {
+    @SuppressWarnings("deprecation")
+    private void mergeWriteConcernError(@Nullable final WriteConcernError writeConcernError) {
         if (writeConcernError != null) {
             if (writeConcernErrors.isEmpty()) {
                 writeConcernErrors.add(writeConcernError);
-                errorLabels.addAll(writeConcernError.getErrorLabels());
             } else if (!writeConcernError.equals(writeConcernErrors.get(writeConcernErrors.size() - 1))) {
                 writeConcernErrors.add(writeConcernError);
-                errorLabels.addAll(writeConcernError.getErrorLabels());
             }
         }
     }
@@ -188,7 +193,7 @@ public class BulkWriteBatchCombiner {
 
     private void throwOnError() {
         if (hasErrors()) {
-            throw getError();
+            throw getErrorNonNullable();
         }
     }
 

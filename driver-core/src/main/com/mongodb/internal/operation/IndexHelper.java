@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.client.model.IndexModel;
+import com.mongodb.client.model.SearchIndexModel;
 import org.bson.BsonDocument;
 import org.bson.BsonNumber;
 import org.bson.BsonString;
@@ -25,9 +26,10 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * This class is NOT part of the public API. It may change at any time without notification.
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class IndexHelper {
 
@@ -39,7 +41,7 @@ public final class IndexHelper {
      * @return the list of index names
      */
     public static List<String> getIndexNames(final List<IndexModel> indexes, final CodecRegistry codecRegistry) {
-        List<String> indexNames = new ArrayList<String>(indexes.size());
+        List<String> indexNames = new ArrayList<>(indexes.size());
         for (IndexModel index : indexes) {
             String name = index.getOptions().getName();
             if (name != null) {
@@ -49,6 +51,23 @@ public final class IndexHelper {
             }
         }
         return indexNames;
+    }
+
+    /**
+     * Get a list of Atlas Search index names for the given list of {@link SearchIndexModel}.
+     *
+     * @param indexes the search index models.
+     * @return the list of search index names.
+     */
+    public static List<String> getSearchIndexNames(final List<SearchIndexModel> indexes) {
+        return indexes.stream()
+                .map(IndexHelper::getSearchIndexName)
+                .collect(Collectors.toList());
+    }
+
+    private static String getSearchIndexName(final SearchIndexModel model) {
+        String name = model.getName();
+        return  name != null ? name : "default";
     }
 
     /**

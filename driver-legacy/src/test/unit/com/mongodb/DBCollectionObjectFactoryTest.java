@@ -28,7 +28,7 @@ import java.util.Map;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class DBCollectionObjectFactoryTest {
 
@@ -58,7 +58,7 @@ public class DBCollectionObjectFactoryTest {
     @Test
     public void testEmptyPath() {
         factory = factory.update(TopLevelDBObject.class);
-        assertThat(factory.getInstance(Collections.<String>emptyList()), instanceOf(TopLevelDBObject.class));
+        assertThat(factory.getInstance(Collections.emptyList()), instanceOf(TopLevelDBObject.class));
     }
 
     @Test

@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection
 
+import com.mongodb.ClusterFixture
 import com.mongodb.MongoConfigurationException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
@@ -54,7 +55,7 @@ class DnsMultiServerClusterSpecification extends Specification {
         DnsSrvRecordInitializer initializer
         def dnsSrvRecordMonitorFactory = new DnsSrvRecordMonitorFactory() {
             @Override
-            DnsSrvRecordMonitor create(final String hostName, final DnsSrvRecordInitializer dnsSrvRecordListener) {
+            DnsSrvRecordMonitor create(final String hostName, String srvServiceName, final DnsSrvRecordInitializer dnsSrvRecordListener) {
                 initializer = dnsSrvRecordListener
                 dnsSrvRecordMonitor
             }
@@ -67,7 +68,7 @@ class DnsMultiServerClusterSpecification extends Specification {
                         .srvHost(srvHost)
                         .mode(MULTIPLE)
                         .build(),
-                factory, dnsSrvRecordMonitorFactory)
+                factory, ClusterFixture.CLIENT_METADATA, dnsSrvRecordMonitorFactory)
 
         then: 'the monitor is created and started'
         initializer != null
@@ -98,7 +99,7 @@ class DnsMultiServerClusterSpecification extends Specification {
         factory.sendNotification(secondServer, SHARD_ROUTER)
         def firstTestServer = factory.getServer(firstServer)
         def secondTestServer = factory.getServer(secondServer)
-        def clusterDescription = cluster.getDescription()
+        def clusterDescription = cluster.getCurrentDescription()
 
         then: 'events are generated, description includes hosts, exception is cleared, and servers are open'
         2 * clusterListener.clusterDescriptionChanged(_)
@@ -112,10 +113,10 @@ class DnsMultiServerClusterSpecification extends Specification {
         initializer.initialize([secondServer, thirdServer])
         factory.sendNotification(secondServer, SHARD_ROUTER)
         def thirdTestServer = factory.getServer(thirdServer)
-        clusterDescription = cluster.getDescription()
+        clusterDescription = cluster.getCurrentDescription()
 
         then: 'events are generated, description is updated, and the removed server is closed'
-        2 * clusterListener.clusterDescriptionChanged(_)
+        1 * clusterListener.clusterDescriptionChanged(_)
         clusterDescription.getType() == SHARDED
         ClusterDescriptionHelper.getAll(clusterDescription) == factory.getDescriptions(secondServer, thirdServer)
         clusterDescription.getSrvResolutionException() == null
@@ -125,7 +126,7 @@ class DnsMultiServerClusterSpecification extends Specification {
 
         when: 'the listener is initialized with another exception'
         initializer.initialize(exception)
-        clusterDescription = cluster.getDescription()
+        clusterDescription = cluster.getCurrentDescription()
 
         then: 'the exception is ignored'
         0 * clusterListener.clusterDescriptionChanged(_)

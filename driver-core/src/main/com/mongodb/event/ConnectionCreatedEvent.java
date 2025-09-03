@@ -22,6 +22,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * An event for creating a connection in the pool.
+ * Such a connection is considered pending until it is {@linkplain ConnectionReadyEvent finished being established and becomes available}.
  *
  * @since 4.0
  */
@@ -49,7 +50,9 @@ public final class ConnectionCreatedEvent {
     @Override
     public String toString() {
         return "ConnectionCreatedEvent{"
-                       + " connectionId=" + connectionId
-                       + '}';
+                + "connectionId=" + connectionId
+                + ", server=" + connectionId.getServerId().getAddress()
+                + ", clusterId=" + connectionId.getServerId().getClusterId()
+                + '}';
     }
 }

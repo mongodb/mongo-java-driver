@@ -17,13 +17,19 @@
 package org.bson.codecs;
 
 import org.bson.Transformer;
+import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import java.lang.reflect.Type;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.bson.assertions.Assertions.notNull;
 import static org.bson.codecs.BsonTypeClassMap.DEFAULT_BSON_TYPE_CLASS_MAP;
+import static org.bson.codecs.ContainerCodecHelper.getCodec;
 
 /**
  * A {@code CodecProvider} for the Map class and all the default Codec implementations on which it depends.
@@ -73,12 +79,34 @@ public class MapCodecProvider implements CodecProvider {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-        if (Map.class.isAssignableFrom(clazz)) {
-            return (Codec<T>) new MapCodec(registry, bsonTypeClassMap, valueTransformer);
-        }
+        return get(clazz, Collections.emptyList(), registry);
+    }
 
+    @Override
+    public <T> Codec<T> get(final Class<T> clazz, final List<Type> typeArguments, final CodecRegistry registry) {
+        if (Map.class.isAssignableFrom(clazz)) {
+            int typeArgumentsSize = typeArguments.size();
+            switch (typeArgumentsSize) {
+                case 0: {
+                    @SuppressWarnings({"unchecked", "rawtypes"})
+                    Codec<T> result = new MapCodec(registry, bsonTypeClassMap, valueTransformer, clazz);
+                    return result;
+                }
+                case 2: {
+                    Type genericTypeOfMapKey = typeArguments.get(0);
+                    if (!genericTypeOfMapKey.getTypeName().equals("java.lang.String")) {
+                        throw new CodecConfigurationException("Unsupported key type for Map: " + genericTypeOfMapKey.getTypeName());
+                    }
+                    @SuppressWarnings({"unchecked", "rawtypes"})
+                    Codec<T> result = new ParameterizedMapCodec(getCodec(registry, typeArguments.get(1)), clazz);
+                    return result;
+                }
+                default: {
+                    throw new CodecConfigurationException("Expected two parameterized type for an Iterable, but found " + typeArgumentsSize);
+                }
+            }
+        }
         return null;
     }
 
@@ -95,7 +123,7 @@ public class MapCodecProvider implements CodecProvider {
         if (!bsonTypeClassMap.equals(that.bsonTypeClassMap)) {
             return false;
         }
-        if (valueTransformer != null ? !valueTransformer.equals(that.valueTransformer) : that.valueTransformer != null) {
+        if (!Objects.equals(valueTransformer, that.valueTransformer)) {
             return false;
         }
 
@@ -107,5 +135,10 @@ public class MapCodecProvider implements CodecProvider {
         int result = bsonTypeClassMap.hashCode();
         result = 31 * result + (valueTransformer != null ? valueTransformer.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "MapCodecProvider{}";
     }
 }

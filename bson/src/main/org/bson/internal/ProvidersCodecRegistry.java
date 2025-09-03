@@ -17,32 +17,56 @@
 package org.bson.internal;
 
 import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.internal.CodecCache.CodecCacheKey;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+import static java.lang.String.format;
+import static java.util.Collections.emptyList;
 import static org.bson.assertions.Assertions.isTrueArgument;
+import static org.bson.assertions.Assertions.notNull;
 
-public final class ProvidersCodecRegistry implements CodecRegistry, CycleDetectingCodecRegistry {
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
+public final class ProvidersCodecRegistry implements CycleDetectingCodecRegistry {
     private final List<CodecProvider> codecProviders;
     private final CodecCache codecCache = new CodecCache();
 
     public ProvidersCodecRegistry(final List<? extends CodecProvider> codecProviders) {
         isTrueArgument("codecProviders must not be null or empty", codecProviders != null && codecProviders.size() > 0);
-        this.codecProviders = new ArrayList<CodecProvider>(codecProviders);
+        this.codecProviders = new ArrayList<>(codecProviders);
     }
 
     @Override
     public <T> Codec<T> get(final Class<T> clazz) {
-        return get(new ChildCodecRegistry<T>(this, clazz));
+        return get(new ChildCodecRegistry<>(this, clazz, null));
     }
 
-    @SuppressWarnings("rawtypes")
+    @Override
+    public <T> Codec<T> get(final Class<T> clazz, final List<Type> typeArguments) {
+        notNull("typeArguments", typeArguments);
+        isTrueArgument(format("typeArguments size should equal the number of type parameters in class %s, but is %d",
+                        clazz, typeArguments.size()),
+                clazz.getTypeParameters().length == typeArguments.size());
+        return get(new ChildCodecRegistry<>(this, clazz, typeArguments));
+    }
+
+    @Override
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+        return get(clazz, Collections.emptyList(), registry);
+    }
+
+    @Override
+    public <T> Codec<T> get(final Class<T> clazz, final List<Type> typeArguments, final CodecRegistry registry) {
         for (CodecProvider provider : codecProviders) {
-            Codec<T> codec = provider.get(clazz, registry);
+            Codec<T> codec = provider.get(clazz, typeArguments, registry);
             if (codec != null) {
                 return codec;
             }
@@ -50,18 +74,17 @@ public final class ProvidersCodecRegistry implements CodecRegistry, CycleDetecti
         return null;
     }
 
-    @SuppressWarnings({"rawtypes" })
     public <T> Codec<T> get(final ChildCodecRegistry<T> context) {
-        if (!codecCache.containsKey(context.getCodecClass())) {
+        CodecCacheKey codecCacheKey = new CodecCacheKey(context.getCodecClass(), context.getTypes().orElse(null));
+        return codecCache.<T>get(codecCacheKey).orElseGet(() -> {
             for (CodecProvider provider : codecProviders) {
-                Codec<T> codec = provider.get(context.getCodecClass(), context);
+                Codec<T> codec = provider.get(context.getCodecClass(), context.getTypes().orElse(emptyList()), context);
                 if (codec != null) {
-                    return codecCache.putIfMissing(context.getCodecClass(), codec);
+                    return codecCache.putIfAbsent(codecCacheKey, codec);
                 }
             }
-            codecCache.put(context.getCodecClass(), null);
-        }
-        return codecCache.getOrThrow(context.getCodecClass());
+            throw new CodecConfigurationException(format("Can't find a codec for %s.", codecCacheKey));
+        });
     }
 
     @Override
@@ -88,5 +111,12 @@ public final class ProvidersCodecRegistry implements CodecRegistry, CycleDetecti
     @Override
     public int hashCode() {
         return codecProviders.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "ProvidersCodecRegistry{"
+                + "codecProviders=" + codecProviders
+                + '}';
     }
 }

@@ -17,8 +17,15 @@
 package com.mongodb.client;
 
 import com.mongodb.CursorType;
+import com.mongodb.ExplainVerbosity;
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
+import com.mongodb.client.model.Projections;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonValue;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -71,12 +78,12 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      * The maximum amount of time for the server to wait on new documents to satisfy a tailable cursor
      * query. This only applies to a TAILABLE_AWAIT cursor. When the cursor is not a TAILABLE_AWAIT cursor,
      * this option is ignored.
-     *
+     * <p>
      * On servers &gt;= 3.2, this option will be specified on the getMore command as "maxTimeMS". The default
      * is no value: no "maxTimeMS" is sent to the server with the getMore command.
-     *
+     * <p>
      * On servers &lt; 3.2, this option is ignored, and indicates that the driver should respect the server's default value
-     *
+     * <p>
      * A zero value will be ignored.
      *
      * @param maxAwaitTime  the max await time
@@ -93,6 +100,7 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      * @param projection the project document, which may be null.
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Projection
+     * @see Projections
      */
     FindIterable<TResult> projection(@Nullable Bson projection);
 
@@ -113,16 +121,6 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      */
     FindIterable<TResult> noCursorTimeout(boolean noCursorTimeout);
-
-    /**
-     * Users should not set this under normal circumstances.
-     *
-     * @param oplogReplay if oplog replay is enabled
-     * @return this
-     * @deprecated oplogReplay has been deprecated in MongoDB 4.4.
-     */
-    @Deprecated
-    FindIterable<TResult> oplogReplay(boolean oplogReplay);
 
     /**
      * Get partial results from a sharded cluster if one or more shards are unreachable (instead of throwing an error).
@@ -162,13 +160,27 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
     FindIterable<TResult> collation(@Nullable Collation collation);
 
     /**
-     * Sets the comment to the query. A null value means no comment is set.
+     * Sets the comment for this operation. A null value means no comment is set.
      *
      * @param comment the comment
      * @return this
      * @since 3.5
      */
     FindIterable<TResult> comment(@Nullable String comment);
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * <p>The comment can be any valid BSON type for server versions 4.4 and above.
+     * Server versions between 3.6 and 4.2 only support string as comment,
+     * and providing a non-string type will result in a server-side error.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 3.6
+     */
+    FindIterable<TResult> comment(@Nullable BsonValue comment);
 
     /**
      * Sets the hint for which index to use. A null value means no hint is set.
@@ -189,6 +201,19 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      * @since 3.12
      */
     FindIterable<TResult> hintString(@Nullable String hint);
+
+    /**
+     * Add top-level variables to the operation. A null value means no variables are set.
+     *
+     * <p>Allows for improved command readability by separating the variables from the query text.</p>
+     *
+     * @param variables for find operation or null
+     * @return this
+     * @mongodb.driver.manual reference/command/find/
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    FindIterable<TResult> let(@Nullable Bson variables);
 
     /**
      * Sets the exclusive upper bound for a specific index. A null value means no max is set.
@@ -239,4 +264,71 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      */
     FindIterable<TResult> allowDiskUse(@Nullable Boolean allowDiskUse);
 
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * <p>
+     *     Requires the {@code timeout} to be set, either in the {@link com.mongodb.MongoClientSettings},
+     *     via {@link MongoDatabase} or via {@link MongoCollection}
+     * </p>
+     * <p>
+     *     If the {@code timeout} is set then:
+     *     <ul>
+     *      <li>For non-tailable cursors, the default value of timeoutMode is {@link TimeoutMode#CURSOR_LIFETIME}</li>
+     *      <li>For tailable cursors, the default value of timeoutMode is {@link TimeoutMode#ITERATION} and its an error
+     *      to configure it as: {@link TimeoutMode#CURSOR_LIFETIME}</li>
+     *     </ul>
+     *
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    FindIterable<TResult> timeoutMode(TimeoutMode timeoutMode);
+
+    /**
+     * Explain the execution plan for this operation with the server's default verbosity level
+     *
+     * @return the execution plan
+     * @since 4.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.2
+     */
+    Document explain();
+
+    /**
+     * Explain the execution plan for this operation with the given verbosity level
+     *
+     * @param verbosity the verbosity of the explanation
+     * @return the execution plan
+     * @since 4.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.2
+     */
+    Document explain(ExplainVerbosity verbosity);
+
+    /**
+     * Explain the execution plan for this operation with the server's default verbosity level
+     *
+     * @param <E> the type of the document class
+     * @param explainResultClass the document class to decode into
+     * @return the execution plan
+     * @since 4.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.2
+     */
+    <E> E explain(Class<E> explainResultClass);
+
+    /**
+     * Explain the execution plan for this operation with the given verbosity level
+     *
+     * @param <E> the type of the document class
+     * @param explainResultClass the document class to decode into
+     * @param verbosity            the verbosity of the explanation
+     * @return the execution plan
+     * @since 4.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.2
+     */
+    <E> E explain(Class<E> explainResultClass, ExplainVerbosity verbosity);
 }

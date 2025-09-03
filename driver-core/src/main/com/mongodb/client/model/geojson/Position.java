@@ -55,7 +55,7 @@ public final class Position {
      * @param remaining the remaining values
      */
     public Position(final double first, final double second, final double... remaining) {
-        List<Double> values = new ArrayList<Double>();
+        List<Double> values = new ArrayList<>();
         values.add(first);
         values.add(second);
         for (double cur : remaining) {

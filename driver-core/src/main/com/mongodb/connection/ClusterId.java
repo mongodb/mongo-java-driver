@@ -16,9 +16,14 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.lang.Nullable;
 import org.bson.types.ObjectId;
 
+import java.util.Objects;
+
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
 /**
  * A client-generated identifier that uniquely identifies a connection to a MongoDB cluster, which could be sharded, replica set,
@@ -43,12 +48,12 @@ public final class ClusterId {
      *
      * @param description the user defined description of the MongoClient
      */
-    public ClusterId(final String description) {
+    public ClusterId(@Nullable final String description) {
         this.value = new ObjectId().toHexString();
         this.description = description;
     }
 
-    // for testing only, as cluster identifiers should really be unique
+    @VisibleForTesting(otherwise = PRIVATE)
     ClusterId(final String value, final String description) {
         this.value = notNull("value", value);
         this.description = description;
@@ -68,6 +73,7 @@ public final class ClusterId {
      *
      * @return the user defined description of the MongoClient
      */
+    @Nullable
     public String getDescription() {
         return description;
     }
@@ -86,7 +92,7 @@ public final class ClusterId {
         if (!value.equals(clusterId.value)) {
             return false;
         }
-        if (description != null ? !description.equals(clusterId.description) : clusterId.description != null) {
+        if (!Objects.equals(description, clusterId.description)) {
             return false;
         }
 

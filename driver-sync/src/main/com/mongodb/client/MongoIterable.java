@@ -29,13 +29,16 @@ import java.util.Collection;
  */
 public interface MongoIterable<TResult> extends Iterable<TResult> {
 
+    /**
+     * @return A {@link MongoCursor} that must be {@linkplain MongoCursor#close() closed}.
+     */
     @Override
     MongoCursor<TResult> iterator();
 
     /**
      * Returns a cursor used for iterating over elements of type {@code TResult}. The cursor is primarily used for change streams.
      *
-     * @return a cursor
+     * @return a cursor equivalent to that returned from {@link #iterator()}.
      * @since 3.11
      */
     MongoCursor<TResult> cursor();
@@ -74,4 +77,5 @@ public interface MongoIterable<TResult> extends Iterable<TResult> {
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     MongoIterable<TResult> batchSize(int batchSize);
+
 }

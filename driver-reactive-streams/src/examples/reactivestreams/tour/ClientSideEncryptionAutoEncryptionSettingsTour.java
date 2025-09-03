@@ -47,7 +47,7 @@ public class ClientSideEncryptionAutoEncryptionSettingsTour {
 
     /**
      * Run this main method to see the output of this quick example.
-     *
+     * <p>
      * Requires the mongodb-crypt library in the class path and mongocryptd on the system path.
      *
      * @param args ignored args
@@ -55,7 +55,7 @@ public class ClientSideEncryptionAutoEncryptionSettingsTour {
     public static void main(final String[] args) {
 
         // This would have to be the same master key as was used to create the encryption key
-        final byte[] localMasterKey = new byte[96];
+        byte[] localMasterKey = new byte[96];
         new SecureRandom().nextBytes(localMasterKey);
 
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
@@ -64,11 +64,14 @@ public class ClientSideEncryptionAutoEncryptionSettingsTour {
            }});
         }};
 
+        MongoClientSettings commonClientSettings = (
+                args.length == 0
+                        ? MongoClientSettings.builder()
+                        : MongoClientSettings.builder().applyConnectionString(new ConnectionString(args[0])))
+                .build();
         String keyVaultNamespace = "admin.datakeys";
         ClientEncryptionSettings clientEncryptionSettings = ClientEncryptionSettings.builder()
-                .keyVaultMongoClientSettings(MongoClientSettings.builder()
-                        .applyConnectionString(new ConnectionString("mongodb://localhost"))
-                        .build())
+                .keyVaultMongoClientSettings(commonClientSettings)
                 .keyVaultNamespace(keyVaultNamespace)
                 .kmsProviders(kmsProviders)
                 .build();
@@ -107,7 +110,7 @@ public class ClientSideEncryptionAutoEncryptionSettingsTour {
                                     + "}"));
                 }}).build();
 
-        MongoClientSettings clientSettings = MongoClientSettings.builder()
+        MongoClientSettings clientSettings = MongoClientSettings.builder(commonClientSettings)
                 .autoEncryptionSettings(autoEncryptionSettings)
                 .build();
 

@@ -20,6 +20,7 @@ package com.mongodb;
  * Subclass of {@link MongoException} representing a network-related exception
  *
  * @since 2.12
+ * @serial exclude
  */
 public class MongoSocketException extends MongoException {
 
@@ -32,7 +33,7 @@ public class MongoSocketException extends MongoException {
      * @param msg the message
      * @param e the cause
      */
-    MongoSocketException(final String msg, final ServerAddress serverAddress, final Throwable e) {
+    public MongoSocketException(final String msg, final ServerAddress serverAddress, final Throwable e) {
         super(-2, msg, e);
         this.serverAddress = serverAddress;
     }

@@ -20,18 +20,17 @@ import com.mongodb.MongoDriverInformation
 import com.mongodb.MongoNamespace
 import com.mongodb.client.model.IndexModel
 import com.mongodb.client.result.InsertOneResult
-import com.mongodb.diagnostics.logging.Loggers
+import com.mongodb.internal.diagnostics.logging.Loggers
 import org.bson.BsonInt32
 import org.bson.Document
 import org.bson.RawBsonDocument
+import reactor.core.publisher.Flux
 import spock.lang.IgnoreIf
 
 import static Fixture.getMongoClient
-import static com.mongodb.ClusterFixture.TIMEOUT
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION
 import static com.mongodb.ClusterFixture.getConnectionString
 import static com.mongodb.reactivestreams.client.Fixture.isReplicaSet
-import static com.mongodb.reactivestreams.client.Fixture.serverVersionAtLeast
-import static java.util.concurrent.TimeUnit.SECONDS
 
 class SmokeTestSpecification extends FunctionalSpecification {
 
@@ -123,13 +122,13 @@ class SmokeTestSpecification extends FunctionalSpecification {
         run('drop the index', collection.&dropIndex, 'multi_1') == []
 
         then:
-        run('has a single index left "_id" ', collection.&listIndexes).size == 2
+        run('has a single index left "_id" ', collection.&listIndexes).size() == 2
 
         then:
         run('drop the index', collection.&dropIndex, 'test_1') == []
 
         then:
-        run('has a single index left "_id" ', collection.&listIndexes).size == 1
+        run('has a single index left "_id" ', collection.&listIndexes).size() == 1
 
         then:
         def newCollectionName = 'new' + collectionName.capitalize()
@@ -146,13 +145,13 @@ class SmokeTestSpecification extends FunctionalSpecification {
         run('drop the collection', collection.&drop) == []
 
         then:
-        run('there are no indexes', collection.&listIndexes).size == 0
+        run('there are no indexes', collection.&listIndexes).size() == 0
 
         then:
         !run('the collection name is no longer in the collectionNames list', database.&listCollectionNames).contains(collectionName)
     }
 
-    @IgnoreIf({ !(serverVersionAtLeast(3, 7) && isReplicaSet()) })
+    @IgnoreIf({ !isReplicaSet() })
     def 'should commit a transaction'() {
         given:
         run('create collection', database.&createCollection, collection.namespace.collectionName)
@@ -165,9 +164,12 @@ class SmokeTestSpecification extends FunctionalSpecification {
 
         then:
         run('The count is one', collection.&countDocuments)[0] == 1
+
+        cleanup:
+        session?.close()
     }
 
-    @IgnoreIf({ !(serverVersionAtLeast(3, 7) && isReplicaSet()) })
+    @IgnoreIf({ !isReplicaSet() })
     def 'should abort a transaction'() {
         given:
         run('create collection', database.&createCollection, collection.namespace.collectionName)
@@ -180,6 +182,9 @@ class SmokeTestSpecification extends FunctionalSpecification {
 
         then:
         run('The count is zero', collection.&countDocuments)[0] == 0
+
+        cleanup:
+        session?.close()
     }
 
     def 'should not leak exceptions when a client is closed'() {
@@ -208,33 +213,16 @@ class SmokeTestSpecification extends FunctionalSpecification {
     @SuppressWarnings('BusyWait')
     def 'should visit all documents from a cursor with multiple batches'() {
         given:
-        def batchSize = 100
         def total = 1000
         def documents = (1..total).collect { new Document('_id', it) }
         run('Insert 10000 documents', collection.&insertMany, documents)
 
         when:
-        def subscriber = new Fixture.CountingSubscriber<Document>()
-        collection.find(new Document()).sort(new Document('_id', 1)).subscribe(subscriber)
+        def counted = Flux.from(collection.find(new Document()).sort(new Document('_id', 1)).batchSize(10))
+                .collectList().block(TIMEOUT_DURATION).size()
 
         then:
-        def range = 1..( total / batchSize )
-        for (i in range) {
-            subscriber.getSubscription().request(batchSize)
-            while (subscriber.getCount() < (i * batchSize)) {
-                sleep(100)
-            }
-        }
-
-        then:
-        subscriber.getCount() == documents.size()
-
-        when:
-        subscriber.getSubscription().request(1)
-        subscriber.await(TIMEOUT, SECONDS)
-
-        then:
-        subscriber.isCompleted()
+        counted == documents.size()
     }
 
     def 'should bulk insert RawBsonDocuments'() {
@@ -250,9 +238,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
 
     def run(String log, operation, ... args) {
         LOGGER.debug(log)
-        def subscriber = new Fixture.ObservableSubscriber()
-        operation.call(args).subscribe(subscriber)
-        subscriber.get(TIMEOUT, SECONDS)
+        Flux.from(operation.call(args)).collectList().block(TIMEOUT_DURATION)
     }
 
 }

@@ -7,15 +7,14 @@ set -o errexit  # Exit the script with error if any of the commands fail
 AUTH=${AUTH:-noauth}
 SSL=${SSL:-nossl}
 MONGODB_URI=${MONGODB_URI:-}
-JDK=${JDK:-jdk11}
 TOPOLOGY=${TOPOLOGY:-standalone}
-SAFE_FOR_MULTI_MONGOS=${SAFE_FOR_MULTI_MONGOS:-}
-
-export JAVA_HOME="/opt/java/${JDK}"
 
 ############################################
 #            Main Program                  #
 ############################################
+RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
+. "${RELATIVE_DIR_PATH}/setup-env.bash"
+
 
 if [ "$SSL" != "nossl" ]; then
   echo -e "\nSSL support not configured for Scala tests"
@@ -27,11 +26,10 @@ if [ "$AUTH" != "noauth" ]; then
   exit 1
 fi
 
-if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
-    export TRANSACTION_URI="-Dorg.mongodb.test.transaction.uri=${MONGODB_URI}"
-fi
+export MULTI_MONGOS_URI_SYSTEM_PROPERTY="-Dorg.mongodb.test.multi.mongos.uri=${MONGODB_URI}"
 
 echo "Running scala tests with Scala $SCALA"
 
 ./gradlew -version
-./gradlew -PscalaVersion=$SCALA --stacktrace --info :bson-scala:test :driver-scala:test :driver-scala:integrationTest -Dorg.mongodb.test.uri=${MONGODB_URI} ${TRANSACTION_URI}
+./gradlew -PjavaVersion=${JAVA_VERSION} -PscalaVersion=$SCALA --stacktrace --info scalaCheck \
+    -Dorg.mongodb.test.uri=${MONGODB_URI} ${MULTI_MONGOS_URI_SYSTEM_PROPERTY}

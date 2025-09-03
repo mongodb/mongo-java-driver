@@ -42,6 +42,10 @@ import java.util.Map;
  *     <li>{@link org.bson.codecs.StringCodec}</li>
  *     <li>{@link org.bson.codecs.SymbolCodec}</li>
  *     <li>{@link org.bson.codecs.UuidCodec}</li>
+ *     <li>{@link BinaryVectorCodec}</li>
+ *     <li>{@link Float32BinaryVectorCodec}</li>
+ *     <li>{@link Int8VectorCodec}</li>
+ *     <li>{@link PackedBitBinaryVectorCodec}</li>
  *     <li>{@link org.bson.codecs.ByteCodec}</li>
  *     <li>{@link org.bson.codecs.ShortCodec}</li>
  *     <li>{@link org.bson.codecs.ByteArrayCodec}</li>
@@ -54,7 +58,7 @@ import java.util.Map;
  * @since 3.0
  */
 public class ValueCodecProvider implements CodecProvider {
-    private final Map<Class<?>, Codec<?>> codecs = new HashMap<Class<?>, Codec<?>>();
+    private final Map<Class<?>, Codec<?>> codecs = new HashMap<>();
 
     /**
      * A provider of Codecs for simple value types.
@@ -86,6 +90,10 @@ public class ValueCodecProvider implements CodecProvider {
         addCodec(new StringCodec());
         addCodec(new SymbolCodec());
         addCodec(new OverridableUuidRepresentationUuidCodec());
+        addCodec(new BinaryVectorCodec());
+        addCodec(new Float32BinaryVectorCodec());
+        addCodec(new Int8VectorCodec());
+        addCodec(new PackedBitBinaryVectorCodec());
 
         addCodec(new ByteCodec());
         addCodec(new PatternCodec());
@@ -116,5 +124,10 @@ public class ValueCodecProvider implements CodecProvider {
     @Override
     public int hashCode() {
         return 0;
+    }
+
+    @Override
+    public String toString() {
+        return "ValueCodecProvider{}";
     }
 }

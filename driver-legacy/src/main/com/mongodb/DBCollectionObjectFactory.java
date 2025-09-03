@@ -30,7 +30,7 @@ final class DBCollectionObjectFactory implements DBObjectFactory {
     private final Map<List<String>, Class<? extends DBObject>> pathToClassMap;
 
     DBCollectionObjectFactory() {
-        this(Collections.<List<String>, Class<? extends DBObject>>emptyMap());
+        this(Collections.emptyMap());
     }
 
     private DBCollectionObjectFactory(final Map<List<String>, Class<? extends DBObject>> pathToClassMap) {
@@ -39,7 +39,7 @@ final class DBCollectionObjectFactory implements DBObjectFactory {
 
     @Override
     public DBObject getInstance() {
-        return getInstance(Collections.<String>emptyList());
+        return getInstance(Collections.emptyList());
     }
 
     @Override
@@ -47,11 +47,7 @@ final class DBCollectionObjectFactory implements DBObjectFactory {
         Class<? extends DBObject> aClass = getClassForPath(path);
         try {
             return aClass.getDeclaredConstructor().newInstance();
-        } catch (InstantiationException e) {
-            throw createInternalException(aClass, e);
-        } catch (IllegalAccessException e) {
-            throw createInternalException(aClass, e);
-        } catch (NoSuchMethodException e) {
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException e) {
             throw createInternalException(aClass, e);
         } catch (InvocationTargetException e) {
             throw createInternalException(aClass, e.getTargetException());
@@ -59,7 +55,7 @@ final class DBCollectionObjectFactory implements DBObjectFactory {
     }
 
     public DBCollectionObjectFactory update(final Class<? extends DBObject> aClass) {
-        return new DBCollectionObjectFactory(updatePathToClassMap(aClass, Collections.<String>emptyList()));
+        return new DBCollectionObjectFactory(updatePathToClassMap(aClass, Collections.emptyList()));
     }
 
     public DBCollectionObjectFactory update(final Class<? extends DBObject> aClass, final List<String> path) {
@@ -68,7 +64,7 @@ final class DBCollectionObjectFactory implements DBObjectFactory {
 
     private Map<List<String>, Class<? extends DBObject>> updatePathToClassMap(final Class<? extends DBObject> aClass,
                                                                               final List<String> path) {
-        Map<List<String>, Class<? extends DBObject>> map = new HashMap<List<String>, Class<? extends DBObject>>(pathToClassMap);
+        Map<List<String>, Class<? extends DBObject>> map = new HashMap<>(pathToClassMap);
         if (aClass != null) {
             map.put(path, aClass);
         } else {
@@ -78,11 +74,7 @@ final class DBCollectionObjectFactory implements DBObjectFactory {
     }
 
     Class<? extends DBObject> getClassForPath(final List<String> path) {
-        if (pathToClassMap.containsKey(path)) {
-            return pathToClassMap.get(path);
-        } else {
-            return BasicDBObject.class;
-        }
+        return pathToClassMap.getOrDefault(path, BasicDBObject.class);
     }
 
     private MongoInternalException createInternalException(final Class<? extends DBObject> aClass, final Throwable e) {

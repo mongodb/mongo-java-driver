@@ -17,7 +17,7 @@
 package com.mongodb.internal.client.model;
 
 /**
- * Not part of the public API
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public enum CountStrategy {
 

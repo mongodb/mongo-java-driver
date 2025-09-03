@@ -16,134 +16,53 @@
 
 package com.mongodb.internal.operation
 
-import category.Async
-import category.Slow
-import com.mongodb.MongoExecutionTimeoutException
+
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
 import org.bson.codecs.BsonDocumentCodec
-import org.junit.experimental.categories.Category
-import spock.lang.IgnoreIf
-
-import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
-import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
-import static com.mongodb.ClusterFixture.executeAsync
-import static com.mongodb.ClusterFixture.getBinding
-import static com.mongodb.ClusterFixture.isSharded
+import com.mongodb.spock.Slow
 
 class CommandOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should execute read command'() {
         given:
-        def commandOperation = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
-                                                                      new BsonDocument('count', new BsonString(getCollectionName())),
-                                                                      new BsonDocumentCodec())
+        def operation = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
+                new BsonDocument('count', new BsonString(getCollectionName())),
+                new BsonDocumentCodec())
         when:
-        def result = commandOperation.execute(getBinding())
+        def result = execute(operation, async)
 
         then:
         result.getNumber('n').intValue() == 0
+
+
+        where:
+        async << [true, false]
     }
 
-    @Category(Async)
-    def 'should execute read command asynchronously'() {
-        given:
-        def commandOperation = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
-                                                                      new BsonDocument('count', new BsonString(getCollectionName())),
-                                                                      new BsonDocumentCodec())
-        when:
-        def result = executeAsync(commandOperation)
 
-        then:
-        result.getNumber('n').intValue() == 0
-    }
-
-    def 'should execute write command'() {
-        when:
-        def result = new CommandWriteOperation<BsonDocument>(getNamespace().databaseName,
-                                                             new BsonDocument('findAndModify', new BsonString(getNamespace().fullName))
-                                                                     .append('query', new BsonDocument('_id', new BsonInt32(42)))
-                                                                     .append('update',
-                                                                             new BsonDocument('_id', new BsonInt32(42))
-                                                                                     .append('b', new BsonInt32(42))),
-                                                             new BsonDocumentCodec())
-                .execute(getBinding())
-
-        then:
-        result.containsKey('value')
-    }
-
-    @Category(Async)
-    def 'should execute write command asynchronously'() {
-        when:
-        def result = executeAsync(new CommandWriteOperation<BsonDocument>(getNamespace().databaseName,
-                                                             new BsonDocument('findAndModify', new BsonString(getNamespace().fullName))
-                                                                     .append('query', new BsonDocument('_id', new BsonInt32(42)))
-                                                                     .append('update',
-                                                                             new BsonDocument('_id', new BsonInt32(42))
-                                                                                     .append('b', new BsonInt32(42))),
-                                                             new BsonDocumentCodec()))
-
-        then:
-        result.containsKey('value')
-    }
-
-    @Category(Slow)
+    @Slow
     def 'should execute command larger than 16MB'() {
+        given:
+        def operation = new CommandReadOperation<>(getNamespace().databaseName,
+                new BsonDocument('findAndModify', new BsonString(getNamespace().fullName))
+                        .append('query', new BsonDocument('_id', new BsonInt32(42)))
+                        .append('update',
+                                new BsonDocument('_id', new BsonInt32(42))
+                                        .append('b', new BsonBinary(
+                                                new byte[16 * 1024 * 1024 - 30]))),
+                new BsonDocumentCodec())
+
         when:
-        def result = new CommandWriteOperation<BsonDocument>(getNamespace().databaseName,
-                                                             new BsonDocument('findAndModify', new BsonString(getNamespace().fullName))
-                                                                     .append('query', new BsonDocument('_id', new BsonInt32(42)))
-                                                                     .append('update',
-                                                                             new BsonDocument('_id', new BsonInt32(42))
-                                                                                     .append('b', new BsonBinary(
-                                                                                     new byte[16 * 1024 * 1024 - 30]))),
-                                                             new BsonDocumentCodec())
-                .execute(getBinding())
+        def result = execute(operation, async)
 
         then:
         result.containsKey('value')
-    }
 
-    @IgnoreIf({ isSharded() })
-    def 'should throw execution timeout exception from execute'() {
-        given:
-        def commandOperation = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
-                                                                      new BsonDocument('count', new BsonString(getCollectionName()))
-                                                                              .append('maxTimeMS', new BsonInt32(1)),
-                                                                      new BsonDocumentCodec())
-        enableMaxTimeFailPoint()
-
-        when:
-        commandOperation.execute(getBinding())
-
-        then:
-        thrown(MongoExecutionTimeoutException)
-
-        cleanup:
-        disableMaxTimeFailPoint()
-    }
-
-    @Category(Async)
-    @IgnoreIf({ isSharded() })
-    def 'should throw execution timeout exception from executeAsync'() {
-        given:
-        def commandOperation = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
-                                                                      new BsonDocument('count', new BsonString(getCollectionName()))
-                                                                              .append('maxTimeMS', new BsonInt32(1)),
-                                                                      new BsonDocumentCodec())
-        enableMaxTimeFailPoint()
-
-        when:
-        executeAsync(commandOperation)
-
-        then:
-        thrown(MongoExecutionTimeoutException)
-
-        cleanup:
-        disableMaxTimeFailPoint()
+        where:
+        async << [true, false]
     }
 }

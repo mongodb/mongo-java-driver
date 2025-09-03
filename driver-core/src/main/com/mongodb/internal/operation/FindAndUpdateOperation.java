@@ -20,446 +20,165 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.internal.validator.UpdateFieldNameValidator;
 import com.mongodb.lang.Nullable;
-import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
-import org.bson.conversions.Bson;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
-import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
-import static com.mongodb.internal.operation.OperationHelper.validateCollation;
-import static com.mongodb.internal.operation.OperationHelper.validateHint;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.Collections.singletonMap;
 
 /**
  * An operation that atomically finds and updates a single document.
  *
- * @param <T> the operations result type.
- * @since 3.0
- * @mongodb.driver.manual reference/command/findAndModify/ findAndModify
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     private final BsonDocument update;
     private final List<BsonDocument> updatePipeline;
-    private BsonDocument filter;
-    private BsonDocument projection;
-    private BsonDocument sort;
-    private long maxTimeMS;
     private boolean returnOriginal = true;
     private boolean upsert;
     private Boolean bypassDocumentValidation;
-    private Collation collation;
     private List<BsonDocument> arrayFilters;
-    private Bson hint;
-    private String hintString;
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace the database and collection namespace for the operation.
-     * @param decoder   the decoder for the result documents.
-     * @param update    the document containing update operators.
-     */
-    public FindAndUpdateOperation(final MongoNamespace namespace, final Decoder<T> decoder, final BsonDocument update) {
-        this(namespace, WriteConcern.ACKNOWLEDGED, false, decoder, update);
-    }
-
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace    the database and collection namespace for the operation.
-     * @param writeConcern the writeConcern for the operation
-     * @param decoder      the decoder for the result documents.
-     * @param update       the document containing update operators.
-     * @since 3.2
-     */
-    public FindAndUpdateOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final Decoder<T> decoder,
-                                  final BsonDocument update) {
-        this(namespace, writeConcern, false, decoder, update);
-    }
-
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace    the database and collection namespace for the operation.
-     * @param writeConcern the writeConcern for the operation
-     * @param retryWrites  if writes should be retried if they fail due to a network error.
-     * @param decoder      the decoder for the result documents.
-     * @param update       the document containing update operators.
-     * @since 3.6
-     */
-    public FindAndUpdateOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
-                                  final Decoder<T> decoder, final BsonDocument update) {
+    public FindAndUpdateOperation(final MongoNamespace namespace,
+            final WriteConcern writeConcern, final boolean retryWrites, final Decoder<T> decoder, final BsonDocument update) {
         super(namespace, writeConcern, retryWrites, decoder);
         this.update = notNull("update", update);
         this.updatePipeline = null;
     }
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace    the database and collection namespace for the operation.
-     * @param writeConcern the writeConcern for the operation
-     * @param retryWrites  if writes should be retried if they fail due to a network error.
-     * @param decoder      the decoder for the result documents.
-     * @param update       the pipeline containing update operators.
-     * @since 3.11
-     * @mongodb.server.release 4.2
-     */
     public FindAndUpdateOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
-                                  final Decoder<T> decoder, final List<BsonDocument> update) {
+            final Decoder<T> decoder, final List<BsonDocument> update) {
         super(namespace, writeConcern, retryWrites, decoder);
         this.updatePipeline = update;
         this.update = null;
     }
 
-    /**
-     * Gets the document containing update operators
-     *
-     * @return the update document
-     */
     @Nullable
     public BsonDocument getUpdate() {
         return update;
     }
 
-    /**
-     * Gets the pipeline containing update operators
-     *
-     * @return the update pipeline
-     * @since 3.11
-     * @mongodb.server.release 4.2
-     */
     @Nullable
     public List<BsonDocument> getUpdatePipeline() {
         return updatePipeline;
     }
 
-    /**
-     * Gets the query filter.
-     *
-     * @return the query filter
-     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
-     */
-    public BsonDocument getFilter() {
-        return filter;
-    }
-
-    /**
-     * Sets the filter to apply to the query.
-     *
-     * @param filter the filter, which may be null.
-     * @return this
-     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
-     */
-    public FindAndUpdateOperation<T> filter(final BsonDocument filter) {
-        this.filter = filter;
-        return this;
-    }
-
-    /**
-     * Gets a document describing the fields to return for all matching documents.
-     *
-     * @return the project document, which may be null
-     * @mongodb.driver.manual reference/method/db.collection.find/ Projection
-     */
-    public BsonDocument getProjection() {
-        return projection;
-    }
-
-    /**
-     * Sets a document describing the fields to return for all matching documents.
-     *
-     * @param projection the project document, which may be null.
-     * @return this
-     * @mongodb.driver.manual reference/method/db.collection.find/ Projection
-     */
-    public FindAndUpdateOperation<T> projection(final BsonDocument projection) {
-        this.projection = projection;
-        return this;
-    }
-
-    /**
-     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum execution time in the given time unit
-     */
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, MILLISECONDS);
-    }
-
-    /**
-     * Sets the maximum execution time on the server for this operation.
-     *
-     * @param maxTime  the max time
-     * @param timeUnit the time unit, which may not be null
-     * @return this
-     */
-    public FindAndUpdateOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
-    }
-
-    /**
-     * Gets the sort criteria to apply to the query. The default is null, which means that the documents will be returned in an undefined
-     * order.
-     *
-     * @return a document describing the sort criteria
-     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
-     */
-    public BsonDocument getSort() {
-        return sort;
-    }
-
-    /**
-     * Sets the sort criteria to apply to the query.
-     *
-     * @param sort the sort criteria, which may be null.
-     * @return this
-     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
-     */
-    public FindAndUpdateOperation<T> sort(final BsonDocument sort) {
-        this.sort = sort;
-        return this;
-    }
-
-    /**
-     * When false, returns the updated document rather than the original. The default is false.
-     *
-     * @return true if the original document should be returned
-     */
     public boolean isReturnOriginal() {
         return returnOriginal;
     }
 
-    /**
-     * Set to false if the updated document rather than the original should be returned.
-     *
-     * @param returnOriginal set to false if the updated document rather than the original should be returned
-     * @return this
-     */
     public FindAndUpdateOperation<T> returnOriginal(final boolean returnOriginal) {
         this.returnOriginal = returnOriginal;
         return this;
     }
 
-    /**
-     * Returns true if a new document should be inserted if there are no matches to the query filter.  The default is false.
-     *
-     * @return true if a new document should be inserted if there are no matches to the query filter
-     */
     public boolean isUpsert() {
         return upsert;
     }
 
-    /**
-     * Set to true if a new document should be inserted if there are no matches to the query filter.
-     *
-     * @param upsert true if a new document should be inserted if there are no matches to the query filter
-     * @return this
-     */
     public FindAndUpdateOperation<T> upsert(final boolean upsert) {
         this.upsert = upsert;
         return this;
     }
 
-    /**
-     * Gets the bypass document level validation flag
-     *
-     * @return the bypass document level validation flag
-     * @since 3.2
-     */
     public Boolean getBypassDocumentValidation() {
         return bypassDocumentValidation;
     }
 
-    /**
-     * Sets the bypass document level validation flag.
-     *
-     * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
-     * @return this
-     * @since 3.2
-     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
-     * @mongodb.server.release 3.2
-     */
-    public FindAndUpdateOperation<T> bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public FindAndUpdateOperation<T> bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
 
-    /**
-     * Returns the collation options
-     *
-     * @return the collation options
-     * @since 3.4
-     * @mongodb.server.release 3.4
-     */
-    public Collation getCollation() {
-        return collation;
-    }
-
-    /**
-     * Sets the collation options
-     *
-     * <p>A null value represents the server default.</p>
-     * @param collation the collation options to use
-     * @return this
-     * @since 3.4
-     * @mongodb.server.release 3.4
-     */
-    public FindAndUpdateOperation<T> collation(final Collation collation) {
-        this.collation = collation;
-        return this;
-    }
-
-
-    /**
-     * Sets the array filters option
-     *
-     * @param arrayFilters the array filters, which may be null
-     * @return this
-     * @since 3.6
-     * @mongodb.server.release 3.6
-     */
-    public FindAndUpdateOperation<T> arrayFilters(final List<BsonDocument> arrayFilters) {
+    public FindAndUpdateOperation<T> arrayFilters(@Nullable final List<BsonDocument> arrayFilters) {
         this.arrayFilters = arrayFilters;
         return this;
     }
 
-    /**
-     * Returns the array filters option
-     *
-     * @return the array filters, which may be null
-     * @since 3.6
-     * @mongodb.server.release 3.6
-     */
     public List<BsonDocument> getArrayFilters() {
         return arrayFilters;
     }
 
-    /**
-     * Returns the hint for which index to use. The default is not to set a hint.
-     *
-     * @return the hint
-     * @since 4.1
-     */
-    @Nullable
-    public Bson getHint() {
-        return hint;
-    }
-
-    /**
-     * Sets the hint for which index to use. A null value means no hint is set.
-     *
-     * @param hint the hint
-     * @return this
-     * @since 4.1
-     */
-    public FindAndUpdateOperation<T> hint(@Nullable final Bson hint) {
-        this.hint = hint;
-        return this;
-    }
-
-    /**
-     * Gets the hint string to apply.
-     *
-     * @return the hint string, which should be the name of an existing index
-     * @since 4.1
-     */
-    @Nullable
-    public String getHintString() {
-        return hintString;
-    }
-
-    /**
-     * Sets the hint to apply.
-     *
-     * @param hint the name of the index which should be used for the operation
-     * @return this
-     * @since 4.1
-     */
-    public FindAndUpdateOperation<T> hintString(@Nullable final String hint) {
-        this.hintString = hint;
+    @Override
+    public FindAndUpdateOperation<T> filter(@Nullable final BsonDocument filter) {
+        super.filter(filter);
         return this;
     }
 
     @Override
-    protected String getDatabaseName() {
-        return getNamespace().getDatabaseName();
+    public FindAndUpdateOperation<T> projection(@Nullable final BsonDocument projection) {
+        super.projection(projection);
+        return this;
+    }
+
+    @Override
+    public FindAndUpdateOperation<T> sort(@Nullable final BsonDocument sort) {
+        super.sort(sort);
+        return this;
+    }
+
+    @Override
+    public FindAndUpdateOperation<T> hint(@Nullable final BsonDocument hint) {
+        super.hint(hint);
+        return this;
+    }
+
+    @Override
+    public FindAndUpdateOperation<T> hintString(@Nullable final String hint) {
+        super.hintString(hint);
+        return this;
+    }
+
+    @Override
+    public FindAndUpdateOperation<T> collation(@Nullable final Collation collation) {
+        super.collation(collation);
+        return this;
+    }
+
+    @Override
+    public FindAndUpdateOperation<T> comment(@Nullable final BsonValue comment) {
+        super.comment(comment);
+        return this;
+    }
+
+    @Override
+    public FindAndUpdateOperation<T> let(@Nullable final BsonDocument variables) {
+        super.let(variables);
+        return this;
     }
 
     @Override
     protected FieldNameValidator getFieldNameValidator() {
-        Map<String, FieldNameValidator> map = new HashMap<String, FieldNameValidator>();
-        map.put("update", new UpdateFieldNameValidator());
-        return new MappedFieldNameValidator(new NoOpFieldNameValidator(), map);
+        return new MappedFieldNameValidator(NoOpFieldNameValidator.INSTANCE, singletonMap("update", new UpdateFieldNameValidator()));
     }
 
     @Override
-    protected CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return new CommandCreator() {
-            @Override
-            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                return createCommand(sessionContext, serverDescription, connectionDescription);
-            }
-        };
-    }
-
-    private BsonDocument createCommand(final SessionContext sessionContext, final ServerDescription serverDescription,
-                                       final ConnectionDescription connectionDescription) {
-        validateCollation(connectionDescription, collation);
-        BsonDocument commandDocument = new BsonDocument("findAndModify", new BsonString(getNamespace().getCollectionName()));
-        putIfNotNull(commandDocument, "query", getFilter());
-        putIfNotNull(commandDocument, "fields", getProjection());
-        putIfNotNull(commandDocument, "sort", getSort());
+    protected void specializeCommand(final BsonDocument commandDocument, final ConnectionDescription connectionDescription) {
         commandDocument.put("new", new BsonBoolean(!isReturnOriginal()));
         putIfTrue(commandDocument, "upsert", isUpsert());
-        putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
+
         if (getUpdatePipeline() != null) {
             commandDocument.put("update", new BsonArray(getUpdatePipeline()));
         } else {
             putIfNotNull(commandDocument, "update", getUpdate());
         }
-        if (bypassDocumentValidation != null && serverIsAtLeastVersionThreeDotTwo(connectionDescription)) {
+        if (bypassDocumentValidation != null) {
             commandDocument.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
-        }
-        addWriteConcernToCommand(connectionDescription, commandDocument, sessionContext);
-        if (collation != null) {
-            commandDocument.put("collation", collation.asDocument());
         }
         if (arrayFilters != null) {
             commandDocument.put("arrayFilters", new BsonArray(arrayFilters));
         }
-        if (hint != null || hintString != null) {
-            validateHint(connectionDescription, getWriteConcern());
-            if (hint != null) {
-                commandDocument.put("hint", hint.toBsonDocument(BsonDocument.class, null));
-            } else {
-                commandDocument.put("hint", new BsonString(hintString));
-            }
-        }
-        addTxnNumberToCommand(serverDescription, connectionDescription, commandDocument, sessionContext);
-        return commandDocument;
     }
 }

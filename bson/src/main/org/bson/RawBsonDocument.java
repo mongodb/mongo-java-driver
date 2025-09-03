@@ -52,8 +52,19 @@ public final class RawBsonDocument extends BsonDocument {
     private static final long serialVersionUID = 1L;
     private static final int MIN_BSON_DOCUMENT_SIZE = 5;
 
+    /**
+     * The raw bytes.
+     */
     private final byte[] bytes;
+
+    /**
+     * The offset into bytes, which must be less than {@code bytes.length}.
+     */
     private final int offset;
+
+    /**
+     * The length, which must be less than {@code offset + bytes.length}.
+     */
     private final int length;
 
     /**
@@ -113,14 +124,11 @@ public final class RawBsonDocument extends BsonDocument {
         notNull("document", document);
         notNull("codec", codec);
         BasicOutputBuffer buffer = new BasicOutputBuffer();
-        BsonBinaryWriter writer = new BsonBinaryWriter(buffer);
-        try {
+        try (BsonBinaryWriter writer = new BsonBinaryWriter(buffer)) {
             codec.encode(writer, document, EncoderContext.builder().build());
             this.bytes = buffer.getInternalBuffer();
             this.offset = 0;
             this.length = buffer.getPosition();
-        } finally {
-            writer.close();
         }
     }
 
@@ -156,11 +164,8 @@ public final class RawBsonDocument extends BsonDocument {
      * @since 3.6
      */
     public <T> T decode(final Decoder<T> decoder) {
-        BsonBinaryReader reader = createReader();
-        try {
+        try (BsonBinaryReader reader = createReader()) {
             return decoder.decode(reader, DecoderContext.builder().build());
-        } finally {
-            reader.close();
         }
     }
 
@@ -191,15 +196,12 @@ public final class RawBsonDocument extends BsonDocument {
 
     @Override
     public boolean isEmpty() {
-        BsonBinaryReader bsonReader = createReader();
-        try {
+        try (BsonBinaryReader bsonReader = createReader()) {
             bsonReader.readStartDocument();
             if (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 return false;
             }
             bsonReader.readEndDocument();
-        } finally {
-            bsonReader.close();
         }
 
         return true;
@@ -208,8 +210,7 @@ public final class RawBsonDocument extends BsonDocument {
     @Override
     public int size() {
         int size = 0;
-        BsonBinaryReader bsonReader = createReader();
-        try {
+        try (BsonBinaryReader bsonReader = createReader()) {
             bsonReader.readStartDocument();
             while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 size++;
@@ -217,8 +218,6 @@ public final class RawBsonDocument extends BsonDocument {
                 bsonReader.skipValue();
             }
             bsonReader.readEndDocument();
-        } finally {
-            bsonReader.close();
         }
 
         return size;
@@ -226,31 +225,28 @@ public final class RawBsonDocument extends BsonDocument {
 
     @Override
     public Set<Entry<String, BsonValue>> entrySet() {
-        return toBsonDocument().entrySet();
+        return toBaseBsonDocument().entrySet();
     }
 
     @Override
     public Collection<BsonValue> values() {
-        return toBsonDocument().values();
+        return toBaseBsonDocument().values();
     }
 
     @Override
     public Set<String> keySet() {
-        return toBsonDocument().keySet();
+        return toBaseBsonDocument().keySet();
     }
 
     @Override
     public String getFirstKey() {
-        BsonBinaryReader bsonReader = createReader();
-        try {
+        try (BsonBinaryReader bsonReader = createReader()) {
             bsonReader.readStartDocument();
             try {
                 return bsonReader.readName();
             } catch (BsonInvalidOperationException e) {
                 throw new NoSuchElementException();
             }
-        } finally {
-            bsonReader.close();
         }
     }
 
@@ -260,8 +256,7 @@ public final class RawBsonDocument extends BsonDocument {
             throw new IllegalArgumentException("key can not be null");
         }
 
-        BsonBinaryReader bsonReader = createReader();
-        try {
+        try (BsonBinaryReader bsonReader = createReader()) {
             bsonReader.readStartDocument();
             while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 if (bsonReader.readName().equals(key)) {
@@ -270,8 +265,6 @@ public final class RawBsonDocument extends BsonDocument {
                 bsonReader.skipValue();
             }
             bsonReader.readEndDocument();
-        } finally {
-            bsonReader.close();
         }
 
         return false;
@@ -279,8 +272,7 @@ public final class RawBsonDocument extends BsonDocument {
 
     @Override
     public boolean containsValue(final Object value) {
-        BsonBinaryReader bsonReader = createReader();
-        try {
+        try (BsonBinaryReader bsonReader = createReader()) {
             bsonReader.readStartDocument();
             while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 bsonReader.skipName();
@@ -289,8 +281,6 @@ public final class RawBsonDocument extends BsonDocument {
                 }
             }
             bsonReader.readEndDocument();
-        } finally {
-            bsonReader.close();
         }
 
         return false;
@@ -300,8 +290,7 @@ public final class RawBsonDocument extends BsonDocument {
     public BsonValue get(final Object key) {
         notNull("key", key);
 
-        BsonBinaryReader bsonReader = createReader();
-        try {
+        try (BsonBinaryReader bsonReader = createReader()) {
             bsonReader.readStartDocument();
             while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 if (bsonReader.readName().equals(key)) {
@@ -310,15 +299,12 @@ public final class RawBsonDocument extends BsonDocument {
                 bsonReader.skipValue();
             }
             bsonReader.readEndDocument();
-        } finally {
-            bsonReader.close();
         }
 
         return null;
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public String toJson() {
         return toJson(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
     }
@@ -332,12 +318,12 @@ public final class RawBsonDocument extends BsonDocument {
 
     @Override
     public boolean equals(final Object o) {
-        return toBsonDocument().equals(o);
+        return toBaseBsonDocument().equals(o);
     }
 
     @Override
     public int hashCode() {
-        return toBsonDocument().hashCode();
+        return toBaseBsonDocument().hashCode();
     }
 
     @Override
@@ -349,21 +335,36 @@ public final class RawBsonDocument extends BsonDocument {
         return new BsonBinaryReader(new ByteBufferBsonInput(getByteBuffer()));
     }
 
-    private BsonDocument toBsonDocument() {
-        BsonBinaryReader bsonReader = createReader();
-        try {
+    // Transform to an org.bson.BsonDocument instance
+    private BsonDocument toBaseBsonDocument() {
+        try (BsonBinaryReader bsonReader = createReader()) {
             return new BsonDocumentCodec().decode(bsonReader, DecoderContext.builder().build());
-        } finally {
-            bsonReader.close();
         }
     }
 
-    // see https://docs.oracle.com/javase/6/docs/platform/serialization/spec/output.html
+    /**
+     * Write the replacement object.
+     *
+     * <p>
+     * See https://docs.oracle.com/javase/6/docs/platform/serialization/spec/output.html
+     * </p>
+     *
+     * @return a proxy for the document
+     */
     private Object writeReplace() {
         return new SerializationProxy(this.bytes, offset, length);
     }
 
-    // see https://docs.oracle.com/javase/6/docs/platform/serialization/spec/input.html
+    /**
+     * Prevent normal deserialization.
+     *
+     * <p>
+     * See https://docs.oracle.com/javase/6/docs/platform/serialization/spec/input.html
+     * </p>
+     *
+     * @param stream the stream
+     * @throws InvalidObjectException in all cases
+     */
     private void readObject(final ObjectInputStream stream) throws InvalidObjectException {
         throw new InvalidObjectException("Proxy required");
     }

@@ -16,35 +16,47 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.annotations.Reason;
 import com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider;
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
+import com.mongodb.client.model.mql.ExpressionCodecProvider;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.connection.StreamFactoryFactory;
+import com.mongodb.connection.TransportSettings;
 import com.mongodb.event.CommandListener;
 import com.mongodb.lang.Nullable;
+import com.mongodb.spi.dns.DnsClient;
+import com.mongodb.spi.dns.InetAddressResolver;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.BsonCodecProvider;
 import org.bson.codecs.BsonValueCodecProvider;
+import org.bson.codecs.CollectionCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
+import org.bson.codecs.EnumCodecProvider;
 import org.bson.codecs.IterableCodecProvider;
+import org.bson.codecs.JsonObjectCodecProvider;
 import org.bson.codecs.MapCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.jsr310.Jsr310CodecProvider;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.TimeoutSettings.convertAndValidateTimeout;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -63,12 +75,18 @@ public final class MongoClientSettings {
                     new DBRefCodecProvider(),
                     new DBObjectCodecProvider(),
                     new DocumentCodecProvider(new DocumentToDBRefTransformer()),
+                    new CollectionCodecProvider(new DocumentToDBRefTransformer()),
                     new IterableCodecProvider(new DocumentToDBRefTransformer()),
                     new MapCodecProvider(new DocumentToDBRefTransformer()),
                     new GeoJsonCodecProvider(),
                     new GridFSFileCodecProvider(),
                     new Jsr310CodecProvider(),
-                    new BsonCodecProvider()));
+                    new JsonObjectCodecProvider(),
+                    new BsonCodecProvider(),
+                    new ExpressionCodecProvider(),
+                    new Jep395RecordCodecProvider(),
+                    new KotlinCodecProvider(),
+                    new EnumCodecProvider()));
 
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
@@ -76,10 +94,10 @@ public final class MongoClientSettings {
     private final boolean retryReads;
     private final ReadConcern readConcern;
     private final MongoCredential credential;
-    private final StreamFactoryFactory streamFactoryFactory;
+    private final TransportSettings transportSettings;
     private final List<CommandListener> commandListeners;
     private final CodecRegistry codecRegistry;
-
+    private final LoggerSettings loggerSettings;
     private final ClusterSettings clusterSettings;
     private final SocketSettings socketSettings;
     private final SocketSettings heartbeatSocketSettings;
@@ -89,8 +107,17 @@ public final class MongoClientSettings {
     private final String applicationName;
     private final List<MongoCompressor> compressorList;
     private final UuidRepresentation uuidRepresentation;
+    private final ServerApi serverApi;
 
     private final AutoEncryptionSettings autoEncryptionSettings;
+    private final boolean heartbeatSocketTimeoutSetExplicitly;
+    private final boolean heartbeatConnectTimeoutSetExplicitly;
+
+    private final ContextProvider contextProvider;
+    private final DnsClient dnsClient;
+    private final InetAddressResolver inetAddressResolver;
+    @Nullable
+    private final Long timeoutMS;
 
     /**
      * Gets the default codec registry.  It includes the following providers:
@@ -101,13 +128,23 @@ public final class MongoClientSettings {
      * <li>{@link com.mongodb.DBRefCodecProvider}</li>
      * <li>{@link com.mongodb.DBObjectCodecProvider}</li>
      * <li>{@link org.bson.codecs.DocumentCodecProvider}</li>
+     * <li>{@link org.bson.codecs.CollectionCodecProvider}</li>
      * <li>{@link org.bson.codecs.IterableCodecProvider}</li>
      * <li>{@link org.bson.codecs.MapCodecProvider}</li>
      * <li>{@link com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider}</li>
      * <li>{@link com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider}</li>
      * <li>{@link org.bson.codecs.jsr310.Jsr310CodecProvider}</li>
+     * <li>{@link org.bson.codecs.JsonObjectCodecProvider}</li>
      * <li>{@link org.bson.codecs.BsonCodecProvider}</li>
+     * <li>{@link org.bson.codecs.EnumCodecProvider}</li>
+     * <li>{@link ExpressionCodecProvider}</li>
+     * <li>{@link com.mongodb.Jep395RecordCodecProvider}</li>
+     * <li>{@link com.mongodb.KotlinCodecProvider}</li>
      * </ul>
+     *
+     * <p>
+     * Additional providers may be added in a future release.
+     * </p>
      *
      * @return the default codec registry
      */
@@ -135,6 +172,37 @@ public final class MongoClientSettings {
     }
 
     /**
+     * Gets the {@link DnsClient} to use for resolving DNS queries.
+     *
+     * <p>If set, it will be used to resolve SRV and TXT records for mongodb+srv connections. Otherwise,
+     * implementations of {@link com.mongodb.spi.dns.DnsClientProvider} will be discovered via {@link java.util.ServiceLoader}.
+     * If no implementations are discovered, then {@code com.sun.jndi.dns.DnsContextFactory} will be used to resolve these records.
+     *
+     * <p>If applying a connection string to these settings, care must be taken to also pass the same {@link DnsClient} as an argument to
+     * the {@link ConnectionString} constructor.
+     *
+     * @return the DNS client
+     * @since 4.10
+     * @see ConnectionString#ConnectionString(String, DnsClient)
+     */
+    @Nullable
+    public DnsClient getDnsClient() {
+        return dnsClient;
+    }
+
+    /**
+     * Gets the explicitly set {@link InetAddressResolver} to use for looking up the {@link java.net.InetAddress} instances for each host.
+     *
+     * @return the {@link java.net.InetAddress} resolver
+     * @see Builder#inetAddressResolver(InetAddressResolver)
+     * @since 4.10
+     */
+    @Nullable
+    public InetAddressResolver getInetAddressResolver() {
+        return inetAddressResolver;
+    }
+
+    /**
      * A builder for {@code MongoClientSettings} so that {@code MongoClientSettings} can be immutable, and to support easier construction
      * through chaining.
      */
@@ -146,9 +214,10 @@ public final class MongoClientSettings {
         private boolean retryReads = true;
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClientSettings.getDefaultCodecRegistry();
-        private StreamFactoryFactory streamFactoryFactory;
-        private List<CommandListener> commandListeners = new ArrayList<CommandListener>();
+        private TransportSettings transportSettings;
+        private List<CommandListener> commandListeners = new ArrayList<>();
 
+        private final LoggerSettings.Builder loggerSettingsBuilder = LoggerSettings.builder();
         private final ClusterSettings.Builder clusterSettingsBuilder = ClusterSettings.builder();
         private final SocketSettings.Builder socketSettingsBuilder = SocketSettings.builder();
         private final ConnectionPoolSettings.Builder connectionPoolSettingsBuilder = ConnectionPoolSettings.builder();
@@ -158,8 +227,17 @@ public final class MongoClientSettings {
         private String applicationName;
         private List<MongoCompressor> compressorList = Collections.emptyList();
         private UuidRepresentation uuidRepresentation = UuidRepresentation.UNSPECIFIED;
+        private ServerApi serverApi;
 
         private AutoEncryptionSettings autoEncryptionSettings;
+
+        private int heartbeatConnectTimeoutMS;
+        private int heartbeatSocketTimeoutMS;
+        private Long timeoutMS;
+
+        private ContextProvider contextProvider;
+        private DnsClient dnsClient;
+        private InetAddressResolver inetAddressResolver;
 
         private Builder() {
         }
@@ -167,8 +245,8 @@ public final class MongoClientSettings {
         private Builder(final MongoClientSettings settings) {
             notNull("settings", settings);
             applicationName = settings.getApplicationName();
-            commandListeners = new ArrayList<CommandListener>(settings.getCommandListeners());
-            compressorList = new ArrayList<MongoCompressor>(settings.getCompressorList());
+            commandListeners = new ArrayList<>(settings.getCommandListeners());
+            compressorList = new ArrayList<>(settings.getCompressorList());
             codecRegistry = settings.getCodecRegistry();
             readPreference = settings.getReadPreference();
             writeConcern = settings.getWriteConcern();
@@ -177,13 +255,26 @@ public final class MongoClientSettings {
             readConcern = settings.getReadConcern();
             credential = settings.getCredential();
             uuidRepresentation = settings.getUuidRepresentation();
-            streamFactoryFactory = settings.getStreamFactoryFactory();
+            serverApi = settings.getServerApi();
+            dnsClient = settings.getDnsClient();
+            timeoutMS = settings.getTimeout(MILLISECONDS);
+            inetAddressResolver = settings.getInetAddressResolver();
+            transportSettings = settings.getTransportSettings();
             autoEncryptionSettings = settings.getAutoEncryptionSettings();
+            contextProvider = settings.getContextProvider();
+            loggerSettingsBuilder.applySettings(settings.getLoggerSettings());
             clusterSettingsBuilder.applySettings(settings.getClusterSettings());
             serverSettingsBuilder.applySettings(settings.getServerSettings());
             socketSettingsBuilder.applySettings(settings.getSocketSettings());
             connectionPoolSettingsBuilder.applySettings(settings.getConnectionPoolSettings());
             sslSettingsBuilder.applySettings(settings.getSslSettings());
+
+            if (settings.heartbeatConnectTimeoutSetExplicitly) {
+                heartbeatConnectTimeoutMS = settings.heartbeatSocketSettings.getConnectTimeout(MILLISECONDS);
+            }
+            if (settings.heartbeatSocketTimeoutSetExplicitly) {
+                heartbeatSocketTimeoutMS = settings.heartbeatSocketSettings.getReadTimeout(MILLISECONDS);
+            }
         }
 
         /**
@@ -215,6 +306,10 @@ public final class MongoClientSettings {
             if (retryWritesValue != null) {
                 retryWrites = retryWritesValue;
             }
+            Boolean retryReadsValue = connectionString.getRetryReads();
+            if (retryReadsValue != null) {
+                retryReads = retryReadsValue;
+            }
             if (connectionString.getUuidRepresentation() != null) {
                 uuidRepresentation = connectionString.getUuidRepresentation();
             }
@@ -225,6 +320,22 @@ public final class MongoClientSettings {
             if (connectionString.getWriteConcern() != null) {
                 writeConcern = connectionString.getWriteConcern();
             }
+            if (connectionString.getTimeout() != null) {
+                timeoutMS = connectionString.getTimeout();
+            }
+            return this;
+        }
+
+        /**
+         * Applies the {@link LoggerSettings.Builder} block and then sets the loggerSettings.
+         *
+         * @param block the block to apply to the LoggerSettings.
+         * @return this
+         * @see MongoClientSettings#getLoggerSettings()
+         * @since 4.9
+         */
+        public Builder applyToLoggerSettings(final Block<LoggerSettings.Builder> block) {
+            notNull("block", block).apply(loggerSettingsBuilder);
             return this;
         }
 
@@ -368,9 +479,15 @@ public final class MongoClientSettings {
         /**
          * Sets the codec registry
          *
+         * <p>The {@link CodecRegistry} configured by this method is effectively treated by the driver as an instance of
+         * {@link org.bson.codecs.configuration.CodecProvider}, which {@link CodecRegistry} extends. So there is no benefit to defining
+         * a class that implements {@link CodecRegistry}. Rather, an application should always create {@link CodecRegistry} instances
+         * using the factory methods in {@link org.bson.codecs.configuration.CodecRegistries}.</p>
+         *
          * @param codecRegistry the codec registry
          * @return this
          * @see MongoClientSettings#getCodecRegistry()
+         * @see org.bson.codecs.configuration.CodecRegistries
          */
         public Builder codecRegistry(final CodecRegistry codecRegistry) {
             this.codecRegistry = notNull("codecRegistry", codecRegistry);
@@ -378,13 +495,14 @@ public final class MongoClientSettings {
         }
 
         /**
-         * Sets the factory to use to create a {@code StreamFactory}.
+         * Sets the {@link TransportSettings} to apply.
          *
-         * @param streamFactoryFactory the stream factory factory
+         * @param transportSettings the transport settings
          * @return this
+         * @see #getTransportSettings()
          */
-        public Builder streamFactoryFactory(final StreamFactoryFactory streamFactoryFactory) {
-            this.streamFactoryFactory = notNull("streamFactoryFactory", streamFactoryFactory);
+        public Builder transportSettings(final TransportSettings transportSettings) {
+            this.transportSettings = notNull("transportSettings", transportSettings);
             return this;
         }
 
@@ -401,14 +519,14 @@ public final class MongoClientSettings {
         }
 
         /**
-         * Sets the the command listeners
+         * Sets the command listeners
          *
          * @param commandListeners the list of command listeners
          * @return this
          */
         public Builder commandListenerList(final List<CommandListener> commandListeners) {
             notNull("commandListeners", commandListeners);
-            this.commandListeners = new ArrayList<CommandListener>(commandListeners);
+            this.commandListeners = new ArrayList<>(commandListeners);
             return this;
         }
 
@@ -425,7 +543,7 @@ public final class MongoClientSettings {
         public Builder applicationName(@Nullable final String applicationName) {
             if (applicationName != null) {
                 isTrueArgument("applicationName UTF-8 encoding length <= 128",
-                        applicationName.getBytes(Charset.forName("UTF-8")).length <= 128);
+                        applicationName.getBytes(StandardCharsets.UTF_8).length <= 128);
             }
             this.applicationName = applicationName;
             return this;
@@ -442,7 +560,7 @@ public final class MongoClientSettings {
          */
         public Builder compressorList(final List<MongoCompressor> compressorList) {
             notNull("compressorList", compressorList);
-            this.compressorList = new ArrayList<MongoCompressor>(compressorList);
+            this.compressorList = new ArrayList<>(compressorList);
             return this;
         }
 
@@ -462,15 +580,146 @@ public final class MongoClientSettings {
         }
 
         /**
+         * Sets the server API to use when sending commands to the server.
+         * <p>
+         * This is required for some MongoDB deployments.
+         * </p>
+         *
+         * @param serverApi the server API, which may not be null
+         * @return this
+         * @since 4.3
+         */
+        public Builder serverApi(final ServerApi serverApi) {
+            this.serverApi = notNull("serverApi", serverApi);
+            return this;
+        }
+
+        /**
          * Sets the auto-encryption settings
+         * <p>
+         * A separate, internal {@code MongoClient} is created if any of the following are true:
+         *
+         * <ul>
+         *    <li>{@code AutoEncryptionSettings.keyVaultClient} is not passed</li>
+         *    <li>{@code AutoEncryptionSettings.bypassAutomaticEncryption} is {@code false}</li>
+         * </ul>
+         *
+         * If an internal {@code MongoClient} is created, it is configured with the same
+         * options as the parent {@code MongoClient} except {@code minPoolSize} is set to {@code 0}
+         * and {@code AutoEncryptionSettings} is omitted.
          *
          * @param autoEncryptionSettings the auto-encryption settings
          * @return this
          * @since 3.11
          * @see #getAutoEncryptionSettings()
          */
-        public Builder autoEncryptionSettings(final AutoEncryptionSettings autoEncryptionSettings) {
+        public Builder autoEncryptionSettings(@Nullable final AutoEncryptionSettings autoEncryptionSettings) {
             this.autoEncryptionSettings = autoEncryptionSettings;
+            return this;
+        }
+
+        /**
+         * Sets the context provider
+         *
+         * <p>
+         * When used with the synchronous driver, this must be an instance of {@code com.mongodb.client.SynchronousContextProvider}.
+         * When used with the reactive streams driver, this must be an instance of
+         * {@code com.mongodb.reactivestreams.client.ReactiveContextProvider}.
+         *
+         * </p>
+         *
+         * @param contextProvider the context provider
+         * @return this
+         * @since 4.4
+         */
+        public Builder contextProvider(@Nullable final ContextProvider contextProvider) {
+            this.contextProvider = contextProvider;
+            return this;
+        }
+
+        /**
+         * Sets the {@link DnsClient} to use for resolving DNS queries.
+         *
+         * <p> If set, it will be used to resolve SRV and TXT records for mongodb+srv connections. Otherwise,
+         * implementation of {@link com.mongodb.spi.dns.DnsClientProvider} will be discovered via {@link java.util.ServiceLoader}
+         * and used to create an instance of {@link DnsClient}. If no implementation is discovered, then
+         * {@code com.sun.jndi.dns.DnsContextFactory} will be used to resolve these records.
+         *
+         * <p>If {@linkplain #applyConnectionString(ConnectionString) applying a connection string to these settings}, care must be
+         * taken to also pass the same {@link DnsClient} as an argument to the {@link ConnectionString} constructor.
+         *
+         * @param dnsClient the DNS client
+         * @return the DNS client
+         * @since 4.10
+         * @see ConnectionString#ConnectionString(String, DnsClient)
+         */
+        public Builder dnsClient(@Nullable final DnsClient dnsClient) {
+            this.dnsClient = dnsClient;
+            return this;
+        }
+
+        /**
+         * Sets the {@link InetAddressResolver} to use for looking up the {@link java.net.InetAddress} instances for each host.
+         *
+         * <p>If set, it will be used to look up the {@link java.net.InetAddress} for each host, via
+         * {@link InetAddressResolver#lookupByName(String)}. Otherwise,
+         * an implementation of {@link com.mongodb.spi.dns.InetAddressResolverProvider} will be discovered via
+         * {@link java.util.ServiceLoader} and used to create an instance of {@link InetAddressResolver}.  If no implementation is
+         * discovered, {@link java.net.InetAddress#getAllByName(String)} will be used to lookup the {@link java.net.InetAddress}
+         * instances for a host.
+         *
+         * @param inetAddressResolver the InetAddress provider
+         * @return the {@link java.net.InetAddress} resolver
+         * @see #getInetAddressResolver()
+         * @since 4.10
+         */
+        public Builder inetAddressResolver(@Nullable final InetAddressResolver inetAddressResolver) {
+            this.inetAddressResolver = inetAddressResolver;
+            return this;
+        }
+
+
+        /**
+         * Sets the time limit for the full execution of an operation.
+         *
+         * <ul>
+         *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
+         *    <ul>
+         *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
+         *        available</li>
+         *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
+         *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
+         *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
+         *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
+         *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+         *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
+         *   </ul>
+         *   </li>
+         *   <li>{@code 0} means infinite timeout.</li>
+         *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+         * </ul>
+         *
+         * @param timeout the timeout
+         * @param timeUnit the time unit
+         * @return this
+         * @since 5.2
+         * @see #getTimeout
+         */
+        @Alpha(Reason.CLIENT)
+        public Builder timeout(final long timeout, final TimeUnit timeUnit) {
+            this.timeoutMS = convertAndValidateTimeout(timeout, timeUnit);
+            return this;
+        }
+
+        // Package-private to provide interop with MongoClientOptions
+        Builder heartbeatConnectTimeoutMS(final int heartbeatConnectTimeoutMS) {
+            this.heartbeatConnectTimeoutMS = heartbeatConnectTimeoutMS;
+            return this;
+        }
+
+        // Package-private to provide interop with MongoClientOptions
+        Builder heartbeatSocketTimeoutMS(final int heartbeatSocketTimeoutMS) {
+            this.heartbeatSocketTimeoutMS = heartbeatSocketTimeoutMS;
             return this;
         }
 
@@ -512,7 +761,7 @@ public final class MongoClientSettings {
      * <p>Default is {@code WriteConcern.ACKNOWLEDGED}.</p>
      *
      * @return the write concern
-     * @see WriteConcern#ACKNOWLEDGED
+     * @see Builder#writeConcern(WriteConcern)
      */
     public WriteConcern getWriteConcern() {
         return writeConcern;
@@ -562,13 +811,16 @@ public final class MongoClientSettings {
     }
 
     /**
-     * Gets the factory to use to create a {@code StreamFactory}.
+     * Gets the settings for the underlying transport implementation
      *
-     * @return the stream factory factory
+     * @return the settings for the underlying transport implementation
+     *
+     * @since 4.11
+     * @see Builder#transportSettings(TransportSettings)
      */
     @Nullable
-    public StreamFactoryFactory getStreamFactoryFactory() {
-        return streamFactoryFactory;
+    public TransportSettings getTransportSettings() {
+        return transportSettings;
     }
 
     /**
@@ -589,6 +841,7 @@ public final class MongoClientSettings {
      * <p>Default is null.</p>
      *
      * @return the application name, which may be null
+     * @see Builder#applicationName(String)
      * @mongodb.server.release 3.4
      */
     @Nullable
@@ -628,9 +881,53 @@ public final class MongoClientSettings {
     }
 
     /**
+     * Gets the server API to use when sending commands to the server.
+     *
+     * @return the server API, which may be null
+     * @since 4.3
+     */
+    @Nullable
+    public ServerApi getServerApi() {
+        return serverApi;
+    }
+
+    /**
+     * The time limit for the full execution of an operation.
+     *
+     * <p>If set the following deprecated options will be ignored:
+     * {@code waitQueueTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS} and {@code maxCommitTimeMS}</p>
+     *
+     * <ul>
+     *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
+     *    <ul>
+     *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
+     *        available</li>
+     *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
+     *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
+     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
+     *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
+     *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+     *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
+     *   </ul>
+     *   </li>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @param timeUnit the time unit
+     * @return the timeout in the given time unit
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    @Nullable
+    public Long getTimeout(final TimeUnit timeUnit) {
+        return timeoutMS == null ? null : timeUnit.convert(timeoutMS, MILLISECONDS);
+    }
+
+    /**
      * Gets the auto-encryption settings.
      * <p>
-     * Client side encryption enables an application to specify what fields in a collection must be
+     * In-use encryption enables an application to specify what fields in a collection must be
      * encrypted, and the driver automatically encrypts commands and decrypts results.
      * </p>
      * <p>
@@ -647,7 +944,8 @@ public final class MongoClientSettings {
      * Automatic encryption requires the authenticated user to have the listCollections privilege action.
      * </p>
      * <p>
-     * Note: support for client side encryption is in beta.  Backwards-breaking changes may be made before the final release.
+     * Supplying an {@code encryptedFieldsMap} provides more security than relying on an encryptedFields obtained from the server.
+     * It protects against a malicious server advertising false encryptedFields.
      * </p>
      *
      * @return the auto-encryption settings, which may be null
@@ -656,6 +954,16 @@ public final class MongoClientSettings {
     @Nullable
     public AutoEncryptionSettings getAutoEncryptionSettings() {
         return autoEncryptionSettings;
+    }
+
+    /**
+     * Gets the logger settings.
+     *
+     * @return the logger settings
+     * @since 4.9
+     */
+    public LoggerSettings getLoggerSettings() {
+        return loggerSettings;
     }
 
     /**
@@ -677,8 +985,8 @@ public final class MongoClientSettings {
     }
 
     /**
-     * Gets the connection-specific settings wrapped in a settings object.   This settings object uses the values for connectTimeout,
-     * socketTimeout and socketKeepAlive.
+     * Gets the connection-specific settings wrapped in a settings object.   This settings object uses the values for connectTimeout
+     * and socketTimeout.
      *
      * @return a SocketSettings object populated with the connection settings from this {@code MongoClientSettings} instance.
      * @see SocketSettings
@@ -704,7 +1012,7 @@ public final class MongoClientSettings {
      *
      * @return a ConnectionPoolSettings populated with the settings from this {@code MongoClientSettings} instance that relate to the
      * connection provider.
-     * @see ConnectionPoolSettings
+     * @see Builder#applyToConnectionPoolSettings(Block)
      */
     public ConnectionPoolSettings getConnectionPoolSettings() {
         return connectionPoolSettings;
@@ -721,17 +1029,109 @@ public final class MongoClientSettings {
         return serverSettings;
     }
 
+    /**
+     * Get the context provider
+     *
+     * @return the context provider
+     * @since 4.4
+     */
+    @Nullable
+    public ContextProvider getContextProvider() {
+        return contextProvider;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        MongoClientSettings that = (MongoClientSettings) o;
+        return retryWrites == that.retryWrites
+                && retryReads == that.retryReads
+                && heartbeatSocketTimeoutSetExplicitly == that.heartbeatSocketTimeoutSetExplicitly
+                && heartbeatConnectTimeoutSetExplicitly == that.heartbeatConnectTimeoutSetExplicitly
+                && Objects.equals(readPreference, that.readPreference)
+                && Objects.equals(writeConcern, that.writeConcern)
+                && Objects.equals(readConcern, that.readConcern)
+                && Objects.equals(credential, that.credential)
+                && Objects.equals(transportSettings, that.transportSettings)
+                && Objects.equals(commandListeners, that.commandListeners)
+                && Objects.equals(codecRegistry, that.codecRegistry)
+                && Objects.equals(loggerSettings, that.loggerSettings)
+                && Objects.equals(clusterSettings, that.clusterSettings)
+                && Objects.equals(socketSettings, that.socketSettings)
+                && Objects.equals(heartbeatSocketSettings, that.heartbeatSocketSettings)
+                && Objects.equals(connectionPoolSettings, that.connectionPoolSettings)
+                && Objects.equals(serverSettings, that.serverSettings)
+                && Objects.equals(sslSettings, that.sslSettings)
+                && Objects.equals(applicationName, that.applicationName)
+                && Objects.equals(compressorList, that.compressorList)
+                && uuidRepresentation == that.uuidRepresentation
+                && Objects.equals(serverApi, that.serverApi)
+                && Objects.equals(autoEncryptionSettings, that.autoEncryptionSettings)
+                && Objects.equals(dnsClient, that.dnsClient)
+                && Objects.equals(inetAddressResolver, that.inetAddressResolver)
+                && Objects.equals(contextProvider, that.contextProvider)
+                && Objects.equals(timeoutMS, that.timeoutMS);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(readPreference, writeConcern, retryWrites, retryReads, readConcern, credential, transportSettings,
+                commandListeners, codecRegistry, loggerSettings, clusterSettings, socketSettings,
+                heartbeatSocketSettings, connectionPoolSettings, serverSettings, sslSettings, applicationName, compressorList,
+                uuidRepresentation, serverApi, autoEncryptionSettings, heartbeatSocketTimeoutSetExplicitly,
+                heartbeatConnectTimeoutSetExplicitly, dnsClient, inetAddressResolver, contextProvider, timeoutMS);
+
+    }
+
+    @Override
+    public String toString() {
+        return "MongoClientSettings{"
+                + "readPreference=" + readPreference
+                + ", writeConcern=" + writeConcern
+                + ", retryWrites=" + retryWrites
+                + ", retryReads=" + retryReads
+                + ", readConcern=" + readConcern
+                + ", credential=" + credential
+                + ", transportSettings=" + transportSettings
+                + ", commandListeners=" + commandListeners
+                + ", codecRegistry=" + codecRegistry
+                + ", loggerSettings=" + loggerSettings
+                + ", clusterSettings=" + clusterSettings
+                + ", socketSettings=" + socketSettings
+                + ", heartbeatSocketSettings=" + heartbeatSocketSettings
+                + ", connectionPoolSettings=" + connectionPoolSettings
+                + ", serverSettings=" + serverSettings
+                + ", sslSettings=" + sslSettings
+                + ", applicationName='" + applicationName + '\''
+                + ", compressorList=" + compressorList
+                + ", uuidRepresentation=" + uuidRepresentation
+                + ", serverApi=" + serverApi
+                + ", autoEncryptionSettings=" + autoEncryptionSettings
+                + ", dnsClient=" + dnsClient
+                + ", inetAddressResolver=" + inetAddressResolver
+                + ", contextProvider=" + contextProvider
+                + ", timeoutMS=" + timeoutMS
+                + '}';
+    }
+
     private MongoClientSettings(final Builder builder) {
+        isTrue("timeoutMS > 0 ", builder.timeoutMS == null || builder.timeoutMS >= 0);
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
         retryWrites = builder.retryWrites;
         retryReads = builder.retryReads;
         readConcern = builder.readConcern;
         credential = builder.credential;
-        streamFactoryFactory = builder.streamFactoryFactory;
+        transportSettings = builder.transportSettings;
         codecRegistry = builder.codecRegistry;
         commandListeners = builder.commandListeners;
         applicationName = builder.applicationName;
+        loggerSettings = builder.loggerSettingsBuilder.build();
         clusterSettings = builder.clusterSettingsBuilder.build();
         serverSettings = builder.serverSettingsBuilder.build();
         socketSettings = builder.socketSettingsBuilder.build();
@@ -739,11 +1139,22 @@ public final class MongoClientSettings {
         sslSettings = builder.sslSettingsBuilder.build();
         compressorList = builder.compressorList;
         uuidRepresentation = builder.uuidRepresentation;
+        serverApi = builder.serverApi;
+        dnsClient = builder.dnsClient;
+        inetAddressResolver = builder.inetAddressResolver;
         autoEncryptionSettings = builder.autoEncryptionSettings;
-
-        SocketSettings.Builder heartbeatSocketSettingsBuilder = SocketSettings.builder()
-                .readTimeout(socketSettings.getConnectTimeout(MILLISECONDS), MILLISECONDS)
-                .connectTimeout(socketSettings.getConnectTimeout(MILLISECONDS), MILLISECONDS);
-        heartbeatSocketSettings = heartbeatSocketSettingsBuilder.build();
+        heartbeatSocketSettings = SocketSettings.builder()
+                .readTimeout(builder.heartbeatSocketTimeoutMS == 0
+                                ? socketSettings.getConnectTimeout(MILLISECONDS) : builder.heartbeatSocketTimeoutMS,
+                        MILLISECONDS)
+                .connectTimeout(builder.heartbeatConnectTimeoutMS == 0
+                                ? socketSettings.getConnectTimeout(MILLISECONDS) : builder.heartbeatConnectTimeoutMS,
+                        MILLISECONDS)
+                .applyToProxySettings(proxyBuilder -> proxyBuilder.applySettings(socketSettings.getProxySettings()))
+                .build();
+        heartbeatSocketTimeoutSetExplicitly = builder.heartbeatSocketTimeoutMS != 0;
+        heartbeatConnectTimeoutSetExplicitly = builder.heartbeatConnectTimeoutMS != 0;
+        contextProvider = builder.contextProvider;
+        timeoutMS = builder.timeoutMS;
     }
 }

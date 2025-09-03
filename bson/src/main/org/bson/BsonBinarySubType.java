@@ -17,7 +17,7 @@
 package org.bson;
 
 /**
- * The Binary subtype
+ * The Binary subtype.
  *
  * @since 3.0
  */
@@ -53,6 +53,36 @@ public enum BsonBinarySubType {
     MD5((byte) 0x05),
 
     /**
+     * Encrypted data.
+     *
+     * @since 4.4
+     */
+    ENCRYPTED((byte) 0x06),
+
+    /**
+     * Columnar data.
+     *
+     * @since 4.4
+     */
+    COLUMN((byte) 0x07),
+
+    /**
+     * Sensitive data (e.g., HMAC keys) that should be excluded from server-side logging.
+     *
+     * @since 5.3
+     */
+    SENSITIVE((byte) 0x08),
+
+    /**
+     * Vector data.
+     *
+     * @mongodb.server.release 6.0
+     * @since 5.3
+     * @see BinaryVector
+     */
+    VECTOR((byte) 0x09),
+
+    /**
      * User defined binary data.
      */
     USER_DEFINED((byte) 0x80);
@@ -60,10 +90,10 @@ public enum BsonBinarySubType {
     private final byte value;
 
     /**
-     * Returns true if the given value is a UUID subtype
+     * Returns true if the given value is a UUID subtype.
      *
-     * @param value the subtype value as a byte
-     * @return true if value is a UUID subtype
+     * @param value the subtype value as a byte.
+     * @return true if value is a UUID subtype.
      * @since 3.4
      */
     public static boolean isUuid(final byte value) {

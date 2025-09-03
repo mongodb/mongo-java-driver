@@ -20,12 +20,15 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.DropCollectionOptions;
 import com.mongodb.client.model.DropIndexOptions;
 import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
@@ -37,18 +40,21 @@ import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
+import com.mongodb.lang.Nullable;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The MongoCollection interface.
@@ -106,6 +112,37 @@ public interface MongoCollection<TDocument> {
     ReadConcern getReadConcern();
 
     /**
+     * The time limit for the full execution of an operation.
+     *
+     * <p>If not null the following deprecated options will be ignored:
+     * {@code waitQueueTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS} and {@code maxCommitTimeMS}</p>
+     *
+     * <ul>
+     *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
+     *    <ul>
+     *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
+     *        available</li>
+     *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
+     *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
+     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
+     *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
+     *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+     *        See: {@link com.mongodb.TransactionOptions#getMaxCommitTime}.</li>
+     *   </ul>
+     *   </li>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @param timeUnit the time unit
+     * @return the timeout in the given time unit
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    @Nullable
+    Long getTimeout(TimeUnit timeUnit);
+
+    /**
      * Create a new MongoCollection instance with a different default class to cast any documents returned from the database into..
      *
      * @param clazz          the default class to cast any documents returned from the database into.
@@ -117,8 +154,14 @@ public interface MongoCollection<TDocument> {
     /**
      * Create a new MongoCollection instance with a different codec registry.
      *
+     * <p>The {@link CodecRegistry} configured by this method is effectively treated by the driver as an instance of
+     * {@link org.bson.codecs.configuration.CodecProvider}, which {@link CodecRegistry} extends. So there is no benefit to defining
+     * a class that implements {@link CodecRegistry}. Rather, an application should always create {@link CodecRegistry} instances
+     * using the factory methods in {@link org.bson.codecs.configuration.CodecRegistries}.</p>
+     *
      * @param codecRegistry the new {@link org.bson.codecs.configuration.CodecRegistry} for the collection
      * @return a new MongoCollection instance with the different codec registry
+     * @see org.bson.codecs.configuration.CodecRegistries
      */
     MongoCollection<TDocument> withCodecRegistry(CodecRegistry codecRegistry);
 
@@ -149,19 +192,46 @@ public interface MongoCollection<TDocument> {
     MongoCollection<TDocument> withReadConcern(ReadConcern readConcern);
 
     /**
+     * Create a new MongoCollection instance with the set time limit for the full execution of an operation.
+     *
+     * <ul>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @param timeout the timeout, which must be greater than or equal to 0
+     * @param timeUnit the time unit
+     * @return a new MongoCollection instance with the set time limit for the full execution of an operation
+     * @since 5.2
+     * @see #getTimeout
+     */
+    @Alpha(Reason.CLIENT)
+    MongoCollection<TDocument> withTimeout(long timeout, TimeUnit timeUnit);
+
+    /**
      * Gets an estimate of the count of documents in a collection using collection metadata.
+     *
+     * <p>
+     * Implementation note: this method is implemented using the MongoDB server's count command
+     * </p>
      *
      * @return a publisher with a single element indicating the estimated number of documents
      * @since 1.9
+     * @mongodb.driver.manual manual/reference/command/count/#behavior
      */
     Publisher<Long> estimatedDocumentCount();
 
     /**
      * Gets an estimate of the count of documents in a collection using collection metadata.
      *
+     * <p>
+     * Implementation note: this method is implemented using the MongoDB server's count command
+     * </p>
+     *
      * @param options the options describing the count
      * @return a publisher with a single element indicating the estimated number of documents
      * @since 1.9
+     * @mongodb.driver.manual manual/reference/command/count/#behavior
      */
     Publisher<Long> estimatedDocumentCount(EstimatedDocumentCountOptions options);
 
@@ -601,7 +671,9 @@ public interface MongoCollection<TDocument> {
      * @param reduceFunction A JavaScript function that "reduces" to a single object all the values associated with a particular key.
      * @return an publisher containing the result of the map-reduce operation
      * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
+     * @deprecated Superseded by aggregate
      */
+    @Deprecated
     MapReducePublisher<TDocument> mapReduce(String mapFunction, String reduceFunction);
 
     /**
@@ -613,7 +685,9 @@ public interface MongoCollection<TDocument> {
      * @param <TResult>      the target document type of the iterable.
      * @return a publisher containing the result of the map-reduce operation
      * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
+     * @deprecated Superseded by aggregate
      */
+    @Deprecated
     <TResult> MapReducePublisher<TResult> mapReduce(String mapFunction, String reduceFunction, Class<TResult> clazz);
 
     /**
@@ -626,7 +700,9 @@ public interface MongoCollection<TDocument> {
      * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
      * @mongodb.server.release 3.6
      * @since 1.7
+     * @deprecated Superseded by aggregate
      */
+    @Deprecated
     MapReducePublisher<TDocument> mapReduce(ClientSession clientSession, String mapFunction, String reduceFunction);
 
     /**
@@ -641,7 +717,9 @@ public interface MongoCollection<TDocument> {
      * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
      * @mongodb.server.release 3.6
      * @since 1.7
+     * @deprecated Superseded by aggregate
      */
+    @Deprecated
     <TResult> MapReducePublisher<TResult> mapReduce(ClientSession clientSession, String mapFunction, String reduceFunction,
                                                     Class<TResult> clazz);
 
@@ -779,7 +857,7 @@ public interface MongoCollection<TDocument> {
      * Removes at most one document from the collection that matches the given filter.  If no documents match, the collection is not
      * modified.
      *
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @return a publisher with a single element the DeleteResult or with an com.mongodb.MongoException
      */
     Publisher<DeleteResult> deleteOne(Bson filter);
@@ -788,7 +866,7 @@ public interface MongoCollection<TDocument> {
      * Removes at most one document from the collection that matches the given filter.  If no documents match, the collection is not
      * modified.
      *
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @param options the options to apply to the delete operation
      * @return a publisher with a single element the DeleteResult or with an com.mongodb.MongoException
      * @since 1.5
@@ -800,7 +878,7 @@ public interface MongoCollection<TDocument> {
      * modified.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @return a publisher with a single element the DeleteResult or with an com.mongodb.MongoException
      * @mongodb.server.release 3.6
      * @since 1.7
@@ -812,7 +890,7 @@ public interface MongoCollection<TDocument> {
      * modified.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @param options the options to apply to the delete operation
      * @return a publisher with a single element the DeleteResult or with an com.mongodb.MongoException
      * @mongodb.server.release 3.6
@@ -823,7 +901,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
      *
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @return a publisher with a single element the DeleteResult or with an com.mongodb.MongoException
      */
     Publisher<DeleteResult> deleteMany(Bson filter);
@@ -831,7 +909,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
      *
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @param options the options to apply to the delete operation
      * @return a publisher with a single element the DeleteResult or with an com.mongodb.MongoException
      * @since 1.5
@@ -842,7 +920,7 @@ public interface MongoCollection<TDocument> {
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @return a publisher with a single element the DeleteResult or with an com.mongodb.MongoException
      * @mongodb.server.release 3.6
      * @since 1.7
@@ -853,7 +931,7 @@ public interface MongoCollection<TDocument> {
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param filter the query filter to apply the the delete operation
+     * @param filter the query filter to apply the delete operation
      * @param options the options to apply to the delete operation
      * @return a publisher with a single element the DeleteResult or with an com.mongodb.MongoException
      * @mongodb.server.release 3.6
@@ -864,7 +942,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Replace a document in the collection according to the specified arguments.
      *
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @return a publisher with a single element the UpdateResult
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
@@ -874,7 +952,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Replace a document in the collection according to the specified arguments.
      *
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @param options     the options to apply to the replace operation
      * @return a publisher with a single element the UpdateResult
@@ -887,7 +965,7 @@ public interface MongoCollection<TDocument> {
      * Replace a document in the collection according to the specified arguments.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @return a publisher with a single element the UpdateResult
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
@@ -900,7 +978,7 @@ public interface MongoCollection<TDocument> {
      * Replace a document in the collection according to the specified arguments.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @param options     the options to apply to the replace operation
      * @return a publisher with a single element the UpdateResult
@@ -1177,7 +1255,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Atomically find a document and replace it.
      *
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @return a publisher with a single element the document that was replaced.  Depending on the value of the {@code returnOriginal}
      * property, this will either be the document as it was before the update or as it is after the update.  If no documents matched the
@@ -1188,7 +1266,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Atomically find a document and replace it.
      *
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @param options     the options to apply to the operation
      * @return a publisher with a single element the document that was replaced.  Depending on the value of the {@code returnOriginal}
@@ -1201,7 +1279,7 @@ public interface MongoCollection<TDocument> {
      * Atomically find a document and replace it.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @return a publisher with a single element the document that was replaced.  Depending on the value of the {@code returnOriginal}
      * property, this will either be the document as it was before the update or as it is after the update.  If no documents matched the
@@ -1215,7 +1293,7 @@ public interface MongoCollection<TDocument> {
      * Atomically find a document and replace it.
      *
      * @param clientSession the client session with which to associate this operation
-     * @param filter      the query filter to apply the the replace operation
+     * @param filter      the query filter to apply the replace operation
      * @param replacement the replacement document
      * @param options     the options to apply to the operation
      * @return a publisher with a single element the document that was replaced.  Depending on the value of the {@code returnOriginal}
@@ -1356,6 +1434,108 @@ public interface MongoCollection<TDocument> {
      * @since 1.7
      */
     Publisher<Void> drop(ClientSession clientSession);
+
+    /**
+     * Drops this collection from the Database.
+     *
+     * @param dropCollectionOptions various options for dropping the collection
+     * @return an empty publisher that indicates when the operation has completed
+     * @mongodb.driver.manual reference/command/drop/ Drop Collection
+     * @since 4.7
+     * @mongodb.server.release 6.0
+     */
+    Publisher<Void> drop(DropCollectionOptions dropCollectionOptions);
+
+    /**
+     * Drops this collection from the Database.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param dropCollectionOptions various options for dropping the collection
+     * @return an empty publisher that indicates when the operation has completed
+     * @mongodb.driver.manual reference/command/drop/ Drop Collection
+     * @since 4.7
+     * @mongodb.server.release 6.0
+     */
+    Publisher<Void> drop(ClientSession clientSession, DropCollectionOptions dropCollectionOptions);
+
+
+    /**
+     * Create an Atlas Search index for the collection.
+     *
+     * @param indexName  the name of the search index to create.
+     * @param definition Atlas Search index mapping definition.
+     * @return a {@link Publisher} with search index name.
+     * @mongodb.server.release 6.0
+     * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
+     * @since 4.11
+     */
+    Publisher<String> createSearchIndex(String indexName, Bson definition);
+
+    /**
+     * Create an Atlas Search index with {@code "default"} name for the collection.
+     *
+     * @param definition Atlas Search index mapping definition.
+     * @return a {@link Publisher} with search index name.
+     * @mongodb.server.release 6.0
+     * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
+     * @since 4.11
+     */
+    Publisher<String> createSearchIndex(Bson definition);
+
+    /**
+     * Create one or more Atlas Search indexes for the collection.
+     * <p>
+     * The name can be omitted for a single index, in which case a name will be {@code "default"}.
+     * </p>
+     *
+     * @param searchIndexModels the search index models.
+     * @return a {@link Publisher} with the search index names in the order specified by the given list {@link SearchIndexModel}s.
+     * @mongodb.server.release 6.0
+     * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
+     * @since 4.11
+     */
+    Publisher<String> createSearchIndexes(List<SearchIndexModel> searchIndexModels);
+    /**
+     * Update an Atlas Search index in the collection.
+     *
+     * @param indexName  the name of the search index to update.
+     * @param definition Atlas Search index mapping definition.
+     * @return an empty publisher that indicates when the operation has completed.
+     * @mongodb.server.release 6.0
+     * @mongodb.driver.manual reference/command/updateSearchIndex/ Update Search index
+     * @since 4.11
+     */
+    Publisher<Void> updateSearchIndex(String indexName, Bson definition);
+    /**
+     * Drop an Atlas Search index given its name.
+     *
+     * @param indexName the name of the search index to drop.
+     * @return an empty publisher that indicates when the operation has completed.
+     * @mongodb.server.release 6.0
+     * @mongodb.driver.manual reference/command/dropSearchIndex/ Drop Search index
+     * @since 4.11
+     */
+    Publisher<Void> dropSearchIndex(String indexName);
+
+    /**
+     * Get all Atlas Search indexes in this collection.
+     *
+     * @return the fluent list search indexes interface.
+     * @since 4.11
+     * @mongodb.server.release 6.0
+     */
+    ListSearchIndexesPublisher<Document> listSearchIndexes();
+
+    /**
+     * Get all Atlas Search indexes in this collection.
+     *
+     * @param resultClass the class to decode each document into.
+     * @param <TResult>   the target document type of the iterable.
+     * @return the fluent list search indexes interface.
+     * @since 4.11
+     * @mongodb.server.release 6.0
+     */
+    <TResult> ListSearchIndexesPublisher<TResult> listSearchIndexes(Class<TResult> resultClass);
 
     /**
      * Creates an index.

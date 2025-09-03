@@ -16,6 +16,10 @@
 
 package org.bson;
 
+import static java.lang.String.format;
+import static org.bson.BsonBinarySubType.UUID_LEGACY;
+import static org.bson.BsonBinarySubType.UUID_STANDARD;
+
 /**
  * The representation to use when converting a UUID to a BSON binary value.
  * This class is necessary because the different drivers used to have different
@@ -34,21 +38,21 @@ public enum UuidRepresentation {
 
     /**
      * The canonical representation of UUID
-     *
+     * <p>
      * BSON binary subtype 4
      */
     STANDARD,
 
     /**
      * The legacy representation of UUID used by the C# driver
-     *
+     * <p>
      * BSON binary subtype 3
      */
     C_SHARP_LEGACY,
 
     /**
      * The legacy representation of UUID used by the Java driver
-     *
+     * <p>
      * BSON binary subtype 3
      */
     JAVA_LEGACY,
@@ -56,8 +60,28 @@ public enum UuidRepresentation {
     /**
      * The legacy representation of UUID used by the Python driver, which is the same
      * format as STANDARD, but has the UUID old BSON subtype (\x03)
-     *
+     * <p>
      * BSON binary subtype 3
      */
-    PYTHON_LEGACY
+    PYTHON_LEGACY;
+
+    /**
+     * Gets the BSON binary subtype for the representation.
+     *
+     * @return the BSON binary subtype for the representation
+     * @throws BSONException if this is {@link #UNSPECIFIED}
+     * @since 4.7
+     */
+    public BsonBinarySubType getSubtype() {
+        switch (this) {
+            case STANDARD:
+                return UUID_STANDARD;
+            case JAVA_LEGACY:
+            case PYTHON_LEGACY:
+            case C_SHARP_LEGACY:
+                return UUID_LEGACY;
+            default:
+                throw new BSONException(format("No BsonBinarySubType for %s", this));
+        }
+    }
 }

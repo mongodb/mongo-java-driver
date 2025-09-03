@@ -19,26 +19,33 @@ package com.mongodb.internal.connection;
 import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
+import com.mongodb.ServerApi;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.authentication.SaslPrep;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
-import org.bson.internal.Base64;
 
 import javax.crypto.Mac;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.spec.InvalidKeySpecException;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Random;
 
 import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_1;
 import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_256;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.authentication.NativeAuthenticationHelper.createAuthenticationHash;
 import static java.lang.String.format;
 
@@ -51,19 +58,18 @@ class ScramShaAuthenticator extends SaslAuthenticator {
     private static final int MINIMUM_ITERATION_COUNT = 4096;
     private static final String GS2_HEADER = "n,,";
     private static final int RANDOM_LENGTH = 24;
-    private static final byte[] INT_1 = new byte[]{0, 0, 0, 1};
 
-    ScramShaAuthenticator(final MongoCredentialWithCache credential) {
-        this(credential, new DefaultRandomStringGenerator(), getAuthenicationHashGenerator(credential.getAuthenticationMechanism()));
-    }
-
-    ScramShaAuthenticator(final MongoCredentialWithCache credential, final RandomStringGenerator randomStringGenerator) {
-        this(credential, randomStringGenerator, getAuthenicationHashGenerator(credential.getAuthenticationMechanism()));
+    ScramShaAuthenticator(final MongoCredentialWithCache credential, final ClusterConnectionMode clusterConnectionMode,
+            @Nullable final ServerApi serverApi) {
+        this(credential, new DefaultRandomStringGenerator(),
+                getAuthenicationHashGenerator(assertNotNull(credential.getAuthenticationMechanism())),
+                clusterConnectionMode, serverApi);
     }
 
     ScramShaAuthenticator(final MongoCredentialWithCache credential, final RandomStringGenerator randomStringGenerator,
-                          final AuthenticationHashGenerator authenticationHashGenerator) {
-        super(credential);
+            final AuthenticationHashGenerator authenticationHashGenerator, final ClusterConnectionMode clusterConnectionMode,
+            @Nullable final ServerApi serverApi) {
+        super(credential, clusterConnectionMode, serverApi);
         this.randomStringGenerator = randomStringGenerator;
         this.authenticationHashGenerator = authenticationHashGenerator;
     }
@@ -84,11 +90,15 @@ class ScramShaAuthenticator extends SaslAuthenticator {
 
 
     @Override
-    protected SaslClient createSaslClient(final ServerAddress serverAddress) {
+    protected SaslClient createSaslClient(final ServerAddress serverAddress, @Nullable final OperationContext operationContext) {
         if (speculativeSaslClient != null) {
             return speculativeSaslClient;
         }
-        return new ScramShaSaslClient(getMongoCredentialWithCache(), randomStringGenerator, authenticationHashGenerator);
+        return new ScramShaSaslClient(getMongoCredentialWithCache().getCredential(), randomStringGenerator, authenticationHashGenerator);
+    }
+
+    protected SaslClient createSaslClient(final ServerAddress serverAddress) {
+        return createSaslClient(serverAddress, null);
     }
 
     @Override
@@ -96,7 +106,7 @@ class ScramShaAuthenticator extends SaslAuthenticator {
         try {
             speculativeSaslClient = createSaslClient(connection.getDescription().getServerAddress());
             BsonDocument startDocument = createSaslStartCommandDocument(speculativeSaslClient.evaluateChallenge(new byte[0]))
-                    .append("db", new BsonString("admin"));
+                    .append("db", new BsonString(getMongoCredential().getSource()));
             appendSaslStartOptions(startDocument);
             return startDocument;
         } catch (Exception e) {
@@ -110,7 +120,7 @@ class ScramShaAuthenticator extends SaslAuthenticator {
     }
 
     @Override
-    public void setSpeculativeAuthenticateResponse(final BsonDocument response) {
+    public void setSpeculativeAuthenticateResponse(@Nullable final BsonDocument response) {
         if (response == null) {
             speculativeSaslClient = null;
         } else {
@@ -118,13 +128,13 @@ class ScramShaAuthenticator extends SaslAuthenticator {
         }
     }
 
-    class ScramShaSaslClient implements SaslClient {
-
-        private final MongoCredentialWithCache credential;
+    class ScramShaSaslClient extends SaslClientImpl {
         private final RandomStringGenerator randomStringGenerator;
         private final AuthenticationHashGenerator authenticationHashGenerator;
         private final String hAlgorithm;
         private final String hmacAlgorithm;
+        private final String pbeAlgorithm;
+        private final int keyLength;
 
         private String clientFirstMessageBare;
         private String clientNonce;
@@ -132,26 +142,24 @@ class ScramShaAuthenticator extends SaslAuthenticator {
         private byte[] serverSignature;
         private int step = -1;
 
-        ScramShaSaslClient(final MongoCredentialWithCache credential, final RandomStringGenerator randomStringGenerator,
-                           final AuthenticationHashGenerator authenticationHashGenerator) {
-            this.credential = credential;
+        ScramShaSaslClient(
+                final MongoCredential credential,
+                final RandomStringGenerator randomStringGenerator,
+                final AuthenticationHashGenerator authenticationHashGenerator) {
+            super(credential);
             this.randomStringGenerator = randomStringGenerator;
             this.authenticationHashGenerator = authenticationHashGenerator;
-            if (credential.getAuthenticationMechanism().equals(SCRAM_SHA_1)) {
+            if (assertNotNull(credential.getAuthenticationMechanism()).equals(SCRAM_SHA_1)) {
                 hAlgorithm = "SHA-1";
                 hmacAlgorithm = "HmacSHA1";
+                pbeAlgorithm = "PBKDF2WithHmacSHA1";
+                keyLength = 160;
             } else {
                 hAlgorithm = "SHA-256";
                 hmacAlgorithm = "HmacSHA256";
+                pbeAlgorithm = "PBKDF2WithHmacSHA256";
+                keyLength = 256;
             }
-        }
-
-        public String getMechanismName() {
-            return credential.getAuthenticationMechanism().getMechanismName();
-        }
-
-        public boolean hasInitialResponse() {
-            return true;
         }
 
         public byte[] evaluateChallenge(final byte[] challenge) throws SaslException {
@@ -163,14 +171,15 @@ class ScramShaAuthenticator extends SaslAuthenticator {
             } else if (step == 2) {
                 return validateServerSignature(challenge);
             } else {
-                throw new SaslException(format("Too many steps involved in the %s negotiation.", getMechanismName()));
+                throw new SaslException(format("Too many steps involved in the %s negotiation.",
+                        super.getMechanismName()));
             }
         }
 
         private byte[] validateServerSignature(final byte[] challenge) throws SaslException {
-            String serverResponse = encodeUTF8(challenge);
+            String serverResponse = new String(challenge, StandardCharsets.UTF_8);
             HashMap<String, String> map = parseServerResponse(serverResponse);
-            if (!MessageDigest.isEqual(decodeBase64(map.get("v")), serverSignature)) {
+            if (!MessageDigest.isEqual(Base64.getDecoder().decode(map.get("v")), serverSignature)) {
                 throw new SaslException("Server signature was invalid.");
             }
             return new byte[0];
@@ -180,31 +189,15 @@ class ScramShaAuthenticator extends SaslAuthenticator {
             return step == 2;
         }
 
-        public byte[] unwrap(final byte[] incoming, final int offset, final int len) {
-            throw new UnsupportedOperationException("Not implemented yet!");
-        }
-
-        public byte[] wrap(final byte[] outgoing, final int offset, final int len) {
-            throw new UnsupportedOperationException("Not implemented yet!");
-        }
-
-        public Object getNegotiatedProperty(final String propName) {
-            throw new UnsupportedOperationException("Not implemented yet!");
-        }
-
-        public void dispose() {
-            // nothing to do
-        }
-
-        private byte[] computeClientFirstMessage() throws SaslException {
+        private byte[] computeClientFirstMessage() {
             clientNonce = randomStringGenerator.generate(RANDOM_LENGTH);
             String clientFirstMessage = "n=" + getUserName() + ",r=" + clientNonce;
             clientFirstMessageBare = clientFirstMessage;
-            return decodeUTF8(GS2_HEADER + clientFirstMessage);
+            return (GS2_HEADER + clientFirstMessage).getBytes(StandardCharsets.UTF_8);
         }
 
         private byte[] computeClientFinalMessage(final byte[] challenge) throws SaslException {
-            String serverFirstMessage = encodeUTF8(challenge);
+            String serverFirstMessage = new String(challenge, StandardCharsets.UTF_8);
             HashMap<String, String> map = parseServerResponse(serverFirstMessage);
             String serverNonce = map.get("r");
             if (!serverNonce.startsWith(clientNonce)) {
@@ -217,11 +210,11 @@ class ScramShaAuthenticator extends SaslAuthenticator {
                 throw new SaslException("Invalid iteration count.");
             }
 
-            String clientFinalMessageWithoutProof = "c=" + encodeBase64(GS2_HEADER) + ",r=" + serverNonce;
+            String clientFinalMessageWithoutProof = "c=" + Base64.getEncoder().encodeToString(GS2_HEADER.getBytes(StandardCharsets.UTF_8)) + ",r=" + serverNonce;
             String authMessage = clientFirstMessageBare + "," + serverFirstMessage + "," + clientFinalMessageWithoutProof;
             String clientFinalMessage = clientFinalMessageWithoutProof + ",p="
                     + getClientProof(getAuthenicationHash(), salt, iterationCount, authMessage);
-            return decodeUTF8(clientFinalMessage);
+            return clientFinalMessage.getBytes(StandardCharsets.UTF_8);
         }
 
         /**
@@ -238,12 +231,12 @@ class ScramShaAuthenticator extends SaslAuthenticator {
          */
         String getClientProof(final String password, final String salt, final int iterationCount, final String authMessage)
                 throws SaslException {
-            String hashedPasswordAndSalt = encodeUTF8(h(decodeUTF8(password + salt)));
+            String hashedPasswordAndSalt = new String(h((password + salt).getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
 
             CacheKey cacheKey = new CacheKey(hashedPasswordAndSalt, salt, iterationCount);
             CacheValue cachedKeys = getMongoCredentialWithCache().getFromCache(cacheKey, CacheValue.class);
             if (cachedKeys == null) {
-                byte[] saltedPassword = hi(decodeUTF8(password), decodeBase64(salt), iterationCount);
+                byte[] saltedPassword = hi(password, Base64.getDecoder().decode(salt), iterationCount);
                 byte[] clientKey = hmac(saltedPassword, "Client Key");
                 byte[] serverKey = hmac(saltedPassword, "Server Key");
                 cachedKeys = new CacheValue(clientKey, serverKey);
@@ -254,35 +247,7 @@ class ScramShaAuthenticator extends SaslAuthenticator {
             byte[] storedKey = h(cachedKeys.clientKey);
             byte[] clientSignature = hmac(storedKey, authMessage);
             byte[] clientProof = xor(cachedKeys.clientKey, clientSignature);
-            return encodeBase64(clientProof);
-        }
-
-        private byte[] decodeBase64(final String str) {
-            return Base64.decode(str);
-        }
-
-        private byte[] decodeUTF8(final String str) throws SaslException {
-            try {
-                return str.getBytes("UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                throw new SaslException("UTF-8 is not a supported encoding.", e);
-            }
-        }
-
-        private String encodeBase64(final String str) throws SaslException {
-            return Base64.encode(decodeUTF8(str));
-        }
-
-        private String encodeBase64(final byte[] bytes) {
-            return Base64.encode(bytes);
-        }
-
-        private String encodeUTF8(final byte[] bytes) throws SaslException {
-            try {
-                return new String(bytes, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                throw new SaslException("UTF-8 is not a supported encoding.", e);
-            }
+            return Base64.getEncoder().encodeToString(clientProof);
         }
 
         private byte[] h(final byte[] data) throws SaslException {
@@ -293,25 +258,15 @@ class ScramShaAuthenticator extends SaslAuthenticator {
             }
         }
 
-        private byte[] hi(final byte[] password, final byte[] salt, final int iterations) throws SaslException {
+        private byte[] hi(final String password, final byte[] salt, final int iterations) throws SaslException {
             try {
-                SecretKeySpec key = new SecretKeySpec(password, hmacAlgorithm);
-                Mac mac = Mac.getInstance(hmacAlgorithm);
-                mac.init(key);
-                mac.update(salt);
-                mac.update(INT_1);
-                byte[] result = mac.doFinal();
-                byte[] previous = null;
-                for (int i = 1; i < iterations; i++) {
-                    mac.update(previous != null ? previous : result);
-                    previous = mac.doFinal();
-                    xorInPlace(result, previous);
-                }
-                return result;
+                SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance(pbeAlgorithm);
+                PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, iterations, keyLength);
+                return secretKeyFactory.generateSecret(spec).getEncoded();
             } catch (NoSuchAlgorithmException e) {
-                throw new SaslException(format("Algorithm for '%s' could not be found.", hmacAlgorithm), e);
-            } catch (InvalidKeyException e) {
-                throw new SaslException(format("Invalid key for %s", hmacAlgorithm), e);
+                throw new SaslException(format("Algorithm for '%s' could not be found.", pbeAlgorithm), e);
+            } catch (InvalidKeySpecException e) {
+                throw new SaslException(format("Invalid key specification for '%s'", pbeAlgorithm), e);
             }
         }
 
@@ -319,7 +274,7 @@ class ScramShaAuthenticator extends SaslAuthenticator {
             try {
                 Mac mac = Mac.getInstance(hmacAlgorithm);
                 mac.init(new SecretKeySpec(bytes, hmacAlgorithm));
-                return mac.doFinal(decodeUTF8(key));
+                return mac.doFinal(key.getBytes(StandardCharsets.UTF_8));
             } catch (NoSuchAlgorithmException e) {
                 throw new SaslException(format("Algorithm for '%s' could not be found.", hmacAlgorithm), e);
             } catch (InvalidKeyException e) {
@@ -333,7 +288,7 @@ class ScramShaAuthenticator extends SaslAuthenticator {
          * For example: a=kg4io3,b=skljsfoiew,c=1203
          */
         private HashMap<String, String> parseServerResponse(final String response) {
-            HashMap<String, String> map = new HashMap<String, String>();
+            HashMap<String, String> map = new HashMap<>();
             String[] pairs = response.split(",");
             for (String pair : pairs) {
                 String[] parts = pair.split("=", 2);
@@ -342,9 +297,8 @@ class ScramShaAuthenticator extends SaslAuthenticator {
             return map;
         }
 
-
         private String getUserName() {
-            String userName = credential.getCredential().getUserName();
+            String userName = getCredential().getUserName();
             if (userName == null) {
                 throw new IllegalArgumentException("Username can not be null");
             }
@@ -352,8 +306,8 @@ class ScramShaAuthenticator extends SaslAuthenticator {
         }
 
         private String getAuthenicationHash() {
-            String password = authenticationHashGenerator.generate(credential.getCredential());
-            if (credential.getAuthenticationMechanism() == SCRAM_SHA_256) {
+            String password = authenticationHashGenerator.generate(getCredential());
+            if (getCredential().getAuthenticationMechanism() == SCRAM_SHA_256) {
                 password = SaslPrep.saslPrepStored(password);
             }
             return password;
@@ -402,28 +356,22 @@ class ScramShaAuthenticator extends SaslAuthenticator {
         }
     }
 
-    private static final AuthenticationHashGenerator DEFAULT_AUTHENTICATION_HASH_GENERATOR =  new AuthenticationHashGenerator() {
-        @Override
-        public String generate(final MongoCredential credential) {
-            char[] password = credential.getPassword();
-            if (password == null) {
-                throw new IllegalArgumentException("Password must not be null");
-            }
-            return new String(password);
+    private static final AuthenticationHashGenerator DEFAULT_AUTHENTICATION_HASH_GENERATOR = credential -> {
+        char[] password = credential.getPassword();
+        if (password == null) {
+            throw new IllegalArgumentException("Password must not be null");
         }
+        return new String(password);
     };
 
-    private static final AuthenticationHashGenerator LEGACY_AUTHENTICATION_HASH_GENERATOR =  new AuthenticationHashGenerator() {
-        @Override
-        public String generate(final MongoCredential credential) {
-            // Username and password must not be modified going into the hash.
-            String username = credential.getUserName();
-            char[] password = credential.getPassword();
-            if (username == null || password == null) {
-                throw new IllegalArgumentException("Username and password must not be null");
-            }
-            return createAuthenticationHash(username, password);
+    private static final AuthenticationHashGenerator LEGACY_AUTHENTICATION_HASH_GENERATOR = credential -> {
+        // Username and password must not be modified going into the hash.
+        String username = credential.getUserName();
+        char[] password = credential.getPassword();
+        if (username == null || password == null) {
+            throw new IllegalArgumentException("Username and password must not be null");
         }
+        return createAuthenticationHash(username, password);
     };
 
     private static AuthenticationHashGenerator getAuthenicationHashGenerator(final AuthenticationMechanism authenticationMechanism) {
@@ -471,8 +419,8 @@ class ScramShaAuthenticator extends SaslAuthenticator {
     }
 
     private static class CacheValue {
-        private byte[] clientKey;
-        private byte[] serverKey;
+        private final byte[] clientKey;
+        private final byte[] serverKey;
 
         CacheValue(final byte[] clientKey, final byte[] serverKey) {
             this.clientKey = clientKey;

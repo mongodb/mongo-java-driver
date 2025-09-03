@@ -27,19 +27,22 @@ public class Code implements Serializable {
 
     private static final long serialVersionUID = 475535263314046697L;
 
+    /**
+     * The JavaScript code string.
+     */
     private final String code;
 
     /**
      * Construct a new instance with the given code.
      *
-     * @param code the Javascript code
+     * @param code the JavaScript code
      */
     public Code(final String code) {
         this.code = code;
     }
 
     /**
-     * Get the Javascript code.
+     * Get the JavaScript code.
      *
      * @return the code
      */

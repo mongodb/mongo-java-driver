@@ -18,6 +18,7 @@ package org.bson.codecs.pojo.entities;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public final class NestedGenericHolderSimpleGenericsModel {
     private GenericHolderModel<SimpleGenericsModel<Integer, List<SimpleModel>, Map<String, SimpleModel>>> nested;
@@ -49,7 +50,7 @@ public final class NestedGenericHolderSimpleGenericsModel {
 
         NestedGenericHolderSimpleGenericsModel that = (NestedGenericHolderSimpleGenericsModel) o;
 
-        if (nested != null ? !nested.equals(that.nested) : that.nested != null) {
+        if (!Objects.equals(nested, that.nested)) {
             return false;
         }
 

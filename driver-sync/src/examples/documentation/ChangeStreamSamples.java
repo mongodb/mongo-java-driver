@@ -32,7 +32,6 @@ import org.bson.conversions.Bson;
 
 import java.util.List;
 
-import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
@@ -125,17 +124,17 @@ public final class ChangeStreamSamples {
         // Update the test document.
         collection.updateOne(Filters.eq("updateMe", 1), Updates.set("updated", true));
         next = cursor.next();
-        System.out.println(format("Update operationType: %s %n %s", next.getUpdateDescription(), next));
+        System.out.printf("Update operationType: %s %n %s%n", next.getUpdateDescription(), next);
 
         // Replace the test document.
         collection.replaceOne(Filters.eq("replaceMe", 1), Document.parse("{replaced: true}"));
         next = cursor.next();
-        System.out.println(format("Replace operationType: %s", next));
+        System.out.printf("Replace operationType: %s%n", next);
 
         // Delete the test document.
         collection.deleteOne(Filters.eq("username", "alice123"));
         next = cursor.next();
-        System.out.println(format("Delete operationType: %s", next));
+        System.out.printf("Delete operationType: %s%n", next);
         cursor.close();
         sleep();
 

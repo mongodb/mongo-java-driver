@@ -20,6 +20,8 @@ import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
+import java.util.Objects;
+
 public class BsonIgnoreDuplicatePropertyMultipleTypes {
     private final String stringField;
     private String altStringField;
@@ -67,10 +69,10 @@ public class BsonIgnoreDuplicatePropertyMultipleTypes {
 
         BsonIgnoreDuplicatePropertyMultipleTypes that = (BsonIgnoreDuplicatePropertyMultipleTypes) o;
 
-        if (stringField != null ? !stringField.equals(that.stringField) : that.stringField != null) {
+        if (!Objects.equals(stringField, that.stringField)) {
             return false;
         }
-        return altStringField != null ? altStringField.equals(that.altStringField) : that.altStringField == null;
+        return Objects.equals(altStringField, that.altStringField);
     }
 
     @Override

@@ -21,6 +21,7 @@ import com.mongodb.MongoTimeoutException;
 import org.junit.Test;
 
 import java.io.Closeable;
+import java.util.function.Consumer;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
@@ -34,7 +35,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testThatGetDecreasesAvailability() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
 
         pool.get();
         pool.get();
@@ -49,7 +50,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testThatReleaseIncreasesAvailability() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
 
         pool.get();
         pool.get();
@@ -59,7 +60,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testThatGetReleasesPermitIfCreateFails() {
-        pool = new ConcurrentPool<TestCloseable>(1, new TestItemFactory(true));
+        pool = new ConcurrentPool<>(1, new TestItemFactory(true));
 
         try {
             pool.get();
@@ -73,7 +74,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testInUseCount() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
 
         assertEquals(0, pool.getInUseCount());
         TestCloseable closeable = pool.get();
@@ -84,7 +85,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testAvailableCount() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
 
         assertEquals(0, pool.getAvailableCount());
         TestCloseable closeable = pool.get();
@@ -98,7 +99,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testAddItemToPoolOnRelease() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
 
         TestCloseable closeable = pool.get();
         pool.release(closeable, false);
@@ -107,7 +108,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testCloseItemOnReleaseWithDiscard() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
 
         TestCloseable closeable = pool.get();
         pool.release(closeable, true);
@@ -116,7 +117,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testCloseAllItemsAfterPoolClosed() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
 
         TestCloseable c1 = pool.get();
         TestCloseable c2 = pool.get();
@@ -129,7 +130,7 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testCloseItemOnReleaseAfterPoolClosed() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
 
         TestCloseable c1 = pool.get();
         pool.close();
@@ -139,47 +140,50 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testEnsureMinSize() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
-
-        pool.ensureMinSize(0, false);
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
+        Consumer<TestCloseable> initAndRelease = connection -> pool.release(connection);
+        pool.ensureMinSize(0, initAndRelease);
         assertEquals(0, pool.getAvailableCount());
 
-        pool.ensureMinSize(1, false);
+        pool.ensureMinSize(1, initAndRelease);
         assertEquals(1, pool.getAvailableCount());
 
-        pool.ensureMinSize(1, false);
+        pool.ensureMinSize(1, initAndRelease);
         assertEquals(1, pool.getAvailableCount());
 
         pool.get();
-        pool.ensureMinSize(1, false);
+        pool.ensureMinSize(1, initAndRelease);
         assertEquals(0, pool.getAvailableCount());
 
-        pool.ensureMinSize(4, false);
+        pool.ensureMinSize(4, initAndRelease);
         assertEquals(3, pool.getAvailableCount());
     }
 
     @Test
     public void whenEnsuringMinSizeShouldNotInitializePooledItemIfNotRequested() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
 
-        pool.ensureMinSize(1, false);
+        pool.ensureMinSize(1, pool::release);
         assertFalse(pool.get().isInitialized());
     }
 
     @Test
     public void whenEnsuringMinSizeShouldInitializePooledItemIfRequested() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<>(3, new TestItemFactory());
 
-        pool.ensureMinSize(1, true);
+        pool.ensureMinSize(1, connection -> {
+            connection.initialized = true;
+            pool.release(connection);
+        });
         assertTrue(pool.get().isInitialized());
     }
 
     @Test
     public void testThatEnsuringMinSizeReleasesPermitIfCreateFails() {
-        pool = new ConcurrentPool<TestCloseable>(1, new TestItemFactory(true));
+        pool = new ConcurrentPool<>(1, new TestItemFactory(true));
 
         try {
-            pool.ensureMinSize(1, true);
+            pool.ensureMinSize(1, ignore -> fail());
             fail();
         } catch (MongoException e) {
             // expected
@@ -190,34 +194,30 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testPrune() {
-        pool = new ConcurrentPool<TestCloseable>(5, new TestItemFactory());
+        pool = new ConcurrentPool<>(5, new TestItemFactory());
 
         TestCloseable t1 = pool.get();
         TestCloseable t2 = pool.get();
         TestCloseable t3 = pool.get();
         TestCloseable t4 = pool.get();
-        TestCloseable t5 = pool.get();
-        t1.shouldPrune = ConcurrentPool.Prune.YES;
-        t2.shouldPrune = ConcurrentPool.Prune.NO;
-        t3.shouldPrune = ConcurrentPool.Prune.YES;
-        t4.shouldPrune = ConcurrentPool.Prune.STOP;
-        t5.shouldPrune = null;
+        t1.shouldPrune = true;
+        t2.shouldPrune = false;
+        t3.shouldPrune = true;
+        t4.shouldPrune = false;
 
         pool.release(t1);
         pool.release(t2);
         pool.release(t3);
         pool.release(t4);
-        pool.release(t5);
 
         pool.prune();
 
-        assertEquals(3, pool.getAvailableCount());
+        assertEquals(2, pool.getAvailableCount());
         assertEquals(0, pool.getInUseCount());
         assertTrue(t1.isClosed());
-        assertTrue(!t2.isClosed());
+        assertFalse(t2.isClosed());
         assertTrue(t3.isClosed());
-        assertTrue(!t4.isClosed());
-        assertTrue(!t5.isClosed());
+        assertFalse(t4.isClosed());
     }
 
     class TestItemFactory implements ConcurrentPool.ItemFactory<TestCloseable> {
@@ -232,11 +232,11 @@ public class ConcurrentPoolTest {
         }
 
         @Override
-        public TestCloseable create(final boolean initialize) {
+        public TestCloseable create() {
             if (shouldThrowOnCreate) {
                 throw new MongoException("This is a journey");
             }
-            return new TestCloseable(initialize);
+            return new TestCloseable();
         }
 
         @Override
@@ -245,18 +245,17 @@ public class ConcurrentPoolTest {
         }
 
         @Override
-        public ConcurrentPool.Prune shouldPrune(final TestCloseable testCloseable) {
+        public boolean shouldPrune(final TestCloseable testCloseable) {
             return testCloseable.shouldPrune();
         }
     }
 
     static class TestCloseable implements Closeable {
         private boolean closed;
-        private ConcurrentPool.Prune shouldPrune;
-        private final boolean initialized;
+        private boolean shouldPrune;
+        private boolean initialized;
 
-        TestCloseable(final boolean initialize) {
-            this.initialized = initialize;
+        TestCloseable() {
         }
 
         @Override
@@ -272,7 +271,7 @@ public class ConcurrentPoolTest {
             return initialized;
         }
 
-        public ConcurrentPool.Prune shouldPrune() {
+        public boolean shouldPrune() {
             return shouldPrune;
         }
     }

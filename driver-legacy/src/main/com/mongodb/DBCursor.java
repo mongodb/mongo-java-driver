@@ -23,8 +23,10 @@ import com.mongodb.client.internal.OperationExecutor;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.DBCollectionCountOptions;
 import com.mongodb.client.model.DBCollectionFindOptions;
+import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.operation.FindOperation;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonString;
 import org.bson.codecs.Decoder;
 
 import java.util.ArrayList;
@@ -33,7 +35,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.DBObjects.toDBObject;
+import static com.mongodb.MongoClient.getDefaultCodecRegistry;
+import static com.mongodb.TimeoutSettingsHelper.createTimeoutSettings;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -76,11 +79,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     private DBObject currentObject;
     private int numSeen;
     private boolean closed;
-    private final List<DBObject> all = new ArrayList<DBObject>();
+    private final List<DBObject> all = new ArrayList<>();
     private MongoCursor<DBObject> cursor;
-    // This allows us to easily enable/disable finalizer for cleaning up un-closed cursors
-    @SuppressWarnings("UnusedDeclaration")// IDEs will say it can be converted to a local variable, resist the urge
-    private OptionalFinalizer optionalFinalizer;
+    private DBCursorCleaner optionalCleaner;
 
     /**
      * Initializes a new database cursor.
@@ -143,7 +144,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     /**
      * Checks if there is another object available.
      *
-     * <p><em>Note</em>: Automatically turns cursors of type Tailable to TailableAwait. For non blocking tailable cursors see
+     * <p><em>Note</em>: Automatically turns cursors of type Tailable to TailableAwait. For non-blocking tailable cursors see
      * {@link #tryNext }.</p>
      *
      * @return true if there is another object available
@@ -164,14 +165,16 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
 
         boolean hasNext = cursor.hasNext();
-        setServerCursorOnFinalizer(cursor.getServerCursor());
+        if (cursor.getServerCursor() == null) {
+            clearCursorOnCleaner();
+        }
         return hasNext;
     }
 
     /**
      * Returns the object the cursor is at and moves the cursor ahead by one.
      *
-     * <p><em>Note</em>: Automatically turns cursors of type Tailable to TailableAwait. For non blocking tailable cursors see
+     * <p><em>Note</em>: Automatically turns cursors of type Tailable to TailableAwait. For non-blocking tailable cursors see
      * {@link #tryNext }.</p>
      *
      * @return the next element
@@ -185,6 +188,21 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
 
         return nextInternal();
+    }
+
+    /**
+     * Gets the number of results available locally without blocking, which may be 0.
+     *
+     * <p>
+     * If the cursor is known to be exhausted, returns 0.  If the cursor is closed before it's been exhausted, it may return a non-zero
+     * value.
+     * </p>
+     *
+     * @return the number of results available locally without blocking
+     * @since 4.5
+     */
+    public int available() {
+        return cursor != null ? cursor.available() : 0;
     }
 
     /**
@@ -208,7 +226,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
             initializeCursor(operation);
         }
         DBObject next = cursor.tryNext();
-        setServerCursorOnFinalizer(cursor.getServerCursor());
+        if (cursor.getServerCursor() == null) {
+            clearCursorOnCleaner();
+        }
         return currentObject(next);
     }
 
@@ -309,6 +329,19 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
+     * Informs the database of an indexed field of the collection in order to improve performance.
+     *
+     * @param indexName the name of an index
+     * @return same DBCursor for chaining operations
+     * @since 4.4
+     * @mongodb.driver.manual reference/operator/meta/hint/ $hint
+     */
+    public DBCursor hint(final String indexName) {
+        findOptions.hintString(indexName);
+        return this;
+    }
+
+    /**
      * Set the maximum execution time for operations on this cursor.
      *
      * @param maxTime  the maximum time that the server will allow the query to run, before killing the operation.
@@ -335,13 +368,12 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return a {@code DBObject} containing the explain output for this DBCursor's query
      * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/explain Explain Output
-     * @deprecated Replace with direct use of the explain command using the runCommand helper method
+     * @mongodb.server.release 3.0
      */
-    @Deprecated
     public DBObject explain() {
-        return toDBObject(executor.execute(getQueryOperation(collection.getObjectCodec())
-                                           .asExplainableOperation(),
-                                           getReadPreference(), getReadConcern()));
+        return executor.execute(
+                getQueryOperation(collection.getObjectCodec())
+                                .asExplainableOperation(null, getDefaultCodecRegistry().get(DBObject.class)), getReadPreference(), getReadConcern(), null);
     }
 
     /**
@@ -353,20 +385,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      */
     public DBCursor cursorType(final CursorType cursorType) {
         findOptions.cursorType(cursorType);
-        return this;
-    }
-
-    /**
-     * Users should not set this under normal circumstances.
-     *
-     * @param oplogReplay if oplog replay is enabled
-     * @return this
-     * @since 3.9
-     * @deprecated oplogReplay has been deprecated in MongoDB 4.4.
-     */
-    @Deprecated
-    public DBCursor oplogReplay(final boolean oplogReplay) {
-        findOptions.oplogReplay(oplogReplay);
         return this;
     }
 
@@ -395,30 +413,30 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         return this;
     }
 
-    @SuppressWarnings("deprecation")
     private FindOperation<DBObject> getQueryOperation(final Decoder<DBObject> decoder) {
-
-        return new FindOperation<DBObject>(collection.getNamespace(), decoder)
-                                                .filter(collection.wrapAllowNull(filter))
-                                                .batchSize(findOptions.getBatchSize())
-                                                .skip(findOptions.getSkip())
-                                                .limit(findOptions.getLimit())
-                                                .maxAwaitTime(findOptions.getMaxAwaitTime(MILLISECONDS), MILLISECONDS)
-                                                .maxTime(findOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                                .projection(collection.wrapAllowNull(findOptions.getProjection()))
-                                                .sort(collection.wrapAllowNull(findOptions.getSort()))
-                                                .collation(findOptions.getCollation())
-                                                .comment(findOptions.getComment())
-                                                .hint(collection.wrapAllowNull(findOptions.getHint()))
-                                                .min(collection.wrapAllowNull(findOptions.getMin()))
-                                                .max(collection.wrapAllowNull(findOptions.getMax()))
-                                                .cursorType(findOptions.getCursorType())
-                                                .noCursorTimeout(findOptions.isNoCursorTimeout())
-                                                .oplogReplay(findOptions.isOplogReplay())
-                                                .partial(findOptions.isPartial())
-                                                .returnKey(findOptions.isReturnKey())
-                                                .showRecordId(findOptions.isShowRecordId())
-                                                .retryReads(retryReads);
+        return new FindOperation<>(
+                collection.getNamespace(), decoder)
+                .filter(collection.wrapAllowNull(filter))
+                .batchSize(findOptions.getBatchSize())
+                .skip(findOptions.getSkip())
+                .limit(findOptions.getLimit())
+                .projection(collection.wrapAllowNull(findOptions.getProjection()))
+                .sort(collection.wrapAllowNull(findOptions.getSort()))
+                .collation(findOptions.getCollation())
+                .comment(findOptions.getComment() != null
+                        ? new BsonString(findOptions.getComment()) : null)
+                .hint(findOptions.getHint() != null
+                        ? collection.wrapAllowNull(findOptions.getHint())
+                        : (findOptions.getHintString() != null
+                        ? new BsonString(findOptions.getHintString()) : null))
+                .min(collection.wrapAllowNull(findOptions.getMin()))
+                .max(collection.wrapAllowNull(findOptions.getMax()))
+                .cursorType(findOptions.getCursorType())
+                .noCursorTimeout(findOptions.isNoCursorTimeout())
+                .partial(findOptions.isPartial())
+                .returnKey(findOptions.isReturnKey())
+                .showRecordId(findOptions.isShowRecordId())
+                .retryReads(retryReads);
     }
 
     /**
@@ -505,7 +523,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         if (cursor != null) {
             cursor.close();
             cursor = null;
-            setServerCursorOnFinalizer(null);
+            clearCursorOnCleaner();
         }
 
         currentObject = null;
@@ -570,11 +588,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      */
     @Nullable
     public DBObject one() {
-        DBCursor findOneCursor = copy().limit(-1);
-        try {
+        try (DBCursor findOneCursor = copy().limit(-1)) {
             return findOneCursor.hasNext() ? findOneCursor.next() : null;
-        } finally {
-            findOneCursor.close();
         }
     }
 
@@ -748,7 +763,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         this.decoderFactory = factory;
 
         //Not creating new CompoundDBObjectCodec because we don't care about encoder.
-        this.decoder = new DBDecoderAdapter(factory.create(), collection, getCollection().getBufferPool());
+        this.decoder = new DBDecoderAdapter(factory.create(), collection, PowerOfTwoBufferPool.DEFAULT);
         return this;
     }
 
@@ -771,20 +786,25 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     private void initializeCursor(final FindOperation<DBObject> operation) {
-        cursor = new MongoBatchCursorAdapter<DBObject>(executor.execute(operation, getReadPreference(), getReadConcern()));
-        if (isCursorFinalizerEnabled() && cursor.getServerCursor() != null) {
-            optionalFinalizer = new OptionalFinalizer(collection.getDB().getMongoClient(), collection.getNamespace());
+        cursor =
+                new MongoBatchCursorAdapter<>(executor
+                        .withTimeoutSettings(createTimeoutSettings(collection.getTimeoutSettings(), findOptions))
+                        .execute(operation, getReadPreference(), getReadConcern(), null));
+        ServerCursor serverCursor = cursor.getServerCursor();
+        if (isCursorFinalizerEnabled() && serverCursor != null) {
+            optionalCleaner = DBCursorCleaner.create(collection.getDB().getMongoClient(), collection.getNamespace(),
+                    serverCursor);
+        }
+    }
+
+    private void clearCursorOnCleaner() {
+        if (optionalCleaner != null) {
+            optionalCleaner.clearCursor();
         }
     }
 
     private boolean isCursorFinalizerEnabled() {
         return collection.getDB().getMongoClient().getMongoClientOptions().isCursorFinalizerEnabled();
-    }
-
-    private void setServerCursorOnFinalizer(@Nullable final ServerCursor serverCursor) {
-        if (optionalFinalizer != null) {
-            optionalFinalizer.setServerCursor(serverCursor);
-        }
     }
 
     private void checkIteratorOrArray(final IteratorOrArray expected) {
@@ -813,7 +833,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
 
         DBObject next = cursor.next();
-        setServerCursorOnFinalizer(cursor.getServerCursor());
+        if (cursor.getServerCursor() == null) {
+            clearCursorOnCleaner();
+        }
         return currentObjectNonNull(next);
     }
 
@@ -847,35 +869,13 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         ARRAY
     }
 
-    private static class OptionalFinalizer {
-        private final MongoClient mongo;
-        private final MongoNamespace namespace;
-        private volatile ServerCursor serverCursor;
-
-        private OptionalFinalizer(final MongoClient mongo, final MongoNamespace namespace) {
-            this.namespace = notNull("namespace", namespace);
-            this.mongo = notNull("mongo", mongo);
-        }
-
-        private void setServerCursor(@Nullable final ServerCursor serverCursor) {
-            this.serverCursor = serverCursor;
-        }
-
-        @Override
-        @SuppressWarnings("deprecation")
-        protected void finalize() {
-            if (serverCursor != null) {
-                mongo.addOrphanedCursor(serverCursor, namespace);
-            }
-        }
-    }
-
     private DBCollectionCountOptions getDbCollectionCountOptions() {
         return new DBCollectionCountOptions()
                 .readPreference(getReadPreference())
                 .readConcern(getReadConcern())
                 .collation(getCollation())
                 .maxTime(findOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
-                .hint(findOptions.getHint());
+                .hint(findOptions.getHint())
+                .hintString(findOptions.getHintString());
     }
 }

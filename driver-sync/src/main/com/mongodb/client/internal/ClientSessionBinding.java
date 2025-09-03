@@ -18,35 +18,40 @@ package com.mongodb.client.internal;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
-import com.mongodb.ServerAddress;
 import com.mongodb.client.ClientSession;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.binding.AbstractReferenceCounted;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadWriteBinding;
+import com.mongodb.internal.binding.TransactionContext;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.connection.Server;
-import com.mongodb.internal.selector.ReadPreferenceServerSelector;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.session.ClientSessionContext;
-import com.mongodb.internal.session.SessionContext;
 
+import java.util.function.Supplier;
+
+import static com.mongodb.connection.ClusterType.LOAD_BALANCED;
+import static com.mongodb.connection.ClusterType.SHARDED;
+import static org.bson.assertions.Assertions.assertNotNull;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
- * This class is not part of the public API and may be removed or changed at any time.
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class ClientSessionBinding implements ReadWriteBinding {
+public class ClientSessionBinding extends AbstractReferenceCounted implements ReadWriteBinding {
     private final ClusterAwareReadWriteBinding wrapped;
     private final ClientSession session;
     private final boolean ownsSession;
-    private final ClientSessionContext sessionContext;
+    private final OperationContext operationContext;
 
     public ClientSessionBinding(final ClientSession session, final boolean ownsSession, final ClusterAwareReadWriteBinding wrapped) {
         this.wrapped = wrapped;
+        wrapped.retain();
         this.session = notNull("session", session);
         this.ownsSession = ownsSession;
-        this.sessionContext = new SyncClientSessionContext(session);
+        this.operationContext = wrapped.getOperationContext().withSessionContext(new SyncClientSessionContext(session));
     }
 
     @Override
@@ -60,57 +65,61 @@ public class ClientSessionBinding implements ReadWriteBinding {
     }
 
     @Override
-    public ReadWriteBinding retain() {
-        wrapped.retain();
+    public ClientSessionBinding retain() {
+        super.retain();
         return this;
     }
 
     @Override
-    public void release() {
-        wrapped.release();
-        closeSessionIfCountIsZero();
-    }
+    public int release() {
+        int count = super.release();
+        if (count == 0) {
+            wrapped.release();
+            if (ownsSession) {
+                session.close();
+            }
 
-    private void closeSessionIfCountIsZero() {
-        if (getCount() == 0 && ownsSession) {
-            session.close();
         }
+        return count;
     }
 
     @Override
     public ConnectionSource getReadConnectionSource() {
-        if (isActiveShardedTxn()) {
-            return new SessionBindingConnectionSource(wrapped.getConnectionSource(pinServer()));
-        } else {
-            return new SessionBindingConnectionSource(wrapped.getReadConnectionSource());
-        }
-    }
-
-    public ConnectionSource getWriteConnectionSource() {
-        if (isActiveShardedTxn()) {
-            return new SessionBindingConnectionSource(wrapped.getConnectionSource(pinServer()));
-        } else {
-            return new SessionBindingConnectionSource(wrapped.getWriteConnectionSource());
-        }
+        return new SessionBindingConnectionSource(getConnectionSource(wrapped::getReadConnectionSource));
     }
 
     @Override
-    public SessionContext getSessionContext() {
-        return sessionContext;
+    public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference) {
+        return new SessionBindingConnectionSource(getConnectionSource(() ->
+                wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference)));
     }
 
-    private boolean isActiveShardedTxn() {
-        return session.hasActiveTransaction() && wrapped.getCluster().getDescription().getType() == ClusterType.SHARDED;
+    public ConnectionSource getWriteConnectionSource() {
+        return new SessionBindingConnectionSource(getConnectionSource(wrapped::getWriteConnectionSource));
     }
 
-    private ServerAddress pinServer() {
-        ServerAddress pinnedServerAddress = session.getPinnedServerAddress();
-        if (pinnedServerAddress == null) {
-            Server server = wrapped.getCluster().selectServer(new ReadPreferenceServerSelector(wrapped.getReadPreference()));
-            pinnedServerAddress = server.getDescription().getAddress();
-            session.setPinnedServerAddress(pinnedServerAddress);
+    @Override
+    public OperationContext getOperationContext() {
+        return operationContext;
+    }
+
+    private ConnectionSource getConnectionSource(final Supplier<ConnectionSource> wrappedConnectionSourceSupplier) {
+        if (!session.hasActiveTransaction()) {
+            return wrappedConnectionSourceSupplier.get();
         }
-        return pinnedServerAddress;
+
+        if (TransactionContext.get(session) == null) {
+            ConnectionSource source = wrappedConnectionSourceSupplier.get();
+            ClusterType clusterType = source.getServerDescription().getClusterType();
+            if (clusterType == SHARDED || clusterType == LOAD_BALANCED) {
+                TransactionContext<Connection> transactionContext = new TransactionContext<>(clusterType);
+                session.setTransactionContext(source.getServerDescription().getAddress(), transactionContext);
+                transactionContext.release();  // The session is responsible for retaining a reference to the context
+            }
+            return source;
+        } else {
+            return wrapped.getConnectionSource(assertNotNull(session.getPinnedServerAddress()));
+        }
     }
 
     private class SessionBindingConnectionSource implements ConnectionSource {
@@ -118,6 +127,7 @@ public class ClientSessionBinding implements ReadWriteBinding {
 
         SessionBindingConnectionSource(final ConnectionSource wrapped) {
             this.wrapped = wrapped;
+            ClientSessionBinding.this.retain();
         }
 
         @Override
@@ -126,13 +136,30 @@ public class ClientSessionBinding implements ReadWriteBinding {
         }
 
         @Override
-        public SessionContext getSessionContext() {
-            return sessionContext;
+        public OperationContext getOperationContext() {
+            return operationContext;
+        }
+
+        @Override
+        public ReadPreference getReadPreference() {
+            return wrapped.getReadPreference();
         }
 
         @Override
         public Connection getConnection() {
-            return wrapped.getConnection();
+            TransactionContext<Connection> transactionContext = TransactionContext.get(session);
+            if (transactionContext != null && transactionContext.isConnectionPinningRequired()) {
+                Connection pinnedConnection = transactionContext.getPinnedConnection();
+                if (pinnedConnection == null) {
+                    Connection connection = wrapped.getConnection();
+                    transactionContext.pinConnection(connection, Connection::markAsPinned);
+                    return connection;
+                } else {
+                    return pinnedConnection.retain();
+                }
+            } else {
+                return wrapped.getConnection();
+            }
         }
 
         @Override
@@ -148,13 +175,16 @@ public class ClientSessionBinding implements ReadWriteBinding {
         }
 
         @Override
-        public void release() {
-            wrapped.release();
-            closeSessionIfCountIsZero();
+        public int release() {
+            int count = wrapped.release();
+            if (count == 0) {
+                ClientSessionBinding.this.release();
+            }
+            return count;
         }
     }
 
-    private final class SyncClientSessionContext extends ClientSessionContext implements SessionContext {
+    private final class SyncClientSessionContext extends ClientSessionContext {
 
         private final ClientSession clientSession;
 
@@ -181,9 +211,11 @@ public class ClientSessionBinding implements ReadWriteBinding {
         @Override
         public ReadConcern getReadConcern() {
             if (clientSession.hasActiveTransaction()) {
-                return clientSession.getTransactionOptions().getReadConcern();
+                return assertNotNull(clientSession.getTransactionOptions().getReadConcern());
+            } else if (isSnapshot()) {
+                return ReadConcern.SNAPSHOT;
             } else {
-               return wrapped.getSessionContext().getReadConcern();
+               return wrapped.getOperationContext().getSessionContext().getReadConcern();
             }
         }
     }

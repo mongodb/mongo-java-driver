@@ -20,13 +20,19 @@ import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
+import javax.net.ssl.SSLContext;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.Collections.unmodifiableMap;
 
 /**
- * The client-side automatic encryption settings. Client side encryption enables an application to specify what fields in a collection
+ * The client-side automatic encryption settings. In-use encryption enables an application to specify what fields in a collection
  * must be encrypted, and the driver automatically encrypts commands sent to MongoDB and decrypts responses.
  * <p>
  * Automatic encryption is an enterprise only feature that only applies to operations on a collection. Automatic encryption is not
@@ -51,6 +57,10 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <p>
  * Automatic encryption requires the authenticated user to have the listCollections privilege action.
  * </p>
+ * <p>
+ * Supplying an {@code encryptedFieldsMap} provides more security than relying on an encryptedFields obtained from the server.
+ * It protects against a malicious server advertising false encryptedFields.
+ * </p>
  *
  * @since 3.11
  */
@@ -58,9 +68,15 @@ public final class AutoEncryptionSettings {
     private final MongoClientSettings keyVaultMongoClientSettings;
     private final String keyVaultNamespace;
     private final Map<String, Map<String, Object>> kmsProviders;
+    private final Map<String, SSLContext> kmsProviderSslContextMap;
+    private final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers;
     private final Map<String, BsonDocument> schemaMap;
     private final Map<String, Object> extraOptions;
     private final boolean bypassAutoEncryption;
+    private final Map<String, BsonDocument> encryptedFieldsMap;
+    private final boolean bypassQueryAnalysis;
+    @Nullable
+    private final Long keyExpirationMS;
 
     /**
      * A builder for {@code AutoEncryptionSettings} so that {@code AutoEncryptionSettings} can be immutable, and to support easier
@@ -71,9 +87,14 @@ public final class AutoEncryptionSettings {
         private MongoClientSettings keyVaultMongoClientSettings;
         private String keyVaultNamespace;
         private Map<String, Map<String, Object>> kmsProviders;
+        private Map<String, SSLContext> kmsProviderSslContextMap = new HashMap<>();
+        private Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<>();
         private Map<String, BsonDocument> schemaMap = Collections.emptyMap();
         private Map<String, Object> extraOptions = Collections.emptyMap();
         private boolean bypassAutoEncryption;
+        private Map<String, BsonDocument> encryptedFieldsMap = Collections.emptyMap();
+        private boolean bypassQueryAnalysis;
+        @Nullable private Long keyExpirationMS;
 
         /**
          * Sets the key vault settings.
@@ -104,10 +125,40 @@ public final class AutoEncryptionSettings {
          *
          * @param kmsProviders the KMS providers map, which may not be null
          * @return this
+         * @see #kmsProviderPropertySuppliers(Map)
          * @see #getKmsProviders()
          */
         public Builder kmsProviders(final Map<String, Map<String, Object>> kmsProviders) {
             this.kmsProviders = notNull("kmsProviders", kmsProviders);
+            return this;
+        }
+
+        /**
+         * This method is similar to {@link #kmsProviders(Map)}, but instead of configuring properties for KMS providers,
+         * it configures {@link Supplier}s of properties.
+         *
+         * @param kmsProviderPropertySuppliers A {@link Map} where keys identify KMS providers,
+         * and values specify {@link Supplier}s of properties for the KMS providers.
+         * Must not be null. Each {@link Supplier} must return non-empty properties.
+         * @return this
+         * @see #getKmsProviderPropertySuppliers()
+         * @since 4.6
+         */
+        public Builder kmsProviderPropertySuppliers(final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers) {
+            this.kmsProviderPropertySuppliers = notNull("kmsProviderPropertySuppliers", kmsProviderPropertySuppliers);
+            return this;
+        }
+
+        /**
+         * Sets the KMS provider to SSLContext map
+         *
+         * @param kmsProviderSslContextMap the KMS provider to SSLContext map, which may not be null
+         * @return this
+         * @see #getKmsProviderSslContextMap()
+         * @since 4.4
+         */
+        public Builder kmsProviderSslContextMap(final Map<String, SSLContext> kmsProviderSslContextMap) {
+            this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", kmsProviderSslContextMap);
             return this;
         }
 
@@ -125,6 +176,11 @@ public final class AutoEncryptionSettings {
 
         /**
          * Sets the extra options.
+         *
+         * <p>
+         *      <strong>Note:</strong> When setting {@code cryptSharedLibPath}, the override path must be given as a path to the shared
+         *      crypt library file itself, and not simply the directory that contains it.
+         * </p>
          *
          * @param extraOptions the extra options, which may not be null
          * @return this
@@ -144,6 +200,60 @@ public final class AutoEncryptionSettings {
          */
         public Builder bypassAutoEncryption(final boolean bypassAutoEncryption) {
             this.bypassAutoEncryption = bypassAutoEncryption;
+            return this;
+        }
+
+        /**
+         * Maps a collection namespace to an encryptedFields.
+         *
+         * <p><strong>Note:</strong> only applies to queryable encryption.
+         * Automatic encryption in queryable encryption is configured with the encryptedFields.</p>
+         * <p>If a collection is present in both the {@code encryptedFieldsMap} and {@link #schemaMap}, the driver will error.</p>
+         * <p>If a collection is present on the {@code encryptedFieldsMap}, the behavior of {@code collection.createCollection()} and
+         * {@code collection.drop()} is altered.</p>
+         *
+         * <p>If a collection is not present on the {@code encryptedFieldsMap} a server-side collection {@code encryptedFieldsMap} may be
+         * used by the driver.
+         *
+         * @param encryptedFieldsMap the mapping of the collection namespace to the encryptedFields
+         * @return this
+         * @since 4.7
+         * @mongodb.server.release 7.0
+         */
+        public Builder encryptedFieldsMap(final Map<String, BsonDocument> encryptedFieldsMap) {
+            this.encryptedFieldsMap = notNull("encryptedFieldsMap", encryptedFieldsMap);
+            return this;
+        }
+
+        /**
+         * Enable or disable automatic analysis of outgoing commands.
+         *
+         * <p>Set bypassQueryAnalysis to true to use explicit encryption on indexed fields
+         * without the MongoDB Enterprise Advanced licensed crypt shared library.</p>
+         *
+         * @param bypassQueryAnalysis whether query analysis should be bypassed
+         * @return this
+         * @since 4.7
+         * @mongodb.server.release 7.0
+         */
+        public Builder bypassQueryAnalysis(final boolean bypassQueryAnalysis) {
+            this.bypassQueryAnalysis = bypassQueryAnalysis;
+            return this;
+        }
+
+        /**
+         * The cache expiration time for data encryption keys.
+         * <p>Defaults to {@code null} which defers to libmongocrypt's default which is currently 60000 ms. Set to 0 to disable key expiration.</p>
+         *
+         * @param keyExpiration the cache expiration time in milliseconds or null to use libmongocrypt's default.
+         * @param timeUnit the time unit
+         * @return this
+         * @see #getKeyExpiration(TimeUnit)
+         * @since 5.5
+         */
+        public Builder keyExpiration(@Nullable final Long keyExpiration, final TimeUnit timeUnit) {
+            assertTrue(keyExpiration == null || keyExpiration >= 0, "keyExpiration must be >= 0 or null");
+            this.keyExpirationMS = keyExpiration == null ? null : TimeUnit.MILLISECONDS.convert(keyExpiration, timeUnit);
             return this;
         }
 
@@ -192,7 +302,7 @@ public final class AutoEncryptionSettings {
      * <p>
      * The key vault namespace refers to a collection that contains all data keys used for encryption and decryption (aka the key vault
      * collection). Data keys are stored as documents in a special MongoDB collection. Data keys are protected with encryption by a KMS
-     * provider (AWS KMS or a local master key).
+     * provider (AWS, Azure, GCP KMS or a local master key).
      * </p>
      *
      * @return the key vault namespace, which may not be null
@@ -204,28 +314,96 @@ public final class AutoEncryptionSettings {
     /**
      * Gets the map of KMS provider properties.
      *
+     * <p> Multiple KMS providers can be specified within this map. Each KMS provider is identified by a unique key.
+     * Keys are formatted as either {@code "KMS provider type"} or {@code "KMS provider type:KMS provider name"} (e.g., "aws" or "aws:myname").
+     * The KMS provider name must only contain alphanumeric characters (a-z, A-Z, 0-9), underscores (_), and must not be empty.
      * <p>
-     * Multiple KMS providers may be specified. Initially, two KMS providers are supported: "aws" and "local". The kmsProviders map
-     * values differ by provider:
+     * Supported KMS provider types include "aws", "azure", "gcp", and "local". The provider name is optional and allows
+     * for the configuration of multiple providers of the same type under different names (e.g., "aws:name1" and
+     * "aws:name2" could represent different AWS accounts).
+     * <p>
+     * The kmsProviders map values differ by provider type. The following properties are supported for each provider type:
      * </p>
      * <p>
      * For "aws", the properties are:
      * </p>
      * <ul>
-     *     <li>accessKeyId: a String containing the AWS access key identifier</li>
-     *     <li>secretAccessKey: a String the AWS secret access key</li>
+     *     <li>accessKeyId: a String, the AWS access key identifier</li>
+     *     <li>secretAccessKey: a String, the AWS secret access key</li>
+     *     <li>sessionToken: an optional String, the AWS session token</li>
+     * </ul>
+     * <p>
+     * For "azure", the properties are:
+     * </p>
+     * <ul>
+     *     <li>tenantId: a String, the tenantId that identifies the organization for the account.</li>
+     *     <li>clientId: a String, the clientId to authenticate a registered application.</li>
+     *     <li>clientSecret: a String, the client secret to authenticate a registered application.</li>
+     *     <li>identityPlatformEndpoint: optional String, a host with optional port. e.g. "example.com" or "example.com:443".
+     *     Generally used for private Azure instances.</li>
+     * </ul>
+     * <p>
+     * For "gcp", the properties are:
+     * </p>
+     * <ul>
+     *     <li>email: a String, the service account email to authenticate.</li>
+     *     <li>privateKey: a String or byte[], the encoded PKCS#8 encrypted key</li>
+     *     <li>endpoint: optional String, a host with optional port. e.g. "example.com" or "example.com:443".</li>
+     * </ul>
+     * <p>
+     * For "kmip", the properties are:
+     * </p>
+     * <ul>
+     *     <li>endpoint: a String, the endpoint as a host with required port. e.g. "example.com:443".</li>
      * </ul>
      * <p>
      * For "local", the properties are:
      * </p>
      * <ul>
-     *     <li>key: &lt;byte array of length 96&gt;</li>
+     *     <li>key: byte[] of length 96, the local key</li>
      * </ul>
-     *
+     * <p>
+     * It is also permitted for the value of a kms provider to be an empty map, in which case the driver will first
+     * </p>
+     * <ul>
+     *  <li>use the {@link Supplier} configured in {@link #getKmsProviderPropertySuppliers()} to obtain a non-empty map</li>
+     *  <li>attempt to obtain the properties from the environment</li>
+     * </ul>
+     * However, KMS providers containing a name (e.g., "aws:myname") do not support dynamically obtaining KMS properties from the {@link Supplier}
+     * or environment.
      * @return map of KMS provider properties
+     * @see #getKmsProviderPropertySuppliers()
      */
     public Map<String, Map<String, Object>> getKmsProviders() {
-        return kmsProviders;
+        return unmodifiableMap(kmsProviders);
+    }
+
+    /**
+     * This method is similar to {@link #getKmsProviders()}, but instead of getting properties for KMS providers,
+     * it gets {@link Supplier}s of properties.
+     * <p>If {@link #getKmsProviders()} returns empty properties for a KMS provider,
+     * the driver will use a {@link Supplier} of properties configured for the KMS provider to obtain non-empty properties.</p>
+     *
+     * @return A {@link Map} where keys identify KMS providers, and values specify {@link Supplier}s of properties for the KMS providers.
+     * @since 4.6
+     */
+    public Map<String, Supplier<Map<String, Object>>> getKmsProviderPropertySuppliers() {
+        return unmodifiableMap(kmsProviderPropertySuppliers);
+    }
+
+    /**
+     * Gets the KMS provider to SSLContext map.
+     *
+     * <p>
+     * If a KMS provider is mapped to a non-null {@link SSLContext}, the context will be used to establish a TLS connection to the KMS.
+     * Otherwise, the default context will be used.
+     * </p>
+     *
+     * @return the KMS provider to SSLContext map
+     * @since 4.4
+     */
+    public Map<String, SSLContext> getKmsProviderSslContextMap() {
+        return unmodifiableMap(kmsProviderSslContextMap);
     }
 
     /**
@@ -269,6 +447,10 @@ public final class AutoEncryptionSettings {
      * the system path.</li>
      * <li>mongocryptdSpawnArgs: Used to control the behavior of mongocryptd when the driver spawns it. By default, the driver spawns
      * mongocryptd with the single command line argument {@code "--idleShutdownTimeoutSecs=60"}</li>
+     * <li>cryptSharedLibPath: Optional, override the path used to load the crypt shared library. Note: All MongoClient objects in the
+     * same process should use the same setting for cryptSharedLibPath, as it is an error to load more that one crypt shared library
+     * simultaneously in a single operating system process.</li>
+     * <li>cryptSharedLibRequired: boolean, if 'true', refuse to continue encryption without a crypt shared library.</li>
      * </ul>
      *
      * @return the extra options map
@@ -292,12 +474,72 @@ public final class AutoEncryptionSettings {
         return bypassAutoEncryption;
     }
 
+    /**
+     * Gets the mapping of a collection namespace to encryptedFields.
+     *
+     * <p><strong>Note:</strong> only applies to Queryable Encryption.
+     * Automatic encryption in Queryable Encryption is configured with the encryptedFields.</p>
+     * <p>If a collection is present in both the {@code encryptedFieldsMap} and {@link #schemaMap}, the driver will error.</p>
+     * <p>If a collection is present on the {@code encryptedFieldsMap}, the behavior of {@code collection.createCollection()} and
+     * {@code collection.drop()} is altered.</p>
+     *
+     * <p>If a collection is not present on the {@code encryptedFieldsMap} a server-side collection {@code encryptedFieldsMap} may be
+     * used by the driver.</p>
+     *
+     * @return the mapping of the collection namespaces to encryptedFields
+     * @since 4.7
+     * @mongodb.server.release 7.0
+     */
+    @Nullable
+    public Map<String, BsonDocument> getEncryptedFieldsMap() {
+        return encryptedFieldsMap;
+    }
+
+    /**
+     * Gets whether automatic analysis of outgoing commands is set.
+     *
+     * <p>Set bypassQueryAnalysis to true to use explicit encryption on indexed fields
+     * without the MongoDB Enterprise Advanced licensed crypt shared library.</p>
+     *
+     * @return true if query analysis should be bypassed
+     * @since 4.7
+     * @mongodb.server.release 7.0
+     */
+    public boolean isBypassQueryAnalysis() {
+        return bypassQueryAnalysis;
+    }
+
+    /**
+     * Returns the cache expiration time for data encryption keys.
+     *
+     * <p>Defaults to {@code null} which defers to libmongocrypt's default which is currently {@code 60000 ms}.
+     * Set to {@code 0} to disable key expiration.</p>
+     *
+     * @param timeUnit the time unit, which must not be null
+     * @return the cache expiration time or null if not set.
+     * @since 5.5
+     */
+    @Nullable
+    public Long getKeyExpiration(final TimeUnit timeUnit) {
+        return keyExpirationMS == null ? null : timeUnit.convert(keyExpirationMS, TimeUnit.MILLISECONDS);
+    }
+
     private AutoEncryptionSettings(final Builder builder) {
         this.keyVaultMongoClientSettings = builder.keyVaultMongoClientSettings;
         this.keyVaultNamespace = notNull("keyVaultNamespace", builder.keyVaultNamespace);
         this.kmsProviders = notNull("kmsProviders", builder.kmsProviders);
+        this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", builder.kmsProviderSslContextMap);
+        this.kmsProviderPropertySuppliers = notNull("kmsProviderPropertySuppliers", builder.kmsProviderPropertySuppliers);
         this.schemaMap = notNull("schemaMap", builder.schemaMap);
         this.extraOptions = notNull("extraOptions", builder.extraOptions);
         this.bypassAutoEncryption = builder.bypassAutoEncryption;
+        this.encryptedFieldsMap = builder.encryptedFieldsMap;
+        this.bypassQueryAnalysis = builder.bypassQueryAnalysis;
+        this.keyExpirationMS = builder.keyExpirationMS;
+    }
+
+    @Override
+    public String toString() {
+        return "AutoEncryptionSettings{<hidden>}";
     }
 }

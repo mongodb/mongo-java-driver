@@ -25,18 +25,57 @@ package com.mongodb.client.model;
  * @since 3.4
  */
 public enum BucketGranularity {
+    /**
+     * R5
+     */
     R5,
+    /**
+     * R10
+     */
     R10,
+    /**
+     * R20
+     */
     R20,
+    /**
+     * R40
+     */
     R40,
+    /**
+     * R80
+     */
     R80,
+    /**
+     * SERIES_125
+     */
     SERIES_125("1-2-5"),
+    /**
+     * E6
+     */
     E6,
+    /**
+     * E12
+     */
     E12,
+    /**
+     * E24
+     */
     E24,
+    /**
+     * E48
+     */
     E48,
+    /**
+     * E96
+     */
     E96,
+    /**
+     * E192
+     */
     E192,
+    /**
+     * POWERSOF2
+     */
     POWERSOF2;
 
     private final String value;

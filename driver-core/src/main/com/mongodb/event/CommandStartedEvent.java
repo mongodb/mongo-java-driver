@@ -16,7 +16,9 @@
 
 package com.mongodb.event;
 
+import com.mongodb.RequestContext;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 /**
@@ -25,32 +27,25 @@ import org.bson.BsonDocument;
  * @since 3.1
  */
 public final class CommandStartedEvent extends CommandEvent {
-    private final String databaseName;
     private final BsonDocument command;
 
     /**
      * Construct an instance.
      *
+     * @param requestContext        the request context
+     * @param operationId           the operation id
      * @param requestId             the request id
      * @param connectionDescription the connection description
      * @param databaseName          the database name
      * @param commandName           the command name
-     * @param command the command as a BSON document
+     * @param command               the command as a BSON document
+     * @since 4.10
      */
-    public CommandStartedEvent(final int requestId, final ConnectionDescription connectionDescription,
-                               final String databaseName, final String commandName, final BsonDocument command) {
-        super(requestId, connectionDescription, commandName);
+    public CommandStartedEvent(@Nullable final RequestContext requestContext, final long operationId, final int requestId,
+            final ConnectionDescription connectionDescription, final String databaseName, final String commandName,
+            final BsonDocument command) {
+        super(requestContext, operationId, requestId, connectionDescription, databaseName, commandName);
         this.command = command;
-        this.databaseName = databaseName;
-    }
-
-    /**
-     * Gets the database on which the operation will be executed.
-     *
-     * @return the database name
-     */
-    public String getDatabaseName() {
-        return databaseName;
     }
 
     /**

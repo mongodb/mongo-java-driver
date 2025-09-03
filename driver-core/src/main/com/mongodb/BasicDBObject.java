@@ -21,6 +21,8 @@ import org.bson.BasicBSONObject;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
+import org.bson.UuidRepresentation;
+import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.Encoder;
@@ -43,6 +45,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
+import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
+
 /**
  * A basic implementation of BSON object that is MongoDB specific. A {@code DBObject} can be created as follows, using this class:
  * <pre>
@@ -56,6 +60,13 @@ import java.util.TreeSet;
 public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
     private static final long serialVersionUID = -4415279469780082174L;
 
+    private static final Codec<BasicDBObject> DEFAULT_CODEC =
+            withUuidRepresentation(DBObjectCodec.getDefaultRegistry(), UuidRepresentation.STANDARD)
+                    .get(BasicDBObject.class);
+
+    /**
+     * Whether the object is partial
+     */
     private boolean isPartialObject;
 
     /**
@@ -67,7 +78,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      * @mongodb.driver.manual reference/mongodb-extended-json/ MongoDB Extended JSON
      */
     public static BasicDBObject parse(final String json) {
-        return parse(json, DBObjectCodec.getDefaultRegistry().get(BasicDBObject.class));
+        return parse(json, DEFAULT_CODEC);
     }
 
     /**
@@ -87,7 +98,6 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      * Creates an empty object.
      */
     public BasicDBObject() {
-        super();
     }
 
     /**
@@ -150,7 +160,6 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      * @see #toJson(JsonWriterSettings)
      * @see JsonWriterSettings
      */
-    @SuppressWarnings("deprecation")
     public String toJson() {
         return toJson(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
     }
@@ -165,7 +174,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      * @throws org.bson.codecs.configuration.CodecConfigurationException if the document contains types not in the default registry
      */
     public String toJson(final JsonWriterSettings writerSettings) {
-        return toJson(writerSettings, DBObjectCodec.getDefaultRegistry().get(BasicDBObject.class));
+        return toJson(writerSettings, DEFAULT_CODEC);
     }
 
     /**
@@ -177,7 +186,6 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      * @return a JSON representation of this document
      * @throws org.bson.codecs.configuration.CodecConfigurationException if the registry does not contain a codec for the document values.
      */
-    @SuppressWarnings("deprecation")
     public String toJson(final Encoder<BasicDBObject> encoder) {
         return toJson(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build(), encoder);
     }
@@ -220,10 +228,14 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
         return Arrays.hashCode(toBson(canonicalizeBSONObject(this)));
     }
 
-    private static byte[] toBson(final DBObject dbObject) {
+    /**
+     * Convert the object to its BSON representation, using the {@code STANDARD} representation for UUID.  This is safe to do in the context
+     * of this class because currently this method is only used for equality and hash code, and is not passed to any other parts of the
+     * library.
+     */
+    private static byte[] toBson(final BasicDBObject dbObject) {
         OutputBuffer outputBuffer = new BasicOutputBuffer();
-        DBObjectCodec.getDefaultRegistry().get(DBObject.class).encode(new BsonBinaryWriter(outputBuffer), dbObject,
-                EncoderContext.builder().build());
+        DEFAULT_CODEC.encode(new BsonBinaryWriter(outputBuffer), dbObject, EncoderContext.builder().build());
         return outputBuffer.toByteArray();
     }
 
@@ -268,7 +280,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
 
     @Override
     public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
-        return new BsonDocumentWrapper<BasicDBObject>(this, codecRegistry.get(BasicDBObject.class));
+        return new BsonDocumentWrapper<>(this, codecRegistry.get(BasicDBObject.class));
     }
 
     // create a copy of "from", but with keys ordered alphabetically
@@ -286,8 +298,8 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
     }
 
     private static Map<String, Object> canonicalizeMap(final Map<String, Object> from) {
-        Map<String, Object> canonicalized = new LinkedHashMap<String, Object>(from.size());
-        TreeSet<String> keysInOrder = new TreeSet<String>(from.keySet());
+        Map<String, Object> canonicalized = new LinkedHashMap<>(from.size());
+        TreeSet<String> keysInOrder = new TreeSet<>(from.keySet());
         for (String key : keysInOrder) {
             Object val = from.get(key);
             canonicalized.put(key, canonicalize(val));
@@ -295,9 +307,9 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
         return canonicalized;
     }
 
-    private static DBObject canonicalizeBSONObject(final BSONObject from) {
+    private static BasicDBObject canonicalizeBSONObject(final BSONObject from) {
         BasicDBObject canonicalized = new BasicDBObject();
-        TreeSet<String> keysInOrder = new TreeSet<String>(from.keySet());
+        TreeSet<String> keysInOrder = new TreeSet<>(from.keySet());
         for (String key : keysInOrder) {
             Object val = from.get(key);
             canonicalized.put(key, canonicalize(val));
@@ -306,7 +318,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
     }
 
     private static List canonicalizeList(final List<Object> list) {
-        List<Object> canonicalized = new ArrayList<Object>(list.size());
+        List<Object> canonicalized = new ArrayList<>(list.size());
         for (Object cur : list) {
             canonicalized.add(canonicalize(cur));
         }

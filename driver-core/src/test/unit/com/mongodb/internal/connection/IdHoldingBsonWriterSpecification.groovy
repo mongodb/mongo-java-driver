@@ -32,11 +32,12 @@ import static org.bson.BsonHelper.documentWithValuesOfEveryType
 import static org.bson.BsonHelper.getBsonValues
 
 class IdHoldingBsonWriterSpecification extends Specification {
+    private static final OBJECT_ID = new BsonObjectId()
 
     def 'should write all types'() {
         given:
         def bsonBinaryWriter = new BsonBinaryWriter(new BasicOutputBuffer())
-        def idTrackingBsonWriter = new IdHoldingBsonWriter(bsonBinaryWriter)
+        def idTrackingBsonWriter = new IdHoldingBsonWriter(bsonBinaryWriter, fallbackId)
         def document = documentWithValuesOfEveryType()
 
         when:
@@ -47,18 +48,25 @@ class IdHoldingBsonWriterSpecification extends Specification {
         !document.containsKey('_id')
         encodedDocument.containsKey('_id')
         idTrackingBsonWriter.getId() == encodedDocument.get('_id')
+        if (expectedIdNullIfMustBeGenerated != null) {
+            idTrackingBsonWriter.getId() == expectedIdNullIfMustBeGenerated
+        }
 
         when:
         encodedDocument.remove('_id')
 
         then:
         encodedDocument == document
+
+        where:
+        fallbackId << [null, OBJECT_ID]
+        expectedIdNullIfMustBeGenerated << [null, OBJECT_ID]
     }
 
     def 'should support all types for _id value'() {
         given:
         def bsonBinaryWriter = new BsonBinaryWriter(new BasicOutputBuffer())
-        def idTrackingBsonWriter = new IdHoldingBsonWriter(bsonBinaryWriter)
+        def idTrackingBsonWriter = new IdHoldingBsonWriter(bsonBinaryWriter, fallbackId)
         def document = new BsonDocument()
         document.put('_id', id)
 
@@ -71,12 +79,15 @@ class IdHoldingBsonWriterSpecification extends Specification {
         idTrackingBsonWriter.getId() == id
 
         where:
-        id << getBsonValues()
+        [id, fallbackId] << [
+                getBsonValues(),
+                [null, new BsonObjectId()]
+        ].combinations()
     }
 
     def 'serialize document with list of documents that contain an _id field'() {
         def bsonBinaryWriter = new BsonBinaryWriter(new BasicOutputBuffer())
-        def idTrackingBsonWriter = new IdHoldingBsonWriter(bsonBinaryWriter)
+        def idTrackingBsonWriter = new IdHoldingBsonWriter(bsonBinaryWriter, fallbackId)
         def document = new BsonDocument('_id', new BsonObjectId())
                 .append('items', new BsonArray(Collections.singletonList(new BsonDocument('_id', new BsonObjectId()))))
 
@@ -86,6 +97,39 @@ class IdHoldingBsonWriterSpecification extends Specification {
 
         then:
         encodedDocument == document
+
+        where:
+        fallbackId << [null, new BsonObjectId()]
+    }
+
+    def 'serialize _id documents containing arrays'() {
+        def bsonBinaryWriter = new BsonBinaryWriter(new BasicOutputBuffer())
+        def idTrackingBsonWriter = new IdHoldingBsonWriter(bsonBinaryWriter, fallbackId)
+        BsonDocument document = BsonDocument.parse(json)
+
+        when:
+        new BsonDocumentCodec().encode(idTrackingBsonWriter, document, EncoderContext.builder()
+                .isEncodingCollectibleDocument(true).build())
+        def encodedDocument = getEncodedDocument(bsonBinaryWriter.getBsonOutput())
+
+        then:
+        encodedDocument == document
+
+        where:
+        [json, fallbackId] << [
+                ['{"_id": {"a": []}, "b": 123}',
+                 '{"_id": {"a": [1, 2]}, "b": 123}',
+                 '{"_id": {"a": [[[[1]]]]}, "b": 123}',
+                 '{"_id": {"a": [{"a": [1, 2]}]}, "b": 123}',
+                 '{"_id": {"a": {"a": [1, 2]}}, "b": 123}',
+                 '{"_id": {"a": [1, 2], "b": [123]}}',
+                 '{"_id": [], "b": 123}',
+                 '{"_id": [1, 2], "b": 123}',
+                 '{"_id": [[1], [[2]]], "b": 123}',
+                 '{"_id": [{"a": 1}], "b": 123}',
+                 '{"_id": [{"a": [{"b": 123}]}]}'],
+                [null, new BsonObjectId()]
+        ].combinations()
     }
 
     private static BsonDocument getEncodedDocument(BsonOutput buffer) {

@@ -23,6 +23,7 @@ import org.bson.BsonInt32;
 import org.bson.BsonObjectId;
 import org.bson.ByteBufNIO;
 import org.bson.Document;
+import org.bson.BinaryVector;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.BsonInput;
 import org.bson.io.ByteBufferBsonInput;
@@ -33,9 +34,9 @@ import org.bson.types.Decimal128;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -45,21 +46,21 @@ import java.util.HashSet;
 import java.util.List;
 
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DocumentCodecTest {
     private BasicOutputBuffer buffer;
     private BsonBinaryWriter writer;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         buffer = new BasicOutputBuffer();
         writer = new BsonBinaryWriter(buffer);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         writer.close();
     }
@@ -80,6 +81,9 @@ public class DocumentCodecTest {
         doc.put("code", new Code("var i = 0"));
         doc.put("minkey", new MinKey());
         doc.put("maxkey", new MaxKey());
+        doc.put("vectorFloat", BinaryVector.floatVector(new float[]{1.1f, 2.2f, 3.3f}));
+        doc.put("vectorInt8", BinaryVector.int8Vector(new byte[]{10, 20, 30, 40}));
+        doc.put("vectorPackedBit", BinaryVector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3));
         //        doc.put("pattern", Pattern.compile("^hello"));  // TODO: Pattern doesn't override equals method!
         doc.put("null", null);
 
@@ -95,7 +99,7 @@ public class DocumentCodecTest {
         DocumentCodec documentCodec = new DocumentCodec();
         Document doc = new Document()
                        .append("list", asList(1, 2, 3, 4, 5))
-                       .append("set", new HashSet<Integer>(asList(1, 2, 3, 4)));
+                       .append("set", new HashSet<>(asList(1, 2, 3, 4)));
 
         documentCodec.encode(writer, doc, EncoderContext.builder().build());
 
@@ -103,8 +107,7 @@ public class DocumentCodecTest {
         Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInput), DecoderContext.builder().build());
         assertEquals(new Document()
                      .append("list", asList(1, 2, 3, 4, 5))
-                     .append("set", asList(1, 2, 3, 4)),
-                     decodedDocument);
+                     .append("set", asList(1, 2, 3, 4)), decodedDocument);
     }
 
     @Test
@@ -123,7 +126,6 @@ public class DocumentCodecTest {
     public void testIterableContainingOtherIterableEncoding() throws IOException {
         DocumentCodec documentCodec = new DocumentCodec();
         Document doc = new Document();
-        @SuppressWarnings("unchecked")
         List<List<Integer>> listOfLists = asList(asList(1), asList(2));
         doc.put("array", listOfLists);
 

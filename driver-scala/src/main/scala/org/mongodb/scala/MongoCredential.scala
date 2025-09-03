@@ -29,7 +29,7 @@ object MongoCredential {
   /**
    * The GSSAPI mechanism.  See the <a href="http://tools.ietf.org/html/rfc4752">RFC</a>.
    *
-    @see [[http://docs.mongodb.org/manual/core/authentication/#kerberos-authentication GSSAPI]]
+    @see [[https://www.mongodb.com/docs/manual/core/authentication/#kerberos-authentication GSSAPI]]
    * @since 4.0
    */
   val GSSAPI_MECHANISM: String = JMongoCredential.GSSAPI_MECHANISM
@@ -37,7 +37,7 @@ object MongoCredential {
   /**
    * The PLAIN mechanism.  See the <a href="http://www.ietf.org/rfc/rfc4616.txt">RFC</a>.
    *
-    @see [[http://docs.mongodb.org/manual/core/authentication/#ldap-proxy-authority-authentication PLAIN]]
+    @see [[https://www.mongodb.com/docs/manual/core/authentication/#ldap-proxy-authority-authentication PLAIN]]
    * @since 4.0
    */
   val PLAIN_MECHANISM: String = JMongoCredential.PLAIN_MECHANISM
@@ -45,7 +45,7 @@ object MongoCredential {
   /**
    * The MongoDB X.509
    *
-    @see [[http://docs.mongodb.org/manual/core/authentication/#x-509-certificate-authentication X-509]]
+    @see [[https://www.mongodb.com/docs/manual/core/authentication/#x-509-certificate-authentication X-509]]
    * @since 4.0
    */
   val MONGODB_X509_MECHANISM: String = JMongoCredential.MONGODB_X509_MECHANISM
@@ -54,7 +54,7 @@ object MongoCredential {
    * The SCRAM-SHA-1 Mechanism.
    *
    * @note Requires MongoDB 3.0 or greater
-    @see [[http://docs.mongodb.org/manual/core/authentication/#authentication-scram-sha-1 SCRAM-SHA-1]]
+    @see [[https://www.mongodb.com/docs/manual/core/authentication/#authentication-scram-sha-1 SCRAM-SHA-1]]
    * @since 4.0
    */
   val SCRAM_SHA_1_MECHANISM: String = JMongoCredential.SCRAM_SHA_1_MECHANISM
@@ -64,7 +64,7 @@ object MongoCredential {
    *
    * @since 3.8
    * @note Requires MongoDB 4.0 or greater
-    @see [[http://docs.mongodb.org/manual/core/authentication/#authentication-scram-sha-256 SCRAM-SHA-256]]
+    @see [[https://www.mongodb.com/docs/manual/core/authentication/#authentication-scram-sha-256 SCRAM-SHA-256]]
    */
   val SCRAM_SHA_256_MECHANISM: String = JMongoCredential.SCRAM_SHA_256_MECHANISM
 
@@ -126,8 +126,8 @@ object MongoCredential {
    * @param password the user's password
    * @return the credential
    *
-   * @see [[http://docs.mongodb.org/manual/core/authentication/#mongodb-cr-authentication MONGODB-CR]]
-   * @see [[http://docs.mongodb.org/manual/core/authentication/#authentication-scram-sha-1 SCRAM-SHA-1]]
+   * @see [[https://www.mongodb.com/docs/manual/core/authentication/#mongodb-cr-authentication MONGODB-CR]]
+   * @see [[https://www.mongodb.com/docs/manual/core/authentication/#authentication-scram-sha-1 SCRAM-SHA-1]]
    */
   def createCredential(userName: String, database: String, password: Array[Char]): JMongoCredential =
     JMongoCredential.createCredential(userName, database, password)
@@ -145,7 +145,7 @@ object MongoCredential {
    * @return the credential
    * @see [[createCredential]]
    *
-   * @see [[http://docs.mongodb.org/manual/core/authentication/#authentication-scram-sha-1 SCRAM-SHA-1]]
+   * @see [[https://www.mongodb.com/docs/manual/core/authentication/#authentication-scram-sha-1 SCRAM-SHA-1]]
    */
   def createScramSha1Credential(userName: String, source: String, password: Array[Char]): JMongoCredential =
     JMongoCredential.createScramSha1Credential(userName, source, password)
@@ -159,7 +159,7 @@ object MongoCredential {
    * @param password the non-null user password
    * @return the credential
    * @note Requires MongoDB 4.0 or greater
-   * @see [[http://docs.mongodb.org/manual/core/authentication/#authentication-scram-sha-256 SCRAM-SHA-256]]
+   * @see [[https://www.mongodb.com/docs/manual/core/authentication/#authentication-scram-sha-256 SCRAM-SHA-256]]
    */
   def createScramSha256Credential(userName: String, source: String, password: Array[Char]): JMongoCredential =
     JMongoCredential.createScramSha256Credential(userName, source, password)
@@ -169,7 +169,7 @@ object MongoCredential {
    *
    * @param userName the user name
    * @return the credential
-   * @see [[http://docs.mongodb.org/manual/core/authentication/#x-509-certificate-authentication X-509]]
+   * @see [[https://www.mongodb.com/docs/manual/core/authentication/#x-509-certificate-authentication X-509]]
    */
   def createMongoX509Credential(userName: String): JMongoCredential =
     JMongoCredential.createMongoX509Credential(userName)
@@ -179,7 +179,7 @@ object MongoCredential {
    * acts as the userName.
    *
    * @return the credential
-   * @see [[http://docs.mongodb.org/manual/core/authentication/#x-509-certificate-authentication X-509]]
+   * @see [[https://www.mongodb.com/docs/manual/core/authentication/#x-509-certificate-authentication X-509]]
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
    */
@@ -192,7 +192,7 @@ object MongoCredential {
    * @param source   the source where the user is defined.  This can be either `\$external` or the name of a database.
    * @param password the non-null user password
    * @return the credential
-   * @see [[http://docs.mongodb.org/manual/core/authentication/#ldap-proxy-authority-authentication PLAIN]]
+   * @see [[https://www.mongodb.com/docs/manual/core/authentication/#ldap-proxy-authority-authentication PLAIN]]
    */
   def createPlainCredential(userName: String, source: String, password: Array[Char]): JMongoCredential =
     JMongoCredential.createPlainCredential(userName, source, password)
@@ -204,7 +204,7 @@ object MongoCredential {
    *
    * @param userName the non-null user name
    * @return the credential
-   * @see [[http://docs.mongodb.org/manual/core/authentication/#kerberos-authentication GSSAPI]]
+   * @see [[https://www.mongodb.com/docs/manual/core/authentication/#kerberos-authentication GSSAPI]]
    */
   def createGSSAPICredential(userName: String): JMongoCredential = JMongoCredential.createGSSAPICredential(userName)
 

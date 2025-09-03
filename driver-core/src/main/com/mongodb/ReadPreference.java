@@ -98,15 +98,18 @@ public abstract class ReadPreference {
      * @return a new ReadPreference instance with hedge options
      * @since 4.1
      * @mongodb.server.release 4.4
+     * @deprecated As of MongoDB 8.1, the server ignores the option and periodically logs a warning
      */
+    @Deprecated
     public abstract ReadPreference withHedgeOptions(ReadPreferenceHedgeOptions hedgeOptions);
 
     /**
      * True if this read preference allows reading from a secondary member of a replica set.
      *
      * @return if reading from a secondary is ok
+     * @since 4.4
      */
-    public abstract boolean isSlaveOk();
+    public abstract boolean isSecondaryOk();
 
     /**
      * Gets the name of this read preference.
@@ -135,6 +138,8 @@ public abstract class ReadPreference {
             case SHARDED:
             case STANDALONE:
                 return chooseForNonReplicaSet(clusterDescription);
+            case LOAD_BALANCED:
+                return clusterDescription.getServerDescriptions();
             case UNKNOWN:
                 return Collections.emptyList();
             default:
@@ -142,8 +147,20 @@ public abstract class ReadPreference {
         }
     }
 
+    /**
+     * Choose for non-replica sets.
+     *
+     * @param clusterDescription the cluster description
+     * @return the list of matching server descriptions
+     */
     protected abstract List<ServerDescription> chooseForNonReplicaSet(ClusterDescription clusterDescription);
 
+    /**
+     * Choose for replica sets.
+     *
+     * @param clusterDescription the cluster description
+     * @return the list of matching server descriptions
+     */
     protected abstract List<ServerDescription> chooseForReplicaSet(ClusterDescription clusterDescription);
 
     /**
@@ -202,14 +219,14 @@ public abstract class ReadPreference {
      * @see TaggableReadPreference#getMaxStaleness(TimeUnit)
      */
     public static ReadPreference primaryPreferred(final long maxStaleness, final TimeUnit timeUnit) {
-        return new PrimaryPreferredReadPreference(Collections.<TagSet>emptyList(), maxStaleness, timeUnit);
+        return new PrimaryPreferredReadPreference(Collections.emptyList(), maxStaleness, timeUnit);
     }
 
     /**
      * Gets a read preference that forces reads to a secondary that is less stale than the given maximum.
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      *
@@ -221,7 +238,7 @@ public abstract class ReadPreference {
      * @see TaggableReadPreference#getMaxStaleness(TimeUnit)
      */
     public static ReadPreference secondary(final long maxStaleness, final TimeUnit timeUnit) {
-        return new SecondaryReadPreference(Collections.<TagSet>emptyList(), maxStaleness, timeUnit);
+        return new SecondaryReadPreference(Collections.emptyList(), maxStaleness, timeUnit);
     }
 
     /**
@@ -229,7 +246,7 @@ public abstract class ReadPreference {
      * otherwise to the primary.
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>     *
      * @param maxStaleness the max allowable staleness of secondaries. The minimum value is either 90 seconds, or the heartbeat frequency
@@ -240,14 +257,14 @@ public abstract class ReadPreference {
      * @see TaggableReadPreference#getMaxStaleness(TimeUnit)
      */
     public static ReadPreference secondaryPreferred(final long maxStaleness, final TimeUnit timeUnit) {
-        return new SecondaryPreferredReadPreference(Collections.<TagSet>emptyList(), maxStaleness, timeUnit);
+        return new SecondaryPreferredReadPreference(Collections.emptyList(), maxStaleness, timeUnit);
     }
 
     /**
      * Gets a read preference that forces reads to a primary or a secondary that is less stale than the given maximum.
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      *
@@ -259,7 +276,7 @@ public abstract class ReadPreference {
      * @see TaggableReadPreference#getMaxStaleness(TimeUnit)
      */
     public static ReadPreference nearest(final long maxStaleness, final TimeUnit timeUnit) {
-        return new NearestReadPreference(Collections.<TagSet>emptyList(), maxStaleness, timeUnit);
+        return new NearestReadPreference(Collections.emptyList(), maxStaleness, timeUnit);
     }
 
     /**
@@ -311,7 +328,7 @@ public abstract class ReadPreference {
      * that is less stale than the given maximum.
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      *
@@ -332,7 +349,7 @@ public abstract class ReadPreference {
      * Gets a read preference that forces reads to a secondary with the given set of tags that is less stale than the given maximum.
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      *
@@ -354,7 +371,7 @@ public abstract class ReadPreference {
      * or the primary is none are available.
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>     *
      * @param tagSet the set of tags to limit the list of secondaries to
@@ -375,7 +392,7 @@ public abstract class ReadPreference {
      * given maximum.
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      *
@@ -455,7 +472,7 @@ public abstract class ReadPreference {
      * </p>
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      *
@@ -482,7 +499,7 @@ public abstract class ReadPreference {
      * </p>
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      *
@@ -509,7 +526,7 @@ public abstract class ReadPreference {
      * </p>
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      *
@@ -536,7 +553,7 @@ public abstract class ReadPreference {
      * </p>
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      *
@@ -599,7 +616,7 @@ public abstract class ReadPreference {
      * Creates a taggable read preference from the given read preference name, list of tag sets, and max allowable staleness of secondaries.
      *
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      *
@@ -667,13 +684,14 @@ public abstract class ReadPreference {
             throw new UnsupportedOperationException("Primary read preference can not also specify max staleness");
         }
 
+        @Deprecated
         @Override
         public TaggableReadPreference withHedgeOptions(final ReadPreferenceHedgeOptions hedgeOptions) {
             throw new UnsupportedOperationException("Primary read preference can not also specify hedge");
         }
 
         @Override
-        public boolean isSlaveOk() {
+        public boolean isSecondaryOk() {
             return false;
         }
 

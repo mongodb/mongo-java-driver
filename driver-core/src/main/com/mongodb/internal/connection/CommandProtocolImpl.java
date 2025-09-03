@@ -16,73 +16,59 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ProtocolHelper.getMessageSettings;
 
 class CommandProtocolImpl<T> implements CommandProtocol<T> {
-    private final MongoNamespace namespace;
+    private final String database;
     private final BsonDocument command;
-    private final SplittablePayload payload;
+    private final MessageSequences sequences;
     private final ReadPreference readPreference;
     private final FieldNameValidator commandFieldNameValidator;
-    private final FieldNameValidator payloadFieldNameValidator;
     private final Decoder<T> commandResultDecoder;
     private final boolean responseExpected;
     private final ClusterConnectionMode clusterConnectionMode;
-    private SessionContext sessionContext;
+    private final OperationContext operationContext;
 
     CommandProtocolImpl(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                        final ReadPreference readPreference, final Decoder<T> commandResultDecoder) {
-        this(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, true, null, null,
-                ClusterConnectionMode.MULTIPLE);
-    }
-
-    CommandProtocolImpl(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                        final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final boolean responseExpected,
-                        final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
-                        final ClusterConnectionMode clusterConnectionMode) {
+            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final boolean responseExpected,
+            final MessageSequences sequences, final ClusterConnectionMode clusterConnectionMode, final OperationContext operationContext) {
         notNull("database", database);
-        this.namespace = new MongoNamespace(notNull("database", database), MongoNamespace.COMMAND_COLLECTION_NAME);
+        this.database = notNull("database", database);
         this.command = notNull("command", command);
         this.commandFieldNameValidator = notNull("commandFieldNameValidator", commandFieldNameValidator);
         this.readPreference = readPreference;
         this.commandResultDecoder = notNull("commandResultDecoder", commandResultDecoder);
         this.responseExpected = responseExpected;
-        this.payload = payload;
-        this.payloadFieldNameValidator = payloadFieldNameValidator;
+        this.sequences = sequences;
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
-
-        isTrueArgument("payloadFieldNameValidator cannot be null if there is a payload.",
-                payload == null || payloadFieldNameValidator != null);
+        this.operationContext = operationContext;
     }
 
+    @Nullable
     @Override
     public T execute(final InternalConnection connection) {
-        return connection.sendAndReceive(getCommandMessage(connection), commandResultDecoder, sessionContext);
+        return connection.sendAndReceive(getCommandMessage(connection), commandResultDecoder, operationContext);
     }
 
     @Override
     public void executeAsync(final InternalConnection connection, final SingleResultCallback<T> callback) {
         try {
-            connection.sendAndReceiveAsync(getCommandMessage(connection), commandResultDecoder, sessionContext,
-                    new SingleResultCallback<T>() {
-                        @Override
-                        public void onResult(final T result, final Throwable t) {
-                            if (t != null) {
-                                callback.onResult(null, t);
-                            } else {
-                                callback.onResult(result, null);
-                            }
+            connection.sendAndReceiveAsync(getCommandMessage(connection), commandResultDecoder, operationContext,
+                    (result, t) -> {
+                        if (t != null) {
+                            callback.onResult(null, t);
+                        } else {
+                            callback.onResult(result, null);
                         }
                     });
         } catch (Throwable t) {
@@ -91,14 +77,15 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
     }
 
     @Override
-    public CommandProtocolImpl<T> sessionContext(final SessionContext sessionContext) {
-        this.sessionContext = sessionContext;
-        return this;
+    public CommandProtocolImpl<T> withSessionContext(final SessionContext sessionContext) {
+        return new CommandProtocolImpl<>(database, command, commandFieldNameValidator, readPreference,
+                commandResultDecoder, responseExpected, sequences, clusterConnectionMode,
+                operationContext.withSessionContext(sessionContext));
     }
 
     private CommandMessage getCommandMessage(final InternalConnection connection) {
-        return new CommandMessage(namespace, command, commandFieldNameValidator, readPreference,
-                    getMessageSettings(connection.getDescription()), responseExpected, payload,
-                payloadFieldNameValidator, clusterConnectionMode);
+        return new CommandMessage(database, command, commandFieldNameValidator, readPreference,
+                    getMessageSettings(connection.getDescription(), connection.getInitialServerDescription()), responseExpected,
+                sequences, clusterConnectionMode, operationContext.getServerApi());
     }
 }

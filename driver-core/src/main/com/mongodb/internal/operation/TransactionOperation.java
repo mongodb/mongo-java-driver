@@ -18,12 +18,10 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.Function;
 import com.mongodb.WriteConcern;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
-import com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -32,71 +30,57 @@ import org.bson.codecs.BsonDocumentCodec;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformer;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformerAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableWriteAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
+import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
+import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableWrite;
+import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErrorTransformer;
 
 /**
  * A base class for transaction-related operations
  *
- * @since 3.8
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public abstract class TransactionOperation implements WriteOperation<Void>, AsyncWriteOperation<Void> {
+public abstract class TransactionOperation implements WriteOperation<Void> {
     private final WriteConcern writeConcern;
 
-    /**
-     * Construct an instance.
-     *
-     * @param writeConcern the write concern
-     */
     TransactionOperation(final WriteConcern writeConcern) {
         this.writeConcern = notNull("writeConcern", writeConcern);
     }
 
-    /**
-     * Gets the write concern.
-     *
-     * @return the write concern
-     */
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }
 
     @Override
     public Void execute(final WriteBinding binding) {
-        isTrue("in transaction", binding.getSessionContext().hasActiveTransaction());
-        return executeRetryableCommand(binding, "admin", null, new NoOpFieldNameValidator(),
-                new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformer(), getRetryCommandModifier());
+        isTrue("in transaction", binding.getOperationContext().getSessionContext().hasActiveTransaction());
+        TimeoutContext timeoutContext = binding.getOperationContext().getTimeoutContext();
+        return executeRetryableWrite(binding, "admin", null, NoOpFieldNameValidator.INSTANCE,
+                                     new BsonDocumentCodec(), getCommandCreator(),
+                writeConcernErrorTransformer(timeoutContext), getRetryCommandModifier(timeoutContext));
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        isTrue("in transaction", binding.getSessionContext().hasActiveTransaction());
-        executeRetryableCommand(binding, "admin", null, new NoOpFieldNameValidator(),
-                new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformerAsync(), getRetryCommandModifier(),
-                errorHandlingCallback(callback, LOGGER));
+        isTrue("in transaction", binding.getOperationContext().getSessionContext().hasActiveTransaction());
+        TimeoutContext timeoutContext = binding.getOperationContext().getTimeoutContext();
+        executeRetryableWriteAsync(binding, "admin", null, NoOpFieldNameValidator.INSTANCE,
+                                   new BsonDocumentCodec(), getCommandCreator(),
+                writeConcernErrorTransformerAsync(timeoutContext), getRetryCommandModifier(timeoutContext),
+                                   errorHandlingCallback(callback, LOGGER));
     }
 
     CommandCreator getCommandCreator() {
-        return new CommandCreator() {
-            @Override
-            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                BsonDocument command = new BsonDocument(getCommandName(), new BsonInt32(1));
-                if (!writeConcern.isServerDefault()) {
-                    command.put("writeConcern", writeConcern.asDocument());
-                }
-                return command;
+        return (operationContext, serverDescription, connectionDescription) -> {
+            BsonDocument command = new BsonDocument(getCommandName(), new BsonInt32(1));
+            if (!writeConcern.isServerDefault()) {
+                command.put("writeConcern", writeConcern.asDocument());
             }
+            return command;
         };
     }
 
-    /**
-     * Gets the command name.
-     *
-     * @return the command name
-     */
-    protected abstract String getCommandName();
-
-    protected abstract Function<BsonDocument, BsonDocument> getRetryCommandModifier();
+    protected abstract Function<BsonDocument, BsonDocument> getRetryCommandModifier(TimeoutContext timeoutContext);
 }

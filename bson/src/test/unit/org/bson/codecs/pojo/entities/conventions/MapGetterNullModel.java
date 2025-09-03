@@ -17,6 +17,7 @@
 package org.bson.codecs.pojo.entities.conventions;
 
 import java.util.Map;
+import java.util.Objects;
 
 public class MapGetterNullModel {
 
@@ -45,7 +46,7 @@ public class MapGetterNullModel {
 
         MapGetterNullModel that = (MapGetterNullModel) o;
 
-        return mapField != null ? mapField.equals(that.mapField) : that.mapField == null;
+        return Objects.equals(mapField, that.mapField);
     }
 
     @Override

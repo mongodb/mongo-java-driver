@@ -1,0 +1,83 @@
+[
+{
+  "name":"com.mongodb.BasicDBObject",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.mongodb.MongoNamespace",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"com.mongodb.WriteConcern",
+  "allPublicFields":true
+},
+{
+  "name":"com.mongodb.client.model.changestream.ChangeStreamDocument",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String","org.bson.BsonDocument","org.bson.BsonDocument","java.lang.String","org.bson.BsonDocument","java.lang.Object","java.lang.Object","org.bson.BsonDocument","org.bson.BsonTimestamp","com.mongodb.client.model.changestream.UpdateDescription","org.bson.BsonInt64","org.bson.BsonDocument","org.bson.BsonDateTime","com.mongodb.client.model.changestream.SplitEvent","org.bson.BsonDocument"] }]
+},
+{
+  "name":"com.mongodb.client.model.changestream.SplitEvent",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"com.mongodb.client.model.changestream.TruncatedArray",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"com.mongodb.client.model.changestream.UpdateDescription",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["java.util.List","org.bson.BsonDocument","java.util.List","org.bson.BsonDocument"] }]
+},
+{
+  "name":"java.lang.Record"
+},
+{
+  "name":"java.lang.Thread",
+  "fields":[{"name":"threadLocalRandomProbe"}]
+},
+{
+  "name":"java.net.Socket",
+  "methods":[{"name":"setOption","parameterTypes":["java.net.SocketOption","java.lang.Object"] }]
+},
+{
+  "name":"java.security.SecureRandomParameters"
+},
+{
+  "name":"java.util.concurrent.ForkJoinTask",
+  "fields":[{"name":"aux"}, {"name":"status"}]
+},
+{
+  "name":"java.util.concurrent.atomic.Striped64",
+  "fields":[{"name":"base"}, {"name":"cellsBusy"}]
+},
+{
+  "name":"jdk.internal.misc.Unsafe"
+},
+{
+  "name":"jdk.net.ExtendedSocketOptions",
+  "fields":[{"name":"TCP_KEEPCOUNT"}, {"name":"TCP_KEEPIDLE"}, {"name":"TCP_KEEPINTERVAL"}]
+},
+{
+  "name":"org.bson.codecs.kotlin.DataClassCodecProvider"
+},
+{
+  "name":"org.bson.codecs.kotlinx.KotlinSerializerCodecProvider"
+},
+{
+  "name":"org.bson.codecs.record.RecordCodecProvider"
+},
+{
+  "name":"org.slf4j.Logger"
+}
+]

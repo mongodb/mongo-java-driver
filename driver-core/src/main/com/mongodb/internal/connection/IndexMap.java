@@ -28,7 +28,7 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
  * split into multiple batches. Has the ability to switch from a range-based to a hash-based map depending on the mappings that have
  * been added.</p>
  *
- * <p>This class should not be considered a part of the public API.</p>
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public abstract class IndexMap {
 
@@ -70,7 +70,7 @@ public abstract class IndexMap {
     public abstract int map(int index);
 
     private static class HashBased extends IndexMap {
-        private final Map<Integer, Integer> indexMap = new HashMap<Integer, Integer>();
+        private final Map<Integer, Integer> indexMap = new HashMap<>();
 
         HashBased(final int startIndex, final int count) {
             for (int i = startIndex; i < startIndex + count; i++) {

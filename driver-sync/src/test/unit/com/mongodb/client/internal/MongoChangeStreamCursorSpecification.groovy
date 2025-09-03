@@ -74,7 +74,7 @@ class MongoChangeStreamCursorSpecification extends Specification {
     def 'next should throw if there is no next'() {
         given:
         def batchCursor = Stub(AggregateResponseBatchCursor)
-        def codec = new RawBsonDocumentCodec();
+        def codec = new RawBsonDocumentCodec()
         def resumeToken = Mock(BsonDocument)
 
         batchCursor.hasNext() >> false
@@ -96,7 +96,7 @@ class MongoChangeStreamCursorSpecification extends Specification {
         def secondBatch = [RawBsonDocument.parse('{ _id: { _data: 3 }, x: 2 }')]
 
         def batchCursor = Stub(AggregateResponseBatchCursor)
-        def codec = new RawBsonDocumentCodec();
+        def codec = new RawBsonDocumentCodec()
         def resumeToken = Mock(BsonDocument)
 
         batchCursor.hasNext() >>> [true, true, true, true, false]
@@ -121,7 +121,7 @@ class MongoChangeStreamCursorSpecification extends Specification {
         def secondBatch = [RawBsonDocument.parse('{ _id: { _data: 3 }, x: 2 }')]
 
         def batchCursor = Stub(AggregateResponseBatchCursor)
-        def codec = new RawBsonDocumentCodec();
+        def codec = new RawBsonDocumentCodec()
         def resumeToken = Mock(BsonDocument)
 
         batchCursor.tryNext() >>> [firstBatch, null, secondBatch, null]
@@ -140,10 +140,10 @@ class MongoChangeStreamCursorSpecification extends Specification {
         given:
         def firstBatch = [RawBsonDocument.parse('{ _id: { _data: 1 }, x: 1 }'),
                           RawBsonDocument.parse('{ _id: { _data: 2 }, x: 1 }')]
-        def secondBatch = [RawBsonDocument.parse('{ _id: { _data: 3 }, x: 2 }')]
+        List<BsonDocument> secondBatch = [RawBsonDocument.parse('{ _id: { _data: 3 }, x: 2 }')]
 
         def batchCursor = Stub(AggregateResponseBatchCursor)
-        def codec = new RawBsonDocumentCodec();
+        def codec = new RawBsonDocumentCodec()
         def resumeToken = new BsonDocument('_data', new BsonInt32(1))
 
         batchCursor.hasNext() >>> [true, true, true, false]
@@ -157,11 +157,11 @@ class MongoChangeStreamCursorSpecification extends Specification {
 
         expect:
         cursor.getResumeToken() == resumeToken
-        cursor.next()
+        cursor.next() == firstBatch.head()
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(1))
-        cursor.next()
+        cursor.next() == firstBatch.last()
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(2))
-        cursor.next()
+        cursor.next() == secondBatch.head()
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(3))
     }
 
@@ -172,7 +172,7 @@ class MongoChangeStreamCursorSpecification extends Specification {
         def secondBatch = [RawBsonDocument.parse('{ _id: { _data: 3 }, x: 2 }')]
 
         def batchCursor = Stub(AggregateResponseBatchCursor)
-        def codec = new RawBsonDocumentCodec();
+        def codec = new RawBsonDocumentCodec()
         def resumeToken = new BsonDocument('_data', new BsonInt32(1))
 
         batchCursor.hasNext() >>> [true, true, true, false]
@@ -189,15 +189,83 @@ class MongoChangeStreamCursorSpecification extends Specification {
 
         expect:
         cursor.getResumeToken() == resumeToken
-        cursor.tryNext()
+        cursor.tryNext() == firstBatch.head()
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(1))
-        cursor.tryNext()
+        cursor.tryNext() == firstBatch.last()
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(2))
-        !cursor.tryNext()
+        cursor.tryNext() == null
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(2))
-        cursor.tryNext()
+        cursor.tryNext() == secondBatch.head()
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(3))
-        !cursor.tryNext()
+        cursor.tryNext() == null
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(3))
+    }
+
+
+    def 'should report available documents'() {
+        given:
+        def firstBatch = [RawBsonDocument.parse('{ _id: { _data: 1 }, x: 1 }'),
+                          RawBsonDocument.parse('{ _id: { _data: 2 }, x: 1 }')]
+        def secondBatch = [RawBsonDocument.parse('{ _id: { _data: 3 }, x: 2 }')]
+
+        def batchCursor = Stub(AggregateResponseBatchCursor)
+
+        batchCursor.hasNext() >>> [true, true, true, true, false]
+        batchCursor.next() >>> [firstBatch, secondBatch]
+        batchCursor.available() >>> [2, 2, 0, 0, 0, 1, 0, 0, 0]
+
+        when:
+        def cursor = new MongoChangeStreamCursorImpl(batchCursor, new RawBsonDocumentCodec(), new BsonDocument('_data', new BsonInt32(1)))
+
+        then:
+        cursor.available() == 2
+
+        when:
+        cursor.hasNext()
+
+        then:
+        cursor.available() == 2
+
+        when:
+        cursor.next()
+
+        then:
+        cursor.available() == 1
+
+        when:
+        cursor.hasNext()
+
+        then:
+        cursor.available() == 1
+
+        when:
+        cursor.next()
+
+        then:
+        cursor.available() == 0
+
+        when:
+        cursor.hasNext()
+
+        then:
+        cursor.available() == 1
+
+        when:
+        cursor.next()
+
+        then:
+        cursor.available() == 0    // fail
+
+        when:
+        cursor.hasNext()
+
+        then:
+        cursor.available() == 0
+
+        when:
+        cursor.close()
+
+        then:
+        cursor.available() == 0
     }
 }

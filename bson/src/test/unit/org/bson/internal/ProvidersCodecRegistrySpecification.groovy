@@ -98,8 +98,8 @@ class ProvidersCodecRegistrySpecification extends Specification {
                           new Nested('George', new Top('Joe', null, null)))
         def writer = new BsonBinaryWriter(new BasicOutputBuffer())
         topCodec.encode(writer, top, EncoderContext.builder().build())
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        writer.getBsonOutput().pipe(os);
+        ByteArrayOutputStream os = new ByteArrayOutputStream()
+        writer.getBsonOutput().pipe(os)
         writer.close()
 
         then:
@@ -109,22 +109,32 @@ class ProvidersCodecRegistrySpecification extends Specification {
 
     def 'get should use the codecCache'() {
         given:
-        def provider = Mock(CodecProvider)
+        def codec = Mock(Codec)
+        def provider = new CodecProvider() {
+            private int counter = 0
+
+            @Override
+            Codec get(final Class clazz, final CodecRegistry registry) {
+                if (counter == 0) {
+                    counter++
+                    return codec
+                }
+                throw new AssertionError((Object)'Must not be called more than once.')
+            }
+        }
 
         when:
         def registry = new ProvidersCodecRegistry([provider])
-        registry.get(MinKey)
+        def codecFromRegistry = registry.get(MinKey)
 
         then:
-        thrown(CodecConfigurationException)
-        1 * provider.get(MinKey, _)
+        codecFromRegistry == codec
 
         when:
-        registry.get(MinKey)
+        codecFromRegistry = registry.get(MinKey)
 
         then:
-        thrown(CodecConfigurationException)
-        0 * provider.get(MinKey, _)
+        codecFromRegistry == codec
     }
 
     def 'get with codec registry should return the codec from the first source that has one'() {
@@ -164,7 +174,7 @@ class SingleCodecProvider implements CodecProvider {
     }
 
     @Override
-    def <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+    <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
         if (clazz == codec.getEncoderClass()) {
             return codec
         }
@@ -186,7 +196,7 @@ class ClassModelCodecProvider implements CodecProvider {
 
     @Override
     @SuppressWarnings('ReturnNullFromCatchBlock')
-    def <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+    <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
         if (!supportedClasses.contains(clazz)) {
             null
         } else if (clazz == Top) {
@@ -265,7 +275,7 @@ class TopCodec implements Codec<Top> {
             nested = codecForNested.decode(reader, decoderContext)
         }
         reader.readEndDocument()
-        new Top(name, other, nested);
+        new Top(name, other, nested)
     }
 }
 
@@ -309,7 +319,7 @@ class NestedCodec implements Codec<Nested> {
             top = codecForTop.decode(reader, decoderContext)
         }
         reader.readEndDocument()
-        new Nested(name, top);
+        new Nested(name, top)
     }
 }
 
@@ -444,4 +454,3 @@ class Nested {
 class Simple {
     int value = 0
 }
-

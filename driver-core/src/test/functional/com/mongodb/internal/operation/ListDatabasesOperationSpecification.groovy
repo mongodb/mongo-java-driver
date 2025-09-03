@@ -16,12 +16,11 @@
 
 package com.mongodb.internal.operation
 
-import category.Async
-import com.mongodb.MongoExecutionTimeoutException
+
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
-import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.connection.ConnectionDescription
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.binding.ConnectionSource
@@ -33,15 +32,8 @@ import org.bson.BsonRegularExpression
 import org.bson.Document
 import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
-import org.junit.experimental.categories.Category
-import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
-import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
-import static com.mongodb.ClusterFixture.executeAsync
-import static com.mongodb.ClusterFixture.getBinding
-import static com.mongodb.ClusterFixture.isSharded
-import static java.util.concurrent.TimeUnit.MILLISECONDS
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 
 class ListDatabasesOperationSpecification extends OperationFunctionalSpecification {
     def codec = new DocumentCodec()
@@ -76,52 +68,18 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ isSharded() })
-    def 'should throw execution timeout exception from execute'() {
-        given:
-        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())
-        def operation = new ListDatabasesOperation(codec).maxTime(1000, MILLISECONDS)
-
-        enableMaxTimeFailPoint()
-
-        when:
-        operation.execute(getBinding())
-
-        then:
-        thrown(MongoExecutionTimeoutException)
-
-        cleanup:
-        disableMaxTimeFailPoint()
-    }
-
-    @Category(Async)
-    @IgnoreIf({ isSharded() })
-    def 'should throw execution timeout exception from executeAsync'() {
-        given:
-        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())
-        def operation = new ListDatabasesOperation(codec).maxTime(1000, MILLISECONDS)
-
-        enableMaxTimeFailPoint()
-
-        when:
-        executeAsync(operation);
-
-        then:
-        thrown(MongoExecutionTimeoutException)
-
-        cleanup:
-        disableMaxTimeFailPoint()
-    }
-
-    def 'should use the ReadBindings readPreference to set slaveOK'() {
+    def 'should use the readPreference to set secondaryOk'() {
         given:
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> connection
+            getReadPreference() >> readPreference
+            getOperationContext() >> OPERATION_CONTEXT
         }
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
+            getOperationContext() >> OPERATION_CONTEXT
         }
         def operation = new ListDatabasesOperation(helper.decoder)
 
@@ -130,17 +88,18 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         _ * connection.getDescription() >> helper.connectionDescription
-        1 * connection.command(_, _, _, readPreference, _, _) >> helper.commandResult
+        1 * connection.command(_, _, _, readPreference, _, OPERATION_CONTEXT) >> helper.commandResult
         1 * connection.release()
 
         where:
         readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
     }
 
-    def 'should use the AsyncReadBindings readPreference to set slaveOK'() {
+    def 'should use the readPreference to set secondaryOk async'() {
         given:
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
+            getReadPreference() >> readPreference
             getConnection(_) >> { it[0].onResult(connection, null) }
         }
         def readBinding = Stub(AsyncReadBinding) {
@@ -154,7 +113,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         _ * connection.getDescription() >> helper.connectionDescription
-        1 * connection.commandAsync(_, _, _, readPreference, _, _, _) >> { it[6].onResult(helper.commandResult, null) }
+        1 * connection.commandAsync(_, _, _, readPreference, *_) >> { it.last().onResult(helper.commandResult, null) }
         1 * connection.release()
 
         where:

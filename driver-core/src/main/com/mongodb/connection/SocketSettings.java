@@ -16,12 +16,15 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.Block;
 import com.mongodb.ConnectionString;
 import com.mongodb.annotations.Immutable;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.lang.Math.toIntExact;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -31,13 +34,15 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 @Immutable
 public final class SocketSettings {
-    private final long connectTimeoutMS;
-    private final long readTimeoutMS;
+    private final int connectTimeoutMS;
+    private final int readTimeoutMS;
     private final int receiveBufferSize;
     private final int sendBufferSize;
+    private final ProxySettings proxySettings;
 
     /**
      * Gets a builder for an instance of {@code SocketSettings}.
+     *
      * @return the builder
      */
     public static Builder builder() {
@@ -59,10 +64,11 @@ public final class SocketSettings {
      * A builder for an instance of {@code SocketSettings}.
      */
     public static final class Builder {
-        private long connectTimeoutMS = 10000;
-        private long readTimeoutMS;
+        private int connectTimeoutMS = 10000;
+        private int readTimeoutMS;
         private int receiveBufferSize;
         private int sendBufferSize;
+        private ProxySettings.Builder proxySettingsBuilder = ProxySettings.builder();
 
         private Builder() {
         }
@@ -82,30 +88,34 @@ public final class SocketSettings {
             readTimeoutMS = socketSettings.readTimeoutMS;
             receiveBufferSize = socketSettings.receiveBufferSize;
             sendBufferSize = socketSettings.sendBufferSize;
+            proxySettingsBuilder.applySettings(socketSettings.getProxySettings());
             return this;
         }
 
         /**
          * Sets the socket connect timeout.
          *
-         * @param connectTimeout the connect timeout
+         * @param connectTimeout the connect timeout.
+         * The timeout converted to milliseconds must not be greater than {@link Integer#MAX_VALUE}.
          * @param timeUnit the time unit
          * @return this
          */
-        public Builder connectTimeout(final int connectTimeout, final TimeUnit timeUnit) {
-            this.connectTimeoutMS = MILLISECONDS.convert(connectTimeout, timeUnit);
+        public Builder connectTimeout(final long connectTimeout, final TimeUnit timeUnit) {
+            this.connectTimeoutMS = timeoutArgumentToMillis(connectTimeout, timeUnit);
             return this;
         }
 
         /**
          * Sets the socket read timeout.
          *
-         * @param readTimeout the read timeout
+         * @param readTimeout the read timeout.
+         * The timeout converted to milliseconds must not be greater than {@link Integer#MAX_VALUE}.
          * @param timeUnit the time unit
          * @return this
+         * @see #getReadTimeout(TimeUnit)
          */
-        public Builder readTimeout(final int readTimeout, final TimeUnit timeUnit) {
-            this.readTimeoutMS = MILLISECONDS.convert(readTimeout, timeUnit);
+        public Builder readTimeout(final long readTimeout, final TimeUnit timeUnit) {
+            this.readTimeoutMS = timeoutArgumentToMillis(readTimeout, timeUnit);
             return this;
         }
 
@@ -132,6 +142,18 @@ public final class SocketSettings {
         }
 
         /**
+         * Applies the {@link ProxySettings.Builder} block and then sets the {@link SocketSettings#proxySettings}.
+         *
+         * @param block the block to apply to the {@link ProxySettings}.
+         * @return this
+         * @see SocketSettings#getProxySettings()
+         */
+        public SocketSettings.Builder applyToProxySettings(final Block<ProxySettings.Builder> block) {
+            notNull("block", block).apply(proxySettingsBuilder);
+            return this;
+        }
+
+        /**
          * Takes the settings from the given {@code ConnectionString} and applies them to the builder
          *
          * @param connectionString the connection string containing details of how to connect to MongoDB
@@ -149,6 +171,8 @@ public final class SocketSettings {
             if (socketTimeout != null) {
                 this.readTimeout(socketTimeout, MILLISECONDS);
             }
+
+            proxySettingsBuilder.applyConnectionString(connectionString);
 
             return this;
         }
@@ -177,13 +201,26 @@ public final class SocketSettings {
      *
      * @param timeUnit the time unit to get the timeout in
      * @return the read timeout in the requested time unit, or 0 if there is no timeout
+     * @see Builder#readTimeout(long, TimeUnit)
      */
     public int getReadTimeout(final TimeUnit timeUnit) {
         return (int) timeUnit.convert(readTimeoutMS, MILLISECONDS);
     }
 
     /**
+     * Gets the proxy settings used for connecting to MongoDB via a SOCKS5 proxy server.
+     *
+     * @return The {@link ProxySettings} instance containing the SOCKS5 proxy configuration.
+     * @see Builder#applyToProxySettings(Block)
+     * @since 4.11
+     */
+    public ProxySettings getProxySettings() {
+        return proxySettings;
+    }
+
+    /**
      * Gets the receive buffer size. Defaults to the operating system default.
+     *
      * @return the receive buffer size
      */
     public int getReceiveBufferSize() {
@@ -222,27 +259,22 @@ public final class SocketSettings {
         if (sendBufferSize != that.sendBufferSize) {
             return false;
         }
-
-        return true;
+        return proxySettings.equals(that.proxySettings);
     }
 
     @Override
     public int hashCode() {
-        int result = (int) (connectTimeoutMS ^ (connectTimeoutMS >>> 32));
-        result = 31 * result + (int) (readTimeoutMS ^ (readTimeoutMS >>> 32));
-        result = 31 * result + receiveBufferSize;
-        result = 31 * result + sendBufferSize;
-        return result;
+        return Objects.hash(connectTimeoutMS, readTimeoutMS, receiveBufferSize, sendBufferSize, proxySettings);
     }
 
     @Override
     public String toString() {
         return "SocketSettings{"
-               + "connectTimeoutMS=" + connectTimeoutMS
-               + ", readTimeoutMS=" + readTimeoutMS
-               + ", receiveBufferSize=" + receiveBufferSize
-               + ", sendBufferSize=" + sendBufferSize
-               + '}';
+                + "connectTimeoutMS=" + connectTimeoutMS
+                + ", readTimeoutMS=" + readTimeoutMS
+                + ", receiveBufferSize=" + receiveBufferSize
+                + ", proxySettings=" + proxySettings
+                + '}';
     }
 
     private SocketSettings(final Builder builder) {
@@ -250,5 +282,15 @@ public final class SocketSettings {
         readTimeoutMS = builder.readTimeoutMS;
         receiveBufferSize = builder.receiveBufferSize;
         sendBufferSize = builder.sendBufferSize;
+        proxySettings = builder.proxySettingsBuilder.build();
+    }
+
+    private static int timeoutArgumentToMillis(final long timeout, final TimeUnit timeUnit) throws IllegalArgumentException {
+        try {
+            return toIntExact(MILLISECONDS.convert(timeout, timeUnit));
+        } catch (ArithmeticException e) {
+            throw new IllegalArgumentException(
+                    "The timeout converted to milliseconds must not be greater than `Integer.MAX_VALUE`", e);
+        }
     }
 }

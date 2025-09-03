@@ -18,11 +18,13 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
-import com.mongodb.MongoInterruptedException;
 import com.mongodb.connection.AsyncCompletionHandler;
+import com.mongodb.lang.Nullable;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
+
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 
 class FutureAsyncCompletionHandler<T> implements AsyncCompletionHandler<T> {
     private final CountDownLatch latch = new CountDownLatch(1);
@@ -30,7 +32,7 @@ class FutureAsyncCompletionHandler<T> implements AsyncCompletionHandler<T> {
     private volatile Throwable error;
 
     @Override
-    public void completed(final T result) {
+    public void completed(@Nullable final T result) {
         this.result = result;
         latch.countDown();
     }
@@ -57,7 +59,7 @@ class FutureAsyncCompletionHandler<T> implements AsyncCompletionHandler<T> {
         try {
             latch.await();
         } catch (InterruptedException e) {
-            throw new MongoInterruptedException(prefix + " the AsynchronousSocketChannelStream failed", e);
+            throw interruptAndCreateMongoInterruptedException(prefix + " the AsynchronousSocketChannelStream failed", e);
 
         }
         if (error != null) {

@@ -17,21 +17,21 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.internal.session.SessionContext;
+import com.mongodb.internal.connection.OperationContext;
 
 import static org.bson.assertions.Assertions.notNull;
 
 public final class AsyncSessionBinding implements AsyncReadWriteBinding {
 
     private final AsyncReadWriteBinding wrapped;
-    private final SessionContext sessionContext;
+    private final OperationContext operationContext;
 
     public AsyncSessionBinding(final AsyncReadWriteBinding wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
-        this.sessionContext = new SimpleSessionContext();
+        this.operationContext = wrapped.getOperationContext().withSessionContext(new SimpleSessionContext());
     }
 
     @Override
@@ -41,33 +41,40 @@ public final class AsyncSessionBinding implements AsyncReadWriteBinding {
 
     @Override
     public void getWriteConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
-        wrapped.getWriteConnectionSource(new SingleResultCallback<AsyncConnectionSource>() {
-            @Override
-            public void onResult(final AsyncConnectionSource result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    callback.onResult(new SessionBindingAsyncConnectionSource(result), null);
-                }
+        wrapped.getWriteConnectionSource((result, t) -> {
+            if (t != null) {
+                callback.onResult(null, t);
+            } else {
+                callback.onResult(new SessionBindingAsyncConnectionSource(result), null);
             }
         });
     }
 
     @Override
-    public SessionContext getSessionContext() {
-        return sessionContext;
+    public OperationContext getOperationContext() {
+        return operationContext;
     }
 
     @Override
     public void getReadConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
-        wrapped.getReadConnectionSource(new SingleResultCallback<AsyncConnectionSource>() {
-            @Override
-            public void onResult(final AsyncConnectionSource result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    callback.onResult(new SessionBindingAsyncConnectionSource(result), null);
-                }
+        wrapped.getReadConnectionSource((result, t) -> {
+            if (t != null) {
+                callback.onResult(null, t);
+            } else {
+                callback.onResult(new SessionBindingAsyncConnectionSource(result), null);
+            }
+        });
+    }
+
+
+    @Override
+    public void getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference,
+            final SingleResultCallback<AsyncConnectionSource> callback) {
+        wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference, (result, t) -> {
+            if (t != null) {
+                callback.onResult(null, t);
+            } else {
+                callback.onResult(new SessionBindingAsyncConnectionSource(result), null);
             }
         });
     }
@@ -79,16 +86,17 @@ public final class AsyncSessionBinding implements AsyncReadWriteBinding {
 
     @Override
     public AsyncReadWriteBinding retain() {
-        return wrapped.retain();
+        wrapped.retain();
+        return this;
     }
 
     @Override
-    public void release() {
-        wrapped.release();
+    public int release() {
+        return wrapped.release();
     }
 
     private class SessionBindingAsyncConnectionSource implements AsyncConnectionSource {
-        private AsyncConnectionSource wrapped;
+        private final AsyncConnectionSource wrapped;
 
         SessionBindingAsyncConnectionSource(final AsyncConnectionSource wrapped) {
             this.wrapped = wrapped;
@@ -100,8 +108,13 @@ public final class AsyncSessionBinding implements AsyncReadWriteBinding {
         }
 
         @Override
-        public SessionContext getSessionContext() {
-            return sessionContext;
+        public OperationContext getOperationContext() {
+            return operationContext;
+        }
+
+        @Override
+        public ReadPreference getReadPreference() {
+            return wrapped.getReadPreference();
         }
 
         @Override
@@ -116,12 +129,13 @@ public final class AsyncSessionBinding implements AsyncReadWriteBinding {
 
         @Override
         public AsyncConnectionSource retain() {
-            return wrapped.retain();
+            wrapped.retain();
+            return this;
         }
 
         @Override
-        public void release() {
-            wrapped.release();
+        public int release() {
+            return wrapped.release();
         }
     }
 

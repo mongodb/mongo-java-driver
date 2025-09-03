@@ -16,21 +16,18 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.CursorType;
 import com.mongodb.MongoNamespace;
-import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
-import com.mongodb.internal.async.AsyncBatchCursor;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.FullDocument;
-import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.binding.AsyncConnectionSource;
+import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
-import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
-import com.mongodb.internal.operation.OperationHelper.AsyncCallableWithSource;
-import com.mongodb.internal.operation.OperationHelper.CallableWithSource;
-import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -44,322 +41,193 @@ import org.bson.codecs.RawBsonDocumentCodec;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncReadConnection;
-import static com.mongodb.internal.operation.OperationHelper.withReadConnectionSource;
+import static com.mongodb.client.cursor.TimeoutMode.CURSOR_LIFETIME;
 
 /**
  * An operation that executes an {@code $changeStream} aggregation.
  *
- * @param <T> the operations result type.
- * @mongodb.driver.manual aggregation/ Aggregation
- * @since 3.6
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+public class ChangeStreamOperation<T> implements ReadOperationCursor<T> {
     private static final RawBsonDocumentCodec RAW_BSON_DOCUMENT_CODEC = new RawBsonDocumentCodec();
     private final AggregateOperationImpl<RawBsonDocument> wrapped;
     private final FullDocument fullDocument;
+    private final FullDocumentBeforeChange fullDocumentBeforeChange;
     private final Decoder<T> decoder;
     private final ChangeStreamLevel changeStreamLevel;
 
     private BsonDocument resumeAfter;
     private BsonDocument startAfter;
     private BsonTimestamp startAtOperationTime;
+    private boolean showExpandedEvents;
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace    the database and collection namespace for the operation.
-     * @param fullDocument the fullDocument value
-     * @param pipeline     the aggregation pipeline.
-     * @param decoder      the decoder for the result documents.
-     */
-    public ChangeStreamOperation(final MongoNamespace namespace, final FullDocument fullDocument, final List<BsonDocument> pipeline,
-                                 final Decoder<T> decoder) {
-        this(namespace, fullDocument, pipeline, decoder, ChangeStreamLevel.COLLECTION);
+
+    public ChangeStreamOperation(final MongoNamespace namespace, final FullDocument fullDocument,
+            final FullDocumentBeforeChange fullDocumentBeforeChange, final List<BsonDocument> pipeline, final Decoder<T> decoder) {
+        this(namespace, fullDocument, fullDocumentBeforeChange, pipeline, decoder, ChangeStreamLevel.COLLECTION);
     }
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace         the database and collection namespace for the operation.
-     * @param fullDocument      the fullDocument value
-     * @param pipeline          the aggregation pipeline.
-     * @param decoder           the decoder for the result documents.
-     * @param changeStreamLevel the level at which the change stream is observing
-     *
-     * @since 3.8
-     */
-    public ChangeStreamOperation(final MongoNamespace namespace, final FullDocument fullDocument, final List<BsonDocument> pipeline,
-                                 final Decoder<T> decoder, final ChangeStreamLevel changeStreamLevel) {
-        this.wrapped = new AggregateOperationImpl<RawBsonDocument>(namespace, pipeline, RAW_BSON_DOCUMENT_CODEC,
-                getAggregateTarget(), getPipelineCreator());
+    public ChangeStreamOperation(final MongoNamespace namespace, final FullDocument fullDocument,
+            final FullDocumentBeforeChange fullDocumentBeforeChange, final List<BsonDocument> pipeline, final Decoder<T> decoder,
+            final ChangeStreamLevel changeStreamLevel) {
+        this.wrapped = new AggregateOperationImpl<>(namespace, pipeline, RAW_BSON_DOCUMENT_CODEC, getAggregateTarget(),
+                getPipelineCreator()).cursorType(CursorType.TailableAwait);
         this.fullDocument = notNull("fullDocument", fullDocument);
+        this.fullDocumentBeforeChange = notNull("fullDocumentBeforeChange", fullDocumentBeforeChange);
         this.decoder = notNull("decoder", decoder);
         this.changeStreamLevel = notNull("changeStreamLevel", changeStreamLevel);
     }
 
-    /**
-     * @return the namespace for this operation
-     */
     public MongoNamespace getNamespace() {
         return wrapped.getNamespace();
     }
 
-    /**
-     * @return the decoder for this operation
-     */
     public Decoder<T> getDecoder() {
         return decoder;
     }
 
-    /**
-     * Returns the fullDocument value, in 3.6
-     *
-     * @return the fullDocument value
-     */
     public FullDocument getFullDocument() {
         return fullDocument;
     }
 
-    /**
-     * Returns the logical starting point for the new change stream.
-     *
-     * <p>A null value represents the server default.</p>
-     *
-     * @return the resumeAfter resumeToken
-     * @since 3.11
-     * @mongodb.server.release 4.2
-     */
     public BsonDocument getResumeAfter() {
         return resumeAfter;
     }
 
-    /**
-     * Sets the logical starting point for the new change stream.
-     *
-     * @param resumeAfter the resumeToken
-     * @return this
-     */
     public ChangeStreamOperation<T> resumeAfter(final BsonDocument resumeAfter) {
         this.resumeAfter = resumeAfter;
         return this;
     }
 
-    /**
-     * Returns the logical starting point for the new change stream returning the first notification after the token.
-     *
-     * <p>A null value represents the server default.</p>
-     *
-     * @return the startAfter resumeToken
-     * @since 3.11
-     * @mongodb.server.release 4.2
-     */
     public BsonDocument getStartAfter() {
         return startAfter;
     }
 
-    /**
-     * Similar to {@code resumeAfter}, this option takes a resume token and starts a
-     * new change stream returning the first notification after the token.
-     *
-     * <p>This will allow users to watch collections that have been dropped and recreated
-     * or newly renamed collections without missing any notifications.</p>
-     *
-     * <p>Note: The server will report an error if both {@code startAfter} and {@code resumeAfter} are specified.</p>
-     *
-     * @param startAfter the startAfter resumeToken
-     * @return this
-     * @since 3.11
-     * @mongodb.server.release 4.2
-     * @mongodb.driver.manual changeStreams/#change-stream-start-after
-     */
     public ChangeStreamOperation<T> startAfter(final BsonDocument startAfter) {
         this.startAfter = startAfter;
         return this;
     }
 
-    /**
-     * Gets the aggregation pipeline.
-     *
-     * @return the pipeline
-     * @mongodb.driver.manual core/aggregation-introduction/#aggregation-pipelines Aggregation Pipeline
-     */
     public List<BsonDocument> getPipeline() {
         return wrapped.getPipeline();
     }
 
-    /**
-     * Gets the number of documents to return per batch.  Default to 0, which indicates that the server chooses an appropriate batch size.
-     *
-     * @return the batch size, which may be null
-     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
-     */
     public Integer getBatchSize() {
         return wrapped.getBatchSize();
     }
 
-    /**
-     * Sets the number of documents to return per batch.
-     *
-     * @param batchSize the batch size
-     * @return this
-     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
-     */
-    public ChangeStreamOperation<T> batchSize(final Integer batchSize) {
+    public ChangeStreamOperation<T> batchSize(@Nullable final Integer batchSize) {
         wrapped.batchSize(batchSize);
         return this;
     }
 
-    /**
-     * The maximum amount of time for the server to wait on new documents to satisfy a tailable cursor
-     * query. This only applies to a TAILABLE_AWAIT cursor. When the cursor is not a TAILABLE_AWAIT cursor,
-     * this option is ignored.
-     *
-     * A zero value will be ignored.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum await execution time in the given time unit
-     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
-     */
-    public long getMaxAwaitTime(final TimeUnit timeUnit) {
-        return wrapped.getMaxAwaitTime(timeUnit);
-    }
-
-    /**
-     * Sets the maximum await execution time on the server for this operation.
-     *
-     * @param maxAwaitTime the max await time.  A value less than one will be ignored, and indicates that the driver should respect the
-     *                     server's default value
-     * @param timeUnit     the time unit, which may not be null
-     * @return this
-     */
-    public ChangeStreamOperation<T> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
-        wrapped.maxAwaitTime(maxAwaitTime, timeUnit);
-        return this;
-    }
-
-    /**
-     * Returns the collation options
-     *
-     * @return the collation options
-     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
-     */
     public Collation getCollation() {
         return wrapped.getCollation();
     }
 
-    /**
-     * Sets the collation options
-     *
-     * <p>A null value represents the server default.</p>
-     *
-     * @param collation the collation options to use
-     * @return this
-     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
-     */
     public ChangeStreamOperation<T> collation(final Collation collation) {
         wrapped.collation(collation);
         return this;
     }
 
-    /**
-     * The change stream will only provides changes that occurred after the specified timestamp.
-     *
-     * <p>Any command run against the server will return an operation time that can be used here.</p>
-     * <p>The default value is an operation time obtained from the server before the change stream was created.</p>
-     *
-     * @param startAtOperationTime the start at operation time
-     * @return this
-     * @since 3.8
-     * @mongodb.server.release 4.0
-     * @mongodb.driver.manual reference/method/db.runCommand/
-     */
     public ChangeStreamOperation<T> startAtOperationTime(final BsonTimestamp startAtOperationTime) {
         this.startAtOperationTime = startAtOperationTime;
         return this;
     }
 
-    /**
-     * Returns the start at operation time
-     *
-     * @return the start at operation time
-     * @since 3.8
-     * @mongodb.server.release 4.0
-     */
     public BsonTimestamp getStartAtOperationTime() {
         return startAtOperationTime;
     }
 
-    /**
-     * Enables retryable reads if a read fails due to a network error.
-     *
-     * @param retryReads true if reads should be retried
-     * @return this
-     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
-     * @since 3.11
-     */
     public ChangeStreamOperation<T> retryReads(final boolean retryReads) {
         wrapped.retryReads(retryReads);
         return this;
     }
 
-    /**
-     * Gets the value for retryable reads. The default is true.
-     *
-     * @return the retryable reads value
-     * @since 3.11
-     */
     public boolean getRetryReads() {
         return wrapped.getRetryReads();
     }
 
+    @Nullable
+    public BsonValue getComment() {
+        return wrapped.getComment();
+    }
+
+    public ChangeStreamOperation<T> comment(final BsonValue comment) {
+        wrapped.comment(comment);
+        return this;
+    }
+
+    public boolean getShowExpandedEvents() {
+        return this.showExpandedEvents;
+    }
+
+    public ChangeStreamOperation<T> showExpandedEvents(final boolean showExpandedEvents) {
+        this.showExpandedEvents = showExpandedEvents;
+        return this;
+    }
+
+    /**
+     * Gets an aggregate operation with consideration for timeout settings.
+     * <p>
+     * Change streams act similarly to tailable awaitData cursors, with identical timeoutMS option behavior.
+     * Key distinctions include:
+     * - The timeoutMS option must be applied at the start of the aggregate operation for change streams.
+     * - Change streams support resumption on next() calls. The driver handles automatic resumption for transient errors.
+     * <p>
+     *
+     * As a result, when {@code timeoutContext.hasTimeoutMS()} the CURSOR_LIFETIME setting is utilized to manage the underlying cursor's
+     * lifespan in change streams.
+     *
+     * @param timeoutContext
+     * @return An AggregateOperationImpl
+     */
+    private AggregateOperationImpl<RawBsonDocument> getAggregateOperation(final TimeoutContext timeoutContext) {
+        if (timeoutContext.hasTimeoutMS()) {
+            return wrapped.timeoutMode(CURSOR_LIFETIME);
+        }
+        return wrapped;
+    }
+
+    @Override
+    public String getCommandName() {
+        return wrapped.getCommandName();
+    }
+
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return withReadConnectionSource(binding, new CallableWithSource<BatchCursor<T>>() {
-            @Override
-            public BatchCursor<T> call(final ConnectionSource source) {
-                AggregateResponseBatchCursor<RawBsonDocument> cursor =
-                        (AggregateResponseBatchCursor<RawBsonDocument>) wrapped.execute(binding);
-                return new ChangeStreamBatchCursor<T>(ChangeStreamOperation.this, cursor, binding,
-                        setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),
-                                cursor.getMaxWireVersion(), cursor.isFirstBatchEmpty()), cursor.getMaxWireVersion());
-            }
-        });
+        TimeoutContext timeoutContext = binding.getOperationContext().getTimeoutContext();
+        CommandBatchCursor<RawBsonDocument> cursor = ((CommandBatchCursor<RawBsonDocument>) getAggregateOperation(timeoutContext).execute(binding))
+                .disableTimeoutResetWhenClosing();
+
+            return new ChangeStreamBatchCursor<>(ChangeStreamOperation.this, cursor, binding,
+                    setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),
+                            cursor.getMaxWireVersion(), cursor.isFirstBatchEmpty()), cursor.getMaxWireVersion());
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        wrapped.executeAsync(binding, new SingleResultCallback<AsyncBatchCursor<RawBsonDocument>>() {
-            @Override
-            public void onResult(final AsyncBatchCursor<RawBsonDocument> result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    final AsyncAggregateResponseBatchCursor<RawBsonDocument> cursor =
-                            (AsyncAggregateResponseBatchCursor<RawBsonDocument>) result;
-                    withAsyncReadConnection(binding, new AsyncCallableWithSource() {
-                        @Override
-                        public void call(final AsyncConnectionSource source, final Throwable t) {
-                            if (t != null) {
-                                callback.onResult(null, t);
-                            } else {
-                                callback.onResult(new AsyncChangeStreamBatchCursor<T>(ChangeStreamOperation.this, cursor, binding,
-                                        setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),
-                                                cursor.getMaxWireVersion(), cursor.isFirstBatchEmpty()), cursor.getMaxWireVersion()), null);
-                            }
-                            source.release();
-                        }
-                    });
-                }
+        TimeoutContext timeoutContext = binding.getOperationContext().getTimeoutContext();
+        getAggregateOperation(timeoutContext).executeAsync(binding, (result, t) -> {
+            if (t != null) {
+                callback.onResult(null, t);
+            } else {
+                AsyncCommandBatchCursor<RawBsonDocument> cursor = ((AsyncCommandBatchCursor<RawBsonDocument>) assertNotNull(result))
+                        .disableTimeoutResetWhenClosing();
+
+                callback.onResult(new AsyncChangeStreamBatchCursor<>(ChangeStreamOperation.this, cursor, binding,
+                        setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),
+                                cursor.getMaxWireVersion(), cursor.isFirstBatchEmpty()), cursor.getMaxWireVersion()), null);
             }
         });
     }
 
-    private BsonDocument setChangeStreamOptions(final BsonDocument postBatchResumeToken, final BsonTimestamp operationTime,
-                                                final int maxWireVersion, final boolean firstBatchEmpty) {
+    @Nullable
+    private BsonDocument setChangeStreamOptions(@Nullable final BsonDocument postBatchResumeToken,
+            @Nullable final BsonTimestamp operationTime, final int maxWireVersion, final boolean firstBatchEmpty) {
         BsonDocument resumeToken = null;
         if (startAfter != null) {
             resumeToken = startAfter;
@@ -371,14 +239,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
         return resumeToken;
     }
 
-    /**
-     * Set the change stream operation options for a resumeable operation.
-     *
-     * @param resumeToken the resume token cached prior to resume
-     * @param maxWireVersion the max wire version reported by the server description
-     * @since 3.11
-     */
-    public void setChangeStreamOptionsForResume(final BsonDocument resumeToken, final int maxWireVersion) {
+    public void setChangeStreamOptionsForResume(@Nullable final BsonDocument resumeToken, final int maxWireVersion) {
         startAfter = null;
         if (resumeToken != null) {
             startAtOperationTime = null;
@@ -391,44 +252,45 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
         }
     }
 
+    // Leave as anonymous class so as not to confuse CustomMatchers#compare
     private AggregateOperationImpl.AggregateTarget getAggregateTarget() {
-        return new AggregateOperationImpl.AggregateTarget() {
-            @Override
-            public BsonValue create() {
-                return changeStreamLevel == ChangeStreamLevel.COLLECTION
-                        ? new BsonString(getNamespace().getCollectionName()) : new BsonInt32(1);
-            }
-        };
+        return () -> changeStreamLevel == ChangeStreamLevel.COLLECTION
+                ? new BsonString(getNamespace().getCollectionName()) : new BsonInt32(1);
     }
 
+    // Leave as anonymous class so as not to confuse CustomMatchers#compare
     private AggregateOperationImpl.PipelineCreator getPipelineCreator() {
-        return new AggregateOperationImpl.PipelineCreator() {
-            @Override
-            public BsonArray create(final ConnectionDescription description, final SessionContext sessionContext) {
-                List<BsonDocument> changeStreamPipeline = new ArrayList<BsonDocument>();
-                BsonDocument changeStream = new BsonDocument();
-                if (fullDocument != FullDocument.DEFAULT) {
-                    changeStream.append("fullDocument", new BsonString(fullDocument.getValue()));
-                }
-
-                if (changeStreamLevel == ChangeStreamLevel.CLIENT) {
-                    changeStream.append("allChangesForCluster", BsonBoolean.TRUE);
-                }
-
-                if (resumeAfter != null) {
-                    changeStream.append("resumeAfter", resumeAfter);
-                }
-                if (startAfter != null) {
-                    changeStream.append("startAfter", startAfter);
-                }
-                if (startAtOperationTime != null) {
-                    changeStream.append("startAtOperationTime", startAtOperationTime);
-                }
-
-                changeStreamPipeline.add(new BsonDocument("$changeStream", changeStream));
-                changeStreamPipeline.addAll(getPipeline());
-                return new BsonArray(changeStreamPipeline);
+        return () -> {
+            List<BsonDocument> changeStreamPipeline = new ArrayList<>();
+            BsonDocument changeStream = new BsonDocument();
+            if (fullDocument != FullDocument.DEFAULT) {
+                changeStream.append("fullDocument", new BsonString(fullDocument.getValue()));
             }
+            if (fullDocumentBeforeChange != FullDocumentBeforeChange.DEFAULT) {
+                changeStream.append("fullDocumentBeforeChange", new BsonString(fullDocumentBeforeChange.getValue()));
+            }
+
+            if (changeStreamLevel == ChangeStreamLevel.CLIENT) {
+                changeStream.append("allChangesForCluster", BsonBoolean.TRUE);
+            }
+
+            if (showExpandedEvents) {
+                changeStream.append("showExpandedEvents", BsonBoolean.TRUE);
+            }
+
+            if (resumeAfter != null) {
+                changeStream.append("resumeAfter", resumeAfter);
+            }
+            if (startAfter != null) {
+                changeStream.append("startAfter", startAfter);
+            }
+            if (startAtOperationTime != null) {
+                changeStream.append("startAtOperationTime", startAtOperationTime);
+            }
+
+            changeStreamPipeline.add(new BsonDocument("$changeStream", changeStream));
+            changeStreamPipeline.addAll(getPipeline());
+            return new BsonArray(changeStreamPipeline);
         };
     }
 }

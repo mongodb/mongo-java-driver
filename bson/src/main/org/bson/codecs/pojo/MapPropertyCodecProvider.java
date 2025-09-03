@@ -103,11 +103,11 @@ final class MapPropertyCodecProvider implements PropertyCodecProvider {
 
         private Map<String, T> getInstance() {
             if (encoderClass.isInterface()) {
-                return new HashMap<String, T>();
+                return new HashMap<>();
             }
             try {
                 return encoderClass.getDeclaredConstructor().newInstance();
-            } catch (final Exception e) {
+            } catch (Exception e) {
                 throw new CodecConfigurationException(e.getMessage(), e);
             }
         }

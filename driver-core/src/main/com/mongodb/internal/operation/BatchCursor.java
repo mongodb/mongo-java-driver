@@ -19,24 +19,36 @@ package com.mongodb.internal.operation;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.lang.Nullable;
 
 import java.io.Closeable;
 import java.util.Iterator;
 import java.util.List;
 
+import static java.util.Spliterator.IMMUTABLE;
+import static java.util.Spliterator.ORDERED;
+import static java.util.Spliterators.spliteratorUnknownSize;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.StreamSupport.stream;
+
 /**
- *
  * MongoDB returns query results as batches, and this interface provideds an iterator over those batches.  The first call to
  * the {@code next} method will return the first batch, and subsequent calls will trigger a  request to get the next batch
  * of results.  Clients can control the batch size by setting the {@code batchSize} property between calls to {@code next}.
-
- * @since 3.0
  *
- * @param <T> The type of documents the cursor contains
- * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#wire-op-get-more OP_GET_MORE
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 @NotThreadSafe
 public interface BatchCursor<T> extends Iterator<List<T>>, Closeable {
+    /**
+     * Despite this interface being {@linkplain NotThreadSafe non-thread-safe},
+     * {@link #close()} is allowed to be called concurrently with any method of the cursor, including itself.
+     * This is useful to cancel blocked {@link #hasNext()}, {@link #next()}.
+     * This method is idempotent.
+     * <p>
+     * Another quirk is that this method is allowed to release resources "eventually",
+     * i.e., not before (in the happens-before order) returning.
+     */
     @Override
     void close();
 
@@ -54,6 +66,13 @@ public interface BatchCursor<T> extends Iterator<List<T>>, Closeable {
      * @throws java.util.NoSuchElementException if no next batch exists
      */
     List<T> next();
+
+    /**
+     * Gets the number of results available locally without blocking,which may be 0, or 0 when the cursor is exhausted or closed.
+     *
+     * @return the number of results available locally without blocking
+     */
+    int available();
 
     /**
      * Sets the batch size to use when requesting the next batch.  This is the number of documents to request in the next batch.
@@ -78,19 +97,16 @@ public interface BatchCursor<T> extends Iterator<List<T>>, Closeable {
      * @return the next batch if available or null.
      * @mongodb.driver.manual reference/glossary/#term-tailable-cursor Tailable Cursor
      */
+    @Nullable
     List<T> tryNext();
 
-    /**
-     * Returns the server cursor
-     *
-     * @return ServerCursor
-     */
+    @Nullable
     ServerCursor getServerCursor();
 
-    /**
-     * Returns the server address
-     *
-     * @return ServerAddress
-     */
     ServerAddress getServerAddress();
+
+    default List<List<T>> exhaust() {
+        return stream(spliteratorUnknownSize(this, ORDERED | IMMUTABLE), false)
+                .collect(toList());
+    }
 }

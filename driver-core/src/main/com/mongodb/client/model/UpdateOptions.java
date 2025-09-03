@@ -17,6 +17,8 @@
 package com.mongodb.client.model;
 
 import com.mongodb.lang.Nullable;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 import java.util.List;
@@ -36,6 +38,9 @@ public class UpdateOptions {
     private List<? extends Bson> arrayFilters;
     private Bson hint;
     private String hintString;
+    private BsonValue comment;
+    private Bson variables;
+    private Bson sort;
 
     /**
      * Returns true if a new document should be inserted if there are no matches to the query filter.  The default is false.
@@ -58,7 +63,7 @@ public class UpdateOptions {
     }
 
     /**
-     * Gets the the bypass document level validation flag
+     * Gets the bypass document level validation flag
      *
      * @return the bypass document level validation flag
      * @since 3.2
@@ -71,6 +76,8 @@ public class UpdateOptions {
 
     /**
      * Sets the bypass document level validation flag.
+     *
+     * <p>For bulk operations use: {@link BulkWriteOptions#bypassDocumentValidation(Boolean)}</p>
      *
      * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
      * @return this
@@ -179,6 +186,114 @@ public class UpdateOptions {
         return this;
     }
 
+
+    /**
+     * @return the comment for this operation. A null value means no comment is set.
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    @Nullable
+    public BsonValue getComment() {
+        return comment;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * <p>For bulk operations use: {@link BulkWriteOptions#comment(String)}</p>
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public UpdateOptions comment(@Nullable final String comment) {
+        this.comment = comment != null ? new BsonString(comment) : null;
+        return this;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * <p>For bulk operations use: {@link BulkWriteOptions#comment(BsonValue)}</p>
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public UpdateOptions comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
+    /**
+     * Add top-level variables to the operation
+     *
+     * <p>The value of let will be passed to all update and delete, but not insert, commands.
+     *
+     * @return the top level variables if set or null.
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    @Nullable
+    public Bson getLet() {
+        return variables;
+    }
+
+    /**
+     * Add top-level variables for the operation
+     *
+     * <p>Allows for improved command readability by separating the variables from the query text.
+     * <p>For bulk operations use: {@link BulkWriteOptions#let(Bson)}
+     *
+     * @param variables for the operation or null
+     * @return this
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    public UpdateOptions let(final Bson variables) {
+        this.variables = variables;
+        return this;
+    }
+
+    /**
+     * Gets the sort criteria to apply to the operation.
+     *
+     * <p>
+     * The sort criteria determines which document the operation updates if the query matches multiple documents.
+     * The first document matched by the sort criteria will be updated.
+     * The default is null, which means no specific sort criteria is applied.
+     *
+     * @return a document describing the sort criteria, or null if no sort is specified.
+     * @mongodb.driver.manual reference/method/db.collection.updateOne/ Sort
+     * @mongodb.server.release 8.0
+     * @since 5.3
+     * @see #sort(Bson)
+     */
+    @Nullable
+    public Bson getSort() {
+        return sort;
+    }
+
+    /**
+     * Sets the sort criteria to apply to the operation. A null value means no sort criteria is set.
+     *
+     * <p>
+     * The sort criteria determines which document the operation updates if the query matches multiple documents.
+     * The first document matched by the specified sort criteria will be updated.
+     *
+     * @param sort the sort criteria, which may be null.
+     * @return this
+     * @mongodb.driver.manual reference/method/db.collection.updateOne/ Sort
+     * @mongodb.server.release 8.0
+     * @since 5.3
+     */
+    public UpdateOptions sort(@Nullable final Bson sort) {
+        this.sort = sort;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "UpdateOptions{"
@@ -188,6 +303,9 @@ public class UpdateOptions {
                 + ", arrayFilters=" + arrayFilters
                 + ", hint=" + hint
                 + ", hintString=" + hintString
+                + ", comment=" + comment
+                + ", let=" + variables
+                + ", sort=" + sort
                 + '}';
     }
 }

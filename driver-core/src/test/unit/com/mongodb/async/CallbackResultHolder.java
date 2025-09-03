@@ -20,6 +20,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A SingleResultCallback implementation that saves the result of the callback.
@@ -30,8 +31,8 @@ import java.io.StringWriter;
 class CallbackResultHolder<T> implements SingleResultCallback<T> {
     private T result = null;
     private Throwable error = null;
-    private boolean isDone = false;
-
+    private final AtomicInteger completionCounter = new AtomicInteger();
+    
     /**
      * Set the result of the callback
      *
@@ -39,14 +40,14 @@ class CallbackResultHolder<T> implements SingleResultCallback<T> {
      * @param error  the throwable error of the callback
      */
     public void onResult(final T result, final Throwable error) {
-        if (isDone) {
+        if (completionCounter.getAndIncrement() > 0) {
             throw new IllegalStateException("The CallbackResult cannot be initialized multiple times.  The first time it was initialized "
-                    + "with " + (this.error != null ? getErrorString(this.error) : this.result) + "\n The second time it was initialized "
+                    + "with " + (this.error != null ? getErrorString(this.error) : this.result) + "\n"
+                    + "On invocation number " + completionCounter.get() + " it was initialized "
                     + "with " + (error != null ? getErrorString(error) : result));
         }
         this.result = result;
         this.error = error;
-        this.isDone = true;
     }
 
     private String getErrorString(final Throwable error) {
@@ -88,7 +89,11 @@ class CallbackResultHolder<T> implements SingleResultCallback<T> {
      * @return true if the callback has been called
      */
     public boolean isDone() {
-        return isDone;
+        return completionCounter.get() > 0;
+    }
+
+    public boolean wasInvokedMultipleTimes() {
+        return completionCounter.get() > 1;
     }
 
     @Override
@@ -96,7 +101,9 @@ class CallbackResultHolder<T> implements SingleResultCallback<T> {
         return "CallbackResultHolder{"
                 + "result=" + result
                 + ", error=" + error
-                + ", isDone=" + isDone
+                + ", isDone=" + isDone()
+                + ", completionCounter=" + completionCounter.get()
                 + '}';
     }
+
 }

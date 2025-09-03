@@ -20,15 +20,17 @@ import com.mongodb.ServerAddress;
 import com.mongodb.TagSet;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * This class is NOT part of the public API.
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class ClusterDescriptionHelper {
 
@@ -38,13 +40,8 @@ public final class ClusterDescriptionHelper {
      * @return the set of server descriptions
      */
     public static Set<ServerDescription> getAll(final ClusterDescription clusterDescription) {
-        Set<ServerDescription> serverDescriptionSet = new TreeSet<ServerDescription>((o1, o2) -> {
-            int val = o1.getAddress().getHost().compareTo(o2.getAddress().getHost());
-            if (val != 0) {
-                return val;
-            }
-            return Integer.compare(o1.getAddress().getPort(), o2.getAddress().getPort());
-        });
+        Set<ServerDescription> serverDescriptionSet = new TreeSet<>(Comparator.comparing((ServerDescription o) ->
+                o.getAddress().getHost()).thenComparingInt(o -> o.getAddress().getPort()));
         serverDescriptionSet.addAll(clusterDescription.getServerDescriptions());
         return Collections.unmodifiableSet(serverDescriptionSet);
     }
@@ -55,6 +52,7 @@ public final class ClusterDescriptionHelper {
      * @param serverAddress the ServerAddress for a server in this cluster
      * @return the ServerDescription for this server
      */
+    @Nullable
     public static ServerDescription getByServerAddress(final ClusterDescription clusterDescription, final ServerAddress serverAddress) {
         for (final ServerDescription cur : clusterDescription.getServerDescriptions()) {
             if (cur.isOk() && cur.getAddress().equals(serverAddress)) {
@@ -129,7 +127,7 @@ public final class ClusterDescriptionHelper {
     }
 
     public static List<ServerDescription> getServersByPredicate(final ClusterDescription clusterDescription, final Predicate predicate) {
-        List<ServerDescription> membersByTag = new ArrayList<ServerDescription>();
+        List<ServerDescription> membersByTag = new ArrayList<>();
 
         for (final ServerDescription cur : clusterDescription.getServerDescriptions()) {
             if (predicate.apply(cur)) {

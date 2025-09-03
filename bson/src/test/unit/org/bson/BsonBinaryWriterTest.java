@@ -19,34 +19,41 @@ package org.bson;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.ByteBufferBsonInput;
 import org.bson.types.ObjectId;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class BsonBinaryWriterTest {
+
+    private static final byte FLOAT32_DTYPE = BinaryVector.DataType.FLOAT32.getValue();
+    private static final int ZERO_PADDING = 0;
 
     private BsonBinaryWriter writer;
     private BasicOutputBuffer buffer;
 
-    @Before
+    @BeforeEach
     public void setup() {
         buffer = new BasicOutputBuffer();
-        writer = new BsonBinaryWriter(new BsonWriterSettings(100), new BsonBinaryWriterSettings(1024), buffer);
+        writer = new BsonBinaryWriter(new BsonWriterSettings(100), new BsonBinaryWriterSettings(12904), buffer);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         writer.close();
     }
@@ -55,11 +62,11 @@ public class BsonBinaryWriterTest {
     public void shouldThrowWhenMaxDocumentSizeIsExceeded() {
         try {
             writer.writeStartDocument();
-            writer.writeBinaryData("b", new BsonBinary(new byte[1024]));
+            writer.writeBinaryData("b", new BsonBinary(new byte[12904]));
             writer.writeEndDocument();
             fail();
         } catch (BsonMaximumSizeExceededException e) {
-            assertEquals("Document size of 1037 is larger than maximum of 1024.", e.getMessage());
+            assertEquals("Document size of 12917 is larger than maximum of 12904.", e.getMessage());
         }
     }
 
@@ -101,10 +108,10 @@ public class BsonBinaryWriterTest {
         reader.readStartDocument();
         assertThat(reader.readBsonType(), is(BsonType.BOOLEAN));
         assertEquals("b1", reader.readName());
-        assertEquals(true, reader.readBoolean());
+        assertTrue(reader.readBoolean());
         assertThat(reader.readBsonType(), is(BsonType.BOOLEAN));
         assertEquals("b2", reader.readName());
-        assertEquals(false, reader.readBoolean());
+        assertFalse(reader.readBoolean());
         reader.readEndDocument();
     }
 
@@ -191,16 +198,39 @@ public class BsonBinaryWriterTest {
     }
 
     @Test
-    public void testWriteArrayElements() {
+    public void testWriteArrayElements() throws IOException {
+        ByteArrayOutputStream expectedOutput = new ByteArrayOutputStream();
+        expectedOutput.write(new byte[]{
+                -52, 25, 0, 0, //document length
+                4, // array type
+                97, 49, 0, // "a1" name + null terminator
+                -61, 25, 0, 0}); // array length
+
 
         writer.writeStartDocument();
         writer.writeStartArray("a1");
-        writer.writeBoolean(true);
-        writer.writeBoolean(false);
+        int arrayIndex = 0;
+        while (arrayIndex < 1100) {
+            writer.writeBoolean(true);
+
+            expectedOutput.write(BsonType.BOOLEAN.getValue());
+            expectedOutput.write(Integer.toString(arrayIndex++).getBytes(StandardCharsets.UTF_8));
+            expectedOutput.write(0); // null terminator
+            expectedOutput.write(1); // boolean value
+
+            writer.writeBoolean(false);
+
+            expectedOutput.write(BsonType.BOOLEAN.getValue());
+            expectedOutput.write(Integer.toString(arrayIndex++).getBytes(StandardCharsets.UTF_8));
+            expectedOutput.write(0); // null terminator
+            expectedOutput.write(0); // boolean value
+        }
         writer.writeEndArray();
+        expectedOutput.write(0); // end of array
         writer.writeEndDocument();
-        byte[] expectedValues = {22, 0, 0, 0, 4, 97, 49, 0, 13, 0, 0, 0, 8, 48, 0, 1, 8, 49, 0, 0, 0, 0};
-        assertArrayEquals(expectedValues, buffer.toByteArray());
+        expectedOutput.write(0); // end of a document
+
+        assertArrayEquals(expectedOutput.toByteArray(), buffer.toByteArray());
     }
 
     @Test
@@ -296,12 +326,38 @@ public class BsonBinaryWriterTest {
         writer.writeBinaryData("b1", new BsonBinary(new byte[]{0, 0, 0, 0, 0, 0, 0, 0}));
         writer.writeBinaryData("b2", new BsonBinary(BsonBinarySubType.OLD_BINARY, new byte[]{1, 1, 1, 1, 1}));
         writer.writeBinaryData("b3", new BsonBinary(BsonBinarySubType.FUNCTION, new byte[]{}));
+        writer.writeBinaryData("b4", new BsonBinary(BsonBinarySubType.VECTOR, new byte[]{FLOAT32_DTYPE, ZERO_PADDING,
+               (byte) 205, (byte) 204, (byte) 140, (byte) 63}));
 
         writer.writeEndDocument();
+        byte[] expectedValues = new byte[]{
+                64,  // total document length
+                0, 0, 0,
 
-        byte[] expectedValues = {49, 0, 0, 0, 5, 98, 49, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 98, 50, 0,
-                                 9, 0,
-                                 0, 0, 2, 5, 0, 0, 0, 1, 1, 1, 1, 1, 5, 98, 51, 0, 0, 0, 0, 0, 1, 0};
+                //Binary
+                (byte) BsonType.BINARY.getValue(),
+                98, 49, 0,  // name "b1"
+                8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+                // Old binary
+                (byte) BsonType.BINARY.getValue(),
+                98, 50, 0, // name "b2"
+                9, 0, 0, 0, 2, 5, 0, 0, 0, 1, 1, 1, 1, 1,
+
+                // Function binary
+                (byte) BsonType.BINARY.getValue(),
+                98, 51, 0, // name "b3"
+                0, 0, 0, 0, 1,
+
+                //Vector binary
+                (byte) BsonType.BINARY.getValue(),
+                98, 52, 0,  // name "b4"
+                6, 0, 0, 0, // total length, int32 (little endian)
+                BsonBinarySubType.VECTOR.getValue(), FLOAT32_DTYPE, ZERO_PADDING, (byte) 205, (byte) 204, (byte) 140, 63,
+
+                0 //end of document
+        };
+
         assertArrayEquals(expectedValues, buffer.toByteArray());
     }
 
@@ -355,6 +411,36 @@ public class BsonBinaryWriterTest {
     }
 
     @Test
+    public void testNullByteInTopLevelName() {
+        writer.writeStartDocument();
+        writer.writeName("a\u0000b");
+        assertThrows(BsonSerializationException.class, () -> writer.writeBoolean(true));
+    }
+
+    @Test
+    public void testNullByteInNestedName() {
+        writer.writeStartDocument();
+        writer.writeName("nested");
+        writer.writeStartDocument();
+        writer.writeName("a\u0000b");
+        assertThrows(BsonSerializationException.class, () -> writer.writeBoolean(true));
+    }
+
+    @Test
+    public void testNullByteInRegularExpressionPattern() {
+        writer.writeStartDocument();
+        writer.writeName("regex");
+        assertThrows(BsonSerializationException.class, () -> writer.writeRegularExpression(new BsonRegularExpression("a\u0000b")));
+    }
+
+    @Test
+    public void testNullByteInRegularExpressionOptions() {
+        writer.writeStartDocument();
+        writer.writeName("regex");
+        assertThrows(BsonSerializationException.class, () -> writer.writeRegularExpression(new BsonRegularExpression("a*", "i\u0000")));
+    }
+
+    @Test
     //CHECKSTYLE:OFF
     public void testWriteRead() throws IOException {
         ObjectId oid1 = new ObjectId();
@@ -393,19 +479,17 @@ public class BsonBinaryWriterTest {
 
         ByteBufferBsonInput basicInputBuffer = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(baos.toByteArray())));
 
-        BsonBinaryReader reader = new BsonBinaryReader(basicInputBuffer);
-
-        try {
+        try (BsonBinaryReader reader = new BsonBinaryReader(basicInputBuffer)) {
             assertEquals(BsonType.DOCUMENT, reader.readBsonType());
             reader.readStartDocument();
             {
                 assertEquals(BsonType.BOOLEAN, reader.readBsonType());
                 assertEquals("b1", reader.readName());
-                assertEquals(true, reader.readBoolean());
+                assertTrue(reader.readBoolean());
 
                 assertEquals(BsonType.BOOLEAN, reader.readBsonType());
                 assertEquals("b2", reader.readName());
-                assertEquals(false, reader.readBoolean());
+                assertFalse(reader.readBoolean());
 
                 assertEquals(BsonType.ARRAY, reader.readBsonType());
                 assertEquals("a1", reader.readName());
@@ -458,8 +542,6 @@ public class BsonBinaryWriterTest {
                 reader.readEndDocument();
 
             }
-        } finally {
-            reader.close();
         }
     }
     //CHECKSTYLE:ON
@@ -473,16 +555,10 @@ public class BsonBinaryWriterTest {
         byte[] bytes = buffer.toByteArray();
 
         BasicOutputBuffer newBuffer = new BasicOutputBuffer();
-        BsonBinaryWriter newWriter = new BsonBinaryWriter(newBuffer);
-        try {
-            BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(bytes))));
-            try {
+        try (BsonBinaryWriter newWriter = new BsonBinaryWriter(newBuffer)) {
+            try (BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(bytes))))) {
                 newWriter.pipe(reader);
-            } finally {
-                reader.close();
             }
-        } finally {
-            newWriter.close();
         }
         assertArrayEquals(bytes, newBuffer.toByteArray());
     }
@@ -520,7 +596,7 @@ public class BsonBinaryWriterTest {
         reader2.readStartDocument(); //checking what writer piped
         assertEquals(BsonType.BOOLEAN, reader2.readBsonType());
         assertEquals("a", reader2.readName());
-        assertEquals(true, reader2.readBoolean());
+        assertTrue(reader2.readBoolean());
         reader2.readEndDocument();
     }
 
@@ -661,17 +737,10 @@ public class BsonBinaryWriterTest {
         );
 
         BasicOutputBuffer newBuffer = new BasicOutputBuffer();
-        BsonBinaryWriter newWriter = new BsonBinaryWriter(newBuffer);
-        try {
-            BsonBinaryReader reader =
-                    new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(pipedBuffer.toByteArray()))));
-            try {
+        try (BsonBinaryWriter newWriter = new BsonBinaryWriter(newBuffer)) {
+            try (BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(pipedBuffer.toByteArray()))))) {
                 newWriter.pipe(reader, extraElements);
-            } finally {
-                reader.close();
             }
-        } finally {
-            newWriter.close();
         }
         assertArrayEquals(bytes, newBuffer.toByteArray());
     }
@@ -707,21 +776,14 @@ public class BsonBinaryWriterTest {
         );
 
         BasicOutputBuffer newBuffer = new BasicOutputBuffer();
-        BsonBinaryWriter newWriter = new BsonBinaryWriter(newBuffer);
-        try {
-            BsonBinaryReader reader =
-                    new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(pipedBuffer.toByteArray()))));
-            try {
+        try (BsonBinaryWriter newWriter = new BsonBinaryWriter(newBuffer)) {
+            try (BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(pipedBuffer.toByteArray()))))) {
                 newWriter.writeStartDocument();
                 newWriter.writeName("nested");
                 newWriter.pipe(reader, extraElements);
                 newWriter.writeBoolean("b", true);
                 newWriter.writeEndDocument();
-            } finally {
-                reader.close();
             }
-        } finally {
-            newWriter.close();
         }
         byte[] actualBytes = newBuffer.toByteArray();
         assertArrayEquals(bytes, actualBytes);
@@ -732,20 +794,13 @@ public class BsonBinaryWriterTest {
         byte[] bytes = {4, 0, 0, 0};  // minimum document size is 5;
 
         BasicOutputBuffer newBuffer = new BasicOutputBuffer();
-        BsonBinaryWriter newWriter = new BsonBinaryWriter(newBuffer);
-        try {
-            BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(bytes))));
-            try {
+        try (BsonBinaryWriter newWriter = new BsonBinaryWriter(newBuffer)) {
+            try (BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(bytes))))) {
                 newWriter.pipe(reader);
                 fail("Pipe is expected to fail with document size is < 5");
             } catch (BsonSerializationException e) {
                 // expected
             }
-            finally {
-                reader.close();
-            }
-        } finally {
-            newWriter.close();
         }
 
     }
@@ -780,9 +835,7 @@ public class BsonBinaryWriterTest {
 
         ByteBufferBsonInput basicInputBuffer = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(baos.toByteArray())));
 
-        BsonBinaryReader reader = new BsonBinaryReader(basicInputBuffer);
-
-        try {
+        try (BsonBinaryReader reader = new BsonBinaryReader(basicInputBuffer)) {
             reader.readStartDocument();
             reader.readName("a");
             reader.readStartArray();
@@ -798,10 +851,6 @@ public class BsonBinaryWriterTest {
             }
             reader.readEndArray();
             reader.readEndDocument();
-        } finally
-
-        {
-            reader.close();
         }
     }
     // CHECKSTYLE:ON

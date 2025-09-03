@@ -22,24 +22,23 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerType;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.session.SessionContext;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize;
 
 class TestInternalConnectionFactory implements InternalConnectionFactory {
     private final AtomicInteger incrementingId = new AtomicInteger();
-    private final List<TestInternalConnection> createdConnections = new ArrayList<TestInternalConnection>();
+    private final List<TestInternalConnection> createdConnections = new CopyOnWriteArrayList<>();
 
     @Override
-    public InternalConnection create(final ServerId serverId) {
-        TestInternalConnection connection = new TestInternalConnection(serverId);
+    public InternalConnection create(final ServerId serverId, final ConnectionGenerationSupplier connectionGenerationSupplier) {
+        TestInternalConnection connection = new TestInternalConnection(serverId, connectionGenerationSupplier.getGeneration());
         createdConnections.add(connection);
         return connection;
     }
@@ -54,19 +53,26 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
 
     class TestInternalConnection implements InternalConnection {
         private final ConnectionId connectionId;
-        private boolean closed;
-        private boolean opened;
+        private final int generation;
+        private volatile boolean closed;
+        private volatile boolean opened;
 
-        TestInternalConnection(final ServerId serverId) {
+        TestInternalConnection(final ServerId serverId, final int generation) {
             this.connectionId = new ConnectionId(serverId, incrementingId.incrementAndGet(), null);
+            this.generation = generation;
         }
 
-        public void open() {
+        @Override
+        public int getGeneration() {
+            return generation;
+        }
+
+        public void open(final OperationContext operationContext) {
             opened = true;
         }
 
         @Override
-        public void openAsync(final SingleResultCallback<Void> callback) {
+        public void openAsync(final OperationContext operationContext, final SingleResultCallback<Void> callback) {
             opened = true;
             callback.onResult(null, null);
         }
@@ -92,20 +98,20 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
         }
 
         @Override
-        public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
+        public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId, final OperationContext operationContext) {
         }
 
         @Override
-        public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+        public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
             return null;
         }
 
         @Override
-        public <T> void send(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+        public <T> void send(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
         }
 
         @Override
-        public <T> T receive(final Decoder<T> decoder, final SessionContext sessionContext) {
+        public <T> T receive(final Decoder<T> decoder, final OperationContext operationContext) {
             return null;
         }
 
@@ -116,29 +122,31 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
 
         @Override
         public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
-                                            final SessionContext sessionContext, final SingleResultCallback<T> callback) {
+                final OperationContext operationContext, final SingleResultCallback<T> callback) {
             callback.onResult(null, null);
         }
 
         @Override
-        public ResponseBuffers receiveMessage(final int responseTo) {
+        public ResponseBuffers receiveMessage(final int responseTo, final OperationContext operationContext) {
             return null;
         }
 
         @Override
-        public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
+        public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final OperationContext operationContext,
+                final SingleResultCallback<Void> callback) {
             callback.onResult(null, null);
         }
 
         @Override
-        public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
+        public void receiveMessageAsync(final int responseTo, final OperationContext operationContext,
+                final SingleResultCallback<ResponseBuffers> callback) {
             callback.onResult(null, null);
         }
 
         @Override
         public ConnectionDescription getDescription() {
             return new ConnectionDescription(connectionId, 7, ServerType.UNKNOWN, 1000,
-                    getDefaultMaxDocumentSize(), 100000, Collections.<String>emptyList());
+                    getDefaultMaxDocumentSize(), 100000, Collections.emptyList());
 
         }
 

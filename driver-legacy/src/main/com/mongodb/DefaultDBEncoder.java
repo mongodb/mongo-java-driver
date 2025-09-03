@@ -63,10 +63,8 @@ public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
         return String.format("DBEncoder{class=%s}", getClass().getName());
     }
 
-    public static final DBEncoderFactory FACTORY = new DBEncoderFactory() {
-        @Override
-        public DBEncoder create() {
-            return new DefaultDBEncoder();
-        }
-    };
+    /**
+     * The {@code DBEncoderFactory} for {@code DefaultDBEncoder} instances.
+     */
+    public static final DBEncoderFactory FACTORY = () -> new DefaultDBEncoder();
 }

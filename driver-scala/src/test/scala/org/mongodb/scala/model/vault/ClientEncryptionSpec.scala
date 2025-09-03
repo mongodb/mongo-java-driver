@@ -16,57 +16,144 @@
 
 package org.mongodb.scala.model.vault
 
-import java.lang.reflect.Modifier.{ isPublic, isStatic }
+import com.mongodb.client.model.CreateEncryptedCollectionParams
 
 import com.mongodb.reactivestreams.client.vault.{ ClientEncryption => JClientEncryption }
-import org.mongodb.scala.BaseSpec
+import org.mockito.ArgumentMatchers.{ any, same }
+import org.mockito.Mockito.verify
+import org.mongodb.scala.{ BaseSpec, MongoDatabase }
+import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.bson.{ BsonBinary, BsonString }
+import org.mongodb.scala.model.CreateCollectionOptions
 import org.mongodb.scala.vault.ClientEncryption
-import org.scalamock.scalatest.proxy.MockFactory
+import org.scalatestplus.mockito.MockitoSugar
 
-class ClientEncryptionSpec extends BaseSpec with MockFactory {
+import java.lang.reflect.Modifier.{ isPublic, isStatic }
+
+class ClientEncryptionSpec extends BaseSpec with MockitoSugar {
 
   val wrapped = mock[JClientEncryption]
   val clientEncryption = ClientEncryption(wrapped)
 
   "ClientEncryption" should "have the same methods as the wrapped Filters" in {
-    val wrapped = classOf[JClientEncryption].getDeclaredMethods
-      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers))
-      .map(_.getName)
-      .toSet
-    val ignore = Set("toString", "apply", "unapply")
-    val local = ClientEncryption.getClass.getDeclaredMethods
-      .filter(f => isPublic(f.getModifiers))
-      .map(_.getName)
-      .toSet -- ignore
+    val wrapped = classOf[JClientEncryption].getDeclaredMethods.map(_.getName).toSet
+    val local = classOf[ClientEncryption].getDeclaredMethods.map(_.getName).toSet
 
-    local should equal(wrapped)
+    wrapped.foreach((name: String) => {
+      val cleanedName = name.stripPrefix("get")
+      assert(local.contains(name) || local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
+    })
   }
 
   it should "call createDataKey" in {
     val kmsProvider = "kmsProvider"
     val options = DataKeyOptions()
 
-    wrapped.expects(Symbol("createDataKey"))(kmsProvider, *).once()
     clientEncryption.createDataKey(kmsProvider)
+    verify(wrapped).createDataKey(same(kmsProvider), any())
 
-    wrapped.expects(Symbol("createDataKey"))(kmsProvider, options).once()
     clientEncryption.createDataKey(kmsProvider, options)
+    verify(wrapped).createDataKey(kmsProvider, options)
+  }
+
+  it should "call getKey" in {
+    val bsonBinary = BsonBinary(Array[Byte](1, 2, 3))
+
+    clientEncryption.getKey(bsonBinary)
+    verify(wrapped).getKey(same(bsonBinary))
+  }
+
+  it should "call getKeyByAltName" in {
+    val altKeyName = "altKeyName"
+
+    clientEncryption.getKeyByAltName(altKeyName)
+    verify(wrapped).getKeyByAltName(same(altKeyName))
+  }
+
+  it should "call getKeys" in {
+    clientEncryption.keys
+    verify(wrapped).getKeys
+  }
+
+  it should "call addKeyAltName" in {
+    val bsonBinary = BsonBinary(Array[Byte](1, 2, 3))
+    val altKeyName = "altKeyName"
+
+    clientEncryption.addKeyAltName(bsonBinary, altKeyName)
+    verify(wrapped).addKeyAltName(same(bsonBinary), same(altKeyName))
+  }
+
+  it should "call deleteKey" in {
+    val bsonBinary = BsonBinary(Array[Byte](1, 2, 3))
+
+    clientEncryption.deleteKey(bsonBinary)
+    verify(wrapped).deleteKey(same(bsonBinary))
+  }
+
+  it should "call removeKeyAltName" in {
+    val bsonBinary = BsonBinary(Array[Byte](1, 2, 3))
+    val altKeyName = "altKeyName"
+
+    clientEncryption.removeKeyAltName(bsonBinary, altKeyName)
+    verify(wrapped).removeKeyAltName(same(bsonBinary), same(altKeyName))
+  }
+
+  it should "call rewrapManyDataKey" in {
+    val bsonDocument = Document()
+    val options = RewrapManyDataKeyOptions()
+
+    clientEncryption.rewrapManyDataKey(bsonDocument)
+    verify(wrapped).rewrapManyDataKey(same(bsonDocument))
+
+    clientEncryption.rewrapManyDataKey(bsonDocument, options)
+    verify(wrapped).rewrapManyDataKey(same(bsonDocument), same(options))
   }
 
   it should "call encrypt" in {
     val bsonValue = BsonString("")
     val options = EncryptOptions("algorithm")
-    wrapped.expects(Symbol("encrypt"))(bsonValue, options).once()
-
     clientEncryption.encrypt(bsonValue, options)
+
+    verify(wrapped).encrypt(bsonValue, options)
+  }
+
+  it should "call encrypt Expression" in {
+    val bsonDocument = Document()
+    val options = EncryptOptions("algorithm").rangeOptions(RangeOptions())
+    clientEncryption.encryptExpression(bsonDocument, options)
+
+    verify(wrapped).encryptExpression(bsonDocument.toBsonDocument, options)
   }
 
   it should "call decrypt" in {
     val bsonBinary = BsonBinary(Array[Byte](1, 2, 3))
-    wrapped.expects(Symbol("decrypt"))(bsonBinary).once()
-
     clientEncryption.decrypt(bsonBinary)
+
+    verify(wrapped).decrypt(bsonBinary)
   }
 
+  it should "call createEncryptedCollection" in {
+    val database = mock[MongoDatabase]
+    val collectionName = "collectionName"
+    val createCollectionOptions = new CreateCollectionOptions()
+    val createEncryptedCollectionParams = new CreateEncryptedCollectionParams("kmsProvider")
+    clientEncryption.createEncryptedCollection(
+      database,
+      collectionName,
+      createCollectionOptions,
+      createEncryptedCollectionParams
+    )
+    verify(wrapped).createEncryptedCollection(
+      same(database.wrapped),
+      same(collectionName),
+      same(createCollectionOptions),
+      same(createEncryptedCollectionParams)
+    )
+  }
+
+  it should "call close" in {
+    clientEncryption.close()
+
+    verify(wrapped).close()
+  }
 }

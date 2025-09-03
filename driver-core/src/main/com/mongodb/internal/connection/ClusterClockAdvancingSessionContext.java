@@ -18,9 +18,13 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class ClusterClockAdvancingSessionContext implements SessionContext {
 
     private final SessionContext wrapped;
@@ -72,7 +76,7 @@ public final class ClusterClockAdvancingSessionContext implements SessionContext
     }
 
     @Override
-    public void advanceOperationTime(final BsonTimestamp operationTime) {
+    public void advanceOperationTime(@Nullable final BsonTimestamp operationTime) {
         wrapped.advanceOperationTime(operationTime);
     }
 
@@ -82,9 +86,25 @@ public final class ClusterClockAdvancingSessionContext implements SessionContext
     }
 
     @Override
-    public void advanceClusterTime(final BsonDocument clusterTime) {
+    public void advanceClusterTime(@Nullable final BsonDocument clusterTime) {
         wrapped.advanceClusterTime(clusterTime);
         clusterClock.advance(clusterTime);
+    }
+
+    @Override
+    public boolean isSnapshot() {
+        return wrapped.isSnapshot();
+    }
+
+    @Override
+    public void setSnapshotTimestamp(@Nullable final BsonTimestamp snapshotTimestamp) {
+        wrapped.setSnapshotTimestamp(snapshotTimestamp);
+    }
+
+    @Override
+    @Nullable
+    public BsonTimestamp getSnapshotTimestamp() {
+        return wrapped.getSnapshotTimestamp();
     }
 
     @Override
@@ -103,8 +123,8 @@ public final class ClusterClockAdvancingSessionContext implements SessionContext
     }
 
     @Override
-    public void unpinServerAddress() {
-        wrapped.unpinServerAddress();
+    public void clearTransactionContext() {
+        wrapped.clearTransactionContext();
     }
 
     @Override

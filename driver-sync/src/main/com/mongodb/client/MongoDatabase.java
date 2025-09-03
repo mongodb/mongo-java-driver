@@ -19,14 +19,18 @@ package com.mongodb.client;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
+import com.mongodb.lang.Nullable;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The MongoDatabase interface.
@@ -77,10 +81,47 @@ public interface MongoDatabase {
     ReadConcern getReadConcern();
 
     /**
+     * The time limit for the full execution of an operation.
+     *
+     * <p>If not null the following deprecated options will be ignored:
+     * {@code waitQueueTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS} and {@code maxCommitTimeMS}</p>
+     *
+     * <ul>
+     *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
+     *    <ul>
+     *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
+     *        available</li>
+     *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
+     *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
+     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
+     *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
+     *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+     *        See: {@link com.mongodb.TransactionOptions#getMaxCommitTime}.</li>
+     *   </ul>
+     *   </li>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @param timeUnit the time unit
+     * @return the timeout in the given time unit
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    @Nullable
+    Long getTimeout(TimeUnit timeUnit);
+
+    /**
      * Create a new MongoDatabase instance with a different codec registry.
+     *
+     * <p>The {@link CodecRegistry} configured by this method is effectively treated by the driver as an instance of
+     * {@link org.bson.codecs.configuration.CodecProvider}, which {@link CodecRegistry} extends. So there is no benefit to defining
+     * a class that implements {@link CodecRegistry}. Rather, an application should always create {@link CodecRegistry} instances
+     * using the factory methods in {@link org.bson.codecs.configuration.CodecRegistries}.</p>
      *
      * @param codecRegistry the new {@link org.bson.codecs.configuration.CodecRegistry} for the database
      * @return a new MongoDatabase instance with the different codec registry
+     * @see org.bson.codecs.configuration.CodecRegistries
      */
     MongoDatabase withCodecRegistry(CodecRegistry codecRegistry);
 
@@ -112,6 +153,23 @@ public interface MongoDatabase {
     MongoDatabase withReadConcern(ReadConcern readConcern);
 
     /**
+     * Create a new MongoDatabase instance with the set time limit for the full execution of an operation.
+     *
+     * <ul>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @param timeout the timeout, which must be greater than or equal to 0
+     * @param timeUnit the time unit
+     * @return a new MongoDatabase instance with the set time limit for the full execution of an operation.
+     * @since 5.2
+     * @see #getTimeout
+     */
+    @Alpha(Reason.CLIENT)
+    MongoDatabase withTimeout(long timeout, TimeUnit timeUnit);
+
+    /**
      * Gets a collection.
      *
      * @param collectionName the name of the collection to return
@@ -134,6 +192,9 @@ public interface MongoDatabase {
     /**
      * Executes the given command in the context of the current database with a read preference of {@link ReadPreference#primary()}.
      *
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
+     *
      * @param command the command to be run
      * @return the command result
      */
@@ -141,6 +202,9 @@ public interface MongoDatabase {
 
     /**
      * Executes the given command in the context of the current database with the given read preference.
+     *
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
      *
      * @param command        the command to be run
      * @param readPreference the {@link ReadPreference} to be used when executing the command
@@ -151,6 +215,9 @@ public interface MongoDatabase {
     /**
      * Executes the given command in the context of the current database with a read preference of {@link ReadPreference#primary()}.
      *
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
+     *
      * @param command     the command to be run
      * @param resultClass the class to decode each document into
      * @param <TResult> the type of the class to use instead of {@code Document}.
@@ -160,6 +227,9 @@ public interface MongoDatabase {
 
     /**
      * Executes the given command in the context of the current database with the given read preference.
+     *
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
      *
      * @param command        the command to be run
      * @param readPreference the {@link ReadPreference} to be used when executing the command
@@ -172,6 +242,9 @@ public interface MongoDatabase {
     /**
      * Executes the given command in the context of the current database with a read preference of {@link ReadPreference#primary()}.
      *
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
+     *
      * @param clientSession the client session with which to associate this operation
      * @param command the command to be run
      * @return the command result
@@ -182,6 +255,9 @@ public interface MongoDatabase {
 
     /**
      * Executes the given command in the context of the current database with the given read preference.
+     *
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
      *
      * @param clientSession the client session with which to associate this operation
      * @param command        the command to be run
@@ -195,6 +271,9 @@ public interface MongoDatabase {
     /**
      * Executes the given command in the context of the current database with a read preference of {@link ReadPreference#primary()}.
      *
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
+     *
      * @param clientSession the client session with which to associate this operation
      * @param command     the command to be run
      * @param resultClass the class to decode each document into
@@ -207,6 +286,9 @@ public interface MongoDatabase {
 
     /**
      * Executes the given command in the context of the current database with the given read preference.
+     *
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
      *
      * @param clientSession  the client session with which to associate this operation
      * @param command        the command to be run
@@ -240,8 +322,9 @@ public interface MongoDatabase {
      * Gets the names of all the collections in this database.
      *
      * @return an iterable containing all the names of all the collections in this database
+     * @mongodb.driver.manual reference/command/listCollections listCollections
      */
-    MongoIterable<String> listCollectionNames();
+    ListCollectionNamesIterable listCollectionNames();
 
     /**
      * Finds all the collections in this database.
@@ -268,8 +351,9 @@ public interface MongoDatabase {
      * @return an iterable containing all the names of all the collections in this database
      * @since 3.6
      * @mongodb.server.release 3.6
+     * @mongodb.driver.manual reference/command/listCollections listCollections
      */
-    MongoIterable<String> listCollectionNames(ClientSession clientSession);
+    ListCollectionNamesIterable listCollectionNames(ClientSession clientSession);
 
     /**
      * Finds all the collections in this database.

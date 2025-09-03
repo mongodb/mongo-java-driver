@@ -21,6 +21,7 @@ package com.mongodb;
 import com.mongodb.lang.Nullable;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -33,8 +34,17 @@ public class DBRef implements Serializable {
 
     private static final long serialVersionUID = -849581217713362618L;
 
+    /**
+     * The id.
+     */
     private final Object id;
+    /**
+     * The collection name.
+     */
     private final String collectionName;
+    /**
+     * The database name, which may be null.
+     */
     private final String databaseName;
 
     /**
@@ -108,7 +118,7 @@ public class DBRef implements Serializable {
         if (!collectionName.equals(dbRef.collectionName)) {
             return false;
         }
-        if (databaseName != null ? !databaseName.equals(dbRef.databaseName) : dbRef.databaseName != null) {
+        if (!Objects.equals(databaseName, dbRef.databaseName)) {
             return false;
         }
 

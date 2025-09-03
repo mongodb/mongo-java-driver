@@ -20,9 +20,11 @@ package com.mongodb.reactivestreams.client;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
+import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
+import org.bson.BsonValue;
 import org.reactivestreams.Publisher;
 
 import java.util.concurrent.TimeUnit;
@@ -42,6 +44,16 @@ public interface ChangeStreamPublisher<TResult> extends Publisher<ChangeStreamDo
      * @return this
      */
     ChangeStreamPublisher<TResult> fullDocument(FullDocument fullDocument);
+
+    /**
+     * Sets the fullDocumentBeforeChange value.
+     *
+     * @param fullDocumentBeforeChange the fullDocumentBeforeChange
+     * @return this
+     * @since 4.7
+     * @mongodb.server.release 6.0
+     */
+    ChangeStreamPublisher<TResult> fullDocumentBeforeChange(FullDocumentBeforeChange fullDocumentBeforeChange);
 
     /**
      * Sets the logical starting point for the new change stream.
@@ -113,7 +125,7 @@ public interface ChangeStreamPublisher<TResult> extends Publisher<ChangeStreamDo
     /**
      * Sets the number of documents to return per batch.
      *
-     * <p>Overrides the {@link org.reactivestreams.Subscription#request(long)} value for setting the batch size, allowing for fine grained
+     * <p>Overrides the {@link org.reactivestreams.Subscription#request(long)} value for setting the batch size, allowing for fine-grained
      * control over the underlying cursor.</p>
      *
      * @param batchSize the batch size
@@ -130,4 +142,40 @@ public interface ChangeStreamPublisher<TResult> extends Publisher<ChangeStreamDo
      * @since 1.8
      */
     Publisher<ChangeStreamDocument<TResult>> first();
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 3.6
+     */
+    ChangeStreamPublisher<TResult> comment(@Nullable String comment);
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * <p>The comment can be any valid BSON type for server versions 4.4 and above.
+     * Server versions between 3.6 and 4.2 only support string as comment,
+     * and providing a non-string type will result in a server-side error.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 3.6
+     */
+    ChangeStreamPublisher<TResult> comment(@Nullable BsonValue comment);
+
+    /**
+     * Sets whether to include expanded change stream events, which are:
+     * createIndexes, dropIndexes, modify, create, shardCollection,
+     * reshardCollection, refineCollectionShardKey. False by default.
+     *
+     * @param showExpandedEvents true to include expanded events
+     * @return this
+     * @since 4.7
+     * @mongodb.server.release 6.0
+     */
+    ChangeStreamPublisher<TResult> showExpandedEvents(boolean showExpandedEvents);
 }

@@ -17,6 +17,8 @@
 package com.mongodb.client.model;
 
 import com.mongodb.lang.Nullable;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -37,6 +39,8 @@ public class FindOneAndDeleteOptions {
     private Collation collation;
     private Bson hint;
     private String hintString;
+    private BsonValue comment;
+    private Bson variables;
 
     /**
      * Gets a document describing the fields to return for all matching documents.
@@ -55,6 +59,7 @@ public class FindOneAndDeleteOptions {
      * @param projection the project document, which may be null.
      * @return this
      * @mongodb.driver.manual tutorial/project-fields-from-query-results Projection
+     * @see Projections
      */
     public FindOneAndDeleteOptions projection(@Nullable final Bson projection) {
         this.projection = projection;
@@ -186,6 +191,70 @@ public class FindOneAndDeleteOptions {
         return this;
     }
 
+
+    /**
+     * @return the comment for this operation. A null value means no comment is set.
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    @Nullable
+    public BsonValue getComment() {
+        return comment;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public FindOneAndDeleteOptions comment(@Nullable final String comment) {
+        this.comment = comment != null ? new BsonString(comment) : null;
+        return this;
+    }
+
+    /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 4.4
+     */
+    public FindOneAndDeleteOptions comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
+    /**
+     * Add top-level variables to the operation
+     *
+     * @return the top level variables if set or null.
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    @Nullable
+    public Bson getLet() {
+        return variables;
+    }
+
+    /**
+     * Add top-level variables for the operation
+     *
+     * <p>Allows for improved command readability by separating the variables from the query text.
+     *
+     * @param variables for the operation or null
+     * @return this
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    public FindOneAndDeleteOptions let(final Bson variables) {
+        this.variables = variables;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "FindOneAndDeleteOptions{"
@@ -195,6 +264,8 @@ public class FindOneAndDeleteOptions {
                 + ", collation=" + collation
                 + ", hint=" + hint
                 + ", hintString='" + hintString + '\''
+                + ", comment=" + comment
+                + ", let=" + variables
                 + '}';
     }
 }

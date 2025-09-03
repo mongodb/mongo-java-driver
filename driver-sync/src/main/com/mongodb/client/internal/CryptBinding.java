@@ -22,9 +22,9 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadWriteBinding;
-import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.session.SessionContext;
+import com.mongodb.internal.connection.OperationContext;
+
 
 class CryptBinding implements ClusterAwareReadWriteBinding {
     private final ClusterAwareReadWriteBinding wrapped;
@@ -46,6 +46,11 @@ class CryptBinding implements ClusterAwareReadWriteBinding {
     }
 
     @Override
+    public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference) {
+        return new CryptConnectionSource(wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference));
+    }
+
+    @Override
     public ConnectionSource getWriteConnectionSource() {
         return new CryptConnectionSource(wrapped.getWriteConnectionSource());
     }
@@ -56,8 +61,8 @@ class CryptBinding implements ClusterAwareReadWriteBinding {
     }
 
     @Override
-    public SessionContext getSessionContext() {
-        return wrapped.getSessionContext();
+    public OperationContext getOperationContext() {
+        return wrapped.getOperationContext();
     }
 
     @Override
@@ -72,13 +77,8 @@ class CryptBinding implements ClusterAwareReadWriteBinding {
     }
 
     @Override
-    public void release() {
-        wrapped.release();
-    }
-
-    @Override
-    public Cluster getCluster() {
-        return wrapped.getCluster();
+    public int release() {
+        return wrapped.release();
     }
 
     private class CryptConnectionSource implements ConnectionSource {
@@ -94,8 +94,13 @@ class CryptBinding implements ClusterAwareReadWriteBinding {
         }
 
         @Override
-        public SessionContext getSessionContext() {
-            return wrapped.getSessionContext();
+        public OperationContext getOperationContext() {
+            return wrapped.getOperationContext();
+        }
+
+        @Override
+        public ReadPreference getReadPreference() {
+            return wrapped.getReadPreference();
         }
 
         @Override
@@ -115,8 +120,8 @@ class CryptBinding implements ClusterAwareReadWriteBinding {
         }
 
         @Override
-        public void release() {
-            wrapped.release();
+        public int release() {
+            return wrapped.release();
         }
     }
 }

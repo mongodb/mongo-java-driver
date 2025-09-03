@@ -16,9 +16,11 @@
 
 package org.mongodb.scala
 
-import java.util.concurrent.TimeUnit
+import com.mongodb.annotations.{ Alpha, Reason }
 
+import java.util.concurrent.TimeUnit
 import com.mongodb.reactivestreams.client.ListIndexesPublisher
+import org.mongodb.scala.bson.BsonValue
 
 import scala.concurrent.duration.Duration
 
@@ -34,7 +36,7 @@ case class ListIndexesObservable[TResult](wrapped: ListIndexesPublisher[TResult]
   /**
    * Sets the maximum execution time on the server for this operation.
    *
-   * [[http://docs.mongodb.org/manual/reference/operator/meta/maxTimeMS/ Max Time]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/ Max Time]]
    * @param duration the duration
    * @return this
    */
@@ -52,6 +54,48 @@ case class ListIndexesObservable[TResult](wrapped: ListIndexesPublisher[TResult]
    */
   def batchSize(batchSize: Int): ListIndexesObservable[TResult] = {
     wrapped.batchSize(batchSize)
+    this
+  }
+
+  /**
+   * Sets the comment for this operation. A null value means no comment is set.
+   *
+   * @param comment the comment
+   * @return this
+   * @since 4.6
+   * @note Requires MongoDB 4.4 or greater
+   */
+  def comment(comment: String): ListIndexesObservable[TResult] = {
+    wrapped.comment(comment)
+    this
+  }
+
+  /**
+   * Sets the comment for this operation. A null value means no comment is set.
+   *
+   * @param comment the comment
+   * @return this
+   * @since 4.6
+   * @note Requires MongoDB 4.4 or greater
+   */
+  def comment(comment: BsonValue): ListIndexesObservable[TResult] = {
+    wrapped.comment(comment)
+    this
+  }
+
+  /**
+   * Sets the timeoutMode for the cursor.
+   *
+   * Requires the `timeout` to be set, either in the [[MongoClientSettings]],
+   * via [[MongoDatabase]] or via [[MongoCollection]]
+   *
+   * @param timeoutMode the timeout mode
+   * @return this
+   * @since 5.2
+   */
+  @Alpha(Array(Reason.CLIENT))
+  def timeoutMode(timeoutMode: TimeoutMode): ListIndexesObservable[TResult] = {
+    wrapped.timeoutMode(timeoutMode)
     this
   }
 

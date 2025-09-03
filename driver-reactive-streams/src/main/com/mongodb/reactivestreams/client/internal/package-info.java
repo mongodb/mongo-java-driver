@@ -19,4 +19,7 @@
  *
  * <p>This should not be considered a part of the public API.</p>
  */
+@NonNullApi
 package com.mongodb.reactivestreams.client.internal;
+
+import com.mongodb.lang.NonNullApi;

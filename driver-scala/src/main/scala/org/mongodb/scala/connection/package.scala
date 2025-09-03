@@ -42,53 +42,44 @@ package object connection {
   type SocketSettings = com.mongodb.connection.SocketSettings
 
   /**
+   * This setting is only applicable when communicating with a MongoDB server using the synchronous variant of `MongoClient`.
+   *
+   * This setting is furthermore ignored if:
+   * <ul>
+   *    <li>the communication is via `com.mongodb.UnixServerAddress` (Unix domain socket).</li>
+   *    <li>a `StreamFactoryFactory` is `MongoClientSettings.Builder.streamFactoryFactory` configured.</li>
+   * </ul>
+   *
+   * @see [[org.mongodb.scala.connection.SocketSettings]]
+   * @see [[org.mongodb.scala.AutoEncryptionSettings]]
+   * @see [[org.mongodb.scala.ClientEncryptionSettings]]
+   * @since 4.11
+   */
+  type ProxySettings = com.mongodb.connection.ProxySettings
+
+  /**
    * Settings for connecting to MongoDB via SSL.
    */
   type SslSettings = com.mongodb.connection.SslSettings
 
   /**
-   * The factory for streams.
-   */
-  type StreamFactory = com.mongodb.connection.StreamFactory
-
-  /**
-   * A factory of `StreamFactory` instances.
-   */
-  type StreamFactoryFactory = com.mongodb.connection.StreamFactoryFactory
-
-  /**
-   * A `StreamFactoryFactory` implementation for AsynchronousSocketChannel-based streams.
+   * Transport settings for the driver.
    *
-   * @see java.nio.channels.AsynchronousSocketChannel
+   * @since 4.11
    */
-  type AsynchronousSocketChannelStreamFactoryFactory =
-    com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory
+  type TransportSettings = com.mongodb.connection.TransportSettings
 
   /**
-   * A `StreamFactoryFactory` builder for AsynchronousSocketChannel-based streams.
+   * TransportSettings for a Netty-based transport implementation.
    *
-   * @see java.nio.channels.AsynchronousSocketChannel
-   * @since 2.2
+   * @since 4.11
    */
-  type AsynchronousSocketChannelStreamFactoryFactoryBuilder =
-    com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory.Builder
+  type NettyTransportSettings = com.mongodb.connection.NettyTransportSettings
 
   /**
-   * A `StreamFactoryFactory` implementation for Netty-based streams.
-   * @since 2.2
-   */
-  type NettyStreamFactoryFactory = com.mongodb.connection.netty.NettyStreamFactoryFactory
-
-  /**
-   * A `StreamFactoryFactory` builder for Netty-based streams.
-   * @since 2.2
-   */
-  type NettyStreamFactoryFactoryBuilder = com.mongodb.connection.netty.NettyStreamFactoryFactory.Builder
-
-  /**
-   * A `StreamFactoryFactory` that supports TLS/SSL.
+   * TransportSettings for an async transport implementation.
    *
-   * @since 2.6
+   * @since 5.2
    */
-  type TlsChannelStreamFactoryFactory = com.mongodb.connection.TlsChannelStreamFactoryFactory
+  type AsyncTransportSettings = com.mongodb.connection.AsyncTransportSettings
 }

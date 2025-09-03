@@ -18,15 +18,18 @@ package org.mongodb.scala
 
 import com.mongodb.reactivestreams.client.{ MongoClient => JMongoClient }
 import org.bson.BsonDocument
-import org.scalamock.scalatest.proxy.MockFactory
+import org.mockito.Mockito.verify
+import org.mongodb.scala.model.bulk.{ ClientBulkWriteOptions, ClientNamespacedWriteModel }
+import org.scalatestplus.mockito.MockitoSugar
 
 import scala.collection.JavaConverters._
 
-class MongoClientSpec extends BaseSpec with MockFactory {
+class MongoClientSpec extends BaseSpec with MockitoSugar {
 
   val wrapped = mock[JMongoClient]
   val clientSession = mock[ClientSession]
   val mongoClient = new MongoClient(wrapped)
+  val namespace = new MongoNamespace("db.coll")
 
   "MongoClient" should "have the same methods as the wrapped MongoClient" in {
     val wrapped = classOf[JMongoClient].getMethods.map(_.getName).toSet -- Seq("getSettings")
@@ -34,7 +37,7 @@ class MongoClientSpec extends BaseSpec with MockFactory {
 
     wrapped.foreach((name: String) => {
       val cleanedName = name.stripPrefix("get")
-      assert(local.contains(name) | local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
+      assert(local.contains(name) || local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
     })
   }
 
@@ -44,62 +47,99 @@ class MongoClientSpec extends BaseSpec with MockFactory {
   }
 
   it should "call the underlying getDatabase" in {
-    wrapped.expects(Symbol("getDatabase"))("dbName").once()
-
     mongoClient.getDatabase("dbName")
+
+    verify(wrapped).getDatabase("dbName")
   }
 
   it should "call the underlying close" in {
-    wrapped.expects(Symbol("close"))().once()
-
     mongoClient.close()
+
+    verify(wrapped).close()
   }
 
   it should "call the underlying startSession" in {
-    val clientSessionOptions = ClientSessionOptions.builder.build()
-    wrapped.expects(Symbol("startSession"))(clientSessionOptions).once()
-
+    val clientSessionOptions = ClientSessionOptions.builder().build()
     mongoClient.startSession(clientSessionOptions)
+
+    verify(wrapped).startSession(clientSessionOptions)
   }
 
   it should "call the underlying listDatabases[T]" in {
-    wrapped.expects(Symbol("listDatabases"))(classOf[Document]).once()
-    wrapped.expects(Symbol("listDatabases"))(clientSession, classOf[Document]).once()
-    wrapped.expects(Symbol("listDatabases"))(classOf[BsonDocument]).once()
-    wrapped.expects(Symbol("listDatabases"))(clientSession, classOf[BsonDocument]).once()
-
     mongoClient.listDatabases()
     mongoClient.listDatabases(clientSession)
     mongoClient.listDatabases[BsonDocument]()
     mongoClient.listDatabases[BsonDocument](clientSession)
+
+    verify(wrapped).listDatabases(classOf[Document])
+    verify(wrapped).listDatabases(clientSession, classOf[Document])
+    verify(wrapped).listDatabases(classOf[BsonDocument])
+    verify(wrapped).listDatabases(clientSession, classOf[BsonDocument])
   }
 
   it should "call the underlying listDatabaseNames" in {
-    wrapped.expects(Symbol("listDatabaseNames"))().once()
-    wrapped.expects(Symbol("listDatabaseNames"))(clientSession).once()
-
     mongoClient.listDatabaseNames()
     mongoClient.listDatabaseNames(clientSession)
+
+    verify(wrapped).listDatabaseNames()
+    verify(wrapped).listDatabaseNames(clientSession)
   }
 
   it should "call the underlying watch" in {
     val pipeline = List(Document("$match" -> 1))
-
-    wrapped.expects(Symbol("watch"))(classOf[Document]).once()
-    wrapped.expects(Symbol("watch"))(pipeline.asJava, classOf[Document]).once()
-    wrapped.expects(Symbol("watch"))(pipeline.asJava, classOf[BsonDocument]).once()
-    wrapped.expects(Symbol("watch"))(clientSession, pipeline.asJava, classOf[Document]).once()
-    wrapped.expects(Symbol("watch"))(clientSession, pipeline.asJava, classOf[BsonDocument]).once()
 
     mongoClient.watch() shouldBe a[ChangeStreamObservable[_]]
     mongoClient.watch(pipeline) shouldBe a[ChangeStreamObservable[_]]
     mongoClient.watch[BsonDocument](pipeline) shouldBe a[ChangeStreamObservable[_]]
     mongoClient.watch(clientSession, pipeline) shouldBe a[ChangeStreamObservable[_]]
     mongoClient.watch[BsonDocument](clientSession, pipeline) shouldBe a[ChangeStreamObservable[_]]
+
+    verify(wrapped).watch(classOf[Document])
+    verify(wrapped).watch(pipeline.asJava, classOf[Document])
+    verify(wrapped).watch(pipeline.asJava, classOf[BsonDocument])
+    verify(wrapped).watch(clientSession, pipeline.asJava, classOf[Document])
+    verify(wrapped).watch(clientSession, pipeline.asJava, classOf[BsonDocument])
+  }
+
+  it should "call the underlying bulkWrite with models only" in {
+    val models = List(ClientNamespacedWriteModel.insertOne(namespace, Document("key" -> "value")))
+    mongoClient.bulkWrite(models) shouldBe a[SingleObservable[_]]
+    verify(wrapped).bulkWrite(models.asJava)
+  }
+
+  it should "call the underlying bulkWrite with models and options" in {
+    val models = List(ClientNamespacedWriteModel.insertOne(namespace, Document("key" -> "value")))
+    val options = ClientBulkWriteOptions.clientBulkWriteOptions()
+
+    mongoClient.bulkWrite(models, options)
+
+    verify(wrapped).bulkWrite(models.asJava, options)
+  }
+
+  it should "call the underlying bulkWrite with clientSession and models" in {
+    val models = List(ClientNamespacedWriteModel.insertOne(namespace, Document("key" -> "value")))
+
+    mongoClient.bulkWrite(clientSession, models)
+
+    verify(wrapped).bulkWrite(clientSession, models.asJava)
+  }
+
+  it should "call the underlying bulkWrite with clientSession, models, and options" in {
+    val models = List(ClientNamespacedWriteModel.insertOne(namespace, Document("key" -> "value")))
+    val options = ClientBulkWriteOptions.clientBulkWriteOptions()
+
+    mongoClient.bulkWrite(clientSession, models, options)
+    verify(wrapped).bulkWrite(clientSession, models.asJava, options)
   }
 
   it should "call the underlying getClusterDescription" in {
-    wrapped.expects(Symbol("getClusterDescription"))().once()
     mongoClient.getClusterDescription
+    verify(wrapped).getClusterDescription
+  }
+
+  it should "call the underlying appendMetadata" in {
+    val driverInformation = MongoDriverInformation.builder().build()
+    mongoClient.appendMetadata(driverInformation)
+    verify(wrapped).appendMetadata(driverInformation)
   }
 }

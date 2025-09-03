@@ -29,13 +29,14 @@ import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimar
 /**
  * A server selector that chooses servers that are writable.
  *
- * @since 3.1
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class WritableServerSelector implements ServerSelector {
 
     @Override
     public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-        if (clusterDescription.getConnectionMode() == ClusterConnectionMode.SINGLE) {
+        if (clusterDescription.getConnectionMode() == ClusterConnectionMode.SINGLE
+                || clusterDescription.getConnectionMode() == ClusterConnectionMode.LOAD_BALANCED) {
             return getAny(clusterDescription);
         }
         return getPrimaries(clusterDescription);

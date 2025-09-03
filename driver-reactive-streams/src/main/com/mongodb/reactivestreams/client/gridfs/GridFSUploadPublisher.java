@@ -33,7 +33,7 @@ public interface GridFSUploadPublisher<T> extends Publisher<T> {
 
     /**
      * Gets the {@link ObjectId} for the file to be uploaded
-     *
+     * <p>
      * Throws a {@link com.mongodb.MongoGridFSException} if the file id is not an ObjectId.
      *
      * @return the ObjectId for the file to be uploaded

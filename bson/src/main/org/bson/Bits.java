@@ -99,7 +99,7 @@ class Bits {
      */
     static int readInt(final byte[] buffer, final int offset) {
         int x = 0;
-        x |= (0xFF & buffer[offset + 0]) << 0;
+        x |= (0xFF & buffer[offset]) << 0;
         x |= (0xFF & buffer[offset + 1]) << 8;
         x |= (0xFF & buffer[offset + 2]) << 16;
         x |= (0xFF & buffer[offset + 3]) << 24;
@@ -150,7 +150,7 @@ class Bits {
      */
     static long readLong(final byte[] buffer, final int offset) {
         long x = 0;
-        x |= (0xFFL & buffer[offset + 0]) << 0;
+        x |= (0xFFL & buffer[offset]) << 0;
         x |= (0xFFL & buffer[offset + 1]) << 8;
         x |= (0xFFL & buffer[offset + 2]) << 16;
         x |= (0xFFL & buffer[offset + 3]) << 24;

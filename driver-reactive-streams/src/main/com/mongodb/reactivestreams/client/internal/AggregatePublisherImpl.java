@@ -16,87 +16,249 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
+import com.mongodb.ExplainVerbosity;
+import com.mongodb.MongoNamespace;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.async.client.AsyncAggregateIterable;
+import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.client.model.AggregationLevel;
+import com.mongodb.internal.client.model.FindOptions;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperationCursor;
+import com.mongodb.internal.operation.ReadOperationExplainable;
+import com.mongodb.internal.operation.ReadOperationSimple;
+import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
+import com.mongodb.reactivestreams.client.ClientSession;
+import org.bson.BsonDocument;
+import org.bson.BsonString;
+import org.bson.BsonValue;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
+final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements AggregatePublisher<T> {
+    private final List<? extends Bson> pipeline;
+    private final AggregationLevel aggregationLevel;
+    private Boolean allowDiskUse;
+    private long maxTimeMS;
+    private long maxAwaitTimeMS;
+    private Boolean bypassDocumentValidation;
+    private Collation collation;
+    private BsonValue comment;
+    private Bson hint;
+    private String hintString;
+    private Bson variables;
 
-final class AggregatePublisherImpl<TResult> implements AggregatePublisher<TResult> {
-
-    private final AsyncAggregateIterable<TResult> wrapped;
-
-    AggregatePublisherImpl(final AsyncAggregateIterable<TResult> wrapped) {
-        this.wrapped = notNull("wrapped", wrapped);
+    AggregatePublisherImpl(
+            @Nullable final ClientSession clientSession,
+            final MongoOperationPublisher<T> mongoOperationPublisher,
+            final List<? extends Bson> pipeline,
+            final AggregationLevel aggregationLevel) {
+        super(clientSession, mongoOperationPublisher);
+        this.pipeline = notNull("pipeline", pipeline);
+        this.aggregationLevel = notNull("aggregationLevel", aggregationLevel);
     }
 
-
     @Override
-    public AggregatePublisher<TResult> allowDiskUse(final Boolean allowDiskUse) {
-        wrapped.allowDiskUse(allowDiskUse);
+    public AggregatePublisher<T> allowDiskUse(@Nullable final Boolean allowDiskUse) {
+        this.allowDiskUse = allowDiskUse;
         return this;
     }
 
     @Override
-    public AggregatePublisher<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        wrapped.maxTime(maxTime, timeUnit);
+    public AggregatePublisher<T> batchSize(final int batchSize) {
+        super.batchSize(batchSize);
         return this;
     }
 
     @Override
-    public AggregatePublisher<TResult> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
-        wrapped.maxAwaitTime(maxAwaitTime, timeUnit);
+    public AggregatePublisher<T> timeoutMode(final TimeoutMode timeoutMode) {
+        super.timeoutMode(timeoutMode);
         return this;
     }
 
     @Override
-    public AggregatePublisher<TResult> bypassDocumentValidation(final Boolean bypassDocumentValidation) {
-        wrapped.bypassDocumentValidation(bypassDocumentValidation);
+    public AggregatePublisher<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
+        return this;
+    }
+
+    @Override
+    public AggregatePublisher<T> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
+        this.maxAwaitTimeMS = validateMaxAwaitTime(maxAwaitTime, timeUnit);
+        return this;
+    }
+
+    @Override
+    public AggregatePublisher<T> bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
+        this.bypassDocumentValidation = bypassDocumentValidation;
+        return this;
+    }
+
+    @Override
+    public AggregatePublisher<T> collation(@Nullable final Collation collation) {
+        this.collation = collation;
+        return this;
+    }
+
+    @Override
+    public AggregatePublisher<T> comment(@Nullable final String comment) {
+        this.comment = comment != null ? new BsonString(comment) : null;
+        return this;
+    }
+
+    @Override
+    public AggregatePublisher<T> comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
+    @Override
+    public AggregatePublisher<T> hint(@Nullable final Bson hint) {
+        this.hint = hint;
+        return this;
+    }
+
+    @Override
+    public AggregatePublisher<T> hintString(@Nullable final String hint) {
+        this.hintString = hint;
+        return this;
+    }
+
+    @Override
+    public AggregatePublisher<T> let(@Nullable final Bson variables) {
+        this.variables = variables;
         return this;
     }
 
     @Override
     public Publisher<Void> toCollection() {
-        return Publishers.publish(wrapped::toCollection);
+        BsonDocument lastPipelineStage = getLastPipelineStage();
+        if (lastPipelineStage == null || !lastPipelineStage.containsKey("$out") && !lastPipelineStage.containsKey("$merge")) {
+            throw new IllegalStateException("The last stage of the aggregation pipeline must be $out or $merge");
+        }
+        return getMongoOperationPublisher().createReadOperationMono(
+                operations -> operations.createTimeoutSettings(maxTimeMS, maxAwaitTimeMS),
+                this::getAggregateToCollectionOperation, getClientSession());
     }
 
     @Override
-    public AggregatePublisher<TResult> collation(final Collation collation) {
-        wrapped.collation(collation);
-        return this;
+    public Publisher<Document> explain() {
+        return publishExplain(Document.class, null);
     }
 
     @Override
-    public AggregatePublisher<TResult> comment(final String comment) {
-        wrapped.comment(comment);
-        return this;
+    public Publisher<Document> explain(final ExplainVerbosity verbosity) {
+        return publishExplain(Document.class, notNull("verbosity", verbosity));
     }
 
     @Override
-    public AggregatePublisher<TResult> hint(final Bson hint) {
-        wrapped.hint(hint);
-        return this;
+    public <E> Publisher<E> explain(final Class<E> explainResultClass) {
+        return publishExplain(explainResultClass, null);
     }
 
     @Override
-    public AggregatePublisher<TResult> batchSize(final int batchSize) {
-        wrapped.batchSize(batchSize);
-        return this;
+    public <E> Publisher<E> explain(final Class<E> explainResultClass, final ExplainVerbosity verbosity) {
+        return publishExplain(explainResultClass, notNull("verbosity", verbosity));
+    }
+
+    private <E> Publisher<E> publishExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
+        notNull("explainDocumentClass", explainResultClass);
+        return getMongoOperationPublisher().createReadOperationMono(
+                Operations::getTimeoutSettings,
+                () -> asAggregateOperation(1).asExplainableOperation(verbosity,
+                        getCodecRegistry().get(explainResultClass)), getClientSession());
     }
 
     @Override
-    public Publisher<TResult> first() {
-        return Publishers.publish(wrapped::first);
+    ReadOperationCursor<T> asReadOperation(final int initialBatchSize) {
+        MongoNamespace outNamespace = getOutNamespace();
+
+        if (outNamespace != null) {
+            ReadOperationSimple<Void> aggregateToCollectionOperation = getAggregateToCollectionOperation();
+
+            FindOptions findOptions = new FindOptions().collation(collation).comment(comment).batchSize(initialBatchSize);
+
+            ReadOperationCursor<T> findOperation =
+                    getOperations().find(outNamespace, new BsonDocument(), getDocumentClass(), findOptions);
+
+            return new VoidReadOperationThenCursorReadOperation<>(aggregateToCollectionOperation, findOperation);
+        } else {
+            return asAggregateOperation(initialBatchSize);
+        }
     }
 
     @Override
-    public void subscribe(final Subscriber<? super TResult> s) {
-        Publishers.publish(wrapped).subscribe(s);
+    Function<Operations<?>, TimeoutSettings> getTimeoutSettings() {
+        return (operations -> operations.createTimeoutSettings(maxTimeMS, maxAwaitTimeMS));
+    }
+
+    private ReadOperationExplainable<T> asAggregateOperation(final int initialBatchSize) {
+        return getOperations()
+                .aggregate(pipeline, getDocumentClass(), getTimeoutMode(),
+                           initialBatchSize, collation, hint, hintString, comment, variables, allowDiskUse, aggregationLevel);
+    }
+
+    private ReadOperationSimple<Void> getAggregateToCollectionOperation() {
+        return getOperations().aggregateToCollection(pipeline, getTimeoutMode(), allowDiskUse, bypassDocumentValidation,
+                collation, hint, hintString, comment, variables, aggregationLevel);
+    }
+
+    @Nullable
+    private BsonDocument getLastPipelineStage() {
+        if (pipeline.isEmpty()) {
+            return null;
+        } else {
+            Bson lastStage = notNull("last pipeline stage", pipeline.get(pipeline.size() - 1));
+            return lastStage.toBsonDocument(getDocumentClass(), getCodecRegistry());
+        }
+    }
+
+    @Nullable
+    private MongoNamespace getOutNamespace() {
+        BsonDocument lastPipelineStage = getLastPipelineStage();
+        if (lastPipelineStage == null) {
+            return null;
+        }
+        String databaseName = getNamespace().getDatabaseName();
+        if (lastPipelineStage.containsKey("$out")) {
+            if (lastPipelineStage.get("$out").isString()) {
+                return new MongoNamespace(databaseName, lastPipelineStage.getString("$out").getValue());
+            } else if (lastPipelineStage.get("$out").isDocument()) {
+                BsonDocument outDocument = lastPipelineStage.getDocument("$out");
+                if (!outDocument.containsKey("db") || !outDocument.containsKey("coll")) {
+                    throw new IllegalStateException("Cannot return a cursor when the value for $out stage is not a namespace document");
+                }
+                return new MongoNamespace(outDocument.getString("db").getValue(), outDocument.getString("coll").getValue());
+            } else {
+                throw new IllegalStateException("Cannot return a cursor when the value for $out stage "
+                                                        + "is not a string or namespace document");
+            }
+        } else if (lastPipelineStage.containsKey("$merge")) {
+            if (lastPipelineStage.isString("$merge")) {
+                return new MongoNamespace(databaseName, lastPipelineStage.getString("$merge").getValue());
+            } else if (lastPipelineStage.isDocument("$merge")) {
+                BsonDocument mergeDocument = lastPipelineStage.getDocument("$merge");
+                if (mergeDocument.isDocument("into")) {
+                    BsonDocument intoDocument = mergeDocument.getDocument("into");
+                    return new MongoNamespace(intoDocument.getString("db", new BsonString(databaseName)).getValue(),
+                            intoDocument.getString("coll").getValue());
+                } else if (mergeDocument.isString("into")) {
+                    return new MongoNamespace(databaseName, mergeDocument.getString("into").getValue());
+                }
+            } else {
+                throw new IllegalStateException("Cannot return a cursor when the value for $merge stage is not a string or a document");
+            }
+        }
+
+        return null;
     }
 }

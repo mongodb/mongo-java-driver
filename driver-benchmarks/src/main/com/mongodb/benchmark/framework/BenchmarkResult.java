@@ -29,9 +29,9 @@ public class BenchmarkResult {
 
     public BenchmarkResult(final String name, final List<Long> elapsedTimeNanosList, final int bytesPerRun) {
         this.name = name;
-        this.elapsedTimeNanosList = new ArrayList<Long>(elapsedTimeNanosList);
+        this.elapsedTimeNanosList = new ArrayList<>(elapsedTimeNanosList);
         this.bytesPerRun = bytesPerRun;
-        this.sortedElapsedTimeNanosList = new ArrayList<Long>(elapsedTimeNanosList);
+        this.sortedElapsedTimeNanosList = new ArrayList<>(elapsedTimeNanosList);
         Collections.sort(this.sortedElapsedTimeNanosList);
     }
 

@@ -18,10 +18,12 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ServerSettings;
-import com.mongodb.event.ServerListener;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public interface ClusterableServerFactory {
-    ClusterableServer create(ServerAddress serverAddress, ServerListener serverListener, ClusterClock clusterClock);
+    ClusterableServer create(Cluster cluster, ServerAddress serverAddress);
 
     ServerSettings getSettings();
 }

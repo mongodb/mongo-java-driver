@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 final class MapOfCodecsProvider implements CodecProvider {
-    private final Map<Class<?>, Codec<?>> codecsMap = new HashMap<Class<?>, Codec<?>>();
+    private final Map<Class<?>, Codec<?>> codecsMap = new HashMap<>();
 
     MapOfCodecsProvider(final List<? extends Codec<?>> codecsList) {
        for (Codec<?> codec : codecsList) {
@@ -37,4 +37,10 @@ final class MapOfCodecsProvider implements CodecProvider {
         return (Codec<T>) codecsMap.get(clazz);
     }
 
+    @Override
+    public String toString() {
+        return "MapOfCodecsProvider{"
+                + "codecsMap=" + codecsMap
+                + '}';
+    }
 }

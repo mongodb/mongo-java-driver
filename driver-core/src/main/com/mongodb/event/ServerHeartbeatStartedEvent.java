@@ -17,6 +17,7 @@
 package com.mongodb.event;
 
 import com.mongodb.connection.ConnectionId;
+import com.mongodb.connection.ServerMonitoringMode;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -27,14 +28,30 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public final class ServerHeartbeatStartedEvent {
     private final ConnectionId connectionId;
+    private final boolean awaited;
 
     /**
      * Construct an instance.
      *
      * @param connectionId the non-null connnectionId
+     * @param awaited {@code true} if and only if the heartbeat is for an awaitable `hello` / legacy hello.
+     * @since 5.1
      */
-    public ServerHeartbeatStartedEvent(final ConnectionId connectionId) {
+    public ServerHeartbeatStartedEvent(final ConnectionId connectionId, final boolean awaited) {
         this.connectionId = notNull("connectionId", connectionId);
+        this.awaited = awaited;
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param connectionId the non-null connnectionId
+     * @deprecated Prefer {@link #ServerHeartbeatStartedEvent(ConnectionId, boolean)}.
+     * If this constructor is used then {@link #isAwaited()} is {@code false}.
+     */
+    @Deprecated
+    public ServerHeartbeatStartedEvent(final ConnectionId connectionId) {
+        this(connectionId, false);
     }
 
     /**
@@ -46,10 +63,24 @@ public final class ServerHeartbeatStartedEvent {
         return connectionId;
     }
 
+    /**
+     * Gets whether the heartbeat is for an awaitable `hello` / legacy hello.
+     *
+     * @return {@code true} if and only if the heartbeat is for an awaitable `hello` / legacy hello.
+     * @see ServerMonitoringMode#STREAM
+     * @since 5.1
+     */
+    public boolean isAwaited() {
+        return awaited;
+    }
+
     @Override
     public String toString() {
         return "ServerHeartbeatStartedEvent{"
                 + "connectionId=" + connectionId
+                + ", server=" + connectionId.getServerId().getAddress()
+                + ", clusterId=" + connectionId.getServerId().getClusterId()
+                + ", awaited=" + awaited
                 + "} " + super.toString();
     }
 }

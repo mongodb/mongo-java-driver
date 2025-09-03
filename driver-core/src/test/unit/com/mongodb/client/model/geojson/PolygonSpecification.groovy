@@ -70,6 +70,37 @@ class PolygonSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+
+        when:
+        new Polygon(exterior,  [null])
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        new Polygon(exterior, [[new Position([40.0d, 18.0d]),
+                               new Position([40.0d, 19.0d]),
+                               null]])
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        new Polygon(exterior, [[new Position([40.0d, 18.0d]),
+                               new Position([40.0d, 19.0d]),
+                               new Position([41.0d, 19.0d])]])
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        new Polygon(exterior, [[new Position([40.0d, 18.0d]),
+                               new Position([40.0d, 19.0d]),
+                               new Position([41.0d, 19.0d]),
+                               new Position([1.0, 2.0])]])
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should get type'() {

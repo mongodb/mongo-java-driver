@@ -22,8 +22,6 @@ import java.util.concurrent.TimeUnit.SECONDS
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
 
-import org.scalatest.{ FlatSpec, Matchers }
-
 class ReadPreferenceSpec extends BaseSpec {
 
   val duration = Duration("95 sec")

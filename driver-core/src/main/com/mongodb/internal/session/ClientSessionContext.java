@@ -16,15 +16,19 @@
 
 package com.mongodb.internal.session;
 
+import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public abstract class ClientSessionContext implements SessionContext {
 
-    private ClientSession clientSession;
+    private final ClientSession clientSession;
 
     public ClientSessionContext(final ClientSession clientSession) {
         this.clientSession = notNull("clientSession", clientSession);
@@ -65,7 +69,7 @@ public abstract class ClientSessionContext implements SessionContext {
     }
 
     @Override
-    public void advanceOperationTime(final BsonTimestamp operationTime) {
+    public void advanceOperationTime(@Nullable final BsonTimestamp operationTime) {
         clientSession.advanceOperationTime(operationTime);
     }
 
@@ -75,8 +79,25 @@ public abstract class ClientSessionContext implements SessionContext {
     }
 
     @Override
-    public void advanceClusterTime(final BsonDocument clusterTime) {
+    public void advanceClusterTime(@Nullable final BsonDocument clusterTime) {
         clientSession.advanceClusterTime(clusterTime);
+    }
+
+    @Override
+    public boolean isSnapshot() {
+        Boolean snapshot = clientSession.getOptions().isSnapshot();
+        return snapshot != null && snapshot;
+    }
+
+    @Override
+    public void setSnapshotTimestamp(@Nullable final BsonTimestamp snapshotTimestamp) {
+        clientSession.setSnapshotTimestamp(snapshotTimestamp);
+    }
+
+    @Override
+    @Nullable
+    public BsonTimestamp getSnapshotTimestamp() {
+        return clientSession.getSnapshotTimestamp();
     }
 
     @Override
@@ -85,8 +106,8 @@ public abstract class ClientSessionContext implements SessionContext {
     }
 
     @Override
-    public void unpinServerAddress() {
-        clientSession.setPinnedServerAddress(null);
+    public void clearTransactionContext() {
+        clientSession.clearTransactionContext();
     }
 
     @Override

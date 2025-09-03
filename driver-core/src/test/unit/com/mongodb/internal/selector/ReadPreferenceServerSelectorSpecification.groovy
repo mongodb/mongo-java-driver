@@ -36,13 +36,13 @@ class ReadPreferenceServerSelectorSpecification extends Specification {
                                    .address(new ServerAddress())
                                    .ok(true)
                                    .type(ServerType.REPLICA_SET_PRIMARY)
-                                   .build();
+                                   .build()
     def secondary = ServerDescription.builder()
                                      .state(CONNECTED)
                                      .address(new ServerAddress('localhost', 27018))
                                      .ok(true)
                                      .type(ServerType.REPLICA_SET_SECONDARY)
-                                     .build();
+                                     .build()
 
     def 'constructor should throws if read preference is null'() {
         when:

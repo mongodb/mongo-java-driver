@@ -16,17 +16,21 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
 
 import java.util.List;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public interface InternalConnection extends BufferProvider {
+
+    int NOT_INITIALIZED_GENERATION = -1;
 
     /**
      * Gets the description of this connection.
@@ -43,16 +47,19 @@ public interface InternalConnection extends BufferProvider {
     ServerDescription getInitialServerDescription();
 
     /**
-     * Opens the connection so its ready for use
+     * Opens the connection so its ready for use. Will perform a handshake.
+     *
+     * @param operationContext the operation context
      */
-    void open();
+    void open(OperationContext operationContext);
 
     /**
      * Opens the connection so its ready for use
      *
-     * @param callback the callback to be called once the connection has been opened
+     * @param operationContext the operation context
+     * @param callback         the callback to be called once the connection has been opened
      */
-    void openAsync(SingleResultCallback<Void> callback);
+    void openAsync(OperationContext operationContext, SingleResultCallback<Void> callback);
 
     /**
      * Closes the connection.
@@ -76,75 +83,71 @@ public interface InternalConnection extends BufferProvider {
     /**
      * Gets the generation of this connection.  This can be used by connection pools to track whether the connection is stale.
      *
-     * @return the generation.
+     * @return the generation
      */
-    default int getGeneration() {
-        throw new UnsupportedOperationException();
-    }
+    int getGeneration();
 
     /**
      * Send a command message to the server.
      *
-     * @param message   the command message to send
-     * @param sessionContext the session context
+     * @param message          the command message to send
+     * @param operationContext the operation context
      */
-    <T> T sendAndReceive(CommandMessage message, Decoder<T> decoder, SessionContext sessionContext);
+    @Nullable
+    <T> T sendAndReceive(CommandMessage message, Decoder<T> decoder, OperationContext operationContext);
 
-    <T> void send(CommandMessage message, Decoder<T> decoder, SessionContext sessionContext);
+    <T> void send(CommandMessage message, Decoder<T> decoder, OperationContext operationContext);
 
-    <T> T receive(Decoder<T> decoder, SessionContext sessionContext);
-
-
-    default boolean supportsAdditionalTimeout() {
-        return false;
-    }
-
-    default <T> T receive(Decoder<T> decoder, SessionContext sessionContext, int additionalTimeout) {
-        throw new UnsupportedOperationException();
-    }
+    <T> T receive(Decoder<T> decoder, OperationContext operationContext);
 
     boolean hasMoreToCome();
 
     /**
      * Send a command message to the server.
      *
-     * @param message   the command message to send
-     * @param sessionContext the session context
-     * @param callback the callback
+     * @param message          the command message to send
+     * @param callback         the callback
      */
-    <T> void sendAndReceiveAsync(CommandMessage message, Decoder<T> decoder, SessionContext sessionContext,
-                                 SingleResultCallback<T> callback);
+    <T> void sendAndReceiveAsync(CommandMessage message, Decoder<T> decoder, OperationContext operationContext, SingleResultCallback<T> callback);
 
     /**
      * Send a message to the server. The connection may not make any attempt to validate the integrity of the message.
      *
      * @param byteBuffers   the list of byte buffers to send.
      * @param lastRequestId the request id of the last message in byteBuffers
+     * @param operationContext the operation context
      */
-    void sendMessage(List<ByteBuf> byteBuffers, int lastRequestId);
+    void sendMessage(List<ByteBuf> byteBuffers, int lastRequestId, OperationContext operationContext);
 
     /**
      * Receive a response to a sent message from the server.
      *
      * @param responseTo the request id that this message is a response to
+     * @param operationContext the operation context
      * @return the response
      */
-    ResponseBuffers receiveMessage(int responseTo);
+    ResponseBuffers receiveMessage(int responseTo, OperationContext operationContext);
 
     /**
      * Asynchronously send a message to the server. The connection may not make any attempt to validate the integrity of the message.
      *
      * @param byteBuffers   the list of byte buffers to send
      * @param lastRequestId the request id of the last message in byteBuffers
+     * @param operationContext the operation context
      * @param callback      the callback to invoke on completion
      */
-    void sendMessageAsync(List<ByteBuf> byteBuffers, int lastRequestId, SingleResultCallback<Void> callback);
+    void sendMessageAsync(List<ByteBuf> byteBuffers, int lastRequestId, OperationContext operationContext,
+            SingleResultCallback<Void> callback);
 
     /**
      * Asynchronously receive a response to a sent message from the server.
      *
      * @param responseTo the request id that this message is a response to
+     * @param operationContext the operation context
      * @param callback the callback to invoke on completion
      */
-    void receiveMessageAsync(int responseTo, SingleResultCallback<ResponseBuffers> callback);
+    void receiveMessageAsync(int responseTo, OperationContext operationContext, SingleResultCallback<ResponseBuffers> callback);
+
+    default void markAsPinned(Connection.PinningMode pinningMode) {
+    }
 }

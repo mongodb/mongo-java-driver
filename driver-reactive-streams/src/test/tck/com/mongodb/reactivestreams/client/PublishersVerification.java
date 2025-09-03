@@ -16,12 +16,11 @@
 
 package com.mongodb.reactivestreams.client;
 
-import com.mongodb.reactivestreams.client.internal.Publishers;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.tck.PublisherVerification;
 import org.reactivestreams.tck.TestEnvironment;
+import reactor.core.publisher.Flux;
 
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.mongodb.reactivestreams.client.MongoFixture.DEFAULT_TIMEOUT_MILLIS;
@@ -36,10 +35,7 @@ public class PublishersVerification extends PublisherVerification<Integer> {
     @Override
     public Publisher<Integer> createPublisher(final long elements) {
         assert (elements <= maxElementsFromPublisher());
-
-        return Publishers.publishAndFlatten(callback ->
-                callback.onResult(IntStream.rangeClosed(1, (int) elements).boxed().collect(Collectors.toList()), null)
-        );
+        return Flux.fromStream(IntStream.rangeClosed(1, (int) elements).boxed());
     }
 
     @Override

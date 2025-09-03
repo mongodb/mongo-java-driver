@@ -41,6 +41,7 @@ import spock.lang.Specification
 
 import java.util.function.Consumer
 
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -58,11 +59,11 @@ class AggregateIterableSpecification extends Specification {
 
     def 'should build the expected AggregationOperation'() {
         given:
-        def executor = new TestOperationExecutor([null, null, null, null, null]);
+        def executor = new TestOperationExecutor([null, null, null, null, null])
         def pipeline = [new Document('$match', 1)]
         def aggregationIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
                 readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION,
-                true)
+                true, TIMEOUT_SETTINGS)
 
         when: 'default input should be as expected'
         aggregationIterable.iterator()
@@ -78,8 +79,8 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'overriding initial options'
         aggregationIterable
-                .maxAwaitTime(99, MILLISECONDS)
-                .maxTime(999, MILLISECONDS)
+                .maxAwaitTime(1001, MILLISECONDS)
+                .maxTime(101, MILLISECONDS)
                 .collation(collation)
                 .hint(new Document('a', 1))
                 .comment('this is a comment')
@@ -93,9 +94,23 @@ class AggregateIterableSpecification extends Specification {
                 .retryReads(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
-                .comment('this is a comment')
-                .maxAwaitTime(99, MILLISECONDS)
-                .maxTime(999, MILLISECONDS))
+                .comment(new BsonString('this is a comment')))
+
+        when: 'both hint and hint string are set'
+        aggregationIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
+                readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, false, TIMEOUT_SETTINGS)
+
+        aggregationIterable
+                .hint(new Document('a', 1))
+                .hintString('a_1')
+                .iterator()
+
+        operation = executor.getReadOperation() as AggregateOperation<Document>
+
+        then: 'should use hint not hint string'
+        expect operation, isTheSameAs(new AggregateOperation<Document>(namespace,
+                [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec())
+                .hint(new BsonDocument('a', new BsonInt32(1))))
     }
 
     def 'should build the expected AggregateToCollectionOperation for $out'() {
@@ -107,25 +122,24 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'aggregation includes $out'
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                pipeline, AggregationLevel.COLLECTION, false)
+                pipeline, AggregationLevel.COLLECTION, false, TIMEOUT_SETTINGS)
                 .batchSize(99)
-                .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
-                .comment('this is a comment').iterator()
+                .comment(new BsonString('this is a comment'))
+                .iterator()
 
-        def operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        def operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
                 [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))],
                 readConcern, writeConcern, AggregationLevel.COLLECTION)
-                .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
-                .comment('this is a comment')
+                .comment(new BsonString('this is a comment'))
         )
 
         when: 'the subsequent read should have the batchSize set'
@@ -135,31 +149,29 @@ class AggregateIterableSpecification extends Specification {
         operation.getNamespace() == collectionNamespace
         operation.getBatchSize() == 99
         operation.getCollation() == collation
-        operation.getMaxAwaitTime(MILLISECONDS) == 0
-        operation.getMaxTime(MILLISECONDS) == 0
 
         when: 'aggregation includes $out and is at the database level'
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                pipeline, AggregationLevel.DATABASE, false)
+                pipeline, AggregationLevel.DATABASE, false, TIMEOUT_SETTINGS)
                 .batchSize(99)
-                .maxTime(999, MILLISECONDS)
+                .maxTime(100, MILLISECONDS)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
-                .comment('this is a comment').iterator()
+                .comment(new BsonString('this is a comment'))
+                .iterator()
 
-        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
                 [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))],
                 readConcern, writeConcern,
                 AggregationLevel.DATABASE)
-                .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
-                .comment('this is a comment')
+                .comment(new BsonString('this is a comment'))
         )
 
         when: 'the subsequent read should have the batchSize set'
@@ -169,20 +181,18 @@ class AggregateIterableSpecification extends Specification {
         operation.getNamespace() == collectionNamespace
         operation.getBatchSize() == 99
         operation.getCollation() == collation
-        operation.getMaxAwaitTime(MILLISECONDS) == 0
-        operation.getMaxTime(MILLISECONDS) == 0
         operation.isAllowDiskUse() == null
 
         when: 'toCollection should work as expected'
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                pipeline, AggregationLevel.COLLECTION, false)
+                pipeline, AggregationLevel.COLLECTION, false, TIMEOUT_SETTINGS)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
-                .comment('this is a comment')
+                .comment(new BsonString('this is a comment'))
                 .toCollection()
 
-        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then:
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -191,10 +201,45 @@ class AggregateIterableSpecification extends Specification {
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
-                .comment('this is a comment'))
+                .comment(new BsonString('this is a comment')))
     }
 
-    def 'should build the expected AggregateToCollectionOperation for $merge'() {
+    def 'should build the expected AggregateToCollectionOperation for $out with hint string'() {
+        given:
+        def executor = new TestOperationExecutor([null, null, null, null, null])
+        def collectionName = 'collectionName'
+        def pipeline = [new Document('$match', 1), new Document('$out', collectionName)]
+
+        when: 'aggregation includes $out and hint string'
+        new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
+                pipeline, AggregationLevel.COLLECTION, false, TIMEOUT_SETTINGS)
+                .hintString('x_1').iterator()
+
+        def operation = executor.getReadOperation() as AggregateToCollectionOperation
+
+        then: 'should use the overrides'
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))],
+                readConcern, writeConcern, AggregationLevel.COLLECTION)
+                .hint(new BsonString('x_1')))
+
+        when: 'aggregation includes $out and hint and hint string'
+        executor = new TestOperationExecutor([null, null, null, null, null])
+        new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
+                pipeline, AggregationLevel.COLLECTION, false, TIMEOUT_SETTINGS)
+                .hint(new BsonDocument('x', new BsonInt32(1)))
+                .hintString('x_1').iterator()
+
+        operation = executor.getReadOperation() as AggregateToCollectionOperation
+
+        then: 'should use the hint not the hint string'
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))],
+                readConcern, writeConcern, AggregationLevel.COLLECTION)
+                .hint(new BsonDocument('x', new BsonInt32(1))))
+    }
+
+    def 'should build the expected AggregateToCollectionOperation for $merge document'() {
         given:
         def executor = new TestOperationExecutor([null, null, null, null, null, null, null])
         def collectionName = 'collectionName'
@@ -205,15 +250,14 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'aggregation includes $merge'
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                pipeline, AggregationLevel.COLLECTION, false)
+                pipeline, AggregationLevel.COLLECTION, false, TIMEOUT_SETTINGS)
                 .batchSize(99)
-                .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
-                .comment('this is a comment').iterator()
+                .comment(new BsonString('this is a comment')).iterator()
 
-        def operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        def operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -221,11 +265,10 @@ class AggregateIterableSpecification extends Specification {
                  new BsonDocument('$merge', new BsonDocument('into', new BsonString(collectionName)))],
                 readConcern, writeConcern,
                 AggregationLevel.COLLECTION)
-                .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
-                .comment('this is a comment')
+                .comment(new BsonString('this is a comment'))
         )
 
         when: 'the subsequent read should have the batchSize set'
@@ -235,20 +278,18 @@ class AggregateIterableSpecification extends Specification {
         operation.getNamespace() == collectionNamespace
         operation.getBatchSize() == 99
         operation.getCollation() == collation
-        operation.getMaxAwaitTime(MILLISECONDS) == 0
-        operation.getMaxTime(MILLISECONDS) == 0
 
         when: 'aggregation includes $merge into a different database'
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                pipelineWithIntoDocument, AggregationLevel.COLLECTION, false)
+                pipelineWithIntoDocument, AggregationLevel.COLLECTION, false, TIMEOUT_SETTINGS)
                 .batchSize(99)
-                .maxTime(999, MILLISECONDS)
+                .maxTime(100, MILLISECONDS)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
-                .comment('this is a comment').iterator()
+                .comment(new BsonString('this is a comment')).iterator()
 
-        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -257,11 +298,10 @@ class AggregateIterableSpecification extends Specification {
                          new BsonDocument('db', new BsonString('db2')).append('coll', new BsonString(collectionName))))],
                 readConcern, writeConcern,
                 AggregationLevel.COLLECTION)
-                .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
-                .comment('this is a comment')
+                .comment(new BsonString('this is a comment'))
         )
 
         when: 'the subsequent read should have the batchSize set'
@@ -271,20 +311,18 @@ class AggregateIterableSpecification extends Specification {
         operation.getNamespace() == new MongoNamespace('db2', collectionName)
         operation.getBatchSize() == 99
         operation.getCollation() == collation
-        operation.getMaxAwaitTime(MILLISECONDS) == 0
-        operation.getMaxTime(MILLISECONDS) == 0
 
         when: 'aggregation includes $merge and is at the database level'
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                pipeline, AggregationLevel.DATABASE, false)
+                pipeline, AggregationLevel.DATABASE, false, TIMEOUT_SETTINGS)
                 .batchSize(99)
-                .maxTime(999, MILLISECONDS)
+                .maxTime(100, MILLISECONDS)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
-                .comment('this is a comment').iterator()
+                .comment(new BsonString('this is a comment')).iterator()
 
-        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -292,11 +330,10 @@ class AggregateIterableSpecification extends Specification {
                  new BsonDocument('$merge', new BsonDocument('into', new BsonString(collectionName)))],
                 readConcern, writeConcern,
                 AggregationLevel.DATABASE)
-                .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
-                .comment('this is a comment')
+                .comment(new BsonString('this is a comment'))
         )
 
         when: 'the subsequent read should have the batchSize set'
@@ -306,19 +343,17 @@ class AggregateIterableSpecification extends Specification {
         operation.getNamespace() == collectionNamespace
         operation.getBatchSize() == 99
         operation.getCollation() == collation
-        operation.getMaxAwaitTime(MILLISECONDS) == 0
-        operation.getMaxTime(MILLISECONDS) == 0
 
         when: 'toCollection should work as expected'
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                pipeline, AggregationLevel.COLLECTION, false)
+                pipeline, AggregationLevel.COLLECTION, false, TIMEOUT_SETTINGS)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
-                .comment('this is a comment')
+                .comment(new BsonString('this is a comment'))
                 .toCollection()
 
-        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then:
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -328,7 +363,32 @@ class AggregateIterableSpecification extends Specification {
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
-                .comment('this is a comment'))
+                .comment(new BsonString('this is a comment')))
+    }
+
+    def 'should build the expected AggregateToCollectionOperation for $merge string'() {
+        given:
+        def executor = new TestOperationExecutor([null, null, null, null, null, null, null])
+        def collectionName = 'collectionName'
+        def collectionNamespace = new MongoNamespace(namespace.getDatabaseName(), collectionName)
+        def pipeline = [new BsonDocument('$match', new BsonDocument()), new BsonDocument('$merge', new BsonString(collectionName))]
+
+        when:
+        new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
+                pipeline, AggregationLevel.COLLECTION, false, TIMEOUT_SETTINGS)
+                .iterator()
+
+        def operation = executor.getReadOperation() as AggregateToCollectionOperation
+
+        then:
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace, pipeline, readConcern,
+                writeConcern, AggregationLevel.COLLECTION))
+
+        when:
+        operation = executor.getReadOperation() as FindOperation<Document>
+
+        then:
+        operation.getNamespace() == collectionNamespace
     }
 
     def 'should build the expected AggregateToCollectionOperation for $out as a document'() {
@@ -337,7 +397,7 @@ class AggregateIterableSpecification extends Specification {
         def cursor = {
             Stub(BatchCursor) {
                 def count = 0
-                def results;
+                def results
                 def getResult = {
                     count++
                     results = count == 1 ? cannedResults : null
@@ -358,10 +418,10 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'aggregation includes $out'
         def aggregateIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, false)
+                readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, false, TIMEOUT_SETTINGS)
 
         aggregateIterable.toCollection()
-        def operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        def operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then:
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -377,10 +437,10 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'aggregation includes $out and is at the database level'
         aggregateIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, pipeline, AggregationLevel.DATABASE, false)
+                readConcern, writeConcern, executor, pipeline, AggregationLevel.DATABASE, false, TIMEOUT_SETTINGS)
         aggregateIterable.toCollection()
 
-        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then:
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -396,10 +456,10 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'toCollection should work as expected'
         aggregateIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, false)
+                readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, false, TIMEOUT_SETTINGS)
         aggregateIterable.toCollection()
 
-        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then:
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -414,10 +474,10 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'aggregation includes $out with namespace'
         aggregateIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, outWithDBpipeline, AggregationLevel.COLLECTION, false)
+                readConcern, writeConcern, executor, outWithDBpipeline, AggregationLevel.COLLECTION, false, TIMEOUT_SETTINGS)
         aggregateIterable.toCollection()
 
-        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        operation = executor.getReadOperation() as AggregateToCollectionOperation
 
         then:
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -438,10 +498,10 @@ class AggregateIterableSpecification extends Specification {
         def batchCursor = Stub(BatchCursor) {
             _ * hasNext() >> { false }
         }
-        def executor = new TestOperationExecutor([batchCursor, batchCursor]);
+        def executor = new TestOperationExecutor([batchCursor, batchCursor])
         def pipeline = [new Document('$match', 1)]
         def aggregationIterable = new AggregateIterableImpl(clientSession, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, false)
+                readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, false, TIMEOUT_SETTINGS)
 
         when:
         aggregationIterable.first()
@@ -464,10 +524,10 @@ class AggregateIterableSpecification extends Specification {
         def batchCursor = Stub(BatchCursor) {
             _ * hasNext() >> { false }
         }
-        def executor = new TestOperationExecutor([null, batchCursor, null, batchCursor, null]);
+        def executor = new TestOperationExecutor([null, batchCursor, null, batchCursor, null])
         def pipeline = [new Document('$match', 1), new Document('$out', 'collName')]
         def aggregationIterable = new AggregateIterableImpl(clientSession, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, false)
+                readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, false, TIMEOUT_SETTINGS)
 
         when:
         aggregationIterable.first()
@@ -498,7 +558,7 @@ class AggregateIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def pipeline = [new BsonDocument('$match', new BsonInt32(1))]
         def aggregationIterable = new AggregateIterableImpl(null, namespace, BsonDocument, BsonDocument, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, false)
+                readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, false, TIMEOUT_SETTINGS)
 
         when: 'The operation fails with an exception'
         aggregationIterable.iterator()
@@ -514,14 +574,14 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'a codec is missing'
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                pipeline, AggregationLevel.COLLECTION, false).iterator()
+                pipeline, AggregationLevel.COLLECTION, false, TIMEOUT_SETTINGS).iterator()
 
         then:
         thrown(CodecConfigurationException)
 
         when: 'pipeline contains null'
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                [null], AggregationLevel.COLLECTION, false).iterator()
+                [null], AggregationLevel.COLLECTION, false, TIMEOUT_SETTINGS).iterator()
 
         then:
         thrown(IllegalArgumentException)
@@ -533,7 +593,7 @@ class AggregateIterableSpecification extends Specification {
         def cursor = {
             Stub(BatchCursor) {
                 def count = 0
-                def results;
+                def results
                 def getResult = {
                     count++
                     results = count == 1 ? cannedResults : null
@@ -549,7 +609,8 @@ class AggregateIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()])
         def mongoIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, [new Document('$match', 1)], AggregationLevel.COLLECTION, false)
+                readConcern, writeConcern, executor, [new Document('$match', 1)], AggregationLevel.COLLECTION, false,
+                TIMEOUT_SETTINGS)
 
         when:
         def results = mongoIterable.first()
@@ -594,7 +655,7 @@ class AggregateIterableSpecification extends Specification {
         def batchSize = 5
         def mongoIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
                 readConcern, writeConcern, Stub(OperationExecutor), [new Document('$match', 1)], AggregationLevel.COLLECTION,
-                false)
+                false, TIMEOUT_SETTINGS)
 
         then:
         mongoIterable.getBatchSize() == null

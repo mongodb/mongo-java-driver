@@ -16,14 +16,17 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 interface SpeculativeAuthenticator {
 
+    @Nullable
     default BsonDocument createSpeculativeAuthenticateCommand(final InternalConnection connection) {
         return null;
     }
 
+    @Nullable
     default BsonDocument getSpeculativeAuthenticateResponse() {
         return null;
     }

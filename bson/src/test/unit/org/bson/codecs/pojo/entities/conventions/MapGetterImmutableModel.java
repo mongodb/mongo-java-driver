@@ -18,13 +18,14 @@ package org.bson.codecs.pojo.entities.conventions;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 public class MapGetterImmutableModel {
 
     private final Map<String, Integer> mapField;
 
     public MapGetterImmutableModel() {
-        this(Collections.<String, Integer>emptyMap());
+        this(Collections.emptyMap());
     }
 
     public MapGetterImmutableModel(final Map<String, Integer> mapField) {
@@ -46,7 +47,7 @@ public class MapGetterImmutableModel {
 
         MapGetterImmutableModel that = (MapGetterImmutableModel) o;
 
-        return mapField != null ? mapField.equals(that.mapField) : that.mapField == null;
+        return Objects.equals(mapField, that.mapField);
     }
 
     @Override

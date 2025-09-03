@@ -16,56 +16,25 @@
 
 package com.mongodb;
 
-import static java.lang.String.format;
+import org.bson.BsonDocument;
 
 /**
  * An exception indicating that a query operation failed on the server.
  *
  * @since 3.0
+ * @serial exclude
  */
-public class MongoQueryException extends MongoServerException {
+public class MongoQueryException extends MongoCommandException {
     private static final long serialVersionUID = -5113350133297015801L;
-    private final String errorMessage;
 
     /**
      * Construct an instance.
      *
-     * @param address the server address
-     * @param errorCode the error code
-     * @param errorMessage the error message
+     * @param response the server response document
+     * @param serverAddress the server address
+     * @since 4.8
      */
-    public MongoQueryException(final ServerAddress address, final int errorCode, final String errorMessage) {
-        super(errorCode, format("Query failed with error code %d and error message '%s' on server %s", errorCode, errorMessage, address),
-              address);
-        this.errorMessage = errorMessage;
-    }
-
-    /**
-     * Construct an instance from a command exception.
-     *
-     * @param commandException the command exception
-     * @since 3.7
-     */
-    public MongoQueryException(final MongoCommandException commandException) {
-        this(commandException.getServerAddress(), commandException.getErrorCode(), commandException.getErrorMessage());
-        addLabels(commandException.getErrorLabels());
-    }
-
-    /**
-     * Gets the error code for this query failure.
-     *
-     * @return the error code
-     */
-    public int getErrorCode() {
-        return getCode();
-    }
-
-    /**
-     * Gets the error message for this query failure.
-     *
-     * @return the error message
-     */
-    public String getErrorMessage() {
-        return errorMessage;
+    public MongoQueryException(final BsonDocument response, final ServerAddress serverAddress) {
+        super(response, serverAddress);
     }
 }

@@ -17,13 +17,13 @@
 
 package com.mongodb.benchmark.benchmarks;
 
-public class InsertOneBenchmark<T> extends AbstractInsertBenchmark<T> {
+public class InsertOneBenchmark<T> extends AbstractCollectionWriteBenchmark<T> {
     private final int numIterations;
     private final IdRemover<T> idRemover;
 
     public InsertOneBenchmark(final String name, final String resourcePath, final int numIterations, final Class<T> clazz,
                               final IdRemover<T> idRemover) {
-        super(name + " doc insertOne", resourcePath, clazz);
+        super(name + " doc insertOne", resourcePath, numIterations, 1, clazz);
         this.numIterations = numIterations;
         this.idRemover = idRemover;
     }
@@ -35,10 +35,4 @@ public class InsertOneBenchmark<T> extends AbstractInsertBenchmark<T> {
             collection.insertOne(document);
         }
     }
-
-    @Override
-    public int getBytesPerRun() {
-        return fileLength * numIterations;
-    }
-
 }

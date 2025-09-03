@@ -16,6 +16,8 @@
 
 package org.bson.codecs.pojo.entities;
 
+import java.util.Objects;
+
 public final class PropertyReusingClassTypeParameter<A> {
 
     public GenericTreeModel<A, A> tree;
@@ -38,7 +40,7 @@ public final class PropertyReusingClassTypeParameter<A> {
 
         PropertyReusingClassTypeParameter<?> that = (PropertyReusingClassTypeParameter<?>) o;
 
-        if (tree != null ? !tree.equals(that.tree) : that.tree != null) {
+        if (!Objects.equals(tree, that.tree)) {
             return false;
         }
 

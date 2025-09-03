@@ -16,8 +16,10 @@
 
 package org.bson.codecs
 
+import org.bson.BsonArray
 import org.bson.BsonBinaryReader
 import org.bson.BsonBinaryWriter
+import org.bson.BsonDateTime
 import org.bson.BsonDbPointer
 import org.bson.BsonDocument
 import org.bson.BsonDocumentReader
@@ -30,6 +32,7 @@ import org.bson.BsonUndefined
 import org.bson.BsonWriter
 import org.bson.ByteBufNIO
 import org.bson.Document
+import org.bson.codecs.jsr310.Jsr310CodecProvider
 import org.bson.io.BasicOutputBuffer
 import org.bson.io.ByteBufferBsonInput
 import org.bson.json.JsonReader
@@ -44,7 +47,9 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.lang.reflect.ParameterizedType
 import java.nio.ByteBuffer
+import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
@@ -63,7 +68,7 @@ class MapCodecSpecification extends Specification {
 
     static final REGISTRY = fromRegistries(fromCodecs(new UuidCodec(JAVA_LEGACY)),
             fromProviders(asList(new ValueCodecProvider(), new BsonValueCodecProvider(),
-                    new DocumentCodecProvider(), new IterableCodecProvider(), new MapCodecProvider())))
+                    new DocumentCodecProvider(), new CollectionCodecProvider(), new MapCodecProvider())))
 
     @Shared
     BsonDocument bsonDoc = new BsonDocument()
@@ -102,18 +107,18 @@ class MapCodecSpecification extends Specification {
         }
 
         when:
-        new MapCodec(REGISTRY).encode(writer, originalDocument, EncoderContext.builder().build())
+        new MapCodec(REGISTRY, new BsonTypeClassMap(), null, Map).encode(writer, originalDocument, EncoderContext.builder().build())
         BsonReader reader
         if (writer instanceof BsonDocumentWriter) {
             reader = new BsonDocumentReader(bsonDoc)
         } else if (writer instanceof BsonBinaryWriter) {
-            BasicOutputBuffer buffer = (BasicOutputBuffer)writer.getBsonOutput();
+            BasicOutputBuffer buffer = (BasicOutputBuffer)writer.getBsonOutput()
             reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(
                     ByteBuffer.wrap(buffer.toByteArray()))))
         } else {
             reader = new JsonReader(stringWriter.toString())
         }
-        def decodedDoc = new MapCodec(REGISTRY).decode(reader, DecoderContext.builder().build())
+        def decodedDoc = new MapCodec(REGISTRY, new BsonTypeClassMap(), null, Map).decode(reader, DecoderContext.builder().build())
 
         then:
         decodedDoc.get('null') == originalDocument.get('null')
@@ -172,7 +177,7 @@ class MapCodecSpecification extends Specification {
         def reader = new BsonBinaryReader(ByteBuffer.wrap(bytes as byte[]))
 
         when:
-        def map = new MapCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()))
+        def map = new MapCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()), new BsonTypeClassMap(), null, Map)
                 .withUuidRepresentation(representation)
                 .decode(reader, DecoderContext.builder().build())
 
@@ -195,7 +200,7 @@ class MapCodecSpecification extends Specification {
         def reader = new BsonBinaryReader(ByteBuffer.wrap(bytes as byte[]))
 
         when:
-        def map = new MapCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()))
+        def map = new MapCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()), new BsonTypeClassMap(), null, Map)
                 .withUuidRepresentation(representation)
                 .decode(reader, DecoderContext.builder().build())
 
@@ -216,11 +221,76 @@ class MapCodecSpecification extends Specification {
         given:
         def codec = new MapCodec(fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()]),
                                       new BsonTypeClassMap(),
-                                      { Object value -> 5 })
+                                      { Object value -> 5 }, Map)
         when:
         def doc = codec.decode(new BsonDocumentReader(new BsonDocument('_id', new BsonInt32(1))), DecoderContext.builder().build())
 
         then:
         doc['_id'] == 5
+    }
+
+    def 'should decode to specified generic class'() {
+        given:
+        def doc = new BsonDocument('_id', new BsonInt32(1))
+
+        when:
+        def codec = new MapCodec(fromProviders([new ValueCodecProvider()]), new BsonTypeClassMap(), null, mapType)
+        def map = codec.decode(new BsonDocumentReader(doc), DecoderContext.builder().build())
+
+        then:
+        codec.getEncoderClass() == mapType
+        map.getClass() == actualType
+
+        where:
+        mapType      | actualType
+        Map          | HashMap
+        NavigableMap | TreeMap
+        AbstractMap  | HashMap
+        HashMap      | HashMap
+        TreeMap      | TreeMap
+        WeakHashMap  | WeakHashMap
+    }
+
+
+    def 'should parameterize'() {
+        given:
+        def codec = fromProviders(new Jsr310CodecProvider(), REGISTRY).get(
+                Map,
+                asList(((ParameterizedType) Container.getMethod('getInstants').genericReturnType).actualTypeArguments))
+
+        def writer = new BsonDocumentWriter(new BsonDocument())
+        def reader = new BsonDocumentReader(writer.getDocument())
+        def instants =
+                ['firstMap': [Instant.ofEpochMilli(1), Instant.ofEpochMilli(2)],
+                 'secondMap': [Instant.ofEpochMilli(3), Instant.ofEpochMilli(4)]]
+        when:
+        writer.writeStartDocument()
+        writer.writeName('instants')
+        codec.encode(writer, instants, EncoderContext.builder().build())
+        writer.writeEndDocument()
+
+        then:
+        writer.getDocument() == new BsonDocument()
+                .append('instants',
+                        new BsonDocument()
+                                .append('firstMap', new BsonArray([new BsonDateTime(1), new BsonDateTime(2)]))
+                                .append('secondMap', new BsonArray([new BsonDateTime(3), new BsonDateTime(4)])))
+
+        when:
+        reader.readStartDocument()
+        reader.readName('instants')
+        def decodedInstants = codec.decode(reader, DecoderContext.builder().build())
+
+        then:
+        decodedInstants == instants
+    }
+
+    @SuppressWarnings('unused')
+    static class Container {
+        private final Map<String, List<Instant>> instants = [:]
+
+        Map<String, List<Instant>> getInstants() {
+            instants
+        }
     }
 }

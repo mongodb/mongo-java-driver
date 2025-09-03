@@ -18,7 +18,6 @@
 package com.mongodb.reactivestreams.client;
 
 import com.mongodb.TransactionOptions;
-import com.mongodb.internal.async.client.AsyncClientSession;
 import org.reactivestreams.Publisher;
 
 /**
@@ -47,18 +46,20 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
     boolean notifyMessageSent();
 
     /**
+     * Notify the client session that command execution is being initiated. This should be called before server selection occurs.
+     * <p>
+     * For internal use only
+     * </p>
+     * @param operation the operation
+     */
+    void notifyOperationInitiated(Object operation);
+
+    /**
      * Gets the transaction options.  Only call this method of the session has an active transaction
      *
      * @return the transaction options
      */
     TransactionOptions getTransactionOptions();
-
-    /**
-     * For internal use only.
-     *
-     * @return the wrapped session
-     */
-    AsyncClientSession getWrapped();
 
     /**
      * Start a transaction in the context of this session with default transaction options. A transaction can not be started if there is

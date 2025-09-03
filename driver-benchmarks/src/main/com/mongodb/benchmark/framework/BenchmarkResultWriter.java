@@ -21,4 +21,6 @@ import java.io.Closeable;
 
 public interface BenchmarkResultWriter extends Closeable {
     void write(BenchmarkResult benchmarkResult);
+
+    void write(MongocryptBecnhmarkResult result);
 }

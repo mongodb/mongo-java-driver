@@ -16,29 +16,18 @@
 
 package com.mongodb.internal.binding;
 
-import com.mongodb.internal.session.SessionContext;
-
 /**
  * A factory of connection sources to servers that can be written to, e.g, a standalone, a mongos, or a replica set primary.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public interface WriteBinding extends ReferenceCounted {
+public interface WriteBinding extends BindingContext, ReferenceCounted {
     /**
      * Supply a connection source to a server that can be written to
      *
      * @return a connection source
      */
     ConnectionSource getWriteConnectionSource();
-
-    /**
-     * Gets the session context for this binding.
-     *
-     * @return the session context, which may not be null
-     *
-     * @since 3.6
-     */
-    SessionContext getSessionContext();
 
     @Override
     WriteBinding retain();

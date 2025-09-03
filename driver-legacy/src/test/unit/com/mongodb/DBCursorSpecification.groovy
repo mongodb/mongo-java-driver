@@ -23,6 +23,7 @@ import com.mongodb.internal.operation.BatchCursor
 import com.mongodb.internal.operation.CountOperation
 import com.mongodb.internal.operation.FindOperation
 import org.bson.BsonDocument
+import org.bson.BsonString
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -112,7 +113,7 @@ class DBCursorSpecification extends Specification {
 
     def 'find should create the correct FindOperation'() {
         given:
-        def executor = new TestOperationExecutor([stubBatchCursor()]);
+        def executor = new TestOperationExecutor([stubBatchCursor()])
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
         def cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
         cursor.setReadConcern(ReadConcern.MAJORITY)
@@ -121,16 +122,17 @@ class DBCursorSpecification extends Specification {
         cursor.toArray()
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
-                                                                .filter(new BsonDocument())
-                                                                .projection(new BsonDocument())
-                                                                .retryReads(true))
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(),
+                collection.getObjectCodec())
+                .filter(new BsonDocument())
+                .projection(new BsonDocument())
+                .retryReads(true))
     }
 
 
     def 'one should create the correct FindOperation'() {
         given:
-        def executor = new TestOperationExecutor([stubBatchCursor()]);
+        def executor = new TestOperationExecutor([stubBatchCursor()])
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
         def cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
         cursor.setReadConcern(ReadConcern.MAJORITY)
@@ -139,16 +141,18 @@ class DBCursorSpecification extends Specification {
         cursor.one()
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
-                                                                .limit(-1)
-                                                                .filter(new BsonDocument())
-                                                                .projection(new BsonDocument())
-                                                                .retryReads(true))
+        expect executor.getReadOperation(), isTheSameAs(
+                new FindOperation(collection.getNamespace(), collection.getObjectCodec())
+                        .limit(-1)
+                        .filter(new BsonDocument())
+                        .projection(new BsonDocument())
+                        .retryReads(true)
+        )
     }
 
     def 'DBCursor methods should be used to create the expected operation'() {
         given:
-        def executor = new TestOperationExecutor([stubBatchCursor()]);
+        def executor = new TestOperationExecutor([stubBatchCursor()])
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
         def collation = Collation.builder().locale('en').build()
         def cursorType = CursorType.NonTailable
@@ -166,9 +170,8 @@ class DBCursorSpecification extends Specification {
                 .batchSize(1)
                 .cursorType(cursorType)
                 .limit(1)
-                .maxTime(1, TimeUnit.MILLISECONDS)
+                .maxTime(100, TimeUnit.MILLISECONDS)
                 .noCursorTimeout(true)
-                .oplogReplay(true)
                 .partial(true)
                 .skip(1)
                 .sort(sort)
@@ -177,15 +180,14 @@ class DBCursorSpecification extends Specification {
         cursor.toArray()
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
+        expect executor.getReadOperation(), isTheSameAs(
+                new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                 .batchSize(1)
                 .collation(collation)
                 .cursorType(cursorType)
                 .filter(bsonFilter)
                 .limit(1)
-                .maxTime(1, TimeUnit.MILLISECONDS)
                 .noCursorTimeout(true)
-                .oplogReplay(true)
                 .partial(true)
                 .skip(1)
                 .sort(bsonSort)
@@ -198,7 +200,7 @@ class DBCursorSpecification extends Specification {
 
     def 'DBCollectionFindOptions should be used to create the expected operation'() {
         given:
-        def executor = new TestOperationExecutor([stubBatchCursor()]);
+        def executor = new TestOperationExecutor([stubBatchCursor()])
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
         def collation = Collation.builder().locale('en').build()
         def cursorType = CursorType.NonTailable
@@ -222,10 +224,9 @@ class DBCursorSpecification extends Specification {
                 .collation(collation)
                 .cursorType(cursorType)
                 .limit(1)
-                .maxAwaitTime(1, TimeUnit.MILLISECONDS)
-                .maxTime(1, TimeUnit.MILLISECONDS)
+                .maxAwaitTime(1001, TimeUnit.MILLISECONDS)
+                .maxTime(101, TimeUnit.MILLISECONDS)
                 .noCursorTimeout(true)
-                .oplogReplay(true)
                 .partial(true)
                 .projection(projection)
                 .readConcern(readConcern)
@@ -251,15 +252,12 @@ class DBCursorSpecification extends Specification {
                 .cursorType(cursorType)
                 .filter(bsonFilter)
                 .limit(1)
-                .maxAwaitTime(1, TimeUnit.MILLISECONDS)
-                .maxTime(1, TimeUnit.MILLISECONDS)
                 .noCursorTimeout(true)
-                .oplogReplay(true)
                 .partial(true)
                 .projection(bsonProjection)
                 .skip(1)
                 .sort(bsonSort)
-                .comment(comment)
+                .comment(new BsonString(comment))
                 .hint(bsonHint)
                 .max(bsonMax)
                 .min(bsonMin)
@@ -272,7 +270,7 @@ class DBCursorSpecification extends Specification {
     }
 
     def 'count should create the correct CountOperation'() {
-        def executor = new TestOperationExecutor([42L]);
+        def executor = new TestOperationExecutor([42L])
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
         def cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
         cursor.setReadConcern(ReadConcern.MAJORITY)
@@ -288,7 +286,7 @@ class DBCursorSpecification extends Specification {
     }
 
     def 'size should create the correct CountOperation'() {
-        def executor = new TestOperationExecutor([42L]);
+        def executor = new TestOperationExecutor([42L])
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
         def cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
         cursor.setReadConcern(ReadConcern.MAJORITY)
@@ -314,6 +312,6 @@ class DBCursorSpecification extends Specification {
                 count == 0
             }
             getServerCursor() >> new ServerCursor(12L, new ServerAddress())
-        };
+        }
     }
 }

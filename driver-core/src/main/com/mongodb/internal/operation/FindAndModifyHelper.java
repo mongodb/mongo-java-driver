@@ -19,44 +19,36 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.operation.CommandOperationHelper.CommandWriteTransformer;
-import com.mongodb.internal.operation.CommandOperationHelper.CommandWriteTransformerAsync;
+import com.mongodb.lang.Nullable;
+import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 
+import java.util.stream.Collectors;
+
+import static com.mongodb.internal.operation.AsyncOperationHelper.CommandWriteTransformerAsync;
+import static com.mongodb.internal.operation.SyncOperationHelper.CommandWriteTransformer;
 import static com.mongodb.internal.operation.WriteConcernHelper.createWriteConcernError;
 import static com.mongodb.internal.operation.WriteConcernHelper.hasWriteConcernError;
 
 final class FindAndModifyHelper {
 
     static <T> CommandWriteTransformer<BsonDocument, T> transformer() {
-        return new CommandWriteTransformer<BsonDocument, T>() {
-            @SuppressWarnings("unchecked")
-            @Override
-            public T apply(final BsonDocument result, final Connection connection) {
-                return transformDocument(result, connection.getDescription().getServerAddress());
-            }
-        };
+        return (result, connection) -> transformDocument(result, connection.getDescription().getServerAddress());
     }
 
     static <T> CommandWriteTransformerAsync<BsonDocument, T> asyncTransformer() {
-        return new CommandWriteTransformerAsync<BsonDocument, T>() {
-            @SuppressWarnings("unchecked")
-            @Override
-            public T apply(final BsonDocument result, final AsyncConnection connection) {
-                return transformDocument(result, connection.getDescription().getServerAddress());
-            }
-        };
+        return (result, connection) -> transformDocument(result, connection.getDescription().getServerAddress());
     }
 
+    @Nullable
     private static <T> T transformDocument(final BsonDocument result, final ServerAddress serverAddress) {
         if (hasWriteConcernError(result)) {
             throw new MongoWriteConcernException(
                     createWriteConcernError(result.getDocument("writeConcernError")),
-                    createWriteConcernResult(result.getDocument("lastErrorObject", new BsonDocument())), serverAddress);
+                    createWriteConcernResult(result.getDocument("lastErrorObject", new BsonDocument())), serverAddress,
+                    result.getArray("errorLabels", new BsonArray()).stream().map(i -> i.asString().getValue()).collect(Collectors.toSet()));
         }
 
         if (!result.isDocument("value")) {

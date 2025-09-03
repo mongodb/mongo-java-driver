@@ -16,11 +16,11 @@
 
  package org.bson.codecs;
 
- import org.bson.UuidRepresentation;
- import org.bson.codecs.configuration.CodecProvider;
- import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.UuidRepresentation;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
 
- import java.util.UUID;
+import java.util.UUID;
 
  /**
   * A {@code CodecProvider} for UUID Codecs with custom UUID representations
@@ -29,7 +29,7 @@
   */
  public class UuidCodecProvider implements CodecProvider {
 
-     private UuidRepresentation uuidRepresentation;
+     private final UuidRepresentation uuidRepresentation;
 
      /**
       * Set the UUIDRepresentation to be used in the codec

@@ -16,8 +16,8 @@
 
 package com.mongodb.management;
 
-import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;

@@ -16,39 +16,31 @@
 
 package com.mongodb.internal.async;
 
+import com.mongodb.internal.operation.BatchCursor;
+
 import java.io.Closeable;
+import java.util.ArrayList;
 import java.util.List;
+
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 
 /**
  * MongoDB returns query results as batches, and this interface provides an asynchronous iterator over those batches.  The first call to
  * the {@code next} method will return the first batch, and subsequent calls will trigger an asynchronous request to get the next batch
  * of results.  Clients can control the batch size by setting the {@code batchSize} property between calls to {@code next}.
  *
- * @param <T> The type of documents the cursor contains
- * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#wire-op-get-more OP_GET_MORE
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface AsyncBatchCursor<T> extends Closeable {
     /**
-     * Returns the next batch of results.  A tailable cursor will block until another batch exists.  After the last batch, the next call
-     * to this method will execute the callback with a null result to indicate that there are no more batches available and the cursor
-     * has been closed.
+     * Returns the next batch of results. A tailable cursor will block until another batch exists.
+     * Unlike the {@link BatchCursor} this method will automatically mark the cursor as closed when there are no more expected results.
+     * Care should be taken to check {@link #isClosed()} between calls.
      *
      * @param callback callback to receive the next batch of results
      * @throws java.util.NoSuchElementException if no next batch exists
      */
     void next(SingleResultCallback<List<T>> callback);
-
-    /**
-     * A special {@code next()} case that returns the next batch if available or null.
-     *
-     * <p>Tailable cursors are an example where this is useful. A call to {@code tryNext()} may return null, but in the future calling
-     * {@code tryNext()} would return a new batch if a document had been added to the capped collection.</p>
-     *
-     * @param callback callback to receive the next batch of results
-     * @since 3.6
-     * @mongodb.driver.manual reference/glossary/#term-tailable-cursor Tailable Cursor
-     */
-    void tryNext(SingleResultCallback<List<T>> callback);
 
     /**
      * Sets the batch size to use when requesting the next batch.  This is the number of documents to request in the next batch.
@@ -65,12 +57,40 @@ public interface AsyncBatchCursor<T> extends Closeable {
     int getBatchSize();
 
     /**
-     * Return true if the AsyncBatchCursor has been closed
+     * Implementations of {@link AsyncBatchCursor} are allowed to close themselves, see {@link #close()} for more details.
      *
-     * @return true if the AsyncBatchCursor has been closed
+     * @return {@code true} if {@code this} has been closed or has closed itself.
      */
     boolean isClosed();
 
+    /**
+     * Implementations of {@link AsyncBatchCursor} are allowed to close themselves synchronously via methods
+     * {@link #next(SingleResultCallback)}.
+     * Self-closing behavior is discouraged because it introduces an additional burden on code that uses {@link AsyncBatchCursor}.
+     * To help making such code simpler, this method is required to be idempotent.
+     * <p>
+     * Another quirk is that this method is allowed to release resources "eventually",
+     * i.e., not before (in the happens-before order) returning.
+     * Nevertheless, {@link #isClosed()} called after (in the happens-before order) {@link #close()} must return {@code true}.
+     */
     @Override
     void close();
+
+    default void exhaust(final SingleResultCallback<List<List<T>>> finalCallback) {
+        List<List<T>> results = new ArrayList<>();
+
+        beginAsync().thenRunDoWhileLoop(iterationCallback -> {
+            beginAsync().<List<T>>thenSupply(c -> {
+                next(c);
+            }).thenConsume((batch, c) -> {
+                if (!batch.isEmpty()) {
+                    results.add(batch);
+                }
+                c.complete(c);
+            }).finish(iterationCallback);
+        }, () -> !this.isClosed()
+        ).<List<List<T>>>thenSupply(c -> {
+            c.complete(results);
+        }).finish(finalCallback);
+     }
 }

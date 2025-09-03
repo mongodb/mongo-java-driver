@@ -16,38 +16,21 @@
 
 package com.mongodb.internal.binding;
 
+import com.mongodb.ReadPreference;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.session.SessionContext;
 
 /**
  * A source of connections to a single MongoDB server.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public interface ConnectionSource extends ReferenceCounted {
+public interface ConnectionSource extends BindingContext, ReferenceCounted {
 
-    /**
-     * Gets the current description of this source.
-     *
-     * @return the current details of the server state.
-     */
     ServerDescription getServerDescription();
 
-    /**
-     * Gets the session context for this source
-     *
-     * @return the session context, which may not be null
-     *
-     * @since 3.6
-     */
-    SessionContext getSessionContext();
+    ReadPreference getReadPreference();
 
-    /**
-     * Gets a connection from this source.
-     *
-     * @return the connection
-     */
     Connection getConnection();
 
     @Override

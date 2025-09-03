@@ -21,9 +21,14 @@ MONGODB_URI="$1"
 
 echo "Running MONGODB-AWS ECS authentication tests"
 
+apt update
+
 if ! which java ; then
     echo "Installing java..."
-    apt install openjdk-11-jdk -y
+    # Ubuntu 18.04 ca-certificates-java and opendjdk-17 bug work around
+    dpkg --purge --force-depends ca-certificates-java
+    apt install ca-certificates-java -y
+    apt install openjdk-17-jdk -y
 fi
 
 if ! which git ; then
@@ -32,8 +37,37 @@ if ! which git ; then
 fi
 
 cd src
+
+RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
+. "${RELATIVE_DIR_PATH}/setup-env.bash"
+
 ./gradlew -version
 
 echo "Running tests..."
-./gradlew -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --debug --info driver-core:test --tests AwsAuthenticationSpecification
+./gradlew -Dorg.mongodb.test.uri=${MONGODB_URI} -Dorg.mongodb.test.aws.credential.provider=awsSdkV2 --stacktrace --debug --info \
+           driver-core:test --tests AwsAuthenticationSpecification
+first=$?
+echo $first
+
+./gradlew -Dorg.mongodb.test.uri=${MONGODB_URI} -Dorg.mongodb.test.aws.credential.provider=awsSdkV1 --stacktrace --debug --info \
+           driver-core:test --tests AwsAuthenticationSpecification
+second=$?
+echo $second
+
+./gradlew -Dorg.mongodb.test.uri=${MONGODB_URI} -Dorg.mongodb.test.aws.credential.provider=builtIn --stacktrace --debug --info \
+           driver-core:test --tests AwsAuthenticationSpecification
+third=$?
+echo $third
+
+if [ $first -ne 0 ]; then
+   exit $first
+elif [ $second -ne 0 ]; then
+   exit $second
+elif [ $third -ne 0 ]; then
+   exit $third
+else
+   exit 0
+fi
+
+
 cd -

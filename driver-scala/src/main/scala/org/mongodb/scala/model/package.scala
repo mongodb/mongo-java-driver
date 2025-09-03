@@ -16,7 +16,10 @@
 
 package org.mongodb.scala
 
+import com.mongodb.annotations.{ Beta, Reason, Sealed }
+
 import scala.collection.JavaConverters._
+import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit }
 import org.mongodb.scala.bson.conversions.Bson
 
 // scalastyle:off number.of.methods number.of.types
@@ -48,14 +51,14 @@ package object model {
   }
 
   /**
-   * The options for a \$bucketAuto aggregation pipeline stage
+   * The options for a `\$bucketAuto` aggregation pipeline stage
    *
    * @since 1.2
    */
   type BucketAutoOptions = com.mongodb.client.model.BucketAutoOptions
 
   /**
-   * The options for a \$bucketAuto aggregation pipeline stage
+   * The options for a `\$bucketAuto` aggregation pipeline stage
    *
    * @since 1.2
    */
@@ -64,14 +67,14 @@ package object model {
   }
 
   /**
-   * The options for a \$bucket aggregation pipeline stage
+   * The options for a `\$bucket` aggregation pipeline stage
    *
    * @since 1.2
    */
   type BucketOptions = com.mongodb.client.model.BucketOptions
 
   /**
-   * The options for a \$bucket aggregation pipeline stage
+   * The options for a `\$bucket` aggregation pipeline stage
    *
    * @since 1.2
    */
@@ -160,6 +163,87 @@ package object model {
    */
   object CreateCollectionOptions {
     def apply(): CreateCollectionOptions = new com.mongodb.client.model.CreateCollectionOptions()
+
+    def apply(options: CreateCollectionOptions): CreateCollectionOptions =
+      new com.mongodb.client.model.CreateCollectionOptions(options)
+  }
+
+  /**
+   * Auxiliary parameters for creating an encrypted collection.
+   *
+   * @since 4.9
+   */
+  @Beta(Array(Reason.SERVER))
+  type CreateEncryptedCollectionParams = com.mongodb.client.model.CreateEncryptedCollectionParams
+
+  /**
+   * Auxiliary parameters for creating an encrypted collection.
+   *
+   * @since 4.9
+   */
+  @Beta(Array(Reason.SERVER))
+  object CreateEncryptedCollectionParams {
+    def apply(kmsProvider: String) =
+      new com.mongodb.client.model.CreateEncryptedCollectionParams(kmsProvider)
+  }
+
+  /**
+   * Options for creating a collection
+   *
+   * @since 4.6
+   */
+  type DropCollectionOptions = com.mongodb.client.model.DropCollectionOptions
+
+  /**
+   * Options for creating a collection
+   *
+   * @since 4.6
+   */
+  object DropCollectionOptions {
+    def apply(): DropCollectionOptions = new com.mongodb.client.model.DropCollectionOptions()
+  }
+
+  /**
+   * Options for creating a time-series collection
+   */
+  type TimeSeriesOptions = com.mongodb.client.model.TimeSeriesOptions
+
+  /**
+   * Options for creating a time-series collection
+   */
+  object TimeSeriesOptions {
+    def apply(timeFieldName: String): TimeSeriesOptions = new com.mongodb.client.model.TimeSeriesOptions(timeFieldName)
+  }
+
+  /**
+   * Options for creating a clustered index on a collection
+   */
+  type ClusteredIndexOptions = com.mongodb.client.model.ClusteredIndexOptions
+
+  /**
+   * Options for creating a clustered index on a collection
+   */
+  object ClusteredIndexOptions {
+    def apply(key: Bson, unique: Boolean): ClusteredIndexOptions =
+      new com.mongodb.client.model.ClusteredIndexOptions(key, unique)
+  }
+
+  /**
+   * Enumeration of values for time-series data granularity
+   */
+  type TimeSeriesGranularity = com.mongodb.client.model.TimeSeriesGranularity
+
+  /**
+   * Options for change stream pre- and post- images
+   */
+  type ChangeStreamPreAndPostImagesOptions = com.mongodb.client.model.ChangeStreamPreAndPostImagesOptions
+
+  /**
+   * Options for change stream pre- and post- images
+   */
+  object ChangeStreamPreAndPostImagesOptions {
+    def apply(enabled: Boolean): ChangeStreamPreAndPostImagesOptions =
+      new com.mongodb.client.model.ChangeStreamPreAndPostImagesOptions(enabled)
   }
 
   /**
@@ -184,7 +268,7 @@ package object model {
    * The default options for a collection to apply on the creation of indexes.
    *
    * @note Requires MongoDB 3.2 or greater
-   * @see [[http://docs.mongodb.org/manual/reference/command/createIndexes Index options]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/command/createIndexes Index options]]
    * @since 1.1
    */
   type IndexOptionDefaults = com.mongodb.client.model.IndexOptionDefaults
@@ -252,14 +336,14 @@ package object model {
   }
 
   /**
-   * Defines a Facet for use in \$facet pipeline stages.
+   * Defines a Facet for use in `\$facet` pipeline stages.
    *
    * @since 1.2
    */
   type Facet = com.mongodb.client.model.Facet
 
   /**
-   * Defines a Facet for use in \$facet pipeline stages.
+   * Defines a Facet for use in `\$facet` pipeline stages.
    *
    * @since 1.2
    */
@@ -270,7 +354,7 @@ package object model {
      *
      * @param name     the name of this facet
      * @param pipeline the facet definition pipeline
-     * @return the \$facet pipeline stage
+     * @return the `\$facet` pipeline stage
      */
     def apply(name: String, pipeline: Bson*): Facet = {
       new com.mongodb.client.model.Facet(name, pipeline.asJava)
@@ -278,7 +362,7 @@ package object model {
   }
 
   /**
-   * A helper to define new fields for the \$addFields pipeline stage
+   * A helper to define new fields for the `\$addFields` pipeline stage
    *
    * @tparam TExpression the expression type
    * @since 1.2
@@ -286,7 +370,7 @@ package object model {
   type Field[TExpression] = com.mongodb.client.model.Field[TExpression]
 
   /**
-   * A helper to define new fields for the \$addFields pipeline stage
+   * A helper to define new fields for the `\$addFields` pipeline stage
    *
    * @since 1.2
    */
@@ -390,6 +474,55 @@ package object model {
    */
   object IndexOptions {
     def apply(): IndexOptions = new com.mongodb.client.model.IndexOptions()
+  }
+
+  /**
+   * A model describing the creation of a single Atlas Search index.
+   */
+  type SearchIndexModel = com.mongodb.client.model.SearchIndexModel
+
+  /**
+   * Represents an Atlas Search Index type, which is utilized for creating specific types of indexes.
+   */
+  type SearchIndexType = com.mongodb.client.model.SearchIndexType
+
+  /**
+   * A model describing the creation of a single Atlas Search index.
+   */
+  object SearchIndexModel {
+
+    /**
+     * Construct an instance with the given Atlas Search index mapping definition.
+     *
+     * After calling this constructor, the `name` field will be `null`. In that case, when passing this
+     * `SearchIndexModel` to the `createSearchIndexes` method, the default search index name `default`
+     * will be used to create the search index.
+     *
+     * @param definition the search index mapping definition.
+     * @return the SearchIndexModel
+     */
+    def apply(definition: Bson): SearchIndexModel = new com.mongodb.client.model.SearchIndexModel(definition)
+
+    /**
+     * Construct an instance with the given search index name and definition.
+     *
+     * @param indexName the name of the search index to create.
+     * @param definition the search index mapping definition.
+     * @return the SearchIndexModel
+     */
+    def apply(indexName: String, definition: Bson): SearchIndexModel =
+      new com.mongodb.client.model.SearchIndexModel(indexName, definition)
+
+    /**
+     * Construct an instance with the given search index name and definition.
+     *
+     * @param indexName the name of the search index to create.
+     * @param definition the search index mapping definition.
+     * @param indexType  the search index type.
+     * @return the SearchIndexModel
+     */
+    def apply(indexName: Option[String], definition: Bson, indexType: Option[SearchIndexType]): SearchIndexModel =
+      new com.mongodb.client.model.SearchIndexModel(indexName.orNull, definition, indexType.orNull)
   }
 
   /**
@@ -557,7 +690,7 @@ package object model {
   /**
    * Text search options for the [[Filters]] text helper
    *
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/text \$text]]
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/text \$text]]
    * @since 1.1
    */
   type TextSearchOptions = com.mongodb.client.model.TextSearchOptions
@@ -631,6 +764,32 @@ package object model {
      */
     def apply(filter: Bson, update: Bson, updateOptions: UpdateOptions): UpdateManyModel[Nothing] =
       new com.mongodb.client.model.UpdateManyModel(filter, update, updateOptions)
+
+    /**
+     * Construct a new instance.
+     *
+     * @param filter a document describing the query filter.
+     * @param update a pipeline describing the update, which may not be null.
+     * @return the new UpdateManyModel
+     * @note Requires MongoDB 4.2 or greater
+     * @since 4.7
+     */
+    def apply(filter: Bson, update: Seq[Bson]): UpdateManyModel[Nothing] =
+      new com.mongodb.client.model.UpdateManyModel(filter, update.asJava)
+
+    /**
+     * Construct a new instance.
+     *
+     * @param filter a document describing the query filter.
+     * @param update a pipeline describing the update, which may not be null.
+     * @param updateOptions the options to apply
+     * @return the new UpdateManyModel
+     * @note Requires MongoDB 4.2 or greater
+     * @since 4.7
+     *
+     */
+    def apply(filter: Bson, update: Seq[Bson], updateOptions: UpdateOptions): UpdateManyModel[Nothing] =
+      new com.mongodb.client.model.UpdateManyModel(filter, update.asJava, updateOptions)
   }
 
   /**
@@ -680,6 +839,32 @@ package object model {
      */
     def apply(filter: Bson, update: Bson, updateOptions: UpdateOptions): UpdateOneModel[Nothing] =
       new com.mongodb.client.model.UpdateOneModel(filter, update, updateOptions)
+
+    /**
+     * Construct a new instance.
+     *
+     * @param filter a document describing the query filter.
+     * @param update a pipeline describing the update, which may not be null.
+     * @return the new UpdateOneModel
+     * @note Requires MongoDB 4.2 or greater
+     * @since 4.7
+     */
+    def apply(filter: Bson, update: Seq[Bson]): UpdateOneModel[Nothing] =
+      new com.mongodb.client.model.UpdateOneModel(filter, update.asJava)
+
+    /**
+     * Construct a new instance.
+     *
+     * @param filter a document describing the query filter.
+     * @param update a pipeline describing the update, which may not be null.
+     * @param updateOptions the options to apply
+     * @return the new UpdateOneModel
+     * @note Requires MongoDB 4.2 or greater
+     * @since 4.7
+     *
+     */
+    def apply(filter: Bson, update: Seq[Bson], updateOptions: UpdateOptions): UpdateOneModel[Nothing] =
+      new com.mongodb.client.model.UpdateOneModel(filter, update.asJava, updateOptions)
   }
 
   /**
@@ -751,6 +936,62 @@ package object model {
       new com.mongodb.client.model.Variable[TExpression](name, value)
 
   }
+
+  /**
+   * Units for specifying time-based values.
+   *
+   * @see [[Windows]]
+   * @see [[WindowOutputFields]]
+   * @see `org.mongodb.scala.model.densify.DensifyRange`
+   * @since 4.3
+   * @note Requires MongoDB 5.0 or greater.
+   */
+  object MongoTimeUnit {
+
+    val YEAR = JMongoTimeUnit.YEAR
+
+    val QUARTER = JMongoTimeUnit.QUARTER
+
+    val MONTH = JMongoTimeUnit.MONTH
+
+    val WEEK = JMongoTimeUnit.WEEK
+
+    val DAY = JMongoTimeUnit.DAY
+
+    val HOUR = JMongoTimeUnit.HOUR
+
+    val MINUTE = JMongoTimeUnit.MINUTE
+
+    val SECOND = JMongoTimeUnit.SECOND
+
+    val MILLISECOND = JMongoTimeUnit.MILLISECOND
+  }
+
+  /**
+   * A subset of documents within a partition in the `Aggregates.setWindowFields` pipeline stage
+   * of an aggregation pipeline (see `partitionBy` in `Aggregates.setWindowFields`).
+   *
+   * @see [[Windows]]
+   * @since 4.3
+   */
+  type Window = com.mongodb.client.model.Window
+
+  /**
+   * The core part of the `Aggregates.setWindowFields` pipeline stage of an aggregation pipeline.
+   * A triple of a window function, a [[Window window]] and a path to a field to be computed by the window function over the window.
+   *
+   * @see [[WindowOutputFields]]
+   * @since 4.3
+   */
+  type WindowOutputField = com.mongodb.client.model.WindowOutputField
+
+  type GeoNearOptions = com.mongodb.client.model.GeoNearOptions
+
+  /**
+   * @see `QuantileMethod.approximate()`
+   */
+  @Sealed
+  type ApproximateQuantileMethod = com.mongodb.client.model.ApproximateQuantileMethod
 }
 
 // scalastyle:on number.of.methods number.of.types

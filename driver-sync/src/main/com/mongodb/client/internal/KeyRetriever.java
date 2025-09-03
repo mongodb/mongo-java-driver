@@ -18,35 +18,34 @@ package com.mongodb.client.internal;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.internal.time.Timeout;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
-import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.client.internal.TimeoutHelper.collectionWithTimeout;
 
-class KeyRetriever implements Closeable {
-    private final SimpleMongoClient client;
-    private final boolean ownsClient;
+class KeyRetriever {
+    private static final String TIMEOUT_ERROR_MESSAGE = "Key retrieval exceeded the timeout limit.";
+    private final MongoClient client;
     private final MongoNamespace namespace;
 
-    KeyRetriever(final SimpleMongoClient client, final boolean ownsClient, final MongoNamespace namespace) {
+    KeyRetriever(final MongoClient client, final MongoNamespace namespace) {
         this.client = notNull("client", client);
-        this.ownsClient = ownsClient;
         this.namespace = notNull("namespace", namespace);
     }
 
-    public List<BsonDocument> find(final BsonDocument keyFilter) {
-        return client.getDatabase(namespace.getDatabaseName()).getCollection(namespace.getCollectionName(), BsonDocument.class)
-                .withReadConcern(ReadConcern.MAJORITY)
-                .find(keyFilter).into(new ArrayList<BsonDocument>());
-    }
+    public List<BsonDocument> find(final BsonDocument keyFilter, @Nullable final Timeout operationTimeout) {
+        MongoCollection<BsonDocument> collection = client.getDatabase(namespace.getDatabaseName())
+                .getCollection(namespace.getCollectionName(), BsonDocument.class);
 
-    @Override
-    public void close() {
-        if (ownsClient) {
-            client.close();
-        }
+        return collectionWithTimeout(collection, TIMEOUT_ERROR_MESSAGE, operationTimeout)
+                .withReadConcern(ReadConcern.MAJORITY)
+                .find(keyFilter).into(new ArrayList<>());
     }
 }

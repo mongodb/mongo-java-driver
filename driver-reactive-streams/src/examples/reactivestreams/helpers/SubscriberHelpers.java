@@ -33,7 +33,6 @@
 
 package reactivestreams.helpers;
 
-import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
 import org.bson.Document;
 import org.reactivestreams.Subscriber;
@@ -45,7 +44,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import static java.lang.String.format;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 
 /**
  *  Subscriber helper implementations for the Quick Tour.
@@ -149,6 +148,17 @@ public final class SubscriberHelpers {
             return await(timeout, unit).getReceived();
         }
 
+
+        /**
+         * Get the first received element.
+         *
+         * @return the first received element
+         */
+        public T first() {
+            List<T> received = await().getReceived();
+            return received.size() > 0 ? received.get(0) : null;
+        }
+
         /**
          * Await completion or error
          *
@@ -172,7 +182,7 @@ public final class SubscriberHelpers {
                     throw new MongoTimeoutException("Publisher onComplete timed out");
                 }
             } catch (InterruptedException e) {
-                throw new MongoInterruptedException("Interrupted waiting for observeration", e);
+                throw interruptAndCreateMongoInterruptedException("Interrupted waiting for observeration", e);
             }
             if (!errors.isEmpty()) {
                 throw errors.get(0);
@@ -214,7 +224,7 @@ public final class SubscriberHelpers {
 
         @Override
         public void onComplete() {
-            System.out.println(format(message, getReceived()));
+            System.out.printf((message) + "%n", getReceived());
             super.onComplete();
         }
     }

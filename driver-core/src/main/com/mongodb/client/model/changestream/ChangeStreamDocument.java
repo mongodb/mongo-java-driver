@@ -17,18 +17,20 @@
 package com.mongodb.client.model.changestream;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.assertions.Assertions;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonDateTime;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
-import org.bson.BsonString;
 import org.bson.BsonTimestamp;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonExtraElements;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 import org.bson.codecs.pojo.annotations.BsonProperty;
+
+import java.util.Objects;
 
 /**
  * Represents the {@code $changeStream} aggregation output document.
@@ -44,14 +46,27 @@ public final class ChangeStreamDocument<TDocument> {
     @BsonId()
     private final BsonDocument resumeToken;
     private final BsonDocument namespaceDocument;
+
+    @BsonProperty("nsType")
+    private final String namespaceTypeString;
+    @BsonIgnore
+    private final NamespaceType namespaceType;
     private final BsonDocument destinationNamespaceDocument;
     private final TDocument fullDocument;
+    private final TDocument fullDocumentBeforeChange;
     private final BsonDocument documentKey;
     private final BsonTimestamp clusterTime;
+    @BsonProperty("operationType")
+    private final String operationTypeString;
+    @BsonIgnore
     private final OperationType operationType;
     private final UpdateDescription updateDescription;
     private final BsonInt64 txnNumber;
     private final BsonDocument lsid;
+    private final BsonDateTime wallTime;
+    private final SplitEvent splitEvent;
+    @BsonExtraElements
+    private final BsonDocument extraElements;
 
     /**
      * Creates a new instance
@@ -59,43 +74,55 @@ public final class ChangeStreamDocument<TDocument> {
      * @param operationType the operation type
      * @param resumeToken the resume token
      * @param namespaceDocument the BsonDocument representing the namespace
+     * @param namespaceType the namespace type
      * @param destinationNamespaceDocument the BsonDocument representing the destinatation namespace
      * @param fullDocument the full document
+     * @param fullDocumentBeforeChange the full document before change
      * @param documentKey a document containing the _id of the changed document
      * @param clusterTime the cluster time at which the change occured
      * @param updateDescription the update description
      * @param txnNumber the transaction number
      * @param lsid the identifier for the session associated with the transaction
+     * @param wallTime the wall time of the server at the moment the change occurred
+     * @param splitEvent the split event
+     * @param extraElements any extra elements that are part of the change stream document but not otherwise mapped to fields
      *
-     * @since 3.11
+     * @since 4.11
      */
     @BsonCreator
-    public ChangeStreamDocument(@BsonProperty("operationType") final OperationType operationType,
-                                @BsonProperty("resumeToken") final BsonDocument resumeToken,
-                                @Nullable @BsonProperty("ns") final BsonDocument namespaceDocument,
-                                @Nullable @BsonProperty("to") final BsonDocument destinationNamespaceDocument,
-                                @Nullable @BsonProperty("fullDocument") final TDocument fullDocument,
-                                @Nullable @BsonProperty("documentKey") final BsonDocument documentKey,
-                                @Nullable @BsonProperty("clusterTime") final BsonTimestamp clusterTime,
-                                @Nullable @BsonProperty("updateDescription") final UpdateDescription updateDescription,
-                                @Nullable @BsonProperty("txnNumber") final BsonInt64 txnNumber,
-                                @Nullable @BsonProperty("lsid") final BsonDocument lsid) {
+    public ChangeStreamDocument(
+            @Nullable @BsonProperty("operationType") final String operationType,
+            @BsonProperty("resumeToken") final BsonDocument resumeToken,
+            @Nullable @BsonProperty("ns") final BsonDocument namespaceDocument,
+            @Nullable @BsonProperty("nsType") final String  namespaceType,
+            @Nullable @BsonProperty("to") final BsonDocument destinationNamespaceDocument,
+            @Nullable @BsonProperty("fullDocument") final TDocument fullDocument,
+            @Nullable @BsonProperty("fullDocumentBeforeChange") final TDocument fullDocumentBeforeChange,
+            @Nullable @BsonProperty("documentKey") final BsonDocument documentKey,
+            @Nullable @BsonProperty("clusterTime") final BsonTimestamp clusterTime,
+            @Nullable @BsonProperty("updateDescription") final UpdateDescription updateDescription,
+            @Nullable @BsonProperty("txnNumber") final BsonInt64 txnNumber,
+            @Nullable @BsonProperty("lsid") final BsonDocument lsid,
+            @Nullable @BsonProperty("wallTime") final BsonDateTime wallTime,
+            @Nullable @BsonProperty("splitEvent") final SplitEvent splitEvent,
+            @Nullable @BsonProperty final BsonDocument extraElements) {
         this.resumeToken = resumeToken;
         this.namespaceDocument = namespaceDocument;
+        this.namespaceTypeString = namespaceType;
+        this.namespaceType = namespaceTypeString == null ? null : NamespaceType.fromString(namespaceType);
         this.destinationNamespaceDocument = destinationNamespaceDocument;
+        this.fullDocumentBeforeChange = fullDocumentBeforeChange;
         this.documentKey = documentKey;
         this.fullDocument = fullDocument;
         this.clusterTime = clusterTime;
-        this.operationType = operationType;
+        this.operationTypeString = operationType;
+        this.operationType = operationTypeString == null ? null : OperationType.fromString(operationTypeString);
         this.updateDescription = updateDescription;
         this.txnNumber = txnNumber;
         this.lsid = lsid;
-    }
-
-    private static BsonDocument namespaceToDocument(final MongoNamespace namespace) {
-        Assertions.notNull("namespace", namespace);
-        return new BsonDocument("db", new BsonString(namespace.getDatabaseName()))
-                .append("coll", new BsonString(namespace.getCollectionName()));
+        this.wallTime = wallTime;
+        this.splitEvent = splitEvent;
+        this.extraElements = extraElements;
     }
 
     /**
@@ -109,13 +136,15 @@ public final class ChangeStreamDocument<TDocument> {
 
     /**
      * Returns the namespace, derived from the "ns" field in a change stream document.
-     *
+     * <p>
      * The invalidate operation type does include a MongoNamespace in the ChangeStreamDocument response. The
      * dropDatabase operation type includes a MongoNamespace, but does not include a collection name as part
      * of the namespace.
      *
      * @return the namespace. If the namespaceDocument is null or if it is missing either the 'db' or 'coll' keys,
      * then this will return null.
+     * @see #getNamespaceType()
+     * @see #getNamespaceTypeString()
      */
     @BsonIgnore
     @Nullable
@@ -131,18 +160,54 @@ public final class ChangeStreamDocument<TDocument> {
     }
 
     /**
-     * Returns the namespace cocument, derived from the "ns" field in a change stream document.
-     *
+     * Returns the namespace document, derived from the "ns" field in a change stream document.
+     * <p>
      * The namespace document is a BsonDocument containing the values associated with a MongoNamespace. The
      * 'db' key refers to the database name and the 'coll' key refers to the collection name.
      *
      * @return the namespaceDocument
      * @since 3.8
+     * @see #getNamespaceType()
+     * @see #getNamespaceTypeString()
      */
     @BsonProperty("ns")
     @Nullable
     public BsonDocument getNamespaceDocument() {
         return namespaceDocument;
+    }
+
+    /**
+     * Returns the type of the newly created namespace object as a String, derived from the "nsType" field in a change stream document.
+     * <p>
+     * This method is useful when using a driver release that has not yet been updated to include a newer namespace type in the
+     * {@link NamespaceType} enum.  In that case, {@link #getNamespaceType()} will return {@link NamespaceType#OTHER} and this method can
+     * be used to retrieve the actual namespace type as a string value.
+     * <p>
+     * May return null only if <code>$changeStreamSplitLargeEvent</code> is used.
+     *
+     * @return the namespace type as a string
+     * @since 5.6
+     * @mongodb.server.release 8.1
+     * @see #getNamespaceType()
+     * @see #getNamespaceDocument()
+     */
+    @Nullable
+    public String getNamespaceTypeString() {
+        return namespaceTypeString;
+    }
+
+    /**
+     * Returns the type of the newly created namespace object, derived from the "nsType" field in a change stream document.
+     *
+     * @return the namespace type.
+     * @since 5.6
+     * @mongodb.server.release 8.1
+     * @see #getNamespaceTypeString()
+     * @see #getNamespaceDocument()
+     */
+    @Nullable
+    public NamespaceType getNamespaceType() {
+        return namespaceType;
     }
 
     /**
@@ -203,13 +268,55 @@ public final class ChangeStreamDocument<TDocument> {
     }
 
     /**
-     * Returns the fullDocument
+     * Returns the fullDocument.
+     *
+     * <p>
+     * Always present for operations of type {@link OperationType#INSERT} and {@link OperationType#REPLACE}. Also present for operations
+     * of type {@link OperationType#UPDATE} if the user has specified {@link FullDocument#UPDATE_LOOKUP} for the {@code fullDocument}
+     * option when creating the change stream.
+     * </p>
+     *
+     * <p>
+     * For operations of type {@link OperationType#INSERT} and {@link OperationType#REPLACE}, the value will contain the document being
+     * inserted or the new version of the document that is replacing the existing document, respectively.
+     * </p>
+     *
+     * <p>
+     * For operations of type {@link OperationType#UPDATE}, the value will contain a copy of the full version of the document from some
+     * point after the update occurred. If the document was deleted since the updated happened, the value may be null.
+     * </p>
+     *
+     * <p>
+     * Contains the point-in-time post-image of the modified document if the post-image is available and either
+     * {@link FullDocument#REQUIRED} or {@link FullDocument#WHEN_AVAILABLE} was specified for the {@code fullDocument} option when
+     * creating the change stream. A post-image is always available for {@link OperationType#INSERT} and {@link OperationType#REPLACE}
+     * events.
+     * </p>
      *
      * @return the fullDocument
      */
     @Nullable
     public TDocument getFullDocument() {
         return fullDocument;
+    }
+
+    /**
+     * Returns the fullDocument before change
+     *
+     * <p>
+     * Contains the pre-image of the modified or deleted document if the pre-image is available for the change event and either
+     * {@link FullDocumentBeforeChange#REQUIRED} or {@link FullDocumentBeforeChange#WHEN_AVAILABLE} was specified for the
+     * {@code fullDocumentBeforeChange} option when creating the change stream. If {@link FullDocumentBeforeChange#WHEN_AVAILABLE} was
+     * specified but the pre-image is unavailable, the value will be null.
+     * </p>
+     *
+     * @return the fulDocument before change
+     * @since 4.7
+     * @mongodb.server.release 6.0
+     */
+    @Nullable
+    public TDocument getFullDocumentBeforeChange() {
+        return fullDocumentBeforeChange;
     }
 
     /**
@@ -240,11 +347,33 @@ public final class ChangeStreamDocument<TDocument> {
         return clusterTime;
     }
 
+
     /**
-     * Returns the operationType
+     * Returns the operation type as a string.
+     * <p>
+     * This method is useful when using a driver release that has not yet been updated to include a newer operation type in the
+     * {@link OperationType} enum.  In that case, {@link #getOperationType()} will return {@link OperationType#OTHER} and this method can
+     * be used to retrieve the actual operation type as a string value.
+     * <p>
+     * May return null only if <code>$changeStreamSplitLargeEvent</code> is used.
+     *
+     * @return the operation type as a string
+     * @since 4.6
+     * @see #getOperationType()
+     */
+    @Nullable
+    public String getOperationTypeString() {
+        return operationTypeString;
+    }
+
+    /**
+     * Returns the operationType.
+     * <p>
+     * May return null only if <code>$changeStreamSplitLargeEvent</code> is used.
      *
      * @return the operationType
      */
+    @Nullable
     public OperationType getOperationType() {
         return operationType;
     }
@@ -284,6 +413,41 @@ public final class ChangeStreamDocument<TDocument> {
     }
 
     /**
+     * The wall time of the server at the moment the change occurred.
+     *
+     * @return The wall time of the server at the moment the change occurred.
+     * @since 4.7
+     * @mongodb.server.release 6.0
+     */
+    @Nullable
+    public BsonDateTime getWallTime() {
+        return wallTime;
+    }
+
+    /**
+     * The split event.
+     *
+     * @return the split event
+     * @since 4.11
+     * @mongodb.server.release 6.0.9
+     */
+    @Nullable
+    public SplitEvent getSplitEvent() {
+        return splitEvent;
+    }
+
+    /**
+     * Any extra elements that are part of the change stream document but not otherwise mapped to fields.
+     *
+     * @return Any extra elements that are part of the change stream document but not otherwise mapped to fields.
+     * @since 4.7
+     */
+    @Nullable
+    public BsonDocument getExtraElements() {
+        return extraElements;
+    }
+
+    /**
      * Creates the codec for the specific ChangeStreamOutput type
      *
      * @param fullDocumentClass the class to use to represent the fullDocument
@@ -293,7 +457,7 @@ public final class ChangeStreamDocument<TDocument> {
      */
     public static <TFullDocument> Codec<ChangeStreamDocument<TFullDocument>> createCodec(final Class<TFullDocument> fullDocumentClass,
                                                                                          final CodecRegistry codecRegistry) {
-        return new ChangeStreamDocumentCodec<TFullDocument>(fullDocumentClass, codecRegistry);
+        return new ChangeStreamDocumentCodec<>(fullDocumentClass, codecRegistry);
     }
 
     @Override
@@ -304,73 +468,60 @@ public final class ChangeStreamDocument<TDocument> {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
         ChangeStreamDocument<?> that = (ChangeStreamDocument<?>) o;
-
-        if (resumeToken != null ? !resumeToken.equals(that.resumeToken) : that.resumeToken != null) {
-            return false;
-        }
-        if (namespaceDocument != null ? !namespaceDocument.equals(that.namespaceDocument) : that.namespaceDocument != null) {
-            return false;
-        }
-        if (destinationNamespaceDocument != null
-                ? !destinationNamespaceDocument.equals(that.destinationNamespaceDocument)
-                : that.destinationNamespaceDocument != null) {
-            return false;
-        }
-        if (fullDocument != null ? !fullDocument.equals(that.fullDocument) : that.fullDocument != null) {
-            return false;
-        }
-        if (documentKey != null ? !documentKey.equals(that.documentKey) : that.documentKey != null) {
-            return false;
-        }
-        if (clusterTime != null ? !clusterTime.equals(that.clusterTime) : that.clusterTime != null) {
-            return false;
-        }
-        if (operationType != that.operationType) {
-            return false;
-        }
-        if (updateDescription != null ? !updateDescription.equals(that.updateDescription) : that.updateDescription != null) {
-            return false;
-        }
-        if (txnNumber != null ? !txnNumber.equals(that.txnNumber) : that.txnNumber != null) {
-            return false;
-        }
-        if (lsid != null ? !lsid.equals(that.lsid) : that.lsid != null) {
-            return false;
-        }
-
-        return true;
+        return Objects.equals(resumeToken, that.resumeToken)
+                && Objects.equals(namespaceDocument, that.namespaceDocument)
+                && Objects.equals(destinationNamespaceDocument, that.destinationNamespaceDocument)
+                && Objects.equals(fullDocument, that.fullDocument)
+                && Objects.equals(fullDocumentBeforeChange, that.fullDocumentBeforeChange)
+                && Objects.equals(documentKey, that.documentKey)
+                && Objects.equals(clusterTime, that.clusterTime)
+                && Objects.equals(operationTypeString, that.operationTypeString)
+                // operationType covered by operationTypeString
+                && Objects.equals(updateDescription, that.updateDescription)
+                && Objects.equals(txnNumber, that.txnNumber)
+                && Objects.equals(lsid, that.lsid)
+                && Objects.equals(wallTime, that.wallTime)
+                && Objects.equals(splitEvent, that.splitEvent)
+                && Objects.equals(extraElements, that.extraElements);
     }
 
     @Override
     public int hashCode() {
-        int result = resumeToken != null ? resumeToken.hashCode() : 0;
-        result = 31 * result + (namespaceDocument != null ? namespaceDocument.hashCode() : 0);
-        result = 31 * result + (destinationNamespaceDocument != null ? destinationNamespaceDocument.hashCode() : 0);
-        result = 31 * result + (fullDocument != null ? fullDocument.hashCode() : 0);
-        result = 31 * result + (documentKey != null ? documentKey.hashCode() : 0);
-        result = 31 * result + (clusterTime != null ? clusterTime.hashCode() : 0);
-        result = 31 * result + (operationType != null ? operationType.hashCode() : 0);
-        result = 31 * result + (updateDescription != null ? updateDescription.hashCode() : 0);
-        result = 31 * result + (txnNumber != null ? txnNumber.hashCode() : 0);
-        result = 31 * result + (lsid != null ? lsid.hashCode() : 0);
-        return result;
+        return Objects.hash(
+                resumeToken,
+                namespaceDocument,
+                destinationNamespaceDocument,
+                fullDocument,
+                fullDocumentBeforeChange,
+                documentKey,
+                clusterTime,
+                operationTypeString,
+                // operationType covered by operationTypeString
+                updateDescription,
+                txnNumber,
+                lsid,
+                wallTime,
+                splitEvent,
+                extraElements);
     }
 
     @Override
     public String toString() {
         return "ChangeStreamDocument{"
-                + " operationType=" + operationType
+                + " operationType=" + operationTypeString
                 + ", resumeToken=" + resumeToken
                 + ", namespace=" + getNamespace()
                 + ", destinationNamespace=" + getDestinationNamespace()
                 + ", fullDocument=" + fullDocument
+                + ", fullDocumentBeforeChange=" + fullDocumentBeforeChange
                 + ", documentKey=" + documentKey
                 + ", clusterTime=" + clusterTime
                 + ", updateDescription=" + updateDescription
                 + ", txnNumber=" + txnNumber
                 + ", lsid=" + lsid
+                + ", splitEvent=" + splitEvent
+                + ", wallTime=" + wallTime
                 + "}";
     }
 }

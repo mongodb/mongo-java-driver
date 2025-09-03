@@ -16,6 +16,8 @@
 
 package org.bson.codecs.pojo;
 
+import java.util.SortedSet;
+
 import org.bson.codecs.pojo.entities.CollectionNestedPojoModel;
 import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
@@ -35,24 +37,24 @@ import org.bson.codecs.pojo.entities.ShapeModelAbstract;
 import org.bson.codecs.pojo.entities.ShapeModelCircle;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
+import org.bson.codecs.pojo.entities.SimpleWithStaticModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationInheritedModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationModel;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class ClassModelTest {
 
     @Test
-    @SuppressWarnings("rawtypes")
     public void testSimpleGenericsModel() {
         ClassModel<?> classModel = ClassModel.builder(SimpleGenericsModel.class).build();
 
@@ -80,6 +82,7 @@ public final class ClassModelTest {
         TypeData<List> listList = createBuilder(List.class).addTypeParameter(list).build();
         TypeData<Set> set = createBuilder(Set.class).addTypeParameter(simple).build();
         TypeData<Set> setSet = createBuilder(Set.class).addTypeParameter(set).build();
+        TypeData<SortedSet> sortedSet = createBuilder(SortedSet.class).addTypeParameter(simple).build();
         TypeData<Map> map = createBuilder(Map.class).addTypeParameter(string).addTypeParameter(simple).build();
         TypeData<List> listMap = createBuilder(List.class).addTypeParameter(map).build();
         TypeData<Map> mapMap = createBuilder(Map.class).addTypeParameter(string).addTypeParameter(map).build();
@@ -91,12 +94,14 @@ public final class ClassModelTest {
 
         ClassModel<?> classModel = ClassModel.builder(CollectionNestedPojoModel.class).build();
 
-        assertEquals(12, classModel.getPropertyModels().size());
+        assertEquals(13, classModel.getPropertyModels().size());
         assertEquals(classModel.getPropertyModel("listSimple").getTypeData(), list);
         assertEquals(classModel.getPropertyModel("listListSimple").getTypeData(), listList);
 
         assertEquals(classModel.getPropertyModel("setSimple").getTypeData(), set);
         assertEquals(classModel.getPropertyModel("setSetSimple").getTypeData(), setSet);
+
+        assertEquals(classModel.getPropertyModel("sortedSetSimple").getTypeData(), sortedSet);
 
         assertEquals(classModel.getPropertyModel("mapSimple").getTypeData(), map);
         assertEquals(classModel.getPropertyModel("mapMapSimple").getTypeData(), mapMap);
@@ -111,7 +116,6 @@ public final class ClassModelTest {
     }
 
     @Test
-    @SuppressWarnings("rawtypes")
     public void testWildcardModel() {
         ClassModel<?> classModel = ClassModel.builder(ConcreteAndNestedAbstractInterfaceModel.class).build();
 
@@ -131,7 +135,6 @@ public final class ClassModelTest {
     }
 
     @Test
-    @SuppressWarnings("rawtypes")
     public void testMappingConcreteGenericTypes() {
         ClassModel<?> classModel = ClassModel.builder(NestedGenericHolderMapModel.class).build();
 
@@ -202,8 +205,7 @@ public final class ClassModelTest {
         ClassModel<?> classModel = ClassModel.builder(ListListGenericExtendedModel.class).build();
 
         assertEquals(1, classModel.getPropertyModels().size());
-        assertEquals(createBuilder(List.class).addTypeParameter(createTypeData(List.class, Integer.class)).build(),
-                classModel.getPropertyModel("values").getTypeData());
+        assertEquals(createBuilder(List.class).addTypeParameter(createTypeData(List.class, Integer.class)).build(), classModel.getPropertyModel("values").getTypeData());
     }
 
     @Test
@@ -220,8 +222,7 @@ public final class ClassModelTest {
 
         assertEquals(1, classModel.getPropertyModels().size());
         assertEquals(createBuilder(Map.class).addTypeParameter(createTypeData(String.class))
-                        .addTypeParameter(createTypeData(Map.class, String.class, Integer.class)).build(),
-                classModel.getPropertyModel("values").getTypeData());
+                        .addTypeParameter(createTypeData(Map.class, String.class, Integer.class)).build(), classModel.getPropertyModel("values").getTypeData());
     }
 
     @Test
@@ -229,8 +230,7 @@ public final class ClassModelTest {
         ClassModel<?> classModel = ClassModel.builder(ListMapGenericExtendedModel.class).build();
 
         assertEquals(1, classModel.getPropertyModels().size());
-        assertEquals(createBuilder(List.class).addTypeParameter(createTypeData(Map.class, String.class, Integer.class)).build(),
-                classModel.getPropertyModel("values").getTypeData());
+        assertEquals(createBuilder(List.class).addTypeParameter(createTypeData(Map.class, String.class, Integer.class)).build(), classModel.getPropertyModel("values").getTypeData());
     }
 
 
@@ -241,8 +241,7 @@ public final class ClassModelTest {
         assertEquals(1, classModel.getPropertyModels().size());
         assertEquals(createBuilder(Map.class)
                         .addTypeParameter(createTypeData(String.class))
-                        .addTypeParameter(createTypeData(List.class, Integer.class)).build(),
-                classModel.getPropertyModel("values").getTypeData());
+                        .addTypeParameter(createTypeData(List.class, Integer.class)).build(), classModel.getPropertyModel("values").getTypeData());
     }
 
 
@@ -255,6 +254,16 @@ public final class ClassModelTest {
         assertEquals(createTypeData(Double.class), classModel.getPropertyModel("level1").getTypeData());
         assertEquals(createTypeData(List.class, Integer.class), classModel.getPropertyModel("level2").getTypeData());
         assertEquals(createTypeData(Map.class, String.class, String.class), classModel.getPropertyModel("level3").getTypeData());
+    }
+
+    @Test
+    public void testSimpleWithStaticModel() {
+        ClassModel<?> classModel = ClassModel.builder(SimpleWithStaticModel.class).build();
+
+        assertEquals(2, classModel.getPropertyModels().size());
+        assertEquals(createTypeData(Integer.class), classModel.getPropertyModel("integerField").getTypeData());
+        assertEquals(createTypeData(String.class), classModel.getPropertyModel("stringField").getTypeData());
+
     }
 
     <T> TypeData.Builder<T> createBuilder(final Class<T> clazz, final Class<?>... types) {

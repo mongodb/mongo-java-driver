@@ -19,12 +19,14 @@ package com.mongodb;
 import com.mongodb.lang.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * An exception that represents all errors associated with a bulk write operation.
  *
  * @mongodb.driver.manual reference/method/BulkWriteResult/#BulkWriteResult.writeErrors BulkWriteResult.writeErrors
  * @since 2.12
+ * @serial exclude
  */
 public class BulkWriteException extends MongoServerException {
     private static final long serialVersionUID = -1505950263354313025L;
@@ -44,7 +46,7 @@ public class BulkWriteException extends MongoServerException {
      */
     BulkWriteException(final BulkWriteResult writeResult, final List<BulkWriteError> writeErrors,
                        @Nullable final WriteConcernError writeConcernError, final ServerAddress serverAddress) {
-        super("Bulk write operation error on server " + serverAddress + ". "
+        super("Bulk write operation error on MongoDB server " + serverAddress + ". "
               + (writeErrors.isEmpty() ? "" : "Write errors: " + writeErrors + ". ")
               + (writeConcernError == null ? "" : "Write concern error: " + writeConcernError + ". "), serverAddress);
         this.writeResult = writeResult;
@@ -98,7 +100,7 @@ public class BulkWriteException extends MongoServerException {
         if (!serverAddress.equals(that.serverAddress)) {
             return false;
         }
-        if (writeConcernError != null ? !writeConcernError.equals(that.writeConcernError) : that.writeConcernError != null) {
+        if (!Objects.equals(writeConcernError, that.writeConcernError)) {
             return false;
         }
         if (!writeResult.equals(that.writeResult)) {

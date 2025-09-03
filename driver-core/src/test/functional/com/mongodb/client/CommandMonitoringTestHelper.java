@@ -16,7 +16,6 @@
 
 package com.mongodb.client;
 
-import com.mongodb.ClusterFixture;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
@@ -30,6 +29,7 @@ import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
+import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.BsonValueCodecProvider;
@@ -67,7 +67,7 @@ public final class CommandMonitoringTestHelper {
 
     public static List<CommandEvent> getExpectedEvents(final BsonArray expectedEventDocuments, final String databaseName,
                                                        final BsonDocument operation) {
-        List<CommandEvent> expectedEvents = new ArrayList<CommandEvent>(expectedEventDocuments.size());
+        List<CommandEvent> expectedEvents = new ArrayList<>(expectedEventDocuments.size());
         for (BsonValue expectedEventDocument : expectedEventDocuments) {
             BsonDocument curExpectedEventDocument = expectedEventDocument.asDocument();
             String eventType = curExpectedEventDocument.keySet().iterator().next();
@@ -90,20 +90,17 @@ public final class CommandMonitoringTestHelper {
                 }
 
                 // Not clear whether these global fields should be included, but also not clear how to efficiently exclude them
-                if (ClusterFixture.serverVersionAtLeast(3, 6)) {
-                    commandDocument.put("$db", new BsonString(actualDatabaseName));
-                    if (operation != null && operation.containsKey("read_preference")) {
-                        commandDocument.put("$readPreference", operation.getDocument("read_preference"));
-                    }
+                commandDocument.put("$db", new BsonString(actualDatabaseName));
+                if (operation != null && operation.containsKey("read_preference")) {
+                    commandDocument.put("$readPreference", operation.getDocument("read_preference"));
                 }
-                commandEvent = new CommandStartedEvent(1, null, actualDatabaseName, commandName,
+                commandEvent = new CommandStartedEvent(null, 1, 1, null, actualDatabaseName, commandName,
                         commandDocument);
             } else if (eventType.equals("command_succeeded_event")) {
                 BsonDocument replyDocument = eventDescriptionDocument.get("reply").asDocument();
-                commandEvent = new CommandSucceededEvent(1, null, commandName, replyDocument, 1);
-
+                commandEvent = new CommandSucceededEvent(null, 1, 1, null, null, commandName, replyDocument, 1);
             } else if (eventType.equals("command_failed_event")) {
-                commandEvent = new CommandFailedEvent(1, null, commandName, 1, null);
+                commandEvent = new CommandFailedEvent(null, 1, 1, null, null, commandName, 1, null);
             } else {
                 throw new UnsupportedOperationException("Unsupported command event type: " + eventType);
             }
@@ -121,11 +118,11 @@ public final class CommandMonitoringTestHelper {
         return asList("insert", "update", "delete").contains(commandName);
     }
 
-    public static void assertEventsEquality(final List<CommandEvent> expectedEvents, final List<CommandEvent> events) {
+    public static void assertEventsEquality(final List<CommandEvent> expectedEvents, final List<? extends CommandEvent> events) {
         assertEventsEquality(expectedEvents, events, null);
     }
 
-    public static void assertEventsEquality(final List<CommandEvent> expectedEvents, final List<CommandEvent> events,
+    public static void assertEventsEquality(final List<CommandEvent> expectedEvents, final List<? extends CommandEvent> events,
                                             @Nullable final Map<String, BsonDocument> lsidMap) {
         assertEquals(expectedEvents.size(), events.size());
 
@@ -217,40 +214,47 @@ public final class CommandMonitoringTestHelper {
                 response.remove("nModified");
             }
         }
-        return new CommandSucceededEvent(actual.getRequestId(), actual.getConnectionDescription(), actual.getCommandName(), response,
+        return new CommandSucceededEvent(actual.getRequestContext(), actual.getOperationId(), actual.getRequestId(),
+                actual.getConnectionDescription(), actual.getDatabaseName(), actual.getCommandName(), response,
                 actual.getElapsedTime(TimeUnit.NANOSECONDS));
     }
 
     private static CommandStartedEvent massageActualCommandStartedEvent(final CommandStartedEvent event,
                                                                         @Nullable final Map<String, BsonDocument> lsidMap,
                                                                         final CommandStartedEvent expectedCommandStartedEvent) {
-        BsonDocument command = getWritableCloneOfCommand(event.getCommand());
+        BsonDocument actualCommand = getWritableCloneOfCommand(event.getCommand());
+        BsonDocument expectedCommand = expectedCommandStartedEvent.getCommand();
 
-        massageCommand(event, command);
+        massageCommand(event, actualCommand);
 
-        if (command.containsKey("readConcern") && (command.getDocument("readConcern").containsKey("afterClusterTime"))) {
-            command.getDocument("readConcern").put("afterClusterTime", new BsonInt32(42));
+        if (actualCommand.containsKey("readConcern") && (actualCommand.getDocument("readConcern").containsKey("afterClusterTime"))) {
+            actualCommand.getDocument("readConcern").put("afterClusterTime", new BsonInt32(42));
         }
-        // Tests expect maxTimeMS to be int32, but Java API requires maxTime to be a long.  This massage seems preferable to casting
-        if (command.containsKey("maxTimeMS")) {
-            command.put("maxTimeMS", new BsonInt32(command.getNumber("maxTimeMS").intValue()));
+        if (actualCommand.containsKey("maxTimeMS")  && !isExpectedMaxTimeMsLong(expectedCommand)) {
+            // Some tests expect maxTimeMS to be int32, but Java API requires maxTime to be a long.  This massage seems preferable to casting
+            actualCommand.put("maxTimeMS", new BsonInt32(actualCommand.getNumber("maxTimeMS").intValue()));
         }
         // Tests do not expect the "ns" field in a result after running createIndex.
-        if (command.containsKey("createIndexes") && command.containsKey("indexes")) {
-            massageCommandIndexes(command.getArray("indexes"));
+        if (actualCommand.containsKey("createIndexes") && actualCommand.containsKey("indexes")) {
+            massageCommandIndexes(actualCommand.getArray("indexes"));
         }
-        massageActualCommand(command, expectedCommandStartedEvent.getCommand());
+        massageActualCommand(actualCommand, expectedCommand);
 
-        return new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
-                event.getCommandName(), command);
+        return new CommandStartedEvent(event.getRequestContext(), event.getOperationId(), event.getRequestId(),
+                event.getConnectionDescription(), event.getDatabaseName(), event.getCommandName(), actualCommand);
+    }
+
+    private static boolean isExpectedMaxTimeMsLong(final BsonDocument expectedCommand) {
+        if (expectedCommand.containsKey("maxTimeMS")) {
+            return expectedCommand.get("maxTimeMS").getBsonType() == BsonType.INT64;
+        }
+        return false;
     }
 
     private static void massageCommandIndexes(final BsonArray indexes) {
         for (BsonValue indexDocument : indexes) {
             BsonDocument index = indexDocument.asDocument();
-            if (index.containsKey("ns")) {
-                index.remove("ns");
-            }
+            index.remove("ns");
         }
     }
 
@@ -293,56 +297,38 @@ public final class CommandMonitoringTestHelper {
         BsonDocument command = getWritableCloneOfCommand(event.getCommand());
 
         massageCommand(event, command);
-
+        // The null-treatment below stems from
+        // https://github.com/mongodb/specifications/blob/master/source/transactions/tests/README.rst#null-values
         if (lsidMap == null) {
             command.remove("lsid");
         } else if (command.containsKey("lsid")) {
             command.put("lsid", lsidMap.get(command.getString("lsid").getValue()));
         }
-
-        if (command.containsKey("txnNumber") && command.isNull("txnNumber")) {
-            command.remove("txnNumber");
-        }
-        if (command.containsKey("stmtId") && command.isNull("stmtId")) {
-            command.remove("stmtId");
-        }
-        if (command.containsKey("startTransaction") && command.isNull("startTransaction")) {
-            command.remove("startTransaction");
-        }
-        if (command.containsKey("autocommit") && command.isNull("autocommit")) {
-            command.remove("autocommit");
-        }
-        if (command.containsKey("maxTimeMS") && command.isNull("maxTimeMS")) {
-            command.remove("maxTimeMS");
-        }
-        if (command.containsKey("writeConcern") && command.isNull("writeConcern")) {
-            command.remove("writeConcern");
-        }
-        if (command.containsKey("allowDiskUse") && command.isNull("allowDiskUse")) {
-            command.remove("allowDiskUse");
-        }
-        if (command.containsKey("readConcern")) {
-            if (command.isNull("readConcern")) {
-                command.remove("readConcern");
+        for (String nullableFieldName : new String[] {"txnNumber", "stmtId", "startTransaction", "autocommit", "maxTimeMS", "writeConcern",
+                "allowDiskUse", "readConcern", "encryptedFields"}) {
+            if (command.isNull(nullableFieldName)) {
+                command.remove(nullableFieldName);
             }
         }
-        if (command.containsKey("recoveryToken")) {
-            command.remove("recoveryToken");
+        if (command.containsKey("encryptedFields")) {
+            BsonDocument encryptedFields = command.getDocument("encryptedFields");
+            for (String nullableFieldName : new String[] {"escCollection", "ecocCollection", "eccCollection"}) {
+                if (encryptedFields.isNull(nullableFieldName)) {
+                    encryptedFields.remove(nullableFieldName);
+                }
+            }
         }
-        if (command.containsKey("query")) {
-            command.remove("query");
-        }
+        command.remove("recoveryToken");
+        command.remove("query");
         if (command.containsKey("filter") && command.getDocument("filter").isEmpty()) {
             command.remove("filter");
         }
-        if (command.containsKey("mapReduce")) {
-            command.remove("mapReduce");
-        }
+        command.remove("mapReduce");
 
         replaceTypeAssertionWithActual(command, actualEvent.getCommand());
 
-        return new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
-                event.getCommandName(), command);
+        return new CommandStartedEvent(event.getRequestContext(), event.getOperationId(), event.getRequestId(),
+                event.getConnectionDescription(), event.getDatabaseName(), event.getCommandName(), command);
     }
 
     private static void massageCommand(final CommandStartedEvent event, final BsonDocument command) {

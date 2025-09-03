@@ -19,10 +19,13 @@ package com.mongodb.internal.connection;
 import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoSecurityException;
-import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.ServerApi;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
@@ -30,25 +33,25 @@ import org.bson.BsonString;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
 import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionThreeDotFour;
 
 class X509Authenticator extends Authenticator implements SpeculativeAuthenticator {
     public static final Logger LOGGER = Loggers.getLogger("authenticator");
     private BsonDocument speculativeAuthenticateResponse;
 
-    X509Authenticator(final MongoCredentialWithCache credential) {
-        super(credential);
+    X509Authenticator(final MongoCredentialWithCache credential, final ClusterConnectionMode clusterConnectionMode,
+                      @Nullable final ServerApi serverApi) {
+        super(credential, clusterConnectionMode, serverApi);
     }
 
     @Override
-    void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
+    void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription,
+            final OperationContext operationContext) {
         if (this.speculativeAuthenticateResponse != null) {
             return;
         }
         try {
-            validateUserName(connectionDescription);
             BsonDocument authCommand = getAuthCommand(getMongoCredential().getUserName());
-            executeCommand(getMongoCredential().getSource(), authCommand, connection);
+            executeCommand(getMongoCredential().getSource(), authCommand, getClusterConnectionMode(), getServerApi(), connection, operationContext);
         } catch (MongoCommandException e) {
             throw new MongoSecurityException(getMongoCredential(), "Exception authenticating", e);
         }
@@ -56,22 +59,19 @@ class X509Authenticator extends Authenticator implements SpeculativeAuthenticato
 
     @Override
     void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
-                           final SingleResultCallback<Void> callback) {
+            final OperationContext operationContext, final SingleResultCallback<Void> callback) {
         if (speculativeAuthenticateResponse != null) {
             callback.onResult(null, null);
         } else {
             SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
             try {
-                validateUserName(connectionDescription);
-                executeCommandAsync(getMongoCredential().getSource(), getAuthCommand(getMongoCredential().getUserName()), connection,
-                        new SingleResultCallback<BsonDocument>() {
-                            @Override
-                            public void onResult(final BsonDocument nonceResult, final Throwable t) {
-                                if (t != null) {
-                                    errHandlingCallback.onResult(null, translateThrowable(t));
-                                } else {
-                                    errHandlingCallback.onResult(null, null);
-                                }
+                executeCommandAsync(getMongoCredential().getSource(), getAuthCommand(getMongoCredential().getUserName()),
+                        getClusterConnectionMode(), getServerApi(), connection, operationContext,
+                        (nonceResult, t) -> {
+                            if (t != null) {
+                                errHandlingCallback.onResult(null, translateThrowable(t));
+                            } else {
+                                errHandlingCallback.onResult(null, null);
                             }
                         });
             } catch (Throwable t) {
@@ -95,7 +95,7 @@ class X509Authenticator extends Authenticator implements SpeculativeAuthenticato
         return speculativeAuthenticateResponse;
     }
 
-    private BsonDocument getAuthCommand(final String userName) {
+    private BsonDocument getAuthCommand(@Nullable final String userName) {
         BsonDocument cmd = new BsonDocument();
 
         cmd.put("authenticate", new BsonInt32(1));
@@ -112,13 +112,6 @@ class X509Authenticator extends Authenticator implements SpeculativeAuthenticato
             return new MongoSecurityException(getMongoCredential(), "Exception authenticating", t);
         } else {
             return t;
-        }
-    }
-
-    private void validateUserName(final ConnectionDescription connectionDescription) {
-        if (getMongoCredential().getUserName() == null && serverIsLessThanVersionThreeDotFour(connectionDescription)) {
-            throw new MongoSecurityException(getMongoCredential(), "User name is required for the MONGODB-X509 authentication mechanism "
-                                                                      + "on server versions less than 3.4");
         }
     }
 }

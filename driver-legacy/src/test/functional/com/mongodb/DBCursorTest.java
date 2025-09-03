@@ -18,7 +18,6 @@ package com.mongodb;
 
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -29,12 +28,11 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.isSharded;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
@@ -59,6 +57,27 @@ public class DBCursorTest extends DatabaseTestCase {
         if (cursor != null) {
             cursor.close();
         }
+    }
+
+    @Test
+    public void testAvailable() {
+        cursor.batchSize(3);
+        assertEquals(0, cursor.available());
+
+        cursor.next();
+        assertEquals(2, cursor.available());
+
+        cursor.next();
+        assertEquals(1, cursor.available());
+
+        cursor.next();
+        assertEquals(0, cursor.available());
+
+        cursor.next();
+        assertEquals(2, cursor.available());
+
+        cursor.close();
+        assertEquals(0, cursor.available());
     }
 
     @Test
@@ -195,11 +214,8 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testSkip() {
-        DBCursor cursor = collection.find().skip(2);
-        try {
+        try (DBCursor cursor = collection.find().skip(2)) {
             assertEquals(8, cursor.toArray().size());
-        } finally {
-            cursor.close();
         }
     }
 
@@ -325,7 +341,7 @@ public class DBCursorTest extends DatabaseTestCase {
                           .returnKey();
         try {
             while (cursor.hasNext()) {
-                Assert.assertNull(cursor.next()
+                assertNull(cursor.next()
                                         .get("_id"));
             }
         } finally {
@@ -335,7 +351,7 @@ public class DBCursorTest extends DatabaseTestCase {
                  .returnKey();
         try {
             while (cursor.hasNext()) {
-                Assert.assertNull(cursor.next()
+                assertNull(cursor.next()
                                         .get("_id"));
             }
         } finally {
@@ -377,13 +393,7 @@ public class DBCursorTest extends DatabaseTestCase {
             assertEquals(1, profileCollection.count());
 
             DBObject profileDocument = profileCollection.findOne();
-            if (serverVersionAtLeast(3, 6)) {
-                assertEquals(expectedComment, ((DBObject) profileDocument.get("command")).get("comment"));
-            } else if (serverVersionAtLeast(3, 2)) {
-                assertEquals(expectedComment, ((DBObject) profileDocument.get("query")).get("comment"));
-            } else {
-                assertEquals(expectedComment, ((DBObject) profileDocument.get("query")).get("$comment"));
-            }
+            assertEquals(expectedComment, ((DBObject) profileDocument.get("command")).get("comment"));
         } finally {
             database.command(new BasicDBObject("profile", 0));
             profileCollection.drop();

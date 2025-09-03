@@ -17,7 +17,6 @@
 package org.bson.internal
 
 import org.bson.codecs.MinKeyCodec
-import org.bson.codecs.configuration.CodecConfigurationException
 import org.bson.types.MinKey
 import spock.lang.Specification
 
@@ -27,18 +26,39 @@ class CodecCacheSpecification extends Specification {
         when:
         def codec = new MinKeyCodec()
         def cache = new CodecCache()
-        cache.put(MinKey, codec)
+        def cacheKey = new CodecCache.CodecCacheKey(MinKey, null)
+        cache.putIfAbsent(cacheKey, codec)
 
         then:
-        cache.getOrThrow(MinKey).is(codec)
+        cache.get(cacheKey).get().is(codec)
     }
 
-    def 'should throw if codec for class does not exist'() {
+    def 'should return empty if codec for class does not exist'() {
         when:
         def cache = new CodecCache()
-        cache.getOrThrow(MinKey)
+        def cacheKey = new CodecCache.CodecCacheKey(MinKey, null)
 
         then:
-        thrown(CodecConfigurationException)
+        !cache.get(cacheKey).isPresent()
+    }
+
+    def 'should return the cached codec if a codec for the parameterized class exists'() {
+        when:
+        def codec = new MinKeyCodec()
+        def cache = new CodecCache()
+        def cacheKey = new CodecCache.CodecCacheKey(List, [Integer])
+        cache.putIfAbsent(cacheKey, codec)
+
+        then:
+        cache.get(cacheKey).get().is(codec)
+    }
+
+    def 'should return empty if codec for the parameterized class does not exist'() {
+        when:
+        def cache = new CodecCache()
+        def cacheKey = new CodecCache.CodecCacheKey(List, [Integer])
+
+        then:
+        !cache.get(cacheKey).isPresent()
     }
 }

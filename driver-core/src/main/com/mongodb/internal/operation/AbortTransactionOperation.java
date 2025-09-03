@@ -18,62 +18,49 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.Function;
 import com.mongodb.WriteConcern;
-import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
-import static com.mongodb.internal.operation.CommandOperationHelper.noOpRetryCommandModifier;
+import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
+import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 
 /**
  * An operation that aborts a transaction.
  *
- * @since 3.8
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class AbortTransactionOperation extends TransactionOperation {
+    private static final String COMMAND_NAME = "abortTransaction";
     private BsonDocument recoveryToken;
 
-    /**
-     * Construct an instance.
-     *
-     * @param writeConcern the write concern
-     */
     public AbortTransactionOperation(final WriteConcern writeConcern) {
         super(writeConcern);
     }
 
-    /**
-     * Set the recovery token.
-     *
-     * @param recoveryToken the recovery token
-     * @return the AbortTransactionOperation
-     * @since 3.11
-     */
-    public AbortTransactionOperation recoveryToken(final BsonDocument recoveryToken) {
+    public AbortTransactionOperation recoveryToken(@Nullable final BsonDocument recoveryToken) {
         this.recoveryToken = recoveryToken;
         return this;
     }
 
     @Override
-    protected String getCommandName() {
-        return "abortTransaction";
+    public String getCommandName() {
+        return COMMAND_NAME;
     }
 
     @Override
-    CommandOperationHelper.CommandCreator getCommandCreator() {
-        final CommandOperationHelper.CommandCreator creator = super.getCommandCreator();
-        if (recoveryToken != null) {
-            return new CommandOperationHelper.CommandCreator() {
-                @Override
-                public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                    return creator.create(serverDescription, connectionDescription).append("recoveryToken", recoveryToken);
-                }
-            };
-        }
-        return creator;
+    CommandCreator getCommandCreator() {
+        return (operationContext, serverDescription, connectionDescription) -> {
+            operationContext.getTimeoutContext().resetToDefaultMaxTime();
+            BsonDocument command = AbortTransactionOperation.super.getCommandCreator()
+                    .create(operationContext, serverDescription, connectionDescription);
+            putIfNotNull(command, "recoveryToken", recoveryToken);
+            return command;
+        };
     }
 
     @Override
-    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier() {
-        return noOpRetryCommandModifier();
+    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier(final TimeoutContext timeoutContext) {
+        return cmd -> cmd;
     }
 }

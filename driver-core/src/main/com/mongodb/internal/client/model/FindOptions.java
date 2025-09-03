@@ -17,8 +17,13 @@
 package com.mongodb.internal.client.model;
 
 import com.mongodb.CursorType;
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -29,8 +34,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * The options to apply to a find operation (also commonly referred to as a query).
  *
- * @mongodb.driver.manual tutorial/query-documents/ Find
- * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class FindOptions {
     private int batchSize;
@@ -42,22 +46,59 @@ public final class FindOptions {
     private Bson sort;
     private CursorType cursorType = CursorType.NonTailable;
     private boolean noCursorTimeout;
-    private boolean oplogReplay;
     private boolean partial;
     private Collation collation;
-    private String comment;
+    private BsonValue comment;
     private Bson hint;
     private String hintString;
+    private Bson variables;
     private Bson max;
     private Bson min;
     private boolean returnKey;
     private boolean showRecordId;
     private Boolean allowDiskUse;
+    private TimeoutMode timeoutMode;
 
     /**
      * Construct a new instance.
      */
     public FindOptions() {
+    }
+
+    //CHECKSTYLE:OFF
+    FindOptions(
+            final int batchSize, final int limit, final Bson projection, final long maxTimeMS, final long maxAwaitTimeMS, final int skip,
+            final Bson sort, final CursorType cursorType, final boolean noCursorTimeout, final boolean partial,
+            final Collation collation, final BsonValue comment, final Bson hint, final String hintString, final Bson variables,
+            final Bson max, final Bson min, final boolean returnKey, final boolean showRecordId, final Boolean allowDiskUse,
+            final TimeoutMode timeoutMode) {
+        this.batchSize = batchSize;
+        this.limit = limit;
+        this.projection = projection;
+        this.maxTimeMS = maxTimeMS;
+        this.maxAwaitTimeMS = maxAwaitTimeMS;
+        this.skip = skip;
+        this.sort = sort;
+        this.cursorType = cursorType;
+        this.noCursorTimeout = noCursorTimeout;
+        this.partial = partial;
+        this.collation = collation;
+        this.comment = comment;
+        this.hint = hint;
+        this.hintString = hintString;
+        this.variables = variables;
+        this.max = max;
+        this.min = min;
+        this.returnKey = returnKey;
+        this.showRecordId = showRecordId;
+        this.allowDiskUse = allowDiskUse;
+        this.timeoutMode = timeoutMode;
+    }
+    //CHECKSTYLE:ON
+
+    public FindOptions withBatchSize(final int batchSize) {
+        return new FindOptions(batchSize, limit, projection, maxTimeMS, maxAwaitTimeMS, skip, sort, cursorType, noCursorTimeout,
+                partial, collation, comment, hint, hintString, variables, max, min, returnKey, showRecordId, allowDiskUse, timeoutMode);
     }
 
     /**
@@ -135,18 +176,16 @@ public final class FindOptions {
      * The maximum amount of time for the server to wait on new documents to satisfy a tailable cursor
      * query. This only applies to a TAILABLE_AWAIT cursor. When the cursor is not a TAILABLE_AWAIT cursor,
      * this option is ignored.
-     *
+     * <p>
      * On servers &gt;= 3.2, this option will be specified on the getMore command as "maxTimeMS". The default
      * is no value: no "maxTimeMS" is sent to the server with the getMore command.
-     *
+     * <p>
      * On servers &lt; 3.2, this option is ignored, and indicates that the driver should respect the server's default value
-     *
+     * <p>
      * A zero value will be ignored.
      *
      * @param timeUnit the time unit to return the result in
      * @return the maximum await execution time in the given time unit
-     * @since 3.2
-     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
     public long getMaxAwaitTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
@@ -160,9 +199,7 @@ public final class FindOptions {
      *                      default value
      * @param timeUnit the time unit, which may not be null
      * @return this
-     * @since 3.2
-     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
-     */
+      */
     public FindOptions maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         isTrueArgument("maxAwaitTime > = 0", maxAwaitTime >= 0);
@@ -191,6 +228,41 @@ public final class FindOptions {
     public FindOptions batchSize(final int batchSize) {
         this.batchSize = batchSize;
         return this;
+    }
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * <p>
+     *     Requires the {@code timeout} to be set, either in the {@link com.mongodb.MongoClientSettings},
+     *     via {@code MongoDatabase} or via {@code MongoCollection}
+     * </p>
+     * <p>
+     *     If the {@code timeout} is set then:
+     *     <ul>
+     *      <li>For non-tailable cursors, the default value of timeoutMode is {@link TimeoutMode#CURSOR_LIFETIME}</li>
+     *      <li>For tailable cursors, the default value of timeoutMode is {@link TimeoutMode#ITERATION} and its an error
+     *      to configure it as: {@link TimeoutMode#CURSOR_LIFETIME}</li>
+     *     </ul>
+     * </p>
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    public FindOptions timeoutMode(final TimeoutMode timeoutMode) {
+        this.timeoutMode = timeoutMode;
+        return this;
+    }
+
+    /**
+     * @see #timeoutMode(TimeoutMode)
+     * @return timeout mode
+     */
+    @Alpha(Reason.CLIENT)
+    @Nullable
+    public TimeoutMode getTimeoutMode() {
+        return timeoutMode;
     }
 
     /**
@@ -263,26 +335,6 @@ public final class FindOptions {
     }
 
     /**
-     * Users should not set this under normal circumstances.
-     *
-     * @return if oplog replay is enabled
-     */
-    public boolean isOplogReplay() {
-        return oplogReplay;
-    }
-
-    /**
-     * Users should not set this under normal circumstances.
-     *
-     * @param oplogReplay if oplog replay is enabled
-     * @return this
-     */
-    public FindOptions oplogReplay(final boolean oplogReplay) {
-        this.oplogReplay = oplogReplay;
-        return this;
-    }
-
-    /**
      * Get partial results from a sharded cluster if one or more shards are unreachable (instead of throwing an error).
      *
      * @return if partial results for sharded clusters is enabled
@@ -326,8 +378,6 @@ public final class FindOptions {
      * Returns the collation options
      *
      * @return the collation options
-     * @since 3.4
-     * @mongodb.server.release 3.4
      */
     @Nullable
     public Collation getCollation() {
@@ -340,8 +390,6 @@ public final class FindOptions {
      * <p>A null value represents the server default.</p>
      * @param collation the collation options to use
      * @return this
-     * @since 3.4
-     * @mongodb.server.release 3.4
      */
     public FindOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
@@ -352,10 +400,9 @@ public final class FindOptions {
      * Returns the comment to send with the query. The default is not to include a comment with the query.
      *
      * @return the comment
-     * @since 3.5
      */
     @Nullable
-    public String getComment() {
+    public BsonValue getComment() {
         return comment;
     }
 
@@ -364,10 +411,20 @@ public final class FindOptions {
      *
      * @param comment the comment
      * @return this
-     * @since 3.5
+     */
+    public FindOptions comment(@Nullable final BsonValue comment) {
+        this.comment = comment;
+        return this;
+    }
+
+    /**
+     * Sets the comment to the query. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
      */
     public FindOptions comment(@Nullable final String comment) {
-        this.comment = comment;
+        this.comment = comment != null ? new BsonString(comment) : null;
         return this;
     }
 
@@ -375,7 +432,6 @@ public final class FindOptions {
      * Returns the hint for which index to use. The default is not to set a hint.
      *
      * @return the hint
-     * @since 3.5
      */
     @Nullable
     public Bson getHint() {
@@ -387,7 +443,6 @@ public final class FindOptions {
      *
      * @param hint the hint
      * @return this
-     * @since 3.5
      */
     public FindOptions hint(@Nullable final Bson hint) {
         this.hint = hint;
@@ -398,7 +453,6 @@ public final class FindOptions {
      * Gets the hint string to apply.
      *
      * @return the hint string, which should be the name of an existing index
-     * @since 3.12
      */
     @Nullable
     public String getHintString() {
@@ -410,7 +464,6 @@ public final class FindOptions {
      *
      * @param hint the name of the index which should be used for the operation
      * @return this
-     * @since 3.12
      */
     public FindOptions hintString(@Nullable final String hint) {
         this.hintString = hint;
@@ -418,10 +471,32 @@ public final class FindOptions {
     }
 
     /**
+     * Add top-level variables to the operation
+     *
+     * @return the top level variables if set or null.
+     */
+    @Nullable
+    public Bson getLet() {
+        return variables;
+    }
+
+    /**
+     * Add top-level variables to the operation
+     *
+     * <p>Allows for improved command readability by separating the variables from the query text.</p>
+     *
+     * @param variables for find operation or null
+     * @return this
+     */
+    public FindOptions let(@Nullable final Bson variables) {
+        this.variables = variables;
+        return this;
+    }
+
+    /**
      * Returns the exclusive upper bound for a specific index. By default there is no max bound.
      *
      * @return the max
-     * @since 3.5
      */
     @Nullable
     public Bson getMax() {
@@ -433,8 +508,7 @@ public final class FindOptions {
      *
      * @param max the max
      * @return this
-     * @since 3.5
-     */
+      */
     public FindOptions max(@Nullable final Bson max) {
         this.max = max;
         return this;
@@ -444,7 +518,6 @@ public final class FindOptions {
      * Returns the minimum inclusive lower bound for a specific index. By default there is no min bound.
      *
      * @return the min
-     * @since 3.5
      */
     @Nullable
     public Bson getMin() {
@@ -456,7 +529,6 @@ public final class FindOptions {
      *
      * @param min the min
      * @return this
-     * @since 3.5
      */
     public FindOptions min(@Nullable final Bson min) {
         this.min = min;
@@ -465,11 +537,10 @@ public final class FindOptions {
 
     /**
      * Returns the returnKey. If true the find operation will return only the index keys in the resulting documents.
-     *
+     * <p>
      * Default value is false. If returnKey is true and the find command does not use an index, the returned documents will be empty.
      *
      * @return the returnKey
-     * @since 3.5
      */
     public boolean isReturnKey() {
         return returnKey;
@@ -480,7 +551,6 @@ public final class FindOptions {
      *
      * @param returnKey the returnKey
      * @return this
-     * @since 3.5
      */
     public FindOptions returnKey(final boolean returnKey) {
         this.returnKey = returnKey;
@@ -489,12 +559,11 @@ public final class FindOptions {
 
     /**
      * Returns the showRecordId.
-     *
+     * <p>
      * Determines whether to return the record identifier for each document. If true, adds a field $recordId to the returned documents.
      * The default is false.
      *
      * @return the showRecordId
-     * @since 3.5
      */
     public boolean isShowRecordId() {
         return showRecordId;
@@ -505,8 +574,7 @@ public final class FindOptions {
      *
      * @param showRecordId the showRecordId
      * @return this
-     * @since 3.5
-     */
+=     */
     public FindOptions showRecordId(final boolean showRecordId) {
         this.showRecordId = showRecordId;
         return this;
@@ -533,30 +601,5 @@ public final class FindOptions {
     public FindOptions allowDiskUse(@Nullable final Boolean allowDiskUse) {
         this.allowDiskUse = allowDiskUse;
         return this;
-    }
-
-    @Override
-    public String toString() {
-        return "FindOptions{"
-                + "batchSize=" + batchSize
-                + ", limit=" + limit
-                + ", projection=" + projection
-                + ", maxTimeMS=" + maxTimeMS
-                + ", maxAwaitTimeMS=" + maxAwaitTimeMS
-                + ", skip=" + skip
-                + ", sort=" + sort
-                + ", cursorType=" + cursorType
-                + ", noCursorTimeout=" + noCursorTimeout
-                + ", oplogReplay=" + oplogReplay
-                + ", partial=" + partial
-                + ", collation=" + collation
-                + ", comment='" + comment + "'"
-                + ", hint=" + hint
-                + ", max=" + max
-                + ", min=" + min
-                + ", returnKey=" + returnKey
-                + ", showRecordId=" + showRecordId
-                + ", allowDiskUse=" + allowDiskUse
-                + "}";
     }
 }

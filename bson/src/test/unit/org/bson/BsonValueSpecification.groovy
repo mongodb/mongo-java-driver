@@ -29,6 +29,7 @@ class BsonValueSpecification extends Specification {
         new BsonInt64(52L).isInt64()
         new BsonInt64(52L).isNumber()
         new BsonDecimal128(Decimal128.parse('1')).isDecimal128()
+        new BsonDecimal128(Decimal128.parse('1')).isNumber()
         new BsonDouble(62.0).isDouble()
         new BsonDouble(62.0).isNumber()
         new BsonBoolean(true).isBoolean()
@@ -71,7 +72,26 @@ class BsonValueSpecification extends Specification {
         !new BsonNull().isDocument()
     }
 
-    def 'as methods should return false for the incorrect type'() {
+    def 'support BsonNumber interface for all number types'() {
+        expect:
+        bsonValue.asNumber() == bsonValue
+        bsonValue.asNumber().intValue()== intValue
+        bsonValue.asNumber().longValue() == longValue
+        bsonValue.asNumber().doubleValue() == doubleValue
+        bsonValue.asNumber().decimal128Value() == decimal128Value
+
+        where:
+        bsonValue                                         | intValue           | longValue      | doubleValue              | decimal128Value
+        new BsonInt32(42)                                 | 42                 | 42L            | 42.0                     | Decimal128.parse('42')
+        new BsonInt64(42)                                 | 42                 | 42L            | 42.0                     | Decimal128.parse('42')
+        new BsonDouble(42)                                | 42                 | 42L            | 42.0                     | Decimal128.parse('42')
+        new BsonDecimal128(Decimal128.parse('42'))        | 42                 | 42L            | 42.0                     | Decimal128.parse('42')
+        new BsonDecimal128(Decimal128.POSITIVE_INFINITY)  | Integer.MAX_VALUE  | Long.MAX_VALUE | Double.POSITIVE_INFINITY | Decimal128.POSITIVE_INFINITY
+        new BsonDecimal128(Decimal128.NEGATIVE_INFINITY)  | Integer.MIN_VALUE  | Long.MIN_VALUE | Double.NEGATIVE_INFINITY | Decimal128.NEGATIVE_INFINITY
+        new BsonDecimal128(Decimal128.NaN)                | 0                  | 0L             | Double.NaN               | Decimal128.NaN
+    }
+
+    def 'as methods should return throw for the incorrect type'() {
         when:
         new BsonNull().asInt32()
 

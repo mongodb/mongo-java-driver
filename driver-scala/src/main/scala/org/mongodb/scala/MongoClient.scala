@@ -16,18 +16,13 @@
 
 package org.mongodb.scala
 
-import java.io.Closeable
-
 import com.mongodb.connection.ClusterDescription
-import com.mongodb.reactivestreams.client.{ MongoClients, MongoClient => JMongoClient }
+import com.mongodb.reactivestreams.client.{ MongoClient => JMongoClient, MongoClients }
 import org.bson.codecs.configuration.CodecRegistries.{ fromProviders, fromRegistries }
 import org.bson.codecs.configuration.CodecRegistry
-import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.codecs.{ DocumentCodecProvider, IterableCodecProvider }
-import org.mongodb.scala.bson.conversions.Bson
 
-import scala.collection.JavaConverters._
-import scala.reflect.ClassTag
+import java.io.Closeable
 
 /**
  * Companion object for creating new [[MongoClient]] instances
@@ -116,36 +111,7 @@ object MongoClient {
  * @param wrapped the underlying java MongoClient
  * @since 1.0
  */
-case class MongoClient(private val wrapped: JMongoClient) extends Closeable {
-
-  /**
-   * Creates a client session.
-   *
-   * '''Note:''' A ClientSession instance can not be used concurrently in multiple asynchronous operations.
-   *
-   * @since 2.4
-   * @note Requires MongoDB 3.6 or greater
-   */
-  def startSession(): SingleObservable[ClientSession] = wrapped.startSession()
-
-  /**
-   * Creates a client session.
-   *
-   * '''Note:''' A ClientSession instance can not be used concurrently in multiple asynchronous operations.
-   *
-   * @param options  the options for the client session
-   * @since 2.2
-   * @note Requires MongoDB 3.6 or greater
-   */
-  def startSession(options: ClientSessionOptions): SingleObservable[ClientSession] = wrapped.startSession(options)
-
-  /**
-   * Gets the database with the given name.
-   *
-   * @param name the name of the database
-   * @return the database
-   */
-  def getDatabase(name: String): MongoDatabase = MongoDatabase(wrapped.getDatabase(name))
+case class MongoClient(protected[scala] val wrapped: JMongoClient) extends MongoCluster(wrapped) with Closeable {
 
   /**
    * Close the client, which will close all underlying cached resources, including, for example,
@@ -154,119 +120,32 @@ case class MongoClient(private val wrapped: JMongoClient) extends Closeable {
   def close(): Unit = wrapped.close()
 
   /**
-   * Get a list of the database names
-   *
-   * [[http://docs.mongodb.org/manual/reference/commands/listDatabases List Databases]]
-   * @return an iterable containing all the names of all the databases
-   */
-  def listDatabaseNames(): Observable[String] = wrapped.listDatabaseNames()
-
-  /**
-   * Get a list of the database names
-   *
-   * [[http://docs.mongodb.org/manual/reference/commands/listDatabases List Databases]]
-   *
-   * @param clientSession the client session with which to associate this operation
-   * @return an iterable containing all the names of all the databases
-   * @since 2.2
-   * @note Requires MongoDB 3.6 or greater
-   */
-  def listDatabaseNames(clientSession: ClientSession): Observable[String] = wrapped.listDatabaseNames(clientSession)
-
-  /**
-   * Gets the list of databases
-   *
-   * @tparam TResult   the type of the class to use instead of `Document`.
-   * @return the fluent list databases interface
-   */
-  def listDatabases[TResult]()(
-      implicit e: TResult DefaultsTo Document,
-      ct: ClassTag[TResult]
-  ): ListDatabasesObservable[TResult] =
-    ListDatabasesObservable(wrapped.listDatabases(ct))
-
-  /**
-   * Gets the list of databases
-   *
-   * @param clientSession the client session with which to associate this operation
-   * @tparam TResult the type of the class to use instead of `Document`.
-   * @return the fluent list databases interface
-   * @since 2.2
-   * @note Requires MongoDB 3.6 or greater
-   */
-  def listDatabases[TResult](
-      clientSession: ClientSession
-  )(implicit e: TResult DefaultsTo Document, ct: ClassTag[TResult]): ListDatabasesObservable[TResult] =
-    ListDatabasesObservable(wrapped.listDatabases(clientSession, ct))
-
-  /**
-   * Creates a change stream for this collection.
-   *
-   * @tparam C   the target document type of the observable.
-   * @return the change stream observable
-   * @since 2.4
-   * @note Requires MongoDB 4.0 or greater
-   */
-  def watch[C]()(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ChangeStreamObservable[C] =
-    ChangeStreamObservable(wrapped.watch(ct))
-
-  /**
-   * Creates a change stream for this collection.
-   *
-   * @param pipeline the aggregation pipeline to apply to the change stream
-   * @tparam C   the target document type of the observable.
-   * @return the change stream observable
-   * @since 2.4
-   * @note Requires MongoDB 4.0 or greater
-   */
-  def watch[C](pipeline: Seq[Bson])(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ChangeStreamObservable[C] =
-    ChangeStreamObservable(wrapped.watch(pipeline.asJava, ct))
-
-  /**
-   * Creates a change stream for this collection.
-   *
-   * @param clientSession the client session with which to associate this operation
-   * @tparam C   the target document type of the observable.
-   * @return the change stream observable
-   * @since 2.4
-   * @note Requires MongoDB 4.0 or greater
-   */
-  def watch[C](
-      clientSession: ClientSession
-  )(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ChangeStreamObservable[C] =
-    ChangeStreamObservable(wrapped.watch(clientSession, ct))
-
-  /**
-   * Creates a change stream for this collection.
-   *
-   * @param clientSession the client session with which to associate this operation
-   * @param pipeline the aggregation pipeline to apply to the change stream
-   * @tparam C   the target document type of the observable.
-   * @return the change stream observable
-   * @since 2.4
-   * @note Requires MongoDB 4.0 or greater
-   */
-  def watch[C](
-      clientSession: ClientSession,
-      pipeline: Seq[Bson]
-  )(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ChangeStreamObservable[C] =
-    ChangeStreamObservable(wrapped.watch(clientSession, pipeline.asJava, ct))
-
-  /**
    * Gets the current cluster description.
    *
-   * <p>
-   * This method will not block, meaning that it may return a { @link ClusterDescription} whose { @code clusterType} is unknown
+   * This method will not block, meaning that it may return a `ClusterDescription` whose `clusterType` is unknown
    * and whose { @link com.mongodb.connection.ServerDescription}s are all in the connecting state.  If the application requires
-   * notifications after the driver has connected to a member of the cluster, it should register a { @link ClusterListener} via
-   * the { @link ClusterSettings} in { @link com.mongodb.MongoClientSettings}.
-   * </p>
+   * notifications after the driver has connected to a member of the cluster, it should register a `ClusterListener` via
+   * the `ClusterSettings` in `MongoClientSettings`.
    *
    * @return the current cluster description
-   * @see ClusterSettings.Builder#addClusterListener(ClusterListener)
-   * @see com.mongodb.MongoClientSettings.Builder#applyToClusterSettings(com.mongodb.Block)
    * @since 4.1
    */
   def getClusterDescription: ClusterDescription =
     wrapped.getClusterDescription
+
+  /**
+   * Appends the provided [[MongoDriverInformation]] to the existing metadata.
+   *
+   *
+   * This enables frameworks and libraries to include identifying metadata (e.g., name, version, platform) which might be visible in
+   * the MongoD/MongoS logs. This can assist with diagnostics by making client identity visible to the server.
+   *
+   *
+   * **Note:** Metadata is limited to 512 bytes; any excess will be truncated.
+   *
+   * @param mongoDriverInformation the driver information to append to the existing metadata
+   * @since 5.6
+   */
+  def appendMetadata(mongoDriverInformation: MongoDriverInformation): Unit =
+    wrapped.appendMetadata(mongoDriverInformation)
 }

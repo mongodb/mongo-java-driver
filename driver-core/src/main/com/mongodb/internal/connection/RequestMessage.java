@@ -16,26 +16,12 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.internal.session.SessionContext;
-import org.bson.BsonBinaryWriter;
-import org.bson.BsonBinaryWriterSettings;
-import org.bson.BsonDocument;
-import org.bson.BsonElement;
-import org.bson.BsonWriter;
-import org.bson.BsonWriterSettings;
-import org.bson.FieldNameValidator;
-import org.bson.codecs.BsonValueCodecProvider;
-import org.bson.codecs.Codec;
-import org.bson.codecs.Encoder;
-import org.bson.codecs.EncoderContext;
-import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.io.BsonOutput;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static com.mongodb.internal.connection.BsonWriterHelper.backpatchLength;
 
 /**
  * Abstract base class for all MongoDB Wire Protocol request messages.
@@ -46,29 +32,10 @@ abstract class RequestMessage {
 
     static final int MESSAGE_PROLOGUE_LENGTH = 16;
 
-    // Allow an extra 16K to the maximum allowed size of a query or command document, so that, for example,
-    // a 16M document can be upserted via findAndModify
-    private static final int DOCUMENT_HEADROOM = 16 * 1024;
-
-    private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
-
-    private final String collectionName;
     private final MessageSettings settings;
     private final int id;
     private final OpCode opCode;
-    private EncodingMetadata encodingMetadata;
 
-    static class EncodingMetadata {
-        private final int firstDocumentPosition;
-
-        EncodingMetadata(final int firstDocumentPosition) {
-            this.firstDocumentPosition = firstDocumentPosition;
-        }
-
-        public int getFirstDocumentPosition() {
-            return firstDocumentPosition;
-        }
-    }
     /**
      * Gets the next available unique message identifier.
      *
@@ -79,20 +46,10 @@ abstract class RequestMessage {
     }
 
     RequestMessage(final OpCode opCode, final MessageSettings settings) {
-        this(null, opCode, settings);
+        this(opCode, REQUEST_ID.getAndIncrement(), settings);
     }
 
     RequestMessage(final OpCode opCode, final int requestId, final MessageSettings settings) {
-        this(null, opCode, requestId, settings);
-    }
-
-
-    RequestMessage(final String collectionName, final OpCode opCode, final MessageSettings settings) {
-        this(collectionName, opCode, REQUEST_ID.getAndIncrement(), settings);
-    }
-
-    private RequestMessage(final String collectionName, final OpCode opCode, final int requestId, final MessageSettings settings) {
-        this.collectionName = collectionName;
         this.settings = settings;
         id = requestId;
         this.opCode = opCode;
@@ -129,24 +86,14 @@ abstract class RequestMessage {
      * Encoded the message to the given output.
      *
      * @param bsonOutput the output
-     * @param sessionContext the session context
+     * @param operationContext the session context
      */
-    public void encode(final BsonOutput bsonOutput, final SessionContext sessionContext) {
-        notNull("sessionContext", sessionContext);
+    public void encode(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext) {
+        notNull("operationContext", operationContext);
         int messageStartPosition = bsonOutput.getPosition();
         writeMessagePrologue(bsonOutput);
-        EncodingMetadata encodingMetadata = encodeMessageBodyWithMetadata(bsonOutput, sessionContext);
-        backpatchMessageLength(messageStartPosition, bsonOutput);
-        this.encodingMetadata = encodingMetadata;
-    }
-
-    /**
-     * Gets the encoding metadata from the last attempt to encode this message.
-     *
-     * @return Get metadata from the last attempt to encode this message. Returns null if there has not yet been an attempt.
-     */
-    public EncodingMetadata getEncodingMetadata() {
-        return encodingMetadata;
+        encodeMessageBody(bsonOutput, operationContext);
+        backpatchLength(messageStartPosition, bsonOutput);
     }
 
     /**
@@ -164,77 +111,8 @@ abstract class RequestMessage {
     /**
      * Encode the message body to the given output.
      *
-     * @param bsonOutput the output
-     * @param sessionContext the session context
-     * @return the encoding metadata
+     * @param bsonOutput       the output
+     * @param operationContext the session context
      */
-    protected abstract EncodingMetadata encodeMessageBodyWithMetadata(BsonOutput bsonOutput, SessionContext sessionContext);
-
-    /**
-     * Appends a document to the message.
-     *
-     * @param document the document
-     * @param bsonOutput the output
-     * @param validator the field name validator
-     */
-    protected void addDocument(final BsonDocument document, final BsonOutput bsonOutput,
-                               final FieldNameValidator validator) {
-        addDocument(document, getCodec(document), EncoderContext.builder().build(), bsonOutput, validator,
-                    settings.getMaxDocumentSize() + DOCUMENT_HEADROOM, null);
-    }
-
-    protected void addDocument(final BsonDocument document, final BsonOutput bsonOutput,
-                               final FieldNameValidator validator, final List<BsonElement> extraElements) {
-        addDocument(document, getCodec(document), EncoderContext.builder().build(), bsonOutput, validator,
-                settings.getMaxDocumentSize() + DOCUMENT_HEADROOM, extraElements);
-    }
-
-    /**
-     * Appends a document to the message that is intended for storage in a collection.
-     *
-     * @param document the document
-     * @param bsonOutput the output
-     * @param validator the field name validator
-     */
-    protected void addCollectibleDocument(final BsonDocument document, final BsonOutput bsonOutput, final FieldNameValidator validator) {
-        addDocument(document, getCodec(document), EncoderContext.builder().isEncodingCollectibleDocument(true).build(), bsonOutput,
-                    validator, settings.getMaxDocumentSize(), null);
-    }
-
-    /**
-     * Backpatches the message length into the beginning of the message.
-     *
-     * @param startPosition the start position of the message
-     * @param bsonOutput the output
-     */
-    protected void backpatchMessageLength(final int startPosition, final BsonOutput bsonOutput) {
-        int messageLength = bsonOutput.getPosition() - startPosition;
-        bsonOutput.writeInt32(bsonOutput.getPosition() - messageLength, messageLength);
-    }
-
-    /**
-     * Gets the collection name, which may be null for some message types
-     *
-     * @return the collection name
-     */
-    protected String getCollectionName() {
-        return collectionName;
-    }
-
-    @SuppressWarnings("unchecked")
-    Codec<BsonDocument> getCodec(final BsonDocument document) {
-        return (Codec<BsonDocument>) REGISTRY.get(document.getClass());
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> void addDocument(final T obj, final Encoder<T> encoder, final EncoderContext encoderContext,
-                                 final BsonOutput bsonOutput, final FieldNameValidator validator, final int maxDocumentSize,
-                                 final List<BsonElement> extraElements) {
-        BsonBinaryWriter bsonBinaryWriter = new BsonBinaryWriter(new BsonWriterSettings(), new BsonBinaryWriterSettings(maxDocumentSize),
-                bsonOutput, validator);
-        BsonWriter bsonWriter = extraElements == null
-                ? bsonBinaryWriter
-                : new ElementExtendingBsonWriter(bsonBinaryWriter, extraElements);
-        encoder.encode(bsonWriter, obj, encoderContext);
-    }
+    protected abstract void encodeMessageBody(ByteBufferBsonOutput bsonOutput, OperationContext operationContext);
 }

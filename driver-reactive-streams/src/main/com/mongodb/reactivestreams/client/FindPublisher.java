@@ -17,8 +17,15 @@
 package com.mongodb.reactivestreams.client;
 
 import com.mongodb.CursorType;
+import com.mongodb.ExplainVerbosity;
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
+import com.mongodb.client.model.Projections;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonValue;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
 
@@ -79,12 +86,12 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * The maximum amount of time for the server to wait on new documents to satisfy a tailable cursor
      * query. This only applies to a TAILABLE_AWAIT cursor. When the cursor is not a TAILABLE_AWAIT cursor,
      * this option is ignored.
-     *
+     * <p>
      * On servers &gt;= 3.2, this option will be specified on the getMore command as "maxTimeMS". The default
      * is no value: no "maxTimeMS" is sent to the server with the getMore command.
-     *
+     * <p>
      * On servers &lt; 3.2, this option is ignored, and indicates that the driver should respect the server's default value
-     *
+     * <p>
      * A zero value will be ignored.
      *
      * @param maxAwaitTime  the max await time
@@ -101,6 +108,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * @param projection the project document, which may be null.
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Projection
+     * @see Projections
      */
     FindPublisher<TResult> projection(@Nullable Bson projection);
     /**
@@ -120,16 +128,6 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * @return this
      */
     FindPublisher<TResult> noCursorTimeout(boolean noCursorTimeout);
-
-    /**
-     * Users should not set this under normal circumstances.
-     *
-     * @param oplogReplay if oplog replay is enabled
-     * @return this
-     * @deprecated oplogReplay has been deprecated in MongoDB 4.4.
-     */
-    @Deprecated
-    FindPublisher<TResult> oplogReplay(boolean oplogReplay);
 
     /**
      * Get partial results from a sharded cluster if one or more shards are unreachable (instead of throwing an error).
@@ -168,6 +166,20 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
     FindPublisher<TResult> comment(@Nullable String comment);
 
     /**
+     * Sets the comment for this operation. A null value means no comment is set.
+     *
+     * <p>The comment can be any valid BSON type for server versions 4.4 and above.
+     * Server versions between 3.6 and 4.2 only support string as comment,
+     * and providing a non-string type will result in a server-side error.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 4.6
+     * @mongodb.server.release 3.6
+     */
+    FindPublisher<TResult> comment(@Nullable BsonValue comment);
+
+    /**
      * Sets the hint for which index to use. A null value means no hint is set.
      *
      * @param hint the hint
@@ -184,6 +196,19 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * @since 1.13
      */
     FindPublisher<TResult> hintString(@Nullable String hint);
+
+    /**
+     * Add top-level variables to the operation. A null value means no variables are set.
+     *
+     * <p>Allows for improved command readability by separating the variables from the query text.</p>
+     *
+     * @param variables for find operation or null
+     * @return this
+     * @mongodb.driver.manual reference/command/find/
+     * @mongodb.server.release 5.0
+     * @since 4.6
+     */
+    FindPublisher<TResult> let(@Nullable Bson variables);
 
     /**
      * Sets the exclusive upper bound for a specific index. A null value means no max is set.
@@ -224,7 +249,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
     /**
      * Sets the number of documents to return per batch.
      *
-     * <p>Overrides the {@link org.reactivestreams.Subscription#request(long)} value for setting the batch size, allowing for fine grained
+     * <p>Overrides the {@link org.reactivestreams.Subscription#request(long)} value for setting the batch size, allowing for fine-grained
      * control over the underlying cursor.</p>
      *
      * @param batchSize the batch size
@@ -237,7 +262,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
     /**
      * Enables writing to temporary files on the server. When set to true, the server
      * can write temporary data to disk while executing the find operation.
-     *
+     * <p>
      * This option is sent only if the caller explicitly sets it to true.
      *
      * @param allowDiskUse the allowDiskUse
@@ -246,4 +271,71 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * @mongodb.server.release 4.4
      */
     FindPublisher<TResult> allowDiskUse(@Nullable Boolean allowDiskUse);
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * <p>
+     *     Requires the {@code timeout} to be set, either in the {@link com.mongodb.MongoClientSettings},
+     *     via {@link MongoDatabase} or via {@link MongoCollection}
+     * </p>
+     * <p>
+     *     If the {@code timeout} is set then:
+     *     <ul>
+     *      <li>For non-tailable cursors, the default value of timeoutMode is {@link TimeoutMode#CURSOR_LIFETIME}</li>
+     *      <li>For tailable cursors, the default value of timeoutMode is {@link TimeoutMode#ITERATION} and its an error
+     *      to configure it as: {@link TimeoutMode#CURSOR_LIFETIME}</li>
+     *     </ul>
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    FindPublisher<TResult> timeoutMode(TimeoutMode timeoutMode);
+
+    /**
+     * Explain the execution plan for this operation with the server's default verbosity level
+     *
+     * @return the execution plan
+     * @since 4.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.2
+     */
+    Publisher<Document> explain();
+
+    /**
+     * Explain the execution plan for this operation with the given verbosity level
+     *
+     * @param verbosity the verbosity of the explanation
+     * @return the execution plan
+     * @since 4.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.2
+     */
+    Publisher<Document> explain(ExplainVerbosity verbosity);
+
+    /**
+     * Explain the execution plan for this operation with the server's default verbosity level
+     *
+     * @param <E> the type of the document class
+     * @param explainResultClass the document class to decode into
+     * @return the execution plan
+     * @since 4.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.2
+     */
+    <E> Publisher<E> explain(Class<E> explainResultClass);
+
+    /**
+     * Explain the execution plan for this operation with the given verbosity level
+     *
+     * @param <E> the type of the document class
+     * @param explainResultClass the document class to decode into
+     * @param verbosity            the verbosity of the explanation
+     * @return the execution plan
+     * @since 4.2
+     * @mongodb.driver.manual reference/command/explain/
+     * @mongodb.server.release 3.2
+     */
+    <E> Publisher<E> explain(Class<E> explainResultClass, ExplainVerbosity verbosity);
 }

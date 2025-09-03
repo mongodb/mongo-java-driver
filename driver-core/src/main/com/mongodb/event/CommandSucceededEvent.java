@@ -16,7 +16,9 @@
 
 package com.mongodb.event;
 
+import com.mongodb.RequestContext;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 import java.util.concurrent.TimeUnit;
@@ -34,15 +36,21 @@ public final class CommandSucceededEvent extends CommandEvent {
 
     /**
      * Construct an instance.
-     * @param requestId the request id
+     *
+     * @param requestContext        the request context
+     * @param operationId           the operation id
+     * @param requestId             the request id
      * @param connectionDescription the connection description
-     * @param commandName the command name
-     * @param response the command response
-     * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds for the operation to complete
+     * @param databaseName          the database name
+     * @param commandName           the command name
+     * @param response              the command response
+     * @param elapsedTimeNanos      the non-negative elapsed time in nanoseconds for the operation to complete
+     * @since 4.11
      */
-    public CommandSucceededEvent(final int requestId, final ConnectionDescription connectionDescription,
-                                 final String commandName, final BsonDocument response, final long elapsedTimeNanos) {
-        super(requestId, connectionDescription, commandName);
+    public CommandSucceededEvent(@Nullable final RequestContext requestContext, final long operationId, final int requestId,
+            final ConnectionDescription connectionDescription, final String databaseName, final String commandName,
+            final BsonDocument response, final long elapsedTimeNanos) {
+        super(requestContext, operationId, requestId, connectionDescription, databaseName, commandName);
         this.response = response;
         isTrueArgument("elapsed time is not negative", elapsedTimeNanos >= 0);
         this.elapsedTimeNanos = elapsedTimeNanos;

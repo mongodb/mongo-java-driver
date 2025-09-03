@@ -16,17 +16,13 @@
 
 package com.mongodb.client;
 
-import com.mongodb.ClientSessionOptions;
-import com.mongodb.MongoNamespace;
+import com.mongodb.MongoDriverInformation;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.event.ClusterListener;
-import org.bson.Document;
-import org.bson.conversions.Bson;
 
 import java.io.Closeable;
-import java.util.List;
 
 /**
  * A client-side representation of a MongoDB cluster.  Instances can represent either a standalone MongoDB instance, a replica set,
@@ -42,196 +38,13 @@ import java.util.List;
  * @since 3.7
  */
 @Immutable
-public interface MongoClient extends Closeable {
-
-    /**
-     * Gets a {@link MongoDatabase} instance for the given database name.
-     *
-     * @param databaseName the name of the database to retrieve
-     * @return a {@code MongoDatabase} representing the specified database
-     * @throws IllegalArgumentException if databaseName is invalid
-     * @see MongoNamespace#checkDatabaseNameValidity(String)
-     */
-    MongoDatabase getDatabase(String databaseName);
-
-    /**
-     * Creates a client session with default options.
-     *
-     * <p>Note: A ClientSession instance can not be used concurrently in multiple operations.</p>
-     *
-     * @return the client session
-     * @mongodb.server.release 3.6
-     */
-    ClientSession startSession();
-
-    /**
-     * Creates a client session.
-     *
-     * <p>Note: A ClientSession instance can not be used concurrently in multiple operations.</p>
-     *
-     * @param options  the options for the client session
-     * @return the client session
-     * @mongodb.server.release 3.6
-     */
-    ClientSession startSession(ClientSessionOptions options);
+public interface MongoClient extends MongoCluster, Closeable {
 
     /**
      * Close the client, which will close all underlying cached resources, including, for example,
      * sockets and background monitoring threads.
      */
     void close();
-
-    /**
-     * Get a list of the database names
-     *
-     * @return an iterable containing all the names of all the databases
-     * @mongodb.driver.manual reference/command/listDatabases List Databases
-     */
-    MongoIterable<String> listDatabaseNames();
-
-    /**
-     * Get a list of the database names
-     *
-     * @param clientSession the client session with which to associate this operation
-     * @return an iterable containing all the names of all the databases
-     * @mongodb.driver.manual reference/command/listDatabases List Databases
-     * @mongodb.server.release 3.6
-     */
-    MongoIterable<String> listDatabaseNames(ClientSession clientSession);
-
-    /**
-     * Gets the list of databases
-     *
-     * @return the list databases iterable interface
-     */
-    ListDatabasesIterable<Document> listDatabases();
-
-    /**
-     * Gets the list of databases
-     *
-     * @param clientSession the client session with which to associate this operation
-     * @return the list databases iterable interface
-     * @mongodb.driver.manual reference/command/listDatabases List Databases
-     * @mongodb.server.release 3.6
-     */
-    ListDatabasesIterable<Document> listDatabases(ClientSession clientSession);
-
-    /**
-     * Gets the list of databases
-     *
-     * @param resultClass the class to cast the database documents to
-     * @param <TResult>   the type of the class to use instead of {@code Document}.
-     * @return the list databases iterable interface
-     */
-    <TResult> ListDatabasesIterable<TResult> listDatabases(Class<TResult> resultClass);
-
-    /**
-     * Gets the list of databases
-     *
-     * @param clientSession the client session with which to associate this operation
-     * @param resultClass the class to cast the database documents to
-     * @param <TResult>   the type of the class to use instead of {@code Document}.
-     * @return the list databases iterable interface
-     * @mongodb.driver.manual reference/command/listDatabases List Databases
-     * @mongodb.server.release 3.6
-     */
-    <TResult> ListDatabasesIterable<TResult> listDatabases(ClientSession clientSession, Class<TResult> resultClass);
-
-    /**
-     * Creates a change stream for this client.
-     *
-     * @return the change stream iterable
-     * @mongodb.driver.dochub core/changestreams Change Streams
-     * @since 3.8
-     * @mongodb.server.release 4.0
-     */
-    ChangeStreamIterable<Document> watch();
-
-    /**
-     * Creates a change stream for this client.
-     *
-     * @param resultClass the class to decode each document into
-     * @param <TResult>   the target document type of the iterable.
-     * @return the change stream iterable
-     * @mongodb.driver.dochub core/changestreams Change Streams
-     * @since 3.8
-     * @mongodb.server.release 4.0
-     */
-    <TResult> ChangeStreamIterable<TResult> watch(Class<TResult> resultClass);
-
-    /**
-     * Creates a change stream for this client.
-     *
-     * @param pipeline the aggregation pipeline to apply to the change stream.
-     * @return the change stream iterable
-     * @mongodb.driver.dochub core/changestreams Change Streams
-     * @since 3.8
-     * @mongodb.server.release 4.0
-     */
-    ChangeStreamIterable<Document> watch(List<? extends Bson> pipeline);
-
-    /**
-     * Creates a change stream for this client.
-     *
-     * @param pipeline    the aggregation pipeline to apply to the change stream
-     * @param resultClass the class to decode each document into
-     * @param <TResult>   the target document type of the iterable.
-     * @return the change stream iterable
-     * @mongodb.driver.dochub core/changestreams Change Streams
-     * @since 3.8
-     * @mongodb.server.release 4.0
-     */
-    <TResult> ChangeStreamIterable<TResult> watch(List<? extends Bson> pipeline, Class<TResult> resultClass);
-
-    /**
-     * Creates a change stream for this client.
-     *
-     * @param clientSession the client session with which to associate this operation
-     * @return the change stream iterable
-     * @since 3.8
-     * @mongodb.server.release 4.0
-     * @mongodb.driver.dochub core/changestreams Change Streams
-     */
-    ChangeStreamIterable<Document> watch(ClientSession clientSession);
-
-    /**
-     * Creates a change stream for this client.
-     *
-     * @param clientSession the client session with which to associate this operation
-     * @param resultClass the class to decode each document into
-     * @param <TResult>   the target document type of the iterable.
-     * @return the change stream iterable
-     * @since 3.8
-     * @mongodb.server.release 4.0
-     * @mongodb.driver.dochub core/changestreams Change Streams
-     */
-    <TResult> ChangeStreamIterable<TResult> watch(ClientSession clientSession, Class<TResult> resultClass);
-
-    /**
-     * Creates a change stream for this client.
-     *
-     * @param clientSession the client session with which to associate this operation
-     * @param pipeline the aggregation pipeline to apply to the change stream.
-     * @return the change stream iterable
-     * @since 3.8
-     * @mongodb.server.release 4.0
-     * @mongodb.driver.dochub core/changestreams Change Streams
-     */
-    ChangeStreamIterable<Document> watch(ClientSession clientSession, List<? extends Bson> pipeline);
-
-    /**
-     * Creates a change stream for this client.
-     *
-     * @param clientSession the client session with which to associate this operation
-     * @param pipeline    the aggregation pipeline to apply to the change stream
-     * @param resultClass the class to decode each document into
-     * @param <TResult>   the target document type of the iterable.
-     * @return the change stream iterable
-     * @since 3.8
-     * @mongodb.server.release 4.0
-     * @mongodb.driver.dochub core/changestreams Change Streams
-     */
-    <TResult> ChangeStreamIterable<TResult> watch(ClientSession clientSession, List<? extends Bson> pipeline, Class<TResult> resultClass);
 
     /**
      * Gets the current cluster description.
@@ -249,4 +62,17 @@ public interface MongoClient extends Closeable {
      * @since 3.11
      */
     ClusterDescription getClusterDescription();
+
+    /**
+     * Appends the provided {@link MongoDriverInformation} to the existing metadata.
+     * <p>
+     * This enables frameworks and libraries to include identifying metadata (e.g., name, version, platform) which might be visible in
+     * the MongoD/MongoS logs. This can assist with diagnostics by making client identity visible to the server.
+     * <p>
+     * <strong>Note:</strong> Metadata is limited to 512 bytes; any excess will be truncated.
+     *
+     * @param mongoDriverInformation the driver information to append to the existing metadata
+     * @since 5.6
+     */
+    void appendMetadata(MongoDriverInformation mongoDriverInformation);
 }

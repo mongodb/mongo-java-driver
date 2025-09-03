@@ -40,7 +40,6 @@ import static java.lang.String.format;
 final class GeometryEncoderHelper {
 
 
-    @SuppressWarnings("unchecked")
     static void encodeGeometry(final BsonWriter writer, final Geometry value, final EncoderContext encoderContext,
                                final CodecRegistry registry) {
 

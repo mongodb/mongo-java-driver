@@ -24,7 +24,7 @@ import java.util.List;
 class JsonStreamBuffer implements JsonBuffer {
 
     private final Reader reader;
-    private final List<Integer> markedPositions = new ArrayList<Integer>();
+    private final List<Integer> markedPositions = new ArrayList<>();
     private final int initialBufferSize;
     private int position;
     private int lastChar;
@@ -88,7 +88,7 @@ class JsonStreamBuffer implements JsonBuffer {
             }
             return nextChar;
 
-        } catch (final IOException e) {
+        } catch (IOException e) {
             throw new JsonParseException(e);
         }
     }

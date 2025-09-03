@@ -17,37 +17,33 @@
 package com.mongodb.internal.connection;
 
 
-import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.ServerAddress;
+import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
+import com.mongodb.event.ServerDescriptionChangedEvent;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
-import org.bson.BsonTimestamp;
 
 import java.io.Closeable;
 
 /**
  * Represents a cluster of MongoDB servers.  Implementations can define the behaviour depending upon the type of cluster.
  *
- * @since 3.0
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface Cluster extends Closeable {
 
-    /**
-     * Gets the cluster settings with which this cluster was created.
-     *
-     * @return the cluster settings
-     * @since 3.4
-     */
     ClusterSettings getSettings();
 
-    /**
-     * Get the description of this cluster.  This method will not return normally until the cluster type is known.
-     *
-     * @return a ClusterDescription representing the current state of the cluster
-     * @throws com.mongodb.MongoTimeoutException if the timeout has been reached before the cluster type is known
-     */
-    ClusterDescription getDescription();
+
+    ClusterId getClusterId();
+
+    ServersSnapshot getServersSnapshot(Timeout serverSelectionTimeout, TimeoutContext timeoutContext);
 
     /**
      * Get the current description of this cluster.
@@ -57,30 +53,16 @@ public interface Cluster extends Closeable {
     ClusterDescription getCurrentDescription();
 
     /**
-     * Get the last seen cluster time
-     *
-     * @since 3.8
-     * @return the last seen cluster time or null if not set
+     * Get the {@link ClusterClock} from which one may get the last seen cluster time.
      */
-    @Nullable
-    BsonTimestamp getClusterTime();
+    ClusterClock getClock();
 
-    /**
-     * Get a MongoDB server that matches the criteria defined by the serverSelector
-     *
-     * @param serverSelector a ServerSelector that defines how to select the required Server
-     * @return a Server that meets the requirements
-     * @throws com.mongodb.MongoTimeoutException if the timeout has been reached before a server matching the selector is available
-     */
-    Server selectServer(ServerSelector serverSelector);
+    ClientMetadata getClientMetadata();
 
-    /**
-     * Asynchronously gets a MongoDB server that matches the criteria defined by the serverSelector.
-     *
-     * @param serverSelector a ServerSelector that defines how to select the required Server
-     * @param callback the callback to invoke when the server is found or an error occurs
-     */
-    void selectServerAsync(ServerSelector serverSelector, SingleResultCallback<Server> callback);
+    ServerTuple selectServer(ServerSelector serverSelector, OperationContext operationContext);
+
+    void selectServerAsync(ServerSelector serverSelector, OperationContext operationContext,
+            SingleResultCallback<ServerTuple> callback);
 
     /**
      * Closes connections to the servers in the cluster.  After this is called, this cluster instance can no longer be used.
@@ -93,4 +75,31 @@ public interface Cluster extends Closeable {
      * @return true if all the servers in this cluster have been closed
      */
     boolean isClosed();
+
+    /**
+     * Does the supplied {@code action} while holding a reentrant cluster-wide lock.
+     *
+     * @param action The action to {@linkplain Runnable#run() do}.
+     */
+    void withLock(Runnable action);
+
+    /**
+     * This method allows {@link Server}s to notify the {@link Cluster} about changes in their state as per the
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.md">
+     * Server Discovery And Monitoring</a> specification.
+     */
+    void onChange(ServerDescriptionChangedEvent event);
+
+    /**
+     * A non-atomic snapshot of the servers in a {@link Cluster}.
+     */
+    @ThreadSafe
+    interface ServersSnapshot {
+        @Nullable
+        Server getServer(ServerAddress serverAddress);
+
+        default boolean containsServer(final ServerAddress serverAddress) {
+            return getServer(serverAddress) != null;
+        }
+    }
 }

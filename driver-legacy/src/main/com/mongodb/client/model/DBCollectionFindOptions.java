@@ -44,13 +44,13 @@ public final class DBCollectionFindOptions {
     private DBObject sort;
     private CursorType cursorType = CursorType.NonTailable;
     private boolean noCursorTimeout;
-    private boolean oplogReplay;
     private boolean partial;
     private ReadPreference readPreference;
     private ReadConcern readConcern;
     private Collation collation;
     private String comment;
     private DBObject hint;
+    private String hintString;
     private DBObject max;
     private DBObject min;
     private boolean returnKey;
@@ -78,13 +78,13 @@ public final class DBCollectionFindOptions {
         copiedOptions.sort(sort);
         copiedOptions.cursorType(cursorType);
         copiedOptions.noCursorTimeout(noCursorTimeout);
-        copiedOptions.oplogReplay(oplogReplay);
         copiedOptions.partial(partial);
         copiedOptions.readPreference(readPreference);
         copiedOptions.readConcern(readConcern);
         copiedOptions.collation(collation);
         copiedOptions.comment(comment);
         copiedOptions.hint(hint);
+        copiedOptions.hintString(hintString);
         copiedOptions.max(max);
         copiedOptions.min(min);
         copiedOptions.returnKey(returnKey);
@@ -167,12 +167,12 @@ public final class DBCollectionFindOptions {
      * The maximum amount of time for the server to wait on new documents to satisfy a tailable cursor
      * query. This only applies to a TAILABLE_AWAIT cursor. When the cursor is not a TAILABLE_AWAIT cursor,
      * this option is ignored.
-     *
+     * <p>
      * On servers &gt;= 3.2, this option will be specified on the getMore command as "maxTimeMS". The default
      * is no value: no "maxTimeMS" is sent to the server with the getMore command.
-     *
+     * <p>
      * On servers &lt; 3.2, this option is ignored, and indicates that the driver should respect the server's default value
-     *
+     * <p>
      * A zero value will be ignored.
      *
      * @param timeUnit the time unit to return the result in
@@ -289,30 +289,6 @@ public final class DBCollectionFindOptions {
      */
     public DBCollectionFindOptions noCursorTimeout(final boolean noCursorTimeout) {
         this.noCursorTimeout = noCursorTimeout;
-        return this;
-    }
-
-    /**
-     * Users should not set this under normal circumstances.
-     *
-     * @return if oplog replay is enabled
-     * @deprecated oplogReplay has been deprecated in MongoDB 4.4.
-     */
-    @Deprecated
-    public boolean isOplogReplay() {
-        return oplogReplay;
-    }
-
-    /**
-     * Users should not set this under normal circumstances.
-     *
-     * @param oplogReplay if oplog replay is enabled
-     * @return this
-     * @deprecated oplogReplay has been deprecated in MongoDB 4.4.
-     */
-    @Deprecated
-    public DBCollectionFindOptions oplogReplay(final boolean oplogReplay) {
-        this.oplogReplay = oplogReplay;
         return this;
     }
 
@@ -458,6 +434,17 @@ public final class DBCollectionFindOptions {
     }
 
     /**
+     * Returns the hint string for the name of the index to use. The default is not to set a hint.
+     *
+     * @return the hint string
+     * @since 4.4
+     */
+    @Nullable
+    public String getHintString() {
+        return hintString;
+    }
+
+    /**
      * Sets the hint for which index to use. A null value means no hint is set.
      *
      * @param hint the hint
@@ -469,6 +456,17 @@ public final class DBCollectionFindOptions {
         return this;
     }
 
+    /**
+     * Sets the hint for the name of the index to use. A null value means no hint is set.
+     *
+     * @param hintString the hint string
+     * @return this
+     * @since 4.4
+     */
+    public DBCollectionFindOptions hintString(@Nullable final String hintString) {
+        this.hintString = hintString;
+        return this;
+    }
     /**
      * Returns the exclusive upper bound for a specific index. By default there is no max bound.
      *
@@ -517,7 +515,7 @@ public final class DBCollectionFindOptions {
 
     /**
      * Returns the returnKey. If true the find operation will return only the index keys in the resulting documents.
-     *
+     * <p>
      * Default value is false. If returnKey is true and the find command does not use an index, the returned documents will be empty.
      *
      * @return the returnKey
@@ -541,7 +539,7 @@ public final class DBCollectionFindOptions {
 
     /**
      * Returns the showRecordId.
-     *
+     * <p>
      * Determines whether to return the record identifier for each document. If true, adds a field $recordId to the returned documents.
      * The default is false.
      *

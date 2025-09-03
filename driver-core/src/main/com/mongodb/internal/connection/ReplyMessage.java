@@ -23,68 +23,33 @@ import org.bson.codecs.DecoderContext;
 import org.bson.io.BsonInput;
 import org.bson.io.ByteBufferBsonInput;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static java.lang.String.format;
 
 /**
  * An OP_REPLY message.
  *
- * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-reply OP_REPLY
- * @param <T> the type of the result document
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ReplyMessage<T> {
 
-    private final ReplyHeader replyHeader;
-    private final List<T> documents;
+    private final T document;
 
     public ReplyMessage(final ResponseBuffers responseBuffers, final Decoder<T> decoder, final long requestId) {
-        this(responseBuffers.getReplyHeader(), requestId);
-
-        if (replyHeader.getNumberReturned() > 0) {
-            BsonInput bsonInput = new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer().duplicate());
-            try {
-                while (documents.size() < replyHeader.getNumberReturned()) {
-                    BsonBinaryReader reader = new BsonBinaryReader(bsonInput);
-                    try {
-                        documents.add(decoder.decode(reader, DecoderContext.builder().build()));
-                    } finally {
-                        reader.close();
-                    }
-                }
-            } finally {
-               bsonInput.close();
-               responseBuffers.reset();
-            }
-        }
-    }
-
-    ReplyMessage(final ReplyHeader replyHeader, final long requestId) {
-        if (requestId != replyHeader.getResponseTo()) {
+        if (requestId != responseBuffers.getReplyHeader().getResponseTo()) {
             throw new MongoInternalException(format("The responseTo (%d) in the response does not match the requestId (%d) in the "
-                                                    + "request", replyHeader.getResponseTo(), requestId));
+                    + "request", responseBuffers.getReplyHeader().getResponseTo(), requestId));
         }
-        this.replyHeader = replyHeader;
 
-        documents = new ArrayList<T>(replyHeader.getNumberReturned());
+        try (BsonInput bsonInput = new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer().duplicate())) {
+            try (BsonBinaryReader reader = new BsonBinaryReader(bsonInput)) {
+                document = decoder.decode(reader, DecoderContext.builder().build());
+            }
+        } finally {
+            responseBuffers.reset();
+        }
     }
 
-    /**
-     * Gets the reply header.
-     *
-     * @return the reply header
-     */
-    public ReplyHeader getReplyHeader() {
-        return replyHeader;
-    }
-
-    /**
-     * Gets the documents.
-     *
-     * @return the documents
-     */
-    public List<T> getDocuments() {
-        return documents;
+    public T getDocument() {
+        return document;
     }
 }

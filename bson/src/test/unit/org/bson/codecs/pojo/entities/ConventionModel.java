@@ -41,7 +41,6 @@ public final class ConventionModel {
     }
 
     public ConventionModel(final String customId, final ConventionModel child, final SimpleModel simpleModel) {
-        this.myIntField = myIntField;
         this.customId = customId;
         this.child = child;
         this.simpleModel = simpleModel;

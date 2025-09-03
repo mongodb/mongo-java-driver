@@ -17,30 +17,31 @@
 package org.mongodb.scala.gridfs
 
 import com.mongodb.reactivestreams.client.gridfs.GridFSUploadPublisher
+import org.mockito.Mockito.verify
 import org.mongodb.scala.BaseSpec
-import org.scalamock.scalatest.proxy.MockFactory
+import org.scalatestplus.mockito.MockitoSugar
 
-class GridFSUploadPublisherSpec extends BaseSpec with MockFactory {
-  val wrapper = mock[GridFSUploadPublisher[Void]]
+class GridFSUploadPublisherSpec extends BaseSpec with MockitoSugar {
+  val wrapper = mock[GridFSUploadPublisher[Unit]]
   val gridFSUploadObservable = GridFSUploadObservable(wrapper)
 
   "GridFSBucket" should "have the same methods as the wrapped GridFSUploadStream" in {
-    val wrapped = classOf[GridFSUploadPublisher[Void]].getMethods.map(_.getName).toSet
-    val local = classOf[GridFSUploadObservable[Void]].getMethods.map(_.getName).toSet
+    val wrapped = classOf[GridFSUploadPublisher[Unit]].getMethods.map(_.getName).toSet
+    val local = classOf[GridFSUploadObservable[Unit]].getMethods.map(_.getName).toSet
 
     wrapped.foreach((name: String) => {
       val cleanedName = name.stripPrefix("get")
-      assert(local.contains(name) | local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
+      assert(local.contains(name) || local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
     })
   }
 
   it should "call the underlying methods" in {
 
-    wrapper.expects(Symbol("getObjectId"))().once()
-    wrapper.expects(Symbol("getId"))().once()
-
     gridFSUploadObservable.objectId
     gridFSUploadObservable.id
+
+    verify(wrapper).getObjectId
+    verify(wrapper).getId
   }
 
 }

@@ -31,7 +31,8 @@ import static java.lang.String.format;
  * Instant Codec.
  *
  * <p>
- * Encodes and decodes {@code Instant} objects to and from {@code DateTime}. Data is stored to millisecond accuracy.
+ * Encodes and decodes {@code Instant} objects to and from {@code DateTime}.
+ * Data is extracted via {@link Instant#toEpochMilli()} and stored to millisecond accuracy.
  * </p>
  *
  * @mongodb.driver.manual reference/bson-types

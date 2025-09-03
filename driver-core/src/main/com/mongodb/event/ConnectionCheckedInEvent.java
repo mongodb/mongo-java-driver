@@ -22,19 +22,26 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * An event for checking in a connection to the pool.
+ * Such a connection is considered available until it becomes {@linkplain ConnectionCheckedOutEvent in use}
+ * or {@linkplain ConnectionClosedEvent closed}.
  *
  * @since 3.5
  */
 public final class ConnectionCheckedInEvent {
     private final ConnectionId connectionId;
+    private final long operationId;
+
 
     /**
      * Construct an instance
      *
      * @param connectionId the connectionId
+     * @param operationId the operation id
+     * @since 4.10
      */
-    public ConnectionCheckedInEvent(final ConnectionId connectionId) {
+    public ConnectionCheckedInEvent(final ConnectionId connectionId, final long operationId) {
         this.connectionId = notNull("connectionId", connectionId);
+        this.operationId = operationId;
     }
 
     /**
@@ -46,10 +53,23 @@ public final class ConnectionCheckedInEvent {
         return connectionId;
     }
 
+    /**
+     * Gets the operation identifier
+     *
+     * @return the operation identifier
+     * @since 4.10
+     */
+    public long getOperationId() {
+        return operationId;
+    }
+
     @Override
     public String toString() {
         return "ConnectionCheckedInEvent{"
-                       + "connectionId=" + connectionId
-                       + '}';
+                + "connectionId=" + connectionId
+                + ", server=" + connectionId.getServerId().getAddress()
+                + ", clusterId=" + connectionId.getServerId().getClusterId()
+                + ", operationId=" + operationId
+                + '}';
     }
 }

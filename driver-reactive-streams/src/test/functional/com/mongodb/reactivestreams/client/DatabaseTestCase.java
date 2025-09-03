@@ -16,17 +16,11 @@
 
 package com.mongodb.reactivestreams.client;
 
-import com.mongodb.MongoException;
 import org.bson.Document;
-import org.junit.After;
-import org.junit.Before;
-import org.reactivestreams.Publisher;
-
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
-import static com.mongodb.reactivestreams.client.Fixture.ObservableSubscriber;
 import static com.mongodb.reactivestreams.client.Fixture.drop;
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClient;
 
@@ -38,43 +32,19 @@ public class DatabaseTestCase {
     protected MongoCollection<Document> collection;
     //CHECKSTYLE:ON
 
-    @Before
-    public void setUp() throws Throwable {
+    @BeforeEach
+    public void setUp() {
         client =  getMongoClient();
         database = client.getDatabase(getDefaultDatabaseName());
         collection = database.getCollection(getClass().getName());
         drop(collection.getNamespace());
     }
 
-    @After
-    public void tearDown() throws Throwable {
+    @AfterEach
+    public void tearDown() {
         if (collection != null) {
             drop(collection.getNamespace());
         }
     }
 
-    public abstract class MongoOperation<TResult> {
-        private final ObservableSubscriber<TResult> subscriber = new ObservableSubscriber<TResult>();
-
-        public ObservableSubscriber<TResult> getSubscriber() {
-            return subscriber;
-        }
-
-        public List<TResult> get() {
-            execute();
-            try {
-                return subscriber.get(60, TimeUnit.SECONDS);
-            } catch (MongoException e) {
-                throw e;
-            } catch (Throwable t) {
-                throw new RuntimeException(t);
-            }
-        }
-
-        public TResult head() {
-            return get().get(0);
-        }
-
-        public abstract Publisher<TResult> execute();
-    }
 }

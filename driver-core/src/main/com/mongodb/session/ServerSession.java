@@ -55,7 +55,7 @@ public interface ServerSession {
 
     /**
      * Mark the server session as dirty.
-     *
+     * <p>
      * A server session is marked dirty when a command fails with a network
      * error. Dirty sessions are later discarded from the server session pool.
      * @since 3.12

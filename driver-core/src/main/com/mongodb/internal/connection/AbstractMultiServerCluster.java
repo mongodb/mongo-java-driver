@@ -17,29 +17,33 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
+import com.mongodb.MongoStalePrimaryException;
 import com.mongodb.ServerAddress;
-import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
-import com.mongodb.event.ServerListener;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.time.Timeout;
+import com.mongodb.lang.Nullable;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.connection.ClusterType.UNKNOWN;
@@ -47,8 +51,12 @@ import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.connection.ServerType.REPLICA_SET_GHOST;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.connection.ServerType.STANDALONE;
+import static com.mongodb.internal.operation.ServerVersionHelper.SIX_DOT_ZERO_WIRE_VERSION;
 import static java.lang.String.format;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public abstract class AbstractMultiServerCluster extends BaseCluster {
     private static final Logger LOGGER = Loggers.getLogger("cluster");
 
@@ -58,7 +66,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     private Integer maxSetVersion;
 
     private final ConcurrentMap<ServerAddress, ServerTuple> addressToServerTupleMap =
-    new ConcurrentHashMap<ServerAddress, ServerTuple>();
+            new ConcurrentHashMap<>();
 
     private static final class ServerTuple {
         private final ClusterableServer server;
@@ -70,38 +78,37 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         }
     }
 
-    AbstractMultiServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
-        super(clusterId, settings, serverFactory);
-        isTrue("connection mode is multiple", settings.getMode() == ClusterConnectionMode.MULTIPLE);
+    AbstractMultiServerCluster(final ClusterId clusterId,
+                               final ClusterSettings settings,
+                               final ClusterableServerFactory serverFactory,
+                               final ClientMetadata clientMetadata) {
+        super(clusterId, settings, serverFactory, clientMetadata);
+        isTrue("connection mode is multiple", settings.getMode() == MULTIPLE);
         clusterType = settings.getRequiredClusterType();
         replicaSetName = settings.getRequiredReplicaSetName();
-
-        if (LOGGER.isInfoEnabled()) {
-            LOGGER.info(format("Cluster created with settings %s", settings.getShortDescription()));
-        }
     }
 
     ClusterType getClusterType() {
         return clusterType;
     }
 
+    @Nullable
     MongoException getSrvResolutionException() {
         return null;
     }
 
     protected void initialize(final Collection<ServerAddress> serverAddresses) {
         ClusterDescription currentDescription = getCurrentDescription();
-        ClusterDescription newDescription;
 
         // synchronizing this code because addServer registers a callback which is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
-        synchronized (this) {
+        withLock(() -> {
             for (final ServerAddress serverAddress : serverAddresses) {
                 addServer(serverAddress);
             }
-            newDescription = updateDescription();
-        }
-        fireChangeEvent(new ClusterDescriptionChangedEvent(getClusterId(), newDescription, currentDescription));
+            ClusterDescription newDescription = updateDescription();
+            fireChangeEvent(newDescription, currentDescription);
+        });
     }
 
     @Override
@@ -113,37 +120,29 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
 
     @Override
     public void close() {
-        synchronized (this) {
+        withLock(() -> {
             if (!isClosed()) {
                 for (final ServerTuple serverTuple : addressToServerTupleMap.values()) {
                     serverTuple.server.close();
                 }
             }
             super.close();
-        }
+        });
     }
 
     @Override
-    protected ClusterableServer getServer(final ServerAddress serverAddress) {
+    public ServersSnapshot getServersSnapshot(final Timeout serverSelectionTimeout,
+                                              final TimeoutContext timeoutContext) {
         isTrue("is open", !isClosed());
-
-        ServerTuple serverTuple = addressToServerTupleMap.get(serverAddress);
-        if (serverTuple == null) {
-            return null;
-        }
-        return serverTuple.server;
-    }
-
-
-    private final class DefaultServerStateListener implements ServerListener {
-        @Override
-        public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
-            onChange(event);
-        }
+        Map<ServerAddress, ServerTuple> nonAtomicSnapshot = new HashMap<>(addressToServerTupleMap);
+        return serverAddress -> {
+            ServerTuple serverTuple = nonAtomicSnapshot.get(serverAddress);
+            return serverTuple == null ? null : serverTuple.server;
+        };
     }
 
     void onChange(final Collection<ServerAddress> newHosts) {
-        synchronized (this) {
+        withLock(() -> {
             if (isClosed()) {
                 return;
             }
@@ -166,15 +165,13 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
             ClusterDescription oldClusterDescription = getCurrentDescription();
             ClusterDescription newClusterDescription = updateDescription();
 
-            fireChangeEvent(new ClusterDescriptionChangedEvent(getClusterId(), newClusterDescription, oldClusterDescription));
-        }
+            fireChangeEvent(newClusterDescription, oldClusterDescription);
+        });
     }
 
-    private void onChange(final ServerDescriptionChangedEvent event) {
-        ClusterDescription oldClusterDescription = null;
-        ClusterDescription newClusterDescription = null;
-        boolean shouldUpdateDescription = true;
-        synchronized (this) {
+    @Override
+    public void onChange(final ServerDescriptionChangedEvent event) {
+        withLock(() -> {
             if (isClosed()) {
                 return;
             }
@@ -195,6 +192,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
                 return;
             }
 
+            boolean shouldUpdateDescription = true;
             if (newDescription.isOk()) {
                 if (clusterType == UNKNOWN && newDescription.getType() != REPLICA_SET_GHOST) {
                     clusterType = newDescription.getClusterType();
@@ -218,15 +216,17 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
                 }
             }
 
+            ClusterDescription oldClusterDescription = null;
+            ClusterDescription newClusterDescription = null;
             if (shouldUpdateDescription) {
                 serverTuple.description = newDescription;
                 oldClusterDescription = getCurrentDescription();
                 newClusterDescription = updateDescription();
             }
-        }
-        if (shouldUpdateDescription) {
-            fireChangeEvent(new ClusterDescriptionChangedEvent(getClusterId(), newClusterDescription, oldClusterDescription));
-        }
+            if (shouldUpdateDescription) {
+                fireChangeEvent(newClusterDescription, oldClusterDescription);
+            }
+        });
     }
 
     private boolean handleReplicaSetMemberChanged(final ServerDescription newDescription) {
@@ -238,14 +238,12 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         }
 
         if (newDescription.getType() == REPLICA_SET_GHOST) {
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info(format("Server %s does not appear to be a member of an initiated replica set.", newDescription.getAddress()));
-            }
+            LOGGER.info(format("Server %s does not appear to be a member of an initiated replica set.", newDescription.getAddress()));
             return true;
         }
 
         if (replicaSetName == null) {
-            replicaSetName = newDescription.getSetName();
+            replicaSetName = assertNotNull(newDescription.getSetName());
         }
 
         if (!replicaSetName.equals(newDescription.getSetName())) {
@@ -261,64 +259,80 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         if (newDescription.getCanonicalAddress() != null
                 && !newDescription.getAddress().equals(new ServerAddress(newDescription.getCanonicalAddress()))
                 && !newDescription.isPrimary()) {
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info(format("Canonical address %s does not match server address.  Removing %s from client view of cluster",
-                                   newDescription.getCanonicalAddress(), newDescription.getAddress()));
-            }
+            LOGGER.info(format("Canonical address %s does not match server address.  Removing %s from client view of cluster",
+                    newDescription.getCanonicalAddress(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
             return true;
         }
 
-        if (newDescription.isPrimary()) {
-            ObjectId electionId = newDescription.getElectionId();
-            Integer setVersion = newDescription.getSetVersion();
-            if (setVersion != null && electionId != null) {
-                if (isStalePrimary(newDescription)) {
-                    if (LOGGER.isInfoEnabled()) {
-                        LOGGER.info(format("Invalidating potential primary %s whose (set version, election id) tuple of (%d, %s) "
-                                + "is less than one already seen of (%d, %s)",
-                                newDescription.getAddress(),
-                                setVersion, electionId,
-                                maxSetVersion, maxElectionId));
-                    }
-                    addressToServerTupleMap.get(newDescription.getAddress()).server.resetToConnecting();
-                    return false;
-                }
-
-                if (!electionId.equals(maxElectionId)) {
-                    if (LOGGER.isInfoEnabled()) {
-                        LOGGER.info(format("Setting max election id to %s from replica set primary %s", electionId,
-                                newDescription.getAddress()));
-                    }
-                    maxElectionId = electionId;
-                }
-            }
-
-            if (setVersion != null
-                    && (maxSetVersion == null || setVersion.compareTo(maxSetVersion) > 0)) {
-                if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info(format("Setting max set version to %d from replica set primary %s", setVersion,
-                            newDescription.getAddress()));
-                }
-                maxSetVersion = setVersion;
-            }
-
-            if (isNotAlreadyPrimary(newDescription.getAddress())) {
-                LOGGER.info(format("Discovered replica set primary %s", newDescription.getAddress()));
-            }
-            invalidateOldPrimaries(newDescription.getAddress());
+        if (!newDescription.isPrimary()) {
+            return true;
         }
-        return true;
-    }
 
-    private boolean isStalePrimary(final ServerDescription newDescription) {
-        if (maxSetVersion == null || maxElectionId == null) {
+        if (isStalePrimary(newDescription)) {
+            invalidatePotentialPrimary(newDescription, new MongoStalePrimaryException("Primary marked stale due to electionId/setVersion mismatch"));
             return false;
         }
 
-        Integer setVersion = newDescription.getSetVersion();
-        return (setVersion == null || maxSetVersion.compareTo(setVersion) > 0
-                || (maxSetVersion.equals(setVersion) && maxElectionId.compareTo(newDescription.getElectionId()) > 0));
+        maxElectionId = nullSafeMax(newDescription.getElectionId(), maxElectionId);
+        maxSetVersion = nullSafeMax(newDescription.getSetVersion(), maxSetVersion);
+
+        invalidateOldPrimaries(newDescription.getAddress());
+
+        if (isNotAlreadyPrimary(newDescription.getAddress())) {
+            LOGGER.info(format("Discovered replica set primary %s with max election id %s and max set version %d",
+                    newDescription.getAddress(), newDescription.getElectionId(), newDescription.getSetVersion()));
+        }
+
+        return true;
+    }
+
+    private boolean isStalePrimary(final ServerDescription description) {
+        ObjectId electionId = description.getElectionId();
+        Integer setVersion = description.getSetVersion();
+        if (description.getMaxWireVersion() >= SIX_DOT_ZERO_WIRE_VERSION) {
+            return nullSafeCompareTo(electionId, maxElectionId) < 0
+                    || (nullSafeCompareTo(electionId, maxElectionId) == 0 && nullSafeCompareTo(setVersion, maxSetVersion) < 0);
+        } else {
+            return setVersion != null && electionId != null
+                    && (nullSafeCompareTo(setVersion, maxSetVersion) < 0
+                    || (nullSafeCompareTo(setVersion, maxSetVersion) == 0
+                    && nullSafeCompareTo(electionId, maxElectionId) < 0));
+        }
+     }
+
+    private void invalidatePotentialPrimary(final ServerDescription newDescription, final MongoStalePrimaryException cause) {
+        LOGGER.info(format("Invalidating potential primary %s whose (set version, election id) tuple of (%d, %s) "
+                        + "is less than one already seen of (%d, %s)",
+                newDescription.getAddress(), newDescription.getSetVersion(), newDescription.getElectionId(),
+                maxSetVersion, maxElectionId));
+
+        addressToServerTupleMap.get(newDescription.getAddress()).server.resetToConnecting(cause);
+    }
+
+    /**
+     * Implements the same contract as {@link Comparable#compareTo(Object)}, except that a null value is always considers less-than any
+     * other value (except null, which it considers as equal-to).
+     */
+    private static <T extends Comparable<T>> int nullSafeCompareTo(@Nullable final T first, @Nullable final T second) {
+        if (first == null) {
+            return second == null ? 0 : -1;
+        }
+        if (second == null) {
+            return 1;
+        }
+        return first.compareTo(second);
+    }
+
+    @Nullable
+    private static <T extends Comparable<T>> T nullSafeMax(@Nullable final T first, @Nullable final T second) {
+        if (first == null) {
+            return second;
+        }
+        if (second == null) {
+            return first;
+        }
+        return first.compareTo(second) >= 0 ? first : second;
     }
 
     private boolean isNotAlreadyPrimary(final ServerAddress address) {
@@ -329,7 +343,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     private boolean handleShardRouterChanged(final ServerDescription newDescription) {
         if (!newDescription.isShardRouter()) {
             LOGGER.error(format("Expecting a %s, but found a %s.  Removing %s from client view of cluster.",
-                                 SHARD_ROUTER, newDescription.getType(), newDescription.getAddress()));
+                    SHARD_ROUTER, newDescription.getType(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
         }
         return true;
@@ -350,7 +364,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info(format("Adding discovered server %s to client view of cluster", serverAddress));
             }
-            ClusterableServer server = createServer(serverAddress, new DefaultServerStateListener());
+            ClusterableServer server = createServer(serverAddress);
             addressToServerTupleMap.put(serverAddress, new ServerTuple(server, getConnectingServerDescription(serverAddress)));
         }
     }
@@ -368,7 +382,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
                 if (LOGGER.isInfoEnabled()) {
                     LOGGER.info(format("Rediscovering type of existing primary %s", serverTuple.description.getAddress()));
                 }
-                serverTuple.server.invalidate();
+                serverTuple.server.invalidate(new MongoStalePrimaryException("Primary marked stale due to discovery of newer primary"));
             }
         }
     }
@@ -385,7 +399,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     }
 
     private List<ServerDescription> getNewServerDescriptionList() {
-        List<ServerDescription> serverDescriptions = new ArrayList<ServerDescription>();
+        List<ServerDescription> serverDescriptions = new ArrayList<>();
         for (final ServerTuple cur : addressToServerTupleMap.values()) {
             serverDescriptions.add(cur.description);
         }
@@ -435,7 +449,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     }
 
     private Set<ServerAddress> getAllServerAddresses(final ServerDescription serverDescription) {
-        Set<ServerAddress> retVal = new HashSet<ServerAddress>();
+        Set<ServerAddress> retVal = new HashSet<>();
         addHostsToSet(serverDescription.getHosts(), retVal);
         addHostsToSet(serverDescription.getPassives(), retVal);
         addHostsToSet(serverDescription.getArbiters(), retVal);

@@ -30,7 +30,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -39,8 +38,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mongodb.ClusterFixture.isClientSideEncryptionTest;
 import static com.mongodb.ClusterFixture.isStandalone;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
@@ -67,7 +66,7 @@ public class ClientSideEncryptionSessionTest {
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
-        assumeTrue(serverVersionAtLeast(4, 2));
+        assumeTrue(isClientSideEncryptionTest());
         assumeFalse(isStandalone());
 
         /* Step 1: get unencrypted client and recreate keys collection */
@@ -141,9 +140,7 @@ public class ClientSideEncryptionSessionTest {
         assertEquals(6, encryptedDocument.getBinary("encrypted").getType());
     }
 
-
-    private static BsonDocument bsonDocumentFromPath(final String path) throws IOException, URISyntaxException {
-        return getTestDocument(new File(ClientSideEncryptionSessionTest.class
-                .getResource("/client-side-encryption-external/" + path).toURI()));
+    private static BsonDocument bsonDocumentFromPath(final String path) {
+        return getTestDocument("client-side-encryption/external/" + path);
     }
 }

@@ -27,23 +27,25 @@ import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerType;
 import com.mongodb.event.ClusterListener;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.connection.SdamServerDescriptionManager.SdamIssue;
+import com.mongodb.internal.time.Timeout;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import util.JsonPoweredTestHelper;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.CLIENT_METADATA;
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
-import static com.mongodb.internal.connection.ClusterableServer.ConnectionState.AFTER_HANDSHAKE;
-import static com.mongodb.internal.connection.ClusterableServer.ConnectionState.BEFORE_HANDSHAKE;
 import static com.mongodb.internal.connection.DescriptionHelper.createServerDescription;
 import static com.mongodb.internal.connection.ProtocolHelper.getCommandFailureException;
 import static org.junit.Assert.assertEquals;
@@ -51,48 +53,52 @@ import static org.junit.Assert.assertEquals;
 public class AbstractServerDiscoveryAndMonitoringTest {
     private final BsonDocument definition;
     private DefaultTestClusterableServerFactory factory;
-    private BaseCluster cluster;
+    private Cluster cluster;
 
     public AbstractServerDiscoveryAndMonitoringTest(final BsonDocument definition) {
         this.definition = definition;
     }
 
-    public static Collection<Object[]> data(final String root) throws URISyntaxException, IOException {
-        List<Object[]> data = new ArrayList<Object[]>();
-        for (File file : JsonPoweredTestHelper.getTestFiles(root)) {
-            BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
-            data.add(new Object[]{file.getName() + ": " + testDocument.getString("description").getValue(), testDocument});
+    public static Collection<Object[]> data(final String resourcePath) {
+        List<Object[]> data = new ArrayList<>();
+        for (BsonDocument testDocument : JsonPoweredTestHelper.getSpecTestDocuments(resourcePath)) {
+            data.add(new Object[]{testDocument.getString("fileName").getValue()
+                    + ": " + testDocument.getString("description").getValue(), testDocument});
         }
         return data;
     }
 
     protected void applyResponse(final BsonArray response) {
         ServerAddress serverAddress = new ServerAddress(response.get(0).asString().getValue());
-        BsonDocument isMasterResult = response.get(1).asDocument();
+        BsonDocument helloResult = response.get(1).asDocument();
         ServerDescription serverDescription;
 
-        if (isMasterResult.isEmpty()) {
+        if (helloResult.isEmpty()) {
             serverDescription = ServerDescription.builder().type(ServerType.UNKNOWN).state(CONNECTING).address(serverAddress).build();
         } else {
-            serverDescription = createServerDescription(serverAddress, isMasterResult, 5000000);
+            serverDescription = createServerDescription(serverAddress, helloResult, 5000000, 0);
         }
         factory.sendNotification(serverAddress, serverDescription);
     }
 
     protected void applyApplicationError(final BsonDocument applicationError) {
+        Timeout serverSelectionTimeout = OPERATION_CONTEXT.getTimeoutContext().computeServerSelectionTimeout();
         ServerAddress serverAddress = new ServerAddress(applicationError.getString("address").getValue());
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS);
         int errorGeneration = applicationError.getNumber("generation",
-                new BsonInt32(((DefaultServer) getCluster().getServer(serverAddress)).getConnectionPool().getGeneration())).intValue();
+                new BsonInt32(((DefaultServer) getCluster().getServersSnapshot(serverSelectionTimeout, timeoutContext).getServer(serverAddress))
+                        .getConnectionPool().getGeneration())).intValue();
         int maxWireVersion = applicationError.getNumber("maxWireVersion").intValue();
         String when = applicationError.getString("when").getValue();
         String type = applicationError.getString("type").getValue();
 
-        ClusterableServer server = cluster.getServer(serverAddress);
+        DefaultServer server = (DefaultServer) cluster.getServersSnapshot(serverSelectionTimeout, timeoutContext).getServer(serverAddress);
         RuntimeException exception;
 
         switch (type) {
             case "command":
-                exception = getCommandFailureException(applicationError.getDocument("response"), serverAddress);
+                exception = getCommandFailureException(applicationError.getDocument("response"), serverAddress,
+                        OPERATION_CONTEXT.getTimeoutContext());
                 break;
             case "network":
                 exception = new MongoSocketReadException("Read error", serverAddress, new IOException());
@@ -106,10 +112,12 @@ public class AbstractServerDiscoveryAndMonitoringTest {
 
         switch (when) {
             case "beforeHandshakeCompletes":
-                server.invalidate(BEFORE_HANDSHAKE, exception, errorGeneration, maxWireVersion);
+                server.sdamServerDescriptionManager().handleExceptionBeforeHandshake(
+                        SdamIssue.of(exception, new SdamIssue.Context(server.serverId(), errorGeneration, maxWireVersion)));
                 break;
             case "afterHandshakeCompletes":
-                server.invalidate(AFTER_HANDSHAKE, exception, errorGeneration, maxWireVersion);
+                server.sdamServerDescriptionManager().handleExceptionAfterHandshake(
+                        SdamIssue.of(exception, new SdamIssue.Context(server.serverId(), errorGeneration, maxWireVersion)));
                 break;
             default:
                 throw new UnsupportedOperationException("Unsupported `when` value: " + when);
@@ -117,7 +125,7 @@ public class AbstractServerDiscoveryAndMonitoringTest {
     }
 
     protected ClusterType getClusterType(final String topologyType) {
-        return getClusterType(topologyType, Collections.<ServerDescription>emptyList());
+        return getClusterType(topologyType, Collections.emptyList());
     }
 
     protected ClusterType getClusterType(final String topologyType, final Collection<ServerDescription> serverDescriptions) {
@@ -126,6 +134,8 @@ public class AbstractServerDiscoveryAndMonitoringTest {
             return serverDescriptions.iterator().next().getClusterType();
         } else if (topologyType.equalsIgnoreCase("Sharded")) {
             return ClusterType.SHARDED;
+        } else if (topologyType.equalsIgnoreCase("LoadBalanced")) {
+            return ClusterType.LOAD_BALANCED;
         } else if (topologyType.startsWith("ReplicaSet")) {
             return ClusterType.REPLICA_SET;
         } else if (topologyType.equalsIgnoreCase("Unknown")) {
@@ -153,6 +163,8 @@ public class AbstractServerDiscoveryAndMonitoringTest {
             serverType = ServerType.STANDALONE;
         } else if (serverTypeString.equals("PossiblePrimary")) {
             serverType = ServerType.UNKNOWN;
+        } else if (serverTypeString.equals("LoadBalancer")) {
+            serverType = ServerType.LOAD_BALANCER;
         } else if (serverTypeString.equals("Unknown")) {
             serverType = ServerType.UNKNOWN;
         } else {
@@ -170,15 +182,17 @@ public class AbstractServerDiscoveryAndMonitoringTest {
 
         ClusterId clusterId = new ClusterId();
 
-        factory = new DefaultTestClusterableServerFactory(clusterId, settings.getMode(), serverListenerFactory);
+        factory = new DefaultTestClusterableServerFactory(settings.getMode(), serverListenerFactory);
 
         ClusterSettings clusterSettings = settings.getClusterListeners().contains(clusterListener) ? settings
                 : ClusterSettings.builder(settings).addClusterListener(clusterListener).build();
 
         if (settings.getMode() == ClusterConnectionMode.SINGLE) {
-            cluster = new SingleServerCluster(clusterId, clusterSettings, factory);
+            cluster = new SingleServerCluster(clusterId, clusterSettings, factory, CLIENT_METADATA);
+        } else if (settings.getMode() == ClusterConnectionMode.MULTIPLE) {
+            cluster = new MultiServerCluster(clusterId, clusterSettings, factory, CLIENT_METADATA);
         } else {
-            cluster = new MultiServerCluster(clusterId, clusterSettings, factory);
+            cluster = new LoadBalancedCluster(clusterId, clusterSettings, factory, CLIENT_METADATA, null);
         }
     }
 
@@ -186,11 +200,15 @@ public class AbstractServerDiscoveryAndMonitoringTest {
         return definition;
     }
 
-    protected DefaultTestClusterableServerFactory getFactory() {
-        return factory;
+    protected boolean isSingleServerClusterExpected() {
+        ConnectionString connectionString = new ConnectionString(definition.getString("uri").getValue());
+        Boolean directConnection = connectionString.isDirectConnection();
+        return (directConnection != null && directConnection)
+                || (directConnection == null && connectionString.getHosts().size() == 1
+                && connectionString.getRequiredReplicaSetName() == null);
     }
 
-    protected BaseCluster getCluster() {
+    protected Cluster getCluster() {
         return cluster;
     }
 }

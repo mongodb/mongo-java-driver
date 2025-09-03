@@ -1,0 +1,293 @@
+<!--
+  ~ Copyright 2008-present MongoDB, Inc.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<!--
+    To determine the rank of a newly-detected bug that you would like to exclude,
+    run spotbugsMain task with xml.enabled, then examine the XML report in
+    <module>/build/reports/spotbugs/main.xml, where the rankings are
+    included as part of the report, e.g.
+
+    <BugInstance type="PA_PUBLIC_PRIMITIVE_ATTRIBUTE" priority="2" rank="16" ...
+
+    See https://spotbugs.readthedocs.io/en/latest/filter.html#rank
+    for the mapping from SpotBugs rank to verbal labels.
+-->
+<FindBugsFilter>
+    <Match>
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 16 -->
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+
+    <Match>
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 16 -->
+        <Class name="com.mongodb.internal.connection.tlschannel.impl.BufferHolder"/>
+        <Bug pattern="PA_PUBLIC_PRIMITIVE_ATTRIBUTE"/>
+    </Match>
+
+    <Match>
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 18 -->
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 14 -->
+        <Class name="org.bson.types.ObjectId"/>
+        <Bug pattern="DMI_RANDOM_USED_ONLY_ONCE"/>
+    </Match>
+
+    <!-- Once we stop supporting Java SE 8,
+            we can start relying on `SecureRandom` being thread-safe,
+            as per https://docs.oracle.com/javase/9/docs/api/java/security/SecureRandom.html,
+            and reuse its instances. -->
+    <Match>
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 14 -->
+        <Class name="com.mongodb.internal.connection.AwsAuthenticator$AwsSaslClient"/>
+        <Bug pattern="DMI_RANDOM_USED_ONLY_ONCE"/>
+    </Match>
+    <Match>
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 14 -->
+        <Class name="com.mongodb.internal.connection.ScramShaAuthenticator$DefaultRandomStringGenerator"/>
+        <Bug pattern="DMI_RANDOM_USED_ONLY_ONCE"/>
+    </Match>
+
+    <Match>
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 18 -->
+        <Class name="org.bson.codecs.BsonValueCodecProvider"/>
+        <Method name="getBsonTypeClassMap"/>
+        <Bug pattern="MS_EXPOSE_REP"/>
+    </Match>
+
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 18 -->
+        <!-- Deliberately ignoring this, as the check for a null SSLParameters is actually necessary.
+            See https://jira.mongodb.org/browse/JAVA-2876 for details. -->
+        <Class name="com.mongodb.client.internal.KeyManagementService"/>
+        <Method name="enableHostNameVerification" params="javax.net.ssl.SSLSocket"/>
+        <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
+    </Match>
+
+    <Match>
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 17 -->
+        <!-- Deliberately ignoring this, as many BSONObject subclasses don't do it -->
+        <Package name="com.mongodb"/>
+        <Bug pattern="EQ_DOESNT_OVERRIDE_EQUALS"/>
+    </Match>
+
+    <Match>
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 5 -->
+        <!-- Deliberately ignoring return value of CountDownLatch.await -->
+        <Class name="com.mongodb.internal.connection.BaseCluster"/>
+        <Bug pattern="RV_RETURN_VALUE_IGNORED"/>
+    </Match>
+
+    <Match>
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 20 -->
+        <!-- The underlying call to GridFSInputFile closes the file -->
+        <Class name="com.mongodb.gridfs.GridFS"/>
+        <Method name="createFile" params="java.io.File"/>
+        <Bug pattern="OBL_UNSATISFIED_OBLIGATION"/>
+    </Match>
+
+    <!-- Special handling of clone method for cloneable BsonValue subclasses.  By design, they don't call super.clone() -->
+    <Match>
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 14 -->
+        <Class name="org.bson.BsonArray"/>
+        <Method name="clone"/>
+        <Bug pattern="CN_IDIOM_NO_SUPER_CALL"/>
+    </Match>
+    <Match>
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 14 -->
+        <Class name="org.bson.BsonDocument"/>
+        <Method name="clone"/>
+        <Bug pattern="CN_IDIOM_NO_SUPER_CALL"/>
+    </Match>
+    <Match>
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 16 -->
+        <Class name="org.bson.RawBsonArray"/>
+        <Method name="clone"/>
+        <Bug pattern="CN_IDIOM_NO_SUPER_CALL"/>
+    </Match>
+
+    <Match>
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 16 -->
+        <Class name="~com.mongodb.client.ClientSession.*"/>
+        <Bug pattern="NM_SAME_SIMPLE_NAME_AS_INTERFACE"/>
+    </Match>
+
+    <Match>
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 16 -->
+        <Class name="~com.mongodb.reactivestreams.client.ClientSession.*"/>
+        <Bug pattern="NM_SAME_SIMPLE_NAME_AS_INTERFACE"/>
+    </Match>
+
+    <Match>
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 16 -->
+        <Class name="~com.mongodb.kotlin.client.coroutine.ClientSession.*"/>
+        <Bug pattern="NM_SAME_SIMPLE_NAME_AS_INTERFACE"/>
+    </Match>
+
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 18 -->
+        <!-- Spotbugs assumes that SSLSocket#getSSLParameters never returns null, when that is not the case for all JDKs -->
+        <Class name="com.mongodb.internal.connection.SslHelper"/>
+        <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
+    </Match>
+
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 17 -->
+        <Class name="com.mongodb.client.internal.CryptConnection"/>
+        <Method name="retain"/>
+        <Bug pattern="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"/>
+    </Match>
+
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 17 -->
+        <Class name="com.mongodb.reactivestreams.client.internal.crypt.CryptConnection"/>
+        <Method name="retain"/>
+        <Bug pattern="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"/>
+    </Match>
+
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 11 -->
+        <Class name="org.bson.codecs.kotlin.DataClassCodec$Companion"/>
+        <Method name="getCodec"/>
+        <Bug pattern="RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"/>
+    </Match>
+
+    <Match>
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 20 -->
+        <!-- AWS use UNIX-style line endings -->
+        <Class name="com.mongodb.internal.connection.AuthorizationHeader"/>
+        <Bug pattern="VA_FORMAT_STRING_USES_NEWLINE"/>
+    </Match>
+
+    <Match>
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 14 -->
+        <!-- The method is a wrapper for `Condition.await`, naturally it does not call it in a loop. -->
+        <Class name="com.mongodb.internal.connection.DefaultConnectionPool$OpenConcurrencyLimiter"/>
+        <Method name="awaitNanos"/>
+        <Bug pattern="WA_AWAIT_NOT_IN_LOOP"/>
+    </Match>
+
+    <!-- The checker fails to see that the code prevents concurrent incrementation by using exclusive locking. -->
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 14 -->
+        <Class name="com.mongodb.internal.connection.DefaultConnectionPool$StateAndGeneration"/>
+        <Field name="generation"/>
+        <Bug pattern="VO_VOLATILE_INCREMENT"/>
+    </Match>
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 14 -->
+        <Class name="com.mongodb.internal.connection.ConcurrentPool$StateAndPermits"/>
+        <Field name="permits"/>
+        <Bug pattern="VO_VOLATILE_INCREMENT"/>
+    </Match>
+
+    <Match>
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 15 -->
+        <!-- Non-short-circuit operators are used intentionally. -->
+        <Class name="com.mongodb.internal.connection.ConcurrentPool$StateAndPermits"/>
+        <Method name="acquirePermit"/>
+        <Bug pattern="NS_DANGEROUS_NON_SHORT_CIRCUIT"/>
+    </Match>
+
+    <!-- Kotlin false positive for validating annotations  -->
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 17 -->
+        <Class name="org.bson.codecs.kotlin.DataClassCodec$Companion"/>
+        <Method name="~.*validateAnnotations.*"/>
+        <Bug pattern="UC_USELESS_OBJECT"/>
+    </Match>
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 17 -->
+        <Class name="org.bson.codecs.kotlinx.KotlinSerializerCodec$Companion"/>
+        <Method name="~.*validateAnnotations.*"/>
+        <Bug pattern="UC_USELESS_OBJECT"/>
+    </Match>
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 17 -->
+        <Class name="org.bson.codecs.kotlinx.KotlinSerializerCodec$Companion"/>
+        <Method name="~.*validateAnnotations.*"/>
+        <Bug pattern="BC_BAD_CAST_TO_ABSTRACT_COLLECTION"/>
+    </Match>
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 17 -->
+        <Class name="com.mongodb.kotlin.client.model.PropertiesKt$path$1"/>
+        <Method name="~.*invoke.*"/>
+        <Bug pattern="BC_BAD_CAST_TO_ABSTRACT_COLLECTION"/>
+    </Match>
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 17 -->
+        <Class name="com.mongodb.kotlin.client.model.Projections"/>
+        <Method name="~include|exclude"/>
+        <Bug pattern="BC_BAD_CAST_TO_ABSTRACT_COLLECTION"/>
+    </Match>
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 17 -->
+        <Class name="com.mongodb.kotlin.client.model.Indexes"/>
+        <Method name="~ascending|descending|geo2dsphere"/>
+        <Bug pattern="BC_BAD_CAST_TO_ABSTRACT_COLLECTION"/>
+    </Match>
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 17 -->
+        <Class name="com.mongodb.kotlin.client.model.Sorts"/>
+        <Method name="~ascending|descending"/>
+        <Bug pattern="BC_BAD_CAST_TO_ABSTRACT_COLLECTION"/>
+    </Match>
+
+    <!-- Spotbugs reports false positives for suspendable operations with default params
+         see: https://github.com/Kotlin/kotlinx.coroutines/issues/3099
+    -->
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 13 -->
+        <Class name="com.mongodb.kotlin.client.coroutine.MongoCluster"/>
+        <Method name="startSession"/>
+        <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+    </Match>
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 16 -->
+        <Class name="~com.mongodb.kotlin.client.coroutine.*"/>
+        <Bug pattern="NP_NONNULL_PARAM_VIOLATION"/>
+    </Match>
+
+    <!-- Ignoring await return; intended to be used in a loop -->
+    <Match>
+        <Class name="com.mongodb.internal.time.Timeout"/>
+        <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"/>
+    </Match>
+    <Match>
+        <Class name="com.mongodb.internal.time.Timeout"/>
+        <Bug pattern="RV_RETURN_VALUE_IGNORED"/>
+    </Match>
+    <Match>
+        <Class name="com.mongodb.internal.time.Timeout"/>
+        <Bug pattern="WA_AWAIT_NOT_IN_LOOP"/>
+    </Match>
+
+    <!-- Void method returning null but @NotNull API -->
+    <Match>
+        <Class name="com.mongodb.internal.operation.DropIndexOperation"/>
+        <Method name="execute"/>
+        <Bug pattern="NP_NONNULL_RETURN_VIOLATION"/>
+    </Match>
+
+    <!-- mongocrypt -->
+    <Match>
+        <Class name="com.mongodb.internal.crypt.capi.CAPI$cstring"/>
+        <Bug pattern="NM_CLASS_NAMING_CONVENTION"/>
+    </Match>
+
+</FindBugsFilter>

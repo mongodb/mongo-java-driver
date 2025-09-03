@@ -16,13 +16,13 @@
 
 package org.mongodb.scala
 
-import java.util.concurrent.atomic.AtomicBoolean
-
 import org.mongodb.scala.bson.ObjectId
 import org.mongodb.scala.gridfs.GridFSFile
-import org.mongodb.scala.internal._
+import org.mongodb.scala.internal.{ MapObservable, UnitObservable }
 import org.reactivestreams.{ Publisher, Subscriber, Subscription => JSubscription }
+import reactor.core.publisher.{ Flux, Mono }
 
+import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.Future
 
 /**
@@ -34,15 +34,14 @@ trait ObservableImplicits {
 
   implicit class BoxedPublisher[T](pub: => Publisher[T]) extends Observable[T] {
     val publisher = pub
-    private def sub(observer: Observer[_ >: T]): Unit = publisher.subscribe(observer)
 
     /**
      * @return an [[Observable]] (extended) publisher
      */
     def toObservable(): Observable[T] = this
 
-    override def subscribe(observer: Observer[_ >: T]): Unit = sub(observer)
-    override def subscribe(s: Subscriber[_ >: T]): Unit = sub(BoxedSubscriber(s))
+    override def subscribe(observer: Observer[_ >: T]): Unit = Flux.from(publisher).subscribe(observer)
+    override def subscribe(s: Subscriber[_ >: T]): Unit = Flux.from(publisher).subscribe(s)
   }
 
   implicit class BoxedSubscriber[T](sub: => Subscriber[_ >: T]) extends Observer[T] {
@@ -72,7 +71,7 @@ trait ObservableImplicits {
 
   implicit class ToObservableString(pub: => Publisher[java.lang.String]) extends Observable[String] {
     val publisher = pub
-    override def subscribe(observer: Observer[_ >: String]): Unit = publisher.toObservable().subscribe(observer)
+    override def subscribe(observer: Observer[_ >: String]): Unit = Flux.from(publisher).subscribe(observer)
   }
 
   implicit class ToSingleObservablePublisher[T](pub: => Publisher[T]) extends SingleObservable[T] {
@@ -85,98 +84,63 @@ trait ObservableImplicits {
      */
     def toSingle(): SingleObservable[T] = this
 
-    override def subscribe(observer: Observer[_ >: T]): Unit = {
-      publisher.subscribe(
-        SubscriptionCheckingObserver(new Observer[T]() {
-          @volatile
-          var results: Option[T] = None
-
-          @volatile
-          var terminated: Boolean = false
-
-          override def onSubscribe(subscription: Subscription): Unit = {
-            observer.onSubscribe(subscription)
-            subscription.request(1)
-          }
-
-          override def onError(throwable: Throwable): Unit = completeWith("onError", () => observer.onError(throwable))
-
-          override def onComplete(): Unit = {
-            completeWith("onComplete", { () =>
-              results.foreach { (result: T) =>
-                observer.onNext(result)
-              }
-              observer.onComplete()
-            })
-          }
-
-          override def onNext(tResult: T): Unit = {
-            check(results.isEmpty, "SingleObservable.onNext cannot be called with multiple results.")
-            results = Some(tResult)
-          }
-
-          private def completeWith(method: String, action: () => Any): Unit = {
-            check(!terminated, s"$method called after the Observer has already completed or errored. $observer")
-            terminated = true
-            action()
-          }
-
-          private def check(requirement: Boolean, message: String): Unit = {
-            if (!requirement) throw new IllegalStateException(message)
-          }
-        })
-      )
-    }
+    override def subscribe(observer: Observer[_ >: T]): Unit = Mono.from(publisher).subscribe(observer)
   }
 
   implicit class ToSingleObservableInt(pub: => Publisher[java.lang.Integer]) extends SingleObservable[Int] {
     val publisher = pub
-    override def subscribe(observer: Observer[_ >: Int]): Unit =
-      publisher.toObservable().map(_.intValue()).toSingle().subscribe(observer)
+    override def subscribe(observer: Observer[_ >: Int]): Unit = {
+      Mono
+        .from(MapObservable(publisher.toObservable(), (i: Integer) => i.toInt))
+        .subscribe(observer)
+    }
   }
 
   implicit class ToSingleObservableLong(pub: => Publisher[java.lang.Long]) extends SingleObservable[Long] {
     val publisher = pub
     override def subscribe(observer: Observer[_ >: Long]): Unit =
-      publisher.toObservable().map(_.longValue()).toSingle().subscribe(observer)
+      Mono
+        .from(MapObservable(publisher.toObservable(), (i: java.lang.Long) => i.toLong))
+        .subscribe(observer)
   }
 
   implicit class ToSingleObservableObjectId(pub: => Publisher[org.bson.types.ObjectId])
       extends SingleObservable[ObjectId] {
     val publisher = pub
-    override def subscribe(observer: Observer[_ >: ObjectId]): Unit = publisher.toSingle().subscribe(observer)
+    override def subscribe(observer: Observer[_ >: ObjectId]): Unit = Mono.from(publisher).subscribe(observer)
   }
 
   implicit class ToSingleObservableGridFS(pub: => Publisher[com.mongodb.client.gridfs.model.GridFSFile])
       extends SingleObservable[GridFSFile] {
     val publisher = pub
-    override def subscribe(observer: Observer[_ >: GridFSFile]): Unit = publisher.toSingle().subscribe(observer)
+    override def subscribe(observer: Observer[_ >: GridFSFile]): Unit = Mono.from(publisher).subscribe(observer)
   }
 
-  implicit class ToSingleObservableVoid(pub: => Publisher[Void]) extends SingleObservable[Void] {
+  /**
+   * An [[Observable]] that emits
+   *
+   *   - exactly one item, if the wrapped `Publisher` does not signal an error, even if the represented stream is empty;
+   *   - no items if the wrapped `Publisher` signals an error.
+   *
+   * @param pub A `Publisher` representing a finite stream.
+   */
+  implicit class ToSingleObservableUnit(pub: => Publisher[Void]) extends SingleObservable[Unit] {
     val publisher = pub
-    override def subscribe(observer: Observer[_ >: Void]): Unit =
-      publisher
-        .toSingle()
-        .subscribe(new Observer[Void] {
 
-          override def onSubscribe(subscription: Subscription): Unit = observer.onSubscribe(subscription)
-
-          override def onNext(result: Void): Unit = {}
-
-          override def onError(e: Throwable): Unit = observer.onError(e)
-
-          override def onComplete(): Unit = observer.onComplete()
-        })
+    override def subscribe(observer: Observer[_ >: Unit]): Unit = {
+      // We must call `toObservable` in order to avoid infinite recursion
+      // caused by the implicit conversion of `Publisher[Void]` to `SingleObservable[Unit]`.
+      UnitObservable(publisher.toObservable()).subscribe(observer)
+    }
   }
 
   implicit class ObservableFuture[T](obs: => Observable[T]) {
     val observable = obs
 
     /**
-     * Collects the [[Observable]] results and converts to a [[scala.concurrent.Future]].
+     * Collects the [[Observable]] results and converts to a `scala.concurrent.Future`.
      *
-     * Automatically subscribes to the `Observable` and uses the [[collect]] method to aggregate the results.
+     * Automatically subscribes to the `Observable` and uses the [[[Observable.collect[S]()*]]] method to aggregate the results.
      *
      * @note If the Observable is large then this will consume lots of memory!
      *       If the underlying Observable is infinite this Observable will never complete.
@@ -190,9 +154,9 @@ trait ObservableImplicits {
     val observable = obs
 
     /**
-     * Collects the [[Observable]] results and converts to a [[scala.concurrent.Future]].
+     * Collects the [[Observable]] results and converts to a `scala.concurrent.Future`.
      *
-     * Automatically subscribes to the `Observable` and uses the [[collect]] method to aggregate the results.
+     * Automatically subscribes to the `Observable` and uses the [[Observable.head]] method to aggregate the results.
      *
      * @note If the Observable is large then this will consume lots of memory!
      *       If the underlying Observable is infinite this Observable will never complete.
@@ -201,7 +165,7 @@ trait ObservableImplicits {
     def toFuture(): Future[T] = observable.head()
 
     /**
-     * Collects the [[Observable]] result and converts to a [[scala.concurrent.Future]].
+     * Collects the [[Observable]] result and converts to a `scala.concurrent.Future`.
      * @return a future representation of the Observable
      *
      */

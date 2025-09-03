@@ -16,6 +16,8 @@
 
 package com.mongodb.client;
 
+import java.util.Objects;
+
 public class Name {
     private final String name;
     private final int count;
@@ -46,7 +48,7 @@ public class Name {
         if (count != name1.count) {
             return false;
         }
-        if (name != null ? !name.equals(name1.name) : name1.name != null) {
+        if (!Objects.equals(name, name1.name)) {
             return false;
         }
 

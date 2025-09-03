@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
@@ -85,6 +86,22 @@ class TestSessionContext implements SessionContext {
     }
 
     @Override
+    public boolean isSnapshot() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setSnapshotTimestamp(final BsonTimestamp snapshotTimestamp) {
+        // TODO
+    }
+
+    @Override
+    @Nullable
+    public BsonTimestamp getSnapshotTimestamp() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public boolean hasActiveTransaction() {
         return false;
     }
@@ -100,7 +117,7 @@ class TestSessionContext implements SessionContext {
     }
 
     @Override
-    public void unpinServerAddress() {
+    public void clearTransactionContext() {
         throw new UnsupportedOperationException();
     }
 

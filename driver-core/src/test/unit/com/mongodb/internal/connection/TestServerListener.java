@@ -16,49 +16,94 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ServerClosedEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerOpeningEvent;
+import com.mongodb.lang.Nullable;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
 
-import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.Locks.withLock;
 
-class TestServerListener implements ServerListener {
-    private ServerOpeningEvent serverOpeningEvent;
-    private ServerClosedEvent serverClosedEvent;
-    private final List<ServerDescriptionChangedEvent> serverDescriptionChangedEvents = new ArrayList<ServerDescriptionChangedEvent>();
+public class TestServerListener implements ServerListener {
+    @Nullable
+    private volatile ServerOpeningEvent serverOpeningEvent;
+    @Nullable
+    private volatile ServerClosedEvent serverClosedEvent;
+    private final List<ServerDescriptionChangedEvent> serverDescriptionChangedEvents = new ArrayList<>();
+    private final Lock lock = new ReentrantLock();
+    private final Condition condition = lock.newCondition();
 
     @Override
     public void serverOpening(final ServerOpeningEvent event) {
-        isTrue("serverOpeningEvent is null", serverOpeningEvent == null);
         serverOpeningEvent = event;
     }
 
     @Override
     public void serverClosed(final ServerClosedEvent event) {
-        isTrue("serverClostedEvent is null", serverClosedEvent == null);
         serverClosedEvent = event;
     }
 
     @Override
     public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
         notNull("event", event);
-        serverDescriptionChangedEvents.add(event);
+        withLock(lock, () -> {
+            serverDescriptionChangedEvents.add(event);
+            condition.signalAll();
+        });
     }
 
+    @Nullable
     public ServerOpeningEvent getServerOpeningEvent() {
         return serverOpeningEvent;
     }
 
+    @Nullable
     public ServerClosedEvent getServerClosedEvent() {
         return serverClosedEvent;
     }
 
     public List<ServerDescriptionChangedEvent> getServerDescriptionChangedEvents() {
-        return serverDescriptionChangedEvents;
+        return withLock(lock, () -> new ArrayList<>(serverDescriptionChangedEvents));
+    }
+
+    public void waitForServerDescriptionChangedEvents(
+            final Predicate<ServerDescriptionChangedEvent> matcher, final int count, final Duration duration)
+            throws InterruptedException, TimeoutException {
+        if (count <= 0) {
+            throw new IllegalArgumentException();
+        }
+        long nanosRemaining = duration.toNanos();
+        lock.lock();
+        try {
+            long observedCount = unguardedCount(matcher);
+            while (observedCount < count) {
+                if (nanosRemaining <= 0) {
+                    throw new TimeoutException(String.format("Timed out waiting for %d %s events. The observed count is %d.",
+                            count, ClusterDescriptionChangedEvent.class.getSimpleName(), observedCount));
+                }
+                nanosRemaining = condition.awaitNanos(nanosRemaining);
+                observedCount = unguardedCount(matcher);
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Must be guarded by {@link #lock}.
+     */
+    private long unguardedCount(final Predicate<ServerDescriptionChangedEvent> matcher) {
+        return serverDescriptionChangedEvents.stream().filter(matcher).count();
     }
 }

@@ -58,5 +58,8 @@ public class BasicDBList extends BasicBSONList implements DBObject {
         return newobj;
     }
 
+    /**
+     * Whether the object is partial
+     */
     private boolean _isPartialObject;
 }

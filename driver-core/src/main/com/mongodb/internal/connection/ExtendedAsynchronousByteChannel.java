@@ -19,6 +19,8 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.lang.Nullable;
+
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousByteChannel;
 import java.nio.channels.CompletionHandler;
@@ -30,6 +32,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * This interface extends {@link AsynchronousByteChannel} adding optional timeouts and scattering and gathering methods.
  * These additions are analogous to the ones made by {@link java.nio.channels.AsynchronousSocketChannel}.
+ *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface ExtendedAsynchronousByteChannel extends AsynchronousByteChannel {
 
@@ -67,7 +71,7 @@ public interface ExtendedAsynchronousByteChannel extends AsynchronousByteChannel
     <A> void read(
             ByteBuffer dst,
             long timeout, TimeUnit unit,
-            A attach, CompletionHandler<Integer, ? super A> handler);
+            @Nullable A attach, CompletionHandler<Integer, ? super A> handler);
 
     /**
      * Reads a sequence of bytes from this channel into a subsequence of the
@@ -133,7 +137,7 @@ public interface ExtendedAsynchronousByteChannel extends AsynchronousByteChannel
     <A> void read(
             ByteBuffer[] dsts, int offset, int length,
             long timeout, TimeUnit unit,
-            A attach, CompletionHandler<Long, ? super A> handler);
+            @Nullable A attach, CompletionHandler<Long, ? super A> handler);
 
     /**
      * Writes a sequence of bytes to this channel from the given buffer.
@@ -167,7 +171,7 @@ public interface ExtendedAsynchronousByteChannel extends AsynchronousByteChannel
     <A> void write(
             ByteBuffer src,
             long timeout, TimeUnit unit,
-            A attach, CompletionHandler<Integer, ? super A> handler);
+            @Nullable A attach, CompletionHandler<Integer, ? super A> handler);
 
     /**
      * Writes a sequence of bytes to this channel from a subsequence of the given
@@ -229,5 +233,5 @@ public interface ExtendedAsynchronousByteChannel extends AsynchronousByteChannel
     <A> void write(
             ByteBuffer[] srcs, int offset, int length,
             long timeout, TimeUnit unit,
-            A attach, CompletionHandler<Long, ? super A> handler);
+            @Nullable A attach, CompletionHandler<Long, ? super A> handler);
 }

@@ -16,11 +16,9 @@
 
 package com.mongodb;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +28,6 @@ import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -63,10 +60,10 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
         String aggCollection = "aggCollection";
         database.getCollection(aggCollection)
             .drop();
-        Assert.assertEquals(0, database.getCollection(aggCollection)
+        assertEquals(0, database.getCollection(aggCollection)
                                        .count());
 
-        List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
+        List<DBObject> pipeline = new ArrayList<>(prepareData());
         pipeline.add(new BasicDBObject("$out", aggCollection));
         verify(pipeline, AggregationOptions.builder()
                                            .build());
@@ -78,7 +75,7 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
     public void testDollarOutOnSecondary() throws InterruptedException {
         assumeTrue(clusterIsType(REPLICA_SET));
 
-        List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
+        List<DBObject> pipeline = new ArrayList<>(prepareData());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
         AggregationOptions options = AggregationOptions.builder()
             .build();
@@ -101,24 +98,19 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
         DBObject group = new BasicDBObject().append("_id", "$name")
             .append("docsPerName", new BasicDBObject("$sum", 1))
             .append("countPerName", new BasicDBObject("$sum", "$count"));
-        return Arrays.<DBObject>asList(new BasicDBObject("$project", projection), new BasicDBObject("$group", group));
+        return asList(new BasicDBObject("$project", projection), new BasicDBObject("$group", group));
     }
 
     @Test
     public void testExplain() {
-        List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
-        pipeline.add(new BasicDBObject("$out", "aggCollection"));
-        CommandResult out = collection.explainAggregate(pipeline, AggregationOptions.builder()
-            .allowDiskUse(true)
-            .build());
-        assertTrue(out.keySet()
-                      .iterator()
-                      .hasNext());
+        List<DBObject> pipeline = new ArrayList<>(prepareData());
+        CommandResult out = collection.explainAggregate(pipeline, AggregationOptions.builder().build());
+        assertTrue(out.keySet().iterator().hasNext());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNullOptions() {
-        collection.aggregate(new ArrayList<DBObject>(), null);
+        collection.aggregate(new ArrayList<>(), null);
     }
 
     @Test
@@ -139,7 +131,6 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
     @Test
     public void testWriteConcern() {
         assumeThat(isDiscoverableReplicaSet(), is(true));
-        assumeTrue(serverVersionAtLeast(3, 4));
         DBCollection collection = database.getCollection("testWriteConcern");
         collection.setWriteConcern(new WriteConcern(5));
         try {
@@ -149,6 +140,22 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
             assertEquals(100, e.getCode());
         }
     }
+
+    @Test
+    public void testAvailable() {
+        prepareData();
+        Cursor cursor = collection.aggregate(asList(new BasicDBObject("$match", new BasicDBObject())),
+                AggregationOptions.builder().build());
+
+        assertEquals(3, cursor.available());
+
+        cursor.next();
+        assertEquals(2, cursor.available());
+
+        cursor.next();
+        assertEquals(1, cursor.available());
+    }
+
 
     private void verify(final List<DBObject> pipeline, final AggregationOptions options) {
         verify(pipeline, options, ReadPreference.primary());
@@ -164,7 +171,7 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
         ServerAddress serverAddress;
         Map<String, DBObject> results;
         try {
-            results = new HashMap<String, DBObject>();
+            results = new HashMap<>();
             while (cursor.hasNext()) {
                 DBObject next = cursor.next();
                 results.put((String) next.get("_id"), next);

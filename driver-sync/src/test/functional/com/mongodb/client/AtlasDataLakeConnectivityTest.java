@@ -16,7 +16,6 @@
 
 package com.mongodb.client;
 
-import com.mongodb.Block;
 import com.mongodb.MongoClientSettings;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -28,7 +27,6 @@ import static com.mongodb.ClusterFixture.isDataLakeTest;
 import static com.mongodb.MongoCredential.createScramSha1Credential;
 import static com.mongodb.MongoCredential.createScramSha256Credential;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
-import static com.mongodb.connection.ClusterSettings.Builder;
 import static java.util.Objects.requireNonNull;
 import static org.junit.Assume.assumeTrue;
 
@@ -65,12 +63,7 @@ public class AtlasDataLakeConnectivityTest {
 
     private MongoClientSettings.Builder createSettingsBuilder() {
         return MongoClientSettings.builder()
-                .applyToClusterSettings(new Block<Builder>() {
-                    @Override
-                    public void apply(final Builder builder) {
-                        builder.hosts(getMongoClientSettings().getClusterSettings().getHosts());
-                    }
-                });
+                .applyToClusterSettings(builder -> builder.hosts(getMongoClientSettings().getClusterSettings().getHosts()));
     }
 
     private char[] getPassword() {

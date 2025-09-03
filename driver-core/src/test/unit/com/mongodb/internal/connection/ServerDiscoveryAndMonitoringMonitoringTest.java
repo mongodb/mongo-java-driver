@@ -34,8 +34,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -66,7 +64,7 @@ public class ServerDiscoveryAndMonitoringMonitoringTest extends AbstractServerDi
     public void shouldPassAllOutcomes() {
         for (BsonValue phase : getDefinition().getArray("phases")) {
             try {
-                for (BsonValue response : phase.asDocument().getArray("responses")) {
+                for (BsonValue response : phase.asDocument().getArray("responses", new BsonArray())) {
                     applyResponse(response.asArray());
                 }
                 BsonDocument outcome = phase.asDocument().getDocument("outcome");
@@ -78,8 +76,8 @@ public class ServerDiscoveryAndMonitoringMonitoringTest extends AbstractServerDi
     }
 
     @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        return data("/server-discovery-and-monitoring-monitoring");
+    public static Collection<Object[]> data() {
+        return data("server-discovery-and-monitoring/tests/monitoring");
     }
 
     private void assertEvents(final BsonArray events) {
@@ -102,8 +100,10 @@ public class ServerDiscoveryAndMonitoringMonitoringTest extends AbstractServerDi
                 BsonDocument newDescription = topologyDescriptionChangedEventDocument.getDocument("newDescription");
                 assertEqualClusterDescriptions(createClusterDescriptionFromClusterDescriptionDocument(newDescription),
                         event.getNewDescription());
-                if (newDescription.getString("topologyType").getValue().equals("Single")) {
+                if (newDescription.getString("topologyType").getValue().equals("Single") && isSingleServerClusterExpected()) {
                     assertEquals(SingleServerCluster.class, getCluster().getClass());
+                } else if (newDescription.getString("topologyType").getValue().equals("LoadBalanced")) {
+                    assertEquals(LoadBalancedCluster.class, getCluster().getClass());
                 } else {
                     assertEquals(MultiServerCluster.class, getCluster().getClass());
                 }
@@ -179,7 +179,7 @@ public class ServerDiscoveryAndMonitoringMonitoringTest extends AbstractServerDi
     }
 
     private ClusterDescription createClusterDescriptionFromClusterDescriptionDocument(final BsonDocument clusterDescriptionDocument) {
-        List<ServerDescription> serverDescriptions = new ArrayList<ServerDescription>();
+        List<ServerDescription> serverDescriptions = new ArrayList<>();
         for (BsonValue cur : clusterDescriptionDocument.getArray("servers"))  {
             serverDescriptions.add(createServerDescriptionFromServerDescriptionDocument(cur.asDocument()));
         }
@@ -192,7 +192,7 @@ public class ServerDiscoveryAndMonitoringMonitoringTest extends AbstractServerDi
         ServerType serverType = getServerType(serverDescriptionDocument.getString("type").getValue());
         return ServerDescription.builder()
                 .address(new ServerAddress(serverDescriptionDocument.getString("address").getValue()))
-                .ok(serverType == ServerType.UNKNOWN ? false : true)
+                .ok(serverType != ServerType.UNKNOWN)
                 .state(serverType == ServerType.UNKNOWN ? CONNECTING : CONNECTED)
                 .type(serverType)
                 .setName(serverDescriptionDocument.containsKey("setName")
@@ -207,7 +207,7 @@ public class ServerDiscoveryAndMonitoringMonitoringTest extends AbstractServerDi
     }
 
     private Set<String> getHostNamesSet(final BsonDocument serverDescriptionDocument, final String fieldName) {
-        Set<String> hostsSet = new HashSet<String>();
+        Set<String> hostsSet = new HashSet<>();
         for (BsonValue cur : serverDescriptionDocument.getArray(fieldName)) {
             hostsSet.add(cur.asString().getValue());
         }
@@ -216,7 +216,7 @@ public class ServerDiscoveryAndMonitoringMonitoringTest extends AbstractServerDi
 
     private static class TestServerListenerFactory implements ServerListenerFactory {
         private final Map<ServerAddress, TestServerListener> serverAddressServerListenerMap =
-                new HashMap<ServerAddress, TestServerListener>();
+                new HashMap<>();
 
         @Override
         public ServerListener create(final ServerAddress serverAddress) {

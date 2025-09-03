@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.connection.BufferProvider;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
 

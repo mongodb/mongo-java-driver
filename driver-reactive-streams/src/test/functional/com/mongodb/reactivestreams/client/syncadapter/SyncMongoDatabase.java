@@ -22,25 +22,33 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
+import com.mongodb.client.ListCollectionNamesIterable;
 import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
 import static java.util.Objects.requireNonNull;
 
-class SyncMongoDatabase implements MongoDatabase {
+public class SyncMongoDatabase implements MongoDatabase {
     private final com.mongodb.reactivestreams.client.MongoDatabase wrapped;
 
     SyncMongoDatabase(final com.mongodb.reactivestreams.client.MongoDatabase wrapped) {
         this.wrapped = wrapped;
+    }
+
+    public com.mongodb.reactivestreams.client.MongoDatabase getWrapped() {
+        return wrapped;
     }
 
     @Override
@@ -69,23 +77,33 @@ class SyncMongoDatabase implements MongoDatabase {
     }
 
     @Override
+    public Long getTimeout(final TimeUnit timeUnit) {
+        return wrapped.getTimeout(timeUnit);
+    }
+
+    @Override
     public MongoDatabase withCodecRegistry(final CodecRegistry codecRegistry) {
         return new SyncMongoDatabase(wrapped.withCodecRegistry(codecRegistry));
     }
 
     @Override
     public MongoDatabase withReadPreference(final ReadPreference readPreference) {
-        throw new UnsupportedOperationException();
+        return new SyncMongoDatabase(wrapped.withReadPreference(readPreference));
     }
 
     @Override
     public MongoDatabase withWriteConcern(final WriteConcern writeConcern) {
-        throw new UnsupportedOperationException();
+        return new SyncMongoDatabase(wrapped.withWriteConcern(writeConcern));
     }
 
     @Override
     public MongoDatabase withReadConcern(final ReadConcern readConcern) {
-        throw new UnsupportedOperationException();
+        return new SyncMongoDatabase(wrapped.withReadConcern(readConcern));
+    }
+
+    @Override
+    public MongoDatabase withTimeout(final long timeout, final TimeUnit timeUnit) {
+        return new SyncMongoDatabase(wrapped.withTimeout(timeout, timeUnit));
     }
 
     @Override
@@ -100,78 +118,59 @@ class SyncMongoDatabase implements MongoDatabase {
 
     @Override
     public Document runCommand(final Bson command) {
-        SingleResultSubscriber<Document> subscriber = new SingleResultSubscriber<>();
-        wrapped.runCommand(command).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.runCommand(command)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public Document runCommand(final Bson command, final ReadPreference readPreference) {
-        SingleResultSubscriber<Document> subscriber = new SingleResultSubscriber<>();
-        wrapped.runCommand(command, readPreference).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.runCommand(command, readPreference)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public <TResult> TResult runCommand(final Bson command, final Class<TResult> resultClass) {
-        SingleResultSubscriber<TResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.runCommand(command, resultClass).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.runCommand(command, resultClass)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public <TResult> TResult runCommand(final Bson command, final ReadPreference readPreference, final Class<TResult> resultClass) {
-        SingleResultSubscriber<TResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.runCommand(command, readPreference, resultClass).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.runCommand(command, readPreference, resultClass)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public Document runCommand(final ClientSession clientSession, final Bson command) {
-        SingleResultSubscriber<Document> subscriber = new SingleResultSubscriber<>();
-        wrapped.runCommand(unwrap(clientSession), command).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.runCommand(unwrap(clientSession), command)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public Document runCommand(final ClientSession clientSession, final Bson command, final ReadPreference readPreference) {
-        SingleResultSubscriber<Document> subscriber = new SingleResultSubscriber<>();
-        wrapped.runCommand(unwrap(clientSession), command, readPreference).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.runCommand(unwrap(clientSession), command, readPreference)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public <TResult> TResult runCommand(final ClientSession clientSession, final Bson command, final Class<TResult> resultClass) {
-        SingleResultSubscriber<TResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.runCommand(unwrap(clientSession), command, resultClass).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.runCommand(unwrap(clientSession), command, resultClass)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public <TResult> TResult runCommand(final ClientSession clientSession, final Bson command, final ReadPreference readPreference,
                                         final Class<TResult> resultClass) {
-        SingleResultSubscriber<TResult> subscriber = new SingleResultSubscriber<>();
-        wrapped.runCommand(unwrap(clientSession), command, readPreference, resultClass).subscribe(subscriber);
-        return requireNonNull(subscriber.get());
+        return requireNonNull(Mono.from(wrapped.runCommand(unwrap(clientSession), command, readPreference, resultClass))
+                                      .contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public void drop() {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.drop().subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.drop()).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void drop(final ClientSession clientSession) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.drop(unwrap(clientSession)).subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.drop(unwrap(clientSession))).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
-    public MongoIterable<String> listCollectionNames() {
-        throw new UnsupportedOperationException();
+    public ListCollectionNamesIterable listCollectionNames() {
+        return new SyncListCollectionNamesIterable(wrapped.listCollectionNames());
     }
 
     @Override
@@ -185,70 +184,63 @@ class SyncMongoDatabase implements MongoDatabase {
     }
 
     @Override
-    public MongoIterable<String> listCollectionNames(final ClientSession clientSession) {
-        throw new UnsupportedOperationException();
+    public ListCollectionNamesIterable listCollectionNames(final ClientSession clientSession) {
+        return new SyncListCollectionNamesIterable(wrapped.listCollectionNames(unwrap(clientSession)));
     }
 
     @Override
     public ListCollectionsIterable<Document> listCollections(final ClientSession clientSession) {
-        throw new UnsupportedOperationException();
+        return listCollections(clientSession, Document.class);
     }
 
     @Override
     public <TResult> ListCollectionsIterable<TResult> listCollections(final ClientSession clientSession, final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        return new SyncListCollectionsIterable<>(wrapped.listCollections(unwrap(clientSession), resultClass));
     }
 
     @Override
     public void createCollection(final String collectionName) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.createCollection(collectionName).subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.createCollection(collectionName)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void createCollection(final String collectionName, final CreateCollectionOptions createCollectionOptions) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.createCollection(collectionName, createCollectionOptions).subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.createCollection(collectionName, createCollectionOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void createCollection(final ClientSession clientSession, final String collectionName) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.createCollection(unwrap(clientSession), collectionName).subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.createCollection(unwrap(clientSession), collectionName)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void createCollection(final ClientSession clientSession, final String collectionName,
                                  final CreateCollectionOptions createCollectionOptions) {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.createCollection(unwrap(clientSession), collectionName, createCollectionOptions).subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.createCollection(unwrap(clientSession), collectionName, createCollectionOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void createView(final String viewName, final String viewOn, final List<? extends Bson> pipeline) {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.createView(viewName, viewOn, pipeline)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void createView(final String viewName, final String viewOn, final List<? extends Bson> pipeline,
                            final CreateViewOptions createViewOptions) {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.createView(viewName, viewOn, pipeline, createViewOptions)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void createView(final ClientSession clientSession, final String viewName, final String viewOn,
                            final List<? extends Bson> pipeline) {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.createView(unwrap(clientSession), viewName, viewOn, pipeline)).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
     public void createView(final ClientSession clientSession, final String viewName, final String viewOn,
                            final List<? extends Bson> pipeline, final CreateViewOptions createViewOptions) {
-        throw new UnsupportedOperationException();
+        Mono.from(wrapped.createView(unwrap(clientSession), viewName, viewOn, pipeline, createViewOptions))
+                .contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override

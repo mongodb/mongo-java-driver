@@ -16,135 +16,260 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
+import com.mongodb.MongoNamespace;
+import com.mongodb.ReadPreference;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.MapReduceAction;
-import com.mongodb.internal.async.client.AsyncMapReduceIterable;
-import com.mongodb.reactivestreams.client.MapReducePublisher;
+import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.binding.AsyncReadBinding;
+import com.mongodb.internal.binding.AsyncWriteBinding;
+import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.client.model.FindOptions;
+import com.mongodb.internal.operation.MapReduceAsyncBatchCursor;
+import com.mongodb.internal.operation.MapReduceBatchCursor;
+import com.mongodb.internal.operation.MapReduceStatistics;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.ReadOperationCursor;
+import com.mongodb.internal.operation.WriteOperation;
+import com.mongodb.lang.Nullable;
+import com.mongodb.reactivestreams.client.ClientSession;
+import org.bson.BsonDocument;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
+import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 
 @SuppressWarnings("deprecation")
-final class MapReducePublisherImpl<TResult> implements MapReducePublisher<TResult> {
-    private final AsyncMapReduceIterable<TResult> wrapped;
+final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements com.mongodb.reactivestreams.client.MapReducePublisher<T> {
 
-    MapReducePublisherImpl(final AsyncMapReduceIterable<TResult> wrapped) {
-        this.wrapped = notNull("wrapped", wrapped);
+    private final String mapFunction;
+    private final String reduceFunction;
+
+    private boolean inline = true;
+    private String collectionName;
+    private String finalizeFunction;
+    private Bson scope;
+    private Bson filter;
+    private Bson sort;
+    private int limit;
+    private boolean jsMode;
+    private boolean verbose = true;
+    private long maxTimeMS;
+    private com.mongodb.client.model.MapReduceAction action = com.mongodb.client.model.MapReduceAction.REPLACE;
+    private String databaseName;
+    private Boolean bypassDocumentValidation;
+    private Collation collation;
+
+    MapReducePublisherImpl(
+            @Nullable final ClientSession clientSession,
+            final MongoOperationPublisher<T> mongoOperationPublisher,
+            final String mapFunction,
+            final String reduceFunction) {
+        super(clientSession, mongoOperationPublisher);
+        this.mapFunction = notNull("mapFunction", mapFunction);
+        this.reduceFunction = notNull("reduceFunction", reduceFunction);
     }
 
-
     @Override
-    public MapReducePublisher<TResult> collectionName(final String collectionName) {
-        wrapped.collectionName(collectionName);
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> collectionName(final String collectionName) {
+        this.collectionName = notNull("collectionName", collectionName);
+        this.inline = false;
         return this;
     }
 
     @Override
-    public MapReducePublisher<TResult> finalizeFunction(final String finalizeFunction) {
-        wrapped.finalizeFunction(finalizeFunction);
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> finalizeFunction(@Nullable final String finalizeFunction) {
+        this.finalizeFunction = finalizeFunction;
         return this;
     }
 
     @Override
-    public MapReducePublisher<TResult> scope(final Bson scope) {
-        wrapped.scope(scope);
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> scope(@Nullable final Bson scope) {
+        this.scope = scope;
         return this;
     }
 
     @Override
-    public MapReducePublisher<TResult> sort(final Bson sort) {
-        wrapped.sort(sort);
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> sort(@Nullable final Bson sort) {
+        this.sort = sort;
         return this;
     }
 
     @Override
-    public MapReducePublisher<TResult> filter(final Bson filter) {
-        wrapped.filter(filter);
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> filter(@Nullable final Bson filter) {
+        this.filter = filter;
         return this;
     }
 
     @Override
-    public MapReducePublisher<TResult> limit(final int limit) {
-        wrapped.limit(limit);
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> limit(final int limit) {
+        this.limit = limit;
         return this;
     }
 
     @Override
-    public MapReducePublisher<TResult> jsMode(final boolean jsMode) {
-        wrapped.jsMode(jsMode);
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> jsMode(final boolean jsMode) {
+        this.jsMode = jsMode;
         return this;
     }
 
     @Override
-    public MapReducePublisher<TResult> verbose(final boolean verbose) {
-        wrapped.verbose(verbose);
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> verbose(final boolean verbose) {
+        this.verbose = verbose;
         return this;
     }
 
     @Override
-    public MapReducePublisher<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        wrapped.maxTime(maxTime, timeUnit);
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
     @Override
-    public MapReducePublisher<TResult> action(final MapReduceAction action) {
-        wrapped.action(action);
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> action(final com.mongodb.client.model.MapReduceAction action) {
+        this.action = action;
         return this;
     }
 
     @Override
-    public MapReducePublisher<TResult> databaseName(final String databaseName) {
-        wrapped.databaseName(databaseName);
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> databaseName(@Nullable final String databaseName) {
+        this.databaseName = databaseName;
         return this;
     }
 
     @Override
-    public MapReducePublisher<TResult> sharded(final boolean sharded) {
-        wrapped.sharded(sharded);
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> batchSize(final int batchSize) {
+        super.batchSize(batchSize);
         return this;
     }
 
     @Override
-    public MapReducePublisher<TResult> nonAtomic(final boolean nonAtomic) {
-        wrapped.nonAtomic(nonAtomic);
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> bypassDocumentValidation(
+            @Nullable final Boolean bypassDocumentValidation) {
+        this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
 
     @Override
-    public MapReducePublisher<TResult> bypassDocumentValidation(final Boolean bypassDocumentValidation) {
-        wrapped.bypassDocumentValidation(bypassDocumentValidation);
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> timeoutMode(final TimeoutMode timeoutMode) {
+        super.timeoutMode(timeoutMode);
         return this;
     }
 
     @Override
     public Publisher<Void> toCollection() {
-        return Publishers.publish(wrapped::toCollection);
+        if (inline) {
+            throw new IllegalStateException("The options must specify a non-inline result");
+        }
+        return getMongoOperationPublisher().createWriteOperationMono(
+                (operations -> operations.createTimeoutSettings(maxTimeMS)),
+                this::createMapReduceToCollectionOperation,
+                getClientSession());
     }
 
     @Override
-    public MapReducePublisher<TResult> collation(final Collation collation) {
-        wrapped.collation(collation);
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> collation(@Nullable final Collation collation) {
+        this.collation = collation;
         return this;
     }
 
     @Override
-    public MapReducePublisher<TResult> batchSize(final int batchSize) {
-        wrapped.batchSize(batchSize);
-        return this;
+    ReadPreference getReadPreference() {
+        if (inline) {
+            return super.getReadPreference();
+        } else {
+            return primary();
+        }
     }
 
     @Override
-    public Publisher<TResult> first() {
-        return Publishers.publish(wrapped::first);
+    Function<Operations<?>, TimeoutSettings> getTimeoutSettings() {
+        return (operations -> operations.createTimeoutSettings(maxTimeMS));
     }
 
     @Override
-    public void subscribe(final Subscriber<? super TResult> s) {
-        Publishers.publish(wrapped).subscribe(s);
+    public ReadOperationCursor<T> asReadOperation(final int initialBatchSize) {
+        if (inline) {
+            // initialBatchSize is ignored for map reduce operations.
+            return createMapReduceInlineOperation();
+        } else {
+            return new VoidWriteOperationThenCursorReadOperation<>(createMapReduceToCollectionOperation(),
+                    createFindOperation(initialBatchSize));
+        }
+    }
+
+    private WrappedMapReduceReadOperation<T> createMapReduceInlineOperation() {
+        return new WrappedMapReduceReadOperation<>(getOperations().mapReduce(mapFunction, reduceFunction, finalizeFunction,
+                getDocumentClass(), filter, limit, jsMode, scope, sort, verbose, collation));
+    }
+
+    private WrappedMapReduceWriteOperation createMapReduceToCollectionOperation() {
+        return new WrappedMapReduceWriteOperation(
+                getOperations().mapReduceToCollection(databaseName, collectionName, mapFunction, reduceFunction, finalizeFunction, filter,
+                        limit, jsMode, scope, sort, verbose, action, bypassDocumentValidation, collation));
+    }
+
+    private ReadOperationCursor<T> createFindOperation(final int initialBatchSize) {
+        String dbName = databaseName != null ? databaseName : getNamespace().getDatabaseName();
+        FindOptions findOptions = new FindOptions().collation(collation).batchSize(initialBatchSize);
+        return getOperations().find(new MongoNamespace(dbName, collectionName), new BsonDocument(), getDocumentClass(), findOptions);
+    }
+
+    // this could be inlined, but giving it a name so that it's unit-testable
+    static class WrappedMapReduceReadOperation<T> implements ReadOperationCursorAsyncOnly<T> {
+        private final ReadOperation<MapReduceBatchCursor<T>, MapReduceAsyncBatchCursor<T>> operation;
+
+        WrappedMapReduceReadOperation(final ReadOperation<MapReduceBatchCursor<T>, MapReduceAsyncBatchCursor<T>> operation) {
+            this.operation = operation;
+        }
+
+        ReadOperation<MapReduceBatchCursor<T>, MapReduceAsyncBatchCursor<T>> getOperation() {
+            return operation;
+        }
+
+        @Override
+        public String getCommandName() {
+            return operation.getCommandName();
+        }
+
+        @Override
+        public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+            operation.executeAsync(binding, callback::onResult);
+        }
+    }
+
+    static class WrappedMapReduceWriteOperation implements WriteOperation<Void> {
+        private final WriteOperation<MapReduceStatistics> operation;
+
+        WrappedMapReduceWriteOperation(final WriteOperation<MapReduceStatistics> operation) {
+            this.operation = operation;
+        }
+
+        WriteOperation<MapReduceStatistics> getOperation() {
+            return operation;
+        }
+
+        @Override
+        public String getCommandName() {
+            return operation.getCommandName();
+        }
+
+        @Override
+        public Void execute(final WriteBinding binding) {
+            throw new UnsupportedOperationException("This operation is async only");
+        }
+
+        @Override
+        public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
+            operation.executeAsync(binding, (result, t) -> callback.onResult(null, t));
+        }
     }
 }

@@ -15,13 +15,22 @@
  */
 package com.mongodb.reactivestreams.client.syncadapter;
 
+import com.mongodb.ExplainVerbosity;
 import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
+import org.bson.BsonValue;
+import org.bson.Document;
 import org.bson.conversions.Bson;
+import reactor.core.publisher.Mono;
 
 import java.util.concurrent.TimeUnit;
+
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
+import static java.util.Objects.requireNonNull;
 
 class SyncAggregateIterable<T> extends SyncMongoIterable<T> implements AggregateIterable<T> {
     private final AggregatePublisher<T> wrapped;
@@ -33,9 +42,7 @@ class SyncAggregateIterable<T> extends SyncMongoIterable<T> implements Aggregate
 
     @Override
     public void toCollection() {
-        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
-        wrapped.toCollection().subscribe(subscriber);
-        subscriber.get();
+        Mono.from(wrapped.toCollection()).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
     }
 
     @Override
@@ -47,6 +54,7 @@ class SyncAggregateIterable<T> extends SyncMongoIterable<T> implements Aggregate
     @Override
     public AggregateIterable<T> batchSize(final int batchSize) {
         wrapped.batchSize(batchSize);
+        super.batchSize(batchSize);
         return this;
     }
 
@@ -81,8 +89,52 @@ class SyncAggregateIterable<T> extends SyncMongoIterable<T> implements Aggregate
     }
 
     @Override
+    public AggregateIterable<T> comment(@Nullable final BsonValue comment) {
+        wrapped.comment(comment);
+        return this;
+    }
+
+    @Override
     public AggregateIterable<T> hint(@Nullable final Bson hint) {
         wrapped.hint(hint);
         return this;
+    }
+
+    @Override
+    public AggregateIterable<T> hintString(final String hint) {
+        wrapped.hintString(hint);
+        return this;
+    }
+
+    @Override
+    public AggregateIterable<T> let(final Bson variables) {
+        wrapped.let(variables);
+        return this;
+    }
+
+    @Override
+    public AggregateIterable<T> timeoutMode(final TimeoutMode timeoutMode) {
+        wrapped.timeoutMode(timeoutMode);
+        return this;
+    }
+
+    @Override
+    public Document explain() {
+        return requireNonNull(Mono.from(wrapped.explain()).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public Document explain(final ExplainVerbosity verbosity) {
+        return requireNonNull(Mono.from(wrapped.explain(verbosity)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public <E> E explain(final Class<E> explainResultClass) {
+        return requireNonNull(Mono.from(wrapped.explain(explainResultClass)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
+    }
+
+    @Override
+    public <E> E explain(final Class<E> explainResultClass, final ExplainVerbosity verbosity) {
+        return requireNonNull(Mono.from(wrapped.explain(explainResultClass, verbosity)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 }

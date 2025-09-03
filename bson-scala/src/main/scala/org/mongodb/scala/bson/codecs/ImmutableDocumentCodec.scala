@@ -43,7 +43,7 @@ case class ImmutableDocumentCodec(registry: Option[CodecRegistry]) extends Colle
 
   override def generateIdIfAbsentFromDocument(document: Document): Document = {
     if (!underlying.documentHasId(document.underlying)) {
-      Document(underlying.generateIdIfAbsentFromDocument(document.toBsonDocument))
+      Document(underlying.generateIdIfAbsentFromDocument(document.toBsonDocument.clone))
     } else {
       document
     }

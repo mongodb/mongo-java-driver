@@ -17,20 +17,23 @@
 package com.mongodb.reactivestreams.client.syncadapter;
 
 import com.mongodb.client.DistinctIterable;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.DistinctPublisher;
+import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
 
 class SyncDistinctIterable<T> extends SyncMongoIterable<T> implements DistinctIterable<T> {
-    private com.mongodb.reactivestreams.client.DistinctPublisher<T> wrapped;
+    private final com.mongodb.reactivestreams.client.DistinctPublisher<T> wrapped;
 
     SyncDistinctIterable(final DistinctPublisher<T> wrapped) {
         super(wrapped);
         this.wrapped = wrapped;
     }
+
     @Override
     public DistinctIterable<T> filter(@Nullable final Bson filter) {
         wrapped.filter(filter);
@@ -46,12 +49,43 @@ class SyncDistinctIterable<T> extends SyncMongoIterable<T> implements DistinctIt
     @Override
     public DistinctIterable<T> batchSize(final int batchSize) {
         wrapped.batchSize(batchSize);
+        super.batchSize(batchSize);
         return this;
     }
 
     @Override
     public DistinctIterable<T> collation(@Nullable final Collation collation) {
         wrapped.collation(collation);
+        return this;
+    }
+
+    @Override
+    public DistinctIterable<T> comment(@Nullable final String comment) {
+        wrapped.comment(comment);
+        return this;
+    }
+
+    @Override
+    public DistinctIterable<T> comment(@Nullable final BsonValue comment) {
+        wrapped.comment(comment);
+        return this;
+    }
+
+    @Override
+    public DistinctIterable<T> hint(@Nullable final Bson hint) {
+        wrapped.hint(hint);
+        return this;
+    }
+
+    @Override
+    public DistinctIterable<T> hintString(@Nullable final String hint) {
+        wrapped.hintString(hint);
+        return this;
+    }
+
+    @Override
+    public DistinctIterable<T> timeoutMode(final TimeoutMode timeoutMode) {
+        wrapped.timeoutMode(timeoutMode);
         return this;
     }
 }

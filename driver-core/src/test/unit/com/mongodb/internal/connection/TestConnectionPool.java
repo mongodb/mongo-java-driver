@@ -20,12 +20,12 @@ import com.mongodb.MongoException;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
+import org.bson.types.ObjectId;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class TestConnectionPool implements ConnectionPool {
 
@@ -36,16 +36,8 @@ public class TestConnectionPool implements ConnectionPool {
         exceptionToThrow = null;
     }
 
-    public TestConnectionPool(final MongoException exceptionToThrow) {
-        this.exceptionToThrow = exceptionToThrow;
-    }
-
     @Override
-    public void start() {
-    }
-
-    @Override
-    public InternalConnection get() {
+    public InternalConnection get(final OperationContext operationContext) {
         return new InternalConnection() {
             @Override
             public ByteBuf getBuffer(final int capacity) {
@@ -53,22 +45,22 @@ public class TestConnectionPool implements ConnectionPool {
             }
 
             @Override
-            public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
+            public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId, final OperationContext operationContext) {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
 
             @Override
-            public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+            public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
 
             @Override
-            public <T> void send(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+            public <T> void send(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public <T> T receive(final Decoder<T> decoder, final SessionContext sessionContext) {
+            public <T> T receive(final Decoder<T> decoder, final OperationContext operationContext) {
                 throw new UnsupportedOperationException();
             }
 
@@ -79,23 +71,24 @@ public class TestConnectionPool implements ConnectionPool {
 
             @Override
             public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
-                                                final SessionContext sessionContext, final SingleResultCallback<T> callback) {
+                    final OperationContext operationContext, final SingleResultCallback<T> callback) {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
 
             @Override
-            public ResponseBuffers receiveMessage(final int responseTo) {
+            public ResponseBuffers receiveMessage(final int responseTo, final OperationContext operationContext) {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
 
             @Override
-            public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId,
+            public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final OperationContext operationContext,
                                          final SingleResultCallback<Void> callback) {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
 
             @Override
-            public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
+            public void receiveMessageAsync(final int responseTo, final OperationContext operationContext,
+                    final SingleResultCallback<ResponseBuffers> callback) {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
 
@@ -110,12 +103,12 @@ public class TestConnectionPool implements ConnectionPool {
             }
 
             @Override
-            public void open() {
+            public void open(final OperationContext operationContext) {
                 throw new UnsupportedOperationException("Not implemented yet");
             }
 
             @Override
-            public void openAsync(final SingleResultCallback<Void> callback) {
+            public void openAsync(final OperationContext operationContext, final SingleResultCallback<Void> callback) {
                 callback.onResult(null, new UnsupportedOperationException("Not implemented yet"));
             }
 
@@ -133,29 +126,35 @@ public class TestConnectionPool implements ConnectionPool {
             public boolean isClosed() {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
+
+            @Override
+            public int getGeneration() {
+                return 0;
+            }
         };
     }
 
     @Override
-    public InternalConnection get(final long timeout, final TimeUnit timeUnit) {
-        if (exceptionToThrow != null) {
-            throw exceptionToThrow;
-        }
-        return get();
-    }
-
-    @Override
-    public void getAsync(final SingleResultCallback<InternalConnection> callback) {
+    public void getAsync(final OperationContext operationContext, final SingleResultCallback<InternalConnection> callback) {
         if (exceptionToThrow != null) {
             callback.onResult(null, exceptionToThrow);
         } else {
-            callback.onResult(get(), null);
+            callback.onResult(get(operationContext), null);
         }
     }
 
     @Override
-    public void invalidate() {
+    public void invalidate(@Nullable final Throwable cause) {
         generation++;
+    }
+
+    @Override
+    public void invalidate(final ObjectId serviceId, final int generation) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void ready() {
     }
 
     @Override

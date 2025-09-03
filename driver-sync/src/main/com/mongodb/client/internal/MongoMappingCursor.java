@@ -48,6 +48,11 @@ class MongoMappingCursor<T, U> implements MongoCursor<U> {
         return mapper.apply(proxied.next());
     }
 
+    @Override
+    public int available() {
+        return proxied.available();
+    }
+
     @Nullable
     @Override
     public U tryNext() {

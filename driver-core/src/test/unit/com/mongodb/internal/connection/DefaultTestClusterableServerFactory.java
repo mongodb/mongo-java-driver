@@ -18,42 +18,46 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterConnectionMode;
-import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.event.ServerListener;
+import com.mongodb.internal.inject.SameObjectProvider;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.mongodb.internal.event.EventListenerHelper.createServerListener;
-
 public class DefaultTestClusterableServerFactory implements ClusterableServerFactory {
     private final ServerSettings settings = ServerSettings.builder().build();
-    private final ClusterId clusterId;
     private final ClusterConnectionMode clusterConnectionMode;
     private final ServerListenerFactory serverListenerFactory;
-    private final Map<ServerAddress, TestServerMonitorFactory> serverAddressToServerMonitorFactoryMap =
-            new HashMap<ServerAddress, TestServerMonitorFactory>();
+    private final Map<ServerAddress, TestServerMonitor> serverAddressToServerMonitorMap = new HashMap<>();
 
-    public DefaultTestClusterableServerFactory(final ClusterId clusterId, final ClusterConnectionMode clusterConnectionMode,
+    public DefaultTestClusterableServerFactory(final ClusterConnectionMode clusterConnectionMode,
                                                final ServerListenerFactory serverListenerFactory) {
-        this.clusterId = clusterId;
         this.clusterConnectionMode = clusterConnectionMode;
         this.serverListenerFactory = serverListenerFactory;
     }
 
     @Override
-    public ClusterableServer create(final ServerAddress serverAddress, final ServerListener serverListener,
-                                    final ClusterClock clusterClock) {
-        TestServerMonitorFactory serverMonitorFactory = new TestServerMonitorFactory(new ServerId(clusterId, serverAddress));
-        serverAddressToServerMonitorFactoryMap.put(serverAddress, serverMonitorFactory);
-
-        return new DefaultServer(new ServerId(clusterId, serverAddress), clusterConnectionMode, new TestConnectionPool(),
-                new TestConnectionFactory(), serverMonitorFactory,
-                createServerListener(ServerSettings.builder().addServerListener(serverListener).build(),
-                        serverListenerFactory.create(serverAddress)), null, clusterClock);
+    public ClusterableServer create(final Cluster cluster, final ServerAddress serverAddress) {
+        ServerId serverId = new ServerId(cluster.getClusterId(), serverAddress);
+        if (clusterConnectionMode == ClusterConnectionMode.LOAD_BALANCED) {
+            return new LoadBalancedServer(serverId, new TestConnectionPool(),
+                    new TestConnectionFactory(), serverListenerFactory.create(serverAddress), cluster.getClock());
+        } else {
+            SameObjectProvider<SdamServerDescriptionManager> sdamProvider = SameObjectProvider.uninitialized();
+            TestServerMonitor serverMonitor = new TestServerMonitor(sdamProvider);
+            serverAddressToServerMonitorMap.put(serverAddress, serverMonitor);
+            ConnectionPool connectionPool = new TestConnectionPool();
+            ServerListener serverListener = serverListenerFactory.create(serverAddress);
+            SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(cluster, serverId, serverListener, serverMonitor,
+                    connectionPool, clusterConnectionMode);
+            sdamProvider.initialize(sdam);
+            serverMonitor.start();
+            return new DefaultServer(serverId, clusterConnectionMode, connectionPool, new TestConnectionFactory(), serverMonitor, sdam,
+                    serverListener, null, cluster.getClock(), true);
+        }
     }
 
     @Override
@@ -63,7 +67,7 @@ public class DefaultTestClusterableServerFactory implements ClusterableServerFac
 
 
     public void sendNotification(final ServerAddress serverAddress, final ServerDescription serverDescription) {
-        serverAddressToServerMonitorFactoryMap.get(serverAddress).sendNotification(serverDescription);
+        serverAddressToServerMonitorMap.get(serverAddress).updateServerDescription(serverDescription);
     }
 
 }

@@ -16,13 +16,14 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
+import com.mongodb.client.TestListener;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonDouble;
@@ -36,21 +37,36 @@ import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
+import static com.mongodb.ClusterFixture.TIMEOUT;
+import static com.mongodb.internal.connection.InternalStreamConnection.getSecuritySensitiveCommands;
+import static com.mongodb.internal.connection.InternalStreamConnection.getSecuritySensitiveHelloCommands;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
+import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class TestCommandListener implements CommandListener {
+    private final List<String> eventTypes;
+    private final List<String> ignoredCommandMonitoringEvents;
     private final List<CommandEvent> events = new ArrayList<>();
+    @Nullable
+    private final TestListener listener;
     private final Lock lock = new ReentrantLock();
     private final Condition commandCompletedCondition = lock.newCondition();
-
+    private final Condition commandAnyEventCondition = lock.newCondition();
+    private final boolean observeSensitiveCommands;
+    private boolean ignoreNextSucceededOrFailedEvent;
     private static final CodecRegistry CODEC_REGISTRY_HACK;
 
     static {
@@ -68,10 +84,44 @@ public class TestCommandListener implements CommandListener {
                 });
     }
 
+    /**
+     * When a test listener is set, this command listener will send string events to the
+     * test listener in the form {@code "<command name> <eventType>"}, where the event
+     * type will be lowercase and will omit the terms "command" and "event".
+     * For example: {@code "saslContinue succeeded"}.
+     *
+     * @see InternalStreamConnection#setRecordEverything(boolean)
+     * @param listener the test listener
+     */
+    public TestCommandListener(final TestListener listener) {
+        this(Arrays.asList("commandStartedEvent", "commandSucceededEvent", "commandFailedEvent"), emptyList(), true, listener);
+    }
+
+    public TestCommandListener() {
+        this(Arrays.asList("commandStartedEvent", "commandSucceededEvent", "commandFailedEvent"), emptyList());
+    }
+
+    public TestCommandListener(final List<String> eventTypes, final List<String> ignoredCommandMonitoringEvents) {
+        this(eventTypes, ignoredCommandMonitoringEvents, true, null);
+    }
+
+    public TestCommandListener(final List<String> eventTypes, final List<String> ignoredCommandMonitoringEvents,
+            final boolean observeSensitiveCommands, @Nullable final TestListener listener) {
+        this.eventTypes = eventTypes;
+        this.ignoredCommandMonitoringEvents = ignoredCommandMonitoringEvents;
+        this.observeSensitiveCommands = observeSensitiveCommands;
+        this.listener = listener;
+    }
+
+
+
     public void reset() {
         lock.lock();
         try {
             events.clear();
+            if (listener != null) {
+                listener.clear();
+            }
         } finally {
             lock.unlock();
         }
@@ -80,9 +130,21 @@ public class TestCommandListener implements CommandListener {
     public List<CommandEvent> getEvents() {
         lock.lock();
         try {
-            return events;
+            return new ArrayList<>(events);
         } finally {
             lock.unlock();
+        }
+    }
+
+    private void addEvent(final CommandEvent c) {
+        events.add(c);
+        String className = c.getClass().getSimpleName()
+                .replace("Command", "")
+                .replace("Event", "")
+                .toLowerCase();
+        // example: "saslContinue succeeded"
+        if (listener != null) {
+            listener.add(c.getCommandName() + " " + className);
         }
     }
 
@@ -110,44 +172,65 @@ public class TestCommandListener implements CommandListener {
         throw new IllegalArgumentException(commandName + " not found in command succeeded event list");
     }
 
-    public List<CommandEvent> getCommandStartedEvents() {
-        return getCommandStartedEvents(Integer.MAX_VALUE);
+    public CommandFailedEvent getCommandFailedEvent(final String commandName) {
+        return getEvents()
+                .stream()
+                .filter(e -> e instanceof CommandFailedEvent)
+                .filter(e -> e.getCommandName().equals(commandName))
+                .map(e -> (CommandFailedEvent) e)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(commandName + " not found in command failed event list"));
     }
 
-    private List<CommandEvent> getCommandStartedEvents(final int maxEvents) {
+    public List<CommandFailedEvent> getCommandFailedEvents() {
+        return getEvents(CommandFailedEvent.class, Integer.MAX_VALUE);
+    }
+
+    public List<CommandFailedEvent> getCommandFailedEvents(final String commandName) {
+        return getEvents(CommandFailedEvent.class,
+                commandEvent -> commandEvent.getCommandName().equals(commandName),
+                Integer.MAX_VALUE);
+    }
+
+    public List<CommandStartedEvent> getCommandStartedEvents() {
+        return getEvents(CommandStartedEvent.class, Integer.MAX_VALUE);
+    }
+
+    public List<CommandStartedEvent> getCommandStartedEvents(final String commandName) {
+        return getEvents(CommandStartedEvent.class,
+                commandEvent -> commandEvent.getCommandName().equals(commandName),
+                Integer.MAX_VALUE);
+    }
+
+    public List<CommandSucceededEvent> getCommandSucceededEvents() {
+        return getEvents(CommandSucceededEvent.class, Integer.MAX_VALUE);
+    }
+
+    private <T extends CommandEvent> List<T> getEvents(final Class<T> type, final int maxEvents) {
+      return getEvents(type, e -> true, maxEvents);
+    }
+
+    private <T extends CommandEvent> List<T> getEvents(final Class<T> type,
+                                                       final Predicate<? super CommandEvent> filter,
+                                                       final int maxEvents) {
         lock.lock();
         try {
-            List<CommandEvent> commandStartedEvents = new ArrayList<CommandEvent>();
-            for (CommandEvent cur : getEvents()) {
-                if (cur instanceof CommandStartedEvent) {
-                    commandStartedEvents.add(cur);
-                }
-                if (commandStartedEvents.size() == maxEvents) {
-                    break;
-                }
-            }
-            return commandStartedEvents;
+            return getEvents().stream()
+                    .filter(e -> e.getClass() == type)
+                    .filter(filter)
+                    .map(type::cast)
+                    .limit(maxEvents).collect(Collectors.toList());
         } finally {
             lock.unlock();
         }
     }
 
-    public List<CommandEvent> waitForStartedEvents(final int numEvents) {
-        lock.lock();
-        try {
-            while (!hasCompletedEvents(numEvents)) {
-                try {
-                    if (!commandCompletedCondition.await(10, TimeUnit.SECONDS)) {
-                        throw new MongoTimeoutException("Timeout waiting for event");
-                    }
-                } catch (InterruptedException e) {
-                    throw new MongoInterruptedException("Interrupted waiting for event", e);
-                }
-            }
-            return getCommandStartedEvents(numEvents);
-        } finally {
-            lock.unlock();
-        }
+    private <T extends CommandEvent> long getEventCount(final Class<T> eventClass, final Predicate<T> matcher) {
+        return getEvents().stream()
+                .filter(eventClass::isInstance)
+                .map(eventClass::cast)
+                .filter(matcher)
+                .count();
     }
 
     public void waitForFirstCommandCompletion() {
@@ -155,11 +238,11 @@ public class TestCommandListener implements CommandListener {
         try {
             while (!hasCompletedEvents(1)) {
                 try {
-                    if (!commandCompletedCondition.await(10, TimeUnit.SECONDS)) {
+                    if (!commandCompletedCondition.await(TIMEOUT, TimeUnit.SECONDS)) {
                         throw new MongoTimeoutException("Timeout waiting for event");
                     }
                 } catch (InterruptedException e) {
-                    throw new MongoInterruptedException("Interrupted waiting for event", e);
+                    throw interruptAndCreateMongoInterruptedException("Interrupted waiting for event", e);
                 }
             }
         } finally {
@@ -180,11 +263,23 @@ public class TestCommandListener implements CommandListener {
 
     @Override
     public void commandStarted(final CommandStartedEvent event) {
+        if (!eventTypes.contains("commandStartedEvent") || ignoredCommandMonitoringEvents.contains(event.getCommandName())) {
+            return;
+        }
+        else if (!observeSensitiveCommands) {
+            if (getSecuritySensitiveCommands().contains(event.getCommandName())) {
+                return;
+            } else if (getSecuritySensitiveHelloCommands().contains(event.getCommandName()) && event.getCommand().isEmpty()) {
+                ignoreNextSucceededOrFailedEvent = true;
+                return;
+            }
+        }
         lock.lock();
         try {
-            events.add(new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
-                    event.getCommandName(),
+            addEvent(new CommandStartedEvent(event.getRequestContext(), event.getOperationId(), event.getRequestId(),
+                    event.getConnectionDescription(), event.getDatabaseName(), event.getCommandName(),
                     event.getCommand() == null ? null : getWritableClone(event.getCommand())));
+            commandAnyEventCondition.signal();
         } finally {
             lock.unlock();
         }
@@ -192,12 +287,25 @@ public class TestCommandListener implements CommandListener {
 
     @Override
     public void commandSucceeded(final CommandSucceededEvent event) {
+        if (!eventTypes.contains("commandSucceededEvent") || ignoredCommandMonitoringEvents.contains(event.getCommandName())) {
+            return;
+        }
+        else if (!observeSensitiveCommands) {
+            if (getSecuritySensitiveCommands().contains(event.getCommandName())) {
+                return;
+            } else if (getSecuritySensitiveHelloCommands().contains(event.getCommandName()) && ignoreNextSucceededOrFailedEvent) {
+                ignoreNextSucceededOrFailedEvent = false;
+                return;
+            }
+        }
         lock.lock();
         try {
-            events.add(new CommandSucceededEvent(event.getRequestId(), event.getConnectionDescription(), event.getCommandName(),
+            addEvent(new CommandSucceededEvent(event.getRequestContext(), event.getOperationId(), event.getRequestId(),
+                    event.getConnectionDescription(), event.getDatabaseName(), event.getCommandName(),
                     event.getResponse() == null ? null : event.getResponse().clone(),
                     event.getElapsedTime(TimeUnit.NANOSECONDS)));
             commandCompletedCondition.signal();
+            commandAnyEventCondition.signal();
         } finally {
             lock.unlock();
         }
@@ -205,10 +313,22 @@ public class TestCommandListener implements CommandListener {
 
     @Override
     public void commandFailed(final CommandFailedEvent event) {
+        if (!eventTypes.contains("commandFailedEvent") || ignoredCommandMonitoringEvents.contains(event.getCommandName())) {
+            return;
+        }
+        else if (!observeSensitiveCommands) {
+            if (getSecuritySensitiveCommands().contains(event.getCommandName())) {
+                return;
+            } else if (getSecuritySensitiveHelloCommands().contains(event.getCommandName()) && ignoreNextSucceededOrFailedEvent) {
+                ignoreNextSucceededOrFailedEvent = false;
+                return;
+            }
+        }
         lock.lock();
         try {
-            events.add(event);
+            addEvent(event);
             commandCompletedCondition.signal();
+            commandAnyEventCondition.signal();
         } finally {
             lock.unlock();
         }
@@ -302,5 +422,23 @@ public class TestCommandListener implements CommandListener {
     private void assertEquivalence(final CommandStartedEvent actual, final CommandStartedEvent expected) {
         assertEquals(expected.getDatabaseName(), actual.getDatabaseName());
         assertEquals(expected.getCommand(), actual.getCommand());
+    }
+
+    public <T extends CommandEvent> void waitForEvents(final Class<T> eventClass, final Predicate<T> matcher, final int count)
+            throws TimeoutException {
+        lock.lock();
+        try {
+            while (getEventCount(eventClass, matcher) < count) {
+                try {
+                    if (!commandAnyEventCondition.await(TIMEOUT, TimeUnit.SECONDS)) {
+                        throw new MongoTimeoutException("Timeout waiting for command event");
+                    }
+                } catch (InterruptedException e) {
+                    throw interruptAndCreateMongoInterruptedException("Interrupted waiting for event", e);
+                }
+            }
+        } finally {
+            lock.unlock();
+        }
     }
 }

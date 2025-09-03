@@ -16,7 +16,11 @@
 
 package com.mongodb.internal.connection
 
-import com.mongodb.connection.netty.NettyBufferProvider
+
+import com.mongodb.internal.connection.netty.NettyByteBuf
+import io.netty.buffer.ByteBufAllocator
+import io.netty.buffer.PooledByteBufAllocator
+import org.bson.ByteBuf
 import spock.lang.Specification
 
 class ByteBufSpecification extends Specification {
@@ -233,5 +237,19 @@ class ByteBufSpecification extends Specification {
 
         where:
         provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
+    }
+
+    static final class NettyBufferProvider implements BufferProvider {
+        private final ByteBufAllocator allocator
+
+        NettyBufferProvider() {
+            allocator = PooledByteBufAllocator.DEFAULT
+        }
+
+        @Override
+        ByteBuf getBuffer(final int size) {
+            io.netty.buffer.ByteBuf buffer = allocator.directBuffer(size, size)
+            new NettyByteBuf(buffer)
+        }
     }
 }

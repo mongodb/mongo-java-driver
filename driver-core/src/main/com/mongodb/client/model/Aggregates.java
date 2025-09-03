@@ -17,20 +17,43 @@
 package com.mongodb.client.model;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.client.model.densify.DensifyOptions;
+import com.mongodb.client.model.densify.DensifyRange;
+import com.mongodb.client.model.fill.FillOptions;
+import com.mongodb.client.model.fill.FillOutputField;
+import com.mongodb.client.model.geojson.Point;
+import com.mongodb.client.model.search.FieldSearchPath;
+import com.mongodb.client.model.search.SearchCollector;
+import com.mongodb.client.model.search.SearchOperator;
+import com.mongodb.client.model.search.SearchOptions;
+import com.mongodb.client.model.search.VectorSearchOptions;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
+import org.bson.BsonType;
 import org.bson.BsonValue;
+import org.bson.Document;
+import org.bson.BinaryVector;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
+import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
+import static com.mongodb.client.model.densify.DensifyOptions.densifyOptions;
+import static com.mongodb.client.model.search.SearchOptions.searchOptions;
+import static com.mongodb.internal.Iterables.concat;
+import static com.mongodb.internal.client.model.Util.sizeAtLeast;
 import static java.util.Arrays.asList;
-import static org.bson.assertions.Assertions.notNull;
 
 /**
  * Builders for aggregation pipeline stages.
@@ -39,6 +62,7 @@ import static org.bson.assertions.Assertions.notNull;
  * @mongodb.server.release 2.2
  * @since 3.1
  */
+@SuppressWarnings("overloads")
 public final class Aggregates {
 
     /**
@@ -64,8 +88,37 @@ public final class Aggregates {
      * @since 3.4
      */
     public static Bson addFields(final List<Field<?>> fields) {
-        return new AddFieldsStage(fields);
+        return new FieldsStage("$addFields", fields);
     }
+
+    /**
+     * Creates a $set pipeline stage for the specified projection
+     *
+     * @param fields the fields to add
+     * @return the $set pipeline stage
+     * @see Projections
+     * @since 4.3
+     * @mongodb.server.release 4.2
+     * @mongodb.driver.manual reference/operator/aggregation/set/ $set
+     */
+    public static Bson set(final Field<?>... fields) {
+        return set(asList(fields));
+    }
+
+    /**
+     * Creates a $set pipeline stage for the specified projection
+     *
+     * @param fields the fields to add
+     * @return the $set pipeline stage
+     * @see Projections
+     * @since 4.3
+     * @mongodb.server.release 4.2
+     * @mongodb.driver.manual reference/operator/aggregation/set/ $set
+     */
+    public static Bson set(final List<Field<?>> fields) {
+        return new FieldsStage("$set", fields);
+    }
+
 
     /**
      * Creates a $bucket pipeline stage
@@ -98,7 +151,7 @@ public final class Aggregates {
      */
     public static <TExpression, TBoundary> Bson bucket(final TExpression groupBy, final List<TBoundary> boundaries,
                                                        final BucketOptions options) {
-        return new BucketStage<TExpression, TBoundary>(groupBy, boundaries, options);
+        return new BucketStage<>(groupBy, boundaries, options);
     }
 
     /**
@@ -129,7 +182,7 @@ public final class Aggregates {
      * @since 3.4
      */
     public static <TExpression> Bson bucketAuto(final TExpression groupBy, final int buckets, final BucketAutoOptions options) {
-        return new BucketAutoStage<TExpression>(groupBy, buckets, options);
+        return new BucketAutoStage<>(groupBy, buckets, options);
     }
 
     /**
@@ -204,7 +257,7 @@ public final class Aggregates {
      * @since 3.4
      */
     public static <TExpression> Bson sortByCount(final TExpression filter) {
-        return new SortByCountStage<TExpression>(filter);
+        return new SortByCountStage<>(filter);
     }
 
     /**
@@ -250,9 +303,14 @@ public final class Aggregates {
     }
 
     /**
-     * Creates a $lookup pipeline stage, joining the current collection with the one specified in from using the given pipeline
+     * Creates a $lookup pipeline stage, joining the current collection with the
+     * one specified in from using the given pipeline. If the first stage in the
+     * pipeline is a {@link Aggregates#documents(List) $documents} stage, then
+     * the {@code from} collection is ignored.
      *
-     * @param from          the name of the collection in the same database to perform the join with.
+     * @param from          the name of the collection in the same database to
+     *                      perform the join with. Must be {$code null} if the
+     *                      first pipeline stage is $documents.
      * @param pipeline      the pipeline to run on the joined collection.
      * @param as            the name of the new array field to add to the input documents.
      * @return the $lookup pipeline stage
@@ -261,15 +319,20 @@ public final class Aggregates {
      * @since 3.7
      *
      */
-    public static Bson lookup(final String from, final List<? extends Bson> pipeline, final String as) {
+    public static Bson lookup(@Nullable final String from, final List<? extends Bson> pipeline, final String as) {
         return lookup(from, null, pipeline, as);
     }
 
     /**
-     * Creates a $lookup pipeline stage, joining the current collection with the one specified in from using the given pipeline
+     * Creates a $lookup pipeline stage, joining the current collection with the
+     * one specified in from using the given pipeline. If the first stage in the
+     * pipeline is a {@link Aggregates#documents(List) $documents} stage, then
+     * the {@code from} collection is ignored.
      *
      * @param <TExpression> the Variable value expression type
-     * @param from          the name of the collection in the same database to perform the join with.
+     * @param from          the name of the collection in the same database to
+     *                      perform the join with. Must be {$code null} if the
+     *                      first pipeline stage is $documents.
      * @param let           the variables to use in the pipeline field stages.
      * @param pipeline      the pipeline to run on the joined collection.
      * @param as            the name of the new array field to add to the input documents.
@@ -278,9 +341,9 @@ public final class Aggregates {
      * @mongodb.server.release 3.6
      * @since 3.7
      */
-    public static <TExpression> Bson lookup(final String from, @Nullable final List<Variable<TExpression>> let,
+    public static <TExpression> Bson lookup(@Nullable final String from, @Nullable final List<Variable<TExpression>> let,
                                             final List<? extends Bson> pipeline, final String as) {
-       return new LookupStage<TExpression>(from, let, pipeline, as);
+       return new LookupStage<>(from, let, pipeline, as);
     }
 
     /**
@@ -346,7 +409,7 @@ public final class Aggregates {
     public static <TExpression> Bson graphLookup(final String from, final TExpression startWith, final String connectFromField,
                                                  final String connectToField, final String as, final GraphLookupOptions options) {
         notNull("options", options);
-        return new GraphLookupStage<TExpression>(from, startWith, connectFromField, connectToField, as, options);
+        return new GraphLookupStage<>(from, startWith, connectFromField, connectToField, as, options);
     }
 
     /**
@@ -374,7 +437,7 @@ public final class Aggregates {
      * @mongodb.driver.manual meta/aggregation-quick-reference/#aggregation-expressions Expressions
      */
     public static <TExpression> Bson group(@Nullable final TExpression id, final List<BsonField> fieldAccumulators) {
-        return new GroupStage<TExpression>(id, fieldAccumulators);
+        return new GroupStage<>(id, fieldAccumulators);
     }
 
     /**
@@ -530,7 +593,7 @@ public final class Aggregates {
      * @since 3.4
      */
     public static <TExpression> Bson replaceRoot(final TExpression value) {
-        return new ReplaceStage<TExpression>(value);
+        return new ReplaceStage<>(value);
     }
 
     /**
@@ -549,7 +612,7 @@ public final class Aggregates {
      * @since 3.11
      */
     public static <TExpression> Bson replaceWith(final TExpression value) {
-        return new ReplaceStage<TExpression>(value, true);
+        return new ReplaceStage<>(value, true);
     }
 
     /**
@@ -563,6 +626,500 @@ public final class Aggregates {
      */
     public static Bson sample(final int size) {
         return new BsonDocument("$sample", new BsonDocument("size", new BsonInt32(size)));
+    }
+
+    /**
+     * Creates a {@code $setWindowFields} pipeline stage, which allows using window operators.
+     * This stage partitions the input documents similarly to the {@link #group(Object, List) $group} pipeline stage,
+     * optionally sorts them, computes fields in the documents by computing window functions over {@linkplain Window windows} specified per
+     * function, and outputs the documents. The important difference from the {@code $group} pipeline stage is that
+     * documents belonging to the same partition or window are not folded into a single document.
+     *
+     * @param partitionBy Optional partitioning of data specified like {@code id} in {@link #group(Object, List)}.
+     *                    If {@code null}, then all documents belong to the same partition.
+     * @param sortBy Fields to sort by. The syntax is identical to {@code sort} in {@link #sort(Bson)} (see {@link Sorts}).
+     *               Sorting is required by certain functions and may be required by some windows (see {@link Windows} for more details).
+     *               Sorting is used only for the purpose of computing window functions and does not guarantee ordering
+     *               of the output documents.
+     * @param output A {@linkplain WindowOutputField windowed computation}.
+     * @param moreOutput More {@linkplain WindowOutputField windowed computations}.
+     * @param <TExpression> The {@code partitionBy} expression type.
+     * @return The {@code $setWindowFields} pipeline stage.
+     * @mongodb.driver.dochub core/window-functions-set-window-fields $setWindowFields
+     * @mongodb.server.release 5.0
+     * @since 4.3
+     */
+    public static <TExpression> Bson setWindowFields(@Nullable final TExpression partitionBy, @Nullable final Bson sortBy,
+            final WindowOutputField output, final WindowOutputField... moreOutput) {
+        return setWindowFields(partitionBy, sortBy, concat(notNull("output", output), moreOutput));
+    }
+
+    /**
+     * Creates a {@code $setWindowFields} pipeline stage, which allows using window operators.
+     * This stage partitions the input documents similarly to the {@link #group(Object, List) $group} pipeline stage,
+     * optionally sorts them, computes fields in the documents by computing window functions over {@linkplain Window windows} specified per
+     * function, and outputs the documents. The important difference from the {@code $group} pipeline stage is that
+     * documents belonging to the same partition or window are not folded into a single document.
+     *
+     * @param partitionBy Optional partitioning of data specified like {@code id} in {@link #group(Object, List)}.
+     *                    If {@code null}, then all documents belong to the same partition.
+     * @param sortBy Fields to sort by. The syntax is identical to {@code sort} in {@link #sort(Bson)} (see {@link Sorts}).
+     *               Sorting is required by certain functions and may be required by some windows (see {@link Windows} for more details).
+     *               Sorting is used only for the purpose of computing window functions and does not guarantee ordering
+     *               of the output documents.
+     * @param output A list of {@linkplain WindowOutputField windowed computations}.
+     * Specifying an empty list is not an error, but the resulting stage does not do anything useful.
+     * @param <TExpression> The {@code partitionBy} expression type.
+     * @return The {@code $setWindowFields} pipeline stage.
+     * @mongodb.driver.dochub core/window-functions-set-window-fields $setWindowFields
+     * @mongodb.server.release 5.0
+     * @since 4.3
+     */
+    public static <TExpression> Bson setWindowFields(@Nullable final TExpression partitionBy, @Nullable final Bson sortBy,
+                                                     final Iterable<? extends WindowOutputField> output) {
+        notNull("output", output);
+        return new SetWindowFieldsStage<>(partitionBy, sortBy, output);
+    }
+
+    /**
+     * Creates a {@code $densify} pipeline stage, which adds documents to a sequence of documents
+     * where certain values in the {@code field} are missing.
+     *
+     * @param field The field to densify.
+     * @param range The range.
+     * @return The requested pipeline stage.
+     * @mongodb.driver.manual reference/operator/aggregation/densify/ $densify
+     * @mongodb.driver.manual core/document/#dot-notation Dot notation
+     * @mongodb.server.release 5.1
+     * @since 4.7
+     */
+    public static Bson densify(final String field, final DensifyRange range) {
+        return densify(notNull("field", field), notNull("range", range), densifyOptions());
+    }
+
+    /**
+     * Creates a {@code $densify} pipeline stage, which adds documents to a sequence of documents
+     * where certain values in the {@code field} are missing.
+     *
+     * @param field The field to densify.
+     * @param range The range.
+     * @param options The densify options.
+     * Specifying {@link DensifyOptions#densifyOptions()} is equivalent to calling {@link #densify(String, DensifyRange)}.
+     * @return The requested pipeline stage.
+     * @mongodb.driver.manual reference/operator/aggregation/densify/ $densify
+     * @mongodb.driver.manual core/document/#dot-notation Dot notation
+     * @mongodb.server.release 5.1
+     * @since 4.7
+     */
+    public static Bson densify(final String field, final DensifyRange range, final DensifyOptions options) {
+        notNull("field", field);
+        notNull("range", range);
+        notNull("options", options);
+        return new Bson() {
+            @Override
+            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+                BsonDocument densifySpecificationDoc = new BsonDocument("field", new BsonString(field));
+                densifySpecificationDoc.append("range", range.toBsonDocument(documentClass, codecRegistry));
+                densifySpecificationDoc.putAll(options.toBsonDocument(documentClass, codecRegistry));
+                return new BsonDocument("$densify", densifySpecificationDoc);
+            }
+
+            @Override
+            public String toString() {
+                return "Stage{name='$densify'"
+                        + ", field=" + field
+                        + ", range=" + range
+                        + ", options=" + options
+                        + '}';
+            }
+        };
+    }
+
+    /**
+     * Creates a {@code $fill} pipeline stage, which assigns values to fields when they are {@link BsonType#NULL Null} or missing.
+     *
+     * @param options The fill options.
+     * @param output The {@link FillOutputField}.
+     * @param moreOutput More {@link FillOutputField}s.
+     * @return The requested pipeline stage.
+     * @mongodb.driver.manual reference/operator/aggregation/fill/ $fill
+     * @mongodb.server.release 5.3
+     * @since 4.7
+     */
+    public static Bson fill(final FillOptions options, final FillOutputField output, final FillOutputField... moreOutput) {
+        return fill(options, concat(notNull("output", output), moreOutput));
+    }
+
+    /**
+     * Creates a {@code $fill} pipeline stage, which assigns values to fields when they are {@link BsonType#NULL Null} or missing.
+     *
+     * @param options The fill options.
+     * @param output The non-empty {@link FillOutputField}s.
+     * @return The requested pipeline stage.
+     * @mongodb.driver.manual reference/operator/aggregation/fill/ $fill
+     * @mongodb.server.release 5.3
+     * @since 4.7
+     */
+    public static Bson fill(final FillOptions options, final Iterable<? extends FillOutputField> output) {
+        notNull("options", options);
+        notNull("output", output);
+        isTrueArgument("output must not be empty", sizeAtLeast(output, 1));
+        return new Bson() {
+            @Override
+            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+                BsonDocument fillSpecificationDoc = new BsonDocument();
+                fillSpecificationDoc.putAll(options.toBsonDocument(documentClass, codecRegistry));
+                BsonDocument outputDoc = new BsonDocument();
+                for (final FillOutputField computation : output) {
+                    BsonDocument computationDoc = computation.toBsonDocument(documentClass, codecRegistry);
+                    assertTrue(computationDoc.size() == 1);
+                    outputDoc.putAll(computationDoc);
+                }
+                fillSpecificationDoc.append("output", outputDoc);
+                return new BsonDocument("$fill", fillSpecificationDoc);
+            }
+
+            @Override
+            public String toString() {
+                return "Stage{name='$fill'"
+                        + ", options=" + options
+                        + ", output=" + output
+                        + '}';
+            }
+        };
+    }
+
+    /**
+     * Creates a {@code $search} pipeline stage supported by MongoDB Atlas.
+     * You may use the {@code $meta: "searchScore"} expression, e.g., via {@link Projections#metaSearchScore(String)},
+     * to extract the relevance score assigned to each found document.
+     * <p>
+     * {@link Filters#text(String, TextSearchOptions)} is a legacy text search alternative.</p>
+     *
+     * @param operator A search operator.
+     * @return The {@code $search} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search
+     * @mongodb.atlas.manual atlas-search/operators-and-collectors/#operators Search operators
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @since 4.7
+     */
+    public static Bson search(final SearchOperator operator) {
+        return search(operator, searchOptions());
+    }
+
+    /**
+     * Creates a {@code $search} pipeline stage supported by MongoDB Atlas.
+     * You may use the {@code $meta: "searchScore"} expression, e.g., via {@link Projections#metaSearchScore(String)},
+     * to extract the relevance score assigned to each found document.
+     * <p>
+     * {@link Filters#text(String, TextSearchOptions)} is a legacy text search alternative.</p>
+     *
+     * @param operator A search operator.
+     * @param options Optional {@code $search} pipeline stage fields.
+     * Specifying {@link SearchOptions#searchOptions()} is equivalent to calling {@link #search(SearchOperator)}.
+     * @return The {@code $search} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search
+     * @mongodb.atlas.manual atlas-search/operators-and-collectors/#operators Search operators
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @since 4.7
+     */
+    public static Bson search(final SearchOperator operator, final SearchOptions options) {
+        return new SearchStage("$search", notNull("operator", operator), notNull("options", options));
+    }
+
+    /**
+     * Creates a {@code $search} pipeline stage supported by MongoDB Atlas.
+     * You may use {@code $meta: "searchScore"}, e.g., via {@link Projections#metaSearchScore(String)},
+     * to extract the relevance score assigned to each found document.
+     *
+     * @param collector A search collector.
+     * @return The {@code $search} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search
+     * @mongodb.atlas.manual atlas-search/operators-and-collectors/#collectors Search collectors
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @since 4.7
+     */
+    public static Bson search(final SearchCollector collector) {
+        return search(collector, searchOptions());
+    }
+
+    /**
+     * Creates a {@code $search} pipeline stage supported by MongoDB Atlas.
+     * You may use {@code $meta: "searchScore"}, e.g., via {@link Projections#metaSearchScore(String)},
+     * to extract the relevance score assigned to each found document.
+     *
+     * @param collector A search collector.
+     * @param options Optional {@code $search} pipeline stage fields.
+     * Specifying {@link SearchOptions#searchOptions()} is equivalent to calling {@link #search(SearchCollector)}.
+     * @return The {@code $search} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-search/query-syntax/#-search $search
+     * @mongodb.atlas.manual atlas-search/operators-and-collectors/#collectors Search collectors
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @since 4.7
+     */
+    public static Bson search(final SearchCollector collector, final SearchOptions options) {
+        return new SearchStage("$search", notNull("collector", collector), notNull("options", options));
+    }
+
+    /**
+     * Creates a {@code $searchMeta} pipeline stage supported by MongoDB Atlas.
+     * Unlike {@link #search(SearchOperator) $search}, it does not return found documents,
+     * instead it returns metadata, which in case of using the {@code $search} stage
+     * may be extracted by using {@code $$SEARCH_META} variable, e.g., via {@link Projections#computedSearchMeta(String)}.
+     *
+     * @param operator A search operator.
+     * @return The {@code $searchMeta} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-search/query-syntax/#-searchmeta $searchMeta
+     * @mongodb.atlas.manual atlas-search/operators-and-collectors/#operators Search operators
+     * @since 4.7
+     */
+    public static Bson searchMeta(final SearchOperator operator) {
+        return searchMeta(operator, searchOptions());
+    }
+
+    /**
+     * Creates a {@code $searchMeta} pipeline stage supported by MongoDB Atlas.
+     * Unlike {@link #search(SearchOperator, SearchOptions) $search}, it does not return found documents,
+     * instead it returns metadata, which in case of using the {@code $search} stage
+     * may be extracted by using {@code $$SEARCH_META} variable, e.g., via {@link Projections#computedSearchMeta(String)}.
+     *
+     * @param operator A search operator.
+     * @param options Optional {@code $search} pipeline stage fields.
+     * Specifying {@link SearchOptions#searchOptions()} is equivalent to calling {@link #searchMeta(SearchOperator)}.
+     * @return The {@code $searchMeta} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-search/query-syntax/#-searchmeta $searchMeta
+     * @mongodb.atlas.manual atlas-search/operators-and-collectors/#operators Search operators
+     * @since 4.7
+     */
+    public static Bson searchMeta(final SearchOperator operator, final SearchOptions options) {
+        return new SearchStage("$searchMeta", notNull("operator", operator), notNull("options", options));
+    }
+
+    /**
+     * Creates a {@code $searchMeta} pipeline stage supported by MongoDB Atlas.
+     * Unlike {@link #search(SearchCollector) $search}, it does not return found documents,
+     * instead it returns metadata, which in case of using the {@code $search} stage
+     * may be extracted by using {@code $$SEARCH_META} variable, e.g., via {@link Projections#computedSearchMeta(String)}.
+     *
+     * @param collector A search collector.
+     * @return The {@code $searchMeta} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-search/query-syntax/#-searchmeta $searchMeta
+     * @mongodb.atlas.manual atlas-search/operators-and-collectors/#collectors Search collectors
+     * @since 4.7
+     */
+    public static Bson searchMeta(final SearchCollector collector) {
+        return searchMeta(collector, searchOptions());
+    }
+
+    /**
+     * Creates a {@code $searchMeta} pipeline stage supported by MongoDB Atlas.
+     * Unlike {@link #search(SearchCollector, SearchOptions) $search}, it does not return found documents,
+     * instead it returns metadata, which in case of using the {@code $search} stage
+     * may be extracted by using {@code $$SEARCH_META} variable, e.g., via {@link Projections#computedSearchMeta(String)}.
+     *
+     * @param collector A search collector.
+     * @param options Optional {@code $search} pipeline stage fields.
+     * Specifying {@link SearchOptions#searchOptions()} is equivalent to calling {@link #searchMeta(SearchCollector)}.
+     * @return The {@code $searchMeta} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-search/query-syntax/#-searchmeta $searchMeta
+     * @mongodb.atlas.manual atlas-search/operators-and-collectors/#collectors Search collectors
+     * @since 4.7
+     */
+    public static Bson searchMeta(final SearchCollector collector, final SearchOptions options) {
+        return new SearchStage("$searchMeta", notNull("collector", collector), notNull("options", options));
+    }
+
+    /**
+     * Creates a {@code $vectorSearch} pipeline stage supported by MongoDB Atlas.
+     * You may use the {@code $meta: "vectorSearchScore"} expression, e.g., via {@link Projections#metaVectorSearchScore(String)},
+     * to extract the relevance score assigned to each found document.
+     *
+     * @param queryVector The query vector. The number of dimensions must match that of the {@code index}.
+     * @param path The field to be searched.
+     * @param index The name of the index to use.
+     * @param limit The limit on the number of documents produced by the pipeline stage.
+     * @param options Optional {@code $vectorSearch} pipeline stage fields.
+     * @return The {@code $vectorSearch} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-vector-search/vector-search-stage/ $vectorSearch
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @mongodb.server.release 6.0.11
+     * @since 4.11
+     */
+    public static Bson vectorSearch(
+            final FieldSearchPath path,
+            final Iterable<Double> queryVector,
+            final String index,
+            final long limit,
+            final VectorSearchOptions options) {
+        notNull("path", path);
+        notNull("queryVector", queryVector);
+        notNull("index", index);
+        notNull("options", options);
+        return new VectorSearchBson(path, queryVector, index, limit, options);
+    }
+
+    /**
+     * Creates a {@code $vectorSearch} pipeline stage supported by MongoDB Atlas.
+     * You may use the {@code $meta: "vectorSearchScore"} expression, e.g., via {@link Projections#metaVectorSearchScore(String)},
+     * to extract the relevance score assigned to each found document.
+     *
+     * @param queryVector The {@linkplain BinaryVector query vector}. The number of dimensions must match that of the {@code index}.
+     * @param path        The field to be searched.
+     * @param index       The name of the index to use.
+     * @param limit       The limit on the number of documents produced by the pipeline stage.
+     * @param options     Optional {@code $vectorSearch} pipeline stage fields.
+     * @return The {@code $vectorSearch} pipeline stage.
+     * @mongodb.atlas.manual atlas-vector-search/vector-search-stage/ $vectorSearch
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @mongodb.server.release 6.0
+     * @see BinaryVector
+     * @since 5.3
+     */
+    public static Bson vectorSearch(
+            final FieldSearchPath path,
+            final BinaryVector queryVector,
+            final String index,
+            final long limit,
+            final VectorSearchOptions options) {
+        notNull("path", path);
+        notNull("queryVector", queryVector);
+        notNull("index", index);
+        notNull("options", options);
+        return new VectorSearchBson(path, queryVector, index, limit, options);
+    }
+
+    /**
+     * Creates an $unset pipeline stage that removes/excludes fields from documents
+     *
+     * @param fields the fields to exclude. May use dot notation.
+     * @return the $unset pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/unset/ $unset
+     * @mongodb.server.release 4.2
+     * @since 4.8
+     */
+    public static Bson unset(final String... fields) {
+        return unset(asList(fields));
+    }
+
+    /**
+     * Creates an $unset pipeline stage that removes/excludes fields from documents
+     *
+     * @param fields the fields to exclude. May use dot notation.
+     * @return the $unset pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/unset/ $unset
+     * @mongodb.server.release 4.2
+     * @since 4.8
+     */
+    public static Bson unset(final List<String> fields) {
+        if (fields.size() == 1) {
+            return new BsonDocument("$unset", new BsonString(fields.get(0)));
+        }
+        BsonArray array = new BsonArray();
+        fields.stream().map(BsonString::new).forEach(array::add);
+        return new BsonDocument().append("$unset", array);
+    }
+
+    /**
+     * Creates a $geoNear pipeline stage that outputs documents in order of nearest to farthest from a specified point.
+     *
+     * @param near The point for which to find the closest documents.
+     * @param distanceField The output field that contains the calculated distance.
+     *                      To specify a field within an embedded document, use dot notation.
+     * @param options {@link GeoNearOptions}
+     * @return the $geoNear pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/geoNear/ $geoNear
+     * @since 4.8
+     */
+    public static Bson geoNear(
+            final Point near,
+            final String distanceField,
+            final GeoNearOptions options) {
+        notNull("near", near);
+        notNull("distanceField", distanceField);
+        notNull("options", options);
+        return new Bson() {
+            @Override
+            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+                BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+                writer.writeStartDocument();
+                writer.writeStartDocument("$geoNear");
+
+                writer.writeName("near");
+                BuildersHelper.encodeValue(writer, near, codecRegistry);
+                writer.writeName("distanceField");
+                BuildersHelper.encodeValue(writer, distanceField, codecRegistry);
+
+                options.toBsonDocument(documentClass, codecRegistry).forEach((optionName, optionValue) -> {
+                    writer.writeName(optionName);
+                    BuildersHelper.encodeValue(writer, optionValue, codecRegistry);
+                });
+
+                writer.writeEndDocument();
+                writer.writeEndDocument();
+                return writer.getDocument();
+            }
+
+            @Override
+            public String toString() {
+                return "Stage{name='$geoNear'"
+                        + ", near=" + near
+                        + ", distanceField=" + distanceField
+                        + ", options=" + options
+                        + '}';
+            }
+        };
+    }
+
+    /**
+     * Creates a $geoNear pipeline stage that outputs documents in order of nearest to farthest from a specified point.
+     *
+     * @param near The point for which to find the closest documents.
+     * @param distanceField The output field that contains the calculated distance.
+     *                      To specify a field within an embedded document, use dot notation.
+     * @return the $geoNear pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/geoNear/ $geoNear
+     * @since 4.8
+     */
+    public static Bson geoNear(
+            final Point near,
+            final String distanceField) {
+        return geoNear(near, distanceField, geoNearOptions());
+    }
+
+    /**
+     * Creates a $documents pipeline stage.
+     *
+     * @param documents the documents.
+     * @return the $documents pipeline stage.
+     * @mongodb.driver.manual reference/operator/aggregation/documents/ $documents
+     * @mongodb.server.release 5.1
+     * @since 4.9
+     */
+    public static Bson documents(final List<? extends Bson> documents) {
+        notNull("documents", documents);
+        return new Bson() {
+            @Override
+            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+                BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+                writer.writeStartDocument();
+                writer.writeStartArray("$documents");
+                for (Bson bson : documents) {
+                    BuildersHelper.encodeValue(writer, bson, codecRegistry);
+                }
+                writer.writeEndArray();
+                writer.writeEndDocument();
+                return writer.getDocument();
+            }
+        };
     }
 
     static void writeBucketOutput(final CodecRegistry codecRegistry, final BsonDocumentWriter writer,
@@ -603,10 +1160,10 @@ public final class Aggregates {
 
             SimplePipelineStage that = (SimplePipelineStage) o;
 
-            if (name != null ? !name.equals(that.name) : that.name != null) {
+            if (!Objects.equals(name, that.name)) {
                 return false;
             }
-            return value != null ? value.equals(that.value) : that.value == null;
+            return Objects.equals(value, that.value);
         }
 
         @Override
@@ -676,10 +1233,10 @@ public final class Aggregates {
 
             BucketStage<?, ?> that = (BucketStage<?, ?>) o;
 
-            if (groupBy != null ? !groupBy.equals(that.groupBy) : that.groupBy != null) {
+            if (!Objects.equals(groupBy, that.groupBy)) {
                 return false;
             }
-            if (boundaries != null ? !boundaries.equals(that.boundaries) : that.boundaries != null) {
+            if (!Objects.equals(boundaries, that.boundaries)) {
                 return false;
             }
             return options.equals(that.options);
@@ -755,7 +1312,7 @@ public final class Aggregates {
             if (buckets != that.buckets) {
                 return false;
             }
-            if (groupBy != null ? !groupBy.equals(that.groupBy) : that.groupBy != null) {
+            if (!Objects.equals(groupBy, that.groupBy)) {
                 return false;
             }
             return options.equals(that.options);
@@ -786,8 +1343,11 @@ public final class Aggregates {
         private final List<? extends Bson> pipeline;
         private final String as;
 
-        private LookupStage(final String from, @Nullable final List<Variable<TExpression>> let, final List<? extends Bson> pipeline,
-                            final String as) {
+        private LookupStage(
+                @Nullable final String from,
+                @Nullable final List<Variable<TExpression>> let,
+                final List<? extends Bson> pipeline,
+                final String as) {
             this.from = from;
             this.let = let;
             this.pipeline = pipeline;
@@ -802,7 +1362,9 @@ public final class Aggregates {
 
             writer.writeStartDocument("$lookup");
 
-            writer.writeString("from", from);
+            if (from != null) {
+                writer.writeString("from", from);
+            }
 
             if (let != null) {
                 writer.writeStartDocument("let");
@@ -840,16 +1402,16 @@ public final class Aggregates {
 
             LookupStage<?> that = (LookupStage<?>) o;
 
-            if (from != null ? !from.equals(that.from) : that.from != null) {
+            if (!Objects.equals(from, that.from)) {
                 return false;
             }
-            if (let != null ? !let.equals(that.let) : that.let != null) {
+            if (!Objects.equals(let, that.let)) {
                 return false;
             }
-            if (pipeline != null ? !pipeline.equals(that.pipeline) : that.pipeline != null) {
+            if (!Objects.equals(pipeline, that.pipeline)) {
                 return false;
             }
-            return as != null ? as.equals(that.as) : that.as == null;
+            return Objects.equals(as, that.as);
         }
 
         @Override
@@ -936,22 +1498,22 @@ public final class Aggregates {
 
             GraphLookupStage<?> that = (GraphLookupStage<?>) o;
 
-            if (from != null ? !from.equals(that.from) : that.from != null) {
+            if (!Objects.equals(from, that.from)) {
                 return false;
             }
-            if (startWith != null ? !startWith.equals(that.startWith) : that.startWith != null) {
+            if (!Objects.equals(startWith, that.startWith)) {
                 return false;
             }
-            if (connectFromField != null ? !connectFromField.equals(that.connectFromField) : that.connectFromField != null) {
+            if (!Objects.equals(connectFromField, that.connectFromField)) {
                 return false;
             }
-            if (connectToField != null ? !connectToField.equals(that.connectToField) : that.connectToField != null) {
+            if (!Objects.equals(connectToField, that.connectToField)) {
                 return false;
             }
-            if (as != null ? !as.equals(that.as) : that.as != null) {
+            if (!Objects.equals(as, that.as)) {
                 return false;
             }
-            return options != null ? options.equals(that.options) : that.options == null;
+            return Objects.equals(options, that.options);
         }
 
         @Override
@@ -1021,10 +1583,10 @@ public final class Aggregates {
 
             GroupStage<?> that = (GroupStage<?>) o;
 
-            if (id != null ? !id.equals(that.id) : that.id != null) {
+            if (!Objects.equals(id, that.id)) {
                 return false;
             }
-            return fieldAccumulators != null ? fieldAccumulators.equals(that.fieldAccumulators) : that.fieldAccumulators == null;
+            return Objects.equals(fieldAccumulators, that.fieldAccumulators);
         }
 
         @Override
@@ -1076,7 +1638,7 @@ public final class Aggregates {
 
             SortByCountStage<?> that = (SortByCountStage<?>) o;
 
-            return filter != null ? filter.equals(that.filter) : that.filter == null;
+            return Objects.equals(filter, that.filter);
         }
 
         @Override
@@ -1131,7 +1693,7 @@ public final class Aggregates {
 
             FacetStage that = (FacetStage) o;
 
-            return facets != null ? facets.equals(that.facets) : that.facets == null;
+            return Objects.equals(facets, that.facets);
         }
 
         @Override
@@ -1148,18 +1710,20 @@ public final class Aggregates {
 
     }
 
-    private static class AddFieldsStage implements Bson {
+    private static class FieldsStage implements Bson {
         private final List<Field<?>> fields;
+        private final String stageName; //one of $addFields or $set
 
-        AddFieldsStage(final List<Field<?>> fields) {
-            this.fields = fields;
+        FieldsStage(final String stageName, final List<Field<?>> fields) {
+            this.stageName = stageName;
+            this.fields = notNull("fields", fields);
         }
 
         @Override
         public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
             BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
             writer.writeStartDocument();
-            writer.writeName("$addFields");
+            writer.writeName(stageName);
             writer.writeStartDocument();
             for (Field<?> field : fields) {
                 writer.writeName(field.getName());
@@ -1180,20 +1744,25 @@ public final class Aggregates {
                 return false;
             }
 
-            AddFieldsStage that = (AddFieldsStage) o;
+            FieldsStage that = (FieldsStage) o;
 
-            return fields != null ? fields.equals(that.fields) : that.fields == null;
+            if (!fields.equals(that.fields)) {
+                return false;
+            }
+            return stageName.equals(that.stageName);
         }
 
         @Override
         public int hashCode() {
-            return fields != null ? fields.hashCode() : 0;
+            int result = fields.hashCode();
+            result = 31 * result + stageName.hashCode();
+            return result;
         }
 
         @Override
         public String toString() {
             return "Stage{"
-                + "name='$addFields', "
+                + "name='" + stageName + "', "
                 + "fields=" + fields
                 + '}';
         }
@@ -1243,7 +1812,7 @@ public final class Aggregates {
 
             ReplaceStage<?> that = (ReplaceStage<?>) o;
 
-            return value != null ? value.equals(that.value) : that.value == null;
+            return Objects.equals(value, that.value);
         }
 
         @Override
@@ -1434,7 +2003,7 @@ public final class Aggregates {
             if (!collection.equals(that.collection)) {
                 return false;
             }
-            return pipeline != null ? !pipeline.equals(that.pipeline) : that.pipeline != null;
+            return !Objects.equals(pipeline, that.pipeline);
         }
 
         @Override
@@ -1450,6 +2019,177 @@ public final class Aggregates {
                     + "name='$unionWith'"
                     + ", collection='" + collection + '\''
                     + ", pipeline=" + pipeline
+                    + '}';
+        }
+    }
+
+    private static final class SetWindowFieldsStage<TExpression> implements Bson {
+        @Nullable
+        private final TExpression partitionBy;
+        @Nullable
+        private final Bson sortBy;
+        private final Iterable<? extends WindowOutputField> output;
+
+        SetWindowFieldsStage(
+                @Nullable final TExpression partitionBy,
+                @Nullable final Bson sortBy,
+                final Iterable<? extends WindowOutputField> output) {
+            this.partitionBy = partitionBy;
+            this.sortBy = sortBy;
+            this.output = output;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
+            BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+            writer.writeStartDocument();
+            writer.writeStartDocument("$setWindowFields");
+            if (partitionBy != null) {
+                writer.writeName("partitionBy");
+                BuildersHelper.encodeValue(writer, partitionBy, codecRegistry);
+            }
+            if (sortBy != null) {
+                writer.writeName("sortBy");
+                BuildersHelper.encodeValue(writer, sortBy, codecRegistry);
+            }
+            writer.writeStartDocument("output");
+            for (WindowOutputField windowOutputField : output) {
+                BsonField field = windowOutputField.toBsonField();
+                writer.writeName(field.getName());
+                BuildersHelper.encodeValue(writer, field.getValue(), codecRegistry);
+            }
+            writer.writeEndDocument(); // end output
+            writer.writeEndDocument(); // end $setWindowFields
+            writer.writeEndDocument();
+            return writer.getDocument();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            SetWindowFieldsStage<?> that = (SetWindowFieldsStage<?>) o;
+            return Objects.equals(partitionBy, that.partitionBy) && Objects.equals(sortBy, that.sortBy) && output.equals(that.output);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(partitionBy, sortBy, output);
+        }
+
+        @Override
+        public String toString() {
+            return "Stage{"
+                    + "name='$setWindowFields'"
+                    + ", partitionBy=" + partitionBy
+                    + ", sortBy=" + sortBy
+                    + ", output=" + output
+                    + '}';
+        }
+    }
+
+    private static final class SearchStage implements Bson {
+        private final String name;
+        private final Bson operatorOrCollector;
+        @Nullable
+        private final SearchOptions options;
+
+        SearchStage(final String name, final Bson operatorOrCollector, @Nullable final SearchOptions options) {
+            this.name = name;
+            this.operatorOrCollector = operatorOrCollector;
+            this.options = options;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+            BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+            writer.writeStartDocument();
+            writer.writeStartDocument(name);
+            BsonDocument operatorOrCollectorDoc = operatorOrCollector.toBsonDocument(documentClass, codecRegistry);
+            assertTrue(operatorOrCollectorDoc.size() == 1);
+            Map.Entry<String, BsonValue> operatorOrCollectorEntry = operatorOrCollectorDoc.entrySet().iterator().next();
+            writer.writeName(operatorOrCollectorEntry.getKey());
+            BuildersHelper.encodeValue(writer, operatorOrCollectorEntry.getValue(), codecRegistry);
+            if (options != null) {
+                options.toBsonDocument(documentClass, codecRegistry).forEach((optionName, optionValue) -> {
+                    writer.writeName(optionName);
+                    BuildersHelper.encodeValue(writer, optionValue, codecRegistry);
+                });
+            }
+            // end `name`
+            writer.writeEndDocument();
+            writer.writeEndDocument();
+            return writer.getDocument();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            SearchStage that = (SearchStage) o;
+            return name.equals(that.name)
+                    && operatorOrCollector.equals(that.operatorOrCollector)
+                    && Objects.equals(options, that.options);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(name, operatorOrCollector, options);
+        }
+
+        @Override
+        public String toString() {
+            return "Stage{"
+                    + "name='" + name + "'"
+                    + ", operatorOrCollector=" + operatorOrCollector
+                    + ", options=" + options
+                    + '}';
+        }
+    }
+
+    private static class VectorSearchBson implements Bson {
+        private final FieldSearchPath path;
+        private final Object queryVector;
+        private final String index;
+        private final long limit;
+        private final VectorSearchOptions options;
+
+        VectorSearchBson(final FieldSearchPath path, final Object queryVector,
+                                final String index, final long limit,
+                                final VectorSearchOptions options) {
+            this.path = path;
+            this.queryVector = queryVector;
+            this.index = index;
+            this.limit = limit;
+            this.options = options;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+            Document specificationDoc = new Document("path", path.toValue())
+                    .append("queryVector", queryVector)
+                    .append("index", index)
+                    .append("limit", limit);
+            specificationDoc.putAll(options.toBsonDocument(documentClass, codecRegistry));
+            return new Document("$vectorSearch", specificationDoc).toBsonDocument(documentClass, codecRegistry);
+        }
+
+        @Override
+        public String toString() {
+            return "Stage{name=$vectorSearch"
+                    + ", path=" + path
+                    + ", queryVector=" + queryVector
+                    + ", index=" + index
+                    + ", limit=" + limit
+                    + ", options=" + options
                     + '}';
         }
     }

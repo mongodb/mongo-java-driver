@@ -18,24 +18,26 @@ package com.mongodb;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.BsonBinary;
+import org.bson.BsonDocument;
 import org.bson.codecs.Codec;
 import org.bson.json.JsonMode;
 import org.bson.json.JsonWriterSettings;
 import org.bson.types.BasicBSONList;
 import org.bson.types.ObjectId;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.UUID;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
@@ -78,55 +80,73 @@ public class BasicDBObjectTest {
     }
 
     @Test
+    public void toJsonShouldRenderUuidAsStandard() {
+        UUID uuid = UUID.randomUUID();
+        BasicDBObject doc = new BasicDBObject("_id", uuid);
+
+        String json = doc.toJson();
+        assertEquals(new BsonDocument("_id", new BsonBinary(uuid)), BsonDocument.parse(json));
+    }
+
+    @Test
+    public void toStringShouldRenderUuidAsStandard() {
+        UUID uuid = UUID.randomUUID();
+        BasicDBObject doc = new BasicDBObject("_id", uuid);
+
+        String json = doc.toString();
+        assertEquals(new BsonDocument("_id", new BsonBinary(uuid)), BsonDocument.parse(json));
+    }
+
+    @Test
     public void testGetDate() {
-        final Date date = new Date();
+        Date date = new Date();
         BasicDBObject doc = new BasicDBObject("foo", date);
-        assertTrue(doc.getDate("foo").equals(date));
+        assertEquals(doc.getDate("foo"), date);
     }
 
     @Test
     public void testGetDateWithDefault() {
-        final Date date = new Date();
+        Date date = new Date();
         BasicDBObject doc = new BasicDBObject("foo", date);
-        assertTrue(doc.getDate("foo", new Date()).equals(date));
-        assertTrue(doc.getDate("bar", date).equals(date));
+        assertEquals(doc.getDate("foo", new Date()), date);
+        assertEquals(doc.getDate("bar", date), date);
     }
 
     @Test
     public void testGetObjectId() {
-        final ObjectId objId = ObjectId.get();
+        ObjectId objId = ObjectId.get();
         BasicDBObject doc = new BasicDBObject("foo", objId);
-        assertTrue(doc.getObjectId("foo").equals(objId));
+        assertEquals(doc.getObjectId("foo"), objId);
     }
 
     @Test
     public void testGetObjectIdWithDefault() {
-        final ObjectId objId = ObjectId.get();
+        ObjectId objId = ObjectId.get();
         BasicDBObject doc = new BasicDBObject("foo", objId);
-        assertTrue(doc.getObjectId("foo", ObjectId.get()).equals(objId));
-        assertTrue(doc.getObjectId("bar", objId).equals(objId));
+        assertEquals(doc.getObjectId("foo", ObjectId.get()), objId);
+        assertEquals(doc.getObjectId("bar", objId), objId);
     }
 
     @Test
     public void testGetLongWithDefault() {
         final long test = 100;
         BasicDBObject doc = new BasicDBObject("foo", test);
-        assertTrue(doc.getLong("foo", 0L) == test);
-        assertTrue(doc.getLong("bar", 0L) == 0L);
+        assertEquals(test, doc.getLong("foo", 0L));
+        assertEquals(0L, doc.getLong("bar", 0L));
     }
 
     @Test
     public void testGetDoubleWithDefault() {
         BasicDBObject doc = new BasicDBObject("foo", Double.MAX_VALUE);
-        assertTrue(doc.getDouble("foo", (double) 0) == Double.MAX_VALUE);
-        assertTrue(doc.getDouble("bar", Double.MIN_VALUE) == Double.MIN_VALUE);
+        assertEquals(Double.MAX_VALUE, doc.getDouble("foo", 0), 0.0);
+        assertEquals(Double.MIN_VALUE, doc.getDouble("bar", Double.MIN_VALUE), 0.0);
     }
 
     @Test
     public void testGetStringWithDefault() {
         BasicDBObject doc = new BasicDBObject("foo", "badmf");
-        assertTrue(doc.getString("foo", "ID").equals("badmf"));
-        assertTrue(doc.getString("bar", "DEFAULT").equals("DEFAULT"));
+        assertEquals("badmf", doc.getString("foo", "ID"));
+        assertEquals("DEFAULT", doc.getString("bar", "DEFAULT"));
     }
 
     @Test
@@ -135,7 +155,7 @@ public class BasicDBObjectTest {
         assertTrue(b.isEmpty());
         b.append("a", 1);
         assertFalse(b.isEmpty());
-        Assert.assertEquals(b.get(), new BasicDBObject("a", 1));
+        assertEquals(b.get(), new BasicDBObject("a", 1));
     }
 
     @Test
@@ -144,7 +164,7 @@ public class BasicDBObjectTest {
         b.add("a", 1);
         b.push("b").append("c", 2).pop();
         DBObject a = b.get();
-        Assert.assertEquals(a, new BasicDBObject("a", 1).append("b", new BasicDBObject("c", 2)));
+        assertEquals(a, new BasicDBObject("a", 1).append("b", new BasicDBObject("c", 2)));
     }
 
     @Test
@@ -157,7 +177,7 @@ public class BasicDBObjectTest {
         b.push("z");
         b.append("b", 3);
 
-        Assert.assertEquals(b.get(),
+        assertEquals(b.get(),
                 new BasicDBObject("x", 1).append("y", new BasicDBObject("a", 2)).append("z", new BasicDBObject("b", 3)));
     }
 
@@ -204,18 +224,27 @@ public class BasicDBObjectTest {
         assertEquality(new BasicDBObject("a", new BasicDBList().put(1, new BasicDBObject("y", 2).append("x", 1))),
                        new BasicBSONObject("a", new BasicBSONList().put(1, new BasicBSONObject("x", 1).append("y", 2))));
 
-        Map<String, Object> first = new HashMap<String, Object>();
+        Map<String, Object> first = new HashMap<>();
         first.put("1", new BasicDBObject("y", 2).append("x", 1));
         first.put("2", new BasicDBObject("a", 2).append("b", 1));
-        Map<String, Object> second = new TreeMap<String, Object>();
+        Map<String, Object> second = new TreeMap<>();
         second.put("2", new BasicDBObject("b", 1).append("a", 2));
         second.put("1", new BasicDBObject("x", 1).append("y", 2));
-        Map<String, Object> third = new TreeMap<String, Object>();
+        Map<String, Object> third = new TreeMap<>();
         third.put("2", new BasicBSONObject("a", 2).append("b", 1));
         third.put("1", new BasicBSONObject("x", 1).append("y", 2));
 
         assertEquality(new BasicDBObject("a", first), new BasicDBObject("a", second));
         assertEquality(new BasicDBObject("a", first), new BasicBSONObject("a", third));
+    }
+
+    @Test
+    public void testUuid() {
+        UUID uuid = UUID.randomUUID();
+        BasicDBObject dbo1 = new BasicDBObject("_id", uuid);
+        BasicDBObject dbo2 = new BasicDBObject("_id", uuid);
+
+        assertEquality(dbo1, dbo2);
     }
 
     void assertEquality(final BSONObject x, final BSONObject y) {

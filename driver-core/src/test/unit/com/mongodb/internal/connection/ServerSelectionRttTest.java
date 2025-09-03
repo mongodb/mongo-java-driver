@@ -23,9 +23,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import util.JsonPoweredTestHelper;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -43,7 +40,7 @@ public class ServerSelectionRttTest {
 
     @Test
     public void shouldPassAllOutcomes() {
-        ExponentiallyWeightedMovingAverage subject = new ExponentiallyWeightedMovingAverage(0.2);
+        RoundTripTimeSampler subject = new RoundTripTimeSampler();
 
         BsonValue current = definition.get("avg_rtt_ms");
         if (current.isNumber()) {
@@ -57,10 +54,10 @@ public class ServerSelectionRttTest {
     }
 
     @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        List<Object[]> data = new ArrayList<Object[]>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/server-selection/rtt")) {
-            data.add(new Object[]{file.getName(), JsonPoweredTestHelper.getTestDocument(file)});
+    public static Collection<Object[]> data() {
+        List<Object[]> data = new ArrayList<>();
+        for (BsonDocument testDocument : JsonPoweredTestHelper.getSpecTestDocuments("server-selection/tests/rtt")) {
+            data.add(new Object[]{testDocument.getString("fileName").getValue(), testDocument});
         }
         return data;
     }

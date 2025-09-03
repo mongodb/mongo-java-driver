@@ -19,29 +19,48 @@ package com.mongodb.client.model
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.client.model.fill.FillOutputField
+import org.bson.BsonDecimal128
 import org.bson.BsonDocument
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.conversions.Bson
+import org.bson.types.Decimal128
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.client.model.Accumulators.accumulator
 import static com.mongodb.client.model.Accumulators.addToSet
 import static com.mongodb.client.model.Accumulators.avg
+import static com.mongodb.client.model.Accumulators.bottom
+import static com.mongodb.client.model.Accumulators.bottomN
 import static com.mongodb.client.model.Accumulators.first
+import static com.mongodb.client.model.Accumulators.firstN
 import static com.mongodb.client.model.Accumulators.last
+import static com.mongodb.client.model.Accumulators.lastN
 import static com.mongodb.client.model.Accumulators.max
+import static com.mongodb.client.model.Accumulators.maxN
+import static com.mongodb.client.model.Accumulators.mergeObjects
 import static com.mongodb.client.model.Accumulators.min
+import static com.mongodb.client.model.Accumulators.minN
 import static com.mongodb.client.model.Accumulators.push
 import static com.mongodb.client.model.Accumulators.stdDevPop
 import static com.mongodb.client.model.Accumulators.stdDevSamp
 import static com.mongodb.client.model.Accumulators.sum
+import static com.mongodb.client.model.Accumulators.top
+import static com.mongodb.client.model.Accumulators.topN
 import static com.mongodb.client.model.Aggregates.addFields
 import static com.mongodb.client.model.Aggregates.bucket
 import static com.mongodb.client.model.Aggregates.bucketAuto
 import static com.mongodb.client.model.Aggregates.count
+import static com.mongodb.client.model.Aggregates.densify
 import static com.mongodb.client.model.Aggregates.facet
+import static com.mongodb.client.model.Aggregates.fill
 import static com.mongodb.client.model.Aggregates.graphLookup
 import static com.mongodb.client.model.Aggregates.group
 import static com.mongodb.client.model.Aggregates.limit
@@ -53,13 +72,14 @@ import static com.mongodb.client.model.Aggregates.project
 import static com.mongodb.client.model.Aggregates.replaceRoot
 import static com.mongodb.client.model.Aggregates.replaceWith
 import static com.mongodb.client.model.Aggregates.sample
+import static com.mongodb.client.model.Aggregates.set
+import static com.mongodb.client.model.Aggregates.setWindowFields
 import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.sortByCount
 import static com.mongodb.client.model.Aggregates.unionWith
 import static com.mongodb.client.model.Aggregates.unwind
 import static com.mongodb.client.model.Filters.eq
-import static com.mongodb.client.model.Filters.exists
 import static com.mongodb.client.model.Filters.expr
 import static com.mongodb.client.model.Projections.computed
 import static com.mongodb.client.model.Projections.exclude
@@ -68,7 +88,18 @@ import static com.mongodb.client.model.Projections.fields
 import static com.mongodb.client.model.Projections.include
 import static com.mongodb.client.model.Sorts.ascending
 import static com.mongodb.client.model.Sorts.descending
+import static com.mongodb.client.model.Windows.Bound.CURRENT
+import static com.mongodb.client.model.Windows.Bound.UNBOUNDED
+import static com.mongodb.client.model.Windows.documents
+import static com.mongodb.client.model.Windows.range
+import static com.mongodb.client.model.Windows.timeRange
+import static com.mongodb.client.model.densify.DensifyOptions.densifyOptions
+import static com.mongodb.client.model.densify.DensifyRange.fullRangeWithStep
+import static com.mongodb.client.model.densify.DensifyRange.partitionRangeWithStep
+import static com.mongodb.client.model.densify.DensifyRange.rangeWithStep
+import static com.mongodb.client.model.fill.FillOptions.fillOptions
 import static java.util.Arrays.asList
+import static java.util.stream.Collectors.toList
 import static org.spockframework.util.CollectionUtil.containsAny
 
 class AggregatesFunctionalSpecification extends OperationFunctionalSpecification {
@@ -78,16 +109,19 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                                   .append('z', false)
                                   .append('a', [1, 2, 3])
                                   .append('a1', [new Document('c', 1).append('d', 2), new Document('c', 2).append('d', 3)])
+                                  .append('o', new Document('a', 1))
 
     def b = new Document('_id', 2).append('x', 2)
                                   .append('y', 'b')
                                   .append('z', true)
                                   .append('a', [3, 4, 5, 6])
                                   .append('a1', [new Document('c', 2).append('d', 3), new Document('c', 3).append('d', 4)])
+                                  .append('o', new Document('b', 2))
 
     def c = new Document('_id', 3).append('x', 3)
                                   .append('y', 'c')
                                   .append('z', true)
+                                  .append('o', new Document('c', 3))
 
     def setup() {
         getCollectionHelper().insertDocuments(a, b, c)
@@ -100,7 +134,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
     def '$match'() {
         expect:
-        aggregate([match(exists('a1'))]) == [a, b]
+        aggregate([match(Filters.exists('a1'))]) == [a, b]
     }
 
     def '$project'() {
@@ -110,10 +144,9 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                                                                             new Document('_id', 3).append('x', 3).append('c', 'c')]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$project an exclusion'() {
         expect:
-        aggregate([project(exclude('a', 'a1', 'z'))]) == [new Document('_id', 1).append('x', 1).append('y', 'a'),
+        aggregate([project(exclude('a', 'a1', 'z', 'o'))]) == [new Document('_id', 1).append('x', 1).append('y', 'a'),
                                                           new Document('_id', 2).append('x', 2).append('y', 'b'),
                                                           new Document('_id', 3).append('x', 3).append('y', 'c')]
     }
@@ -144,7 +177,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                                                                                   new Document('a', 6)]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def '$unwind with UnwindOptions'() {
         given:
         getCollectionHelper().drop()
@@ -192,6 +224,76 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                                                                      new Document('_id', false).append('acc', [false])])
     }
 
+    def '$group with $mergeObjects'() {
+        aggregate([group(null, mergeObjects('acc', '$o'))]).containsAll(
+                [new Document('_id', null).append('acc', new Document('a', 1).append('b', 2).append('c', 3))])
+    }
+
+    @IgnoreIf({ serverVersionLessThan(5, 2) })
+    def '$group with top or bottom n'() {
+        when:
+        List<Document> results = aggregate([group(new Document('gid', '$z'),
+                minN('res', '$y',
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1))))])
+                .collect()
+        then:
+        ((Document) results.stream().find { it.get('_id') == new Document('gid', true) })
+                .get('res', List).toSet() == ['b', 'c'].toSet()
+
+        when:
+        results = aggregate([group(null,
+                maxN('res', '$y', 1))])
+        then:
+        results.first().get('res', List).toSet() == ['c'].toSet()
+
+        when:
+        results = aggregate([
+                sort(ascending('x')),
+                group(null,
+                        firstN('res', '$y', 2))])
+        then:
+        results.first().get('res', List) == ['a', 'b']
+
+        when:
+        results = aggregate([
+                sort(ascending('x')),
+                group(null,
+                        lastN('res', '$y', 1))])
+        then:
+        results.first().get('res', List) == ['c']
+
+        when:
+        results = aggregate([group(new Document('gid', '$z'),
+                bottom('res', descending('y'), ['$x', '$y']))])
+                .collect()
+        then:
+        ((Document) results.stream().find { it.get('_id') == new Document('gid', true) })
+                .get('res', List) == [2, 'b']
+
+        when:
+        results = aggregate([group(new Document('gid', '$z'),
+                bottomN('res', descending('y'), ['$x', '$y'],
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', true)))
+                                .append('then', 2).append('else', 1))))])
+                .collect()
+        then:
+        ((Document) results.stream().find { it.get('_id') == new Document('gid', true) })
+                .get('res', List) == [[3, 'c'], [2, 'b']]
+
+        when:
+        results = aggregate([group(null,
+                top('res', ascending('x'), '$y'))])
+        then:
+        results.first().get('res') == 'a'
+
+        when:
+        results = aggregate([group(null,
+                topN('res', descending('x'), '$y', 1))])
+        then:
+        results.first().get('res', List) == ['c']
+    }
+
     def '$out'() {
         given:
         def outCollectionName = getCollectionName() + '.out'
@@ -203,7 +305,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 3) })
+    @IgnoreIf({ serverVersionLessThan(4, 4) })
     def '$out to specified database'() {
         given:
         def outDatabaseName = getDatabaseName() + '_out'
@@ -217,7 +319,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         getCollectionHelper(new MongoNamespace(outDatabaseName, outCollectionName)).find() == [a, b, c]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 2) })
     def '$merge'() {
         given:
         def outCollectionName = getCollectionName() + '.out'
@@ -303,7 +404,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def '$stdDev'() {
         when:
         def results = aggregate([group(null, stdDevPop('stdDevPop', '$x'), stdDevSamp('stdDevSamp', '$x'))]).first()
@@ -315,14 +415,12 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         results.get('stdDevSamp') == 1.0
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def '$sample'() {
         expect:
         containsAny([a, b, c], aggregate([sample(1)]).first())
     }
 
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def '$lookup'() {
         given:
         def fromCollectionName = 'lookupCollection'
@@ -350,7 +448,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         fromHelper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def '$lookup with pipeline'() {
         given:
         def fromCollectionName = 'warehouses'
@@ -395,7 +492,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         fromHelper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def '$lookup with pipeline without variables'() {
         given:
         def fromCollectionName = 'holidays'
@@ -450,7 +546,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         fromCollection?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$facet'() {
         given:
         def helper = getCollectionHelper()
@@ -507,7 +602,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$graphLookup'() {
         given:
         def fromCollectionName = 'contacts'
@@ -546,7 +640,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         fromHelper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$graphLookup with depth options'() {
         given:
         def fromCollectionName = 'contacts'
@@ -587,7 +680,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         fromHelper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$graphLookup with query filter option'() {
         given:
         def fromCollectionName = 'contacts'
@@ -638,7 +730,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         fromHelper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$bucket'() {
         given:
         def helper = getCollectionHelper()
@@ -672,7 +763,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$bucketAuto'() {
         given:
         def helper = getCollectionHelper()
@@ -706,7 +796,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$bucketAuto with options'() {
         given:
         def helper = getCollectionHelper()
@@ -732,7 +821,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$count'() {
         given:
         def helper = getCollectionHelper()
@@ -768,7 +856,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$sortByCount'() {
         given:
         def helper = getCollectionHelper()
@@ -803,7 +890,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 3) })
+    @IgnoreIf({ serverVersionLessThan(4, 4) })
     def '$accumulator'() {
         given:
         def helper = getCollectionHelper()
@@ -814,7 +901,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         def init = 'function() { return { x: "test string" } }'
         def accumulate = 'function(state) { return state }'
         def merge = 'function(state1, state2) { return state1 }'
-        def accumulatorExpr = accumulator('testString', init, accumulate, merge);
+        def accumulatorExpr = accumulator('testString', init, accumulate, merge)
         def results1 = helper.aggregate([group('$x', asList(accumulatorExpr))])
 
         then:
@@ -828,10 +915,10 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                 Document.parse('{_id: 8645, title: "Eclogues", author: "Dante", copies: 2}'),
                 Document.parse('{_id: 7000, title: "The Odyssey", author: "Homer", copies: 10}'),
                 Document.parse('{_id: 7020, title: "Iliad", author: "Homer", copies: 10}'))
-        def initFunction = 'function(initCount, initSum) { return { count: parseInt(initCount), sum: parseInt(initSum) } }';
-        def accumulateFunction = 'function(state, numCopies) { return { count : state.count + 1, sum : state.sum + numCopies } }';
-        def mergeFunction = 'function(state1, state2) { return { count : state1.count + state2.count, sum : state1.sum + state2.sum } }';
-        def finalizeFunction = 'function(state) { return (state.sum / state.count) }';
+        def initFunction = 'function(initCount, initSum) { return { count: parseInt(initCount), sum: parseInt(initSum) } }'
+        def accumulateFunction = 'function(state, numCopies) { return { count : state.count + 1, sum : state.sum + numCopies } }'
+        def mergeFunction = 'function(state1, state2) { return { count : state1.count + state2.count, sum : state1.sum + state2.sum } }'
+        def finalizeFunction = 'function(state) { return (state.sum / state.count) }'
         def accumulatorExpression = accumulator('avgCopies', initFunction, [ '0', '0' ], accumulateFunction,
                 [ '$copies' ], mergeFunction, finalizeFunction)
         def results2 = helper.aggregate([group('$author', asList(
@@ -847,7 +934,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$addFields'() {
         given:
         def helper = getCollectionHelper()
@@ -921,7 +1007,13 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    def '$set'() {
+        expect:
+        aggregate([set(new Field('c', '$y'))]) == [new Document(a).append('c', 'a'),
+                                                   new Document(b).append('c', 'b'),
+                                                   new Document(c).append('c', 'c')]
+    }
+
     def '$replaceRoot'() {
         given:
         def helper = getCollectionHelper()
@@ -952,7 +1044,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         results == [Document.parse('{b: 1, _id: 7}')]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 2) })
     def '$replaceWith'() {
         given:
         def helper = getCollectionHelper()
@@ -983,7 +1074,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         results == [Document.parse('{b: 1, _id: 7}')]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 3) })
+    @IgnoreIf({ serverVersionLessThan(4, 4) })
     def '$unionWith'() {
         given:
         def coll1Helper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'coll1'))
@@ -1018,5 +1109,275 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         cleanup:
         coll1Helper?.drop()
         coll2Helper?.drop()
+    }
+
+    @IgnoreIf({ serverVersionLessThan(5, 2) })
+    def '$setWindowFields'(Bson preSortBy, Object partitionBy, Bson sortBy, WindowOutputField output, List<Object> expectedFieldValues) {
+        given:
+        ZoneId utc = ZoneId.of(ZoneOffset.UTC.getId())
+        getCollectionHelper().drop()
+        Document[] original = [
+                new Document('partitionId', 1)
+                        .append('num1', 1)
+                        .append('num2', -1)
+                        .append('numMissing', 1)
+                        .append('date', LocalDateTime.ofInstant(Instant.ofEpochSecond(1), utc)),
+                new Document('partitionId', 1)
+                        .append('num1', 2)
+                        .append('num2', -2)
+                        .append('date', LocalDateTime.ofInstant(Instant.ofEpochSecond(2), utc)),
+                new Document('partitionId', 2)
+                        .append('num1', 3)
+                        .append('num2', -3)
+                        .append('numMissing', 3)
+                        .append('date', LocalDateTime.ofInstant(Instant.ofEpochSecond(3), utc))]
+        getCollectionHelper().insertDocuments(original)
+        List<Bson> stages = [
+                setWindowFields(partitionBy, sortBy, output),
+                sort(ascending('num1'))
+        ]
+        if (preSortBy != null) {
+            stages.add(0, sort(preSortBy))
+        }
+        List<Document> actual = aggregate(stages)
+        List<Object> actualFieldValues = actual.stream()
+                .map { doc -> doc.get('result') }
+                .collect(toList())
+
+        expect:
+        actualFieldValues.size() == expectedFieldValues.size()
+        for (int i = 0; i < actualFieldValues.size(); i++) {
+            Object actualV = actualFieldValues.get(i)
+            Object expectedV = expectedFieldValues.get(i)
+            if (actualV instanceof Collection && expectedV instanceof Set) {
+                assert ((Collection) actualV).toSet() == expectedV
+            } else {
+                assert actualV == expectedV
+            }
+        }
+
+        where:
+        preSortBy | partitionBy | sortBy | output | expectedFieldValues
+        null | null | null | WindowOutputFields
+                .sum('result', '$num1', null) | [6, 6, 6]
+        null | null | null | WindowOutputFields
+                .sum('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) | [6, 6, 6]
+        null | '$partitionId' | ascending('num1') | WindowOutputFields
+                .sum('result', '$num1', range(0, UNBOUNDED)) | [3, 2, 3]
+        null | null | ascending('num1') | WindowOutputFields
+                .sum('result', '$num1', range(CURRENT, Integer.MAX_VALUE)) | [6, 5, 3]
+        null | null | ascending('num1') | WindowOutputFields
+                .of(new BsonField('result', new Document('$sum', '$num1')
+                        .append('window', Windows.of(
+                                new Document('range', asList('current', Integer.MAX_VALUE))).toBsonDocument()))) | [6, 5, 3]
+        null | null | ascending('date') | WindowOutputFields
+                .avg('result', '$num1', timeRange(-1, 0, MongoTimeUnit.QUARTER)) | [1, 1.5, 2]
+        null | null | null | WindowOutputFields
+                .stdDevSamp('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) | [1.0, 1.0, 1.0]
+        null | null | ascending('num1') | WindowOutputFields
+                .stdDevPop('result', '$num1', documents(CURRENT, CURRENT)) | [0, 0, 0]
+        null | null | ascending('num1') | WindowOutputFields
+                .min('result', '$num1', documents(-1, 0)) | [1, 1, 2]
+        null | new Document('gid', '$partitionId') | ascending('num1') | WindowOutputFields
+                .minN('result', '$num1',
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', 1)))
+                                .append('then', 2).append('else', 2)),
+                        documents(-1, 0)) | [ [1].toSet(), [1, 2].toSet(), [3].toSet() ]
+        null | null | null | WindowOutputFields
+                .max('result', '$num1', null) | [3, 3, 3]
+        null | null | ascending('num1') | WindowOutputFields
+                .maxN('result', '$num1', 2, documents(-1, 0)) | [ [1].toSet(), [1, 2].toSet(), [2, 3].toSet() ]
+        null | '$partitionId' | null | WindowOutputFields
+                .count('result', null) | [2, 2, 1]
+        null | null | ascending('num1') | WindowOutputFields
+                .derivative('result', '$num2', documents(UNBOUNDED, UNBOUNDED)) | [-1, -1, -1]
+        null | null | ascending('date') | WindowOutputFields
+                .timeDerivative('result', '$num2', documents(UNBOUNDED, UNBOUNDED), MongoTimeUnit.MILLISECOND) | [-0.001, -0.001, -0.001]
+        null | null | ascending('num1') | WindowOutputFields
+                .integral('result', '$num2', documents(UNBOUNDED, UNBOUNDED)) | [-4, -4, -4]
+        null | null | ascending('date') | WindowOutputFields
+                .timeIntegral('result', '$num2', documents(UNBOUNDED, UNBOUNDED), MongoTimeUnit.SECOND) | [-4, -4, -4]
+        null | null | null | WindowOutputFields
+                .covarianceSamp('result', '$num1', '$num2', documents(UNBOUNDED, UNBOUNDED)) | [-1.0, -1.0, -1.0]
+        null | null | ascending('num1') | WindowOutputFields
+                .covariancePop('result', '$num1', '$num2', documents(CURRENT, CURRENT)) | [0, 0, 0]
+        null | null | ascending('num1') | WindowOutputFields
+                .expMovingAvg('result', '$num1', 1) | [1, 2, 3]
+        null | null | ascending('num1') | WindowOutputFields
+                .expMovingAvg('result', '$num1', 0.5) | [1.0, 1.5, 2.25]
+        null | null | descending('num1') | WindowOutputFields
+                .push('result', '$num1', documents(UNBOUNDED, CURRENT)) | [ [3, 2, 1], [3, 2], [3] ]
+        null | null | ascending('num1') | WindowOutputFields
+                .addToSet('result', '$partitionId', documents(UNBOUNDED, -1)) | [ [], [1], [1] ]
+        null | null | ascending('num1') | WindowOutputFields
+                .first('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) | [ 1, 1, 1 ]
+        null | null | descending('num1') | WindowOutputFields
+                .firstN('result', '$num1', 2, documents(UNBOUNDED, UNBOUNDED)) | [ [3, 2], [3, 2], [3, 2] ]
+        null | null | ascending('num1') | WindowOutputFields
+                .last('result', '$num1', documents(UNBOUNDED, UNBOUNDED)) | [ 3, 3, 3 ]
+        null | null | ascending('num1') | WindowOutputFields
+                .lastN('result', '$num1', 2, documents(UNBOUNDED, UNBOUNDED)) | [ [2, 3], [2, 3], [2, 3] ]
+        null | null | ascending('num1') | WindowOutputFields
+                .shift('result', '$num1', -3, 1) | [ 2, 3, -3 ]
+        null | null | ascending('num1') | WindowOutputFields
+                .documentNumber('result') | [ 1, 2, 3 ]
+        null | null | ascending('partitionId') | WindowOutputFields
+                .rank('result') | [ 1, 1, 3 ]
+        null | null | ascending('partitionId') | WindowOutputFields
+                .denseRank('result') | [ 1, 1, 2 ]
+        null | null | null | WindowOutputFields
+                .bottom('result', ascending('num1'), '$num1', null) | [ 3, 3, 3 ]
+        null | new Document('gid', '$partitionId') | descending('num1') | WindowOutputFields
+                .bottomN('result', ascending('num1'), '$num1',
+                        new Document('$cond', new Document('if', new Document('$eq', asList('$gid', 1)))
+                                .append('then', 2).append('else', 2)),
+                        null) | [ [1, 2], [1, 2], [3] ]
+        null | null | descending('num1') | WindowOutputFields
+                .topN('result', ascending('num1'), '$num1', 2, null) | [ [1, 2], [1, 2], [1, 2] ]
+        null | null | null | WindowOutputFields
+                .top('result', ascending('num1'), '$num1', null) | [ 1, 1, 1 ]
+        ascending('num1') | null | null | WindowOutputFields
+                .locf('result', '$numMissing') | [ 1, 1, 3 ]
+        null | null | ascending('num1') | WindowOutputFields
+                .linearFill('result', '$numMissing') | [ 1, 2, 3 ]
+    }
+
+    @IgnoreIf({ serverVersionLessThan(5, 0) })
+    def '$setWindowFields with multiple output'() {
+        given:
+        getCollectionHelper().drop()
+        Document[] original = [new Document('num', 1)]
+        getCollectionHelper().insertDocuments(original)
+        List<Document> actual = aggregate([
+                setWindowFields(null, null, [
+                        WindowOutputFields.count('count', null),
+                        WindowOutputFields.max('max', '$num', null)]),
+                project(fields(excludeId()))])
+
+        expect:
+        actual.size() == 1
+        actual.get(0) == original[0].append('count', 1).append('max', 1)
+    }
+
+    @IgnoreIf({ serverVersionLessThan(5, 0) })
+    def '$setWindowFields with empty output'() {
+        given:
+        getCollectionHelper().drop()
+        Document[] original = [new Document('num', 1)]
+        getCollectionHelper().insertDocuments(original)
+        List<Document> actual = aggregate([
+                setWindowFields(null, null, []),
+                project(fields(excludeId()))])
+
+        expect:
+        actual.size() == 1
+        actual.get(0) == original[0]
+    }
+
+    @IgnoreIf({ serverVersionLessThan(5, 1) })
+    def '$densify'(String field, String partitionByField, Bson densifyStage, List<Object> expectedFieldValues) {
+        given:
+        getCollectionHelper().drop()
+        Document[] docs = [
+                new Document('partitionId', 1)
+                        .append('num', 1)
+                        .append('date', Instant.ofEpochMilli(BigInteger.TWO.pow(32).longValueExact())),
+                new Document('partitionId', 1)
+                        .append('num', 3)
+                        .append('date', Instant.ofEpochMilli(BigInteger.TWO.pow(33).longValueExact())),
+                new Document('partitionId', 2)
+                        .append('num', new BsonDecimal128(new Decimal128(new BigDecimal('4.1'))))
+                        .append('date', Instant.ofEpochMilli(BigInteger.TWO.pow(34).longValueExact()))]
+        getCollectionHelper().insertDocuments(docs)
+        Bson sortSpec = partitionByField == null ? ascending(field) : ascending(partitionByField, field)
+        List<Object> actualFieldValues = aggregate([
+                densifyStage,
+                sort(sortSpec),
+                project(fields(include(field), exclude('_id')))])
+                .stream()
+                .map { doc -> doc.get(field) }
+                .map { e -> e instanceof Date ? ((Date) e).toInstant() : e }
+                .collect(toList())
+
+        expect:
+        actualFieldValues == expectedFieldValues
+
+        where:
+        field | partitionByField | densifyStage | expectedFieldValues
+        'num' | null | densify(field, fullRangeWithStep(new Decimal128(BigDecimal.ONE))) |
+                [1, 2, 3, 4, 4.1]
+        'num' | null | densify(field, rangeWithStep(-1.0, 5.0, 1.0)) |
+                [-1, 0, 1, 2, 3, 4, 4.1]
+        'num' | null | densify(field, rangeWithStep(BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE)) |
+                [1, 3, 4.1]
+        'num' | 'partitionId' | densify(field, fullRangeWithStep(1), densifyOptions().partitionByFields(partitionByField)) |
+                [1, 2, 3, 4, 1, 2, 3, 4, 4.1]
+        'num' | 'partitionId' | densify(field, partitionRangeWithStep(1), densifyOptions().partitionByFields([partitionByField])) |
+                [1, 2, 3, 4.1]
+        'date' | null | densify(field, rangeWithStep(Instant.EPOCH, Instant.ofEpochMilli(BigInteger.TWO.pow(32).longValueExact())
+                .plusMillis(1),
+                // there is a server bug that prevents using `step` larger than 2^31 - 1 in versions before 6.1
+                BigInteger.TWO.pow(31).longValueExact() - 1, MongoTimeUnit.MILLISECOND)) |
+                [Instant.EPOCH,
+                 Instant.ofEpochMilli(BigInteger.TWO.pow(31).longValueExact() - 1),
+                 Instant.ofEpochMilli(BigInteger.TWO.pow(32).longValueExact() - 2),
+                 Instant.ofEpochMilli(BigInteger.TWO.pow(32).longValueExact()),
+                 Instant.ofEpochMilli(BigInteger.TWO.pow(33).longValueExact()),
+                 Instant.ofEpochMilli(BigInteger.TWO.pow(34).longValueExact())]
+    }
+
+    @IgnoreIf({ serverVersionLessThan(5, 3) })
+    def '$fill'(Bson preSortBy, String field, Bson fillStage, List<Object> expectedFieldValues) {
+        given:
+        getCollectionHelper().drop()
+        Document[] docs = [
+                new Document('partition', new Document('id', 10))
+                        .append('_id', 1)
+                        .append('field1', 1)
+                        .append('doc', new Document('field2', 1)),
+                new Document('partition', new Document('id', 10))
+                        .append('_id', 2)
+                        .append('doc', null),
+                new Document('partition', new Document('id', 20))
+                        .append('_id', 3)
+                        .append('field1', 3)
+                        .append('doc', new Document('field2', 3))]
+        getCollectionHelper().insertDocuments(docs)
+        String resultField = 'result'
+        List<Bson> stages = [
+                fillStage,
+                project(fields(computed(resultField, '$' + field))),
+                sort(ascending('_id'))
+        ]
+        if (preSortBy != null) {
+            stages.add(0, sort(preSortBy))
+        }
+        List<Object> actualFieldValues = aggregate(stages)
+                .stream()
+                .map { doc -> doc.get(resultField) }
+                .collect(toList())
+
+        expect:
+        actualFieldValues == expectedFieldValues
+
+        where:
+        preSortBy| field | fillStage | expectedFieldValues
+        null | 'doc.field2' | fill(
+                fillOptions().partitionByFields('p1', 'p2'),
+                FillOutputField.value(field, '$partition.id'))                   |
+                [1, 10, 3]
+        null | 'doc.field2' | fill(
+                fillOptions().sortBy(ascending('_id')),
+                FillOutputField.linear(field), FillOutputField.locf('newField')) |
+                [1, 2, 3]
+        null | 'field1' | fill(
+                // https://jira.mongodb.org/browse/SERVER-67284 prevents specifying partitionByField('partition.id')
+                fillOptions().partitionBy(new Document('p', '$partition.id')).sortBy(descending('_id')),
+                FillOutputField.locf('field1'))                                  |
+                [1, null, 3]
+        descending('_id') | 'field1' | fill(
+                fillOptions(),
+                FillOutputField.locf('field1'))                                  |
+                [1, 3, 3]
     }
 }

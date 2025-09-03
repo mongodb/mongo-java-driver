@@ -21,8 +21,8 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterType;
-import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.dns.DnsResolver;
 
 import java.util.Collections;
@@ -31,11 +31,13 @@ import java.util.List;
 import java.util.Set;
 
 import static com.mongodb.internal.connection.ServerAddressHelper.createServerAddress;
+import static java.util.Collections.unmodifiableSet;
 
 class DefaultDnsSrvRecordMonitor implements DnsSrvRecordMonitor {
     private static final Logger LOGGER = Loggers.getLogger("cluster");
 
     private final String hostName;
+    private final String srvServiceName;
     private final long rescanFrequencyMillis;
     private final long noRecordsRescanFrequencyMillis;
     private final DnsSrvRecordInitializer dnsSrvRecordInitializer;
@@ -43,10 +45,11 @@ class DefaultDnsSrvRecordMonitor implements DnsSrvRecordMonitor {
     private final Thread monitorThread;
     private volatile boolean isClosed;
 
-    DefaultDnsSrvRecordMonitor(final String hostName, final long rescanFrequencyMillis, final long noRecordsRescanFrequencyMillis,
-                               final DnsSrvRecordInitializer dnsSrvRecordInitializer, final ClusterId clusterId,
-                               final DnsResolver dnsResolver) {
+    DefaultDnsSrvRecordMonitor(final String hostName, final String srvServiceName, final long rescanFrequencyMillis, final long noRecordsRescanFrequencyMillis,
+            final DnsSrvRecordInitializer dnsSrvRecordInitializer, final ClusterId clusterId,
+            final DnsResolver dnsResolver) {
         this.hostName = hostName;
+        this.srvServiceName = srvServiceName;
         this.rescanFrequencyMillis = rescanFrequencyMillis;
         this.noRecordsRescanFrequencyMillis = noRecordsRescanFrequencyMillis;
         this.dnsSrvRecordInitializer = dnsSrvRecordInitializer;
@@ -72,41 +75,46 @@ class DefaultDnsSrvRecordMonitor implements DnsSrvRecordMonitor {
 
         @Override
         public void run() {
-            while (!isClosed && shouldContinueMonitoring()) {
-                try {
-                    List<String> resolvedHostNames = dnsResolver.resolveHostFromSrvRecords(hostName);
-                    Set<ServerAddress> hosts = createServerAddressSet(resolvedHostNames);
+            try {
+                while (!isClosed && shouldContinueMonitoring()) {
+                    try {
+                        List<String> resolvedHostNames = dnsResolver.resolveHostFromSrvRecords(hostName, srvServiceName);
+                        Set<ServerAddress> hosts = createServerAddressSet(resolvedHostNames);
 
-                    if (isClosed) {
-                        return;
-                    }
-
-                    if (!hosts.equals(currentHosts)) {
-                        try {
-                            dnsSrvRecordInitializer.initialize(hosts);
-                            currentHosts = hosts;
-                        } catch (RuntimeException e) {
-                            LOGGER.warn("Exception in monitor thread during notification of DNS resolution state change", e);
+                        if (isClosed) {
+                            return;
                         }
-                    }
-                } catch (MongoException e) {
-                    if (currentHosts.isEmpty()) {
-                        dnsSrvRecordInitializer.initialize(e);
-                    }
-                    LOGGER.info("Exception while resolving SRV records", e);
-                } catch (RuntimeException e) {
-                    if (currentHosts.isEmpty()) {
-                        dnsSrvRecordInitializer.initialize(new MongoInternalException("Unexpected runtime exception", e));
-                    }
-                    LOGGER.info("Unexpected runtime exception while resolving SRV record", e);
-                }
 
-                try {
-                    Thread.sleep(getRescanFrequencyMillis());
-                } catch (InterruptedException e) {
-                    // fall through
+                        if (!hosts.equals(currentHosts)) {
+                            try {
+                                dnsSrvRecordInitializer.initialize(unmodifiableSet(hosts));
+                                currentHosts = hosts;
+                            } catch (Exception e) {
+                                LOGGER.warn("Exception in monitor thread during notification of DNS resolution state change", e);
+                            }
+                        }
+                    } catch (MongoException e) {
+                        if (currentHosts.isEmpty()) {
+                            dnsSrvRecordInitializer.initialize(e);
+                        }
+                        LOGGER.info("Exception while resolving SRV records", e);
+                    } catch (Exception e) {
+                        if (currentHosts.isEmpty()) {
+                            dnsSrvRecordInitializer.initialize(new MongoInternalException("Unexpected runtime exception", e));
+                        }
+                        LOGGER.info("Unexpected runtime exception while resolving SRV record", e);
+                    }
+
+                    try {
+                        Thread.sleep(getRescanFrequencyMillis());
+                    } catch (InterruptedException closed) {
+                        // fall through
+                    }
+                    clusterType = dnsSrvRecordInitializer.getClusterType();
                 }
-                clusterType = dnsSrvRecordInitializer.getClusterType();
+            } catch (Throwable t) {
+                LOGGER.error(this + " stopped working. You may want to recreate the MongoClient", t);
+                throw t;
             }
         }
 
@@ -119,7 +127,7 @@ class DefaultDnsSrvRecordMonitor implements DnsSrvRecordMonitor {
         }
 
         private Set<ServerAddress> createServerAddressSet(final List<String> resolvedHostNames) {
-            Set<ServerAddress> hosts = new HashSet<ServerAddress>(resolvedHostNames.size());
+            Set<ServerAddress> hosts = new HashSet<>(resolvedHostNames.size());
             for (String host : resolvedHostNames) {
                 hosts.add(createServerAddress(host));
             }
@@ -127,4 +135,3 @@ class DefaultDnsSrvRecordMonitor implements DnsSrvRecordMonitor {
         }
     }
 }
-

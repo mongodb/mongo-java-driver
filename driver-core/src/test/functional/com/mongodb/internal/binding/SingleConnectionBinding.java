@@ -20,11 +20,10 @@ import com.mongodb.ReadPreference;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.connection.NoOpSessionContext;
-import com.mongodb.internal.connection.Server;
+import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.connection.ServerTuple;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.selector.WritableServerSelector;
-import com.mongodb.internal.session.SessionContext;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -39,33 +38,28 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     private final ReadPreference readPreference;
     private final Connection readConnection;
     private final Connection writeConnection;
-    private final Server readServer;
-    private final Server writeServer;
-
+    private final ServerDescription readServerDescription;
+    private final ServerDescription writeServerDescription;
     private int count = 1;
-
-    /**
-     * Create a new binding with the given cluster.
-     *
-     * @param cluster     a non-null Cluster which will be used to select a server to bind to
-     */
-    public SingleConnectionBinding(final Cluster cluster) {
-        this(cluster, primary());
-    }
+    private final OperationContext operationContext;
 
     /**
      * Create a new binding with the given cluster.
      *
      * @param cluster     a non-null Cluster which will be used to select a server to bind to
      * @param readPreference the readPreference for reads, if not primary a separate connection will be used for reads
+     *
      */
-    public SingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference) {
+    public SingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference, final OperationContext operationContext) {
         notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
-        writeServer = cluster.selectServer(new WritableServerSelector());
-        writeConnection = writeServer.getConnection();
-        readServer = cluster.selectServer(new ReadPreferenceServerSelector(readPreference));
-        readConnection = readServer.getConnection();
+        this.operationContext = operationContext;
+        ServerTuple writeServerTuple = cluster.selectServer(new WritableServerSelector(), operationContext);
+        writeServerDescription = writeServerTuple.getServerDescription();
+        writeConnection = writeServerTuple.getServer().getConnection(operationContext);
+        ServerTuple readServerTuple = cluster.selectServer(new ReadPreferenceServerSelector(readPreference), operationContext);
+        readServerDescription = readServerTuple.getServerDescription();
+        readConnection = readServerTuple.getServer().getConnection(operationContext);
     }
 
     @Override
@@ -80,12 +74,13 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     }
 
     @Override
-    public void release() {
+    public int release() {
         count--;
         if (count == 0) {
             writeConnection.release();
             readConnection.release();
         }
+        return count;
     }
 
     @Override
@@ -100,40 +95,50 @@ public class SingleConnectionBinding implements ReadWriteBinding {
         if (readPreference == primary()) {
             return getWriteConnectionSource();
         } else {
-            return new SingleConnectionSource(readServer, readConnection);
+            return new SingleConnectionSource(readServerDescription, readConnection);
         }
     }
 
     @Override
-    public SessionContext getSessionContext() {
-        return NoOpSessionContext.INSTANCE;
+    public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public OperationContext getOperationContext() {
+        return operationContext;
     }
 
     @Override
     public ConnectionSource getWriteConnectionSource() {
         isTrue("open", getCount() > 0);
-        return new SingleConnectionSource(writeServer, writeConnection);
+        return new SingleConnectionSource(writeServerDescription, writeConnection);
     }
 
     private final class SingleConnectionSource implements ConnectionSource {
+        private final ServerDescription serverDescription;
         private final Connection connection;
-        private final Server server;
         private int count = 1;
 
-        SingleConnectionSource(final Server server, final Connection connection) {
-            this.server = server;
+        SingleConnectionSource(final ServerDescription serverDescription, final Connection connection) {
+            this.serverDescription = serverDescription;
             this.connection = connection;
             SingleConnectionBinding.this.retain();
         }
 
         @Override
         public ServerDescription getServerDescription() {
-            return server.getDescription();
+            return serverDescription;
         }
 
         @Override
-        public SessionContext getSessionContext() {
-            return NoOpSessionContext.INSTANCE;
+        public OperationContext getOperationContext() {
+            return operationContext;
+        }
+
+        @Override
+        public ReadPreference getReadPreference() {
+            return readPreference;
         }
 
         @Override
@@ -154,11 +159,12 @@ public class SingleConnectionBinding implements ReadWriteBinding {
         }
 
         @Override
-        public void release() {
+        public int release() {
             count--;
-            if (getCount() == 0) {
+            if (count == 0) {
                 SingleConnectionBinding.this.release();
             }
+            return count;
         }
     }
 }

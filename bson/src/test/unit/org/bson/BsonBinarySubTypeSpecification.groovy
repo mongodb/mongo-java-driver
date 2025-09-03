@@ -31,5 +31,9 @@ class BsonBinarySubTypeSpecification extends Specification {
         3     | true
         4     | true
         5     | false
+        6     | false
+        7     | false
+        8     | false
+        9     | false
     }
 }

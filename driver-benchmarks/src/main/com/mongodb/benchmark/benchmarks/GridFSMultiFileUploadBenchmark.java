@@ -32,6 +32,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+
 public class GridFSMultiFileUploadBenchmark extends AbstractMongoBenchmark {
 
     private MongoDatabase database;
@@ -39,9 +40,8 @@ public class GridFSMultiFileUploadBenchmark extends AbstractMongoBenchmark {
 
     private ExecutorService fileService;
 
-    @Override
-    public String getName() {
-        return "GridFS multi-file upload";
+    public GridFSMultiFileUploadBenchmark() {
+        super("GridFS multi-file upload");
     }
 
     @Override
@@ -82,18 +82,15 @@ public class GridFSMultiFileUploadBenchmark extends AbstractMongoBenchmark {
     }
 
     private Runnable importFile(final CountDownLatch latch, final int fileId) {
-        return new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    String fileName = "file" + String.format("%02d", fileId) + ".txt";
-                    String resourcePath = "parallel/gridfs_multi/" + fileName;
-                    bucket.uploadFromStream(fileName, streamFromRelativePath(resourcePath),
-                            new GridFSUploadOptions().chunkSizeBytes(ONE_MB));
-                    latch.countDown();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+        return () -> {
+            try {
+                String fileName = "file" + String.format("%02d", fileId) + ".txt";
+                String resourcePath = "parallel/gridfs_multi/" + fileName;
+                bucket.uploadFromStream(fileName, streamFromRelativePath(resourcePath),
+                        new GridFSUploadOptions().chunkSizeBytes(ONE_MB));
+                latch.countDown();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         };
     }

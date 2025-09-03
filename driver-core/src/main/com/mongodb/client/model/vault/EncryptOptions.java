@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model.vault;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
 
 /**
@@ -27,6 +28,9 @@ public class EncryptOptions {
     private BsonBinary keyId;
     private String keyAltName;
     private final String algorithm;
+    private Long contentionFactor;
+    private String queryType;
+    private RangeOptions rangeOptions;
 
     /**
      * Construct an instance with the given algorithm.
@@ -39,8 +43,15 @@ public class EncryptOptions {
     }
 
     /**
-     * Gets the encryption algorithm, which must be either "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic" or
-     * "AEAD_AES_256_CBC_HMAC_SHA_512-Random".
+     * Gets the encryption algorithm, which must be either:
+     *
+     * <ul>
+     *     <li>AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic</li>
+     *     <li>AEAD_AES_256_CBC_HMAC_SHA_512-Random</li>
+     *     <li>Indexed</li>
+     *     <li>Unindexed</li>
+     *     <li>Range</li>
+     * </ul>
      *
      * @return the encryption algorithm
      */
@@ -57,6 +68,7 @@ public class EncryptOptions {
      *
      * @return the key identifier
      */
+    @Nullable
     public BsonBinary getKeyId() {
         return keyId;
     }
@@ -70,6 +82,7 @@ public class EncryptOptions {
      *
      * @return the alternate name
      */
+    @Nullable
     public String getKeyAltName() {
         return keyAltName;
     }
@@ -98,11 +111,98 @@ public class EncryptOptions {
         return this;
     }
 
+    /**
+     * The contention factor.
+     *
+     * <p>It is an error to set contentionFactor when algorithm is not "Indexed" or "Range".
+     * @param contentionFactor the contention factor, which must be {@code >= 0} or null.
+     * @return this
+     * @since 4.7
+     * @mongodb.server.release 7.0
+     */
+    public EncryptOptions contentionFactor(@Nullable final Long contentionFactor) {
+        this.contentionFactor = contentionFactor;
+        return this;
+    }
+
+    /**
+     * Gets the contention factor.
+     *
+     * @see #contentionFactor(Long)
+     * @return the contention factor
+     * @since 4.7
+     * @mongodb.server.release 7.0
+     */
+    @Nullable
+    public Long getContentionFactor() {
+        return contentionFactor;
+    }
+
+    /**
+     * The QueryType.
+     *
+     * <p>Currently, we support only "equality" or "range" queryType.</p>
+     * <p>It is an error to set queryType when the algorithm is not "Indexed" or "Range".</p>
+     * @param queryType the query type
+     * @return this
+     * @since 4.7
+     * @mongodb.server.release 7.0
+     */
+    public EncryptOptions queryType(@Nullable final String queryType) {
+        this.queryType = queryType;
+        return this;
+    }
+
+    /**
+     * Gets the QueryType.
+     *
+     * <p>Currently, we support only "equality" or "range" queryType.</p>
+     * @see #queryType(String)
+     * @return the queryType or null
+     * @since 4.7
+     * @mongodb.server.release 7.0
+     */
+    @Nullable
+    public String getQueryType() {
+        return queryType;
+    }
+
+    /**
+     * The RangeOptions
+     *
+     * <p>It is an error to set RangeOptions when the algorithm is not "Range".
+     * @param rangeOptions the range options
+     * @return this
+     * @since 4.9
+     * @mongodb.server.release 8.0
+     * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
+     */
+    public EncryptOptions rangeOptions(@Nullable final RangeOptions rangeOptions) {
+        this.rangeOptions = rangeOptions;
+        return this;
+    }
+
+    /**
+     * Gets the RangeOptions
+     * @return the range options or null if not set
+     * @since 4.9
+     * @mongodb.server.release 8.0
+     * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
+     */
+    @Nullable
+    public RangeOptions getRangeOptions() {
+        return rangeOptions;
+    }
+
     @Override
     public String toString() {
         return "EncryptOptions{"
                 + "keyId=" + keyId
-                + ", keyAltName=" + keyAltName
-                + ", algorithm='" + algorithm + "'}";
+                + ", keyAltName='" + keyAltName + '\''
+                + ", algorithm='" + algorithm + '\''
+                + ", contentionFactor=" + contentionFactor
+                + ", queryType='" + queryType + '\''
+                + ", rangeOptions=" + rangeOptions
+                + '}';
     }
 }

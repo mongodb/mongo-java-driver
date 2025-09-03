@@ -16,28 +16,31 @@
 
 package com.mongodb;
 
+import org.bson.BsonDocument;
+
 /**
  * Subclass of {@link MongoException} representing a cursor-not-found exception.
  *
  * @since 2.12
+ * @serial exclude
  */
 public class MongoCursorNotFoundException extends MongoQueryException {
 
     private static final long serialVersionUID = -4415279469780082174L;
 
     private final long cursorId;
-    private final ServerAddress serverAddress;
 
     /**
-     * Construct a new instance.
+     * Construct an instance.
      *
      * @param cursorId      cursor identifier
-     * @param serverAddress server address
+     * @param response      the server response document
+     * @param serverAddress the server address
+     * @since 4.8
      */
-    public MongoCursorNotFoundException(final long cursorId, final ServerAddress serverAddress) {
-        super(serverAddress, -5, "Cursor " + cursorId + " not found on server " + serverAddress);
+    public MongoCursorNotFoundException(final long cursorId, final BsonDocument response, final ServerAddress serverAddress) {
+        super(response, serverAddress);
         this.cursorId = cursorId;
-        this.serverAddress = serverAddress;
     }
 
     /**
@@ -47,14 +50,5 @@ public class MongoCursorNotFoundException extends MongoQueryException {
      */
     public long getCursorId() {
         return cursorId;
-    }
-
-    /**
-     * The server address where the cursor is.
-     *
-     * @return the ServerAddress representing the server the cursor was on.
-     */
-    public ServerAddress getServerAddress() {
-        return serverAddress;
     }
 }

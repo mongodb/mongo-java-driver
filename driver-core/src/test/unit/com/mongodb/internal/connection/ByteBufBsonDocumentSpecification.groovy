@@ -36,7 +36,6 @@ import spock.lang.Specification
 import java.nio.ByteBuffer
 
 import static java.util.Arrays.asList
-import static util.GroovyHelpers.areEqual
 
 class ByteBufBsonDocumentSpecification extends Specification {
     def emptyDocumentByteBuf = new ByteBufNIO(ByteBuffer.wrap([5, 0, 0, 0, 0] as byte[]))
@@ -222,21 +221,6 @@ class ByteBufBsonDocumentSpecification extends Specification {
 
         cleanup:
         reader.close()
-    }
-
-   def 'hashCode should equal hash code of identical BsonDocument'() {
-        expect:
-        byteBufDocument.hashCode() == document.hashCode()
-        documentByteBuf.referenceCount == 1
-    }
-
-    def 'equals should equal identical BsonDocument'() {
-        expect:
-        areEqual(byteBufDocument, document)
-        areEqual(document, byteBufDocument)
-        areEqual(byteBufDocument, byteBufDocument)
-        !areEqual(byteBufDocument, emptyByteBufDocument)
-        documentByteBuf.referenceCount == 1
     }
 
     def 'clone should make a deep copy'() {

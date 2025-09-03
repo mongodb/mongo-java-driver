@@ -16,10 +16,7 @@
 
 package com.mongodb.client;
 
-import com.mongodb.Block;
 import com.mongodb.ReadConcern;
-import com.mongodb.connection.SocketSettings;
-import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonDocument;
@@ -28,15 +25,14 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
-import static org.junit.Assume.assumeTrue;
 
 public class ReadConcernTest {
     private MongoClient mongoClient;
@@ -44,17 +40,10 @@ public class ReadConcernTest {
 
     @Before
     public void setUp() {
-        assumeTrue(canRunTests());
-
         commandListener = new TestCommandListener();
         mongoClient = MongoClients.create(getMongoClientSettingsBuilder()
                 .addCommandListener(commandListener)
-                .applyToSocketSettings(new Block<SocketSettings.Builder>() {
-                    @Override
-                    public void apply(final SocketSettings.Builder builder) {
-                        builder.readTimeout(5, TimeUnit.SECONDS);
-                    }
-                })
+                .applyToSocketSettings(builder -> builder.readTimeout(5, TimeUnit.SECONDS))
                 .build());
     }
 
@@ -68,21 +57,15 @@ public class ReadConcernTest {
     @Test
     public void shouldIncludeReadConcernInCommand() {
         mongoClient.getDatabase(getDefaultDatabaseName()).getCollection("test")
-                .withReadConcern(ReadConcern.LOCAL).estimatedDocumentCount();
+                .withReadConcern(ReadConcern.LOCAL).find().into(new ArrayList<>());
 
-        List<CommandEvent> events = commandListener.getCommandStartedEvents();
+        List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();
 
-        BsonDocument commandDocument = new BsonDocument("count", new BsonString("test"))
+        BsonDocument commandDocument = new BsonDocument("find", new BsonString("test"))
                 .append("readConcern", ReadConcern.LOCAL.asDocument())
-                .append("query", new BsonDocument());
-        if (serverVersionAtLeast(3, 6)) {
-            commandDocument.put("$db", new BsonString(getDefaultDatabaseName()));
-        }
-        assertEventsEquality(Arrays.<CommandEvent>asList(new CommandStartedEvent(1, null, getDefaultDatabaseName(),
-                        "count", commandDocument)), events);
-    }
+                .append("filter", new BsonDocument());
 
-    private boolean canRunTests() {
-        return serverVersionAtLeast(3, 2);
+        assertEventsEquality(Arrays.asList(new CommandStartedEvent(null, 1, 1, null, getDefaultDatabaseName(),
+                        "find", commandDocument)), events);
     }
 }

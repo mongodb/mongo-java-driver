@@ -38,7 +38,7 @@ object Indexes {
    *
    * @param fieldNames the field names, which must contain at least one
    * @return the index specification
-   * @see [[http://docs.mongodb.org/manual/core/indexes indexes]]
+   * @see [[https://www.mongodb.com/docs/manual/core/indexes indexes]]
    */
   def ascending(fieldNames: String*): Bson = JIndexes.ascending(fieldNames.asJava)
 
@@ -47,7 +47,7 @@ object Indexes {
    *
    * @param fieldNames the field names, which must contain at least one
    * @return the index specification
-   * @see [[http://docs.mongodb.org/manual/core/indexes indexes]]
+   * @see [[https://www.mongodb.com/docs/manual/core/indexes indexes]]
    */
   def descending(fieldNames: String*): Bson = JIndexes.descending(fieldNames.asJava)
 
@@ -56,7 +56,7 @@ object Indexes {
    *
    * @param fieldNames the field names, which must contain at least one
    * @return the index specification
-   * @see [[http://docs.mongodb.org/manual/core/2dsphere 2dsphere Index]]
+   * @see [[https://www.mongodb.com/docs/manual/core/2dsphere 2dsphere Index]]
    */
   def geo2dsphere(fieldNames: String*): Bson = JIndexes.geo2dsphere(fieldNames.asJava)
 
@@ -70,32 +70,16 @@ object Indexes {
    *
    * @param fieldName the field to create a 2d index on
    * @return the index specification
-   * @see [[http://docs.mongodb.org/manual/core/2d 2d index]]
+   * @see [[https://www.mongodb.com/docs/manual/core/2d 2d index]]
    */
   def geo2d(fieldName: String): Bson = JIndexes.geo2d(fieldName)
-
-  /**
-   * Create an index key for a geohaystack index on the given field.
-   *
-   * <p>
-   * <strong>Note: </strong>For queries that use spherical geometry, a 2dsphere index is a better option than a haystack index.
-   * 2dsphere indexes allow field reordering; geoHaystack indexes require the first field to be the location field. Also, geoHaystack
-   * indexes are only usable via commands and so always return all results at once..
-   * </p>
-   *
-   * @param fieldName the field to create a geoHaystack index on
-   * @param additional the additional field that forms the geoHaystack index key
-   * @return the index specification
-   * @see [[http://docs.mongodb.org/manual/core/geohaystack geoHaystack index]]
-   */
-  def geoHaystack(fieldName: String, additional: Bson): Bson = JIndexes.geoHaystack(fieldName, additional)
 
   /**
    * Create an index key for a text index on the given field.
    *
    * @param fieldName the field to create a text index on
    * @return the index specification
-   * @see [[http://docs.mongodb.org/manual/core/text text index]]
+   * @see [[https://www.mongodb.com/docs/manual/core/text text index]]
    */
   def text(fieldName: String): Bson = JIndexes.text(fieldName)
 
@@ -104,7 +88,7 @@ object Indexes {
    *
    * @param fieldName the field to create a hashed index on
    * @return the index specification
-   * @see [[http://docs.mongodb.org/manual/core/hashed hashed index]]
+   * @see [[https://www.mongodb.com/docs/manual/core/hashed hashed index]]
    */
   def hashed(fieldName: String): Bson = JIndexes.hashed(fieldName)
 
@@ -113,7 +97,7 @@ object Indexes {
    *
    * @param indexes the index specifications
    * @return the compound index specification
-   * @see [[http://docs.mongodb.org/manual/core/index-compound compoundIndex]]
+   * @see [[https://www.mongodb.com/docs/manual/core/index-compound compoundIndex]]
    */
   def compoundIndex(indexes: Bson*): Bson = JIndexes.compoundIndex(indexes.asJava)
 

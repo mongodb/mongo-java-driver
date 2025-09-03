@@ -19,6 +19,7 @@ package com.mongodb.client.internal;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
@@ -30,30 +31,28 @@ import java.util.List;
 public class TestOperationExecutor implements OperationExecutor {
 
     private final List<Object> responses;
-    private List<ClientSession> clientSessions = new ArrayList<ClientSession>();
-    private List<ReadPreference> readPreferences = new ArrayList<ReadPreference>();
-    private List<ReadConcern> readConcerns = new ArrayList<ReadConcern>();
-    private List<ReadOperation> readOperations = new ArrayList<ReadOperation>();
-    private List<WriteOperation> writeOperations = new ArrayList<WriteOperation>();
+    private final List<ClientSession> clientSessions = new ArrayList<>();
+    private final List<ReadPreference> readPreferences = new ArrayList<>();
+    private final List<ReadConcern> readConcerns = new ArrayList<>();
+    private final List<ReadOperation> readOperations = new ArrayList<>();
+    private final List<WriteOperation> writeOperations = new ArrayList<>();
 
     public TestOperationExecutor(final List<Object> responses) {
         this.responses = responses;
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern) {
+    public <T> T execute(final ReadOperation<T, ?> operation, final ReadPreference readPreference, final ReadConcern readConcern) {
         return execute(operation, readPreference, readConcern, null);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public <T> T execute(final WriteOperation<T> operation, final ReadConcern readConcern) {
         return execute(operation, readConcern, null);
     }
 
     @Override
-    public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
+    public <T> T execute(final ReadOperation<T, ?> operation, final ReadPreference readPreference, final ReadConcern readConcern,
                          @Nullable final ClientSession session) {
         clientSessions.add(session);
         readOperations.add(operation);
@@ -68,6 +67,16 @@ public class TestOperationExecutor implements OperationExecutor {
         writeOperations.add(operation);
         readConcerns.add(readConcern);
         return getResponse();
+    }
+
+    @Override
+    public OperationExecutor withTimeoutSettings(final TimeoutSettings timeoutSettings) {
+        return this;
+    }
+
+    @Override
+    public TimeoutSettings getTimeoutSettings() {
+        throw new UnsupportedOperationException("Not supported");
     }
 
     @SuppressWarnings("unchecked")

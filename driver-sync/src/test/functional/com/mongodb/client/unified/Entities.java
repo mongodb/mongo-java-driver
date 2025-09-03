@@ -1,0 +1,747 @@
+/*
+ * Copyright 2008-present MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.mongodb.client.unified;
+
+import com.mongodb.AutoEncryptionSettings;
+import com.mongodb.ClientEncryptionSettings;
+import com.mongodb.ClientSessionOptions;
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoCredential;
+import com.mongodb.ReadConcern;
+import com.mongodb.ReadConcernLevel;
+import com.mongodb.ReadPreference;
+import com.mongodb.ServerApi;
+import com.mongodb.ServerApiVersion;
+import com.mongodb.TransactionOptions;
+import com.mongodb.client.ClientSession;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCluster;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.gridfs.GridFSBucket;
+import com.mongodb.client.vault.ClientEncryption;
+import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.connection.ClusterDescription;
+import com.mongodb.event.TestServerMonitorListener;
+import com.mongodb.internal.connection.ServerMonitoringModeUtil;
+import com.mongodb.internal.connection.TestClusterListener;
+import com.mongodb.internal.connection.TestCommandListener;
+import com.mongodb.internal.connection.TestConnectionPoolListener;
+import com.mongodb.internal.connection.TestServerListener;
+import com.mongodb.internal.logging.LogMessage;
+import com.mongodb.lang.Nullable;
+import com.mongodb.logging.TestLoggingInterceptor;
+import org.bson.BsonArray;
+import org.bson.BsonBoolean;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonString;
+import org.bson.BsonValue;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static com.mongodb.AuthenticationMechanism.MONGODB_OIDC;
+import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
+import static com.mongodb.ClusterFixture.isLoadBalanced;
+import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static com.mongodb.client.Fixture.getMultiMongosMongoClientSettingsBuilder;
+import static com.mongodb.client.unified.UnifiedClientEncryptionHelper.createKmsProvidersMap;
+import static com.mongodb.client.unified.UnifiedCrudHelper.asReadConcern;
+import static com.mongodb.client.unified.UnifiedCrudHelper.asReadPreference;
+import static com.mongodb.client.unified.UnifiedCrudHelper.asWriteConcern;
+import static com.mongodb.internal.connection.AbstractConnectionPoolTest.waitForPoolAsyncWorkManagerStart;
+import static java.lang.System.getenv;
+import static java.util.Arrays.asList;
+import static org.junit.Assume.assumeTrue;
+
+public final class Entities {
+    private static final Set<String> SUPPORTED_CLIENT_ENTITY_OPTIONS = new HashSet<>(
+            asList(
+                    "id", "autoEncryptOpts", "uriOptions", "serverApi", "useMultipleMongoses", "storeEventsAsEntities",
+                    "observeEvents", "observeLogMessages", "observeSensitiveCommands", "ignoreCommandMonitoringEvents"));
+    private final Set<String> entityNames = new HashSet<>();
+    private final Map<String, ExecutorService> threads = new HashMap<>();
+    private final Map<String, ArrayList<Future<?>>> tasks = new HashMap<>();
+    private final Map<String, BsonValue> results = new HashMap<>();
+    private final Map<String, MongoClient> clients = new HashMap<>();
+    private final Map<String, MongoDatabase> databases = new HashMap<>();
+    private final Map<String, MongoCollection<BsonDocument>> collections = new HashMap<>();
+    private final Map<String, ClientSession> sessions = new HashMap<>();
+    private final Map<String, BsonDocument> sessionIdentifiers = new HashMap<>();
+    private final Map<String, GridFSBucket> buckets = new HashMap<>();
+    private final Map<String, ClientEncryption> clientEncryptions = new HashMap<>();
+    private final Map<String, TestCommandListener> clientCommandListeners = new HashMap<>();
+    private final Map<String, TestLoggingInterceptor> clientLoggingInterceptors = new HashMap<>();
+    private final Map<String, TestConnectionPoolListener> clientConnectionPoolListeners = new HashMap<>();
+    private final Map<String, TestServerListener> clientServerListeners = new HashMap<>();
+    private final Map<String, TestClusterListener> clientClusterListeners = new HashMap<>();
+    private final Map<String, TestServerMonitorListener> serverMonitorListeners = new HashMap<>();
+    private final Map<String, MongoCursor<BsonDocument>> cursors = new HashMap<>();
+    private final Map<String, ClusterDescription> topologyDescriptions = new HashMap<>();
+    private final Map<String, List<BsonDocument>> eventsMap = new HashMap<>();
+
+    public boolean hasEvents(final String id) {
+        return eventsMap.containsKey(id);
+    }
+
+    public List<BsonDocument> getEvents(final String id) {
+        return getEntity(id, eventsMap, "events");
+    }
+
+    public void addResult(final String id, final BsonValue result) {
+        putEntity(id, result, results);
+    }
+
+    public BsonValue getResult(final String id) {
+        return getEntity(id, results, "result");
+    }
+
+    public void addCursor(final String id, final MongoCursor<BsonDocument> cursor) {
+        putEntity(id, cursor, cursors);
+    }
+
+    public MongoCursor<BsonDocument> getCursor(final String id) {
+        return getEntity(id, cursors, "cursors");
+    }
+
+    public void addTopologyDescription(final String id, final ClusterDescription clusterDescription) {
+        putEntity(id, clusterDescription, topologyDescriptions);
+    }
+
+    public ClusterDescription getTopologyDescription(final String id) {
+        return getEntity(id, topologyDescriptions, "topologyDescription");
+    }
+
+    public ExecutorService getThread(final String id) {
+        return getEntity(id, threads, "thread");
+    }
+
+    public void addThreadTask(final String id, final Future<?> task) {
+        getEntity(id, tasks, "tasks").add(task);
+    }
+
+    public List<Future<?>> getThreadTasks(final String id) {
+        return getEntity(id, tasks, "tasks");
+    }
+
+    public void clearThreadTasks(final String id) {
+        getEntity(id, tasks, "tasks").clear();
+    }
+
+    public boolean hasClient(final String id) {
+        return clients.containsKey(id);
+    }
+
+    public MongoClient getClient(final String id) {
+        return getEntity(id, clients, "client");
+    }
+
+    public ClientEncryption getClientEncryption(final String id) {
+        return getEntity(id, clientEncryptions, "clientEncryption");
+    }
+
+    public boolean hasDatabase(final String id) {
+        return databases.containsKey(id);
+    }
+
+    public MongoDatabase getDatabase(final String id) {
+        return getEntity(id, databases, "database");
+    }
+
+    public boolean hasCollection(final String id) {
+        return collections.containsKey(id);
+    }
+
+    public MongoCollection<BsonDocument> getCollection(final String id) {
+        return getEntity(id, collections, "collection");
+    }
+
+    public MongoCluster getMongoClusterWithTimeoutMS(final String id, @Nullable final Long timeoutMS) {
+        return timeoutMS != null ? getClient(id).withTimeout(timeoutMS, TimeUnit.MILLISECONDS) : getClient(id);
+    }
+
+    public MongoDatabase getDatabaseWithTimeoutMS(final String id, @Nullable final Long timeoutMS) {
+        return timeoutMS != null ? getDatabase(id).withTimeout(timeoutMS, TimeUnit.MILLISECONDS) : getDatabase(id);
+    }
+
+    public MongoCollection<BsonDocument> getCollectionWithTimeoutMS(final String id, @Nullable final Long timeoutMS) {
+        return timeoutMS != null ? getCollection(id).withTimeout(timeoutMS, TimeUnit.MILLISECONDS) : getCollection(id);
+    }
+
+    public ClientSession getSession(final String id) {
+        return getEntity(id, sessions, "session");
+    }
+
+    public BsonDocument getSessionIdentifier(final String id) {
+        return getEntity(id + "-identifier", sessionIdentifiers, "session identifier");
+    }
+
+    public GridFSBucket getBucket(final String id) {
+        return getEntity(id, buckets, "bucket");
+    }
+
+    public TestCommandListener getClientCommandListener(final String id) {
+        return getEntity(id + "-command-listener", clientCommandListeners, "command listener");
+    }
+
+    public TestLoggingInterceptor getClientLoggingInterceptor(final String id) {
+        return getEntity(id + "-logging-interceptor", clientLoggingInterceptors, "logging interceptor");
+    }
+
+    public TestConnectionPoolListener getConnectionPoolListener(final String id) {
+        return getEntity(id + "-connection-pool-listener", clientConnectionPoolListeners, "connection pool listener");
+    }
+
+    public TestServerListener getServerListener(final String id) {
+        return getEntity(id + "-server-listener", clientServerListeners, "server listener");
+    }
+
+    public TestClusterListener getClusterListener(final String id) {
+        return getEntity(id + "-cluster-listener", clientClusterListeners, "cluster listener");
+    }
+
+    public TestServerMonitorListener getServerMonitorListener(final String id) {
+        return getEntity(id + "-server-monitor-listener", serverMonitorListeners, "server monitor listener");
+    }
+
+    private <T> T getEntity(final String id, final Map<String, T> entities, final String type) {
+        T entity = entities.get(id);
+        if (entity == null) {
+            throw new IllegalStateException("Missing " + type + " with id: " + id);
+        }
+        return entity;
+    }
+
+    private <T> void putEntity(final String id, final T entity, final Map<String, T> entities) {
+        if (!entityNames.add(id)) {
+            throw new IllegalStateException("Already an entity with id: " + id);
+        }
+        entities.put(id, entity);
+    }
+
+    public void init(final BsonArray entitiesArray,
+                     final BsonDocument startingClusterTime,
+                     final boolean waitForPoolAsyncWorkManagerStart,
+                     final Function<MongoClientSettings, MongoClient> mongoClientSupplier,
+                     final Function<MongoDatabase, GridFSBucket> gridFSBucketSupplier,
+                     final BiFunction<MongoClient, ClientEncryptionSettings, ClientEncryption> clientEncryptionSupplier) {
+        for (BsonValue cur : entitiesArray.getValues()) {
+            String entityType = cur.asDocument().getFirstKey();
+            BsonDocument entity = cur.asDocument().getDocument(entityType);
+            String id = entity.getString("id").getValue();
+            switch (entityType) {
+                case "thread":
+                    initThread(id);
+                    break;
+                case "client":
+                    initClient(entity, id, mongoClientSupplier, waitForPoolAsyncWorkManagerStart);
+                    break;
+                case "database": {
+                    initDatabase(entity, id);
+                    break;
+                }
+                case "collection": {
+                    initCollection(entity, id);
+                    break;
+                }
+                case "session": {
+                    initSession(entity, id, startingClusterTime);
+                    break;
+                }
+                case "bucket": {
+                    initBucket(entity, id, gridFSBucketSupplier);
+                    break;
+                }
+                case "clientEncryption": {
+                    initClientEncryption(entity, id, clientEncryptionSupplier);
+                    break;
+                }
+                default:
+                    throw new UnsupportedOperationException("Unsupported entity type: " + entityType);
+            }
+        }
+    }
+
+    private void initThread(final String id) {
+        putEntity(id, Executors.newSingleThreadExecutor(), threads);
+        tasks.put(id, new ArrayList<>());
+    }
+
+    private void initClient(final BsonDocument entity, final String id,
+                            final Function<MongoClientSettings, MongoClient> mongoClientSupplier,
+                            final boolean waitForPoolAsyncWorkManagerStart) {
+        if (!SUPPORTED_CLIENT_ENTITY_OPTIONS.containsAll(entity.keySet())) {
+            throw new UnsupportedOperationException("Client entity contains unsupported options: " + entity.keySet()
+                    + ". Supported options are " + SUPPORTED_CLIENT_ENTITY_OPTIONS);
+        }
+        MongoClientSettings.Builder clientSettingsBuilder;
+        if (entity.getBoolean("useMultipleMongoses", BsonBoolean.FALSE).getValue() && (isSharded() || isLoadBalanced())) {
+            assumeTrue("Multiple mongos connection string not available for sharded cluster",
+                    !isSharded() || getMultiMongosConnectionString() != null);
+            assumeTrue("Multiple mongos connection string not available for load-balanced cluster",
+                    !isLoadBalanced() || getMultiMongosConnectionString() != null);
+            clientSettingsBuilder = getMultiMongosMongoClientSettingsBuilder();
+        } else {
+            clientSettingsBuilder = getMongoClientSettingsBuilder();
+        }
+
+        clientSettingsBuilder.applicationName(id);
+        clientSettingsBuilder.applyToLoggerSettings(builder -> builder.maxDocumentLength(10_000));
+
+        TestServerListener testServerListener = new TestServerListener();
+        clientSettingsBuilder.applyToServerSettings(builder -> builder.addServerListener(testServerListener));
+        putEntity(id + "-server-listener", testServerListener, clientServerListeners);
+
+        TestClusterListener testClusterListener = new TestClusterListener();
+        clientSettingsBuilder.applyToClusterSettings(builder -> builder.addClusterListener(testClusterListener));
+        putEntity(id + "-cluster-listener", testClusterListener, clientClusterListeners);
+
+        if (entity.containsKey("observeEvents")) {
+            List<String> observeEvents = entity.getArray("observeEvents").stream()
+                    .map(type -> type.asString().getValue()).collect(Collectors.toList());
+            List<String> ignoreCommandMonitoringEvents = entity
+                    .getArray("ignoreCommandMonitoringEvents", new BsonArray()).stream()
+                    .map(type -> type.asString().getValue()).collect(Collectors.toList());
+            ignoreCommandMonitoringEvents.add("configureFailPoint");
+            TestCommandListener testCommandListener = new TestCommandListener(
+                    observeEvents,
+                    ignoreCommandMonitoringEvents, entity.getBoolean("observeSensitiveCommands", BsonBoolean.FALSE).getValue(),
+                    null);
+            clientSettingsBuilder.addCommandListener(testCommandListener);
+            putEntity(id + "-command-listener", testCommandListener, clientCommandListeners);
+
+            TestConnectionPoolListener testConnectionPoolListener = new TestConnectionPoolListener(observeEvents);
+            clientSettingsBuilder.applyToConnectionPoolSettings(builder ->
+                    builder.addConnectionPoolListener(testConnectionPoolListener));
+            putEntity(id + "-connection-pool-listener", testConnectionPoolListener, clientConnectionPoolListeners);
+
+            TestServerMonitorListener testServerMonitorListener = new TestServerMonitorListener(observeEvents);
+            clientSettingsBuilder.applyToServerSettings(builder -> builder.addServerMonitorListener(testServerMonitorListener));
+            putEntity(id + "-server-monitor-listener", testServerMonitorListener, serverMonitorListeners);
+        } else {
+            // Regardless of whether events are observed, we still need to track some info about the pool in order to implement
+            // the assertNumberConnectionsCheckedOut operation
+            TestConnectionPoolListener testConnectionPoolListener = new TestConnectionPoolListener();
+            clientSettingsBuilder.applyToConnectionPoolSettings(builder ->
+                    builder.addConnectionPoolListener(testConnectionPoolListener));
+            putEntity(id + "-connection-pool-listener", testConnectionPoolListener, clientConnectionPoolListeners);
+        }
+
+        clientSettingsBuilder.applyToServerSettings(builder -> {
+            builder.heartbeatFrequency(50, TimeUnit.MILLISECONDS);
+            builder.minHeartbeatFrequency(50, TimeUnit.MILLISECONDS);
+        });
+        if (entity.containsKey("uriOptions")) {
+            entity.getDocument("uriOptions").forEach((key, value) -> {
+                switch (key) {
+                    case "retryReads":
+                        clientSettingsBuilder.retryReads(value.asBoolean().getValue());
+                        break;
+                    case "retryWrites":
+                        clientSettingsBuilder.retryWrites(value.asBoolean().getValue());
+                        break;
+                    case "readPreference":
+                        clientSettingsBuilder.readPreference(ReadPreference.valueOf(value.asString().getValue()));
+                        break;
+                    case "readConcernLevel":
+                        clientSettingsBuilder.readConcern(
+                                new ReadConcern(ReadConcernLevel.fromString(value.asString().getValue())));
+                        break;
+                    case "w":
+                        if (value.isString()) {
+                            clientSettingsBuilder.writeConcern(clientSettingsBuilder.build()
+                                    .getWriteConcern().withW(value.asString().getValue()));
+                        } else {
+                            clientSettingsBuilder.writeConcern(clientSettingsBuilder.build()
+                                    .getWriteConcern().withW(value.asInt32().intValue()));
+                        }
+                        break;
+                    case "wTimeoutMS":
+                        clientSettingsBuilder.writeConcern(clientSettingsBuilder.build().getWriteConcern()
+                                .withWTimeout(value.asNumber().longValue(), TimeUnit.MILLISECONDS));
+                        break;
+                    case "maxPoolSize":
+                        clientSettingsBuilder.applyToConnectionPoolSettings(builder -> builder.maxSize(value.asNumber().intValue()));
+                        break;
+                    case "minPoolSize":
+                        clientSettingsBuilder.applyToConnectionPoolSettings(builder -> builder.minSize(value.asNumber().intValue()));
+                        break;
+                    case "waitQueueTimeoutMS":
+                        clientSettingsBuilder.applyToConnectionPoolSettings(builder ->
+                                builder.maxWaitTime(value.asNumber().longValue(), TimeUnit.MILLISECONDS));
+                        break;
+                    case "maxIdleTimeMS":
+                        clientSettingsBuilder.applyToConnectionPoolSettings(builder ->
+                                builder.maxConnectionIdleTime(value.asNumber().longValue(), TimeUnit.MILLISECONDS));
+                        break;
+                    case "maxConnecting":
+                        clientSettingsBuilder.applyToConnectionPoolSettings(builder ->
+                                builder.maxConnecting(value.asNumber().intValue()));
+                        break;
+                    case "heartbeatFrequencyMS":
+                        clientSettingsBuilder.applyToServerSettings(builder ->
+                                builder.heartbeatFrequency(value.asNumber().longValue(), TimeUnit.MILLISECONDS));
+                        break;
+                    case "connectTimeoutMS":
+                        clientSettingsBuilder.applyToSocketSettings(builder ->
+                                builder.connectTimeout(value.asNumber().intValue(), TimeUnit.MILLISECONDS));
+                        break;
+                    case "socketTimeoutMS":
+                        clientSettingsBuilder.applyToSocketSettings(builder ->
+                                builder.readTimeout(value.asNumber().intValue(), TimeUnit.MILLISECONDS));
+                        break;
+                    case "serverSelectionTimeoutMS":
+                        clientSettingsBuilder.applyToClusterSettings(builder ->
+                                builder.serverSelectionTimeout(value.asNumber().longValue(), TimeUnit.MILLISECONDS));
+                        break;
+                    case "loadBalanced":
+                        if (value.asBoolean().getValue()) {
+                            clientSettingsBuilder.applyToClusterSettings(builder -> builder.mode(ClusterConnectionMode.LOAD_BALANCED));
+                        }
+                        break;
+                    case "appname":
+                    case "appName":
+                        clientSettingsBuilder.applicationName(value.asString().getValue());
+                        break;
+                    case "timeoutMS":
+                        clientSettingsBuilder.timeout(value.asNumber().longValue(), TimeUnit.MILLISECONDS);
+                        break;
+                    case "serverMonitoringMode":
+                        clientSettingsBuilder.applyToServerSettings(builder -> builder.serverMonitoringMode(
+                                ServerMonitoringModeUtil.fromString(value.asString().getValue())));
+                        break;
+                    case "authMechanism":
+                        if (value.equals(new BsonString(MONGODB_OIDC.getMechanismName()))) {
+                            // authMechanismProperties depends on authMechanism
+                            BsonDocument authMechanismProperties = entity
+                                    .getDocument("uriOptions")
+                                    .getDocument("authMechanismProperties");
+                            boolean hasPlaceholder = authMechanismProperties.equals(
+                                    new BsonDocument("$$placeholder", new BsonInt32(1)));
+                            if (!hasPlaceholder) {
+                                throw new UnsupportedOperationException(
+                                        "Unsupported authMechanismProperties for authMechanism: " + value);
+                            }
+
+                            // override the org.mongodb.test.uri connection string
+                            String uri = getenv("MONGODB_URI");
+                            ConnectionString cs = new ConnectionString(uri);
+                            clientSettingsBuilder.applyConnectionString(cs);
+
+                            String env = assertNotNull(getenv("OIDC_ENV"));
+                            MongoCredential oidcCredential = MongoCredential
+                                    .createOidcCredential(null)
+                                    .withMechanismProperty("ENVIRONMENT", env);
+                            if (env.equals("azure")) {
+                                oidcCredential = oidcCredential.withMechanismProperty(
+                                        MongoCredential.TOKEN_RESOURCE_KEY, getenv("AZUREOIDC_RESOURCE"));
+                            } else if (env.equals("gcp")) {
+                                oidcCredential = oidcCredential.withMechanismProperty(
+                                        MongoCredential.TOKEN_RESOURCE_KEY, getenv("GCPOIDC_RESOURCE"));
+                            }
+                            clientSettingsBuilder.credential(oidcCredential);
+                            break;
+                        }
+                        throw new UnsupportedOperationException("Unsupported authMechanism: " + value);
+                    case "authMechanismProperties":
+                        // authMechanismProperties are handled as part of authMechanism, above
+                        BsonValue authMechanism = entity
+                                .getDocument("uriOptions")
+                                .get("authMechanism");
+                        if (authMechanism.equals(new BsonString(MONGODB_OIDC.getMechanismName()))) {
+                            break;
+                        }
+                        throw new UnsupportedOperationException("Failure to apply authMechanismProperties: " + value);
+                    default:
+                        throw new UnsupportedOperationException("Unsupported uri option: " + key);
+                }
+            });
+        }
+        if (entity.containsKey("serverApi")) {
+            BsonDocument serverApiDocument = entity.getDocument("serverApi");
+            String apiVersion = serverApiDocument.getString("version").getValue();
+            ServerApi.Builder serverApiBuilder = ServerApi.builder().version(ServerApiVersion.findByValue(apiVersion));
+            if (serverApiDocument.containsKey("deprecationErrors")) {
+                serverApiBuilder.deprecationErrors(serverApiDocument.getBoolean("deprecationErrors").getValue());
+            }
+            if (serverApiDocument.containsKey("strict")) {
+                serverApiBuilder.strict(serverApiDocument.getBoolean("strict").getValue());
+            }
+            clientSettingsBuilder.serverApi(serverApiBuilder.build());
+        }
+        if (entity.containsKey("autoEncryptOpts")) {
+            AutoEncryptionSettings.Builder builder = AutoEncryptionSettings.builder();
+            for (Map.Entry<String, BsonValue> entry : entity.getDocument("autoEncryptOpts").entrySet()) {
+                switch (entry.getKey()) {
+                    case "bypassAutoEncryption":
+                        builder.bypassAutoEncryption(entry.getValue().asBoolean().getValue());
+                        break;
+                    case "bypassQueryAnalysis":
+                        builder.bypassQueryAnalysis(entry.getValue().asBoolean().getValue());
+                        break;
+                    case "schemaMap":
+                        Map<String, BsonDocument> schemaMap = new HashMap<>();
+                        for (Map.Entry<String, BsonValue> entries : entry.getValue().asDocument().entrySet()) {
+                            schemaMap.put(entries.getKey(), entries.getValue().asDocument());
+                        }
+                        builder.schemaMap(schemaMap);
+                        break;
+                    case "encryptedFieldsMap":
+                        Map<String, BsonDocument> encryptedFieldsMap = new HashMap<>();
+                        for (Map.Entry<String, BsonValue> entries : entry.getValue().asDocument().entrySet()) {
+                            encryptedFieldsMap.put(entries.getKey(), entries.getValue().asDocument());
+                        }
+                        builder.encryptedFieldsMap(encryptedFieldsMap);
+                        break;
+                    case "extraOptions":
+                        Map<String, Object> extraOptions = new HashMap<>();
+                        for (Map.Entry<String, BsonValue> extraOptionsEntry : entry.getValue().asDocument().entrySet()) {
+                            switch (extraOptionsEntry.getKey()) {
+                                case "mongocryptdBypassSpawn":
+                                    extraOptions.put(extraOptionsEntry.getKey(), extraOptionsEntry.getValue().asBoolean().getValue());
+                                    break;
+                                default:
+                                    throw new UnsupportedOperationException("Unsupported extra encryption option: " + extraOptionsEntry.getKey());
+                            }
+                        }
+                        builder.extraOptions(extraOptions);
+                        break;
+                    case "keyVaultNamespace":
+                        builder.keyVaultNamespace(entry.getValue().asString().getValue());
+                        break;
+                    case "kmsProviders":
+                        builder.kmsProviders(createKmsProvidersMap(entry.getValue().asDocument()));
+                        break;
+                    case "keyExpirationMS":
+                        builder.keyExpiration(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unsupported client encryption option: " + entry.getKey());
+                }
+            }
+            clientSettingsBuilder.autoEncryptionSettings(builder.build());
+        }
+
+        MongoClientSettings clientSettings = clientSettingsBuilder.build();
+
+        if (entity.containsKey("observeLogMessages")) {
+            BsonDocument observeLogMessagesDocument = entity.getDocument("observeLogMessages");
+
+            Map<LogMessage.Component, LogMessage.Level> filterConfig = observeLogMessagesDocument.entrySet().stream()
+                    .collect(Collectors.toMap(Entities::toComponent, Entities::toLevel));
+
+            TestLoggingInterceptor.LoggingFilter loggingFilter = new TestLoggingInterceptor.LoggingFilter(filterConfig);
+
+            putEntity(id + "-logging-interceptor", new TestLoggingInterceptor(clientSettings.getApplicationName(), loggingFilter),
+                    clientLoggingInterceptors);
+        }
+
+        putEntity(id, mongoClientSupplier.apply(clientSettings), clients);
+        if (waitForPoolAsyncWorkManagerStart) {
+            waitForPoolAsyncWorkManagerStart();
+        }
+    }
+
+    private static LogMessage.Component toComponent(final Map.Entry<String, BsonValue> entry) {
+        String componentName = entry.getKey();
+      return LogMessage.Component.of(componentName);
+    }
+
+    private static LogMessage.Level toLevel(final Map.Entry<String, BsonValue> entry) {
+         BsonValue bsonValue = entry.getValue();
+        String levelName = bsonValue
+                .asString()
+                .getValue()
+                .toUpperCase();
+        return LogMessage.Level.valueOf(levelName);
+    }
+
+    private void initDatabase(final BsonDocument entity, final String id) {
+        MongoClient client = clients.get(entity.getString("client").getValue());
+        MongoDatabase database = client.getDatabase(entity.getString("databaseName").getValue());
+        if (entity.containsKey("databaseOptions")) {
+            for (Map.Entry<String, BsonValue> entry : entity.getDocument("databaseOptions").entrySet()) {
+                switch (entry.getKey()) {
+                    case "readConcern":
+                        database = database.withReadConcern(asReadConcern(entry.getValue().asDocument()));
+                        break;
+                    case "readPreference":
+                        database = database.withReadPreference(asReadPreference(entry.getValue().asDocument()));
+                        break;
+                    case "writeConcern":
+                        database = database.withWriteConcern(asWriteConcern(entry.getValue().asDocument()));
+                        break;
+                    case "timeoutMS":
+                        database = database.withTimeout(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unsupported database option: " + entry.getKey());
+                }
+            }
+        }
+        putEntity(id, database, databases);
+    }
+
+    private void initCollection(final BsonDocument entity, final String id) {
+        MongoDatabase database = databases.get(entity.getString("database").getValue());
+        MongoCollection<BsonDocument> collection = database.getCollection(entity.getString("collectionName").getValue(),
+                BsonDocument.class);
+        if (entity.containsKey("collectionOptions")) {
+            for (Map.Entry<String, BsonValue> entry : entity.getDocument("collectionOptions").entrySet()) {
+                switch (entry.getKey()) {
+                    case "readConcern":
+                        collection = collection.withReadConcern(asReadConcern(entry.getValue().asDocument()));
+                        break;
+                    case "readPreference":
+                        collection = collection.withReadPreference(asReadPreference(entry.getValue().asDocument()));
+                        break;
+                    case "writeConcern":
+                        collection = collection.withWriteConcern(asWriteConcern(entry.getValue().asDocument()));
+                        break;
+                    case "timeoutMS":
+                        collection = collection.withTimeout(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unsupported collection option: " + entry.getKey());
+                }
+            }
+        }
+        putEntity(id, collection, collections);
+    }
+
+    private void initSession(final BsonDocument entity, final String id, final BsonDocument startingClusterTime) {
+        MongoClient client = clients.get(entity.getString("client").getValue());
+        ClientSessionOptions.Builder optionsBuilder = ClientSessionOptions.builder();
+        if (entity.containsKey("sessionOptions")) {
+            for (Map.Entry<String, BsonValue> entry : entity.getDocument("sessionOptions").entrySet()) {
+                switch (entry.getKey()) {
+                    case "defaultTransactionOptions":
+                        optionsBuilder.defaultTransactionOptions(getTransactionOptions(entry.getValue().asDocument()));
+                        break;
+                    case "snapshot":
+                        optionsBuilder.snapshot(entry.getValue().asBoolean().getValue());
+                        break;
+                    case "defaultTimeoutMS":
+                        optionsBuilder.defaultTimeout(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                        break;
+                    case "causalConsistency":
+                        optionsBuilder.causallyConsistent(entry.getValue().asBoolean().getValue());
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unsupported session option: " + entry.getKey());
+                }
+            }
+        }
+        ClientSession session = client.startSession(optionsBuilder.build());
+        session.advanceClusterTime(startingClusterTime);
+        putEntity(id, session, sessions);
+        putEntity(id + "-identifier", session.getServerSession().getIdentifier(), sessionIdentifiers);
+    }
+
+    private void initBucket(final BsonDocument entity, final String id, final Function<MongoDatabase, GridFSBucket> gridFSBucketSupplier) {
+        MongoDatabase database = databases.get(entity.getString("database").getValue());
+        if (entity.containsKey("bucketOptions")) {
+            throw new UnsupportedOperationException("Unsupported session specification: bucketOptions");
+        }
+        putEntity(id, gridFSBucketSupplier.apply(database), buckets);
+    }
+
+    private void initClientEncryption(final BsonDocument entity, final String id,
+            final BiFunction<MongoClient, ClientEncryptionSettings, ClientEncryption> clientEncryptionSupplier) {
+        if (!entity.containsKey("clientEncryptionOpts")) {
+            throw new UnsupportedOperationException("Unsupported client encryption specification missing: clientEncryptionOpts");
+        }
+        BsonDocument clientEncryptionOpts = entity.getDocument("clientEncryptionOpts");
+        if (!clientEncryptionOpts.containsKey("keyVaultClient")) {
+            throw new UnsupportedOperationException("Unsupported client encryption specification missing: "
+                    + "clientEncryptionOpts.keyVaultClient");
+        }
+
+        MongoClient mongoClient = null;
+        ClientEncryptionSettings.Builder builder = ClientEncryptionSettings.builder();
+        // this is ignored in preference to the keyVaultClient, but required to be non-null in the ClientEncryptionSettings constructor
+        builder.keyVaultMongoClientSettings(MongoClientSettings.builder().build());
+        for (Map.Entry<String, BsonValue> entry : clientEncryptionOpts.entrySet()) {
+            switch (entry.getKey()) {
+                case "keyVaultClient":
+                    mongoClient = clients.get(entry.getValue().asString().getValue());
+                    break;
+                case "keyVaultNamespace":
+                    builder.keyVaultNamespace(entry.getValue().asString().getValue());
+                    break;
+                case "kmsProviders":
+                    builder.kmsProviders(createKmsProvidersMap(entry.getValue().asDocument()));
+                    break;
+                case "keyExpirationMS":
+                    builder.keyExpiration(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported client encryption option: " + entry.getKey());
+            }
+        }
+
+        putEntity(id, clientEncryptionSupplier.apply(notNull("mongoClient", mongoClient), builder.build()), clientEncryptions);
+    }
+
+    private TransactionOptions getTransactionOptions(final BsonDocument options) {
+        TransactionOptions.Builder transactionOptionsBuilder = TransactionOptions.builder();
+        for (Map.Entry<String, BsonValue> entry : options.entrySet()) {
+            switch (entry.getKey()) {
+                case "readConcern":
+                    transactionOptionsBuilder.readConcern(asReadConcern(entry.getValue().asDocument()));
+                    break;
+                case "writeConcern":
+                    transactionOptionsBuilder.writeConcern(asWriteConcern(entry.getValue().asDocument()));
+                    break;
+                case "readPreference":
+                    transactionOptionsBuilder.readPreference(asReadPreference(entry.getValue().asDocument()));
+                    break;
+                case "maxCommitTimeMS":
+                    transactionOptionsBuilder.maxCommitTime(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported transaction option: " + entry.getKey());
+            }
+        }
+        return transactionOptionsBuilder.build();
+    }
+
+    public void close() {
+        cursors.values().forEach(MongoCursor::close);
+        sessions.values().forEach(ClientSession::close);
+        clients.values().forEach(MongoClient::close);
+        clientLoggingInterceptors.values().forEach(TestLoggingInterceptor::close);
+        threads.values().forEach(ExecutorService::shutdownNow);
+    }
+}

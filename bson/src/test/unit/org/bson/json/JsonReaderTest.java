@@ -26,13 +26,13 @@ import org.bson.BsonTimestamp;
 import org.bson.BsonType;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -41,11 +41,12 @@ import java.util.Locale;
 import java.util.function.Function;
 
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 
 public class JsonReaderTest {
@@ -135,6 +136,17 @@ public class JsonReaderTest {
             assertEquals(BsonType.DATE_TIME, bsonReader.readBsonType());
             long k = bsonReader.readDateTime();
             assertEquals(9223372036854775807L, k);
+            assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+            return null;
+        });
+    }
+
+    @Test
+    public void testDateTimeShellDateOnly() {
+        String json = "ISODate(\"1970-01-01\")";
+        testStringAndStream(json, bsonReader -> {
+            assertEquals(BsonType.DATE_TIME, bsonReader.readBsonType());
+            assertEquals(0, bsonReader.readDateTime());
             assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
             return null;
         });
@@ -302,7 +314,7 @@ public class JsonReaderTest {
 
     @Test
     public void testHexData() {
-        final byte[] expectedBytes = new byte[]{0x01, 0x23};
+        byte[] expectedBytes = {0x01, 0x23};
         String json = "HexData(0, \"0123\")";
         testStringAndStream(json, bsonReader -> {
             assertEquals(BsonType.BINARY, bsonReader.readBsonType());
@@ -315,7 +327,7 @@ public class JsonReaderTest {
 
     @Test
     public void testHexDataWithNew() {
-        final byte[] expectedBytes = new byte[]{0x01, 0x23};
+        byte[] expectedBytes = {0x01, 0x23};
         String json = "new HexData(0, \"0123\")";
         testStringAndStream(json, bsonReader -> {
             assertEquals(BsonType.BINARY, bsonReader.readBsonType());
@@ -700,6 +712,37 @@ public class JsonReaderTest {
         });
     }
 
+    /**
+     * Test a $regularExpression extended json with unquoted keys
+     */
+    @Test
+    public void testRegularExpressionCanonicalWithUnquotedKeys() {
+        String json = "{$regularExpression: {pattern: \"[a-z]\", options: \"imxs\"}}";
+        testStringAndStream(json, bsonReader -> {
+            assertEquals(BsonType.REGULAR_EXPRESSION, bsonReader.readBsonType());
+            assertEquals(new BsonRegularExpression("[a-z]", "imxs"), bsonReader.readRegularExpression());
+            assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+            return null;
+        });
+    }
+
+    /**
+     * Test a $regex extended json query version with unquoted keys
+     */
+    @Test
+    public void testRegularExpressionQueryWithUnquotedKeys() {
+        String json = "{$regex : { $regularExpression : { pattern : \"[a-z]\", options : \"imxs\" }}}";
+        testStringAndStream(json, bsonReader -> {
+            bsonReader.readStartDocument();
+            BsonRegularExpression regex = bsonReader.readRegularExpression("$regex");
+            assertEquals("[a-z]", regex.getPattern());
+            assertEquals("imsx", regex.getOptions());
+            bsonReader.readEndDocument();
+            assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+            return null;
+        });
+    }
+
     @Test
     public void testString() {
         final String str = "abc";
@@ -794,6 +837,20 @@ public class JsonReaderTest {
         });
     }
 
+    /**
+     * Test a $timestamp extended json with unquoted keys
+     */
+    @Test
+    public void testTimestampStrictWithUnquotedKeys() {
+        String json = "{$timestamp : { t : 1234, i : 1 }}";
+        testStringAndStream(json, bsonReader -> {
+            assertEquals(BsonType.TIMESTAMP, bsonReader.readBsonType());
+            assertEquals(new BsonTimestamp(1234, 1), bsonReader.readTimestamp());
+            assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+            return null;
+        });
+    }
+
     @Test
     public void testUndefined() {
         String json = "undefined";
@@ -816,11 +873,11 @@ public class JsonReaderTest {
         });
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testClosedState() {
-        final AbstractBsonReader bsonReader = new JsonReader("");
+        AbstractBsonReader bsonReader = new JsonReader("");
         bsonReader.close();
-        bsonReader.readBinaryData();
+        assertThrows(IllegalStateException.class, () -> bsonReader.readBinaryData());
     }
 
     @Test
@@ -946,6 +1003,31 @@ public class JsonReaderTest {
     }
 
     @Test
+    public void testUuid() {
+        String json = "{ \"$uuid\" : \"b5f21e0c-2a0d-42d6-ad03-d827008d8ab6\"}}";
+        testStringAndStream(json, bsonReader -> {
+            assertEquals(BsonType.BINARY, bsonReader.readBsonType());
+            BsonBinary binary = bsonReader.readBinaryData();
+            assertEquals(BsonBinarySubType.UUID_STANDARD.getValue(), binary.getType());
+            assertArrayEquals(new byte[]{-75, -14, 30, 12, 42, 13, 66, -42, -83, 3, -40, 39, 0, -115, -118, -74}, binary.getData());
+            assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+            return null;
+        });
+    }
+
+    // testing that JsonReader uses internal UuidStringValidator, as UUID.fromString accepts this UUID
+    @Test
+    public void testInvalidUuid() {
+        // first hyphen out of place
+        String json = "{ \"$uuid\" : \"73ff-d26444b-34c6-990e8e-7d1dfc035d4\"}}";
+        assertThrows(JsonParseException.class, () ->
+                testStringAndStream(json, bsonReader -> {
+                    bsonReader.readBinaryData();
+                    return null;
+                }));
+    }
+
+    @Test
     public void testUuidConstructor() {
         String json = "UUID(\"b5f21e0c-2a0d-42d6-ad03-d827008d8ab6\")";
         testStringAndStream(json, bsonReader -> {
@@ -1066,7 +1148,7 @@ public class JsonReaderTest {
 
     @Test
     public void testEmptyDateTimeConstructorWithNew() {
-        final long currentTime = new Date().getTime();
+        long currentTime = new Date().getTime();
         String json = "new Date()";
         testStringAndStream(json, bsonReader -> {
             assertEquals(BsonType.DATE_TIME, bsonReader.readBsonType());
@@ -1078,7 +1160,7 @@ public class JsonReaderTest {
 
     @Test
     public void testDateTimeWithOutNew() {
-        final long currentTime = currentTimeWithoutMillis();
+        long currentTime = currentTimeWithoutMillis();
         String json = "Date()";
         testStringAndStream(json, bsonReader -> {
             assertEquals(BsonType.STRING, bsonReader.readBsonType());
@@ -1090,7 +1172,7 @@ public class JsonReaderTest {
 
     @Test
     public void testDateTimeWithOutNewContainingJunk() {
-        final long currentTime = currentTimeWithoutMillis();
+        long currentTime = currentTimeWithoutMillis();
         String json = "Date({ok: 1}, 1234)";
         testStringAndStream(json, bsonReader -> {
             assertEquals(BsonType.STRING, bsonReader.readBsonType());
@@ -1102,7 +1184,7 @@ public class JsonReaderTest {
 
     @Test
     public void testEmptyISODateTimeConstructorWithNew() {
-        final long currentTime = new Date().getTime();
+        long currentTime = new Date().getTime();
         String json = "new ISODate()";
         testStringAndStream(json, bsonReader -> {
             assertEquals(BsonType.DATE_TIME, bsonReader.readBsonType());
@@ -1114,7 +1196,7 @@ public class JsonReaderTest {
 
     @Test
     public void testEmptyISODateTimeConstructor() {
-        final long currentTime = new Date().getTime();
+        long currentTime = new Date().getTime();
         String json = "ISODate()";
         testStringAndStream(json, bsonReader -> {
             assertEquals(BsonType.DATE_TIME, bsonReader.readBsonType());
@@ -1225,19 +1307,19 @@ public class JsonReaderTest {
     }
 
     private void testStringAndStream(final String json, final Function<AbstractBsonReader, Void> testFunc,
-                                     final Class<? extends RuntimeException> exClass) {
+            final Class<? extends RuntimeException> exClass) {
         try {
             testFunc.apply(new JsonReader(json));
-        } catch (final RuntimeException e) {
+        } catch (Exception e) {
             if (exClass == null) {
                 throw e;
             }
             assertEquals(exClass, e.getClass());
         }
         try {
-            testFunc.apply(new JsonReader(new InputStreamReader(new ByteArrayInputStream(json.getBytes(Charset.forName("UTF-8"))),
-                    Charset.forName("UTF-8"))));
-        } catch (final RuntimeException e) {
+            testFunc.apply(new JsonReader(new InputStreamReader(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)),
+                    StandardCharsets.UTF_8)));
+        } catch (Exception e) {
             if (exClass == null) {
                 throw e;
             }

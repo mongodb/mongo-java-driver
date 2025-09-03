@@ -19,8 +19,10 @@ package com.mongodb.connection;
 import com.mongodb.ConnectionString;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.lang.Nullable;
 
 import javax.net.ssl.SSLContext;
+import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -110,7 +112,8 @@ public class SslSettings {
         /**
          * Sets the SSLContext for use when SSL is enabled.
          *
-         * @param context the SSLContext to use for connections.  Ignored if SSL is not enabled.
+         * @param context the SSLContext to use for connections. Ignored if TLS/SSL is not {@linkplain #enabled(boolean) enabled}, or if
+         *                overridden by {@link NettyTransportSettings#getSslContext()}.
          * @return this
          * @since 3.5
          */
@@ -176,6 +179,7 @@ public class SslSettings {
      * @since 3.5
      * @see SSLContext#getDefault()
      */
+    @Nullable
     public SSLContext getContext() {
         return context;
     }
@@ -203,7 +207,7 @@ public class SslSettings {
         if (invalidHostNameAllowed != that.invalidHostNameAllowed) {
             return false;
         }
-        return context != null ? context.equals(that.context) : that.context == null;
+        return Objects.equals(context, that.context);
     }
 
     @Override

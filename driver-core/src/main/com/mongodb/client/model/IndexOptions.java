@@ -42,7 +42,6 @@ public class IndexOptions {
     private Integer bits;
     private Double min;
     private Double max;
-    private Double bucketSize;
     private Bson storageEngine;
     private Bson partialFilterExpression;
     private Collation collation;
@@ -372,29 +371,6 @@ public class IndexOptions {
     }
 
     /**
-     * Gets the specified the number of units within which to group the location values for geoHaystack Indexes
-     *
-     * @return the specified the number of units within which to group the location values for geoHaystack Indexes
-     * @mongodb.driver.manual core/geohaystack/ geoHaystack Indexes
-     */
-    @Nullable
-    public Double getBucketSize() {
-        return bucketSize;
-    }
-
-    /**
-     * Sets the specified the number of units within which to group the location values for geoHaystack Indexes
-     *
-     * @param bucketSize the specified the number of units within which to group the location values for geoHaystack Indexes
-     * @return this
-     * @mongodb.driver.manual core/geohaystack/ geoHaystack Indexes
-     */
-    public IndexOptions bucketSize(@Nullable final Double bucketSize) {
-        this.bucketSize = bucketSize;
-        return this;
-    }
-
-    /**
      * Gets the storage engine options document for this index.
      *
      * @return the storage engine options
@@ -533,7 +509,6 @@ public class IndexOptions {
                 + ", bits=" + bits
                 + ", min=" + min
                 + ", max=" + max
-                + ", bucketSize=" + bucketSize
                 + ", storageEngine=" + storageEngine
                 + ", partialFilterExpression=" + partialFilterExpression
                 + ", collation=" + collation

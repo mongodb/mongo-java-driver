@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.FutureResultCallback;
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerId;
@@ -29,6 +30,10 @@ import org.junit.Test;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
+import static com.mongodb.ClusterFixture.getServerApi;
+import static com.mongodb.internal.connection.MessageHelper.getApiVersionField;
+import static com.mongodb.internal.connection.MessageHelper.getDbField;
 import static org.junit.Assert.assertEquals;
 
 public class PlainAuthenticatorUnitTest {
@@ -42,14 +47,14 @@ public class PlainAuthenticatorUnitTest {
         connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
         connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
         credential = MongoCredential.createPlainCredential("user", "$external", "pencil".toCharArray());
-        subject = new PlainAuthenticator(new MongoCredentialWithCache(credential));
+        subject = new PlainAuthenticator(new MongoCredentialWithCache(credential), ClusterConnectionMode.MULTIPLE, getServerApi());
     }
 
     @Test
     public void testSuccessfulAuthentication() {
         enqueueSuccessfulReply();
 
-        subject.authenticate(connection, connectionDescription);
+        subject.authenticate(connection, connectionDescription, OPERATION_CONTEXT);
 
         validateMessages();
     }
@@ -58,8 +63,8 @@ public class PlainAuthenticatorUnitTest {
     public void testSuccessfulAuthenticationAsync() throws ExecutionException, InterruptedException {
         enqueueSuccessfulReply();
 
-        FutureResultCallback<Void> futureCallback = new FutureResultCallback<Void>();
-        subject.authenticateAsync(connection, connectionDescription, futureCallback);
+        FutureResultCallback<Void> futureCallback = new FutureResultCallback<>();
+        subject.authenticateAsync(connection, connectionDescription, OPERATION_CONTEXT, futureCallback);
         futureCallback.get();
 
         validateMessages();
@@ -70,7 +75,10 @@ public class PlainAuthenticatorUnitTest {
         String command = MessageHelper.decodeCommandAsJson(sent.get(0));
         String expectedCommand = "{\"saslStart\": 1, "
                                  + "\"mechanism\": \"PLAIN\", "
-                                 + "\"payload\": {\"$binary\": {\"base64\": \"dXNlcgB1c2VyAHBlbmNpbA==\", \"subType\": \"00\"}}}";
+                                 + "\"payload\": {\"$binary\": {\"base64\": \"dXNlcgB1c2VyAHBlbmNpbA==\", \"subType\": \"00\"}}"
+                                 + getDbField("$external")
+                                 + getApiVersionField()
+                                 + "}";
 
         assertEquals(expectedCommand, command);
     }

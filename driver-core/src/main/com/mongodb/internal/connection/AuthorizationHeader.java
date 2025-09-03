@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.connection;
 
-import org.bson.internal.Base64;
+import com.mongodb.lang.Nullable;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,15 +62,15 @@ final class AuthorizationHeader {
 
     static String createCanonicalRequest(final String method, final String query, final String body,
                                          final Map<String, String> requestHeaders) throws SaslException {
-        final String headers = getCanonicalHeaders(requestHeaders);
-        final String signedHeaders = getSignedHeaders(requestHeaders);
+        String headers = getCanonicalHeaders(requestHeaders);
+        String signedHeaders = getSignedHeaders(requestHeaders);
 
-        final List<String> request = Arrays.asList(method, "/", query, headers, signedHeaders, hash(body));
+        List<String> request = Arrays.asList(method, "/", query, headers, signedHeaders, hash(body));
         return String.join("\n", request);
     }
 
     static String createStringToSign(final String hash, final String timestamp, final String credentialScope) {
-        final List<String> toSign = Arrays.asList(AWS4_HMAC_SHA256, timestamp, credentialScope, hash);
+        List<String> toSign = Arrays.asList(AWS4_HMAC_SHA256, timestamp, credentialScope, hash);
         return String.join("\n", toSign);
     }
 
@@ -94,7 +95,7 @@ final class AuthorizationHeader {
         requestHeaders.put("Content-Length", String.valueOf(this.body.length()));
         requestHeaders.put("Host", this.host);
         requestHeaders.put("X-Amz-Date", this.timestamp);
-        requestHeaders.put("X-MongoDB-Server-Nonce", Base64.encode(this.nonce));
+        requestHeaders.put("X-MongoDB-Server-Nonce", Base64.getEncoder().encodeToString(this.nonce));
         requestHeaders.put("X-MongoDB-GS2-CB-Flag", "n");
         if (this.sessionToken != null) {
             requestHeaders.put("X-Amz-Security-Token", this.sessionToken);
@@ -214,7 +215,7 @@ final class AuthorizationHeader {
             return this;
         }
 
-        Builder setSessionToken(final String sessionToken) {
+        Builder setSessionToken(@Nullable final String sessionToken) {
             this.sessionToken = sessionToken;
             return this;
         }

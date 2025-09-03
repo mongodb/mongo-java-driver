@@ -18,14 +18,14 @@ package org.bson;
 
 import org.bson.io.ByteBufferBsonInput;
 import org.bson.types.ObjectId;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class BsonBinaryReaderTest {
 
@@ -53,8 +53,7 @@ public class BsonBinaryReaderTest {
             reader.readBsonType();
             fail("Should have thrown BsonSerializationException");
         } catch (BsonSerializationException e) {
-            assertEquals("Detected unknown BSON type \"\\x16\" for fieldname \"a\". Are you using the latest driver version?",
-                    e.getMessage());
+            assertEquals("Detected unknown BSON type \"\\x16\" for fieldname \"a\". Are you using the latest driver version?", e.getMessage());
         }
     }
 

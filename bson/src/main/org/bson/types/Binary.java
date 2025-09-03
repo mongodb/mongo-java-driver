@@ -27,7 +27,14 @@ import java.util.Arrays;
 public class Binary implements Serializable {
     private static final long serialVersionUID = 7902997490338209467L;
 
+    /**
+     * The binary sub-type.
+     */
     private final byte type;
+
+    /**
+     * The binary data.
+     */
     private final byte[] data;
 
     /**
@@ -110,7 +117,7 @@ public class Binary implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = (int) type;
+        int result = type;
         result = 31 * result + Arrays.hashCode(data);
         return result;
     }

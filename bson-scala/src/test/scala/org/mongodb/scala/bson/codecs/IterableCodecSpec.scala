@@ -19,10 +19,9 @@ package org.mongodb.scala.bson.codecs
 import org.bson.codecs.{ DecoderContext, EncoderContext }
 import org.bson.{ BsonDocumentReader, BsonDocumentWriter, Transformer }
 import org.mongodb.scala.bson.codecs.Registry.DEFAULT_CODEC_REGISTRY
-import org.mongodb.scala.bson.BsonDocument
-import org.scalatest.{ FlatSpec, Matchers }
+import org.mongodb.scala.bson.{ BaseSpec, BsonDocument }
 
-class IterableCodecSpec extends FlatSpec with Matchers {
+class IterableCodecSpec extends BaseSpec {
 
   "IterableCodec" should "have the correct encoding class" in {
     val codec = IterableCodec(DEFAULT_CODEC_REGISTRY, BsonTypeClassMap())
@@ -58,7 +57,11 @@ class IterableCodecSpec extends FlatSpec with Matchers {
 
     writer.writeStartDocument()
     writer.writeName("array")
-    codec.encode(writer, List(Map("a" -> 1, "b" -> 2, "c" -> null)), EncoderContext.builder().build()) // scalastyle:ignore
+    codec.encode(
+      writer,
+      List(Map("a" -> 1, "b" -> 2, "c" -> null)),
+      EncoderContext.builder().build()
+    ) // scalastyle:ignore
     writer.writeEndDocument()
     writer.getDocument should equal(BsonDocument("{array : [{a: 1, b: 2, c: null}]}"))
   }
@@ -99,9 +102,13 @@ class IterableCodecSpec extends FlatSpec with Matchers {
   }
 
   it should "use the provided transformer" in {
-    val codec = IterableCodec(DEFAULT_CODEC_REGISTRY, BsonTypeClassMap(), new Transformer {
-      override def transform(objectToTransform: Any): AnyRef = s"$objectToTransform"
-    })
+    val codec = IterableCodec(
+      DEFAULT_CODEC_REGISTRY,
+      BsonTypeClassMap(),
+      new Transformer {
+        override def transform(objectToTransform: Any): AnyRef = s"$objectToTransform"
+      }
+    )
     val reader = new BsonDocumentReader(BsonDocument("{array : [1, 2, 3]}"))
 
     reader.readStartDocument()

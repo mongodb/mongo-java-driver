@@ -16,9 +16,11 @@
 
 package com.mongodb.internal.connection
 
-import com.mongodb.MongoNamespace
+import com.mongodb.ClusterFixture
 import com.mongodb.ReadPreference
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.internal.IgnorableRequestContext
+import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonBinaryWriter
 import org.bson.BsonDocument
@@ -28,14 +30,14 @@ import org.bson.BsonWriter
 import org.bson.ByteBuf
 import org.bson.ByteBufNIO
 import org.bson.io.BasicOutputBuffer
-import org.bson.io.OutputBuffer
 import org.bson.json.JsonReader
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.security.SecureRandom
 
-import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE
+import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO
 
 class StreamHelper {
     private static int nextMessageId = 900000 // Generates a message then adds one to the id
@@ -118,7 +120,7 @@ class StreamHelper {
             putInt(messageId)           // responseTo
             putInt(1)             // opCode
             putInt(0)             // responseFlags
-            putLong(0)            // cursorId
+            putLong(0)            // cursoimport static com.mongodb.rId
             putInt(0)             // starting from
             putInt(1)             // number returned
         }
@@ -161,17 +163,24 @@ class StreamHelper {
         headers
     }
 
-    static isMaster() {
-        CommandMessage command = new CommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME),
-                new BsonDocument('ismaster', new BsonInt32(1)), new NoOpFieldNameValidator(), ReadPreference.primary(),
-                MessageSettings.builder().build())
-        OutputBuffer outputBuffer = new BasicOutputBuffer()
-        command.encode(outputBuffer, NoOpSessionContext.INSTANCE)
-        nextMessageId++
-        [outputBuffer.byteBuffers, nextMessageId]
+    static hello() {
+        CommandMessage command = new CommandMessage('admin',
+                new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
+                MessageSettings.builder().build(), SINGLE, null)
+        ByteBufferBsonOutput outputBuffer = new ByteBufferBsonOutput(new SimpleBufferProvider())
+        try {
+            command.encode(outputBuffer, new OperationContext(
+                    IgnorableRequestContext.INSTANCE,
+                    NoOpSessionContext.INSTANCE,
+                    new TimeoutContext(ClusterFixture.TIMEOUT_SETTINGS), null))
+            nextMessageId++
+            [outputBuffer.byteBuffers, nextMessageId]
+        } finally {
+            outputBuffer.close()
+        }
     }
 
-    static isMasterAsync() {
-        isMaster() + [new FutureResultCallback<Void>(), new FutureResultCallback<ResponseBuffers>()]
+    static helloAsync() {
+        hello() + [new FutureResultCallback<Void>(), new FutureResultCallback<ResponseBuffers>()]
     }
 }

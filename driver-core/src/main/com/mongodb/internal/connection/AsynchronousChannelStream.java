@@ -18,13 +18,13 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
-import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.MongoSocketReadTimeoutException;
+import com.mongodb.MongoSocketWriteTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
-import com.mongodb.connection.Stream;
+import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
 
 import java.io.IOException;
@@ -36,17 +36,20 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
- * Not part of the public API.
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public abstract class AsynchronousChannelStream implements Stream {
     private final ServerAddress serverAddress;
     private final SocketSettings settings;
     private final PowerOfTwoBufferPool bufferProvider;
-    private volatile ExtendedAsynchronousByteChannel channel;
+    // we use `AtomicReference` to guarantee that we do not call `ExtendedAsynchronousByteChannel.close` concurrently with itself
+    private final AtomicReference<ExtendedAsynchronousByteChannel> channel;
     private volatile boolean isClosed;
 
     public AsynchronousChannelStream(final ServerAddress serverAddress, final SocketSettings settings,
@@ -54,6 +57,7 @@ public abstract class AsynchronousChannelStream implements Stream {
         this.serverAddress = serverAddress;
         this.settings = settings;
         this.bufferProvider = bufferProvider;
+        channel = new AtomicReference<>();
     }
 
     public ServerAddress getServerAddress() {
@@ -68,28 +72,31 @@ public abstract class AsynchronousChannelStream implements Stream {
         return bufferProvider;
     }
 
-    public synchronized ExtendedAsynchronousByteChannel getChannel() {
-        return channel;
+    public ExtendedAsynchronousByteChannel getChannel() {
+        return channel.get();
     }
 
-    protected synchronized void setChannel(final ExtendedAsynchronousByteChannel channel) {
-        isTrue("current channel is null", this.channel == null);
+    protected void setChannel(final ExtendedAsynchronousByteChannel channel) {
         if (isClosed) {
             closeChannel(channel);
         } else {
-            this.channel = channel;
+            assertTrue(this.channel.compareAndSet(null, channel));
+            if (isClosed) {
+                closeChannel(this.channel.getAndSet(null));
+            }
         }
     }
 
     @Override
-    public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler<Void> handler) {
-        final AsyncWritableByteChannelAdapter byteChannel = new AsyncWritableByteChannelAdapter();
-        final Iterator<ByteBuf> iter = buffers.iterator();
-        pipeOneBuffer(byteChannel, iter.next(), new AsyncCompletionHandler<Void>() {
+    public void writeAsync(final List<ByteBuf> buffers, final OperationContext operationContext,
+                           final AsyncCompletionHandler<Void> handler) {
+        AsyncWritableByteChannelAdapter byteChannel = new AsyncWritableByteChannelAdapter();
+        Iterator<ByteBuf> iter = buffers.iterator();
+        pipeOneBuffer(byteChannel, iter.next(), operationContext, new AsyncCompletionHandler<Void>() {
             @Override
-            public void completed(final Void t) {
+            public void completed(@Nullable final Void t) {
                 if (iter.hasNext()) {
-                    pipeOneBuffer(byteChannel, iter.next(), this);
+                    pipeOneBuffer(byteChannel, iter.next(), operationContext, this);
                 } else {
                     handler.completed(null);
                 }
@@ -103,51 +110,31 @@ public abstract class AsynchronousChannelStream implements Stream {
     }
 
     @Override
-    public void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler) {
-        readAsync(numBytes, 0, handler);
-    }
-
-    private void readAsync(final int numBytes, final int additionalTimeout, final AsyncCompletionHandler<ByteBuf> handler) {
+    public void readAsync(final int numBytes, final OperationContext operationContext, final AsyncCompletionHandler<ByteBuf> handler) {
         ByteBuf buffer = bufferProvider.getBuffer(numBytes);
 
-        int timeout = settings.getReadTimeout(MILLISECONDS);
-        if (timeout > 0 && additionalTimeout > 0) {
-            timeout += additionalTimeout;
-        }
-
-        channel.read(buffer.asNIO(), timeout, MILLISECONDS, null, new BasicCompletionHandler(buffer, handler));
+        long timeout = operationContext.getTimeoutContext().getReadTimeoutMS();
+        getChannel().read(buffer.asNIO(), timeout, MILLISECONDS, null, new BasicCompletionHandler(buffer, operationContext, handler));
     }
 
     @Override
-    public void open() throws IOException {
-        FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<Void>();
-        openAsync(handler);
+    public void open(final OperationContext operationContext) throws IOException {
+        FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<>();
+        openAsync(operationContext, handler);
         handler.getOpen();
     }
 
     @Override
-    public void write(final List<ByteBuf> buffers) throws IOException {
-        FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<Void>();
-        writeAsync(buffers, handler);
+    public void write(final List<ByteBuf> buffers, final OperationContext operationContext) throws IOException {
+        FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<>();
+        writeAsync(buffers, operationContext, handler);
         handler.getWrite();
     }
 
     @Override
-    public ByteBuf read(final int numBytes) throws IOException {
-        FutureAsyncCompletionHandler<ByteBuf> handler = new FutureAsyncCompletionHandler<ByteBuf>();
-        readAsync(numBytes, handler);
-        return handler.getRead();
-    }
-
-    @Override
-    public boolean supportsAdditionalTimeout() {
-        return true;
-    }
-
-    @Override
-    public ByteBuf read(final int numBytes, final int additionalTimeout) throws IOException {
-        FutureAsyncCompletionHandler<ByteBuf> handler = new FutureAsyncCompletionHandler<ByteBuf>();
-        readAsync(numBytes, additionalTimeout, handler);
+    public ByteBuf read(final int numBytes, final OperationContext operationContext) throws IOException {
+        FutureAsyncCompletionHandler<ByteBuf> handler = new FutureAsyncCompletionHandler<>();
+        readAsync(numBytes, operationContext, handler);
         return handler.getRead();
     }
 
@@ -157,16 +144,12 @@ public abstract class AsynchronousChannelStream implements Stream {
     }
 
     @Override
-    public synchronized void close() {
+    public void close() {
         isClosed = true;
-        try {
-            closeChannel(channel);
-        } finally {
-            channel = null;
-        }
+        closeChannel(this.channel.getAndSet(null));
     }
 
-    private void closeChannel(final ExtendedAsynchronousByteChannel channel) {
+    private void closeChannel(@Nullable final ExtendedAsynchronousByteChannel channel) {
         try {
             if (channel != null) {
                 channel.close();
@@ -187,12 +170,12 @@ public abstract class AsynchronousChannelStream implements Stream {
     }
 
     private void pipeOneBuffer(final AsyncWritableByteChannelAdapter byteChannel, final ByteBuf byteBuffer,
-                               final AsyncCompletionHandler<Void> outerHandler) {
-        byteChannel.write(byteBuffer.asNIO(), new AsyncCompletionHandler<Void>() {
+            final OperationContext operationContext, final AsyncCompletionHandler<Void> outerHandler) {
+        byteChannel.write(byteBuffer.asNIO(), operationContext, new AsyncCompletionHandler<Void>() {
             @Override
-            public void completed(final Void t) {
+            public void completed(@Nullable final Void t) {
                 if (byteBuffer.hasRemaining()) {
-                    byteChannel.write(byteBuffer.asNIO(), this);
+                    byteChannel.write(byteBuffer.asNIO(), operationContext, this);
                 } else {
                     outerHandler.completed(null);
                 }
@@ -206,8 +189,12 @@ public abstract class AsynchronousChannelStream implements Stream {
     }
 
     private class AsyncWritableByteChannelAdapter {
-        void write(final ByteBuffer src, final AsyncCompletionHandler<Void> handler) {
-            channel.write(src, null, new AsyncWritableByteChannelAdapter.WriteCompletionHandler(handler));
+        void write(final ByteBuffer src, final OperationContext operationContext, final AsyncCompletionHandler<Void> handler) {
+            beginAsync().thenRun((c) -> {
+                long writeTimeoutMS = operationContext.getTimeoutContext().getWriteTimeoutMS();
+                getChannel().write(src, writeTimeoutMS, MILLISECONDS, null,
+                        new AsyncWritableByteChannelAdapter.WriteCompletionHandler(c.asHandler()));
+            }).finish(handler.asCallback());
         }
 
         private class WriteCompletionHandler extends BaseCompletionHandler<Void, Integer, Object> {
@@ -223,35 +210,45 @@ public abstract class AsynchronousChannelStream implements Stream {
             }
 
             @Override
-            public void failed(final Throwable exc, final Object attachment) {
+            public void failed(final Throwable t, final Object attachment) {
                 AsyncCompletionHandler<Void> localHandler = getHandlerAndClear();
-                localHandler.failed(exc);
+                if (t instanceof InterruptedByTimeoutException) {
+                    localHandler.failed(new MongoSocketWriteTimeoutException("Timeout while writing message", serverAddress, t));
+                } else {
+                    localHandler.failed(t);
+                }
             }
         }
     }
 
     private final class BasicCompletionHandler extends BaseCompletionHandler<ByteBuf, Integer, Void> {
         private final AtomicReference<ByteBuf> byteBufReference;
+        private final OperationContext operationContext;
 
-        private BasicCompletionHandler(final ByteBuf dst, final AsyncCompletionHandler<ByteBuf> handler) {
+        private BasicCompletionHandler(final ByteBuf dst, final OperationContext operationContext,
+                                       final AsyncCompletionHandler<ByteBuf> handler) {
             super(handler);
-            this.byteBufReference = new AtomicReference<ByteBuf>(dst);
+            this.byteBufReference = new AtomicReference<>(dst);
+            this.operationContext = operationContext;
         }
 
         @Override
         public void completed(final Integer result, final Void attachment) {
             AsyncCompletionHandler<ByteBuf> localHandler = getHandlerAndClear();
-            ByteBuf localByteBuf = byteBufReference.getAndSet(null);
-            if (result == -1) {
-                localByteBuf.release();
-                localHandler.failed(new MongoSocketReadException("Prematurely reached end of stream", serverAddress));
-            } else if (!localByteBuf.hasRemaining()) {
-                localByteBuf.flip();
-                localHandler.completed(localByteBuf);
-            } else {
-                channel.read(localByteBuf.asNIO(), settings.getReadTimeout(MILLISECONDS), MILLISECONDS, null,
-                        new BasicCompletionHandler(localByteBuf, localHandler));
-            }
+            beginAsync().<ByteBuf>thenSupply((c) -> {
+                ByteBuf localByteBuf = byteBufReference.getAndSet(null);
+                if (result == -1) {
+                    localByteBuf.release();
+                    throw new MongoSocketReadException("Prematurely reached end of stream", serverAddress);
+                } else if (!localByteBuf.hasRemaining()) {
+                    localByteBuf.flip();
+                    c.complete(localByteBuf);
+                } else {
+                    long readTimeoutMS = operationContext.getTimeoutContext().getReadTimeoutMS();
+                    getChannel().read(localByteBuf.asNIO(), readTimeoutMS, MILLISECONDS, null,
+                            new BasicCompletionHandler(localByteBuf, operationContext, c.asHandler()));
+                }
+            }).finish(localHandler.asCallback());
         }
 
         @Override
@@ -275,7 +272,7 @@ public abstract class AsynchronousChannelStream implements Stream {
         private final AtomicReference<AsyncCompletionHandler<T>> handlerReference;
 
         BaseCompletionHandler(final AsyncCompletionHandler<T> handler) {
-            this.handlerReference = new AtomicReference<AsyncCompletionHandler<T>>(handler);
+            this.handlerReference = new AtomicReference<>(handler);
         }
 
         AsyncCompletionHandler<T> getHandlerAndClear() {
@@ -289,7 +286,7 @@ public abstract class AsynchronousChannelStream implements Stream {
         private volatile Throwable error;
 
         @Override
-        public void completed(final T result) {
+        public void completed(@Nullable final T result) {
             this.result = result;
             latch.countDown();
         }
@@ -316,7 +313,7 @@ public abstract class AsynchronousChannelStream implements Stream {
             try {
                 latch.await();
             } catch (InterruptedException e) {
-                throw new MongoInterruptedException(prefix + " the AsynchronousSocketChannelStream failed", e);
+                throw interruptAndCreateMongoInterruptedException(prefix + " the AsynchronousSocketChannelStream failed", e);
 
             }
             if (error != null) {

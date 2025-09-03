@@ -76,7 +76,7 @@ class ProjectionFunctionalSpecification extends OperationFunctionalSpecification
         find(exclude(['x', 'y', 'x'])) == [aId]
     }
 
-    def 'excludeId'() {
+    def 'excludeId helper'() {
         expect:
         find(excludeId()) == [aNoId]
     }

@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
@@ -51,8 +52,9 @@ public abstract class TaggableReadPreference extends ReadPreference {
     private static final int SMALLEST_MAX_STALENESS_MS = 90000;
     private static final int IDLE_WRITE_PERIOD_MS = 10000;
 
-    private final List<TagSet> tagSetList = new ArrayList<TagSet>();
+    private final List<TagSet> tagSetList = new ArrayList<>();
     private final Long maxStalenessMS;
+    @SuppressWarnings("deprecation")
     private final ReadPreferenceHedgeOptions hedgeOptions;
 
     TaggableReadPreference() {
@@ -60,6 +62,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         this.hedgeOptions = null;
     }
 
+    @SuppressWarnings("deprecation")
     TaggableReadPreference(final List<TagSet> tagSetList, @Nullable final Long maxStaleness, final TimeUnit timeUnit,
                            @Nullable final ReadPreferenceHedgeOptions hedgeOptions) {
         notNull("tagSetList", tagSetList);
@@ -79,11 +82,12 @@ public abstract class TaggableReadPreference extends ReadPreference {
     @Override
     public abstract TaggableReadPreference withMaxStalenessMS(Long maxStalenessMS, TimeUnit timeUnit);
 
+    @Deprecated
     @Override
     public abstract TaggableReadPreference withHedgeOptions(ReadPreferenceHedgeOptions hedgeOptions);
 
     @Override
-    public boolean isSlaveOk() {
+    public boolean isSecondaryOk() {
         return true;
     }
 
@@ -122,7 +126,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
      * and shouldn't be used to try to select "up-to-date" secondaries.
      * </p>
      * <p>
-     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server hello responses,
      * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
      * </p>
      * @param timeUnit the time unit in which to return the value
@@ -136,7 +140,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         if (maxStalenessMS == null) {
             return null;
         }
-        return timeUnit.convert(maxStalenessMS, TimeUnit.MILLISECONDS);
+        return timeUnit.convert(maxStalenessMS, MILLISECONDS);
     }
 
     /**
@@ -145,7 +149,9 @@ public abstract class TaggableReadPreference extends ReadPreference {
      * @return the hedge options
      * @mongodb.server.release 4.4
      * @since 4.1
+     * @deprecated As of MongoDB 8.1, the server ignores the option and periodically logs a warning
      */
+    @Deprecated
     @Nullable
     public ReadPreferenceHedgeOptions getHedgeOptions() {
         return hedgeOptions;
@@ -172,13 +178,13 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
         TaggableReadPreference that = (TaggableReadPreference) o;
 
-        if (maxStalenessMS != null ? !maxStalenessMS.equals(that.maxStalenessMS) : that.maxStalenessMS != null) {
+        if (!Objects.equals(maxStalenessMS, that.maxStalenessMS)) {
             return false;
         }
         if (!tagSetList.equals(that.tagSetList)) {
             return false;
         }
-        if (hedgeOptions != null ? !hedgeOptions.equals(that.hedgeOptions) : that.hedgeOptions != null) {
+        if (!Objects.equals(hedgeOptions, that.hedgeOptions)) {
             return false;
         }
 
@@ -199,8 +205,8 @@ public abstract class TaggableReadPreference extends ReadPreference {
         return selectFreshServers(clusterDescription, getAny(clusterDescription));
     }
 
-    protected static ClusterDescription copyClusterDescription(final ClusterDescription clusterDescription,
-                                                               final List<ServerDescription> selectedServers) {
+    static ClusterDescription copyClusterDescription(final ClusterDescription clusterDescription,
+                                                     final List<ServerDescription> selectedServers) {
         return new ClusterDescription(clusterDescription.getConnectionMode(),
                                              clusterDescription.getType(),
                                              selectedServers,
@@ -208,8 +214,8 @@ public abstract class TaggableReadPreference extends ReadPreference {
                                              clusterDescription.getServerSettings());
     }
 
-    protected List<ServerDescription> selectFreshServers(final ClusterDescription clusterDescription,
-                                                         final List<ServerDescription> servers) {
+    List<ServerDescription> selectFreshServers(final ClusterDescription clusterDescription,
+                                               final List<ServerDescription> servers) {
         Long maxStaleness = getMaxStaleness(MILLISECONDS);
         if (maxStaleness == null) {
             return servers;
@@ -239,7 +245,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
                         maxStaleness, heartbeatFrequencyMS, IDLE_WRITE_PERIOD_MS));
             }
         }
-        List<ServerDescription> freshServers = new ArrayList<ServerDescription>(servers.size());
+        List<ServerDescription> freshServers = new ArrayList<>(servers.size());
 
         ServerDescription primary = findPrimary(clusterDescription);
 
@@ -326,6 +332,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
             this(tagSetList, maxStaleness, timeUnit, null);
         }
 
+        @SuppressWarnings("deprecation")
         SecondaryReadPreference(final List<TagSet> tagSetList, @Nullable final Long maxStaleness, final TimeUnit timeUnit,
                                 @Nullable final ReadPreferenceHedgeOptions hedgeOptions) {
             super(tagSetList, maxStaleness, timeUnit, hedgeOptions);
@@ -348,6 +355,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
             return new SecondaryReadPreference(getTagSetList(), maxStaleness, timeUnit, getHedgeOptions());
         }
 
+        @Deprecated
         @Override
         public TaggableReadPreference withHedgeOptions(final ReadPreferenceHedgeOptions hedgeOptions) {
             return new SecondaryReadPreference(getTagSetList(), getMaxStaleness(MILLISECONDS), MILLISECONDS, hedgeOptions);
@@ -387,6 +395,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
             this(tagSetList, maxStaleness, timeUnit, null);
         }
 
+        @SuppressWarnings("deprecation")
         SecondaryPreferredReadPreference(final List<TagSet> tagSetList, @Nullable final Long maxStaleness, final TimeUnit timeUnit,
                                          @Nullable final ReadPreferenceHedgeOptions hedgeOptions) {
             super(tagSetList, maxStaleness, timeUnit, hedgeOptions);
@@ -409,6 +418,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
             return new SecondaryPreferredReadPreference(getTagSetList(), maxStaleness, timeUnit, getHedgeOptions());
         }
 
+        @Deprecated
         @Override
         public TaggableReadPreference withHedgeOptions(final ReadPreferenceHedgeOptions hedgeOptions) {
             return new SecondaryPreferredReadPreference(getTagSetList(), getMaxStaleness(MILLISECONDS), MILLISECONDS, hedgeOptions);
@@ -440,6 +450,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
             this(tagSetList, maxStaleness, timeUnit, null);
         }
 
+        @SuppressWarnings("deprecation")
         NearestReadPreference(final List<TagSet> tagSetList, @Nullable final Long maxStaleness, final TimeUnit timeUnit,
                               @Nullable final ReadPreferenceHedgeOptions hedgeOptions) {
             super(tagSetList, maxStaleness, timeUnit, hedgeOptions);
@@ -462,6 +473,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
             return new NearestReadPreference(getTagSetList(), maxStaleness, timeUnit, getHedgeOptions());
         }
 
+        @Deprecated
         @Override
         public TaggableReadPreference withHedgeOptions(final ReadPreferenceHedgeOptions hedgeOptions) {
             return new NearestReadPreference(getTagSetList(), getMaxStaleness(MILLISECONDS), MILLISECONDS, hedgeOptions);
@@ -502,6 +514,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
             this(tagSetList, maxStaleness, timeUnit, null);
         }
 
+        @SuppressWarnings("deprecation")
         PrimaryPreferredReadPreference(final List<TagSet> tagSetList, @Nullable final Long maxStaleness, final TimeUnit timeUnit,
                                        @Nullable final ReadPreferenceHedgeOptions hedgeOptions) {
             super(tagSetList, maxStaleness, timeUnit, hedgeOptions);
@@ -524,6 +537,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
             return new PrimaryPreferredReadPreference(getTagSetList(), maxStaleness, timeUnit, getHedgeOptions());
         }
 
+        @Deprecated
         @Override
         public TaggableReadPreference withHedgeOptions(final ReadPreferenceHedgeOptions hedgeOptions) {
             return new PrimaryPreferredReadPreference(getTagSetList(), getMaxStaleness(MILLISECONDS), MILLISECONDS, hedgeOptions);
@@ -545,7 +559,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
     }
 
     private BsonArray tagsListToBsonArray() {
-        BsonArray bsonArray = new BsonArray();
+        BsonArray bsonArray = new BsonArray(tagSetList.size());
         for (TagSet tagSet : tagSetList) {
             bsonArray.add(toDocument(tagSet));
         }
