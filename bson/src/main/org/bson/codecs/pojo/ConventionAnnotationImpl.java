@@ -25,6 +25,8 @@ import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.codecs.pojo.annotations.BsonRepresentation;
+import org.bson.diagnostics.Logger;
+import org.bson.diagnostics.Loggers;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -40,6 +42,8 @@ import static java.lang.reflect.Modifier.isStatic;
 import static org.bson.codecs.pojo.PojoBuilderHelper.createPropertyModelBuilder;
 
 final class ConventionAnnotationImpl implements Convention {
+
+    private static final Logger LOGGER = Loggers.getLogger("ConventionAnnotation");
 
     @Override
     public void apply(final ClassModelBuilder<?> classModelBuilder) {
@@ -239,6 +243,15 @@ final class ConventionAnnotationImpl implements Convention {
         for (PropertyModelBuilder<?> propertyModelBuilder : classModelBuilder.getPropertyModelBuilders()) {
             if (!propertyModelBuilder.isReadable() && !propertyModelBuilder.isWritable()) {
                 propertiesToRemove.add(propertyModelBuilder.getName());
+            }
+            if (classModelBuilder.useDiscriminator() && propertyModelBuilder.getReadName().equals(classModelBuilder.getDiscriminatorKey())) {
+                propertiesToRemove.add(propertyModelBuilder.getName());
+                LOGGER.warn(
+                        format(
+                                "Removed the property '%s' from the model because the discriminator has the same key",
+                                classModelBuilder.getDiscriminatorKey()
+                        )
+                );
             }
         }
         for (String propertyName : propertiesToRemove) {
