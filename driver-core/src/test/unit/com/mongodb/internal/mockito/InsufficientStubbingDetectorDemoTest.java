@@ -40,33 +40,33 @@ final class InsufficientStubbingDetectorDemoTest {
     @Test
     void mockObjectWithDefaultAnswer() {
         ReadBinding binding = Mockito.mock(ReadBinding.class);
-        assertThrows(NullPointerException.class, () -> operation.execute(binding));
+        assertThrows(NullPointerException.class, () -> operation.execute(binding, OPERATION_CONTEXT));
     }
 
     @Test
     void mockObjectWithThrowsException() {
         ReadBinding binding = Mockito.mock(ReadBinding.class,
                 new ThrowsException(new AssertionError("Insufficient stubbing for " + ReadBinding.class)));
-        assertThrows(AssertionError.class, () -> operation.execute(binding));
+        assertThrows(AssertionError.class, () -> operation.execute(binding, OPERATION_CONTEXT));
     }
 
     @Test
     void mockObjectWithInsufficientStubbingDetector() {
         ReadBinding binding = MongoMockito.mock(ReadBinding.class);
-        assertThrows(AssertionError.class, () -> operation.execute(binding));
+        assertThrows(AssertionError.class, () -> operation.execute(binding, OPERATION_CONTEXT));
     }
 
     @Test
     void stubbingWithThrowsException() {
         ReadBinding binding = Mockito.mock(ReadBinding.class,
                 new ThrowsException(new AssertionError("Unfortunately, you cannot do stubbing")));
-        assertThrows(AssertionError.class, () -> when(binding.getOperationContext()).thenReturn(OPERATION_CONTEXT));
+        assertThrows(AssertionError.class, () -> when(binding.getReadConnectionSource(OPERATION_CONTEXT)).thenReturn(null));
     }
 
     @Test
     void stubbingWithInsufficientStubbingDetector() {
         MongoMockito.mock(ReadBinding.class, bindingMock ->
-                when(bindingMock.getOperationContext()).thenReturn(OPERATION_CONTEXT)
+                when(bindingMock.getReadConnectionSource(OPERATION_CONTEXT)).thenReturn(null)
         );
     }
 }

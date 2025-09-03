@@ -72,23 +72,21 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         given:
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
-            getConnection() >> connection
+            getConnection(_) >> connection
             getReadPreference() >> readPreference
-            getOperationContext() >> OPERATION_CONTEXT
         }
         def readBinding = Stub(ReadBinding) {
-            getReadConnectionSource() >> connectionSource
+            getReadConnectionSource(_) >> connectionSource
             getReadPreference() >> readPreference
-            getOperationContext() >> OPERATION_CONTEXT
         }
         def operation = new ListDatabasesOperation(helper.decoder)
 
         when:
-        operation.execute(readBinding)
+        operation.execute(readBinding, OPERATION_CONTEXT)
 
         then:
         _ * connection.getDescription() >> helper.connectionDescription
-        1 * connection.command(_, _, _, readPreference, _, OPERATION_CONTEXT) >> helper.commandResult
+        1 * connection.command(_, _, _, readPreference, _, _) >> helper.commandResult
         1 * connection.release()
 
         where:
@@ -100,16 +98,16 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
             getReadPreference() >> readPreference
-            getConnection(_) >> { it[0].onResult(connection, null) }
+            getConnection(_, _) >> { it[1].onResult(connection, null) }
         }
         def readBinding = Stub(AsyncReadBinding) {
             getReadPreference() >> readPreference
-            getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+            getReadConnectionSource(_, _) >> { it[1].onResult(connectionSource, null) }
         }
         def operation = new ListDatabasesOperation(helper.decoder)
 
         when:
-        operation.executeAsync(readBinding, Stub(SingleResultCallback))
+        operation.executeAsync(readBinding, OPERATION_CONTEXT, Stub(SingleResultCallback))
 
         then:
         _ * connection.getDescription() >> helper.connectionDescription
