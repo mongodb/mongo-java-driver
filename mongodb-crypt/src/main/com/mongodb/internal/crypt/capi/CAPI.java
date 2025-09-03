@@ -622,6 +622,37 @@ public class CAPI {
     public static native boolean
     mongocrypt_ctx_setopt_algorithm_range (mongocrypt_ctx_t ctx, mongocrypt_binary_t opts);
 
+
+    /**
+     * Set options for explicit encryption with the "textPreview" algorithm. "prefix" and "suffix" can both be set.
+     * NOTE: "textPreview" is experimental only and may be removed in a future non-major release.
+     * opts is a BSON document of the form:
+     *
+     * {
+     *   "caseSensitive": bool,
+     *   "diacriticSensitive": bool,
+     *   "prefix": Optional{
+     *     "strMaxQueryLength": Int32,
+     *     "strMinQueryLength": Int32,
+     *   },
+     *   "suffix": Optional{
+     *     "strMaxQueryLength": Int32,
+     *     "strMinQueryLength": Int32,
+     *   },
+     *   "substring": Optional{
+     *     "strMaxLength": Int32,
+     *     "strMaxQueryLength": Int32,
+     *     "strMinQueryLength": Int32,
+     *   },
+     * }
+     *
+     * @param ctx The @ref mongocrypt_ctx_t object.
+     * @param opts BSON.
+     * @return A boolean indicating success. If false, an error status is set.
+     * @since 5.6
+     */
+    public static native boolean mongocrypt_ctx_setopt_algorithm_text(mongocrypt_ctx_t ctx, mongocrypt_binary_t opts);
+
     /**
      * Initialize new @ref mongocrypt_t object.
      *
@@ -630,7 +661,6 @@ public class CAPI {
      */
     public static native boolean
     mongocrypt_init(mongocrypt_t crypt);
-
 
     /**
      * Get the status associated with a @ref mongocrypt_t object.
