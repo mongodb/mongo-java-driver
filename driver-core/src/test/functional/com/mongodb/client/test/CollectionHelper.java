@@ -74,6 +74,7 @@ import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.executeAsync;
 import static com.mongodb.ClusterFixture.getBinding;
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
@@ -152,6 +153,16 @@ public final class CollectionHelper<T> {
 
     public void drop(final WriteConcern writeConcern) {
         drop(namespace, writeConcern);
+    }
+
+    public void dropAndCreate(final BsonDocument createOptions) {
+        // Drop the collection and any encryption collections: enxcol_.<collectionName>.esc and enxcol_.<collectionName>.ecoc
+        drop(namespace, WriteConcern.MAJORITY);
+        drop(new MongoNamespace(namespace.getDatabaseName(), format("enxcol_.%s.esc", namespace.getCollectionName())),
+                WriteConcern.MAJORITY);
+        drop(new MongoNamespace(namespace.getDatabaseName(), format("enxcol_.%s.ecoc", namespace.getCollectionName())),
+                WriteConcern.MAJORITY);
+        create(WriteConcern.MAJORITY, createOptions);
     }
 
     public void create() {

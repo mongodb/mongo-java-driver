@@ -110,7 +110,7 @@ public abstract class UnifiedTest {
     private static final Set<String> PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS = Collections.singleton(
             "wait queue timeout errors include details about checked out connections");
 
-    private static final String MAX_SUPPORTED_SCHEMA_VERSION = "1.23";
+    private static final String MAX_SUPPORTED_SCHEMA_VERSION = "1.25";
     private static final List<Integer> MAX_SUPPORTED_SCHEMA_VERSION_COMPONENTS = Arrays.stream(MAX_SUPPORTED_SCHEMA_VERSION.split("\\."))
             .map(Integer::parseInt)
             .collect(Collectors.toList());
@@ -518,16 +518,25 @@ public abstract class UnifiedTest {
         context.getAssertionContext().push(ContextElement.ofCompletedOperation(operation, result, operationIndex));
 
         if (!operation.getBoolean("ignoreResultAndError", BsonBoolean.FALSE).getValue()) {
+            Exception operationException = result.getException();
             if (operation.containsKey("expectResult")) {
-                assertNull(result.getException(),
-                        context.getAssertionContext().getMessage("The operation expects a result but an exception occurred"));
-                context.getValueMatcher().assertValuesMatch(operation.get("expectResult"), result.getResult());
+                BsonValue expectedResult = operation.get("expectResult");
+                if (expectedResult.isDocument() && expectedResult.asDocument().containsKey("isTimeoutError")) {
+                    assertNotNull(operationException,
+                            context.getAssertionContext().getMessage("The operation expects a timeout error but no timeout exception was"
+                                    + " thrown"));
+                    context.getErrorMatcher().assertErrorsMatch(expectedResult.asDocument(), operationException);
+                } else {
+                    assertNull(operationException,
+                            context.getAssertionContext().getMessage("The operation expects a result but an exception occurred"));
+                    context.getValueMatcher().assertValuesMatch(expectedResult, result.getResult());
+                }
             } else if (operation.containsKey("expectError")) {
-                assertNotNull(result.getException(),
+                assertNotNull(operationException,
                         context.getAssertionContext().getMessage("The operation expects an error but no exception was thrown"));
-                context.getErrorMatcher().assertErrorsMatch(operation.getDocument("expectError"), result.getException());
+                context.getErrorMatcher().assertErrorsMatch(operation.getDocument("expectError"), operationException);
             } else {
-                assertNull(result.getException(),
+                assertNull(operationException,
                         context.getAssertionContext().getMessage("The operation expects no error but an exception occurred"));
             }
         }
@@ -1086,7 +1095,7 @@ public abstract class UnifiedTest {
                     new MongoNamespace(curDataSet.getString("databaseName").getValue(),
                             curDataSet.getString("collectionName").getValue()));
 
-            helper.create(WriteConcern.MAJORITY, curDataSet.getDocument("createOptions", new BsonDocument()));
+            helper.dropAndCreate(curDataSet.getDocument("createOptions", new BsonDocument()));
 
             BsonArray documentsArray = curDataSet.getArray("documents", new BsonArray());
             if (!documentsArray.isEmpty()) {
