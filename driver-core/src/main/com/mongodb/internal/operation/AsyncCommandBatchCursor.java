@@ -60,6 +60,7 @@ import static com.mongodb.internal.operation.CommandBatchCursorHelper.getKillCur
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.getMoreCommandDocument;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.logCommandCursorResult;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.translateCommandException;
+import static com.mongodb.internal.operation.CommandCursorResult.withEmptyResults;
 import static java.util.Collections.emptyList;
 
 class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
@@ -117,6 +118,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
             }
 
             if (serverCursorIsNull || !batchResults.isEmpty()) {
+                commandCursorResult = withEmptyResults(commandCursorResult);
                 funcCallback.onResult(batchResults, null);
             } else {
                 getMore(localServerCursor, funcCallback);
@@ -206,6 +208,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
                     resourceManager.setServerCursor(nextServerCursor);
                     List<T> nextBatch = commandCursorResult.getResults();
                     if (nextServerCursor == null || !nextBatch.isEmpty()) {
+                        commandCursorResult = withEmptyResults(commandCursorResult);
                         callback.onResult(nextBatch, null);
                         return;
                     }
