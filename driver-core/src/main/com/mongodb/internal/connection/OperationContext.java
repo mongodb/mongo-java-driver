@@ -163,16 +163,15 @@ public class OperationContext {
     }
 
     public OperationContext withNewlyStartedTimeout() {
-        TimeoutContext tc = this.timeoutContext.withNewlyStartedTimeout();
-        return this.withTimeoutContext(tc);
+        return withTimeoutContext(timeoutContext.withNewlyStartedTimeout());
     }
 
     public OperationContext withMinRoundTripTime(final ServerDescription serverDescription) {
-        return this.withTimeoutContext(this.timeoutContext.withMinRoundTripTime(TimeUnit.NANOSECONDS.toMillis(serverDescription.getMinRoundTripTimeNanos())));
+        return withTimeoutContext(timeoutContext.withMinRoundTripTime(TimeUnit.NANOSECONDS.toMillis(serverDescription.getMinRoundTripTimeNanos())));
     }
 
     public OperationContext withOverride(final TimeoutContextOverride timeoutContextOverrideFunction) {
-        return this.withTimeoutContext(timeoutContextOverrideFunction.apply(timeoutContext));
+        return withTimeoutContext(timeoutContextOverrideFunction.apply(timeoutContext));
     }
 
     public static final class ServerDeprioritization {
