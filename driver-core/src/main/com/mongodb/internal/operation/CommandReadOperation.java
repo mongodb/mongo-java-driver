@@ -22,7 +22,7 @@ import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.OperationContext;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
-import org.jetbrains.annotations.NotNull;
+import com.mongodb.lang.NotNull;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
