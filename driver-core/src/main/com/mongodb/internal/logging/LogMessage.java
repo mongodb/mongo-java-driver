@@ -120,7 +120,7 @@ public final class LogMessage {
             MIN_POOL_SIZE("minPoolSize"),
             MAX_POOL_SIZE("maxPoolSize"),
             MAX_CONNECTING("maxConnecting"),
-            WAIT_QUEUE_TIMEOUT_MS("waitQueueTimeoutMS"),
+            MAX_WAIT_TIMEOUT_MS("waitQueueTimeoutMS"),
             SELECTOR("selector"),
             TOPOLOGY_DESCRIPTION("topologyDescription"),
             REMAINING_TIME_MS("remainingTimeMS"),

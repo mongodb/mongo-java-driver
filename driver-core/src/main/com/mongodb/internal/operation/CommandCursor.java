@@ -133,6 +133,7 @@ class CommandCursor<T> implements Cursor<T> {
 
         List<T> retVal = nextBatch;
         nextBatch = null;
+        commandCursorResult = CommandCursorResult.withEmptyResults(commandCursorResult);
         return retVal;
     }
 

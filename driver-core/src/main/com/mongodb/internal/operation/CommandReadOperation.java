@@ -22,7 +22,6 @@ import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.OperationContext;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
-import com.mongodb.lang.NotNull;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
@@ -76,7 +75,7 @@ public class CommandReadOperation<T> implements ReadOperationSimple<T> {
         return (result, source, connection, operationContext) -> result;
     }
 
-    private static <T> @NotNull CommandReadTransformerAsync<T, T> asyncTransformer() {
+    private static <T> CommandReadTransformerAsync<T, T> asyncTransformer() {
         return (result, source, connection, operationContext) -> result;
     }
 }

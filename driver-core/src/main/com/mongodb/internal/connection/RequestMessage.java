@@ -16,17 +16,12 @@
 
 package com.mongodb.internal.connection;
 
-import org.bson.BsonBinaryWriter;
-import org.bson.BsonDocument;
-import org.bson.FieldNameValidator;
 import org.bson.io.BsonOutput;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.BsonWriterHelper.backpatchLength;
-import static com.mongodb.internal.connection.BsonWriterHelper.createBsonBinaryWriter;
-import static com.mongodb.internal.connection.BsonWriterHelper.encodeUsingRegistry;
 
 /**
  * Abstract base class for all MongoDB Wire Protocol request messages.
@@ -40,19 +35,7 @@ abstract class RequestMessage {
     private final MessageSettings settings;
     private final int id;
     private final OpCode opCode;
-    private EncodingMetadata encodingMetadata;
 
-    static class EncodingMetadata {
-        private final int firstDocumentPosition;
-
-        EncodingMetadata(final int firstDocumentPosition) {
-            this.firstDocumentPosition = firstDocumentPosition;
-        }
-
-        public int getFirstDocumentPosition() {
-            return firstDocumentPosition;
-        }
-    }
     /**
      * Gets the next available unique message identifier.
      *
@@ -109,18 +92,8 @@ abstract class RequestMessage {
         notNull("operationContext", operationContext);
         int messageStartPosition = bsonOutput.getPosition();
         writeMessagePrologue(bsonOutput);
-        EncodingMetadata encodingMetadata = encodeMessageBodyWithMetadata(bsonOutput, operationContext);
+        encodeMessageBody(bsonOutput, operationContext);
         backpatchLength(messageStartPosition, bsonOutput);
-        this.encodingMetadata = encodingMetadata;
-    }
-
-    /**
-     * Gets the encoding metadata from the last attempt to encode this message.
-     *
-     * @return Get metadata from the last attempt to encode this message. Returns null if there has not yet been an attempt.
-     */
-    public EncodingMetadata getEncodingMetadata() {
-        return encodingMetadata;
     }
 
     /**
@@ -138,16 +111,8 @@ abstract class RequestMessage {
     /**
      * Encode the message body to the given output.
      *
-     * @param bsonOutput the output
+     * @param bsonOutput       the output
      * @param operationContext the session context
-     * @return the encoding metadata
      */
-    protected abstract EncodingMetadata encodeMessageBodyWithMetadata(ByteBufferBsonOutput bsonOutput, OperationContext operationContext);
-
-    protected int writeDocument(final BsonDocument document, final BsonOutput bsonOutput, final FieldNameValidator validator) {
-        BsonBinaryWriter writer = createBsonBinaryWriter(bsonOutput, validator, getSettings());
-        int documentStart = bsonOutput.getPosition();
-        encodeUsingRegistry(writer, document);
-        return bsonOutput.getPosition() - documentStart;
-    }
+    protected abstract void encodeMessageBody(ByteBufferBsonOutput bsonOutput, OperationContext operationContext);
 }

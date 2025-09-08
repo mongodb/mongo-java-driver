@@ -67,7 +67,7 @@ public class TimeoutContext {
         return createMongoTimeoutException("Operation exceeded the timeout limit: " + cause.getMessage(), cause);
     }
 
-    public static MongoOperationTimeoutException createMongoTimeoutException(final String message, final Throwable cause) {
+    public static MongoOperationTimeoutException createMongoTimeoutException(final String message, @Nullable final Throwable cause) {
         if (cause instanceof MongoOperationTimeoutException) {
             return (MongoOperationTimeoutException) cause;
         }
@@ -439,7 +439,10 @@ public class TimeoutContext {
         return StartTime.now().timeoutAfterOrInfiniteIfNegative(getTimeoutSettings().getServerSelectionTimeoutMS(), MILLISECONDS);
     }
 
-    public Timeout startWaitQueueTimeout(final StartTime checkoutStart) {
+    public Timeout startMaxWaitTimeout(final StartTime checkoutStart) {
+        if (hasTimeoutMS()) {
+            return assertNotNull(timeout);
+        }
         final long ms = getTimeoutSettings().getMaxWaitTimeMS();
         return checkoutStart.timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
     }

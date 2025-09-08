@@ -110,7 +110,7 @@ public abstract class UnifiedTest {
     private static final Set<String> PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS = Collections.singleton(
             "wait queue timeout errors include details about checked out connections");
 
-    private static final String MAX_SUPPORTED_SCHEMA_VERSION = "1.22";
+    private static final String MAX_SUPPORTED_SCHEMA_VERSION = "1.23";
     private static final List<Integer> MAX_SUPPORTED_SCHEMA_VERSION_COMPONENTS = Arrays.stream(MAX_SUPPORTED_SCHEMA_VERSION.split("\\."))
             .map(Integer::parseInt)
             .collect(Collectors.toList());
@@ -779,6 +779,9 @@ public abstract class UnifiedTest {
                 context.getEventMatcher().waitForServerMonitorEvents(clientId, TestServerMonitorListener.eventType(eventName), event, count,
                         entities.getServerMonitorListener(clientId));
                 break;
+            case "commandStartedEvent":
+                context.getEventMatcher().waitForCommandEvents(clientId, event, count, entities.getClientCommandListener(clientId));
+                break;
             default:
                 throw new UnsupportedOperationException("Unsupported event: " + eventName);
         }
@@ -1103,6 +1106,6 @@ public abstract class UnifiedTest {
     }
 
     public enum Language {
-        JAVA, KOTLIN
+        JAVA, KOTLIN, SCALA
     }
 }
