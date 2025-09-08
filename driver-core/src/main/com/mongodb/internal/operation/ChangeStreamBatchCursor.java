@@ -1,5 +1,3 @@
-package com.mongodb.internal.operation;
-
 /*
  * Copyright 2008-present MongoDB, Inc.
  *
@@ -15,6 +13,7 @@ package com.mongodb.internal.operation;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.mongodb.internal.operation;
 
 
 import com.mongodb.MongoChangeStreamException;
@@ -42,7 +41,7 @@ import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isRes
 import static com.mongodb.internal.operation.SyncOperationHelper.withReadConnectionSource;
 
 /**
- * A change stream cursor that wraps {@link CommandBatchCursor} with automatic resumption capabilities in the event
+ * A change stream cursor that wraps {@link Cursor} with automatic resumption capabilities in the event
  * of timeouts or transient errors.
  * <p>
  * Upon encountering a resumable error during {@code hasNext()}, {@code next()}, or {@code tryNext()} calls, the {@link ChangeStreamBatchCursor}
@@ -61,7 +60,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
     private OperationContext operationContext;
     private final ChangeStreamOperation<T> changeStreamOperation;
     private final int maxWireVersion;
-    private CoreCursor<RawBsonDocument> wrapped;
+    private Cursor<RawBsonDocument> wrapped;
     private BsonDocument resumeToken;
     private final AtomicBoolean closed;
 
@@ -73,7 +72,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
     private boolean lastOperationTimedOut;
 
     ChangeStreamBatchCursor(final ChangeStreamOperation<T> changeStreamOperation,
-                            final CoreCursor<RawBsonDocument> wrapped,
+                            final Cursor<RawBsonDocument> wrapped,
                             final ReadBinding binding,
                             final OperationContext operationContext,
                             @Nullable final BsonDocument resumeToken,
@@ -88,29 +87,29 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         lastOperationTimedOut = false;
     }
 
-    CoreCursor<RawBsonDocument> getWrapped() {
+    Cursor<RawBsonDocument> getWrapped() {
         return wrapped;
     }
 
     @Override
     public boolean hasNext() {
-        return resumeableOperation(commandBatchCursor -> {
+        return resumeableOperation(coreCursor -> {
             try {
-                return commandBatchCursor.hasNext(operationContext);
+                return coreCursor.hasNext(operationContext);
             } finally {
-                cachePostBatchResumeToken(commandBatchCursor);
+                cachePostBatchResumeToken(coreCursor);
             }
         });
     }
 
     @Override
     public List<T> next() {
-        return resumeableOperation(commandBatchCursor -> {
+        return resumeableOperation(coreCursor -> {
             try {
-                return convertAndProduceLastId(commandBatchCursor.next(operationContext), changeStreamOperation.getDecoder(),
+                return convertAndProduceLastId(coreCursor.next(operationContext), changeStreamOperation.getDecoder(),
                         lastId -> resumeToken = lastId);
             } finally {
-                cachePostBatchResumeToken(commandBatchCursor);
+                cachePostBatchResumeToken(coreCursor);
             }
         });
     }
@@ -126,13 +125,13 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
 
     @Override
     public List<T> tryNext() {
-        return resumeableOperation(commandBatchCursor -> {
+        return resumeableOperation(coreCursor -> {
             try {
-                List<RawBsonDocument> tryNext = commandBatchCursor.tryNext(operationContext);
+                List<RawBsonDocument> tryNext = coreCursor.tryNext(operationContext);
                 return tryNext == null ? null
                         : convertAndProduceLastId(tryNext, changeStreamOperation.getDecoder(), lastId -> resumeToken = lastId);
             } finally {
-                cachePostBatchResumeToken(commandBatchCursor);
+                cachePostBatchResumeToken(coreCursor);
             }
         });
     }
@@ -190,9 +189,9 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         return maxWireVersion;
     }
 
-    private void cachePostBatchResumeToken(final CoreCursor<RawBsonDocument> commandBatchCursor) {
-        if (commandBatchCursor.getPostBatchResumeToken() != null) {
-            resumeToken = commandBatchCursor.getPostBatchResumeToken();
+    private void cachePostBatchResumeToken(final Cursor<RawBsonDocument> cursor) {
+        if (cursor.getPostBatchResumeToken() != null) {
+            resumeToken = cursor.getPostBatchResumeToken();
         }
     }
 
@@ -216,7 +215,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         return results;
     }
 
-    <R> R resumeableOperation(final Function<CoreCursor<RawBsonDocument>, R> function) {
+    <R> R resumeableOperation(final Function<Cursor<RawBsonDocument>, R> function) {
         restartTimeout();
         try {
             R result = execute(function);
@@ -228,7 +227,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         }
     }
 
-    private <R> R execute(final Function<CoreCursor<RawBsonDocument>, R> function) {
+    private <R> R execute(final Function<Cursor<RawBsonDocument>, R> function) {
         boolean shouldBeResumed = hasPreviousNextTimedOut();
         while (true) {
             if (shouldBeResumed) {

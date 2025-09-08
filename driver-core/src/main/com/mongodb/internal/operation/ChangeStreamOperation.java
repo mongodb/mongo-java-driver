@@ -201,7 +201,7 @@ public class ChangeStreamOperation<T> implements ReadOperationCursor<T> {
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
-        CoreCursor<RawBsonDocument> cursor = ((CommandBatchCursor<RawBsonDocument>) getAggregateOperation(operationContext.getTimeoutContext())
+        Cursor<RawBsonDocument> cursor = ((CommandBatchCursor<RawBsonDocument>) getAggregateOperation(operationContext.getTimeoutContext())
                 .execute(binding, operationContext))
                 .getWrapped();
 
@@ -223,7 +223,7 @@ public class ChangeStreamOperation<T> implements ReadOperationCursor<T> {
             if (t != null) {
                 callback.onResult(null, t);
             } else {
-                AsyncCoreCursor<RawBsonDocument> cursor = ((AsyncCommandBatchCursor<RawBsonDocument>) assertNotNull(result))
+                AsyncCursor<RawBsonDocument> cursor = ((AsyncCommandBatchCursor<RawBsonDocument>) assertNotNull(result))
                         .getWrapped();
 
                 callback.onResult(new AsyncChangeStreamBatchCursor<>(ChangeStreamOperation.this, cursor, binding,

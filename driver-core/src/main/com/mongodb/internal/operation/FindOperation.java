@@ -297,13 +297,7 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
             throw invalidTimeoutModeException;
         }
 
-        OperationContext findOperationContext;
-        if (shouldDisableMaxTimeMS()) {
-            findOperationContext = operationContext.withOverride(TimeoutContext::withDisabledMaxTime);
-        } else {
-            findOperationContext = operationContext;
-        }
-
+        OperationContext findOperationContext = getFindOperationContext(operationContext);
         RetryState retryState = initialRetryState(retryReads, findOperationContext.getTimeoutContext());
         Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, findOperationContext, () ->
                 withSourceAndConnection(binding::getReadConnectionSource, false,
@@ -321,10 +315,6 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
         return read.get();
     }
 
-    private boolean shouldDisableMaxTimeMS() {
-        return isTailableCursor() && !isAwaitData() || timeoutMode == TimeoutMode.ITERATION;
-    }
-
     @Override
     public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         IllegalStateException invalidTimeoutModeException = invalidTimeoutModeException();
@@ -333,13 +323,7 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
             return;
         }
 
-        OperationContext findOperationContext;
-        if (shouldDisableMaxTimeMS()) {
-            findOperationContext = operationContext.withOverride(TimeoutContext::withDisabledMaxTime);
-        } else {
-            findOperationContext = operationContext;
-        }
-
+        OperationContext findOperationContext = getFindOperationContext(operationContext);
         RetryState retryState = initialRetryState(retryReads, findOperationContext.getTimeoutContext());
         binding.retain();
         AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = decorateReadWithRetriesAsync(
@@ -485,7 +469,7 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
     private CommandReadTransformer<BsonDocument, CommandBatchCursor<T>> transformer() {
         return (result, source, connection, operationContext) ->
                 new CommandBatchCursor<>(getTimeoutMode(), getMaxTimeForCursor(operationContext), operationContext,
-                        new CommandCoreCursor<>(
+                        new CommandCursor<>(
                                 result, batchSize, decoder, comment, source, connection
                 ));
     }
@@ -493,7 +477,7 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
         return (result, source, connection, operationContext) ->
                 new AsyncCommandBatchCursor<>(getTimeoutMode(), getMaxTimeForCursor(operationContext), operationContext,
-                        new AsyncCommandCoreCursor<>(
+                        new AsyncCommandCursor<>(
                                 result, batchSize, decoder,
                                 comment, source, connection
                         ));
@@ -511,5 +495,16 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
             }
         }
         return null;
+    }
+
+    private boolean shouldDisableMaxTimeMS() {
+        return isTailableCursor() && !isAwaitData() || timeoutMode == TimeoutMode.ITERATION;
+    }
+
+    private OperationContext getFindOperationContext(final OperationContext operationContext) {
+        if (shouldDisableMaxTimeMS()) {
+            return operationContext.withOverride(TimeoutContext::withDisabledMaxTime);
+        }
+        return operationContext;
     }
 }

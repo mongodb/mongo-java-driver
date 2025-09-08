@@ -75,25 +75,11 @@ final class AsyncOperationHelper {
     }
 
     interface CommandWriteTransformerAsync<T, R> {
-
-        /**
-         * Yield an appropriate result object for the input object.
-         *
-         * @param t the input object
-         * @return the function result
-         */
         @Nullable
         R apply(T t, AsyncConnection connection);
     }
 
     interface CommandReadTransformerAsync<T, R> {
-
-        /**
-         * Yield an appropriate result object for the input object.
-         *
-         * @param t the input object
-         * @return the function result
-         */
         @Nullable
         R apply(T t, AsyncConnectionSource source, AsyncConnection connection, OperationContext operationContext);
     }
@@ -384,7 +370,7 @@ final class AsyncOperationHelper {
                                                                     final AsyncConnectionSource source,
                                                                     final AsyncConnection connection,
                                                                     final OperationContext operationContext) {
-        return new AsyncCommandBatchCursor<>(timeoutMode, 0, operationContext, new AsyncCommandCoreCursor<>(
+        return new AsyncCommandBatchCursor<>(timeoutMode, 0, operationContext, new AsyncCommandCursor<>(
                 cursorDocument, batchSize, decoder, comment, source, connection
         ));
     }

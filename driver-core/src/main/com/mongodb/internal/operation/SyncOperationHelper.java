@@ -358,7 +358,7 @@ final class SyncOperationHelper {
                                                                  final int batchSize, final Decoder<T> decoder,
                                                                  @Nullable final BsonValue comment, final ConnectionSource source,
                                                                  final Connection connection, final OperationContext operationContext) {
-        return new CommandBatchCursor<>(timeoutMode, 0, operationContext, new CommandCoreCursor<>(
+        return new CommandBatchCursor<>(timeoutMode, 0, operationContext, new CommandCursor<>(
                 cursorDocument, batchSize, decoder, comment, source, connection
         ));
 

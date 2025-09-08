@@ -284,7 +284,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 // If connection pinning is required, `binding` handles that,
                 // and `ClientSession`, `TransactionContext` are aware of that.
                 () -> withSourceAndConnection(binding::getWriteConnectionSource, true,
-                        (connectionSource, connection, commandOperationContext) -> {
+                        (connectionSource, connection, operationContextWithMinRtt) -> {
                             ConnectionDescription connectionDescription = connection.getDescription();
                             boolean effectiveRetryWrites = isRetryableWrite(
                                     retryWritesSetting, effectiveWriteConcern, connectionDescription, sessionContext);
@@ -296,7 +296,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                     retryState, effectiveRetryWrites, effectiveWriteConcern, sessionContext, unexecutedModels, batchEncoder,
                                     () -> retryState.attach(AttachmentKeys.retryableCommandFlag(), true, true));
                             return executeBulkWriteCommandAndExhaustOkResponse(
-                                    retryState, connectionSource, connection, bulkWriteCommand, effectiveWriteConcern, commandOperationContext);
+                                    retryState, connectionSource, connection, bulkWriteCommand, effectiveWriteConcern, operationContextWithMinRtt);
                         }, operationContext)
         );
 

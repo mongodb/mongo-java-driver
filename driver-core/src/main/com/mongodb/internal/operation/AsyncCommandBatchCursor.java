@@ -31,13 +31,13 @@ public class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCu
     private final TimeoutMode timeoutMode;
     private OperationContext operationContext;
 
-    private AsyncCoreCursor<T> wrapped;
+    private AsyncCursor<T> wrapped;
 
     AsyncCommandBatchCursor(
             final TimeoutMode timeoutMode,
             final long maxTimeMs,
             final OperationContext operationContext,
-            final AsyncCoreCursor<T> wrapped) {
+            final AsyncCursor<T> wrapped) {
         this.operationContext = operationContext.withOverride(timeoutContext ->
                 timeoutContext.withMaxTimeOverride(maxTimeMs));
         this.timeoutMode = timeoutMode;
@@ -102,7 +102,7 @@ public class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCu
         }
     }
 
-    AsyncCoreCursor<T> getWrapped() {
+    AsyncCursor<T> getWrapped() {
         return wrapped;
     }
 }

@@ -44,7 +44,7 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         operationContext.getTimeoutContext().hasTimeoutMS() >> hasTimeoutMS
 
         def callback = Stub(SingleResultCallback)
-        AsyncCoreCursor<RawBsonDocument> wrapped = Mock(AsyncCoreCursor)
+        AsyncCursor<RawBsonDocument> wrapped = Mock(AsyncCursor)
         def cursor = new AsyncChangeStreamBatchCursor(changeStreamOperation,
                 wrapped, binding, operationContext, null,
                 ServerVersionHelper.FOUR_DOT_FOUR_WIRE_VERSION)
@@ -86,7 +86,7 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         operationContext.getTimeoutContext().hasTimeoutMS() >> hasTimeoutMS
 
         def callback = Stub(SingleResultCallback)
-        AsyncCoreCursor<RawBsonDocument> wrapped = Mock(AsyncCoreCursor)
+        AsyncCursor<RawBsonDocument> wrapped = Mock(AsyncCursor)
         def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation,
                 wrapped, binding, operationContext, null,
                 ServerVersionHelper.FOUR_DOT_FOUR_WIRE_VERSION)
@@ -117,7 +117,7 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         def operationContext = getOperationContext()
         operationContext.getTimeoutContext().hasTimeoutMS() >> hasTimeoutMS
 
-        AsyncCoreCursor<RawBsonDocument> wrapped = Mock(AsyncCoreCursor)
+        AsyncCursor<RawBsonDocument> wrapped = Mock(AsyncCursor)
         def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation,
                 wrapped, binding, operationContext, null,
                 ServerVersionHelper.FOUR_DOT_FOUR_WIRE_VERSION)

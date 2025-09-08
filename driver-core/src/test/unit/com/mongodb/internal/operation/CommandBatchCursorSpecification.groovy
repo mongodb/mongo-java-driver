@@ -73,7 +73,7 @@ class CommandBatchCursorSpecification extends Specification {
         def reply =  getMoreResponse([], 0)
 
         when:
-        def commandCoreCursor = new CommandCoreCursor<>(firstBatch, batchSize, CODEC, null, connectionSource, initialConnection)
+        def commandCoreCursor = new CommandCursor<>(firstBatch, batchSize, CODEC, null, connectionSource, initialConnection)
         def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, maxTimeMS, operationContext, commandCoreCursor)
 
         then:
@@ -109,7 +109,7 @@ class CommandBatchCursorSpecification extends Specification {
         def serverVersion = new ServerVersion([3, 6, 0])
         def connection = referenceCountedConnection(serverVersion)
         def connectionSource = getConnectionSource(connection)
-        def commandCoreCursor = new CommandCoreCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
+        def commandCoreCursor = new CommandCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
         def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
 
         when:
@@ -137,7 +137,7 @@ class CommandBatchCursorSpecification extends Specification {
 
         when:
         def firstBatch = createCommandResult(FIRST_BATCH, 0)
-        def commandCoreCursor = new CommandCoreCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
+        def commandCoreCursor = new CommandCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
         def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
 
         then:
@@ -161,7 +161,7 @@ class CommandBatchCursorSpecification extends Specification {
 
         when:
         def firstBatch = createCommandResult([], CURSOR_ID)
-        def commandCoreCursor = new CommandCoreCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
+        def commandCoreCursor = new CommandCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
         def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
         def batch = cursor.next()
 
@@ -215,7 +215,7 @@ class CommandBatchCursorSpecification extends Specification {
         def firstBatch = createCommandResult()
 
         when:
-        def commandCoreCursor = new CommandCoreCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
+        def commandCoreCursor = new CommandCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
         def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
         List<Document> batch = cursor.next()
 
@@ -267,7 +267,7 @@ class CommandBatchCursorSpecification extends Specification {
         def connectionSource = getConnectionSource(connectionA, connectionB)
 
         when:
-        def commandCoreCursor = new CommandCoreCursor<>(createCommandResult(FIRST_BATCH, 42), 0, CODEC,
+        def commandCoreCursor = new CommandCursor<>(createCommandResult(FIRST_BATCH, 42), 0, CODEC,
                 null, connectionSource, initialConnection)
         def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
         def batch = cursor.next()
@@ -304,7 +304,7 @@ class CommandBatchCursorSpecification extends Specification {
         def firstBatch = createCommandResult()
 
         when:
-        def commandCoreCursor = new CommandCoreCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
+        def commandCoreCursor = new CommandCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
         def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
         def batch = cursor.next()
 
@@ -343,7 +343,7 @@ class CommandBatchCursorSpecification extends Specification {
         def initialConnection = referenceCountedConnection()
         def connectionSource = getConnectionSourceWithResult(ServerType.STANDALONE) { throw MONGO_EXCEPTION }
         def firstBatch = createCommandResult()
-        def commandCoreCursor = new CommandCoreCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
+        def commandCoreCursor = new CommandCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
         def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
 
         when:
@@ -364,7 +364,7 @@ class CommandBatchCursorSpecification extends Specification {
 
         when:
         def firstBatch = createCommandResult()
-        def commandCoreCursor = new CommandCoreCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
+        def commandCoreCursor = new CommandCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
         def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
 
         then:
@@ -391,7 +391,7 @@ class CommandBatchCursorSpecification extends Specification {
 
         when:
         def firstBatch = createCommandResult()
-        def commandCoreCursor = new CommandCoreCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
+        def commandCoreCursor = new CommandCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection)
         def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
         then:
         connectionSource.getCount() == 1
@@ -450,7 +450,7 @@ class CommandBatchCursorSpecification extends Specification {
         connectionSource.retain() >> connectionSource
 
         def initialResults = createCommandResult([])
-        def commandCoreCursor = new CommandCoreCursor<>(initialResults, 2, CODEC, null, connectionSource, initialConnection)
+        def commandCoreCursor = new CommandCursor<>(initialResults, 2, CODEC, null, connectionSource, initialConnection)
         def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 100, operationContext, commandCoreCursor)
 
         when:
@@ -476,7 +476,7 @@ class CommandBatchCursorSpecification extends Specification {
         connectionSource.retain() >> connectionSource
 
         def initialResults = createCommandResult([])
-        def commandCoreCursor = new CommandCoreCursor<>(initialResults, 2, CODEC, null, connectionSource, initialConnection)
+        def commandCoreCursor = new CommandCursor<>(initialResults, 2, CODEC, null, connectionSource, initialConnection)
         def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 100, operationContext, commandCoreCursor)
 
         when:

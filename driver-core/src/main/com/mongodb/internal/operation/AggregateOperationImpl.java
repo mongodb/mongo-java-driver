@@ -242,7 +242,7 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
 
     private CommandReadTransformer<BsonDocument, CommandBatchCursor<T>> transformer() {
         return (result, source, connection, operationContext) ->
-                new CommandBatchCursor<>(getTimeoutMode(), getMaxTimeForCursor(operationContext.getTimeoutContext()), operationContext, new CommandCoreCursor<>(
+                new CommandBatchCursor<>(getTimeoutMode(), getMaxTimeForCursor(operationContext.getTimeoutContext()), operationContext, new CommandCursor<>(
                         result, batchSize != null ? batchSize : 0,
                         decoder, comment, source, connection
                 ));
@@ -251,7 +251,7 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
         return (result, source, connection, operationContext) ->
             new AsyncCommandBatchCursor<>(getTimeoutMode(), getMaxTimeForCursor(operationContext.getTimeoutContext()),
-                    operationContext, new AsyncCommandCoreCursor<>(
+                    operationContext, new AsyncCommandCursor<>(
                     result, batchSize != null ? batchSize : 0, decoder, comment, source, connection
             ));
     }

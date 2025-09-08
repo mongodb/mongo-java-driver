@@ -49,11 +49,6 @@ class VoidReadOperationThenCursorReadOperation<T> implements ReadOperationCursor
     }
 
     @Override
-    public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
-        throw new UnsupportedOperationException("This operation is async only");
-    }
-
-    @Override
     public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         readOperation.executeAsync(binding, operationContext, (result, t) -> {
             if (t != null) {

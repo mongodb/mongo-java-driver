@@ -1,5 +1,3 @@
-package com.mongodb.internal.operation;
-
 /*
  * Copyright 2008-present MongoDB, Inc.
  *
@@ -15,6 +13,7 @@ package com.mongodb.internal.operation;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoSocketException;
@@ -35,6 +34,23 @@ import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CONCURRENT_OPERATION;
 
+/**
+ * This is the resource manager for {@link CommandBatchCursor} or {@link AsyncCommandBatchCursor} implementations.
+ * <p>
+ * This class maintains all resources that must be released in {@link CommandBatchCursor#close()} /
+ * {@link AsyncCommandBatchCursor#close()}. The abstract {@linkplain #doClose(OperationContext)} deferred close action} is such that it is totally
+ * ordered with other operations of {@link CommandBatchCursor} / {@link AsyncCommandBatchCursor} (methods {@link #tryStartOperation()}/
+ * {@link #endOperation(OperationContext)} must be used properly to enforce the order) despite the method {@link CommandBatchCursor#close()} /
+ * {@link AsyncCommandBatchCursor#close()} being called concurrently with those operations.
+ * <p>
+ * This total order induces the happens-before order.
+ * <p>
+ * The deferred close action does not violate externally observable idempotence of {@link CommandBatchCursor#close()} /
+ * {@link AsyncCommandBatchCursor#close()}, because the close method is allowed to release resources "eventually".
+ * <p>
+ * Only methods explicitly documented as thread-safe are thread-safe,
+ * others are not and rely on the total order mentioned above.
+ */
 @ThreadSafe
 abstract class CursorResourceManager<CS extends ReferenceCounted, C extends ReferenceCounted> {
     private final Lock lock;

@@ -60,7 +60,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class AsyncCommandCoreCursorTest {
+class AsyncCommandCursorTest {
 
     private static final MongoNamespace NAMESPACE = new MongoNamespace("test", "test");
     private static final BsonInt64 CURSOR_ID = new BsonInt64(1);
@@ -80,11 +80,11 @@ class AsyncCommandCoreCursorTest {
     private OperationContext operationContext;
     private TimeoutContext timeoutContext;
     private ServerDescription serverDescription;
-    private AsyncCoreCursor<Document> coreCursor;
+    private AsyncCursor<Document> coreCursor;
 
     @BeforeEach
     void setUp() {
-        coreCursor = mock(AsyncCoreCursor.class);
+        coreCursor = mock(AsyncCursor.class);
         timeoutContext = spy(new TimeoutContext(TimeoutSettings.create(
                 MongoClientSettings.builder().timeout(TIMEOUT.toMillis(), MILLISECONDS).build())));
         operationContext = spy(new OperationContext(
@@ -122,7 +122,7 @@ class AsyncCommandCoreCursorTest {
             return null;
         }).when(mockConnection).commandAsync(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any(), any());
         when(serverDescription.getType()).thenReturn(ServerType.LOAD_BALANCER);
-        AsyncCoreCursor<Document> commandBatchCursor = createBatchCursor();
+        AsyncCursor<Document> commandBatchCursor = createBatchCursor();
 
         //when
         commandBatchCursor.next(operationContext, (result, t) -> {
@@ -147,7 +147,7 @@ class AsyncCommandCoreCursorTest {
         }).when(mockConnection).commandAsync(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any(), any());
         when(serverDescription.getType()).thenReturn(ServerType.LOAD_BALANCER);
 
-        AsyncCoreCursor<Document> commandBatchCursor = createBatchCursor();
+        AsyncCursor<Document> commandBatchCursor = createBatchCursor();
 
         //when
         commandBatchCursor.next(operationContext, (result, t) -> {
@@ -178,7 +178,7 @@ class AsyncCommandCoreCursorTest {
         }).when(mockConnection).commandAsync(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any(), any());
         when(serverDescription.getType()).thenReturn(ServerType.LOAD_BALANCER);
 
-        AsyncCoreCursor<Document> commandBatchCursor = createBatchCursor();
+        AsyncCursor<Document> commandBatchCursor = createBatchCursor();
 
         //when
         commandBatchCursor.next(operationContext, (result, t) -> {
@@ -199,8 +199,8 @@ class AsyncCommandCoreCursorTest {
     }
 
 
-    private AsyncCoreCursor<Document> createBatchCursor() {
-        return new AsyncCommandCoreCursor<>(
+    private AsyncCursor<Document> createBatchCursor() {
+        return new AsyncCommandCursor<>(
                 COMMAND_CURSOR_DOCUMENT,
                 0,
                 DOCUMENT_CODEC,

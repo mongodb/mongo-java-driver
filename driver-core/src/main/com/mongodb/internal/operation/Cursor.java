@@ -16,9 +16,8 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
-import com.mongodb.internal.async.AsyncBatchCursor;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -26,9 +25,26 @@ import org.bson.BsonTimestamp;
 
 import java.util.List;
 
-public interface AsyncCoreCursor<T> {
+interface Cursor<T> {
     void close(OperationContext operationContext);
-    void next(OperationContext operationContext, SingleResultCallback<List<T>> callback);
+
+    boolean hasNext(OperationContext operationContext);
+
+    List<T> next(OperationContext operationContext);
+
+    /**
+     * A special {@code next()} case that returns the next batch if available or null.
+     *
+     * <p>Tailable cursors are an example where this is useful. A call to {@code tryNext()} may return null, but in the future calling
+     * {@code tryNext()} would return a new batch if a document had been added to the capped collection.</p>
+     *
+     * @mongodb.driver.manual reference/glossary/#term-tailable-cursor Tailable Cursor
+     */
+    @Nullable
+    List<T> tryNext(OperationContext operationContext);
+
+
+    int available();
 
     /**
      * Sets the batch size to use when requesting the next batch.  This is the number of documents to request in the next batch.
@@ -47,6 +63,7 @@ public interface AsyncCoreCursor<T> {
     @Nullable
     ServerCursor getServerCursor();
 
+    ServerAddress getServerAddress();
 
     @Nullable
     BsonDocument getPostBatchResumeToken();
@@ -57,12 +74,5 @@ public interface AsyncCoreCursor<T> {
     boolean isFirstBatchEmpty();
 
     int getMaxWireVersion();
-
-
-    /**
-     * Implementations of {@link AsyncBatchCursor} are allowed to close themselves, see {@link #close()} for more details.
-     *
-     * @return {@code true} if {@code this} has been closed or has closed itself.
-     */
-    boolean isClosed();
 }
+

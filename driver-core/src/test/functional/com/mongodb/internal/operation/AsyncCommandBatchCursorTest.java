@@ -41,11 +41,11 @@ class AsyncCommandBatchCursorTest {
     private static final Duration TIMEOUT = Duration.ofMillis(3_000);
     private OperationContext operationContext;
     private TimeoutContext timeoutContext;
-    private AsyncCoreCursor<Document> coreCursor;
+    private AsyncCursor<Document> coreCursor;
 
     @BeforeEach
     void setUp() {
-        coreCursor = mock(AsyncCoreCursor.class);
+        coreCursor = mock(AsyncCursor.class);
         timeoutContext = spy(new TimeoutContext(TimeoutSettings.create(
                 MongoClientSettings.builder().timeout(TIMEOUT.toMillis(), MILLISECONDS).build())));
         operationContext = spy(new OperationContext(

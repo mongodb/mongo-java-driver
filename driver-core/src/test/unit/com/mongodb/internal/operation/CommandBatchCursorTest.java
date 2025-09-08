@@ -43,11 +43,11 @@ class CommandBatchCursorTest {
     private static final Duration TIMEOUT = Duration.ofMillis(3_000);
     private OperationContext operationContext;
     private TimeoutContext timeoutContext;
-    private CoreCursor<Document> coreCursor;
+    private Cursor<Document> cursor;
 
     @BeforeEach
     void setUp() {
-        coreCursor = mock(CoreCursor.class);
+        cursor = mock(Cursor.class);
         timeoutContext = spy(new TimeoutContext(TimeoutSettings.create(
                 MongoClientSettings.builder().timeout(TIMEOUT.toMillis(), MILLISECONDS).build())));
         operationContext = spy(new OperationContext(
@@ -62,7 +62,7 @@ class CommandBatchCursorTest {
                 TimeoutMode.CURSOR_LIFETIME,
                 maxTimeMS,
                 operationContext,
-                coreCursor);
+                cursor);
     }
 
     @Test
@@ -79,7 +79,7 @@ class CommandBatchCursorTest {
 
             // then verify that the `maxTimeMS` override was applied
             ArgumentCaptor<OperationContext> operationContextArgumentCaptor = ArgumentCaptor.forClass(OperationContext.class);
-            verify(coreCursor).next(operationContextArgumentCaptor.capture());
+            verify(cursor).next(operationContextArgumentCaptor.capture());
             OperationContext operationContextForNext = operationContextArgumentCaptor.getValue();
             operationContextForNext.getTimeoutContext()
                     .runMaxTimeMS(remainingMillis -> assertEquals(maxTimeMS, remainingMillis, "MaxTieMs override not applied"));
@@ -100,7 +100,7 @@ class CommandBatchCursorTest {
 
             // then verify that the `maxTimeMS` override was applied
             ArgumentCaptor<OperationContext> operationContextArgumentCaptor = ArgumentCaptor.forClass(OperationContext.class);
-            verify(coreCursor).tryNext(operationContextArgumentCaptor.capture());
+            verify(cursor).tryNext(operationContextArgumentCaptor.capture());
             OperationContext operationContextForNext = operationContextArgumentCaptor.getValue();
             operationContextForNext.getTimeoutContext()
                     .runMaxTimeMS(remainingMillis -> assertEquals(maxTimeMS, remainingMillis, "MaxTieMs override not applied"));
@@ -119,7 +119,7 @@ class CommandBatchCursorTest {
 
             // then verify that the `maxTimeMS` override was not applied
             ArgumentCaptor<OperationContext> operationContextArgumentCaptor = ArgumentCaptor.forClass(OperationContext.class);
-            verify(coreCursor).next(operationContextArgumentCaptor.capture());
+            verify(cursor).next(operationContextArgumentCaptor.capture());
             OperationContext operationContextForNext = operationContextArgumentCaptor.getValue();
             operationContextForNext.getTimeoutContext().runMaxTimeMS(remainingMillis -> {
                 // verify that the `maxTimeMS` override was reset
@@ -141,7 +141,7 @@ class CommandBatchCursorTest {
 
             // then verify that the `maxTimeMS` override was not applied
             ArgumentCaptor<OperationContext> operationContextArgumentCaptor = ArgumentCaptor.forClass(OperationContext.class);
-            verify(coreCursor).tryNext(operationContextArgumentCaptor.capture());
+            verify(cursor).tryNext(operationContextArgumentCaptor.capture());
             OperationContext operationContextForNext = operationContextArgumentCaptor.getValue();
             operationContextForNext.getTimeoutContext().runMaxTimeMS(remainingMillis -> {
                 // verify that the `maxTimeMS` override was reset
@@ -163,7 +163,7 @@ class CommandBatchCursorTest {
 
             // then verify that the `maxTimeMS` override was not applied
             ArgumentCaptor<OperationContext> operationContextArgumentCaptor = ArgumentCaptor.forClass(OperationContext.class);
-            verify(coreCursor).close(operationContextArgumentCaptor.capture());
+            verify(cursor).close(operationContextArgumentCaptor.capture());
             OperationContext operationContextForNext = operationContextArgumentCaptor.getValue();
             operationContextForNext.getTimeoutContext().runMaxTimeMS(remainingMillis -> {
                 // verify that the `maxTimeMS` override was reset

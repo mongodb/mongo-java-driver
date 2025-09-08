@@ -60,7 +60,7 @@ import static com.mongodb.internal.operation.CommandBatchCursorHelper.logCommand
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.translateCommandException;
 import static java.util.Collections.emptyList;
 
-class AsyncCommandCoreCursor<T> implements AsyncCoreCursor<T> {
+class AsyncCommandCursor<T> implements AsyncCursor<T> {
 
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
@@ -73,7 +73,7 @@ class AsyncCommandCoreCursor<T> implements AsyncCoreCursor<T> {
     private int batchSize;
     private volatile CommandCursorResult<T> commandCursorResult;
 
-    AsyncCommandCoreCursor(
+    AsyncCommandCursor(
             final BsonDocument commandCursorDocument,
             final int batchSize,
             final Decoder<T> decoder,

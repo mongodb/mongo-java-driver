@@ -58,7 +58,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class CommandCoreCursorTest {
+class CommandCursorTest {
     private static final MongoNamespace NAMESPACE = new MongoNamespace("test", "test");
     private static final BsonInt64 CURSOR_ID = new BsonInt64(1);
     private static final BsonDocument COMMAND_CURSOR_DOCUMENT = new BsonDocument("ok", new BsonInt32(1))
@@ -110,12 +110,12 @@ class CommandCoreCursorTest {
                 new MongoSocketException("test", new ServerAddress()));
         when(serverDescription.getType()).thenReturn(ServerType.LOAD_BALANCER);
 
-        CoreCursor<Document> coreCursor = createCoreCursor();
+        Cursor<Document> cursor = createCoreCursor();
         //when
-        assertThrows(MongoSocketException.class, () -> coreCursor.next(operationContext));
+        assertThrows(MongoSocketException.class, () -> cursor.next(operationContext));
 
         //then
-        coreCursor.close(operationContext);
+        cursor.close(operationContext);
         verify(mockConnection, times(1)).command(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any());
     }
 
@@ -126,12 +126,12 @@ class CommandCoreCursorTest {
                 new MongoOperationTimeoutException("test"));
         when(serverDescription.getType()).thenReturn(ServerType.LOAD_BALANCER);
 
-        CoreCursor<Document> coreCursor = createCoreCursor();
+        Cursor<Document> cursor = createCoreCursor();
 
         //when
-        assertThrows(MongoOperationTimeoutException.class, () -> coreCursor.next(operationContext));
+        assertThrows(MongoOperationTimeoutException.class, () -> cursor.next(operationContext));
 
-        coreCursor.close(operationContext);
+        cursor.close(operationContext);
 
 
         //then
@@ -150,11 +150,11 @@ class CommandCoreCursorTest {
                 new MongoOperationTimeoutException("test", new MongoSocketException("test", new ServerAddress())));
         when(serverDescription.getType()).thenReturn(ServerType.LOAD_BALANCER);
 
-        CoreCursor<Document> coreCursor = createCoreCursor();
+        Cursor<Document> cursor = createCoreCursor();
 
         //when
-        assertThrows(MongoOperationTimeoutException.class, () -> coreCursor.next(operationContext));
-        coreCursor.close(operationContext);
+        assertThrows(MongoOperationTimeoutException.class, () -> cursor.next(operationContext));
+        cursor.close(operationContext);
 
         //then
         verify(mockConnection, times(1)).command(any(),
@@ -165,8 +165,8 @@ class CommandCoreCursorTest {
                 argThat(bsonDocument -> bsonDocument.containsKey("killCursors")), any(), any(), any(), any());
     }
 
-    private CoreCursor<Document> createCoreCursor() {
-        return new CommandCoreCursor<>(
+    private Cursor<Document> createCoreCursor() {
+        return new CommandCursor<>(
                 COMMAND_CURSOR_DOCUMENT,
                 0,
                 DOCUMENT_CODEC,

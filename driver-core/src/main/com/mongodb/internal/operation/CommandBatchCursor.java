@@ -30,13 +30,13 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
     private final TimeoutMode timeoutMode;
     private OperationContext operationContext;
-    private CoreCursor<T> wrapped;
+    private Cursor<T> wrapped;
 
     CommandBatchCursor(
             final TimeoutMode timeoutMode,
             final long maxTimeMs,
             final OperationContext operationContext,
-            final CoreCursor<T> wrapped) {
+            final Cursor<T> wrapped) {
         this.operationContext = operationContext.withOverride(timeoutContext ->
                 timeoutContext.withMaxTimeOverride(maxTimeMs));
         this.timeoutMode = timeoutMode;
@@ -129,7 +129,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         }
     }
 
-    CoreCursor<T> getWrapped() {
+    Cursor<T> getWrapped() {
         return wrapped;
     }
 }

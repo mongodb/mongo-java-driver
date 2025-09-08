@@ -148,7 +148,7 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
         public void getConnection(final OperationContext operationContext, final SingleResultCallback<AsyncConnection> callback) {
             /*
              The first read in a causally consistent session MUST not send afterClusterTime to the server
-             (because the operationTime has not yet been determined). Therefore, we use ReadConcernAwareNoOpSessionContext to
+             (because the operationTime has not yet been determined). Therefore, we use ReadConcernAwareNoOpSessionContext
              so that we do not advance clusterTime on ClientSession in given operationContext because it might not be yet set.
              */
             ReadConcern readConcern = operationContext.getSessionContext().getReadConcern();

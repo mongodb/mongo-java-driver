@@ -56,7 +56,7 @@ import static com.mongodb.internal.operation.CommandBatchCursorHelper.getMoreCom
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.logCommandCursorResult;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.translateCommandException;
 
-class CommandCoreCursor<T> implements CoreCursor<T> {
+class CommandCursor<T> implements Cursor<T> {
 
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
@@ -71,7 +71,7 @@ class CommandCoreCursor<T> implements CoreCursor<T> {
     @Nullable
     private List<T> nextBatch;
 
-    CommandCoreCursor(
+    CommandCursor(
             final BsonDocument commandCursorDocument,
             final int batchSize,
             final Decoder<T> decoder,

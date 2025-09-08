@@ -316,7 +316,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
         private final SaslClient saslClient;
         private final BsonDocument saslStartDocument;
         private final InternalConnection connection;
-        private OperationContext operationContext;
+        private final OperationContext operationContext;
         private final SingleResultCallback<Void> callback;
 
         Continuator(final SaslClient saslClient, final BsonDocument saslStartDocument, final InternalConnection connection,
@@ -340,7 +340,6 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
                 verifySaslClientComplete(saslClient, result, callback);
                 disposeOfSaslClient(saslClient);
             } else {
-                operationContext = operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout);
                 continueConversation(result);
             }
         }
@@ -355,7 +354,8 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
                     try {
                         sendSaslContinueAsync(saslStartDocument.getInt32("conversationId"),
                                 saslClient.evaluateChallenge((result.getBinary("payload")).getData()), connection,
-                                operationContext, Continuator.this);
+                                operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout),
+                                Continuator.this);
                     } catch (SaslException e) {
                         throw wrapException(e);
                     }

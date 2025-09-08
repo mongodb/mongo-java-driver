@@ -80,15 +80,15 @@ final class ChangeStreamBatchCursorTest {
     private ConnectionSource connectionSource;
     private ReadBinding readBinding;
     private BsonDocument resumeToken;
-    private CoreCursor<RawBsonDocument> coreCursor;
-    private CoreCursor<RawBsonDocument> newCoreCursor;
+    private Cursor<RawBsonDocument> cursor;
+    private Cursor<RawBsonDocument> newCursor;
     private ChangeStreamBatchCursor<Document> newChangeStreamCursor;
     private ChangeStreamOperation<Document> changeStreamOperation;
 
     @Test
     @DisplayName("should return result on next")
     void shouldReturnResultOnNext() {
-        when(coreCursor.next(any())).thenReturn(RESULT_FROM_NEW_CURSOR);
+        when(cursor.next(any())).thenReturn(RESULT_FROM_NEW_CURSOR);
         ChangeStreamBatchCursor<Document> cursor = createChangeStreamCursor();
 
         //when
@@ -98,11 +98,11 @@ final class ChangeStreamBatchCursorTest {
         //then
         assertEquals(RESULT_FROM_NEW_CURSOR, next);
         assertTimeoutWasRefreshedForOperation(operationContextCaptor ->
-                verify(coreCursor).next(operationContextCaptor.capture()));
+                verify(this.cursor).next(operationContextCaptor.capture()));
 
-        verify(coreCursor, times(1)).next(any());
-        verify(coreCursor, atLeastOnce()).getPostBatchResumeToken();
-        verifyNoMoreInteractions(coreCursor);
+        verify(this.cursor, times(1)).next(any());
+        verify(this.cursor, atLeastOnce()).getPostBatchResumeToken();
+        verifyNoMoreInteractions(this.cursor);
         verify(changeStreamOperation, times(1)).getDecoder();
         verifyNoMoreInteractions(changeStreamOperation);
     }
@@ -110,15 +110,15 @@ final class ChangeStreamBatchCursorTest {
     @Test
     @DisplayName("should throw timeout exception without resume attempt on next")
     void shouldThrowTimeoutExceptionWithoutResumeAttemptOnNext() {
-        when(coreCursor.next(any())).thenThrow(new MongoOperationTimeoutException("timeout"));
+        when(cursor.next(any())).thenThrow(new MongoOperationTimeoutException("timeout"));
         ChangeStreamBatchCursor<Document> cursor = createChangeStreamCursor();
         //when
         assertThrows(MongoOperationTimeoutException.class, cursor::next);
 
         //then
-        verify(coreCursor, times(1)).next(any());
-        verify(coreCursor, atLeastOnce()).getPostBatchResumeToken();
-        verifyNoMoreInteractions(coreCursor);
+        verify(this.cursor, times(1)).next(any());
+        verify(this.cursor, atLeastOnce()).getPostBatchResumeToken();
+        verifyNoMoreInteractions(this.cursor);
         verifyNoResumeAttemptCalled();
     }
 
@@ -126,7 +126,7 @@ final class ChangeStreamBatchCursorTest {
     @DisplayName("should not refresh timeout on next() after cursor close() when resume attempt is made")
     void shouldNotRefreshTimeoutOnNextAfterCloseWhenResumeAttemptIsMade() {
         // given
-        when(coreCursor.next(any())).thenThrow(new MongoOperationTimeoutException("timeout"));
+        when(cursor.next(any())).thenThrow(new MongoOperationTimeoutException("timeout"));
         ChangeStreamBatchCursor<Document> cursor = createChangeStreamCursor();
         // when
         assertThrows(MongoOperationTimeoutException.class, cursor::next);
@@ -134,9 +134,9 @@ final class ChangeStreamBatchCursorTest {
         cursor.next();
 
         // then
-        TimeoutContext timeoutContextForClose = captureTimeoutContext(captor -> verify(coreCursor)
+        TimeoutContext timeoutContextForClose = captureTimeoutContext(captor -> verify(this.cursor)
                 .close(captor.capture()));
-        TimeoutContext timeoutContextForNext = captureTimeoutContext(captor -> verify(newCoreCursor)
+        TimeoutContext timeoutContextForNext = captureTimeoutContext(captor -> verify(newCursor)
                 .next(captor.capture()));
         assertEquals(timeoutContextForNext.getTimeout(), timeoutContextForClose.getTimeout(),
                 "Timeout should not be refreshed on close after resume attempt");
@@ -146,16 +146,16 @@ final class ChangeStreamBatchCursorTest {
     @DisplayName("should not refresh timeout on close() after cursor next() when resume attempt is made")
     void shouldNotRefreshTimeoutOnCloseAfterNextWhenResumeAttemptIsMade() {
         // given
-        when(coreCursor.next(any())).thenThrow(new MongoNotPrimaryException(new BsonDocument(), new ServerAddress()));
+        when(cursor.next(any())).thenThrow(new MongoNotPrimaryException(new BsonDocument(), new ServerAddress()));
         ChangeStreamBatchCursor<Document> cursor = createChangeStreamCursor();
 
         // when
         cursor.next();
 
         // then
-        TimeoutContext timeoutContextForNext = captureTimeoutContext(captor -> verify(coreCursor)
+        TimeoutContext timeoutContextForNext = captureTimeoutContext(captor -> verify(this.cursor)
                 .next(captor.capture()));
-        TimeoutContext timeoutContextForClose = captureTimeoutContext(captor -> verify(coreCursor)
+        TimeoutContext timeoutContextForClose = captureTimeoutContext(captor -> verify(this.cursor)
                 .close(captor.capture()));
         assertEquals(timeoutContextForNext.getTimeout(), timeoutContextForClose.getTimeout(),
                 "Timeout should not be refreshed on close after resume attempt");
@@ -164,7 +164,7 @@ final class ChangeStreamBatchCursorTest {
     @Test
     @DisplayName("should perform resume attempt on next when resumable error is thrown")
     void shouldPerformResumeAttemptOnNextWhenResumableErrorIsThrown() {
-        when(coreCursor.next(any())).thenThrow(new MongoNotPrimaryException(new BsonDocument(), new ServerAddress()));
+        when(cursor.next(any())).thenThrow(new MongoNotPrimaryException(new BsonDocument(), new ServerAddress()));
         ChangeStreamBatchCursor<Document> cursor = createChangeStreamCursor();
 
         //when
@@ -174,15 +174,15 @@ final class ChangeStreamBatchCursorTest {
         //then
         assertEquals(RESULT_FROM_NEW_CURSOR, next);
         assertTimeoutWasRefreshedForOperation(operationContextCaptor ->
-                verify(newCoreCursor).next(operationContextCaptor.capture()));
-        verify(coreCursor, times(1)).next(any());
-        verify(coreCursor, atLeastOnce()).getPostBatchResumeToken();
+                verify(newCursor).next(operationContextCaptor.capture()));
+        verify(this.cursor, times(1)).next(any());
+        verify(this.cursor, atLeastOnce()).getPostBatchResumeToken();
         verifyResumeAttemptCalled();
         verify(changeStreamOperation, times(1)).getDecoder();
-        verify(newCoreCursor, times(1)).next(any());
-        verify(newCoreCursor, atLeastOnce()).getPostBatchResumeToken();
+        verify(newCursor, times(1)).next(any());
+        verify(newCursor, atLeastOnce()).getPostBatchResumeToken();
 
-        verifyNoMoreInteractions(newCoreCursor);
+        verifyNoMoreInteractions(newCursor);
         verifyNoMoreInteractions(changeStreamOperation);
     }
 
@@ -190,19 +190,19 @@ final class ChangeStreamBatchCursorTest {
     @Test
     @DisplayName("should resume only once on subsequent calls after timeout error")
     void shouldResumeOnlyOnceOnSubsequentCallsAfterTimeoutError() {
-        when(coreCursor.next(any())).thenThrow(new MongoOperationTimeoutException("timeout"));
+        when(cursor.next(any())).thenThrow(new MongoOperationTimeoutException("timeout"));
         ChangeStreamBatchCursor<Document> cursor = createChangeStreamCursor();
         //when
         assertThrows(MongoOperationTimeoutException.class, cursor::next);
 
         //then
         assertTimeoutWasRefreshedForOperation(operationContextCaptor ->
-                verify(coreCursor).next(operationContextCaptor.capture()));
-        verify(coreCursor, times(1)).next(any());
-        verify(coreCursor, atLeastOnce()).getPostBatchResumeToken();
-        verifyNoMoreInteractions(coreCursor);
+                verify(this.cursor).next(operationContextCaptor.capture()));
+        verify(this.cursor, times(1)).next(any());
+        verify(this.cursor, atLeastOnce()).getPostBatchResumeToken();
+        verifyNoMoreInteractions(this.cursor);
         verifyNoResumeAttemptCalled();
-        clearInvocations(coreCursor, newCoreCursor, timeoutContext, changeStreamOperation, readBinding);
+        clearInvocations(this.cursor, newCursor, timeoutContext, changeStreamOperation, readBinding);
 
         //when seconds next is called. Resume is attempted.
         sleep(TIMEOUT_CONSUMPTION_SLEEP_MS);
@@ -210,17 +210,17 @@ final class ChangeStreamBatchCursorTest {
 
         //then
         assertEquals(Collections.emptyList(), next);
-        verify(coreCursor, times(1)).close(any());
-        verifyNoMoreInteractions(coreCursor);
+        verify(this.cursor, times(1)).close(any());
+        verifyNoMoreInteractions(this.cursor);
         assertTimeoutWasRefreshedForOperation(operationContextCaptor ->
-                verify(newCoreCursor).next(operationContextCaptor.capture()));
+                verify(newCursor).next(operationContextCaptor.capture()));
         verify(changeStreamOperation).setChangeStreamOptionsForResume(resumeToken, maxWireVersion);
         verify(changeStreamOperation, times(1)).getDecoder();
         verify(changeStreamOperation, times(1)).execute(eq(readBinding), any());
         verifyNoMoreInteractions(changeStreamOperation);
-        verify(newCoreCursor, times(1)).next(any());
-        verify(newCoreCursor, atLeastOnce()).getPostBatchResumeToken();
-        clearInvocations(coreCursor, newCoreCursor, timeoutContext, changeStreamOperation, readBinding);
+        verify(newCursor, times(1)).next(any());
+        verify(newCursor, atLeastOnce()).getPostBatchResumeToken();
+        clearInvocations(this.cursor, newCursor, timeoutContext, changeStreamOperation, readBinding);
 
         //when third next is called. No resume is attempted.
         sleep(TIMEOUT_CONSUMPTION_SLEEP_MS);
@@ -228,12 +228,12 @@ final class ChangeStreamBatchCursorTest {
 
         //then
         assertEquals(Collections.emptyList(), next2);
-        verifyNoInteractions(coreCursor);
+        verifyNoInteractions(this.cursor);
         assertTimeoutWasRefreshedForOperation(operationContextCaptor ->
-                verify(newCoreCursor).next(operationContextCaptor.capture()));
-        verify(newCoreCursor, times(1)).next(any());
-        verify(newCoreCursor, atLeastOnce()).getPostBatchResumeToken();
-        verifyNoMoreInteractions(newCoreCursor);
+                verify(newCursor).next(operationContextCaptor.capture()));
+        verify(newCursor, times(1)).next(any());
+        verify(newCursor, atLeastOnce()).getPostBatchResumeToken();
+        verifyNoMoreInteractions(newCursor);
         verify(changeStreamOperation, times(1)).getDecoder();
         verifyNoMoreInteractions(changeStreamOperation);
         verifyNoInteractions(readBinding);
@@ -243,20 +243,20 @@ final class ChangeStreamBatchCursorTest {
     @Test
     @DisplayName("should propagate any errors occurred in aggregate operation during creating new change stream when previous next timed out")
     void shouldPropagateAnyErrorsOccurredInAggregateOperation() {
-        when(coreCursor.next(any())).thenThrow(new MongoOperationTimeoutException("timeout"));
+        when(cursor.next(any())).thenThrow(new MongoOperationTimeoutException("timeout"));
         MongoNotPrimaryException resumableError = new MongoNotPrimaryException(new BsonDocument(), new ServerAddress());
         when(changeStreamOperation.execute(eq(readBinding), any())).thenThrow(resumableError);
 
         ChangeStreamBatchCursor<Document> cursor = createChangeStreamCursor();
         //when
         assertThrows(MongoOperationTimeoutException.class, cursor::next);
-        clearInvocations(coreCursor, newCoreCursor, timeoutContext, changeStreamOperation, readBinding);
+        clearInvocations(this.cursor, newCursor, timeoutContext, changeStreamOperation, readBinding);
         assertThrows(MongoNotPrimaryException.class, cursor::next);
 
         //then
         verifyResumeAttemptCalled();
         verifyNoMoreInteractions(changeStreamOperation);
-        verifyNoInteractions(newCoreCursor);
+        verifyNoInteractions(newCursor);
     }
 
 
@@ -267,15 +267,15 @@ final class ChangeStreamBatchCursorTest {
         ChangeStreamBatchCursor<Document> cursor = createChangeStreamCursor();
 
         //first next operation times out on getMore
-        when(coreCursor.next(any())).thenThrow(new MongoOperationTimeoutException("timeout during next call"));
+        when(this.cursor.next(any())).thenThrow(new MongoOperationTimeoutException("timeout during next call"));
         assertThrows(MongoOperationTimeoutException.class, cursor::next);
-        clearInvocations(coreCursor, newCoreCursor, timeoutContext, changeStreamOperation, readBinding);
+        clearInvocations(this.cursor, newCursor, timeoutContext, changeStreamOperation, readBinding);
 
         //second next operation times out on resume attempt when creating change stream
         when(changeStreamOperation.execute(eq(readBinding), any())).thenThrow(
                 new MongoOperationTimeoutException("timeout during resumption"));
         assertThrows(MongoOperationTimeoutException.class, cursor::next);
-        clearInvocations(coreCursor, newCoreCursor, timeoutContext, changeStreamOperation);
+        clearInvocations(this.cursor, newCursor, timeoutContext, changeStreamOperation);
 
         doReturn(newChangeStreamCursor).when(changeStreamOperation).execute(eq(readBinding), any());
 
@@ -290,10 +290,10 @@ final class ChangeStreamBatchCursorTest {
         verifyNoMoreInteractions(changeStreamOperation);
 
         assertTimeoutWasRefreshedForOperation(operationContextCaptor ->
-                verify(newCoreCursor).next(operationContextCaptor.capture()));
-        verify(newCoreCursor, times(1)).next(any());
-        verify(newCoreCursor, atLeastOnce()).getPostBatchResumeToken();
-        verifyNoMoreInteractions(newCoreCursor);
+                verify(newCursor).next(operationContextCaptor.capture()));
+        verify(newCursor, times(1)).next(any());
+        verify(newCursor, atLeastOnce()).getPostBatchResumeToken();
+        verifyNoMoreInteractions(newCursor);
     }
 
     @Test
@@ -303,9 +303,9 @@ final class ChangeStreamBatchCursorTest {
         ChangeStreamBatchCursor<Document> cursor = createChangeStreamCursor();
 
         //first next operation times out on getMore
-        when(coreCursor.next(any())).thenThrow(new MongoOperationTimeoutException("timeout during next call"));
+        when(this.cursor.next(any())).thenThrow(new MongoOperationTimeoutException("timeout during next call"));
         assertThrows(MongoOperationTimeoutException.class, cursor::next);
-        clearInvocations(coreCursor, newCoreCursor, timeoutContext, changeStreamOperation, readBinding);
+        clearInvocations(this.cursor, newCursor, timeoutContext, changeStreamOperation, readBinding);
 
         //when second next operation errors on resume attempt when creating change stream
         when(changeStreamOperation.execute(eq(readBinding), any())).thenThrow(
@@ -315,11 +315,11 @@ final class ChangeStreamBatchCursorTest {
         //then
         verifyResumeAttemptCalled();
         verifyNoMoreInteractions(changeStreamOperation);
-        verifyNoInteractions(newCoreCursor);
-        clearInvocations(coreCursor, newCoreCursor, timeoutContext, changeStreamOperation, readBinding);
+        verifyNoInteractions(newCursor);
+        clearInvocations(this.cursor, newCursor, timeoutContext, changeStreamOperation, readBinding);
 
         //when third next operation errors with cursor closed exception
-        doThrow(new IllegalStateException(MESSAGE_IF_CLOSED_AS_CURSOR)).when(coreCursor).next(any());
+        doThrow(new IllegalStateException(MESSAGE_IF_CLOSED_AS_CURSOR)).when(this.cursor).next(any());
         MongoException mongoException = assertThrows(MongoException.class, cursor::next);
 
         //then
@@ -329,23 +329,23 @@ final class ChangeStreamBatchCursorTest {
 
     private ChangeStreamBatchCursor<Document> createChangeStreamCursor() {
         ChangeStreamBatchCursor<Document> cursor =
-                new ChangeStreamBatchCursor<>(changeStreamOperation, coreCursor, readBinding, operationContext, null, maxWireVersion);
-        clearInvocations(coreCursor, newCoreCursor, timeoutContext, changeStreamOperation, readBinding);
+                new ChangeStreamBatchCursor<>(changeStreamOperation, this.cursor, readBinding, operationContext, null, maxWireVersion);
+        clearInvocations(this.cursor, newCursor, timeoutContext, changeStreamOperation, readBinding);
         return cursor;
     }
 
     private void verifyNoResumeAttemptCalled() {
         verifyNoInteractions(changeStreamOperation);
-        verifyNoInteractions(newCoreCursor);
+        verifyNoInteractions(newCursor);
         verifyNoInteractions(readBinding);
     }
 
 
     private void verifyResumeAttemptCalled() {
-        verify(coreCursor, times(1)).close(any());
+        verify(cursor, times(1)).close(any());
         verify(changeStreamOperation).setChangeStreamOptionsForResume(resumeToken, maxWireVersion);
         verify(changeStreamOperation, times(1)).execute(eq(readBinding), any());
-        verifyNoMoreInteractions(coreCursor);
+        verifyNoMoreInteractions(cursor);
     }
 
     @BeforeEach
@@ -379,17 +379,17 @@ final class ChangeStreamBatchCursorTest {
         when(readBinding.getReadConnectionSource(any())).thenReturn(connectionSource);
 
 
-        coreCursor = mock(CoreCursor.class);
-        when(coreCursor.getPostBatchResumeToken()).thenReturn(resumeToken);
-        doNothing().when(coreCursor).close(any());
+        cursor = mock(Cursor.class);
+        when(cursor.getPostBatchResumeToken()).thenReturn(resumeToken);
+        doNothing().when(cursor).close(any());
 
-        newCoreCursor = mock(CoreCursor.class);
-        when(newCoreCursor.getPostBatchResumeToken()).thenReturn(resumeToken);
-        when(newCoreCursor.next(any())).thenReturn(RESULT_FROM_NEW_CURSOR);
-        doNothing().when(newCoreCursor).close(any());
+        newCursor = mock(Cursor.class);
+        when(newCursor.getPostBatchResumeToken()).thenReturn(resumeToken);
+        when(newCursor.next(any())).thenReturn(RESULT_FROM_NEW_CURSOR);
+        doNothing().when(newCursor).close(any());
 
         newChangeStreamCursor = mock(ChangeStreamBatchCursor.class);
-        when(newChangeStreamCursor.getWrapped()).thenReturn(newCoreCursor);
+        when(newChangeStreamCursor.getWrapped()).thenReturn(newCursor);
 
         changeStreamOperation = mock(ChangeStreamOperation.class);
         when(changeStreamOperation.getDecoder()).thenReturn(new DocumentCodec());
