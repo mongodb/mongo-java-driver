@@ -427,7 +427,7 @@ class MongoCryptImpl implements MongoCrypt {
     }
 
     /**
-     * Configures the main mongocrypt instance the given supplier that indicates if configuration was successful or not.
+     * Configures the main mongocrypt instance with the given supplier that indicates if configuration was successful or not.
      * <p>
      * Throws an exception derived from the mongocrypt status if the configuration fails.
      */
