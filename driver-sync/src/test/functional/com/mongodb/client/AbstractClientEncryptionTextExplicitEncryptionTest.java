@@ -61,7 +61,7 @@ import static util.JsonPoweredTestHelper.getTestDocument;
 
 public abstract class AbstractClientEncryptionTextExplicitEncryptionTest {
 
-    private static final ServerVersion REQUIRED_LIB_MONGOCRYPT_VERSION = new ServerVersion(asList(1, 5, 1));
+    private static final ServerVersion REQUIRED_LIB_MONGOCRYPT_VERSION = new ServerVersion(asList(1, 15, 1));
     private MongoClient encryptedClient;
     private MongoDatabase encryptedDatabase;
     private ClientEncryption clientEncryption;
