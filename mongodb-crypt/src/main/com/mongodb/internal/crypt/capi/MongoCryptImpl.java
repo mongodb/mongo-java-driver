@@ -438,7 +438,7 @@ class MongoCryptImpl implements MongoCrypt {
     }
 
     /**
-     * Configures a mongocrypt_ctx_t context instance the given supplier that indicates if configuration was successful or not.
+     * Configures a mongocrypt_ctx_t context instance with the given supplier that indicates if configuration was successful or not.
      * <p>
      * Throws an exception derived from the contexts mongocrypt status if the configuration fails.
      */
