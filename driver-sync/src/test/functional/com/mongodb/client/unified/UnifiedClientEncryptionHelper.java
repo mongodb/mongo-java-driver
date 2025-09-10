@@ -65,8 +65,15 @@ public final class UnifiedClientEncryptionHelper {
             switch (kmsProviderKey) {
                 case "aws":
                 case "aws:name1":
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "accessKeyId", "AWS_ACCESS_KEY_ID");
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "secretAccessKey", "AWS_SECRET_ACCESS_KEY");
+                    // awsTemporary uses `aws` and includes a `sessionToken`.
+                    if (kmsProviderOptions.containsKey("sessionToken")) {
+                        setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "accessKeyId", "AWS_TEMP_ACCESS_KEY_ID");
+                        setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "secretAccessKey", "AWS_TEMP_SECRET_ACCESS_KEY");
+                        setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "sessionToken", "AWS_TEMP_SESSION_TOKEN");
+                    } else {
+                        setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "accessKeyId", "AWS_ACCESS_KEY_ID");
+                        setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "secretAccessKey", "AWS_SECRET_ACCESS_KEY");
+                    }
                     break;
                 case "aws:name2":
                     setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "accessKeyId", "AWS_ACCESS_KEY_ID_AWS_KMS_NAMED");
@@ -160,7 +167,7 @@ public final class UnifiedClientEncryptionHelper {
             }
 
             BsonValue kmsValue = kmsProviderOptions.get(key);
-            if (kmsValue.isString()) {
+            if (kmsValue.isString() && !key.equals("sessionToken")) {
                 kmsProviderMap.put(key, decodeKmsProviderString(kmsValue.asString().getValue()));
             } else {
                 kmsProviderMap.put(key, kmsValue);
