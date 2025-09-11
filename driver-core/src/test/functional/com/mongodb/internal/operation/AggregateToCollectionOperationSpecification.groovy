@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation
 
+import com.mongodb.ClusterFixture
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoWriteConcernException
@@ -275,8 +276,9 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
     def 'should apply comment'() {
         given:
         def profileCollectionHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'system.profile'))
+        def binding = getBinding()
         new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(2)),
-                new BsonDocumentCodec()).execute(getBinding())
+                new BsonDocumentCodec()).execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
         def expectedComment = 'this is a comment'
         AggregateToCollectionOperation operation = createOperation(getNamespace(),
                 [Aggregates.out('outputCollection').toBsonDocument(BsonDocument, registry)], ACKNOWLEDGED)
@@ -291,7 +293,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
 
         cleanup:
         new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)),
-                new BsonDocumentCodec()).execute(getBinding())
+                new BsonDocumentCodec()).execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
         profileCollectionHelper.drop()
 
         where:

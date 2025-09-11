@@ -17,12 +17,13 @@
 package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ReadOperationCursor;
 
 public interface ReadOperationCursorAsyncOnly<T> extends ReadOperationCursor<T> {
 
-    default BatchCursor<T> execute(final ReadBinding binding) {
+    default BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
         throw new UnsupportedOperationException("This operation is async only");
     }
 

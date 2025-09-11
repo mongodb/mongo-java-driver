@@ -232,7 +232,7 @@ public final class GridFSBucketImpl implements GridFSBucket {
     @Override
     public GridFSDownloadPublisher downloadToPublisher(final String filename, final GridFSDownloadOptions options) {
         Function<Timeout, GridFSFindPublisher> findPublisherCreator =
-                operationTimeout -> createGridFSFindPublisher(filesCollection, null, filename, options, operationTimeout);
+                timeout -> createGridFSFindPublisher(filesCollection, null, filename, options, timeout);
         return createGridFSDownloadPublisher(chunksCollection, null, findPublisherCreator);
     }
 
