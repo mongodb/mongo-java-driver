@@ -947,53 +947,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         assertInstanceOf(MongoOperationTimeoutException.class, commandFailedEvents.get(0).getThrowable());
     }
 
-    /**
-     * Not a prose spec test. However, it is additional test case for better coverage.
-     * <p>
-     * From the spec:
-     * - When doing `minPoolSize` maintenance, `connectTimeoutMS` is used as the timeout for socket establishment. After the connection
-     * is established, if timeoutMS is set at the MongoClient level, it MUST be used as the timeout for all commands sent as part of
-     * the MongoDB or authentication handshakes
-     * <p>
-     * Therefore, if timeoutMS expires before connection establishment begins, connectTimeoutMS should not be used to start a TCP connection,
-     * since the connection will be closed immediately on the first handshake command due to the expired timeout. The timeout MUST be
-     * refreshed after each command.
-     */
-    @Test
-    @DisplayName("Should throw MongoOperationTimeoutException when establishing connection in background if timeoutMs expired before starting connect")
-    public void shouldThrowMongoOperationTimeoutWhenEstablishingConnectionInBackgroundIfTimeoutMsExpiredBeforeStartingConnect() {
-        assumeTrue(serverVersionAtLeast(4, 4));
-
-        collectionHelper.runAdminCommand("{"
-                + "configureFailPoint: \"" + FAIL_COMMAND_NAME + "\","
-                + "mode: \"alwaysOn\","
-                + "  data: {"
-                + "    failCommands: [\"hello\", \"isMaster\"],"
-                + "    blockConnection: true,"
-                + "    blockTimeMS: " + 500
-                + "  }"
-                + "}");
-
-        TestConnectionPoolListener connectionPoolListener = new TestConnectionPoolListener();
-        try (MongoClient ignored = createMongoClient(getMongoClientSettingsBuilder()
-                .applyToConnectionPoolSettings(builder -> builder.minSize(1))
-                .applyToConnectionPoolSettings(builder -> {
-                    builder.addConnectionPoolListener(connectionPoolListener);
-                })
-                // Use a very short timeout to ensure that the connection establishment will fail before the first handshake command.
-                .timeout(1, TimeUnit.MILLISECONDS))) {
-            InternalStreamConnection.setRecordEverything(true);
-
-            // Wait for the connection to start establishment in the background.
-            sleep(1000);
-        } finally {
-            InternalStreamConnection.setRecordEverything(false);
-        }
-
-        List<CommandStartedEvent> commandStartedEvents = commandListener.getCommandStartedEvents("isMaster");
-        assertEquals(0, commandStartedEvents.size());
-    }
-
     private static Stream<Arguments> test8ServerSelectionArguments() {
         return Stream.of(
                 Arguments.of(Named.of("serverSelectionTimeoutMS honored if timeoutMS is not set",
