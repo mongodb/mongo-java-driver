@@ -17,6 +17,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.Function;
 import com.mongodb.MongoConnectionPoolClearedException;
+import com.mongodb.ReadConcern;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
@@ -164,6 +165,17 @@ public class OperationContext {
 
     public OperationContext withNewlyStartedTimeout() {
         return withTimeoutContext(timeoutContext.withNewlyStartedTimeout());
+    }
+
+    /**
+     * Create a new OperationContext with a SessionContext that does not send a session ID.
+     * <p>
+     * The driver MUST NOT append a session ID to any command sent during the process of
+     * opening and authenticating a connection.
+     */
+    public OperationContext withConnectionEstablishmentSessionContext() {
+        ReadConcern readConcern = getSessionContext().getReadConcern();
+        return withSessionContext(new ReadConcernAwareNoOpSessionContext(readConcern));
     }
 
     public OperationContext withMinRoundTripTime(final ServerDescription serverDescription) {
