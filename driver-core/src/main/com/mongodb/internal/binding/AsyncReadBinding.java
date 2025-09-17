@@ -18,13 +18,14 @@ package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.connection.OperationContext;
 
 /**
  * An asynchronous factory of connection sources to servers that can be read from and that satisfy the specified read preference.
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public interface AsyncReadBinding extends BindingContext, ReferenceCounted {
+public interface AsyncReadBinding extends ReferenceCounted {
     /**
      * The read preference that all connection sources returned by this instance will satisfy.
      * @return the non-null read preference
@@ -33,9 +34,10 @@ public interface AsyncReadBinding extends BindingContext, ReferenceCounted {
 
     /**
      * Returns a connection source to a server that satisfies the read preference with which this instance is configured.
+     * @param operationContext the operation context to use
      * @param callback the to be passed the connection source
      */
-    void getReadConnectionSource(SingleResultCallback<AsyncConnectionSource> callback);
+    void getReadConnectionSource(OperationContext operationContext, SingleResultCallback<AsyncConnectionSource> callback);
 
     /**
      * Return a connection source that satisfies the read preference with which this instance is configured, if all connected servers have
@@ -48,6 +50,7 @@ public interface AsyncReadBinding extends BindingContext, ReferenceCounted {
      * @see com.mongodb.internal.operation.AggregateToCollectionOperation
      */
     void getReadConnectionSource(int minWireVersion, ReadPreference fallbackReadPreference,
+            OperationContext operationContext,
             SingleResultCallback<AsyncConnectionSource> callback);
 
     @Override

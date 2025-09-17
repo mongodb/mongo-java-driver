@@ -26,7 +26,6 @@ class AsyncSessionBindingSpecification extends Specification {
     def 'should wrap the passed in async binding'() {
         given:
         def wrapped = Mock(AsyncReadWriteBinding)
-        wrapped.getOperationContext() >> OPERATION_CONTEXT
         def binding = new AsyncSessionBinding(wrapped)
 
         when:
@@ -54,23 +53,16 @@ class AsyncSessionBindingSpecification extends Specification {
         1 * wrapped.release()
 
         when:
-        binding.getReadConnectionSource(Stub(SingleResultCallback))
+        binding.getReadConnectionSource(OPERATION_CONTEXT, Stub(SingleResultCallback))
 
         then:
-        1 * wrapped.getReadConnectionSource(_)
+        1 * wrapped.getReadConnectionSource(OPERATION_CONTEXT, _)
 
         when:
-        binding.getWriteConnectionSource(Stub(SingleResultCallback))
+        binding.getWriteConnectionSource(OPERATION_CONTEXT, Stub(SingleResultCallback))
 
         then:
-        1 * wrapped.getWriteConnectionSource(_)
-
-        when:
-        def context = binding.getOperationContext().getSessionContext()
-
-        then:
-        0 * wrapped.getOperationContext().getSessionContext()
-        context instanceof SimpleSessionContext
+        1 * wrapped.getWriteConnectionSource(OPERATION_CONTEXT, _)
     }
 
 }

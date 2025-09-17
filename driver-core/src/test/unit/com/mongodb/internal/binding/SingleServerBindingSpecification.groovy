@@ -41,22 +41,12 @@ class SingleServerBindingSpecification extends Specification {
                             .build())
         }
         def address = new ServerAddress()
-        def operationContext = OPERATION_CONTEXT
 
         when:
-
-        def binding = new SingleServerBinding(cluster, address, operationContext)
+        def binding = new SingleServerBinding(cluster, address)
 
         then:
         binding.readPreference == ReadPreference.primary()
-        binding.getOperationContext() == operationContext
-
-
-        when:
-        def source = binding.getReadConnectionSource()
-
-        then:
-        source.getOperationContext() == operationContext
     }
 
     def 'should increment and decrement reference counts'() {
@@ -72,13 +62,13 @@ class SingleServerBindingSpecification extends Specification {
         def address = new ServerAddress()
 
         when:
-        def binding = new SingleServerBinding(cluster, address, OPERATION_CONTEXT)
+        def binding = new SingleServerBinding(cluster, address)
 
         then:
         binding.count == 1
 
         when:
-        def source = binding.getReadConnectionSource()
+        def source = binding.getReadConnectionSource(OPERATION_CONTEXT)
 
         then:
         source.count == 1
@@ -106,7 +96,7 @@ class SingleServerBindingSpecification extends Specification {
         binding.count == 1
 
         when:
-        source = binding.getWriteConnectionSource()
+        source = binding.getWriteConnectionSource(OPERATION_CONTEXT)
 
         then:
         source.count == 1
