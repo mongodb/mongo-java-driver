@@ -44,6 +44,9 @@ import static java.lang.String.format;
 
 final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private final AsyncReadBinding binding;
+    /**
+     * The initial operation context, which is used as an initial state to create new operation contexts for each operation.
+     */
     private final OperationContext initialOperationContext;
     private final ChangeStreamOperation<T> changeStreamOperation;
     private final int maxWireVersion;
