@@ -19,6 +19,7 @@ package org.bson.codecs.pojo;
 import org.bson.codecs.pojo.entities.DiscriminatorModel;
 import org.bson.codecs.pojo.entities.DiscriminatorWithGetterModel;
 import org.bson.codecs.pojo.entities.DiscriminatorWithProperty;
+import org.bson.codecs.pojo.entities.DiscriminatorWithPropertyAndIgnore;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -67,6 +68,14 @@ public final class PojoCodecDiscriminatorTest extends PojoTestCase {
     public void testDiscriminatorRoundTripWhenItIsAlsoAProperty() {
         roundTrip(
                 new DiscriminatorWithProperty(),
+                "{discriminatorKey:'discriminatorValue'}"
+        );
+    }
+
+    @Test
+    public void testDiscriminatorRoundTripWhenItIsAlsoAPropertyWithIgnoredProperty() {
+        roundTrip(
+                new DiscriminatorWithPropertyAndIgnore(),
                 "{discriminatorKey:'discriminatorValue'}"
         );
     }

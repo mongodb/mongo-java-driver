@@ -244,7 +244,7 @@ final class ConventionAnnotationImpl implements Convention {
             if (!propertyModelBuilder.isReadable() && !propertyModelBuilder.isWritable()) {
                 propertiesToRemove.add(propertyModelBuilder.getName());
             }
-            if (classModelBuilder.useDiscriminator() && propertyModelBuilder.getReadName().equals(classModelBuilder.getDiscriminatorKey())) {
+            if (classModelBuilder.useDiscriminator() && classModelBuilder.getDiscriminatorKey().equals(propertyModelBuilder.getReadName())) {
                 propertiesToRemove.add(propertyModelBuilder.getName());
                 LOGGER.warn(
                         format(
