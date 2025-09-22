@@ -15,7 +15,7 @@
  */
 
 /**
- * This package contains classes that internal client classes.
+ * This package contains classes for internal client functionality.
  */
 
 @NonNullApi
