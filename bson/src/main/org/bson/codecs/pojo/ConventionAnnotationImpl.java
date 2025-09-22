@@ -34,6 +34,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Map;
 
 import static java.lang.String.format;
@@ -244,7 +245,7 @@ final class ConventionAnnotationImpl implements Convention {
             if (!propertyModelBuilder.isReadable() && !propertyModelBuilder.isWritable()) {
                 propertiesToRemove.add(propertyModelBuilder.getName());
             }
-            if (classModelBuilder.useDiscriminator() && propertyModelBuilder.getReadName().equals(classModelBuilder.getDiscriminatorKey())) {
+            if (classModelBuilder.useDiscriminator() && Objects.equals(classModelBuilder.getDiscriminatorKey(), propertyModelBuilder.getReadName())) {
                 propertiesToRemove.add(propertyModelBuilder.getName());
                 LOGGER.warn(
                         format(
