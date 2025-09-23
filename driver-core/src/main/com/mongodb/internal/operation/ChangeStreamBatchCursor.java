@@ -82,7 +82,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
                             final int maxWireVersion) {
         this.changeStreamOperation = changeStreamOperation;
         this.binding = binding.retain();
-        this.initialOperationContext = initialOperationContext.withOverride(TimeoutContext::withMaxTimeAsMaxAwaitTimeOverride);
+        this.initialOperationContext = operationContext.withOverride(TimeoutContext::withMaxTimeAsMaxAwaitTimeOverride);
         this.wrapped = wrapped;
         this.resumeToken = resumeToken;
         this.maxWireVersion = maxWireVersion;
@@ -96,23 +96,23 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
 
     @Override
     public boolean hasNext() {
-        return resumeableOperation((coreCursor, operationContext) -> {
+        return resumeableOperation((cursor, operationContext) -> {
             try {
-                return coreCursor.hasNext(operationContext);
+                return cursor.hasNext(operationContext);
             } finally {
-                cachePostBatchResumeToken(coreCursor);
+                cachePostBatchResumeToken(cursor);
             }
         });
     }
 
     @Override
     public List<T> next() {
-        return resumeableOperation((coreCursor, operationContext) -> {
+        return resumeableOperation((cursor, operationContext) -> {
             try {
-                return convertAndProduceLastId(coreCursor.next(operationContext), changeStreamOperation.getDecoder(),
+                return convertAndProduceLastId(cursor.next(operationContext), changeStreamOperation.getDecoder(),
                         lastId -> resumeToken = lastId);
             } finally {
-                cachePostBatchResumeToken(coreCursor);
+                cachePostBatchResumeToken(cursor);
             }
         });
     }
@@ -124,13 +124,13 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
 
     @Override
     public List<T> tryNext() {
-        return resumeableOperation((coreCursor, operationContext) -> {
+        return resumeableOperation((cursor, operationContext) -> {
             try {
-                List<RawBsonDocument> tryNext = coreCursor.tryNext(operationContext);
+                List<RawBsonDocument> tryNext = cursor.tryNext(operationContext);
                 return tryNext == null ? null
                         : convertAndProduceLastId(tryNext, changeStreamOperation.getDecoder(), lastId -> resumeToken = lastId);
             } finally {
-                cachePostBatchResumeToken(coreCursor);
+                cachePostBatchResumeToken(cursor);
             }
         });
     }

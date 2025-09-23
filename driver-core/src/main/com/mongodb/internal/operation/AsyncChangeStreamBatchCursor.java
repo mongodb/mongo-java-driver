@@ -1,5 +1,3 @@
-package com.mongodb.internal.operation;
-
 /*
  * Copyright 2008-present MongoDB, Inc.
  *
