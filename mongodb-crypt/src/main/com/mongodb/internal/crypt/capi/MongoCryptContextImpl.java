@@ -58,7 +58,11 @@ class MongoCryptContextImpl implements MongoCryptContext {
     @Override
     public State getState() {
         isTrue("open", !closed);
-        return State.fromIndex(mongocrypt_ctx_state(wrapped));
+        State state = State.fromIndex(mongocrypt_ctx_state(wrapped));
+        if (state.equals(State.ERROR)) {
+            throwExceptionFromStatus();
+        }
+        return state;
     }
 
     @Override

@@ -60,8 +60,6 @@ echo "Running tests with Java ${JAVA_VERSION}"
       ${GRADLE_EXTRA_VARS} \
       -Dorg.mongodb.test.fle.on.demand.credential.test.failure.enabled=true \
       --stacktrace --info --continue \
-      driver-legacy:test \
-          --tests "*.Client*Encryption*" \
       driver-sync:test \
           --tests "*.Client*Encryption*" \
       driver-reactive-streams:test \

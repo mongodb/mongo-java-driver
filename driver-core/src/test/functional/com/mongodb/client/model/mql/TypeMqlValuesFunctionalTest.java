@@ -29,6 +29,7 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.client.model.mql.MqlValues.of;
 import static com.mongodb.client.model.mql.MqlValues.ofIntegerArray;
 import static com.mongodb.client.model.mql.MqlValues.ofMap;
@@ -173,6 +174,8 @@ class TypeMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
 
     @Test
     public void asStringTest() {
+        assumeTrue(serverVersionLessThan(8, 2)); // TODO JAVA-5960
+
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toString/
         // asString, since toString conflicts
         assertExpression("false", of(false).asString(), "{'$toString': [false]}");

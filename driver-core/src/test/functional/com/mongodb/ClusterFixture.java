@@ -62,6 +62,7 @@ import com.mongodb.internal.connection.StreamFactory;
 import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.internal.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.internal.connection.netty.NettyStreamFactoryFactory;
+import com.mongodb.internal.crypt.capi.CAPI;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.CommandReadOperation;
 import com.mongodb.internal.operation.DropDatabaseOperation;
@@ -148,6 +149,7 @@ public final class ClusterFixture {
     private static final Map<ReadPreference, SimpleSessionContext> ASYNC_SESSION_CONTEXT_MAP = new HashMap<>();
     private static final Map<ReadPreference, AsyncReadWriteBinding> ASYNC_BINDING_MAP = new HashMap<>();
 
+    private static ServerVersion mongoCryptVersion;
     private static ServerVersion serverVersion;
     private static BsonDocument serverParameters;
 
@@ -179,6 +181,13 @@ public final class ClusterFixture {
         } catch (InterruptedException e) {
             throw interruptAndCreateMongoInterruptedException("Interrupted", e);
         }
+    }
+
+    public static ServerVersion getMongoCryptVersion() {
+        if (mongoCryptVersion == null) {
+            mongoCryptVersion = new ServerVersion(getVersionList(CAPI.mongocrypt_version(null).toString()));
+        }
+        return mongoCryptVersion;
     }
 
     public static ServerVersion getServerVersion() {

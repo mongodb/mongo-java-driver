@@ -18,7 +18,7 @@ package org.mongodb.scala.unified
 
 import com.mongodb.client.gridfs.{ GridFSBucket => JGridFSBucket }
 import com.mongodb.client.unified.UnifiedTest.Language
-import com.mongodb.client.unified.{ UnifiedTest, UnifiedTest => JUnifiedTest }
+import com.mongodb.client.unified.{ UnifiedTest => JUnifiedTest }
 import com.mongodb.client.vault.{ ClientEncryption => JClientEncryption }
 import com.mongodb.client.{ MongoClient => JMongoClient, MongoDatabase => JMongoDatabase }
 import com.mongodb.reactivestreams.client.internal.vault.ClientEncryptionImpl
