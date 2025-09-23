@@ -32,51 +32,24 @@ public final class DriverInformationHelper {
                     format("Java/%s/%s", getProperty("java.vendor", "unknown-vendor"),
                                          getProperty("java.runtime.version", "unknown-version")));
 
-    private enum DriverField {
-        DRIVER_NAME,
-        DRIVER_VERSION,
-        DRIVER_PLATFORM
-    }
-
     public static List<String> getNames(final List<DriverInformation> driverInformation) {
-        return getDriverInformation(DriverField.DRIVER_NAME, driverInformation);
+        return getDriverField(DriverInformation::getDriverName, driverInformation);
     }
 
     public static List<String> getVersions(final List<DriverInformation> driverInformation) {
-        return getDriverInformation(DriverField.DRIVER_VERSION, driverInformation);
+        return getDriverInformation(DriverInformation::getDriverVersion, driverInformation);
     }
 
     public static List<String> getPlatforms(final List<DriverInformation> driverInformation) {
-        return getDriverInformation(DriverField.DRIVER_PLATFORM, driverInformation);
+        return getDriverField(DriverInformation::getDriverPlatform, driverInformation);
     }
 
-    private static List<String> getDriverInformation(final DriverField driverField, final List<DriverInformation> driverInformation) {
-        List<String> data = new ArrayList<>();
-        driverInformation.forEach(info -> {
-            switch (driverField) {
-                case DRIVER_NAME:
-                    String name = info.getDriverName();
-                    if (name != null) {
-                        data.add(name);
-                    }
-                    break;
-                case DRIVER_VERSION:
-                    String version = info.getDriverVersion();
-                    if (version != null) {
-                        data.add(version);
-                    }
-                    break;
-                case DRIVER_PLATFORM:
-                    String platform = info.getDriverPlatform();
-                    if (platform != null) {
-                        data.add(platform);
-                    }
-                    break;
-                default:
-                    fail(format("Unknown field: %s", driverField));
-            }
-        });
-        return Collections.unmodifiableList(data);
+    private static List<String> getDriverField(final Function<DriverInformation, String> fieldSupplier,
+                                                                          final List<DriverInformation> driverInformation) {
+        return Collections.unmodifiableList(driverInformation.stream()
+                .map(fieldSupplier)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList()));
     }
 
     private DriverInformationHelper() {
