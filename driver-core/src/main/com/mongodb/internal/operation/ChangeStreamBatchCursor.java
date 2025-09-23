@@ -249,7 +249,6 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
                 .withTimeoutContext(operationContext.getTimeoutContext().withDefaultMaxTime());
 
         wrapped.close(operationContextWithDefaultMaxTime);
-        // TODO-JAVA-5640 why do we initiate server selection here just to get server description and then ignore the selected server further on line 259? So we do two server selections?
         withReadConnectionSource(binding, operationContext, (source, operationContextWithMinRtt) -> {
             changeStreamOperation.setChangeStreamOptionsForResume(resumeToken, source.getServerDescription().getMaxWireVersion());
             return null;

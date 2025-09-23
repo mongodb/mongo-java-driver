@@ -119,22 +119,6 @@ class ClientSessionBindingSpecification extends Specification {
         0 * session.close()
     }
 
-    // TODO-JAVA-5640 move to SessionContext test
-//    def 'owned session is implicit'() {
-//        given:
-//        def session = Mock(ClientSession)
-//        def wrappedBinding = createStubBinding()
-//
-//        when:
-//        def binding = new ClientSessionBinding(session, ownsSession, wrappedBinding)
-//
-//        then:
-//        binding.getOperationContext().getSessionContext().isImplicitSession() == ownsSession
-//
-//        where:
-//        ownsSession << [true, false]
-//    }
-
     private ReadWriteBinding createStubBinding() {
         def cluster = Stub(Cluster)
         new ClusterBinding(cluster, ReadPreference.primary())

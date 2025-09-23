@@ -28,8 +28,6 @@ public class SessionBinding implements ReadWriteBinding {
 
     public SessionBinding(final ReadWriteBinding wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
-        // TODO-JAVA-5640
-       // this.operationContext = wrapped.getOperationContext().withSessionContext(new SimpleSessionContext());
     }
 
     @Override

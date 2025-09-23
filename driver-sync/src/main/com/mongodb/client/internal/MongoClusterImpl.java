@@ -416,9 +416,10 @@ final class MongoClusterImpl implements MongoCluster {
             }
 
             ClientSession actualClientSession = getClientSession(session);
+            boolean implicitSession = isImplicitSession(session);
             OperationContext operationContext = getOperationContext(actualClientSession, readConcern, operation.getCommandName())
-                    .withSessionContext(new ClientSessionBinding.SyncClientSessionContext(actualClientSession, readConcern, isImplicitSession(session)));
-            ReadBinding binding = getReadBinding(readPreference, actualClientSession, isImplicitSession(session));
+                    .withSessionContext(new ClientSessionBinding.SyncClientSessionContext(actualClientSession, readConcern, implicitSession));
+            ReadBinding binding = getReadBinding(readPreference, actualClientSession, implicitSession);
 
             try {
                 if (actualClientSession.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
@@ -476,8 +477,7 @@ final class MongoClusterImpl implements MongoCluster {
             return getReadWriteBinding(primary(), session, ownsSession);
         }
 
-        ReadBinding getReadBinding(final ReadPreference readPreference, final ClientSession session,
-                final boolean ownsSession) {
+        ReadBinding getReadBinding(final ReadPreference readPreference, final ClientSession session, final boolean ownsSession) {
             return getReadWriteBinding(readPreference, session, ownsSession);
         }
 
