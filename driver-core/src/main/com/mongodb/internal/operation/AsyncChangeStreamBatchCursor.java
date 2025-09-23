@@ -63,7 +63,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
     AsyncChangeStreamBatchCursor(final ChangeStreamOperation<T> changeStreamOperation,
                                  final AsyncCursor<RawBsonDocument> wrapped,
                                  final AsyncReadBinding binding,
-                                 final OperationContext initialOperationContext,
+                                 final OperationContext operationContext,
                                  @Nullable final BsonDocument resumeToken,
                                  final int maxWireVersion) {
         this.changeStreamOperation = changeStreamOperation;
