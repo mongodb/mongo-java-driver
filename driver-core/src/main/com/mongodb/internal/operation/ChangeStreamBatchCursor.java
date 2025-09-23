@@ -77,7 +77,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
     ChangeStreamBatchCursor(final ChangeStreamOperation<T> changeStreamOperation,
                             final Cursor<RawBsonDocument> wrapped,
                             final ReadBinding binding,
-                            final OperationContext initialOperationContext,
+                            final OperationContext operationContext,
                             @Nullable final BsonDocument resumeToken,
                             final int maxWireVersion) {
         this.changeStreamOperation = changeStreamOperation;
