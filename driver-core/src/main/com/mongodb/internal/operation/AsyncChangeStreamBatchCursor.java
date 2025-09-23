@@ -83,8 +83,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
 
     @Override
     public void next(final SingleResultCallback<List<T>> callback) {
-        OperationContext operationContext = initialOperationContext.withNewlyStartedTimeout();
-        resumeableOperation(AsyncCursor::next, callback, operationContext, false);
+        resumeableOperation(AsyncCursor::next, callback, initialOperationContext.withNewlyStartedTimeout(), false);
     }
 
     @Override
