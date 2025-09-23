@@ -7,6 +7,13 @@ package com.mongodb.internal.operation;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
+/*
+ * Copyright 2008-present MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -15,6 +22,8 @@ package com.mongodb.internal.operation;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+package com.mongodb.internal.operation;
 
 
 import com.mongodb.MongoException;
