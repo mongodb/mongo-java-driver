@@ -174,8 +174,6 @@ class TypeMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
 
     @Test
     public void asStringTest() {
-        assumeTrue(serverVersionLessThan(8, 2)); // TODO JAVA-5960
-
         // https://www.mongodb.com/docs/manual/reference/operator/aggregation/toString/
         // asString, since toString conflicts
         assertExpression("false", of(false).asString(), "{'$toString': [false]}");
@@ -189,14 +187,25 @@ class TypeMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
 
         // this is equivalent to $dateToString
         assertExpression("1970-01-01T00:00:00.123Z", of(Instant.ofEpochMilli(123)).asString());
+    }
+
+    @Test
+    public void asStringTestNestedPre82() {
+        assumeTrue(serverVersionLessThan(8, 2));
 
         // Arrays and documents are not (yet) supported:
         assertThrows(MongoCommandException.class, () ->
-                assertExpression("[]", ofIntegerArray(1, 2).asString()));
+                assertExpression("[1,2]", ofIntegerArray(1, 2).asString()));
         assertThrows(MongoCommandException.class, () ->
-                assertExpression("[1, 2]", ofIntegerArray(1, 2).asString()));
-        assertThrows(MongoCommandException.class, () ->
-                assertExpression("{a: 1}", of(Document.parse("{a: 1}")).asString()));
+                assertExpression("{\"a\":1}", of(Document.parse("{a: 1}")).asString()));
+    }
+
+    @Test
+    public void asStringTestNested() {
+        assumeTrue(serverVersionAtLeast(8, 2));
+
+        assertExpression("[1,2]", ofIntegerArray(1, 2).asString());
+        assertExpression("{\"a\":1}", of(Document.parse("{a: 1}")).asString());
     }
 
     @Test
