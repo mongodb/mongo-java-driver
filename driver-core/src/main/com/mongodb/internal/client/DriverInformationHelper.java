@@ -17,11 +17,12 @@ package com.mongodb.internal.client;
 
 import com.mongodb.internal.build.MongoDriverVersion;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import static com.mongodb.assertions.Assertions.fail;
 import static java.lang.String.format;
 import static java.lang.System.getProperty;
 
@@ -37,7 +38,7 @@ public final class DriverInformationHelper {
     }
 
     public static List<String> getVersions(final List<DriverInformation> driverInformation) {
-        return getDriverInformation(DriverInformation::getDriverVersion, driverInformation);
+        return getDriverField(DriverInformation::getDriverVersion, driverInformation);
     }
 
     public static List<String> getPlatforms(final List<DriverInformation> driverInformation) {
