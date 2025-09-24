@@ -174,6 +174,10 @@ class UpdatesSpecification extends Specification {
                                                                                                   }''')
     }
 
+    def 'should set document'() {
+        toBson(set(parse('{ a : 1, b: "two"}'))) == parse('{$set : {a: 1, b: "two"} }')
+    }
+
     def 'should create string representation for simple updates'() {
         expect:
         set('x', 1).toString() == 'Update{fieldName=\'x\', operator=\'$set\', value=1}'
