@@ -395,12 +395,13 @@ class AggregateIterableSpecification extends Specification {
         given:
         def cannedResults = [new Document('_id', 1), new Document('_id', 2), new Document('_id', 3)]
         def cursor = {
+            def batchToReturn = cannedResults.collect()
             Stub(BatchCursor) {
                 def count = 0
                 def results
                 def getResult = {
                     count++
-                    results = count == 1 ? cannedResults : null
+                    results = count == 1 ? batchToReturn : null
                     results
                 }
                 next() >> {
@@ -591,12 +592,13 @@ class AggregateIterableSpecification extends Specification {
         given:
         def cannedResults = [new Document('_id', 1), new Document('_id', 2), new Document('_id', 3)]
         def cursor = {
+            def batchToReturn = cannedResults.collect()
             Stub(BatchCursor) {
                 def count = 0
                 def results
                 def getResult = {
                     count++
-                    results = count == 1 ? cannedResults : null
+                    results = count == 1 ? batchToReturn : null
                     results
                 }
                 next() >> {

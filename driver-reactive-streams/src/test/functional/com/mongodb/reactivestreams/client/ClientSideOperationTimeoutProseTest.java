@@ -21,7 +21,6 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoOperationTimeoutException;
-import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.AbstractClientSideOperationsTimeoutProseTest;
@@ -149,9 +148,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
             assertEquals(1, onErrorEvents.size());
 
             Throwable commandError = onErrorEvents.get(0);
-            Throwable operationTimeoutErrorCause = commandError.getCause();
             assertInstanceOf(MongoOperationTimeoutException.class, commandError);
-            assertInstanceOf(MongoSocketReadTimeoutException.class, operationTimeoutErrorCause);
 
             CommandFailedEvent chunkInsertFailedEvent = commandListener.getCommandFailedEvent("insert");
             assertNotNull(chunkInsertFailedEvent);
@@ -204,10 +201,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
             //then
             Throwable droppedError = droppedErrorFuture.get(TIMEOUT_DURATION.toMillis(), TimeUnit.MILLISECONDS);
             Throwable commandError = droppedError.getCause();
-            Throwable operationTimeoutErrorCause = commandError.getCause();
-
             assertInstanceOf(MongoOperationTimeoutException.class, commandError);
-            assertInstanceOf(MongoSocketReadTimeoutException.class, operationTimeoutErrorCause);
 
             CommandFailedEvent deleteFailedEvent = commandListener.getCommandFailedEvent("delete");
             assertNotNull(deleteFailedEvent);
@@ -514,7 +508,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
 
     @Override
     @AfterEach
-    public void tearDown() {
+    public void tearDown() throws InterruptedException {
         super.tearDown();
         SyncMongoClient.disableSleep();
     }

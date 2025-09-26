@@ -22,6 +22,8 @@ import java.util.concurrent.TimeUnit;
  * A point in time used to track how much time has elapsed. In contrast to a
  * Timeout, it is guaranteed to not be in the future, and is never infinite.
  *
+ * Implementations of this interface must be immutable.
+ *
  * @see TimePoint
  */
 public interface StartTime {

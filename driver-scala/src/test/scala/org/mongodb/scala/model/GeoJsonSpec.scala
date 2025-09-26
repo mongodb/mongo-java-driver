@@ -28,7 +28,7 @@ class GeoJsonSpec extends BaseSpec {
 
   it should "have the same methods as the wrapped CoordinateReferenceSystemType" in {
     val wrapped = classOf[geojson.CoordinateReferenceSystemType].getDeclaredFields
-      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers))
+      .filter(f => isPublic(f.getModifiers))
       .map(_.getName)
       .toSet
     val local = CoordinateReferenceSystemType.getClass.getDeclaredMethods
@@ -41,7 +41,7 @@ class GeoJsonSpec extends BaseSpec {
 
   it should "have the same methods as the wrapped GeoJsonObjectType" in {
     val wrapped = classOf[geojson.GeoJsonObjectType].getDeclaredFields
-      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers))
+      .filter(f => isPublic(f.getModifiers))
       .map(_.getName)
       .toSet
     val local = GeoJsonObjectType.getClass.getDeclaredMethods.filter(f => isPublic(f.getModifiers)).map(_.getName).toSet
