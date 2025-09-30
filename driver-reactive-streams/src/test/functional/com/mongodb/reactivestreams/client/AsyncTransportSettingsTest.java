@@ -48,7 +48,7 @@ class AsyncTransportSettingsTest {
                 .transportSettings(asyncTransportSettings)
                 .build();
 
-        try (MongoClient client = new SyncMongoClient(mongoClientSettings);) {
+        try (MongoClient client = new SyncMongoClient(mongoClientSettings)) {
             client.listDatabases().first();
         }
         verify(executorService, atLeastOnce()).execute(any());
@@ -67,7 +67,7 @@ class AsyncTransportSettingsTest {
                 .transportSettings(asyncTransportSettings)
                 .build();
 
-        try (MongoClient ignored = new SyncMongoClient(mongoClientSettings);) {
+        try (MongoClient ignored = new SyncMongoClient(mongoClientSettings)) {
             // ignored
         }
 
