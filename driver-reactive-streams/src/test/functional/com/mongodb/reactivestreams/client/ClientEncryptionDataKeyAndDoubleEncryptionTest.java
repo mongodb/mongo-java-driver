@@ -73,7 +73,7 @@ public class ClientEncryptionDataKeyAndDoubleEncryptionTest {
 
         // Step 1: create unencrypted client
         commandListener = new TestCommandListener();
-        client = new SyncMongoClient(MongoClients.create(getMongoClientSettingsBuilder().addCommandListener(commandListener).build()));
+        client = new SyncMongoClient(getMongoClientSettingsBuilder().addCommandListener(commandListener));
         client.getDatabase("keyvault").getCollection("datakeys").drop();
         client.getDatabase("db").getCollection("coll").drop();
 
@@ -114,12 +114,11 @@ public class ClientEncryptionDataKeyAndDoubleEncryptionTest {
         }};
 
         String keyVaultNamespace = "keyvault.datakeys";
-        clientEncrypted = new SyncMongoClient(MongoClients.create(getMongoClientSettingsBuilder()
+        clientEncrypted = new SyncMongoClient(getMongoClientSettingsBuilder()
                 .autoEncryptionSettings(AutoEncryptionSettings.builder()
                         .keyVaultNamespace(keyVaultNamespace)
                         .kmsProviders(kmsProviders)
                         .schemaMap(schemaMap)
-                .build())
                 .build()));
 
         clientEncryption = ClientEncryptions.create(

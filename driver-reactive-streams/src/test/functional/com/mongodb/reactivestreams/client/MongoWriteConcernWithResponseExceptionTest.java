@@ -25,7 +25,6 @@ import org.junit.Test;
 public class MongoWriteConcernWithResponseExceptionTest {
     @Test
     public void doesNotLeak() throws InterruptedException {
-        com.mongodb.client.MongoWriteConcernWithResponseExceptionTest.doesNotLeak(
-                mongoClientSettings -> new SyncMongoClient(MongoClients.create(mongoClientSettings)));
+        com.mongodb.client.MongoWriteConcernWithResponseExceptionTest.doesNotLeak(SyncMongoClient::new);
     }
 }

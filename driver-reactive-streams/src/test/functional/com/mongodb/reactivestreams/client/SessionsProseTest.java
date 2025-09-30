@@ -24,6 +24,6 @@ import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 public class SessionsProseTest extends AbstractSessionsProseTest {
     @Override
     protected MongoClient getMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
+        return new SyncMongoClient(settings);
     }
 }
