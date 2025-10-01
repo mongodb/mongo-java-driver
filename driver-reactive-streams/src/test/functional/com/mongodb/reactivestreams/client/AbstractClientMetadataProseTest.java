@@ -29,6 +29,6 @@ import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 class ClientMetadataProseTest extends AbstractClientMetadataProseTest {
 
     protected MongoClient createMongoClient(@Nullable final MongoDriverInformation mongoDriverInformation, final MongoClientSettings mongoClientSettings) {
-        return new SyncMongoClient(MongoClients.create(mongoClientSettings, mongoDriverInformation));
+        return new SyncMongoClient(mongoClientSettings, mongoDriverInformation);
     }
 }

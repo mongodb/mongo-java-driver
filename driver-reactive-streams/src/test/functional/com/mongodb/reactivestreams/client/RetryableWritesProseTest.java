@@ -48,7 +48,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
     @Test
     public void poolClearedExceptionMustBeRetryable() throws InterruptedException, ExecutionException, TimeoutException {
         com.mongodb.client.RetryableWritesProseTest.poolClearedExceptionMustBeRetryable(
-                mongoClientSettings -> new SyncMongoClient(MongoClients.create(mongoClientSettings)),
+                SyncMongoClient::new,
                 mongoCollection -> mongoCollection.insertOne(new Document()), "insert", true);
     }
 
@@ -58,7 +58,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
     @Test
     public void originalErrorMustBePropagatedIfNoWritesPerformed() throws InterruptedException {
         com.mongodb.client.RetryableWritesProseTest.originalErrorMustBePropagatedIfNoWritesPerformed(
-                mongoClientSettings -> new SyncMongoClient(MongoClients.create(mongoClientSettings)));
+                SyncMongoClient::new);
     }
 
     /**
@@ -67,7 +67,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
     @Test
     public void retriesOnDifferentMongosWhenAvailable() {
         com.mongodb.client.RetryableWritesProseTest.retriesOnDifferentMongosWhenAvailable(
-                mongoClientSettings -> new SyncMongoClient(MongoClients.create(mongoClientSettings)),
+                SyncMongoClient::new,
                 mongoCollection -> mongoCollection.insertOne(new Document()), "insert", true);
     }
 
@@ -77,7 +77,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
     @Test
     public void retriesOnSameMongosWhenAnotherNotAvailable() {
         com.mongodb.client.RetryableWritesProseTest.retriesOnSameMongosWhenAnotherNotAvailable(
-                mongoClientSettings -> new SyncMongoClient(MongoClients.create(mongoClientSettings)),
+                SyncMongoClient::new,
                 mongoCollection -> mongoCollection.insertOne(new Document()), "insert", true);
     }
 }

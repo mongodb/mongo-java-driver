@@ -28,7 +28,7 @@ public class ClientSideEncryption25LookupProseTests extends com.mongodb.client.C
 
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
+        return new SyncMongoClient(settings);
     }
 
     @Override
