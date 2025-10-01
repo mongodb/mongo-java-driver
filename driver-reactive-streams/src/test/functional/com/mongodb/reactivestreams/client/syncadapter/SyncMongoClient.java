@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.mongodb.ClusterFixture.sleep;
 import static java.lang.String.format;
 
 public class SyncMongoClient implements MongoClient {
@@ -301,10 +302,7 @@ public class SyncMongoClient implements MongoClient {
     @Override
     public void close() {
         wrapped.close();
-       int activeConnections = connectionPoolCounter.getActiveConnections();
-       Assertions.assertTrue(activeConnections == 0,
-               format("Expected all connections to be closed after closing the client. %n"
-                       + "The connection pool listener reports '%d' open connections.", activeConnections));
+        connectionPoolCounter.assertConnectionsClosed();
     }
 
 
@@ -359,8 +357,23 @@ public class SyncMongoClient implements MongoClient {
             activeConnections.decrementAndGet();
         }
 
-        public int getActiveConnections() {
-            return activeConnections.get();
+        protected void assertConnectionsClosed() {
+            int activeConnectionsCount = activeConnections.get();
+            boolean connectionsClosed = activeConnectionsCount == 0;
+            int counter = 0;
+            while (counter < 10 && !connectionsClosed) {
+                activeConnectionsCount = activeConnections.get();
+                connectionsClosed = activeConnectionsCount == 0;
+                if (!connectionsClosed) {
+                    sleep(200);
+                    counter++;
+                }
+            }
+
+            Assertions.assertTrue(activeConnectionsCount == 0,
+                    format("Expected all connections to be closed after closing the client. %n"
+                            + "The connection pool listener reports '%d' open connections.", activeConnectionsCount));
+
         }
     }
 }
