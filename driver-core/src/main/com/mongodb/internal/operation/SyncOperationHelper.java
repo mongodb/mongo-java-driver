@@ -97,6 +97,10 @@ final class SyncOperationHelper {
 
     private static final BsonDocumentCodec BSON_DOCUMENT_CODEC = new BsonDocumentCodec();
 
+    /**
+     * Gets a {@link ConnectionSource} from the {@link ReadBinding#getReadConnectionSource()} and executes
+     * the provided {@link  CallableWithSource} with it.
+     */
     static <T> T withReadConnectionSource(final ReadBinding binding, final CallableWithSource<T> callable) {
         ConnectionSource source = binding.getReadConnectionSource();
         try {
