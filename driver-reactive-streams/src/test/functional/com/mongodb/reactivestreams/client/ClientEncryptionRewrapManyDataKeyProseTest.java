@@ -28,7 +28,7 @@ public class ClientEncryptionRewrapManyDataKeyProseTest extends AbstractClientEn
 
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
+        return new SyncMongoClient(settings);
     }
 
     @Override

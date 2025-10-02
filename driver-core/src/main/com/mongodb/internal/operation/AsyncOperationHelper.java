@@ -155,6 +155,9 @@ final class AsyncOperationHelper {
                     AsyncCallbackSupplier<R> curriedFunction = c -> function.apply(resource, c);
                     curriedFunction.whenComplete(resource::release).get(errorHandlingCallback);
                 } catch (Exception e) {
+                    if (resource.getCount() > 0) {
+                        resource.release();
+                    }
                     errorHandlingCallback.onResult(null, e);
                 }
             }

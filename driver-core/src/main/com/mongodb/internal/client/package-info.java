@@ -13,19 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.reactivestreams.client;
-
-import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 
 /**
- * See
- * <a href="https://github.com/mongodb/specifications/blob/master/source/crud/tests/README.md#prose-tests">CRUD Prose Tests</a>.
+ * This package contains classes for internal client functionality.
  */
-final class CrudProseTest extends com.mongodb.client.CrudProseTest {
-    @Override
-    protected MongoClient createMongoClient(final MongoClientSettings.Builder mongoClientSettingsBuilder) {
-        return new SyncMongoClient(mongoClientSettingsBuilder);
-    }
-}
+
+@NonNullApi
+package com.mongodb.internal.client;
+
+import com.mongodb.lang.NonNullApi;

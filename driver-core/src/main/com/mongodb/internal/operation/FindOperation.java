@@ -393,7 +393,7 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
                 commandDocument.put("limit", new BsonInt32(Math.abs(batchSize)));
             } else if (batchSize != 0) {
                 int effectiveBatchSize = Math.abs(batchSize);
-                if (effectiveBatchSize == limit) {
+                if (effectiveBatchSize == limit && effectiveBatchSize < Integer.MAX_VALUE) {
                     // avoid an open cursor on server side when batchSize and limit are equal
                     effectiveBatchSize++;
                 }

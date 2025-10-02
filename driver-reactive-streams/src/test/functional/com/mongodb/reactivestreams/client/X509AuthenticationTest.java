@@ -23,6 +23,6 @@ import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 public class X509AuthenticationTest extends AbstractX509AuthenticationTest {
     @Override
     protected com.mongodb.client.MongoClient createMongoClient(final MongoClientSettings mongoClientSettings) {
-        return new SyncMongoClient(MongoClients.create(mongoClientSettings));
+        return new SyncMongoClient(mongoClientSettings);
     }
 }

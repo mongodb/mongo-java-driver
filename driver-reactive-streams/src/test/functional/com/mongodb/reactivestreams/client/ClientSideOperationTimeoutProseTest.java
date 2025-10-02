@@ -75,16 +75,13 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
 
     @Override
     protected com.mongodb.client.MongoClient createMongoClient(final MongoClientSettings mongoClientSettings) {
-        wrapped = createReactiveClient(mongoClientSettings);
-        return new SyncMongoClient(wrapped);
+        SyncMongoClient client = new SyncMongoClient(mongoClientSettings);
+        wrapped = client.getWrapped();
+        return client;
     }
 
     private static MongoClient createReactiveClient(final MongoClientSettings.Builder builder) {
         return MongoClients.create(builder.build());
-    }
-
-    private static MongoClient createReactiveClient(final MongoClientSettings mongoClientSettings) {
-        return MongoClients.create(mongoClientSettings);
     }
 
     @Override
