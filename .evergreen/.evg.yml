@@ -1469,18 +1469,6 @@ tasks:
           OCSP_MUST_STAPLE: "false"
           OCSP_TLS_SHOULD_SUCCEED: "0"
 
-  - name: "atlas-data-lake-task"
-    commands:
-      - func: "assume-aws-test-secrets-role"
-      - func: "start-mongohoused"
-      - command: shell.exec
-        type: "test"
-        params:
-          working_dir: "src"
-          script: |
-            ${PREPARE_SHELL}
-            JAVA_VERSION=${JAVA_VERSION} .evergreen/run-atlas-data-lake-test.sh
-
   - name: "atlas-search-task"
     commands:
       - command: shell.exec
@@ -2285,12 +2273,6 @@ buildvariants:
       - name: "atlas-search-task"
       - name: "atlas-connectivity-task"
       - name:  "atlas-x509-auth-test-task"
-
-  - name: "atlas-data-lake-test"
-    display_name: "Atlas Data Lake test"
-    run_on: "ubuntu2204-small"
-    tasks:
-      - name: "atlas-data-lake-task"
 
   - name: "reactive-streams-tck-test"
     display_name: "Reactive Streams TCK tests"
