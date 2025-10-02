@@ -16,6 +16,10 @@
 
 package com.mongodb.internal.tracing;
 
+import com.mongodb.MongoNamespace;
+import com.mongodb.lang.Nullable;
+import io.micrometer.common.KeyValue;
+import io.micrometer.common.KeyValues;
 
 /**
  * Represents a tracing span for the driver internal operations.
@@ -32,7 +36,7 @@ package com.mongodb.internal.tracing;
  * </ul>
  * </p>
  *
- * @since 5.6
+ * @since 5.7
  */
 public interface Span {
     /**
@@ -44,13 +48,15 @@ public interface Span {
      */
     Span EMPTY = new Span() {
         @Override
-        public Span tag(final String key, final String value) {
-            return this;
+        public void tagLowCardinality(final KeyValue tag) {
         }
 
         @Override
-        public Span tag(final String key, final Long value) {
-            return this;
+        public void tagLowCardinality(final KeyValues keyValues) {
+        }
+
+        @Override
+        public void tagHighCardinality(final KeyValue keyValue) {
         }
 
         @Override
@@ -69,25 +75,34 @@ public interface Span {
         public TraceContext context() {
             return TraceContext.EMPTY;
         }
+
+        @Override
+        @Nullable
+        public MongoNamespace getNamespace() {
+            return null;
+        }
     };
 
     /**
-     * Adds a tag to the span with a key-value pair.
+     * Adds a low-cardinality tag to the span.
      *
-     * @param key   The tag key.
-     * @param value The tag value.
-     * @return The current instance of the span.
+     * @param keyValue The key-value pair representing the tag.
      */
-    Span tag(String key, String value);
+    void tagLowCardinality(KeyValue keyValue);
 
     /**
-     * Adds a tag to the span with a key and a numeric value.
+     * Adds multiple low-cardinality tags to the span.
      *
-     * @param key   The tag key.
-     * @param value The numeric tag value.
-     * @return The current instance of the span.
+     * @param keyValues The key-value pairs representing the tags.
      */
-    Span tag(String key, Long value);
+    void tagLowCardinality(KeyValues keyValues);
+
+    /**
+     * Adds a high-cardinality (highly variable values) tag to the span.
+     *
+     * @param keyValue The key-value pair representing the tag.
+     */
+    void tagHighCardinality(KeyValue keyValue);
 
     /**
      * Records an event in the span.
@@ -114,4 +129,12 @@ public interface Span {
      * @return The trace context associated with the span.
      */
     TraceContext context();
+
+    /**
+     * Retrieves the MongoDB namespace associated with the span, if any.
+     *
+     * @return The MongoDB namespace, or null if none is associated.
+     */
+    @Nullable
+    MongoNamespace getNamespace();
 }

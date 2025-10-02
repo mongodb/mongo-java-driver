@@ -16,12 +16,13 @@
 
 package com.mongodb.client.tracing;
 
-import com.mongodb.internal.tracing.Tags;
 import com.mongodb.lang.Nullable;
+import io.micrometer.tracing.exporter.FinishedSpan;
 import io.micrometer.tracing.test.simple.SimpleSpan;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
+import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 
@@ -35,6 +36,12 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
+import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.CLIENT_CONNECTION_ID;
+import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.CURSOR_ID;
+import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.SERVER_CONNECTION_ID;
+import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.SERVER_PORT;
+import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.SESSION_ID;
+import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.TRANSACTION_NUMBER;
 import static org.bson.assertions.Assertions.notNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -60,8 +67,8 @@ public class SpanTree {
                 final SpanNode rootNode = new SpanNode(name);
                 spanTree.roots.add(rootNode);
 
-                if (spanDoc.containsKey("tags")) {
-                    rootNode.tags = spanDoc.getDocument("tags");
+                if (spanDoc.containsKey("attributes")) {
+                    rootNode.tags = spanDoc.getDocument("attributes");
                 }
 
                 if (spanDoc.containsKey("nested")) {
@@ -101,8 +108,15 @@ public class SpanTree {
             for (final Map.Entry<String, String> tag : span.getTags().entrySet()) {
                 // handle special case of session id (needs to be parsed into a BsonBinary)
                 // this is needed because the SimpleTracer reports all the collected tags as strings
-                if (tag.getKey().equals(Tags.SESSION_ID)) {
+                if (tag.getKey().equals(SESSION_ID.asString())) {
                     spanNode.tags.append(tag.getKey(), new BsonDocument().append("id", new BsonBinary(UUID.fromString(tag.getValue()))));
+
+                } else if (tag.getKey().equals(CURSOR_ID.asString())
+                        || tag.getKey().equals(SERVER_PORT.asString())
+                        || tag.getKey().equals(TRANSACTION_NUMBER.asString())
+                        || tag.getKey().equals(CLIENT_CONNECTION_ID.asString())
+                        || tag.getKey().equals(SERVER_CONNECTION_ID.asString())) {
+                    spanNode.tags.append(tag.getKey(), new BsonInt64(Long.parseLong(tag.getValue())));
                 } else {
                     spanNode.tags.append(tag.getKey(), new BsonString(tag.getValue()));
                 }
@@ -123,6 +137,43 @@ public class SpanTree {
         return spanTree;
     }
 
+    public static SpanTree from(final List<FinishedSpan> spans) {
+        final SpanTree spanTree = new SpanTree();
+        final Map<String, SpanNode> idToSpanNode = new HashMap<>();
+        for (final FinishedSpan span : spans) {
+            final SpanNode spanNode = new SpanNode(span.getName());
+            for (final Map.Entry<String, String> tag : span.getTags().entrySet()) {
+                // handle special case of session id (needs to be parsed into a BsonBinary)
+                // this is needed because the SimpleTracer reports all the collected tags as strings
+                if (tag.getKey().equals(SESSION_ID.asString())) {
+                    spanNode.tags.append(tag.getKey(), new BsonDocument().append("id", new BsonBinary(UUID.fromString(tag.getValue()))));
+
+                } else if (tag.getKey().equals(CURSOR_ID.asString())
+                        || tag.getKey().equals(SERVER_PORT.asString())
+                        || tag.getKey().equals(TRANSACTION_NUMBER.asString())
+                        || tag.getKey().equals(CLIENT_CONNECTION_ID.asString())
+                        || tag.getKey().equals(SERVER_CONNECTION_ID.asString())) {
+                    spanNode.tags.append(tag.getKey(), new BsonInt64(Long.parseLong(tag.getValue())));
+                } else {
+                    spanNode.tags.append(tag.getKey(), new BsonString(tag.getValue()));
+                }
+            }
+            idToSpanNode.put(span.getSpanId(), spanNode);
+        }
+
+        for (final FinishedSpan span : spans) {
+            final String parentId = span.getParentId();
+            final SpanNode node = idToSpanNode.get(span.getSpanId());
+
+            if (parentId != null && !parentId.isEmpty() && idToSpanNode.containsKey(parentId)) {
+                idToSpanNode.get(parentId).children.add(node);
+            } else { // doesn't have a parent, so it is a root node
+                spanTree.roots.add(node);
+            }
+        }
+        return spanTree;
+    }
+
     /**
      * Adds nested spans to the parent node based on the provided BsonDocument.
      * This method recursively adds child spans to the parent span node.
@@ -134,8 +185,8 @@ public class SpanTree {
         final String name = nestedSpan.getString("name").getValue();
         final SpanNode childNode = new SpanNode(name, parentNode);
 
-        if (nestedSpan.containsKey("tags")) {
-            childNode.tags = nestedSpan.getDocument("tags");
+        if (nestedSpan.containsKey("attributes")) {
+            childNode.tags = nestedSpan.getDocument("attributes");
         }
 
         if (nestedSpan.containsKey("nested")) {
@@ -159,8 +210,9 @@ public class SpanTree {
             final boolean ignoreExtraSpans) {
         if (ignoreExtraSpans) {
             // remove from the reported spans all the nodes that are not expected
-            reportedSpans.roots.removeIf(node -> !expectedSpans.roots.contains(node));
-
+            reportedSpans.roots.removeIf(node ->
+                    expectedSpans.roots.stream().noneMatch(expectedNode -> expectedNode.getName().equalsIgnoreCase(node.getName()))
+            );
         }
 
         // check that we have the same root spans

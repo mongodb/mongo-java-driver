@@ -60,11 +60,11 @@ import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.internal.tracing.Span;
-import com.mongodb.internal.tracing.Tags;
 import com.mongodb.internal.tracing.TraceContext;
 import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.internal.tracing.TransactionSpan;
 import com.mongodb.lang.Nullable;
+import io.micrometer.common.KeyValues;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.UuidRepresentation;
@@ -78,11 +78,17 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
+import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.TimeoutContext.createTimeoutContext;
+import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.COLLECTION;
+import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.NAMESPACE;
+import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.OPERATION_NAME;
+import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.OPERATION_SUMMARY;
+import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.SYSTEM;
 
 final class MongoClusterImpl implements MongoCluster {
     @Nullable
@@ -601,17 +607,27 @@ final class MongoClusterImpl implements MongoCluster {
                 if (transactionSpan != null) {
                     parentContext = transactionSpan.getContext();
                 }
-                String name = commandName + " " + namespace.getFullName();
+                String name = commandName + " " + namespace.getDatabaseName() + (COMMAND_COLLECTION_NAME.equalsIgnoreCase(namespace.getCollectionName())
+                        ? ""
+                        : "." + namespace.getCollectionName());
+
+                KeyValues keyValues = KeyValues.of(
+                        SYSTEM.withValue("mongodb"),
+                        NAMESPACE.withValue(namespace.getDatabaseName()));
+                if (!COMMAND_COLLECTION_NAME.equalsIgnoreCase(namespace.getCollectionName())) {
+                    keyValues = keyValues.and(COLLECTION.withValue(namespace.getCollectionName()));
+                }
+                keyValues = keyValues.and(OPERATION_NAME.withValue(commandName),
+                        OPERATION_SUMMARY.withValue(name));
+
                 Span span = binding
                         .getOperationContext()
                         .getTracingManager()
-                        .addSpan(name, parentContext);
+                        .addSpan(name, parentContext, namespace);
+
+                span.tagLowCardinality(keyValues);
+
                 binding.getOperationContext().setTracingSpan(span);
-                span.tag(Tags.SYSTEM, "mongodb");
-                span.tag(Tags.NAMESPACE, namespace.getDatabaseName());
-                span.tag(Tags.COLLECTION, namespace.getCollectionName());
-                span.tag(Tags.OPERATION_NAME, commandName);
-                span.tag(Tags.OPERATION_SUMMARY, name);
                 return span;
 
             } else {

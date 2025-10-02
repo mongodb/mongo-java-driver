@@ -54,7 +54,7 @@ dependencies {
 
     optionalImplementation(libs.snappy.java)
     optionalImplementation(libs.zstd.jni)
-    optionalImplementation(libs.micrometer)
+    optionalImplementation(libs.micrometer.observation)
 
     testImplementation(project(path = ":bson", configuration = "testArtifacts"))
     testImplementation(libs.reflections)

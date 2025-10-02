@@ -16,9 +16,10 @@
 
 package com.mongodb.internal.tracing;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.lang.Nullable;
 
-import static com.mongodb.internal.tracing.Tags.SYSTEM;
+import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.SYSTEM;
 import static java.lang.System.getenv;
 
 /**
@@ -34,30 +35,17 @@ public class TracingManager {
      */
     public static final TracingManager NO_OP = new TracingManager(Tracer.NO_OP);
     private static final String ENV_ALLOW_COMMAND_PAYLOAD = "MONGODB_TRACING_ALLOW_COMMAND_PAYLOAD";
-
     private final Tracer tracer;
-    private final TraceContext parentContext;
     private final boolean enableCommandPayload;
-
-    /**
-     * Constructs a new TracingManager with the specified tracer.
-     *
-     * @param tracer The tracer to use for tracing operations.
-     */
-    public TracingManager(final Tracer tracer) {
-        this(tracer, tracer.currentContext());
-    }
 
     /**
      * Constructs a new TracingManager with the specified tracer and parent context.
      * Setting the environment variable {@code MONGODB_TRACING_ALLOW_COMMAND_PAYLOAD} to "true" will enable command payload tracing.
      *
      * @param tracer        The tracer to use for tracing operations.
-     * @param parentContext The parent trace context.
      */
-    public TracingManager(final Tracer tracer, final TraceContext parentContext) {
+    public TracingManager(final Tracer tracer) {
         this.tracer = tracer;
-        this.parentContext = parentContext;
         String envAllowCommandPayload = getenv(ENV_ALLOW_COMMAND_PAYLOAD);
         if (envAllowCommandPayload != null) {
             this.enableCommandPayload = Boolean.parseBoolean(envAllowCommandPayload);
@@ -78,7 +66,24 @@ public class TracingManager {
      * @return The created span.
      */
     public Span addSpan(final String name, @Nullable final TraceContext parentContext) {
-        return tracer.nextSpan(name, parentContext);
+        return tracer.nextSpan(name, parentContext, null);
+    }
+
+    /**
+     * Creates a new span with the specified name, parent trace context, and MongoDB namespace.
+     * <p>
+     * This method is used to create a span that is linked to a parent context,
+     * enabling hierarchical tracing of operations. The MongoDB namespace can be used
+     * by nested spans to access the database and collection name (which might not be easily accessible at connection layer).
+     * </p>
+     *
+     * @param name          The name of the span.
+     * @param parentContext The parent trace context to associate with the span.
+     * @param namespace     The MongoDB namespace associated with the operation.
+     * @return The created span.
+     */
+    public Span addSpan(final String name, @Nullable final TraceContext parentContext, final MongoNamespace namespace) {
+        return tracer.nextSpan(name, parentContext, namespace);
     }
 
     /**
@@ -87,8 +92,8 @@ public class TracingManager {
      * @return The created transaction span.
      */
     public Span addTransactionSpan() {
-        Span span = tracer.nextSpan("transaction", parentContext);
-        span.tag(SYSTEM, "mongodb");
+        Span span = tracer.nextSpan("transaction", null, null);
+        span.tagLowCardinality(SYSTEM.withValue("mongodb"));
         return span;
     }
 

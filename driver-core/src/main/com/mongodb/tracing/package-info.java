@@ -17,7 +17,7 @@
 /**
  * This package defines the API for MongoDB driver tracing.
  *
- * @since 5.6
+ * @since 5.7
  */
 @NonNullApi
 package com.mongodb.tracing;

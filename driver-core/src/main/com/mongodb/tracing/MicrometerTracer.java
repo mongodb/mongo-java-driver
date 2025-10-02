@@ -16,73 +16,71 @@
 
 package com.mongodb.tracing;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.internal.tracing.Span;
 import com.mongodb.internal.tracing.TraceContext;
 import com.mongodb.internal.tracing.Tracer;
 import com.mongodb.lang.Nullable;
+import io.micrometer.common.KeyValue;
+import io.micrometer.common.KeyValues;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import static com.mongodb.internal.tracing.Tags.EXCEPTION_MESSAGE;
-import static com.mongodb.internal.tracing.Tags.EXCEPTION_STACKTRACE;
-import static com.mongodb.internal.tracing.Tags.EXCEPTION_TYPE;
+import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_MESSAGE;
+import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_STACKTRACE;
+import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_TYPE;
+import static com.mongodb.tracing.MongodbObservation.MONGODB_OBSERVATION;
+
 
 /**
- * A {@link Tracer} implementation that delegates tracing operations to a Micrometer {@link io.micrometer.tracing.Tracer}.
+ * A {@link Tracer} implementation that delegates tracing operations to a Micrometer {@link io.micrometer.observation.ObservationRegistry}.
  * <p>
  * This class enables integration of MongoDB driver tracing with Micrometer-based tracing systems.
- * It provides methods to create and manage spans using the Micrometer tracing API.
+ * It provides integration with Micrometer to propagate observations into tracing API.
  * </p>
  *
- * @since 5.6
+ * @since 5.7
  */
 public class MicrometerTracer implements Tracer {
-    private final io.micrometer.tracing.Tracer tracer;
     private final boolean allowCommandPayload;
+    private final ObservationRegistry observationRegistry;
 
     /**
      * Constructs a new {@link MicrometerTracer} instance.
      *
-     * @param tracer The Micrometer {@link io.micrometer.tracing.Tracer} to delegate tracing operations to.
+     * @param observationRegistry The Micrometer {@link ObservationRegistry} to delegate tracing operations to.
      */
-    public MicrometerTracer(final io.micrometer.tracing.Tracer tracer) {
-        this(tracer, false);
+    public MicrometerTracer(final ObservationRegistry observationRegistry) {
+        this(observationRegistry, false);
     }
 
     /**
      * Constructs a new {@link MicrometerTracer} instance with an option to allow command payloads.
      *
-     * @param tracer              The Micrometer {@link io.micrometer.tracing.Tracer} to delegate tracing operations to.
+     * @param observationRegistry The Micrometer {@link ObservationRegistry} to delegate tracing operations to.
      * @param allowCommandPayload Whether to allow command payloads in the trace context.
      */
-    public MicrometerTracer(final io.micrometer.tracing.Tracer tracer, final boolean allowCommandPayload) {
-        this.tracer = tracer;
+    public MicrometerTracer(final ObservationRegistry observationRegistry, final boolean allowCommandPayload) {
         this.allowCommandPayload = allowCommandPayload;
+        this.observationRegistry = observationRegistry;
     }
 
     @Override
-    public TraceContext currentContext() {
-        return new MicrometerTraceContext(tracer.currentTraceContext().context());
-    }
-
-    @Override
-    public Span nextSpan(final String name) {
-        return new MicrometerSpan(tracer.nextSpan().name(name).start());
-    }
-
-    @Override
-    public Span nextSpan(final String name, @Nullable final TraceContext parent) {
+    public Span nextSpan(final String name, @Nullable final TraceContext parent, @Nullable final MongoNamespace namespace) {
         if (parent instanceof MicrometerTraceContext) {
-            io.micrometer.tracing.TraceContext micrometerContext = ((MicrometerTraceContext) parent).getTraceContext();
-            if (micrometerContext != null) {
-                return new MicrometerSpan(tracer.spanBuilder()
-                        .name(name)
-                        .setParent(micrometerContext)
-                        .start());
+            Observation parentObservation = ((MicrometerTraceContext) parent).observation;
+            if (parentObservation != null) {
+                return new MicrometerSpan(MONGODB_OBSERVATION
+                        .observation(observationRegistry)
+                        .contextualName(name)
+                        .parentObservation(parentObservation)
+                        .start(), namespace);
             }
         }
-        return nextSpan(name);
+        return new MicrometerSpan(MONGODB_OBSERVATION.observation(observationRegistry).contextualName(name).start(), namespace);
     }
 
     @Override
@@ -99,25 +97,15 @@ public class MicrometerTracer implements Tracer {
      * Represents a Micrometer-based trace context.
      */
     private static class MicrometerTraceContext implements TraceContext {
-        private final io.micrometer.tracing.TraceContext traceContext;
+        private final Observation observation;
 
         /**
-         * Constructs a new {@link MicrometerTraceContext} instance.
+         * Constructs a new {@link MicrometerTraceContext} instance with an associated Observation.
          *
-         * @param traceContext The Micrometer {@link io.micrometer.tracing.TraceContext}, or null if none exists.
+         * @param observation The Micrometer {@link Observation}, or null if none exists.
          */
-        MicrometerTraceContext(@Nullable final io.micrometer.tracing.TraceContext traceContext) {
-            this.traceContext = traceContext;
-        }
-
-        /**
-         * Retrieves the underlying Micrometer trace context.
-         *
-         * @return The Micrometer {@link io.micrometer.tracing.TraceContext}, or null if none exists.
-         */
-        @Nullable
-        public io.micrometer.tracing.TraceContext getTraceContext() {
-            return traceContext;
+        MicrometerTraceContext(@Nullable final Observation observation) {
+            this.observation = observation;
         }
     }
 
@@ -125,50 +113,75 @@ public class MicrometerTracer implements Tracer {
      * Represents a Micrometer-based span.
      */
     private static class MicrometerSpan implements Span {
-        private final io.micrometer.tracing.Span span;
+        private final Observation observation;
+        @Nullable
+        private final MongoNamespace namespace;
 
         /**
-         * Constructs a new {@link MicrometerSpan} instance.
+         * Constructs a new {@link MicrometerSpan} instance with an associated Observation.
          *
-         * @param span The Micrometer {@link io.micrometer.tracing.Span} to delegate operations to.
+         * @param observation The Micrometer {@link Observation}, or null if none exists.
          */
-        MicrometerSpan(final io.micrometer.tracing.Span span) {
-            this.span = span;
+        MicrometerSpan(final Observation observation) {
+            this.observation = observation;
+            this.namespace = null;
+        }
+
+        /**
+         * Constructs a new {@link MicrometerSpan} instance with an associated Observation and MongoDB namespace.
+         *
+         * @param observation The Micrometer {@link Observation}, or null if none exists.
+         * @param namespace   The MongoDB namespace associated with the span.
+         */
+        MicrometerSpan(final Observation observation, @Nullable final MongoNamespace namespace) {
+            this.namespace = namespace;
+            this.observation = observation;
         }
 
         @Override
-        public Span tag(final String key, final String value) {
-            span.tag(key, value);
-            return this;
+        public void tagLowCardinality(final KeyValue keyValue) {
+            observation.lowCardinalityKeyValue(keyValue);
         }
 
         @Override
-        public Span tag(final String key, final Long value) {
-            span.tag(key, value);
-            return this;
+        public void tagLowCardinality(final KeyValues keyValues) {
+            observation.lowCardinalityKeyValues(keyValues);
+        }
+
+        @Override
+        public void tagHighCardinality(final KeyValue keyValue) {
+            observation.highCardinalityKeyValue(keyValue);
         }
 
         @Override
         public void event(final String event) {
-            span.event(event);
+            observation.event(() -> event);
         }
 
         @Override
         public void error(final Throwable throwable) {
-            span.tag(EXCEPTION_MESSAGE, throwable.getMessage());
-            span.tag(EXCEPTION_TYPE, throwable.getClass().getName());
-            span.tag(EXCEPTION_STACKTRACE, getStackTraceAsString(throwable));
-            span.error(throwable);
+            observation.lowCardinalityKeyValues(KeyValues.of(
+                    EXCEPTION_MESSAGE.withValue(throwable.getMessage()),
+                    EXCEPTION_TYPE.withValue(throwable.getClass().getName()),
+                    EXCEPTION_STACKTRACE.withValue(getStackTraceAsString(throwable))
+            ));
+            observation.error(throwable);
         }
 
         @Override
         public void end() {
-            span.end();
+            observation.stop();
         }
 
         @Override
         public TraceContext context() {
-            return new MicrometerTraceContext(span.context());
+            return new MicrometerTraceContext(observation);
+        }
+
+        @Override
+        @Nullable
+        public MongoNamespace getNamespace() {
+            return namespace;
         }
 
         private String getStackTraceAsString(final Throwable throwable) {

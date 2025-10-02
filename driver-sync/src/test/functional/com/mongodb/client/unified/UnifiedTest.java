@@ -45,8 +45,7 @@ import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.test.AfterBeforeParameterResolver;
-import io.micrometer.tracing.Tracer;
-import io.micrometer.tracing.test.simple.SimpleTracer;
+import io.micrometer.tracing.test.reporter.inmemory.InMemoryOtelSetup;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -114,7 +113,7 @@ public abstract class UnifiedTest {
     private static final Set<String> PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS = Collections.singleton(
             "wait queue timeout errors include details about checked out connections");
 
-    private static final String MAX_SUPPORTED_SCHEMA_VERSION = "1.26";
+    private static final String MAX_SUPPORTED_SCHEMA_VERSION = "1.27";
     private static final List<Integer> MAX_SUPPORTED_SCHEMA_VERSION_COMPONENTS = Arrays.stream(MAX_SUPPORTED_SCHEMA_VERSION.split("\\."))
             .map(Integer::parseInt)
             .collect(Collectors.toList());
@@ -496,17 +495,19 @@ public abstract class UnifiedTest {
     }
 
     private void compareTracingSpans(final BsonDocument definition) {
-        BsonDocument curTracingSpansForClient = definition.getDocument("expectTracingMessages");
-        String clientId = curTracingSpansForClient.getString("client").getValue();
+        BsonArray curTracingSpansForClients = definition.getArray("expectTracingMessages");
+        for (BsonValue tracingSpan : curTracingSpansForClients) {
+            BsonDocument curTracingSpansForClient = tracingSpan.asDocument();
+            String clientId = curTracingSpansForClient.getString("client").getValue();
 
-        // Get the tracer for the client
-        Tracer micrometerTracer = entities.getClientTracer(clientId);
-        SimpleTracer simpleTracer = (SimpleTracer) micrometerTracer;
+            // Get the tracer for the client
+            InMemoryOtelSetup.Builder.OtelBuildingBlocks micrometerTracer = entities.getClientTracer(clientId);
 
-        SpanTree expectedSpans = SpanTree.from(curTracingSpansForClient.getArray("spans"));
-        SpanTree reportedSpans = SpanTree.from(simpleTracer.getSpans());
-        boolean ignoreExtraSpans = curTracingSpansForClient.getBoolean("ignoreExtraSpans", BsonBoolean.TRUE).getValue();
-        SpanTree.assertValid(reportedSpans, expectedSpans, rootContext.valueMatcher::assertValuesMatch, ignoreExtraSpans);
+            SpanTree expectedSpans = SpanTree.from(curTracingSpansForClient.getArray("spans"));
+            SpanTree reportedSpans = SpanTree.from(micrometerTracer.getFinishedSpans());
+            boolean ignoreExtraSpans = curTracingSpansForClient.getBoolean("ignoreExtraSpans", BsonBoolean.TRUE).getValue();
+            SpanTree.assertValid(reportedSpans, expectedSpans, rootContext.valueMatcher::assertValuesMatch, ignoreExtraSpans);
+        }
     }
 
     private void assertOutcome(final UnifiedTestContext context) {

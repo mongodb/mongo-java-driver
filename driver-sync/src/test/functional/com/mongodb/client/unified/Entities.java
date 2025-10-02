@@ -67,8 +67,8 @@ import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.tracing.MicrometerTracer;
-import io.micrometer.tracing.Tracer;
-import io.micrometer.tracing.test.simple.SimpleTracer;
+import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.tracing.test.reporter.inmemory.InMemoryOtelSetup;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -129,7 +129,8 @@ public final class Entities {
     private final Map<String, ClientEncryption> clientEncryptions = new HashMap<>();
     private final Map<String, TestCommandListener> clientCommandListeners = new HashMap<>();
     private final Map<String, TestLoggingInterceptor> clientLoggingInterceptors = new HashMap<>();
-    private final Map<String, Tracer> clientTracing = new HashMap<>();
+    private final Map<String, InMemoryOtelSetup.Builder.OtelBuildingBlocks> clientTracing = new HashMap<>();
+    private final Set<InMemoryOtelSetup> inMemoryOTelInstances = new HashSet<>();
     private final Map<String, TestConnectionPoolListener> clientConnectionPoolListeners = new HashMap<>();
     private final Map<String, TestServerListener> clientServerListeners = new HashMap<>();
     private final Map<String, TestClusterListener> clientClusterListeners = new HashMap<>();
@@ -298,7 +299,7 @@ public final class Entities {
         return getEntity(id + "-logging-interceptor", clientLoggingInterceptors, "logging interceptor");
     }
 
-    public Tracer getClientTracer(final String id) {
+    public InMemoryOtelSetup.Builder.OtelBuildingBlocks getClientTracer(final String id) {
         return getEntity(id + "-tracing", clientTracing, "micrometer tracing");
     }
 
@@ -615,17 +616,13 @@ public final class Entities {
 
         if (entity.containsKey("observeTracingMessages")) {
             boolean enableCommandPayload = entity.getDocument("observeTracingMessages").get("enableCommandPayload", BsonBoolean.FALSE).asBoolean().getValue();
-            /* To enable Zipkin backend, uncomment the following lines and ensure you have the server started
-            (docker run -d -p 9411:9411 openzipkin/zipkin). The tests will fail but the captured spans will be
-             visible in the Zipkin UI at http://localhost:9411 for debugging purpose.
-             *
-             * Tracer tracer = ZipkinTracer.getTracer("UTR");
-             * putEntity(id + "-tracing", new SimpleTracer(), clientTracing);
-             */
-            Tracer tracer = new SimpleTracer();
-            putEntity(id + "-tracing", tracer, clientTracing);
+            ObservationRegistry observationRegistry = ObservationRegistry.create();
+            InMemoryOtelSetup inMemoryOtel = InMemoryOtelSetup.builder().register(observationRegistry);
+            InMemoryOtelSetup.Builder.OtelBuildingBlocks tracer = inMemoryOtel.getBuildingBlocks();
 
-            clientSettingsBuilder.tracer(new MicrometerTracer(tracer, enableCommandPayload));
+            putEntity(id + "-tracing", tracer, clientTracing);
+            inMemoryOTelInstances.add(inMemoryOtel);
+            clientSettingsBuilder.tracer(new MicrometerTracer(observationRegistry, enableCommandPayload));
         }
 
         MongoClientSettings clientSettings = clientSettingsBuilder.build();
@@ -818,6 +815,7 @@ public final class Entities {
         clients.values().forEach(MongoClient::close);
         clientLoggingInterceptors.values().forEach(TestLoggingInterceptor::close);
         threads.values().forEach(ExecutorService::shutdownNow);
+        inMemoryOTelInstances.forEach(InMemoryOtelSetup::close);
     }
 
     private static class EntityCommandListener implements CommandListener {

@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.mongodb.internal.tracing;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.lang.Nullable;
 
 /**
@@ -25,23 +25,12 @@ import com.mongodb.lang.Nullable;
  * It also includes a no-operation (NO_OP) implementation for cases where tracing is not required.
  * </p>
  *
- * @since 5.6
+ * @since 5.7
  */
 public interface Tracer {
     Tracer NO_OP = new Tracer() {
-
         @Override
-        public TraceContext currentContext() {
-            return TraceContext.EMPTY;
-        }
-
-        @Override
-        public Span nextSpan(final String name) {
-            return Span.EMPTY;
-        }
-
-        @Override
-        public Span nextSpan(final String name, @Nullable final TraceContext parent) {
+        public Span nextSpan(final String name, @Nullable final TraceContext parent, @Nullable final MongoNamespace namespace) {
             return Span.EMPTY;
         }
 
@@ -57,29 +46,14 @@ public interface Tracer {
     };
 
     /**
-     * Retrieves the current trace context from the Micrometer tracer.
-     *
-     * @return A {@link TraceContext} representing the underlying {@link io.micrometer.tracing.TraceContext}.
-     * exists.
-     */
-    TraceContext currentContext();
-
-    /**
-     * Creates a new span with the specified name.
-     *
-     * @param name The name of the span.
-     * @return A {@link Span} representing the newly created span.
-     */
-    Span nextSpan(String name); // uses current active span
-
-    /**
      * Creates a new span with the specified name and optional parent trace context.
      *
      * @param name   The name of the span.
      * @param parent The parent {@link TraceContext}, or null if no parent context is provided.
+     * @param namespace The {@link MongoNamespace} associated with the span, or null if none is provided.
      * @return A {@link Span} representing the newly created span.
      */
-    Span nextSpan(String name, @Nullable TraceContext parent); // manually attach the next span to the provided parent
+    Span nextSpan(String name, @Nullable TraceContext parent, @Nullable MongoNamespace namespace);
 
     /**
      * Indicates whether tracing is enabled.
@@ -93,5 +67,5 @@ public interface Tracer {
      *
      * @return {@code true} if command payloads are allowed, {@code false} otherwise.
      */
-    boolean includeCommandPayload(); // whether the tracer allows command payloads in the trace context
+    boolean includeCommandPayload();
 }

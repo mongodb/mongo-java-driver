@@ -35,12 +35,13 @@ dependencies {
 
     testImplementation(project(path = ":bson", configuration = "testArtifacts"))
     testImplementation(project(path = ":driver-core", configuration = "testArtifacts"))
+    optionalImplementation(libs.micrometer.observation)
 
     // lambda testing
     testImplementation(libs.aws.lambda.core)
 
-    // Tracing
-    testImplementation(libs.bundles.micrometer.test)
+    // Tracing testing
+    testImplementation(libs.micrometer.tracing.integration.test) { exclude(group = "org.junit.jupiter") }
 }
 
 configureMavenPublication {

@@ -46,7 +46,7 @@ dependencies {
     testImplementation(libs.reactive.streams.tck)
 
     // Tracing
-    testImplementation(libs.micrometer)
+    testImplementation(libs.micrometer.observation)
 }
 
 configureMavenPublication {

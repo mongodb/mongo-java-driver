@@ -20,6 +20,8 @@ import com.mongodb.lang.Nullable;
 
 /**
  * State class for transaction tracing.
+ *
+ * @since 5.7
  */
 public class TransactionSpan {
     private boolean isConvenientTransaction = false;
