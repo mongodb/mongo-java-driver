@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model.vault;
 
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
 
@@ -31,6 +33,7 @@ public class EncryptOptions {
     private Long contentionFactor;
     private String queryType;
     private RangeOptions rangeOptions;
+    private TextOptions textOptions;
 
     /**
      * Construct an instance with the given algorithm.
@@ -51,7 +54,12 @@ public class EncryptOptions {
      *     <li>Indexed</li>
      *     <li>Unindexed</li>
      *     <li>Range</li>
+     *     <li>TextPreview</li>
      * </ul>
+     *
+     * <p>The "TextPreview" algorithm is in preview and should be used for experimental workloads only.
+     *   These features are unstable and their security is not guaranteed until released as Generally Available (GA).
+     *   The GA version of these features may not be backwards compatible with the preview version.</p>
      *
      * @return the encryption algorithm
      */
@@ -141,8 +149,8 @@ public class EncryptOptions {
     /**
      * The QueryType.
      *
-     * <p>Currently, we support only "equality" or "range" queryType.</p>
-     * <p>It is an error to set queryType when the algorithm is not "Indexed" or "Range".</p>
+     * <p>Currently, we support only "equality", "range", "prefixPreview", "suffixPreview" or "substringPreview" queryType.</p>
+     * <p>It is an error to set queryType when the algorithm is not "Indexed", "Range" or "TextPreview".</p>
      * @param queryType the query type
      * @return this
      * @since 4.7
@@ -192,6 +200,36 @@ public class EncryptOptions {
     @Nullable
     public RangeOptions getRangeOptions() {
         return rangeOptions;
+    }
+
+    /**
+     * The TextOptions
+     *
+     * <p>It is an error to set TextOptions when the algorithm is not "TextPreview".
+     * @param textOptions the text options
+     * @return this
+     * @since 5.6
+     * @mongodb.server.release 8.2
+     * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
+     */
+    @Alpha(Reason.SERVER)
+    public EncryptOptions textOptions(@Nullable final TextOptions textOptions) {
+        this.textOptions = textOptions;
+        return this;
+    }
+
+    /**
+     * Gets the TextOptions
+     * @see #textOptions(TextOptions)
+     * @return the text options or null if not set
+     * @since 5.6
+     * @mongodb.server.release 8.2
+     * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
+     */
+    @Alpha(Reason.SERVER)
+    @Nullable
+    public TextOptions getTextOptions() {
+        return textOptions;
     }
 
     @Override

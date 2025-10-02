@@ -523,6 +523,16 @@ functions:
           # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
           JAVA_VERSION="8" MONGODB_URI="${plain_auth_mongodb_uri}" .evergreen/run-plain-auth-test.sh
 
+  "run-x509-auth-test":
+    - command: shell.exec
+      type: "test"
+      params:
+        silent: true
+        working_dir: "src"
+        script: |
+          # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
+          JAVA_VERSION="8" .evergreen/run-x509-auth-tests.sh
+
   "run-aws-auth-test-with-regular-aws-credentials":
     - command: shell.exec
       type: "test"
@@ -988,6 +998,13 @@ tasks:
   - name: "plain-auth-test-task"
     commands:
       - func: "run-plain-auth-test"
+
+    # Test that x509 auth using server with OpenSSL 3 succeeds.
+  - name: "atlas-x509-auth-test-task"
+    commands:
+      - func: "assume-aws-test-secrets-role"
+      - func: "add-atlas-connect-variables-to-file"
+      - func: "run-x509-auth-test"
 
   - name: "aws-auth-test-with-regular-aws-credentials-task"
     commands:
@@ -1929,6 +1946,8 @@ task_groups:
           working_dir: "src"
           binary: bash
           add_expansions_to_env: true
+          env:
+            MONGODB_VERSION: "8.0"
           args:
             - ${DRIVERS_TOOLS}/.evergreen/atlas/setup-atlas-cluster.sh
       - command: expansions.update
@@ -2267,6 +2286,7 @@ buildvariants:
       - name: "atlas-deployed-task-group"
       - name: "atlas-search-task"
       - name: "atlas-connectivity-task"
+      - name:  "atlas-x509-auth-test-task"
 
   - name: "atlas-data-lake-test"
     display_name: "Atlas Data Lake test"

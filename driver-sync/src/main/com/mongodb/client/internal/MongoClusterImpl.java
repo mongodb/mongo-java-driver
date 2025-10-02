@@ -39,8 +39,8 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.SynchronousContextProvider;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
-import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.bulk.ClientBulkWriteResult;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
@@ -53,8 +53,8 @@ import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.internal.operation.OperationHelper;
+import com.mongodb.internal.operation.Operations;
 import com.mongodb.internal.operation.ReadOperation;
-import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
@@ -98,7 +98,7 @@ final class MongoClusterImpl implements MongoCluster {
     private final TimeoutSettings timeoutSettings;
     private final UuidRepresentation uuidRepresentation;
     private final WriteConcern writeConcern;
-    private final SyncOperations<BsonDocument> operations;
+    private final Operations<BsonDocument> operations;
 
     MongoClusterImpl(
             @Nullable final AutoEncryptionSettings autoEncryptionSettings, final Cluster cluster, final CodecRegistry codecRegistry,
@@ -123,7 +123,7 @@ final class MongoClusterImpl implements MongoCluster {
         this.timeoutSettings = timeoutSettings;
         this.uuidRepresentation = uuidRepresentation;
         this.writeConcern = writeConcern;
-        operations = new SyncOperations<>(
+        operations = new Operations<>(
                 null,
                 BsonDocument.class,
                 readPreference,
@@ -156,6 +156,7 @@ final class MongoClusterImpl implements MongoCluster {
     }
 
     @Override
+    @Nullable
     public Long getTimeout(final TimeUnit timeUnit) {
         Long timeoutMS = timeoutSettings.getTimeoutMS();
         return timeoutMS == null ? null : timeUnit.convert(timeoutMS, TimeUnit.MILLISECONDS);
@@ -398,7 +399,7 @@ final class MongoClusterImpl implements MongoCluster {
         }
 
         @Override
-        public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern) {
+        public <T> T execute(final ReadOperation<T, ?> operation, final ReadPreference readPreference, final ReadConcern readConcern) {
             return execute(operation, readPreference, readConcern, null);
         }
 
@@ -408,7 +409,7 @@ final class MongoClusterImpl implements MongoCluster {
         }
 
         @Override
-        public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
+        public <T> T execute(final ReadOperation<T, ?> operation, final ReadPreference readPreference, final ReadConcern readConcern,
                 @Nullable final ClientSession session) {
             if (session != null) {
                 session.notifyOperationInitiated(operation);

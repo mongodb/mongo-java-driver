@@ -54,7 +54,7 @@ import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConc
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class AggregateToCollectionOperation implements ReadOperation<Void>, AsyncReadOperation<Void> {
+public class AggregateToCollectionOperation implements ReadOperationSimple<Void> {
     private static final String COMMAND_NAME = "aggregate";
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;

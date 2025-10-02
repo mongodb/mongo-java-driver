@@ -62,6 +62,10 @@ public final class UnifiedTestModifications {
                 .test("change-streams", "change-streams-errors", "Change Stream should error when an invalid aggregation stage is passed in")
                 .test("change-streams", "change-streams-errors", "The watch helper must not throw a custom exception when executed against a single server topology, but instead depend on a server error");
 
+        // Client side encryption (QE)
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5675 Support QE with Client.bulkWrite")
+                .file("client-side-encryption/tests/unified", "client bulkWrite with queryable encryption");
+
         // client-side-operation-timeout (CSOT)
 
         def.skipNoncompliantReactive("No good way to fulfill tryNext() requirement with a Publisher<T>")
@@ -76,9 +80,96 @@ public final class UnifiedTestModifications {
                 .test("client-side-operations-timeout", "timeoutMS behaves correctly for GridFS download operations",
                       "timeoutMS applied to entire download, not individual parts");
 
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5815")
-                .test("client-side-operations-timeout", "WaitQueueTimeoutError does not clear the pool",
-                        "WaitQueueTimeoutError does not clear the pool");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5491")
+                .when(() -> !serverVersionLessThan(8, 3))
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "socketTimeoutMS is ignored if timeoutMS is set - dropIndex on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "wTimeoutMS is ignored if timeoutMS is set - dropIndex on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "maxTimeMS is ignored if timeoutMS is set - dropIndex on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "socketTimeoutMS is ignored if timeoutMS is set - dropIndexes on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "wTimeoutMS is ignored if timeoutMS is set - dropIndexes on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "maxTimeMS is ignored if timeoutMS is set - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoDatabase",
+                        "timeoutMS can be configured on a MongoDatabase - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoDatabase",
+                        "timeoutMS can be set to 0 on a MongoDatabase - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoDatabase",
+                        "timeoutMS can be configured on a MongoDatabase - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoDatabase",
+                        "timeoutMS can be set to 0 on a MongoDatabase - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoCollection",
+                        "timeoutMS can be configured on a MongoCollection - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoCollection",
+                        "timeoutMS can be set to 0 on a MongoCollection - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoCollection",
+                        "timeoutMS can be configured on a MongoCollection - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoCollection",
+                        "timeoutMS can be set to 0 on a MongoCollection - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for an operation",
+                        "timeoutMS can be configured for an operation - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for an operation",
+                        "timeoutMS can be set to 0 for an operation - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for an operation",
+                        "timeoutMS can be configured for an operation - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for an operation",
+                        "timeoutMS can be set to 0 for an operation - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
+                        "timeoutMS can be configured on a MongoClient - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
+                        "timeoutMS can be set to 0 on a MongoClient - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
+                        "timeoutMS can be configured on a MongoClient - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
+                        "timeoutMS can be set to 0 on a MongoClient - dropIndexes on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "socketTimeoutMS is ignored if timeoutMS is set - dropIndex on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "wTimeoutMS is ignored if timeoutMS is set - dropIndex on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "maxTimeMS is ignored if timeoutMS is set - dropIndex on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "socketTimeoutMS is ignored if timeoutMS is set - dropIndexes on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "wTimeoutMS is ignored if timeoutMS is set - dropIndexes on collection")
+                .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
+                        "maxTimeMS is ignored if timeoutMS is set - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoDatabase",
+                        "timeoutMS can be configured on a MongoDatabase - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoDatabase",
+                        "timeoutMS can be set to 0 on a MongoDatabase - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoDatabase",
+                        "timeoutMS can be configured on a MongoDatabase - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoDatabase",
+                        "timeoutMS can be set to 0 on a MongoDatabase - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoCollection",
+                        "timeoutMS can be configured on a MongoCollection - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoCollection",
+                        "timeoutMS can be set to 0 on a MongoCollection - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoCollection",
+                        "timeoutMS can be configured on a MongoCollection - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for a MongoCollection",
+                        "timeoutMS can be set to 0 on a MongoCollection - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for an operation",
+                        "timeoutMS can be configured for an operation - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for an operation",
+                        "timeoutMS can be set to 0 for an operation - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for an operation",
+                        "timeoutMS can be configured for an operation - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be overridden for an operation",
+                        "timeoutMS can be set to 0 for an operation - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
+                        "timeoutMS can be configured on a MongoClient - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
+                        "timeoutMS can be set to 0 on a MongoClient - dropIndex on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
+                        "timeoutMS can be configured on a MongoClient - dropIndexes on collection")
+                .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
+                        "timeoutMS can be set to 0 on a MongoClient - dropIndexes on collection");
 
         // TODO-JAVA-5712
 
@@ -159,6 +250,10 @@ public final class UnifiedTestModifications {
 
         def.skipNoncompliant("https://jira.mongodb.org/browse/JAVA-5838")
                 .when(() -> def.isReactive() && UnifiedTest.Language.KOTLIN.equals(def.getLanguage()))
+                .file("crud", "findOne");
+
+        def.skipNoncompliant("Scala Mono pulls the data and sets the batch size https://jira.mongodb.org/browse/JAVA-5838")
+                .when(() -> UnifiedTest.Language.SCALA.equals(def.getLanguage()))
                 .file("crud", "findOne");
 
         def.skipNoncompliant("Updates and Replace bulk operations are split in the java driver")

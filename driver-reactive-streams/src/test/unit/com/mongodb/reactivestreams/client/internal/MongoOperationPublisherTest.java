@@ -66,7 +66,7 @@ public class MongoOperationPublisherTest {
 
     @Test
     public void withDatabase() {
-        assertEquals(new MongoNamespace("c.ignored"), DEFAULT_MOP.withDatabase("c").getNamespace());
+        assertEquals(new MongoNamespace("c._ignored"), DEFAULT_MOP.withDatabase("c").getNamespace());
     }
 
     @Test
@@ -79,7 +79,7 @@ public class MongoOperationPublisherTest {
     public void withDatabaseAndDocumentClass() {
         MongoOperationPublisher<BsonDocument> alternative = DEFAULT_MOP.withDatabaseAndDocumentClass("c", BsonDocument.class);
         assertEquals(BsonDocument.class, alternative.getDocumentClass());
-        assertEquals(new MongoNamespace("c.ignored"), alternative.getNamespace());
+        assertEquals(new MongoNamespace("c._ignored"), alternative.getNamespace());
     }
 
     @Test

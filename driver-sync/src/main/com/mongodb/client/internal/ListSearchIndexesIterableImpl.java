@@ -24,10 +24,9 @@ import com.mongodb.client.ListSearchIndexesIterable;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.operation.BatchCursor;
-import com.mongodb.internal.operation.ExplainableReadOperation;
-import com.mongodb.internal.operation.ReadOperation;
-import com.mongodb.internal.operation.SyncOperations;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperationCursor;
+import com.mongodb.internal.operation.ReadOperationExplainable;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -40,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 
 final class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListSearchIndexesIterable<TResult> {
-    private final SyncOperations<BsonDocument> operations;
+    private final Operations<BsonDocument> operations;
     private final Class<TResult> resultClass;
     @Nullable
     private Boolean allowDiskUse;
@@ -59,12 +58,12 @@ final class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TRe
                                   final ReadPreference readPreference, final boolean retryReads, final TimeoutSettings timeoutSettings) {
         super(null, executor, ReadConcern.DEFAULT, readPreference, retryReads, timeoutSettings);
         this.resultClass = resultClass;
-        this.operations = new SyncOperations<>(namespace, BsonDocument.class, readPreference, codecRegistry, retryReads, timeoutSettings);
+        this.operations = new Operations<>(namespace, BsonDocument.class, readPreference, codecRegistry, retryReads, timeoutSettings);
         this.codecRegistry = codecRegistry;
     }
 
     @Override
-    public ReadOperation<BatchCursor<TResult>> asReadOperation() {
+    public ReadOperationCursor<TResult> asReadOperation() {
         return asAggregateOperation();
     }
 
@@ -146,7 +145,7 @@ final class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TRe
                         .asExplainableOperation(verbosity, codecRegistry.get(explainResultClass)), getReadPreference(), getReadConcern(), getClientSession());
     }
 
-    private ExplainableReadOperation<BatchCursor<TResult>> asAggregateOperation() {
+    private ReadOperationExplainable<TResult> asAggregateOperation() {
         return operations.listSearchIndexes(resultClass, indexName, getBatchSize(), collation, comment,
                 allowDiskUse);
     }

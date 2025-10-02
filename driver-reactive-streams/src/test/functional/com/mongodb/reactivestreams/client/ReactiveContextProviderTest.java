@@ -109,10 +109,8 @@ public class ReactiveContextProviderTest {
 
     private MongoClient getMongoClient() {
         if (mongoClient == null) {
-            mongoClient = new SyncMongoClient(
-                    MongoClients.create(getMongoClientSettingsBuilder()
-                            .contextProvider(CONTEXT_PROVIDER)
-                            .build()));
+            mongoClient = new SyncMongoClient(getMongoClientSettingsBuilder()
+                            .contextProvider(CONTEXT_PROVIDER));
         }
         return mongoClient;
     }

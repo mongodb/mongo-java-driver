@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.operation;
+package org.bson.codecs.pojo.entities;
 
-import com.mongodb.ExplainVerbosity;
-import com.mongodb.lang.Nullable;
-import org.bson.codecs.Decoder;
+import org.bson.codecs.pojo.annotations.BsonDiscriminator;
 
-/**
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
- */
-public interface AsyncExplainableReadOperation<T> extends AsyncReadOperation<T> {
-    <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable ExplainVerbosity verbosity, Decoder<R> resultDecoder);
+@BsonDiscriminator(key = "discriminatorKey", value = "discriminatorValue")
+public class DiscriminatorModel {
+
+    public DiscriminatorModel() {
+    }
 }
