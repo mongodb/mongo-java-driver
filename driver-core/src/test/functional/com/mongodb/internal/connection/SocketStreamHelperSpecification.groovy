@@ -98,7 +98,7 @@ class SocketStreamHelperSpecification extends Specification {
                 SocketSettings.builder().build(), SslSettings.builder().build())
 
         then:
-        thrown(MongoOperationTimeoutException.class)
+        thrown(MongoOperationTimeoutException)
 
         cleanup:
         socket?.close()
