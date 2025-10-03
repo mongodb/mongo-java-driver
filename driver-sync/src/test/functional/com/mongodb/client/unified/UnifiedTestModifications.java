@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static com.mongodb.ClusterFixture.isDataLakeTest;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
@@ -40,12 +39,6 @@ import static java.lang.String.format;
 
 public final class UnifiedTestModifications {
     public static void applyCustomizations(final TestDef def) {
-
-        // atlas-data-lake
-
-        def.skipAccordingToSpec("Data lake tests should only run on data lake")
-                .when(() -> !isDataLakeTest())
-                .directory("atlas-data-lake-testing");
 
         // change-streams
         def.skipNoncompliantReactive("error required from change stream initialization") // TODO-JAVA-5711 reason?
@@ -190,9 +183,6 @@ public final class UnifiedTestModifications {
         def.skipNoncompliant("The driver doesn't reduce the batchSize for the getMore")
                 .test("command-logging-and-monitoring/tests/monitoring", "find",
                       "A successful find event with a getmore and the server kills the cursor (<= 4.4)");
-
-        def.skipNoncompliant("The driver doesn't reduce the batchSize for the getMore")
-                .test("atlas-data-lake-testing", "getMore", "A successful find event with getMore");
 
         // connection-monitoring-and-pooling
         def.skipNoncompliant("According to the test, we should clear the pool then close the connection. Our implementation"
