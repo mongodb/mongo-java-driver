@@ -955,7 +955,9 @@ final class MqlExpression<T extends MqlValue>
     }
 
     public MqlString asString(final MqlString timezone) {
-        throw fail(); // intentionally not implemented, see DRIVERS-2620
+        // Given that server versions < 7.1 return a wrong format, not implementing this method helps prevent users
+        // from encountering the bug, described in DRIVERS-2620, by avoiding the method that requires a format as a parameter.
+        throw fail();
     }
 
     @Override
