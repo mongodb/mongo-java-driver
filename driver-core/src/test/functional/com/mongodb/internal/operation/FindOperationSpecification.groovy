@@ -31,6 +31,7 @@ import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
 import com.mongodb.internal.TimeoutContext
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncClusterBinding
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
@@ -39,6 +40,7 @@ import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.binding.ReadBinding
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
+import com.mongodb.internal.connection.OperationContext
 import com.mongodb.internal.session.SessionContext
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -55,10 +57,10 @@ import spock.lang.IgnoreIf
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.executeSync
-import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getCluster
+import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.CursorType.NonTailable
@@ -385,8 +387,10 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
     def 'should apply comment'() {
         given:
         def profileCollectionHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'system.profile'))
+
+        def binding = getBinding()
         new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(2)),
-                new BsonDocumentCodec()).execute(getBinding())
+                new BsonDocumentCodec()).execute(binding, getOperationContext(binding.getReadPreference()))
         def expectedComment = 'this is a comment'
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
                 .comment(new BsonString(expectedComment))
@@ -401,7 +405,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         cleanup:
         new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)),
                 new BsonDocumentCodec())
-                .execute(getBinding())
+                .execute(binding, getOperationContext(binding.getReadPreference()))
         profileCollectionHelper.drop()
 
         where:
@@ -431,9 +435,8 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         given:
         collectionHelper.insertDocuments(new DocumentCodec(), new Document())
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-        def syncBinding = new ClusterBinding(getCluster(), ReadPreference.secondary(), ReadConcern.DEFAULT, OPERATION_CONTEXT)
-        def asyncBinding = new AsyncClusterBinding(getAsyncCluster(), ReadPreference.secondary(), ReadConcern.DEFAULT,
-                OPERATION_CONTEXT)
+        def syncBinding = new ClusterBinding(getCluster(), ReadPreference.secondary())
+        def asyncBinding = new AsyncClusterBinding(getAsyncCluster(), ReadPreference.secondary())
 
         when:
         def result = async ? executeAsync(operation, asyncBinding) : executeSync(operation, syncBinding)
@@ -457,8 +460,8 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def hedgeOptions = isHedgeEnabled != null ?
                 ReadPreferenceHedgeOptions.builder().enabled(isHedgeEnabled as boolean).build() : null
         def readPreference = ReadPreference.primaryPreferred().withHedgeOptions(hedgeOptions)
-        def syncBinding = new ClusterBinding(getCluster(), readPreference, ReadConcern.DEFAULT, OPERATION_CONTEXT)
-        def asyncBinding = new AsyncClusterBinding(getAsyncCluster(), readPreference, ReadConcern.DEFAULT, OPERATION_CONTEXT)
+        def syncBinding = new ClusterBinding(getCluster(), readPreference)
+        def asyncBinding = new AsyncClusterBinding(getAsyncCluster(), readPreference)
         def cursor = async ? executeAsync(operation, asyncBinding) : executeSync(operation, syncBinding)
         def firstBatch = {
             if (async) {
@@ -484,26 +487,26 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def source = Stub(ConnectionSource)
         def connection = Mock(Connection)
         binding.readPreference >> ReadPreference.primary()
-        binding.operationContext >> operationContext
-        binding.readConnectionSource >> source
-        source.connection >> connection
+        binding.getReadConnectionSource(_) >> source
+        source.getConnection(_) >> connection
         source.retain() >> source
-        source.operationContext >> operationContext
         def commandDocument = new BsonDocument('find', new BsonString(getCollectionName()))
         appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
 
         when:
-        operation.execute(binding)
+        operation.execute(binding, operationContext)
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                  6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.command(_, commandDocument, _, _, _, operationContext) >>
-                new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
-                        .append('ns', new BsonString(getNamespace().getFullName()))
-                        .append('firstBatch', new BsonArrayWrapper([])))
+        1 * connection.command(_, commandDocument, _, _, _, _) >> {
+            assertEquals(((OperationContext) it[5]).getId(), operationContext.getId())
+            new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
+                    .append('ns', new BsonString(getNamespace().getFullName()))
+                    .append('firstBatch', new BsonArrayWrapper([])))
+        }
         1 * connection.release()
 
         where:
@@ -524,10 +527,8 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def source = Stub(AsyncConnectionSource)
         def connection = Mock(AsyncConnection)
         binding.readPreference >> ReadPreference.primary()
-        binding.operationContext >> operationContext
-        binding.getReadConnectionSource(_) >> { it[0].onResult(source, null) }
-        source.operationContext >> operationContext
-        source.getConnection(_) >> { it[0].onResult(connection, null) }
+        binding.getReadConnectionSource(_ as OperationContext, _ as SingleResultCallback) >> { it[1].onResult(source, null) }
+        source.getConnection(_ as OperationContext, _ as SingleResultCallback) >> { it[1].onResult(connection, null) }
         source.retain() >> source
         def commandDocument = new BsonDocument('find', new BsonString(getCollectionName()))
         appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
@@ -535,12 +536,13 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
 
         when:
-        executeAsync(operation, binding)
+        executeAsync(operation, binding, operationContext)
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                  6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.commandAsync(_, commandDocument, _, _, _, operationContext, _) >> {
+        1 * connection.commandAsync(_, commandDocument, _, _, _, _, _) >> {
+            assertEquals(((OperationContext) it[5]).getId(), operationContext.getId())
             it.last().onResult(new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
                     .append('ns', new BsonString(getNamespace().getFullName()))
                     .append('firstBatch', new BsonArrayWrapper([]))), null)
@@ -565,26 +567,26 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def source = Stub(ConnectionSource)
         def connection = Mock(Connection)
         binding.readPreference >> ReadPreference.primary()
-        binding.readConnectionSource >> source
-        binding.operationContext >> operationContext
-        source.connection >> connection
+        binding.getReadConnectionSource(_) >> source
+        source.getConnection(_) >> connection
         source.retain() >> source
-        source.operationContext >> operationContext
         def commandDocument = new BsonDocument('find', new BsonString(getCollectionName())).append('allowDiskUse', BsonBoolean.TRUE)
         appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec()).allowDiskUse(true)
 
         when:
-        operation.execute(binding)
+        operation.execute(binding, operationContext)
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                 6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.command(_, commandDocument, _, _, _, operationContext) >>
-                new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
-                        .append('ns', new BsonString(getNamespace().getFullName()))
-                        .append('firstBatch', new BsonArrayWrapper([])))
+        1 * connection.command(_, commandDocument, _, _, _, _) >> {
+            assertEquals(((OperationContext) it[5]).getId(), operationContext.getId())
+            new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
+                    .append('ns', new BsonString(getNamespace().getFullName()))
+                    .append('firstBatch', new BsonArrayWrapper([])))
+        }
         1 * connection.release()
 
         where:
@@ -604,11 +606,9 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def binding = Stub(AsyncReadBinding)
         def source = Stub(AsyncConnectionSource)
         def connection = Mock(AsyncConnection)
-        binding.operationContext >> operationContext
         binding.readPreference >> ReadPreference.primary()
-        binding.getReadConnectionSource(_) >> { it[0].onResult(source, null) }
-        source.operationContext >> operationContext
-        source.getConnection(_) >> { it[0].onResult(connection, null) }
+        binding.getReadConnectionSource(_, _) >> { it[1].onResult(source, null) }
+        source.getConnection(_, _) >> { it[1].onResult(connection, null) }
         source.retain() >> source
         def commandDocument = new BsonDocument('find', new BsonString(getCollectionName())).append('allowDiskUse', BsonBoolean.TRUE)
         appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
@@ -616,12 +616,13 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec()).allowDiskUse(true)
 
         when:
-        executeAsync(operation, binding)
+        executeAsync(operation, binding, operationContext)
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                 6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.commandAsync(_, commandDocument, _, _, _, operationContext, _) >> {
+        1 * connection.commandAsync(_, commandDocument, _, _, _, _, _) >> {
+            assertEquals(((OperationContext) it[5]).getId(), operationContext.getId())
             it.last().onResult(new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
                     .append('ns', new BsonString(getNamespace().getFullName()))
                     .append('firstBatch', new BsonArrayWrapper([]))), null)
@@ -644,7 +645,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         given:
         def (cursorType, long maxAwaitTimeMS, long maxTimeMSForCursor) = cursorDetails
         def timeoutSettings = ClusterFixture.TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT.withMaxAwaitTimeMS(maxAwaitTimeMS)
-        def timeoutContext = Spy(TimeoutContext, constructorArgs: [timeoutSettings])
+        def timeoutContext = new TimeoutContext(timeoutSettings)
         def operationContext = OPERATION_CONTEXT.withTimeoutContext(timeoutContext)
 
         collectionHelper.create(getCollectionName(), new CreateCollectionOptions().capped(true).sizeInBytes(1000))
@@ -652,14 +653,19 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 .cursorType(cursorType)
 
         when:
+        def cursor;
         if (async) {
-            execute(operation, getBinding(operationContext))
+             cursor = execute(operation, ClusterFixture.getAsyncBinding(operationContext), operationContext)
         } else {
-            execute(operation, getAsyncBinding(operationContext))
+             cursor = execute(operation, ClusterFixture.getBinding(operationContext), operationContext)
         }
 
         then:
-        timeoutContext.setMaxTimeOverride(maxTimeMSForCursor)
+        cursor.operationContext.getTimeoutContext().getMaxAwaitTimeMS() == maxAwaitTimeMS
+        // should have maxTimeMS override
+        cursor.operationContext.getTimeoutContext().runMaxTimeMS { long actualMaxTimeMs ->
+            assertEquals(maxTimeMSForCursor, actualMaxTimeMs)
+        }
 
         where:
         [async, cursorDetails] << [

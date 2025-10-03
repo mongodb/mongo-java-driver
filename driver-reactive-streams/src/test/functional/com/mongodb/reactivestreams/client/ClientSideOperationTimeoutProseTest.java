@@ -21,7 +21,6 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoOperationTimeoutException;
-import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.AbstractClientSideOperationsTimeoutProseTest;
@@ -76,16 +75,13 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
 
     @Override
     protected com.mongodb.client.MongoClient createMongoClient(final MongoClientSettings mongoClientSettings) {
-        wrapped = createReactiveClient(mongoClientSettings);
-        return new SyncMongoClient(wrapped);
+        SyncMongoClient client = new SyncMongoClient(mongoClientSettings);
+        wrapped = client.getWrapped();
+        return client;
     }
 
     private static MongoClient createReactiveClient(final MongoClientSettings.Builder builder) {
         return MongoClients.create(builder.build());
-    }
-
-    private static MongoClient createReactiveClient(final MongoClientSettings mongoClientSettings) {
-        return MongoClients.create(mongoClientSettings);
     }
 
     @Override
@@ -149,9 +145,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
             assertEquals(1, onErrorEvents.size());
 
             Throwable commandError = onErrorEvents.get(0);
-            Throwable operationTimeoutErrorCause = commandError.getCause();
             assertInstanceOf(MongoOperationTimeoutException.class, commandError);
-            assertInstanceOf(MongoSocketReadTimeoutException.class, operationTimeoutErrorCause);
 
             CommandFailedEvent chunkInsertFailedEvent = commandListener.getCommandFailedEvent("insert");
             assertNotNull(chunkInsertFailedEvent);
@@ -204,10 +198,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
             //then
             Throwable droppedError = droppedErrorFuture.get(TIMEOUT_DURATION.toMillis(), TimeUnit.MILLISECONDS);
             Throwable commandError = droppedError.getCause();
-            Throwable operationTimeoutErrorCause = commandError.getCause();
-
             assertInstanceOf(MongoOperationTimeoutException.class, commandError);
-            assertInstanceOf(MongoSocketReadTimeoutException.class, operationTimeoutErrorCause);
 
             CommandFailedEvent deleteFailedEvent = commandListener.getCommandFailedEvent("delete");
             assertNotNull(deleteFailedEvent);
@@ -466,7 +457,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                     .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
 
             //when
-            ChangeStreamPublisher<Document> documentChangeStreamPublisher = collection.watch();
+            ChangeStreamPublisher<Document> documentChangeStreamPublisher = collection.watch().maxAwaitTime(1000, TimeUnit.MILLISECONDS);
             StepVerifier.create(documentChangeStreamPublisher, 2)
             //then
                     .expectError(MongoOperationTimeoutException.class)
@@ -514,7 +505,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
 
     @Override
     @AfterEach
-    public void tearDown() {
+    public void tearDown() throws InterruptedException {
         super.tearDown();
         SyncMongoClient.disableSleep();
     }

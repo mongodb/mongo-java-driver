@@ -17,7 +17,9 @@ package com.mongodb.internal.client.vault;
 
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.model.vault.RangeOptions;
+import com.mongodb.client.model.vault.TextOptions;
 import com.mongodb.internal.crypt.capi.MongoExplicitEncryptOptions;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
@@ -70,6 +72,30 @@ public final class EncryptOptionsHelper {
             }
             encryptOptionsBuilder.rangeOptions(rangeOptionsBsonDocument);
         }
+
+        TextOptions textOptions = options.getTextOptions();
+        if (textOptions != null) {
+            BsonDocument textOptionsDocument = new BsonDocument();
+            textOptionsDocument.put("caseSensitive", BsonBoolean.valueOf(textOptions.getCaseSensitive()));
+            textOptionsDocument.put("diacriticSensitive", BsonBoolean.valueOf(textOptions.getDiacriticSensitive()));
+
+            BsonDocument substringOptions = textOptions.getSubstringOptions();
+            if (substringOptions != null) {
+                textOptionsDocument.put("substring", substringOptions);
+            }
+
+            BsonDocument prefixOptions = textOptions.getPrefixOptions();
+            if (prefixOptions != null) {
+                textOptionsDocument.put("prefix", prefixOptions);
+            }
+
+            BsonDocument suffixOptions = textOptions.getSuffixOptions();
+            if (suffixOptions != null) {
+                textOptionsDocument.put("suffix", suffixOptions);
+            }
+            encryptOptionsBuilder.textOptions(textOptionsDocument);
+        }
+
         return encryptOptionsBuilder.build();
     }
     private EncryptOptionsHelper() {

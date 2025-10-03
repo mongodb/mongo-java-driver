@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation
 
+import com.mongodb.ClusterFixture
 import com.mongodb.MongoException
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
@@ -31,6 +32,7 @@ import spock.lang.Unroll
 
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 
 class DropIndexOperationSpecification extends OperationFunctionalSpecification {
 
@@ -45,6 +47,7 @@ class DropIndexOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
+    @IgnoreIf({ serverVersionAtLeast(8, 3) })
     def 'should error when dropping non-existent index on existing collection'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
@@ -154,7 +157,9 @@ class DropIndexOperationSpecification extends OperationFunctionalSpecification {
 
     def getIndexes() {
         def indexes = []
-        def cursor = new ListIndexesOperation(getNamespace(), new DocumentCodec()).execute(getBinding())
+        def binding = getBinding()
+        def cursor = new ListIndexesOperation(getNamespace(), new DocumentCodec())
+                .execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
         while (cursor.hasNext()) {
             indexes.addAll(cursor.next())
         }

@@ -130,12 +130,13 @@ class GridFSFindIterableSpecification extends Specification {
                         , null),
         ]
         def cursor = {
+            def batchToReturn = cannedResults.collect();
             Stub(BatchCursor) {
                 def count = 0
                 def results
                 def getResult = {
                     count++
-                    results = count == 1 ? cannedResults : null
+                    results = count == 1 ? batchToReturn : null
                     results
                 }
                 next() >> {

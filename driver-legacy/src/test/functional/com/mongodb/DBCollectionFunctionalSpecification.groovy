@@ -31,6 +31,7 @@ import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static org.hamcrest.Matchers.contains
 import static org.hamcrest.Matchers.containsInAnyOrder
 import static spock.util.matcher.HamcrestSupport.that
@@ -163,6 +164,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.dropIndex('indexOnCollectionThatDoesNotExist')
     }
 
+    @IgnoreIf({ serverVersionAtLeast(8, 3) })
     def 'drop index should error if index does not exist'() {
         given:
         collection.createIndex(new BasicDBObject('x', 1))
@@ -175,6 +177,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         exception.getErrorMessage().contains('index not found')
     }
 
+    @IgnoreIf({ serverVersionAtLeast(8, 3) })
     def 'should throw Exception if dropping an index with an incorrect type'() {
         given:
         BasicDBObject index = new BasicDBObject('x', 1)

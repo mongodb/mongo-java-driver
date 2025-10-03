@@ -432,8 +432,10 @@ final class MongoClusterImpl implements MongoCluster {
             }
 
             ClientSession actualClientSession = getClientSession(session);
-            ReadBinding binding = getReadBinding(readPreference, readConcern, actualClientSession, session == null,
-                    operation.getCommandName());
+            boolean implicitSession = isImplicitSession(session);
+            OperationContext operationContext = getOperationContext(actualClientSession, readConcern, operation.getCommandName())
+                    .withSessionContext(new ClientSessionBinding.SyncClientSessionContext(actualClientSession, readConcern, implicitSession));
+            ReadBinding binding = getReadBinding(readPreference, actualClientSession, implicitSession);
 
             Span span = createOperationSpan(actualClientSession, binding, operation.getCommandName(), operation.getNamespace());
 
@@ -441,7 +443,7 @@ final class MongoClusterImpl implements MongoCluster {
                 if (actualClientSession.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
                     throw new MongoClientException("Read preference in a transaction must be primary");
                 }
-                return operation.execute(binding);
+                return operation.execute(binding, operationContext);
             } catch (MongoException e) {
                 MongoException exceptionToHandle = OperationHelper.unwrap(e);
                 labelException(actualClientSession, exceptionToHandle);
@@ -466,11 +468,13 @@ final class MongoClusterImpl implements MongoCluster {
             }
 
             ClientSession actualClientSession = getClientSession(session);
-            WriteBinding binding = getWriteBinding(readConcern, actualClientSession, session == null, operation.getCommandName());
+            OperationContext operationContext = getOperationContext(actualClientSession, readConcern, operation.getCommandName())
+                    .withSessionContext(new ClientSessionBinding.SyncClientSessionContext(actualClientSession, readConcern, isImplicitSession(session)));
+            WriteBinding binding = getWriteBinding(actualClientSession, isImplicitSession(session));
 
             Span span = createOperationSpan(actualClientSession, binding, operation.getCommandName(), operation.getNamespace());
             try {
-                return operation.execute(binding);
+                return operation.execute(binding, operationContext);
             } catch (MongoException e) {
                 MongoException exceptionToHandle = OperationHelper.unwrap(e);
                 labelException(actualClientSession, exceptionToHandle);
@@ -500,23 +504,18 @@ final class MongoClusterImpl implements MongoCluster {
             return executorTimeoutSettings;
         }
 
-        WriteBinding getWriteBinding(final ReadConcern readConcern, final ClientSession session, final boolean ownsSession,
-                final String commandName) {
-            return getReadWriteBinding(primary(), readConcern, session, ownsSession, commandName);
+        WriteBinding getWriteBinding(final ClientSession session, final boolean ownsSession) {
+            return getReadWriteBinding(primary(), session, ownsSession);
         }
 
-        ReadBinding getReadBinding(final ReadPreference readPreference, final ReadConcern readConcern, final ClientSession session,
-                final boolean ownsSession, final String commandName) {
-            return getReadWriteBinding(readPreference, readConcern, session, ownsSession, commandName);
+        ReadBinding getReadBinding(final ReadPreference readPreference, final ClientSession session, final boolean ownsSession) {
+            return getReadWriteBinding(readPreference, session, ownsSession);
         }
 
-        ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference,
-                final ReadConcern readConcern, final ClientSession session, final boolean ownsSession,
-                final String commandName) {
+        ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final ClientSession session, final boolean ownsSession) {
 
             ClusterAwareReadWriteBinding readWriteBinding = new ClusterBinding(cluster,
-                    getReadPreferenceForBinding(readPreference, session), readConcern,
-                    getOperationContext(session, readConcern, commandName));
+                    getReadPreferenceForBinding(readPreference, session));
 
             if (crypt != null) {
                 readWriteBinding = new CryptBinding(readWriteBinding, crypt);
@@ -558,7 +557,7 @@ final class MongoClusterImpl implements MongoCluster {
         }
 
         private ReadPreference getReadPreferenceForBinding(final ReadPreference readPreference, @Nullable final ClientSession session) {
-            if (session == null) {
+            if (isImplicitSession(session)) {
                 return readPreference;
             }
             if (session.hasActiveTransaction()) {
@@ -634,5 +633,9 @@ final class MongoClusterImpl implements MongoCluster {
                 return null;
             }
         }
+    }
+
+    private boolean isImplicitSession(@Nullable final ClientSession session) {
+        return session == null;
     }
 }

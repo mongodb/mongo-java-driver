@@ -84,10 +84,10 @@ public final class MongoClientSettings {
                     new Jsr310CodecProvider(),
                     new JsonObjectCodecProvider(),
                     new BsonCodecProvider(),
-                    new EnumCodecProvider(),
                     new ExpressionCodecProvider(),
                     new Jep395RecordCodecProvider(),
-                    new KotlinCodecProvider()));
+                    new KotlinCodecProvider(),
+                    new EnumCodecProvider()));
 
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;

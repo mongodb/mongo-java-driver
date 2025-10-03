@@ -30,6 +30,7 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
@@ -66,9 +67,11 @@ public class CommitTransactionOperation extends TransactionOperation {
     }
 
     @Override
-    public Void execute(final WriteBinding binding) {
+    public Void execute(final WriteBinding binding, final OperationContext operationContext) {
         try {
-            return super.execute(binding);
+            return super.execute(
+                    binding,
+                    operationContext.withOverride(TimeoutContext::withMaxTimeAsMaxCommitTime));
         } catch (MongoException e) {
             addErrorLabels(e);
             throw e;
@@ -76,8 +79,11 @@ public class CommitTransactionOperation extends TransactionOperation {
     }
 
     @Override
-    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        super.executeAsync(binding, (result, t) -> {
+    public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<Void> callback) {
+        super.executeAsync(
+                binding,
+                operationContext.withOverride(TimeoutContext::withMaxTimeAsMaxCommitTime),
+                (result, t) -> {
              if (t instanceof MongoException) {
                  addErrorLabels((MongoException) t);
              }
@@ -127,7 +133,6 @@ public class CommitTransactionOperation extends TransactionOperation {
         CommandCreator creator = (operationContext, serverDescription, connectionDescription) -> {
             BsonDocument command = CommitTransactionOperation.super.getCommandCreator()
                     .create(operationContext, serverDescription, connectionDescription);
-            operationContext.getTimeoutContext().setMaxTimeOverrideToMaxCommitTime();
             return command;
         };
         if (alreadyCommitted) {

@@ -72,6 +72,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -86,10 +88,12 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.sleep;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getPrimary;
+import static java.lang.Long.MAX_VALUE;
 import static java.lang.String.join;
 import static java.util.Arrays.asList;
 import static java.util.Collections.nCopies;
 import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -111,6 +115,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     protected static final String FAIL_COMMAND_NAME = "failCommand";
     protected static final String GRID_FS_BUCKET_NAME = "db.fs";
     private static final AtomicInteger COUNTER = new AtomicInteger();
+    private ExecutorService executor;
 
     protected MongoNamespace namespace;
     protected MongoNamespace gridFsFileNamespace;
@@ -771,13 +776,118 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             }});
     }
 
+    /**
+     * Not a prose spec test. However, it is additional test case for better coverage.
+     */
+    @Test
+    @DisplayName("Should ignore waitQueueTimeoutMS when timeoutMS is set")
+    public void shouldIgnoreWaitQueueTimeoutMSWhenTimeoutMsIsSet() {
+        assumeTrue(serverVersionAtLeast(4, 4));
+
+        //given
+        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
+                .timeout(500, TimeUnit.MILLISECONDS)
+                .applyToConnectionPoolSettings(builder -> builder
+                        .maxWaitTime(1, TimeUnit.MILLISECONDS)
+                        .maxSize(1)
+                ))) {
+            MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
+                    .getCollection(namespace.getCollectionName());
+
+            collectionHelper.runAdminCommand("{"
+                    + "    configureFailPoint: \"failCommand\","
+                    + "    mode: { times: 1},"
+                    + "    data: {"
+                    + "        failCommands: [\"find\" ],"
+                    + "        blockConnection: true,"
+                    + "        blockTimeMS: " + 300
+                    + "    }"
+                    + "}");
+
+            executor.submit(() -> collection.find().first());
+            sleep(100);
+
+            //when && then
+            assertDoesNotThrow(() -> collection.find().first());
+        }
+    }
 
     /**
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
-    @DisplayName("KillCursors is not executed after getMore network error when timeout is not enabled")
     @Test
-    public void testKillCursorsIsNotExecutedAfterGetMoreNetworkErrorWhenTimeoutIsNotEnabled() {
+    @DisplayName("Should throw MongoOperationTimeoutException when connection is not available and timeoutMS is set")
+    public void shouldThrowOperationTimeoutExceptionWhenConnectionIsNotAvailableAndTimeoutMSIsSet() {
+        assumeTrue(serverVersionAtLeast(4, 4));
+
+        //given
+        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
+                .timeout(100, TimeUnit.MILLISECONDS)
+                .applyToConnectionPoolSettings(builder -> builder
+                        .maxSize(1)
+                ))) {
+            MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
+                    .getCollection(namespace.getCollectionName());
+
+            collectionHelper.runAdminCommand("{"
+                    + "    configureFailPoint: \"failCommand\","
+                    + "    mode: { times: 1},"
+                    + "    data: {"
+                    + "        failCommands: [\"find\" ],"
+                    + "        blockConnection: true,"
+                    + "        blockTimeMS: " + 500
+                    + "    }"
+                    + "}");
+
+            executor.submit(() -> collection.withTimeout(0, TimeUnit.MILLISECONDS).find().first());
+            sleep(100);
+
+            //when && then
+            assertThrows(MongoOperationTimeoutException.class, () -> collection.find().first());
+        }
+    }
+
+    /**
+     * Not a prose spec test. However, it is additional test case for better coverage.
+     */
+    @Test
+    @DisplayName("Should use waitQueueTimeoutMS when timeoutMS is not set")
+    public void shouldUseWaitQueueTimeoutMSWhenTimeoutIsNotSet() {
+        assumeTrue(serverVersionAtLeast(4, 4));
+
+        //given
+        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
+                .applyToConnectionPoolSettings(builder -> builder
+                        .maxWaitTime(100, TimeUnit.MILLISECONDS)
+                        .maxSize(1)
+                ))) {
+            MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
+                    .getCollection(namespace.getCollectionName());
+
+            collectionHelper.runAdminCommand("{"
+                    + "    configureFailPoint: \"failCommand\","
+                    + "    mode: { times: 1},"
+                    + "    data: {"
+                    + "        failCommands: [\"find\" ],"
+                    + "        blockConnection: true,"
+                    + "        blockTimeMS: " + 300
+                    + "    }"
+                    + "}");
+
+            executor.submit(() -> collection.find().first());
+            sleep(100);
+
+            //when & then
+            assertThrows(MongoTimeoutException.class, () -> collection.find().first());
+        }
+    }
+
+    /**
+     * Not a prose spec test. However, it is additional test case for better coverage.
+     */
+    @DisplayName("KillCursors is not executed after getMore network error when timeoutMs is not enabled")
+    @Test
+    public void testKillCursorsIsNotExecutedAfterGetMoreNetworkErrorWhenTimeoutMsIsNotEnabled() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeTrue(isLoadBalanced());
 
@@ -946,6 +1056,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     @BeforeEach
     public void setUp() {
         namespace = generateNamespace();
+        executor = Executors.newSingleThreadExecutor();
         gridFsFileNamespace = new MongoNamespace(getDefaultDatabaseName(), GRID_FS_BUCKET_NAME + ".files");
         gridFsChunksNamespace = new MongoNamespace(getDefaultDatabaseName(), GRID_FS_BUCKET_NAME + ".chunks");
 
@@ -956,7 +1067,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     }
 
     @AfterEach
-    public void tearDown() {
+    public void tearDown() throws InterruptedException {
         ClusterFixture.disableFailPoint(FAIL_COMMAND_NAME);
         if (collectionHelper != null) {
             collectionHelper.drop();
@@ -968,6 +1079,12 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             } catch (InterruptedException e) {
                 // ignore
             }
+        }
+
+        if (executor != null) {
+            executor.shutdownNow();
+            //noinspection ResultOfMethodCallIgnored
+            executor.awaitTermination(MAX_VALUE, NANOSECONDS);
         }
     }
 
@@ -983,4 +1100,5 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
    private long msElapsedSince(final long t1) {
         return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t1);
     }
+
 }

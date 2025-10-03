@@ -14,20 +14,11 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.binding;
-
-import com.mongodb.internal.connection.OperationContext;
-
-
 /**
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ * This package contains classes for internal client functionality.
  */
-public interface BindingContext {
 
-    /**
-     * Note: Will return the same operation context if called multiple times.
-     *
-     * @return the operation context for the binding context.
-     */
-    OperationContext getOperationContext();
-}
+@NonNullApi
+package com.mongodb.internal.client;
+
+import com.mongodb.lang.NonNullApi;

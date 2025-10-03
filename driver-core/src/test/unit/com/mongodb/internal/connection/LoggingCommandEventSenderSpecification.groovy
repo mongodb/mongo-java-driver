@@ -18,7 +18,6 @@ package com.mongodb.internal.connection
 
 import com.mongodb.LoggerSettings
 import com.mongodb.MongoInternalException
-import com.mongodb.MongoNamespace
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
@@ -50,13 +49,13 @@ class LoggingCommandEventSenderSpecification extends Specification {
     def 'should send events'() {
         given:
         def connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()))
-        def namespace = new MongoNamespace('test.driver')
-            def messageSettings = MessageSettings.builder().maxWireVersion(LATEST_WIRE_VERSION).build()
+        def database = 'test'
+        def messageSettings = MessageSettings.builder().maxWireVersion(LATEST_WIRE_VERSION).build()
         def commandListener = new TestCommandListener()
         def commandDocument = new BsonDocument('ping', new BsonInt32(1))
         def replyDocument = new BsonDocument('ok', new BsonInt32(1))
         def failureException = new MongoInternalException('failure!')
-        def message = new CommandMessage(namespace, commandDocument,
+        def message = new CommandMessage(database, commandDocument,
                 NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), messageSettings, MULTIPLE, null)
         def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())
         message.encode(bsonOutput, new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
@@ -78,14 +77,14 @@ class LoggingCommandEventSenderSpecification extends Specification {
         then:
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(null, operationContext.id, message.getId(), connectionDescription,
-                        namespace.databaseName, commandDocument.getFirstKey(),
-                        commandDocument.append('$db', new BsonString(namespace.databaseName))),
+                        database, commandDocument.getFirstKey(),
+                        commandDocument.append('$db', new BsonString(database))),
                 new CommandSucceededEvent(null, operationContext.id, message.getId(), connectionDescription,
-                        namespace.databaseName, commandDocument.getFirstKey(), new BsonDocument(), 1),
+                        database, commandDocument.getFirstKey(), new BsonDocument(), 1),
                 new CommandSucceededEvent(null, operationContext.id, message.getId(), connectionDescription,
-                        namespace.databaseName, commandDocument.getFirstKey(), replyDocument, 1),
+                        database, commandDocument.getFirstKey(), replyDocument, 1),
                 new CommandFailedEvent(null, operationContext.id, message.getId(), connectionDescription,
-                        namespace.databaseName, commandDocument.getFirstKey(), 1, failureException)
+                        database, commandDocument.getFirstKey(), 1, failureException)
         ])
 
         where:
@@ -97,12 +96,12 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def serverId = new ServerId(new ClusterId(), new ServerAddress())
         def connectionDescription = new ConnectionDescription(serverId)
                 .withConnectionId(new ConnectionId(serverId, 42, 1000))
-        def namespace = new MongoNamespace('test.driver')
+        def database = 'test'
         def messageSettings = MessageSettings.builder().maxWireVersion(LATEST_WIRE_VERSION).build()
         def commandDocument = new BsonDocument('ping', new BsonInt32(1))
         def replyDocument = new BsonDocument('ok', new BsonInt32(42))
         def failureException = new MongoInternalException('failure!')
-        def message = new CommandMessage(namespace, commandDocument, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
+        def message = new CommandMessage(database, commandDocument, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
                 messageSettings, MULTIPLE, null)
         def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())
         message.encode(bsonOutput, new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
@@ -156,10 +155,10 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def serverId = new ServerId(new ClusterId(), new ServerAddress())
         def connectionDescription = new ConnectionDescription(serverId)
                 .withConnectionId(new ConnectionId(serverId, 42, 1000))
-        def namespace = new MongoNamespace('test.driver')
+        def database = 'test'
         def messageSettings = MessageSettings.builder().maxWireVersion(LATEST_WIRE_VERSION).build()
         def commandDocument = new BsonDocument('fake', new BsonBinary(new byte[2048]))
-        def message = new CommandMessage(namespace, commandDocument, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
+        def message = new CommandMessage(database, commandDocument, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
                 messageSettings, SINGLE, null)
         def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())
         message.encode(bsonOutput, new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
@@ -190,10 +189,10 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def serverId = new ServerId(new ClusterId(), new ServerAddress())
         def connectionDescription = new ConnectionDescription(serverId)
                 .withConnectionId(new ConnectionId(serverId, 42, 1000))
-        def namespace = new MongoNamespace('test.driver')
+        def database = 'test'
         def messageSettings = MessageSettings.builder().maxWireVersion(LATEST_WIRE_VERSION).build()
         def commandDocument = new BsonDocument('createUser', new BsonString('private'))
-        def message = new CommandMessage(namespace, commandDocument, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
+        def message = new CommandMessage(database, commandDocument, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
                 messageSettings, SINGLE, null)
         def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())
         message.encode(bsonOutput, new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,

@@ -17,7 +17,6 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoInterruptedException;
-import com.mongodb.MongoNamespace;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ServerApi;
 import com.mongodb.annotations.ThreadSafe;
@@ -51,7 +50,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.fail;
@@ -381,7 +379,7 @@ class DefaultServerMonitor implements ServerMonitor {
 
         private CommandMessage createCommandMessage(final BsonDocument command, final InternalConnection connection,
                 final ServerDescription currentServerDescription) {
-            return new CommandMessage(new MongoNamespace("admin", COMMAND_COLLECTION_NAME), command,
+            return new CommandMessage("admin", command,
                     NoOpFieldNameValidator.INSTANCE, primary(),
                     MessageSettings.builder()
                             .maxWireVersion(connection.getDescription().getMaxWireVersion())
