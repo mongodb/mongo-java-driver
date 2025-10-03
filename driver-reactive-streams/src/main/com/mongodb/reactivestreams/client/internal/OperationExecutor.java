@@ -19,8 +19,8 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.operation.AsyncReadOperation;
-import com.mongodb.internal.operation.AsyncWriteOperation;
+import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import reactor.core.publisher.Mono;
@@ -41,7 +41,7 @@ public interface OperationExecutor {
      * @param session the session to associate this operation with
      * @param <T> the operations result type.
      */
-    <T> Mono<T> execute(AsyncReadOperation<T> operation, ReadPreference readPreference, ReadConcern readConcern,
+    <T> Mono<T> execute(ReadOperation<?, T> operation, ReadPreference readPreference, ReadConcern readConcern,
             @Nullable ClientSession session);
 
     /**
@@ -52,7 +52,7 @@ public interface OperationExecutor {
      * @param readConcern the read concern
      * @param <T> the operations result type.
      */
-    <T> Mono<T> execute(AsyncWriteOperation<T> operation, ReadConcern readConcern, @Nullable ClientSession session);
+    <T> Mono<T> execute(WriteOperation<T> operation, ReadConcern readConcern, @Nullable ClientSession session);
 
     /**
      * Create a new OperationExecutor with a specific timeout settings

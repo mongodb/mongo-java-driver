@@ -36,17 +36,13 @@ class ClientEncryptionSpec extends BaseSpec with MockitoSugar {
   val clientEncryption = ClientEncryption(wrapped)
 
   "ClientEncryption" should "have the same methods as the wrapped Filters" in {
-    val wrapped = classOf[JClientEncryption].getDeclaredMethods
-      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers))
-      .map(_.getName)
-      .toSet
-    val ignore = Set("toString", "apply", "unapply")
-    val local = ClientEncryption.getClass.getDeclaredMethods
-      .filter(f => isPublic(f.getModifiers))
-      .map(_.getName)
-      .toSet -- ignore
+    val wrapped = classOf[JClientEncryption].getDeclaredMethods.map(_.getName).toSet
+    val local = classOf[ClientEncryption].getDeclaredMethods.map(_.getName).toSet
 
-    local should equal(wrapped)
+    wrapped.foreach((name: String) => {
+      val cleanedName = name.stripPrefix("get")
+      assert(local.contains(name) || local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
+    })
   }
 
   it should "call createDataKey" in {
@@ -58,6 +54,59 @@ class ClientEncryptionSpec extends BaseSpec with MockitoSugar {
 
     clientEncryption.createDataKey(kmsProvider, options)
     verify(wrapped).createDataKey(kmsProvider, options)
+  }
+
+  it should "call getKey" in {
+    val bsonBinary = BsonBinary(Array[Byte](1, 2, 3))
+
+    clientEncryption.getKey(bsonBinary)
+    verify(wrapped).getKey(same(bsonBinary))
+  }
+
+  it should "call getKeyByAltName" in {
+    val altKeyName = "altKeyName"
+
+    clientEncryption.getKeyByAltName(altKeyName)
+    verify(wrapped).getKeyByAltName(same(altKeyName))
+  }
+
+  it should "call getKeys" in {
+    clientEncryption.keys
+    verify(wrapped).getKeys
+  }
+
+  it should "call addKeyAltName" in {
+    val bsonBinary = BsonBinary(Array[Byte](1, 2, 3))
+    val altKeyName = "altKeyName"
+
+    clientEncryption.addKeyAltName(bsonBinary, altKeyName)
+    verify(wrapped).addKeyAltName(same(bsonBinary), same(altKeyName))
+  }
+
+  it should "call deleteKey" in {
+    val bsonBinary = BsonBinary(Array[Byte](1, 2, 3))
+
+    clientEncryption.deleteKey(bsonBinary)
+    verify(wrapped).deleteKey(same(bsonBinary))
+  }
+
+  it should "call removeKeyAltName" in {
+    val bsonBinary = BsonBinary(Array[Byte](1, 2, 3))
+    val altKeyName = "altKeyName"
+
+    clientEncryption.removeKeyAltName(bsonBinary, altKeyName)
+    verify(wrapped).removeKeyAltName(same(bsonBinary), same(altKeyName))
+  }
+
+  it should "call rewrapManyDataKey" in {
+    val bsonDocument = Document()
+    val options = RewrapManyDataKeyOptions()
+
+    clientEncryption.rewrapManyDataKey(bsonDocument)
+    verify(wrapped).rewrapManyDataKey(same(bsonDocument))
+
+    clientEncryption.rewrapManyDataKey(bsonDocument, options)
+    verify(wrapped).rewrapManyDataKey(same(bsonDocument), same(options))
   }
 
   it should "call encrypt" in {
@@ -100,5 +149,11 @@ class ClientEncryptionSpec extends BaseSpec with MockitoSugar {
       same(createCollectionOptions),
       same(createEncryptedCollectionParams)
     )
+  }
+
+  it should "call close" in {
+    clientEncryption.close()
+
+    verify(wrapped).close()
   }
 }

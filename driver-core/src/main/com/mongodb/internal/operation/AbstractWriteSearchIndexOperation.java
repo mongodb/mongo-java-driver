@@ -37,7 +37,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErr
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-abstract class AbstractWriteSearchIndexOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+abstract class AbstractWriteSearchIndexOperation implements WriteOperation<Void> {
     private final MongoNamespace namespace;
 
     AbstractWriteSearchIndexOperation(final MongoNamespace namespace) {
@@ -66,9 +66,9 @@ abstract class AbstractWriteSearchIndexOperation implements AsyncWriteOperation<
                                 writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()), (result, commandExecutionError) -> {
                                     try {
                                         swallowOrThrow(commandExecutionError);
-                                        callback.onResult(result, null);
+                                        cb.onResult(result, null);
                                     } catch (Throwable mongoCommandException) {
-                                        callback.onResult(null, mongoCommandException);
+                                        cb.onResult(null, mongoCommandException);
                                     }
                                 }
                         )

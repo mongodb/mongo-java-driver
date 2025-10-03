@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.operation;
-
-import com.mongodb.ExplainVerbosity;
-import com.mongodb.lang.Nullable;
-import org.bson.codecs.Decoder;
-
 /**
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ * This package contains classes for internal client functionality.
  */
-public interface ExplainableReadOperation<T> extends ReadOperation<T> {
-    <R> ReadOperation<R> asExplainableOperation(@Nullable ExplainVerbosity verbosity, Decoder<R> resultDecoder);
-}
+
+@NonNullApi
+package com.mongodb.internal.client;
+
+import com.mongodb.lang.NonNullApi;

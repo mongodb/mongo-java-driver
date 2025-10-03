@@ -238,7 +238,7 @@ public class CrudProseTest {
     }
 
     @DisplayName("6. MongoClient.bulkWrite handles individual WriteErrors across batches")
-    @ParameterizedTest
+    @ParameterizedTest(name = "6. MongoClient.bulkWrite handles individual WriteErrors across batches--ordered:{0}")
     @ValueSource(booleans = {false, true})
     protected void testBulkWriteHandlesWriteErrorsAcrossBatches(final boolean ordered) {
         assumeTrue(serverVersionAtLeast(8, 0));
@@ -380,7 +380,7 @@ public class CrudProseTest {
     }
 
     @DisplayName("12. MongoClient.bulkWrite returns an error if no operations can be added to ops")
-    @ParameterizedTest
+    @ParameterizedTest(name = "12. MongoClient.bulkWrite returns an error if no operations can be added to ops--tooLarge:{0}")
     @ValueSource(strings = {"document", "namespace"})
     protected void testBulkWriteSplitsErrorsForTooLargeOpsOrNsInfo(final String tooLarge) {
         assumeTrue(serverVersionAtLeast(8, 0));
@@ -465,7 +465,8 @@ public class CrudProseTest {
     /**
      * This test is not from the specification.
      */
-    @ParameterizedTest
+    @DisplayName("insertMustGenerateIdAtMostOnce")
+    @ParameterizedTest(name = "insertMustGenerateIdAtMostOnce--documentClass:{0}, expectIdGenerated:{1}")
     @MethodSource("insertMustGenerateIdAtMostOnceArgs")
     protected <TDocument> void insertMustGenerateIdAtMostOnce(
             final Class<TDocument> documentClass,

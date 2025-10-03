@@ -47,7 +47,7 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class RenameCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+public class RenameCollectionOperation implements WriteOperation<Void> {
     private static final String COMMAND_NAME = "renameCollection";
     private final MongoNamespace originalNamespace;
     private final MongoNamespace newNamespace;

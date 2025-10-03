@@ -74,6 +74,7 @@ import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.executeAsync;
 import static com.mongodb.ClusterFixture.getBinding;
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
@@ -154,6 +155,16 @@ public final class CollectionHelper<T> {
         drop(namespace, writeConcern);
     }
 
+    public void dropAndCreate(final BsonDocument createOptions) {
+        // Drop the collection and any encryption collections: enxcol_.<collectionName>.esc and enxcol_.<collectionName>.ecoc
+        drop(namespace, WriteConcern.MAJORITY);
+        drop(new MongoNamespace(namespace.getDatabaseName(), format("enxcol_.%s.esc", namespace.getCollectionName())),
+                WriteConcern.MAJORITY);
+        drop(new MongoNamespace(namespace.getDatabaseName(), format("enxcol_.%s.ecoc", namespace.getCollectionName())),
+                WriteConcern.MAJORITY);
+        create(WriteConcern.MAJORITY, createOptions);
+    }
+
     public void create() {
         create(namespace.getCollectionName(), new CreateCollectionOptions(), WriteConcern.ACKNOWLEDGED);
     }
@@ -176,6 +187,14 @@ public final class CollectionHelper<T> {
                 case "size":
                     createCollectionOptions.sizeInBytes(createOptions.getNumber("size").longValue());
                     break;
+                case "encryptedFields":
+                    createCollectionOptions.encryptedFields(createOptions.getDocument("encryptedFields"));
+                    break;
+                case "validator":
+                    ValidationOptions validationOptions = new ValidationOptions();
+                    validationOptions.validator(createOptions.getDocument("validator"));
+                    createCollectionOptions.validationOptions(validationOptions);
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported create collection option: " + option);
             }
@@ -194,6 +213,10 @@ public final class CollectionHelper<T> {
         IndexOptionDefaults indexOptionDefaults = options.getIndexOptionDefaults();
         if (indexOptionDefaults.getStorageEngine() != null) {
             operation.indexOptionDefaults(new BsonDocument("storageEngine", toBsonDocument(indexOptionDefaults.getStorageEngine())));
+        }
+        Bson encryptedFields = options.getEncryptedFields();
+        if (encryptedFields != null) {
+            operation.encryptedFields(encryptedFields.toBsonDocument());
         }
         ValidationOptions validationOptions = options.getValidationOptions();
         if (validationOptions.getValidator() != null) {

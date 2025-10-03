@@ -17,7 +17,6 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoInterruptedException;
-import com.mongodb.MongoNamespace;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ServerApi;
 import com.mongodb.annotations.ThreadSafe;
@@ -51,7 +50,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.fail;
@@ -231,8 +229,9 @@ class DefaultServerMonitor implements ServerMonitor {
                 }
             } catch (InterruptedException | MongoInterruptedException closed) {
                 // stop the monitor
-            } catch (RuntimeException e) {
-                LOGGER.error(format("Server monitor for %s exiting with exception", serverId), e);
+            } catch (Throwable t) {
+                LOGGER.error(format("%s for %s stopped working. You may want to recreate the MongoClient", this, serverId), t);
+                throw t;
             } finally {
                 if (connection != null) {
                     connection.close();
@@ -261,7 +260,7 @@ class DefaultServerMonitor implements ServerMonitor {
 
                 // Get existing connection
                 return doHeartbeat(currentServerDescription, shouldStreamResponses);
-            } catch (Throwable t) {
+            } catch (Exception t) {
                 roundTripTimeSampler.reset();
                 InternalConnection localConnection = withLock(lock, () -> {
                     InternalConnection result = connection;
@@ -380,7 +379,7 @@ class DefaultServerMonitor implements ServerMonitor {
 
         private CommandMessage createCommandMessage(final BsonDocument command, final InternalConnection connection,
                 final ServerDescription currentServerDescription) {
-            return new CommandMessage(new MongoNamespace("admin", COMMAND_COLLECTION_NAME), command,
+            return new CommandMessage("admin", command,
                     NoOpFieldNameValidator.INSTANCE, primary(),
                     MessageSettings.builder()
                             .maxWireVersion(connection.getDescription().getMaxWireVersion())
@@ -532,7 +531,7 @@ class DefaultServerMonitor implements ServerMonitor {
                         } else {
                             pingServer(connection);
                         }
-                    } catch (Throwable t) {
+                    } catch (Exception t) {
                         if (connection != null) {
                             connection.close();
                             connection = null;
@@ -542,6 +541,9 @@ class DefaultServerMonitor implements ServerMonitor {
                 }
             } catch (InterruptedException closed) {
                 // stop the monitor
+            } catch (Throwable t) {
+                LOGGER.error(format("%s for %s stopped working. You may want to recreate the MongoClient", this, serverId), t);
+                throw t;
             } finally {
                 if (connection != null) {
                     connection.close();

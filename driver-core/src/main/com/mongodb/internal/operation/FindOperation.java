@@ -67,7 +67,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatchCursor<T>>, ExplainableReadOperation<BatchCursor<T>> {
+public class FindOperation<T> implements ReadOperationExplainable<T> {
     private static final String COMMAND_NAME = "find";
     private static final String FIRST_BATCH = "firstBatch";
 
@@ -361,11 +361,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     public <R> CommandReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
         return createExplainableOperation(verbosity, resultDecoder);
     }
-    @Override
-    public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
-                                                                 final Decoder<R> resultDecoder) {
-        return createExplainableOperation(verbosity, resultDecoder);
-    }
 
     <R> CommandReadOperation<R> createExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
         return new CommandReadOperation<>(getNamespace().getDatabaseName(), getCommandName(),
@@ -395,7 +390,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                 commandDocument.put("limit", new BsonInt32(Math.abs(batchSize)));
             } else if (batchSize != 0) {
                 int effectiveBatchSize = Math.abs(batchSize);
-                if (effectiveBatchSize == limit) {
+                if (effectiveBatchSize == limit && effectiveBatchSize < Integer.MAX_VALUE) {
                     // avoid an open cursor on server side when batchSize and limit are equal
                     effectiveBatchSize++;
                 }

@@ -32,7 +32,7 @@ class UpdatesSpec extends BaseSpec {
 
   "Updates" should "have the same methods as the wrapped Updates" in {
     val wrapped = classOf[com.mongodb.client.model.Updates].getDeclaredMethods
-      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers))
+      .filter(f => isPublic(f.getModifiers))
       .map(_.getName)
       .toSet
     val local = model.Updates.getClass.getDeclaredMethods.filter(f => isPublic(f.getModifiers)).map(_.getName).toSet
