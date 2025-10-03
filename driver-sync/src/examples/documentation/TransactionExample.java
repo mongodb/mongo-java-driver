@@ -36,7 +36,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.mongodb.ClusterFixture.isDataLakeTest;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
@@ -47,7 +46,7 @@ public class TransactionExample {
 
     @Before
     public void setUp() {
-        assumeTrue(canRunTest());
+        assumeTrue(isSharded() || isDiscoverableReplicaSet());
         MongoClientSettings.Builder builder = getMongoClientSettingsBuilder()
                 .applyConnectionString(new ConnectionString(
                         "mongodb://localhost,localhost:27018,localhost:27019/?serverSelectionTimeoutMS=5000"));
@@ -163,11 +162,4 @@ public class TransactionExample {
         }
     }
 
-    private boolean canRunTest() {
-        if (isDataLakeTest()) {
-            return false;
-        } else {
-            return isSharded() || isDiscoverableReplicaSet();
-        }
-    }
 }
