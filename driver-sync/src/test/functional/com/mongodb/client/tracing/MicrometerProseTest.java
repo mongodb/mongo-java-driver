@@ -139,7 +139,7 @@ public class MicrometerProseTest {
     }
 
     @SuppressWarnings("unchecked")
-    private void setEnv(String key, String value) throws Exception {
+    private void setEnv(final String key, final String value) throws Exception {
         // Get the unmodifiable Map from System.getenv()
         Map<String, String> env = System.getenv();
 

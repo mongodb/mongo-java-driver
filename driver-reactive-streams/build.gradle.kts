@@ -46,7 +46,7 @@ dependencies {
     testImplementation(libs.reactive.streams.tck)
 
     // Tracing
-    testImplementation(libs.micrometer.observation)
+    testImplementation(libs.micrometer.tracing.integration.test) { exclude(group = "org.junit.jupiter") }
 }
 
 configureMavenPublication {
