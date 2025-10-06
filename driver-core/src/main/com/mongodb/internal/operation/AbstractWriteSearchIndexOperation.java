@@ -66,9 +66,9 @@ abstract class AbstractWriteSearchIndexOperation implements AsyncWriteOperation<
                                 writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()), (result, commandExecutionError) -> {
                                     try {
                                         swallowOrThrow(commandExecutionError);
-                                        callback.onResult(result, null);
+                                        cb.onResult(result, null);
                                     } catch (Throwable mongoCommandException) {
-                                        callback.onResult(null, mongoCommandException);
+                                        cb.onResult(null, mongoCommandException);
                                     }
                                 }
                         )
