@@ -25,6 +25,10 @@ import com.mongodb.lang.Nullable;
  * It also includes a no-operation (NO_OP) implementation for cases where tracing is not required.
  * </p>
  *
+ * Note: You can use the environment variable {@code OTEL_JAVA_INSTRUMENTATION_MONGODB_ENABLED} to override the behaviour of enabling/disabling
+ * tracing before you create the {@link com.mongodb.MongoClientSettings} instance.
+ * You can also use the environment variable {@code OTEL_JAVA_INSTRUMENTATION_MONGODB_QUERY_TEXT_MAX_LENGTH} to enable or disable command payload when tracing is enabled. .
+ *
  * @since 5.7
  */
 public interface Tracer {

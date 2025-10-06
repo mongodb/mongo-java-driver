@@ -476,7 +476,7 @@ public class InternalStreamConnection implements InternalConnection {
                 commandEventSender = new NoOpCommandEventSender();
             }
             if (isTracingCommandPayloadNeeded) {
-                tracingSpan.tagHighCardinality(QUERY_TEXT.withValue(commandDocument.toJson()));
+                tracingSpan.tagHighCardinality(QUERY_TEXT.withBson(commandDocument));
             }
 
             try {

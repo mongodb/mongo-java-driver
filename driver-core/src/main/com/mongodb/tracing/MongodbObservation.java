@@ -16,8 +16,16 @@
 
 package com.mongodb.tracing;
 
+import io.micrometer.common.KeyValue;
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.observation.docs.ObservationDocumentation;
+import org.bson.BsonDocument;
+import org.bson.BsonReader;
+import org.bson.json.JsonMode;
+import org.bson.json.JsonWriter;
+import org.bson.json.JsonWriterSettings;
+
+import java.io.StringWriter;
 
 /**
  * A MongoDB-based {@link io.micrometer.observation.Observation}.
@@ -180,6 +188,30 @@ public enum MongodbObservation implements ObservationDocumentation {
             public String asString() {
                 return "db.query.text";
             }
+        };
+
+        public KeyValue withBson(final BsonDocument commandDocument) {
+            return KeyValue.of(asString(), getTruncatedJsonCommand(commandDocument));
         }
+
+        private String getTruncatedJsonCommand(final BsonDocument commandDocument) {
+            StringWriter writer = new StringWriter();
+
+            try (BsonReader bsonReader = commandDocument.asBsonReader()) {
+                JsonWriter jsonWriter = new JsonWriter(writer,
+                        JsonWriterSettings.builder().outputMode(JsonMode.RELAXED)
+                                .maxLength(42)
+                                .build());
+
+                jsonWriter.pipe(bsonReader);
+
+                if (jsonWriter.isTruncated()) {
+                    writer.append(" ...");
+                }
+
+                return writer.toString();
+            }
+        }
+
     }
 }

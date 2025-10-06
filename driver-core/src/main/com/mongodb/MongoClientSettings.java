@@ -58,6 +58,7 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.TimeoutSettings.convertAndValidateTimeout;
+import static java.lang.System.getenv;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -88,6 +89,7 @@ public final class MongoClientSettings {
                     new ExpressionCodecProvider(),
                     new Jep395RecordCodecProvider(),
                     new KotlinCodecProvider()));
+    private static final String ENV_OTEL_ENABLED = "OTEL_JAVA_INSTRUMENTATION_MONGODB_ENABLED";
 
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
@@ -1184,6 +1186,14 @@ public final class MongoClientSettings {
         heartbeatConnectTimeoutSetExplicitly = builder.heartbeatConnectTimeoutMS != 0;
         contextProvider = builder.contextProvider;
         timeoutMS = builder.timeoutMS;
-        tracer = (builder.tracer == null) ? Tracer.NO_OP : builder.tracer;
+
+        String envOtelInstrumentationEnabled = getenv(ENV_OTEL_ENABLED);
+        boolean enableTracing = true;
+        if (envOtelInstrumentationEnabled != null) {
+            enableTracing = Boolean.parseBoolean(envOtelInstrumentationEnabled);
+        }
+        tracer = (builder.tracer == null) ? Tracer.NO_OP
+                : (enableTracing) ? builder.tracer
+                : Tracer.NO_OP;
     }
 }

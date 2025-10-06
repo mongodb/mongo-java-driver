@@ -44,6 +44,12 @@ dependencies {
     testImplementation(libs.micrometer.tracing.integration.test) { exclude(group = "org.junit.jupiter") }
 }
 
+tasks.withType<Test> {
+    // Needed for MicrometerProseTest to set env variable programmatically (calls
+    // `field.setAccessible(true)`)
+    jvmArgs("--add-opens=java.base/java.util=ALL-UNNAMED")
+}
+
 configureMavenPublication {
     pom {
         name.set("MongoDB Driver")

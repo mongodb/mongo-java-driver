@@ -34,23 +34,23 @@ public class TracingManager {
      * A no-op instance of the TracingManager used when tracing is disabled.
      */
     public static final TracingManager NO_OP = new TracingManager(Tracer.NO_OP);
-    private static final String ENV_ALLOW_COMMAND_PAYLOAD = "MONGODB_TRACING_ALLOW_COMMAND_PAYLOAD";
+    private static final String ENV_OTEL_QUERY_TEXT_MAX_LENGTH = "OTEL_JAVA_INSTRUMENTATION_MONGODB_QUERY_TEXT_MAX_LENGTH";
     private final Tracer tracer;
-    private final boolean enableCommandPayload;
+    private final int queryTextMaxLength;
 
     /**
      * Constructs a new TracingManager with the specified tracer and parent context.
-     * Setting the environment variable {@code MONGODB_TRACING_ALLOW_COMMAND_PAYLOAD} to "true" will enable command payload tracing.
+     * Setting the environment variable {@code OTEL_JAVA_INSTRUMENTATION_MONGODB_QUERY_TEXT_MAX_LENGTH} will enable command payload tracing.
      *
      * @param tracer        The tracer to use for tracing operations.
      */
     public TracingManager(final Tracer tracer) {
         this.tracer = tracer;
-        String envAllowCommandPayload = getenv(ENV_ALLOW_COMMAND_PAYLOAD);
-        if (envAllowCommandPayload != null) {
-            this.enableCommandPayload = Boolean.parseBoolean(envAllowCommandPayload);
+        String queryTextMaxLength = getenv(ENV_OTEL_QUERY_TEXT_MAX_LENGTH);
+        if (queryTextMaxLength != null) {
+            this.queryTextMaxLength = Integer.parseInt(queryTextMaxLength);
         } else {
-            this.enableCommandPayload = tracer.includeCommandPayload();
+            this.queryTextMaxLength = tracer.includeCommandPayload() ? Integer.MAX_VALUE : 0;
         }
     }
 
@@ -112,6 +112,6 @@ public class TracingManager {
      * @return True if command payload tracing is enabled, false otherwise.
      */
     public boolean isCommandPayloadEnabled() {
-        return enableCommandPayload;
+        return queryTextMaxLength > 0;
     }
 }
