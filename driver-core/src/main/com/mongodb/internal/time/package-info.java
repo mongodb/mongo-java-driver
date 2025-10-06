@@ -15,9 +15,11 @@
  */
 
 /**
- * This package contains program elements for working with time.
+ * This package contains internal functionality that may change at any time.
  */
+@Internal
 @NonNullApi
 package com.mongodb.internal.time;
 
+import com.mongodb.annotations.Internal;
 import com.mongodb.lang.NonNullApi;

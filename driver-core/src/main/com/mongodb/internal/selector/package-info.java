@@ -15,10 +15,11 @@
  */
 
 /**
- * This package contains classes that manage binding to MongoDB servers for various operations.
+ * This package contains internal functionality that may change at any time.
  */
-
+@Internal
 @NonNullApi
 package com.mongodb.internal.selector;
 
+import com.mongodb.annotations.Internal;
 import com.mongodb.lang.NonNullApi;

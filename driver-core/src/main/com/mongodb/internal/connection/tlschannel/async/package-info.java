@@ -18,7 +18,9 @@
  */
 
 /**
- * This package enables the usage of TLS Channel as an {@link
- * java.nio.channels.AsynchronousByteChannel}.
+ * This package contains internal functionality that may change at any time.
  */
+@Internal
 package com.mongodb.internal.connection.tlschannel.async;
+
+import com.mongodb.annotations.Internal;
