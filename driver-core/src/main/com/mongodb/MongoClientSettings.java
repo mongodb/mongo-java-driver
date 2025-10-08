@@ -85,11 +85,10 @@ public final class MongoClientSettings {
                     new Jsr310CodecProvider(),
                     new JsonObjectCodecProvider(),
                     new BsonCodecProvider(),
-                    new EnumCodecProvider(),
                     new ExpressionCodecProvider(),
                     new Jep395RecordCodecProvider(),
-                    new KotlinCodecProvider()));
-    private static final String ENV_OTEL_ENABLED = "OTEL_JAVA_INSTRUMENTATION_MONGODB_ENABLED";
+                    new KotlinCodecProvider(),
+                    new EnumCodecProvider()));
 
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
@@ -121,6 +120,8 @@ public final class MongoClientSettings {
     private final InetAddressResolver inetAddressResolver;
     @Nullable
     private final Long timeoutMS;
+
+    private static final String ENV_OTEL_ENABLED = "OTEL_JAVA_INSTRUMENTATION_MONGODB_ENABLED";
     private final Tracer tracer;
 
     /**

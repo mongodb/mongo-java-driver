@@ -73,7 +73,7 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
             final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
             final OperationExecutor executor, final List<? extends Bson> pipeline, final Class<TResult> resultClass,
             final ChangeStreamLevel changeStreamLevel, final boolean retryReads, final TimeoutSettings timeoutSettings) {
-        this(clientSession, new MongoNamespace(databaseName, "ignored"), codecRegistry, readPreference, readConcern, executor, pipeline,
+        this(clientSession, new MongoNamespace(databaseName, "_ignored"), codecRegistry, readPreference, readConcern, executor, pipeline,
                 resultClass, changeStreamLevel, retryReads, timeoutSettings);
     }
 

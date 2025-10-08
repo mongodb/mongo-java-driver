@@ -175,7 +175,7 @@ public final class MongoOperationPublisher<T> {
     }
 
     <D> MongoOperationPublisher<D> withDatabaseAndDocumentClass(final String name, final Class<D> documentClass) {
-        return withNamespaceAndDocumentClass(new MongoNamespace(notNull("name", name), "ignored"),
+        return withNamespaceAndDocumentClass(new MongoNamespace(notNull("name", name), "_ignored"),
                                              notNull("documentClass", documentClass));
     }
 

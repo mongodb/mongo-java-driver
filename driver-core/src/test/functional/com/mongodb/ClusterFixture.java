@@ -64,6 +64,7 @@ import com.mongodb.internal.connection.StreamFactory;
 import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.internal.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.internal.connection.netty.NettyStreamFactoryFactory;
+import com.mongodb.internal.crypt.capi.CAPI;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.CommandReadOperation;
 import com.mongodb.internal.operation.DropDatabaseOperation;
@@ -88,6 +89,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.connection.ClusterConnectionMode.LOAD_BALANCED;
@@ -118,7 +120,6 @@ public final class ClusterFixture {
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
     public static final String MONGODB_API_VERSION = "org.mongodb.test.api.version";
     public static final String MONGODB_MULTI_MONGOS_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.multi.mongos.uri";
-    public static final String DATA_LAKE_TEST_SYSTEM_PROPERTY_NAME = "org.mongodb.test.data.lake";
     public static final String ATLAS_SEARCH_TEST_SYSTEM_PROPERTY_NAME = "org.mongodb.test.atlas.search";
     private static final String MONGODB_OCSP_SHOULD_SUCCEED = "org.mongodb.test.ocsp.tls.should.succeed";
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
@@ -147,6 +148,7 @@ public final class ClusterFixture {
     private static final Map<ReadPreference, ReadWriteBinding> BINDING_MAP = new HashMap<>();
     private static final Map<ReadPreference, AsyncReadWriteBinding> ASYNC_BINDING_MAP = new HashMap<>();
 
+    private static ServerVersion mongoCryptVersion;
     private static ServerVersion serverVersion;
     private static BsonDocument serverParameters;
 
@@ -178,6 +180,13 @@ public final class ClusterFixture {
         } catch (InterruptedException e) {
             throw interruptAndCreateMongoInterruptedException("Interrupted", e);
         }
+    }
+
+    public static ServerVersion getMongoCryptVersion() {
+        if (mongoCryptVersion == null) {
+            mongoCryptVersion = new ServerVersion(getVersionList(CAPI.mongocrypt_version(null).toString()));
+        }
+        return mongoCryptVersion;
     }
 
     public static ServerVersion getServerVersion() {
@@ -278,6 +287,11 @@ public final class ClusterFixture {
         return value == null ? defaultValue : value;
     }
 
+    public static Optional<String> cryptSharedLibPathSysPropValue() {
+        String value = getEnv("CRYPT_SHARED_LIB_PATH", "");
+        return value.isEmpty() ? Optional.empty() : Optional.of(value);
+    }
+
     @Nullable
     public static String getEnv(final String name) {
         return System.getenv(name);
@@ -290,11 +304,6 @@ public final class ClusterFixture {
     @Nullable
     public static synchronized ConnectionString getMultiMongosConnectionString() {
         return getConnectionStringFromSystemProperty(MONGODB_MULTI_MONGOS_URI_SYSTEM_PROPERTY_NAME);
-    }
-
-    public static synchronized boolean isDataLakeTest() {
-        String isDataLakeSystemProperty = System.getProperty(DATA_LAKE_TEST_SYSTEM_PROPERTY_NAME);
-        return "true".equals(isDataLakeSystemProperty);
     }
 
     public static synchronized ConnectionString getConnectionString() {

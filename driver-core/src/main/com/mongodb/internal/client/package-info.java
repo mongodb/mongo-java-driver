@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-package com.mongodb.client.unified;
+/**
+ * This package contains classes for internal client functionality.
+ */
 
-import org.junit.jupiter.params.provider.Arguments;
+@NonNullApi
+package com.mongodb.internal.client;
 
-import java.util.Collection;
-
-final class UnifiedAtlasDataLakeTest extends UnifiedSyncTest {
-    private static Collection<Arguments> data() {
-        return getTestData("atlas-data-lake-testing");
-    }
-}
+import com.mongodb.lang.NonNullApi;

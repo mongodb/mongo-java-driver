@@ -20,7 +20,6 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.lang.Nullable;
 
 import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.SYSTEM;
-import static java.lang.System.getenv;
 
 /**
  * Manages tracing spans for MongoDB driver activities.
@@ -34,24 +33,18 @@ public class TracingManager {
      * A no-op instance of the TracingManager used when tracing is disabled.
      */
     public static final TracingManager NO_OP = new TracingManager(Tracer.NO_OP);
-    private static final String ENV_OTEL_QUERY_TEXT_MAX_LENGTH = "OTEL_JAVA_INSTRUMENTATION_MONGODB_QUERY_TEXT_MAX_LENGTH";
     private final Tracer tracer;
-    private final int queryTextMaxLength;
+    private final boolean enableCommandPayload;
 
     /**
      * Constructs a new TracingManager with the specified tracer and parent context.
      * Setting the environment variable {@code OTEL_JAVA_INSTRUMENTATION_MONGODB_QUERY_TEXT_MAX_LENGTH} will enable command payload tracing.
      *
-     * @param tracer        The tracer to use for tracing operations.
+     * @param tracer The tracer to use for tracing operations.
      */
     public TracingManager(final Tracer tracer) {
         this.tracer = tracer;
-        String queryTextMaxLength = getenv(ENV_OTEL_QUERY_TEXT_MAX_LENGTH);
-        if (queryTextMaxLength != null) {
-            this.queryTextMaxLength = Integer.parseInt(queryTextMaxLength);
-        } else {
-            this.queryTextMaxLength = tracer.includeCommandPayload() ? Integer.MAX_VALUE : 0;
-        }
+        this.enableCommandPayload = tracer.includeCommandPayload();
     }
 
     /**
@@ -112,6 +105,6 @@ public class TracingManager {
      * @return True if command payload tracing is enabled, false otherwise.
      */
     public boolean isCommandPayloadEnabled() {
-        return queryTextMaxLength > 0;
+        return enableCommandPayload;
     }
 }

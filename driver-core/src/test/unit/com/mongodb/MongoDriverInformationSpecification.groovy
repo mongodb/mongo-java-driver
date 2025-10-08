@@ -30,7 +30,7 @@ class MongoDriverInformationSpecification extends Specification {
         options.getDriverPlatforms() ==  []
     }
 
-    def 'should not prepend data if none has been added'() {
+    def 'should not append data if none has been added'() {
         given:
         def options = MongoDriverInformation.builder(MongoDriverInformation.builder().build()).build()
 
@@ -40,18 +40,18 @@ class MongoDriverInformationSpecification extends Specification {
         options.getDriverPlatforms() ==  []
     }
 
-    def 'should prepend data to the list'() {
+    def 'should append data to the list'() {
         given:
-        def scalaDriverInfo = MongoDriverInformation.builder()
-                .driverName('mongo-scala-driver')
-                .driverVersion('1.2.0')
-                .driverPlatform('Scala 2.11')
-                .build()
-
-        def options = MongoDriverInformation.builder(scalaDriverInfo)
+        def javaDriverInfo = MongoDriverInformation.builder()
                 .driverName('mongo-java-driver')
                 .driverVersion('3.4.0')
                 .driverPlatform('Java oracle64-1.8.0.31')
+                .build()
+
+        def options = MongoDriverInformation.builder(javaDriverInfo)
+                .driverName('mongo-scala-driver')
+                .driverVersion('1.2.0')
+                .driverPlatform('Scala 2.11')
                 .build()
 
         expect:
@@ -60,28 +60,20 @@ class MongoDriverInformationSpecification extends Specification {
         options.getDriverPlatforms() == ['Java oracle64-1.8.0.31', 'Scala 2.11']
     }
 
-    def 'should only prepend data that has been set'() {
+    def 'should only append data that has been set'() {
         given:
-        def scalaDriverInfo = MongoDriverInformation.builder().driverName('mongo-scala-driver').build()
-
-        def options = MongoDriverInformation.builder(scalaDriverInfo)
+        def javaDriverInfo = MongoDriverInformation.builder()
                 .driverName('mongo-java-driver')
                 .driverVersion('3.4.0')
                 .driverPlatform('Java oracle64-1.8.0.31')
                 .build()
 
+        def options = MongoDriverInformation.builder(javaDriverInfo).driverName('mongo-scala-driver').build()
+
         expect:
         options.getDriverNames() == ['mongo-java-driver', 'mongo-scala-driver']
         options.getDriverVersions() == ['3.4.0']
         options.getDriverPlatforms() == ['Java oracle64-1.8.0.31']
-    }
-
-    def 'should error if trying to set a version without setting a name'() {
-        when:
-        MongoDriverInformation.builder().driverVersion('0.21.1-alpha').build()
-
-        then:
-        thrown IllegalStateException
     }
 
     def 'should null check the passed MongoDriverInformation'() {

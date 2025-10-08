@@ -159,8 +159,8 @@ public class DropCollectionOperation implements WriteOperation<Void> {
      *
      * @return the list of commands to run to create the collection
      */
-    private List<Supplier<BsonDocument>> getCommands(final BsonDocument encryptedFields) {
-        if (encryptedFields == null) {
+    private List<Supplier<BsonDocument>> getCommands(@Nullable final BsonDocument encryptedFields) {
+        if (encryptedFields == null || encryptedFields.isEmpty()) {
             return singletonList(this::dropCollectionCommand);
         } else  {
             return asList(

@@ -46,7 +46,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -88,7 +87,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
         this.autoEncryptionSettings = autoEncryptionSettings;
         this.timeoutSettings = timeoutSettings;
         this.executor = notNull("executor", executor);
-        this.operations = new Operations<>(new MongoNamespace(name, COMMAND_COLLECTION_NAME), BsonDocument.class, readPreference,
+        this.operations = new Operations<>(new MongoNamespace(name, "_ignored"), BsonDocument.class, readPreference,
                 codecRegistry, readConcern, writeConcern, retryWrites, retryReads, timeoutSettings);
     }
 

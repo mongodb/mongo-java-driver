@@ -49,7 +49,6 @@ import io.micrometer.tracing.test.reporter.inmemory.InMemoryOtelSetup;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.BsonValue;
@@ -82,7 +81,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getServerVersion;
-import static com.mongodb.ClusterFixture.isDataLakeTest;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.test.CollectionHelper.getCurrentClusterTime;
@@ -287,9 +285,7 @@ public abstract class UnifiedTest {
             throw new TestAbortedException(definition.getString("skipReason").getValue());
         }
 
-        if (!isDataLakeTest()) {
-            killAllSessions();
-        }
+        killAllSessions();
 
         startingClusterTime = addInitialDataAndGetClusterTime();
 
@@ -542,16 +538,25 @@ public abstract class UnifiedTest {
         context.getAssertionContext().push(ContextElement.ofCompletedOperation(operation, result, operationIndex));
 
         if (!operation.getBoolean("ignoreResultAndError", BsonBoolean.FALSE).getValue()) {
+            Exception operationException = result.getException();
             if (operation.containsKey("expectResult")) {
-                assertNull(result.getException(),
-                        context.getAssertionContext().getMessage("The operation expects a result but an exception occurred"));
-                context.getValueMatcher().assertValuesMatch(operation.get("expectResult"), result.getResult());
+                BsonValue expectedResult = operation.get("expectResult");
+                if (expectedResult.isDocument() && expectedResult.asDocument().containsKey("isTimeoutError")) {
+                    assertNotNull(operationException,
+                            context.getAssertionContext().getMessage("The operation expects a timeout error but no timeout exception was"
+                                    + " thrown"));
+                    context.getErrorMatcher().assertErrorsMatch(expectedResult.asDocument(), operationException);
+                } else {
+                    assertNull(operationException,
+                            context.getAssertionContext().getMessage("The operation expects a result but an exception occurred"));
+                    context.getValueMatcher().assertValuesMatch(expectedResult, result.getResult());
+                }
             } else if (operation.containsKey("expectError")) {
-                assertNotNull(result.getException(),
+                assertNotNull(operationException,
                         context.getAssertionContext().getMessage("The operation expects an error but no exception was thrown"));
-                context.getErrorMatcher().assertErrorsMatch(operation.getDocument("expectError"), result.getException());
+                context.getErrorMatcher().assertErrorsMatch(operation.getDocument("expectError"), operationException);
             } else {
-                assertNull(result.getException(),
+                assertNull(operationException,
                         context.getAssertionContext().getMessage("The operation expects no error but an exception occurred"));
             }
         }
@@ -722,8 +727,6 @@ public abstract class UnifiedTest {
                     return gridFSHelper.executeUpload(operation);
                 case "runCommand":
                     return crudHelper.executeRunCommand(operation);
-                case "loop":
-                    return loop(context, operation);
                 case "createDataKey":
                     return clientEncryptionHelper.executeCreateDataKey(operation);
                 case "addKeyAltName":
@@ -752,67 +755,6 @@ public abstract class UnifiedTest {
         } finally {
             context.getAssertionContext().pop();
         }
-    }
-
-    private OperationResult loop(final UnifiedTestContext context, final BsonDocument operation) {
-        BsonDocument arguments = operation.getDocument("arguments");
-
-        int numIterations = 0;
-        int numSuccessfulOperations = 0;
-        boolean storeFailures = arguments.containsKey("storeFailuresAsEntity");
-        boolean storeErrors = arguments.containsKey("storeErrorsAsEntity");
-        BsonArray failureDescriptionDocuments = new BsonArray();
-        BsonArray errorDescriptionDocuments = new BsonArray();
-
-        while (!terminateLoop()) {
-            BsonArray array = arguments.getArray("operations");
-            for (int i = 0; i < array.size(); i++) {
-                BsonValue cur = array.get(i);
-                try {
-                    assertOperation(context, cur.asDocument().clone(), i);
-                    numSuccessfulOperations++;
-                } catch (AssertionError e) {
-                    if (storeFailures) {
-                        failureDescriptionDocuments.add(createDocumentFromException(e));
-                    } else if (storeErrors) {
-                        errorDescriptionDocuments.add(createDocumentFromException(e));
-                    } else {
-                        throw e;
-                    }
-                    break;
-                } catch (Exception e) {
-                    if (storeErrors) {
-                        errorDescriptionDocuments.add(createDocumentFromException(e));
-                    } else if (storeFailures) {
-                        failureDescriptionDocuments.add(createDocumentFromException(e));
-                    } else {
-                        throw e;
-                    }
-                    break;
-                }
-            }
-            numIterations++;
-        }
-
-        if (arguments.containsKey("storeSuccessesAsEntity")) {
-            entities.addSuccessCount(arguments.getString("storeSuccessesAsEntity").getValue(), numSuccessfulOperations);
-        }
-        if (arguments.containsKey("storeIterationsAsEntity")) {
-            entities.addIterationCount(arguments.getString("storeIterationsAsEntity").getValue(), numIterations);
-        }
-        if (storeFailures) {
-            entities.addFailureDocuments(arguments.getString("storeFailuresAsEntity").getValue(), failureDescriptionDocuments);
-        }
-        if (storeErrors) {
-            entities.addErrorDocuments(arguments.getString("storeErrorsAsEntity").getValue(), errorDescriptionDocuments);
-        }
-
-        return OperationResult.NONE;
-    }
-
-    private BsonDocument createDocumentFromException(final Throwable throwable) {
-        return new BsonDocument("error", new BsonString(throwable.toString()))
-                .append("time", new BsonDouble(System.currentTimeMillis() / 1000.0));
     }
 
     protected boolean terminateLoop() {
@@ -865,6 +807,9 @@ public abstract class UnifiedTest {
             case "serverHeartbeatFailedEvent":
                 context.getEventMatcher().waitForServerMonitorEvents(clientId, TestServerMonitorListener.eventType(eventName), event, count,
                         entities.getServerMonitorListener(clientId));
+                break;
+            case "commandStartedEvent":
+                context.getEventMatcher().waitForCommandEvents(clientId, event, count, entities.getClientCommandListener(clientId));
                 break;
             default:
                 throw new UnsupportedOperationException("Unsupported event: " + eventName);
@@ -1170,7 +1115,7 @@ public abstract class UnifiedTest {
                     new MongoNamespace(curDataSet.getString("databaseName").getValue(),
                             curDataSet.getString("collectionName").getValue()));
 
-            helper.create(WriteConcern.MAJORITY, curDataSet.getDocument("createOptions", new BsonDocument()));
+            helper.dropAndCreate(curDataSet.getDocument("createOptions", new BsonDocument()));
 
             BsonArray documentsArray = curDataSet.getArray("documents", new BsonArray());
             if (!documentsArray.isEmpty()) {
@@ -1190,6 +1135,6 @@ public abstract class UnifiedTest {
     }
 
     public enum Language {
-        JAVA, KOTLIN
+        JAVA, KOTLIN, SCALA
     }
 }

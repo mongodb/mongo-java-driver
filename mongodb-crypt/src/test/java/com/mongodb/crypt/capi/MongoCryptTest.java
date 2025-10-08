@@ -265,18 +265,17 @@ public class MongoCryptTest {
         MongoCrypt mongoCrypt = createMongoCrypt();
         assertNotNull(mongoCrypt);
 
+        BsonDocument valueToEncrypt = getResourceAsDocument("fle2-find-range-explicit-v2/int32/value-to-encrypt.json");
         BsonDocument rangeOptions = getResourceAsDocument("fle2-find-range-explicit-v2/int32/rangeopts.json");
 
-        IllegalStateException illegalStateException = assertThrows(IllegalStateException.class, () -> MongoExplicitEncryptOptions.builder()
+        MongoExplicitEncryptOptions options = MongoExplicitEncryptOptions.builder()
                 .keyId(new BsonBinary(BsonBinarySubType.UUID_STANDARD, Base64.getDecoder().decode("q83vqxI0mHYSNBI0VniQEg==")))
                 .algorithm("RangePreview")
-                .queryType("range")
-                .contentionFactor(4L)
                 .rangeOptions(rangeOptions)
-                .build());
+                .build();
 
-        assertEquals("Invalid configuration, contentionFactor can only be set if algorithm is 'Indexed' or 'Range'",
-                illegalStateException.getMessage());
+        MongoCryptException exp = assertThrows(MongoCryptException.class, () -> mongoCrypt.createEncryptExpressionContext(valueToEncrypt, options));
+        assertEquals("Algorithm 'rangePreview' is deprecated, please use 'range'", exp.getMessage());
         mongoCrypt.close();
     }
 
