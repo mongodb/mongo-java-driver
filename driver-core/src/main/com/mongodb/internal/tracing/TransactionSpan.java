@@ -17,6 +17,8 @@
 package com.mongodb.internal.tracing;
 
 import com.mongodb.lang.Nullable;
+import com.mongodb.tracing.Span;
+import com.mongodb.tracing.TraceContext;
 
 /**
  * State class for transaction tracing.

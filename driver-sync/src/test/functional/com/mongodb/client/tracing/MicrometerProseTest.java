@@ -92,7 +92,7 @@ public class MicrometerProseTest {
 
     @Test
     void testControlCommandPayloadViaEnvironmentVariable() throws Exception {
-        MicrometerTracer tracer = new MicrometerTracer(observationRegistry); // don't enable command payload by default
+        MicrometerTracer tracer = new MicrometerTracer(observationRegistry, true);
         setEnv("OTEL_JAVA_INSTRUMENTATION_MONGODB_QUERY_TEXT_MAX_LENGTH", "42");
 
         MongoClientSettings clientSettings = Fixture.getMongoClientSettingsBuilder()

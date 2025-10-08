@@ -30,7 +30,7 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.TransportSettings;
 import com.mongodb.event.CommandListener;
-import com.mongodb.internal.tracing.Tracer;
+import com.mongodb.tracing.Tracer;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.DnsClient;
 import com.mongodb.spi.dns.InetAddressResolver;
@@ -736,7 +736,7 @@ public final class MongoClientSettings {
          * @param tracer the tracer
          * @see com.mongodb.tracing.MicrometerTracer
          * @return this
-         * @since 5.6
+         * @since 5.7
          */
         @Alpha(Reason.CLIENT)
         public Builder tracer(final Tracer tracer) {
@@ -1065,7 +1065,7 @@ public final class MongoClientSettings {
      * Get the tracer to create Spans for operations, commands and transactions.
      *
      * @return the configured Tracer
-     * @since 5.6
+     * @since 5.7
      */
     public Tracer getTracer() {
         return tracer;

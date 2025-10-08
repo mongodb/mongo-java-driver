@@ -53,7 +53,7 @@ import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.time.Timeout;
-import com.mongodb.internal.tracing.Span;
+import com.mongodb.tracing.Span;
 import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.lang.Nullable;
 import io.micrometer.common.KeyValues;

@@ -17,9 +17,6 @@
 package com.mongodb.tracing;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.internal.tracing.Span;
-import com.mongodb.internal.tracing.TraceContext;
-import com.mongodb.internal.tracing.Tracer;
 import com.mongodb.lang.Nullable;
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;

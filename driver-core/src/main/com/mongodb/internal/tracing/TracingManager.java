@@ -18,6 +18,9 @@ package com.mongodb.internal.tracing;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.lang.Nullable;
+import com.mongodb.tracing.Span;
+import com.mongodb.tracing.TraceContext;
+import com.mongodb.tracing.Tracer;
 
 import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.SYSTEM;
 

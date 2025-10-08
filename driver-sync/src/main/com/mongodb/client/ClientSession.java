@@ -131,7 +131,7 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      * Get the transaction span (if started).
      *
      * @return the transaction span
-     * @since 5.6
+     * @since 5.7
      */
     @Nullable
     TransactionSpan getTransactionSpan();
