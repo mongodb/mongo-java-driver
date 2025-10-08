@@ -36,6 +36,9 @@ dependencies {
 
     // Encryption testing
     integrationTestImplementation(project(path = ":mongodb-crypt", configuration = "default"))
+
+    // Tracing
+    testImplementation(libs.micrometer.tracing.integration.test) { exclude(group = "org.junit.jupiter") }
 }
 
 configureMavenPublication {
