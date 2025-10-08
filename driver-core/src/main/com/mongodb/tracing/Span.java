@@ -34,7 +34,6 @@ import io.micrometer.common.KeyValues;
  *   <li><b>Operation Spans</b>: Trace higher-level operations, which may include multiple commands or internal steps.</li>
  *   <li><b>Transaction Spans</b>: Trace the lifecycle of a transaction, including all operations and commands within it.</li>
  * </ul>
- * </p>
  *
  * @since 5.7
  */
