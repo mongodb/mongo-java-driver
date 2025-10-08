@@ -80,6 +80,10 @@ public final class UnifiedTestModifications {
                 .test("client-side-operations-timeout", "WaitQueueTimeoutError does not clear the pool",
                         "WaitQueueTimeoutError does not clear the pool");
 
+        // There are more than 44 tests using 'awaitMinPoolSizeMS' this will be fixed in JAVA-5957
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5957")
+                .directory("client-side-operations-timeout");
+
         // TODO-JAVA-5712
 
         // collection-management
