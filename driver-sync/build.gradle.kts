@@ -15,6 +15,7 @@
  */
 import ProjectExtensions.configureJarManifest
 import ProjectExtensions.configureMavenPublication
+import project.DEFAULT_JAVA_VERSION
 
 plugins {
     id("project.java")
@@ -47,7 +48,10 @@ dependencies {
 tasks.withType<Test> {
     // Needed for MicrometerProseTest to set env variable programmatically (calls
     // `field.setAccessible(true)`)
-    jvmArgs("--add-opens=java.base/java.util=ALL-UNNAMED")
+    val testJavaVersion: Int = findProperty("javaVersion")?.toString()?.toInt() ?: DEFAULT_JAVA_VERSION
+    if (testJavaVersion >= DEFAULT_JAVA_VERSION) {
+        jvmArgs("--add-opens=java.base/java.util=ALL-UNNAMED")
+    }
 }
 
 configureMavenPublication {
