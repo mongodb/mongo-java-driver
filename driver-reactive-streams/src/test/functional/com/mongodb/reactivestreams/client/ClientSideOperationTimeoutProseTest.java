@@ -457,7 +457,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                     .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
 
             //when
-            ChangeStreamPublisher<Document> documentChangeStreamPublisher = collection.watch();
+            ChangeStreamPublisher<Document> documentChangeStreamPublisher = collection.watch().maxAwaitTime(1000, TimeUnit.MILLISECONDS);
             StepVerifier.create(documentChangeStreamPublisher, 2)
             //then
                     .expectError(MongoOperationTimeoutException.class)

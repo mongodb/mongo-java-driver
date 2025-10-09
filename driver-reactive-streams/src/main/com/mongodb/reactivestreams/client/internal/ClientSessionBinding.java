@@ -21,7 +21,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.async.function.AsyncCallbackSupplier;
+import com.mongodb.internal.async.function.AsyncCallbackFunction;
 import com.mongodb.internal.binding.AbstractReferenceCounted;
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.AsyncConnectionSource;
@@ -46,13 +46,11 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
     private final AsyncClusterAwareReadWriteBinding wrapped;
     private final ClientSession session;
     private final boolean ownsSession;
-    private final OperationContext operationContext;
 
     public ClientSessionBinding(final ClientSession session, final boolean ownsSession, final AsyncClusterAwareReadWriteBinding wrapped) {
         this.wrapped = notNull("wrapped", wrapped).retain();
         this.ownsSession = ownsSession;
         this.session = notNull("session", session);
-        this.operationContext = wrapped.getOperationContext().withSessionContext(new AsyncClientSessionContext(session));
     }
 
     @Override
@@ -61,37 +59,38 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
     }
 
     @Override
-    public OperationContext getOperationContext() {
-        return operationContext;
-    }
-
-    @Override
-    public void getReadConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
-        getConnectionSource(wrapped::getReadConnectionSource, callback);
+    public void getReadConnectionSource(final OperationContext operationContext,
+                                        final SingleResultCallback<AsyncConnectionSource> callback) {
+        getConnectionSource(wrapped::getReadConnectionSource, operationContext, callback);
     }
 
     @Override
     public void getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference,
+                                        final OperationContext operationContext,
             final SingleResultCallback<AsyncConnectionSource> callback) {
-        getConnectionSource(wrappedConnectionSourceCallback ->
-                wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference, wrappedConnectionSourceCallback),
+        getConnectionSource((opContext, wrappedConnectionSourceCallback) ->
+                        wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference, opContext,
+                                wrappedConnectionSourceCallback),
+                operationContext,
                 callback);
     }
 
-    public void getWriteConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
-        getConnectionSource(wrapped::getWriteConnectionSource, callback);
+    @Override
+    public void getWriteConnectionSource(final OperationContext operationContext, final SingleResultCallback<AsyncConnectionSource> callback) {
+        getConnectionSource(wrapped::getWriteConnectionSource, operationContext, callback);
     }
 
-    private void getConnectionSource(final AsyncCallbackSupplier<AsyncConnectionSource> connectionSourceSupplier,
+    private void getConnectionSource(final AsyncCallbackFunction<OperationContext, AsyncConnectionSource> connectionSourceSupplier,
+                                     final OperationContext operationContext,
             final SingleResultCallback<AsyncConnectionSource> callback) {
         WrappingCallback wrappingCallback = new WrappingCallback(callback);
 
         if (!session.hasActiveTransaction()) {
-            connectionSourceSupplier.get(wrappingCallback);
+            connectionSourceSupplier.apply(operationContext, wrappingCallback);
             return;
         }
         if (TransactionContext.get(session) == null) {
-            connectionSourceSupplier.get((source, t) -> {
+            connectionSourceSupplier.apply(operationContext, (source, t) -> {
                 if (t != null) {
                     wrappingCallback.onResult(null, t);
                 } else {
@@ -105,7 +104,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
                 }
             });
         } else {
-            wrapped.getConnectionSource(assertNotNull(session.getPinnedServerAddress()), wrappingCallback);
+            wrapped.getConnectionSource(assertNotNull(session.getPinnedServerAddress()), operationContext, wrappingCallback);
         }
     }
 
@@ -141,22 +140,17 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
         }
 
         @Override
-        public OperationContext getOperationContext() {
-            return operationContext;
-        }
-
-        @Override
         public ReadPreference getReadPreference() {
             return wrapped.getReadPreference();
         }
 
         @Override
-        public void getConnection(final SingleResultCallback<AsyncConnection> callback) {
+        public void getConnection(final OperationContext operationContext, final SingleResultCallback<AsyncConnection> callback) {
             TransactionContext<AsyncConnection> transactionContext = TransactionContext.get(session);
             if (transactionContext != null && transactionContext.isConnectionPinningRequired()) {
                 AsyncConnection pinnedConnection = transactionContext.getPinnedConnection();
                 if (pinnedConnection == null) {
-                    wrapped.getConnection((connection, t) -> {
+                    wrapped.getConnection(operationContext, (connection, t) -> {
                         if (t != null) {
                             callback.onResult(null, t);
                         } else {
@@ -168,7 +162,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
                     callback.onResult(pinnedConnection.retain(), null);
                 }
             } else {
-                wrapped.getConnection(callback);
+                wrapped.getConnection(operationContext, callback);
             }
         }
 
@@ -193,13 +187,19 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
         }
     }
 
-    private final class AsyncClientSessionContext extends ClientSessionContext {
+    public static final class AsyncClientSessionContext extends ClientSessionContext {
 
         private final ClientSession clientSession;
+        private final ReadConcern inheritedReadConcern;
+        private final boolean ownsSession;
 
-        AsyncClientSessionContext(final ClientSession clientSession) {
+        AsyncClientSessionContext(final ClientSession clientSession,
+                                  final boolean ownsSession,
+                                  final ReadConcern inheritedReadConcern) {
             super(clientSession);
             this.clientSession = clientSession;
+            this.ownsSession = ownsSession;
+            this.inheritedReadConcern = inheritedReadConcern;
         }
 
 
@@ -242,7 +242,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
             } else if (isSnapshot()) {
                 return ReadConcern.SNAPSHOT;
             } else {
-                return wrapped.getOperationContext().getSessionContext().getReadConcern();
+                return inheritedReadConcern;
             }
         }
     }

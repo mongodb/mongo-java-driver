@@ -144,8 +144,6 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
             helloResult = executeCommand("admin", helloCommandDocument, clusterConnectionMode, serverApi, internalConnection, operationContext);
         } catch (MongoException e) {
             throw mapHelloException(e);
-        } finally {
-            operationContext.getTimeoutContext().resetMaintenanceTimeout();
         }
         setSpeculativeAuthenticateResponse(helloResult);
         return createInitializationDescription(helloResult, internalConnection, start);
