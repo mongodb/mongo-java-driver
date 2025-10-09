@@ -587,11 +587,11 @@ public final class Entities {
         }
 
         putEntity(id, mongoClientSupplier.apply(clientSettings), clients);
-        if (waitForMinPoolSizeToPopulate) {
-            waitForMinPoolSizeToPopulate(entity, id, clientSettings);
-        }
         if (waitForPoolAsyncWorkManagerStart) {
             waitForPoolAsyncWorkManagerStart();
+        }
+        if (waitForMinPoolSizeToPopulate) {
+            waitForMinPoolSizeToPopulate(entity, id, clientSettings);
         }
     }
 
