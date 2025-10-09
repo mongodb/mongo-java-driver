@@ -13,12 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bson.json;
 
-class JsonDoubleConverter implements Converter<Double> {
-    @Override
-    public void convert(final Double value, final StrictJsonWriter writer) {
-        writer.writeNumber(JsonDoubleHelper.toString(value));
+import java.util.regex.Pattern;
+
+final class JsonDoubleHelper {
+
+    private static final Pattern POSITIVE_EXPONENT_PATTERN = Pattern.compile("E([^\\-]+)");
+    private static final String POSITIVE_EXPONENT_REPLACER = "E+$1";
+
+    static String toString(final double value) {
+        String doubleString = Double.toString(value);
+        return POSITIVE_EXPONENT_PATTERN.matcher(doubleString).replaceAll(POSITIVE_EXPONENT_REPLACER);
+    }
+
+    private JsonDoubleHelper() {
     }
 }
