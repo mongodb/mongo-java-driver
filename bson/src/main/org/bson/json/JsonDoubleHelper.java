@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 
 final class JsonDoubleHelper {
 
-    private static final Pattern POSITIVE_EXPONENT_PATTERN = Pattern.compile("E([^\\-]+)");
+    private static final Pattern POSITIVE_EXPONENT_PATTERN = Pattern.compile("E(\\+?\\d+)");
     private static final String POSITIVE_EXPONENT_REPLACER = "E+$1";
 
     static String toString(final double value) {
