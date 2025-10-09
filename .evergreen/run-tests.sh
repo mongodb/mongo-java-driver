@@ -128,6 +128,7 @@ echo "Running $AUTH tests over $SSL for $TOPOLOGY and connecting to $MONGODB_URI
 echo "Running tests with Java ${JAVA_VERSION}"
 ./gradlew -version
 
+set -o pipefail
 ./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
           ${MULTI_MONGOS_URI_SYSTEM_PROPERTY} ${API_VERSION} ${GRADLE_EXTRA_VARS} \
           ${JAVA_SYSPROP_ASYNC_TRANSPORT}  ${JAVA_SYSPROP_NETTY_SSL_PROVIDER} \
