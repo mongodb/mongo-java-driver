@@ -69,4 +69,8 @@ public class TestLoggingInterceptor implements LoggingInterceptor, AutoCloseable
             return false;
         }
     }
+
+    public synchronized void clearMessages() {
+        messages.clear();
+    }
 }

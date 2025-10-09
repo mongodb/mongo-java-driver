@@ -145,6 +145,15 @@ public class TestConnectionPoolListener implements ConnectionPoolListener {
         }
     }
 
+    public void clearEvents() {
+        lock.lock();
+        try {
+            events.clear();
+        } finally {
+            lock.unlock();
+        }
+    }
+
     @Override
     public void connectionPoolCreated(final ConnectionPoolCreatedEvent event) {
         if (eventTypes.contains("poolCreatedEvent")) {
