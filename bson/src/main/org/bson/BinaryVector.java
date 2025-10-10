@@ -18,6 +18,8 @@ package org.bson;
 
 import org.bson.annotations.Beta;
 import org.bson.annotations.Reason;
+import org.bson.diagnostics.Logger;
+import org.bson.diagnostics.Loggers;
 
 import static org.bson.assertions.Assertions.isTrueArgument;
 import static org.bson.assertions.Assertions.notNull;
@@ -33,6 +35,7 @@ import static org.bson.assertions.Assertions.notNull;
  * @since 5.3
  */
 public abstract class BinaryVector {
+    protected static final Logger LOGGER = Loggers.getLogger("BinaryVector");
     private final DataType dataType;
 
     BinaryVector(final DataType dataType) {
@@ -67,6 +70,13 @@ public abstract class BinaryVector {
         notNull("data", data);
         isTrueArgument("Padding must be between 0 and 7 bits. Provided padding: " + padding, padding >= 0 && padding <= 7);
         isTrueArgument("Padding must be 0 if vector is empty. Provided padding: " + padding, padding == 0 || data.length > 0);
+        if (padding > 0) {
+            int mask = (1 << padding) - 1;
+            if ((data[data.length - 1] & mask) != 0) {
+                // JAVA-5848 in version 6.0.0 will convert this logging into an IllegalArgumentException
+                LOGGER.warn("The last " + padding + " padded bits should be zero in the final byte.");
+            }
+        }
         return new PackedBitBinaryVector(data, padding);
     }
 
