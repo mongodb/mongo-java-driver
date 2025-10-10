@@ -600,9 +600,16 @@ public final class Entities {
         int awaitMinPoolSizeMS = entity.getInt32("awaitMinPoolSizeMS").getValue();
         TestConnectionPoolListener testConnectionPoolListener = getConnectionPoolListener(id);
         try {
+            /*
+             From the spec:
+             Any CMAP and SDAM event/log listeners configured on the client should ignore any events that occur before the pool is being
+             populated.
+
+             Spec advices SHOULD, not MUST.
+             Currently, no flaky or racy behavior is caused by not cleaning pre-pool-population CMAP and SDAM events.
+             In case any race behaviour is observed, consider cleaning events.
+             */
             testConnectionPoolListener.waitForEvent(ConnectionReadyEvent.class, minSize, awaitMinPoolSizeMS, TimeUnit.MILLISECONDS);
-//            testConnectionPoolListener.clearEvents();
-//            getClientLoggingInterceptor(id).clearMessages();
         } catch (TimeoutException | InterruptedException e) {
             throw new RuntimeException(format("Error waiting for awaitMinPoolSizeMS [%s] to establish minPoolSize [%s] connections",
                     awaitMinPoolSizeMS, minSize));
