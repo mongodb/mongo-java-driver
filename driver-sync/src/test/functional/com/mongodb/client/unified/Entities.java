@@ -604,7 +604,7 @@ public final class Entities {
              From the spec:
              Any CMAP and SDAM event/log listeners configured on the client SHOULD ignore any events that occur before the pool is populated.
 
-             Currently, no flaky or racy behavior is caused by not clearing, pre-pool-population CMAP and SDAM events.
+             Currently, no flaky or racy behavior is caused by not clearing pre-pool-population CMAP and SDAM events.
              If any race behavior is observed, consider clearing events.
              */
             testConnectionPoolListener.waitForEvent(ConnectionReadyEvent.class, minSize, awaitMinPoolSizeMS, TimeUnit.MILLISECONDS);
