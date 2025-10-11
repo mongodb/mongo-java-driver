@@ -80,6 +80,11 @@ public class RenameCollectionOperation implements WriteOperation<Void> {
     }
 
     @Override
+    public MongoNamespace getNamespace() {
+        return originalNamespace;
+    }
+
+    @Override
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, connection -> executeCommand(binding, "admin", getCommand(), connection,
                 writeConcernErrorTransformer(binding.getOperationContext().getTimeoutContext())));

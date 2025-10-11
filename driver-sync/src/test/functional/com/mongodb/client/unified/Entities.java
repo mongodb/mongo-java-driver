@@ -47,6 +47,9 @@ import com.mongodb.internal.connection.TestServerListener;
 import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.lang.Nullable;
 import com.mongodb.logging.TestLoggingInterceptor;
+import com.mongodb.tracing.MicrometerTracer;
+import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.tracing.test.reporter.inmemory.InMemoryOtelSetup;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -90,7 +93,7 @@ public final class Entities {
     private static final Set<String> SUPPORTED_CLIENT_ENTITY_OPTIONS = new HashSet<>(
             asList(
                     "id", "autoEncryptOpts", "uriOptions", "serverApi", "useMultipleMongoses", "storeEventsAsEntities",
-                    "observeEvents", "observeLogMessages", "observeSensitiveCommands", "ignoreCommandMonitoringEvents"));
+                    "observeEvents", "observeLogMessages", "observeSensitiveCommands", "ignoreCommandMonitoringEvents", "observeTracingMessages"));
     private final Set<String> entityNames = new HashSet<>();
     private final Map<String, ExecutorService> threads = new HashMap<>();
     private final Map<String, ArrayList<Future<?>>> tasks = new HashMap<>();
@@ -104,6 +107,8 @@ public final class Entities {
     private final Map<String, ClientEncryption> clientEncryptions = new HashMap<>();
     private final Map<String, TestCommandListener> clientCommandListeners = new HashMap<>();
     private final Map<String, TestLoggingInterceptor> clientLoggingInterceptors = new HashMap<>();
+    private final Map<String, InMemoryOtelSetup.Builder.OtelBuildingBlocks> clientTracing = new HashMap<>();
+    private final Set<InMemoryOtelSetup> inMemoryOTelInstances = new HashSet<>();
     private final Map<String, TestConnectionPoolListener> clientConnectionPoolListeners = new HashMap<>();
     private final Map<String, TestServerListener> clientServerListeners = new HashMap<>();
     private final Map<String, TestClusterListener> clientClusterListeners = new HashMap<>();
@@ -218,6 +223,10 @@ public final class Entities {
 
     public TestLoggingInterceptor getClientLoggingInterceptor(final String id) {
         return getEntity(id + "-logging-interceptor", clientLoggingInterceptors, "logging interceptor");
+    }
+
+    public InMemoryOtelSetup.Builder.OtelBuildingBlocks getClientTracer(final String id) {
+        return getEntity(id + "-tracing", clientTracing, "micrometer tracing");
     }
 
     public TestConnectionPoolListener getConnectionPoolListener(final String id) {
@@ -565,6 +574,17 @@ public final class Entities {
             clientSettingsBuilder.autoEncryptionSettings(builder.build());
         }
 
+        if (entity.containsKey("observeTracingMessages")) {
+            boolean enableCommandPayload = entity.getDocument("observeTracingMessages").get("enableCommandPayload", BsonBoolean.FALSE).asBoolean().getValue();
+            ObservationRegistry observationRegistry = ObservationRegistry.create();
+            InMemoryOtelSetup inMemoryOtel = InMemoryOtelSetup.builder().register(observationRegistry);
+            InMemoryOtelSetup.Builder.OtelBuildingBlocks tracer = inMemoryOtel.getBuildingBlocks();
+
+            putEntity(id + "-tracing", tracer, clientTracing);
+            inMemoryOTelInstances.add(inMemoryOtel);
+            clientSettingsBuilder.tracer(new MicrometerTracer(observationRegistry, enableCommandPayload));
+        }
+
         MongoClientSettings clientSettings = clientSettingsBuilder.build();
 
         if (entity.containsKey("observeLogMessages")) {
@@ -756,5 +776,6 @@ public final class Entities {
         clients.values().forEach(MongoClient::close);
         clientLoggingInterceptors.values().forEach(TestLoggingInterceptor::close);
         threads.values().forEach(ExecutorService::shutdownNow);
+        inMemoryOTelInstances.forEach(InMemoryOtelSetup::close);
     }
 }

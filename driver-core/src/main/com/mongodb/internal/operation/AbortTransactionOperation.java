@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.Function;
+import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.lang.Nullable;
@@ -46,6 +47,11 @@ public class AbortTransactionOperation extends TransactionOperation {
     @Override
     public String getCommandName() {
         return COMMAND_NAME;
+    }
+
+    @Override
+    public MongoNamespace getNamespace() {
+        return new MongoNamespace("admin", MongoNamespace.COMMAND_COLLECTION_NAME); // TODO double check
     }
 
     @Override

@@ -99,6 +99,7 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
         this.decoder = notNull("decoder", decoder);
     }
 
+    @Override
     public MongoNamespace getNamespace() {
         return namespace;
     }
@@ -468,9 +469,12 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
     }
 
     private CommandReadTransformer<BsonDocument, CommandBatchCursor<T>> transformer() {
-        return (result, source, connection) ->
-                new CommandBatchCursor<>(getTimeoutMode(), result, batchSize, getMaxTimeForCursor(source.getOperationContext()), decoder,
-                        comment, source, connection);
+        return (result, source, connection) -> {
+            OperationContext operationContext = source.getOperationContext();
+
+            return new CommandBatchCursor<>(getTimeoutMode(), result, batchSize, getMaxTimeForCursor(operationContext), decoder,
+                    comment, source, connection);
+        };
     }
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {

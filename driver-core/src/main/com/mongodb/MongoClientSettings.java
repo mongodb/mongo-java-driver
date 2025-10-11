@@ -30,9 +30,11 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.TransportSettings;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.DnsClient;
 import com.mongodb.spi.dns.InetAddressResolver;
+import com.mongodb.tracing.Tracer;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.BsonCodecProvider;
 import org.bson.codecs.BsonValueCodecProvider;
@@ -57,6 +59,8 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.TimeoutSettings.convertAndValidateTimeout;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
+import static java.lang.System.getenv;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -118,6 +122,10 @@ public final class MongoClientSettings {
     private final InetAddressResolver inetAddressResolver;
     @Nullable
     private final Long timeoutMS;
+
+    @VisibleForTesting(otherwise = PRIVATE)
+    public static final String ENV_OTEL_ENABLED = "OTEL_JAVA_INSTRUMENTATION_MONGODB_ENABLED";
+    private final Tracer tracer;
 
     /**
      * Gets the default codec registry.  It includes the following providers:
@@ -238,6 +246,7 @@ public final class MongoClientSettings {
         private ContextProvider contextProvider;
         private DnsClient dnsClient;
         private InetAddressResolver inetAddressResolver;
+        private Tracer tracer;
 
         private Builder() {
         }
@@ -275,6 +284,7 @@ public final class MongoClientSettings {
             if (settings.heartbeatSocketTimeoutSetExplicitly) {
                 heartbeatSocketTimeoutMS = settings.heartbeatSocketSettings.getReadTimeout(MILLISECONDS);
             }
+            tracer = settings.tracer;
         }
 
         /**
@@ -724,6 +734,20 @@ public final class MongoClientSettings {
         }
 
         /**
+         * Sets the tracer to use for creating Spans for operations, commands and transactions.
+         *
+         * @param tracer the tracer
+         * @see com.mongodb.tracing.MicrometerTracer
+         * @return this
+         * @since 5.7
+         */
+        @Alpha(Reason.CLIENT)
+        public Builder tracer(final Tracer tracer) {
+            this.tracer = tracer;
+            return this;
+        }
+
+        /**
          * Build an instance of {@code MongoClientSettings}.
          *
          * @return the settings from this builder
@@ -1040,6 +1064,16 @@ public final class MongoClientSettings {
         return contextProvider;
     }
 
+    /**
+     * Get the tracer to create Spans for operations, commands and transactions.
+     *
+     * @return the configured Tracer
+     * @since 5.7
+     */
+    public Tracer getTracer() {
+        return tracer;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -1156,5 +1190,14 @@ public final class MongoClientSettings {
         heartbeatConnectTimeoutSetExplicitly = builder.heartbeatConnectTimeoutMS != 0;
         contextProvider = builder.contextProvider;
         timeoutMS = builder.timeoutMS;
+
+        String envOtelInstrumentationEnabled = getenv(ENV_OTEL_ENABLED);
+        boolean enableTracing = true;
+        if (envOtelInstrumentationEnabled != null) {
+            enableTracing = Boolean.parseBoolean(envOtelInstrumentationEnabled);
+        }
+        tracer = (builder.tracer == null) ? Tracer.NO_OP
+                : (enableTracing) ? builder.tracer
+                : Tracer.NO_OP;
     }
 }

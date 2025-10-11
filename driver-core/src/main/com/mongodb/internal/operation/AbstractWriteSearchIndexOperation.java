@@ -96,7 +96,9 @@ abstract class AbstractWriteSearchIndexOperation implements WriteOperation<Void>
 
     abstract BsonDocument buildCommand();
 
-    MongoNamespace getNamespace() {
+
+    @Override
+    public MongoNamespace getNamespace() {
         return namespace;
     }
 }

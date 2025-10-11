@@ -76,6 +76,11 @@ public class EstimatedDocumentCountOperation implements ReadOperationSimple<Long
     }
 
     @Override
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    @Override
     public Long execute(final ReadBinding binding) {
         try {
             return executeRetryableRead(binding, namespace.getDatabaseName(),

@@ -241,6 +241,11 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
         }
 
         @Override
+        public MongoNamespace getNamespace() {
+            return operation.getNamespace();
+        }
+
+        @Override
         public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
             operation.executeAsync(binding, callback::onResult);
         }
@@ -260,6 +265,11 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
         @Override
         public String getCommandName() {
             return operation.getCommandName();
+        }
+
+        @Override
+        public MongoNamespace getNamespace() {
+            return operation.getNamespace();
         }
 
         @Override

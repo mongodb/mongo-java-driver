@@ -92,10 +92,6 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
         this.pipelineCreator = notNull("pipelineCreator", pipelineCreator);
     }
 
-    MongoNamespace getNamespace() {
-        return namespace;
-    }
-
     List<BsonDocument> getPipeline() {
         return pipeline;
     }
@@ -189,6 +185,11 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
     @Override
     public String getCommandName() {
         return COMMAND_NAME;
+    }
+
+    @Override
+    public MongoNamespace getNamespace() {
+        return namespace;
     }
 
     @Override

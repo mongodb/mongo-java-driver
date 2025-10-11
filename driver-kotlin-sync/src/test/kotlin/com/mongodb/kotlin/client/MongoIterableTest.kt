@@ -19,6 +19,7 @@ import com.mongodb.Function
 import com.mongodb.client.MongoCursor as JMongoCursor
 import com.mongodb.client.MongoIterable as JMongoIterable
 import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
 import org.bson.Document
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers
@@ -90,7 +91,7 @@ class MongoIterableTest {
         whenever(cursor.next()).thenReturn(documents[0], documents[1], documents[2])
         whenever(delegate.cursor()).doReturn(cursor)
 
-        assertContentEquals(documents.subList(0, 2), iterable.use { it.take(2) }.toList())
+        iterable.use { it.take(2).forEachIndexed { index, document -> assertEquals(documents[index], document) } }
 
         verify(delegate, times(1)).cursor()
         verify(cursor, times(2)).hasNext()

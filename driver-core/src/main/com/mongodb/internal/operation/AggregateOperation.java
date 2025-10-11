@@ -164,7 +164,8 @@ public class AggregateOperation<T> implements ReadOperationExplainable<T> {
                 }, resultDecoder);
     }
 
-    MongoNamespace getNamespace() {
+    @Override
+    public MongoNamespace getNamespace() {
         return wrapped.getNamespace();
     }
 }

@@ -164,6 +164,10 @@ public final class UnifiedTestModifications {
                 .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
                         "timeoutMS can be set to 0 on a MongoClient - dropIndexes on collection");
 
+        // There are more than 44 tests using 'awaitMinPoolSizeMS' this will be fixed in JAVA-5957
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5957")
+                .directory("client-side-operations-timeout");
+
         // TODO-JAVA-5712
 
         // collection-management

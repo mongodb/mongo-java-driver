@@ -114,6 +114,11 @@ public class DistinctOperation<T> implements ReadOperationCursor<T> {
     }
 
     @Override
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         return executeRetryableRead(binding, namespace.getDatabaseName(), getCommandCreator(), createCommandDecoder(),
                 singleBatchCursorTransformer(VALUES), retryReads);

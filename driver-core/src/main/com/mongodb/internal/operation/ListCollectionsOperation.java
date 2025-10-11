@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoCommandException;
+import com.mongodb.MongoNamespace;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.AsyncBatchCursor;
@@ -34,6 +35,7 @@ import org.bson.codecs.Decoder;
 
 import java.util.function.Supplier;
 
+import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -84,6 +86,11 @@ public class ListCollectionsOperation<T> implements ReadOperationCursor<T> {
     public ListCollectionsOperation(final String databaseName, final Decoder<T> decoder) {
         this.databaseName = notNull("databaseName", databaseName);
         this.decoder = notNull("decoder", decoder);
+    }
+
+    @Override
+    public MongoNamespace getNamespace() {
+        return new MongoNamespace(databaseName, COMMAND_COLLECTION_NAME);
     }
 
     public BsonDocument getFilter() {

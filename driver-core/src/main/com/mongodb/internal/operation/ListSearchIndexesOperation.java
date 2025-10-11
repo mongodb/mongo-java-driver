@@ -79,6 +79,11 @@ public final class ListSearchIndexesOperation<T> implements ReadOperationExplain
     }
 
     @Override
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         try {
             return asAggregateOperation().execute(binding);

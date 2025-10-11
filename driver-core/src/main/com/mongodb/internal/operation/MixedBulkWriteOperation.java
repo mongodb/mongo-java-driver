@@ -101,6 +101,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
         this.retryWrites = retryWrites;
     }
 
+    @Override
     public MongoNamespace getNamespace() {
         return namespace;
     }
