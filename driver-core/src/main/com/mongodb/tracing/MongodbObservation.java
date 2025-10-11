@@ -16,19 +16,9 @@
 
 package com.mongodb.tracing;
 
-import io.micrometer.common.KeyValue;
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.docs.ObservationDocumentation;
-import org.bson.BsonDocument;
-import org.bson.BsonReader;
-import org.bson.json.JsonMode;
-import org.bson.json.JsonWriter;
-import org.bson.json.JsonWriterSettings;
-
-import java.io.StringWriter;
-
-import static java.lang.System.getenv;
 
 /**
  * A MongoDB-based {@link Observation}.
@@ -191,46 +181,6 @@ public enum MongodbObservation implements ObservationDocumentation {
             @Override
             public String asString() {
                 return "db.query.text";
-            }
-        };
-
-        private static final String ENV_OTEL_QUERY_TEXT_MAX_LENGTH = "OTEL_JAVA_INSTRUMENTATION_MONGODB_QUERY_TEXT_MAX_LENGTH";
-        private final int textMaxLength;
-
-        HighCardinalityKeyNames() {
-            String queryTextMaxLength = getenv(ENV_OTEL_QUERY_TEXT_MAX_LENGTH);
-            if (queryTextMaxLength != null) {
-                this.textMaxLength = Integer.parseInt(queryTextMaxLength);
-            } else {
-                this.textMaxLength = Integer.MAX_VALUE;
-            }
-        }
-
-        public KeyValue withBson(final BsonDocument commandDocument) {
-            if (textMaxLength == Integer.MAX_VALUE) {
-                // no truncation needed
-                return KeyValue.of(asString(), commandDocument.toString());
-            } else {
-                return KeyValue.of(asString(), getTruncatedJsonCommand(commandDocument));
-            }
-        }
-
-        private String getTruncatedJsonCommand(final BsonDocument commandDocument) {
-            StringWriter writer = new StringWriter();
-
-            try (BsonReader bsonReader = commandDocument.asBsonReader()) {
-                JsonWriter jsonWriter = new JsonWriter(writer,
-                        JsonWriterSettings.builder().outputMode(JsonMode.RELAXED)
-                                .maxLength(textMaxLength)
-                                .build());
-
-                jsonWriter.pipe(bsonReader);
-
-                if (jsonWriter.isTruncated()) {
-                    writer.append(" ...");
-                }
-
-                return writer.toString();
             }
         }
     }

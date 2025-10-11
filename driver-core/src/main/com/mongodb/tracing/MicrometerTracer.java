@@ -17,19 +17,28 @@
 package com.mongodb.tracing;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.lang.Nullable;
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import org.bson.BsonDocument;
+import org.bson.BsonReader;
+import org.bson.json.JsonMode;
+import org.bson.json.JsonWriter;
+import org.bson.json.JsonWriterSettings;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_MESSAGE;
 import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_STACKTRACE;
 import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_TYPE;
 import static com.mongodb.tracing.MongodbObservation.MONGODB_OBSERVATION;
+import static java.lang.System.getenv;
+import static java.util.Optional.ofNullable;
 
 
 /**
@@ -42,8 +51,13 @@ import static com.mongodb.tracing.MongodbObservation.MONGODB_OBSERVATION;
  * @since 5.7
  */
 public class MicrometerTracer implements Tracer {
-    private final boolean allowCommandPayload;
+    @VisibleForTesting(otherwise = PRIVATE)
+    public static final String ENV_OTEL_QUERY_TEXT_MAX_LENGTH = "OTEL_JAVA_INSTRUMENTATION_MONGODB_QUERY_TEXT_MAX_LENGTH";
+
     private final ObservationRegistry observationRegistry;
+    private final boolean allowCommandPayload;
+    private final int textMaxLength;
+    private static final String QUERY_TEXT_LENGTH_CONTEXT_KEY = "QUERY_TEXT_MAX_LENGTH";
 
     /**
      * Constructs a new {@link MicrometerTracer} instance.
@@ -63,6 +77,9 @@ public class MicrometerTracer implements Tracer {
     public MicrometerTracer(final ObservationRegistry observationRegistry, final boolean allowCommandPayload) {
         this.allowCommandPayload = allowCommandPayload;
         this.observationRegistry = observationRegistry;
+        this.textMaxLength = ofNullable(getenv(ENV_OTEL_QUERY_TEXT_MAX_LENGTH))
+                .map(Integer::parseInt)
+                .orElse(Integer.MAX_VALUE);
     }
 
     @Override
@@ -70,14 +87,12 @@ public class MicrometerTracer implements Tracer {
         if (parent instanceof MicrometerTraceContext) {
             Observation parentObservation = ((MicrometerTraceContext) parent).observation;
             if (parentObservation != null) {
-                return new MicrometerSpan(MONGODB_OBSERVATION
-                        .observation(observationRegistry)
-                        .contextualName(name)
-                        .parentObservation(parentObservation)
-                        .start(), namespace);
+                Observation observation = getObservation(name).parentObservation(parentObservation);
+                return new MicrometerSpan(observation.start(), namespace);
             }
         }
-        return new MicrometerSpan(MONGODB_OBSERVATION.observation(observationRegistry).contextualName(name).start(), namespace);
+        Observation observation = getObservation(name);
+        return new MicrometerSpan(observation.start(), namespace);
     }
 
     @Override
@@ -90,6 +105,11 @@ public class MicrometerTracer implements Tracer {
         return allowCommandPayload;
     }
 
+    private Observation getObservation(final String name) {
+        Observation observation = MONGODB_OBSERVATION.observation(observationRegistry).contextualName(name);
+        observation.getContext().put(QUERY_TEXT_LENGTH_CONTEXT_KEY, textMaxLength);
+        return observation;
+    }
     /**
      * Represents a Micrometer-based trace context.
      */
@@ -113,16 +133,7 @@ public class MicrometerTracer implements Tracer {
         private final Observation observation;
         @Nullable
         private final MongoNamespace namespace;
-
-        /**
-         * Constructs a new {@link MicrometerSpan} instance with an associated Observation.
-         *
-         * @param observation The Micrometer {@link Observation}, or null if none exists.
-         */
-        MicrometerSpan(final Observation observation) {
-            this.observation = observation;
-            this.namespace = null;
-        }
+        private final int queryTextLength;
 
         /**
          * Constructs a new {@link MicrometerSpan} instance with an associated Observation and MongoDB namespace.
@@ -133,6 +144,10 @@ public class MicrometerTracer implements Tracer {
         MicrometerSpan(final Observation observation, @Nullable final MongoNamespace namespace) {
             this.namespace = namespace;
             this.observation = observation;
+            this.queryTextLength = ofNullable(observation.getContext().get(QUERY_TEXT_LENGTH_CONTEXT_KEY))
+                    .filter(Integer.class::isInstance)
+                    .map(Integer.class::cast)
+                    .orElse(Integer.MAX_VALUE);
         }
 
         @Override
@@ -146,8 +161,11 @@ public class MicrometerTracer implements Tracer {
         }
 
         @Override
-        public void tagHighCardinality(final KeyValue keyValue) {
-            observation.highCardinalityKeyValue(keyValue);
+        public void tagHighCardinality(final String keyName, final BsonDocument value) {
+            observation.highCardinalityKeyValue(keyName,
+                    (queryTextLength < Integer.MAX_VALUE) // truncate values that are too long
+                            ? getTruncatedBsonDocument(value)
+                            : value.toString());
         }
 
         @Override
@@ -186,6 +204,25 @@ public class MicrometerTracer implements Tracer {
             PrintWriter pw = new PrintWriter(sw);
             throwable.printStackTrace(pw);
             return sw.toString();
+        }
+
+        private String getTruncatedBsonDocument(final BsonDocument commandDocument) {
+            StringWriter writer = new StringWriter();
+
+            try (BsonReader bsonReader = commandDocument.asBsonReader()) {
+                JsonWriter jsonWriter = new JsonWriter(writer,
+                        JsonWriterSettings.builder().outputMode(JsonMode.RELAXED)
+                                .maxLength(queryTextLength)
+                                .build());
+
+                jsonWriter.pipe(bsonReader);
+
+                if (jsonWriter.isTruncated()) {
+                    writer.append(" ...");
+                }
+
+                return writer.toString();
+            }
         }
     }
 }

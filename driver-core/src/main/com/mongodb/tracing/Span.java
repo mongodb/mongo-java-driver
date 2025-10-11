@@ -20,6 +20,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.lang.Nullable;
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
+import org.bson.BsonDocument;
 
 /**
  * Represents a tracing span for the driver internal operations.
@@ -55,7 +56,7 @@ public interface Span {
         }
 
         @Override
-        public void tagHighCardinality(final KeyValue keyValue) {
+        public void tagHighCardinality(final String keyName, final BsonDocument value) {
         }
 
         @Override
@@ -97,11 +98,12 @@ public interface Span {
     void tagLowCardinality(KeyValues keyValues);
 
     /**
-     * Adds a high-cardinality (highly variable values) tag to the span.
+     * Adds a high-cardinality (highly variable values) tag to the span with a BSON document value.
      *
-     * @param keyValue The key-value pair representing the tag.
+     * @param keyName The name of the tag.
+     * @param value   The BSON document representing the value of the tag.
      */
-    void tagHighCardinality(KeyValue keyValue);
+    void tagHighCardinality(String keyName, BsonDocument value);
 
     /**
      * Records an event in the span.

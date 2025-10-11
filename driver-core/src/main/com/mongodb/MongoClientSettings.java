@@ -30,10 +30,11 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.TransportSettings;
 import com.mongodb.event.CommandListener;
-import com.mongodb.tracing.Tracer;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.DnsClient;
 import com.mongodb.spi.dns.InetAddressResolver;
+import com.mongodb.tracing.Tracer;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.BsonCodecProvider;
 import org.bson.codecs.BsonValueCodecProvider;
@@ -58,6 +59,7 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.TimeoutSettings.convertAndValidateTimeout;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static java.lang.System.getenv;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -121,7 +123,8 @@ public final class MongoClientSettings {
     @Nullable
     private final Long timeoutMS;
 
-    private static final String ENV_OTEL_ENABLED = "OTEL_JAVA_INSTRUMENTATION_MONGODB_ENABLED";
+    @VisibleForTesting(otherwise = PRIVATE)
+    public static final String ENV_OTEL_ENABLED = "OTEL_JAVA_INSTRUMENTATION_MONGODB_ENABLED";
     private final Tracer tracer;
 
     /**
