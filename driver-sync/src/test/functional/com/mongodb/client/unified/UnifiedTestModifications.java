@@ -60,7 +60,18 @@ public final class UnifiedTestModifications {
                 .file("client-side-encryption/tests/unified", "client bulkWrite with queryable encryption");
 
         // client-side-operation-timeout (CSOT)
-
+        /*
+          As to the background connection pooling section:
+         timeoutMS set at the MongoClient level MUST be used as the timeout for all commands sent as part of the handshake.
+         We first configure a failpoint to block all hello/isMaster commands for 50 ms, then set timeoutMS = 10 ms on MongoClient
+         and wait for awaitMinPoolSize = 1000. So that means the background thread tries to populate connections under a 10ms timeout
+         cap while the failpoint blocks for 50ms, so all attempts effectively fail.
+         */
+        def.skipAccordingToSpec("background connection pooling section")
+                .test("client-side-operations-timeout", "timeoutMS behaves correctly during command execution",
+                        "short-circuit is not enabled with only 1 RTT measurement")
+                .test("client-side-operations-timeout", "timeoutMS behaves correctly during command execution",
+                        "command is not sent if RTT is greater than timeoutMS");
         def.skipNoncompliantReactive("No good way to fulfill tryNext() requirement with a Publisher<T>")
                 .test("client-side-operations-timeout", "timeoutMS behaves correctly for tailable awaitData cursors",
                       "apply remaining timeoutMS if less than maxAwaitTimeMS");
