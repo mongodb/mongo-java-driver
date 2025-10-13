@@ -84,14 +84,15 @@ public class MicrometerTracer implements Tracer {
 
     @Override
     public Span nextSpan(final String name, @Nullable final TraceContext parent, @Nullable final MongoNamespace namespace) {
+        Observation observation = getObservation(name);
+
         if (parent instanceof MicrometerTraceContext) {
             Observation parentObservation = ((MicrometerTraceContext) parent).observation;
             if (parentObservation != null) {
-                Observation observation = getObservation(name).parentObservation(parentObservation);
-                return new MicrometerSpan(observation.start(), namespace);
+                observation.parentObservation(parentObservation);
             }
         }
-        Observation observation = getObservation(name);
+
         return new MicrometerSpan(observation.start(), namespace);
     }
 

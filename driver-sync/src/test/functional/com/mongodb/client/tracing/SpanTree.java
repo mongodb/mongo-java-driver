@@ -18,7 +18,6 @@ package com.mongodb.client.tracing;
 
 import com.mongodb.lang.Nullable;
 import io.micrometer.tracing.exporter.FinishedSpan;
-import io.micrometer.tracing.test.simple.SimpleSpan;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
@@ -28,7 +27,6 @@ import org.bson.BsonValue;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,61 +77,6 @@ public class SpanTree {
             }
         }
 
-        return spanTree;
-    }
-
-    /**
-     * Creates a SpanTree from a JSON string representation of spans.
-     *
-     * @param spansAsJson the JSON string containing span documents
-     * @return a SpanTree constructed from the provided JSON spans
-     */
-    public static SpanTree from(final String spansAsJson) {
-        BsonArray spans = BsonArray.parse(spansAsJson);
-        return from(spans);
-    }
-
-    /**
-     * Creates a SpanTree from a Deque of SimpleSpan objects.
-     * This method is typically used to build a tree based on the actual collected tracing spans.
-     *
-     * @param spans the Deque containing SimpleSpan objects
-     * @return a SpanTree constructed from the provided spans
-     */
-    public static SpanTree from(final Deque<SimpleSpan> spans) {
-        final SpanTree spanTree = new SpanTree();
-        final Map<String, SpanNode> idToSpanNode = new HashMap<>();
-        for (final SimpleSpan span : spans) {
-            final SpanNode spanNode = new SpanNode(span.getName());
-            for (final Map.Entry<String, String> tag : span.getTags().entrySet()) {
-                // handle special case of session id (needs to be parsed into a BsonBinary)
-                // this is needed because the SimpleTracer reports all the collected tags as strings
-                if (tag.getKey().equals(SESSION_ID.asString())) {
-                    spanNode.tags.append(tag.getKey(), new BsonDocument().append("id", new BsonBinary(UUID.fromString(tag.getValue()))));
-
-                } else if (tag.getKey().equals(CURSOR_ID.asString())
-                        || tag.getKey().equals(SERVER_PORT.asString())
-                        || tag.getKey().equals(TRANSACTION_NUMBER.asString())
-                        || tag.getKey().equals(CLIENT_CONNECTION_ID.asString())
-                        || tag.getKey().equals(SERVER_CONNECTION_ID.asString())) {
-                    spanNode.tags.append(tag.getKey(), new BsonInt64(Long.parseLong(tag.getValue())));
-                } else {
-                    spanNode.tags.append(tag.getKey(), new BsonString(tag.getValue()));
-                }
-            }
-            idToSpanNode.put(span.context().spanId(), spanNode);
-        }
-
-        for (final SimpleSpan span : spans) {
-            final String parentId = span.context().parentId();
-            final SpanNode node = idToSpanNode.get(span.context().spanId());
-
-            if (!parentId.isEmpty() && idToSpanNode.containsKey(parentId)) {
-                idToSpanNode.get(parentId).children.add(node);
-            } else { // doesn't have a parent, so it is a root node
-                spanTree.roots.add(node);
-            }
-        }
         return spanTree;
     }
 
