@@ -38,6 +38,7 @@ import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
+import com.mongodb.event.ConnectionReadyEvent;
 import com.mongodb.event.TestServerMonitorListener;
 import com.mongodb.internal.connection.ServerMonitoringModeUtil;
 import com.mongodb.internal.connection.TestClusterListener;
@@ -67,6 +68,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -85,6 +87,7 @@ import static com.mongodb.client.unified.UnifiedCrudHelper.asReadConcern;
 import static com.mongodb.client.unified.UnifiedCrudHelper.asReadPreference;
 import static com.mongodb.client.unified.UnifiedCrudHelper.asWriteConcern;
 import static com.mongodb.internal.connection.AbstractConnectionPoolTest.waitForPoolAsyncWorkManagerStart;
+import static java.lang.String.format;
 import static java.lang.System.getenv;
 import static java.util.Arrays.asList;
 import static org.junit.Assume.assumeTrue;
@@ -93,7 +96,8 @@ public final class Entities {
     private static final Set<String> SUPPORTED_CLIENT_ENTITY_OPTIONS = new HashSet<>(
             asList(
                     "id", "autoEncryptOpts", "uriOptions", "serverApi", "useMultipleMongoses", "storeEventsAsEntities",
-                    "observeEvents", "observeLogMessages", "observeSensitiveCommands", "ignoreCommandMonitoringEvents", "observeTracingMessages"));
+                    "observeEvents", "observeLogMessages", "observeSensitiveCommands", "ignoreCommandMonitoringEvents",
+                    "awaitMinPoolSizeMS", "observeTracingMessages"));
     private final Set<String> entityNames = new HashSet<>();
     private final Map<String, ExecutorService> threads = new HashMap<>();
     private final Map<String, ArrayList<Future<?>>> tasks = new HashMap<>();
@@ -315,6 +319,7 @@ public final class Entities {
             throw new UnsupportedOperationException("Client entity contains unsupported options: " + entity.keySet()
                     + ". Supported options are " + SUPPORTED_CLIENT_ENTITY_OPTIONS);
         }
+        boolean waitForMinPoolSizeToPopulate = isWaitForMinPoolSizeToPopulate(entity);
         MongoClientSettings.Builder clientSettingsBuilder;
         if (entity.getBoolean("useMultipleMongoses", BsonBoolean.FALSE).getValue() && (isSharded() || isLoadBalanced())) {
             assumeTrue("Multiple mongos connection string not available for sharded cluster",
@@ -340,6 +345,9 @@ public final class Entities {
         if (entity.containsKey("observeEvents")) {
             List<String> observeEvents = entity.getArray("observeEvents").stream()
                     .map(type -> type.asString().getValue()).collect(Collectors.toList());
+            if (waitForMinPoolSizeToPopulate) {
+                observeEvents.add("connectionReadyEvent");
+            }
             List<String> ignoreCommandMonitoringEvents = entity
                     .getArray("ignoreCommandMonitoringEvents", new BsonArray()).stream()
                     .map(type -> type.asString().getValue()).collect(Collectors.toList());
@@ -350,7 +358,6 @@ public final class Entities {
                     null);
             clientSettingsBuilder.addCommandListener(testCommandListener);
             putEntity(id + "-command-listener", testCommandListener, clientCommandListeners);
-
             TestConnectionPoolListener testConnectionPoolListener = new TestConnectionPoolListener(observeEvents);
             clientSettingsBuilder.applyToConnectionPoolSettings(builder ->
                     builder.addConnectionPoolListener(testConnectionPoolListener));
@@ -603,6 +610,35 @@ public final class Entities {
         if (waitForPoolAsyncWorkManagerStart) {
             waitForPoolAsyncWorkManagerStart();
         }
+        if (waitForMinPoolSizeToPopulate) {
+            waitForMinPoolSizeToPopulate(entity, id, clientSettings);
+        }
+    }
+
+    private void waitForMinPoolSizeToPopulate(final BsonDocument entity, final String id, final MongoClientSettings clientSettings) {
+        int minSize = clientSettings.getConnectionPoolSettings().getMinSize();
+        int awaitMinPoolSizeMS = entity.getInt32("awaitMinPoolSizeMS").getValue();
+        TestConnectionPoolListener testConnectionPoolListener = getConnectionPoolListener(id);
+        try {
+           /*
+             From the spec:
+             Any CMAP and SDAM event/log listeners configured on the client SHOULD ignore any events that occur before the pool is populated.
+
+             Currently, no flaky or racy behavior is caused by not clearing pre-pool-population CMAP and SDAM events.
+             If any race behavior is observed, consider clearing events.
+             */
+            testConnectionPoolListener.waitForEvent(ConnectionReadyEvent.class, minSize, awaitMinPoolSizeMS, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException | InterruptedException e) {
+            throw new RuntimeException(format("Error waiting for awaitMinPoolSizeMS [%s] to establish minPoolSize [%s] connections",
+                    awaitMinPoolSizeMS, minSize));
+        }
+    }
+
+    private static boolean isWaitForMinPoolSizeToPopulate(final BsonDocument clientEntity) {
+        int minPoolSize = clientEntity.getDocument("uriOptions", new BsonDocument())
+                .get("minPoolSize", new BsonInt32(0))
+                .asInt32().getValue();
+        return minPoolSize != 0 && clientEntity.containsKey("awaitMinPoolSizeMS");
     }
 
     private static LogMessage.Component toComponent(final Map.Entry<String, BsonValue> entry) {
