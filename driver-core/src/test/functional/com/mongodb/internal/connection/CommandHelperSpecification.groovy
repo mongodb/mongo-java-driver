@@ -55,7 +55,7 @@ class CommandHelperSpecification extends Specification {
         connection?.close()
     }
 
-    @Ignore("5982")
+    @Ignore("JAVA-5982")
     def 'should execute command asynchronously'() {
         when:
         BsonDocument receivedDocument = null
