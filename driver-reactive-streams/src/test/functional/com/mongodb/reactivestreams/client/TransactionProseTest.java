@@ -86,18 +86,17 @@ public class TransactionProseTest {
     @Test
     void testWriteConcernInheritance() {
         Mono<Document> testWriteConcern = Mono.from(client.startSession())
-                .flatMap(clientSession -> {
-                    clientSession.startTransaction();
-                    return Mono.using(() -> clientSession,
-                            session -> Mono.fromRunnable(session::startTransaction)
-                                    .then(Mono.from(collection.withWriteConcern(new WriteConcern(0)).insertOne(session, new Document("n", 1))))
-                                    .then(Mono.from(session.commitTransaction()))
-                                    .then(Mono.from(collection.find(new Document("n", 1)).first())
-                                            .doOnNext(Assertions::assertNotNull)
-                                    ),
-                            ClientSession::close
-                    );
-                });
+                .flatMap(clientSession ->
+                        Mono.using(() -> clientSession,
+                                session -> Mono.fromRunnable(session::startTransaction)
+                                        .then(Mono.from(collection.withWriteConcern(new WriteConcern(0)).insertOne(session, new Document("n", 1))))
+                                        .then(Mono.fromCallable(() -> Mono.from(session.commitTransaction())))
+                                        .then(Mono.from(collection.find(new Document("n", 1)).first())
+                                                .doOnNext(Assertions::assertNotNull)
+                                        ),
+                                ClientSession::close
+                        )
+                );
 
         StepVerifier.create(testWriteConcern).verifyComplete();
     }
