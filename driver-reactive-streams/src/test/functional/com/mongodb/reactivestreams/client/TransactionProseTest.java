@@ -18,7 +18,6 @@ package com.mongodb.reactivestreams.client;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.WriteConcern;
-import com.mongodb.session.ClientSession;
 import org.bson.Document;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -85,14 +84,12 @@ public class TransactionProseTest {
     @Test
     void testWriteConcernInheritance() {
         Mono<Document> testWriteConcern = Mono.from(client.startSession())
-                .flatMap(clientSession ->
-                        Mono.using(() -> clientSession,
-                                session -> Mono.fromRunnable(session::startTransaction)
-                                        .then(Mono.from(collection.withWriteConcern(new WriteConcern(0)).insertOne(session, new Document("n", 1))))
-                                        .flatMap( r -> Mono.from(session.commitTransaction()))
-                                        .then(Mono.from(collection.find(new Document("n", 1)).first())),
-                                ClientSession::close
-                        )
+                .flatMap(session ->
+                        Mono.fromRunnable(session::startTransaction)
+                                .then(Mono.from(collection.withWriteConcern(new WriteConcern(0)).insertOne(session, new Document("n", 1))))
+                                .then(Mono.from(session.commitTransaction()))
+                                .then(Mono.from(collection.find(new Document("n", 1)).first()))
+                                .doFinally(signalType -> session.close())
                 );
 
         StepVerifier.create(testWriteConcern).assertNext(Assertions::assertNotNull).verifyComplete();
