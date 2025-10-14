@@ -94,7 +94,6 @@ public class TransactionProseTest {
         }
     }
 
-    // Test non-transaction operations using a pinned ClientSession unpins the session and normal server selection is performed.
     @DisplayName("Mongos Pinning Prose Tests: 2. Test non-transaction operations using a pinned ClientSession unpins the session"
             + " and normal server selection is performed")
     @Test
