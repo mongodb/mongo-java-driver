@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.WriteConcern;
+import com.mongodb.session.ClientSession;
 import org.bson.Document;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -84,23 +85,20 @@ public class TransactionProseTest {
     @DisplayName("Options Inside Transaction Prose Tests. 1. Write concern not inherited from collection object inside transaction")
     @Test
     void testWriteConcernInheritance() {
-        StepVerifier.create(
-                Mono.from(client.startSession())
-                        .map(session -> {
-                            session.startTransaction();
-                            return session;
-                        })
-                        .flatMap(session ->
-                                Mono.from(collection.withWriteConcern(new WriteConcern(0)).insertOne(session, new Document("n", 1)))
-                                        .thenReturn(session))
-                        .flatMap(session ->
-                                Mono.from(session.commitTransaction())
-                                        .thenReturn(session))
-                        .flatMap(session ->
-                                Mono.from(collection.find(new Document("n", 1)).first())
-                                        .doOnNext(Assertions::assertNotNull)
-                                        .thenReturn(session)
-                        ).flatMap(session -> Mono.fromRunnable(session::close))
-        ).verifyComplete();
+        Mono<Document> testWriteConcern = Mono.from(client.startSession())
+                .flatMap(clientSession -> {
+                    clientSession.startTransaction();
+                    return Mono.using(() -> clientSession,
+                            session -> Mono.fromRunnable(session::startTransaction)
+                                    .then(Mono.from(collection.withWriteConcern(new WriteConcern(0)).insertOne(session, new Document("n", 1))))
+                                    .then(Mono.from(session.commitTransaction()))
+                                    .then(Mono.from(collection.find(new Document("n", 1)).first())
+                                            .doOnNext(Assertions::assertNotNull)
+                                    ),
+                            ClientSession::close
+                    );
+                });
+
+        StepVerifier.create(testWriteConcern).verifyComplete();
     }
 }
