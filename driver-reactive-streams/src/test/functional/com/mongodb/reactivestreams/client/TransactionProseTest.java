@@ -34,7 +34,6 @@ import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.isSharded;
 import static org.junit.jupiter.api.Assumptions.abort;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class TransactionProseTest {
@@ -90,14 +89,12 @@ public class TransactionProseTest {
                         Mono.using(() -> clientSession,
                                 session -> Mono.fromRunnable(session::startTransaction)
                                         .then(Mono.from(collection.withWriteConcern(new WriteConcern(0)).insertOne(session, new Document("n", 1))))
-                                        .then(Mono.fromCallable(() -> Mono.from(session.commitTransaction())))
-                                        .then(Mono.from(collection.find(new Document("n", 1)).first())
-                                                .doOnNext(Assertions::assertNotNull)
-                                        ),
+                                        .flatMap( r -> Mono.from(session.commitTransaction()))
+                                        .then(Mono.from(collection.find(new Document("n", 1)).first())),
                                 ClientSession::close
                         )
                 );
 
-        StepVerifier.create(testWriteConcern).verifyComplete();
+        StepVerifier.create(testWriteConcern).assertNext(Assertions::assertNotNull).verifyComplete();
     }
 }
