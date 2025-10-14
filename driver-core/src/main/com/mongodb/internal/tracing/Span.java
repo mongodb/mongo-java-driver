@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.tracing;
+package com.mongodb.internal.tracing;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.lang.Nullable;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.tracing;
+package com.mongodb.internal.tracing;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.lang.Nullable;
@@ -24,10 +24,6 @@ import com.mongodb.lang.Nullable;
  * This interface defines methods to retrieve the current trace context, create new spans, and check if tracing is enabled.
  * It also includes a no-operation (NO_OP) implementation for cases where tracing is not required.
  * </p>
- *
- * Note: You can use the environment variable {@code OTEL_JAVA_INSTRUMENTATION_MONGODB_ENABLED} to override the behaviour of enabling/disabling
- * tracing before you create the {@link com.mongodb.MongoClientSettings} instance.
- * You can also use the environment variable {@code OTEL_JAVA_INSTRUMENTATION_MONGODB_QUERY_TEXT_MAX_LENGTH} to enable or disable command payload when tracing is enabled. .
  *
  * @since 5.7
  */

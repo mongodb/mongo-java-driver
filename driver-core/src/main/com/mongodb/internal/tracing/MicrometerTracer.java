@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package com.mongodb.tracing;
+package com.mongodb.internal.tracing;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.lang.Nullable;
 import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
@@ -32,11 +31,11 @@ import org.bson.json.JsonWriterSettings;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
-import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_MESSAGE;
-import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_STACKTRACE;
-import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_TYPE;
-import static com.mongodb.tracing.MongodbObservation.MONGODB_OBSERVATION;
+import static com.mongodb.MongoClientSettings.ENV_OTEL_QUERY_TEXT_MAX_LENGTH;
+import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_MESSAGE;
+import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_STACKTRACE;
+import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_TYPE;
+import static com.mongodb.internal.tracing.MongodbObservation.MONGODB_OBSERVATION;
 import static java.lang.System.getenv;
 import static java.util.Optional.ofNullable;
 
@@ -51,9 +50,6 @@ import static java.util.Optional.ofNullable;
  * @since 5.7
  */
 public class MicrometerTracer implements Tracer {
-    @VisibleForTesting(otherwise = PRIVATE)
-    public static final String ENV_OTEL_QUERY_TEXT_MAX_LENGTH = "OTEL_JAVA_INSTRUMENTATION_MONGODB_QUERY_TEXT_MAX_LENGTH";
-
     private final ObservationRegistry observationRegistry;
     private final boolean allowCommandPayload;
     private final int textMaxLength;

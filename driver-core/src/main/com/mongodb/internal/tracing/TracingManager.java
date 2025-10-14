@@ -18,11 +18,11 @@ package com.mongodb.internal.tracing;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.lang.Nullable;
-import com.mongodb.tracing.Span;
-import com.mongodb.tracing.TraceContext;
-import com.mongodb.tracing.Tracer;
+import io.micrometer.observation.ObservationRegistry;
 
-import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.SYSTEM;
+import static com.mongodb.MongoClientSettings.ENV_OTEL_ENABLED;
+import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.SYSTEM;
+import static java.lang.System.getenv;
 
 /**
  * Manages tracing spans for MongoDB driver activities.
@@ -35,18 +35,26 @@ public class TracingManager {
     /**
      * A no-op instance of the TracingManager used when tracing is disabled.
      */
-    public static final TracingManager NO_OP = new TracingManager(Tracer.NO_OP);
+    public static final TracingManager NO_OP = new TracingManager(ObservationRegistry.NOOP, false);
     private final Tracer tracer;
     private final boolean enableCommandPayload;
 
     /**
-     * Constructs a new TracingManager with the specified tracer and parent context.
-     * Setting the environment variable {@code OTEL_JAVA_INSTRUMENTATION_MONGODB_QUERY_TEXT_MAX_LENGTH} will enable command payload tracing.
+     * Constructs a new TracingManager with the specified observation registry.
      *
-     * @param tracer The tracer to use for tracing operations.
+     * @param observationRegistry The observation registry to use for tracing operations, may be null.
+     * @param enableCommandPayload Whether to enable command payload tracing.
      */
-    public TracingManager(final Tracer tracer) {
-        this.tracer = tracer;
+    public TracingManager(@Nullable final ObservationRegistry observationRegistry, final boolean enableCommandPayload) {
+        String envOtelInstrumentationEnabled = getenv(ENV_OTEL_ENABLED);
+        boolean enableTracing = true;
+        if (envOtelInstrumentationEnabled != null) {
+            enableTracing = Boolean.parseBoolean(envOtelInstrumentationEnabled);
+        }
+        tracer = (observationRegistry == null) ? Tracer.NO_OP
+                : (enableTracing) ? new MicrometerTracer(observationRegistry, enableCommandPayload)
+                : Tracer.NO_OP;
+
         this.enableCommandPayload = tracer.includeCommandPayload();
     }
 

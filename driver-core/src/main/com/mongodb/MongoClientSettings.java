@@ -34,7 +34,7 @@ import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.DnsClient;
 import com.mongodb.spi.dns.InetAddressResolver;
-import com.mongodb.tracing.Tracer;
+import io.micrometer.observation.ObservationRegistry;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.BsonCodecProvider;
 import org.bson.codecs.BsonValueCodecProvider;
@@ -60,7 +60,6 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.TimeoutSettings.convertAndValidateTimeout;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
-import static java.lang.System.getenv;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -124,8 +123,13 @@ public final class MongoClientSettings {
     private final Long timeoutMS;
 
     @VisibleForTesting(otherwise = PRIVATE)
+    // If set, this will enable/disable tracing even when an observationRegistry has been passed.
     public static final String ENV_OTEL_ENABLED = "OTEL_JAVA_INSTRUMENTATION_MONGODB_ENABLED";
-    private final Tracer tracer;
+    @VisibleForTesting(otherwise = PRIVATE)
+    // If set, this will truncate the command payload captured in the tracing span to the specified length.
+    public static final String ENV_OTEL_QUERY_TEXT_MAX_LENGTH = "OTEL_JAVA_INSTRUMENTATION_MONGODB_QUERY_TEXT_MAX_LENGTH";
+    private final ObservationRegistry observationRegistry;
+    private final boolean enableCommandPayloadTracing;
 
     /**
      * Gets the default codec registry.  It includes the following providers:
@@ -246,7 +250,8 @@ public final class MongoClientSettings {
         private ContextProvider contextProvider;
         private DnsClient dnsClient;
         private InetAddressResolver inetAddressResolver;
-        private Tracer tracer;
+        private ObservationRegistry observationRegistry;
+        private boolean enableCommandPayloadTracing;
 
         private Builder() {
         }
@@ -284,7 +289,8 @@ public final class MongoClientSettings {
             if (settings.heartbeatSocketTimeoutSetExplicitly) {
                 heartbeatSocketTimeoutMS = settings.heartbeatSocketSettings.getReadTimeout(MILLISECONDS);
             }
-            tracer = settings.tracer;
+            observationRegistry = settings.observationRegistry;
+            enableCommandPayloadTracing = settings.enableCommandPayloadTracing;
         }
 
         /**
@@ -734,16 +740,43 @@ public final class MongoClientSettings {
         }
 
         /**
-         * Sets the tracer to use for creating Spans for operations, commands and transactions.
+         * Sets the observation registry to use for creating tracing Spans for operations, commands and transactions.
          *
-         * @param tracer the tracer
-         * @see com.mongodb.tracing.MicrometerTracer
+         * <p> If set the environment variable {@value ENV_OTEL_ENABLED} is used to enable or disable the creation of tracing spans.
+         *
+         * <p> If set the environment variable {@value ENV_OTEL_QUERY_TEXT_MAX_LENGTH} is used to determine the maximum length
+         * of command payloads captured in tracing spans. If the environment variable is not set, the entire command payloads is
+         * captured.
+         *
+         * @param observationRegistry the observation registry
          * @return this
          * @since 5.7
          */
         @Alpha(Reason.CLIENT)
-        public Builder tracer(final Tracer tracer) {
-            this.tracer = tracer;
+        public Builder observationRegistry(final ObservationRegistry observationRegistry) {
+            this.observationRegistry = observationRegistry;
+            return this;
+        }
+
+        /**
+         * Sets the observation registry to use for creating tracing Spans for operations, commands and transactions.
+         *
+         * <p> If set the environment variable {@value ENV_OTEL_ENABLED} is used to enable or disable the creation of tracing spans.
+         *
+         * <p> If set the environment variable {@value ENV_OTEL_QUERY_TEXT_MAX_LENGTH} is used to determine the maximum length
+         * of command payloads captured in tracing spans. If the environment variable is not set, the entire command payloads is
+         * captured.
+         *
+         * @param observationRegistry the observation registry
+         * @param enableCommandPayload whether command payloads should be captured in tracing spans. This may have performance
+         *                             implications so should be used with care.
+         * @return this
+         * @since 5.7
+         */
+        @Alpha(Reason.CLIENT)
+        public Builder observationRegistry(final ObservationRegistry observationRegistry, final boolean enableCommandPayload) {
+            this.observationRegistry = observationRegistry;
+            this.enableCommandPayloadTracing = enableCommandPayload;
             return this;
         }
 
@@ -1064,14 +1097,25 @@ public final class MongoClientSettings {
         return contextProvider;
     }
 
-    /**
-     * Get the tracer to create Spans for operations, commands and transactions.
+    /** Get the ObservationRegistry to create tracing Spans for operations, commands and transactions.
      *
-     * @return the configured Tracer
+     * @return the configured ObservationRegistry
      * @since 5.7
      */
-    public Tracer getTracer() {
-        return tracer;
+    @Nullable
+    @Alpha(Reason.CLIENT)
+    public ObservationRegistry getObservationRegistry() {
+        return observationRegistry;
+    }
+
+    /** Returns true if command payload tracing is enabled.
+     *
+     * @return the enableCommandPayloadTracing value
+     * @since 5.7
+     */
+    @Alpha(Reason.CLIENT)
+    public boolean isCommandPayloadTracingEnabled() {
+        return enableCommandPayloadTracing;
     }
 
     @Override
@@ -1191,13 +1235,7 @@ public final class MongoClientSettings {
         contextProvider = builder.contextProvider;
         timeoutMS = builder.timeoutMS;
 
-        String envOtelInstrumentationEnabled = getenv(ENV_OTEL_ENABLED);
-        boolean enableTracing = true;
-        if (envOtelInstrumentationEnabled != null) {
-            enableTracing = Boolean.parseBoolean(envOtelInstrumentationEnabled);
-        }
-        tracer = (builder.tracer == null) ? Tracer.NO_OP
-                : (enableTracing) ? builder.tracer
-                : Tracer.NO_OP;
+        observationRegistry = builder.observationRegistry;
+        enableCommandPayloadTracing = builder.enableCommandPayloadTracing;
     }
 }

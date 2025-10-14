@@ -48,7 +48,6 @@ import com.mongodb.internal.connection.TestServerListener;
 import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.lang.Nullable;
 import com.mongodb.logging.TestLoggingInterceptor;
-import com.mongodb.tracing.MicrometerTracer;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.tracing.test.reporter.inmemory.InMemoryOtelSetup;
 import org.bson.BsonArray;
@@ -589,7 +588,7 @@ public final class Entities {
 
             putEntity(id + "-tracing", tracer, clientTracing);
             inMemoryOTelInstances.add(inMemoryOtel);
-            clientSettingsBuilder.tracer(new MicrometerTracer(observationRegistry, enableCommandPayload));
+            clientSettingsBuilder.observationRegistry(observationRegistry, enableCommandPayload);
         }
 
         MongoClientSettings clientSettings = clientSettingsBuilder.build();

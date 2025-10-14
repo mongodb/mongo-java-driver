@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.tracing;
+package com.mongodb.internal.tracing;
 
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.observation.Observation;

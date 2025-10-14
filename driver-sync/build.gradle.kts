@@ -36,12 +36,15 @@ dependencies {
 
     testImplementation(project(path = ":bson", configuration = "testArtifacts"))
     testImplementation(project(path = ":driver-core", configuration = "testArtifacts"))
+
+    optionalImplementation(platform(libs.micrometer.observation.bom))
     optionalImplementation(libs.micrometer.observation)
 
     // lambda testing
     testImplementation(libs.aws.lambda.core)
 
     // Tracing testing
+    testImplementation(platform(libs.micrometer.tracing.integration.test.bom))
     testImplementation(libs.micrometer.tracing.integration.test) { exclude(group = "org.junit.jupiter") }
 }
 

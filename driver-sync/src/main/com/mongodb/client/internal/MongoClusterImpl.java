@@ -59,8 +59,8 @@ import com.mongodb.internal.operation.Operations;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.ServerSessionPool;
-import com.mongodb.tracing.Span;
-import com.mongodb.tracing.TraceContext;
+import com.mongodb.internal.tracing.Span;
+import com.mongodb.internal.tracing.TraceContext;
 import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.internal.tracing.TransactionSpan;
 import com.mongodb.lang.Nullable;
@@ -84,11 +84,11 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.TimeoutContext.createTimeoutContext;
-import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.COLLECTION;
-import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.NAMESPACE;
-import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.OPERATION_NAME;
-import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.OPERATION_SUMMARY;
-import static com.mongodb.tracing.MongodbObservation.LowCardinalityKeyNames.SYSTEM;
+import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.COLLECTION;
+import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.NAMESPACE;
+import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.OPERATION_NAME;
+import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.OPERATION_SUMMARY;
+import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.SYSTEM;
 
 final class MongoClusterImpl implements MongoCluster {
     @Nullable

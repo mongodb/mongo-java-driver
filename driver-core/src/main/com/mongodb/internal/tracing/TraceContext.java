@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.tracing;
+package com.mongodb.internal.tracing;
 
 @SuppressWarnings("InterfaceIsType")
 public interface TraceContext {
