@@ -116,12 +116,6 @@ public enum MongodbObservation implements ObservationDocumentation {
                 return "server.port";
             }
         },
-        SERVER_TYPE {
-            @Override
-            public String asString() {
-                return "server.type";
-            }
-        },
         CLIENT_CONNECTION_ID {
             @Override
             public String asString() {

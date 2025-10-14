@@ -23,7 +23,6 @@ import com.mongodb.MongoCompressor;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
-import com.mongodb.MongoNamespace;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketClosedException;
 import com.mongodb.MongoSocketReadException;
@@ -31,7 +30,6 @@ import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoSocketWriteException;
 import com.mongodb.MongoSocketWriteTimeoutException;
 import com.mongodb.ServerAddress;
-import com.mongodb.UnixServerAddress;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -54,9 +52,7 @@ import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.internal.tracing.Span;
-import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.lang.Nullable;
-import io.micrometer.common.KeyValues;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
 import org.bson.ByteBuf;
@@ -100,21 +96,7 @@ import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
 import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
 import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedException;
 import static com.mongodb.internal.tracing.MongodbObservation.HighCardinalityKeyNames.QUERY_TEXT;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.CLIENT_CONNECTION_ID;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.COLLECTION;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.COMMAND_NAME;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.CURSOR_ID;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.NAMESPACE;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.NETWORK_TRANSPORT;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.QUERY_SUMMARY;
 import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.RESPONSE_STATUS_CODE;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.SERVER_ADDRESS;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.SERVER_CONNECTION_ID;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.SERVER_PORT;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.SERVER_TYPE;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.SESSION_ID;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.SYSTEM;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.TRANSACTION_NUMBER;
 import static java.util.Arrays.asList;
 
 /**
@@ -456,7 +438,16 @@ public class InternalStreamConnection implements InternalConnection {
         Span tracingSpan;
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
             message.encode(bsonOutput, operationContext);
-            tracingSpan = createTracingSpan(message, operationContext, bsonOutput);
+            tracingSpan = operationContext
+                    .getTracingManager()
+                    .createTracingSpan(message,
+                            operationContext,
+                            () -> message.getCommandDocument(bsonOutput),
+                            cmdName -> SECURITY_SENSITIVE_COMMANDS.contains(cmdName)
+                                    || SECURITY_SENSITIVE_HELLO_COMMANDS.contains(cmdName),
+                            () -> getDescription().getServerAddress(),
+                            () -> getDescription().getConnectionId()
+                    );
 
             boolean isLoggingCommandNeeded = isLoggingCommandNeeded();
             boolean isTracingCommandPayloadNeeded = tracingSpan != null && operationContext.getTracingManager().isCommandPayloadEnabled();
@@ -1031,103 +1022,4 @@ public class InternalStreamConnection implements InternalConnection {
         return description.getConnectionId().getServerId().getClusterId();
     }
 
-    /**
-     * Creates a tracing span for the given command message.
-     * <p>
-     * The span is only created if tracing is enabled and the command is not security-sensitive.
-     * It attaches various tags to the span, such as database system, namespace, query summary, opcode,
-     * server address, port, server type, client and server connection IDs, and, if applicable,
-     * transaction number and session ID. For cursor fetching commands, the parent context is retrieved using the cursor ID.
-     * If command payload tracing is enabled, the command document is also attached as a tag.
-     *
-     * @param message          the command message to trace
-     * @param operationContext the operation context containing tracing and session information
-     * @param bsonOutput       the BSON output used to serialize the command
-     * @return the created {@link Span}, or {@code null} if tracing is not enabled or the command is security-sensitive
-     */
-    @Nullable
-    private Span createTracingSpan(final CommandMessage message, final OperationContext operationContext, final ByteBufferBsonOutput bsonOutput) {
-
-        TracingManager tracingManager = operationContext.getTracingManager();
-        BsonDocument command = message.getCommandDocument(bsonOutput);
-
-        String commandName = command.getFirstKey();
-
-        if (!tracingManager.isEnabled()
-                || SECURITY_SENSITIVE_COMMANDS.contains(commandName)
-                || SECURITY_SENSITIVE_HELLO_COMMANDS.contains(commandName)) {
-            return null;
-        }
-
-         Span operationSpan = operationContext.getTracingSpan();
-         Span span = tracingManager
-                .addSpan(commandName,  operationSpan != null ? operationSpan.context() : null);
-
-        if (command.containsKey("getMore")) {
-            long cursorId = command.getInt64("getMore").longValue();
-            span.tagLowCardinality(CURSOR_ID.withValue(String.valueOf(cursorId)));
-            if (operationSpan != null) {
-                operationSpan.tagLowCardinality(CURSOR_ID.withValue(String.valueOf(cursorId)));
-            }
-        }
-
-        tagNamespace(span, operationSpan, message, commandName);
-        tagServerAndConnectionInfo(span, message);
-        tagSessionAndTransactionInfo(span, operationContext);
-
-        return span;
-    }
-
-    private void tagNamespace(final Span span, @Nullable final Span parentSpan, final CommandMessage message, final String commandName) {
-        String namespace;
-        String collection = "";
-        if (parentSpan != null) {
-            MongoNamespace parentNamespace = parentSpan.getNamespace();
-            if (parentNamespace != null) {
-                namespace = parentNamespace.getDatabaseName();
-                collection =
-                        MongoNamespace.COMMAND_COLLECTION_NAME.equalsIgnoreCase(parentNamespace.getCollectionName()) ? ""
-                                : parentNamespace.getCollectionName();
-            } else {
-                namespace = message.getDatabase();
-            }
-        } else {
-            namespace = message.getDatabase();
-        }
-        String summary = commandName + " " + namespace + (collection.isEmpty() ? "" : "." + collection);
-
-        KeyValues keyValues = KeyValues.of(
-                SYSTEM.withValue("mongodb"),
-                NAMESPACE.withValue(namespace),
-                QUERY_SUMMARY.withValue(summary),
-                COMMAND_NAME.withValue(commandName));
-
-        if (!collection.isEmpty()) {
-            keyValues = keyValues.and(COLLECTION.withValue(collection));
-        }
-        span.tagLowCardinality(keyValues);
-    }
-
-    private void tagServerAndConnectionInfo(final Span span, final CommandMessage message) {
-        span.tagLowCardinality(KeyValues.of(
-                SERVER_ADDRESS.withValue(serverId.getAddress().getHost()),
-                SERVER_PORT.withValue(String.valueOf(serverId.getAddress().getPort())),
-                SERVER_TYPE.withValue(message.getSettings().getServerType().name()),
-                CLIENT_CONNECTION_ID.withValue(String.valueOf(this.description.getConnectionId().getLocalValue())),
-                SERVER_CONNECTION_ID.withValue(String.valueOf(this.description.getConnectionId().getServerValue())),
-                NETWORK_TRANSPORT.withValue(getServerAddress() instanceof UnixServerAddress ? "unix" : "tcp")
-        ));
-    }
-
-    private void tagSessionAndTransactionInfo(final Span span, final OperationContext operationContext) {
-        SessionContext sessionContext = operationContext.getSessionContext();
-        if (sessionContext.hasSession() && !sessionContext.isImplicitSession()) {
-            span.tagLowCardinality(KeyValues.of(
-                    TRANSACTION_NUMBER.withValue(String.valueOf(sessionContext.getTransactionNumber())),
-                    SESSION_ID.withValue(String.valueOf(sessionContext.getSessionId()
-                            .get(sessionContext.getSessionId().getFirstKey())
-                            .asBinary().asUuid()))
-            ));
-        }
-    }
 }
