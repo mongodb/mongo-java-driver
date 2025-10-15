@@ -88,7 +88,7 @@ public class MicrometerProseTest {
             collection.find().first();
 
             // Assert that no OpenTelemetry tracing spans are emitted for the operation.
-            assertTrue(inMemoryOtel.getFinishedSpans().isEmpty(), "Spans should not be emitted when instrumentation is enabled.");
+            assertTrue(inMemoryOtel.getFinishedSpans().isEmpty(), "Spans should not be emitted when instrumentation is disabled.");
         }
 
         setEnv(ENV_OTEL_ENABLED, "true");
