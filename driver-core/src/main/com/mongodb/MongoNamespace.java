@@ -41,14 +41,14 @@ public final class MongoNamespace {
      * @deprecated there is no replacement for this constant, as it is only needed for the OP_QUERY wire protocol message, which has
      * been replaced by OP_MSG
      */
+    private static final Set<Character> PROHIBITED_CHARACTERS_IN_DATABASE_NAME =
+            new HashSet<>(asList('\0', '/', '\\', ' ', '"', '.'));
+
     @Internal
     public static final String COMMAND_COLLECTION_NAME = "$cmd";
 
     @Internal
     public static final MongoNamespace ADMIN_DB_COMMAND_NAMESPACE = new MongoNamespace("admin", COMMAND_COLLECTION_NAME);
-
-    private static final Set<Character> PROHIBITED_CHARACTERS_IN_DATABASE_NAME =
-            new HashSet<>(asList('\0', '/', '\\', ' ', '"', '.'));
 
     private final String databaseName;
     private final String collectionName;
