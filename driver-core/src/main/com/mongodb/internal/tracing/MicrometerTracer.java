@@ -41,7 +41,7 @@ import static java.util.Optional.ofNullable;
 
 
 /**
- * A {@link Tracer} implementation that delegates tracing operations to a Micrometer {@link io.micrometer.observation.ObservationRegistry}.
+ * A {@link Tracer} implementation that delegates tracing operations to a Micrometer {@link ObservationRegistry}.
  * <p>
  * This class enables integration of MongoDB driver tracing with Micrometer-based tracing systems.
  * It provides integration with Micrometer to propagate observations into tracing API.
