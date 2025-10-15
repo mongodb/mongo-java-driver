@@ -1084,9 +1084,10 @@ public class InternalStreamConnection implements InternalConnection {
         return span;
     }
 
+    @SuppressWarnings("deprecation")
     private void tagNamespace(final Span span, @Nullable final Span parentSpan, final CommandMessage message, final String commandName) {
-        String namespace;
-        String collection;
+        String namespace = "ns";
+        String collection = "col";
         if (parentSpan != null) {
             MongoNamespace parentNamespace = parentSpan.getNamespace();
             if (parentNamespace != null) {
@@ -1095,12 +1096,10 @@ public class InternalStreamConnection implements InternalConnection {
                         MongoNamespace.COMMAND_COLLECTION_NAME.equalsIgnoreCase(parentNamespace.getCollectionName()) ? ""
                                 : parentNamespace.getCollectionName();
             } else {
-                namespace = message.getNamespace().getDatabaseName();
-                collection = message.getCollectionName().contains("$cmd") ? "" : message.getCollectionName();
+                namespace = message.getDatabase();
             }
         } else {
-            namespace = message.getNamespace().getDatabaseName();
-            collection = message.getCollectionName().contains("$cmd") ? "" : message.getCollectionName();
+            namespace = message.getDatabase();
         }
         String summary = commandName + " " + namespace + (collection.isEmpty() ? "" : "." + collection);
 

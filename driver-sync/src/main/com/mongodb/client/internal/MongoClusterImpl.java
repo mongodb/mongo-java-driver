@@ -44,7 +44,6 @@ import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.binding.BindingContext;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.ClusterBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -437,7 +436,7 @@ final class MongoClusterImpl implements MongoCluster {
                     .withSessionContext(new ClientSessionBinding.SyncClientSessionContext(actualClientSession, readConcern, implicitSession));
             ReadBinding binding = getReadBinding(readPreference, actualClientSession, implicitSession);
 
-            Span span = createOperationSpan(actualClientSession, binding, operation.getCommandName(), operation.getNamespace());
+            Span span = createOperationSpan(actualClientSession, operationContext, operation.getCommandName(), operation.getNamespace());
 
             try {
                 if (actualClientSession.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
@@ -472,7 +471,7 @@ final class MongoClusterImpl implements MongoCluster {
                     .withSessionContext(new ClientSessionBinding.SyncClientSessionContext(actualClientSession, readConcern, isImplicitSession(session)));
             WriteBinding binding = getWriteBinding(actualClientSession, isImplicitSession(session));
 
-            Span span = createOperationSpan(actualClientSession, binding, operation.getCommandName(), operation.getNamespace());
+            Span span = createOperationSpan(actualClientSession, operationContext, operation.getCommandName(), operation.getNamespace());
             try {
                 return operation.execute(binding, operationContext);
             } catch (MongoException e) {
@@ -592,14 +591,15 @@ final class MongoClusterImpl implements MongoCluster {
          * Create a tracing span for the given operation, and set it on operation context.
          *
          * @param actualClientSession the session that the operation is part of
-         * @param binding             the binding for the operation
+         * @param operationContext    the operation context
          * @param commandName         the name of the command
          * @param namespace           the namespace of the command
          * @return the created span, or null if tracing is not enabled
          */
         @Nullable
-        private Span createOperationSpan(final ClientSession actualClientSession, final BindingContext binding, final String commandName, final MongoNamespace namespace) {
-            TracingManager tracingManager = binding.getOperationContext().getTracingManager();
+        private Span createOperationSpan(final ClientSession actualClientSession, final OperationContext operationContext, final String commandName,
+                final MongoNamespace namespace) {
+            TracingManager tracingManager = operationContext.getTracingManager();
             if (tracingManager.isEnabled()) {
                 TraceContext parentContext = null;
                 TransactionSpan transactionSpan = actualClientSession.getTransactionSpan();
@@ -619,14 +619,13 @@ final class MongoClusterImpl implements MongoCluster {
                 keyValues = keyValues.and(OPERATION_NAME.withValue(commandName),
                         OPERATION_SUMMARY.withValue(name));
 
-                Span span = binding
-                        .getOperationContext()
+                Span span = operationContext
                         .getTracingManager()
                         .addSpan(name, parentContext, namespace);
 
                 span.tagLowCardinality(keyValues);
 
-                binding.getOperationContext().setTracingSpan(span);
+                operationContext.setTracingSpan(span);
                 return span;
 
             } else {

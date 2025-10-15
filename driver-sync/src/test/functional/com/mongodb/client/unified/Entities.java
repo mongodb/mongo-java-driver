@@ -93,7 +93,8 @@ public final class Entities {
     private static final Set<String> SUPPORTED_CLIENT_ENTITY_OPTIONS = new HashSet<>(
             asList(
                     "id", "autoEncryptOpts", "uriOptions", "serverApi", "useMultipleMongoses", "storeEventsAsEntities",
-                    "observeEvents", "observeLogMessages", "observeSensitiveCommands", "ignoreCommandMonitoringEvents", "observeTracingMessages"));
+                    "observeEvents", "observeLogMessages", "observeSensitiveCommands", "ignoreCommandMonitoringEvents",
+                    "observeTracingMessages", "awaitMinPoolSizeMS"));
     private final Set<String> entityNames = new HashSet<>();
     private final Map<String, ExecutorService> threads = new HashMap<>();
     private final Map<String, ArrayList<Future<?>>> tasks = new HashMap<>();
