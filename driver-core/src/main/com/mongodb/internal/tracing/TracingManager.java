@@ -74,8 +74,8 @@ public class TracingManager {
         if (envOtelInstrumentationEnabled != null) {
             enableTracing = Boolean.parseBoolean(envOtelInstrumentationEnabled);
         }
-        tracer = (observationRegistry == null) ? Tracer.NO_OP
-                : (enableTracing) ? new MicrometerTracer(observationRegistry, enableCommandPayload)
+        tracer = enableTracing && observationRegistry != null ?
+                new MicrometerTracer(observationRegistry, enableCommandPayload)
                 : Tracer.NO_OP;
 
         this.enableCommandPayload = tracer.includeCommandPayload();
