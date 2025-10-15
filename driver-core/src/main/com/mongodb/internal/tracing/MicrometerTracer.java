@@ -22,6 +22,8 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.transport.Kind;
+import io.micrometer.observation.transport.SenderContext;
 import org.bson.BsonDocument;
 import org.bson.BsonReader;
 import org.bson.json.JsonMode;
@@ -31,11 +33,11 @@ import org.bson.json.JsonWriterSettings;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import static com.mongodb.MongoClientSettings.ENV_OTEL_QUERY_TEXT_MAX_LENGTH;
 import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_MESSAGE;
 import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_STACKTRACE;
 import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_TYPE;
 import static com.mongodb.internal.tracing.MongodbObservation.MONGODB_OBSERVATION;
+import static com.mongodb.observability.MicrometerObservabilitySettings.ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH;
 import static java.lang.System.getenv;
 import static java.util.Optional.ofNullable;
 
@@ -61,7 +63,7 @@ public class MicrometerTracer implements Tracer {
      * @param observationRegistry The Micrometer {@link ObservationRegistry} to delegate tracing operations to.
      */
     public MicrometerTracer(final ObservationRegistry observationRegistry) {
-        this(observationRegistry, false);
+        this(observationRegistry, false, 0);
     }
 
     /**
@@ -70,12 +72,12 @@ public class MicrometerTracer implements Tracer {
      * @param observationRegistry The Micrometer {@link ObservationRegistry} to delegate tracing operations to.
      * @param allowCommandPayload Whether to allow command payloads in the trace context.
      */
-    public MicrometerTracer(final ObservationRegistry observationRegistry, final boolean allowCommandPayload) {
+    public MicrometerTracer(final ObservationRegistry observationRegistry, final boolean allowCommandPayload, final int textMaxLength) {
         this.allowCommandPayload = allowCommandPayload;
         this.observationRegistry = observationRegistry;
-        this.textMaxLength = ofNullable(getenv(ENV_OTEL_QUERY_TEXT_MAX_LENGTH))
+        this.textMaxLength = ofNullable(getenv(ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH))
                 .map(Integer::parseInt)
-                .orElse(Integer.MAX_VALUE);
+                .orElse(textMaxLength);
     }
 
     @Override
@@ -93,7 +95,7 @@ public class MicrometerTracer implements Tracer {
     }
 
     @Override
-    public boolean enabled() {
+    public boolean isEnabled() {
         return true;
     }
 
@@ -103,7 +105,9 @@ public class MicrometerTracer implements Tracer {
     }
 
     private Observation getObservation(final String name) {
-        Observation observation = MONGODB_OBSERVATION.observation(observationRegistry).contextualName(name);
+        Observation observation = MONGODB_OBSERVATION.observation(observationRegistry,
+                        () -> new SenderContext<>((carrier, key, value) -> {}, Kind.CLIENT))
+                .contextualName(name);
         observation.getContext().put(QUERY_TEXT_LENGTH_CONTEXT_KEY, textMaxLength);
         return observation;
     }

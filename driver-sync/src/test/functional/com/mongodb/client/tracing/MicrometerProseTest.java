@@ -22,6 +22,8 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.observability.MicrometerObservabilitySettings;
+import com.mongodb.observability.ObservabilitySettings;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.tracing.test.reporter.inmemory.InMemoryOtelSetup;
 import org.bson.Document;
@@ -35,9 +37,9 @@ import java.lang.reflect.Field;
 import java.util.Map;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
-import static com.mongodb.MongoClientSettings.ENV_OTEL_ENABLED;
-import static com.mongodb.MongoClientSettings.ENV_OTEL_QUERY_TEXT_MAX_LENGTH;
 import static com.mongodb.internal.tracing.MongodbObservation.HighCardinalityKeyNames.QUERY_TEXT;
+import static com.mongodb.observability.MicrometerObservabilitySettings.ENV_OBSERVABILITY_ENABLED;
+import static com.mongodb.observability.MicrometerObservabilitySettings.ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -54,15 +56,15 @@ public class MicrometerProseTest {
     @BeforeAll
     static void beforeAll() {
         // preserve original env var values
-        previousEnvVarMdbTracingEnabled = System.getenv(ENV_OTEL_ENABLED);
-        previousEnvVarMdbQueryTextLength = System.getenv(ENV_OTEL_QUERY_TEXT_MAX_LENGTH);
+        previousEnvVarMdbTracingEnabled = System.getenv(ENV_OBSERVABILITY_ENABLED);
+        previousEnvVarMdbQueryTextLength = System.getenv(ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH);
     }
 
     @AfterAll
     static void afterAll() throws Exception {
         // restore original env var values
-        setEnv(ENV_OTEL_ENABLED, previousEnvVarMdbTracingEnabled);
-        setEnv(ENV_OTEL_QUERY_TEXT_MAX_LENGTH, previousEnvVarMdbQueryTextLength);
+        setEnv(ENV_OBSERVABILITY_ENABLED, previousEnvVarMdbTracingEnabled);
+        setEnv(ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH, previousEnvVarMdbQueryTextLength);
     }
 
     @BeforeEach
@@ -78,9 +80,14 @@ public class MicrometerProseTest {
 
     @Test
     void testControlOtelInstrumentationViaEnvironmentVariable() throws Exception {
-        setEnv(ENV_OTEL_ENABLED, "false");
+        setEnv(ENV_OBSERVABILITY_ENABLED, "false");
+        // don't enable command payload by default
         MongoClientSettings clientSettings = Fixture.getMongoClientSettingsBuilder()
-                .observationRegistry(observationRegistry).build();
+                .observabilitySettings(ObservabilitySettings.micrometerBuilder()
+                        .observationRegistry(observationRegistry)
+                        .build())
+                .build();
+
 
         try (MongoClient client = MongoClients.create(clientSettings)) {
             MongoDatabase database = client.getDatabase(getDefaultDatabaseName());
@@ -91,7 +98,7 @@ public class MicrometerProseTest {
             assertTrue(inMemoryOtel.getFinishedSpans().isEmpty(), "Spans should not be emitted when instrumentation is disabled.");
         }
 
-        setEnv(ENV_OTEL_ENABLED, "true");
+        setEnv(ENV_OBSERVABILITY_ENABLED, "true");
         try (MongoClient client = MongoClients.create(clientSettings)) {
             MongoDatabase database = client.getDatabase(getDefaultDatabaseName());
             MongoCollection<Document> collection = database.getCollection("test");
@@ -101,14 +108,27 @@ public class MicrometerProseTest {
             assertEquals(2, inMemoryOtel.getFinishedSpans().size(), "Spans should be emitted when instrumentation is enabled.");
             assertEquals("find", inMemoryOtel.getFinishedSpans().get(0).getName());
             assertEquals("find " + getDefaultDatabaseName() + ".test", inMemoryOtel.getFinishedSpans().get(1).getName());
+
+            // Assert that the span kind is CLIENT
+            assertEquals(io.micrometer.tracing.Span.Kind.CLIENT,
+                    inMemoryOtel.getFinishedSpans().get(0).getKind());
         }
     }
 
     @Test
     void testControlCommandPayloadViaEnvironmentVariable() throws Exception {
-        setEnv(ENV_OTEL_QUERY_TEXT_MAX_LENGTH, "42");
+        setEnv(ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH, "42");
+        MicrometerObservabilitySettings settings = MicrometerObservabilitySettings.builder()
+                .observationRegistry(observationRegistry)
+                .enableCommandPayloadTracing(true)
+                .maxQueryTextLength(75) // should be overridden by env var
+                .build();
+
         MongoClientSettings clientSettings = Fixture.getMongoClientSettingsBuilder()
-                .observationRegistry(observationRegistry, true).build();
+                .observabilitySettings(ObservabilitySettings.micrometerBuilder()
+                        .applySettings(settings)
+                        .build()).
+                build();
 
         try (MongoClient client = MongoClients.create(clientSettings)) {
             MongoDatabase database = client.getDatabase(getDefaultDatabaseName());
@@ -131,10 +151,16 @@ public class MicrometerProseTest {
 
         memoryOtelSetup = InMemoryOtelSetup.builder().register(observationRegistry);
         inMemoryOtel = memoryOtelSetup.getBuildingBlocks();
-        setEnv(ENV_OTEL_QUERY_TEXT_MAX_LENGTH, null); // Unset the environment variable
+        setEnv(ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH, null); // Unset the environment variable
+
 
         clientSettings = Fixture.getMongoClientSettingsBuilder()
-                .observationRegistry(observationRegistry).build();  // don't enable command payload by default
+                .observabilitySettings(ObservabilitySettings.micrometerBuilder()
+                        .observationRegistry(observationRegistry)
+                        .maxQueryTextLength(42) // setting this will not matter since env var is not set and enableCommandPayloadTracing is false
+                        .build())
+                .build();
+
         try (MongoClient client = MongoClients.create(clientSettings)) {
             MongoDatabase database = client.getDatabase(getDefaultDatabaseName());
             MongoCollection<Document> collection = database.getCollection("test");
@@ -146,6 +172,32 @@ public class MicrometerProseTest {
                             .noneMatch(entry -> entry.getKey().equals(QUERY_TEXT.asString())),
                     "Tag " + QUERY_TEXT.asString() + " should not exist."
             );
+        } finally {
+            memoryOtelSetup.close();
+        }
+
+        memoryOtelSetup = InMemoryOtelSetup.builder().register(observationRegistry);
+        inMemoryOtel = memoryOtelSetup.getBuildingBlocks();
+        settings = MicrometerObservabilitySettings.builder(settings)
+                .enableCommandPayloadTracing(true)
+                .maxQueryTextLength(7) // setting this will be used;
+                .build();
+
+        clientSettings = Fixture.getMongoClientSettingsBuilder()
+                .observabilitySettings(settings)
+                .build();
+
+        try (MongoClient client = MongoClients.create(clientSettings)) {
+            MongoDatabase database = client.getDatabase(getDefaultDatabaseName());
+            MongoCollection<Document> collection = database.getCollection("test");
+            collection.find().first();
+
+            Map.Entry<String, String> queryTag = inMemoryOtel.getFinishedSpans().get(0).getTags().entrySet()
+                    .stream()
+                    .filter(entry -> entry.getKey().equals(QUERY_TEXT.asString()))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("Attribute " + QUERY_TEXT.asString() + " not found."));
+            assertEquals(11, queryTag.getValue().length(), "Query text length should be 11."); // 7 truncated string + " ..."
         }
     }
 

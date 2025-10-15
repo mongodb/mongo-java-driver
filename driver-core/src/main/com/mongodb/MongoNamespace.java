@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
+import com.mongodb.annotations.Internal;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 import org.bson.codecs.pojo.annotations.BsonProperty;
@@ -40,7 +41,7 @@ public final class MongoNamespace {
      * @deprecated there is no replacement for this constant, as it is only needed for the OP_QUERY wire protocol message, which has
      * been replaced by OP_MSG
      */
-    @Deprecated
+    @Internal
     public static final String COMMAND_COLLECTION_NAME = "$cmd";
 
     private static final Set<Character> PROHIBITED_CHARACTERS_IN_DATABASE_NAME =

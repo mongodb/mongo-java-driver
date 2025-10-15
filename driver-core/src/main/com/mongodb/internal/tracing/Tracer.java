@@ -35,7 +35,7 @@ public interface Tracer {
         }
 
         @Override
-        public boolean enabled() {
+        public boolean isEnabled() {
             return false;
         }
 
@@ -60,7 +60,7 @@ public interface Tracer {
      *
      * @return {@code true} if tracing is enabled, {@code false} otherwise.
      */
-    boolean enabled();
+    boolean isEnabled();
 
     /**
      * Indicates whether command payloads are included in the trace context.

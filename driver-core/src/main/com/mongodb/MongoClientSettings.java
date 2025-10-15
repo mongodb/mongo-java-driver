@@ -30,11 +30,10 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.TransportSettings;
 import com.mongodb.event.CommandListener;
-import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.lang.Nullable;
+import com.mongodb.observability.ObservabilitySettings;
 import com.mongodb.spi.dns.DnsClient;
 import com.mongodb.spi.dns.InetAddressResolver;
-import io.micrometer.observation.ObservationRegistry;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.BsonCodecProvider;
 import org.bson.codecs.BsonValueCodecProvider;
@@ -59,7 +58,6 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.TimeoutSettings.convertAndValidateTimeout;
-import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -119,17 +117,9 @@ public final class MongoClientSettings {
     private final ContextProvider contextProvider;
     private final DnsClient dnsClient;
     private final InetAddressResolver inetAddressResolver;
+    private final ObservabilitySettings observabilitySettings;
     @Nullable
     private final Long timeoutMS;
-
-    @VisibleForTesting(otherwise = PRIVATE)
-    // If set, this will enable/disable tracing even when an observationRegistry has been passed.
-    public static final String ENV_OTEL_ENABLED = "OTEL_JAVA_INSTRUMENTATION_MONGODB_ENABLED";
-    @VisibleForTesting(otherwise = PRIVATE)
-    // If set, this will truncate the command payload captured in the tracing span to the specified length.
-    public static final String ENV_OTEL_QUERY_TEXT_MAX_LENGTH = "OTEL_JAVA_INSTRUMENTATION_MONGODB_QUERY_TEXT_MAX_LENGTH";
-    private final ObservationRegistry observationRegistry;
-    private final boolean enableCommandPayloadTracing;
 
     /**
      * Gets the default codec registry.  It includes the following providers:
@@ -227,6 +217,7 @@ public final class MongoClientSettings {
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClientSettings.getDefaultCodecRegistry();
         private TransportSettings transportSettings;
+        private ObservabilitySettings observabilitySettings;
         private List<CommandListener> commandListeners = new ArrayList<>();
 
         private final LoggerSettings.Builder loggerSettingsBuilder = LoggerSettings.builder();
@@ -250,8 +241,6 @@ public final class MongoClientSettings {
         private ContextProvider contextProvider;
         private DnsClient dnsClient;
         private InetAddressResolver inetAddressResolver;
-        private ObservationRegistry observationRegistry;
-        private boolean enableCommandPayloadTracing;
 
         private Builder() {
         }
@@ -274,6 +263,7 @@ public final class MongoClientSettings {
             timeoutMS = settings.getTimeout(MILLISECONDS);
             inetAddressResolver = settings.getInetAddressResolver();
             transportSettings = settings.getTransportSettings();
+            observabilitySettings = settings.getObservabilitySettings();
             autoEncryptionSettings = settings.getAutoEncryptionSettings();
             contextProvider = settings.getContextProvider();
             loggerSettingsBuilder.applySettings(settings.getLoggerSettings());
@@ -289,8 +279,6 @@ public final class MongoClientSettings {
             if (settings.heartbeatSocketTimeoutSetExplicitly) {
                 heartbeatSocketTimeoutMS = settings.heartbeatSocketSettings.getReadTimeout(MILLISECONDS);
             }
-            observationRegistry = settings.observationRegistry;
-            enableCommandPayloadTracing = settings.enableCommandPayloadTracing;
         }
 
         /**
@@ -522,6 +510,19 @@ public final class MongoClientSettings {
             return this;
         }
 
+        /** Sets the {@link ObservabilitySettings} to apply.
+         *
+         * @param observabilitySettings the observability settings
+         * @return this
+         * @see #getObservabilitySettings()
+         * @since 5.7
+         */
+        @Alpha(Reason.CLIENT)
+        public Builder observabilitySettings(final ObservabilitySettings observabilitySettings) {
+            this.observabilitySettings = notNull("observabilitySettings", observabilitySettings);
+            return this;
+        }
+
         /**
          * Adds the given command listener.
          *
@@ -736,47 +737,6 @@ public final class MongoClientSettings {
         // Package-private to provide interop with MongoClientOptions
         Builder heartbeatSocketTimeoutMS(final int heartbeatSocketTimeoutMS) {
             this.heartbeatSocketTimeoutMS = heartbeatSocketTimeoutMS;
-            return this;
-        }
-
-        /**
-         * Sets the observation registry to use for creating tracing Spans for operations, commands and transactions.
-         *
-         * <p> If set the environment variable {@value ENV_OTEL_ENABLED} is used to enable or disable the creation of tracing spans.
-         *
-         * <p> If set the environment variable {@value ENV_OTEL_QUERY_TEXT_MAX_LENGTH} is used to determine the maximum length
-         * of command payloads captured in tracing spans. If the environment variable is not set, the entire command payloads is
-         * captured.
-         *
-         * @param observationRegistry the observation registry
-         * @return this
-         * @since 5.7
-         */
-        @Alpha(Reason.CLIENT)
-        public Builder observationRegistry(final ObservationRegistry observationRegistry) {
-            this.observationRegistry = observationRegistry;
-            return this;
-        }
-
-        /**
-         * Sets the observation registry to use for creating tracing Spans for operations, commands and transactions.
-         *
-         * <p> If set the environment variable {@value ENV_OTEL_ENABLED} is used to enable or disable the creation of tracing spans.
-         *
-         * <p> If set the environment variable {@value ENV_OTEL_QUERY_TEXT_MAX_LENGTH} is used to determine the maximum length
-         * of command payloads captured in tracing spans. If the environment variable is not set, the entire command payloads is
-         * captured.
-         *
-         * @param observationRegistry the observation registry
-         * @param enableCommandPayload whether command payloads should be captured in tracing spans. This may have performance
-         *                             implications so should be used with care.
-         * @return this
-         * @since 5.7
-         */
-        @Alpha(Reason.CLIENT)
-        public Builder observationRegistry(final ObservationRegistry observationRegistry, final boolean enableCommandPayload) {
-            this.observationRegistry = observationRegistry;
-            this.enableCommandPayloadTracing = enableCommandPayload;
             return this;
         }
 
@@ -1097,25 +1057,16 @@ public final class MongoClientSettings {
         return contextProvider;
     }
 
-    /** Get the ObservationRegistry to create tracing Spans for operations, commands and transactions.
-     *
-     * @return the configured ObservationRegistry
-     * @since 5.7
-     */
-    @Nullable
-    @Alpha(Reason.CLIENT)
-    public ObservationRegistry getObservationRegistry() {
-        return observationRegistry;
-    }
 
-    /** Returns true if command payload tracing is enabled.
-     *
-     * @return the enableCommandPayloadTracing value
+    /**
+     * Get the observability settings.
+     * @return the observability settings
      * @since 5.7
      */
     @Alpha(Reason.CLIENT)
-    public boolean isCommandPayloadTracingEnabled() {
-        return enableCommandPayloadTracing;
+    @Nullable
+    public ObservabilitySettings getObservabilitySettings() {
+        return observabilitySettings;
     }
 
     @Override
@@ -1215,6 +1166,7 @@ public final class MongoClientSettings {
         socketSettings = builder.socketSettingsBuilder.build();
         connectionPoolSettings = builder.connectionPoolSettingsBuilder.build();
         sslSettings = builder.sslSettingsBuilder.build();
+        observabilitySettings = builder.observabilitySettings;
         compressorList = builder.compressorList;
         uuidRepresentation = builder.uuidRepresentation;
         serverApi = builder.serverApi;
@@ -1234,8 +1186,5 @@ public final class MongoClientSettings {
         heartbeatConnectTimeoutSetExplicitly = builder.heartbeatConnectTimeoutMS != 0;
         contextProvider = builder.contextProvider;
         timeoutMS = builder.timeoutMS;
-
-        observationRegistry = builder.observationRegistry;
-        enableCommandPayloadTracing = builder.enableCommandPayloadTracing;
     }
 }

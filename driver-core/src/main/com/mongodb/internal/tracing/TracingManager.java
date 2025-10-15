@@ -24,6 +24,8 @@ import com.mongodb.internal.connection.CommandMessage;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
+import com.mongodb.observability.MicrometerObservabilitySettings;
+import com.mongodb.observability.ObservabilitySettings;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.ObservationRegistry;
 import org.bson.BsonDocument;
@@ -31,7 +33,6 @@ import org.bson.BsonDocument;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static com.mongodb.MongoClientSettings.ENV_OTEL_ENABLED;
 import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.CLIENT_CONNECTION_ID;
 import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.COLLECTION;
 import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.COMMAND_NAME;
@@ -45,6 +46,7 @@ import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyN
 import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.SESSION_ID;
 import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.SYSTEM;
 import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.TRANSACTION_NUMBER;
+import static com.mongodb.observability.MicrometerObservabilitySettings.ENV_OBSERVABILITY_ENABLED;
 import static java.lang.System.getenv;
 
 /**
@@ -58,7 +60,7 @@ public class TracingManager {
     /**
      * A no-op instance of the TracingManager used when tracing is disabled.
      */
-    public static final TracingManager NO_OP = new TracingManager(ObservationRegistry.NOOP, false);
+    public static final TracingManager NO_OP = new TracingManager(null);
     private final Tracer tracer;
     private final boolean enableCommandPayload;
 
@@ -68,17 +70,32 @@ public class TracingManager {
      * @param observationRegistry The observation registry to use for tracing operations, may be null.
      * @param enableCommandPayload Whether to enable command payload tracing.
      */
-    public TracingManager(@Nullable final ObservationRegistry observationRegistry, final boolean enableCommandPayload) {
-        String envOtelInstrumentationEnabled = getenv(ENV_OTEL_ENABLED);
-        boolean enableTracing = true;
-        if (envOtelInstrumentationEnabled != null) {
-            enableTracing = Boolean.parseBoolean(envOtelInstrumentationEnabled);
-        }
-        tracer = enableTracing && observationRegistry != null ?
-                new MicrometerTracer(observationRegistry, enableCommandPayload)
-                : Tracer.NO_OP;
+    public TracingManager(@Nullable final ObservabilitySettings observabilitySettings) {
+        if (observabilitySettings == null) {
+            tracer = Tracer.NO_OP;
+            enableCommandPayload = false;
 
-        this.enableCommandPayload = tracer.includeCommandPayload();
+        } else {
+            MicrometerObservabilitySettings settings;
+            if (observabilitySettings instanceof MicrometerObservabilitySettings) {
+                settings = (MicrometerObservabilitySettings) observabilitySettings;
+            } else {
+                throw new IllegalArgumentException("Only Micrometer based observability is currently supported");
+            }
+
+            String envOtelInstrumentationEnabled = getenv(ENV_OBSERVABILITY_ENABLED);
+            boolean enableTracing = true;
+            if (envOtelInstrumentationEnabled != null) {
+                enableTracing = Boolean.parseBoolean(envOtelInstrumentationEnabled);
+            }
+
+            ObservationRegistry observationRegistry = settings.getObservationRegistry();
+            tracer = enableTracing && observationRegistry != null
+                    ? new MicrometerTracer(observationRegistry, settings.isEnableCommandPayloadTracing(), settings.getMaxQueryTextLength())
+                    : Tracer.NO_OP;
+
+            this.enableCommandPayload = tracer.includeCommandPayload();
+        }
     }
 
     /**
@@ -130,7 +147,7 @@ public class TracingManager {
      * @return True if tracing is enabled, false otherwise.
      */
     public boolean isEnabled() {
-        return tracer.enabled();
+        return tracer.isEnabled();
     }
 
     /**
