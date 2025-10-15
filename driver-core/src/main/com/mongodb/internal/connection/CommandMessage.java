@@ -148,48 +148,43 @@ public final class CommandMessage extends RequestMessage {
      * `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE` sections.
      */
     BsonDocument getCommandDocument(final ByteBufferBsonOutput bsonOutput) {
-        List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
+        CompositeByteBuf byteBuf = new CompositeByteBuf(bsonOutput.getByteBuffers());
         try {
-            CompositeByteBuf byteBuf = new CompositeByteBuf(byteBuffers);
-            try {
-                byteBuf.position(firstDocumentPosition);
-                ByteBufBsonDocument byteBufBsonDocument = createOne(byteBuf);
+            byteBuf.position(firstDocumentPosition);
+            ByteBufBsonDocument byteBufBsonDocument = createOne(byteBuf);
 
-                // If true, it means there is at least one `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE` section in the OP_MSG
-                if (byteBuf.hasRemaining()) {
-                    BsonDocument commandBsonDocument = byteBufBsonDocument.toBaseBsonDocument();
+            // If true, it means there is at least one `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE` section in the OP_MSG
+            if (byteBuf.hasRemaining()) {
+                BsonDocument commandBsonDocument = byteBufBsonDocument.toBaseBsonDocument();
 
-                    // Each loop iteration processes one Document Sequence
-                    // When there are no more bytes remaining, there are no more Document Sequences
-                    while (byteBuf.hasRemaining()) {
-                        // skip reading the payload type, we know it is `PAYLOAD_TYPE_1`
-                        byteBuf.position(byteBuf.position() + 1);
-                        int sequenceStart = byteBuf.position();
-                        int sequenceSizeInBytes = byteBuf.getInt();
-                        int sectionEnd = sequenceStart + sequenceSizeInBytes;
+                // Each loop iteration processes one Document Sequence
+                // When there are no more bytes remaining, there are no more Document Sequences
+                while (byteBuf.hasRemaining()) {
+                    // skip reading the payload type, we know it is `PAYLOAD_TYPE_1`
+                    byteBuf.position(byteBuf.position() + 1);
+                    int sequenceStart = byteBuf.position();
+                    int sequenceSizeInBytes = byteBuf.getInt();
+                    int sectionEnd = sequenceStart + sequenceSizeInBytes;
 
-                        String fieldName = getSequenceIdentifier(byteBuf);
-                        // If this assertion fires, it means that the driver has started using document sequences for nested fields.  If
-                        // so, this method will need to change in order to append the value to the correct nested document.
-                        assertFalse(fieldName.contains("."));
+                    String fieldName = getSequenceIdentifier(byteBuf);
+                    // If this assertion fires, it means that the driver has started using document sequences for nested fields.  If
+                    // so, this method will need to change in order to append the value to the correct nested document.
+                    assertFalse(fieldName.contains("."));
 
-                        ByteBuf documentsByteBufSlice = byteBuf.duplicate().limit(sectionEnd);
-                        try {
-                            commandBsonDocument.append(fieldName, new BsonArray(createList(documentsByteBufSlice)));
-                        } finally {
-                            documentsByteBufSlice.release();
-                        }
-                        byteBuf.position(sectionEnd);
+                    ByteBuf documentsByteBufSlice = byteBuf.duplicate().limit(sectionEnd);
+                    try {
+                        commandBsonDocument.append(fieldName, new BsonArray(createList(documentsByteBufSlice)));
+                    } finally {
+                        documentsByteBufSlice.release();
                     }
-                    return commandBsonDocument;
-                } else {
-                    return byteBufBsonDocument;
+                    byteBuf.position(sectionEnd);
                 }
-            } finally {
-                byteBuf.release();
+                return commandBsonDocument;
+            } else {
+                return byteBufBsonDocument;
             }
         } finally {
-            byteBuffers.forEach(ByteBuf::release);
+            byteBuf.release();
         }
     }
 

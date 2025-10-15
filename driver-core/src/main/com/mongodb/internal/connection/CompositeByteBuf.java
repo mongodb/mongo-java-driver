@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.assertions.Assertions;
 import org.bson.ByteBuf;
 
 import java.nio.Buffer;
@@ -50,7 +51,11 @@ class CompositeByteBuf implements ByteBuf {
     }
 
     CompositeByteBuf(final CompositeByteBuf from) {
-        components = from.components;
+        notNull("from", from);
+        components = new ArrayList<>(from.components.size());
+        from.components.forEach(component ->
+                components.add(new Component(component.buffer.duplicate(), component.offset))
+        );
         position = from.position();
         limit = from.limit();
     }
@@ -306,6 +311,7 @@ class CompositeByteBuf implements ByteBuf {
             referenceCount.decrementAndGet();
             throw new IllegalStateException("Attempted to increment the reference count when it is already 0");
         }
+        components.forEach(c -> c.buffer.retain());
         return this;
     }
 
@@ -314,6 +320,11 @@ class CompositeByteBuf implements ByteBuf {
         if (referenceCount.decrementAndGet() < 0) {
             referenceCount.incrementAndGet();
             throw new IllegalStateException("Attempted to decrement the reference count below 0");
+        }
+        components.forEach(c -> c.buffer.release());
+        if (referenceCount.get() == 0) {
+            Assertions.assertTrue(components.stream().noneMatch(c -> c.buffer.getReferenceCount() > 0),
+                    "Some buffers still had a reference to them even though the CompositeByteBuf was fully released");
         }
     }
 
