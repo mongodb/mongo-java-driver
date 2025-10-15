@@ -44,6 +44,9 @@ public final class MongoNamespace {
     @Internal
     public static final String COMMAND_COLLECTION_NAME = "$cmd";
 
+    @Internal
+    public static final MongoNamespace ADMIN_DB_COMMAND_NAMESPACE = new MongoNamespace("admin", COMMAND_COLLECTION_NAME);
+
     private static final Set<Character> PROHIBITED_CHARACTERS_IN_DATABASE_NAME =
             new HashSet<>(asList('\0', '/', '\\', ' ', '"', '.'));
 

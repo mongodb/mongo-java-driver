@@ -51,7 +51,7 @@ public class AbortTransactionOperation extends TransactionOperation {
 
     @Override
     public MongoNamespace getNamespace() {
-        return new MongoNamespace("admin", MongoNamespace.COMMAND_COLLECTION_NAME); // TODO double check
+        return MongoNamespace.ADMIN_DB_COMMAND_NAMESPACE;
     }
 
     @Override

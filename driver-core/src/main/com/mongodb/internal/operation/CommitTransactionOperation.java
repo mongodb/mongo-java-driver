@@ -119,7 +119,7 @@ public class CommitTransactionOperation extends TransactionOperation {
 
     @Override
     public MongoNamespace getNamespace() {
-        return new MongoNamespace("admin", MongoNamespace.COMMAND_COLLECTION_NAME);
+        return MongoNamespace.ADMIN_DB_COMMAND_NAMESPACE;
     }
 
     @Override

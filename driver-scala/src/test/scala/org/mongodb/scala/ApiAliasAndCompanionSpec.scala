@@ -95,10 +95,8 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "BaseClientUpdateOptions",
       "BaseClientDeleteOptions",
       "MongoBaseInterfaceAssertions",
-      "MicrometerTracer",
-      "TraceContext",
-      "Span",
-      "Tracer"
+      "MicrometerObservabilitySettings",
+      "ObservabilitySettings"
     )
     val scalaExclusions = Set(
       "BuildInfo",
