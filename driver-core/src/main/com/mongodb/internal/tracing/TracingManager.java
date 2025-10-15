@@ -168,9 +168,12 @@ public class TracingManager {
             final Supplier<ConnectionId> connectionIdSupplier
             ) {
 
+       if (!isEnabled()) {
+            return null;
+        }
         BsonDocument command = commandDocumentSupplier.get();
         String commandName = command.getFirstKey();
-        if (!isEnabled() || isSensitiveCommand.test(commandName)) {
+        if (isSensitiveCommand.test(commandName)) {
             return null;
         }
 
