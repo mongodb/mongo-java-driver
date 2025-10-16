@@ -12,10 +12,13 @@ set -o errexit
 ############################################
 #            Main Program                  #
 ############################################
+JAVA_VERSION=8
 RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
 . "${RELATIVE_DIR_PATH}/setup-env.bash"
 
 echo "Running connectivity tests with Java ${JAVA_VERSION}"
+
+MONGODB_URIS="${ATLAS_FREE}|${ATLAS_REPL}|${ATLAS_SHRD}|${ATLAS_TLS11}|${ATLAS_TLS12}|${ATLAS_SRV_FREE}|${ATLAS_SRV_REPL}|${ATLAS_SRV_SHRD}|${ATLAS_SRV_TLS11}|${ATLAS_SRV_TLS12}"
 
 ./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.connectivity.uris="${MONGODB_URIS}" --info --continue \
  driver-sync:test --tests ConnectivityTest \
