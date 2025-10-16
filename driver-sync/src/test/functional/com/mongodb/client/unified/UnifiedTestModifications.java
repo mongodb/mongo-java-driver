@@ -178,8 +178,13 @@ public final class UnifiedTestModifications {
         // OpenTelemetry
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5991")
                 .file("open-telemetry/tests", "operation find")
+                .file("open-telemetry/tests", "operation find_one_and_update")
+                .file("open-telemetry/tests", "operation update")
+                .file("open-telemetry/tests", "operation bulk_write")
+                .file("open-telemetry/tests", "operation drop collection")
                 .file("open-telemetry/tests", "transaction spans")
                 .file("open-telemetry/tests", "convenient transactions")
+                .file("open-telemetry/tests", "operation atlas_search")
                 .file("open-telemetry/tests", "operation insert")
                 .file("open-telemetry/tests", "operation map_reduce")
                 .file("open-telemetry/tests", "operation find without db.query.text")
