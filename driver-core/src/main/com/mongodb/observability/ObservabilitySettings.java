@@ -16,7 +16,9 @@
 
 package com.mongodb.observability;
 
+import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 
 /**
