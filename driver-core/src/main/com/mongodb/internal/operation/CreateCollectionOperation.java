@@ -18,6 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
+import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.ChangeStreamPreAndPostImagesOptions;
 import com.mongodb.client.model.Collation;
@@ -235,6 +236,11 @@ public class CreateCollectionOperation implements WriteOperation<Void> {
     @Override
     public String getCommandName() {
         return "createCollection";
+    }
+
+    @Override
+    public MongoNamespace getNamespace() {
+        return new MongoNamespace(databaseName, collectionName);
     }
 
     @Override

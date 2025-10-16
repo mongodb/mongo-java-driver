@@ -18,6 +18,7 @@ package com.mongodb.kotlin.client
 import com.mongodb.ClientSessionOptions
 import com.mongodb.TransactionOptions
 import com.mongodb.client.ClientSession as JClientSession
+import com.mongodb.internal.tracing.TransactionSpan
 import java.io.Closeable
 import java.util.concurrent.TimeUnit
 
@@ -86,6 +87,9 @@ public class ClientSession(public val wrapped: JClientSession) : Closeable {
         transactionBody: () -> T,
         options: TransactionOptions = TransactionOptions.builder().build()
     ): T = wrapped.withTransaction(transactionBody, options)
+
+    /** Get the transaction span (if started). */
+    public fun getTransactionSpan(): TransactionSpan? = wrapped.getTransactionSpan()
 }
 
 /**

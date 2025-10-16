@@ -48,6 +48,7 @@ import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.ServerSessionPool;
+import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -106,7 +107,8 @@ public final class MongoClientImpl implements MongoClient {
                                              operationExecutor, settings.getReadConcern(), settings.getReadPreference(), settings.getRetryReads(),
                                              settings.getRetryWrites(), settings.getServerApi(),
                                              new ServerSessionPool(cluster, TimeoutSettings.create(settings), settings.getServerApi()),
-                                             TimeoutSettings.create(settings), settings.getUuidRepresentation(), settings.getWriteConcern());
+                                             TimeoutSettings.create(settings), settings.getUuidRepresentation(),
+                                             settings.getWriteConcern(), new TracingManager(settings.getObservabilitySettings()));
         this.closed = new AtomicBoolean();
 
         BsonDocument clientMetadataDocument = delegate.getCluster().getClientMetadata().getBsonDocument();

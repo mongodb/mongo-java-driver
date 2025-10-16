@@ -16,6 +16,7 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.ClusterFixture;
 import org.opentest4j.AssertionFailedError;
 
 import java.util.ArrayList;
@@ -26,6 +27,8 @@ import java.util.function.Supplier;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.ClusterFixture.isStandalone;
+import static com.mongodb.ClusterFixture.isUnixSocket;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
@@ -174,6 +177,25 @@ public final class UnifiedTestModifications {
                         "timeoutMS can be configured on a MongoClient - dropIndexes on collection")
                 .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
                         "timeoutMS can be set to 0 on a MongoClient - dropIndexes on collection");
+
+        // OpenTelemetry
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5991")
+                .file("open-telemetry/tests", "operation find")
+                .file("open-telemetry/tests", "operation find_one_and_update")
+                .file("open-telemetry/tests", "operation update")
+                .file("open-telemetry/tests", "operation bulk_write")
+                .file("open-telemetry/tests", "operation drop collection")
+                .file("open-telemetry/tests", "transaction spans")
+                .file("open-telemetry/tests", "convenient transactions")
+                .file("open-telemetry/tests", "operation atlas_search")
+                .file("open-telemetry/tests", "operation insert")
+                .file("open-telemetry/tests", "operation map_reduce")
+                .file("open-telemetry/tests", "operation find without db.query.text")
+                .file("open-telemetry/tests", "operation find_retries");
+
+        def.skipAccordingToSpec("Micrometer tests expect the network transport to be tcp")
+                .when(ClusterFixture::isUnixSocket)
+                .directory("open-telemetry/tests");
 
         // TODO-JAVA-5712
 

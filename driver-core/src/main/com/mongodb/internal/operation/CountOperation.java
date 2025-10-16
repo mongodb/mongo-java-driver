@@ -117,6 +117,11 @@ public class CountOperation implements  ReadOperationSimple<Long> {
     }
 
     @Override
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    @Override
     public Long execute(final ReadBinding binding, final OperationContext operationContext) {
         return executeRetryableRead(binding, operationContext, namespace.getDatabaseName(),
                                     getCommandCreator(), DECODER, transformer(), retryReads);

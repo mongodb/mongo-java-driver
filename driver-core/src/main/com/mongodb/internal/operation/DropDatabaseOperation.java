@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
@@ -59,6 +60,11 @@ public class DropDatabaseOperation implements WriteOperation<Void> {
     @Override
     public String getCommandName() {
         return "dropDatabase";
+    }
+
+    @Override
+    public MongoNamespace getNamespace() {
+        return new MongoNamespace(databaseName, MongoNamespace.COMMAND_COLLECTION_NAME);
     }
 
     @Override

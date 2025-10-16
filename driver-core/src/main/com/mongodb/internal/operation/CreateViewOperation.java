@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -127,6 +128,11 @@ public class CreateViewOperation implements WriteOperation<Void> {
     @Override
     public String getCommandName() {
         return "createView";
+    }
+
+    @Override
+    public MongoNamespace getNamespace() {
+        return new MongoNamespace(databaseName, viewName);
     }
 
     @Override

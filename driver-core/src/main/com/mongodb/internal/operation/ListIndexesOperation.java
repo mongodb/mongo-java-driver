@@ -124,6 +124,11 @@ public class ListIndexesOperation<T> implements ReadOperationCursor<T> {
     }
 
     @Override
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    @Override
     public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
         OperationContext listIndexesOperationContext = applyTimeoutModeToOperationContext(timeoutMode, operationContext);
 

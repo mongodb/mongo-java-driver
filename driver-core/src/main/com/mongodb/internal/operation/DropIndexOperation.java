@@ -72,6 +72,11 @@ public class DropIndexOperation implements WriteOperation<Void> {
     }
 
     @Override
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    @Override
     public Void execute(final WriteBinding binding, final OperationContext operationContext) {
         try {
             executeCommand(binding, operationContext, namespace.getDatabaseName(), getCommandCreator(), writeConcernErrorTransformer(

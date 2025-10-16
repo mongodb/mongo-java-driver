@@ -51,6 +51,7 @@ import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.time.Timeout;
+import com.mongodb.internal.tracing.Span;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
@@ -94,6 +95,8 @@ import static com.mongodb.internal.connection.ProtocolHelper.getSnapshotTimestam
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
 import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
 import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedException;
+import static com.mongodb.internal.tracing.MongodbObservation.HighCardinalityKeyNames.QUERY_TEXT;
+import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.RESPONSE_STATUS_CODE;
 import static java.util.Arrays.asList;
 
 /**
@@ -438,22 +441,59 @@ public class InternalStreamConnection implements InternalConnection {
     private <T> T sendAndReceiveInternal(final CommandMessage message, final Decoder<T> decoder,
             final OperationContext operationContext) {
         CommandEventSender commandEventSender;
+        Span tracingSpan;
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
             message.encode(bsonOutput, operationContext);
-            commandEventSender = createCommandEventSender(message, bsonOutput, operationContext);
-            commandEventSender.sendStartedEvent();
+            tracingSpan = operationContext
+                    .getTracingManager()
+                    .createTracingSpan(message,
+                            operationContext,
+                            () -> message.getCommandDocument(bsonOutput),
+                            cmdName -> SECURITY_SENSITIVE_COMMANDS.contains(cmdName)
+                                    || SECURITY_SENSITIVE_HELLO_COMMANDS.contains(cmdName),
+                            () -> getDescription().getServerAddress(),
+                            () -> getDescription().getConnectionId()
+                    );
+
+            boolean isLoggingCommandNeeded = isLoggingCommandNeeded();
+            boolean isTracingCommandPayloadNeeded = tracingSpan != null && operationContext.getTracingManager().isCommandPayloadEnabled();
+
+            // Only hydrate the command document if necessary
+            BsonDocument commandDocument = null;
+            if (isLoggingCommandNeeded || isTracingCommandPayloadNeeded) {
+                commandDocument = message.getCommandDocument(bsonOutput);
+            }
+            if (isLoggingCommandNeeded) {
+                commandEventSender = new LoggingCommandEventSender(
+                        SECURITY_SENSITIVE_COMMANDS, SECURITY_SENSITIVE_HELLO_COMMANDS, description, commandListener,
+                        operationContext, message, commandDocument,
+                        COMMAND_PROTOCOL_LOGGER, loggerSettings);
+                commandEventSender.sendStartedEvent();
+            } else {
+                commandEventSender = new NoOpCommandEventSender();
+            }
+            if (isTracingCommandPayloadNeeded) {
+                tracingSpan.tagHighCardinality(QUERY_TEXT.asString(), commandDocument);
+            }
+
             try {
                 sendCommandMessage(message, bsonOutput, operationContext);
             } catch (Exception e) {
+                if (tracingSpan != null) {
+                    tracingSpan.error(e);
+                }
                 commandEventSender.sendFailedEvent(e);
                 throw e;
             }
         }
 
         if (message.isResponseExpected()) {
-            return receiveCommandMessageResponse(decoder, commandEventSender, operationContext);
+            return receiveCommandMessageResponse(decoder, commandEventSender, operationContext, tracingSpan);
         } else {
             commandEventSender.sendSucceededEventForOneWayCommand();
+            if (tracingSpan != null) {
+                tracingSpan.end();
+            }
             return null;
         }
     }
@@ -472,7 +512,7 @@ public class InternalStreamConnection implements InternalConnection {
     @Override
     public <T> T receive(final Decoder<T> decoder, final OperationContext operationContext) {
         isTrue("Response is expected", hasMoreToCome);
-        return receiveCommandMessageResponse(decoder, new NoOpCommandEventSender(), operationContext);
+        return receiveCommandMessageResponse(decoder, new NoOpCommandEventSender(), operationContext, null);
     }
 
     @Override
@@ -518,7 +558,7 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     private <T> T receiveCommandMessageResponse(final Decoder<T> decoder, final CommandEventSender commandEventSender,
-            final OperationContext operationContext) {
+            final OperationContext operationContext, @Nullable final Span tracingSpan) {
         boolean commandSuccessful = false;
         try (ResponseBuffers responseBuffers = receiveResponseBuffers(operationContext)) {
             updateSessionContext(operationContext.getSessionContext(), responseBuffers);
@@ -543,7 +583,17 @@ public class InternalStreamConnection implements InternalConnection {
             if (!commandSuccessful) {
                 commandEventSender.sendFailedEvent(e);
             }
+            if (tracingSpan != null) {
+                if (e instanceof MongoCommandException) {
+                    tracingSpan.tagLowCardinality(RESPONSE_STATUS_CODE.withValue(String.valueOf(((MongoCommandException) e).getErrorCode())));
+                }
+                tracingSpan.error(e);
+            }
             throw e;
+        } finally {
+            if (tracingSpan != null) {
+                tracingSpan.end();
+            }
         }
     }
 
@@ -559,7 +609,18 @@ public class InternalStreamConnection implements InternalConnection {
 
         try {
             message.encode(bsonOutput, operationContext);
-            CommandEventSender commandEventSender = createCommandEventSender(message, bsonOutput, operationContext);
+
+            CommandEventSender commandEventSender;
+            if (isLoggingCommandNeeded()) {
+                BsonDocument commandDocument = message.getCommandDocument(bsonOutput);
+                commandEventSender = new LoggingCommandEventSender(
+                        SECURITY_SENSITIVE_COMMANDS, SECURITY_SENSITIVE_HELLO_COMMANDS, description, commandListener,
+                        operationContext, message, commandDocument,
+                        COMMAND_PROTOCOL_LOGGER, loggerSettings);
+            } else {
+                commandEventSender = new NoOpCommandEventSender();
+            }
+
             commandEventSender.sendStartedEvent();
             Compressor localSendCompressor = sendCompressor;
             if (localSendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
@@ -958,19 +1019,13 @@ public class InternalStreamConnection implements InternalConnection {
 
     private static final StructuredLogger COMMAND_PROTOCOL_LOGGER = new StructuredLogger("protocol.command");
 
-    private CommandEventSender createCommandEventSender(final CommandMessage message, final ByteBufferBsonOutput bsonOutput,
-                                                        final OperationContext operationContext) {
+    private boolean isLoggingCommandNeeded() {
         boolean listensOrLogs = commandListener != null || COMMAND_PROTOCOL_LOGGER.isRequired(DEBUG, getClusterId());
-        if (!recordEverything && (isMonitoringConnection || !opened() || !authenticated.get() || !listensOrLogs)) {
-            return new NoOpCommandEventSender();
-        }
-        return new LoggingCommandEventSender(
-                SECURITY_SENSITIVE_COMMANDS, SECURITY_SENSITIVE_HELLO_COMMANDS, description, commandListener,
-                operationContext, message, bsonOutput,
-                COMMAND_PROTOCOL_LOGGER, loggerSettings);
+        return recordEverything || (!isMonitoringConnection && opened() && authenticated.get() && listensOrLogs);
     }
 
     private ClusterId getClusterId() {
         return description.getConnectionId().getServerId().getClusterId();
     }
+
 }

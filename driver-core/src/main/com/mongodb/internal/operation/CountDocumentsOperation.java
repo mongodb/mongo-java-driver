@@ -127,6 +127,11 @@ public class CountDocumentsOperation implements ReadOperationSimple<Long> {
     }
 
     @Override
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    @Override
     public Long execute(final ReadBinding binding, final OperationContext operationContext) {
         try (BatchCursor<BsonDocument> cursor = getAggregateOperation().execute(binding, operationContext)) {
             return cursor.hasNext() ? getCountFromAggregateResults(cursor.next()) : 0;

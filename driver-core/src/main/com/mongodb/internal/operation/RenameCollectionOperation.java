@@ -81,6 +81,11 @@ public class RenameCollectionOperation implements WriteOperation<Void> {
     }
 
     @Override
+    public MongoNamespace getNamespace() {
+        return originalNamespace;
+    }
+
+    @Override
     public Void execute(final WriteBinding binding, final OperationContext operationContext) {
         return withConnection(binding, operationContext, (connection, operationContextWithMinRtt) ->
                 executeCommand(binding,

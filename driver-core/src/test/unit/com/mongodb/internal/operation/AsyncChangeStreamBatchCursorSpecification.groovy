@@ -26,6 +26,7 @@ import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.connection.NoOpSessionContext
 import com.mongodb.internal.connection.OperationContext
+import com.mongodb.internal.tracing.TracingManager
 import org.bson.Document
 import org.bson.RawBsonDocument
 import spock.lang.Specification
@@ -41,6 +42,7 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         def changeStreamOperation = Stub(ChangeStreamOperation)
         def binding = Mock(AsyncReadBinding)
         def operationContext = getOperationContext()
+        operationContext.getTracingManager() >> TracingManager.NO_OP
         operationContext.getTimeoutContext().hasTimeoutMS() >> hasTimeoutMS
 
         def callback = Stub(SingleResultCallback)
@@ -83,6 +85,7 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         def changeStreamOpertation = Stub(ChangeStreamOperation)
         def binding = Mock(AsyncReadBinding)
         def operationContext = getOperationContext()
+        operationContext.getTracingManager() >> TracingManager.NO_OP
         operationContext.getTimeoutContext().hasTimeoutMS() >> hasTimeoutMS
 
         def callback = Stub(SingleResultCallback)
@@ -115,6 +118,7 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         def changeStreamOpertation = Stub(ChangeStreamOperation)
         def binding = Mock(AsyncReadBinding)
         def operationContext = getOperationContext()
+        operationContext.getTracingManager() >> TracingManager.NO_OP
         operationContext.getTimeoutContext().hasTimeoutMS() >> hasTimeoutMS
 
         AsyncCursor<RawBsonDocument> wrapped = Mock(AsyncCursor)

@@ -242,6 +242,11 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         }
 
         @Override
+        public MongoNamespace getNamespace() {
+            return operation.getNamespace();
+        }
+
+        @Override
         public BatchCursor<TResult> execute(final ReadBinding binding, final OperationContext operationContext) {
             return operation.execute(binding, operationContext);
         }
