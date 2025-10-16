@@ -610,6 +610,10 @@ public final class ClusterFixture {
         return serverParameters;
     }
 
+    public static boolean isUnixSocket() {
+        return getConnectionString().getConnectionString().contains(".sock");
+    }
+
     public static boolean isDiscoverableReplicaSet() {
         return clusterIsType(REPLICA_SET) && getClusterConnectionMode() == MULTIPLE;
     }

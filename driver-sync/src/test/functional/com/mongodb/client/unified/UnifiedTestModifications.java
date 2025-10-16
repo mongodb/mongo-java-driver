@@ -16,6 +16,7 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.ClusterFixture;
 import org.opentest4j.AssertionFailedError;
 
 import java.util.ArrayList;
@@ -26,6 +27,8 @@ import java.util.function.Supplier;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.ClusterFixture.isStandalone;
+import static com.mongodb.ClusterFixture.isUnixSocket;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
@@ -189,6 +192,10 @@ public final class UnifiedTestModifications {
                 .file("open-telemetry/tests", "operation map_reduce")
                 .file("open-telemetry/tests", "operation find without db.query.text")
                 .file("open-telemetry/tests", "operation find_retries");
+
+        def.skipAccordingToSpec("Micrometer tests expect the network transport to be tcp")
+                .when(ClusterFixture::isUnixSocket)
+                .directory("open-telemetry/tests");
 
         // TODO-JAVA-5712
 
