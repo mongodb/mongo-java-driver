@@ -66,9 +66,7 @@ public class TracingManager {
 
     /**
      * Constructs a new TracingManager with the specified observation registry.
-     *
      * @param observationRegistry The observation registry to use for tracing operations, may be null.
-     * @param enableCommandPayload Whether to enable command payload tracing.
      */
     public TracingManager(@Nullable final ObservabilitySettings observabilitySettings) {
         if (observabilitySettings == null) {
