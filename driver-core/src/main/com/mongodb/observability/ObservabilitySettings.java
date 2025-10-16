@@ -19,6 +19,12 @@ package com.mongodb.observability;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.Sealed;
 
+/**
+ * Observability settings for the driver.
+ *
+ * @since 5.7
+ */
+@Alpha(Reason.CLIENT)
 @Sealed
 @Immutable
 public abstract class ObservabilitySettings {
