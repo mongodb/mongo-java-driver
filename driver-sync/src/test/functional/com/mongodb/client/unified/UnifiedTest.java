@@ -28,6 +28,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.test.CollectionHelper;
+import com.mongodb.client.tracing.SpanTree;
 import com.mongodb.client.unified.UnifiedTestModifications.TestDef;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.connection.ClusterDescription;
@@ -44,6 +45,7 @@ import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.test.AfterBeforeParameterResolver;
+import io.micrometer.tracing.test.reporter.inmemory.InMemoryOtelSetup;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -109,7 +111,7 @@ public abstract class UnifiedTest {
     private static final Set<String> PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS = Collections.singleton(
             "wait queue timeout errors include details about checked out connections");
 
-    private static final String MAX_SUPPORTED_SCHEMA_VERSION = "1.26";
+    private static final String MAX_SUPPORTED_SCHEMA_VERSION = "1.27";
     private static final List<Integer> MAX_SUPPORTED_SCHEMA_VERSION_COMPONENTS = Arrays.stream(MAX_SUPPORTED_SCHEMA_VERSION.split("\\."))
             .map(Integer::parseInt)
             .collect(Collectors.toList());
@@ -376,6 +378,11 @@ public abstract class UnifiedTest {
                 }
                 compareLogMessages(rootContext, definition, tweaks);
             }
+
+            if (definition.containsKey("expectTracingMessages")) {
+                compareTracingSpans(definition);
+            }
+
         } catch (TestAbortedException e) {
             // if a test is ignored, we do not retry
             throw e;
@@ -480,6 +487,22 @@ public abstract class UnifiedTest {
                     entities.getClientLoggingInterceptor(clientId);
             rootContext.getLogMatcher().assertLogMessageEquality(clientId, ignoreMessages, ignoreExtraMessages,
                     curLogMessagesForClient.getArray("messages"), loggingInterceptor.getMessages(), tweaks);
+        }
+    }
+
+    private void compareTracingSpans(final BsonDocument definition) {
+        BsonArray curTracingSpansForClients = definition.getArray("expectTracingMessages");
+        for (BsonValue tracingSpan : curTracingSpansForClients) {
+            BsonDocument curTracingSpansForClient = tracingSpan.asDocument();
+            String clientId = curTracingSpansForClient.getString("client").getValue();
+
+            // Get the tracer for the client
+            InMemoryOtelSetup.Builder.OtelBuildingBlocks micrometerTracer = entities.getClientTracer(clientId);
+
+            SpanTree expectedSpans = SpanTree.from(curTracingSpansForClient.getArray("spans"));
+            SpanTree reportedSpans = SpanTree.from(micrometerTracer.getFinishedSpans());
+            boolean ignoreExtraSpans = curTracingSpansForClient.getBoolean("ignoreExtraSpans", BsonBoolean.TRUE).getValue();
+            SpanTree.assertValid(reportedSpans, expectedSpans, rootContext.valueMatcher::assertValuesMatch, ignoreExtraSpans);
         }
     }
 

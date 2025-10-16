@@ -31,6 +31,7 @@ import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.TransportSettings;
 import com.mongodb.event.CommandListener;
 import com.mongodb.lang.Nullable;
+import com.mongodb.observability.ObservabilitySettings;
 import com.mongodb.spi.dns.DnsClient;
 import com.mongodb.spi.dns.InetAddressResolver;
 import org.bson.UuidRepresentation;
@@ -116,6 +117,7 @@ public final class MongoClientSettings {
     private final ContextProvider contextProvider;
     private final DnsClient dnsClient;
     private final InetAddressResolver inetAddressResolver;
+    private final ObservabilitySettings observabilitySettings;
     @Nullable
     private final Long timeoutMS;
 
@@ -215,6 +217,7 @@ public final class MongoClientSettings {
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClientSettings.getDefaultCodecRegistry();
         private TransportSettings transportSettings;
+        private ObservabilitySettings observabilitySettings;
         private List<CommandListener> commandListeners = new ArrayList<>();
 
         private final LoggerSettings.Builder loggerSettingsBuilder = LoggerSettings.builder();
@@ -260,6 +263,7 @@ public final class MongoClientSettings {
             timeoutMS = settings.getTimeout(MILLISECONDS);
             inetAddressResolver = settings.getInetAddressResolver();
             transportSettings = settings.getTransportSettings();
+            observabilitySettings = settings.getObservabilitySettings();
             autoEncryptionSettings = settings.getAutoEncryptionSettings();
             contextProvider = settings.getContextProvider();
             loggerSettingsBuilder.applySettings(settings.getLoggerSettings());
@@ -503,6 +507,19 @@ public final class MongoClientSettings {
          */
         public Builder transportSettings(final TransportSettings transportSettings) {
             this.transportSettings = notNull("transportSettings", transportSettings);
+            return this;
+        }
+
+        /** Sets the {@link ObservabilitySettings} to apply.
+         *
+         * @param observabilitySettings the observability settings
+         * @return this
+         * @see #getObservabilitySettings()
+         * @since 5.7
+         */
+        @Alpha(Reason.CLIENT)
+        public Builder observabilitySettings(final ObservabilitySettings observabilitySettings) {
+            this.observabilitySettings = notNull("observabilitySettings", observabilitySettings);
             return this;
         }
 
@@ -1040,6 +1057,18 @@ public final class MongoClientSettings {
         return contextProvider;
     }
 
+
+    /**
+     * Get the observability settings.
+     * @return the observability settings
+     * @since 5.7
+     */
+    @Alpha(Reason.CLIENT)
+    @Nullable
+    public ObservabilitySettings getObservabilitySettings() {
+        return observabilitySettings;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -1137,6 +1166,7 @@ public final class MongoClientSettings {
         socketSettings = builder.socketSettingsBuilder.build();
         connectionPoolSettings = builder.connectionPoolSettingsBuilder.build();
         sslSettings = builder.sslSettingsBuilder.build();
+        observabilitySettings = builder.observabilitySettings;
         compressorList = builder.compressorList;
         uuidRepresentation = builder.uuidRepresentation;
         serverApi = builder.serverApi;

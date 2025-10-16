@@ -98,6 +98,11 @@ final class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcern
     }
 
     @Override
+    public MongoNamespace getNamespace() {
+        return wrappedOperation.getNamespace();
+    }
+
+    @Override
     public WriteConcernResult execute(final WriteBinding binding) {
         try {
             BulkWriteResult result = wrappedOperation.bypassDocumentValidation(bypassDocumentValidation).execute(binding);

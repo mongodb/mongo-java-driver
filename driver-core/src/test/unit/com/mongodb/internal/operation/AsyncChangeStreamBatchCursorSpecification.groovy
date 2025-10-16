@@ -22,6 +22,7 @@ import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.connection.OperationContext
+import com.mongodb.internal.tracing.TracingManager
 import org.bson.Document
 import spock.lang.Specification
 
@@ -34,6 +35,7 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         def changeStreamOpertation = Stub(ChangeStreamOperation)
         def binding = Mock(AsyncReadBinding)
         def operationContext = Mock(OperationContext)
+        operationContext.getTracingManager() >> TracingManager.NO_OP
         def timeoutContext = Mock(TimeoutContext)
         binding.getOperationContext() >> operationContext
         operationContext.getTimeoutContext() >> timeoutContext
@@ -78,6 +80,7 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         def changeStreamOpertation = Stub(ChangeStreamOperation)
         def binding = Mock(AsyncReadBinding)
         def operationContext = Mock(OperationContext)
+        operationContext.getTracingManager() >> TracingManager.NO_OP
         def timeoutContext = Mock(TimeoutContext)
         binding.getOperationContext() >> operationContext
         operationContext.getTimeoutContext() >> timeoutContext
@@ -111,6 +114,7 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         def changeStreamOpertation = Stub(ChangeStreamOperation)
         def binding = Mock(AsyncReadBinding)
         def operationContext = Mock(OperationContext)
+        operationContext.getTracingManager() >> TracingManager.NO_OP
         def timeoutContext = Mock(TimeoutContext)
         binding.getOperationContext() >> operationContext
         operationContext.getTimeoutContext() >> timeoutContext

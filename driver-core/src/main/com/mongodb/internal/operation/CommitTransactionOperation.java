@@ -19,6 +19,7 @@ package com.mongodb.internal.operation;
 import com.mongodb.Function;
 import com.mongodb.MongoException;
 import com.mongodb.MongoExecutionTimeoutException;
+import com.mongodb.MongoNamespace;
 import com.mongodb.MongoNodeIsRecoveringException;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoSocketException;
@@ -114,6 +115,11 @@ public class CommitTransactionOperation extends TransactionOperation {
     @Override
     public String getCommandName() {
         return COMMAND_NAME;
+    }
+
+    @Override
+    public MongoNamespace getNamespace() {
+        return MongoNamespace.ADMIN_DB_COMMAND_NAMESPACE;
     }
 
     @Override

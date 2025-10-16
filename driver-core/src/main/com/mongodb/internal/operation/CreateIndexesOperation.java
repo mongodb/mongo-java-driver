@@ -106,6 +106,11 @@ public class CreateIndexesOperation implements WriteOperation<Void> {
     }
 
     @Override
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    @Override
     public Void execute(final WriteBinding binding) {
         try {
             return executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(), writeConcernErrorTransformer(
