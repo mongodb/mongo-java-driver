@@ -324,7 +324,7 @@ class CompositeByteBuf implements ByteBuf {
         components.forEach(c -> c.buffer.release());
         if (referenceCount.get() == 0) {
             Assertions.assertTrue(components.stream().noneMatch(c -> c.buffer.getReferenceCount() > 0),
-                    "Some buffers still had a reference to them even though the CompositeByteBuf was fully released");
+                    "All component buffers should have reference count 0 when CompositeByteBuf is fully released, but some still have references.");
         }
     }
 
