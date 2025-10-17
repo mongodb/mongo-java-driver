@@ -278,6 +278,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
 
         @Override
         public ConnectionSource getReadConnectionSource() {
+            source.retain();
             return source;
         }
 
