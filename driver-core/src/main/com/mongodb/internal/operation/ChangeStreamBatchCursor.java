@@ -248,6 +248,8 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
 
         withReadConnectionSource(binding, source -> {
             changeStreamOperation.setChangeStreamOptionsForResume(resumeToken, source.getServerDescription().getMaxWireVersion());
+            // The same source is pined to resulting CommandBatchCursor, so we need to wrap the binding
+            // to return the same source to avoid double-selection of the server.
             wrapped = ((ChangeStreamBatchCursor<T>) changeStreamOperation.execute(new SourceAwareReadBinding(source, binding))).getWrapped();
             return null;
         });
@@ -262,6 +264,9 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         return exception instanceof MongoOperationTimeoutException;
     }
 
+    /**
+     * Does not retain wrapped {link @ReadBinding} as it serves as a wrapper only.
+     */
     private static class SourceAwareReadBinding implements ReadBinding {
         private final ConnectionSource source;
         private final ReadBinding binding;
