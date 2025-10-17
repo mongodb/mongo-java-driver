@@ -154,7 +154,7 @@ final class ChangeStreamBatchCursorTest {
         verifyNoMoreInteractions(commandBatchCursor);
         verify(changeStreamOperation).setChangeStreamOptionsForResume(resumeToken, maxWireVersion);
         verify(changeStreamOperation, times(1)).getDecoder();
-        verify(changeStreamOperation, times(1)).execute(readBinding);
+        verify(changeStreamOperation, times(1)).execute(any(ReadBinding.class));
         verifyNoMoreInteractions(changeStreamOperation);
         verify(newCommandBatchCursor, times(1)).next();
         verify(newCommandBatchCursor, atLeastOnce()).getPostBatchResumeToken();
@@ -181,7 +181,7 @@ final class ChangeStreamBatchCursorTest {
     void shouldPropagateAnyErrorsOccurredInAggregateOperation() {
         when(commandBatchCursor.next()).thenThrow(new MongoOperationTimeoutException("timeout"));
         MongoNotPrimaryException resumableError = new MongoNotPrimaryException(new BsonDocument(), new ServerAddress());
-        when(changeStreamOperation.execute(readBinding)).thenThrow(resumableError);
+        when(changeStreamOperation.execute(any(ReadBinding.class))).thenThrow(resumableError);
 
         ChangeStreamBatchCursor<Document> cursor = createChangeStreamCursor();
         //when
@@ -209,11 +209,12 @@ final class ChangeStreamBatchCursorTest {
         clearInvocations(commandBatchCursor, newCommandBatchCursor, timeoutContext, changeStreamOperation, readBinding);
 
         //second next operation times out on resume attempt when creating change stream
-        when(changeStreamOperation.execute(readBinding)).thenThrow(new MongoOperationTimeoutException("timeout during resumption"));
+        when(changeStreamOperation.execute(any(ReadBinding.class))).thenThrow(
+                new MongoOperationTimeoutException("timeout during resumption"));
         assertThrows(MongoOperationTimeoutException.class, cursor::next);
-        clearInvocations(commandBatchCursor, newCommandBatchCursor, timeoutContext, changeStreamOperation);
+        clearInvocations(commandBatchCursor, newCommandBatchCursor, timeoutContext, changeStreamOperation, readBinding);
 
-        doReturn(newChangeStreamCursor).when(changeStreamOperation).execute(readBinding);
+        doReturn(newChangeStreamCursor).when(changeStreamOperation).execute(any(ReadBinding.class));
 
         //when third operation succeeds to resume and call next
         List<Document> next = cursor.next();
@@ -243,7 +244,8 @@ final class ChangeStreamBatchCursorTest {
         clearInvocations(commandBatchCursor, newCommandBatchCursor, timeoutContext, changeStreamOperation, readBinding);
 
         //when second next operation errors on resume attempt when creating change stream
-        when(changeStreamOperation.execute(readBinding)).thenThrow(new MongoNotPrimaryException(new BsonDocument(), new ServerAddress()));
+        when(changeStreamOperation.execute(any(ReadBinding.class))).thenThrow(
+                new MongoNotPrimaryException(new BsonDocument(), new ServerAddress()));
         assertThrows(MongoNotPrimaryException.class, cursor::next);
 
         //then
@@ -281,7 +283,8 @@ final class ChangeStreamBatchCursorTest {
     private void verifyResumeAttemptCalled() {
         verify(commandBatchCursor, times(1)).close();
         verify(changeStreamOperation).setChangeStreamOptionsForResume(resumeToken, maxWireVersion);
-        verify(changeStreamOperation, times(1)).execute(readBinding);
+        verify(changeStreamOperation, times(1)).execute(any(ReadBinding.class));
+        verify(readBinding, times(1)).getReadConnectionSource();
         verifyNoMoreInteractions(commandBatchCursor);
     }
 
@@ -328,7 +331,11 @@ final class ChangeStreamBatchCursorTest {
         changeStreamOperation = mock(ChangeStreamOperation.class);
         when(changeStreamOperation.getDecoder()).thenReturn(new DocumentCodec());
         doNothing().when(changeStreamOperation).setChangeStreamOptionsForResume(resumeToken, maxWireVersion);
-        when(changeStreamOperation.execute(readBinding)).thenReturn(newChangeStreamCursor);
+        when(changeStreamOperation.execute(any(ReadBinding.class))).thenAnswer(invocation -> {
+            ReadBinding binding = invocation.getArgument(0);
+            binding.getReadConnectionSource();
+            return newChangeStreamCursor;
+        });
     }
 
 }
