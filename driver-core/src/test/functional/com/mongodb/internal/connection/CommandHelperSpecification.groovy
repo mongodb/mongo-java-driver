@@ -67,9 +67,9 @@ class CommandHelperSpecification extends Specification {
         latch1.await()
 
         then:
+        !receivedException
         !receivedDocument.isEmpty()
         receivedDocument.containsKey('ok')
-        !receivedException
 
         when:
         def latch2 = new CountDownLatch(1)

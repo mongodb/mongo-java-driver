@@ -143,9 +143,9 @@ public class Crypt implements Closeable {
      *
      * @param commandResponse the encrypted command response
      */
-    public Mono<RawBsonDocument> decrypt(final RawBsonDocument commandResponse, @Nullable final Timeout operationTimeout) {
+    public Mono<RawBsonDocument> decrypt(final RawBsonDocument commandResponse, @Nullable final Timeout timeout) {
         notNull("commandResponse", commandResponse);
-        return executeStateMachine(() -> mongoCrypt.createDecryptionContext(commandResponse), operationTimeout)
+        return executeStateMachine(() -> mongoCrypt.createDecryptionContext(commandResponse), timeout)
                 .onErrorMap(this::wrapInClientException);
     }
 

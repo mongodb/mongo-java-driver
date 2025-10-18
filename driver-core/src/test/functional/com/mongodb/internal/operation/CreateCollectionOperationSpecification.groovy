@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation
 
+import com.mongodb.ClusterFixture
 import com.mongodb.MongoBulkWriteException
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
@@ -108,9 +109,13 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         when:
         execute(operation, async)
 
+
         then:
+        def binding = ClusterFixture.getBinding()
         new ListCollectionsOperation(getDatabaseName(), new BsonDocumentCodec())
-                .execute(getBinding()).next().find { it -> it.getString('name').value == getCollectionName() }
+                .execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
+                .next()
+                .find { it -> it.getString('name').value == getCollectionName() }
                 .getDocument('options').getDocument('storageEngine') == operation.storageEngineOptions
 
         where:
@@ -127,8 +132,11 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         execute(operation, async)
 
         then:
+        def binding = ClusterFixture.getBinding()
         new ListCollectionsOperation(getDatabaseName(), new BsonDocumentCodec())
-                .execute(getBinding()).next().find { it -> it.getString('name').value == getCollectionName() }
+                .execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
+                .next()
+                .find { it -> it.getString('name').value == getCollectionName() }
                 .getDocument('options').getDocument('storageEngine') == operation.storageEngineOptions
         where:
         async << [true, false]
@@ -244,8 +252,10 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
     }
 
     def getCollectionInfo(String collectionName) {
+        def binding = getBinding()
         new ListCollectionsOperation(databaseName, new BsonDocumentCodec()).filter(new BsonDocument('name',
-                new BsonString(collectionName))).execute(getBinding()).tryNext()?.head()
+                new BsonString(collectionName))).execute(binding,
+                ClusterFixture.getOperationContext(binding.getReadPreference())).tryNext()?.head()
     }
 
     def collectionNameExists(String collectionName) {
@@ -255,15 +265,16 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
 
     BsonDocument storageStats() {
         if (serverVersionLessThan(6, 2)) {
+            def binding = getBinding()
             return new CommandReadOperation<>(getDatabaseName(),
                     new BsonDocument('collStats', new BsonString(getCollectionName())),
-                    new BsonDocumentCodec()).execute(getBinding())
+                    new BsonDocumentCodec()).execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
         }
+        def binding = ClusterFixture.getBinding()
         BatchCursor<BsonDocument> cursor = new AggregateOperation(
-
                 getNamespace(),
                 singletonList(new BsonDocument('$collStats', new BsonDocument('storageStats', new BsonDocument()))),
-                new BsonDocumentCodec()).execute(getBinding())
+                new BsonDocumentCodec()).execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
         try {
             return cursor.next().first().getDocument('storageStats')
         } finally {

@@ -22,6 +22,7 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -81,9 +82,9 @@ public class EstimatedDocumentCountOperation implements ReadOperationSimple<Long
     }
 
     @Override
-    public Long execute(final ReadBinding binding) {
+    public Long execute(final ReadBinding binding, final OperationContext operationContext) {
         try {
-            return executeRetryableRead(binding, namespace.getDatabaseName(),
+            return executeRetryableRead(binding, operationContext, namespace.getDatabaseName(),
                                         getCommandCreator(), CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")),
                                         transformer(), retryReads);
         } catch (MongoCommandException e) {
@@ -92,8 +93,8 @@ public class EstimatedDocumentCountOperation implements ReadOperationSimple<Long
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
-        executeRetryableReadAsync(binding, namespace.getDatabaseName(),
+    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<Long> callback) {
+        executeRetryableReadAsync(binding, operationContext,  namespace.getDatabaseName(),
                                   getCommandCreator(), CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")),
                                   asyncTransformer(), retryReads,
                                   (result, t) -> {
@@ -106,11 +107,11 @@ public class EstimatedDocumentCountOperation implements ReadOperationSimple<Long
     }
 
     private CommandReadTransformer<BsonDocument, Long> transformer() {
-        return (result, source, connection) -> transformResult(result, connection.getDescription());
+        return (result, source, connection, operationContext) -> transformResult(result, connection.getDescription());
     }
 
     private CommandReadTransformerAsync<BsonDocument, Long> asyncTransformer() {
-        return (result, source, connection) -> transformResult(result, connection.getDescription());
+        return (result, source, connection, operationContext) -> transformResult(result, connection.getDescription());
     }
 
     private long transformResult(final BsonDocument result, final ConnectionDescription connectionDescription) {

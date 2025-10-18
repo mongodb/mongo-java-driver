@@ -31,6 +31,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.AsyncConnection;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -243,20 +244,20 @@ public class CreateCollectionOperation implements WriteOperation<Void> {
     }
 
     @Override
-    public Void execute(final WriteBinding binding) {
-        return withConnection(binding, connection -> {
+    public Void execute(final WriteBinding binding, final OperationContext operationContext) {
+        return withConnection(binding, operationContext, (connection, operationContextWithMinRtt)-> {
             checkEncryptedFieldsSupported(connection.getDescription());
             getCommandFunctions().forEach(commandCreator ->
-               executeCommand(binding, databaseName, commandCreator.get(), connection,
-                      writeConcernErrorTransformer(binding.getOperationContext().getTimeoutContext()))
+               executeCommand(binding, operationContextWithMinRtt,  databaseName, commandCreator.get(), connection,
+                      writeConcernErrorTransformer(operationContextWithMinRtt.getTimeoutContext()))
             );
             return null;
         });
     }
 
     @Override
-    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(binding, (connection, t) -> {
+    public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<Void> callback) {
+        withAsyncConnection(binding, operationContext, (connection, operationContextWithMinRtt, t) -> {
             SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
             if (t != null) {
                 errHandlingCallback.onResult(null, t);
@@ -265,7 +266,7 @@ public class CreateCollectionOperation implements WriteOperation<Void> {
                 if (!checkEncryptedFieldsSupported(connection.getDescription(), releasingCallback)) {
                     return;
                 }
-                new ProcessCommandsCallback(binding, connection, releasingCallback)
+                new ProcessCommandsCallback(binding, operationContextWithMinRtt, connection, releasingCallback)
                         .onResult(null, null);
             }
         });
@@ -409,13 +410,15 @@ public class CreateCollectionOperation implements WriteOperation<Void> {
      */
     class ProcessCommandsCallback implements SingleResultCallback<Void> {
         private final AsyncWriteBinding binding;
+        private final OperationContext operationContext;
         private final AsyncConnection connection;
         private final SingleResultCallback<Void>  finalCallback;
         private final Deque<Supplier<BsonDocument>> commands;
 
         ProcessCommandsCallback(
-                final AsyncWriteBinding binding, final AsyncConnection connection, final SingleResultCallback<Void> finalCallback) {
+                final AsyncWriteBinding binding, final OperationContext operationContext, final AsyncConnection connection, final SingleResultCallback<Void> finalCallback) {
             this.binding = binding;
+            this.operationContext = operationContext;
             this.connection = connection;
             this.finalCallback = finalCallback;
             this.commands = new ArrayDeque<>(getCommandFunctions());
@@ -431,8 +434,8 @@ public class CreateCollectionOperation implements WriteOperation<Void> {
             if (nextCommandFunction == null) {
                 finalCallback.onResult(null, null);
             } else {
-                executeCommandAsync(binding, databaseName, nextCommandFunction.get(),
-                        connection, writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()), this);
+                executeCommandAsync(binding, operationContext,  databaseName, nextCommandFunction.get(),
+                        connection, writeConcernErrorTransformerAsync(operationContext.getTimeoutContext()), this);
             }
         }
     }

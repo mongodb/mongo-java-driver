@@ -93,9 +93,9 @@ public final class GridFSPublisherCreator {
             final MongoCollection<GridFSFile> filesCollection,
             @Nullable final ClientSession clientSession,
             @Nullable final Bson filter,
-            @Nullable final Timeout operationTimeout) {
+            @Nullable final Timeout timeout) {
         notNull("filesCollection", filesCollection);
-        return new GridFSFindPublisherImpl(createFindPublisher(filesCollection, clientSession, filter, operationTimeout));
+        return new GridFSFindPublisherImpl(createFindPublisher(filesCollection, clientSession, filter, timeout));
     }
 
     public static GridFSFindPublisher createGridFSFindPublisher(
@@ -103,7 +103,7 @@ public final class GridFSPublisherCreator {
             @Nullable final ClientSession clientSession,
             final String filename,
             final GridFSDownloadOptions options,
-            @Nullable final Timeout operationTimeout) {
+            @Nullable final Timeout timeout) {
         notNull("filesCollection", filesCollection);
         notNull("filename", filename);
         notNull("options", options);
@@ -119,7 +119,8 @@ public final class GridFSPublisherCreator {
             sort = -1;
         }
 
-        return createGridFSFindPublisher(filesCollection, clientSession, new Document("filename", filename), operationTimeout).skip(skip)
+        return createGridFSFindPublisher(filesCollection, clientSession, new Document("filename", filename), timeout)
+                .skip(skip)
                 .sort(new Document("uploadDate", sort));
     }
 
@@ -127,19 +128,19 @@ public final class GridFSPublisherCreator {
             final MongoCollection<GridFSFile> filesCollection,
             @Nullable final ClientSession clientSession,
             @Nullable final Bson filter,
-            @Nullable final Timeout operationTimeout) {
+            @Nullable final Timeout timeout) {
         notNull("filesCollection", filesCollection);
         FindPublisher<GridFSFile> publisher;
         if (clientSession == null) {
-            publisher = collectionWithTimeout(filesCollection, operationTimeout).find();
+            publisher = collectionWithTimeout(filesCollection, timeout).find();
         } else {
-            publisher = collectionWithTimeout(filesCollection, operationTimeout).find(clientSession);
+            publisher = collectionWithTimeout(filesCollection, timeout).find(clientSession);
         }
 
         if (filter != null) {
             publisher = publisher.filter(filter);
         }
-        if (operationTimeout != null) {
+        if (timeout != null) {
             publisher.timeoutMode(TimeoutMode.CURSOR_LIFETIME);
         }
         return publisher;
@@ -175,8 +176,8 @@ public final class GridFSPublisherCreator {
         BsonDocument filter = new BsonDocument("_id", id);
 
         return Mono.defer(()-> {
-            Timeout operationTimeout = startTimeout(filesCollection.getTimeout(MILLISECONDS));
-            return collectionWithTimeoutMono(filesCollection, operationTimeout)
+            Timeout timeout = startTimeout(filesCollection.getTimeout(MILLISECONDS));
+            return collectionWithTimeoutMono(filesCollection, timeout)
                     .flatMap(wrappedCollection -> {
                     if (clientSession == null) {
                         return Mono.from(wrappedCollection.deleteOne(filter));
@@ -187,7 +188,7 @@ public final class GridFSPublisherCreator {
                     if (deleteResult.wasAcknowledged() && deleteResult.getDeletedCount() == 0) {
                         return Mono.error(new MongoGridFSException(format("No file found with the ObjectId: %s", id)));
                     }
-                    return collectionWithTimeoutMono(chunksCollection, operationTimeout);
+                    return collectionWithTimeoutMono(chunksCollection, timeout);
                 }).flatMap(wrappedCollection -> {
                     if (clientSession == null) {
                         return Mono.from(wrappedCollection.deleteMany(new BsonDocument("files_id", id)));
@@ -228,15 +229,15 @@ public final class GridFSPublisherCreator {
                                                       @Nullable final ClientSession clientSession) {
 
         return Mono.defer(() -> {
-            Timeout operationTimeout = startTimeout(filesCollection.getTimeout(MILLISECONDS));
-            return collectionWithTimeoutMono(filesCollection, operationTimeout)
+            Timeout timeout = startTimeout(filesCollection.getTimeout(MILLISECONDS));
+            return collectionWithTimeoutMono(filesCollection, timeout)
                     .flatMap(wrappedCollection -> {
                         if (clientSession == null) {
                             return Mono.from(wrappedCollection.drop());
                         } else {
                             return Mono.from(wrappedCollection.drop(clientSession));
                         }
-                    }).then(collectionWithTimeoutDeferred(chunksCollection, operationTimeout))
+                    }).then(collectionWithTimeoutDeferred(chunksCollection, timeout))
                     .flatMap(wrappedCollection -> {
                         if (clientSession == null) {
                             return Mono.from(wrappedCollection.drop());

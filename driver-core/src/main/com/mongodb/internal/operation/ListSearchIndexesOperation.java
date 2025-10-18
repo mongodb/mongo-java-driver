@@ -24,6 +24,7 @@ import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -84,9 +85,9 @@ public final class ListSearchIndexesOperation<T> implements ReadOperationExplain
     }
 
     @Override
-    public BatchCursor<T> execute(final ReadBinding binding) {
+    public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
         try {
-            return asAggregateOperation().execute(binding);
+            return asAggregateOperation().execute(binding, operationContext);
         } catch (MongoCommandException exception) {
             int cursorBatchSize = batchSize == null ? 0 : batchSize;
             if (!isNamespaceError(exception)) {
@@ -98,8 +99,8 @@ public final class ListSearchIndexesOperation<T> implements ReadOperationExplain
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        asAggregateOperation().executeAsync(binding, (cursor, exception) -> {
+    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+        asAggregateOperation().executeAsync(binding, operationContext, (cursor, exception) -> {
             if (exception != null && !isNamespaceError(exception)) {
                 callback.onResult(null, exception);
             } else if (exception != null) {
