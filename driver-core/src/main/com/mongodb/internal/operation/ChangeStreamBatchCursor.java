@@ -19,10 +19,14 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoChangeStreamException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoOperationTimeoutException;
+import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
+import com.mongodb.assertions.Assertions;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
@@ -244,9 +248,11 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
 
         withReadConnectionSource(binding, source -> {
             changeStreamOperation.setChangeStreamOptionsForResume(resumeToken, source.getServerDescription().getMaxWireVersion());
+            // The same source is pinned to resulting CommandBatchCursor, so we need to wrap the binding
+            // to return the same source to avoid double-selection of the server.
+            wrapped = ((ChangeStreamBatchCursor<T>) changeStreamOperation.execute(new SourceAwareReadBinding(source, binding))).getWrapped();
             return null;
         });
-        wrapped = ((ChangeStreamBatchCursor<T>) changeStreamOperation.execute(binding)).getWrapped();
         binding.release(); // release the new change stream batch cursor's reference to the binding
     }
 
@@ -256,5 +262,54 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
 
     private static boolean isTimeoutException(final Throwable exception) {
         return exception instanceof MongoOperationTimeoutException;
+    }
+
+    /**
+     * Does not retain wrapped {link @ReadBinding} as it serves as a wrapper only.
+     */
+    private static class SourceAwareReadBinding implements ReadBinding {
+        private final ConnectionSource source;
+        private final ReadBinding binding;
+
+        SourceAwareReadBinding(final ConnectionSource source, final ReadBinding binding) {
+            this.source = source;
+            this.binding = binding;
+        }
+
+        @Override
+        public ReadPreference getReadPreference() {
+            return binding.getReadPreference();
+        }
+
+        @Override
+        public ConnectionSource getReadConnectionSource() {
+            source.retain();
+            return source;
+        }
+
+        @Override
+        public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference) {
+            throw Assertions.fail();
+        }
+
+        @Override
+        public int getCount() {
+            return binding.getCount();
+        }
+
+        @Override
+        public ReadBinding retain() {
+            return binding.retain();
+        }
+
+        @Override
+        public int release() {
+            return binding.release();
+        }
+
+        @Override
+        public OperationContext getOperationContext() {
+            return binding.getOperationContext();
+        }
     }
 }
