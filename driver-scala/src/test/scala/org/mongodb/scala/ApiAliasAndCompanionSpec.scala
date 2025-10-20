@@ -74,6 +74,7 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "SessionContext",
       "SingleResultCallback",
       "Slow",
+      "SpanTree",
       "SubjectProvider",
       "TransactionExample",
       "UnixServerAddress",
