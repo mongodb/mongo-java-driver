@@ -591,7 +591,7 @@ final class MongoClusterImpl implements MongoCluster {
          * Create a tracing span for the given operation, and set it on operation context.
          *
          * @param actualClientSession the session that the operation is part of
-         * @param operationContext             the binding for the operation
+         * @param operationContext             the operation context for the operation
          * @param commandName         the name of the command
          * @param namespace           the namespace of the command
          * @return the created span, or null if tracing is not enabled
