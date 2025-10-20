@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static org.junit.jupiter.api.Assumptions.abort;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -83,6 +84,7 @@ public class TransactionProseTest {
     @DisplayName("Options Inside Transaction Prose Tests. 1. Write concern not inherited from collection object inside transaction")
     @Test
     void testWriteConcernInheritance() {
+        assumeTrue(serverVersionAtLeast(4, 4));
         Mono<Document> testWriteConcern = Mono.from(client.startSession())
                 .flatMap(session ->
                         Mono.fromRunnable(session::startTransaction)
