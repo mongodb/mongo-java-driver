@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.client.tracing;
+package com.mongodb.observability;
 
 import com.mongodb.lang.Nullable;
 import io.micrometer.tracing.exporter.FinishedSpan;
