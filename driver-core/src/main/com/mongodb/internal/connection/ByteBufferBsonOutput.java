@@ -100,6 +100,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
 
 
     @Override
+    @SuppressWarnings("deprecation")
     public void writeInt32(final int absolutePosition, final int value) {
         ensureOpen();
 
