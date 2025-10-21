@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.tracing;
+package com.mongodb.internal.observability.micrometer;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
 import com.mongodb.UnixServerAddress;
 import com.mongodb.connection.ConnectionId;
+import com.mongodb.internal.MongoNamespaceHelper;
 import com.mongodb.internal.connection.CommandMessage;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
-import com.mongodb.observability.MicrometerObservabilitySettings;
 import com.mongodb.observability.ObservabilitySettings;
+import com.mongodb.observability.micrometer.MicrometerObservabilitySettings;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.ObservationRegistry;
 import org.bson.BsonDocument;
@@ -33,20 +34,19 @@ import org.bson.BsonDocument;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.CLIENT_CONNECTION_ID;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.COLLECTION;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.COMMAND_NAME;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.CURSOR_ID;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.NAMESPACE;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.NETWORK_TRANSPORT;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.QUERY_SUMMARY;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.SERVER_ADDRESS;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.SERVER_CONNECTION_ID;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.SERVER_PORT;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.SESSION_ID;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.SYSTEM;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.TRANSACTION_NUMBER;
-import static com.mongodb.observability.MicrometerObservabilitySettings.ENV_OBSERVABILITY_ENABLED;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.CLIENT_CONNECTION_ID;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.COLLECTION;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.COMMAND_NAME;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.NAMESPACE;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.NETWORK_TRANSPORT;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.QUERY_SUMMARY;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SERVER_ADDRESS;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SERVER_CONNECTION_ID;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SERVER_PORT;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SESSION_ID;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SYSTEM;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.TRANSACTION_NUMBER;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.CURSOR_ID;
 import static java.lang.System.getenv;
 
 /**
@@ -65,8 +65,18 @@ public class TracingManager {
     private final boolean enableCommandPayload;
 
     /**
+     * If set, this will enable/disable tracing even when an observationRegistry has been passed
+     */
+    public static final String ENV_OBSERVABILITY_ENABLED = "OBSERVABILITY_MONGODB_ENABLED";
+
+    /**
+     * If set, this will truncate the command payload captured in the tracing span to the specified length.
+     */
+    public static final String ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH = "OBSERVABILITY_MONGODB_QUERY_TEXT_MAX_LENGTH";
+
+    /**
      * Constructs a new TracingManager with the specified observation registry.
-     * @param observationRegistry The observation registry to use for tracing operations, may be null.
+     * @param observabilitySettings The observation registry to use for tracing operations, may be null.
      */
     public TracingManager(@Nullable final ObservabilitySettings observabilitySettings) {
         if (observabilitySettings == null) {
@@ -211,7 +221,7 @@ public class TracingManager {
             if (parentNamespace != null) {
                 namespace = parentNamespace.getDatabaseName();
                 collection =
-                        MongoNamespace.COMMAND_COLLECTION_NAME.equalsIgnoreCase(parentNamespace.getCollectionName()) ? ""
+                        MongoNamespaceHelper.COMMAND_COLLECTION_NAME.equalsIgnoreCase(parentNamespace.getCollectionName()) ? ""
                                 : parentNamespace.getCollectionName();
             } else {
                 namespace = message.getDatabase();
