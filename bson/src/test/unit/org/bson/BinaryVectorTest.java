@@ -79,7 +79,7 @@ class BinaryVectorTest {
     }
 
     @Test
-    void testComparisonWithIgnoredBits() {
+    void shouldCompareVectorsWithIgnoredBits() {
         // b1: 1-bit vector, all 0 ignored bits
         byte[] b1Bytes = {0x10, 0x07, (byte) 0x80};
         BsonBinary b1 = new BsonBinary((byte) 9, b1Bytes);
