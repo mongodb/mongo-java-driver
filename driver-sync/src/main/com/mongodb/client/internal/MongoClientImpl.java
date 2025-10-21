@@ -48,7 +48,7 @@ import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.ServerSessionPool;
-import com.mongodb.internal.tracing.TracingManager;
+import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.Document;

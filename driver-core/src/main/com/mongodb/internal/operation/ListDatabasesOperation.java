@@ -27,7 +27,7 @@ import org.bson.BsonInt32;
 import org.bson.BsonValue;
 import org.bson.codecs.Decoder;
 
-import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
+import static com.mongodb.internal.MongoNamespaceHelper.COMMAND_COLLECTION_NAME;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.asyncSingleBatchCursorTransformer;

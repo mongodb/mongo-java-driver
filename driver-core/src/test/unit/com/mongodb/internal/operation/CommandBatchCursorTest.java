@@ -31,7 +31,7 @@ import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.OperationContext;
-import com.mongodb.internal.tracing.TracingManager;
+import com.mongodb.internal.observability.micrometer.TracingManager;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;

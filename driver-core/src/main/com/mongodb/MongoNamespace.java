@@ -17,7 +17,6 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
-import com.mongodb.annotations.Internal;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 import org.bson.codecs.pojo.annotations.BsonProperty;
@@ -44,11 +43,13 @@ public final class MongoNamespace {
     private static final Set<Character> PROHIBITED_CHARACTERS_IN_DATABASE_NAME =
             new HashSet<>(asList('\0', '/', '\\', ' ', '"', '.'));
 
-    @Internal
+    /**
+     * The collection name in which to execute a command.
+     * @deprecated there is no replacement for this constant, as it is only needed for the OP_QUERY wire protocol message, which has
+     * been replaced by OP_MSG
+     */
+    @Deprecated
     public static final String COMMAND_COLLECTION_NAME = "$cmd";
-
-    @Internal
-    public static final MongoNamespace ADMIN_DB_COMMAND_NAMESPACE = new MongoNamespace("admin", COMMAND_COLLECTION_NAME);
 
     private final String databaseName;
     private final String collectionName;
