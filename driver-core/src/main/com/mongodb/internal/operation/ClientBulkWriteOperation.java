@@ -115,6 +115,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static com.mongodb.MongoNamespace.ADMIN_DB_COMMAND_NAMESPACE;
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
@@ -186,7 +187,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     @Override
     public MongoNamespace getNamespace() {
         // The bulkWrite command is executed on the "admin" database.
-        return new MongoNamespace("admin", COMMAND_COLLECTION_NAME);
+        return new MongoNamespace(ADMIN_DB_COMMAND_NAMESPACE.getDatabaseName(), COMMAND_COLLECTION_NAME);
     }
 
     @Override
@@ -411,7 +412,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final WriteConcern effectiveWriteConcern,
             final OperationContext operationContext) throws MongoWriteConcernWithResponseException {
         BsonDocument bulkWriteCommandOkResponse = connection.command(
-                "admin",
+                ADMIN_DB_COMMAND_NAMESPACE.getDatabaseName(),
                 bulkWriteCommand.getCommandDocument(),
                 NoOpFieldNameValidator.INSTANCE,
                 null,
@@ -443,7 +444,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final SingleResultCallback<ExhaustiveClientBulkWriteCommandOkResponse> finalCallback) {
         beginAsync().<BsonDocument>thenSupply(callback -> {
             connection.commandAsync(
-                    "admin",
+                    ADMIN_DB_COMMAND_NAMESPACE.getDatabaseName(),
                     bulkWriteCommand.getCommandDocument(),
                     NoOpFieldNameValidator.INSTANCE,
                     null,
@@ -1353,7 +1354,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
 
             /**
              * The key of each entry is the index of a model in the
-             * {@linkplain #executeBatch(int, WriteConcern, WriteBinding, ResultAccumulator) batch},
+             * {@linkplain #executeBatch(int, WriteConcern, WriteBinding, OperationContext, ResultAccumulator)}
              * the value is either the "_id" field value from {@linkplain ConcreteClientInsertOneModel#getDocument()},
              * or the value we generated for this field if the field is absent.
              */
