@@ -187,7 +187,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     @Override
     public MongoNamespace getNamespace() {
         // The bulkWrite command is executed on the "admin" database.
-        return new MongoNamespace(ADMIN_DB_COMMAND_NAMESPACE.getDatabaseName(), COMMAND_COLLECTION_NAME);
+        return ADMIN_DB_COMMAND_NAMESPACE;
     }
 
     @Override
