@@ -36,8 +36,8 @@ import java.util.Map;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.internal.tracing.MongodbObservation.HighCardinalityKeyNames.QUERY_TEXT;
-import static com.mongodb.observability.MicrometerObservabilitySettings.ENV_OBSERVABILITY_ENABLED;
-import static com.mongodb.observability.MicrometerObservabilitySettings.ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH;
+import static com.mongodb.internal.tracing.TracingManager.ENV_OBSERVABILITY_ENABLED;
+import static com.mongodb.internal.tracing.TracingManager.ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

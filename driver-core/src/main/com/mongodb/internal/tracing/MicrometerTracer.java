@@ -37,7 +37,7 @@ import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyN
 import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_STACKTRACE;
 import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_TYPE;
 import static com.mongodb.internal.tracing.MongodbObservation.MONGODB_OBSERVATION;
-import static com.mongodb.observability.MicrometerObservabilitySettings.ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH;
+import static com.mongodb.internal.tracing.TracingManager.ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH;
 import static java.lang.System.getenv;
 import static java.util.Optional.ofNullable;
 

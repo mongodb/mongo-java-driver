@@ -18,7 +18,6 @@ package com.mongodb.observability;
 
 import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
-import com.mongodb.annotations.Internal;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
@@ -32,9 +31,11 @@ import static com.mongodb.assertions.Assertions.notNull;
  * The Micrometer Observation settings for tracing operations, commands and transactions.
  *
  * <p>If tracing is configured by supplying an {@code observationRegistry} then setting the environment variable
- * {@value ENV_OBSERVABILITY_ENABLED} is used to enable or disable the creation of tracing spans.
+ * {@value com.mongodb.internal.tracing.TracingManager#ENV_OBSERVABILITY_ENABLED} is used to enable or disable the creation of tracing
+ * spans.
  *
- * <p> If set the environment variable {@value ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH} will be used to determine the maximum length
+ * <p> If set the environment variable {@value com.mongodb.internal.tracing.TracingManager#ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH} will
+ * be used to determine the maximum length
  * of command payloads captured in tracing spans. If the environment variable is not set, the entire command payloads is
  * captured (unless a {@code maxQueryTextLength} is specified via the Builder).
  *
@@ -43,22 +44,6 @@ import static com.mongodb.assertions.Assertions.notNull;
 @Alpha(Reason.CLIENT)
 @Immutable
 public final class MicrometerObservabilitySettings extends ObservabilitySettings {
-
-    /**
-     * If set, this will enable/disable tracing even when an observationRegistry has been passed
-     * <p>
-     * For internal use only
-     */
-    @Internal
-    public static final String ENV_OBSERVABILITY_ENABLED = "OBSERVABILITY_MONGODB_ENABLED";
-
-    /**
-     * If set, this will truncate the command payload captured in the tracing span to the specified length.
-     * <p>
-     * For internal use only
-     */
-    @Internal
-    public static final String ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH = "OBSERVABILITY_MONGODB_QUERY_TEXT_MAX_LENGTH";
     @Nullable
     private final ObservationRegistry observationRegistry;
     private final int maxQueryTextLength;
