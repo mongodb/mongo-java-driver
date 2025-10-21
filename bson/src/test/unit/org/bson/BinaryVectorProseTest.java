@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class BinaryVectorTest {
+class BinaryVectorProseTest {
 
     private ListAppender<ILoggingEvent> logWatcher;
 
