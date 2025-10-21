@@ -75,7 +75,7 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
     }
 
     /**
-     * Convenience method to create a from an existing {@code MicrometerObservabilitySettings}.
+     * Convenience method to create a builder from an existing {@code MicrometerObservabilitySettings}.
      *
      * @param settings create a builder from existing settings
      * @return a builder
