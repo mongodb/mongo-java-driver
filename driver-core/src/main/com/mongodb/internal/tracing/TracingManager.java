@@ -20,6 +20,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
 import com.mongodb.UnixServerAddress;
 import com.mongodb.connection.ConnectionId;
+import com.mongodb.internal.MongoNamespaceHelper;
 import com.mongodb.internal.connection.CommandMessage;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.session.SessionContext;
@@ -211,7 +212,7 @@ public class TracingManager {
             if (parentNamespace != null) {
                 namespace = parentNamespace.getDatabaseName();
                 collection =
-                        MongoNamespace.COMMAND_COLLECTION_NAME.equalsIgnoreCase(parentNamespace.getCollectionName()) ? ""
+                        MongoNamespaceHelper.COMMAND_COLLECTION_NAME.equalsIgnoreCase(parentNamespace.getCollectionName()) ? ""
                                 : parentNamespace.getCollectionName();
             } else {
                 namespace = message.getDatabase();
