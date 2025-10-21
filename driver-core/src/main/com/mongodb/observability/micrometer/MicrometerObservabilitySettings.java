@@ -39,7 +39,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <p> If set the environment variable
  * {@value com.mongodb.internal.observability.micrometer.TracingManager#ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH}
  * will be used to determine the maximum length of command payloads captured in tracing spans.
- * If the environment variable is not set, the entire command payloads is captured (unless a {@code maxQueryTextLength} is specified via
+ * If the environment variable is not set, the entire command payloads are captured (unless a {@code maxQueryTextLength} is specified via
  * the Builder).
  *
  * @since 5.7
