@@ -53,7 +53,7 @@ class BinaryVectorTest {
 
     @DisplayName("Treatment of non-zero ignored bits: 1. Encoding")
     @Test
-    void encodingWithNonZeroIgnoredBits() {
+    void shouldEncodeWithNonZeroIgnoredBits() {
         // when
         byte[] data = {(byte) 0b11111111};
 
