@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package com.mongodb.observability;
+package com.mongodb.observability.micrometer;
 
 import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
+import com.mongodb.observability.ObservabilitySettings;
 import io.micrometer.observation.ObservationRegistry;
 
 import java.util.Objects;
@@ -31,13 +32,14 @@ import static com.mongodb.assertions.Assertions.notNull;
  * The Micrometer Observation settings for tracing operations, commands and transactions.
  *
  * <p>If tracing is configured by supplying an {@code observationRegistry} then setting the environment variable
- * {@value com.mongodb.internal.tracing.TracingManager#ENV_OBSERVABILITY_ENABLED} is used to enable or disable the creation of tracing
- * spans.
+ * {@value com.mongodb.internal.observability.micrometer.TracingManager#ENV_OBSERVABILITY_ENABLED} is used to enable or disable the
+ * creation of tracing spans.
  *
- * <p> If set the environment variable {@value com.mongodb.internal.tracing.TracingManager#ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH} will
- * be used to determine the maximum length
- * of command payloads captured in tracing spans. If the environment variable is not set, the entire command payloads is
- * captured (unless a {@code maxQueryTextLength} is specified via the Builder).
+ * <p> If set the environment variable
+ * {@value com.mongodb.internal.observability.micrometer.TracingManager#ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH}
+ * will be used to determine the maximum length of command payloads captured in tracing spans.
+ * If the environment variable is not set, the entire command payloads is captured (unless a {@code maxQueryTextLength} is specified via
+ * the Builder).
  *
  * @since 5.7
  */
@@ -59,7 +61,7 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
     }
 
     /**
-     * Convenience method to create a from an existing {@code TracingSettings}.
+     * Convenience method to create a from an existing {@code MicrometerObservabilitySettings}.
      *
      * @param settings create a builder from existing settings
      * @return a builder
@@ -91,7 +93,7 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
     }
 
     /**
-     * A builder for {@code TracingSettings}
+     * A builder for {@code MicrometerObservabilitySettings}
      */
     @NotThreadSafe
     public static final class Builder {
@@ -108,18 +110,18 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
         }
 
         /**
-         * Applies the tracingSettings to the builder
+         * Applies the MicrometerObservabilitySettings to the builder
          *
          * <p>Note: Overwrites all existing settings</p>
          *
-         * @param tracingSettings the tracingSettings
+         * @param settings the MicrometerObservabilitySettings
          * @return this
          */
-        public MicrometerObservabilitySettings.Builder applySettings(final MicrometerObservabilitySettings tracingSettings) {
-            notNull("tracingSettings", tracingSettings);
-            observationRegistry = tracingSettings.observationRegistry;
-            enableCommandPayloadTracing = tracingSettings.enableCommandPayloadTracing;
-            maxQueryTextLength = tracingSettings.maxQueryTextLength;
+        public MicrometerObservabilitySettings.Builder applySettings(final MicrometerObservabilitySettings settings) {
+            notNull("settings", settings);
+            observationRegistry = settings.observationRegistry;
+            enableCommandPayloadTracing = settings.enableCommandPayloadTracing;
+            maxQueryTextLength = settings.maxQueryTextLength;
             return this;
         }
 

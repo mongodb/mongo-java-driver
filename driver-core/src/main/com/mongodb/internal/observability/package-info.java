@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.tracing;
+/**
+ * Contains classes related to observability
+ */
+@Internal
+@NonNullApi
+package com.mongodb.internal.observability;
 
-@SuppressWarnings("InterfaceIsType")
-public interface TraceContext {
-    TraceContext EMPTY = new TraceContext() {
-    };
-}
+import com.mongodb.annotations.Internal;
+import com.mongodb.lang.NonNullApi;

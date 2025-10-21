@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-/**
- * Contains classes related to tracing
- */
-@NonNullApi
-package com.mongodb.internal.tracing;
+package com.mongodb.internal.observability.micrometer;
 
-import com.mongodb.lang.NonNullApi;
+@SuppressWarnings("InterfaceIsType")
+public interface TraceContext {
+    TraceContext EMPTY = new TraceContext() {
+    };
+}

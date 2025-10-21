@@ -18,7 +18,7 @@ package com.mongodb.kotlin.client
 import com.mongodb.ClientSessionOptions
 import com.mongodb.TransactionOptions
 import com.mongodb.client.ClientSession as JClientSession
-import com.mongodb.internal.tracing.TransactionSpan
+import com.mongodb.internal.observability.micrometer.TransactionSpan
 import java.io.Closeable
 import java.util.concurrent.TimeUnit
 
