@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.mongodb.internal;
 
-/**
- * Contains classes related to MongoDB observability, including tracing.
- *
- * @since 5.7
- */
-@Alpha(Reason.CLIENT)
-@NonNullApi
-package com.mongodb.observability;
+import com.mongodb.MongoNamespace;
 
-import com.mongodb.lang.NonNullApi;
-import com.mongodb.annotations.Alpha;
-import com.mongodb.annotations.Reason;
+public final class MongoNamespaceHelper {
+
+    public static final String COMMAND_COLLECTION_NAME = "$cmd";
+    public static final MongoNamespace ADMIN_DB_COMMAND_NAMESPACE = new MongoNamespace("admin", COMMAND_COLLECTION_NAME);
+
+    private MongoNamespaceHelper() {
+    }
+}

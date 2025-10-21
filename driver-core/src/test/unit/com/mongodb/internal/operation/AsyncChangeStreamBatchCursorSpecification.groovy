@@ -22,7 +22,7 @@ import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.connection.OperationContext
-import com.mongodb.internal.tracing.TracingManager
+import com.mongodb.internal.observability.micrometer.TracingManager
 import org.bson.Document
 import spock.lang.Specification
 

@@ -18,7 +18,7 @@ package com.mongodb.client;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
-import com.mongodb.internal.tracing.TransactionSpan;
+import com.mongodb.internal.observability.micrometer.TransactionSpan;
 import com.mongodb.lang.Nullable;
 
 /**

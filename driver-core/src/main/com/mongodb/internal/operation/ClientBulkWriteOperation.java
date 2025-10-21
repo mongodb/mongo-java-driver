@@ -115,7 +115,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
+import static com.mongodb.internal.MongoNamespaceHelper.COMMAND_COLLECTION_NAME;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;

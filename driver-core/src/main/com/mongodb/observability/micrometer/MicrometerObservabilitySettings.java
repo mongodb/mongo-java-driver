@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package com.mongodb.observability;
+package com.mongodb.observability.micrometer;
 
+import com.mongodb.MongoConfigurationException;
 import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
-import com.mongodb.annotations.Internal;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
+import com.mongodb.observability.ObservabilitySettings;
 import io.micrometer.observation.ObservationRegistry;
 
 import java.util.Objects;
@@ -32,11 +33,14 @@ import static com.mongodb.assertions.Assertions.notNull;
  * The Micrometer Observation settings for tracing operations, commands and transactions.
  *
  * <p>If tracing is configured by supplying an {@code observationRegistry} then setting the environment variable
- * {@value ENV_OBSERVABILITY_ENABLED} is used to enable or disable the creation of tracing spans.
+ * {@value com.mongodb.internal.observability.micrometer.TracingManager#ENV_OBSERVABILITY_ENABLED} is used to enable or disable the
+ * creation of tracing spans.
  *
- * <p> If set the environment variable {@value ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH} will be used to determine the maximum length
- * of command payloads captured in tracing spans. If the environment variable is not set, the entire command payloads is
- * captured (unless a {@code maxQueryTextLength} is specified via the Builder).
+ * <p> If set the environment variable
+ * {@value com.mongodb.internal.observability.micrometer.TracingManager#ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH}
+ * will be used to determine the maximum length of command payloads captured in tracing spans.
+ * If the environment variable is not set, the entire command payloads are captured (unless a {@code maxQueryTextLength} is specified via
+ * the Builder).
  *
  * @since 5.7
  */
@@ -44,21 +48,18 @@ import static com.mongodb.assertions.Assertions.notNull;
 @Immutable
 public final class MicrometerObservabilitySettings extends ObservabilitySettings {
 
-    /**
-     * If set, this will enable/disable tracing even when an observationRegistry has been passed
-     * <p>
-     * For internal use only
-     */
-    @Internal
-    public static final String ENV_OBSERVABILITY_ENABLED = "OBSERVABILITY_MONGODB_ENABLED";
+    private static final boolean OBSERVATION_REGISTRY_AVAILABLE;
+    static {
+        boolean isAvailable = false;
+        try {
+            Class.forName("io.micrometer.observation.ObservationRegistry");
+            isAvailable = true;
+        } catch (ClassNotFoundException e) {
+            // No Micrometer support
+        }
+        OBSERVATION_REGISTRY_AVAILABLE = isAvailable;
+    }
 
-    /**
-     * If set, this will truncate the command payload captured in the tracing span to the specified length.
-     * <p>
-     * For internal use only
-     */
-    @Internal
-    public static final String ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH = "OBSERVABILITY_MONGODB_QUERY_TEXT_MAX_LENGTH";
     @Nullable
     private final ObservationRegistry observationRegistry;
     private final int maxQueryTextLength;
@@ -74,7 +75,7 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
     }
 
     /**
-     * Convenience method to create a from an existing {@code TracingSettings}.
+     * Convenience method to create a builder from an existing {@code MicrometerObservabilitySettings}.
      *
      * @param settings create a builder from existing settings
      * @return a builder
@@ -106,7 +107,7 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
     }
 
     /**
-     * A builder for {@code TracingSettings}
+     * A builder for {@code MicrometerObservabilitySettings}
      */
     @NotThreadSafe
     public static final class Builder {
@@ -115,7 +116,12 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
         private boolean enableCommandPayloadTracing;
         private int maxQueryTextLength = Integer.MAX_VALUE;
 
-        private Builder() {}
+        private Builder() {
+            if (!OBSERVATION_REGISTRY_AVAILABLE) {
+                throw new MongoConfigurationException("The 'io.micrometer.observation' dependency is required for "
+                        + "MicrometerObservabilitySettings.");
+            }
+        }
         private Builder(final MicrometerObservabilitySettings settings) {
             this.observationRegistry = settings.observationRegistry;
             this.enableCommandPayloadTracing = settings.enableCommandPayloadTracing;
@@ -123,18 +129,18 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
         }
 
         /**
-         * Applies the tracingSettings to the builder
+         * Applies the MicrometerObservabilitySettings to the builder
          *
          * <p>Note: Overwrites all existing settings</p>
          *
-         * @param tracingSettings the tracingSettings
+         * @param settings the MicrometerObservabilitySettings
          * @return this
          */
-        public MicrometerObservabilitySettings.Builder applySettings(final MicrometerObservabilitySettings tracingSettings) {
-            notNull("tracingSettings", tracingSettings);
-            observationRegistry = tracingSettings.observationRegistry;
-            enableCommandPayloadTracing = tracingSettings.enableCommandPayloadTracing;
-            maxQueryTextLength = tracingSettings.maxQueryTextLength;
+        public MicrometerObservabilitySettings.Builder applySettings(final MicrometerObservabilitySettings settings) {
+            notNull("settings", settings);
+            observationRegistry = settings.observationRegistry;
+            enableCommandPayloadTracing = settings.enableCommandPayloadTracing;
+            maxQueryTextLength = settings.maxQueryTextLength;
             return this;
         }
 

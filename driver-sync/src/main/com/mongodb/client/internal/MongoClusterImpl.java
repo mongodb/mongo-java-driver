@@ -59,10 +59,10 @@ import com.mongodb.internal.operation.Operations;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.ServerSessionPool;
-import com.mongodb.internal.tracing.Span;
-import com.mongodb.internal.tracing.TraceContext;
-import com.mongodb.internal.tracing.TracingManager;
-import com.mongodb.internal.tracing.TransactionSpan;
+import com.mongodb.internal.observability.micrometer.Span;
+import com.mongodb.internal.observability.micrometer.TraceContext;
+import com.mongodb.internal.observability.micrometer.TracingManager;
+import com.mongodb.internal.observability.micrometer.TransactionSpan;
 import com.mongodb.lang.Nullable;
 import io.micrometer.common.KeyValues;
 import org.bson.BsonDocument;
@@ -78,17 +78,17 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
-import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
+import static com.mongodb.internal.MongoNamespaceHelper.COMMAND_COLLECTION_NAME;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.TimeoutContext.createTimeoutContext;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.COLLECTION;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.NAMESPACE;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.OPERATION_NAME;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.OPERATION_SUMMARY;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.SYSTEM;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.COLLECTION;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.NAMESPACE;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.OPERATION_NAME;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.OPERATION_SUMMARY;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SYSTEM;
 
 final class MongoClusterImpl implements MongoCluster {
     @Nullable

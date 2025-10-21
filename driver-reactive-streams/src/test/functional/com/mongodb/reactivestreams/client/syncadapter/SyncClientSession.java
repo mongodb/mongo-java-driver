@@ -22,7 +22,7 @@ import com.mongodb.TransactionOptions;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.TransactionBody;
 import com.mongodb.internal.TimeoutContext;
-import com.mongodb.internal.tracing.TransactionSpan;
+import com.mongodb.internal.observability.micrometer.TransactionSpan;
 import com.mongodb.lang.Nullable;
 import com.mongodb.session.ServerSession;
 import org.bson.BsonDocument;

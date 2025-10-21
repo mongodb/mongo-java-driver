@@ -26,6 +26,7 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.WriteConcern;
+import com.mongodb.internal.MongoNamespaceHelper;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
@@ -119,7 +120,7 @@ public class CommitTransactionOperation extends TransactionOperation {
 
     @Override
     public MongoNamespace getNamespace() {
-        return MongoNamespace.ADMIN_DB_COMMAND_NAMESPACE;
+        return MongoNamespaceHelper.ADMIN_DB_COMMAND_NAMESPACE;
     }
 
     @Override
