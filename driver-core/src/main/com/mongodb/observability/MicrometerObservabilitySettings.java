@@ -44,11 +44,20 @@ import static com.mongodb.assertions.Assertions.notNull;
 @Immutable
 public final class MicrometerObservabilitySettings extends ObservabilitySettings {
 
+    /**
+     * If set, this will enable/disable tracing even when an observationRegistry has been passed
+     * <p>
+     * For internal use only
+     */
     @Internal
-    // If set, this will enable/disable tracing even when an observationRegistry has been passed.
     public static final String ENV_OBSERVABILITY_ENABLED = "OBSERVABILITY_MONGODB_ENABLED";
+
+    /**
+     * If set, this will truncate the command payload captured in the tracing span to the specified length.
+     * <p>
+     * For internal use only
+     */
     @Internal
-    // If set, this will truncate the command payload captured in the tracing span to the specified length.
     public static final String ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH = "OBSERVABILITY_MONGODB_QUERY_TEXT_MAX_LENGTH";
     @Nullable
     private final ObservationRegistry observationRegistry;
