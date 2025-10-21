@@ -16,6 +16,7 @@
 
 package com.mongodb.observability.micrometer;
 
+import com.mongodb.MongoConfigurationException;
 import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
@@ -46,6 +47,19 @@ import static com.mongodb.assertions.Assertions.notNull;
 @Alpha(Reason.CLIENT)
 @Immutable
 public final class MicrometerObservabilitySettings extends ObservabilitySettings {
+
+    private static final boolean OBSERVATION_REGISTRY_AVAILABLE;
+    static {
+        boolean isAvailable = false;
+        try {
+            Class.forName("io.micrometer.observation.ObservationRegistry");
+            isAvailable = true;
+        } catch (ClassNotFoundException e) {
+            // No Micrometer support
+        }
+        OBSERVATION_REGISTRY_AVAILABLE = isAvailable;
+    }
+
     @Nullable
     private final ObservationRegistry observationRegistry;
     private final int maxQueryTextLength;
@@ -102,7 +116,12 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
         private boolean enableCommandPayloadTracing;
         private int maxQueryTextLength = Integer.MAX_VALUE;
 
-        private Builder() {}
+        private Builder() {
+            if (!OBSERVATION_REGISTRY_AVAILABLE) {
+                throw new MongoConfigurationException("The 'io.micrometer.observation' dependency is required for "
+                        + "MicrometerObservabilitySettings.");
+            }
+        }
         private Builder(final MicrometerObservabilitySettings settings) {
             this.observationRegistry = settings.observationRegistry;
             this.enableCommandPayloadTracing = settings.enableCommandPayloadTracing;
