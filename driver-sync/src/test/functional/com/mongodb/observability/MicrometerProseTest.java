@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.client.tracing;
+package com.mongodb.observability;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.Fixture;
@@ -22,8 +22,6 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.observability.MicrometerObservabilitySettings;
-import com.mongodb.observability.ObservabilitySettings;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.tracing.test.reporter.inmemory.InMemoryOtelSetup;
 import org.bson.Document;
