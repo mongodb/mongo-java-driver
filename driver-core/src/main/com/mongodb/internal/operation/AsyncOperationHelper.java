@@ -21,12 +21,13 @@ import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.client.cursor.TimeoutMode;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.async.function.AsyncCallbackBiFunction;
 import com.mongodb.internal.async.function.AsyncCallbackFunction;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
+import com.mongodb.internal.async.function.AsyncCallbackTriFunction;
 import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.async.function.RetryingAsyncCallbackSupplier;
 import com.mongodb.internal.binding.AsyncConnectionSource;
@@ -62,7 +63,7 @@ import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConc
 final class AsyncOperationHelper {
 
     interface AsyncCallableWithConnection {
-        void call(@Nullable AsyncConnection connection, @Nullable Throwable t);
+        void call(@Nullable AsyncConnection connection, OperationContext operationContext, @Nullable Throwable t);
     }
 
     interface AsyncCallableConnectionWithCallback<T> {
@@ -74,59 +75,75 @@ final class AsyncOperationHelper {
     }
 
     interface CommandWriteTransformerAsync<T, R> {
-
-        /**
-         * Yield an appropriate result object for the input object.
-         *
-         * @param t the input object
-         * @return the function result
-         */
         @Nullable
         R apply(T t, AsyncConnection connection);
     }
 
     interface CommandReadTransformerAsync<T, R> {
-
-        /**
-         * Yield an appropriate result object for the input object.
-         *
-         * @param t the input object
-         * @return the function result
-         */
         @Nullable
-        R apply(T t, AsyncConnectionSource source, AsyncConnection connection);
+        R apply(T t, AsyncConnectionSource source, AsyncConnection connection, OperationContext operationContext);
     }
 
 
-    static void withAsyncReadConnectionSource(final AsyncReadBinding binding, final AsyncCallableWithSource callable) {
-        binding.getReadConnectionSource(errorHandlingCallback(new AsyncCallableWithSourceCallback(callable), OperationHelper.LOGGER));
+    static void withAsyncReadConnectionSource(final AsyncReadBinding binding, final OperationContext operationContext,
+                                              final AsyncCallableWithSource callable) {
+        binding.getReadConnectionSource(operationContext,
+                errorHandlingCallback(new AsyncCallableWithSourceCallback(callable), OperationHelper.LOGGER));
     }
 
-    static void withAsyncConnection(final AsyncWriteBinding binding, final AsyncCallableWithConnection callable) {
-        binding.getWriteConnectionSource(errorHandlingCallback(new AsyncCallableWithConnectionCallback(callable), OperationHelper.LOGGER));
+    static void withAsyncConnection(final AsyncWriteBinding binding,
+                                    final OperationContext originalOperationContext,
+                                    final AsyncCallableWithConnection callable) {
+        OperationContext serverSelectionOperationContext = originalOperationContext.withOverride(TimeoutContext::withComputedServerSelectionTimeout);
+        binding.getWriteConnectionSource(
+                serverSelectionOperationContext,
+                errorHandlingCallback(
+                        new AsyncCallableWithConnectionCallback(callable, serverSelectionOperationContext, originalOperationContext),
+                        OperationHelper.LOGGER));
     }
 
     /**
-     * @see #withAsyncSuppliedResource(AsyncCallbackSupplier, boolean, SingleResultCallback, AsyncCallbackFunction)
+     * @see #withAsyncSuppliedResource(AsyncCallbackFunction, boolean, OperationContext, SingleResultCallback, AsyncCallbackFunction)
      */
-    static <R> void withAsyncSourceAndConnection(final AsyncCallbackSupplier<AsyncConnectionSource> sourceSupplier,
-            final boolean wrapConnectionSourceException, final SingleResultCallback<R> callback,
-            final AsyncCallbackBiFunction<AsyncConnectionSource, AsyncConnection, R> asyncFunction)
+    static <R> void withAsyncSourceAndConnection(
+            final AsyncCallbackFunction<OperationContext, AsyncConnectionSource> sourceAsyncFunction,
+            final boolean wrapConnectionSourceException,
+            final OperationContext operationContext,
+            final SingleResultCallback<R> callback,
+            final AsyncCallbackTriFunction<AsyncConnectionSource, AsyncConnection, OperationContext, R> asyncFunction)
             throws OperationHelper.ResourceSupplierInternalException {
         SingleResultCallback<R> errorHandlingCallback = errorHandlingCallback(callback, OperationHelper.LOGGER);
-        withAsyncSuppliedResource(sourceSupplier, wrapConnectionSourceException, errorHandlingCallback,
+
+        OperationContext serverSelectionOperationContext =
+                operationContext.withOverride(TimeoutContext::withComputedServerSelectionTimeout);
+        withAsyncSuppliedResource(
+                sourceAsyncFunction,
+                wrapConnectionSourceException,
+                serverSelectionOperationContext,
+                errorHandlingCallback,
                 (source, sourceReleasingCallback) ->
-                        withAsyncSuppliedResource(source::getConnection, wrapConnectionSourceException, sourceReleasingCallback,
+                        withAsyncSuppliedResource(
+                                source::getConnection,
+                                wrapConnectionSourceException,
+                                serverSelectionOperationContext.withMinRoundTripTime(source.getServerDescription()),
+                                sourceReleasingCallback,
                                 (connection, connectionAndSourceReleasingCallback) ->
-                                        asyncFunction.apply(source, connection, connectionAndSourceReleasingCallback)));
+                                        asyncFunction.apply(
+                                                source,
+                                                connection,
+                                                operationContext.withMinRoundTripTime(source.getServerDescription()),
+                                                connectionAndSourceReleasingCallback)));
     }
 
 
-    static <R, T extends ReferenceCounted> void withAsyncSuppliedResource(final AsyncCallbackSupplier<T> resourceSupplier,
-            final boolean wrapSourceConnectionException, final SingleResultCallback<R> callback,
-            final AsyncCallbackFunction<T, R> function) throws OperationHelper.ResourceSupplierInternalException {
+    static <R, T extends ReferenceCounted> void withAsyncSuppliedResource(final AsyncCallbackFunction<OperationContext, T> resourceSupplier,
+                                                                          final boolean wrapSourceConnectionException,
+                                                                          final OperationContext operationContext,
+                                                                          final SingleResultCallback<R> callback,
+                                                                          final AsyncCallbackFunction<T, R> function)
+            throws OperationHelper.ResourceSupplierInternalException {
         SingleResultCallback<R> errorHandlingCallback = errorHandlingCallback(callback, OperationHelper.LOGGER);
-        resourceSupplier.get((resource, supplierException) -> {
+        resourceSupplier.apply(operationContext, (resource, supplierException) -> {
             if (supplierException != null) {
                 if (wrapSourceConnectionException) {
                     supplierException = new OperationHelper.ResourceSupplierInternalException(supplierException);
@@ -147,57 +164,47 @@ final class AsyncOperationHelper {
         });
     }
 
-    static void withAsyncConnectionSourceCallableConnection(final AsyncConnectionSource source,
-            final AsyncCallableWithConnection callable) {
-        source.getConnection((connection, t) -> {
-            source.release();
-            if (t != null) {
-                callable.call(null, t);
-            } else {
-                callable.call(connection, null);
-            }
-        });
-    }
-
-    static void withAsyncConnectionSource(final AsyncConnectionSource source, final AsyncCallableWithSource callable) {
+    static void withAsyncConnectionSource(final AsyncConnectionSource source,
+                                          final AsyncCallableWithSource callable) {
         callable.call(source, null);
     }
 
     static <D, T> void executeRetryableReadAsync(
             final AsyncReadBinding binding,
+            final OperationContext operationContext,
             final String database,
             final CommandCreator commandCreator,
             final Decoder<D> decoder,
             final CommandReadTransformerAsync<D, T> transformer,
             final boolean retryReads,
             final SingleResultCallback<T> callback) {
-        executeRetryableReadAsync(binding, binding::getReadConnectionSource, database, commandCreator,
+        executeRetryableReadAsync(binding, operationContext, binding::getReadConnectionSource, database, commandCreator,
                                   decoder, transformer, retryReads, callback);
     }
 
     static <D, T> void executeRetryableReadAsync(
             final AsyncReadBinding binding,
-            final AsyncCallbackSupplier<AsyncConnectionSource> sourceAsyncSupplier,
+            final OperationContext operationContext,
+            final AsyncCallbackFunction<OperationContext, AsyncConnectionSource> sourceAsyncFunction,
             final String database,
             final CommandCreator commandCreator,
             final Decoder<D> decoder,
             final CommandReadTransformerAsync<D, T> transformer,
             final boolean retryReads,
             final SingleResultCallback<T> callback) {
-        RetryState retryState = initialRetryState(retryReads, binding.getOperationContext().getTimeoutContext());
+        RetryState retryState = initialRetryState(retryReads, operationContext.getTimeoutContext());
         binding.retain();
-        OperationContext operationContext = binding.getOperationContext();
-        AsyncCallbackSupplier<T> asyncRead = decorateReadWithRetriesAsync(retryState, binding.getOperationContext(),
+        AsyncCallbackSupplier<T> asyncRead = decorateReadWithRetriesAsync(retryState, operationContext,
                 (AsyncCallbackSupplier<T>) funcCallback ->
-                        withAsyncSourceAndConnection(sourceAsyncSupplier, false, funcCallback,
-                                (source, connection, releasingCallback) -> {
+                        withAsyncSourceAndConnection(sourceAsyncFunction, false, operationContext, funcCallback,
+                                (source, connection, operationContextWithMinRtt, releasingCallback) -> {
                                     if (retryState.breakAndCompleteIfRetryAnd(
                                             () -> !OperationHelper.canRetryRead(source.getServerDescription(),
-                                                    operationContext),
+                                                    operationContextWithMinRtt),
                                             releasingCallback)) {
                                         return;
                                     }
-                                    createReadCommandAndExecuteAsync(retryState, operationContext, source, database,
+                                    createReadCommandAndExecuteAsync(retryState, operationContextWithMinRtt, source, database,
                                                                      commandCreator, decoder, transformer, connection, releasingCallback);
                                 })
         ).whenComplete(binding::release);
@@ -206,20 +213,31 @@ final class AsyncOperationHelper {
 
     static <T> void executeCommandAsync(
             final AsyncWriteBinding binding,
+            final OperationContext operationContext,
             final String database,
             final CommandCreator commandCreator,
             final CommandWriteTransformerAsync<BsonDocument, T> transformer,
             final SingleResultCallback<T> callback) {
         Assertions.notNull("binding", binding);
-        withAsyncSourceAndConnection(binding::getWriteConnectionSource, false, callback,
-                (source, connection, releasingCallback) ->
-                        executeCommandAsync(binding, database, commandCreator.create(
-                                binding.getOperationContext(), source.getServerDescription(), connection.getDescription()),
-                                connection, transformer, releasingCallback)
-        );
+        withAsyncSourceAndConnection(
+                binding::getWriteConnectionSource,
+                false,
+                operationContext,
+                callback,
+                (source, connection, operationContextWithMinRtt, releasingCallback) ->
+                        executeCommandAsync(
+                                binding,
+                                operationContextWithMinRtt,
+                                database,
+                                commandCreator.create(
+                                        operationContextWithMinRtt, source.getServerDescription(), connection.getDescription()),
+                                connection,
+                                transformer,
+                                releasingCallback));
     }
 
     static <T> void executeCommandAsync(final AsyncWriteBinding binding,
+            final OperationContext operationContext,
             final String database,
             final BsonDocument command,
             final AsyncConnection connection,
@@ -229,11 +247,12 @@ final class AsyncOperationHelper {
         SingleResultCallback<T> addingRetryableLabelCallback = addingRetryableLabelCallback(callback,
                 connection.getDescription().getMaxWireVersion());
         connection.commandAsync(database, command, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(),
-                binding.getOperationContext(), transformingWriteCallback(transformer, connection, addingRetryableLabelCallback));
+                operationContext, transformingWriteCallback(transformer, connection, addingRetryableLabelCallback));
     }
 
     static <T, R> void executeRetryableWriteAsync(
             final AsyncWriteBinding binding,
+            final OperationContext operationContext,
             final String database,
             @Nullable final ReadPreference readPreference,
             final FieldNameValidator fieldNameValidator,
@@ -243,9 +262,8 @@ final class AsyncOperationHelper {
             final Function<BsonDocument, BsonDocument> retryCommandModifier,
             final SingleResultCallback<R> callback) {
 
-        RetryState retryState = initialRetryState(true, binding.getOperationContext().getTimeoutContext());
+        RetryState retryState = initialRetryState(true, operationContext.getTimeoutContext());
         binding.retain();
-        OperationContext operationContext = binding.getOperationContext();
 
         AsyncCallbackSupplier<R> asyncWrite = decorateWriteWithRetriesAsync(retryState, operationContext,
                 (AsyncCallbackSupplier<R>) funcCallback -> {
@@ -253,14 +271,14 @@ final class AsyncOperationHelper {
             if (!firstAttempt && operationContext.getSessionContext().hasActiveTransaction()) {
                 operationContext.getSessionContext().clearTransactionContext();
             }
-            withAsyncSourceAndConnection(binding::getWriteConnectionSource, true, funcCallback,
-                    (source, connection, releasingCallback) -> {
+            withAsyncSourceAndConnection(binding::getWriteConnectionSource, true, operationContext, funcCallback,
+                    (source, connection, operationContextWithMinRtt, releasingCallback) -> {
                         int maxWireVersion = connection.getDescription().getMaxWireVersion();
                         SingleResultCallback<R> addingRetryableLabelCallback = firstAttempt
                                 ? releasingCallback
                                 : addingRetryableLabelCallback(releasingCallback, maxWireVersion);
                         if (retryState.breakAndCompleteIfRetryAnd(() ->
-                                        !OperationHelper.canRetryWrite(connection.getDescription(), operationContext.getSessionContext()),
+                                        !OperationHelper.canRetryWrite(connection.getDescription(), operationContextWithMinRtt.getSessionContext()),
                                 addingRetryableLabelCallback)) {
                             return;
                         }
@@ -271,7 +289,7 @@ final class AsyncOperationHelper {
                                         Assertions.assertFalse(firstAttempt);
                                         return retryCommandModifier.apply(previousAttemptCommand);
                                     }).orElseGet(() -> commandCreator.create(
-                                            operationContext,
+                                            operationContextWithMinRtt,
                                             source.getServerDescription(),
                                             connection.getDescription()));
                             // attach `maxWireVersion`, `retryableCommandFlag` ASAP because they are used to check whether we should retry
@@ -284,7 +302,8 @@ final class AsyncOperationHelper {
                             return;
                         }
                         connection.commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder,
-                                operationContext, transformingWriteCallback(transformer, connection, addingRetryableLabelCallback));
+                                operationContextWithMinRtt,
+                                transformingWriteCallback(transformer, connection, addingRetryableLabelCallback));
                     });
         }).whenComplete(binding::release);
 
@@ -310,7 +329,7 @@ final class AsyncOperationHelper {
             return;
         }
         connection.commandAsync(database, command, NoOpFieldNameValidator.INSTANCE, source.getReadPreference(), decoder,
-                operationContext, transformingReadCallback(transformer, source, connection, callback));
+                operationContext, transformingReadCallback(transformer, source, connection, operationContext, callback));
     }
 
     static <R> AsyncCallbackSupplier<R> decorateReadWithRetriesAsync(final RetryState retryState, final OperationContext operationContext,
@@ -342,14 +361,21 @@ final class AsyncOperationHelper {
     }
 
     static <T> CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncSingleBatchCursorTransformer(final String fieldName) {
-        return (result, source, connection) ->
+        return (result, source, connection, operationContext) ->
                 new AsyncSingleBatchCursor<>(BsonDocumentWrapperHelper.toList(result, fieldName), 0);
     }
 
-    static <T> AsyncBatchCursor<T> cursorDocumentToAsyncBatchCursor(final TimeoutMode timeoutMode, final BsonDocument cursorDocument,
-            final int batchSize, final Decoder<T> decoder, @Nullable final BsonValue comment, final AsyncConnectionSource source,
-            final AsyncConnection connection) {
-        return new AsyncCommandBatchCursor<>(timeoutMode, cursorDocument, batchSize, 0, decoder, comment, source, connection);
+    static <T> AsyncBatchCursor<T> cursorDocumentToAsyncBatchCursor(final TimeoutMode timeoutMode,
+                                                                    final BsonDocument cursorDocument,
+                                                                    final int batchSize,
+                                                                    final Decoder<T> decoder,
+                                                                    @Nullable final BsonValue comment,
+                                                                    final AsyncConnectionSource source,
+                                                                    final AsyncConnection connection,
+                                                                    final OperationContext operationContext) {
+        return new AsyncCommandBatchCursor<>(timeoutMode, 0, operationContext, new AsyncCommandCursor<>(
+                cursorDocument, batchSize, decoder, comment, source, connection
+        ));
     }
 
     static <T> SingleResultCallback<T> releasingCallback(final SingleResultCallback<T> wrapped, final AsyncConnection connection) {
@@ -391,18 +417,36 @@ final class AsyncOperationHelper {
 
     private static class AsyncCallableWithConnectionCallback implements SingleResultCallback<AsyncConnectionSource> {
         private final AsyncCallableWithConnection callable;
+        private final OperationContext serverSelectionOperationContext;
+        private final OperationContext originalOperationContext;
 
-        AsyncCallableWithConnectionCallback(final AsyncCallableWithConnection callable) {
+        AsyncCallableWithConnectionCallback(final AsyncCallableWithConnection callable,
+                                            final OperationContext serverSelectionOperationContext,
+                                            final OperationContext originalOperationContext) {
             this.callable = callable;
+            this.serverSelectionOperationContext = serverSelectionOperationContext;
+            this.originalOperationContext = originalOperationContext;
         }
 
         @Override
         public void onResult(@Nullable final AsyncConnectionSource source, @Nullable final Throwable t) {
             if (t != null) {
-                callable.call(null, t);
+                callable.call(null, originalOperationContext, t);
             } else {
-                withAsyncConnectionSourceCallableConnection(Assertions.assertNotNull(source), callable);
+                withAsyncConnectionSourceCallableConnection(assertNotNull(source));
             }
+        }
+
+        void withAsyncConnectionSourceCallableConnection(final AsyncConnectionSource source) {
+            source.getConnection(serverSelectionOperationContext, (connection, t) -> {
+                source.release();
+                ServerDescription serverDescription = source.getServerDescription();
+                if (t != null) {
+                    callable.call(null, originalOperationContext.withMinRoundTripTime(serverDescription), t);
+                } else {
+                    callable.call(connection, originalOperationContext.withMinRoundTripTime(serverDescription), null);
+                }
+            });
         }
     }
 
@@ -459,14 +503,14 @@ final class AsyncOperationHelper {
     }
 
     private static <T, R> SingleResultCallback<T> transformingReadCallback(final CommandReadTransformerAsync<T, R> transformer,
-            final AsyncConnectionSource source, final AsyncConnection connection, final SingleResultCallback<R> callback) {
+            final AsyncConnectionSource source, final AsyncConnection connection, final OperationContext operationContext, final SingleResultCallback<R> callback) {
         return (result, t) -> {
             if (t != null) {
                 callback.onResult(null, t);
             } else {
                 R transformedResult;
                 try {
-                    transformedResult = transformer.apply(assertNotNull(result), source, connection);
+                    transformedResult = transformer.apply(assertNotNull(result), source, connection, operationContext);
                 } catch (Throwable e) {
                     callback.onResult(null, e);
                     return;

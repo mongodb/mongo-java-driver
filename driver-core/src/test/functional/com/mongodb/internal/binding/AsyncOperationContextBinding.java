@@ -40,8 +40,9 @@ public final class AsyncOperationContextBinding implements AsyncReadWriteBinding
     }
 
     @Override
-    public void getWriteConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
-        wrapped.getWriteConnectionSource((result, t) -> {
+    public void getWriteConnectionSource(final OperationContext operationContext,
+                                         final SingleResultCallback<AsyncConnectionSource> callback) {
+        wrapped.getWriteConnectionSource(operationContext, (result, t) -> {
             if (t != null) {
                 callback.onResult(null, t);
             } else {
@@ -50,14 +51,11 @@ public final class AsyncOperationContextBinding implements AsyncReadWriteBinding
         });
     }
 
-    @Override
-    public OperationContext getOperationContext() {
-        return operationContext;
-    }
 
     @Override
-    public void getReadConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
-        wrapped.getReadConnectionSource((result, t) -> {
+    public void getReadConnectionSource(final OperationContext operationContext,
+                                        final SingleResultCallback<AsyncConnectionSource> callback) {
+        wrapped.getReadConnectionSource(operationContext, (result, t) -> {
             if (t != null) {
                 callback.onResult(null, t);
             } else {
@@ -69,14 +67,19 @@ public final class AsyncOperationContextBinding implements AsyncReadWriteBinding
 
     @Override
     public void getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference,
+                                        final OperationContext operationContext,
             final SingleResultCallback<AsyncConnectionSource> callback) {
-        wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference, (result, t) -> {
+        wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference, operationContext, (result, t) -> {
             if (t != null) {
                 callback.onResult(null, t);
             } else {
                 callback.onResult(new SessionBindingAsyncConnectionSource(result), null);
             }
         });
+    }
+
+    public OperationContext getOperationContext() {
+        return operationContext;
     }
 
     @Override
@@ -108,18 +111,13 @@ public final class AsyncOperationContextBinding implements AsyncReadWriteBinding
         }
 
         @Override
-        public OperationContext getOperationContext() {
-            return operationContext;
-        }
-
-        @Override
         public ReadPreference getReadPreference() {
             return wrapped.getReadPreference();
         }
 
         @Override
-        public void getConnection(final SingleResultCallback<AsyncConnection> callback) {
-            wrapped.getConnection(callback);
+        public void getConnection(final OperationContext operationContext, final SingleResultCallback<AsyncConnection> callback) {
+            wrapped.getConnection(operationContext, callback);
         }
 
         @Override
