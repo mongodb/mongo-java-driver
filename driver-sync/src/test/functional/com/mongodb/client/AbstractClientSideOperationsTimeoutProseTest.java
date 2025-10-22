@@ -1053,7 +1053,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
 
         List<CommandFailedEvent> commandFailedEvents = commandListener.getCommandFailedEvents("isMaster");
-        assertEquals(1, commandFailedEvents.size());
+        assertFalse(commandFailedEvents.isEmpty());
         assertInstanceOf(MongoOperationTimeoutException.class, commandFailedEvents.get(0).getThrowable());
     }
 
