@@ -789,7 +789,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                         writeModelIndex,
                                         new ConcreteClientUpdateResult(
                                                 individualOperationResponse.getInt32("n").getValue(),
-                                                individualOperationResponse.getInt32("nModified").getValue(),
+                                                individualOperationResponse.getInt32("nModified", new BsonInt32(0)).getValue(),
                                                 upsertedIdDocument == null ? null : upsertedIdDocument.get("_id")));
                             } else if (writeModel instanceof ConcreteClientNamespacedDeleteOneModel
                                     || writeModel instanceof ConcreteClientNamespacedDeleteManyModel) {
