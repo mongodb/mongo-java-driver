@@ -26,12 +26,14 @@ import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.binding.ReadBinding
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
+import com.mongodb.internal.connection.OperationContext
 import com.mongodb.internal.session.SessionContext
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -220,11 +222,9 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         def source = Stub(ConnectionSource)
         def connection = Mock(Connection)
         binding.readPreference >> ReadPreference.primary()
-        binding.operationContext >> operationContext
-        binding.readConnectionSource >> source
-        source.connection >> connection
+        binding.getReadConnectionSource(_) >> source
+        source.getConnection(_) >> connection
         source.retain() >> source
-        source.operationContext >> operationContext
         def commandDocument = BsonDocument.parse('''
             { "mapReduce" : "coll",
               "map" : { "$code" : "function(){ }" },
@@ -237,12 +237,12 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
                 new BsonJavaScript('function(){ }'), new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
 
         when:
-        operation.execute(binding)
+        operation.execute(binding, operationContext)
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                  6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.command(_, commandDocument, _, _, _, operationContext) >>
+        1 * connection.command(_, commandDocument, _, _, _, _) >>
                 new BsonDocument('results', new BsonArrayWrapper([]))
                         .append('counts',
                         new BsonDocument('input', new BsonInt32(0))
@@ -269,10 +269,8 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         def source = Stub(AsyncConnectionSource)
         def connection = Mock(AsyncConnection)
         binding.readPreference >> ReadPreference.primary()
-        binding.operationContext >> operationContext
-        binding.getReadConnectionSource(_) >> { it[0].onResult(source, null) }
-        source.operationContext >> operationContext
-        source.getConnection(_) >> { it[0].onResult(connection, null) }
+        binding.getReadConnectionSource(_ as OperationContext, _ as SingleResultCallback) >> { it[1].onResult(source, null) }
+        source.getConnection(_ as OperationContext, _ as SingleResultCallback) >> { it[1].onResult(connection, null) }
         source.retain() >> source
         def commandDocument = BsonDocument.parse('''
             { "mapReduce" : "coll",
@@ -286,12 +284,12 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
                 new BsonJavaScript('function(){ }'), new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
 
         when:
-        executeAsync(operation, binding)
+        executeAsync(operation, binding, operationContext)
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                  6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.commandAsync(_, commandDocument, _, _, _, operationContext, _) >> {
+        1 * connection.commandAsync(_, commandDocument, _, _, _, _, _) >> {
             it.last().onResult(new BsonDocument('results', new BsonArrayWrapper([]))
                     .append('counts',
                     new BsonDocument('input', new BsonInt32(0))

@@ -132,7 +132,10 @@ public class Crypt implements Closeable {
      * @param command   the unencrypted command
      * @return the encrypted command
      */
-    RawBsonDocument encrypt(final String databaseName, final RawBsonDocument command, @Nullable final Timeout timeoutOperation) {
+    RawBsonDocument encrypt(
+            final String databaseName,
+            final RawBsonDocument command,
+            @Nullable final Timeout timeout) {
         notNull("databaseName", databaseName);
         notNull("command", command);
 
@@ -141,7 +144,7 @@ public class Crypt implements Closeable {
         }
 
        try (MongoCryptContext encryptionContext = mongoCrypt.createEncryptionContext(databaseName, command)) {
-           return executeStateMachine(encryptionContext, databaseName, timeoutOperation);
+           return executeStateMachine(encryptionContext, databaseName, timeout);
         } catch (MongoCryptException e) {
             throw wrapInMongoException(e);
         }
@@ -274,24 +277,27 @@ public class Crypt implements Closeable {
         }
     }
 
-    private RawBsonDocument executeStateMachine(final MongoCryptContext cryptContext, @Nullable final String databaseName, @Nullable final Timeout operationTimeout) {
+    private RawBsonDocument executeStateMachine(
+            final MongoCryptContext cryptContext,
+            @Nullable final String databaseName,
+            @Nullable final Timeout timeout) {
         while (true) {
             State state = cryptContext.getState();
             switch (state) {
                 case NEED_MONGO_COLLINFO:
-                    collInfo(cryptContext, notNull("databaseName", databaseName), operationTimeout);
+                    collInfo(cryptContext, notNull("databaseName", databaseName), timeout);
                     break;
                 case NEED_MONGO_MARKINGS:
-                    mark(cryptContext, notNull("databaseName", databaseName), operationTimeout);
+                    mark(cryptContext, notNull("databaseName", databaseName), timeout);
                     break;
                 case NEED_KMS_CREDENTIALS:
                     fetchCredentials(cryptContext);
                     break;
                 case NEED_MONGO_KEYS:
-                    fetchKeys(cryptContext, operationTimeout);
+                    fetchKeys(cryptContext, timeout);
                     break;
                 case NEED_KMS:
-                    decryptKeys(cryptContext, operationTimeout);
+                    decryptKeys(cryptContext, timeout);
                     break;
                 case READY:
                     return cryptContext.finish();
@@ -320,9 +326,9 @@ public class Crypt implements Closeable {
         }
     }
 
-    private void mark(final MongoCryptContext cryptContext, final String databaseName, @Nullable final Timeout operationTimeout) {
+    private void mark(final MongoCryptContext cryptContext, final String databaseName, @Nullable final Timeout timeout) {
         try {
-            RawBsonDocument markedCommand = assertNotNull(commandMarker).mark(databaseName, cryptContext.getMongoOperation(), operationTimeout);
+            RawBsonDocument markedCommand = assertNotNull(commandMarker).mark(databaseName, cryptContext.getMongoOperation(), timeout);
             cryptContext.addMongoOperationResult(markedCommand);
             cryptContext.completeMongoOperation();
         } catch (Throwable t) {

@@ -229,13 +229,12 @@ public class InternalStreamConnection implements InternalConnection {
     public void open(final OperationContext originalOperationContext) {
         isTrue("Open already called", stream == null);
         stream = streamFactory.create(serverId.getAddress());
+        OperationContext operationContext = originalOperationContext;
         try {
-            OperationContext operationContext = originalOperationContext
-                    .withTimeoutContext(originalOperationContext.getTimeoutContext().withComputedServerSelectionTimeoutContext());
-
             stream.open(operationContext);
-
             InternalConnectionInitializationDescription initializationDescription = connectionInitializer.startHandshake(this, operationContext);
+
+            operationContext = operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout);
             initAfterHandshakeStart(initializationDescription);
 
             initializationDescription = connectionInitializer.finishHandshake(this, initializationDescription, operationContext);
@@ -253,10 +252,8 @@ public class InternalStreamConnection implements InternalConnection {
     @Override
     public void openAsync(final OperationContext originalOperationContext, final SingleResultCallback<Void> callback) {
         assertNull(stream);
+        OperationContext operationContext = originalOperationContext;
         try {
-            OperationContext operationContext = originalOperationContext
-                    .withTimeoutContext(originalOperationContext.getTimeoutContext().withComputedServerSelectionTimeoutContext());
-
             stream = streamFactory.create(serverId.getAddress());
             stream.openAsync(operationContext, new AsyncCompletionHandler<Void>() {
 
@@ -270,17 +267,10 @@ public class InternalStreamConnection implements InternalConnection {
                                     } else {
                                         assertNotNull(initialResult);
                                         initAfterHandshakeStart(initialResult);
-                                        connectionInitializer.finishHandshakeAsync(InternalStreamConnection.this,
-                                                initialResult, operationContext, (completedResult, completedException) ->  {
-                                                        if (completedException != null) {
-                                                            close();
-                                                            callback.onResult(null, completedException);
-                                                        } else {
-                                                            assertNotNull(completedResult);
-                                                            initAfterHandshakeFinish(completedResult);
-                                                            callback.onResult(null, null);
-                                                        }
-                                                });
+                                        finishHandshakeAsync(
+                                                initialResult,
+                                                operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout),
+                                                callback);
                                     }
                             });
                 }
@@ -295,6 +285,22 @@ public class InternalStreamConnection implements InternalConnection {
             close();
             callback.onResult(null, t);
         }
+    }
+
+    private void finishHandshakeAsync(final InternalConnectionInitializationDescription initialResult,
+                                      final OperationContext operationContext,
+                                      final SingleResultCallback<Void> callback) {
+        connectionInitializer.finishHandshakeAsync(InternalStreamConnection.this, initialResult, operationContext,
+                (completedResult, completedException) ->  {
+                    if (completedException != null) {
+                        close();
+                        callback.onResult(null, completedException);
+                    } else {
+                        assertNotNull(completedResult);
+                        initAfterHandshakeFinish(completedResult);
+                        callback.onResult(null, null);
+                    }
+                });
     }
 
     private void initAfterHandshakeStart(final InternalConnectionInitializationDescription initializationDescription) {

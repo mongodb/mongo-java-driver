@@ -182,8 +182,9 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
     def 'should replace a single document'() {
         given:
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
+        def binding = getBinding()
         createBulkWriteOperationForInsert(getNamespace(), true, ACKNOWLEDGED, false, asList(insert))
-                .execute(getBinding())
+                .execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
 
         def replacement = new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                 new BsonDocument('_id', new BsonInt32(1)).append('x', new BsonInt32(1)), REPLACE)
