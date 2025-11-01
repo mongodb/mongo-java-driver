@@ -774,8 +774,11 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                     for (BsonDocument individualOperationResponse : response.getCursorExhaust()) {
                         int individualOperationIndexInBatch = individualOperationResponse.getInt32("idx").getValue();
                         int writeModelIndex = batchStartModelIndex + individualOperationIndexInBatch;
-                        if (individualOperationResponse.getNumber("ok").intValue() == 1) {
-                            assertTrue(verboseResultsSetting);
+                        if (individualOperationResponse.getNumber("ok").intValue() == 1 && verboseResultsSetting) {
+                            // Note: Previously, assertTrue(verboseResultsSetting) was used here because the server was not supposed
+                            // to return successful operation results in the cursor when verboseResultsSetting is false.
+                            // Due to server bug SERVER-113344, these unexpected results must be ignored until we stop supporting server
+                            // versions with this bug. When that happens, restore assertTrue(verboseResultsSetting) here.
                             AbstractClientNamespacedWriteModel writeModel = getNamespacedModel(models, writeModelIndex);
                             if (writeModel instanceof ConcreteClientNamespacedInsertOneModel) {
                                 insertResults.put(
