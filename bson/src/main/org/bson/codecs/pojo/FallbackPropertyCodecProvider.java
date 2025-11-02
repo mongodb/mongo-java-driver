@@ -20,6 +20,8 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.lang.reflect.Type;
+import java.util.List;
+import java.util.stream.Collectors;
 
 final class FallbackPropertyCodecProvider implements PropertyCodecProvider {
     private final CodecRegistry codecRegistry;
@@ -37,6 +39,10 @@ final class FallbackPropertyCodecProvider implements PropertyCodecProvider {
         if (clazz == pojoCodec.getEncoderClass()) {
             return (Codec<S>) pojoCodec;
         }
-        return codecRegistry.get(type.getType(), type.getTypeParameters().stream().<Type>map(TypeWithTypeParameters::getType).toList());
+        List<Type> types = type.getTypeParameters().stream().<Type>map(TypeWithTypeParameters::getType).collect(Collectors.toList());
+        if (!types.isEmpty()) {
+            return codecRegistry.get(type.getType(), types);
+        }
+        return codecRegistry.get(type.getType());
     }
 }
