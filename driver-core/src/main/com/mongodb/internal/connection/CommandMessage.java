@@ -22,6 +22,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.internal.MongoNamespaceHelper;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
 import com.mongodb.internal.session.SessionContext;
@@ -278,7 +279,7 @@ public final class CommandMessage extends RequestMessage {
 
     private int writeOpQuery(final ByteBufferBsonOutput bsonOutput) {
         bsonOutput.writeInt32(0);
-        bsonOutput.writeCString(new MongoNamespace(getDatabase(), "$cmd").getFullName());
+        bsonOutput.writeCString(new MongoNamespace(getDatabase(), MongoNamespaceHelper.COMMAND_COLLECTION_NAME).getFullName());
         bsonOutput.writeInt32(0);
         bsonOutput.writeInt32(-1);
 

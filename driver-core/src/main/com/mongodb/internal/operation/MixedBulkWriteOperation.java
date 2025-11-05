@@ -101,6 +101,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
         this.retryWrites = retryWrites;
     }
 
+    @Override
     public MongoNamespace getNamespace() {
         return namespace;
     }
@@ -185,8 +186,8 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
     }
 
     @Override
-    public BulkWriteResult execute(final WriteBinding binding) {
-        TimeoutContext timeoutContext = binding.getOperationContext().getTimeoutContext();
+    public BulkWriteResult execute(final WriteBinding binding, final OperationContext operationContext) {
+        TimeoutContext timeoutContext = operationContext.getTimeoutContext();
         /* We cannot use the tracking of attempts built in the `RetryState` class because conceptually we have to maintain multiple attempt
          * counters while executing a single bulk write operation:
          * - a counter that limits attempts to select server and checkout a connection before we created a batch;
@@ -196,24 +197,26 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
          * and the code related to the attempt tracking in `BulkWriteTracker` will be removed. */
         RetryState retryState = new RetryState(timeoutContext);
         BulkWriteTracker.attachNew(retryState, retryWrites, timeoutContext);
-        Supplier<BulkWriteResult> retryingBulkWrite = decorateWriteWithRetries(retryState, binding.getOperationContext(), () ->
-            withSourceAndConnection(binding::getWriteConnectionSource, true, (source, connection) -> {
+        Supplier<BulkWriteResult> retryingBulkWrite = decorateWriteWithRetries(retryState, operationContext, () ->
+            withSourceAndConnection(binding::getWriteConnectionSource, true, (source, connection, operationContextWithMinRTT) -> {
+                TimeoutContext timeoutContextWithMinRtt = operationContextWithMinRTT.getTimeoutContext();
                 ConnectionDescription connectionDescription = connection.getDescription();
                 // attach `maxWireVersion` ASAP because it is used to check whether we can retry
                 retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true);
-                SessionContext sessionContext = binding.getOperationContext().getSessionContext();
+                SessionContext sessionContext = operationContext.getSessionContext();
                 WriteConcern writeConcern = validateAndGetEffectiveWriteConcern(this.writeConcern, sessionContext);
                 if (!isRetryableWrite(retryWrites, writeConcern, connectionDescription, sessionContext)) {
-                    handleMongoWriteConcernWithResponseException(retryState, true, timeoutContext);
+                    handleMongoWriteConcernWithResponseException(retryState, true, timeoutContextWithMinRtt);
                 }
                 validateWriteRequests(connectionDescription, bypassDocumentValidation, writeRequests, writeConcern);
                 if (!retryState.attachment(AttachmentKeys.bulkWriteTracker()).orElseThrow(Assertions::fail).batch().isPresent()) {
                     BulkWriteTracker.attachNew(retryState, BulkWriteBatch.createBulkWriteBatch(namespace,
                             connectionDescription, ordered, writeConcern,
-                            bypassDocumentValidation, retryWrites, writeRequests, binding.getOperationContext(), comment, variables), timeoutContext);
+                                    bypassDocumentValidation, retryWrites, writeRequests, operationContextWithMinRTT, comment, variables),
+                            timeoutContextWithMinRtt);
                 }
-                return executeBulkWriteBatch(retryState, writeConcern, binding, connection);
-            })
+                return executeBulkWriteBatch(retryState, writeConcern, binding, operationContextWithMinRTT, connection);
+            }, operationContext)
         );
         try {
             return retryingBulkWrite.get();
@@ -222,24 +225,26 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
         }
     }
 
-    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<BulkWriteResult> callback) {
-        TimeoutContext timeoutContext = binding.getOperationContext().getTimeoutContext();
+    public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<BulkWriteResult> callback) {
+        TimeoutContext timeoutContext = operationContext.getTimeoutContext();
         // see the comment in `execute(WriteBinding)` explaining the manual tracking of attempts
         RetryState retryState = new RetryState(timeoutContext);
         BulkWriteTracker.attachNew(retryState, retryWrites, timeoutContext);
         binding.retain();
         AsyncCallbackSupplier<BulkWriteResult> retryingBulkWrite = this.<BulkWriteResult>decorateWriteWithRetries(retryState,
-                binding.getOperationContext(),
+                operationContext,
                 funcCallback ->
-            withAsyncSourceAndConnection(binding::getWriteConnectionSource, true, funcCallback,
-                    (source, connection, releasingCallback) -> {
+            withAsyncSourceAndConnection(binding::getWriteConnectionSource, true, operationContext, funcCallback,
+                    (source, connection, operationContextWithMinRtt, releasingCallback) -> {
+                TimeoutContext timeoutContextWithMinRtt = operationContextWithMinRtt.getTimeoutContext();
                 ConnectionDescription connectionDescription = connection.getDescription();
+
                 // attach `maxWireVersion` ASAP because it is used to check whether we can retry
                 retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true);
-                SessionContext sessionContext = binding.getOperationContext().getSessionContext();
+                SessionContext sessionContext = operationContextWithMinRtt.getSessionContext();
                 WriteConcern writeConcern = validateAndGetEffectiveWriteConcern(this.writeConcern, sessionContext);
-                if (!isRetryableWrite(retryWrites, writeConcern, connectionDescription, sessionContext)
-                        && handleMongoWriteConcernWithResponseExceptionAsync(retryState, releasingCallback, timeoutContext)) {
+                        if (!isRetryableWrite(retryWrites, writeConcern, connectionDescription, sessionContext)
+                        && handleMongoWriteConcernWithResponseExceptionAsync(retryState, releasingCallback, timeoutContextWithMinRtt)) {
                     return;
                 }
                 if (validateWriteRequestsAndCompleteIfInvalid(connectionDescription, bypassDocumentValidation, writeRequests,
@@ -250,13 +255,13 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                     if (!retryState.attachment(AttachmentKeys.bulkWriteTracker()).orElseThrow(Assertions::fail).batch().isPresent()) {
                         BulkWriteTracker.attachNew(retryState, BulkWriteBatch.createBulkWriteBatch(namespace,
                                 connectionDescription, ordered, writeConcern,
-                                bypassDocumentValidation, retryWrites, writeRequests, binding.getOperationContext(), comment, variables), timeoutContext);
+                                bypassDocumentValidation, retryWrites, writeRequests, operationContextWithMinRtt, comment, variables), timeoutContextWithMinRtt);
                     }
                 } catch (Throwable t) {
                     releasingCallback.onResult(null, t);
                     return;
                 }
-                executeBulkWriteBatchAsync(retryState, writeConcern, binding, connection, releasingCallback);
+                executeBulkWriteBatchAsync(retryState, writeConcern, binding, operationContextWithMinRtt, connection, releasingCallback);
             })
         ).whenComplete(binding::release);
         retryingBulkWrite.get(exceptionTransformingCallback(errorHandlingCallback(callback, LOGGER)));
@@ -266,12 +271,12 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final RetryState retryState,
             final WriteConcern effectiveWriteConcern,
             final WriteBinding binding,
+            final OperationContext operationContext,
             final Connection connection) {
         BulkWriteTracker currentBulkWriteTracker = retryState.attachment(AttachmentKeys.bulkWriteTracker())
                 .orElseThrow(Assertions::fail);
         BulkWriteBatch currentBatch = currentBulkWriteTracker.batch().orElseThrow(Assertions::fail);
         int maxWireVersion = connection.getDescription().getMaxWireVersion();
-        OperationContext operationContext = binding.getOperationContext();
         TimeoutContext timeoutContext = operationContext.getTimeoutContext();
 
         while (currentBatch.shouldProcessBatch()) {
@@ -314,6 +319,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final RetryState retryState,
             final WriteConcern effectiveWriteConcern,
             final AsyncWriteBinding binding,
+            final OperationContext operationContext,
             final AsyncConnection connection,
             final SingleResultCallback<BulkWriteResult> callback) {
         LoopState loopState = new LoopState();
@@ -326,13 +332,13 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             if (loopState.breakAndCompleteIf(() -> !currentBatch.shouldProcessBatch(), iterationCallback)) {
                 return;
             }
-            OperationContext operationContext = binding.getOperationContext();
+
             TimeoutContext timeoutContext = operationContext.getTimeoutContext();
             executeCommandAsync(effectiveWriteConcern, operationContext, connection, currentBatch, (result, t) -> {
                 if (t == null) {
                     if (currentBatch.getRetryWrites() && !operationContext.getSessionContext().hasActiveTransaction()) {
                         MongoException writeConcernBasedError = ProtocolHelper.createSpecialException(result,
-                                connection.getDescription().getServerAddress(), "errMsg", binding.getOperationContext().getTimeoutContext());
+                                connection.getDescription().getServerAddress(), "errMsg", operationContext.getTimeoutContext());
                         if (writeConcernBasedError != null) {
                             if (currentBulkWriteTracker.lastAttempt()) {
                                 addRetryableWriteErrorLabel(writeConcernBasedError, maxWireVersion);

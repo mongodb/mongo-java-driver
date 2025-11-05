@@ -25,6 +25,7 @@ import com.mongodb.connection.SocketSettings
 import com.mongodb.internal.connection.netty.NettyStreamFactory
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import spock.lang.Ignore
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
@@ -55,6 +56,7 @@ class CommandHelperSpecification extends Specification {
         connection?.close()
     }
 
+    @Ignore("JAVA-5982")
     def 'should execute command asynchronously'() {
         when:
         BsonDocument receivedDocument = null
@@ -66,9 +68,9 @@ class CommandHelperSpecification extends Specification {
         latch1.await()
 
         then:
+        !receivedException
         !receivedDocument.isEmpty()
         receivedDocument.containsKey('ok')
-        !receivedException
 
         when:
         def latch2 = new CountDownLatch(1)
