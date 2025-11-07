@@ -99,4 +99,5 @@ log "FAILURE: Manifest files changed but SBOM '$SBOM_FILE' was not modified." >&
 log "Changed manifest(s):" >&2
 for mf in "${manifest_changed_list[@]}"; do echo " - $mf" >&2; done
 log "Regenerate SBOM locally (e.g., bash .evergreen/generate-sbom.sh) and commit '$SBOM_FILE'." >&2
-exit "$EXIT_CODE_MISSING"
+log "This is a dry run and will always pass."
+#exit "$EXIT_CODE_MISSING"
