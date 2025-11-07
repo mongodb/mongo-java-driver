@@ -856,6 +856,7 @@ tasks:
             - ".evergreen/static-checks.sh"
 
   - name: "verify-sbom-task"
+    allowed_requesters: ["patch", "github_pr"]
     tags: [ "sbom" ]
     commands:
       - command: shell.exec
