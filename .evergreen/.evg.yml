@@ -855,6 +855,19 @@ tasks:
           args:
             - ".evergreen/static-checks.sh"
 
+  - name: "verify-sbom-task"
+    tags: [ "sbom" ]
+    commands:
+      - command: shell.exec
+        type: "test"
+        params:
+          working_dir: "src"
+          shell: "bash"
+          script: |
+            ${PREPARE_SHELL}
+            echo "Verifying SBOM files"
+            bash .evergreen/verify-sbom.sh
+
   - name: "test-bson-and-crypt-task"
     commands:
       - func: "run-tests"
@@ -2230,6 +2243,20 @@ buildvariants:
     run_on: rhel80-small
     tasks:
       - name: "static-analysis-task"
+
+  - name: "verify-sbom"
+    display_name: "Verify SBOM freshness"
+    run_on: ubuntu2204-small
+    # Only trigger when dependency manifests or the SBOM itself change.
+    paths:
+      - "gradle/libs.versions.toml"
+      - "gradle.properties"
+      - "settings.gradle.kts"
+      - "build.gradle.kts"
+      - "**/build.gradle.kts"
+      - "sbom.json"
+    tasks:
+      - name: "verify-sbom-task"
 
   - name: "perf"
     display_name: "Performance Tests"
