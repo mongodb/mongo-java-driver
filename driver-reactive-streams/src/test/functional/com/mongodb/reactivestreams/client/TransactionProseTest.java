@@ -43,6 +43,7 @@ public class TransactionProseTest {
     @BeforeEach
     public void setUp() {
         assumeTrue(isSharded());
+        assumeTrue(serverVersionAtLeast(4, 2));
         ConnectionString multiMongosConnectionString = getMultiMongosConnectionString();
         assumeTrue(multiMongosConnectionString != null);
 
