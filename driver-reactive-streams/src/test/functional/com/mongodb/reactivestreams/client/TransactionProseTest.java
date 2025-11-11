@@ -89,6 +89,8 @@ public class TransactionProseTest {
             assumeTrue(serverVersionAtLeast(4, 0));
         }
 
+        Mono.from(collection.insertOne(Document.parse("{}"))).block();
+
         Mono<Document> testWriteConcern = Mono.from(client.startSession())
                 .flatMap(session ->
                         Mono.fromRunnable(session::startTransaction)

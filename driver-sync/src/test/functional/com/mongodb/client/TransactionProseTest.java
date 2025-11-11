@@ -127,6 +127,8 @@ public class TransactionProseTest {
             assumeTrue(serverVersionAtLeast(4, 0));
         }
 
+        collection.insertOne(Document.parse("{}"));
+
         try (ClientSession session = client.startSession()) {
             MongoCollection<Document> wcCollection = collection.withWriteConcern(WriteConcern.UNACKNOWLEDGED);
 
