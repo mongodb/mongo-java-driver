@@ -31,6 +31,7 @@ import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static org.junit.jupiter.api.Assumptions.abort;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -48,7 +49,10 @@ public class TransactionProseTest {
             assumeTrue(connectionString != null);
         }
 
-        client = MongoClients.create(MongoClientSettings.builder().applyConnectionString(connectionString).build());
+        client = MongoClients.create(MongoClientSettings.builder()
+                .applyConnectionString(connectionString)
+                .retryWrites(!isStandalone())
+                .build());
 
         collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
         StepVerifier.create(Mono.from(collection.drop())).verifyComplete();
