@@ -27,8 +27,7 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.util.concurrent.TimeUnit;
-
+import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.isSharded;
@@ -42,17 +41,14 @@ public class TransactionProseTest {
 
     @BeforeEach
     public void setUp() {
-        assumeTrue(isSharded());
-        assumeTrue(serverVersionAtLeast(4, 2));
-        ConnectionString multiMongosConnectionString = getMultiMongosConnectionString();
-        assumeTrue(multiMongosConnectionString != null);
+        ConnectionString connectionString = getConnectionString();
+        if (isSharded()) {
+            assumeTrue(serverVersionAtLeast(4, 2));
+            connectionString = getMultiMongosConnectionString();
+            assumeTrue(connectionString != null);
+        }
 
-        MongoClientSettings.Builder builder = MongoClientSettings.builder()
-                .applyConnectionString(multiMongosConnectionString);
-
-        client = MongoClients.create(MongoClientSettings.builder(builder.build())
-                .applyToSocketSettings(builder1 -> builder1.readTimeout(5, TimeUnit.SECONDS))
-                .build());
+        client = MongoClients.create(MongoClientSettings.builder().applyConnectionString(connectionString).build());
 
         collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
         StepVerifier.create(Mono.from(collection.drop())).verifyComplete();
@@ -85,11 +81,18 @@ public class TransactionProseTest {
     @DisplayName("Options Inside Transaction Prose Tests. 1. Write concern not inherited from collection object inside transaction")
     @Test
     void testWriteConcernInheritance() {
-        assumeTrue(serverVersionAtLeast(4, 4));
+        // Create a MongoClient running against a configured sharded/replica set/load balanced cluster.
+        // transactions require a 4.0+ server when non-sharded and 4.2+ when sharded
+        if (isSharded()) {
+            assumeTrue(serverVersionAtLeast(4, 2));
+        } else {
+            assumeTrue(serverVersionAtLeast(4, 0));
+        }
+
         Mono<Document> testWriteConcern = Mono.from(client.startSession())
                 .flatMap(session ->
                         Mono.fromRunnable(session::startTransaction)
-                                .then(Mono.from(collection.withWriteConcern(new WriteConcern(0)).insertOne(session, new Document("n", 1))))
+                                .then(Mono.from(collection.withWriteConcern(WriteConcern.UNACKNOWLEDGED).insertOne(session, new Document("n", 1))))
                                 .then(Mono.from(session.commitTransaction()))
                                 .then(Mono.from(collection.find(new Document("n", 1)).first()))
                                 .doFinally(signalType -> session.close())

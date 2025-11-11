@@ -29,8 +29,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.isSharded;
@@ -47,16 +47,14 @@ public class TransactionProseTest {
 
     @BeforeEach
     public void setUp() {
-        assumeTrue(isSharded());
-        ConnectionString multiMongosConnectionString = getMultiMongosConnectionString();
-        assumeTrue(multiMongosConnectionString != null);
+        ConnectionString connectionString = getConnectionString();
+        if (isSharded()) {
+            assumeTrue(serverVersionAtLeast(4, 2));
+            connectionString = getMultiMongosConnectionString();
+            assumeTrue(connectionString != null);
+        }
 
-        MongoClientSettings.Builder builder = MongoClientSettings.builder()
-                .applyConnectionString(multiMongosConnectionString);
-
-        client = MongoClients.create(MongoClientSettings.builder(builder.build())
-                .applyToSocketSettings(builder1 -> builder1.readTimeout(5, TimeUnit.SECONDS))
-                .build());
+        client = MongoClients.create(MongoClientSettings.builder().applyConnectionString(connectionString).build());
 
         collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
         collection.drop();
@@ -76,6 +74,7 @@ public class TransactionProseTest {
             + "and normal server selection is performed for the next operation.")
     @Test
     public void testNewTransactionUnpinsSession() {
+        assumeTrue(isSharded());
         collection.insertOne(Document.parse("{}"));
         try (ClientSession session = client.startSession()) {
             session.startTransaction();
@@ -99,7 +98,8 @@ public class TransactionProseTest {
             + " and normal server selection is performed")
     @Test
     public void testNonTransactionOpsUnpinsSession() throws MongoException {
-         collection.insertOne(Document.parse("{}"));
+        assumeTrue(isSharded());
+        collection.insertOne(Document.parse("{}"));
         try (ClientSession session = client.startSession()) {
             session.startTransaction();
             collection.insertOne(session, Document.parse("{ _id : 1 }"));
@@ -119,7 +119,14 @@ public class TransactionProseTest {
     @DisplayName("Options Inside Transaction Prose Tests. 1. Write concern not inherited from collection object inside transaction")
     @Test
     void testWriteConcernInheritance() {
-        assumeTrue(serverVersionAtLeast(4, 4));
+        // Create a MongoClient running against a configured sharded/replica set/load balanced cluster.
+        // transactions require a 4.0+ server when non-sharded and 4.2+ when sharded
+        if (isSharded()) {
+            assumeTrue(serverVersionAtLeast(4, 2));
+        } else {
+            assumeTrue(serverVersionAtLeast(4, 0));
+        }
+
         try (ClientSession session = client.startSession()) {
             MongoCollection<Document> wcCollection = collection.withWriteConcern(WriteConcern.UNACKNOWLEDGED);
 
