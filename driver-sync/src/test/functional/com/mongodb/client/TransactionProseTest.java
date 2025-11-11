@@ -121,7 +121,7 @@ public class TransactionProseTest {
     void testWriteConcernInheritance() {
         assumeTrue(serverVersionAtLeast(4, 4));
         try (ClientSession session = client.startSession()) {
-            MongoCollection<Document> wcCollection = collection.withWriteConcern(new WriteConcern(0));
+            MongoCollection<Document> wcCollection = collection.withWriteConcern(WriteConcern.UNACKNOWLEDGED);
 
             assertDoesNotThrow(() -> {
                         session.startTransaction();
