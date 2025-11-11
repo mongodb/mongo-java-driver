@@ -42,6 +42,7 @@ public class TransactionProseTest {
 
     @BeforeEach
     public void setUp() {
+        assumeTrue(!isStandalone());
         ConnectionString connectionString = getConnectionString();
         if (isSharded()) {
             assumeTrue(serverVersionAtLeast(4, 2));
@@ -51,7 +52,6 @@ public class TransactionProseTest {
 
         client = MongoClients.create(MongoClientSettings.builder()
                 .applyConnectionString(connectionString)
-                .retryWrites(!isStandalone())
                 .build());
 
         collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
