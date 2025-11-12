@@ -23,6 +23,8 @@ import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerType;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.event.ServerListener;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
@@ -30,9 +32,11 @@ import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.connection.ServerType.UNKNOWN;
 import static com.mongodb.internal.connection.EventHelper.wouldDescriptionsGenerateEquivalentEvents;
 import static com.mongodb.internal.connection.ServerDescriptionHelper.unknownConnectingServerDescription;
+import static java.lang.String.format;
 
 @ThreadSafe
 final class DefaultSdamServerDescriptionManager implements SdamServerDescriptionManager {
+    private static final Logger LOGGER = Loggers.getLogger("connection");
     private final Cluster cluster;
     private final ServerId serverId;
     private final ServerListener serverListener;
@@ -135,6 +139,15 @@ final class DefaultSdamServerDescriptionManager implements SdamServerDescription
                 connectionPool.invalidate(sdamIssue.exception().orElse(null));
             }
             serverMonitor.connect();
+        } else if (beforeHandshake
+                && (sdamIssue.relatedToNetworkNotTimeout() || sdamIssue.relatedToNetworkTimeout())) {
+            // clients MUST NOT clear the connection pool and MUST NOT mark the server Unknown when a connection establishment
+            // fails with network errors or timeouts
+            // TODO if we can detect reliably TLS handshake error (ex revoked certificate) we may choose to clear the pool and mark the
+            //  server unknown
+            LOGGER.info(format("Connection pool is not cleared and server is not marked Unknown since we encountered a timeout or network"
+                    + " error before the handshake: %s", sdamIssue.exception().orElse(null)));
+            serverMonitor.cancelCurrentCheck();
         } else if (sdamIssue.relatedToNetworkNotTimeout()
                 || (beforeHandshake && (sdamIssue.relatedToNetworkTimeout() || sdamIssue.relatedToAuth()))) {
             updateDescription(sdamIssue.serverDescription());
