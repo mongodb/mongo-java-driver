@@ -234,7 +234,7 @@ class DefaultServerSpecification extends Specification {
         ]
     }
 
-    def 'failed open should invalidate the server'() {
+    def 'timeout and network error should not invalidate the pool'() {
         given:
         def connectionPool = Mock(ConnectionPool)
         connectionPool.get(_) >> { throw exceptionToThrow }
@@ -247,7 +247,7 @@ class DefaultServerSpecification extends Specification {
         then:
         def e = thrown(MongoException)
         e.is(exceptionToThrow)
-        1 * connectionPool.invalidate(exceptionToThrow)
+        0 * connectionPool.invalidate(exceptionToThrow)
         1 * serverMonitor.cancelCurrentCheck()
 
         where:
