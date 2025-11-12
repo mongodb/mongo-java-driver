@@ -775,7 +775,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                         int individualOperationIndexInBatch = individualOperationResponse.getInt32("idx").getValue();
                         int writeModelIndex = batchStartModelIndex + individualOperationIndexInBatch;
                         if (individualOperationResponse.getNumber("ok").intValue() == 1 && verboseResultsSetting) {
-                            // Note: Previously, assertTrue(verboseResultsSetting) was used here because the server was not supposed
+                            //TODO-JAVA-6002 Previously, assertTrue(verboseResultsSetting) was used here because the server was not supposed
                             // to return successful operation results in the cursor when verboseResultsSetting is false.
                             // Due to server bug SERVER-113344, these unexpected results must be ignored until we stop supporting server
                             // versions with this bug. When that happens, restore assertTrue(verboseResultsSetting) here.
@@ -792,6 +792,10 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                         writeModelIndex,
                                         new ConcreteClientUpdateResult(
                                                 individualOperationResponse.getInt32("n").getValue(),
+                                                //TODO-JAVA-6005 Previously, we did not provide a default value of 0 because the
+                                                // server was suppose to return nModified as 0 when no documents were changed.
+                                                // Due to server bug SERVER-113026, we must provide a default of 0 until we stop supporting
+                                                // server versions with this bug. When that happens, remove the default value for nModified.
                                                 individualOperationResponse.getInt32("nModified", new BsonInt32(0)).getValue(),
                                                 upsertedIdDocument == null ? null : upsertedIdDocument.get("_id")));
                             } else if (writeModel instanceof ConcreteClientNamespacedDeleteOneModel
