@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.internal.VisibleForTesting;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonElement;
 import org.bson.FieldNameValidator;
@@ -60,8 +61,8 @@ public abstract class DualMessageSequences extends MessageSequences {
     String getSecondSequenceId() {
         return secondSequenceId;
     }
-
-    protected abstract EncodeDocumentsResult encodeDocuments(WritersProviderAndLimitsChecker writersProviderAndLimitsChecker);
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PROTECTED)
+    public abstract EncodeDocumentsResult encodeDocuments(WritersProviderAndLimitsChecker writersProviderAndLimitsChecker);
 
     /**
      * @see #tryWrite(WriteAction)
