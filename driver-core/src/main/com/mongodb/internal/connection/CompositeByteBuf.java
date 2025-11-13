@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.assertions.Assertions;
 import org.bson.ByteBuf;
 
 import java.nio.Buffer;
@@ -27,6 +26,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.String.format;
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static org.bson.assertions.Assertions.isTrueArgument;
 import static org.bson.assertions.Assertions.notNull;
 
@@ -323,7 +323,7 @@ class CompositeByteBuf implements ByteBuf {
         }
         components.forEach(c -> c.buffer.release());
         if (referenceCount.get() == 0) {
-            Assertions.assertTrue(components.stream().noneMatch(c -> c.buffer.getReferenceCount() > 0),
+            assertTrue(components.stream().noneMatch(c -> c.buffer.getReferenceCount() > 0),
                     "All component buffers should have reference count 0 when CompositeByteBuf is fully released, but some still have references.");
         }
     }
