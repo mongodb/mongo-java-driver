@@ -772,40 +772,24 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                     deletedCount += response.getNDeleted();
                     Map<Integer, BsonValue> insertModelDocumentIds = batchResult.getInsertModelDocumentIds();
                     for (BsonDocument individualOperationResponse : response.getCursorExhaust()) {
+                        int okFieldValue = individualOperationResponse.getNumber("ok").intValue();
+                        if (okFieldValue == 1 && !verboseResultsSetting) {
+                            //TODO-JAVA-6002 Previously, assertTrue(verboseResultsSetting) was used when okStatus == 1 because the server
+                            // was not supposed to return successful operation results in the cursor when verboseResultsSetting is false.
+                            // Due to server bug SERVER-113344, these unexpected results must be ignored until we stop supporting server
+                            // versions affected by this bug. When that happens, restore assertTrue(verboseResultsSetting).
+                            continue;
+                        }
                         int individualOperationIndexInBatch = individualOperationResponse.getInt32("idx").getValue();
                         int writeModelIndex = batchStartModelIndex + individualOperationIndexInBatch;
-                        if (individualOperationResponse.getNumber("ok").intValue() == 1 && verboseResultsSetting) {
-                            //TODO-JAVA-6002 Previously, assertTrue(verboseResultsSetting) was used here because the server was not supposed
-                            // to return successful operation results in the cursor when verboseResultsSetting is false.
-                            // Due to server bug SERVER-113344, these unexpected results must be ignored until we stop supporting server
-                            // versions with this bug. When that happens, restore assertTrue(verboseResultsSetting) here.
-                            AbstractClientNamespacedWriteModel writeModel = getNamespacedModel(models, writeModelIndex);
-                            if (writeModel instanceof ConcreteClientNamespacedInsertOneModel) {
-                                insertResults.put(
-                                        writeModelIndex,
-                                        new ConcreteClientInsertOneResult(insertModelDocumentIds.get(individualOperationIndexInBatch)));
-                            } else if (writeModel instanceof ConcreteClientNamespacedUpdateOneModel
-                                    || writeModel instanceof ConcreteClientNamespacedUpdateManyModel
-                                    || writeModel instanceof ConcreteClientNamespacedReplaceOneModel) {
-                                BsonDocument upsertedIdDocument = individualOperationResponse.getDocument("upserted", null);
-                                updateResults.put(
-                                        writeModelIndex,
-                                        new ConcreteClientUpdateResult(
-                                                individualOperationResponse.getInt32("n").getValue(),
-                                                //TODO-JAVA-6005 Previously, we did not provide a default value of 0 because the
-                                                // server was suppose to return nModified as 0 when no documents were changed.
-                                                // Due to server bug SERVER-113026, we must provide a default of 0 until we stop supporting
-                                                // server versions with this bug. When that happens, remove the default value for nModified.
-                                                individualOperationResponse.getInt32("nModified", new BsonInt32(0)).getValue(),
-                                                upsertedIdDocument == null ? null : upsertedIdDocument.get("_id")));
-                            } else if (writeModel instanceof ConcreteClientNamespacedDeleteOneModel
-                                    || writeModel instanceof ConcreteClientNamespacedDeleteManyModel) {
-                                deleteResults.put(
-                                        writeModelIndex,
-                                        new ConcreteClientDeleteResult(individualOperationResponse.getInt32("n").getValue()));
-                            } else {
-                                fail(writeModel.getClass().toString());
-                            }
+                        if (okFieldValue == 1) {
+                            collectSuccessfulIndividualOperationResult(
+                                    individualOperationResponse,
+                                    writeModelIndex,
+                                    individualOperationIndexInBatch, insertResults,
+                                    insertModelDocumentIds,
+                                    updateResults,
+                                    deleteResults);
                         } else {
                             batchResultsHaveInfoAboutSuccessfulIndividualOperations = batchResultsHaveInfoAboutSuccessfulIndividualOperations
                                     || (orderedSetting && individualOperationIndexInBatch > 0);
@@ -842,6 +826,42 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                         assertNotNull(serverAddress));
             } else {
                 throw assertNotNull(topLevelError);
+            }
+        }
+
+        private void collectSuccessfulIndividualOperationResult(final BsonDocument individualOperationResponse,
+                                                                final int writeModelIndex,
+                                                                final int individualOperationIndexInBatch,
+                                                                final Map<Integer, ClientInsertOneResult> insertResults,
+                                                                final Map<Integer, BsonValue> insertModelDocumentIds,
+                                                                final Map<Integer, ClientUpdateResult> updateResults,
+                                                                final Map<Integer, ClientDeleteResult> deleteResults) {
+            AbstractClientNamespacedWriteModel writeModel = getNamespacedModel(models, writeModelIndex);
+            if (writeModel instanceof ConcreteClientNamespacedInsertOneModel) {
+                insertResults.put(
+                        writeModelIndex,
+                        new ConcreteClientInsertOneResult(insertModelDocumentIds.get(individualOperationIndexInBatch)));
+            } else if (writeModel instanceof ConcreteClientNamespacedUpdateOneModel
+                    || writeModel instanceof ConcreteClientNamespacedUpdateManyModel
+                    || writeModel instanceof ConcreteClientNamespacedReplaceOneModel) {
+                BsonDocument upsertedIdDocument = individualOperationResponse.getDocument("upserted", null);
+                updateResults.put(
+                        writeModelIndex,
+                        new ConcreteClientUpdateResult(
+                                individualOperationResponse.getInt32("n").getValue(),
+                                //TODO-JAVA-6005 Previously, we did not provide a default value of 0 because the
+                                // server was supposed to return nModified as 0 when no documents were changed.
+                                // Due to server bug SERVER-113026, we must provide a default of 0 until we stop supporting
+                                // server versions affected by this bug. When that happens, remove the default value for nModified.
+                                individualOperationResponse.getInt32("nModified", new BsonInt32(0)).getValue(),
+                                upsertedIdDocument == null ? null : upsertedIdDocument.get("_id")));
+            } else if (writeModel instanceof ConcreteClientNamespacedDeleteOneModel
+                    || writeModel instanceof ConcreteClientNamespacedDeleteManyModel) {
+                deleteResults.put(
+                        writeModelIndex,
+                        new ConcreteClientDeleteResult(individualOperationResponse.getInt32("n").getValue()));
+            } else {
+                fail(writeModel.getClass().toString());
             }
         }
 
