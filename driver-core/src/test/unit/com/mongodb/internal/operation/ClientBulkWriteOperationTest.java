@@ -148,7 +148,7 @@ class ClientBulkWriteOperationTest {
                 + "        'ok': 1.0,"
                 + "        'idx': 0,"
                 + "        'n': 1,"
-                //nMofified field is missing here
+                //nModified field is missing here
                 + "        'upserted': {"
                 + "          '_id': 1"
                 + "        }"
