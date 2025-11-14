@@ -66,9 +66,9 @@ abstract class AbstractWriteSearchIndexOperation implements WriteOperation<Void>
                                 writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()), (result, commandExecutionError) -> {
                                     try {
                                         swallowOrThrow(commandExecutionError);
-                                        callback.onResult(result, null);
+                                        cb.onResult(result, null);
                                     } catch (Throwable mongoCommandException) {
-                                        callback.onResult(null, mongoCommandException);
+                                        cb.onResult(null, mongoCommandException);
                                     }
                                 }
                         )
@@ -96,7 +96,9 @@ abstract class AbstractWriteSearchIndexOperation implements WriteOperation<Void>
 
     abstract BsonDocument buildCommand();
 
-    MongoNamespace getNamespace() {
+
+    @Override
+    public MongoNamespace getNamespace() {
         return namespace;
     }
 }

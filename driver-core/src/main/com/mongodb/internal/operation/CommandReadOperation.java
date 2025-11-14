@@ -16,12 +16,14 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
 
+import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
@@ -53,6 +55,11 @@ public class CommandReadOperation<T> implements ReadOperationSimple<T> {
     @Override
     public String getCommandName() {
         return commandName;
+    }
+
+    @Override
+    public MongoNamespace getNamespace() {
+        return new MongoNamespace(databaseName, COMMAND_COLLECTION_NAME);
     }
 
     @Override

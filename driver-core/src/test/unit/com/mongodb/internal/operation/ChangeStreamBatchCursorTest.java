@@ -25,6 +25,7 @@ import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.tracing.TracingManager;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.Document;
@@ -299,6 +300,7 @@ final class ChangeStreamBatchCursorTest {
         doNothing().when(timeoutContext).resetTimeoutIfPresent();
 
         operationContext = mock(OperationContext.class);
+        when(operationContext.getTracingManager()).thenReturn(TracingManager.NO_OP);
         when(operationContext.getTimeoutContext()).thenReturn(timeoutContext);
         connection = mock(Connection.class);
         when(connection.command(any(), any(), any(), any(), any(), any())).thenReturn(null);

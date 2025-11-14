@@ -353,19 +353,17 @@ public class ClientMetadataTest {
                 createExpectedClientMetadataDocument(null, initialDriverInformation),
                 initialClientMetadataDocument);
 
-        MongoDriverInformation.Builder builder;
-        builder = MongoDriverInformation.builder();
+        MongoDriverInformation.Builder expectedUpdatedMetadataBuilder = MongoDriverInformation.builder(initialDriverInformation);
+        ofNullable(driverName).ifPresent(expectedUpdatedMetadataBuilder::driverName);
+        ofNullable(driverVersion).ifPresent(expectedUpdatedMetadataBuilder::driverVersion);
+        ofNullable(driverPlatform).ifPresent(expectedUpdatedMetadataBuilder::driverPlatform);
+        MongoDriverInformation expectedUpdatedMetadata = expectedUpdatedMetadataBuilder.build();
+
+        MongoDriverInformation.Builder builder = MongoDriverInformation.builder();
         ofNullable(driverName).ifPresent(builder::driverName);
         ofNullable(driverVersion).ifPresent(builder::driverVersion);
         ofNullable(driverPlatform).ifPresent(builder::driverPlatform);
         MongoDriverInformation metadataToAppend = builder.build();
-
-        //We pass metadataToAppend to a builder and prepend with initial driver information.
-        MongoDriverInformation expectedUpdatedMetadata = MongoDriverInformation.builder(metadataToAppend)
-                .driverName("mongo-spark")
-                .driverVersion("2.0.0")
-                .driverPlatform("Scala 2.10 / Spark 2.0.0")
-                .build();
 
         //when
         clientMetadata.append(metadataToAppend);

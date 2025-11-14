@@ -87,6 +87,7 @@ public class MapReduceToCollectionOperation implements WriteOperation<MapReduceS
         this.writeConcern = writeConcern;
     }
 
+    @Override
     public MongoNamespace getNamespace() {
         return namespace;
     }

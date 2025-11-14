@@ -243,6 +243,17 @@ functions:
           ${PREPARE_SHELL}
           ${DRIVERS_TOOLS}/.evergreen/secrets_handling/setup-secrets.sh drivers/atlas_connect
 
+  "add-atlas-qa-variables-to-file":
+    - command: shell.exec
+      type: "test"
+      params:
+        include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
+        shell: "bash"
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          ${DRIVERS_TOOLS}/.evergreen/secrets_handling/setup-secrets.sh drivers/atlas-qa
+
   "start-csfle-servers":
     - command: ec2.assume_role
       params:
@@ -1469,41 +1480,30 @@ tasks:
           OCSP_MUST_STAPLE: "false"
           OCSP_TLS_SHOULD_SUCCEED: "0"
 
-  - name: "atlas-data-lake-task"
-    commands:
-      - func: "assume-aws-test-secrets-role"
-      - func: "start-mongohoused"
-      - command: shell.exec
-        type: "test"
-        params:
-          working_dir: "src"
-          script: |
-            ${PREPARE_SHELL}
-            JAVA_VERSION=${JAVA_VERSION} .evergreen/run-atlas-data-lake-test.sh
-
   - name: "atlas-search-task"
     commands:
+      - func: "assume-aws-test-secrets-role"
+      - func: "add-atlas-qa-variables-to-file"
       - command: shell.exec
         type: "test"
         params:
           working_dir: "src"
           script: |
             ${PREPARE_SHELL}
-            MONGODB_URI="${atlas_search_uri}" .evergreen/run-atlas-search-tests.sh
+            .evergreen/run-atlas-search-tests.sh
 
   - name: "atlas-connectivity-task"
     commands:
+      - func: "assume-aws-test-secrets-role"
+      - func: "add-atlas-connect-variables-to-file"
       - command: shell.exec
         type: "test"
         params:
           silent: true
           working_dir: "src"
           script: |
-            # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
-            # The connection strings are pipe-delimited
-            MONGODB_URIS="${atlas_free_tier_uri}|${atlas_replica_set_uri}|${atlas_sharded_uri}|${atlas_tls_v11_uri}|${atlas_tls_v12_uri}|${atlas_free_tier_uri_srv}|${atlas_replica_set_uri_srv}|${atlas_sharded_uri_srv}|${atlas_tls_v11_uri_srv}|${atlas_tls_v12_uri_srv}" \
-            JAVA_VERSION="8" \
-            .evergreen/run-connectivity-tests.sh
+            ${PREPARE_SHELL}
+            .evergreen/run-atlas-connectivity-tests.sh
 
   - name: "atlas-search-index-management-task"
     commands:
@@ -1944,6 +1944,8 @@ task_groups:
           working_dir: "src"
           binary: bash
           add_expansions_to_env: true
+          env:
+            MONGODB_VERSION: "8.0"
           args:
             - ${DRIVERS_TOOLS}/.evergreen/atlas/setup-atlas-cluster.sh
       - command: expansions.update
@@ -2283,12 +2285,6 @@ buildvariants:
       - name: "atlas-search-task"
       - name: "atlas-connectivity-task"
       - name:  "atlas-x509-auth-test-task"
-
-  - name: "atlas-data-lake-test"
-    display_name: "Atlas Data Lake test"
-    run_on: "ubuntu2204-small"
-    tasks:
-      - name: "atlas-data-lake-task"
 
   - name: "reactive-streams-tck-test"
     display_name: "Reactive Streams TCK tests"

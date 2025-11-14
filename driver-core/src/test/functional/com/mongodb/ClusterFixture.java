@@ -120,7 +120,6 @@ public final class ClusterFixture {
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
     public static final String MONGODB_API_VERSION = "org.mongodb.test.api.version";
     public static final String MONGODB_MULTI_MONGOS_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.multi.mongos.uri";
-    public static final String DATA_LAKE_TEST_SYSTEM_PROPERTY_NAME = "org.mongodb.test.data.lake";
     public static final String ATLAS_SEARCH_TEST_SYSTEM_PROPERTY_NAME = "org.mongodb.test.atlas.search";
     private static final String MONGODB_OCSP_SHOULD_SUCCEED = "org.mongodb.test.ocsp.tls.should.succeed";
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
@@ -305,11 +304,6 @@ public final class ClusterFixture {
     @Nullable
     public static synchronized ConnectionString getMultiMongosConnectionString() {
         return getConnectionStringFromSystemProperty(MONGODB_MULTI_MONGOS_URI_SYSTEM_PROPERTY_NAME);
-    }
-
-    public static synchronized boolean isDataLakeTest() {
-        String isDataLakeSystemProperty = System.getProperty(DATA_LAKE_TEST_SYSTEM_PROPERTY_NAME);
-        return "true".equals(isDataLakeSystemProperty);
     }
 
     public static synchronized ConnectionString getConnectionString() {
@@ -614,6 +608,10 @@ public final class ClusterFixture {
                     .execute(getBinding());
         }
         return serverParameters;
+    }
+
+    public static boolean isUnixSocket() {
+        return getConnectionString().getConnectionString().contains(".sock");
     }
 
     public static boolean isDiscoverableReplicaSet() {

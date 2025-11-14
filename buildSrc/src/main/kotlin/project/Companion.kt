@@ -23,4 +23,4 @@ import org.gradle.kotlin.dsl.getByType
 internal val Project.libs: LibrariesForLibs
     get() = extensions.getByType()
 
-internal const val DEFAULT_JAVA_VERSION = 17
+const val DEFAULT_JAVA_VERSION = 17

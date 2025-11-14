@@ -99,6 +99,7 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
         this.decoder = notNull("decoder", decoder);
     }
 
+    @Override
     public MongoNamespace getNamespace() {
         return namespace;
     }
@@ -390,7 +391,7 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
                 commandDocument.put("limit", new BsonInt32(Math.abs(batchSize)));
             } else if (batchSize != 0) {
                 int effectiveBatchSize = Math.abs(batchSize);
-                if (effectiveBatchSize == limit) {
+                if (effectiveBatchSize == limit && effectiveBatchSize < Integer.MAX_VALUE) {
                     // avoid an open cursor on server side when batchSize and limit are equal
                     effectiveBatchSize++;
                 }
@@ -468,9 +469,12 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
     }
 
     private CommandReadTransformer<BsonDocument, CommandBatchCursor<T>> transformer() {
-        return (result, source, connection) ->
-                new CommandBatchCursor<>(getTimeoutMode(), result, batchSize, getMaxTimeForCursor(source.getOperationContext()), decoder,
-                        comment, source, connection);
+        return (result, source, connection) -> {
+            OperationContext operationContext = source.getOperationContext();
+
+            return new CommandBatchCursor<>(getTimeoutMode(), result, batchSize, getMaxTimeForCursor(operationContext), decoder,
+                    comment, source, connection);
+        };
     }
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {

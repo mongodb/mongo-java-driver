@@ -16,6 +16,7 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.ClusterFixture;
 import org.opentest4j.AssertionFailedError;
 
 import java.util.ArrayList;
@@ -24,9 +25,10 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static com.mongodb.ClusterFixture.isDataLakeTest;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.ClusterFixture.isStandalone;
+import static com.mongodb.ClusterFixture.isUnixSocket;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
@@ -40,12 +42,6 @@ import static java.lang.String.format;
 
 public final class UnifiedTestModifications {
     public static void applyCustomizations(final TestDef def) {
-
-        // atlas-data-lake
-
-        def.skipAccordingToSpec("Data lake tests should only run on data lake")
-                .when(() -> !isDataLakeTest())
-                .directory("atlas-data-lake-testing");
 
         // change-streams
         def.skipNoncompliantReactive("error required from change stream initialization") // TODO-JAVA-5711 reason?
@@ -67,7 +63,18 @@ public final class UnifiedTestModifications {
                 .file("client-side-encryption/tests/unified", "client bulkWrite with queryable encryption");
 
         // client-side-operation-timeout (CSOT)
-
+        /*
+          As to the background connection pooling section:
+         timeoutMS set at the MongoClient level MUST be used as the timeout for all commands sent as part of the handshake.
+         We first configure a failpoint to block all hello/isMaster commands for 50 ms, then set timeoutMS = 10 ms on MongoClient
+         and wait for awaitMinPoolSize = 1000. So that means the background thread tries to populate connections under a 10ms timeout
+         cap while the failpoint blocks for 50ms, so all attempts effectively fail.
+         */
+        def.skipAccordingToSpec("background connection pooling section")
+                .test("client-side-operations-timeout", "timeoutMS behaves correctly during command execution",
+                        "short-circuit is not enabled with only 1 RTT measurement")
+                .test("client-side-operations-timeout", "timeoutMS behaves correctly during command execution",
+                        "command is not sent if RTT is greater than timeoutMS");
         def.skipNoncompliantReactive("No good way to fulfill tryNext() requirement with a Publisher<T>")
                 .test("client-side-operations-timeout", "timeoutMS behaves correctly for tailable awaitData cursors",
                       "apply remaining timeoutMS if less than maxAwaitTimeMS");
@@ -171,6 +178,25 @@ public final class UnifiedTestModifications {
                 .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
                         "timeoutMS can be set to 0 on a MongoClient - dropIndexes on collection");
 
+        // OpenTelemetry
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5991")
+                .file("open-telemetry/tests", "operation find")
+                .file("open-telemetry/tests", "operation find_one_and_update")
+                .file("open-telemetry/tests", "operation update")
+                .file("open-telemetry/tests", "operation bulk_write")
+                .file("open-telemetry/tests", "operation drop collection")
+                .file("open-telemetry/tests", "transaction spans")
+                .file("open-telemetry/tests", "convenient transactions")
+                .file("open-telemetry/tests", "operation atlas_search")
+                .file("open-telemetry/tests", "operation insert")
+                .file("open-telemetry/tests", "operation map_reduce")
+                .file("open-telemetry/tests", "operation find without db.query.text")
+                .file("open-telemetry/tests", "operation find_retries");
+
+        def.skipAccordingToSpec("Micrometer tests expect the network transport to be tcp")
+                .when(ClusterFixture::isUnixSocket)
+                .directory("open-telemetry/tests");
+
         // TODO-JAVA-5712
 
         // collection-management
@@ -190,9 +216,6 @@ public final class UnifiedTestModifications {
         def.skipNoncompliant("The driver doesn't reduce the batchSize for the getMore")
                 .test("command-logging-and-monitoring/tests/monitoring", "find",
                       "A successful find event with a getmore and the server kills the cursor (<= 4.4)");
-
-        def.skipNoncompliant("The driver doesn't reduce the batchSize for the getMore")
-                .test("atlas-data-lake-testing", "getMore", "A successful find event with getMore");
 
         // connection-monitoring-and-pooling
         def.skipNoncompliant("According to the test, we should clear the pool then close the connection. Our implementation"
