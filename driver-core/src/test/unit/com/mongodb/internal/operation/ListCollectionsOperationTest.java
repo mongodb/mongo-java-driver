@@ -99,7 +99,7 @@ final class ListCollectionsOperationTest {
     }
 
     private BsonDocument executeOperationAndCaptureCommand() {
-        operation.execute(mocks.readBinding());
+        operation.execute(mocks.readBinding(), OPERATION_CONTEXT);
         ArgumentCaptor<BsonDocument> commandCaptor = forClass(BsonDocument.class);
         verify(mocks.connection()).command(any(), commandCaptor.capture(), any(), any(), any(), any());
         return commandCaptor.getValue();
@@ -108,9 +108,7 @@ final class ListCollectionsOperationTest {
     private static Mocks mocks(final MongoNamespace namespace) {
         Mocks result = new Mocks();
         result.readBinding(mock(ReadBinding.class, bindingMock -> {
-            when(bindingMock.getOperationContext()).thenReturn(OPERATION_CONTEXT);
             ConnectionSource connectionSource = mock(ConnectionSource.class, connectionSourceMock -> {
-                when(connectionSourceMock.getOperationContext()).thenReturn(OPERATION_CONTEXT);
                 when(connectionSourceMock.release()).thenReturn(1);
                 ServerAddress serverAddress = new ServerAddress();
                 result.connection(mock(Connection.class, connectionMock -> {
@@ -119,7 +117,7 @@ final class ListCollectionsOperationTest {
                     when(connectionMock.getDescription()).thenReturn(connectionDescription);
                     when(connectionMock.command(any(), any(), any(), any(), any(), any())).thenReturn(cursorDoc(namespace));
                 }));
-                when(connectionSourceMock.getConnection()).thenReturn(result.connection());
+                when(connectionSourceMock.getConnection(any())).thenReturn(result.connection());
                 ServerDescription serverDescription = ServerDescription.builder()
                         .address(serverAddress)
                         .type(ServerType.STANDALONE)
@@ -128,7 +126,7 @@ final class ListCollectionsOperationTest {
                 when(connectionSourceMock.getServerDescription()).thenReturn(serverDescription);
                 when(connectionSourceMock.getReadPreference()).thenReturn(ReadPreference.primary());
             });
-            when(bindingMock.getReadConnectionSource()).thenReturn(connectionSource);
+            when(bindingMock.getReadConnectionSource(any())).thenReturn(connectionSource);
         }));
         return result;
     }

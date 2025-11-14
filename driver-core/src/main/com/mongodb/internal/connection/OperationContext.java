@@ -15,7 +15,9 @@
  */
 package com.mongodb.internal.connection;
 
+import com.mongodb.Function;
 import com.mongodb.MongoConnectionPoolClearedException;
+import com.mongodb.ReadConcern;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
@@ -26,15 +28,16 @@ import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.internal.observability.micrometer.Span;
+import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.session.SessionContext;
-import com.mongodb.internal.tracing.Span;
-import com.mongodb.internal.tracing.TracingManager;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.stream.Collectors.toList;
@@ -198,6 +201,29 @@ public class OperationContext {
         return serverDeprioritization;
     }
 
+    public OperationContext withNewlyStartedTimeout() {
+        return withTimeoutContext(timeoutContext.withNewlyStartedTimeout());
+    }
+
+    /**
+     * Create a new OperationContext with a SessionContext that does not send a session ID.
+     * <p>
+     * The driver MUST NOT append a session ID to any command sent during the process of
+     * opening and authenticating a connection.
+     */
+    public OperationContext withConnectionEstablishmentSessionContext() {
+        ReadConcern readConcern = getSessionContext().getReadConcern();
+        return withSessionContext(new ReadConcernAwareNoOpSessionContext(readConcern));
+    }
+
+    public OperationContext withMinRoundTripTime(final ServerDescription serverDescription) {
+        return withTimeoutContext(timeoutContext.withMinRoundTripTime(TimeUnit.NANOSECONDS.toMillis(serverDescription.getMinRoundTripTimeNanos())));
+    }
+
+    public OperationContext withOverride(final TimeoutContextOverride timeoutContextOverrideFunction) {
+        return withTimeoutContext(timeoutContextOverrideFunction.apply(timeoutContext));
+    }
+
     public static final class ServerDeprioritization {
         @Nullable
         private ServerAddress candidate;
@@ -258,5 +284,7 @@ public class OperationContext {
             }
         }
     }
+
+    public interface TimeoutContextOverride extends Function<TimeoutContext, TimeoutContext> {}
 }
 

@@ -19,8 +19,6 @@
  *
  * @since 5.7
  */
-
-
 @Alpha(Reason.CLIENT)
 @NonNullApi
 package com.mongodb.observability;

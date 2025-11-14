@@ -53,21 +53,19 @@ class SyncOperationHelperSpecification extends Specification {
         def connection = Mock(Connection)
         def function = Stub(CommandWriteTransformer)
         def connectionSource = Stub(ConnectionSource) {
-            getConnection() >> connection
-            getOperationContext() >> OPERATION_CONTEXT
+            getConnection(_) >> connection
         }
         def writeBinding = Stub(WriteBinding) {
-            getWriteConnectionSource() >> connectionSource
-            getOperationContext() >> OPERATION_CONTEXT
+            getWriteConnectionSource(_) >> connectionSource
         }
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeCommand(writeBinding, dbName, command, decoder, function)
+        executeCommand(writeBinding, OPERATION_CONTEXT, dbName, command, decoder, function)
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.command(dbName, command, _, primary(), decoder, OPERATION_CONTEXT) >> new BsonDocument()
+        1 * connection.command(dbName, command, _, primary(), decoder, _) >> new BsonDocument()
         1 * connection.release()
     }
 
@@ -94,24 +92,22 @@ class SyncOperationHelperSpecification extends Specification {
             }
         }
         def connectionSource = Stub(ConnectionSource) {
-            _ * getConnection() >> connection
+            _ * getConnection(_) >> connection
             _ * getServerDescription() >> Stub(ServerDescription) {
                 getLogicalSessionTimeoutMinutes() >> 1
             }
-            getOperationContext() >> operationContext
         }
         def writeBinding = Stub(WriteBinding) {
-            getWriteConnectionSource() >> connectionSource
-            getOperationContext() >> operationContext
+            getWriteConnectionSource(_) >> connectionSource
         }
 
         when:
-        executeRetryableWrite(writeBinding, dbName, primary(),
+        executeRetryableWrite(writeBinding, operationContext, dbName, primary(),
                 NoOpFieldNameValidator.INSTANCE, decoder, commandCreator, FindAndModifyHelper.transformer())
                 { cmd -> cmd }
 
         then:
-        2 * connection.command(dbName, command, _, primary(), decoder, operationContext) >> { results.poll() }
+        2 * connection.command(dbName, command, _, primary(), decoder, _) >> { results.poll() }
 
         then:
         def ex = thrown(MongoWriteConcernException)
@@ -127,22 +123,20 @@ class SyncOperationHelperSpecification extends Specification {
         def function = Stub(CommandReadTransformer)
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
-            getConnection() >> connection
+            getConnection(_) >> connection
             getReadPreference() >> readPreference
-            getOperationContext() >> OPERATION_CONTEXT
         }
         def readBinding = Stub(ReadBinding) {
-            getReadConnectionSource() >> connectionSource
-            getOperationContext() >> OPERATION_CONTEXT
+            getReadConnectionSource(_) >> connectionSource
         }
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeRetryableRead(readBinding, dbName, commandCreator, decoder, function, false)
+        executeRetryableRead(readBinding, OPERATION_CONTEXT, dbName, commandCreator, decoder, function, false)
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.command(dbName, command, _, readPreference, decoder, OPERATION_CONTEXT) >> new BsonDocument()
+        1 * connection.command(dbName, command, _, readPreference, decoder, _) >> new BsonDocument()
         1 * connection.release()
 
         where:

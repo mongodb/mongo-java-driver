@@ -14,20 +14,12 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.binding;
-
-import com.mongodb.internal.connection.OperationContext;
-
-
 /**
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ * Contains classes related to observability
  */
-public interface BindingContext {
+@Internal
+@NonNullApi
+package com.mongodb.internal.observability;
 
-    /**
-     * Note: Will return the same operation context if called multiple times.
-     *
-     * @return the operation context for the binding context.
-     */
-    OperationContext getOperationContext();
-}
+import com.mongodb.annotations.Internal;
+import com.mongodb.lang.NonNullApi;

@@ -44,7 +44,6 @@ import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.binding.BindingContext;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.ClusterBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -59,10 +58,10 @@ import com.mongodb.internal.operation.Operations;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.ServerSessionPool;
-import com.mongodb.internal.tracing.Span;
-import com.mongodb.internal.tracing.TraceContext;
-import com.mongodb.internal.tracing.TracingManager;
-import com.mongodb.internal.tracing.TransactionSpan;
+import com.mongodb.internal.observability.micrometer.Span;
+import com.mongodb.internal.observability.micrometer.TraceContext;
+import com.mongodb.internal.observability.micrometer.TracingManager;
+import com.mongodb.internal.observability.micrometer.TransactionSpan;
 import com.mongodb.lang.Nullable;
 import io.micrometer.common.KeyValues;
 import org.bson.BsonDocument;
@@ -78,17 +77,17 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
-import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
+import static com.mongodb.internal.MongoNamespaceHelper.COMMAND_COLLECTION_NAME;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.TimeoutContext.createTimeoutContext;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.COLLECTION;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.NAMESPACE;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.OPERATION_NAME;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.OPERATION_SUMMARY;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.SYSTEM;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.COLLECTION;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.NAMESPACE;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.OPERATION_NAME;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.OPERATION_SUMMARY;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SYSTEM;
 
 final class MongoClusterImpl implements MongoCluster {
     @Nullable
@@ -432,16 +431,18 @@ final class MongoClusterImpl implements MongoCluster {
             }
 
             ClientSession actualClientSession = getClientSession(session);
-            ReadBinding binding = getReadBinding(readPreference, readConcern, actualClientSession, session == null,
-                    operation.getCommandName());
+            boolean implicitSession = isImplicitSession(session);
+            OperationContext operationContext = getOperationContext(actualClientSession, readConcern, operation.getCommandName())
+                    .withSessionContext(new ClientSessionBinding.SyncClientSessionContext(actualClientSession, readConcern, implicitSession));
+            Span span = createOperationSpan(actualClientSession, operationContext, operation.getCommandName(), operation.getNamespace());
+            ReadBinding binding = getReadBinding(readPreference, actualClientSession, implicitSession);
 
-            Span span = createOperationSpan(actualClientSession, binding, operation.getCommandName(), operation.getNamespace());
 
             try {
                 if (actualClientSession.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
                     throw new MongoClientException("Read preference in a transaction must be primary");
                 }
-                return operation.execute(binding);
+                return operation.execute(binding, operationContext);
             } catch (MongoException e) {
                 MongoException exceptionToHandle = OperationHelper.unwrap(e);
                 labelException(actualClientSession, exceptionToHandle);
@@ -466,11 +467,13 @@ final class MongoClusterImpl implements MongoCluster {
             }
 
             ClientSession actualClientSession = getClientSession(session);
-            WriteBinding binding = getWriteBinding(readConcern, actualClientSession, session == null, operation.getCommandName());
+            OperationContext operationContext = getOperationContext(actualClientSession, readConcern, operation.getCommandName())
+                    .withSessionContext(new ClientSessionBinding.SyncClientSessionContext(actualClientSession, readConcern, isImplicitSession(session)));
+            Span span = createOperationSpan(actualClientSession, operationContext, operation.getCommandName(), operation.getNamespace());
+            WriteBinding binding = getWriteBinding(actualClientSession, isImplicitSession(session));
 
-            Span span = createOperationSpan(actualClientSession, binding, operation.getCommandName(), operation.getNamespace());
             try {
-                return operation.execute(binding);
+                return operation.execute(binding, operationContext);
             } catch (MongoException e) {
                 MongoException exceptionToHandle = OperationHelper.unwrap(e);
                 labelException(actualClientSession, exceptionToHandle);
@@ -500,23 +503,18 @@ final class MongoClusterImpl implements MongoCluster {
             return executorTimeoutSettings;
         }
 
-        WriteBinding getWriteBinding(final ReadConcern readConcern, final ClientSession session, final boolean ownsSession,
-                final String commandName) {
-            return getReadWriteBinding(primary(), readConcern, session, ownsSession, commandName);
+        WriteBinding getWriteBinding(final ClientSession session, final boolean ownsSession) {
+            return getReadWriteBinding(primary(), session, ownsSession);
         }
 
-        ReadBinding getReadBinding(final ReadPreference readPreference, final ReadConcern readConcern, final ClientSession session,
-                final boolean ownsSession, final String commandName) {
-            return getReadWriteBinding(readPreference, readConcern, session, ownsSession, commandName);
+        ReadBinding getReadBinding(final ReadPreference readPreference, final ClientSession session, final boolean ownsSession) {
+            return getReadWriteBinding(readPreference, session, ownsSession);
         }
 
-        ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference,
-                final ReadConcern readConcern, final ClientSession session, final boolean ownsSession,
-                final String commandName) {
+        ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final ClientSession session, final boolean ownsSession) {
 
             ClusterAwareReadWriteBinding readWriteBinding = new ClusterBinding(cluster,
-                    getReadPreferenceForBinding(readPreference, session), readConcern,
-                    getOperationContext(session, readConcern, commandName));
+                    getReadPreferenceForBinding(readPreference, session));
 
             if (crypt != null) {
                 readWriteBinding = new CryptBinding(readWriteBinding, crypt);
@@ -558,7 +556,7 @@ final class MongoClusterImpl implements MongoCluster {
         }
 
         private ReadPreference getReadPreferenceForBinding(final ReadPreference readPreference, @Nullable final ClientSession session) {
-            if (session == null) {
+            if (isImplicitSession(session)) {
                 return readPreference;
             }
             if (session.hasActiveTransaction()) {
@@ -593,14 +591,14 @@ final class MongoClusterImpl implements MongoCluster {
          * Create a tracing span for the given operation, and set it on operation context.
          *
          * @param actualClientSession the session that the operation is part of
-         * @param binding             the binding for the operation
+         * @param operationContext             the operation context for the operation
          * @param commandName         the name of the command
          * @param namespace           the namespace of the command
          * @return the created span, or null if tracing is not enabled
          */
         @Nullable
-        private Span createOperationSpan(final ClientSession actualClientSession, final BindingContext binding, final String commandName, final MongoNamespace namespace) {
-            TracingManager tracingManager = binding.getOperationContext().getTracingManager();
+        private Span createOperationSpan(final ClientSession actualClientSession, final OperationContext operationContext, final String commandName, final MongoNamespace namespace) {
+            TracingManager tracingManager = operationContext.getTracingManager();
             if (tracingManager.isEnabled()) {
                 TraceContext parentContext = null;
                 TransactionSpan transactionSpan = actualClientSession.getTransactionSpan();
@@ -620,19 +618,20 @@ final class MongoClusterImpl implements MongoCluster {
                 keyValues = keyValues.and(OPERATION_NAME.withValue(commandName),
                         OPERATION_SUMMARY.withValue(name));
 
-                Span span = binding
-                        .getOperationContext()
-                        .getTracingManager()
-                        .addSpan(name, parentContext, namespace);
+                Span span = tracingManager.addSpan(name, parentContext, namespace);
 
                 span.tagLowCardinality(keyValues);
 
-                binding.getOperationContext().setTracingSpan(span);
+                operationContext.setTracingSpan(span);
                 return span;
 
             } else {
                 return null;
             }
         }
+    }
+
+    private boolean isImplicitSession(@Nullable final ClientSession session) {
+        return session == null;
     }
 }

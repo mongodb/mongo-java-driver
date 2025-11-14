@@ -15,9 +15,14 @@
  */
 
 /**
- * Contains classes related to tracing
+ * Contains classes related to MongoDB micrometer observability, including tracing.
+ *
+ * @since 5.7
  */
+@Alpha(Reason.CLIENT)
 @NonNullApi
-package com.mongodb.internal.tracing;
+package com.mongodb.observability.micrometer;
 
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import com.mongodb.lang.NonNullApi;

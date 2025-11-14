@@ -28,7 +28,7 @@ import com.mongodb.internal.TimeoutSettings
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
 import com.mongodb.internal.connection.Cluster
 import com.mongodb.internal.session.ServerSessionPool
-import com.mongodb.internal.tracing.TracingManager
+import com.mongodb.internal.observability.micrometer.TracingManager
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.codecs.UuidCodec

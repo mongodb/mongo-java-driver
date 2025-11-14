@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.client.tracing;
+package com.mongodb.observability;
 
 import com.mongodb.lang.Nullable;
 import io.micrometer.tracing.exporter.FinishedSpan;
@@ -34,12 +34,12 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.CLIENT_CONNECTION_ID;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.CURSOR_ID;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.SERVER_CONNECTION_ID;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.SERVER_PORT;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.SESSION_ID;
-import static com.mongodb.internal.tracing.MongodbObservation.LowCardinalityKeyNames.TRANSACTION_NUMBER;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.CLIENT_CONNECTION_ID;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.CURSOR_ID;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SERVER_CONNECTION_ID;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SERVER_PORT;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SESSION_ID;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.TRANSACTION_NUMBER;
 import static org.bson.assertions.Assertions.notNull;
 import static org.junit.jupiter.api.Assertions.fail;
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.tracing;
+package com.mongodb.internal.observability.micrometer;
 
 @SuppressWarnings("InterfaceIsType")
 public interface TraceContext {
