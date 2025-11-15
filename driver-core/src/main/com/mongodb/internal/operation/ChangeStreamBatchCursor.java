@@ -19,9 +19,12 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoChangeStreamException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoOperationTimeoutException;
+import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
+import com.mongodb.assertions.Assertions;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
@@ -251,9 +254,11 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         wrapped.close(operationContextWithDefaultMaxTime);
         withReadConnectionSource(binding, operationContext, (source, operationContextWithMinRtt) -> {
             changeStreamOperation.setChangeStreamOptionsForResume(resumeToken, source.getServerDescription().getMaxWireVersion());
+            // We wrap the binding so that the selected ConnectionSource is reused, preventing redundant server selection.
+            // Consequently, the same ConnectionSource remains pinned to the resulting CommandCursor.
+            wrapped = ((ChangeStreamBatchCursor<T>) changeStreamOperation.execute(new SourceAwareReadBinding(source, binding), operationContextWithDefaultMaxTime)).getWrapped();
             return null;
         });
-        wrapped = ((ChangeStreamBatchCursor<T>) changeStreamOperation.execute(binding, operationContextWithDefaultMaxTime)).getWrapped();
         binding.release(); // release the new change stream batch cursor's reference to the binding
     }
 
@@ -263,5 +268,49 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
 
     private static boolean isTimeoutException(final Throwable exception) {
         return exception instanceof MongoOperationTimeoutException;
+    }
+
+    /**
+     * Does not retain wrapped {link @ReadBinding} as it serves as a wrapper only.
+     */
+    private static class SourceAwareReadBinding implements ReadBinding {
+        private final ConnectionSource source;
+        private final ReadBinding binding;
+
+        SourceAwareReadBinding(final ConnectionSource source, final ReadBinding binding) {
+            this.source = source;
+            this.binding = binding;
+        }
+
+        @Override
+        public ReadPreference getReadPreference() {
+            return binding.getReadPreference();
+        }
+
+        @Override
+        public ConnectionSource getReadConnectionSource(final OperationContext ignored) {
+            source.retain();
+            return source;
+        }
+
+        @Override
+        public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference, final OperationContext ignored) {
+            throw Assertions.fail();
+        }
+
+        @Override
+        public int getCount() {
+            return binding.getCount();
+        }
+
+        @Override
+        public ReadBinding retain() {
+            return binding.retain();
+        }
+
+        @Override
+        public int release() {
+            return binding.release();
+        }
     }
 }
