@@ -91,7 +91,7 @@ public abstract class AbstractChangeSteamFunctionalTest {
                 assertNotNull(changeStreamDocument);
                 int actualCountOfServerSelections = serverSelectionCounter.get();
                 assertEquals(2, actualCountOfServerSelections,
-                        format("Expected only one additional server selection due to resume after resumable error, but was %s",
+                        format("Expected 2 server selections (initial aggregate command  + resume attempt aggregate command), but there were %s",
                                 actualCountOfServerSelections));
             }
         }
