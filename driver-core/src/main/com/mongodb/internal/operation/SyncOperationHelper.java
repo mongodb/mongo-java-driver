@@ -97,7 +97,6 @@ final class SyncOperationHelper {
 
     private static final BsonDocumentCodec BSON_DOCUMENT_CODEC = new BsonDocumentCodec();
 
-
     static <T> T withReadConnectionSource(final ReadBinding binding,
                                           final OperationContext operationContext,
                                           final CallableWithSource<T> callable) {
