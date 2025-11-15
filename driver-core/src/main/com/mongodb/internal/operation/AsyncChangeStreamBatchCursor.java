@@ -235,8 +235,8 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
             } else {
                 changeStreamOperation.setChangeStreamOptionsForResume(resumeToken,
                         assertNotNull(source).getServerDescription().getMaxWireVersion());
-                // The same source is pined to resulting AsyncCommandBatchCursor, so we need to wrap the binding
-                // to return the same source to avoid double-selection of the server.
+                // We wrap the binding so that the selected AsyncConnectionSource is reused, preventing redundant server selection.
+                // Consequently, the same AsyncConnectionSource remains pinned to the resulting AsyncCommandCursor.
                 changeStreamOperation.executeAsync(new AsyncSourceAwareReadBinding(source, binding), operationContext, (asyncBatchCursor, t1) -> {
                     if (t1 != null) {
                         callback.onResult(null, t1);

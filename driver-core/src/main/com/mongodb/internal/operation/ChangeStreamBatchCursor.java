@@ -254,8 +254,8 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         wrapped.close(operationContextWithDefaultMaxTime);
         withReadConnectionSource(binding, operationContext, (source, operationContextWithMinRtt) -> {
             changeStreamOperation.setChangeStreamOptionsForResume(resumeToken, source.getServerDescription().getMaxWireVersion());
-            // The same source is pinned to resulting CommandBatchCursor, so we need to wrap the binding
-            // to return the same source to avoid double-selection of the server.
+            // We wrap the binding so that the selected ConnectionSource is reused, preventing redundant server selection.
+            // Consequently, the same ConnectionSource remains pinned to the resulting CommandCursor.
             wrapped = ((ChangeStreamBatchCursor<T>) changeStreamOperation.execute(new SourceAwareReadBinding(source, binding), operationContextWithDefaultMaxTime)).getWrapped();
             return null;
         });
