@@ -17,7 +17,9 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.Function;
+import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
+import com.mongodb.internal.MongoNamespaceHelper;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -49,11 +51,17 @@ public class AbortTransactionOperation extends TransactionOperation {
     }
 
     @Override
+    public MongoNamespace getNamespace() {
+        return MongoNamespaceHelper.ADMIN_DB_COMMAND_NAMESPACE;
+    }
+
+    @Override
     CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
-            operationContext.getTimeoutContext().resetToDefaultMaxTime();
             BsonDocument command = AbortTransactionOperation.super.getCommandCreator()
-                    .create(operationContext, serverDescription, connectionDescription);
+                    .create(operationContext.withOverride(TimeoutContext::withDefaultMaxTime),
+                            serverDescription,
+                            connectionDescription);
             putIfNotNull(command, "recoveryToken", recoveryToken);
             return command;
         };

@@ -35,6 +35,9 @@ dependencies {
     testImplementation(project(path = ":bson", configuration = "testArtifacts"))
     testImplementation(project(path = ":driver-core", configuration = "testArtifacts"))
     testImplementation(project(path = ":driver-sync", configuration = "testArtifacts"))
+
+    testImplementation(platform(libs.micrometer.observation.bom))
+    testImplementation(libs.micrometer.observation)
 }
 
 configureMavenPublication {

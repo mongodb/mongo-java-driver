@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.internal.client;
 
+package com.mongodb.internal.connection;
+
+import com.mongodb.MongoDriverInformation;
 import com.mongodb.internal.build.MongoDriverVersion;
+import com.mongodb.internal.client.DriverInformation;
 
 import java.util.Collections;
 import java.util.List;
@@ -23,36 +26,45 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
 import static java.lang.System.getProperty;
 
-public final class DriverInformationHelper {
-
+public final class ConcreteMongoDriverInformation extends MongoDriverInformation {
     public static final DriverInformation INITIAL_DRIVER_INFORMATION =
             new DriverInformation(MongoDriverVersion.NAME, MongoDriverVersion.VERSION,
                     format("Java/%s/%s", getProperty("java.vendor", "unknown-vendor"),
-                                         getProperty("java.runtime.version", "unknown-version")));
+                            getProperty("java.runtime.version", "unknown-version")));
 
-    public static List<String> getNames(final List<DriverInformation> driverInformation) {
-        return getDriverField(DriverInformation::getDriverName, driverInformation);
+    private final List<DriverInformation> driverInformationList;
+
+    public ConcreteMongoDriverInformation(final List<DriverInformation> driverInformation) {
+        this.driverInformationList = notNull("driverInformation", driverInformation);
     }
 
-    public static List<String> getVersions(final List<DriverInformation> driverInformation) {
-        return getDriverField(DriverInformation::getDriverVersion, driverInformation);
+    @Override
+    public List<String> getDriverNames() {
+        return getDriverField(DriverInformation::getDriverName);
     }
 
-    public static List<String> getPlatforms(final List<DriverInformation> driverInformation) {
-        return getDriverField(DriverInformation::getDriverPlatform, driverInformation);
+    @Override
+    public List<String> getDriverVersions() {
+        return getDriverField(DriverInformation::getDriverVersion);
     }
 
-    private static List<String> getDriverField(final Function<DriverInformation, String> fieldSupplier,
-                                                                          final List<DriverInformation> driverInformation) {
-        return Collections.unmodifiableList(driverInformation.stream()
+    @Override
+    public List<String> getDriverPlatforms() {
+        return getDriverField(DriverInformation::getDriverPlatform);
+    }
+
+    public List<DriverInformation> getDriverInformationList() {
+        return driverInformationList;
+    }
+
+    private List<String> getDriverField(final Function<DriverInformation, String> fieldSupplier) {
+        return Collections.unmodifiableList(driverInformationList.stream()
                 .map(fieldSupplier)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList()));
-    }
-
-    private DriverInformationHelper() {
     }
 }

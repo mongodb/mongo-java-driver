@@ -36,6 +36,8 @@ import com.mongodb.internal.operation.WriteConcernHelper;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
+import com.mongodb.internal.observability.micrometer.TracingManager;
+import com.mongodb.internal.observability.micrometer.TransactionSpan;
 import com.mongodb.lang.Nullable;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
@@ -54,11 +56,14 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
     private boolean messageSentInCurrentTransaction;
     private boolean commitInProgress;
     private TransactionOptions transactionOptions;
+    private final TracingManager tracingManager;
+    private TransactionSpan transactionSpan = null;
 
     ClientSessionImpl(final ServerSessionPool serverSessionPool, final Object originator, final ClientSessionOptions options,
-                      final OperationExecutor operationExecutor) {
+            final OperationExecutor operationExecutor, final TracingManager tracingManager) {
         super(serverSessionPool, originator, options);
         this.operationExecutor = operationExecutor;
+        this.tracingManager = tracingManager;
     }
 
     @Override
@@ -141,6 +146,9 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         } finally {
             clearTransactionContext();
             cleanupTransaction(TransactionState.ABORTED);
+            if (transactionSpan != null) {
+                transactionSpan.finalizeTransactionSpan(TransactionState.ABORTED.name());
+            }
         }
     }
 
@@ -167,6 +175,10 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         if (!writeConcern.isAcknowledged()) {
             throw new MongoClientException("Transactions do not support unacknowledged write concern");
         }
+
+        if (tracingManager.isEnabled()) {
+            transactionSpan = new TransactionSpan(tracingManager);
+        }
         clearTransactionContext();
         setTimeoutContext(timeoutContext);
     }
@@ -187,7 +199,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         if (transactionState == TransactionState.NONE) {
             throw new IllegalStateException("There is no transaction started");
         }
-
+        boolean exceptionThrown = false;
         try {
             if (messageSentInCurrentTransaction) {
                 ReadConcern readConcern = transactionOptions.getReadConcern();
@@ -206,11 +218,20 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                                 .recoveryToken(getRecoveryToken()), readConcern, this);
             }
         } catch (MongoException e) {
+            exceptionThrown = true;
             clearTransactionContextOnError(e);
+            if (transactionSpan != null) {
+                transactionSpan.handleTransactionSpanError(e);
+            }
             throw e;
         } finally {
             transactionState = TransactionState.COMMITTED;
             commitInProgress = false;
+            if (!exceptionThrown) {
+                if (transactionSpan != null) {
+                    transactionSpan.finalizeTransactionSpan(TransactionState.COMMITTED.name());
+                }
+            }
         }
     }
 
@@ -231,49 +252,70 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         long startTime = ClientSessionClock.INSTANCE.now();
         TimeoutContext withTransactionTimeoutContext = createTimeoutContext(options);
 
-        outer:
-        while (true) {
-            T retVal;
-            try {
-                startTransaction(options, withTransactionTimeoutContext.copyTimeoutContext());
-                retVal = transactionBody.execute();
-            } catch (Throwable e) {
-                if (transactionState == TransactionState.IN) {
-                    abortTransaction();
-                }
-                if (e instanceof MongoException && !(e instanceof MongoOperationTimeoutException)) {
-                    MongoException exceptionToHandle = OperationHelper.unwrap((MongoException) e);
-                    if (exceptionToHandle.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)
-                            && ClientSessionClock.INSTANCE.now() - startTime < MAX_RETRY_TIME_LIMIT_MS) {
-                        continue;
+        try {
+            outer:
+            while (true) {
+                T retVal;
+                try {
+                    startTransaction(options, withTransactionTimeoutContext.copyTimeoutContext());
+                    if (transactionSpan != null) {
+                        transactionSpan.setIsConvenientTransaction();
                     }
-                }
-                throw e;
-            }
-            if (transactionState == TransactionState.IN) {
-                while (true) {
-                    try {
-                        commitTransaction(false);
-                        break;
-                    } catch (MongoException e) {
-                        clearTransactionContextOnError(e);
-                        if (!(e instanceof MongoOperationTimeoutException)
+                    retVal = transactionBody.execute();
+                } catch (Throwable e) {
+                    if (transactionState == TransactionState.IN) {
+                        abortTransaction();
+                    }
+                    if (e instanceof MongoException && !(e instanceof MongoOperationTimeoutException)) {
+                        MongoException exceptionToHandle = OperationHelper.unwrap((MongoException) e);
+                        if (exceptionToHandle.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)
                                 && ClientSessionClock.INSTANCE.now() - startTime < MAX_RETRY_TIME_LIMIT_MS) {
-                            applyMajorityWriteConcernToTransactionOptions();
-
-                            if (!(e instanceof MongoExecutionTimeoutException)
-                                    && e.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
-                                continue;
-                            } else if (e.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
-                                continue outer;
+                            if (transactionSpan != null) {
+                                transactionSpan.spanFinalizing(false);
                             }
+                            continue;
                         }
-                        throw e;
+                    }
+                    throw e;
+                }
+                if (transactionState == TransactionState.IN) {
+                    while (true) {
+                        try {
+                            commitTransaction(false);
+                            break;
+                        } catch (MongoException e) {
+                            clearTransactionContextOnError(e);
+                            if (!(e instanceof MongoOperationTimeoutException)
+                                    && ClientSessionClock.INSTANCE.now() - startTime < MAX_RETRY_TIME_LIMIT_MS) {
+                                applyMajorityWriteConcernToTransactionOptions();
+
+                                if (!(e instanceof MongoExecutionTimeoutException)
+                                        && e.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
+                                    continue;
+                                } else if (e.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
+                                    if (transactionSpan != null) {
+                                        transactionSpan.spanFinalizing(true);
+                                    }
+                                    continue outer;
+                                }
+                            }
+                            throw e;
+                        }
                     }
                 }
+                return retVal;
             }
-            return retVal;
+        } finally {
+            if (transactionSpan != null) {
+                transactionSpan.spanFinalizing(true);
+            }
         }
+    }
+
+    @Override
+    @Nullable
+    public TransactionSpan getTransactionSpan() {
+        return transactionSpan;
     }
 
     @Override

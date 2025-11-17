@@ -17,6 +17,7 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.internal.connection.OperationContext;
 
 /**
  * This interface is not part of the public API and may be removed or changed at any time.
@@ -27,5 +28,5 @@ public interface ClusterAwareReadWriteBinding extends ReadWriteBinding {
      * Returns a connection source to the specified server address.
      * @return the connection source
      */
-    ConnectionSource getConnectionSource(ServerAddress serverAddress);
+    ConnectionSource getConnectionSource(ServerAddress serverAddress, OperationContext operationContext);
 }

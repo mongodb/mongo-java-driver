@@ -21,6 +21,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -80,20 +81,27 @@ public class RenameCollectionOperation implements WriteOperation<Void> {
     }
 
     @Override
-    public Void execute(final WriteBinding binding) {
-        return withConnection(binding, connection -> executeCommand(binding, "admin", getCommand(), connection,
-                writeConcernErrorTransformer(binding.getOperationContext().getTimeoutContext())));
+    public MongoNamespace getNamespace() {
+        return originalNamespace;
     }
 
     @Override
-    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(binding, (connection, t) -> {
+    public Void execute(final WriteBinding binding, final OperationContext operationContext) {
+        return withConnection(binding, operationContext, (connection, operationContextWithMinRtt) ->
+                executeCommand(binding,
+                        operationContextWithMinRtt, "admin", getCommand(), connection,
+                        writeConcernErrorTransformer(operationContextWithMinRtt.getTimeoutContext())));
+    }
+
+    @Override
+    public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<Void> callback) {
+        withAsyncConnection(binding, operationContext, (connection, operationContextWithMinRtt, t) -> {
             SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
             if (t != null) {
                 errHandlingCallback.onResult(null, t);
             } else {
-                executeCommandAsync(binding, "admin", getCommand(), assertNotNull(connection),
-                        writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()),
+                executeCommandAsync(binding, operationContextWithMinRtt, "admin", getCommand(), assertNotNull(connection),
+                        writeConcernErrorTransformerAsync(operationContextWithMinRtt.getTimeoutContext()),
                         releasingCallback(errHandlingCallback, connection));
             }
         });

@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation
 
+import com.mongodb.ClusterFixture
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
@@ -36,7 +37,9 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         assert collectionNameExists(getCollectionName())
 
         when:
-        new DropCollectionOperation(getNamespace(), WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        def binding = getBinding()
+        new DropCollectionOperation(getNamespace(), WriteConcern.ACKNOWLEDGED)
+                .execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
 
         then:
         !collectionNameExists(getCollectionName())
@@ -60,7 +63,8 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         def namespace = new MongoNamespace(getDatabaseName(), 'nonExistingCollection')
 
         when:
-        new DropCollectionOperation(namespace, WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        new DropCollectionOperation(namespace, WriteConcern.ACKNOWLEDGED)
+                .execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
 
         then:
         !collectionNameExists('nonExistingCollection')
@@ -86,7 +90,8 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         def operation = new DropCollectionOperation(getNamespace(), new WriteConcern(5))
 
         when:
-        async ? executeAsync(operation) : operation.execute(getBinding())
+        def binding = getBinding()
+        async ? executeAsync(operation) : operation.execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
 
         then:
         def ex = thrown(MongoWriteConcernException)
@@ -98,7 +103,8 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
     }
 
     def collectionNameExists(String collectionName) {
-        def cursor = new ListCollectionsOperation(databaseName, new DocumentCodec()).execute(getBinding())
+        def cursor = new ListCollectionsOperation(databaseName, new DocumentCodec())
+                .execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
         if (!cursor.hasNext()) {
             return false
         }
