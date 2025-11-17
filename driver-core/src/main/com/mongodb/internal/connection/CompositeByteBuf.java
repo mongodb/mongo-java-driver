@@ -50,7 +50,7 @@ class CompositeByteBuf implements ByteBuf {
         limit = components.get(components.size() - 1).endOffset;
     }
 
-    CompositeByteBuf(final CompositeByteBuf from) {
+    private CompositeByteBuf(final CompositeByteBuf from) {
         notNull("from", from);
         components = new ArrayList<>(from.components.size());
         from.components.forEach(component ->
@@ -317,12 +317,13 @@ class CompositeByteBuf implements ByteBuf {
 
     @Override
     public void release() {
-        if (referenceCount.decrementAndGet() < 0) {
+        int decrementedReferenceCount = referenceCount.decrementAndGet();
+        if (decrementedReferenceCount < 0) {
             referenceCount.incrementAndGet();
             throw new IllegalStateException("Attempted to decrement the reference count below 0");
         }
         components.forEach(c -> c.buffer.release());
-        if (referenceCount.get() == 0) {
+        if (decrementedReferenceCount == 0) {
             assertTrue(components.stream().noneMatch(c -> c.buffer.getReferenceCount() > 0),
                     "All component buffers should have reference count 0 when CompositeByteBuf is fully released, but some still have references.");
         }
