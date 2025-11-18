@@ -125,9 +125,7 @@ public class TransactionProseTest {
     void testWriteConcernInheritance() {
         // Create a MongoClient running against a configured sharded/replica set/load balanced cluster.
         // transactions require a 4.0+ server when non-sharded and 4.2+ when sharded
-        if (isSharded()) {
-            assumeTrue(serverVersionAtLeast(4, 2));
-        } else {
+        if (!isSharded()) {
             assumeTrue(serverVersionAtLeast(4, 0));
         }
 
