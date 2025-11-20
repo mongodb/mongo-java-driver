@@ -50,7 +50,8 @@ class CompositeByteBuf implements ByteBuf {
     }
 
     CompositeByteBuf(final CompositeByteBuf from) {
-        components = from.components;
+        components = new ArrayList<>(from.components);
+        from.components.forEach(c -> components.add(new Component(c.buffer.duplicate(), c.offset)));
         position = from.position();
         limit = from.limit();
     }

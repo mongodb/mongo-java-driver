@@ -44,6 +44,7 @@ class CommandHelperSpecification extends Specification {
     InternalConnection connection
 
     def setup() {
+        InternalStreamConnection.setRecordEverything(true)
         connection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE,
                 new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                 getCredentialWithCache(), CLIENT_METADATA, [], LoggerSettings.builder().build(), null, getServerApi())
@@ -55,7 +56,6 @@ class CommandHelperSpecification extends Specification {
         connection?.close()
     }
 
-    @Ignore("JAVA-5982")
     def 'should execute command asynchronously'() {
         when:
         BsonDocument receivedDocument = null
