@@ -13,22 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.mongodb.client;
+package com.mongodb.reactivestreams.client;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoException;
-import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import org.bson.Document;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.HashSet;
-import java.util.Set;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
@@ -36,12 +33,9 @@ import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.abort;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-// See https://github.com/mongodb/specifications/blob/master/source/transactions/tests/README.md#mongos-pinning-prose-tests
 public class TransactionProseTest {
     private MongoClient client;
     private MongoCollection<Document> collection;
@@ -61,13 +55,13 @@ public class TransactionProseTest {
                 .build());
 
         collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
-        collection.drop();
+        StepVerifier.create(Mono.from(collection.drop())).verifyComplete();
     }
 
     @AfterEach
     public void tearDown() {
         if (collection != null) {
-            collection.drop();
+            StepVerifier.create(Mono.from(collection.drop())).verifyComplete();
         }
         if (client != null) {
             client.close();
@@ -77,47 +71,15 @@ public class TransactionProseTest {
     @DisplayName("Mongos Pinning Prose Tests: 1. Test that starting a new transaction on a pinned ClientSession unpins the session "
             + "and normal server selection is performed for the next operation.")
     @Test
-    public void testNewTransactionUnpinsSession() {
-        assumeTrue(isSharded());
-        collection.insertOne(Document.parse("{}"));
-        try (ClientSession session = client.startSession()) {
-            session.startTransaction();
-            collection.insertOne(session, Document.parse("{ _id : 1 }"));
-            session.commitTransaction();
-
-            Set<ServerAddress> addresses = new HashSet<>();
-            int iterations = 50;
-            while (iterations-- > 0) {
-                session.startTransaction();
-                try (MongoCursor<Document> cursor = collection.find(session, Document.parse("{}")).cursor()) {
-                    addresses.add(cursor.getServerAddress());
-                }
-                session.commitTransaction();
-            }
-            assertTrue(addresses.size() > 1);
-        }
+    void testNewTransactionUnpinsSession() {
+        abort("There is no ability to get the server address with the reactive api");
     }
 
     @DisplayName("Mongos Pinning Prose Tests: 2. Test non-transaction operations using a pinned ClientSession unpins the session"
             + " and normal server selection is performed")
     @Test
-    public void testNonTransactionOpsUnpinsSession() throws MongoException {
-        assumeTrue(isSharded());
-        collection.insertOne(Document.parse("{}"));
-        try (ClientSession session = client.startSession()) {
-            session.startTransaction();
-            collection.insertOne(session, Document.parse("{ _id : 1 }"));
-            session.commitTransaction();
-
-            Set<ServerAddress> addresses = new HashSet<>();
-            int iterations = 50;
-            while (iterations-- > 0) {
-                try (MongoCursor<Document> cursor = collection.find(session, Document.parse("{}")).cursor()) {
-                    addresses.add(cursor.getServerAddress());
-                }
-            }
-            assertTrue(addresses.size() > 1);
-        }
+    void testNonTransactionOpsUnpinsSession() {
+        abort("There is no ability to get the server address with the reactive api");
     }
 
     @DisplayName("Options Inside Transaction Prose Tests. 1. Write concern not inherited from collection object inside transaction")
@@ -125,22 +87,23 @@ public class TransactionProseTest {
     void testWriteConcernInheritance() {
         // Create a MongoClient running against a configured sharded/replica set/load balanced cluster.
         // transactions require a 4.0+ server when non-sharded and 4.2+ when sharded
-        if (!isSharded()) {
+        if (isSharded()) {
+            assumeTrue(serverVersionAtLeast(4, 2));
+        } else {
             assumeTrue(serverVersionAtLeast(4, 0));
         }
 
-        collection.insertOne(Document.parse("{}"));
+        Mono.from(collection.insertOne(Document.parse("{}"))).block();
 
-        try (ClientSession session = client.startSession()) {
-            MongoCollection<Document> wcCollection = collection.withWriteConcern(WriteConcern.UNACKNOWLEDGED);
+        Mono<Document> testWriteConcern = Mono.from(client.startSession())
+                .flatMap(session ->
+                        Mono.fromRunnable(session::startTransaction)
+                                .then(Mono.from(collection.withWriteConcern(WriteConcern.UNACKNOWLEDGED).insertOne(session, new Document("n", 1))))
+                                .then(Mono.from(session.commitTransaction()))
+                                .then(Mono.from(collection.find(new Document("n", 1)).first()))
+                                .doFinally(signalType -> session.close())
+                );
 
-            assertDoesNotThrow(() -> {
-                        session.startTransaction();
-                        wcCollection.insertOne(session, new Document("n", 1));
-                        session.commitTransaction();
-                    });
-            assertNotNull(collection.find(new Document("n", 1)).first());
-        }
+        StepVerifier.create(testWriteConcern).assertNext(Assertions::assertNotNull).verifyComplete();
     }
-
 }
