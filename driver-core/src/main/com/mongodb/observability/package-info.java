@@ -14,20 +14,15 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.binding;
-
-import com.mongodb.internal.connection.OperationContext;
-
-
 /**
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ * Contains classes related to MongoDB observability, including tracing.
+ *
+ * @since 5.7
  */
-public interface BindingContext {
+@Alpha(Reason.CLIENT)
+@NonNullApi
+package com.mongodb.observability;
 
-    /**
-     * Note: Will return the same operation context if called multiple times.
-     *
-     * @return the operation context for the binding context.
-     */
-    OperationContext getOperationContext();
-}
+import com.mongodb.lang.NonNullApi;
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;

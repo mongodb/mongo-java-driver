@@ -26,6 +26,7 @@ import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.InsertRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.bulk.WriteRequest;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.MixedBulkWriteOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
@@ -98,9 +99,14 @@ final class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcern
     }
 
     @Override
-    public WriteConcernResult execute(final WriteBinding binding) {
+    public MongoNamespace getNamespace() {
+        return wrappedOperation.getNamespace();
+    }
+
+    @Override
+    public WriteConcernResult execute(final WriteBinding binding, final OperationContext operationContext) {
         try {
-            BulkWriteResult result = wrappedOperation.bypassDocumentValidation(bypassDocumentValidation).execute(binding);
+            BulkWriteResult result = wrappedOperation.bypassDocumentValidation(bypassDocumentValidation).execute(binding, operationContext);
             if (result.wasAcknowledged()) {
                 return translateBulkWriteResult(result);
             } else {
@@ -112,7 +118,7 @@ final class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcern
     }
 
     @Override
-    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<WriteConcernResult> callback) {
+    public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<WriteConcernResult> callback) {
         throw new UnsupportedOperationException("This operation is sync only");
     }
 

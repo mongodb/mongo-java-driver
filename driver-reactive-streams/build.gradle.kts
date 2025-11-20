@@ -44,6 +44,10 @@ dependencies {
 
     // Reactive Streams TCK testing
     testImplementation(libs.reactive.streams.tck)
+
+    // Tracing
+    testImplementation(platform(libs.micrometer.tracing.integration.test.bom))
+    testImplementation(libs.micrometer.tracing.integration.test) { exclude(group = "org.junit.jupiter") }
 }
 
 configureMavenPublication {

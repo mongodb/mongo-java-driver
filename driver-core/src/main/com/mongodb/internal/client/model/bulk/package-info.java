@@ -15,9 +15,12 @@
  */
 
 /**
- * Internal program elements related to {@link com.mongodb.client.model.bulk}.
+ * This package contains internal functionality that may change at any time.
  */
+
+@Internal
 @NonNullApi
 package com.mongodb.internal.client.model.bulk;
 
+import com.mongodb.annotations.Internal;
 import com.mongodb.lang.NonNullApi;

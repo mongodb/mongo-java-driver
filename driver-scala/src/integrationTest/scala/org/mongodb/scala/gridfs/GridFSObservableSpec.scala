@@ -16,6 +16,8 @@
 
 package org.mongodb.scala.gridfs
 
+import com.mongodb.client.gridfs.model.GridFSUploadOptions
+
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.channels.Channels
@@ -345,7 +347,11 @@ class GridFSObservableSpec extends RequiresMongoDBISpec with FuturesSpec with Be
       override def onComplete(): Unit = completed = true
     }
     gridFSBucket
-      .uploadFromObservable("myFile", Observable(List.fill(1024)(ByteBuffer.wrap(contentBytes))))
+      .uploadFromObservable(
+        "myFile",
+        Observable(List.fill(1024)(ByteBuffer.wrap(contentBytes))),
+        new GridFSUploadOptions().chunkSizeBytes(1024)
+      )
       .subscribe(observer)
 
     observer.subscription().request(1)
@@ -368,7 +374,7 @@ class GridFSObservableSpec extends RequiresMongoDBISpec with FuturesSpec with Be
     } catch {
       case e: Exception =>
         if (n > 1) {
-          Thread.sleep(250)
+          Thread.sleep(500)
           retry(n - 1)(fn)
         } else {
           throw e

@@ -26,5 +26,10 @@
  * <p>In other words, a simple library that allows the programmer to have TLS using the same
  * standard socket API used for plaintext, just like OpenSSL does for C, only for Java, filling a
  * specially painful missing feature of the standard Java library.
+ *
+ * <p>This package contains internal functionality that may change at any time.
  */
+@Internal
 package com.mongodb.internal.connection.tlschannel;
+
+import com.mongodb.annotations.Internal;

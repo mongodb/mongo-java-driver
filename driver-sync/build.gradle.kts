@@ -15,6 +15,7 @@
  */
 import ProjectExtensions.configureJarManifest
 import ProjectExtensions.configureMavenPublication
+import project.DEFAULT_JAVA_VERSION
 
 plugins {
     id("project.java")
@@ -36,8 +37,24 @@ dependencies {
     testImplementation(project(path = ":bson", configuration = "testArtifacts"))
     testImplementation(project(path = ":driver-core", configuration = "testArtifacts"))
 
+    optionalImplementation(platform(libs.micrometer.observation.bom))
+    optionalImplementation(libs.micrometer.observation)
+
     // lambda testing
     testImplementation(libs.aws.lambda.core)
+
+    // Tracing testing
+    testImplementation(platform(libs.micrometer.tracing.integration.test.bom))
+    testImplementation(libs.micrometer.tracing.integration.test) { exclude(group = "org.junit.jupiter") }
+}
+
+tasks.withType<Test> {
+    // Needed for MicrometerProseTest to set env variable programmatically (calls
+    // `field.setAccessible(true)`)
+    val testJavaVersion: Int = findProperty("javaVersion")?.toString()?.toInt() ?: DEFAULT_JAVA_VERSION
+    if (testJavaVersion >= DEFAULT_JAVA_VERSION) {
+        jvmArgs("--add-opens=java.base/java.util=ALL-UNNAMED")
+    }
 }
 
 configureMavenPublication {

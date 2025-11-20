@@ -16,10 +16,12 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.AsyncWriteBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.ReadOperationCursor;
 import com.mongodb.internal.operation.WriteOperation;
 
@@ -39,12 +41,17 @@ class VoidWriteOperationThenCursorReadOperation<T> implements ReadOperationCurso
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        writeOperation.executeAsync((AsyncWriteBinding) binding, (result, t) -> {
+    public MongoNamespace getNamespace() {
+        return writeOperation.getNamespace();
+    }
+
+    @Override
+    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+        writeOperation.executeAsync((AsyncWriteBinding) binding, operationContext,  (result, t) -> {
             if (t != null) {
                 callback.onResult(null, t);
             } else {
-                cursorReadOperation.executeAsync(binding, callback);
+                cursorReadOperation.executeAsync(binding, operationContext, callback);
             }
         });
     }

@@ -22,6 +22,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
@@ -45,12 +46,12 @@ abstract class AbstractWriteSearchIndexOperation implements WriteOperation<Void>
     }
 
     @Override
-    public Void execute(final WriteBinding binding) {
-        return withConnection(binding, connection -> {
+    public Void execute(final WriteBinding binding, final OperationContext operationContext) {
+        return withConnection(binding, operationContext, (connection, operationContextWithMinRtt) -> {
             try {
-                executeCommand(binding, namespace.getDatabaseName(), buildCommand(),
+                executeCommand(binding, operationContextWithMinRtt, namespace.getDatabaseName(), buildCommand(),
                         connection,
-                        writeConcernErrorTransformer(binding.getOperationContext().getTimeoutContext()));
+                        writeConcernErrorTransformer(operationContextWithMinRtt.getTimeoutContext()));
             } catch (MongoCommandException mongoCommandException) {
                 swallowOrThrow(mongoCommandException);
             }
@@ -59,11 +60,11 @@ abstract class AbstractWriteSearchIndexOperation implements WriteOperation<Void>
     }
 
     @Override
-    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncSourceAndConnection(binding::getWriteConnectionSource, false, callback,
-                (connectionSource, connection, cb) ->
-                        executeCommandAsync(binding, namespace.getDatabaseName(), buildCommand(), connection,
-                                writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()), (result, commandExecutionError) -> {
+    public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<Void> callback) {
+        withAsyncSourceAndConnection(binding::getWriteConnectionSource, false, operationContext, callback,
+                (connectionSource, connection, operationContextWithMinRtt, cb) ->
+                        executeCommandAsync(binding, operationContextWithMinRtt,  namespace.getDatabaseName(), buildCommand(), connection,
+                                writeConcernErrorTransformerAsync(operationContextWithMinRtt.getTimeoutContext()), (result, commandExecutionError) -> {
                                     try {
                                         swallowOrThrow(commandExecutionError);
                                         cb.onResult(result, null);
@@ -71,8 +72,7 @@ abstract class AbstractWriteSearchIndexOperation implements WriteOperation<Void>
                                         cb.onResult(null, mongoCommandException);
                                     }
                                 }
-                        )
-        );
+                        ));
     }
 
     /**
@@ -96,7 +96,9 @@ abstract class AbstractWriteSearchIndexOperation implements WriteOperation<Void>
 
     abstract BsonDocument buildCommand();
 
-    MongoNamespace getNamespace() {
+
+    @Override
+    public MongoNamespace getNamespace() {
         return namespace;
     }
 }

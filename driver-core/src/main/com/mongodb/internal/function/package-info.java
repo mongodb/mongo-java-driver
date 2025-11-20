@@ -15,9 +15,11 @@
  */
 
 /**
+ * This package contains internal functionality that may change at any time.
  */
-
+@Internal
 @NonNullApi
 package com.mongodb.internal.function;
 
+import com.mongodb.annotations.Internal;
 import com.mongodb.lang.NonNullApi;

@@ -16,10 +16,10 @@
 
 package com.mongodb;
 
-import com.mongodb.annotations.Internal;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.annotations.Sealed;
 import com.mongodb.internal.client.DriverInformation;
-import com.mongodb.internal.client.DriverInformationHelper;
+import com.mongodb.internal.connection.ConcreteMongoDriverInformation;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,8 +47,9 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.4
  * @mongodb.server.release 3.4
  */
-public final class MongoDriverInformation {
-    private final List<DriverInformation> driverInformationList;
+@Sealed
+public abstract class MongoDriverInformation {
+
 
     /**
      * Convenience method to create a Builder.
@@ -66,7 +67,7 @@ public final class MongoDriverInformation {
      * @return a builder
      */
     public static Builder builder(final MongoDriverInformation mongoDriverInformation) {
-        return new Builder(mongoDriverInformation);
+        return new Builder((ConcreteMongoDriverInformation) mongoDriverInformation);
     }
 
     /**
@@ -74,42 +75,28 @@ public final class MongoDriverInformation {
      *
      * @return the driverNames
      */
-    public List<String> getDriverNames() {
-        return DriverInformationHelper.getNames(driverInformationList);
-    }
+    public abstract List<String> getDriverNames();
 
     /**
      * Returns the driverVersions
      *
      * @return the driverVersions
      */
-    public List<String> getDriverVersions() {
-        return DriverInformationHelper.getVersions(driverInformationList);
-    }
+    public abstract List<String> getDriverVersions();
 
     /**
      * Returns the driverPlatforms
      *
      * @return the driverPlatforms
      */
-    public List<String> getDriverPlatforms() {
-        return DriverInformationHelper.getPlatforms(driverInformationList);
-    }
-
-    /**
-     * For internal use only
-     */
-    @Internal
-    public List<DriverInformation> getDriverInformationList() {
-        return driverInformationList;
-    }
+    public abstract List<String> getDriverPlatforms();
 
     /**
      *
      */
     @NotThreadSafe
     public static final class Builder {
-        private final MongoDriverInformation mongoDriverInformation;
+        private final ConcreteMongoDriverInformation mongoDriverInformation;
         private String driverName;
         private String driverVersion;
         private String driverPlatform;
@@ -156,25 +143,21 @@ public final class MongoDriverInformation {
          */
         public MongoDriverInformation build() {
             DriverInformation driverInformation = new DriverInformation(driverName, driverVersion, driverPlatform);
-            if (mongoDriverInformation.driverInformationList.contains(driverInformation)) {
+            if (mongoDriverInformation.getDriverInformationList().contains(driverInformation)) {
                 return mongoDriverInformation;
             }
 
-            List<DriverInformation> driverInformationList = new ArrayList<>(mongoDriverInformation.driverInformationList);
+            List<DriverInformation> driverInformationList = new ArrayList<>(mongoDriverInformation.getDriverInformationList());
             driverInformationList.add(driverInformation);
-            return new MongoDriverInformation(Collections.unmodifiableList(driverInformationList));
+            return new ConcreteMongoDriverInformation(Collections.unmodifiableList(driverInformationList));
         }
 
         private Builder() {
-            mongoDriverInformation = new MongoDriverInformation(Collections.emptyList());
+            mongoDriverInformation = new ConcreteMongoDriverInformation(Collections.emptyList());
         }
 
-        private Builder(final MongoDriverInformation driverInformation) {
+        private Builder(final ConcreteMongoDriverInformation driverInformation) {
             this.mongoDriverInformation = notNull("driverInformation", driverInformation);
         }
-    }
-
-    private MongoDriverInformation(final List<DriverInformation> driverInformation) {
-        this.driverInformationList = notNull("driverInformation", driverInformation);
     }
 }

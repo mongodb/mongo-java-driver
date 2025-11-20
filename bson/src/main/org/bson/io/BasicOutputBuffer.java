@@ -88,6 +88,7 @@ public class BasicOutputBuffer extends OutputBuffer {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void writeInt32(final int position, final int value) {
         ensureOpen();
         checkPosition(position, 4);

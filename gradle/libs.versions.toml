@@ -24,6 +24,8 @@ reactive-streams = "1.0.4"
 snappy = "1.1.10.3"
 zstd = "1.5.5-3"
 jetbrains-annotations = "26.0.2"
+micrometer-tracing = "1.6.0-M3" # This version has a fix for https://github.com/micrometer-metrics/tracing/issues/1092
+micrometer-observation-bom = "1.15.4"
 
 kotlin = "1.8.10"
 kotlinx-coroutines-bom = "1.6.4"
@@ -93,6 +95,8 @@ reactive-streams = { module = " org.reactivestreams:reactive-streams", version.r
 slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 snappy-java = { module = "org.xerial.snappy:snappy-java", version.ref = "snappy" }
 zstd-jni = { module = "com.github.luben:zstd-jni", version.ref = "zstd" }
+micrometer-observation-bom = { module = "io.micrometer:micrometer-bom", version.ref = "micrometer-observation-bom" }
+micrometer-observation = { module = "io.micrometer:micrometer-observation" }
 
 graal-sdk = { module = "org.graalvm.sdk:graal-sdk", version.ref = "graal-sdk" }
 graal-sdk-nativeimage = { module = "org.graalvm.sdk:nativeimage", version.ref = "graal-sdk" }
@@ -172,6 +176,8 @@ project-reactor-test = { module = "io.projectreactor:reactor-test" }
 reactive-streams-tck = { module = " org.reactivestreams:reactive-streams-tck", version.ref = "reactive-streams" }
 reflections = { module = "org.reflections:reflections", version.ref = "reflections" }
 
+micrometer-tracing-integration-test-bom = { module = " io.micrometer:micrometer-tracing-bom", version.ref = "micrometer-tracing" }
+micrometer-tracing-integration-test = { module = " io.micrometer:micrometer-tracing-integration-test" }
 
 [bundles]
 aws-java-sdk-v1 = ["aws-java-sdk-v1-core", "aws-java-sdk-v1-sts"]

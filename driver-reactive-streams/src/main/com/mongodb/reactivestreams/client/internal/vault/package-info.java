@@ -15,11 +15,11 @@
  */
 
 /**
- * Utility classes for internal library use only.
- *
- * <p>This should not be considered a part of the public API.</p>
+ * This package contains internal functionality that may change at any time.
  */
+@Internal
 @NonNullApi
 package com.mongodb.reactivestreams.client.internal.vault;
 
+import com.mongodb.annotations.Internal;
 import com.mongodb.lang.NonNullApi;

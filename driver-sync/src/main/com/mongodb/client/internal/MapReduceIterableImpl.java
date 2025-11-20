@@ -29,6 +29,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.FindOptions;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.MapReduceStatistics;
 import com.mongodb.internal.operation.Operations;
@@ -241,12 +242,17 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         }
 
         @Override
-        public BatchCursor<TResult> execute(final ReadBinding binding) {
-            return operation.execute(binding);
+        public MongoNamespace getNamespace() {
+            return operation.getNamespace();
         }
 
         @Override
-        public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<TResult>> callback) {
+        public BatchCursor<TResult> execute(final ReadBinding binding, final OperationContext operationContext) {
+            return operation.execute(binding, operationContext);
+        }
+
+        @Override
+        public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<TResult>> callback) {
             throw new UnsupportedOperationException("This operation is sync only");
         }
     }

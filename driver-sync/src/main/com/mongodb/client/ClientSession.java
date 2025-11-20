@@ -18,6 +18,7 @@ package com.mongodb.client;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
+import com.mongodb.internal.observability.micrometer.TransactionSpan;
 import com.mongodb.lang.Nullable;
 
 /**
@@ -125,4 +126,13 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      * @since 3.11
      */
     <T> T withTransaction(TransactionBody<T> transactionBody, TransactionOptions options);
+
+    /**
+     * Get the transaction span (if started).
+     *
+     * @return the transaction span
+     * @since 5.7
+     */
+    @Nullable
+    TransactionSpan getTransactionSpan();
 }

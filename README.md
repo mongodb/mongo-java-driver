@@ -85,7 +85,7 @@ Example for Maven:
     <version>x.y.z</version>
 </dependency>
 ```
-Snapshot builds are also published regulary via Sonatype.
+Snapshot builds are also published regularly via Sonatype.
 
 Example for Maven:
 

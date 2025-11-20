@@ -20,7 +20,6 @@ import com.mongodb.MongoDriverInformation;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.client.DriverInformation;
-import com.mongodb.internal.client.DriverInformationHelper;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
@@ -41,7 +40,7 @@ import java.util.function.Consumer;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.internal.Locks.withLock;
-import static com.mongodb.internal.client.DriverInformationHelper.INITIAL_DRIVER_INFORMATION;
+import static com.mongodb.internal.connection.ConcreteMongoDriverInformation.INITIAL_DRIVER_INFORMATION;
 import static com.mongodb.internal.connection.FaasEnvironment.getFaasEnvironment;
 import static java.lang.System.getProperty;
 import static java.nio.file.Paths.get;
@@ -67,7 +66,7 @@ public class ClientMetadata {
         this.driverInformationList = new ArrayList<>();
         withLock(readWriteLock.writeLock(), () -> {
             driverInformationList.add(INITIAL_DRIVER_INFORMATION);
-            driverInformationList.addAll(mongoDriverInformation.getDriverInformationList());
+            driverInformationList.addAll(((ConcreteMongoDriverInformation) mongoDriverInformation).getDriverInformationList());
             this.clientMetadataBsonDocument = createClientMetadataDocument(applicationName, driverInformationList);
         });
     }
@@ -82,7 +81,8 @@ public class ClientMetadata {
     public void append(final MongoDriverInformation mongoDriverInformationToAppend) {
         withLock(readWriteLock.writeLock(), () -> {
             boolean hasAddedNewData = false;
-            for (DriverInformation driverInformation : mongoDriverInformationToAppend.getDriverInformationList()) {
+            for (DriverInformation driverInformation
+                    : ((ConcreteMongoDriverInformation) mongoDriverInformationToAppend).getDriverInformationList()) {
                if (!driverInformationList.contains(driverInformation)) {
                    hasAddedNewData = true;
                    driverInformationList.add(driverInformation);
@@ -112,9 +112,10 @@ public class ClientMetadata {
         });
         tryWithLimit(clientMetadata, d -> putAtPath(d, "os.type", getOperatingSystemType(getOperatingSystemName())));
         // full driver information:
+        ConcreteMongoDriverInformation mongoDriverInformation = new ConcreteMongoDriverInformation(driverInformationList);
         tryWithLimit(clientMetadata, d -> {
-            putAtPath(d, "driver.name", listToString(DriverInformationHelper.getNames(driverInformationList)));
-            putAtPath(d, "driver.version", listToString(DriverInformationHelper.getVersions(driverInformationList)));
+            putAtPath(d, "driver.name", listToString(mongoDriverInformation.getDriverNames()));
+            putAtPath(d, "driver.version", listToString(mongoDriverInformation.getDriverVersions()));
         });
 
         // optional fields:
@@ -123,7 +124,7 @@ public class ClientMetadata {
         ClientMetadata.Orchestrator orchestrator = ClientMetadata.Orchestrator.determineExecutionOrchestrator();
 
         tryWithLimit(clientMetadata, d -> putAtPath(d, "platform", INITIAL_DRIVER_INFORMATION.getDriverPlatform()));
-        tryWithLimit(clientMetadata, d -> putAtPath(d, "platform", listToString(DriverInformationHelper.getPlatforms(driverInformationList))));
+        tryWithLimit(clientMetadata, d -> putAtPath(d, "platform", listToString(mongoDriverInformation.getDriverPlatforms())));
         tryWithLimit(clientMetadata, d -> putAtPath(d, "os.name", getOperatingSystemName()));
         tryWithLimit(clientMetadata, d -> putAtPath(d, "os.architecture", getProperty("os.arch", "unknown")));
         tryWithLimit(clientMetadata, d -> putAtPath(d, "os.version", getProperty("os.version", "unknown")));

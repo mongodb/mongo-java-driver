@@ -74,6 +74,7 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "SessionContext",
       "SingleResultCallback",
       "Slow",
+      "SpanTree",
       "SubjectProvider",
       "TransactionExample",
       "UnixServerAddress",
@@ -94,7 +95,9 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "SyncClientEncryption",
       "BaseClientUpdateOptions",
       "BaseClientDeleteOptions",
-      "MongoBaseInterfaceAssertions"
+      "MongoBaseInterfaceAssertions",
+      "MicrometerObservabilitySettings",
+      "ObservabilitySettings"
     )
     val scalaExclusions = Set(
       "BuildInfo",

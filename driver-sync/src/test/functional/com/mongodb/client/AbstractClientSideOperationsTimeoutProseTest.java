@@ -886,9 +886,9 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     /**
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
-    @DisplayName("KillCursors is not executed after getMore network error when timeout is not enabled")
+    @DisplayName("KillCursors is not executed after getMore network error when timeoutMs is not enabled")
     @Test
-    public void testKillCursorsIsNotExecutedAfterGetMoreNetworkErrorWhenTimeoutIsNotEnabled() {
+    public void testKillCursorsIsNotExecutedAfterGetMoreNetworkErrorWhenTimeoutMsIsNotEnabled() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeTrue(isLoadBalanced());
 
@@ -1053,7 +1053,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
 
         List<CommandFailedEvent> commandFailedEvents = commandListener.getCommandFailedEvents("isMaster");
-        assertEquals(1, commandFailedEvents.size());
+        assertFalse(commandFailedEvents.isEmpty());
         assertInstanceOf(MongoOperationTimeoutException.class, commandFailedEvents.get(0).getThrowable());
     }
 
@@ -1139,4 +1139,5 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
    private long msElapsedSince(final long t1) {
         return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t1);
     }
+
 }

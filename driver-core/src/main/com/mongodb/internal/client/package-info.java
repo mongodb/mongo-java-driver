@@ -15,10 +15,12 @@
  */
 
 /**
- * This package contains classes for internal client functionality.
+ * This package contains internal functionality that may change at any time.
  */
 
+@Internal
 @NonNullApi
 package com.mongodb.internal.client;
 
+import com.mongodb.annotations.Internal;
 import com.mongodb.lang.NonNullApi;

@@ -859,18 +859,20 @@ public class MongoClient implements Closeable {
         try {
             ServerCursorAndNamespace cur;
             while ((cur = orphanedCursors.poll()) != null) {
-                ReadWriteBinding binding = new SingleServerBinding(delegate.getCluster(), cur.serverCursor.getAddress(),
-                        new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
-                                new TimeoutContext(getTimeoutSettings()), options.getServerApi()));
+                OperationContext operationContext = new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
+                        new TimeoutContext(getTimeoutSettings()), options.getServerApi());
+
+                ReadWriteBinding binding = new SingleServerBinding(delegate.getCluster(), cur.serverCursor.getAddress());
                 try {
-                    ConnectionSource source = binding.getReadConnectionSource();
+                    OperationContext serverSelectionOperationContext = operationContext.withOverride(TimeoutContext::withComputedServerSelectionTimeout);
+                    ConnectionSource source = binding.getReadConnectionSource(serverSelectionOperationContext);
                     try {
-                        Connection connection = source.getConnection();
+                        Connection connection = source.getConnection(serverSelectionOperationContext);
                         try {
                             BsonDocument killCursorsCommand = new BsonDocument("killCursors", new BsonString(cur.namespace.getCollectionName()))
                                     .append("cursors", new BsonArray(singletonList(new BsonInt64(cur.serverCursor.getId()))));
                             connection.command(cur.namespace.getDatabaseName(), killCursorsCommand, NoOpFieldNameValidator.INSTANCE,
-                                    ReadPreference.primary(), new BsonDocumentCodec(), source.getOperationContext());
+                                    ReadPreference.primary(), new BsonDocumentCodec(), operationContext);
                         } finally {
                             connection.release();
                         }
