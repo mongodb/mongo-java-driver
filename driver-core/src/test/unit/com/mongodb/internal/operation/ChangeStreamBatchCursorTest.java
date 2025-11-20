@@ -25,7 +25,6 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadBinding;
-import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.internal.connection.OperationContext;
