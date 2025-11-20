@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
-package org.bson;
+package org.bson.vector;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import org.bson.BinaryVector;
+import org.bson.BsonBinary;
+import org.bson.Float32BinaryVector;
+import org.bson.Int8BinaryVector;
+import org.bson.PackedBitBinaryVector;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,6 +41,9 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+
+// Prose tests for Sessions specification: https://github.com/mongodb/specifications/tree/master/source/bson-binary-vector
+// Prose test README: https://github.com/mongodb/specifications/blob/master/source/bson-binary-vector/tests/README.md
 class BinaryVectorProseTest {
 
     private ListAppender<ILoggingEvent> logWatcher;
@@ -58,7 +67,7 @@ class BinaryVectorProseTest {
         byte[] data = {(byte) 0b11111111};
 
         // then
-        assertDoesNotThrow(()-> BinaryVector.packedBitVector(data, (byte) 7));
+        Assertions.assertDoesNotThrow(()-> BinaryVector.packedBitVector(data, (byte) 7));
         ILoggingEvent iLoggingEvent = logWatcher.list.get(0);
         assertEquals(Level.WARN, iLoggingEvent.getLevel());
         assertEquals("The last 7 padded bits should be zero in the final byte.", iLoggingEvent.getMessage());
@@ -78,6 +87,7 @@ class BinaryVectorProseTest {
         assertEquals("The last 7 padded bits should be zero in the final byte.", iLoggingEvent.getMessage());
     }
 
+    @DisplayName("Treatment of non-zero ignored bits: 3. Comparison")
     @Test
     void shouldCompareVectorsWithIgnoredBits() {
         // b1: 1-bit vector, all 0 ignored bits
@@ -106,6 +116,9 @@ class BinaryVectorProseTest {
         assertEquals(v1, v3);    // Equal at BinaryVector level
     }
 
+    //
+    // Extra non specification based tests
+    //
     @Test
     void shouldCreateInt8Vector() {
         // given
