@@ -94,6 +94,8 @@ public final class BinaryVectorHelper {
 
     private static PackedBitBinaryVector decodePackedBitVector(final byte[] encodedVector, final byte padding) {
         byte[] packedBitVector = extractVectorData(encodedVector);
+        isTrue("Padding must be 0 if vector is empty, but found: " + padding, padding == 0 || packedBitVector.length > 0);
+        isTrue("Padding must be between 0 and 7 bits, but found: " + padding, padding >= 0 && padding <= 7);
         return BinaryVector.packedBitVector(packedBitVector, padding);
     }
 
