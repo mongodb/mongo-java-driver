@@ -19,7 +19,7 @@ package org.bson;
 import java.util.Arrays;
 import java.util.Objects;
 
-import static org.bson.assertions.Assertions.assertNotNull;
+import static org.bson.assertions.Assertions.notNull;
 
 /**
  * Represents a vector of 8-bit signed integers, where each element in the vector is a byte.
@@ -38,7 +38,7 @@ public final class Int8BinaryVector extends BinaryVector {
 
     Int8BinaryVector(final byte[] data) {
         super(DataType.INT8);
-        this.data = assertNotNull(data);
+        this.data = notNull("data", data);
     }
 
     /**
@@ -50,7 +50,7 @@ public final class Int8BinaryVector extends BinaryVector {
      * @return the underlying byte array representing this {@link Int8BinaryVector} vector.
      */
     public byte[] getData() {
-        return assertNotNull(data);
+        return data;
     }
 
     @Override
