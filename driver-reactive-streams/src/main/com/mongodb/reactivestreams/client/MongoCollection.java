@@ -1212,8 +1212,8 @@ public interface MongoCollection<TDocument> {
      * Atomically find a document and remove it.
      *
      * @param filter the query filter to find the document with
-     * @return a publisher with a single element the document that was removed.  If no documents matched the query filter, then null will be
-     * returned
+     * @return a publisher with a single element the document that was removed.  If no documents matched the query filter, then an empty
+     * publisher is returned
      */
     Publisher<TDocument> findOneAndDelete(Bson filter);
 
@@ -1222,8 +1222,8 @@ public interface MongoCollection<TDocument> {
      *
      * @param filter  the query filter to find the document with
      * @param options the options to apply to the operation
-     * @return a publisher with a single element the document that was removed.  If no documents matched the query filter, then null will be
-     * returned
+     * @return a publisher with a single element the document that was removed.  If no documents matched the query filter,
+     * then an empty publisher is returned
      */
     Publisher<TDocument> findOneAndDelete(Bson filter, FindOneAndDeleteOptions options);
 
@@ -1232,8 +1232,8 @@ public interface MongoCollection<TDocument> {
      *
      * @param clientSession the client session with which to associate this operation
      * @param filter the query filter to find the document with
-     * @return a publisher with a single element the document that was removed.  If no documents matched the query filter, then null will be
-     * returned
+     * @return a publisher with a single element the document that was removed.  If no documents matched the query filter,
+     * then an empty publisher is returned
      * @mongodb.server.release 3.6
      * @since 1.7
      */
@@ -1245,8 +1245,8 @@ public interface MongoCollection<TDocument> {
      * @param clientSession the client session with which to associate this operation
      * @param filter  the query filter to find the document with
      * @param options the options to apply to the operation
-     * @return a publisher with a single element the document that was removed.  If no documents matched the query filter, then null will be
-     * returned
+     * @return a publisher with a single element the document that was removed.  If no documents matched the query filter,
+     * then an empty publisher is returned
      * @mongodb.server.release 3.6
      * @since 1.7
      */
@@ -1259,7 +1259,7 @@ public interface MongoCollection<TDocument> {
      * @param replacement the replacement document
      * @return a publisher with a single element the document that was replaced.  Depending on the value of the {@code returnOriginal}
      * property, this will either be the document as it was before the update or as it is after the update.  If no documents matched the
-     * query filter, then null will be returned
+     * query filter, then an empty publisher is returned
      */
     Publisher<TDocument> findOneAndReplace(Bson filter, TDocument replacement);
 
@@ -1271,7 +1271,7 @@ public interface MongoCollection<TDocument> {
      * @param options     the options to apply to the operation
      * @return a publisher with a single element the document that was replaced.  Depending on the value of the {@code returnOriginal}
      * property, this will either be the document as it was before the update or as it is after the update.  If no documents matched the
-     * query filter, then null will be returned
+     * query filter, then an empty publisher is returned
      */
     Publisher<TDocument> findOneAndReplace(Bson filter, TDocument replacement, FindOneAndReplaceOptions options);
 
@@ -1283,7 +1283,7 @@ public interface MongoCollection<TDocument> {
      * @param replacement the replacement document
      * @return a publisher with a single element the document that was replaced.  Depending on the value of the {@code returnOriginal}
      * property, this will either be the document as it was before the update or as it is after the update.  If no documents matched the
-     * query filter, then null will be returned
+     * query filter, then an empty publisher is returned
      * @mongodb.server.release 3.6
      * @since 1.7
      */
@@ -1298,7 +1298,7 @@ public interface MongoCollection<TDocument> {
      * @param options     the options to apply to the operation
      * @return a publisher with a single element the document that was replaced.  Depending on the value of the {@code returnOriginal}
      * property, this will either be the document as it was before the update or as it is after the update.  If no documents matched the
-     * query filter, then null will be returned
+     * query filter, then an empty publisher is returned
      * @mongodb.server.release 3.6
      * @since 1.7
      */
@@ -1311,7 +1311,7 @@ public interface MongoCollection<TDocument> {
      * @param filter a document describing the query filter, which may not be null.
      * @param update a document describing the update, which may not be null. The update to apply must include only update operators.
      * @return a publisher with a single element the document that was updated before the update was applied.  If no documents matched the
-     * query filter, then null will be returned
+     * query filter, then an empty publisher is returned
      */
     Publisher<TDocument> findOneAndUpdate(Bson filter, Bson update);
 
@@ -1323,7 +1323,7 @@ public interface MongoCollection<TDocument> {
      * @param options the options to apply to the operation
      * @return a publisher with a single element the document that was updated.  Depending on the value of the {@code returnOriginal}
      * property, this will either be the document as it was before the update or as it is after the update.  If no documents matched the
-     * query filter, then null will be returned
+     * query filter, then an empty publisher is returned
      */
     Publisher<TDocument> findOneAndUpdate(Bson filter, Bson update, FindOneAndUpdateOptions options);
 
@@ -1334,7 +1334,7 @@ public interface MongoCollection<TDocument> {
      * @param filter a document describing the query filter, which may not be null.
      * @param update a document describing the update, which may not be null. The update to apply must include only update operators.
      * @return a publisher with a single element the document that was updated before the update was applied.  If no documents matched the
-     * query filter, then null will be returned
+     * query filter, then an empty publisher is returned
      * @mongodb.server.release 3.6
      * @since 1.7
      */
@@ -1349,7 +1349,7 @@ public interface MongoCollection<TDocument> {
      * @param options the options to apply to the operation
      * @return a publisher with a single element the document that was updated.  Depending on the value of the {@code returnOriginal}
      * property, this will either be the document as it was before the update or as it is after the update.  If no documents matched the
-     * query filter, then null will be returned
+     * query filter, then an empty publisher is returned
      * @mongodb.server.release 3.6
      * @since 1.7
      */
@@ -1363,7 +1363,7 @@ public interface MongoCollection<TDocument> {
      * @param update a pipeline describing the update, which may not be null.
      * @return a publisher with a single element the document that was updated.  Depending on the value of the {@code returnOriginal}
      * property, this will either be the document as it was before the update or as it is after the update.  If no documents matched the
-     * query filter, then null will be returned
+     * query filter, then an empty publisher is returned
      * @since 1.12
      * @mongodb.server.release 4.2
      */
@@ -1378,7 +1378,7 @@ public interface MongoCollection<TDocument> {
      * @param options the options to apply to the operation
      * @return a publisher with a single element the document that was updated.  Depending on the value of the {@code returnOriginal}
      * property, this will either be the document as it was before the update or as it is after the update.  If no documents matched the
-     * query filter, then null will be returned
+     * query filter, then an empty publisher is returned
      * @since 1.12
      * @mongodb.server.release 4.2
      */
@@ -1393,7 +1393,7 @@ public interface MongoCollection<TDocument> {
      * @param update a pipeline describing the update, which may not be null.
      * @return a publisher with a single element the document that was updated.  Depending on the value of the {@code returnOriginal}
      * property, this will either be the document as it was before the update or as it is after the update.  If no documents matched the
-     * query filter, then null will be returned
+     * query filter, then an empty publisher is returned
      * @since 1.12
      * @mongodb.server.release 4.2
      */
@@ -1409,7 +1409,7 @@ public interface MongoCollection<TDocument> {
      * @param options the options to apply to the operation
      * @return a publisher with a single element the document that was updated.  Depending on the value of the {@code returnOriginal}
      * property, this will either be the document as it was before the update or as it is after the update.  If no documents matched the
-     * query filter, then null will be returned
+     * query filter, then an empty publisher is returned
      * @since 1.12
      * @mongodb.server.release 4.2
      */
