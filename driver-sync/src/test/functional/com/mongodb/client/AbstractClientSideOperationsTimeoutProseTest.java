@@ -47,6 +47,11 @@ import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.event.ConnectionClosedEvent;
 import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionReadyEvent;
+import com.mongodb.internal.connection.CommandHelper;
+
+import static com.mongodb.internal.connection.CommandHelper.HELLO;
+import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
+
 import com.mongodb.internal.connection.InternalStreamConnection;
 import com.mongodb.internal.connection.ServerHelper;
 import com.mongodb.internal.connection.TestCommandListener;
@@ -1051,8 +1056,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         } finally {
             InternalStreamConnection.setRecordEverything(false);
         }
-
-        List<CommandFailedEvent> commandFailedEvents = commandListener.getCommandFailedEvents("isMaster");
+        List<CommandFailedEvent> commandFailedEvents = commandListener.getCommandFailedEvents(getHandshakeCommandName());
         assertFalse(commandFailedEvents.isEmpty());
         assertInstanceOf(MongoOperationTimeoutException.class, commandFailedEvents.get(0).getThrowable());
     }
@@ -1136,8 +1140,15 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         return createMongoClient(builder.build());
     }
 
-   private long msElapsedSince(final long t1) {
+    private long msElapsedSince(final long t1) {
         return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t1);
     }
 
+    /**
+     * Get the handshake command name based on the server API version.
+     * @return the handshake command name
+     */
+    private String getHandshakeCommandName() {
+        return ClusterFixture.getServerApi() == null ? LEGACY_HELLO : HELLO;
+    }
 }
