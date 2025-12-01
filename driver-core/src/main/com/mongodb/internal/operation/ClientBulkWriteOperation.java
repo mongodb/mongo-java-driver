@@ -772,9 +772,9 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                     deletedCount += response.getNDeleted();
                     Map<Integer, BsonValue> insertModelDocumentIds = batchResult.getInsertModelDocumentIds();
                     for (BsonDocument individualOperationResponse : response.getCursorExhaust()) {
-                        int okFieldValue = individualOperationResponse.getNumber("ok").intValue();
-                        if (okFieldValue == 1 && !verboseResultsSetting) {
-                            //TODO-JAVA-6002 Previously, assertTrue(verboseResultsSetting) was used when okStatus == 1 because the server
+                        boolean individualOperationSuccessful = individualOperationResponse.getNumber("ok").intValue() == 1;
+                        if (individualOperationSuccessful && !verboseResultsSetting) {
+                            //TODO-JAVA-6002 Previously, assertTrue(verboseResultsSetting) was used when ok == 1 because the server
                             // was not supposed to return successful operation results in the cursor when verboseResultsSetting is false.
                             // Due to server bug SERVER-113344, these unexpected results must be ignored until we stop supporting server
                             // versions affected by this bug. When that happens, restore assertTrue(verboseResultsSetting).
@@ -782,12 +782,13 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                         }
                         int individualOperationIndexInBatch = individualOperationResponse.getInt32("idx").getValue();
                         int writeModelIndex = batchStartModelIndex + individualOperationIndexInBatch;
-                        if (okFieldValue == 1) {
+                        if (individualOperationSuccessful) {
                             collectSuccessfulIndividualOperationResult(
                                     individualOperationResponse,
                                     writeModelIndex,
-                                    individualOperationIndexInBatch, insertResults,
+                                    individualOperationIndexInBatch,
                                     insertModelDocumentIds,
+                                    insertResults,
                                     updateResults,
                                     deleteResults);
                         } else {
@@ -832,8 +833,8 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         private void collectSuccessfulIndividualOperationResult(final BsonDocument individualOperationResponse,
                                                                 final int writeModelIndex,
                                                                 final int individualOperationIndexInBatch,
-                                                                final Map<Integer, ClientInsertOneResult> insertResults,
                                                                 final Map<Integer, BsonValue> insertModelDocumentIds,
+                                                                final Map<Integer, ClientInsertOneResult> insertResults,
                                                                 final Map<Integer, ClientUpdateResult> updateResults,
                                                                 final Map<Integer, ClientDeleteResult> deleteResults) {
             AbstractClientNamespacedWriteModel writeModel = getNamespacedModel(models, writeModelIndex);

@@ -61,6 +61,7 @@ public abstract class DualMessageSequences extends MessageSequences {
     String getSecondSequenceId() {
         return secondSequenceId;
     }
+
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PROTECTED)
     public abstract EncodeDocumentsResult encodeDocuments(WritersProviderAndLimitsChecker writersProviderAndLimitsChecker);
 
