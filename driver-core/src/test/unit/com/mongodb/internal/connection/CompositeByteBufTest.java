@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
-public final class CompositeByteBufTest {
+final class CompositeByteBufTest {
 
     @Test
     @SuppressWarnings("ConstantConditions")
