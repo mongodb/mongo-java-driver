@@ -18,7 +18,6 @@ package com.mongodb.client;
 
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientException;
-import com.mongodb.MongoException;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.fixture.EncryptionFixture;
@@ -179,7 +178,7 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
     @Test
-    public void testUnexpectedEndOfStreamFromKmsProvider() {
+    public void testUnexpectedEndOfStreamFromKmsProvider() throws Exception {
         int kmsPort = 5555;
         ClientEncryptionSettings clientEncryptionSettings = ClientEncryptionSettings.builder()
                 .keyVaultMongoClientSettings(getMongoClientSettings())
@@ -197,11 +196,11 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
                     System.getProperty("org.mongodb.test.kms.keystore.location"),
                     "server.p12"), kmsPort);
 
-            MongoException mongoException = assertThrows(MongoClientException.class,
+            MongoClientException mongoException = assertThrows(MongoClientException.class,
                     () -> clientEncryption.createDataKey("kmip", new DataKeyOptions()));
             assertEquals("Exception in encryption library: Unexpected end of stream from KMS provider kmip",
                     mongoException.getMessage());
-        } catch (Throwable e) {
+        } finally {
             if (serverThread != null) {
                 serverThread.interrupt();
             }
