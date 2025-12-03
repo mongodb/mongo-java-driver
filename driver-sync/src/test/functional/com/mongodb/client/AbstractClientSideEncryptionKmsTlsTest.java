@@ -307,15 +307,14 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
         Thread serverThread = new Thread(() -> {
             try {
                 SSLServerSocketFactory serverSocketFactory = sslContext.getServerSocketFactory();
-                SSLServerSocket sslServerSocket = (SSLServerSocket) serverSocketFactory.createServerSocket(kmsPort);
-                sslServerSocket.setNeedClientAuth(false);
-                confirmListening.complete(null);
-
-                Socket accept = sslServerSocket.accept();
-                accept.setSoTimeout(10000);
-                accept.getInputStream().read();
-                accept.close();
-                sslServerSocket.close();
+                try (SSLServerSocket sslServerSocket = (SSLServerSocket) serverSocketFactory.createServerSocket(kmsPort)) {
+                    sslServerSocket.setNeedClientAuth(false);
+                    confirmListening.complete(null);
+                    try (Socket accept = sslServerSocket.accept()) {
+                        accept.setSoTimeout(10000);
+                        accept.getInputStream().read();
+                    }
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
