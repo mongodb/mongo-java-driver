@@ -17,7 +17,7 @@ echo "Running KMS TLS tests"
 cp ${JAVA_HOME}/lib/security/cacerts mongo-truststore
 ${JAVA_HOME}/bin/keytool -importcert -trustcacerts -file ${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem -keystore mongo-truststore -storepass changeit -storetype JKS -noprompt
 
-# Create keystore from server.pem for KMS TLS tests
+# Create keystore from server.pem to emulate KMS server in tests.
 openssl pkcs12 -export \
   -in ${DRIVERS_TOOLS}/.evergreen/x509gen/server.pem \
   -out server.p12 \
