@@ -27,6 +27,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.ClusterFixture.TIMEOUT;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
@@ -200,6 +201,44 @@ public class WithTransactionProseTest extends DatabaseTestCase {
                 return found != null ? found : new Document();
             });
             assertEquals(document, returnValueFromCallback);
+        }
+    }
+
+    //
+    // Test that exponential backoff is applied when retrying transactions
+    // Backoff uses growth factor of 1.5 as per spec
+    //
+    @Test
+    public void testExponentialBackoffOnTransientError() {
+        // Configure failpoint to simulate transient errors
+        MongoDatabase failPointAdminDb = client.getDatabase("admin");
+        failPointAdminDb.runCommand(
+                Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 3}, "
+                        + "'data': {'failCommands': ['insert'], 'errorCode': 112, "
+                        + "'errorLabels': ['TransientTransactionError']}}"));
+
+        try (ClientSession session = client.startSession()) {
+            long startTime = System.currentTimeMillis();
+
+            // Track retry count
+            AtomicInteger retryCount = new AtomicInteger(0);
+
+            session.withTransaction(() -> {
+                retryCount.incrementAndGet();  // Count the attempt before the operation that might fail
+                collection.insertOne(session, Document.parse("{ _id : 'backoff-test' }"));
+                return retryCount;
+            });
+
+            long elapsedTime = System.currentTimeMillis() - startTime;
+
+            // With backoff (growth factor 1.5), we expect at least some delay between retries
+            // Expected delays (without jitter): 5ms, 7.5ms, 11.25ms
+            // With jitter, actual delays will be between 0 and these values
+            // 3 retries with backoff should take at least a few milliseconds
+            assertTrue(elapsedTime > 5, "Expected backoff delays to be applied");
+            assertEquals(4, retryCount.get(), "Expected 1 initial attempt + 3 retries");
+        } finally {
+            failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': 'off'}"));
         }
     }
 
