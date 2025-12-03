@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.ClusterFixture;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
@@ -50,6 +49,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 import static com.mongodb.client.model.bulk.ClientReplaceOneOptions.clientReplaceOneOptions;
 import static java.util.Collections.singletonList;
@@ -75,7 +75,7 @@ class ClientBulkWriteOperationTest {
         binding = MongoMockito.mock(ReadWriteBinding.class);
 
         doReturn(new ConnectionDescription(new ServerId(new ClusterId("test"), new ServerAddress()))).when(connection).getDescription();
-        doReturn(connection).when(connectionSource).getConnection(any(OperationContext.class));
+        doReturn(connection).when(connectionSource).getConnection();
         doReturn(0).when(connectionSource).release();
         doReturn(0).when(connection).release();
 
@@ -83,7 +83,10 @@ class ClientBulkWriteOperationTest {
                 .state(ServerConnectionState.CONNECTED)
                 .type(ServerType.STANDALONE)
                 .build()).when(connectionSource).getServerDescription();
-        doReturn(connectionSource).when(binding).getWriteConnectionSource(any(OperationContext.class));
+        doReturn(OPERATION_CONTEXT).when(connectionSource).getOperationContext();
+
+        doReturn(connectionSource).when(binding).getWriteConnectionSource();
+        doReturn(OPERATION_CONTEXT).when(binding).getOperationContext();
     }
 
 
@@ -124,7 +127,7 @@ class ClientBulkWriteOperationTest {
                 false,
                 getDefaultCodecRegistry());
         //when
-        ClientBulkWriteResult result = op.execute(binding, ClusterFixture.OPERATION_CONTEXT);
+        ClientBulkWriteResult result = op.execute(binding);
 
         //then
         assertEquals(
@@ -176,7 +179,7 @@ class ClientBulkWriteOperationTest {
                 false,
                 getDefaultCodecRegistry());
         //when
-        ClientBulkWriteResult result = op.execute(binding, ClusterFixture.OPERATION_CONTEXT);
+        ClientBulkWriteResult result = op.execute(binding);
 
         //then
         assertEquals(1, result.getInsertedCount());
