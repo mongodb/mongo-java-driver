@@ -283,7 +283,7 @@ public class GenericBsonTest {
 
     private static Stream<Arguments> data() {
         List<Arguments> data = new ArrayList<>();
-        for (BsonDocument testDocument : JsonPoweredTestHelper.getTestDocuments("/bson")) {
+        for (BsonDocument testDocument : JsonPoweredTestHelper.getSpecTestDocuments("bson-corpus")) {
             for (BsonValue curValue : testDocument.getArray("valid", new BsonArray())) {
                 BsonDocument testCaseDocument = curValue.asDocument();
                 data.add(Arguments.of(
