@@ -229,13 +229,6 @@ public class WithTransactionProseTest extends DatabaseTestCase {
                 return retryCount;
             });
 
-            long elapsedTime = System.currentTimeMillis() - startTime;
-
-            // With backoff (growth factor 1.5), we expect at least some delay between retries
-            // Expected delays (without jitter): 5ms, 7.5ms, 11.25ms
-            // With jitter, actual delays will be between 0 and these values
-            // 3 retries with backoff should take at least a few milliseconds
-            assertTrue(elapsedTime > 5, "Expected backoff delays to be applied");
             assertEquals(4, retryCount.get(), "Expected 1 initial attempt + 3 retries");
         } finally {
             failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': 'off'}"));

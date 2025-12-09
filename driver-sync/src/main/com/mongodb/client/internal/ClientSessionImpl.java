@@ -269,7 +269,6 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                         throw withTransactionTimeoutContext.hasTimeoutMS()
                                 ? new MongoOperationTimeoutException("Transaction retry exceeded the timeout limit")
                                 : new MongoTimeoutException("Transaction retry time limit exceeded");
-
                     }
                     if (transactionBackoff == null) {
                         transactionBackoff = ExponentialBackoff.forTransactionRetry();
