@@ -20,6 +20,9 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
+
+import java.util.concurrent.TimeUnit;
+
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -72,11 +75,13 @@ public abstract class AbstractServerSelectionProseTest {
         String appName = "loadBalancingTest";
         int timeoutSeconds = 60;
         int tasks = 10;
-        int opsPerTask = 1000; // it used to be 100 but NodeJs driver has 1000
+        int opsPerTask = 100;
         TestCommandListener commandListener = new TestCommandListener(singletonList("commandStartedEvent"), singletonList("drop"));
         MongoClientSettings clientSettings = getMongoClientSettingsBuilder()
                 .applicationName(appName)
                 .applyConnectionString(multiMongosConnectionString)
+                // set it to 3000 ms according to specification
+                .applyToClusterSettings(builder -> builder.localThreshold(3000L, TimeUnit.MILLISECONDS))
                 .applyToConnectionPoolSettings(builder -> builder
                         .minSize(tasks))
                 .addCommandListener(commandListener)
@@ -109,10 +114,7 @@ public abstract class AbstractServerSelectionProseTest {
             commandListener.reset();
             Map<ServerAddress, Double> selectionRates = doSelections(collection, commandListener, executor, tasks, opsPerTask,
                     timeoutSeconds);
-            // assert that each mongos was selected roughly 50% of the time (within +/- 15%).
-            // the specification says within 10% but in practice
-            // the deviation can be higher , Nodejs driver uses 15% and has not seen failures with that threshold
-            selectionRates.values().forEach(rate -> assertEquals(0.5, rate, 0.15, selectionRates::toString));
+            selectionRates.values().forEach(rate -> assertEquals(0.5, rate, 0.1, selectionRates::toString));
         } finally {
             executor.shutdownNow();
             assertTrue(executor.awaitTermination(timeoutSeconds, SECONDS));
