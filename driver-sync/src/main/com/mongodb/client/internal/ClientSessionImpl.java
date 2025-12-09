@@ -267,8 +267,8 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     // Check if we've exceeded the retry time limit BEFORE applying backoff
                     if (ClientSessionClock.INSTANCE.now() - startTime >= maxRetryTimeMS) {
                         throw withTransactionTimeoutContext.hasTimeoutMS()
-                                ? new MongoOperationTimeoutException("Transaction retry exceeded the timeout limit")
-                                : new MongoTimeoutException("Transaction retry time limit exceeded");
+                                ? new MongoOperationTimeoutException("Transaction retry time limit of " + maxRetryTimeMS + "ms exceeded")
+                                : new MongoTimeoutException("Transaction retry time limit of " + maxRetryTimeMS + "ms exceeded");
                     }
                     if (transactionBackoff == null) {
                         transactionBackoff = ExponentialBackoff.forTransactionRetry();
