@@ -119,7 +119,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     public void testRetryTimeoutEnforcedUnknownTransactionCommit() {
         MongoDatabase failPointAdminDb = client.getDatabase("admin");
         failPointAdminDb.runCommand(
-                Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 2}, "
+                Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 1}, "
                         + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 91, 'closeConnection': false}}"));
 
         try (ClientSession session = client.startSession()) {
@@ -153,7 +153,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
 
         try (ClientSession session = client.startSession()) {
             ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
-            session.withTransaction((TransactionBody<Void>) () -> {
+            session.withTransaction(() -> {
                 ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
                 collection.insertOne(session, Document.parse("{ _id : 1 }"));
                 return null;
