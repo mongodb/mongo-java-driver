@@ -306,13 +306,6 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 }
                 if (transactionState == TransactionState.IN) {
                     while (true) {
-                        // Check if we've exceeded the retry time limit
-                        if (ClientSessionClock.INSTANCE.now() - startTime >= maxRetryTimeMS) {
-                            throw hasTimeoutMS(withTransactionTimeoutContext)
-                                    ? new MongoOperationTimeoutException("Transaction commit retry time limit exceeded")
-                                    : new MongoTimeoutException("Transaction commit retry time limit exceeded");
-                        }
-
                         try {
                             commitTransaction(false);
                             break;

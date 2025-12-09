@@ -147,7 +147,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     public void testRetryTimeoutEnforcedTransientTransactionErrorOnCommit() {
         MongoDatabase failPointAdminDb = client.getDatabase("admin");
         failPointAdminDb.runCommand(
-                Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 2}, "
+                Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 1}, "
                         + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 251, 'codeName': 'NoSuchTransaction', "
                         + "'errmsg': 'Transaction 0 has been aborted', 'closeConnection': false}}"));
 
