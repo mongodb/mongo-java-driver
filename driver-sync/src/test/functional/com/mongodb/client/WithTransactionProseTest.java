@@ -124,7 +124,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
 
         try (ClientSession session = client.startSession()) {
             ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
-            session.withTransaction((TransactionBody<Void>) () -> {
+            session.withTransaction(() -> {
                 ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
                 collection.insertOne(session, new Document("_id", 2));
                 return null;
