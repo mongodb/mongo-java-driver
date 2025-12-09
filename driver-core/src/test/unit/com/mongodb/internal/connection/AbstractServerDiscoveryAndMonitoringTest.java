@@ -35,15 +35,14 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import util.JsonPoweredTestHelper;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.CLIENT_METADATA;
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
@@ -60,11 +59,11 @@ public class AbstractServerDiscoveryAndMonitoringTest {
         this.definition = definition;
     }
 
-    public static Collection<Object[]> data(final String root) throws URISyntaxException, IOException {
+    public static Collection<Object[]> data(final String resourcePath) {
         List<Object[]> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles(root)) {
-            BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
-            data.add(new Object[]{file.getName() + ": " + testDocument.getString("description").getValue(), testDocument});
+        for (BsonDocument testDocument : JsonPoweredTestHelper.getSpecTestDocuments(resourcePath)) {
+            data.add(new Object[]{testDocument.getString("fileName").getValue()
+                    + ": " + testDocument.getString("description").getValue(), testDocument});
         }
         return data;
     }
@@ -114,11 +113,11 @@ public class AbstractServerDiscoveryAndMonitoringTest {
         switch (when) {
             case "beforeHandshakeCompletes":
                 server.sdamServerDescriptionManager().handleExceptionBeforeHandshake(
-                        SdamIssue.specific(exception, new SdamIssue.Context(server.serverId(), errorGeneration, maxWireVersion)));
+                        SdamIssue.of(exception, new SdamIssue.Context(server.serverId(), errorGeneration, maxWireVersion)));
                 break;
             case "afterHandshakeCompletes":
                 server.sdamServerDescriptionManager().handleExceptionAfterHandshake(
-                        SdamIssue.specific(exception, new SdamIssue.Context(server.serverId(), errorGeneration, maxWireVersion)));
+                        SdamIssue.of(exception, new SdamIssue.Context(server.serverId(), errorGeneration, maxWireVersion)));
                 break;
             default:
                 throw new UnsupportedOperationException("Unsupported `when` value: " + when);
@@ -189,11 +188,11 @@ public class AbstractServerDiscoveryAndMonitoringTest {
                 : ClusterSettings.builder(settings).addClusterListener(clusterListener).build();
 
         if (settings.getMode() == ClusterConnectionMode.SINGLE) {
-            cluster = new SingleServerCluster(clusterId, clusterSettings, factory);
+            cluster = new SingleServerCluster(clusterId, clusterSettings, factory, CLIENT_METADATA);
         } else if (settings.getMode() == ClusterConnectionMode.MULTIPLE) {
-            cluster = new MultiServerCluster(clusterId, clusterSettings, factory);
+            cluster = new MultiServerCluster(clusterId, clusterSettings, factory, CLIENT_METADATA);
         } else {
-            cluster = new LoadBalancedCluster(clusterId, clusterSettings, factory, null);
+            cluster = new LoadBalancedCluster(clusterId, clusterSettings, factory, CLIENT_METADATA, null);
         }
     }
 

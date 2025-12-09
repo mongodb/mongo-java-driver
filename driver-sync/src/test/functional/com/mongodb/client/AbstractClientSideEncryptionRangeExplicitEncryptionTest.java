@@ -51,12 +51,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getDefaultDatabase;
@@ -70,7 +68,6 @@ import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static util.JsonPoweredTestHelper.getTestDocument;
@@ -93,11 +90,10 @@ public abstract class AbstractClientSideEncryptionRangeExplicitEncryptionTest {
     public void setUp(final Type type) {
         assumeTrue(serverVersionAtLeast(8, 0));
         assumeFalse(isStandalone());
-        assumeFalse(isServerlessTest());
 
         MongoNamespace dataKeysNamespace = new MongoNamespace("keyvault.datakeys");
-        BsonDocument encryptedFields = bsonDocumentFromPath("range-encryptedFields-" + type.value + ".json");
-        BsonDocument key1Document = bsonDocumentFromPath("keys/key1-document.json");
+        BsonDocument encryptedFields = getTestDocument("client-side-encryption/etc/data/range-encryptedFields-" + type.value + ".json");
+        BsonDocument key1Document = getTestDocument("client-side-encryption/etc/data/keys/key1-document.json");
         key1Id = key1Document.getBinary("_id");
 
         MongoDatabase explicitEncryptionDatabase = getDefaultDatabase();
@@ -354,15 +350,4 @@ public abstract class AbstractClientSideEncryptionRangeExplicitEncryptionTest {
             }
         }
     }
-
-    private static BsonDocument bsonDocumentFromPath(final String path) {
-        try {
-            return getTestDocument(new File(AbstractClientSideEncryptionRangeExplicitEncryptionTest.class
-                    .getResource("/client-side-encryption-data/" + path).toURI()));
-        } catch (Exception e) {
-            fail("Unable to load resource", e);
-            return null;
-        }
-    }
-
 }

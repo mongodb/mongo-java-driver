@@ -25,6 +25,10 @@ import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.internal.ClientEncryptionImpl;
 import com.mongodb.client.vault.ClientEncryption;
+import com.mongodb.lang.NonNull;
+import org.junit.jupiter.params.provider.Arguments;
+
+import java.util.Collection;
 
 public abstract class UnifiedSyncTest extends UnifiedTest {
     protected UnifiedSyncTest() {
@@ -43,5 +47,10 @@ public abstract class UnifiedSyncTest extends UnifiedTest {
     @Override
     protected ClientEncryption createClientEncryption(final MongoClient keyVaultClient, final ClientEncryptionSettings clientEncryptionSettings) {
         return new ClientEncryptionImpl(keyVaultClient, clientEncryptionSettings);
+    }
+
+    @NonNull
+    protected static Collection<Arguments> getTestData(final String directory) {
+        return getTestData(directory, false, Language.JAVA);
     }
 }

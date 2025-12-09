@@ -98,6 +98,30 @@ public class ByteBufNIO implements ByteBuf {
     }
 
     @Override
+    public ByteBuf putInt(final int b) {
+        buf.putInt(b);
+        return this;
+    }
+
+    @Override
+    public ByteBuf putInt(final int index, final int b) {
+        buf.putInt(index, b);
+        return this;
+    }
+
+    @Override
+    public ByteBuf putDouble(final double b) {
+        buf.putDouble(b);
+        return this;
+    }
+
+    @Override
+    public ByteBuf putLong(final long b) {
+        buf.putLong(b);
+        return this;
+    }
+
+    @Override
     public ByteBuf flip() {
         ((Buffer) buf).flip();
         return this;
@@ -106,6 +130,16 @@ public class ByteBufNIO implements ByteBuf {
     @Override
     public byte[] array() {
         return buf.array();
+    }
+
+    @Override
+    public boolean isBackedByArray() {
+        return buf.hasArray();
+    }
+
+    @Override
+    public int arrayOffset() {
+        return buf.arrayOffset();
     }
 
     @Override
@@ -160,8 +194,13 @@ public class ByteBufNIO implements ByteBuf {
 
     @Override
     public ByteBuf get(final int index, final byte[] bytes, final int offset, final int length) {
-        for (int i = 0; i < length; i++) {
-            bytes[offset + i] = buf.get(index + i);
+        if (buf.hasArray()) {
+            System.arraycopy(buf.array(), index, bytes, offset, length);
+        } else {
+            // Fallback to per-byte copying if no backing array is available.
+            for (int i = 0; i < length; i++) {
+                bytes[offset + i] = buf.get(index + i);
+            }
         }
         return this;
     }

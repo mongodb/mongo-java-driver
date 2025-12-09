@@ -23,15 +23,12 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
-import com.mongodb.assertions.Assertions;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Duration;
@@ -43,9 +40,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+
+import static com.mongodb.ClusterFixture.cryptSharedLibPathSysPropValue;
 import static com.mongodb.client.AbstractClientSideEncryptionNotCreateMongocryptdClientTest.findAvailableMongocryptdLoopbackPort;
-import static com.mongodb.client.AbstractClientSideEncryptionTest.cryptSharedLibPathSysPropValue;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.unified.UnifiedClientEncryptionHelper.localKmsProviderKey;
 import static java.lang.String.format;
@@ -75,11 +72,6 @@ public abstract class AbstractClientSideEncryptionNotSpawnMongocryptdTest {
 
     private MongoClient client;
     private InetSocketAddress mongocryptdSocketAddress;
-
-    @BeforeEach
-    public void setUp() {
-        assumeTrue(serverVersionAtLeast(4, 2));
-    }
 
     @AfterEach
     public void cleanUp() {
@@ -216,21 +208,11 @@ public abstract class AbstractClientSideEncryptionNotSpawnMongocryptdTest {
     }
 
     private static BsonDocument externalSchema() {
-        try {
-            return getTestDocument(new File(Assertions.assertNotNull(AbstractClientSideEncryptionNotSpawnMongocryptdTest.class
-                    .getResource("/client-side-encryption-external/external-schema.json")).toURI()));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+            return getTestDocument("client-side-encryption/external/external-schema.json");
     }
 
     private static BsonDocument externalKey() {
-        try {
-            return getTestDocument(new File(Assertions.assertNotNull(AbstractClientSideEncryptionNotSpawnMongocryptdTest.class
-                    .getResource("/client-side-encryption-external/external-key.json")).toURI()));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return getTestDocument("client-side-encryption/external/external-key.json");
     }
 
     @SafeVarargs

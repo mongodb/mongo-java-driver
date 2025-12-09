@@ -38,7 +38,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Base64;
@@ -47,7 +46,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static com.mongodb.fixture.EncryptionFixture.getKmsProviders;
@@ -73,7 +71,6 @@ public class ClientSideEncryptionCorpusTest {
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
-        assumeTrue(serverVersionAtLeast(4, 2));
         assumeTrue("Corpus tests disabled", hasEncryptionTestsEnabled());
 
         MongoClientSettings clientSettings = getMongoClientSettingsBuilder()
@@ -261,9 +258,8 @@ public class ClientSideEncryptionCorpusTest {
         }
     }
 
-    private static BsonDocument bsonDocumentFromPath(final String path) throws IOException, URISyntaxException {
-        return getTestDocument(new File(ClientSideEncryptionTest.class
-                .getResource("/client-side-encryption-corpus/" + path).toURI()));
+    private static BsonDocument bsonDocumentFromPath(final String path) {
+        return getTestDocument("client-side-encryption/corpus/" + path);
     }
 
     @Parameterized.Parameters(name = "useLocalSchema: {0}")

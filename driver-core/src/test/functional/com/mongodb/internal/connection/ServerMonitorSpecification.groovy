@@ -34,6 +34,7 @@ import org.bson.types.ObjectId
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
+import static com.mongodb.ClusterFixture.CLIENT_METADATA
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT_FACTORY
 import static com.mongodb.ClusterFixture.getClusterConnectionMode
 import static com.mongodb.ClusterFixture.getCredentialWithCache
@@ -194,7 +195,14 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
     def initializeServerMonitor(ServerAddress address) {
         SdamServerDescriptionManager sdam = new SdamServerDescriptionManager() {
             @Override
-            void update(final ServerDescription candidateDescription) {
+            void monitorUpdate(final ServerDescription candidateDescription) {
+                assert candidateDescription != null
+                newDescription = candidateDescription
+                latch.countDown()
+            }
+
+            @Override
+            void updateToUnknown(final ServerDescription candidateDescription) {
                 assert candidateDescription != null
                 newDescription = candidateDescription
                 latch.countDown()
@@ -223,7 +231,7 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
         serverMonitor = new DefaultServerMonitor(new ServerId(new ClusterId(), address), ServerSettings.builder().build(),
                         new InternalStreamConnectionFactory(SINGLE, new SocketStreamFactory(new DefaultInetAddressResolver(),
                         SocketSettings.builder().connectTimeout(500, TimeUnit.MILLISECONDS).build(), getSslSettings()),
-                        getCredentialWithCache(), null, null, [], LoggerSettings.builder().build(), null,
+                        getCredentialWithCache(), CLIENT_METADATA, [], LoggerSettings.builder().build(), null,
                         getServerApi()),
                 getClusterConnectionMode(), getServerApi(), false, SameObjectProvider.initialized(sdam),
                 OPERATION_CONTEXT_FACTORY)

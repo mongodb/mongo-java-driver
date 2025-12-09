@@ -487,6 +487,25 @@ public class CAPI {
     mongocrypt_setopt_bypass_query_analysis (mongocrypt_t crypt);
 
     /**
+     * Set the expiration time for the data encryption key cache. Defaults to 60 seconds if not set.
+     *
+     * @param crypt The @ref mongocrypt_t object to update
+     * @param cache_expiration_ms if 0 the cache never expires
+     * @return A boolean indicating success. If false, an error status is set.
+     * @since 5.4
+     */
+    public static native boolean
+    mongocrypt_setopt_key_expiration (mongocrypt_t crypt, long cache_expiration_ms);
+
+    /**
+     * Opt-into enabling sending multiple collection info documents.
+     *
+     * @param crypt The @ref mongocrypt_t object to update
+     */
+    public static native void
+    mongocrypt_setopt_enable_multiple_collinfo (mongocrypt_t crypt);
+
+    /**
      * Set the contention factor used for explicit encryption.
      * The contention factor is only used for indexed Queryable Encryption.
      *
@@ -603,6 +622,37 @@ public class CAPI {
     public static native boolean
     mongocrypt_ctx_setopt_algorithm_range (mongocrypt_ctx_t ctx, mongocrypt_binary_t opts);
 
+
+    /**
+     * Set options for explicit encryption with the "textPreview" algorithm. "prefix" and "suffix" can both be set.
+     * NOTE: "textPreview" is experimental only and may be removed in a future non-major release.
+     * opts is a BSON document of the form:
+     *
+     * {
+     *   "caseSensitive": bool,
+     *   "diacriticSensitive": bool,
+     *   "prefix": Optional{
+     *     "strMaxQueryLength": Int32,
+     *     "strMinQueryLength": Int32,
+     *   },
+     *   "suffix": Optional{
+     *     "strMaxQueryLength": Int32,
+     *     "strMinQueryLength": Int32,
+     *   },
+     *   "substring": Optional{
+     *     "strMaxLength": Int32,
+     *     "strMaxQueryLength": Int32,
+     *     "strMinQueryLength": Int32,
+     *   },
+     * }
+     *
+     * @param ctx The @ref mongocrypt_ctx_t object.
+     * @param opts BSON.
+     * @return A boolean indicating success. If false, an error status is set.
+     * @since 5.6
+     */
+    public static native boolean mongocrypt_ctx_setopt_algorithm_text(mongocrypt_ctx_t ctx, mongocrypt_binary_t opts);
+
     /**
      * Initialize new @ref mongocrypt_t object.
      *
@@ -611,7 +661,6 @@ public class CAPI {
      */
     public static native boolean
     mongocrypt_init(mongocrypt_t crypt);
-
 
     /**
      * Get the status associated with a @ref mongocrypt_t object.

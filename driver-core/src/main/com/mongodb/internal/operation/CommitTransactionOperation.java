@@ -19,16 +19,19 @@ package com.mongodb.internal.operation;
 import com.mongodb.Function;
 import com.mongodb.MongoException;
 import com.mongodb.MongoExecutionTimeoutException;
+import com.mongodb.MongoNamespace;
 import com.mongodb.MongoNodeIsRecoveringException;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.WriteConcern;
+import com.mongodb.internal.MongoNamespaceHelper;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
@@ -46,6 +49,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class CommitTransactionOperation extends TransactionOperation {
+    private static final String COMMAND_NAME = "commitTransaction";
     private final boolean alreadyCommitted;
     private BsonDocument recoveryToken;
 
@@ -64,9 +68,11 @@ public class CommitTransactionOperation extends TransactionOperation {
     }
 
     @Override
-    public Void execute(final WriteBinding binding) {
+    public Void execute(final WriteBinding binding, final OperationContext operationContext) {
         try {
-            return super.execute(binding);
+            return super.execute(
+                    binding,
+                    operationContext.withOverride(TimeoutContext::withMaxTimeAsMaxCommitTime));
         } catch (MongoException e) {
             addErrorLabels(e);
             throw e;
@@ -74,8 +80,11 @@ public class CommitTransactionOperation extends TransactionOperation {
     }
 
     @Override
-    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        super.executeAsync(binding, (result, t) -> {
+    public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<Void> callback) {
+        super.executeAsync(
+                binding,
+                operationContext.withOverride(TimeoutContext::withMaxTimeAsMaxCommitTime),
+                (result, t) -> {
              if (t instanceof MongoException) {
                  addErrorLabels((MongoException) t);
              }
@@ -110,10 +119,14 @@ public class CommitTransactionOperation extends TransactionOperation {
         return false;
     }
 
+    @Override
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
 
     @Override
-    protected String getCommandName() {
-        return "commitTransaction";
+    public MongoNamespace getNamespace() {
+        return MongoNamespaceHelper.ADMIN_DB_COMMAND_NAMESPACE;
     }
 
     @Override
@@ -121,7 +134,6 @@ public class CommitTransactionOperation extends TransactionOperation {
         CommandCreator creator = (operationContext, serverDescription, connectionDescription) -> {
             BsonDocument command = CommitTransactionOperation.super.getCommandCreator()
                     .create(operationContext, serverDescription, connectionDescription);
-            operationContext.getTimeoutContext().setMaxTimeOverrideToMaxCommitTime();
             return command;
         };
         if (alreadyCommitted) {

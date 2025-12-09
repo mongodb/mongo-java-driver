@@ -49,6 +49,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.StructuredLogger;
+import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
@@ -75,8 +76,8 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.Authenticator.shouldAuthenticate;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
@@ -93,6 +94,8 @@ import static com.mongodb.internal.connection.ProtocolHelper.getRecoveryToken;
 import static com.mongodb.internal.connection.ProtocolHelper.getSnapshotTimestamp;
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
 import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.HighCardinalityKeyNames.QUERY_TEXT;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.RESPONSE_STATUS_CODE;
 import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedException;
 import static java.util.Arrays.asList;
 
@@ -226,13 +229,12 @@ public class InternalStreamConnection implements InternalConnection {
     public void open(final OperationContext originalOperationContext) {
         isTrue("Open already called", stream == null);
         stream = streamFactory.create(serverId.getAddress());
+        OperationContext operationContext = originalOperationContext;
         try {
-            OperationContext operationContext = originalOperationContext
-                    .withTimeoutContext(originalOperationContext.getTimeoutContext().withComputedServerSelectionTimeoutContext());
-
             stream.open(operationContext);
-
             InternalConnectionInitializationDescription initializationDescription = connectionInitializer.startHandshake(this, operationContext);
+
+            operationContext = operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout);
             initAfterHandshakeStart(initializationDescription);
 
             initializationDescription = connectionInitializer.finishHandshake(this, initializationDescription, operationContext);
@@ -250,10 +252,8 @@ public class InternalStreamConnection implements InternalConnection {
     @Override
     public void openAsync(final OperationContext originalOperationContext, final SingleResultCallback<Void> callback) {
         assertNull(stream);
+        OperationContext operationContext = originalOperationContext;
         try {
-            OperationContext operationContext = originalOperationContext
-                    .withTimeoutContext(originalOperationContext.getTimeoutContext().withComputedServerSelectionTimeoutContext());
-
             stream = streamFactory.create(serverId.getAddress());
             stream.openAsync(operationContext, new AsyncCompletionHandler<Void>() {
 
@@ -267,17 +267,10 @@ public class InternalStreamConnection implements InternalConnection {
                                     } else {
                                         assertNotNull(initialResult);
                                         initAfterHandshakeStart(initialResult);
-                                        connectionInitializer.finishHandshakeAsync(InternalStreamConnection.this,
-                                                initialResult, operationContext, (completedResult, completedException) ->  {
-                                                        if (completedException != null) {
-                                                            close();
-                                                            callback.onResult(null, completedException);
-                                                        } else {
-                                                            assertNotNull(completedResult);
-                                                            initAfterHandshakeFinish(completedResult);
-                                                            callback.onResult(null, null);
-                                                        }
-                                                });
+                                        finishHandshakeAsync(
+                                                initialResult,
+                                                operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout),
+                                                callback);
                                     }
                             });
                 }
@@ -292,6 +285,22 @@ public class InternalStreamConnection implements InternalConnection {
             close();
             callback.onResult(null, t);
         }
+    }
+
+    private void finishHandshakeAsync(final InternalConnectionInitializationDescription initialResult,
+                                      final OperationContext operationContext,
+                                      final SingleResultCallback<Void> callback) {
+        connectionInitializer.finishHandshakeAsync(InternalStreamConnection.this, initialResult, operationContext,
+                (completedResult, completedException) ->  {
+                    if (completedException != null) {
+                        close();
+                        callback.onResult(null, completedException);
+                    } else {
+                        assertNotNull(completedResult);
+                        initAfterHandshakeFinish(completedResult);
+                        callback.onResult(null, null);
+                    }
+                });
     }
 
     private void initAfterHandshakeStart(final InternalConnectionInitializationDescription initializationDescription) {
@@ -355,7 +364,7 @@ public class InternalStreamConnection implements InternalConnection {
     public void close() {
         // All but the first call is a no-op
         if (!isClosed.getAndSet(true) && (stream != null)) {
-                stream.close();
+            stream.close();
         }
     }
 
@@ -432,22 +441,59 @@ public class InternalStreamConnection implements InternalConnection {
     private <T> T sendAndReceiveInternal(final CommandMessage message, final Decoder<T> decoder,
             final OperationContext operationContext) {
         CommandEventSender commandEventSender;
+        Span tracingSpan;
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
             message.encode(bsonOutput, operationContext);
-            commandEventSender = createCommandEventSender(message, bsonOutput, operationContext);
-            commandEventSender.sendStartedEvent();
+            tracingSpan = operationContext
+                    .getTracingManager()
+                    .createTracingSpan(message,
+                            operationContext,
+                            () -> message.getCommandDocument(bsonOutput),
+                            cmdName -> SECURITY_SENSITIVE_COMMANDS.contains(cmdName)
+                                    || SECURITY_SENSITIVE_HELLO_COMMANDS.contains(cmdName),
+                            () -> getDescription().getServerAddress(),
+                            () -> getDescription().getConnectionId()
+                    );
+
+            boolean isLoggingCommandNeeded = isLoggingCommandNeeded();
+            boolean isTracingCommandPayloadNeeded = tracingSpan != null && operationContext.getTracingManager().isCommandPayloadEnabled();
+
+            // Only hydrate the command document if necessary
+            BsonDocument commandDocument = null;
+            if (isLoggingCommandNeeded || isTracingCommandPayloadNeeded) {
+                commandDocument = message.getCommandDocument(bsonOutput);
+            }
+            if (isLoggingCommandNeeded) {
+                commandEventSender = new LoggingCommandEventSender(
+                        SECURITY_SENSITIVE_COMMANDS, SECURITY_SENSITIVE_HELLO_COMMANDS, description, commandListener,
+                        operationContext, message, commandDocument,
+                        COMMAND_PROTOCOL_LOGGER, loggerSettings);
+                commandEventSender.sendStartedEvent();
+            } else {
+                commandEventSender = new NoOpCommandEventSender();
+            }
+            if (isTracingCommandPayloadNeeded) {
+                tracingSpan.tagHighCardinality(QUERY_TEXT.asString(), commandDocument);
+            }
+
             try {
                 sendCommandMessage(message, bsonOutput, operationContext);
             } catch (Exception e) {
+                if (tracingSpan != null) {
+                    tracingSpan.error(e);
+                }
                 commandEventSender.sendFailedEvent(e);
                 throw e;
             }
         }
 
         if (message.isResponseExpected()) {
-            return receiveCommandMessageResponse(decoder, commandEventSender, operationContext);
+            return receiveCommandMessageResponse(decoder, commandEventSender, operationContext, tracingSpan);
         } else {
             commandEventSender.sendSucceededEventForOneWayCommand();
+            if (tracingSpan != null) {
+                tracingSpan.end();
+            }
             return null;
         }
     }
@@ -466,7 +512,7 @@ public class InternalStreamConnection implements InternalConnection {
     @Override
     public <T> T receive(final Decoder<T> decoder, final OperationContext operationContext) {
         isTrue("Response is expected", hasMoreToCome);
-        return receiveCommandMessageResponse(decoder, new NoOpCommandEventSender(), operationContext);
+        return receiveCommandMessageResponse(decoder, new NoOpCommandEventSender(), operationContext, null);
     }
 
     @Override
@@ -512,7 +558,7 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     private <T> T receiveCommandMessageResponse(final Decoder<T> decoder, final CommandEventSender commandEventSender,
-            final OperationContext operationContext) {
+            final OperationContext operationContext, @Nullable final Span tracingSpan) {
         boolean commandSuccessful = false;
         try (ResponseBuffers responseBuffers = receiveResponseBuffers(operationContext)) {
             updateSessionContext(operationContext.getSessionContext(), responseBuffers);
@@ -537,7 +583,17 @@ public class InternalStreamConnection implements InternalConnection {
             if (!commandSuccessful) {
                 commandEventSender.sendFailedEvent(e);
             }
+            if (tracingSpan != null) {
+                if (e instanceof MongoCommandException) {
+                    tracingSpan.tagLowCardinality(RESPONSE_STATUS_CODE.withValue(String.valueOf(((MongoCommandException) e).getErrorCode())));
+                }
+                tracingSpan.error(e);
+            }
             throw e;
+        } finally {
+            if (tracingSpan != null) {
+                tracingSpan.end();
+            }
         }
     }
 
@@ -553,7 +609,18 @@ public class InternalStreamConnection implements InternalConnection {
 
         try {
             message.encode(bsonOutput, operationContext);
-            CommandEventSender commandEventSender = createCommandEventSender(message, bsonOutput, operationContext);
+
+            CommandEventSender commandEventSender;
+            if (isLoggingCommandNeeded()) {
+                BsonDocument commandDocument = message.getCommandDocument(bsonOutput);
+                commandEventSender = new LoggingCommandEventSender(
+                        SECURITY_SENSITIVE_COMMANDS, SECURITY_SENSITIVE_HELLO_COMMANDS, description, commandListener,
+                        operationContext, message, commandDocument,
+                        COMMAND_PROTOCOL_LOGGER, loggerSettings);
+            } else {
+                commandEventSender = new NoOpCommandEventSender();
+            }
+
             commandEventSender.sendStartedEvent();
             Compressor localSendCompressor = sendCompressor;
             if (localSendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
@@ -952,19 +1019,13 @@ public class InternalStreamConnection implements InternalConnection {
 
     private static final StructuredLogger COMMAND_PROTOCOL_LOGGER = new StructuredLogger("protocol.command");
 
-    private CommandEventSender createCommandEventSender(final CommandMessage message, final ByteBufferBsonOutput bsonOutput,
-                                                        final OperationContext operationContext) {
+    private boolean isLoggingCommandNeeded() {
         boolean listensOrLogs = commandListener != null || COMMAND_PROTOCOL_LOGGER.isRequired(DEBUG, getClusterId());
-        if (!recordEverything && (isMonitoringConnection || !opened() || !authenticated.get() || !listensOrLogs)) {
-            return new NoOpCommandEventSender();
-        }
-        return new LoggingCommandEventSender(
-                SECURITY_SENSITIVE_COMMANDS, SECURITY_SENSITIVE_HELLO_COMMANDS, description, commandListener,
-                operationContext, message, bsonOutput,
-                COMMAND_PROTOCOL_LOGGER, loggerSettings);
+        return recordEverything || (!isMonitoringConnection && opened() && authenticated.get() && listensOrLogs);
     }
 
     private ClusterId getClusterId() {
         return description.getConnectionId().getServerId().getClusterId();
     }
+
 }

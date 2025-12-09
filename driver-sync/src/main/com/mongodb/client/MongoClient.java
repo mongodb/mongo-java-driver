@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.MongoDriverInformation;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
@@ -61,4 +62,17 @@ public interface MongoClient extends MongoCluster, Closeable {
      * @since 3.11
      */
     ClusterDescription getClusterDescription();
+
+    /**
+     * Appends the provided {@link MongoDriverInformation} to the existing metadata.
+     * <p>
+     * This enables frameworks and libraries to include identifying metadata (e.g., name, version, platform) which might be visible in
+     * the MongoD/MongoS logs. This can assist with diagnostics by making client identity visible to the server.
+     * <p>
+     * <strong>Note:</strong> Metadata is limited to 512 bytes; any excess will be truncated.
+     *
+     * @param mongoDriverInformation the driver information to append to the existing metadata
+     * @since 5.6
+     */
+    void appendMetadata(MongoDriverInformation mongoDriverInformation);
 }

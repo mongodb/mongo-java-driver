@@ -51,7 +51,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import static com.mongodb.ClusterFixture.configureFailPoint;
 import static com.mongodb.ClusterFixture.disableFailPoint;
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
@@ -70,12 +69,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 /**
  * See
- * <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-tests.rst">Server Discovery And Monitoring—Test Plan</a>
+ * <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-tests.md">Server Discovery And Monitoring—Test Plan</a>
  * and
  * <a href="https://github.com/mongodb/specifications/tree/master/source/server-discovery-and-monitoring/tests#prose-tests">Prose Tests</a>.
  */
@@ -89,8 +87,6 @@ public class ServerDiscoveryAndMonitoringProseTests {
     @Test
     @SuppressWarnings("try")
     public void testHeartbeatFrequency() throws InterruptedException {
-        assumeFalse(isServerlessTest());
-
         CountDownLatch latch = new CountDownLatch(5);
         MongoClientSettings settings = getMongoClientSettingsBuilder()
                                        .applyToServerSettings(builder -> {
@@ -163,14 +159,13 @@ public class ServerDiscoveryAndMonitoringProseTests {
 
     /**
      * See
-     * <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-tests.rst#connection-pool-management">Connection Pool Management</a>.
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-tests.md#connection-pool-management">Connection Pool Management</a>.
      */
     @Test
-    @Ignore
+    @Ignore("JAVA-4484 - events are not guaranteed to be delivered in order")
     @SuppressWarnings("try")
     public void testConnectionPoolManagement() throws InterruptedException {
         assumeTrue(serverVersionAtLeast(4, 3));
-        assumeFalse(isServerlessTest());
         BlockingQueue<Object> events = new LinkedBlockingQueue<>();
         ServerMonitorListener serverMonitorListener = new ServerMonitorListener() {
             @Override
@@ -227,14 +222,13 @@ public class ServerDiscoveryAndMonitoringProseTests {
 
     /**
      * See
-     * <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-tests.rst#monitors-sleep-at-least-minheartbeatfreqencyms-between-checks">
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-tests.md#monitors-sleep-at-least-minheartbeatfrequencyms-between-checks">
      * Monitors sleep at least minHeartbeatFreqencyMS between checks</a>.
      */
     @Test
     @SuppressWarnings("try")
-    public void monitorsSleepAtLeastMinHeartbeatFreqencyMSBetweenChecks() {
+    public void monitorsSleepAtLeastMinHeartbeatFrequencyMSBetweenChecks() {
         assumeTrue(serverVersionAtLeast(4, 3));
-        assumeFalse(isServerlessTest());
         long defaultMinHeartbeatIntervalMillis = MongoClientSettings.builder().build().getServerSettings()
                 .getMinHeartbeatFrequency(MILLISECONDS);
         assertEquals(500, defaultMinHeartbeatIntervalMillis);
@@ -265,6 +259,13 @@ public class ServerDiscoveryAndMonitoringProseTests {
             assertTrue(msg, durationMillis >= 2000);
             assertTrue(msg, durationMillis <= 3500);
         }
+    }
+
+    @Test
+    @Ignore("Run as part of DefaultServerMonitorTest")
+    public void shouldEmitHeartbeatStartedBeforeSocketIsConnected() {
+        // The implementation of this test is in DefaultServerMonitorTest.shouldEmitHeartbeatStartedBeforeSocketIsConnected
+        // As it requires mocking and package access to `com.mongodb.internal.connection`
     }
 
     private static void assertPoll(final BlockingQueue<?> queue, @Nullable final Class<?> allowed, final Set<Class<?>> required)

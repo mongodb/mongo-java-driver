@@ -24,7 +24,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 MONGODB_URI=${MONGODB_URI:-}
 
 RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
-. "${RELATIVE_DIR_PATH}/javaConfig.bash"
+. "${RELATIVE_DIR_PATH}/setup-env.bash"
 
 ############################################
 #            Functions                     #
@@ -60,8 +60,6 @@ echo "Running tests with Java ${JAVA_VERSION}"
       ${GRADLE_EXTRA_VARS} \
       -Dorg.mongodb.test.fle.on.demand.credential.test.failure.enabled=true \
       --stacktrace --info --continue \
-      driver-legacy:test \
-          --tests "*.Client*Encryption*" \
       driver-sync:test \
           --tests "*.Client*Encryption*" \
       driver-reactive-streams:test \

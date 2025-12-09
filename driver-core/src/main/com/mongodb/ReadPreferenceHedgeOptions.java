@@ -25,7 +25,9 @@ import org.bson.BsonDocument;
  *
  * @since 4.1
  * @mongodb.server.release 4.4
+ * @deprecated As of MongoDB 8.1, the server ignores the option and periodically logs a warning
  */
+@Deprecated
 @Immutable
 public final class ReadPreferenceHedgeOptions {
     private final boolean enabled;

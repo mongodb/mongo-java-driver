@@ -25,6 +25,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerType;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackFunction;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
@@ -46,7 +47,6 @@ import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotFour;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotTwo;
 import static java.lang.String.format;
 
 /**
@@ -70,10 +70,6 @@ public final class OperationHelper {
     private static void validateWriteRequestHint(final ConnectionDescription connectionDescription, final WriteConcern writeConcern,
                                                  final WriteRequest request) {
         if (!writeConcern.isAcknowledged()) {
-            if (request instanceof UpdateRequest && serverIsLessThanVersionFourDotTwo(connectionDescription)) {
-                throw new IllegalArgumentException(format("Hint not supported by wire version: %s",
-                        connectionDescription.getMaxWireVersion()));
-            }
             if (request instanceof DeleteRequest && serverIsLessThanVersionFourDotFour(connectionDescription)) {
                 throw new IllegalArgumentException(format("Hint not supported by wire version: %s",
                         connectionDescription.getMaxWireVersion()));
@@ -82,10 +78,6 @@ public final class OperationHelper {
     }
 
     static void validateHintForFindAndModify(final ConnectionDescription connectionDescription, final WriteConcern writeConcern) {
-        if (serverIsLessThanVersionFourDotTwo(connectionDescription)) {
-            throw new IllegalArgumentException(format("Hint not supported by wire version: %s",
-                    connectionDescription.getMaxWireVersion()));
-        }
         if (!writeConcern.isAcknowledged() && serverIsLessThanVersionFourDotFour(connectionDescription)) {
             throw new IllegalArgumentException(format("Hint not supported by wire version: %s",
                     connectionDescription.getMaxWireVersion()));
@@ -201,10 +193,12 @@ public final class OperationHelper {
         return true;
     }
 
-    static void setNonTailableCursorMaxTimeSupplier(final TimeoutMode timeoutMode, final OperationContext operationContext) {
+    static OperationContext applyTimeoutModeToOperationContext(final TimeoutMode timeoutMode,
+                                                               final OperationContext operationContext) {
         if (timeoutMode == TimeoutMode.ITERATION) {
-            operationContext.getTimeoutContext().disableMaxTimeOverride();
+            return operationContext.withOverride(TimeoutContext::withDisabledMaxTime);
         }
+        return operationContext;
     }
 
     /**

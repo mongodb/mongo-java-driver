@@ -60,9 +60,6 @@ import org.junit.runners.Parameterized;
 import org.mockito.Mockito;
 import util.JsonPoweredTestHelper;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -80,13 +77,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT_FACTORY;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -96,7 +94,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 
 // Implementation of
-// https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst
+// https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.md
 // specification tests
 @SuppressWarnings("deprecation")
 @RunWith(Parameterized.class)
@@ -126,6 +124,13 @@ public abstract class AbstractConnectionPoolTest {
         this.description = description;
         this.definition = definition;
         this.skipTest = skipTest;
+
+        // Driver does not support interruptInUseConnections option See: JAVA-4536
+        assumeFalse(fileName.equals("pool-clear-schedule-run-interruptInUseConnections-false.json"));
+        assumeFalse(fileName.equals("pool-clear-interrupting-pending-connections.json"));
+
+        // Events out of order - the driver closes connection first then clears the pool. See: JAVA-5664
+        assumeFalse(fileName.equals("pool-create-min-size-error.json"));
     }
 
     @Before
@@ -184,10 +189,11 @@ public abstract class AbstractConnectionPoolTest {
                 pool = new ConnectionIdAdjustingConnectionPool(new DefaultConnectionPool(serverId,
                         new InternalStreamConnectionFactory(
                                 connectionMode,
-                                createStreamFactory(SocketSettings.builder().build(), ClusterFixture.getSslSettings()),
+                                createStreamFactory(SocketSettings.builder().build(),
+                                        ClusterFixture.getSslSettings()),
                                 ClusterFixture.getCredentialWithCache(),
-                                poolOptions.getString("appName", new BsonString(fileName + ": " + description)).getValue(),
-                                MongoDriverInformation.builder().build(),
+                                new ClientMetadata(poolOptions.getString("appName", new BsonString(fileName + ": " + description)).getValue(),
+                                        MongoDriverInformation.builder().build()),
                                 Collections.emptyList(),
                                 LoggerSettings.builder().build(),
                                 new TestCommandListener(),
@@ -536,7 +542,7 @@ public abstract class AbstractConnectionPoolTest {
 
     private static void executeAdminCommand(final BsonDocument command) {
         new CommandReadOperation<>("admin", command, new BsonDocumentCodec())
-                .execute(ClusterFixture.getBinding());
+                .execute(ClusterFixture.getBinding(), OPERATION_CONTEXT);
     }
 
     private void setFailPoint() {
@@ -566,16 +572,13 @@ public abstract class AbstractConnectionPoolTest {
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
+    public static Collection<Object[]> data() {
         List<Object[]> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/connection-monitoring-and-pooling/cmap-format")) {
-            BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
-            data.add(new Object[]{
-                    file.getName(),
+        for (BsonDocument testDocument
+                : JsonPoweredTestHelper.getSpecTestDocuments("connection-monitoring-and-pooling/tests/cmap-format")) {
+            data.add(new Object[]{testDocument.getString("fileName").getValue(),
                     testDocument.getString("description").getValue(),
-                    testDocument,
-                    JsonTestServerVersionChecker.skipTest(testDocument, BsonDocument.parse("{}"))
-            });
+                    testDocument, JsonTestServerVersionChecker.skipTest(testDocument, BsonDocument.parse("{}"))});
         }
         return data;
     }

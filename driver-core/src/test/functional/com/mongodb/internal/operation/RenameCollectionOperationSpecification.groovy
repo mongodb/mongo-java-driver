@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation
 
+
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoServerException
 import com.mongodb.MongoWriteConcernException
@@ -27,16 +28,17 @@ import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
-import static com.mongodb.ClusterFixture.serverVersionLessThan
 
 @IgnoreIf( { isSharded() } )  // these tests don't reliably pass against mongos
 class RenameCollectionOperationSpecification extends OperationFunctionalSpecification {
 
     def cleanup() {
+        def binding = getBinding()
         new DropCollectionOperation(new MongoNamespace(getDatabaseName(), 'newCollection'),
-                WriteConcern.ACKNOWLEDGED).execute(getBinding())
+                WriteConcern.ACKNOWLEDGED).execute(binding, getOperationContext(binding.getReadPreference()))
     }
 
     def 'should return rename a collection'() {
@@ -74,7 +76,7 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
@@ -82,8 +84,10 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
         def operation = new RenameCollectionOperation(getNamespace(),
                 new MongoNamespace(getDatabaseName(), 'newCollection'), new WriteConcern(5))
 
+
+        def binding = getBinding()
         when:
-        async ? executeAsync(operation) : operation.execute(getBinding())
+        async ? executeAsync(operation) : operation.execute(binding, getOperationContext(binding.getReadPreference()))
 
         then:
         def ex = thrown(MongoWriteConcernException)
@@ -95,7 +99,9 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
     }
 
     def collectionNameExists(String collectionName) {
-        def cursor = new ListCollectionsOperation(databaseName, new DocumentCodec()).execute(getBinding())
+        def binding = getBinding()
+        def cursor = new ListCollectionsOperation(databaseName, new DocumentCodec()).execute(binding,
+                getOperationContext(binding.getReadPreference()))
         if (!cursor.hasNext()) {
             return false
         }

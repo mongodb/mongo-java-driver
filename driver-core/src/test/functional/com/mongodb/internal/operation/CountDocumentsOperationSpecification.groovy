@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation
 
+import com.mongodb.ClusterFixture
 import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
@@ -26,6 +27,7 @@ import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.binding.ConnectionSource
@@ -33,6 +35,7 @@ import com.mongodb.internal.binding.ReadBinding
 import com.mongodb.internal.bulk.IndexRequest
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
+import com.mongodb.internal.connection.OperationContext
 import com.mongodb.internal.session.SessionContext
 import org.bson.BsonArray
 import org.bson.BsonDocument
@@ -42,15 +45,12 @@ import org.bson.BsonString
 import org.bson.BsonTimestamp
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
-import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.executeAsync
-import static com.mongodb.ClusterFixture.getBinding
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand
-import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION
+import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION
 
 class CountDocumentsOperationSpecification extends OperationFunctionalSpecification {
 
@@ -150,12 +150,13 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should use hint with the count'() {
         given:
         def indexDefinition = new BsonDocument('y', new BsonInt32(1))
+
+        def binding = ClusterFixture.getBinding()
         new CreateIndexesOperation(getNamespace(), [new IndexRequest(indexDefinition).sparse(true)], null)
-                .execute(getBinding())
+                .execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
         def operation = new CountDocumentsOperation(getNamespace()).hint(indexDefinition)
 
         when:
@@ -168,7 +169,6 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should support hints that are bson documents or strings'() {
         expect:
         execute(new CountDocumentsOperation(getNamespace()).hint(hint), async) == 5
@@ -240,7 +240,6 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
         [async, hint] << [[true, false], [new BsonString('hint_1'), BsonDocument.parse('{hint: 1}')]].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should support collation'() {
         given:
         getCollectionHelper().insertDocuments(BsonDocument.parse('{str: "foo"}'))
@@ -265,26 +264,24 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
         def source = Stub(ConnectionSource)
         def connection = Mock(Connection)
         binding.readPreference >> ReadPreference.primary()
-        binding.operationContext >> operationContext
-        binding.readConnectionSource >> source
-        source.connection >> connection
+        binding.getReadConnectionSource(_) >> source
+        source.getConnection(_) >> connection
         source.retain() >> source
-        source.operationContext >> operationContext
         def pipeline = new BsonArray([BsonDocument.parse('{ $match: {}}'), BsonDocument.parse('{$group: {_id: 1, n: {$sum: 1}}}')])
         def commandDocument = new BsonDocument('aggregate', new BsonString(getCollectionName()))
                 .append('pipeline', pipeline)
                 .append('cursor', new BsonDocument())
-        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
+        appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
 
         def operation = new CountDocumentsOperation(getNamespace())
 
         when:
-        operation.execute(binding)
+        operation.execute(binding, operationContext)
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                 6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.command(_, commandDocument, _, _, _, operationContext) >> helper.cursorResult
+        1 * connection.command(_, commandDocument, _, _, _, _) >> helper.cursorResult
         1 * connection.release()
 
         where:
@@ -305,21 +302,19 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
         def source = Stub(AsyncConnectionSource)
         def connection = Mock(AsyncConnection)
         binding.readPreference >> ReadPreference.primary()
-        binding.operationContext >> operationContext
-        binding.getReadConnectionSource(_) >> { it[0].onResult(source, null) }
-        source.getConnection(_) >> { it[0].onResult(connection, null) }
+        binding.getReadConnectionSource(_ as OperationContext, _ as SingleResultCallback) >> { it[1].onResult(source, null) }
+        source.getConnection(_ as OperationContext, _ as SingleResultCallback) >> { it[1].onResult(connection, null) }
         source.retain() >> source
-        source.operationContext >> operationContext
         def pipeline = new BsonArray([BsonDocument.parse('{ $match: {}}'), BsonDocument.parse('{$group: {_id: 1, n: {$sum: 1}}}')])
         def commandDocument = new BsonDocument('aggregate', new BsonString(getCollectionName()))
                 .append('pipeline', pipeline)
                 .append('cursor', new BsonDocument())
-        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
+        appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
 
         def operation = new CountDocumentsOperation(getNamespace())
 
         when:
-        executeAsync(operation, binding)
+        executeAsync(operation, binding, operationContext)
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),

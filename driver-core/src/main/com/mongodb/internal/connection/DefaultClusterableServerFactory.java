@@ -19,7 +19,6 @@ package com.mongodb.internal.connection;
 import com.mongodb.LoggerSettings;
 import com.mongodb.MongoCompressor;
 import com.mongodb.MongoCredential;
-import com.mongodb.MongoDriverInformation;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -50,8 +49,6 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
     private final MongoCredentialWithCache credential;
     private final LoggerSettings loggerSettings;
     private final CommandListener commandListener;
-    private final String applicationName;
-    private final MongoDriverInformation mongoDriverInformation;
     private final List<MongoCompressor> compressorList;
     @Nullable
     private final ServerApi serverApi;
@@ -63,8 +60,7 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
             final InternalOperationContextFactory clusterOperationContextFactory, final StreamFactory streamFactory,
             final InternalOperationContextFactory heartbeatOperationContextFactory, final StreamFactory heartbeatStreamFactory,
             @Nullable final MongoCredential credential, final LoggerSettings loggerSettings,
-            @Nullable final CommandListener commandListener, @Nullable final String applicationName,
-            @Nullable final MongoDriverInformation mongoDriverInformation,
+            @Nullable final CommandListener commandListener,
             final List<MongoCompressor> compressorList, @Nullable final ServerApi serverApi, final boolean isFunctionAsAServiceEnvironment) {
         this.serverSettings = serverSettings;
         this.connectionPoolSettings = connectionPoolSettings;
@@ -76,8 +72,6 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
         this.credential = credential == null ? null : new MongoCredentialWithCache(credential);
         this.loggerSettings = loggerSettings;
         this.commandListener = commandListener;
-        this.applicationName = applicationName;
-        this.mongoDriverInformation = mongoDriverInformation;
         this.compressorList = compressorList;
         this.serverApi = serverApi;
         this.isFunctionAsAServiceEnvironment = isFunctionAsAServiceEnvironment;
@@ -88,14 +82,17 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
         ServerId serverId = new ServerId(cluster.getClusterId(), serverAddress);
         ClusterConnectionMode clusterMode = cluster.getSettings().getMode();
         SameObjectProvider<SdamServerDescriptionManager> sdamProvider = SameObjectProvider.uninitialized();
+        ClientMetadata clientMetadata = cluster.getClientMetadata();
+
         ServerMonitor serverMonitor = new DefaultServerMonitor(serverId, serverSettings,
                 // no credentials, compressor list, or command listener for the server monitor factory
-                new InternalStreamConnectionFactory(clusterMode, true, heartbeatStreamFactory, null, applicationName,
-                        mongoDriverInformation, emptyList(), loggerSettings, null, serverApi),
+                new InternalStreamConnectionFactory(clusterMode, true, heartbeatStreamFactory, null, clientMetadata,
+                         emptyList(), loggerSettings, null, serverApi),
                 clusterMode, serverApi, isFunctionAsAServiceEnvironment, sdamProvider, heartbeatOperationContextFactory);
+
         ConnectionPool connectionPool = new DefaultConnectionPool(serverId,
-                new InternalStreamConnectionFactory(clusterMode, streamFactory, credential, applicationName,
-                        mongoDriverInformation, compressorList, loggerSettings, commandListener, serverApi),
+                new InternalStreamConnectionFactory(clusterMode, streamFactory, credential, clientMetadata,
+                         compressorList, loggerSettings, commandListener, serverApi),
                 connectionPoolSettings, internalConnectionPoolSettings, sdamProvider, clusterOperationContextFactory);
         ServerListener serverListener = singleServerListener(serverSettings);
         SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(cluster, serverId, serverListener, serverMonitor,

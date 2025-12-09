@@ -34,8 +34,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -78,8 +76,8 @@ public class ServerDiscoveryAndMonitoringMonitoringTest extends AbstractServerDi
     }
 
     @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        return data("/server-discovery-and-monitoring-monitoring");
+    public static Collection<Object[]> data() {
+        return data("server-discovery-and-monitoring/tests/monitoring");
     }
 
     private void assertEvents(final BsonArray events) {

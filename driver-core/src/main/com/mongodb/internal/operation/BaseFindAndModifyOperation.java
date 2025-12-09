@@ -23,6 +23,7 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -45,7 +46,8 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
+public abstract class BaseFindAndModifyOperation<T> implements WriteOperation<T> {
+    private static final String COMMAND_NAME = "findAndModify";
     private final MongoNamespace namespace;
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
@@ -69,8 +71,14 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
     }
 
     @Override
-    public T execute(final WriteBinding binding) {
-        return executeRetryableWrite(binding, getDatabaseName(), null, getFieldNameValidator(),
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+
+    @Override
+    public T execute(final WriteBinding binding, final OperationContext operationContext) {
+        return executeRetryableWrite(binding, operationContext, getDatabaseName(), null, getFieldNameValidator(),
                                      CommandResultDocumentCodec.create(getDecoder(), "value"),
                                      getCommandCreator(),
                                      FindAndModifyHelper.transformer(),
@@ -78,13 +86,14 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
     }
 
     @Override
-    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<T> callback) {
-        executeRetryableWriteAsync(binding, getDatabaseName(), null, getFieldNameValidator(),
+    public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<T> callback) {
+        executeRetryableWriteAsync(binding, operationContext, getDatabaseName(), null, getFieldNameValidator(),
                                    CommandResultDocumentCodec.create(getDecoder(), "value"),
                                    getCommandCreator(),
                 FindAndModifyHelper.asyncTransformer(), cmd -> cmd, callback);
     }
 
+    @Override
     public MongoNamespace getNamespace() {
         return namespace;
     }
@@ -184,7 +193,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
         return (operationContext, serverDescription, connectionDescription) -> {
             SessionContext sessionContext = operationContext.getSessionContext();
 
-            BsonDocument commandDocument = new BsonDocument("findAndModify", new BsonString(getNamespace().getCollectionName()));
+            BsonDocument commandDocument = new BsonDocument(getCommandName(), new BsonString(getNamespace().getCollectionName()));
             putIfNotNull(commandDocument, "query", getFilter());
             putIfNotNull(commandDocument, "fields", getProjection());
             putIfNotNull(commandDocument, "sort", getSort());

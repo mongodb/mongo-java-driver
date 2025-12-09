@@ -17,11 +17,11 @@
 package com.mongodb.kotlin.client.model
 
 import java.util.Locale
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.serialization.SerialName
 import org.bson.codecs.pojo.annotations.BsonId
 import org.bson.codecs.pojo.annotations.BsonProperty
-import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 
 class KPropertiesTest {
@@ -138,5 +138,21 @@ class KPropertiesTest {
         assertThrows<UnsupportedOperationException> { property.callBy(mapOf()) }
         assertThrows<UnsupportedOperationException> { property.get(restaurant) }
         assertThrows<UnsupportedOperationException> { property.getDelegate(restaurant) }
+    }
+
+    @Test
+    fun testNoCacheCollisions() {
+        for (i in 1.rangeTo(25_000)) {
+            assertEquals("reviews.$i", Restaurant::reviews.pos(i).path())
+            assertEquals("reviews.$[identifier$i]", Restaurant::reviews.filteredPosOp("identifier$i").path())
+            assertEquals("localeMap.$i", Restaurant::localeMap.keyProjection(i).path())
+
+            val x = i / 2
+            assertEquals(
+                "reviews.$[identifier$x].rating",
+                (Restaurant::reviews.filteredPosOp("identifier$x") / Review::score).path())
+            assertEquals("reviews.$x.rating", (Restaurant::reviews.pos(x) / Review::score).path())
+            assertEquals("localeMap.$x.rating", (Restaurant::localeMap.keyProjection(x) / Review::score).path())
+        }
     }
 }

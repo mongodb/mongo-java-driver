@@ -36,9 +36,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import reactor.core.publisher.Mono;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
@@ -47,7 +44,6 @@ import java.util.Map;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.ClusterFixture.isClientSideEncryptionTest;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClient;
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClientBuilderFromConnectionString;
 import static org.junit.Assert.assertEquals;
@@ -66,7 +62,6 @@ public class ClientSideEncryptionExternalKeyVaultTest {
 
     @Before
     public void setUp() throws Throwable {
-        assumeTrue(serverVersionAtLeast(4, 2));
         assumeTrue("Encryption test with external keyVault is disabled", isClientSideEncryptionTest());
 
         /* Step 1: get unencrypted client and recreate keys collection */
@@ -146,9 +141,8 @@ public class ClientSideEncryptionExternalKeyVaultTest {
         assertEquals(authExceptionThrown, withExternalKeyVault);
     }
 
-    private static BsonDocument bsonDocumentFromPath(final String path) throws IOException, URISyntaxException {
-        return getTestDocument(new File(ClientSideEncryptionExternalKeyVaultTest.class
-                .getResource("/client-side-encryption-external/" + path).toURI()));
+    private static BsonDocument bsonDocumentFromPath(final String path) {
+        return getTestDocument("client-side-encryption/external/" + path);
     }
 
     @Parameterized.Parameters(name = "withExternalKeyVault: {0}")

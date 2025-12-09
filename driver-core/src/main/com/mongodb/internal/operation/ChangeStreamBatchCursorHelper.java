@@ -35,7 +35,7 @@ import static java.util.Arrays.asList;
 final class ChangeStreamBatchCursorHelper {
     @VisibleForTesting(otherwise = PRIVATE)
     static final List<Integer> RETRYABLE_SERVER_ERROR_CODES =
-            asList(6, 7, 63, 89, 91, 133, 150, 189, 234, 262, 9001, 10107, 11600, 11602, 13388, 13435, 13436);
+            asList(6, 7, 63, 89, 91, 133, 134, 150, 189, 234, 262, 9001, 10107, 11600, 11602, 13388, 13435, 13436);
     @VisibleForTesting(otherwise = PRIVATE)
     static final String RESUMABLE_CHANGE_STREAM_ERROR_LABEL = "ResumableChangeStreamError";
 

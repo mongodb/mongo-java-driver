@@ -25,12 +25,13 @@ import com.mongodb.lang.Nullable;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
-import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.Locks.withLock;
 
@@ -42,17 +43,21 @@ public final class TestClusterListener implements ClusterListener {
     private final ArrayList<ClusterDescriptionChangedEvent> clusterDescriptionChangedEvents = new ArrayList<>();
     private final ReentrantLock lock = new ReentrantLock();
     private final Condition newClusterDescriptionChangedEventCondition = lock.newCondition();
+    private final CountDownLatch closedLatch = new CountDownLatch(1);
 
     @Override
     public void clusterOpening(final ClusterOpeningEvent event) {
-        isTrue("clusterOpeningEvent is null", clusterOpeningEvent == null);
-        clusterOpeningEvent = event;
+        if (clusterOpeningEvent == null) {
+            clusterOpeningEvent = event;
+        }
     }
 
     @Override
     public void clusterClosed(final ClusterClosedEvent event) {
-        isTrue("clusterClosingEvent is null", clusterClosingEvent == null);
-        clusterClosingEvent = event;
+        if (clusterClosingEvent == null) {
+            closedLatch.countDown();
+            clusterClosingEvent = event;
+        }
     }
 
     @Override
@@ -107,6 +112,17 @@ public final class TestClusterListener implements ClusterListener {
             }
         } finally {
             lock.unlock();
+        }
+    }
+
+    /**
+     * Waits for the cluster to be closed, which is signaled by a {@link ClusterClosedEvent}.
+     */
+    public void waitForClusterClosedEvent(final Duration duration)
+            throws InterruptedException, TimeoutException {
+        boolean await = closedLatch.await(duration.toMillis(), TimeUnit.MILLISECONDS);
+        if (!await) {
+            throw new TimeoutException("Timed out waiting for cluster to close");
         }
     }
 

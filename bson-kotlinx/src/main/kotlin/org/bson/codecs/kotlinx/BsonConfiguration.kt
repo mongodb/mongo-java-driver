@@ -31,4 +31,19 @@ public data class BsonConfiguration(
     val encodeDefaults: Boolean = true,
     val explicitNulls: Boolean = false,
     val classDiscriminator: String = "_t",
+    val bsonNamingStrategy: BsonNamingStrategy? = null
 )
+
+/**
+ * Optional BSON naming strategy for a field.
+ *
+ * @since 5.4
+ */
+public enum class BsonNamingStrategy {
+
+    /**
+     * A strategy that transforms serial names from camel case to snake case — lowercase characters with words separated
+     * by underscores.
+     */
+    SNAKE_CASE,
+}

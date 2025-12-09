@@ -16,13 +16,7 @@
 
 package com.mongodb.reactivestreams.client.unified;
 
-import com.mongodb.ClusterFixture;
-import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.connection.TransportSettings;
 import com.mongodb.lang.Nullable;
-import com.mongodb.reactivestreams.client.MongoClients;
-import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.junit.jupiter.api.AfterEach;
@@ -31,8 +25,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Hooks;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -50,8 +42,8 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
 
     private final AtomicReference<Throwable> atomicReferenceThrowable = new AtomicReference<>();
 
-    private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/client-side-operation-timeout");
+    private static Collection<Arguments> data() {
+        return getTestData("client-side-operations-timeout");
     }
 
     @Override
@@ -81,6 +73,10 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
         // No withTransaction support
         assumeFalse(fileDescription.contains("withTransaction") || testDescription.contains("withTransaction"));
 
+        assumeFalse(fileDescription.equals("operations ignore deprecated timeout options if timeoutMS is set")
+                && (testDescription.startsWith("abortTransaction ignores") || testDescription.startsWith("commitTransaction ignores")),
+                "No operation session based overrides");
+
         if (testDescription.equals("timeoutMS is refreshed for close")) {
             enableSleepAfterCursorError(256);
         }
@@ -99,18 +95,25 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
     @MethodSource("data")
     @Override
     public void shouldPassAllOutcomes(
+            final String testName,
             @Nullable final String fileDescription,
             @Nullable final String testDescription,
             @Nullable final String directoryName,
+            final int attemptNumber,
+            final int totalAttempts,
             final String schemaVersion,
             @Nullable final BsonArray runOnRequirements,
             final BsonArray entitiesArray,
             final BsonArray initialData,
             final BsonDocument definition) {
         try {
-            super.shouldPassAllOutcomes(fileDescription,
+            super.shouldPassAllOutcomes(
+                    testName,
+                    fileDescription,
                     testDescription,
                     directoryName,
+                    attemptNumber,
+                    totalAttempts,
                     schemaVersion,
                     runOnRequirements,
                     entitiesArray,
@@ -128,13 +131,6 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
             throw e;
         }
         assertNoDroppedError(format("%s passed but there was a dropped error; `onError` called with no handler.", testDescription));
-    }
-    @Override
-    protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        TransportSettings overriddenTransportSettings = ClusterFixture.getOverriddenTransportSettings();
-        MongoClientSettings clientSettings = overriddenTransportSettings == null ? settings
-                : MongoClientSettings.builder(settings).transportSettings(overriddenTransportSettings).build();
-        return new SyncMongoClient(MongoClients.create(clientSettings));
     }
 
     @AfterEach

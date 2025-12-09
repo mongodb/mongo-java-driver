@@ -15,7 +15,9 @@
  */
 package com.mongodb.internal.connection;
 
+import com.mongodb.Function;
 import com.mongodb.MongoConnectionPoolClearedException;
+import com.mongodb.ReadConcern;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
@@ -26,6 +28,8 @@ import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.internal.observability.micrometer.Span;
+import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
@@ -33,6 +37,7 @@ import com.mongodb.selector.ServerSelector;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.stream.Collectors.toList;
@@ -47,12 +52,28 @@ public class OperationContext {
     private final SessionContext sessionContext;
     private final RequestContext requestContext;
     private final TimeoutContext timeoutContext;
+    private final TracingManager tracingManager;
     @Nullable
     private final ServerApi serverApi;
+    @Nullable
+    private final String operationName;
+    @Nullable
+    private Span tracingSpan;
 
     public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
             @Nullable final ServerApi serverApi) {
-        this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, new ServerDeprioritization(), serverApi);
+        this(requestContext, sessionContext, timeoutContext, TracingManager.NO_OP, serverApi, null);
+    }
+
+    public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
+            final TracingManager tracingManager,
+            @Nullable final ServerApi serverApi,
+            @Nullable final String operationName) {
+        this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, new ServerDeprioritization(),
+                tracingManager,
+                serverApi,
+                operationName,
+                null);
     }
 
     public static OperationContext simpleOperationContext(
@@ -61,7 +82,10 @@ public class OperationContext {
                 IgnorableRequestContext.INSTANCE,
                 NoOpSessionContext.INSTANCE,
                 new TimeoutContext(timeoutSettings),
-                serverApi);
+                TracingManager.NO_OP,
+                serverApi,
+                null
+                );
     }
 
     public static OperationContext simpleOperationContext(final TimeoutContext timeoutContext) {
@@ -69,19 +93,32 @@ public class OperationContext {
                 IgnorableRequestContext.INSTANCE,
                 NoOpSessionContext.INSTANCE,
                 timeoutContext,
+                TracingManager.NO_OP,
+                null,
                 null);
     }
 
     public OperationContext withSessionContext(final SessionContext sessionContext) {
-        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, serverApi);
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, tracingManager, serverApi,
+                operationName, tracingSpan);
     }
 
     public OperationContext withTimeoutContext(final TimeoutContext timeoutContext) {
-        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, serverApi);
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, tracingManager, serverApi,
+                operationName, tracingSpan);
+    }
+
+    public OperationContext withOperationName(final String operationName) {
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, tracingManager, serverApi,
+                operationName, tracingSpan);
     }
 
     public long getId() {
         return id;
+    }
+
+    public TracingManager getTracingManager() {
+        return tracingManager;
     }
 
     public SessionContext getSessionContext() {
@@ -101,33 +138,59 @@ public class OperationContext {
         return serverApi;
     }
 
+    @Nullable
+    public String getOperationName() {
+        return operationName;
+    }
+
+    @Nullable
+    public Span getTracingSpan() {
+        return tracingSpan;
+    }
+
+    public void setTracingSpan(final Span tracingSpan) {
+        this.tracingSpan = tracingSpan;
+    }
+
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
     public OperationContext(final long id,
-                            final RequestContext requestContext,
-                            final SessionContext sessionContext,
-                            final TimeoutContext timeoutContext,
-                            final ServerDeprioritization serverDeprioritization,
-                            @Nullable final ServerApi serverApi) {
+            final RequestContext requestContext,
+            final SessionContext sessionContext,
+            final TimeoutContext timeoutContext,
+            final ServerDeprioritization serverDeprioritization,
+            final TracingManager tracingManager,
+            @Nullable final ServerApi serverApi,
+            @Nullable final String operationName,
+            @Nullable final Span tracingSpan) {
+
         this.id = id;
         this.serverDeprioritization = serverDeprioritization;
         this.requestContext = requestContext;
         this.sessionContext = sessionContext;
         this.timeoutContext = timeoutContext;
+        this.tracingManager = tracingManager;
         this.serverApi = serverApi;
+        this.operationName = operationName;
+        this.tracingSpan = tracingSpan;
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
     public OperationContext(final long id,
-                            final RequestContext requestContext,
-                            final SessionContext sessionContext,
-                            final TimeoutContext timeoutContext,
-                            @Nullable final ServerApi serverApi) {
+            final RequestContext requestContext,
+            final SessionContext sessionContext,
+            final TimeoutContext timeoutContext,
+            final TracingManager tracingManager,
+            @Nullable final ServerApi serverApi,
+            @Nullable final String operationName) {
         this.id = id;
         this.serverDeprioritization = new ServerDeprioritization();
         this.requestContext = requestContext;
         this.sessionContext = sessionContext;
         this.timeoutContext = timeoutContext;
+        this.tracingManager = tracingManager;
         this.serverApi = serverApi;
+        this.operationName = operationName;
+        this.tracingSpan = null;
     }
 
 
@@ -136,6 +199,29 @@ public class OperationContext {
      */
     public ServerDeprioritization getServerDeprioritization() {
         return serverDeprioritization;
+    }
+
+    public OperationContext withNewlyStartedTimeout() {
+        return withTimeoutContext(timeoutContext.withNewlyStartedTimeout());
+    }
+
+    /**
+     * Create a new OperationContext with a SessionContext that does not send a session ID.
+     * <p>
+     * The driver MUST NOT append a session ID to any command sent during the process of
+     * opening and authenticating a connection.
+     */
+    public OperationContext withConnectionEstablishmentSessionContext() {
+        ReadConcern readConcern = getSessionContext().getReadConcern();
+        return withSessionContext(new ReadConcernAwareNoOpSessionContext(readConcern));
+    }
+
+    public OperationContext withMinRoundTripTime(final ServerDescription serverDescription) {
+        return withTimeoutContext(timeoutContext.withMinRoundTripTime(TimeUnit.NANOSECONDS.toMillis(serverDescription.getMinRoundTripTimeNanos())));
+    }
+
+    public OperationContext withOverride(final TimeoutContextOverride timeoutContextOverrideFunction) {
+        return withTimeoutContext(timeoutContextOverrideFunction.apply(timeoutContext));
     }
 
     public static final class ServerDeprioritization {
@@ -198,5 +284,7 @@ public class OperationContext {
             }
         }
     }
+
+    public interface TimeoutContextOverride extends Function<TimeoutContext, TimeoutContext> {}
 }
 

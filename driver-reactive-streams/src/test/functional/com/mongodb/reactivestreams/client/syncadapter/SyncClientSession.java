@@ -22,6 +22,7 @@ import com.mongodb.TransactionOptions;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.TransactionBody;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.observability.micrometer.TransactionSpan;
 import com.mongodb.lang.Nullable;
 import com.mongodb.session.ServerSession;
 import org.bson.BsonDocument;
@@ -186,6 +187,12 @@ class SyncClientSession implements ClientSession {
     @Override
     public TimeoutContext getTimeoutContext() {
         return wrapped.getTimeoutContext();
+    }
+
+    @Override
+    @Nullable
+    public TransactionSpan getTransactionSpan() {
+        return null;
     }
 
     private static void sleep(final long millis) {

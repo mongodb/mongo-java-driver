@@ -42,17 +42,7 @@ MongoDB project, please report it according to the [instructions here](https://w
 
 ## Versioning
 
-Major increments (such as 4.x -> 5.x) will occur when breaking changes are being made to the public API.  All methods and
-classes removed in a major release will have been deprecated in a prior release of the previous major release branch, and/or otherwise
-called out in the release notes.
-
-Minor 5.x increments (such as 5.1, 5.2, etc) will occur when non-trivial new functionality is added or significant enhancements or bug
-fixes occur that may have behavioral changes that may affect some edge cases (such as dependence on behavior resulting from a bug). An
-example of an enhancement is a method or class added to support new functionality added to the MongoDB server.   Minor releases will
-almost always be binary compatible with prior minor releases from the same major release branch, except as noted below.
-
-Patch 5.x.y increments (such as 5.0.0 -> 5.0.1, 5.1.1 -> 5.1.2, etc) will occur for bug fixes only and will always be binary compatible
-with prior patch releases of the same minor release branch.
+We follow [semantic versioning](https://semver.org/spec/v2.0.0.html) when releasing.
 
 #### @Alpha
 
@@ -84,7 +74,7 @@ time.
 ## Binaries
 
 Binaries and dependency information for Maven, Gradle, Ivy and others can be found at
-[http://search.maven.org](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.mongodb%22%20AND%20a%3A%22mongodb-driver-sync%22).
+[https://central.sonatype.com/search](https://central.sonatype.com/search?namespace=org.mongodb&name=mongodb-driver-sync).
 
 Example for Maven:
 
@@ -95,17 +85,24 @@ Example for Maven:
     <version>x.y.z</version>
 </dependency>
 ```
-Snapshot builds are also published regulary via Sonatype.
+Snapshot builds are also published regularly via Sonatype.
 
 Example for Maven:
 
 ```xml
-    <repositories>
-        <repository>
-            <id>sonatype-snapshot</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </repository>
-    </repositories>
+<repositories>
+    <repository>
+        <name>Central Portal Snapshots</name>
+        <id>central-portal-snapshots</id>
+        <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+        <releases>
+            <enabled>false</enabled>
+        </releases>
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots>
+    </repository>
+</repositories>
 ```
 
 ## Build
@@ -113,7 +110,7 @@ Example for Maven:
 Java 17+ and git is required to build and compile the source. To build and test the driver:
 
 ```
-$ git clone https://github.com/mongodb/mongo-java-driver.git
+$ git clone --recurse-submodules https://github.com/mongodb/mongo-java-driver.git
 $ cd mongo-java-driver
 $ ./gradlew check
 ```

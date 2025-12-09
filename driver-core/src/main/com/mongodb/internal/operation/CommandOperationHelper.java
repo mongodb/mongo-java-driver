@@ -45,6 +45,7 @@ import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.internal.async.function.RetryState.INFINITE_ATTEMPTS;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -122,12 +123,14 @@ final class CommandOperationHelper {
 
     static RetryState initialRetryState(final boolean retry, final TimeoutContext timeoutContext) {
         if (retry) {
-            return RetryState.withRetryableState(RetryState.RETRIES, timeoutContext);
+            boolean retryUntilTimeoutThrowsException = timeoutContext.hasTimeoutMS();
+            int retries = retryUntilTimeoutThrowsException ? INFINITE_ATTEMPTS : RetryState.RETRIES;
+            return RetryState.withRetryableState(retries, retryUntilTimeoutThrowsException);
         }
         return RetryState.withNonRetryableState();
     }
 
-    private static final List<Integer> RETRYABLE_ERROR_CODES = asList(6, 7, 89, 91, 189, 262, 9001, 13436, 13435, 11602, 11600, 10107);
+    private static final List<Integer> RETRYABLE_ERROR_CODES = asList(6, 7, 89, 91, 134, 189, 262, 9001, 13436, 13435, 11602, 11600, 10107);
     static boolean isRetryableException(final Throwable t) {
         if (!(t instanceof MongoException)) {
             return false;

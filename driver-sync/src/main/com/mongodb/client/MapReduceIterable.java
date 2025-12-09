@@ -27,9 +27,9 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Iterable for map-reduce.
- *
- * <p>By default the {@code MapReduceIterable} returns the results inline. You can write map-reduce output to a collection by using the
- * {@link MapReduceIterable#collectionName(String)} method.</p>
+ * <p>
+ * By default, the {@code MapReduceIterable} produces the results inline. You can write map-reduce output to a collection by using the
+ * {@link #collectionName(String)} and {@link #toCollection()} methods.</p>
  *
  * @param <TResult> The type of the result.
  * @since 3.0
@@ -39,14 +39,41 @@ import java.util.concurrent.TimeUnit;
 public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
 
     /**
-     * Aggregates documents to a collection according to the specified map-reduce function with the given options, which must specify a
-     * non-inline result.
+     * Aggregates documents to a collection according to the specified map-reduce function with the given options, which must not produce
+     * results inline. This method is the preferred alternative to {@link #iterator()}, {@link #cursor()},
+     * because this method does what is explicitly requested without executing implicit operations.
      *
-     * @throws IllegalStateException if a collection name to write the results to has not been specified
+     * @throws IllegalStateException if a {@linkplain #collectionName(String) collection name} to write the results to has not been specified
      * @see #collectionName(String)
      * @since 3.4
      */
     void toCollection();
+
+    /**
+     * Aggregates documents according to the specified map-reduce function with the given options.
+     * <ul>
+     *     <li>
+     *     If the aggregation produces results inline, then {@linkplain MongoCollection#find() finds all} documents in the
+     *     affected namespace and returns a {@link MongoCursor} over them. You may want to use {@link #toCollection()} instead.</li>
+     *     <li>
+     *     Otherwise, returns a {@link MongoCursor} producing no elements.</li>
+     * </ul>
+     */
+    @Override
+    MongoCursor<TResult> iterator();
+
+    /**
+     * Aggregates documents according to the specified map-reduce function with the given options.
+     * <ul>
+     *     <li>
+     *     If the aggregation produces results inline, then {@linkplain MongoCollection#find() finds all} documents in the
+     *     affected namespace and returns a {@link MongoCursor} over them. You may want to use {@link #toCollection()} instead.</li>
+     *     <li>
+     *     Otherwise, returns a {@link MongoCursor} producing no elements.</li>
+     * </ul>
+     */
+    @Override
+    MongoCursor<TResult> cursor();
 
     /**
      * Sets the collectionName for the output of the MapReduce
@@ -55,6 +82,7 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
      *
      * @param collectionName the name of the collection that you want the map-reduce operation to write its output.
      * @return this
+     * @see #toCollection()
      */
     MapReduceIterable<TResult> collectionName(String collectionName);
 

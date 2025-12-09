@@ -37,6 +37,7 @@ import com.mongodb.internal.binding.ReadBinding
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
+import com.mongodb.internal.connection.OperationContext
 import com.mongodb.internal.session.SessionContext
 import org.bson.BsonArray
 import org.bson.BsonBoolean
@@ -56,14 +57,13 @@ import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.isStandalone
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.client.model.changestream.ChangeStreamDocument.createCodec
 import static com.mongodb.internal.connection.ServerHelper.waitForLastRelease
 import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
-@IgnoreIf({ !(serverVersionAtLeast(3, 6) && !isStandalone()) })
+@IgnoreIf({ isStandalone() })
 class ChangeStreamOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should have the correct defaults'() {
@@ -209,6 +209,8 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         waitForLastRelease(getCluster())
     }
 
+    // TODO undo skip and update for JAVA-5835
+    @IgnoreIf({ !serverVersionLessThan(8, 2) })
     def 'should decode update to ChangeStreamDocument '() {
         given:
         def helper = getHelper()
@@ -321,7 +323,6 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         waitForLastRelease(getCluster())
     }
 
-    @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should decode drop to ChangeStreamDocument '() {
         given:
         def helper = getHelper()
@@ -350,7 +351,6 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         waitForLastRelease(getCluster())
     }
 
-    @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should decode dropDatabase to ChangeStreamDocument '() {
         given:
         def helper = getHelper()
@@ -380,7 +380,6 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         waitForLastRelease(getCluster())
     }
 
-    @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should decode rename to ChangeStreamDocument '() {
         given:
         def helper = getHelper()
@@ -503,7 +502,6 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should work with a startAtOperationTime'() {
         given:
         def helper = getHelper()
@@ -582,7 +580,6 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(4, 2) })
     def 'should work with a startAfter resumeToken'() {
         given:
         def helper = getHelper()
@@ -645,10 +642,8 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
                 })
         def changeStream
         def binding = Stub(ReadBinding) {
-            getOperationContext() >> operationContext
-            getReadConnectionSource() >> Stub(ConnectionSource) {
-                getOperationContext() >> operationContext
-                getConnection() >> Stub(Connection) {
+            getReadConnectionSource(_) >> Stub(ConnectionSource) {
+                getConnection(_) >> Stub(Connection) {
                      command(*_) >> {
                          changeStream = getChangeStream(it[1])
                          new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
@@ -666,7 +661,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT,
                 FullDocumentBeforeChange.DEFAULT, [], CODEC)
                 .resumeAfter(new BsonDocument())
-                .execute(binding)
+                .execute(binding, operationContext)
 
         then:
         changeStream.containsKey('resumeAfter')
@@ -676,7 +671,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT,
                 FullDocumentBeforeChange.DEFAULT, [], CODEC)
                 .startAfter(new BsonDocument())
-                .execute(binding)
+                .execute(binding, operationContext)
 
         then:
         changeStream.containsKey('startAfter')
@@ -687,7 +682,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT,
                 FullDocumentBeforeChange.DEFAULT, [], CODEC)
                 .startAtOperationTime(startAtTime)
-                .execute(binding)
+                .execute(binding, operationContext)
 
         then:
         changeStream.getTimestamp('startAtOperationTime') == startAtTime
@@ -702,11 +697,9 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
                 })
         def changeStream
         def binding = Stub(AsyncReadBinding) {
-            getOperationContext() >> operationContext
-            getReadConnectionSource(_) >> {
+            getReadConnectionSource(_ as OperationContext, _ as SingleResultCallback) >> {
                 it.last().onResult(Stub(AsyncConnectionSource) {
-                    getOperationContext() >> operationContext
-                    getConnection(_) >> {
+                    getConnection(_ as OperationContext, _ as SingleResultCallback) >> {
                         it.last().onResult(Stub(AsyncConnection) {
                             commandAsync(*_) >> {
                                 changeStream = getChangeStream(it[1])
@@ -727,7 +720,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT,
                 FullDocumentBeforeChange.DEFAULT, [], CODEC)
                 .resumeAfter(new BsonDocument())
-                .executeAsync(binding, Stub(SingleResultCallback))
+                .executeAsync(binding, operationContext, Stub(SingleResultCallback))
 
         then:
         changeStream.containsKey('resumeAfter')
@@ -737,7 +730,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT,
                 FullDocumentBeforeChange.DEFAULT, [], CODEC)
                 .startAfter(new BsonDocument())
-                .executeAsync(binding, Stub(SingleResultCallback))
+                .executeAsync(binding, operationContext, Stub(SingleResultCallback))
 
         then:
         changeStream.containsKey('startAfter')
@@ -748,7 +741,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT,
                 FullDocumentBeforeChange.DEFAULT, [], CODEC)
                 .startAtOperationTime(startAtTime)
-                .executeAsync(binding, Stub(SingleResultCallback))
+                .executeAsync(binding, operationContext, Stub(SingleResultCallback))
 
         then:
         changeStream.getTimestamp('startAtOperationTime') == startAtTime
@@ -787,6 +780,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
             doc.remove('_id')
             doc.remove('clusterTime')
             doc.remove('wallTime')
+            doc.remove('collectionUUID')
             doc
         }
     }

@@ -30,17 +30,14 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.TIMEOUT;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-// See https://github.com/mongodb/specifications/tree/master/source/transactions-convenient-api/tests/README.rst#prose-tests
+// See https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#prose-tests
 public class WithTransactionProseTest extends DatabaseTestCase {
     private static final long START_TIME_MS = 1L;
     private static final long ERROR_GENERATING_INTERVAL = 121000L;
@@ -147,7 +144,6 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     //
     @Test
     public void testRetryTimeoutEnforcedTransientTransactionErrorOnCommit() {
-        assumeFalse(isServerlessTest());
         MongoDatabase failPointAdminDb = client.getDatabase("admin");
         failPointAdminDb.runCommand(
                 Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 2}, "
@@ -208,12 +204,6 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     }
 
     private boolean canRunTests() {
-        if (isSharded()) {
-            return serverVersionAtLeast(4, 2);
-        } else if (isDiscoverableReplicaSet()) {
-            return serverVersionAtLeast(4, 0);
-        } else {
-            return false;
-        }
+        return isSharded() || isDiscoverableReplicaSet();
     }
 }

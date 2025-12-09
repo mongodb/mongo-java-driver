@@ -24,7 +24,7 @@ fi
 #            Main Program                  #
 ############################################
 RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE[0]:-$0}")"
-source "${RELATIVE_DIR_PATH}/javaConfig.bash"
+source "${RELATIVE_DIR_PATH}/setup-env.bash"
 
 printf "\nCreating SSDLC reports\n"
 printf "\nProduct name: %s\n" "${PRODUCT_NAME}"

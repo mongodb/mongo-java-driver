@@ -143,9 +143,9 @@ public class Crypt implements Closeable {
      *
      * @param commandResponse the encrypted command response
      */
-    public Mono<RawBsonDocument> decrypt(final RawBsonDocument commandResponse, @Nullable final Timeout operationTimeout) {
+    public Mono<RawBsonDocument> decrypt(final RawBsonDocument commandResponse, @Nullable final Timeout timeout) {
         notNull("commandResponse", commandResponse);
-        return executeStateMachine(() -> mongoCrypt.createDecryptionContext(commandResponse), operationTimeout)
+        return executeStateMachine(() -> mongoCrypt.createDecryptionContext(commandResponse), timeout)
                 .onErrorMap(this::wrapInClientException);
     }
 
@@ -304,10 +304,8 @@ public class Crypt implements Closeable {
         } else {
             collectionInfoRetriever.filter(databaseName, cryptContext.getMongoOperation(), operationTimeout)
                     .contextWrite(sink.contextView())
-                    .doOnSuccess(result -> {
-                        if (result != null) {
-                            cryptContext.addMongoOperationResult(result);
-                        }
+                    .doOnNext(result -> cryptContext.addMongoOperationResult(result))
+                    .doOnComplete(() -> {
                         cryptContext.completeMongoOperation();
                         executeStateMachineWithSink(cryptContext, databaseName, sink, operationTimeout);
                     })

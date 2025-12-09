@@ -28,10 +28,9 @@ import spock.lang.IgnoreIf
 import static com.mongodb.ClusterFixture.configureFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.ClusterFixture.serverVersionLessThan
 
 class DropDatabaseOperationSpecification extends OperationFunctionalSpecification {
 
@@ -66,23 +65,22 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentTo', 'createTheCollection'))
 
-        // On servers older than 4.0 that don't support this failpoint, use a crazy w value instead
-        def w = serverVersionAtLeast(4, 0) ? 2 : 5
+        def w = 2
         def operation = new DropDatabaseOperation(databaseName, new WriteConcern(w))
-        if (serverVersionAtLeast(4, 0)) {
-            configureFailPoint(BsonDocument.parse('{ configureFailPoint: "failCommand", ' +
-                    'mode : {times : 1}, ' +
-                    'data : {failCommands : ["dropDatabase"], ' +
-                    'writeConcernError : {code : 100, errmsg : "failed"}}}'))
-        }
+        configureFailPoint(BsonDocument.parse('{ configureFailPoint: "failCommand", ' +
+                'mode : {times : 1}, ' +
+                'data : {failCommands : ["dropDatabase"], ' +
+                'writeConcernError : {code : 100, errmsg : "failed"}}}'))
 
+
+        def binding = getBinding()
         when:
-        async ? executeAsync(operation) : operation.execute(getBinding())
+        async ? executeAsync(operation) : operation.execute(binding, getOperationContext(binding.getReadPreference()))
 
         then:
         def ex = thrown(MongoWriteConcernException)
@@ -94,7 +92,8 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
     }
 
     def databaseNameExists(String databaseName) {
-        new ListDatabasesOperation(new DocumentCodec()).execute(getBinding()).next()*.name.contains(databaseName)
+        new ListDatabasesOperation(new DocumentCodec()).execute(binding,
+                getOperationContext(binding.getReadPreference())).next()*.name.contains(databaseName)
     }
 
 }

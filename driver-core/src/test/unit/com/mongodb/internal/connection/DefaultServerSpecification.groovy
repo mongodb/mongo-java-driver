@@ -17,12 +17,16 @@
 package com.mongodb.internal.connection
 
 import com.mongodb.MongoException
+import com.mongodb.MongoNodeIsRecoveringException
+import com.mongodb.MongoNotPrimaryException
 import com.mongodb.MongoSecurityException
 import com.mongodb.MongoServerUnavailableException
+import com.mongodb.MongoSocketException
 import com.mongodb.MongoSocketOpenException
 import com.mongodb.MongoSocketReadException
 import com.mongodb.MongoSocketReadTimeoutException
 import com.mongodb.MongoSocketWriteException
+import com.mongodb.MongoStalePrimaryException
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.client.syncadapter.SupplyingCallback
@@ -49,6 +53,7 @@ import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
 
+import static com.mongodb.ClusterFixture.CLIENT_METADATA
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
@@ -151,16 +156,57 @@ class DefaultServerSpecification extends Specification {
                 .build())
 
         when:
-        server.invalidate()
+        server.invalidate(exceptionToThrow)
 
         then:
         1 * serverListener.serverDescriptionChanged(_)
 
         cleanup:
         server?.close()
+
+        where:
+        exceptionToThrow << [
+                new MongoStalePrimaryException(""),
+                new MongoNotPrimaryException(new BsonDocument(), new ServerAddress()),
+                new MongoNodeIsRecoveringException(new BsonDocument(), new ServerAddress()),
+                new MongoSocketException("", new ServerAddress()),
+                new MongoWriteConcernWithResponseException(new MongoException(""), new Object())
+        ]
     }
 
-    def 'invalidate should do nothing when server is closed'() {
+    def 'invalidate should not invoke server listeners'() {
+        given:
+        def serverListener = Mock(ServerListener)
+        def connectionPool = Mock(ConnectionPool)
+        def sdamProvider = SameObjectProvider.<SdamServerDescriptionManager> uninitialized()
+        def serverMonitor = new TestServerMonitor(sdamProvider)
+        sdamProvider.initialize(new DefaultSdamServerDescriptionManager(mockCluster(), serverId, serverListener, serverMonitor,
+                connectionPool, ClusterConnectionMode.MULTIPLE))
+        def server = defaultServer(Mock(ConnectionPool), serverMonitor, serverListener, sdamProvider.get(), Mock(CommandListener))
+        serverMonitor.updateServerDescription(ServerDescription.builder()
+                .address(serverId.getAddress())
+                .ok(true)
+                .state(ServerConnectionState.CONNECTED)
+                .type(ServerType.STANDALONE)
+                .build())
+
+        when:
+        server.invalidate(exceptionToThrow)
+
+        then:
+        0 * serverListener.serverDescriptionChanged(_)
+
+        cleanup:
+        server?.close()
+
+        where:
+        exceptionToThrow << [
+                new MongoException(""),
+                new MongoSecurityException(createCredential("jeff", "admin", "123".toCharArray()), "Auth failed"),
+        ]
+    }
+
+    def 'invalidate should do nothing when server is closed for any exception'() {
         given:
         def connectionPool = Mock(ConnectionPool)
         def serverMonitor = Mock(ServerMonitor)
@@ -170,11 +216,22 @@ class DefaultServerSpecification extends Specification {
         server.close()
 
         when:
-        server.invalidate()
+        server.invalidate(exceptionToThrow)
 
         then:
         0 * connectionPool.invalidate(null)
         0 * serverMonitor.connect()
+
+        where:
+        exceptionToThrow << [
+                new MongoStalePrimaryException(""),
+                new MongoNotPrimaryException(new BsonDocument(), new ServerAddress()),
+                new MongoNodeIsRecoveringException(new BsonDocument(), new ServerAddress()),
+                new MongoSocketException("", new ServerAddress()),
+                new MongoWriteConcernWithResponseException(new MongoException(""), new Object()),
+                new MongoException(""),
+                new MongoSecurityException(createCredential("jeff", "admin", "123".toCharArray()), "Auth failed"),
+        ]
     }
 
     def 'failed open should invalidate the server'() {
@@ -293,7 +350,7 @@ class DefaultServerSpecification extends Specification {
         clusterClock.advance(clusterClockClusterTime)
         def server = new DefaultServer(serverId, SINGLE, Mock(ConnectionPool), new TestConnectionFactory(), Mock(ServerMonitor),
                 Mock(SdamServerDescriptionManager), Mock(ServerListener), Mock(CommandListener), clusterClock, false)
-        def testConnection = (TestConnection) server.getConnection()
+        def testConnection = (TestConnection) server.getConnection(OPERATION_CONTEXT)
         def sessionContext = new TestSessionContext(initialClusterTime)
         def response = BsonDocument.parse(
                 '''{
@@ -386,7 +443,7 @@ class DefaultServerSpecification extends Specification {
     }
 
     private Cluster mockCluster() {
-        new BaseCluster(new ClusterId(), ClusterSettings.builder().build(), Mock(ClusterableServerFactory)) {
+        new BaseCluster(new ClusterId(), ClusterSettings.builder().build(), Mock(ClusterableServerFactory), CLIENT_METADATA) {
             @Override
             protected void connect() {
             }

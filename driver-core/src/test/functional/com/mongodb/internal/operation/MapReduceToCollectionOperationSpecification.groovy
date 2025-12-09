@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation
 
+import com.mongodb.ClusterFixture
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoWriteConcernException
@@ -62,9 +63,12 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
     }
 
     def cleanup() {
-        new DropCollectionOperation(mapReduceInputNamespace, WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        def binding = getBinding()
+        def operationContext = ClusterFixture.getOperationContext(binding.getReadPreference())
+        new DropCollectionOperation(mapReduceInputNamespace, WriteConcern.ACKNOWLEDGED)
+                .execute(binding, operationContext)
         new DropCollectionOperation(mapReduceOutputNamespace, WriteConcern.ACKNOWLEDGED)
-                .execute(getBinding())
+                .execute(binding, operationContext)
     }
 
     def 'should have the correct defaults'() {
@@ -167,7 +171,6 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
     }
 
 
-    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should support bypassDocumentValidation'() {
         given:
         def collectionOutHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'collectionOut'))
@@ -206,7 +209,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         getCollectionHelper().insertDocuments(new BsonDocument())
@@ -296,7 +299,6 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         [3, 4, 0]     | true                    | true                | true             | false
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should support collation'() {
         given:
         def outCollectionHelper = getCollectionHelper(new MongoNamespace(mapReduceInputNamespace.getDatabaseName(), 'collectionOut'))

@@ -21,6 +21,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -47,7 +48,8 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class RenameCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+public class RenameCollectionOperation implements WriteOperation<Void> {
+    private static final String COMMAND_NAME = "renameCollection";
     private final MongoNamespace originalNamespace;
     private final MongoNamespace newNamespace;
     private final WriteConcern writeConcern;
@@ -74,27 +76,39 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
     }
 
     @Override
-    public Void execute(final WriteBinding binding) {
-        return withConnection(binding, connection -> executeCommand(binding, "admin", getCommand(), connection,
-                writeConcernErrorTransformer(binding.getOperationContext().getTimeoutContext())));
+    public String getCommandName() {
+        return COMMAND_NAME;
     }
 
     @Override
-    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(binding, (connection, t) -> {
+    public MongoNamespace getNamespace() {
+        return originalNamespace;
+    }
+
+    @Override
+    public Void execute(final WriteBinding binding, final OperationContext operationContext) {
+        return withConnection(binding, operationContext, (connection, operationContextWithMinRtt) ->
+                executeCommand(binding,
+                        operationContextWithMinRtt, "admin", getCommand(), connection,
+                        writeConcernErrorTransformer(operationContextWithMinRtt.getTimeoutContext())));
+    }
+
+    @Override
+    public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<Void> callback) {
+        withAsyncConnection(binding, operationContext, (connection, operationContextWithMinRtt, t) -> {
             SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
             if (t != null) {
                 errHandlingCallback.onResult(null, t);
             } else {
-                executeCommandAsync(binding, "admin", getCommand(), assertNotNull(connection),
-                        writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()),
+                executeCommandAsync(binding, operationContextWithMinRtt, "admin", getCommand(), assertNotNull(connection),
+                        writeConcernErrorTransformerAsync(operationContextWithMinRtt.getTimeoutContext()),
                         releasingCallback(errHandlingCallback, connection));
             }
         });
     }
 
     private BsonDocument getCommand() {
-        BsonDocument commandDocument = new BsonDocument("renameCollection", new BsonString(originalNamespace.getFullName()))
+        BsonDocument commandDocument = new BsonDocument(getCommandName(), new BsonString(originalNamespace.getFullName()))
                                             .append("to", new BsonString(newNamespace.getFullName()))
                                             .append("dropTarget", BsonBoolean.valueOf(dropTarget));
         appendWriteConcernToCommand(writeConcern, commandDocument);

@@ -28,9 +28,7 @@ import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.asser
 public class ExplainTest extends AbstractExplainTest {
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(
-                MongoClientSettings.builder(settings).contextProvider(CONTEXT_PROVIDER).build()
-        ));
+        return new SyncMongoClient(MongoClientSettings.builder(settings).contextProvider(CONTEXT_PROVIDER));
     }
 
     @Test
@@ -44,13 +42,6 @@ public class ExplainTest extends AbstractExplainTest {
     @Override
     public void testExplainOfAggregateWithNewResponseStructure() {
         super.testExplainOfAggregateWithNewResponseStructure();
-        assertContextPassedThrough();
-    }
-
-    @Test
-    @Override
-    public void testExplainOfAggregateWithOldResponseStructure() {
-        super.testExplainOfAggregateWithOldResponseStructure();
         assertContextPassedThrough();
     }
 }

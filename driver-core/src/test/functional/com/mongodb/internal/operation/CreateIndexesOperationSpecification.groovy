@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation
 
+import com.mongodb.ClusterFixture
 import com.mongodb.CreateIndexCommitQuorum
 import com.mongodb.DuplicateKeyException
 import com.mongodb.MongoClientException
@@ -34,7 +35,6 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ClusterFixture.serverVersionLessThan
@@ -172,22 +172,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         thrown(DuplicateKeyException)
-
-        where:
-        async << [true, false]
-    }
-
-    @IgnoreIf({ serverVersionAtLeast(3, 0) })
-    def 'should drop duplicates'() {
-        given:
-        getCollectionHelper().insertDocuments(new DocumentCodec(), x1, x1)
-        def operation = createOperation([new IndexRequest(new BsonDocument('x', new BsonInt32(1))).unique(true).dropDups(true)])
-
-        when:
-        execute(operation, async)
-
-        then:
-        getCollectionHelper().count() == 1
 
         where:
         async << [true, false]
@@ -376,7 +360,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 0) })
     def 'should pass through storage engine options'() {
         given:
         def storageEngineOptions = new Document('wiredTiger', new Document('configString', 'block_compressor=zlib'))
@@ -393,7 +376,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 2) })
     def 'should be able to create a partially filtered index'() {
         given:
         def partialFilterExpression = new Document('a', new Document('$gte', 10))
@@ -411,7 +393,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         def keys = new BsonDocument('field', new BsonInt32(1))
@@ -429,7 +411,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should be able to create an index with collation'() {
         given:
         def operation = createOperation([new IndexRequest(new BsonDocument('a', new BsonInt32(1))).collation(defaultCollation)])
@@ -446,7 +427,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(4, 2) })
     def 'should be able to create wildcard indexes'() {
         given:
         def operation = createOperation([new IndexRequest(new BsonDocument('$**', new BsonInt32(1))),
@@ -463,7 +443,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(4, 2) })
     def 'should be able to create wildcard index with projection'() {
         given:
         def operation = createOperation([new IndexRequest(new BsonDocument('$**', new BsonInt32(1)))
@@ -512,7 +491,10 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
 
     List<Document> getIndexes() {
         def indexes = []
-        def cursor = new ListIndexesOperation(getNamespace(), new DocumentCodec()).execute(getBinding())
+
+        def binding = ClusterFixture.getBinding()
+        def cursor = new ListIndexesOperation(getNamespace(), new DocumentCodec())
+                .execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
         while (cursor.hasNext()) {
             indexes.addAll(cursor.next())
         }

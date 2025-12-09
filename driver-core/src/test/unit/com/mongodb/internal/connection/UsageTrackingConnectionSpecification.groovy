@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection
 
-import com.mongodb.MongoNamespace
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.connection.ClusterId
@@ -171,7 +170,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         def openedLastUsedAt = connection.lastUsedAt
 
         when:
-        connection.sendAndReceive(new CommandMessage(new MongoNamespace('test.coll'),
+        connection.sendAndReceive(new CommandMessage('test',
                 new BsonDocument('ping', new BsonInt32(1)), NoOpFieldNameValidator.INSTANCE, primary(),
                 MessageSettings.builder().build(), SINGLE, null), new BsonDocumentCodec(),  OPERATION_CONTEXT)
 
@@ -188,7 +187,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         def futureResultCallback = new FutureResultCallback<Void>()
 
         when:
-        connection.sendAndReceiveAsync(new CommandMessage(new MongoNamespace('test.coll'),
+        connection.sendAndReceiveAsync(new CommandMessage('test',
                 new BsonDocument('ping', new BsonInt32(1)), NoOpFieldNameValidator.INSTANCE, primary(),
                 MessageSettings.builder().build(), SINGLE, null),
                 new BsonDocumentCodec(), OPERATION_CONTEXT, futureResultCallback)

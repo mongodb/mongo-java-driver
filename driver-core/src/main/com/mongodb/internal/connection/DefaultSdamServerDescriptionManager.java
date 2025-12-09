@@ -56,7 +56,7 @@ final class DefaultSdamServerDescriptionManager implements SdamServerDescription
     }
 
     @Override
-    public void update(final ServerDescription candidateDescription) {
+    public void monitorUpdate(final ServerDescription candidateDescription) {
         cluster.withLock(() -> {
             if (TopologyVersionHelper.newer(description.getTopologyVersion(), candidateDescription.getTopologyVersion())) {
                 return;
@@ -79,6 +79,18 @@ final class DefaultSdamServerDescriptionManager implements SdamServerDescription
                 assertFalse(markedPoolReady);
                 connectionPool.invalidate(candidateDescriptionException);
             }
+        });
+    }
+
+    @Override
+    public void updateToUnknown(final ServerDescription candidateDescription) {
+        assertTrue(candidateDescription.getType() == UNKNOWN);
+        cluster.withLock(() -> {
+            if (TopologyVersionHelper.newer(description.getTopologyVersion(), candidateDescription.getTopologyVersion())) {
+                return;
+            }
+
+            updateDescription(candidateDescription);
         });
     }
 
@@ -119,7 +131,7 @@ final class DefaultSdamServerDescriptionManager implements SdamServerDescription
         }
         if (sdamIssue.relatedToStateChange()) {
             updateDescription(sdamIssue.serverDescription());
-            if (sdamIssue.serverIsLessThanVersionFourDotTwo() || sdamIssue.relatedToShutdown()) {
+            if (sdamIssue.relatedToShutdown()) {
                 connectionPool.invalidate(sdamIssue.exception().orElse(null));
             }
             serverMonitor.connect();
@@ -128,11 +140,8 @@ final class DefaultSdamServerDescriptionManager implements SdamServerDescription
             updateDescription(sdamIssue.serverDescription());
             connectionPool.invalidate(sdamIssue.exception().orElse(null));
             serverMonitor.cancelCurrentCheck();
-        } else if (sdamIssue.relatedToWriteConcern() || !sdamIssue.specific()) {
+        } else if (sdamIssue.relatedToWriteConcern() || sdamIssue.relatedToStalePrimary()) {
             updateDescription(sdamIssue.serverDescription());
-            if (sdamIssue.serverIsLessThanVersionFourDotTwo()) {
-                connectionPool.invalidate(sdamIssue.exception().orElse(null));
-            }
             serverMonitor.connect();
         }
     }

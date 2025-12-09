@@ -22,6 +22,7 @@ import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketReadTimeoutException;
+import com.mongodb.MongoStalePrimaryException;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ServerDescription;
@@ -35,21 +36,29 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.internal.connection.ClusterableServer.SHUTDOWN_CODES;
 import static com.mongodb.internal.connection.ServerDescriptionHelper.unknownConnectingServerDescription;
-import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_TWO_WIRE_VERSION;
 
 /**
  * See the
- * <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.rst">
+ * <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.md">
  * Server Discovery And Monitoring</a> specification.
  */
 @ThreadSafe
 interface SdamServerDescriptionManager {
     /**
+     * Receives candidate {@link ServerDescription} from the monitoring activity.
+     *
      * @param candidateDescription A {@link ServerDescription} that may or may not be applied
      *                             {@linkplain TopologyVersionHelper#newer(TopologyVersion, TopologyVersion) depending on}
      *                             its {@link ServerDescription#getTopologyVersion() topology version}.
      */
-    void update(ServerDescription candidateDescription);
+    void monitorUpdate(ServerDescription candidateDescription);
+
+    /**
+     * @param candidateDescription A {@link ServerDescription} that may or may not be applied
+     *                             {@linkplain TopologyVersionHelper#newer(TopologyVersion, TopologyVersion) depending on}
+     *                             its {@link ServerDescription#getTopologyVersion() topology version}.
+     */
+    void updateToUnknown(ServerDescription candidateDescription);
 
     void handleExceptionBeforeHandshake(SdamIssue sdamIssue);
 
@@ -85,40 +94,19 @@ interface SdamServerDescriptionManager {
             this.context = assertNotNull(context);
         }
 
-        /**
-         * @see #unspecified(Context)
-         */
-        static SdamIssue specific(final Throwable exception, final Context context) {
+        static SdamIssue of(final Throwable exception, final Context context) {
             return new SdamIssue(assertNotNull(exception), assertNotNull(context));
         }
 
         /**
-         * @see #specific(Throwable, Context)
-         */
-        static SdamIssue unspecified(final Context context) {
-            return new SdamIssue(null, assertNotNull(context));
-        }
-
-        /**
-         * @return An exception if and only if this {@link SdamIssue} is {@linkplain #specific()}.
+         * @return An exception that caused this {@link SdamIssue}.
          */
         Optional<Throwable> exception() {
             return Optional.ofNullable(exception);
         }
 
-        /**
-         * @return {@code true} if and only if this {@link SdamIssue} has an exception {@linkplain #specific(Throwable, Context) specified}.
-         */
-        boolean specific() {
-            return exception != null;
-        }
-
         ServerDescription serverDescription() {
             return unknownConnectingServerDescription(context.serverId(), exception);
-        }
-
-        boolean serverIsLessThanVersionFourDotTwo() {
-            return context.serverIsLessThanVersionFourDotTwo();
         }
 
         boolean stale(final ConnectionPool connectionPool, final ServerDescription currentServerDescription) {
@@ -130,6 +118,10 @@ interface SdamServerDescriptionManager {
          */
         boolean relatedToStateChange() {
             return exception instanceof MongoNotPrimaryException || exception instanceof MongoNodeIsRecoveringException;
+        }
+
+        boolean relatedToStalePrimary() {
+            return exception instanceof MongoStalePrimaryException;
         }
 
         /**
@@ -190,10 +182,6 @@ interface SdamServerDescriptionManager {
                 this.serverId = assertNotNull(serverId);
                 this.connectionPoolGeneration = connectionPoolGeneration;
                 this.serverMaxWireVersion = serverMaxWireVersion;
-            }
-
-            private boolean serverIsLessThanVersionFourDotTwo() {
-                return serverMaxWireVersion < FOUR_DOT_TWO_WIRE_VERSION;
             }
 
             private boolean stale(final ConnectionPool connectionPool) {

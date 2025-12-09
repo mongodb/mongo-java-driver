@@ -235,6 +235,13 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
   type MongoBulkWriteException = com.mongodb.MongoBulkWriteException
 
   /**
+   * The result of an unsuccessful or partially unsuccessful client-level bulk write operation.
+   *
+   * @since 5.4
+   */
+  type ClientBulkWriteException = com.mongodb.ClientBulkWriteException
+
+  /**
    * An exception indicating that a failure occurred when running a `\$changeStream`.
    * @since 2.2
    */
@@ -286,6 +293,15 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
    * the operation. This can happen when a server is starting up and trying to join the replica set.
    */
   type MongoNodeIsRecoveringException = com.mongodb.MongoNodeIsRecoveringException
+
+  /**
+   * Exception thrown when a replica set primary is identified as a stale primary during Server Discovery and Monitoring (SDAM).
+   * This occurs when a new primary is discovered, causing the previously known primary to be marked stale, typically during network
+   * partitions or elections.
+   *
+   * @since 5.6
+   */
+  type MongoStalePrimaryException = com.mongodb.MongoStalePrimaryException
 
   /**
    * An exception indicating that the server is a member of a replica set but is not the primary, and therefore refused to execute either a

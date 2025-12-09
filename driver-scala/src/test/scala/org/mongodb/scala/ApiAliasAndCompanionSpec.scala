@@ -73,6 +73,8 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "ServerSession",
       "SessionContext",
       "SingleResultCallback",
+      "Slow",
+      "SpanTree",
       "SubjectProvider",
       "TransactionExample",
       "UnixServerAddress",
@@ -93,7 +95,9 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "SyncClientEncryption",
       "BaseClientUpdateOptions",
       "BaseClientDeleteOptions",
-      "MongoBaseInterfaceAssertions"
+      "MongoBaseInterfaceAssertions",
+      "MicrometerObservabilitySettings",
+      "ObservabilitySettings"
     )
     val scalaExclusions = Set(
       "BuildInfo",
@@ -153,9 +157,7 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       .asScala
       .map(_.getSimpleName)
       .toSet +
-      "MongoException" - "MongoGridFSException" - "MongoConfigurationException" - "MongoWriteConcernWithResponseException" -
-      // TODO-JAVA-5531 remove the `"ClientBulkWriteException"` exclusion
-      "ClientBulkWriteException"
+      "MongoException" - "MongoGridFSException" - "MongoConfigurationException" - "MongoWriteConcernWithResponseException"
 
     val objects = new Reflections(
       new ConfigurationBuilder()

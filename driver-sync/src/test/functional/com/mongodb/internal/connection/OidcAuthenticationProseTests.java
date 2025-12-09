@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
@@ -24,9 +25,12 @@ import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.assertions.Assertions;
+import com.mongodb.client.ClientSession;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.Fixture;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.TestListener;
 import com.mongodb.event.CommandListener;
 import com.mongodb.lang.Nullable;
@@ -38,9 +42,11 @@ import org.bson.BsonString;
 import org.bson.Document;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
-import org.opentest4j.AssertionFailedError;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -49,6 +55,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -57,9 +64,11 @@ import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.mongodb.MongoCredential.ALLOWED_HOSTS_KEY;
 import static com.mongodb.MongoCredential.ENVIRONMENT_KEY;
@@ -70,9 +79,12 @@ import static com.mongodb.MongoCredential.OidcCallbackContext;
 import static com.mongodb.MongoCredential.OidcCallbackResult;
 import static com.mongodb.MongoCredential.TOKEN_RESOURCE_KEY;
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.testing.MongoAssertions.assertCause;
+import static java.lang.String.format;
 import static java.lang.System.getenv;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -196,6 +208,101 @@ public class OidcAuthenticationProseTests {
         }
     }
 
+    // Not a prose test
+    @ParameterizedTest(name = "{0}. "
+            + "Parameters: timeoutMs={1}, "
+            + "serverSelectionTimeoutMS={2},"
+            + " expectedTimeoutThreshold={3}")
+    @MethodSource
+    void testValidCallbackInputsTimeoutWhenTimeoutMsIsSet(final String testName,
+                                                          final long timeoutMs,
+                                                          final long serverSelectionTimeoutMS,
+                                                          final long expectedTimeoutThreshold) {
+        TestCallback callback1 = createCallback();
+
+        OidcCallback callback2 = (context) -> {
+            assertTrue(context.getTimeout().toMillis() < expectedTimeoutThreshold,
+                    format("Expected timeout to be less than %d, but was %d",
+                            expectedTimeoutThreshold,
+                            context.getTimeout().toMillis()));
+            return callback1.onRequest(context);
+        };
+
+        MongoClientSettings clientSettings = MongoClientSettings.builder(createSettings(callback2))
+                .applyToClusterSettings(builder ->
+                        builder.serverSelectionTimeout(
+                                serverSelectionTimeoutMS,
+                                TimeUnit.MILLISECONDS))
+                .timeout(timeoutMs, TimeUnit.MILLISECONDS)
+                .build();
+
+        try (MongoClient mongoClient = createMongoClient(clientSettings)) {
+            long start = System.nanoTime();
+            performFind(mongoClient);
+            assertEquals(1, callback1.getInvocations());
+            long elapsed = msElapsedSince(start);
+
+
+            assertFalse(elapsed > minTimeout(timeoutMs, serverSelectionTimeoutMS),
+                    format("Elapsed time %d is greater then minimum of serverSelectionTimeoutMS and timeoutMs, which is %d. "
+                                    + "This indicates that the callback was not called with the expected timeout.",
+                            elapsed,
+                            minTimeout(timeoutMs, serverSelectionTimeoutMS)));
+
+        }
+    }
+
+    private static Stream<Arguments> testValidCallbackInputsTimeoutWhenTimeoutMsIsSet() {
+        long rtt = ClusterFixture.getPrimaryRTT();
+        return Stream.of(
+                Arguments.of("serverSelectionTimeoutMS honored for oidc callback if it's lower than timeoutMS",
+                        1000 + rtt, // timeoutMS
+                        500 + rtt,  // serverSelectionTimeoutMS
+                        499 + rtt), // expectedTimeoutThreshold
+                Arguments.of("timeoutMS honored for oidc callback if it's lower than serverSelectionTimeoutMS",
+                        500 + rtt,  // timeoutMS
+                        1000 + rtt, // serverSelectionTimeoutMS
+                        499 + rtt), // expectedTimeoutThreshold
+                Arguments.of("timeoutMS honored for oidc callback if serverSelectionTimeoutMS is infinite",
+                        500 + rtt,  // timeoutMS
+                        -1, // serverSelectionTimeoutMS
+                        499 + rtt), // expectedTimeoutThreshold,
+                Arguments.of("serverSelectionTimeoutMS honored for oidc callback if timeoutMS=0",
+                        0,   // infinite timeoutMS
+                        500 + rtt, // serverSelectionTimeoutMS
+                        499 + rtt) // expectedTimeoutThreshold
+        );
+    }
+
+    // Not a prose test
+    @Test
+    @DisplayName("test callback timeout when serverSelectionTimeoutMS and timeoutMS are infinite")
+    void testCallbackTimeoutWhenServerSelectionTimeoutMsIsInfiniteTimeoutMsIsSet() {
+        TestCallback callback1 = createCallback();
+        Duration expectedTimeout = ChronoUnit.FOREVER.getDuration();
+
+        OidcCallback callback2 = (context) -> {
+            assertEquals(expectedTimeout, context.getTimeout(),
+                    format("Expected timeout to be infinite (%s), but was %s",
+                            expectedTimeout, context.getTimeout()));
+
+            return callback1.onRequest(context);
+        };
+
+        MongoClientSettings clientSettings = MongoClientSettings.builder(createSettings(callback2))
+                .applyToClusterSettings(builder ->
+                        builder.serverSelectionTimeout(
+                                -1, // -1 means infinite
+                                TimeUnit.MILLISECONDS))
+                .timeout(0, TimeUnit.MILLISECONDS)
+                .build();
+
+        try (MongoClient mongoClient = createMongoClient(clientSettings)) {
+            performFind(mongoClient);
+            assertEquals(1, callback1.getInvocations());
+        }
+    }
+
     @Test
     public void test2p2RequestCallbackReturnsNull() {
         //noinspection ConstantConditions
@@ -299,7 +406,7 @@ public class OidcAuthenticationProseTests {
         MongoClientSettings clientSettings = createSettings(callback);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
             assertCause(MongoCommandException.class,
-                    "Command failed with error 18 (AuthenticationFailed):",
+                    "Command execution failed on MongoDB server with error 18 (AuthenticationFailed):",
                     () -> performFind(mongoClient));
         }
     }
@@ -317,7 +424,7 @@ public class OidcAuthenticationProseTests {
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
             failCommand(20, 1, "saslStart");
             assertCause(MongoCommandException.class,
-                    "Command failed with error 20",
+                    "Command execution failed on MongoDB server with error 20",
                     () -> performFind(mongoClient));
 
             assertEquals(Arrays.asList(
@@ -335,12 +442,17 @@ public class OidcAuthenticationProseTests {
 
     @Test
     public void test4p1Reauthentication() {
+        testReauthentication(false);
+    }
+
+    private void testReauthentication(final boolean inSession) {
         TestCallback callback = createCallback();
         MongoClientSettings clientSettings = createSettings(callback);
-        try (MongoClient mongoClient = createMongoClient(clientSettings)) {
+        try (MongoClient mongoClient = createMongoClient(clientSettings);
+             ClientSession session = inSession ? mongoClient.startSession() : null) {
             failCommand(391, 1, "find");
             // #. Perform a find operation that succeeds.
-            performFind(mongoClient);
+            performFind(mongoClient, session);
         }
         assertEquals(2, callback.invocations.get());
     }
@@ -359,7 +471,7 @@ public class OidcAuthenticationProseTests {
             performFind(mongoClient);
             failCommand(391, 1, "find");
             assertCause(MongoCommandException.class,
-                    "Command failed with error 18",
+                    "Command execution failed on MongoDB server with error 18",
                     () -> performFind(mongoClient));
         }
         assertEquals(2, wrappedCallback.invocations.get());
@@ -380,7 +492,7 @@ public class OidcAuthenticationProseTests {
             performInsert(mongoClient);
             failCommand(391, 1, "insert");
             assertCause(MongoCommandException.class,
-                    "Command failed with error 18",
+                    "Command execution failed on MongoDB server with error 18",
                     () -> performInsert(mongoClient));
         }
         assertEquals(2, wrappedCallback.invocations.get());
@@ -391,6 +503,11 @@ public class OidcAuthenticationProseTests {
                 .getDatabase("test")
                 .getCollection("test")
                 .insertOne(Document.parse("{ x: 1 }"));
+    }
+
+    @Test
+    public void test4p5ReauthenticationInSession() {
+        testReauthentication(true);
     }
 
     @Test
@@ -569,7 +686,7 @@ public class OidcAuthenticationProseTests {
                 "accessToken can not be null");
     }
 
-    // not a prose test
+    // Not a prose test
     @Test
     public void testRefreshTokenAbsent() {
         // additionally, check validation for refresh in machine workflow:
@@ -623,7 +740,7 @@ public class OidcAuthenticationProseTests {
         TestCommandListener commandListener = new TestCommandListener(listener);
         assertFindFails(createHumanSettings(createHumanCallback(), commandListener),
                 MongoCommandException.class,
-                "Command failed with error 18");
+                "Command execution failed on MongoDB server with error 18");
         assertEquals(Arrays.asList(
                 "isMaster started",
                 "isMaster succeeded",
@@ -716,7 +833,7 @@ public class OidcAuthenticationProseTests {
             assertEquals(1, callback1.getInvocations());
             failCommand(391, 1, "find");
             assertCause(MongoCommandException.class,
-                    "Command failed with error 18",
+                    "Command execution failed on MongoDB server with error 18",
                     () -> performFind(mongoClient));
             assertEquals(3, callback1.getInvocations());
         }
@@ -826,6 +943,7 @@ public class OidcAuthenticationProseTests {
         String cleanedConnectionString = callback == null ? connectionString : connectionString
                 .replace("ENVIRONMENT:azure,", "")
                 .replace("ENVIRONMENT:gcp,", "")
+                .replace("&authMechanismProperties=ENVIRONMENT:k8s", "")
                 .replace("ENVIRONMENT:test,", "");
         return createSettings(cleanedConnectionString, callback, commandListener, OIDC_CALLBACK_KEY);
     }
@@ -914,26 +1032,14 @@ public class OidcAuthenticationProseTests {
         }
     }
 
-    private void performFind(final MongoClient mongoClient) {
-        mongoClient
-                .getDatabase("test")
-                .getCollection("test")
-                .find()
-                .first();
+    private static void performFind(final MongoClient mongoClient) {
+        performFind(mongoClient, null);
     }
 
-    private static <T extends Throwable> void assertCause(
-            final Class<T> expectedCause, final String expectedMessageFragment, final Executable e) {
-        Throwable cause = assertThrows(Throwable.class, e);
-        while (cause.getCause() != null) {
-            cause = cause.getCause();
-        }
-        if (!cause.getMessage().contains(expectedMessageFragment)) {
-            throw new AssertionFailedError("Unexpected message: " + cause.getMessage(), cause);
-        }
-        if (!expectedCause.isInstance(cause)) {
-            throw new AssertionFailedError("Unexpected cause: " + cause.getClass(), assertThrows(Throwable.class, e));
-        }
+    private static void performFind(final MongoClient mongoClient, @Nullable final ClientSession session) {
+        MongoCollection<Document> collection = mongoClient.getDatabase("test").getCollection("test");
+        FindIterable<Document> findIterable = session == null ? collection.find() : collection.find(session);
+        findIterable.first();
     }
 
     protected void delayNextFind() {
@@ -1042,6 +1148,8 @@ public class OidcAuthenticationProseTests {
                     c = OidcAuthenticator.getAzureCallback(credential);
                 } else if (oidcEnv.contains("gcp")) {
                     c = OidcAuthenticator.getGcpCallback(credential);
+                } else if (oidcEnv.contains("k8s")) {
+                    c = OidcAuthenticator.getK8sCallback();
                 } else {
                     c = getProseTestCallback();
                 }
@@ -1139,5 +1247,15 @@ public class OidcAuthenticationProseTests {
         return new TestCallback()
                 .setPathSupplier(() -> oidcTokenDirectory() + "test_user1")
                 .setRefreshToken("refreshToken");
+    }
+
+    private long msElapsedSince(final long timeOfStart) {
+        return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - timeOfStart);
+    }
+
+    private static long minTimeout(final long timeoutMs, final long serverSelectionTimeoutMS) {
+        long timeoutMsEffective = timeoutMs != 0 ? timeoutMs : Long.MAX_VALUE;
+        long serverSelectionTimeoutMSEffective = serverSelectionTimeoutMS != -1 ? serverSelectionTimeoutMS : Long.MAX_VALUE;
+        return Math.min(timeoutMsEffective, serverSelectionTimeoutMSEffective);
     }
 }

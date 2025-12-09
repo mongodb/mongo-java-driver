@@ -38,7 +38,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import reactor.core.publisher.Mono;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -50,7 +49,6 @@ import java.util.Map;
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.ClusterFixture.getEnv;
 import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClientBuilderFromConnectionString;
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClientSettings;
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
@@ -74,7 +72,6 @@ public class ClientSideEncryptionCorpusTest {
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
-        assumeTrue(serverVersionAtLeast(4, 2));
         assumeTrue("Corpus tests disabled", hasEncryptionTestsEnabled());
 
         MongoClientSettings clientSettings = getMongoClientBuilderFromConnectionString()
@@ -283,9 +280,8 @@ public class ClientSideEncryptionCorpusTest {
         }
     }
 
-    private static BsonDocument bsonDocumentFromPath(final String path) throws IOException, URISyntaxException {
-        return getTestDocument(new File(ClientSideEncryptionCorpusTest.class
-                .getResource("/client-side-encryption-corpus/" + path).toURI()));
+    private static BsonDocument bsonDocumentFromPath(final String path) {
+        return getTestDocument("client-side-encryption/corpus/" + path);
     }
 
     @Parameterized.Parameters(name = "useLocalSchema: {0}")

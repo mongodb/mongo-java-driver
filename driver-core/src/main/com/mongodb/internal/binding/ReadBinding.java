@@ -17,20 +17,21 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.internal.connection.OperationContext;
 
 /**
  * A factory of connection sources to servers that can be read from and that satisfy the specified read preference.
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public interface ReadBinding extends BindingContext, ReferenceCounted {
+public interface ReadBinding extends ReferenceCounted {
     ReadPreference getReadPreference();
 
     /**
      * Returns a connection source to a server that satisfies the read preference with which this instance is configured.
      * @return the connection source
      */
-    ConnectionSource getReadConnectionSource();
+    ConnectionSource getReadConnectionSource(OperationContext operationContext);
 
     /**
      * Return a connection source that satisfies the read preference with which this instance is configured, if all connected servers have
@@ -42,7 +43,7 @@ public interface ReadBinding extends BindingContext, ReferenceCounted {
      *
      * @see com.mongodb.internal.operation.AggregateToCollectionOperation
      */
-    ConnectionSource getReadConnectionSource(int minWireVersion, ReadPreference fallbackReadPreference);
+    ConnectionSource getReadConnectionSource(int minWireVersion, ReadPreference fallbackReadPreference, OperationContext operationContext);
 
     @Override
     ReadBinding retain();

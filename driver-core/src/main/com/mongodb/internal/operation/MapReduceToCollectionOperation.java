@@ -24,6 +24,7 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -58,7 +59,8 @@ import static java.util.Arrays.asList;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistics>, WriteOperation<MapReduceStatistics> {
+public class MapReduceToCollectionOperation implements WriteOperation<MapReduceStatistics> {
+    private static final String COMMAND_NAME = "mapReduce";
     private final MongoNamespace namespace;
     private final BsonJavaScript mapFunction;
     private final BsonJavaScript reduceFunction;
@@ -86,6 +88,7 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
         this.writeConcern = writeConcern;
     }
 
+    @Override
     public MongoNamespace getNamespace() {
         return namespace;
     }
@@ -209,17 +212,24 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
     }
 
     @Override
-    public MapReduceStatistics execute(final WriteBinding binding) {
-        return executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(), transformer(binding
-                .getOperationContext()
-                .getTimeoutContext()));
+    public String getCommandName() {
+        return COMMAND_NAME;
     }
 
     @Override
-    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<MapReduceStatistics> callback) {
-        executeCommandAsync(binding, namespace.getDatabaseName(), getCommandCreator(), transformerAsync(binding
-                .getOperationContext()
-                .getTimeoutContext()), callback);
+    public MapReduceStatistics execute(final WriteBinding binding, final OperationContext operationContext) {
+        return executeCommand(binding,
+                operationContext,
+                namespace.getDatabaseName(),
+                getCommandCreator(),
+                transformer(operationContext.getTimeoutContext()));
+    }
+
+    @Override
+    public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext,
+                             final SingleResultCallback<MapReduceStatistics> callback) {
+        executeCommandAsync(binding, operationContext,  namespace.getDatabaseName(), getCommandCreator(),
+                transformerAsync(operationContext.getTimeoutContext()), callback);
     }
 
     /**
@@ -228,22 +238,12 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
      * @param explainVerbosity the explain verbosity
      * @return a read operation that when executed will explain this operation
      */
-    public ReadOperation<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return createExplainableOperation(explainVerbosity);
-    }
-
-    /**
-     * Gets an operation whose execution explains this operation.
-     *
-     * @param explainVerbosity the explain verbosity
-     * @return a read operation that when executed will explain this operation
-     */
-    public AsyncReadOperation<BsonDocument> asExplainableOperationAsync(final ExplainVerbosity explainVerbosity) {
+    public ReadOperationSimple<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
         return createExplainableOperation(explainVerbosity);
     }
 
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return new CommandReadOperation<>(getNamespace().getDatabaseName(),
+        return new ExplainCommandOperation<>(getNamespace().getDatabaseName(), getCommandName(),
                 (operationContext, serverDescription, connectionDescription) -> {
                     BsonDocument command = getCommandCreator().create(operationContext, serverDescription, connectionDescription);
                     applyMaxTimeMS(operationContext.getTimeoutContext(), command);

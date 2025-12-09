@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
@@ -25,6 +26,10 @@ import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.Updates;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.event.ServerHeartbeatStartedEvent;
+import com.mongodb.event.ServerHeartbeatSucceededEvent;
+import com.mongodb.event.TestServerMonitorListener;
+import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.junit.jupiter.api.AfterAll;
@@ -33,19 +38,22 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.assertions.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -53,7 +61,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 // Prose tests for Sessions specification: https://github.com/mongodb/specifications/tree/master/source/sessions
-// Prose test README: https://github.com/mongodb/specifications/tree/master/source/sessions/tests/README.rst
+// Prose test README: https://github.com/mongodb/specifications/tree/master/source/sessions/tests/README.md
 public abstract class AbstractSessionsProseTest {
 
     private static final int MONGOCRYPTD_PORT = 47017;
@@ -63,9 +71,7 @@ public abstract class AbstractSessionsProseTest {
 
     @BeforeAll
     public static void beforeAll() throws IOException {
-        if (serverVersionAtLeast(4, 2)) {
-            mongocryptdProcess = startMongocryptdProcess();
-        }
+        mongocryptdProcess = startMongocryptdProcess();
     }
 
     @AfterAll
@@ -134,8 +140,6 @@ public abstract class AbstractSessionsProseTest {
     // Test 18 from #18-implicit-session-is-ignored-if-connection-does-not-support-sessions
     @Test
     public void shouldIgnoreImplicitSessionIfConnectionDoesNotSupportSessions() throws IOException {
-        assumeTrue(serverVersionAtLeast(4, 2));
-
         // initialize to true in case the command listener is never actually called, in which case the assertFalse will fire
         AtomicBoolean containsLsid = new AtomicBoolean(true);
         try (MongoClient client = getMongoClient(
@@ -174,7 +178,6 @@ public abstract class AbstractSessionsProseTest {
     // Test 19 from #19-explicit-session-raises-an-error-if-connection-does-not-support-sessions
     @Test
     public void shouldThrowOnExplicitSessionIfConnectionDoesNotSupportSessions() throws IOException {
-        assumeTrue(serverVersionAtLeast(4, 2));
         try (MongoClient client = getMongoClient(getMongocryptdMongoClientSettingsBuilder().build())) {
             MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
 
@@ -201,6 +204,61 @@ public abstract class AbstractSessionsProseTest {
         }
     }
 
+    /* Test 20 from #20-drivers-do-not-gossip-clustertime-on-sdam-commands
+      In this test, we check that the cluster time has not been advanced on client1 through the server monitors, after client2 advanced
+      the cluster time on the deployment/cluster.
+    */
+    @Test
+    public void shouldNotGossipClusterTimeInServerMonitors() throws InterruptedException, TimeoutException {
+        assumeTrue(!isStandalone());
+
+        //given
+        TestServerMonitorListener serverMonitorListener =
+                new TestServerMonitorListener(asList("serverHeartbeatStartedEvent", "serverHeartbeatSucceededEvent",
+                        "serverHeartbeatFailedEvent"));
+        TestCommandListener commandListener = new TestCommandListener();
+        try (MongoClient client1 = getMongoClient(
+                getDirectPrimaryMongoClientSettingsBuilder()
+                        .addCommandListener(commandListener)
+                        .applyToServerSettings(builder -> builder
+                                .heartbeatFrequency(10, MILLISECONDS)
+                                .addServerMonitorListener(serverMonitorListener))
+                        .build());
+             MongoClient client2 = getMongoClient(getDirectPrimaryMongoClientSettingsBuilder()
+                     .build())) {
+
+            Document clusterTime = executePing(client1)
+                    .get("$clusterTime", Document.class);
+
+            //when
+            client2.getDatabase("test")
+                    .getCollection("test")
+                    .insertOne(new Document("advance", "$clusterTime"));
+
+            // wait until the client1 processes the next pair of SDAM heartbeat started + succeeded events.
+            serverMonitorListener.reset();
+            serverMonitorListener.waitForEvents(ServerHeartbeatStartedEvent.class, serverHeartbeatStartedEvent -> true,
+                    1, Duration.ofMillis(20 + ClusterFixture.getPrimaryRTT()));
+            serverMonitorListener.waitForEvents(ServerHeartbeatSucceededEvent.class, serverHeartbeatSucceededEvent -> true,
+                    1, Duration.ofMillis(20 + ClusterFixture.getPrimaryRTT()));
+
+            commandListener.reset();
+            executePing(client1);
+
+            //then
+            List<CommandStartedEvent> pingStartedEvents = commandListener.getCommandStartedEvents("ping");
+            assertEquals(1, pingStartedEvents.size());
+            BsonDocument sentClusterTime = pingStartedEvents.get(0).getCommand().getDocument("$clusterTime");
+
+            assertEquals(clusterTime.toBsonDocument(), sentClusterTime, "Cluster time should not have advanced after the first ping");
+        }
+    }
+
+    private static MongoClientSettings.Builder getDirectPrimaryMongoClientSettingsBuilder() {
+        return getMongoClientSettingsBuilder()
+                .applyToClusterSettings(ClusterFixture::setDirectConnection);
+    }
+
     private static MongoClientSettings.Builder getMongocryptdMongoClientSettingsBuilder() {
         return MongoClientSettings.builder()
                 .applyToClusterSettings(builder ->
@@ -215,6 +273,11 @@ public abstract class AbstractSessionsProseTest {
         processBuilder.redirectErrorStream(true);
         processBuilder.redirectOutput(new File("/tmp/mongocryptd.log"));
         return processBuilder.start();
+    }
+
+    private static Document executePing(final MongoClient client1) {
+        return client1.getDatabase("admin")
+                .runCommand(new Document("ping", 1));
     }
 }
 

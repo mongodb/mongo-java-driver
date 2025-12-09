@@ -20,10 +20,8 @@ import com.mongodb.ExplainVerbosity;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.async.AsyncBatchCursor;
-import com.mongodb.internal.operation.AsyncExplainableReadOperation;
-import com.mongodb.internal.operation.AsyncOperations;
-import com.mongodb.internal.operation.AsyncReadOperation;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperationExplainable;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ListSearchIndexesPublisher;
 import org.bson.BsonString;
@@ -128,22 +126,19 @@ final class ListSearchIndexesPublisherImpl<T> extends BatchCursorPublisher<T> im
 
     private <E> Publisher<E> publishExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
         return getMongoOperationPublisher().createReadOperationMono(
-                (asyncOperations -> asyncOperations.createTimeoutSettings(maxTimeMS)),
-                () -> asAggregateOperation(1).asAsyncExplainableOperation(verbosity,
+                (operations -> operations.createTimeoutSettings(maxTimeMS)),
+                () -> asReadOperation(1).asExplainableOperation(verbosity,
                         getCodecRegistry().get(explainResultClass)), getClientSession());
     }
 
     @Override
-    AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
-        return asAggregateOperation(initialBatchSize);
+    ReadOperationExplainable<T> asReadOperation(final int initialBatchSize) {
+        return getOperations().listSearchIndexes(getDocumentClass(), indexName, initialBatchSize, collation, comment, allowDiskUse);
     }
 
     @Override
-    Function<AsyncOperations<?>, TimeoutSettings> getTimeoutSettings() {
-        return  (asyncOperations -> asyncOperations.createTimeoutSettings(maxTimeMS));
+    Function<Operations<?>, TimeoutSettings> getTimeoutSettings() {
+        return  (operations -> operations.createTimeoutSettings(maxTimeMS));
     }
 
-    private AsyncExplainableReadOperation<AsyncBatchCursor<T>> asAggregateOperation(final int initialBatchSize) {
-        return getOperations().listSearchIndexes(getDocumentClass(), indexName, initialBatchSize, collation, comment, allowDiskUse);
-    }
 }

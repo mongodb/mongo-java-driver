@@ -189,7 +189,7 @@ public final class MongoCredential {
     /**
      * Mechanism property key for specifying the environment for OIDC, which is
      * the name of a built-in OIDC application environment integration to use
-     * to obtain credentials. The value must be either "gcp" or "azure".
+     * to obtain credentials. The value must be either "k8s", "gcp", or "azure".
      * This is an alternative to supplying a callback.
      * <p>
      * The "gcp" and "azure" environments require
@@ -199,6 +199,11 @@ public final class MongoCredential {
      * {@link MongoCredential#OIDC_CALLBACK_KEY} and
      * {@link MongoCredential#OIDC_HUMAN_CALLBACK_KEY}
      * must not be provided.
+     * <p>
+     * The "k8s" environment will check the env vars
+     * {@code AZURE_FEDERATED_TOKEN_FILE}, and then {@code AWS_WEB_IDENTITY_TOKEN_FILE},
+     * for the token file path, and if neither is set will then use the path
+     * {@code /var/run/secrets/kubernetes.io/serviceaccount/token}.
      *
      * @see #createOidcCredential(String)
      * @see MongoCredential#TOKEN_RESOURCE_KEY
@@ -256,16 +261,16 @@ public final class MongoCredential {
      * The list of allowed hosts that will be used if no
      * {@link MongoCredential#ALLOWED_HOSTS_KEY} value is supplied.
      * The default allowed hosts are:
-     * {@code "*.mongodb.net", "*.mongodb-qa.net", "*.mongodb-dev.net", "*.mongodbgov.net", "localhost", "127.0.0.1", "::1"}
+     * {@code "*.mongo.com", "*.mongodb.net", "*.mongodb-qa.net", "*.mongodb-dev.net", "*.mongodbgov.net", "localhost", "127.0.0.1", "::1"}
      *
      * @see #createOidcCredential(String)
      * @since 5.1
      */
     public static final List<String> DEFAULT_ALLOWED_HOSTS = Collections.unmodifiableList(Arrays.asList(
-            "*.mongodb.net", "*.mongodb-qa.net", "*.mongodb-dev.net", "*.mongodbgov.net", "localhost", "127.0.0.1", "::1"));
+            "*.mongo.com", "*.mongodb.net", "*.mongodb-qa.net", "*.mongodb-dev.net", "*.mongodbgov.net", "localhost", "127.0.0.1", "::1"));
 
     /**
-     * Mechanism property key for specifying he URI of the target resource (sometimes called the audience),
+     * Mechanism property key for specifying the URI of the target resource (sometimes called the audience),
      * used in some OIDC environments.
      *
      * <p>A TOKEN_RESOURCE with a comma character must be given as a `MongoClient` configuration and not as

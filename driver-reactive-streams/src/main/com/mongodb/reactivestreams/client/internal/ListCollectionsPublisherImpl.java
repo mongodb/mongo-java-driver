@@ -19,9 +19,8 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.ReadConcern;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.async.AsyncBatchCursor;
-import com.mongodb.internal.operation.AsyncOperations;
-import com.mongodb.internal.operation.AsyncReadOperation;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperationCursor;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.ListCollectionNamesPublisher;
@@ -96,13 +95,13 @@ final class ListCollectionsPublisherImpl<T> extends BatchCursorPublisher<T> impl
     }
 
 
-    AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
+    ReadOperationCursor<T> asReadOperation(final int initialBatchSize) {
         return getOperations().listCollections(getNamespace().getDatabaseName(), getDocumentClass(), filter, collectionNamesOnly,
                 authorizedCollections, initialBatchSize, comment, getTimeoutMode());
     }
 
     @Override
-    Function<AsyncOperations<?>, TimeoutSettings> getTimeoutSettings() {
-        return (asyncOperations -> asyncOperations.createTimeoutSettings(maxTimeMS));
+    Function<Operations<?>, TimeoutSettings> getTimeoutSettings() {
+        return (operations -> operations.createTimeoutSettings(maxTimeMS));
     }
 }

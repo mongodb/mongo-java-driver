@@ -16,15 +16,14 @@
 
 package com.mongodb.reactivestreams.client.internal.crypt;
 
-import com.mongodb.MongoClientException;
 import com.mongodb.ReadPreference;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.connection.MessageSettings;
 import com.mongodb.internal.connection.MessageSequences;
 import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
+import com.mongodb.internal.connection.MessageSettings;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.SplittablePayload;
 import com.mongodb.internal.connection.SplittablePayloadBsonWriter;
@@ -54,7 +53,6 @@ import java.util.Map;
 import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.fail;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotTwo;
 import static com.mongodb.reactivestreams.client.internal.MongoOperationPublisher.sinkToCallback;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
@@ -105,11 +103,6 @@ class CryptConnection implements AsyncConnection {
                                  final OperationContext operationContext, final boolean responseExpected, final MessageSequences sequences,
                                  final SingleResultCallback<T> callback) {
 
-        if (serverIsLessThanVersionFourDotTwo(wrapped.getDescription())) {
-            callback.onResult(null, new MongoClientException("Auto-encryption requires a minimum MongoDB version of 4.2"));
-            return;
-        }
-
         try {
             SplittablePayload payload = null;
             FieldNameValidator payloadFieldNameValidator = null;
@@ -128,14 +121,14 @@ class CryptConnection implements AsyncConnection {
                     : new SplittablePayloadBsonWriter(bsonBinaryWriter, bsonOutput, createSplittablePayloadMessageSettings(), payload,
                                                       MAX_SPLITTABLE_DOCUMENT_SIZE);
 
-            Timeout operationTimeout = operationContext.getTimeoutContext().getTimeout();
+            Timeout timeout = operationContext.getTimeoutContext().getTimeout();
 
             getEncoder(command).encode(writer, command, EncoderContext.builder().build());
-            crypt.encrypt(database, new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()), operationTimeout)
+            crypt.encrypt(database, new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()), timeout)
                     .flatMap((Function<RawBsonDocument, Mono<RawBsonDocument>>) encryptedCommand ->
                             Mono.create(sink -> wrapped.commandAsync(database, encryptedCommand, commandFieldNameValidator, readPreference,
                                     new RawBsonDocumentCodec(), operationContext, responseExpected, EmptyMessageSequences.INSTANCE, sinkToCallback(sink))))
-                    .flatMap(rawBsonDocument -> crypt.decrypt(rawBsonDocument, operationTimeout))
+                    .flatMap(rawBsonDocument -> crypt.decrypt(rawBsonDocument, timeout))
                     .map(decryptedResponse ->
                         commandResultDecoder.decode(new BsonBinaryReader(decryptedResponse.getByteBuffer().asNIO()),
                                                     DecoderContext.builder().build())

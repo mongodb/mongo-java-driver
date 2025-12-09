@@ -33,6 +33,7 @@ import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.binding.ReadBinding
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
+import com.mongodb.internal.connection.OperationContext
 import com.mongodb.internal.session.SessionContext
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -49,15 +50,14 @@ import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.StringCodec
 import org.bson.codecs.ValueCodecProvider
 import org.bson.types.ObjectId
-import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.executeAsync
-import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand
-import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION
+import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
+import static org.junit.jupiter.api.Assertions.assertEquals
 
 class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
@@ -207,7 +207,6 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         async << [false, false]
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should support collation'() {
         given:
         def document = Document.parse('{str: "foo"}')
@@ -233,25 +232,25 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         def source = Stub(ConnectionSource)
         def connection = Mock(Connection)
         binding.readPreference >> ReadPreference.primary()
-        binding.operationContext >> operationContext
-        binding.readConnectionSource >> source
-        source.connection >> connection
+        binding.getReadConnectionSource(_) >> source
+        source.getConnection(_) >> connection
         source.retain() >> source
-        source.operationContext >> operationContext
         def commandDocument = new BsonDocument('distinct', new BsonString(getCollectionName()))
                 .append('key', new BsonString('str'))
-        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
+        appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
 
         def operation = new DistinctOperation<String>(getNamespace(), 'str', new StringCodec())
 
         when:
-        operation.execute(binding)
+        operation.execute(binding, operationContext)
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                 6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.command(_, commandDocument, _, _, _, operationContext) >>
-                new BsonDocument('values', new BsonArrayWrapper([]))
+        1 * connection.command(_, commandDocument, _, _, _, _) >> {
+            assertEquals(((OperationContext) it[5]).getId(), operationContext.getId())
+            new BsonDocument('values', new BsonArrayWrapper([]))
+        }
         1 * connection.release()
 
         where:
@@ -272,24 +271,23 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         def source = Stub(AsyncConnectionSource)
         def connection = Mock(AsyncConnection)
         binding.readPreference >> ReadPreference.primary()
-        binding.getReadConnectionSource(_) >> { it[0].onResult(source, null) }
-        binding.operationContext >> operationContext
-        source.operationContext >> operationContext
-        source.getConnection(_) >> { it[0].onResult(connection, null) }
+        binding.getReadConnectionSource(_, _) >> { it[1].onResult(source, null) }
+        source.getConnection(_, _) >> { it[1].onResult(connection, null) }
         source.retain() >> source
         def commandDocument = new BsonDocument('distinct', new BsonString(getCollectionName()))
                 .append('key', new BsonString('str'))
-        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
+        appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
 
         def operation = new DistinctOperation<String>(getNamespace(), 'str', new StringCodec())
 
         when:
-        executeAsync(operation, binding)
+        executeAsync(operation, binding, operationContext)
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                  6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.commandAsync(_, commandDocument, _, _, _, operationContext, *_) >> {
+        1 * connection.commandAsync(_, commandDocument, _, _, _, _, *_) >> {
+            assertEquals(((OperationContext) it[5]).getId(), operationContext.getId())
             it.last().onResult(new BsonDocument('values', new BsonArrayWrapper([])), null)
         }
         1 * connection.release()

@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.connection
 
-import com.mongodb.MongoClientException
+
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
@@ -43,7 +43,6 @@ import spock.lang.Specification
 import java.nio.ByteBuffer
 
 import static com.mongodb.internal.connection.SplittablePayload.Type.INSERT
-import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_WIRE_VERSION
 import static com.mongodb.internal.operation.ServerVersionHelper.LATEST_WIRE_VERSION
 
 /**
@@ -57,7 +56,7 @@ class CommandMessageSpecification extends Specification {
 
     def 'should encode command message with OP_MSG when server version is >= 3.6'() {
         given:
-        def message = new CommandMessage(namespace, command, fieldNameValidator, readPreference,
+        def message = new CommandMessage(namespace.getDatabaseName(), command, fieldNameValidator, readPreference,
                 MessageSettings.builder()
                         .maxWireVersion(LATEST_WIRE_VERSION)
                         .serverType(serverType as ServerType)
@@ -153,8 +152,8 @@ class CommandMessageSpecification extends Specification {
 
     def 'should get command document'() {
         given:
-        def message = new CommandMessage(namespace, originalCommandDocument, fieldNameValidator, ReadPreference.primary(),
-                MessageSettings.builder().maxWireVersion(maxWireVersion).build(), true,
+        def message = new CommandMessage(namespace.getDatabaseName(), originalCommandDocument, fieldNameValidator,
+                ReadPreference.primary(), MessageSettings.builder().maxWireVersion(maxWireVersion).build(), true,
                 payload == null ? MessageSequences.EmptyMessageSequences.INSTANCE : payload,
                 ClusterConnectionMode.MULTIPLE, null)
         def output = new ByteBufferBsonOutput(new SimpleBufferProvider())
@@ -201,8 +200,8 @@ class CommandMessageSpecification extends Specification {
                                                      new BsonDocument('_id', new BsonInt32(4)).append('b', new BsonBinary(new byte[441])),
                                                      new BsonDocument('_id', new BsonInt32(5)).append('c', new BsonBinary(new byte[451]))]
                 .withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) }, true, fieldNameValidator)
-        def message = new CommandMessage(namespace, insertCommand, fieldNameValidator, ReadPreference.primary(), messageSettings,
-                false, payload, ClusterConnectionMode.MULTIPLE, null)
+        def message = new CommandMessage(namespace.getDatabaseName(), insertCommand, fieldNameValidator, ReadPreference.primary(),
+                messageSettings, false, payload, ClusterConnectionMode.MULTIPLE, null)
         def output = new ByteBufferBsonOutput(new SimpleBufferProvider())
         def sessionContext = Stub(SessionContext) {
             getReadConcern() >> ReadConcern.DEFAULT
@@ -225,8 +224,8 @@ class CommandMessageSpecification extends Specification {
 
         when:
         payload = payload.getNextSplit()
-        message = new CommandMessage(namespace, insertCommand, fieldNameValidator, ReadPreference.primary(), messageSettings,
-                false, payload, ClusterConnectionMode.MULTIPLE, null)
+        message = new CommandMessage(namespace.getDatabaseName(), insertCommand, fieldNameValidator, ReadPreference.primary(),
+                messageSettings, false, payload, ClusterConnectionMode.MULTIPLE, null)
         output.truncateToPosition(0)
         message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext, Stub(TimeoutContext), null))
         byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
@@ -243,8 +242,8 @@ class CommandMessageSpecification extends Specification {
 
         when:
         payload = payload.getNextSplit()
-        message = new CommandMessage(namespace, insertCommand, fieldNameValidator, ReadPreference.primary(), messageSettings,
-                false, payload, ClusterConnectionMode.MULTIPLE, null)
+        message = new CommandMessage(namespace.getDatabaseName(), insertCommand, fieldNameValidator, ReadPreference.primary(),
+                messageSettings, false, payload, ClusterConnectionMode.MULTIPLE, null)
         output.truncateToPosition(0)
         message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext, Stub(TimeoutContext), null))
         byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
@@ -261,8 +260,8 @@ class CommandMessageSpecification extends Specification {
 
         when:
         payload = payload.getNextSplit()
-        message = new CommandMessage(namespace, insertCommand, fieldNameValidator, ReadPreference.primary(), messageSettings,
-                false, payload, ClusterConnectionMode.MULTIPLE, null)
+        message = new CommandMessage(namespace.getDatabaseName(), insertCommand, fieldNameValidator, ReadPreference.primary(),
+                messageSettings, false, payload, ClusterConnectionMode.MULTIPLE, null)
         output.truncateToPosition(0)
         message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE,
                 sessionContext,
@@ -291,8 +290,8 @@ class CommandMessageSpecification extends Specification {
                                                      new BsonDocument('b', new BsonBinary(new byte[450])),
                                                      new BsonDocument('c', new BsonBinary(new byte[450]))]
                 .withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) }, true, fieldNameValidator)
-        def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
-                false, payload, ClusterConnectionMode.MULTIPLE, null)
+        def message = new CommandMessage(namespace.getDatabaseName(), command, fieldNameValidator, ReadPreference.primary(),
+                messageSettings, false, payload, ClusterConnectionMode.MULTIPLE, null)
         def output = new ByteBufferBsonOutput(new SimpleBufferProvider())
         def sessionContext = Stub(SessionContext) {
             getReadConcern() >> ReadConcern.DEFAULT
@@ -316,7 +315,7 @@ class CommandMessageSpecification extends Specification {
 
         when:
         payload = payload.getNextSplit()
-        message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
+        message = new CommandMessage(namespace.getDatabaseName(), command, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, ClusterConnectionMode.MULTIPLE, null)
         output.truncateToPosition(0)
         message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext,
@@ -342,8 +341,8 @@ class CommandMessageSpecification extends Specification {
                 .maxWireVersion(LATEST_WIRE_VERSION).build()
         def payload = new SplittablePayload(INSERT, [new BsonDocument('a', new BsonBinary(new byte[900]))]
                 .withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) }, true, fieldNameValidator)
-        def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
-                false, payload, ClusterConnectionMode.MULTIPLE, null)
+        def message = new CommandMessage(namespace.getDatabaseName(), command, fieldNameValidator, ReadPreference.primary(),
+                messageSettings, false, payload, ClusterConnectionMode.MULTIPLE, null)
         def output = new ByteBufferBsonOutput(new SimpleBufferProvider())
         def sessionContext = Stub(SessionContext) {
             getReadConcern() >> ReadConcern.DEFAULT
@@ -355,30 +354,6 @@ class CommandMessageSpecification extends Specification {
 
         then:
         thrown(BsonMaximumSizeExceededException)
-
-        cleanup:
-        output.close()
-    }
-
-    def 'should throw if wire version and sharded cluster does not support transactions'() {
-        given:
-        def messageSettings = MessageSettings.builder().serverType(ServerType.SHARD_ROUTER)
-                .maxWireVersion(FOUR_DOT_ZERO_WIRE_VERSION).build()
-        def payload = new SplittablePayload(INSERT, [new BsonDocument('a', new BsonInt32(1))], true, fieldNameValidator)
-        def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
-                false, payload, ClusterConnectionMode.MULTIPLE, null)
-        def output = new ByteBufferBsonOutput(new SimpleBufferProvider())
-        def sessionContext = Stub(SessionContext) {
-            getReadConcern() >> ReadConcern.DEFAULT
-            hasActiveTransaction() >> true
-        }
-
-        when:
-        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext,
-                Stub(TimeoutContext), null))
-
-        then:
-        thrown(MongoClientException)
 
         cleanup:
         output.close()

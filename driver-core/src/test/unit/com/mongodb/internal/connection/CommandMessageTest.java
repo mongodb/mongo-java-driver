@@ -48,7 +48,6 @@ import java.util.stream.IntStream;
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 import static com.mongodb.client.model.bulk.ClientBulkWriteOptions.clientBulkWriteOptions;
 import static com.mongodb.internal.mockito.MongoMockito.mock;
-import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_WIRE_VERSION;
 import static com.mongodb.internal.operation.ServerVersionHelper.LATEST_WIRE_VERSION;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -67,9 +66,9 @@ class CommandMessageTest {
     @Test
     void encodeShouldThrowTimeoutExceptionWhenTimeoutContextIsCalled() {
         //given
-        CommandMessage commandMessage = new CommandMessage(NAMESPACE, COMMAND, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
+        CommandMessage commandMessage = new CommandMessage(NAMESPACE.getDatabaseName(), COMMAND, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
                 MessageSettings.builder()
-                        .maxWireVersion(FOUR_DOT_ZERO_WIRE_VERSION)
+                        .maxWireVersion(LATEST_WIRE_VERSION)
                         .serverType(ServerType.REPLICA_SET_SECONDARY)
                         .sessionSupported(true)
                         .build(),
@@ -94,9 +93,9 @@ class CommandMessageTest {
     @Test
     void encodeShouldNotAddExtraElementsFromTimeoutContextWhenConnectedToMongoCrypt() {
         //given
-        CommandMessage commandMessage = new CommandMessage(NAMESPACE, COMMAND, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
+        CommandMessage commandMessage = new CommandMessage(NAMESPACE.getDatabaseName(), COMMAND, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
                 MessageSettings.builder()
-                        .maxWireVersion(FOUR_DOT_ZERO_WIRE_VERSION)
+                        .maxWireVersion(LATEST_WIRE_VERSION)
                         .serverType(ServerType.REPLICA_SET_SECONDARY)
                         .sessionSupported(true)
                         .cryptd(true)
@@ -157,7 +156,7 @@ class CommandMessageTest {
                         new BsonDocument("insert", new BsonInt32(0)).append("document", documents.get(1)))))
                 .append("nsInfo", new BsonArray(singletonList(new BsonDocument("ns", new BsonString(ns.toString())))));
         CommandMessage commandMessage = new CommandMessage(
-                ns, command, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
+                ns.getDatabaseName(), command, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
                 MessageSettings.builder().maxWireVersion(LATEST_WIRE_VERSION).build(), true, opsAndNsInfo, ClusterConnectionMode.MULTIPLE, null);
         try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
             commandMessage.encode(

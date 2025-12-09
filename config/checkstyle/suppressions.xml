@@ -60,6 +60,7 @@
 
     <!-- Allow printStackTrace in this file -->
     <suppress checks="Regexp" files="CallbackResultHolder"/>
+    <suppress checks="Regexp" files="MicrometerTracer"/>
 
     <!--Do not check documentation tests classes -->
     <suppress checks="Javadoc*" files=".*documentation.*"/>

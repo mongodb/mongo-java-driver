@@ -16,36 +16,49 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
-import com.mongodb.internal.operation.AsyncReadOperation;
+import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.operation.ReadOperationCursor;
+import com.mongodb.internal.operation.ReadOperationSimple;
 
-class VoidReadOperationThenCursorReadOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>> {
-    private final AsyncReadOperation<Void> readOperation;
-    private final AsyncReadOperation<AsyncBatchCursor<T>> cursorReadOperation;
+class VoidReadOperationThenCursorReadOperation<T> implements ReadOperationCursorAsyncOnly<T> {
+    private final ReadOperationSimple<Void> readOperation;
+    private final ReadOperationCursor<T> cursorReadOperation;
 
-    VoidReadOperationThenCursorReadOperation(final AsyncReadOperation<Void> readOperation,
-            final AsyncReadOperation<AsyncBatchCursor<T>> cursorReadOperation) {
+    VoidReadOperationThenCursorReadOperation(final ReadOperationSimple<Void> readOperation,
+            final ReadOperationCursor<T> cursorReadOperation) {
         this.readOperation = readOperation;
         this.cursorReadOperation = cursorReadOperation;
     }
 
-    public AsyncReadOperation<Void> getReadOperation() {
+    public ReadOperationSimple<Void> getReadOperation() {
         return readOperation;
     }
 
-    public AsyncReadOperation<AsyncBatchCursor<T>> getCursorReadOperation() {
+    public ReadOperationCursor<T> getCursorReadOperation() {
         return cursorReadOperation;
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        readOperation.executeAsync(binding, (result, t) -> {
+    public String getCommandName() {
+        return readOperation.getCommandName();
+    }
+
+    @Override
+    public MongoNamespace getNamespace() {
+        return readOperation.getNamespace();
+    }
+
+    @Override
+    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+        readOperation.executeAsync(binding, operationContext, (result, t) -> {
             if (t != null) {
                 callback.onResult(null, t);
             } else {
-                cursorReadOperation.executeAsync(binding, callback);
+                cursorReadOperation.executeAsync(binding, operationContext, callback);
             }
         });
     }

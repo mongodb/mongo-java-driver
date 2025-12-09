@@ -56,6 +56,7 @@ import static com.mongodb.MongoCredential.ALLOWED_HOSTS_KEY;
 import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateCreateOidcCredential;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
 
@@ -505,11 +506,10 @@ public class ConnectionString {
             throw new IllegalArgumentException("srvMaxHosts can not be specified with replica set name");
         }
 
-        validateProxyParameters();
+        validateProxyParameters(combinedOptionsMaps);
 
         credential = createCredentials(combinedOptionsMaps, userName, password);
         warnOnUnsupportedOptions(combinedOptionsMaps);
-        warnDeprecatedTimeouts(combinedOptionsMaps);
     }
 
     private static final Set<String> GENERAL_OPTIONS_KEYS = new LinkedHashSet<>();
@@ -518,7 +518,6 @@ public class ConnectionString {
     private static final Set<String> WRITE_CONCERN_KEYS = new HashSet<>();
     private static final Set<String> COMPRESSOR_KEYS = new HashSet<>();
     private static final Set<String> ALL_KEYS = new HashSet<>();
-    private static final Set<String> DEPRECATED_TIMEOUT_KEYS = new HashSet<>();
 
     static {
         GENERAL_OPTIONS_KEYS.add("minpoolsize");
@@ -592,10 +591,6 @@ public class ConnectionString {
         ALL_KEYS.addAll(READ_PREFERENCE_KEYS);
         ALL_KEYS.addAll(WRITE_CONCERN_KEYS);
         ALL_KEYS.addAll(COMPRESSOR_KEYS);
-
-        DEPRECATED_TIMEOUT_KEYS.add("sockettimeoutms");
-        DEPRECATED_TIMEOUT_KEYS.add("waitqueuetimeoutms");
-        DEPRECATED_TIMEOUT_KEYS.add("wtimeoutms");
     }
 
     // Any options contained in the connection string completely replace the corresponding options specified in TXT records,
@@ -616,15 +611,6 @@ public class ConnectionString {
                     .forEach(k -> LOGGER.warn(format("Connection string contains unsupported option '%s'.", k)));
         }
     }
-    private void warnDeprecatedTimeouts(final Map<String, List<String>> optionsMap) {
-        if (LOGGER.isWarnEnabled()) {
-            optionsMap.keySet()
-                    .stream()
-                    .filter(DEPRECATED_TIMEOUT_KEYS::contains)
-                    .forEach(k -> LOGGER.warn(format("Use of deprecated timeout option: '%s'. Prefer 'timeoutMS' instead.", k)));
-        }
-    }
-
 
     private void translateOptions(final Map<String, List<String>> optionsMap) {
         boolean tlsInsecureSet = false;
@@ -1241,7 +1227,7 @@ public class ConnectionString {
         }
     }
 
-    private void validateProxyParameters() {
+    private void validateProxyParameters(final Map<String, List<String>> optionsMap) {
         if (proxyHost == null) {
             if (proxyPort != null) {
                 throw new IllegalArgumentException("proxyPort can only be specified with proxyHost");
@@ -1274,6 +1260,23 @@ public class ConnectionString {
             throw new IllegalArgumentException(
                     "Both proxyUsername and proxyPassword must be set together. They cannot be set individually");
         }
+
+        if (containsDuplicatedOptions("proxyhost", optionsMap)) {
+            throw new IllegalArgumentException("Duplicated values for proxyHost: " + optionsMap.get("proxyhost"));
+        }
+        if (containsDuplicatedOptions("proxyport", optionsMap)) {
+            throw new IllegalArgumentException("Duplicated values for proxyPort: " + optionsMap.get("proxyport"));
+        }
+        if (containsDuplicatedOptions("proxypassword", optionsMap)) {
+            throw new IllegalArgumentException("Duplicated values for proxyPassword: " + optionsMap.get("proxypassword"));
+        }
+        if (containsDuplicatedOptions("proxyusername", optionsMap)) {
+            throw new IllegalArgumentException("Duplicated values for proxyUsername: " + optionsMap.get("proxyusername"));
+        }
+    }
+
+    private static boolean containsDuplicatedOptions(final String optionName, final Map<String, List<String>> optionsMap) {
+        return optionsMap.getOrDefault(optionName, emptyList()).size() > 1;
     }
 
     private int countOccurrences(final String haystack, final String needle) {

@@ -42,7 +42,6 @@ import java.util.Map;
 
 import static com.mongodb.ClusterFixture.getEnv;
 import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -78,7 +77,6 @@ public abstract class AbstractClientEncryptionCustomEndpointTest {
 
     @Before
     public void setUp() {
-        assumeTrue(serverVersionAtLeast(4, 2));
         assumeTrue("Custom Endpoint tests disables", hasEncryptionTestsEnabled());
 
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
@@ -120,7 +118,7 @@ public abstract class AbstractClientEncryptionCustomEndpointTest {
                 put("endpoint", "doesnotexist.invalid:443");
             }});
             put("kmip",  new HashMap<String, Object>() {{
-                put("endpoint", "doesnotexist.local:5698");
+                put("endpoint", "doesnotexist.invalid:5698");
             }});
         }};
 
@@ -189,12 +187,11 @@ public abstract class AbstractClientEncryptionCustomEndpointTest {
                         + "  endpoint: \"kms.us-east-1.amazonaws.com:443\""
                         + "}"),
                 false, null, null, null});
-        data.add(new Object[]{"4. [aws] invalid amazon region in endpoint",
-                "aws",
+        data.add(new Object[]{"4. [kmip] Call client_encryption.createDataKey() and the following masterKey",
+                "kmip",
                 BsonDocument.parse("{\n"
-                        + "  region: \"us-east-1\",\n"
-                        + "  key: \"arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0\",\n"
-                        + "  endpoint: \"kms.us-east-1.amazonaws.com:12345\"\n"
+                        + "  \"keyId\": \"1\",\n"
+                        + "  \"endpoint\": \"localhost:12345\""
                         + "}"),
                 false, MongoClientException.class, ConnectException.class, "Connection refused"});
         data.add(new Object[]{"5. [aws] invalid endpoint host",
@@ -260,7 +257,7 @@ public abstract class AbstractClientEncryptionCustomEndpointTest {
                 "kmip",
                 BsonDocument.parse("{\n"
                         + "  \"keyId\": \"1\",\n"
-                        + "  \"endpoint\": \"doesnotexist.local:5698\"\n"
+                        + "  \"endpoint\": \"doesnotexist.invalid:5698\"\n"
                         + "}"),
                 false, MongoClientException.class, UnknownHostException.class, null});
         return data;

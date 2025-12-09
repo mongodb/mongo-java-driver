@@ -18,12 +18,11 @@ package com.mongodb.client.unified;
 
 import org.junit.jupiter.params.provider.Arguments;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Collection;
 
 final class ClientSideEncryptionTest extends UnifiedSyncTest {
-    private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/client-side-encryption");
+
+    private static Collection<Arguments> data() {
+        return getTestData("client-side-encryption/tests/unified");
     }
 }

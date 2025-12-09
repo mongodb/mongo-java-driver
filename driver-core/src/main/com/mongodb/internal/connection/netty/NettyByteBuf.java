@@ -90,6 +90,30 @@ public final class NettyByteBuf implements ByteBuf {
     }
 
     @Override
+    public ByteBuf putInt(final int b) {
+        proxied.writeInt(b);
+        return this;
+    }
+
+    @Override
+    public ByteBuf putInt(final int index, final int b) {
+        proxied.setInt(index, b);
+        return this;
+    }
+
+    @Override
+    public ByteBuf putDouble(final double b) {
+        proxied.writeDouble(b);
+        return this;
+    }
+
+    @Override
+    public ByteBuf putLong(final long b) {
+        proxied.writeLong(b);
+        return this;
+    }
+
+    @Override
     public ByteBuf flip() {
         isWriting = !isWriting;
         return this;
@@ -98,6 +122,16 @@ public final class NettyByteBuf implements ByteBuf {
     @Override
     public byte[] array() {
         return proxied.array();
+    }
+
+    @Override
+    public boolean isBackedByArray() {
+        return proxied.hasArray();
+    }
+
+    @Override
+    public int arrayOffset() {
+        return proxied.arrayOffset();
     }
 
     @Override
@@ -217,12 +251,12 @@ public final class NettyByteBuf implements ByteBuf {
 
     @Override
     public ByteBuf asReadOnly() {
-        return this;  // TODO: do we need this method really?  Netty ByteBuf does not have this concept
+        return new NettyByteBuf(proxied.asReadOnly().retain(), false);
     }
 
     @Override
     public ByteBuf duplicate() {
-        return new NettyByteBuf(proxied.duplicate().retain(), isWriting);
+        return new NettyByteBuf(proxied.retainedDuplicate(), isWriting);
     }
 
     @Override

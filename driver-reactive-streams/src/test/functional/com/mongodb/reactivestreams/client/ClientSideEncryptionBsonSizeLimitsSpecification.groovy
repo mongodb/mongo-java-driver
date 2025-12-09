@@ -31,7 +31,6 @@ import org.bson.codecs.BsonDocumentCodec
 import reactor.core.publisher.Mono
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.reactivestreams.client.Fixture.drop
 import static com.mongodb.reactivestreams.client.Fixture.getDefaultDatabaseName
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClientBuilderFromConnectionString
@@ -51,14 +50,13 @@ class ClientSideEncryptionBsonSizeLimitsSpecification extends FunctionalSpecific
     private MongoCollection<BsonDocument> autoEncryptingDataCollection
 
     def setup() {
-        assumeTrue(serverVersionAtLeast(4, 2))
         assumeTrue('Key vault tests disabled',
                 !System.getProperty('AWS_ACCESS_KEY_ID', '').isEmpty())
         drop(keyVaultNamespace)
         drop(autoEncryptingCollectionNamespace)
 
         new CollectionHelper<>(new BsonDocumentCodec(), keyVaultNamespace).insertDocuments(
-                [getTestDocument('/client-side-encryption-limits/limits-key.json')],
+                [getTestDocument('client-side-encryption/limits/limits-key.json')],
                 WriteConcern.MAJORITY)
 
         def providerProperties =
@@ -71,7 +69,7 @@ class ClientSideEncryptionBsonSizeLimitsSpecification extends FunctionalSpecific
                         .keyVaultNamespace(keyVaultNamespace.fullName)
                         .kmsProviders(providerProperties)
                         .schemaMap(singletonMap(autoEncryptingCollectionNamespace.fullName,
-                                getTestDocument('/client-side-encryption-limits/limits-schema.json')))
+                                getTestDocument('client-side-encryption/limits/limits-schema.json')))
                         .build())
                 .addCommandListener(commandListener)
                 .build())
@@ -96,7 +94,7 @@ class ClientSideEncryptionBsonSizeLimitsSpecification extends FunctionalSpecific
         noExceptionThrown()
 
         when:
-        Mono.from(autoEncryptingDataCollection.insertOne(getTestDocument('/client-side-encryption-limits/limits-doc.json')
+        Mono.from(autoEncryptingDataCollection.insertOne(getTestDocument('client-side-encryption/limits/limits-doc.json')
                 .append('_id', new BsonString('encryption_exceeds_2mib'))
                 .append('unencrypted', new BsonString('a' * (2097152 - 2000))))
         ).block(TIMEOUT_DURATION)
@@ -122,10 +120,10 @@ class ClientSideEncryptionBsonSizeLimitsSpecification extends FunctionalSpecific
         commandListener.reset()
         Mono.from(autoEncryptingDataCollection.insertMany(
                 [
-                        getTestDocument('/client-side-encryption-limits/limits-doc.json')
+                        getTestDocument('client-side-encryption/limits/limits-doc.json')
                                 .append('_id', new BsonString('encryption_exceeds_2mib_1'))
                                 .append('unencrypted', new BsonString('a' * (2097152 - 2000))),
-                        getTestDocument('/client-side-encryption-limits/limits-doc.json')
+                        getTestDocument('client-side-encryption/limits/limits-doc.json')
                                 .append('_id', new BsonString('encryption_exceeds_2mib_2'))
                                 .append('unencrypted', new BsonString('a' * (2097152 - 2000))),
                 ])).block(TIMEOUT_DURATION)
@@ -143,7 +141,7 @@ class ClientSideEncryptionBsonSizeLimitsSpecification extends FunctionalSpecific
         noExceptionThrown()
 
         when:
-        Mono.from(autoEncryptingDataCollection.insertOne(getTestDocument('/client-side-encryption-limits/limits-doc.json')
+        Mono.from(autoEncryptingDataCollection.insertOne(getTestDocument('client-side-encryption/limits/limits-doc.json')
                 .append('_id', new BsonString('encryption_exceeds_16mib'))
                 .append('unencrypted', new BsonString('a' * (16777216 - 2000))))).block(TIMEOUT_DURATION)
 

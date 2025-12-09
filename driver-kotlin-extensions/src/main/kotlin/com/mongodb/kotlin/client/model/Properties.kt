@@ -32,7 +32,7 @@ import kotlin.reflect.jvm.javaField
 import org.bson.codecs.pojo.annotations.BsonId
 import org.bson.codecs.pojo.annotations.BsonProperty
 
-private val pathCache: MutableMap<String, String> by lazySoft { ConcurrentHashMap<String, String>() }
+private val pathCache: MutableMap<Int, String> by lazySoft { ConcurrentHashMap<Int, String>() }
 
 /** Returns a composed property. For example Friend::address / Address::postalCode = "address.postalCode". */
 public operator fun <T0, T1, T2> KProperty1<T0, T1?>.div(p2: KProperty1<T1, T2?>): KProperty1<T0, T2?> =
@@ -67,12 +67,11 @@ public operator fun <T0, K, T1, T2> KProperty1<T0, Map<out K, T1>?>.div(
  * - BsonProperty annotation
  * - Property name
  */
-internal fun <T> KProperty<T>.path(): String {
+public fun <T> KProperty<T>.path(): String {
     return if (this is KPropertyPath<*, T>) {
         this.name
     } else {
-        pathCache.computeIfAbsent(this.toString()) {
-
+        pathCache.computeIfAbsent(hashCode()) {
             // Check serial name - Note kotlinx.serialization.SerialName may not be on the class
             // path
             val serialName =

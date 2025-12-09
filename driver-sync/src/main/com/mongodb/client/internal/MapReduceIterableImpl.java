@@ -24,13 +24,17 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.FindOptions;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.BatchCursor;
-import com.mongodb.internal.operation.MapReduceBatchCursor;
 import com.mongodb.internal.operation.MapReduceStatistics;
-import com.mongodb.internal.operation.ReadOperation;
-import com.mongodb.internal.operation.SyncOperations;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperationCursor;
+import com.mongodb.internal.operation.ReadOperationMapReduceCursor;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -44,7 +48,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 @SuppressWarnings("deprecation")
 class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements com.mongodb.client.MapReduceIterable<TResult> {
-    private final SyncOperations<TDocument> operations;
+    private final Operations<TDocument> operations;
     private final MongoNamespace namespace;
     private final Class<TResult> resultClass;
     private final String mapFunction;
@@ -70,7 +74,7 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
                           final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
                           final String mapFunction, final String reduceFunction, final TimeoutSettings timeoutSettings) {
         super(clientSession, executor, readConcern, readPreference, false, timeoutSettings);
-        this.operations = new SyncOperations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
+        this.operations = new Operations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
                 false, false, timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.resultClass = notNull("resultClass", resultClass);
@@ -194,9 +198,9 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    public ReadOperation<BatchCursor<TResult>> asReadOperation() {
+    public ReadOperationCursor<TResult> asReadOperation() {
         if (inline) {
-            ReadOperation<MapReduceBatchCursor<TResult>> operation = operations.mapReduce(mapFunction, reduceFunction, finalizeFunction,
+            ReadOperationMapReduceCursor<TResult> operation = operations.mapReduce(mapFunction, reduceFunction, finalizeFunction,
                     resultClass, filter, limit, jsMode, scope, sort, verbose, collation);
             return new WrappedMapReduceReadOperation<>(operation);
         } else {
@@ -221,20 +225,35 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     // this could be inlined, but giving it a name so that it's unit-testable
-    static class WrappedMapReduceReadOperation<TResult> implements ReadOperation<BatchCursor<TResult>> {
-        private final ReadOperation<MapReduceBatchCursor<TResult>> operation;
+    static class WrappedMapReduceReadOperation<TResult> implements ReadOperationCursor<TResult> {
+        private final ReadOperationMapReduceCursor<TResult> operation;
 
-        ReadOperation<MapReduceBatchCursor<TResult>> getOperation() {
+        ReadOperationMapReduceCursor<TResult> getOperation() {
             return operation;
         }
 
-        WrappedMapReduceReadOperation(final ReadOperation<MapReduceBatchCursor<TResult>> operation) {
+        WrappedMapReduceReadOperation(final ReadOperationMapReduceCursor<TResult> operation) {
             this.operation = operation;
         }
 
         @Override
-        public BatchCursor<TResult> execute(final ReadBinding binding) {
-            return operation.execute(binding);
+        public String getCommandName() {
+            return operation.getCommandName();
+        }
+
+        @Override
+        public MongoNamespace getNamespace() {
+            return operation.getNamespace();
+        }
+
+        @Override
+        public BatchCursor<TResult> execute(final ReadBinding binding, final OperationContext operationContext) {
+            return operation.execute(binding, operationContext);
+        }
+
+        @Override
+        public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<TResult>> callback) {
+            throw new UnsupportedOperationException("This operation is sync only");
         }
     }
 }

@@ -27,7 +27,6 @@ import com.mongodb.UnixServerAddress;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
-import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.event.ClusterClosedEvent;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
@@ -50,20 +49,20 @@ import com.mongodb.lang.Nullable;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.ServerSelector;
 
-import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Stream;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.connection.ClusterType.UNKNOWN;
 import static com.mongodb.connection.ServerDescription.MAX_DRIVER_WIRE_VERSION;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_SERVER_VERSION;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
@@ -72,6 +71,7 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.connection.EventHelper.wouldDescriptionsGenerateEquivalentEvents;
 import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
 import static com.mongodb.internal.logging.LogMessage.Component.SERVER_SELECTION;
+import static com.mongodb.internal.logging.LogMessage.Component.TOPOLOGY;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.FAILURE;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.OPERATION;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.OPERATION_ID;
@@ -80,11 +80,16 @@ import static com.mongodb.internal.logging.LogMessage.Entry.Name.SELECTOR;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_HOST;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_PORT;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.TOPOLOGY_DESCRIPTION;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.TOPOLOGY_ID;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.TOPOLOGY_NEW_DESCRIPTION;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.TOPOLOGY_PREVIOUS_DESCRIPTION;
 import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
 import static com.mongodb.internal.logging.LogMessage.Level.INFO;
 import static com.mongodb.internal.time.Timeout.ZeroSemantics.ZERO_DURATION_MEANS_EXPIRED;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.stream.Collectors.toList;
@@ -101,24 +106,36 @@ abstract class BaseCluster implements Cluster {
     private final ClusterListener clusterListener;
     private final Deque<ServerSelectionRequest> waitQueue = new ConcurrentLinkedDeque<>();
     private final ClusterClock clusterClock = new ClusterClock();
+    private final ClientMetadata clientMetadata;
     private Thread waitQueueHandler;
 
     private volatile boolean isClosed;
     private volatile ClusterDescription description;
 
-    BaseCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
+    BaseCluster(final ClusterId clusterId,
+                final ClusterSettings settings,
+                final ClusterableServerFactory serverFactory,
+                final ClientMetadata clientMetadata) {
         this.clusterId = notNull("clusterId", clusterId);
         this.settings = notNull("settings", settings);
         this.serverFactory = notNull("serverFactory", serverFactory);
         this.clusterListener = singleClusterListener(settings);
-        clusterListener.clusterOpening(new ClusterOpeningEvent(clusterId));
-        description = new ClusterDescription(settings.getMode(), ClusterType.UNKNOWN, Collections.emptyList(),
+        this.description = new ClusterDescription(settings.getMode(), UNKNOWN, emptyList(),
                 settings, serverFactory.getSettings());
+        this.clientMetadata = clientMetadata;
+        logTopologyMonitoringStarting(clusterId);
+        ClusterOpeningEvent clusterOpeningEvent = new ClusterOpeningEvent(clusterId);
+        clusterListener.clusterOpening(clusterOpeningEvent);
     }
 
     @Override
     public ClusterClock getClock() {
         return clusterClock;
+    }
+
+    @Override
+    public ClientMetadata getClientMetadata() {
+        return clientMetadata;
     }
 
     @Override
@@ -128,7 +145,7 @@ abstract class BaseCluster implements Cluster {
         ServerDeprioritization serverDeprioritization = operationContext.getServerDeprioritization();
         boolean selectionWaitingLogged = false;
         Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
-        logServerSelectionStarted(clusterId, operationContext.getId(), serverSelector, description);
+        logServerSelectionStarted(operationContext, clusterId, serverSelector, description);
         while (true) {
             CountDownLatch currentPhaseLatch = phase.get();
             ClusterDescription currentDescription = description;
@@ -137,16 +154,11 @@ abstract class BaseCluster implements Cluster {
                     computedServerSelectionTimeout, operationContext.getTimeoutContext());
 
             if (!currentDescription.isCompatibleWithDriver()) {
-                logAndThrowIncompatibleException(operationContext.getId(), serverSelector, currentDescription);
+                logAndThrowIncompatibleException(operationContext, serverSelector, currentDescription);
             }
             if (serverTuple != null) {
                 ServerAddress serverAddress = serverTuple.getServerDescription().getAddress();
-                logServerSelectionSucceeded(
-                        clusterId,
-                        operationContext.getId(),
-                        serverAddress,
-                        serverSelector,
-                        currentDescription);
+                logServerSelectionSucceeded(operationContext, clusterId, serverAddress, serverSelector, currentDescription);
                 serverDeprioritization.updateCandidate(serverAddress);
                 return serverTuple;
             }
@@ -154,7 +166,7 @@ abstract class BaseCluster implements Cluster {
                     logAndThrowTimeoutException(operationContext, serverSelector, currentDescription));
 
             if (!selectionWaitingLogged) {
-                logServerSelectionWaiting(clusterId, operationContext.getId(), computedServerSelectionTimeout, serverSelector, currentDescription);
+                logServerSelectionWaiting(operationContext, clusterId, computedServerSelectionTimeout, serverSelector, currentDescription);
                 selectionWaitingLogged = true;
             }
             connect();
@@ -171,7 +183,9 @@ abstract class BaseCluster implements Cluster {
     @Override
     public void selectServerAsync(final ServerSelector serverSelector, final OperationContext operationContext,
             final SingleResultCallback<ServerTuple> callback) {
-        isTrue("open", !isClosed());
+        if (isClosed()) {
+            callback.onResult(null, new MongoClientException("Cluster was closed during server selection."));
+        }
 
         Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
         ServerSelectionRequest request = new ServerSelectionRequest(
@@ -180,11 +194,7 @@ abstract class BaseCluster implements Cluster {
         CountDownLatch currentPhase = phase.get();
         ClusterDescription currentDescription = description;
 
-        logServerSelectionStarted(
-                clusterId,
-                operationContext.getId(),
-                serverSelector,
-                currentDescription);
+        logServerSelectionStarted(operationContext, clusterId, serverSelector, currentDescription);
 
         if (!handleServerSelectionRequest(request, currentPhase, currentDescription)) {
             notifyWaitQueueHandler(request);
@@ -210,7 +220,11 @@ abstract class BaseCluster implements Cluster {
         if (!isClosed()) {
             isClosed = true;
             phase.get().countDown();
-            clusterListener.clusterClosed(new ClusterClosedEvent(clusterId));
+            fireChangeEvent(new ClusterDescription(settings.getMode(), UNKNOWN, emptyList(), settings, serverFactory.getSettings()),
+                    description);
+            logTopologyMonitoringStopping(clusterId);
+            ClusterClosedEvent clusterClosedEvent = new ClusterClosedEvent(clusterId);
+            clusterListener.clusterClosed(clusterClosedEvent);
             stopWaitQueueHandler();
         }
     }
@@ -237,8 +251,9 @@ abstract class BaseCluster implements Cluster {
      */
     protected void fireChangeEvent(final ClusterDescription newDescription, final ClusterDescription previousDescription) {
         if (!wouldDescriptionsGenerateEquivalentEvents(newDescription, previousDescription)) {
-             clusterListener.clusterDescriptionChanged(
-                     new ClusterDescriptionChangedEvent(getClusterId(), newDescription, previousDescription));
+            ClusterDescriptionChangedEvent changedEvent = new ClusterDescriptionChangedEvent(getClusterId(), newDescription, previousDescription);
+            logTopologyDescriptionChanged(getClusterId(),  changedEvent);
+            clusterListener.clusterDescriptionChanged(changedEvent);
         }
     }
 
@@ -268,12 +283,11 @@ abstract class BaseCluster implements Cluster {
 
         try {
             OperationContext operationContext = request.getOperationContext();
-            long operationId = operationContext.getId();
             if (currentPhase != request.phase) {
                 CountDownLatch prevPhase = request.phase;
                 request.phase = currentPhase;
                 if (!description.isCompatibleWithDriver()) {
-                    logAndThrowIncompatibleException(operationId, request.originalSelector, description);
+                    logAndThrowIncompatibleException(operationContext, request.originalSelector, description);
                 }
 
 
@@ -287,23 +301,13 @@ abstract class BaseCluster implements Cluster {
 
                 if (serverTuple != null) {
                     ServerAddress serverAddress = serverTuple.getServerDescription().getAddress();
-                    logServerSelectionSucceeded(
-                            clusterId,
-                            operationId,
-                            serverAddress,
-                            request.originalSelector,
-                            description);
+                    logServerSelectionSucceeded(operationContext, clusterId, serverAddress, request.originalSelector, description);
                     serverDeprioritization.updateCandidate(serverAddress);
                     request.onResult(serverTuple, null);
                     return true;
                 }
                 if (prevPhase == null) {
-                    logServerSelectionWaiting(
-                            clusterId,
-                            operationId,
-                            request.getTimeout(),
-                            request.originalSelector,
-                            description);
+                    logServerSelectionWaiting(operationContext, clusterId, request.getTimeout(), request.originalSelector, description);
                 }
             }
 
@@ -388,11 +392,11 @@ abstract class BaseCluster implements Cluster {
     }
 
     private void logAndThrowIncompatibleException(
-            final long operationId,
+            final OperationContext operationContext,
             final ServerSelector serverSelector,
             final ClusterDescription clusterDescription) {
         MongoIncompatibleDriverException exception = createIncompatibleException(clusterDescription);
-        logServerSelectionFailed(clusterId, operationId, exception, serverSelector, clusterDescription);
+        logServerSelectionFailed(operationContext, clusterId, exception, serverSelector, clusterDescription);
         throw exception;
     }
 
@@ -426,7 +430,7 @@ abstract class BaseCluster implements Cluster {
         MongoTimeoutException exception = operationContext.getTimeoutContext().hasTimeoutMS()
                 ? new MongoOperationTimeoutException(message) : new MongoTimeoutException(message);
 
-        logServerSelectionFailed(clusterId, operationContext.getId(), exception, serverSelector, clusterDescription);
+        logServerSelectionFailed(operationContext, clusterId, exception, serverSelector, clusterDescription);
         throw exception;
     }
 
@@ -497,54 +501,59 @@ abstract class BaseCluster implements Cluster {
         }
 
         public void run() {
-            while (!isClosed) {
-                CountDownLatch currentPhase = phase.get();
-                ClusterDescription curDescription = description;
+            try {
+                while (!isClosed) {
+                    CountDownLatch currentPhase = phase.get();
+                    ClusterDescription curDescription = description;
 
-                Timeout timeout = Timeout.infinite();
-                boolean someWaitersNotSatisfied = false;
-                for (Iterator<ServerSelectionRequest> iter = waitQueue.iterator(); iter.hasNext();) {
-                    ServerSelectionRequest currentRequest = iter.next();
-                    if (handleServerSelectionRequest(currentRequest, currentPhase, curDescription)) {
-                        iter.remove();
-                    } else {
-                        someWaitersNotSatisfied = true;
-                        timeout = Timeout.earliest(
-                                timeout,
-                                currentRequest.getTimeout(),
-                                startMinWaitHeartbeatTimeout());
+                    Timeout timeout = Timeout.infinite();
+                    boolean someWaitersNotSatisfied = false;
+                    for (Iterator<ServerSelectionRequest> iter = waitQueue.iterator(); iter.hasNext();) {
+                        ServerSelectionRequest currentRequest = iter.next();
+                        if (handleServerSelectionRequest(currentRequest, currentPhase, curDescription)) {
+                            iter.remove();
+                        } else {
+                            someWaitersNotSatisfied = true;
+                            timeout = Timeout.earliest(
+                                    timeout,
+                                    currentRequest.getTimeout(),
+                                    startMinWaitHeartbeatTimeout());
+                        }
+                    }
+
+                    if (someWaitersNotSatisfied) {
+                        connect();
+                    }
+
+                    try {
+                        timeout.awaitOn(currentPhase, () -> "ignored");
+                    } catch (MongoInterruptedException closed) {
+                        // The cluster has been closed and the while loop will exit.
                     }
                 }
-
-                if (someWaitersNotSatisfied) {
-                    connect();
+                // Notify all remaining waiters that a shutdown is in progress
+                for (Iterator<ServerSelectionRequest> iter = waitQueue.iterator(); iter.hasNext();) {
+                    iter.next().onResult(null, new MongoClientException("Shutdown in progress"));
+                    iter.remove();
                 }
-
-                try {
-                    timeout.awaitOn(currentPhase, () -> "ignored");
-                } catch (MongoInterruptedException closed) {
-                    // The cluster has been closed and the while loop will exit.
-                }
-            }
-            // Notify all remaining waiters that a shutdown is in progress
-            for (Iterator<ServerSelectionRequest> iter = waitQueue.iterator(); iter.hasNext();) {
-                iter.next().onResult(null, new MongoClientException("Shutdown in progress"));
-                iter.remove();
+            } catch (Throwable t) {
+                LOGGER.error(this + " stopped working. You may want to recreate the MongoClient", t);
+                throw t;
             }
         }
     }
 
     static void logServerSelectionStarted(
+            final OperationContext operationContext,
             final ClusterId clusterId,
-            final long operationId,
             final ServerSelector serverSelector,
             final ClusterDescription clusterDescription) {
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
             STRUCTURED_LOGGER.log(new LogMessage(
                     SERVER_SELECTION, DEBUG, "Server selection started", clusterId,
                     asList(
-                            new Entry(OPERATION, null),
-                            new Entry(OPERATION_ID, operationId),
+                            new Entry(OPERATION, operationContext.getOperationName()),
+                            new Entry(OPERATION_ID, operationContext.getId()),
                             new Entry(SELECTOR, serverSelector.toString()),
                             new Entry(TOPOLOGY_DESCRIPTION, clusterDescription.getShortDescription())),
                     "Server selection started for operation[ {}] with ID {}. Selector: {}, topology description: {}"));
@@ -552,8 +561,8 @@ abstract class BaseCluster implements Cluster {
     }
 
     private static void logServerSelectionWaiting(
+            final OperationContext operationContext,
             final ClusterId clusterId,
-            final long operationId,
             final Timeout timeout,
             final ServerSelector serverSelector,
             final ClusterDescription clusterDescription) {
@@ -561,8 +570,8 @@ abstract class BaseCluster implements Cluster {
             STRUCTURED_LOGGER.log(new LogMessage(
                     SERVER_SELECTION, INFO, "Waiting for suitable server to become available", clusterId,
                     asList(
-                            new Entry(OPERATION, null),
-                            new Entry(OPERATION_ID, operationId),
+                            new Entry(OPERATION, operationContext.getOperationName()),
+                            new Entry(OPERATION_ID, operationContext.getId()),
                             timeout.call(MILLISECONDS,
                                     () -> new Entry(REMAINING_TIME_MS, "infinite"),
                                     (ms) -> new Entry(REMAINING_TIME_MS, ms),
@@ -575,8 +584,8 @@ abstract class BaseCluster implements Cluster {
     }
 
     private static void logServerSelectionFailed(
+            final OperationContext operationContext,
             final ClusterId clusterId,
-            final long operationId,
             final MongoException failure,
             final ServerSelector serverSelector,
             final ClusterDescription clusterDescription) {
@@ -590,8 +599,8 @@ abstract class BaseCluster implements Cluster {
             STRUCTURED_LOGGER.log(new LogMessage(
                     SERVER_SELECTION, DEBUG, "Server selection failed", clusterId,
                     asList(
-                            new Entry(OPERATION, null),
-                            new Entry(OPERATION_ID, operationId),
+                            new Entry(OPERATION, operationContext.getOperationName()),
+                            new Entry(OPERATION_ID, operationContext.getId()),
                             new Entry(FAILURE, failureDescription),
                             new Entry(SELECTOR, serverSelector.toString()),
                             new Entry(TOPOLOGY_DESCRIPTION, clusterDescription.getShortDescription())),
@@ -600,8 +609,8 @@ abstract class BaseCluster implements Cluster {
     }
 
     static void logServerSelectionSucceeded(
+            final OperationContext operationContext,
             final ClusterId clusterId,
-            final long operationId,
             final ServerAddress serverAddress,
             final ServerSelector serverSelector,
             final ClusterDescription clusterDescription) {
@@ -609,8 +618,8 @@ abstract class BaseCluster implements Cluster {
             STRUCTURED_LOGGER.log(new LogMessage(
                     SERVER_SELECTION, DEBUG, "Server selection succeeded", clusterId,
                     asList(
-                            new Entry(OPERATION, null),
-                            new Entry(OPERATION_ID, operationId),
+                            new Entry(OPERATION, operationContext.getOperationName()),
+                            new Entry(OPERATION_ID, operationContext.getId()),
                             new Entry(SERVER_HOST, serverAddress.getHost()),
                             new Entry(SERVER_PORT, serverAddress instanceof UnixServerAddress ? null : serverAddress.getPort()),
                             new Entry(SELECTOR, serverSelector.toString()),
@@ -619,4 +628,39 @@ abstract class BaseCluster implements Cluster {
                             + " Selector: {}, topology description: {}"));
         }
     }
+
+    static void logTopologyMonitoringStarting(final ClusterId clusterId) {
+        if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
+            STRUCTURED_LOGGER.log(new LogMessage(
+                    TOPOLOGY, DEBUG, "Starting topology monitoring", clusterId,
+                    singletonList(new Entry(TOPOLOGY_ID, clusterId)),
+                    "Starting monitoring for topology with ID {}"));
+        }
+    }
+
+    static void logTopologyDescriptionChanged(
+            final ClusterId clusterId,
+            final ClusterDescriptionChangedEvent clusterDescriptionChangedEvent) {
+        if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
+            STRUCTURED_LOGGER.log(new LogMessage(
+                    TOPOLOGY, DEBUG, "Topology description changed", clusterId,
+                    asList(
+                            new Entry(TOPOLOGY_ID, clusterId),
+                            new Entry(TOPOLOGY_PREVIOUS_DESCRIPTION,
+                                    clusterDescriptionChangedEvent.getPreviousDescription().getShortDescription()),
+                            new Entry(TOPOLOGY_NEW_DESCRIPTION,
+                                    clusterDescriptionChangedEvent.getNewDescription().getShortDescription())),
+                    "Description changed for topology with ID {}. Previous description: {}. New description: {}"));
+        }
+    }
+
+    static void logTopologyMonitoringStopping(final ClusterId clusterId) {
+        if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
+            STRUCTURED_LOGGER.log(new LogMessage(
+                    TOPOLOGY, DEBUG, "Stopped topology monitoring", clusterId,
+                    singletonList(new Entry(TOPOLOGY_ID, clusterId)),
+                    "Stopped monitoring for topology with ID {}"));
+        }
+    }
+
 }

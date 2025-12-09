@@ -39,7 +39,8 @@ class AggregateFlowTest {
 
     @Test
     fun shouldHaveTheSameMethods() {
-        val jAggregatePublisherFunctions = AggregatePublisher::class.declaredFunctions.map { it.name }.toSet() - "first"
+        val jAggregatePublisherFunctions =
+            AggregatePublisher::class.declaredFunctions.map { it.name }.toSet() - "first" - "subscribe"
         val kAggregateFlowFunctions = AggregateFlow::class.declaredFunctions.map { it.name }.toSet() - "collect"
 
         assertEquals(jAggregatePublisherFunctions, kAggregateFlowFunctions)

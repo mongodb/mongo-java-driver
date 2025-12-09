@@ -21,8 +21,8 @@ import com.mongodb.internal.function.CheckedConsumer;
 import com.mongodb.internal.function.CheckedFunction;
 import com.mongodb.internal.function.CheckedRunnable;
 import com.mongodb.internal.function.CheckedSupplier;
+import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,6 +39,8 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * A Timeout is a "deadline", point in time by which something must happen.
+ *
+ * Implementations of this interface must be immutable.
  *
  * @see TimePoint
  */
@@ -82,7 +84,7 @@ public interface Timeout {
      * @param zeroSemantics what to interpret a 0 duration as (infinite or expired)
      * @return a timeout that expires in the specified duration after now.
      */
-    @NotNull
+    @NonNull
     static Timeout expiresIn(final long duration, final TimeUnit unit, final ZeroSemantics zeroSemantics) {
         if (duration < 0) {
             throw new AssertionError("Timeouts must not be in the past");

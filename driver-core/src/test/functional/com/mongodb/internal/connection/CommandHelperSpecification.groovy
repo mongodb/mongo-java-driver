@@ -29,6 +29,7 @@ import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
 
+import static com.mongodb.ClusterFixture.CLIENT_METADATA
 import static com.mongodb.ClusterFixture.LEGACY_HELLO
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.getClusterConnectionMode
@@ -42,9 +43,10 @@ class CommandHelperSpecification extends Specification {
     InternalConnection connection
 
     def setup() {
+        InternalStreamConnection.setRecordEverything(true)
         connection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE,
                 new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                getCredentialWithCache(), null, null, [], LoggerSettings.builder().build(), null, getServerApi())
+                getCredentialWithCache(), CLIENT_METADATA, [], LoggerSettings.builder().build(), null, getServerApi())
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open(OPERATION_CONTEXT)
     }
@@ -64,9 +66,9 @@ class CommandHelperSpecification extends Specification {
         latch1.await()
 
         then:
+        !receivedException
         !receivedDocument.isEmpty()
         receivedDocument.containsKey('ok')
-        !receivedException
 
         when:
         def latch2 = new CountDownLatch(1)

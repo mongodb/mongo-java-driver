@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.mongodb.ClusterFixture.CLIENT_METADATA;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -160,9 +161,10 @@ public class SrvPollingProseTests {
     public void shouldUseSrvMaxHostsWhenSrvMaxHostsIsLessThanNumSrvRecords() {
         int srvMaxHosts = 2;
         List<String> updatedHosts = asList(firstHost, thirdHost, fourthHost);
-
         initCluster(updatedHosts, srvMaxHosts);
+
         assertEquals(srvMaxHosts, clusterHostsSet().size());
+        assertTrue(updatedHosts.contains(firstHost));
         assertTrue(updatedHosts.containsAll(clusterHostsSet()));
     }
 
@@ -197,7 +199,7 @@ public class SrvPollingProseTests {
                             invocation.getArgument(2), clusterId, dnsResolver);
                     return dnsSrvRecordMonitor;
                 });
-        cluster = new DnsMultiServerCluster(clusterId, settingsBuilder.srvMaxHosts(srvMaxHosts).build(), serverFactory,
+        cluster = new DnsMultiServerCluster(clusterId, settingsBuilder.srvMaxHosts(srvMaxHosts).build(), serverFactory, CLIENT_METADATA,
                 dnsSrvRecordMonitorFactory);
         try {
             Thread.sleep(100); // racy

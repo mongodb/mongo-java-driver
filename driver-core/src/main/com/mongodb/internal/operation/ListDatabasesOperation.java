@@ -16,16 +16,19 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonValue;
 import org.bson.codecs.Decoder;
 
+import static com.mongodb.internal.MongoNamespaceHelper.COMMAND_COLLECTION_NAME;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.asyncSingleBatchCursorTransformer;
@@ -42,7 +45,8 @@ import static com.mongodb.internal.operation.SyncOperationHelper.singleBatchCurs
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+public class ListDatabasesOperation<T> implements ReadOperationCursor<T> {
+    private static final String COMMAND_NAME = "listDatabases";
     private static final String DATABASES = "databases";
     private final Decoder<T> decoder;
     private boolean retryReads;
@@ -102,20 +106,32 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
     }
 
     @Override
-    public BatchCursor<T> execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, "admin", getCommandCreator(), CommandResultDocumentCodec.create(decoder, DATABASES),
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+    @Override
+    public MongoNamespace getNamespace() {
+        return new MongoNamespace("admin", COMMAND_COLLECTION_NAME);
+    }
+
+    @Override
+    public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
+        return executeRetryableRead(binding, operationContext, "admin", getCommandCreator(),
+                CommandResultDocumentCodec.create(decoder, DATABASES),
                 singleBatchCursorTransformer(DATABASES), retryReads);
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        executeRetryableReadAsync(binding, "admin", getCommandCreator(), CommandResultDocumentCodec.create(decoder, DATABASES),
+    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext,
+                             final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+        executeRetryableReadAsync(binding, operationContext,  "admin", getCommandCreator(), CommandResultDocumentCodec.create(decoder, DATABASES),
                 asyncSingleBatchCursorTransformer(DATABASES), retryReads, errorHandlingCallback(callback, LOGGER));
     }
 
     private CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
-            BsonDocument commandDocument = new BsonDocument("listDatabases", new BsonInt32(1));
+            BsonDocument commandDocument = new BsonDocument(getCommandName(), new BsonInt32(1));
             putIfNotNull(commandDocument, "filter", filter);
             putIfNotNull(commandDocument, "nameOnly", nameOnly);
             putIfNotNull(commandDocument, "authorizedDatabases", authorizedDatabasesOnly);

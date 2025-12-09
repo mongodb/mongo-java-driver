@@ -22,6 +22,7 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.MongoNamespace;
 import com.mongodb.MongoQueryException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
@@ -39,8 +40,8 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.SynchronousContextProvider;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
-import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.bulk.ClientBulkWriteResult;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
@@ -53,11 +54,16 @@ import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.internal.operation.OperationHelper;
+import com.mongodb.internal.operation.Operations;
 import com.mongodb.internal.operation.ReadOperation;
-import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.ServerSessionPool;
+import com.mongodb.internal.observability.micrometer.Span;
+import com.mongodb.internal.observability.micrometer.TraceContext;
+import com.mongodb.internal.observability.micrometer.TracingManager;
+import com.mongodb.internal.observability.micrometer.TransactionSpan;
 import com.mongodb.lang.Nullable;
+import io.micrometer.common.KeyValues;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.UuidRepresentation;
@@ -71,11 +77,17 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
+import static com.mongodb.internal.MongoNamespaceHelper.COMMAND_COLLECTION_NAME;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.TimeoutContext.createTimeoutContext;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.COLLECTION;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.NAMESPACE;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.OPERATION_NAME;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.OPERATION_SUMMARY;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SYSTEM;
 
 final class MongoClusterImpl implements MongoCluster {
     @Nullable
@@ -98,7 +110,8 @@ final class MongoClusterImpl implements MongoCluster {
     private final TimeoutSettings timeoutSettings;
     private final UuidRepresentation uuidRepresentation;
     private final WriteConcern writeConcern;
-    private final SyncOperations<BsonDocument> operations;
+    private final Operations<BsonDocument> operations;
+    private final TracingManager tracingManager;
 
     MongoClusterImpl(
             @Nullable final AutoEncryptionSettings autoEncryptionSettings, final Cluster cluster, final CodecRegistry codecRegistry,
@@ -106,7 +119,8 @@ final class MongoClusterImpl implements MongoCluster {
             @Nullable final OperationExecutor operationExecutor, final ReadConcern readConcern, final ReadPreference readPreference,
             final boolean retryReads, final boolean retryWrites, @Nullable final ServerApi serverApi,
             final ServerSessionPool serverSessionPool, final TimeoutSettings timeoutSettings, final UuidRepresentation uuidRepresentation,
-            final WriteConcern writeConcern) {
+            final WriteConcern writeConcern,
+            final TracingManager tracingManager) {
         this.autoEncryptionSettings = autoEncryptionSettings;
         this.cluster = cluster;
         this.codecRegistry = codecRegistry;
@@ -123,7 +137,8 @@ final class MongoClusterImpl implements MongoCluster {
         this.timeoutSettings = timeoutSettings;
         this.uuidRepresentation = uuidRepresentation;
         this.writeConcern = writeConcern;
-        operations = new SyncOperations<>(
+        this.tracingManager = tracingManager;
+        operations = new Operations<>(
                 null,
                 BsonDocument.class,
                 readPreference,
@@ -156,6 +171,7 @@ final class MongoClusterImpl implements MongoCluster {
     }
 
     @Override
+    @Nullable
     public Long getTimeout(final TimeUnit timeUnit) {
         Long timeoutMS = timeoutSettings.getTimeoutMS();
         return timeoutMS == null ? null : timeUnit.convert(timeoutMS, TimeUnit.MILLISECONDS);
@@ -165,35 +181,35 @@ final class MongoClusterImpl implements MongoCluster {
     public MongoCluster withCodecRegistry(final CodecRegistry codecRegistry) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, serverApi, serverSessionPool, timeoutSettings,
-                uuidRepresentation, writeConcern);
+                uuidRepresentation, writeConcern, tracingManager);
     }
 
     @Override
     public MongoCluster withReadPreference(final ReadPreference readPreference) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, serverApi, serverSessionPool, timeoutSettings,
-                uuidRepresentation, writeConcern);
+                uuidRepresentation, writeConcern, tracingManager);
     }
 
     @Override
     public MongoCluster withWriteConcern(final WriteConcern writeConcern) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, serverApi, serverSessionPool, timeoutSettings,
-                uuidRepresentation, writeConcern);
+                uuidRepresentation, writeConcern, tracingManager);
     }
 
     @Override
     public MongoCluster withReadConcern(final ReadConcern readConcern) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, serverApi, serverSessionPool, timeoutSettings,
-                uuidRepresentation, writeConcern);
+                uuidRepresentation, writeConcern, tracingManager);
     }
 
     @Override
     public MongoCluster withTimeout(final long timeout, final TimeUnit timeUnit) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, serverApi, serverSessionPool,
-                timeoutSettings.withTimeout(timeout, timeUnit), uuidRepresentation, writeConcern);
+                timeoutSettings.withTimeout(timeout, timeUnit), uuidRepresentation, writeConcern, tracingManager);
     }
 
     @Override
@@ -248,7 +264,7 @@ final class MongoClusterImpl implements MongoCluster {
                                             .readPreference(readPreference)
                                             .build()))
                     .build();
-            return new ClientSessionImpl(serverSessionPool, originator, mergedOptions, operationExecutor);
+            return new ClientSessionImpl(serverSessionPool, originator, mergedOptions, operationExecutor, tracingManager);
     }
 
     @Override
@@ -398,7 +414,7 @@ final class MongoClusterImpl implements MongoCluster {
         }
 
         @Override
-        public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern) {
+        public <T> T execute(final ReadOperation<T, ?> operation, final ReadPreference readPreference, final ReadConcern readConcern) {
             return execute(operation, readPreference, readConcern, null);
         }
 
@@ -408,27 +424,38 @@ final class MongoClusterImpl implements MongoCluster {
         }
 
         @Override
-        public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
+        public <T> T execute(final ReadOperation<T, ?> operation, final ReadPreference readPreference, final ReadConcern readConcern,
                 @Nullable final ClientSession session) {
             if (session != null) {
                 session.notifyOperationInitiated(operation);
             }
 
             ClientSession actualClientSession = getClientSession(session);
-            ReadBinding binding = getReadBinding(readPreference, readConcern, actualClientSession, session == null);
+            boolean implicitSession = isImplicitSession(session);
+            OperationContext operationContext = getOperationContext(actualClientSession, readConcern, operation.getCommandName())
+                    .withSessionContext(new ClientSessionBinding.SyncClientSessionContext(actualClientSession, readConcern, implicitSession));
+            Span span = createOperationSpan(actualClientSession, operationContext, operation.getCommandName(), operation.getNamespace());
+            ReadBinding binding = getReadBinding(readPreference, actualClientSession, implicitSession);
+
 
             try {
                 if (actualClientSession.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
                     throw new MongoClientException("Read preference in a transaction must be primary");
                 }
-                return operation.execute(binding);
+                return operation.execute(binding, operationContext);
             } catch (MongoException e) {
                 MongoException exceptionToHandle = OperationHelper.unwrap(e);
                 labelException(actualClientSession, exceptionToHandle);
                 clearTransactionContextOnTransientTransactionError(session, exceptionToHandle);
+                if (span != null) {
+                    span.error(e);
+                }
                 throw e;
             } finally {
                 binding.release();
+                if (span != null) {
+                    span.end();
+                }
             }
         }
 
@@ -440,17 +467,26 @@ final class MongoClusterImpl implements MongoCluster {
             }
 
             ClientSession actualClientSession = getClientSession(session);
-            WriteBinding binding = getWriteBinding(readConcern, actualClientSession, session == null);
+            OperationContext operationContext = getOperationContext(actualClientSession, readConcern, operation.getCommandName())
+                    .withSessionContext(new ClientSessionBinding.SyncClientSessionContext(actualClientSession, readConcern, isImplicitSession(session)));
+            Span span = createOperationSpan(actualClientSession, operationContext, operation.getCommandName(), operation.getNamespace());
+            WriteBinding binding = getWriteBinding(actualClientSession, isImplicitSession(session));
 
             try {
-                return operation.execute(binding);
+                return operation.execute(binding, operationContext);
             } catch (MongoException e) {
                 MongoException exceptionToHandle = OperationHelper.unwrap(e);
                 labelException(actualClientSession, exceptionToHandle);
                 clearTransactionContextOnTransientTransactionError(session, exceptionToHandle);
+                if (span != null) {
+                    span.error(e);
+                }
                 throw e;
             } finally {
                 binding.release();
+                if (span != null) {
+                    span.end();
+                }
             }
         }
 
@@ -467,20 +503,18 @@ final class MongoClusterImpl implements MongoCluster {
             return executorTimeoutSettings;
         }
 
-        WriteBinding getWriteBinding(final ReadConcern readConcern, final ClientSession session, final boolean ownsSession) {
-            return getReadWriteBinding(primary(), readConcern, session, ownsSession);
+        WriteBinding getWriteBinding(final ClientSession session, final boolean ownsSession) {
+            return getReadWriteBinding(primary(), session, ownsSession);
         }
 
-        ReadBinding getReadBinding(final ReadPreference readPreference, final ReadConcern readConcern, final ClientSession session,
-                final boolean ownsSession) {
-            return getReadWriteBinding(readPreference, readConcern, session, ownsSession);
+        ReadBinding getReadBinding(final ReadPreference readPreference, final ClientSession session, final boolean ownsSession) {
+            return getReadWriteBinding(readPreference, session, ownsSession);
         }
 
-        ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference,
-                final ReadConcern readConcern, final ClientSession session, final boolean ownsSession) {
+        ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final ClientSession session, final boolean ownsSession) {
 
             ClusterAwareReadWriteBinding readWriteBinding = new ClusterBinding(cluster,
-                    getReadPreferenceForBinding(readPreference, session), readConcern, getOperationContext(session, readConcern));
+                    getReadPreferenceForBinding(readPreference, session));
 
             if (crypt != null) {
                 readWriteBinding = new CryptBinding(readWriteBinding, crypt);
@@ -489,12 +523,14 @@ final class MongoClusterImpl implements MongoCluster {
             return new ClientSessionBinding(session, ownsSession, readWriteBinding);
         }
 
-        private OperationContext getOperationContext(final ClientSession session, final ReadConcern readConcern) {
+        private OperationContext getOperationContext(final ClientSession session, final ReadConcern readConcern, final String commandName) {
             return new OperationContext(
                     getRequestContext(),
                     new ReadConcernAwareNoOpSessionContext(readConcern),
                     createTimeoutContext(session, executorTimeoutSettings),
-                    serverApi);
+                    tracingManager,
+                    serverApi,
+                    commandName);
         }
 
         private RequestContext getRequestContext() {
@@ -520,7 +556,7 @@ final class MongoClusterImpl implements MongoCluster {
         }
 
         private ReadPreference getReadPreferenceForBinding(final ReadPreference readPreference, @Nullable final ClientSession session) {
-            if (session == null) {
+            if (isImplicitSession(session)) {
                 return readPreference;
             }
             if (session.hasActiveTransaction()) {
@@ -550,5 +586,52 @@ final class MongoClusterImpl implements MongoCluster {
             }
             return session;
         }
+
+        /**
+         * Create a tracing span for the given operation, and set it on operation context.
+         *
+         * @param actualClientSession the session that the operation is part of
+         * @param operationContext             the operation context for the operation
+         * @param commandName         the name of the command
+         * @param namespace           the namespace of the command
+         * @return the created span, or null if tracing is not enabled
+         */
+        @Nullable
+        private Span createOperationSpan(final ClientSession actualClientSession, final OperationContext operationContext, final String commandName, final MongoNamespace namespace) {
+            TracingManager tracingManager = operationContext.getTracingManager();
+            if (tracingManager.isEnabled()) {
+                TraceContext parentContext = null;
+                TransactionSpan transactionSpan = actualClientSession.getTransactionSpan();
+                if (transactionSpan != null) {
+                    parentContext = transactionSpan.getContext();
+                }
+                String name = commandName + " " + namespace.getDatabaseName() + (COMMAND_COLLECTION_NAME.equalsIgnoreCase(namespace.getCollectionName())
+                        ? ""
+                        : "." + namespace.getCollectionName());
+
+                KeyValues keyValues = KeyValues.of(
+                        SYSTEM.withValue("mongodb"),
+                        NAMESPACE.withValue(namespace.getDatabaseName()));
+                if (!COMMAND_COLLECTION_NAME.equalsIgnoreCase(namespace.getCollectionName())) {
+                    keyValues = keyValues.and(COLLECTION.withValue(namespace.getCollectionName()));
+                }
+                keyValues = keyValues.and(OPERATION_NAME.withValue(commandName),
+                        OPERATION_SUMMARY.withValue(name));
+
+                Span span = tracingManager.addSpan(name, parentContext, namespace);
+
+                span.tagLowCardinality(keyValues);
+
+                operationContext.setTracingSpan(span);
+                return span;
+
+            } else {
+                return null;
+            }
+        }
+    }
+
+    private boolean isImplicitSession(@Nullable final ClientSession session) {
+        return session == null;
     }
 }

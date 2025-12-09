@@ -17,11 +17,11 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoInterruptedException;
-import com.mongodb.MongoNamespace;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ServerApi;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerSettings;
@@ -30,9 +30,12 @@ import com.mongodb.event.ServerHeartbeatStartedEvent;
 import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.ServerMonitorListener;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.inject.Provider;
+import com.mongodb.internal.logging.LogMessage;
+import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
@@ -47,7 +50,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.fail;
@@ -55,13 +57,26 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerType.UNKNOWN;
 import static com.mongodb.internal.Locks.checkedWithLock;
 import static com.mongodb.internal.Locks.withLock;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
 import static com.mongodb.internal.connection.DescriptionHelper.createServerDescription;
 import static com.mongodb.internal.connection.ServerDescriptionHelper.unknownConnectingServerDescription;
 import static com.mongodb.internal.event.EventListenerHelper.singleServerMonitorListener;
+import static com.mongodb.internal.logging.LogMessage.Component.TOPOLOGY;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.AWAITED;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.DRIVER_CONNECTION_ID;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.DURATION_MS;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.FAILURE;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.REPLY;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_CONNECTION_ID;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_HOST;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_PORT;
+import static com.mongodb.internal.logging.LogMessage.Entry.Name.TOPOLOGY_ID;
+import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -69,6 +84,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 class DefaultServerMonitor implements ServerMonitor {
 
     private static final Logger LOGGER = Loggers.getLogger("cluster");
+    private static final StructuredLogger STRUCTURED_LOGGER = new StructuredLogger("cluster");
 
     private final ServerId serverId;
     private final ServerMonitorListener serverMonitorListener;
@@ -114,6 +130,7 @@ class DefaultServerMonitor implements ServerMonitor {
 
     @Override
     public void start() {
+        logStartedServerMonitoring(serverId);
         monitor.start();
     }
 
@@ -135,6 +152,9 @@ class DefaultServerMonitor implements ServerMonitor {
     @SuppressWarnings("try")
     public void close() {
         withLock(lock, () -> {
+            if (!isClosed) {
+                logStoppedServerMonitoring(serverId);
+            }
             isClosed = true;
             //noinspection EmptyTryBlock
             try (ServerMonitor ignoredAutoClosed = monitor;
@@ -149,9 +169,16 @@ class DefaultServerMonitor implements ServerMonitor {
         monitor.cancelCurrentCheck();
     }
 
+    @VisibleForTesting(otherwise = PRIVATE)
+    ServerMonitor getServerMonitor() {
+        return monitor;
+    }
+
     class ServerMonitor extends Thread implements AutoCloseable {
         private volatile InternalConnection connection = null;
+        private volatile boolean alreadyLoggedHeartBeatStarted = false;
         private volatile boolean currentCheckCancelled;
+        private volatile long lookupStartTimeNanos;
 
         ServerMonitor() {
             super("cluster-" + serverId.getClusterId() + "-" + serverId.getAddress());
@@ -190,7 +217,7 @@ class DefaultServerMonitor implements ServerMonitor {
                     }
 
                     logStateChange(previousServerDescription, currentServerDescription);
-                    sdamProvider.get().update(currentServerDescription);
+                    sdamProvider.get().monitorUpdate(currentServerDescription);
 
                     if ((shouldStreamResponses && currentServerDescription.getType() != UNKNOWN)
                             || (connection != null && connection.hasMoreToCome())
@@ -202,8 +229,9 @@ class DefaultServerMonitor implements ServerMonitor {
                 }
             } catch (InterruptedException | MongoInterruptedException closed) {
                 // stop the monitor
-            } catch (RuntimeException e) {
-                LOGGER.error(format("Server monitor for %s exiting with exception", serverId), e);
+            } catch (Throwable t) {
+                LOGGER.error(format("%s for %s stopped working. You may want to recreate the MongoClient", this, serverId), t);
+                throw t;
             } finally {
                 if (connection != null) {
                     connection.close();
@@ -213,61 +241,26 @@ class DefaultServerMonitor implements ServerMonitor {
 
         private ServerDescription lookupServerDescription(final ServerDescription currentServerDescription) {
             try {
-                if (connection == null || connection.isClosed()) {
-                    currentCheckCancelled = false;
-                    InternalConnection newConnection = internalConnectionFactory.create(serverId);
-                    newConnection.open(operationContextFactory.create());
-                    connection = newConnection;
-                    roundTripTimeSampler.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
-                    return connection.getInitialServerDescription();
-                }
-
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug(format("Checking status of %s", serverId.getAddress()));
                 }
+
                 boolean shouldStreamResponses = shouldStreamResponses(currentServerDescription);
-                serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(
-                        connection.getDescription().getConnectionId(), shouldStreamResponses));
+                lookupStartTimeNanos = System.nanoTime();
 
-                long start = System.nanoTime();
-                try {
-                    OperationContext operationContext = operationContextFactory.create();
-                    if (!connection.hasMoreToCome()) {
-                        BsonDocument helloDocument = new BsonDocument(getHandshakeCommandName(currentServerDescription), new BsonInt32(1))
-                                .append("helloOk", BsonBoolean.TRUE);
-                        if (shouldStreamResponses) {
-                            helloDocument.append("topologyVersion", assertNotNull(currentServerDescription.getTopologyVersion()).asDocument());
-                            helloDocument.append("maxAwaitTimeMS", new BsonInt64(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
-                        }
-
-                        connection.send(createCommandMessage(helloDocument, connection, currentServerDescription), new BsonDocumentCodec(),
-                                operationContext);
-                    }
-
-                    BsonDocument helloResult;
-                    if (shouldStreamResponses) {
-                        helloResult = connection.receive(new BsonDocumentCodec(), operationContextWithAdditionalTimeout(operationContext));
-                    } else {
-                        helloResult = connection.receive(new BsonDocumentCodec(), operationContext);
-                    }
-
-                    long elapsedTimeNanos = System.nanoTime() - start;
-                    if (!shouldStreamResponses) {
-                        roundTripTimeSampler.addSample(elapsedTimeNanos);
-                    }
-                    serverMonitorListener.serverHeartbeatSucceeded(
-                            new ServerHeartbeatSucceededEvent(connection.getDescription().getConnectionId(), helloResult,
-                                    elapsedTimeNanos, shouldStreamResponses));
-
-                    return createServerDescription(serverId.getAddress(), helloResult, roundTripTimeSampler.getAverage(),
-                            roundTripTimeSampler.getMin());
-                } catch (Exception e) {
-                    serverMonitorListener.serverHeartbeatFailed(
-                            new ServerHeartbeatFailedEvent(connection.getDescription().getConnectionId(), System.nanoTime() - start,
-                                    shouldStreamResponses, e));
-                    throw e;
+                // Handle connection setup
+                if (connection == null || connection.isClosed()) {
+                    return setupNewConnectionAndGetInitialDescription(shouldStreamResponses);
                 }
-            } catch (Throwable t) {
+
+                // Log heartbeat started if it hasn't been logged yet
+                if (!alreadyLoggedHeartBeatStarted) {
+                    logAndNotifyHeartbeatStarted(shouldStreamResponses);
+                }
+
+                // Get existing connection
+                return doHeartbeat(currentServerDescription, shouldStreamResponses);
+            } catch (Exception t) {
                 roundTripTimeSampler.reset();
                 InternalConnection localConnection = withLock(lock, () -> {
                     InternalConnection result = connection;
@@ -279,6 +272,85 @@ class DefaultServerMonitor implements ServerMonitor {
                 }
                 return unknownConnectingServerDescription(serverId, t);
             }
+        }
+
+        private ServerDescription setupNewConnectionAndGetInitialDescription(final boolean shouldStreamResponses) {
+            connection = internalConnectionFactory.create(serverId);
+            logAndNotifyHeartbeatStarted(shouldStreamResponses);
+
+            try {
+                connection.open(operationContextFactory.create());
+                roundTripTimeSampler.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
+                return connection.getInitialServerDescription();
+            } catch (Exception e) {
+                logAndNotifyHeartbeatFailed(shouldStreamResponses, e);
+                throw e;
+            }
+        }
+
+        /**
+         * Run hello command to get the server description.
+         */
+        private ServerDescription doHeartbeat(final ServerDescription currentServerDescription,
+                                              final boolean shouldStreamResponses) {
+            try {
+                OperationContext operationContext = operationContextFactory.create();
+                if (!connection.hasMoreToCome()) {
+                    BsonDocument helloDocument = new BsonDocument(getHandshakeCommandName(currentServerDescription), new BsonInt32(1))
+                            .append("helloOk", BsonBoolean.TRUE);
+                    if (shouldStreamResponses) {
+                        helloDocument.append("topologyVersion", assertNotNull(currentServerDescription.getTopologyVersion()).asDocument());
+                        helloDocument.append("maxAwaitTimeMS", new BsonInt64(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
+                    }
+                    connection.send(createCommandMessage(helloDocument, connection, currentServerDescription), new BsonDocumentCodec(),
+                            operationContext);
+                }
+
+                BsonDocument helloResult;
+                if (shouldStreamResponses) {
+                    helloResult = connection.receive(new BsonDocumentCodec(), operationContextWithAdditionalTimeout(operationContext));
+                } else {
+                    helloResult = connection.receive(new BsonDocumentCodec(), operationContext);
+                }
+                logAndNotifyHeartbeatSucceeded(shouldStreamResponses, helloResult);
+                return createServerDescription(serverId.getAddress(), helloResult, roundTripTimeSampler.getAverage(),
+                        roundTripTimeSampler.getMin());
+            } catch (Exception e) {
+                logAndNotifyHeartbeatFailed(shouldStreamResponses, e);
+                throw e;
+            }
+        }
+
+        private void logAndNotifyHeartbeatStarted(final boolean shouldStreamResponses) {
+            alreadyLoggedHeartBeatStarted = true;
+            logHeartbeatStarted(serverId, connection.getDescription(), shouldStreamResponses);
+            serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(
+                    connection.getDescription().getConnectionId(), shouldStreamResponses));
+        }
+
+        private void logAndNotifyHeartbeatSucceeded(final boolean shouldStreamResponses, final BsonDocument helloResult) {
+            alreadyLoggedHeartBeatStarted = false;
+            long elapsedTimeNanos = getElapsedTimeNanos();
+            if (!shouldStreamResponses) {
+                roundTripTimeSampler.addSample(elapsedTimeNanos);
+            }
+            logHeartbeatSucceeded(serverId, connection.getDescription(), shouldStreamResponses, elapsedTimeNanos, helloResult);
+            serverMonitorListener.serverHeartbeatSucceeded(
+                    new ServerHeartbeatSucceededEvent(connection.getDescription().getConnectionId(), helloResult,
+                            elapsedTimeNanos, shouldStreamResponses));
+        }
+
+        private void logAndNotifyHeartbeatFailed(final boolean shouldStreamResponses, final Exception e) {
+            alreadyLoggedHeartBeatStarted = false;
+            long elapsedTimeNanos = getElapsedTimeNanos();
+            logHeartbeatFailed(serverId, connection.getDescription(), shouldStreamResponses, elapsedTimeNanos, e);
+            serverMonitorListener.serverHeartbeatFailed(
+                    new ServerHeartbeatFailedEvent(connection.getDescription().getConnectionId(), elapsedTimeNanos,
+                            shouldStreamResponses, e));
+        }
+
+        private long getElapsedTimeNanos() {
+            return System.nanoTime() - lookupStartTimeNanos;
         }
 
         private OperationContext operationContextWithAdditionalTimeout(final OperationContext originalOperationContext) {
@@ -307,7 +379,7 @@ class DefaultServerMonitor implements ServerMonitor {
 
         private CommandMessage createCommandMessage(final BsonDocument command, final InternalConnection connection,
                 final ServerDescription currentServerDescription) {
-            return new CommandMessage(new MongoNamespace("admin", COMMAND_COLLECTION_NAME), command,
+            return new CommandMessage("admin", command,
                     NoOpFieldNameValidator.INSTANCE, primary(),
                     MessageSettings.builder()
                             .maxWireVersion(connection.getDescription().getMaxWireVersion())
@@ -459,7 +531,7 @@ class DefaultServerMonitor implements ServerMonitor {
                         } else {
                             pingServer(connection);
                         }
-                    } catch (Throwable t) {
+                    } catch (Exception t) {
                         if (connection != null) {
                             connection.close();
                             connection = null;
@@ -469,6 +541,9 @@ class DefaultServerMonitor implements ServerMonitor {
                 }
             } catch (InterruptedException closed) {
                 // stop the monitor
+            } catch (Throwable t) {
+                LOGGER.error(format("%s for %s stopped working. You may want to recreate the MongoClient", this, serverId), t);
+                throw t;
             } finally {
                 if (connection != null) {
                     connection.close();
@@ -500,5 +575,95 @@ class DefaultServerMonitor implements ServerMonitor {
 
     private String getHandshakeCommandName(final ServerDescription serverDescription) {
         return serverDescription.isHelloOk() ? HELLO : LEGACY_HELLO;
+    }
+
+    private static void logHeartbeatStarted(
+            final ServerId serverId,
+            final ConnectionDescription connectionDescription,
+            final boolean awaited) {
+        if (STRUCTURED_LOGGER.isRequired(DEBUG, serverId.getClusterId())) {
+            STRUCTURED_LOGGER.log(new LogMessage(
+                    TOPOLOGY, DEBUG, "Server heartbeat started", serverId.getClusterId(),
+                    asList(
+                            new LogMessage.Entry(SERVER_HOST, serverId.getAddress().getHost()),
+                            new LogMessage.Entry(SERVER_PORT, serverId.getAddress().getPort()),
+                            new LogMessage.Entry(DRIVER_CONNECTION_ID, connectionDescription.getConnectionId().getLocalValue()),
+                            new LogMessage.Entry(SERVER_CONNECTION_ID, connectionDescription.getConnectionId().getServerValue()),
+                            new LogMessage.Entry(TOPOLOGY_ID, serverId.getClusterId()),
+                            new LogMessage.Entry(AWAITED, awaited)),
+                    "Heartbeat started for {}:{} on connection with driver-generated ID {} and server-generated ID {} "
+                           + "in topology with ID {}. Awaited: {}"));
+        }
+    }
+
+    private static void logHeartbeatSucceeded(
+            final ServerId serverId,
+            final ConnectionDescription connectionDescription,
+            final boolean awaited,
+            final long elapsedTimeNanos,
+            final BsonDocument reply) {
+        if (STRUCTURED_LOGGER.isRequired(DEBUG, serverId.getClusterId())) {
+            STRUCTURED_LOGGER.log(new LogMessage(
+                    TOPOLOGY, DEBUG, "Server heartbeat succeeded", serverId.getClusterId(),
+                    asList(
+                            new LogMessage.Entry(DURATION_MS, MILLISECONDS.convert(elapsedTimeNanos, NANOSECONDS)),
+                            new LogMessage.Entry(SERVER_HOST, serverId.getAddress().getHost()),
+                            new LogMessage.Entry(SERVER_PORT, serverId.getAddress().getPort()),
+                            new LogMessage.Entry(DRIVER_CONNECTION_ID, connectionDescription.getConnectionId().getLocalValue()),
+                            new LogMessage.Entry(SERVER_CONNECTION_ID, connectionDescription.getConnectionId().getServerValue()),
+                            new LogMessage.Entry(TOPOLOGY_ID, serverId.getClusterId()),
+                            new LogMessage.Entry(AWAITED, awaited),
+                            new LogMessage.Entry(REPLY, reply.toJson())),
+                    "Heartbeat succeeded in {} ms for {}:{} on connection with driver-generated ID {} and server-generated ID {} "
+                            + "in topology with ID {}. Awaited: {}. Reply: {}"));
+        }
+    }
+
+    private static void logHeartbeatFailed(
+            final ServerId serverId,
+            final ConnectionDescription connectionDescription,
+            final boolean awaited,
+            final long elapsedTimeNanos,
+            final Exception failure) {
+        if (STRUCTURED_LOGGER.isRequired(DEBUG, serverId.getClusterId())) {
+            STRUCTURED_LOGGER.log(new LogMessage(
+                    TOPOLOGY, DEBUG, "Server heartbeat failed", serverId.getClusterId(),
+                    asList(
+                            new LogMessage.Entry(DURATION_MS, MILLISECONDS.convert(elapsedTimeNanos, NANOSECONDS)),
+                            new LogMessage.Entry(SERVER_HOST, serverId.getAddress().getHost()),
+                            new LogMessage.Entry(SERVER_PORT, serverId.getAddress().getPort()),
+                            new LogMessage.Entry(DRIVER_CONNECTION_ID, connectionDescription.getConnectionId().getLocalValue()),
+                            new LogMessage.Entry(SERVER_CONNECTION_ID, connectionDescription.getConnectionId().getServerValue()),
+                            new LogMessage.Entry(TOPOLOGY_ID, serverId.getClusterId()),
+                            new LogMessage.Entry(AWAITED, awaited),
+                            new LogMessage.Entry(FAILURE, failure.getMessage())),
+                    "Heartbeat failed in {} ms for {}:{} on connection with driver-generated ID {} and server-generated ID {} "
+                            + "in topology with ID {}. Awaited: {}. Failure: {}"));
+        }
+    }
+
+
+    private static void logStartedServerMonitoring(final ServerId serverId) {
+        if (STRUCTURED_LOGGER.isRequired(DEBUG, serverId.getClusterId())) {
+            STRUCTURED_LOGGER.log(new LogMessage(
+                    TOPOLOGY, DEBUG, "Starting server monitoring", serverId.getClusterId(),
+                    asList(
+                            new LogMessage.Entry(SERVER_HOST, serverId.getAddress().getHost()),
+                            new LogMessage.Entry(SERVER_PORT, serverId.getAddress().getPort()),
+                            new LogMessage.Entry(TOPOLOGY_ID, serverId.getClusterId())),
+                    "Starting monitoring for server {}:{} in topology with ID {}"));
+        }
+    }
+
+    private static void logStoppedServerMonitoring(final ServerId serverId) {
+        if (STRUCTURED_LOGGER.isRequired(DEBUG, serverId.getClusterId())) {
+            STRUCTURED_LOGGER.log(new LogMessage(
+                    TOPOLOGY, DEBUG, "Stopped server monitoring", serverId.getClusterId(),
+                    asList(
+                            new LogMessage.Entry(SERVER_HOST, serverId.getAddress().getHost()),
+                            new LogMessage.Entry(SERVER_PORT, serverId.getAddress().getPort()),
+                            new LogMessage.Entry(TOPOLOGY_ID, serverId.getClusterId())),
+                    "Stopped monitoring for server {}:{} in topology with ID {}"));
+        }
     }
 }

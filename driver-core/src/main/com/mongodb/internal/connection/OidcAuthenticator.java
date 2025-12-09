@@ -29,6 +29,7 @@ import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.Locks;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.authentication.AzureCredentialHelper;
@@ -45,10 +46,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.mongodb.AuthenticationMechanism.MONGODB_OIDC;
@@ -64,11 +67,14 @@ import static com.mongodb.MongoCredential.TOKEN_RESOURCE_KEY;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.internal.TimeoutContext.throwMongoTimeoutException;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateBeforeUse;
 import static java.lang.String.format;
 
 /**
+ * Created per connection, and exists until connection is closed.
+ *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class OidcAuthenticator extends SaslAuthenticator {
@@ -76,10 +82,11 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     private static final String TEST_ENVIRONMENT = "test";
     private static final String AZURE_ENVIRONMENT = "azure";
     private static final String GCP_ENVIRONMENT = "gcp";
+    private static final String K8S_ENVIRONMENT = "k8s";
     private static final List<String> IMPLEMENTED_ENVIRONMENTS = Arrays.asList(
-            AZURE_ENVIRONMENT, GCP_ENVIRONMENT, TEST_ENVIRONMENT);
+            AZURE_ENVIRONMENT, GCP_ENVIRONMENT, K8S_ENVIRONMENT, TEST_ENVIRONMENT);
     private static final List<String> USER_SUPPORTED_ENVIRONMENTS = Arrays.asList(
-            AZURE_ENVIRONMENT, GCP_ENVIRONMENT);
+            AZURE_ENVIRONMENT, GCP_ENVIRONMENT, K8S_ENVIRONMENT);
     private static final List<String> REQUIRES_TOKEN_RESOURCE = Arrays.asList(
             AZURE_ENVIRONMENT, GCP_ENVIRONMENT);
     private static final List<String> ALLOWS_USERNAME = Arrays.asList(
@@ -89,6 +96,10 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     private static final Duration HUMAN_CALLBACK_TIMEOUT = Duration.ofMinutes(5);
 
     public static final String OIDC_TOKEN_FILE = "OIDC_TOKEN_FILE";
+
+    private static final String K8S_FALLBACK_FILE = "/var/run/secrets/kubernetes.io/serviceaccount/token";
+    private static final String K8S_AZURE_FILE = "AZURE_FEDERATED_TOKEN_FILE";
+    private static final String K8S_AWS_FILE = "AWS_WEB_IDENTITY_TOKEN_FILE";
 
     private static final int CALLBACK_API_VERSION_NUMBER = 1;
 
@@ -113,8 +124,21 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         }
     }
 
-    private Duration getCallbackTimeout() {
-        return isHumanCallback() ? HUMAN_CALLBACK_TIMEOUT : CALLBACK_TIMEOUT;
+    private Duration getCallbackTimeout(final TimeoutContext timeoutContext) {
+        if (isHumanCallback()) {
+            return HUMAN_CALLBACK_TIMEOUT;
+        }
+
+        if (timeoutContext.hasTimeoutMS()) {
+            return assertNotNull(timeoutContext.getTimeout()).call(TimeUnit.MILLISECONDS,
+                    () ->
+                          // we can get here if server selection timeout was set to infinite.
+                          ChronoUnit.FOREVER.getDuration(),
+                    (renamingMs) -> Duration.ofMillis(renamingMs),
+                    () -> throwMongoTimeoutException());
+
+        }
+        return CALLBACK_TIMEOUT;
     }
 
     @Override
@@ -123,10 +147,10 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     }
 
     @Override
-    protected SaslClient createSaslClient(final ServerAddress serverAddress) {
+    protected SaslClient createSaslClient(final ServerAddress serverAddress, final OperationContext operationContext) {
         this.serverAddress = assertNotNull(serverAddress);
         MongoCredentialWithCache mongoCredentialWithCache = getMongoCredentialWithCache();
-        return new OidcSaslClient(mongoCredentialWithCache);
+        return new OidcSaslClient(mongoCredentialWithCache, operationContext.getTimeoutContext());
     }
 
     @Override
@@ -192,6 +216,8 @@ public final class OidcAuthenticator extends SaslAuthenticator {
             machine = getAzureCallback(getMongoCredential());
         } else if (GCP_ENVIRONMENT.equals(environment)) {
             machine = getGcpCallback(getMongoCredential());
+        } else if (K8S_ENVIRONMENT.equals(environment)) {
+            machine = getK8sCallback();
         } else {
             machine = getOidcCallbackMechanismProperty(OIDC_CALLBACK_KEY);
         }
@@ -202,6 +228,24 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     private static OidcCallback getTestCallback() {
         return (context) -> {
             String accessToken = readTokenFromFile();
+            return new OidcCallbackResult(accessToken);
+        };
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+    static OidcCallback getK8sCallback() {
+        return (context) -> {
+            String azure = System.getenv(K8S_AZURE_FILE);
+            String aws = System.getenv(K8S_AWS_FILE);
+            String path;
+            if (azure != null) {
+                path = azure;
+            } else if (aws != null) {
+                path = aws;
+            } else {
+                path = K8S_FALLBACK_FILE;
+            }
+            String accessToken = readTokenFromFile(path);
             return new OidcCallbackResult(accessToken);
         };
     }
@@ -228,7 +272,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     @Override
     public void reauthenticate(final InternalConnection connection, final OperationContext operationContext) {
         assertTrue(connection.opened());
-        authenticationLoop(connection, connection.getDescription(), operationContext);
+        authenticationLoop(connection, connection.getDescription(), operationContext.withConnectionEstablishmentSessionContext());
     }
 
     @Override
@@ -237,7 +281,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                                     final SingleResultCallback<Void> callback) {
         beginAsync().thenRun(c -> {
             assertTrue(connection.opened());
-            authenticationLoopAsync(connection, connection.getDescription(), operationContext, c);
+            authenticationLoopAsync(connection, connection.getDescription(), operationContext.withConnectionEstablishmentSessionContext(), c);
         }).finish(callback);
     }
 
@@ -297,7 +341,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         ).finish(callback);
     }
 
-    private byte[] evaluate(final byte[] challenge) {
+    private byte[] evaluate(final byte[] challenge, final TimeoutContext timeoutContext) {
         byte[][] jwt = new byte[1][];
         Locks.withInterruptibleLock(getMongoCredentialWithCache().getOidcLock(), () -> {
             OidcCacheEntry oidcCacheEntry = getMongoCredentialWithCache().getOidcCacheEntry();
@@ -318,7 +362,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                 // Invoke Callback using cached Refresh Token
                 fallbackState = FallbackState.PHASE_2_REFRESH_CALLBACK_TOKEN;
                 OidcCallbackResult result = requestCallback.onRequest(new OidcCallbackContextImpl(
-                        getCallbackTimeout(), cachedIdpInfo, cachedRefreshToken, userName));
+                        getCallbackTimeout(timeoutContext), cachedIdpInfo, cachedRefreshToken, userName));
                 jwt[0] = populateCacheWithCallbackResultAndPrepareJwt(cachedIdpInfo, result);
             } else {
                 // cache is empty
@@ -327,7 +371,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                     // no principal request
                     fallbackState = FallbackState.PHASE_3B_CALLBACK_TOKEN;
                     OidcCallbackResult result = requestCallback.onRequest(new OidcCallbackContextImpl(
-                            getCallbackTimeout(), userName));
+                            getCallbackTimeout(timeoutContext), userName));
                     jwt[0] = populateCacheWithCallbackResultAndPrepareJwt(null, result);
                     if (result.getRefreshToken() != null) {
                         throw new MongoConfigurationException(
@@ -357,7 +401,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                         // there is no cached refresh token
                         fallbackState = FallbackState.PHASE_3B_CALLBACK_TOKEN;
                         OidcCallbackResult result = requestCallback.onRequest(new OidcCallbackContextImpl(
-                                getCallbackTimeout(), idpInfo, null, userName));
+                                getCallbackTimeout(timeoutContext), idpInfo, null, userName));
                         jwt[0] = populateCacheWithCallbackResultAndPrepareJwt(idpInfo, result);
                     }
                 }
@@ -476,14 +520,18 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     }
 
     private final class OidcSaslClient extends SaslClientImpl {
+        private final TimeoutContext timeoutContext;
 
-        private OidcSaslClient(final MongoCredentialWithCache mongoCredentialWithCache) {
+        private OidcSaslClient(final MongoCredentialWithCache mongoCredentialWithCache,
+                               final TimeoutContext timeoutContext) {
             super(mongoCredentialWithCache.getCredential());
+
+            this.timeoutContext = timeoutContext;
         }
 
         @Override
         public byte[] evaluateChallenge(final byte[] challenge) {
-            return evaluate(challenge);
+            return evaluate(challenge, timeoutContext);
         }
 
         @Override
@@ -499,6 +547,10 @@ public final class OidcAuthenticator extends SaslAuthenticator {
             throw new MongoClientException(
                     format("Environment variable must be specified: %s", OIDC_TOKEN_FILE));
         }
+        return readTokenFromFile(path);
+    }
+
+    private static String readTokenFromFile(final String path) {
         try {
             return new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8);
         } catch (IOException e) {

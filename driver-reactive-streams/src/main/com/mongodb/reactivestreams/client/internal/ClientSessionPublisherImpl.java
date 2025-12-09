@@ -25,10 +25,10 @@ import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.operation.AbortTransactionOperation;
-import com.mongodb.internal.operation.AsyncReadOperation;
-import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.internal.operation.CommitTransactionOperation;
+import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteConcernHelper;
+import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
@@ -82,7 +82,7 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
 
     @Override
     public void notifyOperationInitiated(final Object operation) {
-        assertTrue(operation instanceof AsyncReadOperation || operation instanceof AsyncWriteOperation);
+        assertTrue(operation instanceof ReadOperation || operation instanceof WriteOperation);
         if (!(hasActiveTransaction() || operation instanceof CommitTransactionOperation)) {
             assertTrue(getPinnedServerAddress() == null
                     || (transactionState != TransactionState.ABORTED && transactionState != TransactionState.NONE));
@@ -143,69 +143,74 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
 
     @Override
     public Publisher<Void> commitTransaction() {
-        if (transactionState == TransactionState.ABORTED) {
-            throw new IllegalStateException("Cannot call commitTransaction after calling abortTransaction");
-        }
-        if (transactionState == TransactionState.NONE) {
-            throw new IllegalStateException("There is no transaction started");
-        }
-        if (!messageSentInCurrentTransaction) {
-            cleanupTransaction(TransactionState.COMMITTED);
-            return Mono.create(MonoSink::success);
-        } else {
-            ReadConcern readConcern = transactionOptions.getReadConcern();
-            if (readConcern == null) {
-                throw new MongoInternalException("Invariant violated. Transaction options read concern can not be null");
+        return Mono.defer(() -> {
+            if (transactionState == TransactionState.ABORTED) {
+                return Mono.error(new IllegalStateException("Cannot call commitTransaction after calling abortTransaction"));
             }
-            boolean alreadyCommitted = commitInProgress || transactionState == TransactionState.COMMITTED;
-            commitInProgress = true;
-            resetTimeout();
-            TimeoutContext timeoutContext = getTimeoutContext();
-            WriteConcern writeConcern = assertNotNull(getWriteConcern(timeoutContext));
-            return executor
-                    .execute(
-                            new CommitTransactionOperation(writeConcern, alreadyCommitted)
-                                    .recoveryToken(getRecoveryToken()), readConcern, this)
-                    .doOnTerminate(() -> {
-                        commitInProgress = false;
-                        transactionState = TransactionState.COMMITTED;
-                    })
-                    .doOnError(MongoException.class, this::clearTransactionContextOnError);
-        }
+            if (transactionState == TransactionState.NONE) {
+                return Mono.error(new IllegalStateException("There is no transaction started"));
+            }
+            if (!messageSentInCurrentTransaction) {
+                cleanupTransaction(TransactionState.COMMITTED);
+                return Mono.create(MonoSink::success);
+            } else {
+                ReadConcern readConcern = transactionOptions.getReadConcern();
+                if (readConcern == null) {
+                    return Mono.error(new MongoInternalException("Invariant violated. Transaction options read concern can not be null"));
+                }
+                boolean alreadyCommitted = commitInProgress || transactionState == TransactionState.COMMITTED;
+                commitInProgress = true;
+                resetTimeout();
+                TimeoutContext timeoutContext = getTimeoutContext();
+                WriteConcern writeConcern = assertNotNull(getWriteConcern(timeoutContext));
+                return executor
+                        .execute(
+                                new CommitTransactionOperation(writeConcern, alreadyCommitted)
+                                        .recoveryToken(getRecoveryToken()), readConcern, this)
+                        .doOnTerminate(() -> {
+                            commitInProgress = false;
+                            transactionState = TransactionState.COMMITTED;
+                        })
+                        .doOnError(MongoException.class, this::clearTransactionContextOnError);
+            }
+        });
     }
+
 
     @Override
     public Publisher<Void> abortTransaction() {
-        if (transactionState == TransactionState.ABORTED) {
-            throw new IllegalStateException("Cannot call abortTransaction twice");
-        }
-        if (transactionState == TransactionState.COMMITTED) {
-            throw new IllegalStateException("Cannot call abortTransaction after calling commitTransaction");
-        }
-        if (transactionState == TransactionState.NONE) {
-            throw new IllegalStateException("There is no transaction started");
-        }
-        if (!messageSentInCurrentTransaction) {
-            cleanupTransaction(TransactionState.ABORTED);
-            return Mono.create(MonoSink::success);
-        } else {
-            ReadConcern readConcern = transactionOptions.getReadConcern();
-            if (readConcern == null) {
-                throw new MongoInternalException("Invariant violated. Transaction options read concern can not be null");
+        return Mono.defer(() -> {
+            if (transactionState == TransactionState.ABORTED) {
+                throw new IllegalStateException("Cannot call abortTransaction twice");
             }
+            if (transactionState == TransactionState.COMMITTED) {
+                throw new IllegalStateException("Cannot call abortTransaction after calling commitTransaction");
+            }
+            if (transactionState == TransactionState.NONE) {
+                throw new IllegalStateException("There is no transaction started");
+            }
+            if (!messageSentInCurrentTransaction) {
+                cleanupTransaction(TransactionState.ABORTED);
+                return Mono.create(MonoSink::success);
+            } else {
+                ReadConcern readConcern = transactionOptions.getReadConcern();
+                if (readConcern == null) {
+                    throw new MongoInternalException("Invariant violated. Transaction options read concern can not be null");
+                }
 
-            resetTimeout();
-            TimeoutContext timeoutContext = getTimeoutContext();
-            WriteConcern writeConcern = assertNotNull(getWriteConcern(timeoutContext));
-            return executor
-                    .execute(new AbortTransactionOperation(writeConcern)
-                                    .recoveryToken(getRecoveryToken()), readConcern, this)
-                    .onErrorResume(Throwable.class, (e) -> Mono.empty())
-                    .doOnTerminate(() -> {
-                        clearTransactionContext();
-                        cleanupTransaction(TransactionState.ABORTED);
-                    });
-        }
+                resetTimeout();
+                TimeoutContext timeoutContext = getTimeoutContext();
+                WriteConcern writeConcern = assertNotNull(getWriteConcern(timeoutContext));
+                return executor
+                        .execute(new AbortTransactionOperation(writeConcern)
+                                .recoveryToken(getRecoveryToken()), readConcern, this)
+                        .onErrorResume(Throwable.class, (e) -> Mono.empty())
+                        .doOnTerminate(() -> {
+                            clearTransactionContext();
+                            cleanupTransaction(TransactionState.ABORTED);
+                        });
+            }
+        });
     }
 
     private void clearTransactionContextOnError(final MongoException e) {

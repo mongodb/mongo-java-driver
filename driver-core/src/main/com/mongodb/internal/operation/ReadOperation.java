@@ -16,20 +16,44 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.MongoNamespace;
+import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.connection.OperationContext;
 
 /**
  * An operation that reads from a MongoDB server.
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public interface ReadOperation<T> {
+public interface ReadOperation<T, R> {
+
+    /**
+     * @return the command name of the operation, e.g. "insert", "update", "delete", "bulkWrite", etc.
+     */
+    String getCommandName();
+
+    /**
+     * @return the namespace of the operation
+     */
+    MongoNamespace getNamespace();
 
     /**
      * General execute which can return anything of type T
      *
      * @param binding the binding to execute in the context of
+     * @param operationContext the operation context to use
      * @return T, the result of the execution
      */
-    T execute(ReadBinding binding);
+    T execute(ReadBinding binding, OperationContext operationContext);
+
+    /**
+     * General execute which can return anything of type R
+     *
+     * @param binding the binding to execute in the context of
+     * @param operationContext the operation context to use
+     * @param callback the callback to be called when the operation has been executed
+     */
+    void executeAsync(AsyncReadBinding binding, OperationContext operationContext, SingleResultCallback<R> callback);
 }

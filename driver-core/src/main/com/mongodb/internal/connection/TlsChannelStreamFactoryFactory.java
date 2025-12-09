@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.CompletionHandler;
+import java.nio.channels.InterruptedByTimeoutException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
@@ -49,6 +50,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -97,21 +99,40 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
         group.shutdown();
     }
 
+    /**
+     * Monitors `OP_CONNECT` events for socket connections.
+     */
     private static class SelectorMonitor implements Closeable {
 
-        private static final class Pair {
+        static final class SocketRegistration {
             private final SocketChannel socketChannel;
-            private final Runnable attachment;
+            private final AtomicReference<Runnable> afterConnectAction;
 
-            private Pair(final SocketChannel socketChannel, final Runnable attachment) {
+            SocketRegistration(final SocketChannel socketChannel, final Runnable afterConnectAction) {
                 this.socketChannel = socketChannel;
-                this.attachment = attachment;
+                this.afterConnectAction = new AtomicReference<>(afterConnectAction);
+            }
+
+            boolean tryCancelPendingConnection() {
+                return tryTakeAction() != null;
+            }
+
+            void runAfterConnectActionIfNotCanceled() {
+                Runnable afterConnectActionToExecute = tryTakeAction();
+                if (afterConnectActionToExecute != null) {
+                    afterConnectActionToExecute.run();
+                }
+            }
+
+            @Nullable
+            private Runnable tryTakeAction() {
+                return afterConnectAction.getAndSet(null);
             }
         }
 
         private final Selector selector;
         private volatile boolean isClosed;
-        private final ConcurrentLinkedDeque<Pair> pendingRegistrations = new ConcurrentLinkedDeque<>();
+        private final ConcurrentLinkedDeque<SocketRegistration> pendingRegistrations = new ConcurrentLinkedDeque<>();
 
         SelectorMonitor() {
             try {
@@ -127,23 +148,23 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
                     while (!isClosed) {
                         try {
                             selector.select();
-
                             for (SelectionKey selectionKey : selector.selectedKeys()) {
                                 selectionKey.cancel();
-                                Runnable runnable = (Runnable) selectionKey.attachment();
-                                runnable.run();
+                                ((SocketRegistration) selectionKey.attachment()).runAfterConnectActionIfNotCanceled();
                             }
 
-                            for (Iterator<Pair> iter = pendingRegistrations.iterator(); iter.hasNext();) {
-                                Pair pendingRegistration = iter.next();
-                                pendingRegistration.socketChannel.register(selector, SelectionKey.OP_CONNECT,
-                                        pendingRegistration.attachment);
+                            for (Iterator<SocketRegistration> iter = pendingRegistrations.iterator(); iter.hasNext();) {
+                                SocketRegistration pendingRegistration = iter.next();
+                                pendingRegistration.socketChannel.register(selector, SelectionKey.OP_CONNECT, pendingRegistration);
                                 iter.remove();
                             }
                         } catch (Exception e) {
                             LOGGER.warn("Exception in selector loop", e);
                         }
                     }
+                } catch (Throwable t) {
+                    LOGGER.error(this + " stopped working. You may want to recreate the MongoClient", t);
+                    throw t;
                 } finally {
                     try {
                         selector.close();
@@ -156,8 +177,8 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
             selectorThread.start();
         }
 
-        void register(final SocketChannel channel, final Runnable attachment) {
-            pendingRegistrations.add(new Pair(channel, attachment));
+        void register(final SocketRegistration registration) {
+            pendingRegistrations.add(registration);
             selector.wakeup();
         }
 
@@ -200,44 +221,79 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
                 if (getSettings().getSendBufferSize() > 0) {
                     socketChannel.setOption(StandardSocketOptions.SO_SNDBUF, getSettings().getSendBufferSize());
                 }
-
+                //getConnectTimeoutMs MUST be called before connection attempt, as it might throw MongoOperationTimeout exception.
+                int connectTimeoutMs = operationContext.getTimeoutContext().getConnectTimeoutMs();
                 socketChannel.connect(getSocketAddresses(getServerAddress(), inetAddressResolver).get(0));
+                SelectorMonitor.SocketRegistration socketRegistration = new SelectorMonitor.SocketRegistration(
+                        socketChannel, () -> initializeTslChannel(handler, socketChannel));
 
-                selectorMonitor.register(socketChannel, () -> {
-                    try {
-                        if (!socketChannel.finishConnect()) {
-                            throw new MongoSocketOpenException("Failed to finish connect", getServerAddress());
-                        }
+                if (connectTimeoutMs > 0) {
+                    scheduleTimeoutInterruption(handler, socketRegistration, connectTimeoutMs);
+                }
+                selectorMonitor.register(socketRegistration);
+            } catch (IOException e) {
+                handler.failed(new MongoSocketOpenException("Exception opening socket", getServerAddress(), e));
+            } catch (Throwable t) {
+                handler.failed(t);
+            }
+        }
 
-                        SSLEngine sslEngine = getSslContext().createSSLEngine(getServerAddress().getHost(),
-                                getServerAddress().getPort());
-                        sslEngine.setUseClientMode(true);
+        private void scheduleTimeoutInterruption(final AsyncCompletionHandler<Void> handler,
+                                                 final SelectorMonitor.SocketRegistration socketRegistration,
+                                                 final int connectTimeoutMs) {
+            group.getTimeoutExecutor().schedule(() -> {
+                if (socketRegistration.tryCancelPendingConnection()) {
+                    closeAndTimeout(handler, socketRegistration.socketChannel);
+                }
+            }, connectTimeoutMs, TimeUnit.MILLISECONDS);
+        }
 
-                        SSLParameters sslParameters = sslEngine.getSSLParameters();
-                        enableSni(getServerAddress().getHost(), sslParameters);
+        private void closeAndTimeout(final AsyncCompletionHandler<Void> handler, final SocketChannel socketChannel) {
+            // We check if this stream was closed before timeout exception.
+            boolean streamClosed = isClosed();
+            InterruptedByTimeoutException timeoutException = new InterruptedByTimeoutException();
+            try {
+                socketChannel.close();
+            } catch (Exception e) {
+                timeoutException.addSuppressed(e);
+            }
 
-                        if (!sslSettings.isInvalidHostNameAllowed()) {
-                            enableHostNameVerification(sslParameters);
-                        }
-                        sslEngine.setSSLParameters(sslParameters);
+            if (streamClosed) {
+                handler.completed(null);
+            } else {
+                handler.failed(new MongoSocketOpenException("Exception opening socket", getAddress(), timeoutException));
+            }
+        }
 
-                        BufferAllocator bufferAllocator = new BufferProviderAllocator();
+        private void initializeTslChannel(final AsyncCompletionHandler<Void> handler, final SocketChannel socketChannel) {
+            try {
+                if (!socketChannel.finishConnect()) {
+                    throw new MongoSocketOpenException("Failed to finish connect", getServerAddress());
+                }
 
-                        TlsChannel tlsChannel = ClientTlsChannel.newBuilder(socketChannel, sslEngine)
-                                .withEncryptedBufferAllocator(bufferAllocator)
-                                .withPlainBufferAllocator(bufferAllocator)
-                                .build();
+                SSLEngine sslEngine = getSslContext().createSSLEngine(getServerAddress().getHost(),
+                        getServerAddress().getPort());
+                sslEngine.setUseClientMode(true);
 
-                        // build asynchronous channel, based in the TLS channel and associated with the global group.
-                        setChannel(new AsynchronousTlsChannelAdapter(new AsynchronousTlsChannel(group, tlsChannel, socketChannel)));
+                SSLParameters sslParameters = sslEngine.getSSLParameters();
+                enableSni(getServerAddress().getHost(), sslParameters);
 
-                        handler.completed(null);
-                    } catch (IOException e) {
-                        handler.failed(new MongoSocketOpenException("Exception opening socket", getServerAddress(), e));
-                    } catch (Throwable t) {
-                        handler.failed(t);
-                    }
-                });
+                if (!sslSettings.isInvalidHostNameAllowed()) {
+                    enableHostNameVerification(sslParameters);
+                }
+                sslEngine.setSSLParameters(sslParameters);
+
+                BufferAllocator bufferAllocator = new BufferProviderAllocator();
+
+                TlsChannel tlsChannel = ClientTlsChannel.newBuilder(socketChannel, sslEngine)
+                        .withEncryptedBufferAllocator(bufferAllocator)
+                        .withPlainBufferAllocator(bufferAllocator)
+                        .build();
+
+                // build asynchronous channel, based in the TLS channel and associated with the global group.
+                setChannel(new AsynchronousTlsChannelAdapter(new AsynchronousTlsChannel(group, tlsChannel, socketChannel)));
+
+                handler.completed(null);
             } catch (IOException e) {
                 handler.failed(new MongoSocketOpenException("Exception opening socket", getServerAddress(), e));
             } catch (Throwable t) {

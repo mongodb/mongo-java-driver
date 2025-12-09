@@ -34,6 +34,7 @@ import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
 import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
+import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonArray;
@@ -47,6 +48,7 @@ import org.bson.Document;
 import org.bson.RawBsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -64,7 +66,6 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
@@ -96,13 +97,13 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
  * <a href="https://github.com/mongodb/specifications/blob/master/source/crud/tests/README.md#prose-tests">CRUD Prose Tests</a>.
  */
 public class CrudProseTest {
-    private static final MongoNamespace NAMESPACE = new MongoNamespace("db", "coll");
+    private static final MongoNamespace NAMESPACE = new MongoNamespace("db", CrudProseTest.class.getName());
 
     @DisplayName("1. WriteConcernError.details exposes writeConcernError.errInfo")
     @Test
     @SuppressWarnings("try")
     void testWriteConcernErrInfoIsPropagated() throws InterruptedException {
-        assumeTrue(isDiscoverableReplicaSet() && serverVersionAtLeast(4, 0));
+        assumeTrue(isDiscoverableReplicaSet());
         BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
                 .append("mode", new BsonDocument("times", new BsonInt32(1)))
                 .append("data", new BsonDocument("failCommands", new BsonArray(singletonList(new BsonString("insert"))))
@@ -165,7 +166,6 @@ public class CrudProseTest {
     @Test
     void testBulkWriteSplitsWhenExceedingMaxWriteBatchSize() {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         TestCommandListener commandListener = new TestCommandListener();
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder().addCommandListener(commandListener))) {
             int maxWriteBatchSize = droppedDatabase(client).runCommand(new Document("hello", 1)).getInteger("maxWriteBatchSize");
@@ -187,7 +187,6 @@ public class CrudProseTest {
     @Test
     void testBulkWriteSplitsWhenExceedingMaxMessageSizeBytes() {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         TestCommandListener commandListener = new TestCommandListener();
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder().addCommandListener(commandListener))) {
             Document helloResponse = droppedDatabase(client).runCommand(new Document("hello", 1));
@@ -214,7 +213,6 @@ public class CrudProseTest {
     @SuppressWarnings("try")
     protected void testBulkWriteCollectsWriteConcernErrorsAcrossBatches() throws InterruptedException {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         TestCommandListener commandListener = new TestCommandListener();
         BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
                 .append("mode", new BsonDocument("times", new BsonInt32(2)))
@@ -240,11 +238,10 @@ public class CrudProseTest {
     }
 
     @DisplayName("6. MongoClient.bulkWrite handles individual WriteErrors across batches")
-    @ParameterizedTest
+    @ParameterizedTest(name = "6. MongoClient.bulkWrite handles individual WriteErrors across batches--ordered:{0}")
     @ValueSource(booleans = {false, true})
     protected void testBulkWriteHandlesWriteErrorsAcrossBatches(final boolean ordered) {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         TestCommandListener commandListener = new TestCommandListener();
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
                 .retryWrites(false)
@@ -268,7 +265,6 @@ public class CrudProseTest {
     @Test
     void testBulkWriteHandlesCursorRequiringGetMore() {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         assertBulkWriteHandlesCursorRequiringGetMore(false);
     }
 
@@ -276,7 +272,6 @@ public class CrudProseTest {
     @Test
     protected void testBulkWriteHandlesCursorRequiringGetMoreWithinTransaction() {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         assumeFalse(isStandalone());
         assertBulkWriteHandlesCursorRequiringGetMore(true);
     }
@@ -318,7 +313,6 @@ public class CrudProseTest {
     @Test
     protected void testBulkWriteSplitsWhenExceedingMaxMessageSizeBytesDueToNsInfo() {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         assertAll(
                 () -> {
                     // Case 1: No batch-splitting required
@@ -367,7 +361,8 @@ public class CrudProseTest {
             Document helloResponse = droppedDatabase(client).runCommand(new Document("hello", 1));
             int maxBsonObjectSize = helloResponse.getInteger("maxBsonObjectSize");
             int maxMessageSizeBytes = helloResponse.getInteger("maxMessageSizeBytes");
-            int opsBytes = maxMessageSizeBytes - 1122;
+            // By the spec test, we have to subtract only 1122, however, we have different collection name.
+            int opsBytes = maxMessageSizeBytes - 1118 - NAMESPACE.getCollectionName().length();
             int numModels = opsBytes / maxBsonObjectSize;
             int remainderBytes = opsBytes % maxBsonObjectSize;
             List<ClientNamespacedWriteModel> models = new ArrayList<>(nCopies(
@@ -385,11 +380,10 @@ public class CrudProseTest {
     }
 
     @DisplayName("12. MongoClient.bulkWrite returns an error if no operations can be added to ops")
-    @ParameterizedTest
+    @ParameterizedTest(name = "12. MongoClient.bulkWrite returns an error if no operations can be added to ops--tooLarge:{0}")
     @ValueSource(strings = {"document", "namespace"})
     protected void testBulkWriteSplitsErrorsForTooLargeOpsOrNsInfo(final String tooLarge) {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder())) {
             int maxMessageSizeBytes = droppedDatabase(client).runCommand(new Document("hello", 1)).getInteger("maxMessageSizeBytes");
             ClientNamespacedWriteModel model;
@@ -418,7 +412,6 @@ public class CrudProseTest {
     @Test
     protected void testBulkWriteErrorsForAutoEncryption() {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         HashMap<String, Object> awsKmsProviderProperties = new HashMap<>();
         awsKmsProviderProperties.put("accessKeyId", "foo");
         awsKmsProviderProperties.put("secretAccessKey", "bar");
@@ -440,7 +433,6 @@ public class CrudProseTest {
     @Test
     protected void testWriteConcernOfAllBatchesWhenUnacknowledgedRequested() {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         TestCommandListener commandListener = new TestCommandListener();
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder().addCommandListener(commandListener)
                 .writeConcern(WriteConcern.UNACKNOWLEDGED))) {
@@ -473,7 +465,8 @@ public class CrudProseTest {
     /**
      * This test is not from the specification.
      */
-    @ParameterizedTest
+    @DisplayName("insertMustGenerateIdAtMostOnce")
+    @ParameterizedTest(name = "insertMustGenerateIdAtMostOnce--documentClass:{0}, expectIdGenerated:{1}")
     @MethodSource("insertMustGenerateIdAtMostOnceArgs")
     protected <TDocument> void insertMustGenerateIdAtMostOnce(
             final Class<TDocument> documentClass,
@@ -612,5 +605,10 @@ public class CrudProseTest {
             session.abortTransaction();
             throw throwable;
         }
+    }
+
+    @AfterAll
+    public static void cleanUp() {
+        CollectionHelper.drop(NAMESPACE);
     }
 }

@@ -63,6 +63,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.internal.connection.BaseCluster.logServerSelectionStarted;
 import static com.mongodb.internal.connection.BaseCluster.logServerSelectionSucceeded;
+import static com.mongodb.internal.connection.BaseCluster.logTopologyMonitoringStopping;
 import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
@@ -76,6 +77,7 @@ final class LoadBalancedCluster implements Cluster {
     private final ClusterId clusterId;
     private final ClusterSettings settings;
     private final ClusterClock clusterClock = new ClusterClock();
+    private final ClientMetadata clientMetadata;
     private final ClusterListener clusterListener;
     private ClusterDescription description;
     @Nullable
@@ -91,6 +93,7 @@ final class LoadBalancedCluster implements Cluster {
     private final Condition condition = lock.newCondition();
 
     LoadBalancedCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
+                        final ClientMetadata clientMetadata,
                         final DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory) {
         assertTrue(settings.getMode() == ClusterConnectionMode.LOAD_BALANCED);
         LOGGER.info(format("Cluster created with id %s and settings %s", clusterId, settings.getShortDescription()));
@@ -100,6 +103,7 @@ final class LoadBalancedCluster implements Cluster {
         this.clusterListener = singleClusterListener(settings);
         this.description = new ClusterDescription(settings.getMode(), ClusterType.UNKNOWN, emptyList(), settings,
                 serverFactory.getSettings());
+        this.clientMetadata = clientMetadata;
 
         if (settings.getSrvHost() == null) {
             dnsSrvRecordMonitor = null;
@@ -205,6 +209,11 @@ final class LoadBalancedCluster implements Cluster {
     }
 
     @Override
+    public ClientMetadata getClientMetadata() {
+        return clientMetadata;
+    }
+
+    @Override
     public ServerTuple selectServer(final ServerSelector serverSelector, final OperationContext operationContext) {
         isTrue("open", !isClosed());
         Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
@@ -213,9 +222,9 @@ final class LoadBalancedCluster implements Cluster {
             throw createResolvedToMultipleHostsException();
         }
         ClusterDescription curDescription = description;
-        logServerSelectionStarted(clusterId, operationContext.getId(), serverSelector, curDescription);
+        logServerSelectionStarted(operationContext, clusterId, serverSelector, curDescription);
         ServerTuple serverTuple = new ServerTuple(assertNotNull(server), curDescription.getServerDescriptions().get(0));
-        logServerSelectionSucceeded(clusterId, operationContext.getId(), serverTuple.getServerDescription().getAddress(),
+        logServerSelectionSucceeded(operationContext, clusterId, serverTuple.getServerDescription().getAddress(),
                 serverSelector, curDescription);
         return serverTuple;
     }
@@ -245,8 +254,8 @@ final class LoadBalancedCluster implements Cluster {
             return;
         }
         Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
-        ServerSelectionRequest serverSelectionRequest = new ServerSelectionRequest(operationContext.getId(), serverSelector,
-                operationContext, computedServerSelectionTimeout, callback);
+        ServerSelectionRequest serverSelectionRequest = new ServerSelectionRequest(serverSelector, operationContext,
+                computedServerSelectionTimeout, callback);
         if (initializationCompleted) {
             handleServerSelectionRequest(serverSelectionRequest);
         } else {
@@ -272,7 +281,9 @@ final class LoadBalancedCluster implements Cluster {
             if (localServer != null) {
                 localServer.close();
             }
-            clusterListener.clusterClosed(new ClusterClosedEvent(clusterId));
+            logTopologyMonitoringStopping(clusterId);
+            ClusterClosedEvent clusterClosedEvent = new ClusterClosedEvent(clusterId);
+            clusterListener.clusterClosed(clusterClosedEvent);
         }
     }
 
@@ -298,9 +309,9 @@ final class LoadBalancedCluster implements Cluster {
         } else {
             ClusterDescription curDescription = description;
             logServerSelectionStarted(
-                    clusterId, serverSelectionRequest.operationId, serverSelectionRequest.serverSelector, curDescription);
+                    serverSelectionRequest.operationContext, clusterId, serverSelectionRequest.serverSelector, curDescription);
             ServerTuple serverTuple = new ServerTuple(assertNotNull(server), curDescription.getServerDescriptions().get(0));
-            logServerSelectionSucceeded(clusterId, serverSelectionRequest.operationId,
+            logServerSelectionSucceeded(serverSelectionRequest.operationContext, clusterId,
                     serverTuple.getServerDescription().getAddress(), serverSelectionRequest.serverSelector, curDescription);
             serverSelectionRequest.onSuccess(serverTuple);
         }
@@ -352,68 +363,71 @@ final class LoadBalancedCluster implements Cluster {
 
     private final class WaitQueueHandler implements Runnable {
         public void run() {
-            List<ServerSelectionRequest> timeoutList = new ArrayList<>();
-            while (!(isClosed() || initializationCompleted)) {
-                lock.lock();
-                try {
-                    if (isClosed() || initializationCompleted) {
-                        break;
-                    }
-                    Timeout waitTimeNanos = Timeout.infinite();
-
-                    for (Iterator<ServerSelectionRequest> iterator = waitQueue.iterator(); iterator.hasNext();) {
-                        ServerSelectionRequest next = iterator.next();
-
-                        Timeout nextTimeout = next.getTimeout();
-                        Timeout waitTimeNanosFinal = waitTimeNanos;
-                        waitTimeNanos = nextTimeout.call(NANOSECONDS,
-                                () -> Timeout.earliest(waitTimeNanosFinal, nextTimeout),
-                                (ns) -> Timeout.earliest(waitTimeNanosFinal, nextTimeout),
-                                () -> {
-                                    timeoutList.add(next);
-                                    iterator.remove();
-                                    return waitTimeNanosFinal;
-                                });
-                    }
-                    if (timeoutList.isEmpty()) {
-                        try {
-                            waitTimeNanos.awaitOn(condition, () -> "ignored");
-                        } catch (MongoInterruptedException unexpected) {
-                            fail();
+            try {
+                List<ServerSelectionRequest> timeoutList = new ArrayList<>();
+                while (!(isClosed() || initializationCompleted)) {
+                    lock.lock();
+                    try {
+                        if (isClosed() || initializationCompleted) {
+                            break;
                         }
-                    }
-                } finally {
-                    lock.unlock();
-                }
-                timeoutList.forEach(request -> request.onError(createTimeoutException(request
-                        .getOperationContext()
-                        .getTimeoutContext())));
-                timeoutList.clear();
-            }
+                        Timeout waitTimeNanos = Timeout.infinite();
 
-            // This code is executed either after closing the LoadBalancedCluster or after initializing it. In the latter case,
-            // waitQueue is guaranteed to be empty (as DnsSrvRecordInitializer.initialize clears it and no thread adds new elements to
-            // it after that). So shutdownList is not empty iff LoadBalancedCluster is closed, in which case we need to complete the
-            // requests in it.
-            List<ServerSelectionRequest> shutdownList = Locks.withLock(lock, () -> {
-                ArrayList<ServerSelectionRequest> result = new ArrayList<>(waitQueue);
-                waitQueue.clear();
-                return result;
-            });
-            shutdownList.forEach(request -> request.onError(createShutdownException()));
+                        for (Iterator<ServerSelectionRequest> iterator = waitQueue.iterator(); iterator.hasNext();) {
+                            ServerSelectionRequest next = iterator.next();
+
+                            Timeout nextTimeout = next.getTimeout();
+                            Timeout waitTimeNanosFinal = waitTimeNanos;
+                            waitTimeNanos = nextTimeout.call(NANOSECONDS,
+                                    () -> Timeout.earliest(waitTimeNanosFinal, nextTimeout),
+                                    (ns) -> Timeout.earliest(waitTimeNanosFinal, nextTimeout),
+                                    () -> {
+                                        timeoutList.add(next);
+                                        iterator.remove();
+                                        return waitTimeNanosFinal;
+                                    });
+                        }
+                        if (timeoutList.isEmpty()) {
+                            try {
+                                waitTimeNanos.awaitOn(condition, () -> "ignored");
+                            } catch (MongoInterruptedException unexpected) {
+                                fail();
+                            }
+                        }
+                    } finally {
+                        lock.unlock();
+                    }
+                    timeoutList.forEach(request -> request.onError(createTimeoutException(request
+                            .getOperationContext()
+                            .getTimeoutContext())));
+                    timeoutList.clear();
+                }
+
+                // This code is executed either after closing the LoadBalancedCluster or after initializing it. In the latter case,
+                // waitQueue is guaranteed to be empty (as DnsSrvRecordInitializer.initialize clears it and no thread adds new elements to
+                // it after that). So shutdownList is not empty iff LoadBalancedCluster is closed, in which case we need to complete the
+                // requests in it.
+                List<ServerSelectionRequest> shutdownList = Locks.withLock(lock, () -> {
+                    ArrayList<ServerSelectionRequest> result = new ArrayList<>(waitQueue);
+                    waitQueue.clear();
+                    return result;
+                });
+                shutdownList.forEach(request -> request.onError(createShutdownException()));
+            } catch (Throwable t) {
+                LOGGER.error(this + " stopped working. You may want to recreate the MongoClient", t);
+                throw t;
+            }
         }
     }
 
     private static final class ServerSelectionRequest {
-        private final long operationId;
         private final ServerSelector serverSelector;
         private final SingleResultCallback<ServerTuple> callback;
         private final Timeout timeout;
         private final OperationContext operationContext;
 
-        private ServerSelectionRequest(final long operationId, final ServerSelector serverSelector, final OperationContext operationContext,
+        private ServerSelectionRequest(final ServerSelector serverSelector, final OperationContext operationContext,
                                        final Timeout timeout, final SingleResultCallback<ServerTuple> callback) {
-            this.operationId = operationId;
             this.serverSelector = serverSelector;
             this.timeout = timeout;
             this.operationContext = operationContext;

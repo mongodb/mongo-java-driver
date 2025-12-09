@@ -16,45 +16,55 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
+import com.mongodb.ServerAddress;
+import com.mongodb.WriteConcern;
 import org.bson.Document;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-// See https://github.com/mongodb/specifications/blob/master/source/transactions/tests/README.rst#mongos-pinning-prose-tests
+// See https://github.com/mongodb/specifications/blob/master/source/transactions/tests/README.md#mongos-pinning-prose-tests
 public class TransactionProseTest {
     private MongoClient client;
     private MongoCollection<Document> collection;
 
-    @Before
+    @BeforeEach
     public void setUp() {
-        assumeTrue(canRunTests());
-        MongoClientSettings.Builder builder = MongoClientSettings.builder()
-                .applyConnectionString(getMultiMongosConnectionString());
+        assumeTrue(!isStandalone());
+        ConnectionString connectionString = getConnectionString();
+        if (isSharded()) {
+            assumeTrue(serverVersionAtLeast(4, 2));
+            connectionString = getMultiMongosConnectionString();
+            assumeTrue(connectionString != null);
+        }
 
-        client = MongoClients.create(MongoClientSettings.builder(builder.build())
-                .applyToSocketSettings(builder1 -> builder1.readTimeout(5, TimeUnit.SECONDS))
+        client = MongoClients.create(MongoClientSettings.builder()
+                .applyConnectionString(connectionString)
                 .build());
 
         collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
         collection.drop();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         if (collection != null) {
             collection.drop();
@@ -64,67 +74,72 @@ public class TransactionProseTest {
         }
     }
 
-        // Test that starting a new transaction on a pinned ClientSession unpins the session and normal
-    // server selection is performed for the next operation.
+    @DisplayName("Mongos Pinning Prose Tests: 1. Test that starting a new transaction on a pinned ClientSession unpins the session "
+            + "and normal server selection is performed for the next operation.")
     @Test
-    public void testNewTransactionUnpinsSession() throws MongoException {
-        ClientSession session = null;
-        try {
-            collection.insertOne(Document.parse("{}"));
-            session = client.startSession();
+    public void testNewTransactionUnpinsSession() {
+        assumeTrue(isSharded());
+        collection.insertOne(Document.parse("{}"));
+        try (ClientSession session = client.startSession()) {
             session.startTransaction();
             collection.insertOne(session, Document.parse("{ _id : 1 }"));
             session.commitTransaction();
 
-            Set<FindIterable<Document>> addresses = new HashSet<>();
+            Set<ServerAddress> addresses = new HashSet<>();
             int iterations = 50;
             while (iterations-- > 0) {
                 session.startTransaction();
-                addresses.add(collection.find(session, Document.parse("{}")));
+                try (MongoCursor<Document> cursor = collection.find(session, Document.parse("{}")).cursor()) {
+                    addresses.add(cursor.getServerAddress());
+                }
                 session.commitTransaction();
             }
             assertTrue(addresses.size() > 1);
-        } finally {
-            if (session != null) {
-                session.close();
-            }
-            if (collection != null) {
-                collection.drop();
-            }
         }
     }
 
-    // Test non-transaction operations using a pinned ClientSession unpins the session and normal server selection is performed.
+    @DisplayName("Mongos Pinning Prose Tests: 2. Test non-transaction operations using a pinned ClientSession unpins the session"
+            + " and normal server selection is performed")
     @Test
     public void testNonTransactionOpsUnpinsSession() throws MongoException {
-        ClientSession session = null;
-        try {
-            collection.insertOne(Document.parse("{}"));
-            session = client.startSession();
+        assumeTrue(isSharded());
+        collection.insertOne(Document.parse("{}"));
+        try (ClientSession session = client.startSession()) {
             session.startTransaction();
             collection.insertOne(session, Document.parse("{ _id : 1 }"));
+            session.commitTransaction();
 
-            Set<FindIterable<Document>> addresses = new HashSet<>();
+            Set<ServerAddress> addresses = new HashSet<>();
             int iterations = 50;
             while (iterations-- > 0) {
-                addresses.add(collection.find(session, Document.parse("{}")));
+                try (MongoCursor<Document> cursor = collection.find(session, Document.parse("{}")).cursor()) {
+                    addresses.add(cursor.getServerAddress());
+                }
             }
             assertTrue(addresses.size() > 1);
-        } finally {
-            if (session != null) {
-                session.close();
-            }
-            if (collection != null) {
-                collection.drop();
-            }
         }
     }
 
-    private boolean canRunTests() {
-        if (isSharded() && !isServerlessTest()) {
-            return serverVersionAtLeast(4, 2);
-        } else {
-            return false;
+    @DisplayName("Options Inside Transaction Prose Tests. 1. Write concern not inherited from collection object inside transaction")
+    @Test
+    void testWriteConcernInheritance() {
+        // Create a MongoClient running against a configured sharded/replica set/load balanced cluster.
+        // transactions require a 4.0+ server when non-sharded and 4.2+ when sharded
+        if (!isSharded()) {
+            assumeTrue(serverVersionAtLeast(4, 0));
+        }
+
+        collection.insertOne(Document.parse("{}"));
+
+        try (ClientSession session = client.startSession()) {
+            MongoCollection<Document> wcCollection = collection.withWriteConcern(WriteConcern.UNACKNOWLEDGED);
+
+            assertDoesNotThrow(() -> {
+                        session.startTransaction();
+                        wcCollection.insertOne(session, new Document("n", 1));
+                        session.commitTransaction();
+                    });
+            assertNotNull(collection.find(new Document("n", 1)).first());
         }
     }
 

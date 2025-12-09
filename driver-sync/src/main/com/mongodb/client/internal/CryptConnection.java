@@ -16,13 +16,12 @@
 
 package com.mongodb.client.internal;
 
-import com.mongodb.MongoClientException;
 import com.mongodb.ReadPreference;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.connection.MessageSettings;
 import com.mongodb.internal.connection.MessageSequences;
 import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
+import com.mongodb.internal.connection.MessageSettings;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.SplittablePayload;
 import com.mongodb.internal.connection.SplittablePayloadBsonWriter;
@@ -50,7 +49,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.mongodb.assertions.Assertions.fail;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotTwo;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
@@ -95,10 +93,6 @@ public final class CryptConnection implements Connection {
             @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
             final OperationContext operationContext, final boolean responseExpected, final MessageSequences sequences) {
 
-        if (serverIsLessThanVersionFourDotTwo(wrapped.getDescription())) {
-            throw new MongoClientException("Auto-encryption requires a minimum MongoDB version of 4.2");
-        }
-
         SplittablePayload payload = null;
         FieldNameValidator payloadFieldNameValidator = null;
         if (sequences instanceof SplittablePayload) {
@@ -118,9 +112,11 @@ public final class CryptConnection implements Connection {
 
         getEncoder(command).encode(writer, command, EncoderContext.builder().build());
 
-        Timeout operationTimeout = operationContext.getTimeoutContext().getTimeout();
-        RawBsonDocument encryptedCommand = crypt.encrypt(database,
-                new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()), operationTimeout);
+        Timeout timeout = operationContext.getTimeoutContext().getTimeout();
+        RawBsonDocument encryptedCommand = crypt.encrypt(
+                database,
+                new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()),
+                timeout);
 
         RawBsonDocument encryptedResponse = wrapped.command(database, encryptedCommand, commandFieldNameValidator, readPreference,
                 new RawBsonDocumentCodec(), operationContext, responseExpected, EmptyMessageSequences.INSTANCE);
@@ -129,7 +125,7 @@ public final class CryptConnection implements Connection {
             return null;
         }
 
-        RawBsonDocument decryptedResponse = crypt.decrypt(encryptedResponse, operationTimeout);
+        RawBsonDocument decryptedResponse = crypt.decrypt(encryptedResponse, timeout);
 
         BsonBinaryReader reader = new BsonBinaryReader(decryptedResponse.getByteBuffer().asNIO());
 

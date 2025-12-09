@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
@@ -34,22 +33,21 @@ import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.binding.ReadBinding
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
+import com.mongodb.internal.connection.OperationContext
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonDouble
 import org.bson.BsonInt64
-import org.bson.BsonRegularExpression
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
-import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.ClusterFixture.serverVersionLessThan
+import static com.mongodb.ClusterFixture.getOperationContext
+import static org.junit.jupiter.api.Assertions.assertEquals
 
 class ListCollectionsOperationSpecification extends OperationFunctionalSpecification {
 
@@ -59,8 +57,10 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         given:
         def operation = new ListCollectionsOperation(madeUpDatabase, new DocumentCodec())
 
+
+        def binding = getBinding()
         when:
-        def cursor = operation.execute(getBinding())
+        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
 
         then:
         !cursor.hasNext()
@@ -95,8 +95,10 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         helper.insertDocuments(codec, ['a': 1] as Document)
         helper2.insertDocuments(codec, ['a': 1] as Document)
 
+
+        def binding = getBinding()
         when:
-        def cursor = operation.execute(getBinding())
+        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
         def collections = cursor.next()
         def names = collections*.get('name')
 
@@ -104,19 +106,6 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         names.containsAll([collectionName, 'collection2'])
         !names.contains(null)
         names.findAll { it.contains('$') }.isEmpty()
-    }
-
-    @IgnoreIf({ serverVersionAtLeast(3, 0) })
-    def 'should throw if filtering on name with something other than a string'() {
-        given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
-                .filter(new BsonDocument('name', new BsonRegularExpression('^[^$]*$')))
-
-        when:
-        operation.execute(getBinding())
-
-        then:
-        thrown(IllegalArgumentException)
     }
 
     def 'should filter collection names if a name filter is specified'() {
@@ -129,8 +118,11 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         helper.insertDocuments(codec, ['a': 1] as Document)
         helper2.insertDocuments(codec, ['a': 1] as Document)
 
+
+        def binding = getBinding()
         when:
-        def cursor = operation.execute(getBinding())
+        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference())
+        )
         def collections = cursor.next()
         def names = collections*.get('name')
 
@@ -148,8 +140,10 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         def codec = new DocumentCodec()
         helper.insertDocuments(codec, ['a': 1] as Document)
 
+
+        def binding = getBinding()
         when:
-        def cursor = operation.execute(getBinding())
+        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
         def collections = cursor.next()
         def names = collections*.get('name')
 
@@ -158,36 +152,22 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         !names.contains(collectionName)
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 4) || serverVersionAtLeast(4, 0) })
-    def 'should get all fields when nameOnly is not requested'() {
-        given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
-        getCollectionHelper().create('collection4', new CreateCollectionOptions())
-
-        when:
-        def cursor = operation.execute(getBinding())
-        def collection = cursor.next()[0]
-
-        then:
-        collection.size() > 2
-    }
-
-    @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should only get collection names when nameOnly is requested'() {
         given:
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
                 .nameOnly(true)
         getCollectionHelper().create('collection5', new CreateCollectionOptions())
 
+
+        def binding = getBinding()
         when:
-        def cursor = operation.execute(getBinding())
+        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
         def collection = cursor.next()[0]
 
         then:
         collection.size() == 2
     }
 
-    @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should only get collection names when nameOnly and authorizedCollections are requested'() {
         given:
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
@@ -195,30 +175,16 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
                 .authorizedCollections(true)
         getCollectionHelper().create('collection6', new CreateCollectionOptions())
 
+
+        def binding = getBinding()
         when:
-        def cursor = operation.execute(getBinding())
+        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
         def collection = cursor.next()[0]
 
         then:
         collection.size() == 2
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 4) || serverVersionAtLeast(4, 0) })
-    def 'should only get all field names when nameOnly is requested on server versions that do not support nameOnly'() {
-        given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
-                .nameOnly(true)
-        getCollectionHelper().create('collection7', new CreateCollectionOptions())
-
-        when:
-        def cursor = operation.execute(getBinding())
-        def collection = cursor.next()[0]
-
-        then:
-        collection.size() > 2
-    }
-
-    @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should get all fields when authorizedCollections is requested and nameOnly is not requested'() {
         given:
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
@@ -226,8 +192,10 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
                 .authorizedCollections(true)
         getCollectionHelper().create('collection8', new CreateCollectionOptions())
 
+
+        def binding = getBinding()
         when:
-        def cursor = operation.execute(getBinding())
+        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
         def collection = cursor.next()[0]
 
         then:
@@ -256,13 +224,17 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
     }
 
     def 'should filter indexes when calling hasNext before next'() {
+        def binding = getBinding()
         given:
-        new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED)
+                .execute(binding, getOperationContext(binding.getReadPreference()))
         addSeveralIndexes()
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
 
+
         when:
-        def cursor = operation.execute(getBinding())
+        binding = getBinding()
+        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
 
         then:
         cursor.hasNext()
@@ -272,13 +244,16 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
     }
 
     def 'should filter indexes without calling hasNext before next'() {
+        def binding = getBinding()
         given:
-        new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED)
+                .execute(binding, getOperationContext(binding.getReadPreference()))
         addSeveralIndexes()
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
 
         when:
-        def cursor = operation.execute(getBinding())
+        binding = getBinding()
+        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
         def list = cursorToListWithNext(cursor)
 
         then:
@@ -294,13 +269,17 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
     }
 
     def 'should filter indexes when calling hasNext before tryNext'() {
+        def binding = getBinding()
         given:
-        new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED)
+                .execute(binding, getOperationContext(binding.getReadPreference()))
         addSeveralIndexes()
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
 
+
         when:
-        def cursor = operation.execute(getBinding())
+        binding = getBinding()
+        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
 
         then:
         cursor.hasNext()
@@ -317,12 +296,15 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should filter indexes without calling hasNext before tryNext'() {
         given:
-        new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        def binding = getBinding()
+        new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED)
+                .execute(binding, getOperationContext(binding.getReadPreference()))
         addSeveralIndexes()
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
 
         when:
-        def cursor = operation.execute(getBinding())
+        binding = getBinding()
+        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
         def list = cursorToListWithTryNext(cursor)
 
         then:
@@ -334,7 +316,9 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should filter indexes asynchronously'() {
         given:
-        new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        def binding = getBinding()
+        new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED)
+                .execute(binding, getOperationContext(binding.getReadPreference()))
         addSeveralIndexes()
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
 
@@ -357,8 +341,10 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         getCollectionHelper(new MongoNamespace(databaseName, 'collection4')).insertDocuments(codec, ['a': 1] as Document)
         getCollectionHelper(new MongoNamespace(databaseName, 'collection5')).insertDocuments(codec, ['a': 1] as Document)
 
+
         when:
-        def cursor = operation.execute(getBinding())
+        def binding = getBinding()
+        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
         def collections = cursor.next()
 
         then:
@@ -414,23 +400,24 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         given:
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
-            getConnection() >> connection
+            getConnection(_) >> connection
             getReadPreference() >> readPreference
-            getOperationContext() >> OPERATION_CONTEXT
         }
         def readBinding = Stub(ReadBinding) {
-            getReadConnectionSource() >> connectionSource
+            getReadConnectionSource(_) >> connectionSource
             getReadPreference() >> readPreference
-            getOperationContext() >> OPERATION_CONTEXT
         }
         def operation = new ListCollectionsOperation(helper.dbName, helper.decoder)
 
         when: '3.6.0'
-        operation.execute(readBinding)
+        operation.execute(readBinding, OPERATION_CONTEXT)
 
         then:
         _ * connection.getDescription() >> helper.threeSixConnectionDescription
-        1 * connection.command(_, _, _, readPreference, _, OPERATION_CONTEXT) >> helper.commandResult
+        1 * connection.command(_, _, _, readPreference, _, _) >> {
+            assertEquals(((OperationContext) it[5]).getId(), OPERATION_CONTEXT.getId())
+            helper.commandResult
+        }
         1 * connection.release()
 
         where:
@@ -441,23 +428,22 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         given:
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
-            getConnection(_) >> { it[0].onResult(connection, null) }
+            getConnection(_, _) >> { it[1].onResult(connection, null) }
             getReadPreference() >> readPreference
-            getOperationContext() >> OPERATION_CONTEXT
         }
         def readBinding = Stub(AsyncReadBinding) {
-            getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+            getReadConnectionSource(_, _) >> { it[1].onResult(connectionSource, null) }
             getReadPreference() >> readPreference
-            getOperationContext() >> OPERATION_CONTEXT
         }
         def operation = new ListCollectionsOperation(helper.dbName, helper.decoder)
 
         when: '3.6.0'
-        operation.executeAsync(readBinding, Stub(SingleResultCallback))
+        operation.executeAsync(readBinding, OPERATION_CONTEXT, Stub(SingleResultCallback))
 
         then:
         _ * connection.getDescription() >> helper.threeSixConnectionDescription
-        1 * connection.commandAsync(helper.dbName, _, _, readPreference, _, OPERATION_CONTEXT, *_) >> {
+        1 * connection.commandAsync(helper.dbName, _, _, readPreference, _, _, *_) >> {
+            assertEquals(((OperationContext) it[5]).getId(), OPERATION_CONTEXT.getId())
             it.last().onResult(helper.commandResult, null) }
 
         where:

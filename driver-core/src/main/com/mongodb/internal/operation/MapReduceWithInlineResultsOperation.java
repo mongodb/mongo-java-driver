@@ -22,6 +22,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -53,8 +54,8 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperation<MapReduceAsyncBatchCursor<T>>,
-                                                               ReadOperation<MapReduceBatchCursor<T>> {
+public class MapReduceWithInlineResultsOperation<T> implements ReadOperationMapReduceCursor<T> {
+    private static final String COMMAND_NAME = "mapReduce";
     private final MongoNamespace namespace;
     private final BsonJavaScript mapFunction;
     private final BsonJavaScript reduceFunction;
@@ -76,6 +77,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         this.decoder = notNull("decoder", decoder);
     }
 
+    @Override
     public MongoNamespace getNamespace() {
         return namespace;
     }
@@ -165,30 +167,32 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     }
 
     @Override
-    public MapReduceBatchCursor<T> execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, namespace.getDatabaseName(),
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+    @Override
+    public MapReduceBatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
+        return executeRetryableRead(binding, operationContext, namespace.getDatabaseName(),
                 getCommandCreator(),
                 CommandResultDocumentCodec.create(decoder, "results"), transformer(), false);
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<MapReduceAsyncBatchCursor<T>> callback) {
+    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext,
+                             final SingleResultCallback<MapReduceAsyncBatchCursor<T>> callback) {
         SingleResultCallback<MapReduceAsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        executeRetryableReadAsync(binding, namespace.getDatabaseName(),
+        executeRetryableReadAsync(binding, operationContext,  namespace.getDatabaseName(),
                 getCommandCreator(), CommandResultDocumentCodec.create(decoder, "results"),
                 asyncTransformer(), false, errHandlingCallback);
     }
 
-    public ReadOperation<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return createExplainableOperation(explainVerbosity);
-    }
-
-    public AsyncReadOperation<BsonDocument> asExplainableOperationAsync(final ExplainVerbosity explainVerbosity) {
+    public ReadOperationSimple<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
         return createExplainableOperation(explainVerbosity);
     }
 
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return new CommandReadOperation<>(namespace.getDatabaseName(),
+        return new ExplainCommandOperation<>(namespace.getDatabaseName(), getCommandName(),
                 (operationContext, serverDescription, connectionDescription) -> {
                     BsonDocument command = getCommandCreator().create(operationContext, serverDescription, connectionDescription);
                     applyMaxTimeMS(operationContext.getTimeoutContext(), command);
@@ -198,7 +202,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     }
 
     private CommandReadTransformer<BsonDocument, MapReduceBatchCursor<T>> transformer() {
-         return (result, source, connection) ->
+        return (result, source, connection, operationContext) ->
                 new MapReduceInlineResultsCursor<>(
                         new SingleBatchCursor<>(BsonDocumentWrapperHelper.toList(result, "results"), 0,
                                 connection.getDescription().getServerAddress()),
@@ -206,7 +210,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     }
 
     private CommandReadTransformerAsync<BsonDocument, MapReduceAsyncBatchCursor<T>> asyncTransformer() {
-        return (result, source, connection) -> new MapReduceInlineResultsAsyncCursor<>(
+        return (result, source, connection, operationContext) -> new MapReduceInlineResultsAsyncCursor<>(
                 new AsyncSingleBatchCursor<>(BsonDocumentWrapperHelper.toList(result, "results"), 0),
                 MapReduceHelper.createStatistics(result));
     }
@@ -214,7 +218,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     private CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
 
-            BsonDocument commandDocument = new BsonDocument("mapReduce", new BsonString(namespace.getCollectionName()))
+            BsonDocument commandDocument = new BsonDocument(getCommandName(), new BsonString(namespace.getCollectionName()))
                     .append("map", getMapFunction())
                     .append("reduce", getReduceFunction())
                     .append("out", new BsonDocument("inline", new BsonInt32(1)));

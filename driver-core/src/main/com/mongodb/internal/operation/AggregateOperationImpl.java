@@ -47,12 +47,13 @@ import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTra
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.setNonTailableCursorMaxTimeSupplier;
+import static com.mongodb.internal.operation.OperationHelper.applyTimeoutModeToOperationContext;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
 
-class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
+    private static final String COMMAND_NAME = "aggregate";
     private static final String RESULT = "result";
     private static final String CURSOR = "cursor";
     private static final String FIRST_BATCH = "firstBatch";
@@ -89,10 +90,6 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         this.decoder = notNull("decoder", decoder);
         this.aggregateTarget = notNull("aggregateTarget", aggregateTarget);
         this.pipelineCreator = notNull("pipelineCreator", pipelineCreator);
-    }
-
-    MongoNamespace getNamespace() {
-        return namespace;
     }
 
     List<BsonDocument> getPipeline() {
@@ -186,16 +183,26 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     }
 
     @Override
-    public BatchCursor<T> execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, namespace.getDatabaseName(),
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+    @Override
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    @Override
+    public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
+        return executeRetryableRead(binding, applyTimeoutModeToOperationContext(timeoutMode, operationContext), namespace.getDatabaseName(),
                 getCommandCreator(), CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT),
                 transformer(), retryReads);
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         SingleResultCallback<AsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        executeRetryableReadAsync(binding, namespace.getDatabaseName(),
+        executeRetryableReadAsync(binding, applyTimeoutModeToOperationContext(timeoutMode, operationContext),  namespace.getDatabaseName(),
                 getCommandCreator(), CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT),
                 asyncTransformer(), retryReads,
                 errHandlingCallback);
@@ -207,10 +214,9 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     }
 
     BsonDocument getCommand(final OperationContext operationContext, final int maxWireVersion) {
-        BsonDocument commandDocument = new BsonDocument("aggregate", aggregateTarget.create());
+        BsonDocument commandDocument = new BsonDocument(getCommandName(), aggregateTarget.create());
         appendReadConcernToCommand(operationContext.getSessionContext(), maxWireVersion, commandDocument);
         commandDocument.put("pipeline", pipelineCreator.create());
-        setNonTailableCursorMaxTimeSupplier(timeoutMode, operationContext);
         BsonDocument cursor = new BsonDocument();
         if (batchSize != null) {
             cursor.put("batchSize", new BsonInt32(batchSize));
@@ -236,15 +242,19 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     }
 
     private CommandReadTransformer<BsonDocument, CommandBatchCursor<T>> transformer() {
-        return (result, source, connection) ->
-                new CommandBatchCursor<>(getTimeoutMode(), result, batchSize != null ? batchSize : 0,
-                        getMaxTimeForCursor(source.getOperationContext().getTimeoutContext()), decoder, comment, source, connection);
+        return (result, source, connection, operationContext) ->
+                new CommandBatchCursor<>(getTimeoutMode(), getMaxTimeForCursor(operationContext.getTimeoutContext()), operationContext, new CommandCursor<>(
+                        result, batchSize != null ? batchSize : 0,
+                        decoder, comment, source, connection
+                ));
     }
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
-        return (result, source, connection) ->
-            new AsyncCommandBatchCursor<>(getTimeoutMode(), result, batchSize != null ? batchSize : 0,
-                    getMaxTimeForCursor(source.getOperationContext().getTimeoutContext()), decoder, comment, source, connection);
+        return (result, source, connection, operationContext) ->
+            new AsyncCommandBatchCursor<>(getTimeoutMode(), getMaxTimeForCursor(operationContext.getTimeoutContext()),
+                    operationContext, new AsyncCommandCursor<>(
+                    result, batchSize != null ? batchSize : 0, decoder, comment, source, connection
+            ));
     }
 
     private TimeoutMode getTimeoutMode() {

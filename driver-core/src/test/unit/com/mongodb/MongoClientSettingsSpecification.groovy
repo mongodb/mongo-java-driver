@@ -553,9 +553,11 @@ class MongoClientSettingsSpecification extends Specification {
         def expected = ['applicationName', 'autoEncryptionSettings', 'clusterSettingsBuilder', 'codecRegistry', 'commandListeners',
                         'compressorList', 'connectionPoolSettingsBuilder', 'contextProvider', 'credential', 'dnsClient',
                         'heartbeatConnectTimeoutMS', 'heartbeatSocketTimeoutMS', 'inetAddressResolver', 'loggerSettingsBuilder',
+                        'observabilitySettings',
                         'readConcern', 'readPreference', 'retryReads',
                         'retryWrites', 'serverApi', 'serverSettingsBuilder', 'socketSettingsBuilder', 'sslSettingsBuilder',
-                        'timeoutMS', 'transportSettings', 'uuidRepresentation', 'writeConcern']
+                        'timeoutMS', 'transportSettings', 'uuidRepresentation',
+                        'writeConcern']
 
         then:
         actual == expected
@@ -568,9 +570,13 @@ class MongoClientSettingsSpecification extends Specification {
         def expected = ['addCommandListener', 'applicationName', 'applyConnectionString', 'applyToClusterSettings',
                         'applyToConnectionPoolSettings', 'applyToLoggerSettings', 'applyToServerSettings', 'applyToSocketSettings',
                         'applyToSslSettings', 'autoEncryptionSettings', 'build', 'codecRegistry', 'commandListenerList',
-                        'compressorList', 'contextProvider', 'credential', 'dnsClient', 'heartbeatConnectTimeoutMS',
-                        'heartbeatSocketTimeoutMS', 'inetAddressResolver', 'readConcern', 'readPreference', 'retryReads', 'retryWrites',
-                        'serverApi', 'timeout', 'transportSettings', 'uuidRepresentation', 'writeConcern']
+                        'compressorList', 'contextProvider', 'credential', 'dnsClient',
+                        'heartbeatConnectTimeoutMS',
+                        'heartbeatSocketTimeoutMS', 'inetAddressResolver', 'observabilitySettings', 'readConcern',
+                        'readPreference',
+                        'retryReads', 'retryWrites',
+                        'serverApi', 'timeout', 'transportSettings',
+                        'uuidRepresentation', 'writeConcern']
 
         then:
         actual == expected

@@ -16,11 +16,8 @@
 
 package com.mongodb.client;
 
-import com.mongodb.MongoNamespace;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.internal.connection.ServerHelper;
-import org.bson.BsonDocument;
-import org.bson.BsonDocumentWrapper;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
 import org.junit.jupiter.api.AfterEach;
@@ -40,7 +37,7 @@ public class DatabaseTestCase {
 
     @BeforeEach
     public void setUp() {
-        client =  getMongoClient();
+        client = getMongoClient();
         database = client.getDatabase(getDefaultDatabaseName());
         collection = database.getCollection(getClass().getName());
         collection.drop();
@@ -58,23 +55,7 @@ public class DatabaseTestCase {
         }
     }
 
-    protected String getDatabaseName() {
-        return database.getName();
-    }
-
-    protected String getCollectionName() {
-        return collection.getNamespace().getCollectionName();
-    }
-
-    protected MongoNamespace getNamespace() {
-        return collection.getNamespace();
-    }
-
     protected CollectionHelper<Document> getCollectionHelper() {
-        return new CollectionHelper<>(new DocumentCodec(), getNamespace());
-    }
-
-    protected BsonDocument wrap(final Document document) {
-        return new BsonDocumentWrapper<>(document, new DocumentCodec());
+        return new CollectionHelper<>(new DocumentCodec(), collection.getNamespace());
     }
 }

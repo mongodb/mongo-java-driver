@@ -31,7 +31,6 @@ import org.bson.BsonBinarySubType
 import org.bson.BsonDocument
 import org.bson.BsonString
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.Fixture.getDefaultDatabaseName
 import static com.mongodb.client.Fixture.getMongoClient
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder
@@ -57,7 +56,6 @@ class ClientSideEncryptionExternalKeyVaultSpecification extends FunctionalSpecif
     private TestCommandListener commandListener
 
     def setup() {
-        assumeTrue(serverVersionAtLeast(4, 2))
         assumeTrue('Key vault tests disabled',
                 System.getProperty('AWS_ACCESS_KEY_ID') != null
                         && !System.getProperty('AWS_ACCESS_KEY_ID').isEmpty())

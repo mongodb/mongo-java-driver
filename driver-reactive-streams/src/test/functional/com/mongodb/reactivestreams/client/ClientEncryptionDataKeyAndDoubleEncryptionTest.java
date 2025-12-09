@@ -42,7 +42,6 @@ import java.util.Map;
 
 import static com.mongodb.ClusterFixture.getEnv;
 import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static com.mongodb.client.model.Filters.eq;
 import static java.lang.String.format;
@@ -70,12 +69,11 @@ public class ClientEncryptionDataKeyAndDoubleEncryptionTest {
 
     @Before
     public void setUp() {
-        assumeTrue(serverVersionAtLeast(4, 2));
         assumeTrue("Has encryption tests", hasEncryptionTestsEnabled());
 
         // Step 1: create unencrypted client
         commandListener = new TestCommandListener();
-        client = new SyncMongoClient(MongoClients.create(getMongoClientSettingsBuilder().addCommandListener(commandListener).build()));
+        client = new SyncMongoClient(getMongoClientSettingsBuilder().addCommandListener(commandListener));
         client.getDatabase("keyvault").getCollection("datakeys").drop();
         client.getDatabase("db").getCollection("coll").drop();
 
@@ -116,12 +114,11 @@ public class ClientEncryptionDataKeyAndDoubleEncryptionTest {
         }};
 
         String keyVaultNamespace = "keyvault.datakeys";
-        clientEncrypted = new SyncMongoClient(MongoClients.create(getMongoClientSettingsBuilder()
+        clientEncrypted = new SyncMongoClient(getMongoClientSettingsBuilder()
                 .autoEncryptionSettings(AutoEncryptionSettings.builder()
                         .keyVaultNamespace(keyVaultNamespace)
                         .kmsProviders(kmsProviders)
                         .schemaMap(schemaMap)
-                .build())
                 .build()));
 
         clientEncryption = ClientEncryptions.create(

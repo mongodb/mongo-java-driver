@@ -20,6 +20,8 @@ import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.connection.ServerType;
 
+import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION;
+
 /**
  * The message settings
  *
@@ -75,7 +77,7 @@ public final class MessageSettings {
         private int maxDocumentSize = DEFAULT_MAX_DOCUMENT_SIZE;
         private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
         private int maxBatchCount = DEFAULT_MAX_BATCH_COUNT;
-        private int maxWireVersion;
+        private int maxWireVersion = UNKNOWN_WIRE_VERSION;
         private ServerType serverType;
         private boolean sessionSupported;
         private boolean cryptd;

@@ -103,13 +103,13 @@ public abstract class Authenticator {
             OperationContext operationContext, SingleResultCallback<Void> callback);
 
     public void reauthenticate(final InternalConnection connection, final OperationContext operationContext) {
-        authenticate(connection, connection.getDescription(), operationContext);
+        authenticate(connection, connection.getDescription(), operationContext.withConnectionEstablishmentSessionContext());
     }
 
     public void reauthenticateAsync(final InternalConnection connection, final OperationContext operationContext,
                                     final SingleResultCallback<Void> callback) {
         beginAsync().thenRun((c) -> {
-            authenticateAsync(connection, connection.getDescription(), operationContext, c);
+            authenticateAsync(connection, connection.getDescription(), operationContext.withConnectionEstablishmentSessionContext(), c);
         }).finish(callback);
     }
 }

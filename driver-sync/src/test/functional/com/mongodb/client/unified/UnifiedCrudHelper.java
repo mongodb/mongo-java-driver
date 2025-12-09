@@ -17,6 +17,7 @@
 package com.mongodb.client.unified;
 
 import com.mongodb.CursorType;
+import com.mongodb.MongoDriverInformation;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
@@ -39,6 +40,7 @@ import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.ListSearchIndexesIterable;
 import com.mongodb.client.MongoChangeStreamCursor;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -55,6 +57,7 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.DropCollectionOptions;
 import com.mongodb.client.model.DropIndexOptions;
 import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
@@ -75,6 +78,7 @@ import com.mongodb.client.model.TimeSeriesOptions;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
 import com.mongodb.client.model.bulk.ClientBulkWriteResult;
@@ -134,6 +138,7 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static java.util.Objects.requireNonNull;
+import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 
 @SuppressWarnings("deprecation")
@@ -407,6 +412,11 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         });
     }
 
+    /**
+     * There is no explicit {@code findOne()} method in {@link MongoCollection} class.
+     * Its feature was emulated by {@link FindIterable#first()}, which would close cursor on server
+     * by setting {@code batchSize} and {@code limit} appropriately.
+     */
     OperationResult executeFindOne(final BsonDocument operation) {
         return resultOf(() ->  createFindIterable(operation).first());
     }
@@ -632,6 +642,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 case "arrayFilters":
                     options.arrayFilters(cur.getValue().asArray().stream().map(BsonValue::asDocument).collect(toList()));
                     break;
+                case "bypassDocumentValidation":
+                    options.bypassDocumentValidation(cur.getValue().asBoolean().getValue());
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -707,6 +720,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                     break;
                 case "collation":
                     options.collation(asCollation(cur.getValue().asDocument()));
+                    break;
+                case "bypassDocumentValidation":
+                    options.bypassDocumentValidation(cur.getValue().asBoolean().getValue());
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -824,6 +840,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                         break;
                     case "maxAwaitTimeMS":
                         iterable.maxAwaitTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                        break;
+                    case "bypassDocumentValidation":
+                        iterable.bypassDocumentValidation(cur.getValue().asBoolean().getValue());
                         break;
                     default:
                         throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -975,6 +994,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 case "comment":
                     options.comment(cur.getValue());
                     break;
+                case "bypassDocumentValidation":
+                    options.bypassDocumentValidation(cur.getValue().asBoolean().getValue());
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -1011,6 +1033,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                     break;
                 case "comment":
                     options.comment(cur.getValue());
+                    break;
+                case "bypassDocumentValidation":
+                    options.bypassDocumentValidation(cur.getValue().asBoolean().getValue());
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -1055,6 +1080,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                     break;
                 case "let":
                     options.let(cur.getValue().asDocument());
+                    break;
+                case "bypassDocumentValidation":
+                    options.bypassDocumentValidation(cur.getValue().asBoolean().getValue());
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -1186,6 +1214,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 case "sort":
                     options.sort(cur.getValue().asDocument());
                     break;
+                case "bypassDocumentValidation":
+                    options.bypassDocumentValidation(cur.getValue().asBoolean().getValue());
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -1222,6 +1253,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                     break;
                 case "sort":
                     options.sort(cur.getValue().asDocument());
+                    break;
+                case "bypassDocumentValidation":
+                    options.bypassDocumentValidation(cur.getValue().asBoolean().getValue());
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -1330,14 +1364,19 @@ final class UnifiedCrudHelper extends UnifiedHelper {
     public OperationResult executeDropCollection(final BsonDocument operation) {
         MongoDatabase database = getMongoDatabase(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
-        String collectionName = arguments.getString("collection").getValue();
+        String collectionName = arguments.remove("collection").asString().getValue();
 
-        if (operation.getDocument("arguments").size() > 1) {
-            throw new UnsupportedOperationException("Unexpected arguments " + operation.get("arguments"));
+        DropCollectionOptions dropCollectionOptions = new DropCollectionOptions();
+        for (Map.Entry<String, BsonValue> entry : arguments.entrySet()) {
+            if (entry.getKey().equals("encryptedFields")) {
+                dropCollectionOptions.encryptedFields(entry.getValue().asDocument());
+            } else {
+                throw new UnsupportedOperationException("Unsupported drop collections option: " + entry.getKey());
+            }
         }
 
         return resultOf(() -> {
-            database.getCollection(collectionName).drop();
+            database.getCollection(collectionName).drop(dropCollectionOptions);
             return null;
         });
     }
@@ -1351,10 +1390,10 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         // In Java driver there is a separate method for creating a view, but in the unified test CRUD format
         // views and collections are both created with the createCollection operation. We use the createView
         // method if the requisite arguments are present.
-        if (arguments.containsKey("viewOn") && arguments.containsKey("pipeline")) {
+        if (arguments.containsKey("viewOn")) {
             String viewOn = arguments.getString("viewOn").getValue();
             List<BsonDocument> pipeline =
-                    arguments.getArray("pipeline").stream().map(BsonValue::asDocument).collect(toList());
+                    arguments.getArray("pipeline", new BsonArray()).stream().map(BsonValue::asDocument).collect(toList());
 
             for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
                 switch (cur.getKey()) {
@@ -1396,6 +1435,14 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                         break;
                     case "clusteredIndex":
                         options.clusteredIndexOptions(createClusteredIndexOptions(cur.getValue().asDocument()));
+                        break;
+                    case "encryptedFields":
+                        options.encryptedFields(cur.getValue().asDocument());
+                        break;
+                    case "validator":
+                        ValidationOptions validationOptions = new ValidationOptions();
+                        validationOptions.validator(cur.getValue().asDocument());
+                        options.validationOptions(validationOptions);
                         break;
                     default:
                         throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -1607,7 +1654,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         BsonDocument model = bsonValue.asDocument();
         BsonDocument definition = model.getDocument("definition");
         SearchIndexType type = model.containsKey("type") ? getSearchIndexType(model.getString("type")) : null;
-        String name = Optional.ofNullable(model.getString("name", null))
+        String name = ofNullable(model.getString("name", null))
                 .map(BsonString::getValue).
                 orElse(null);
         return new SearchIndexModel(name, definition, type);
@@ -1616,7 +1663,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
 
     OperationResult executeListSearchIndexes(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = getMongoCollection(operation);
-        Optional<BsonDocument> arguments = Optional.ofNullable(operation.getOrDefault("arguments", null)).map(BsonValue::asDocument);
+        Optional<BsonDocument> arguments = ofNullable(operation.getOrDefault("arguments", null)).map(BsonValue::asDocument);
 
         if (arguments.isPresent()) {
             ListSearchIndexesIterable<BsonDocument> iterable = createListSearchIndexesIterable(collection, arguments.get());
@@ -1634,7 +1681,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
 
     private ListSearchIndexesIterable<BsonDocument> createListSearchIndexesIterable(final MongoCollection<BsonDocument> collection,
             final BsonDocument arguments) {
-        Optional<String> name = Optional.ofNullable(arguments.getOrDefault("name", null))
+        Optional<String> name = ofNullable(arguments.getOrDefault("name", null))
                 .map(BsonValue::asString).map(BsonString::getValue);
 
         ListSearchIndexesIterable<BsonDocument> iterable = collection.listSearchIndexes(BsonDocument.class);
@@ -1930,6 +1977,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 case "upsert":
                     options.upsert(argument.asBoolean().getValue());
                     break;
+                case "sort":
+                    options.sort(argument.asDocument());
+                    break;
                 default:
                     throw new UnsupportedOperationException(format("Unsupported argument: key=%s, argument=%s", key, argument));
             }
@@ -1938,7 +1988,16 @@ final class UnifiedCrudHelper extends UnifiedHelper {
     }
 
     private static ClientUpdateOneOptions getClientUpdateOneOptions(final BsonDocument arguments) {
-        return fillAbstractClientUpdateOptions(new ConcreteClientUpdateOneOptions(), arguments);
+        ConcreteClientUpdateOneOptions options = new ConcreteClientUpdateOneOptions();
+
+        if (arguments.containsKey("sort")) {
+            BsonDocument sort = arguments
+                    .remove("sort")
+                    .asDocument();
+            options.sort(sort);
+        }
+
+        return fillAbstractClientUpdateOptions(options, arguments);
     }
 
     private static ClientUpdateManyOptions getClientUpdateManyOptions(final BsonDocument arguments) {
@@ -2173,6 +2232,24 @@ final class UnifiedCrudHelper extends UnifiedHelper {
 
         return resultOf(() ->
                 new BsonInt64(collection.estimatedDocumentCount(options)));
+    }
+
+    public OperationResult executeUpdateClientMetadata(final BsonDocument operation) {
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+        BsonDocument driverInfo = arguments.getDocument("driverInfoOptions");
+
+        MongoDriverInformation mongoDriverInformation = MongoDriverInformation.builder()
+                .driverVersion(driverInfo.getString("version").getValue())
+                .driverName(driverInfo.getString("name").getValue())
+                .driverPlatform(driverInfo.getString("platform").getValue())
+                .build();
+
+        String clientId = operation.getString("object").getValue();
+        MongoClient client = entities.getClient(clientId);
+        return resultOf(() -> {
+            client.appendMetadata(mongoDriverInformation);
+            return null;
+        });
     }
 
     @NonNull

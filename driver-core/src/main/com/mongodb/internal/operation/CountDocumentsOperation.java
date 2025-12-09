@@ -21,6 +21,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -37,7 +38,8 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
+public class CountDocumentsOperation implements ReadOperationSimple<Long> {
+    private static final String COMMAND_NAME = "aggregate";
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
     private final MongoNamespace namespace;
     private boolean retryReads;
@@ -120,15 +122,26 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
     }
 
     @Override
-    public Long execute(final ReadBinding binding) {
-        try (BatchCursor<BsonDocument> cursor = getAggregateOperation().execute(binding)) {
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+    @Override
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    @Override
+    public Long execute(final ReadBinding binding, final OperationContext operationContext) {
+        try (BatchCursor<BsonDocument> cursor = getAggregateOperation().execute(binding, operationContext)) {
             return cursor.hasNext() ? getCountFromAggregateResults(cursor.next()) : 0;
         }
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
-        getAggregateOperation().executeAsync(binding, (result, t) -> {
+    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext,
+                             final SingleResultCallback<Long> callback) {
+        getAggregateOperation().executeAsync(binding, operationContext, (result, t) -> {
             if (t != null) {
                 callback.onResult(null, t);
             } else {

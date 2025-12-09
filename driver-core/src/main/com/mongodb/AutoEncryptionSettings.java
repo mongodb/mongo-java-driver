@@ -24,8 +24,10 @@ import javax.net.ssl.SSLContext;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Collections.unmodifiableMap;
 
@@ -73,6 +75,8 @@ public final class AutoEncryptionSettings {
     private final boolean bypassAutoEncryption;
     private final Map<String, BsonDocument> encryptedFieldsMap;
     private final boolean bypassQueryAnalysis;
+    @Nullable
+    private final Long keyExpirationMS;
 
     /**
      * A builder for {@code AutoEncryptionSettings} so that {@code AutoEncryptionSettings} can be immutable, and to support easier
@@ -90,6 +94,7 @@ public final class AutoEncryptionSettings {
         private boolean bypassAutoEncryption;
         private Map<String, BsonDocument> encryptedFieldsMap = Collections.emptyMap();
         private boolean bypassQueryAnalysis;
+        @Nullable private Long keyExpirationMS;
 
         /**
          * Sets the key vault settings.
@@ -233,6 +238,22 @@ public final class AutoEncryptionSettings {
          */
         public Builder bypassQueryAnalysis(final boolean bypassQueryAnalysis) {
             this.bypassQueryAnalysis = bypassQueryAnalysis;
+            return this;
+        }
+
+        /**
+         * The cache expiration time for data encryption keys.
+         * <p>Defaults to {@code null} which defers to libmongocrypt's default which is currently 60000 ms. Set to 0 to disable key expiration.</p>
+         *
+         * @param keyExpiration the cache expiration time in milliseconds or null to use libmongocrypt's default.
+         * @param timeUnit the time unit
+         * @return this
+         * @see #getKeyExpiration(TimeUnit)
+         * @since 5.5
+         */
+        public Builder keyExpiration(@Nullable final Long keyExpiration, final TimeUnit timeUnit) {
+            assertTrue(keyExpiration == null || keyExpiration >= 0, "keyExpiration must be >= 0 or null");
+            this.keyExpirationMS = keyExpiration == null ? null : TimeUnit.MILLISECONDS.convert(keyExpiration, timeUnit);
             return this;
         }
 
@@ -488,6 +509,21 @@ public final class AutoEncryptionSettings {
         return bypassQueryAnalysis;
     }
 
+    /**
+     * Returns the cache expiration time for data encryption keys.
+     *
+     * <p>Defaults to {@code null} which defers to libmongocrypt's default which is currently {@code 60000 ms}.
+     * Set to {@code 0} to disable key expiration.</p>
+     *
+     * @param timeUnit the time unit, which must not be null
+     * @return the cache expiration time or null if not set.
+     * @since 5.5
+     */
+    @Nullable
+    public Long getKeyExpiration(final TimeUnit timeUnit) {
+        return keyExpirationMS == null ? null : timeUnit.convert(keyExpirationMS, TimeUnit.MILLISECONDS);
+    }
+
     private AutoEncryptionSettings(final Builder builder) {
         this.keyVaultMongoClientSettings = builder.keyVaultMongoClientSettings;
         this.keyVaultNamespace = notNull("keyVaultNamespace", builder.keyVaultNamespace);
@@ -499,6 +535,7 @@ public final class AutoEncryptionSettings {
         this.bypassAutoEncryption = builder.bypassAutoEncryption;
         this.encryptedFieldsMap = builder.encryptedFieldsMap;
         this.bypassQueryAnalysis = builder.bypassQueryAnalysis;
+        this.keyExpirationMS = builder.keyExpirationMS;
     }
 
     @Override

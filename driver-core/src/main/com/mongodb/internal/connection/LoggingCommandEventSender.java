@@ -78,7 +78,7 @@ class LoggingCommandEventSender implements CommandEventSender {
             @Nullable final CommandListener commandListener,
             final OperationContext operationContext,
             final CommandMessage message,
-            final ByteBufferBsonOutput bsonOutput,
+            final BsonDocument commandDocument,
             final StructuredLogger logger,
             final LoggerSettings loggerSettings) {
         this.description = description;
@@ -88,7 +88,7 @@ class LoggingCommandEventSender implements CommandEventSender {
         this.loggerSettings = loggerSettings;
         this.startTimeNanos = System.nanoTime();
         this.message = message;
-        this.commandDocument = message.getCommandDocument(bsonOutput);
+        this.commandDocument = commandDocument;
         this.commandName = commandDocument.getFirstKey();
         this.redactionRequired = securitySensitiveCommands.contains(commandName)
                 || (securitySensitiveHelloCommands.contains(commandName) && commandDocument.containsKey("speculativeAuthenticate"));
@@ -102,7 +102,7 @@ class LoggingCommandEventSender implements CommandEventSender {
 
             logEventMessage(messagePrefix, "Command started", null, entries -> {
                         entries.add(new Entry(COMMAND_NAME, commandName));
-                        entries.add(new Entry(DATABASE_NAME, message.getNamespace().getDatabaseName()));
+                        entries.add(new Entry(DATABASE_NAME, message.getDatabase()));
                     },
                     entries -> entries.add(new Entry(COMMAND_CONTENT, command)));
         }
@@ -111,7 +111,7 @@ class LoggingCommandEventSender implements CommandEventSender {
             BsonDocument commandDocumentForEvent = redactionRequired
                     ? new BsonDocument() : commandDocument;
 
-            sendCommandStartedEvent(message, message.getNamespace().getDatabaseName(), commandName, commandDocumentForEvent, description,
+            sendCommandStartedEvent(message, message.getDatabase(), commandName, commandDocumentForEvent, description,
                     assertNotNull(commandListener), operationContext);
         }
         // the buffer underlying the command document may be released after the started event, so set to null to ensure it's not used
@@ -134,14 +134,14 @@ class LoggingCommandEventSender implements CommandEventSender {
             logEventMessage(messagePrefix, "Command failed", commandEventException,
                     entries -> {
                         entries.add(new Entry(COMMAND_NAME, commandName));
-                        entries.add(new Entry(DATABASE_NAME, message.getNamespace().getDatabaseName()));
+                        entries.add(new Entry(DATABASE_NAME, message.getDatabase()));
                         entries.add(new Entry(DURATION_MS, elapsedTimeNanos / NANOS_PER_MILLI));
                     },
                     entries -> entries.add(new Entry(COMMAND_CONTENT, null)));
         }
 
         if (eventRequired()) {
-            sendCommandFailedEvent(message, commandName, message.getNamespace().getDatabaseName(), description, elapsedTimeNanos,
+            sendCommandFailedEvent(message, commandName, message.getDatabase(), description, elapsedTimeNanos,
                     commandEventException, commandListener, operationContext);
         }
     }
@@ -170,7 +170,7 @@ class LoggingCommandEventSender implements CommandEventSender {
             logEventMessage("Command succeeded", null,
                     entries -> {
                         entries.add(new Entry(COMMAND_NAME, commandName));
-                        entries.add(new Entry(DATABASE_NAME, message.getNamespace().getDatabaseName()));
+                        entries.add(new Entry(DATABASE_NAME, message.getDatabase()));
                         entries.add(new Entry(DURATION_MS, elapsedTimeNanos / NANOS_PER_MILLI));
                     },
                     entries -> entries.add(new Entry(REPLY, replyString)), format);
@@ -178,7 +178,7 @@ class LoggingCommandEventSender implements CommandEventSender {
 
         if (eventRequired()) {
             BsonDocument responseDocumentForEvent = redactionRequired ? new BsonDocument() : reply;
-            sendCommandSucceededEvent(message, commandName, message.getNamespace().getDatabaseName(), responseDocumentForEvent,
+            sendCommandSucceededEvent(message, commandName, message.getDatabase(), responseDocumentForEvent,
                     description, elapsedTimeNanos, commandListener, operationContext);
         }
     }

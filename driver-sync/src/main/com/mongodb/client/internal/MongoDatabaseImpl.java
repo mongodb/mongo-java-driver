@@ -34,7 +34,7 @@ import com.mongodb.client.model.CreateViewOptions;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
-import com.mongodb.internal.operation.SyncOperations;
+import com.mongodb.internal.operation.Operations;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -46,7 +46,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -69,7 +68,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
 
     private final TimeoutSettings timeoutSettings;
     private final OperationExecutor executor;
-    private final SyncOperations<BsonDocument> operations;
+    private final Operations<BsonDocument> operations;
 
     public MongoDatabaseImpl(final String name, final CodecRegistry codecRegistry, final ReadPreference readPreference,
             final WriteConcern writeConcern, final boolean retryWrites, final boolean retryReads,
@@ -88,7 +87,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
         this.autoEncryptionSettings = autoEncryptionSettings;
         this.timeoutSettings = timeoutSettings;
         this.executor = notNull("executor", executor);
-        this.operations = new SyncOperations<>(new MongoNamespace(name, COMMAND_COLLECTION_NAME), BsonDocument.class, readPreference,
+        this.operations = new Operations<>(new MongoNamespace(name, "_ignored"), BsonDocument.class, readPreference,
                 codecRegistry, readConcern, writeConcern, retryWrites, retryReads, timeoutSettings);
     }
 
@@ -118,6 +117,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
+    @Nullable
     public Long getTimeout(final TimeUnit timeUnit) {
         Long timeoutMS = timeoutSettings.getTimeoutMS();
         return timeoutMS == null ? null : notNull("timeUnit", timeUnit).convert(timeoutMS, MILLISECONDS);

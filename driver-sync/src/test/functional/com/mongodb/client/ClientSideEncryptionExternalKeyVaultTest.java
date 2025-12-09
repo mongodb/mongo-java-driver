@@ -20,9 +20,11 @@ import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCredential;
+import com.mongodb.MongoNamespace;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.vault.EncryptOptions;
+import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.client.vault.ClientEncryptions;
 import org.bson.BsonBinary;
@@ -35,7 +37,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -45,7 +46,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.mongodb.ClusterFixture.isClientSideEncryptionTest;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static org.junit.Assert.assertEquals;
@@ -57,6 +57,7 @@ public class ClientSideEncryptionExternalKeyVaultTest {
     private MongoClient client, clientEncrypted;
     private ClientEncryption clientEncryption;
     private final boolean withExternalKeyVault;
+    private static final MongoNamespace NAMESPACE = new MongoNamespace("db", ClientSideEncryptionExternalKeyVaultTest.class.getName());
 
     public ClientSideEncryptionExternalKeyVaultTest(final boolean withExternalKeyVault) {
         this.withExternalKeyVault = withExternalKeyVault;
@@ -64,7 +65,6 @@ public class ClientSideEncryptionExternalKeyVaultTest {
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
-        assumeTrue(serverVersionAtLeast(4, 2));
         assumeTrue("Encryption test with external keyVault is disabled", isClientSideEncryptionTest());
 
         /* Step 1: get unencrypted client and recreate keys collection */
@@ -84,7 +84,7 @@ public class ClientSideEncryptionExternalKeyVaultTest {
                 + "UN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk");
         localMasterkey.put("key", localMasterkeyBytes);
         kmsProviders.put("local", localMasterkey);
-        schemaMap.put("db.coll", bsonDocumentFromPath("external-schema.json"));
+        schemaMap.put(NAMESPACE.getFullName(), bsonDocumentFromPath("external-schema.json"));
 
         AutoEncryptionSettings.Builder autoEncryptionSettingsBuilder = AutoEncryptionSettings.builder()
                 .keyVaultNamespace("keyvault.datakeys")
@@ -123,8 +123,8 @@ public class ClientSideEncryptionExternalKeyVaultTest {
     public void testExternal() {
         boolean authExceptionThrown = false;
         MongoCollection<BsonDocument> coll = clientEncrypted
-                .getDatabase("db")
-                .getCollection("coll", BsonDocument.class);
+                .getDatabase(NAMESPACE.getDatabaseName())
+                .getCollection(NAMESPACE.getCollectionName(), BsonDocument.class);
         try {
             coll.insertOne(new BsonDocument().append("encrypted", new BsonString("test")));
         } catch (MongoSecurityException mse) {
@@ -143,9 +143,8 @@ public class ClientSideEncryptionExternalKeyVaultTest {
         assertEquals(authExceptionThrown, withExternalKeyVault);
     }
 
-    private static BsonDocument bsonDocumentFromPath(final String path) throws IOException, URISyntaxException {
-        return getTestDocument(new File(ClientSideEncryptionExternalKeyVaultTest.class
-                .getResource("/client-side-encryption-external/" + path).toURI()));
+    private static BsonDocument bsonDocumentFromPath(final String path) {
+        return getTestDocument("client-side-encryption/external/" + path);
     }
 
     @Parameterized.Parameters(name = "withExternalKeyVault: {0}")
@@ -169,5 +168,7 @@ public class ClientSideEncryptionExternalKeyVaultTest {
                 // ignore
             }
         }
+
+        CollectionHelper.drop(NAMESPACE);
     }
 }
