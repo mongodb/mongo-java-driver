@@ -72,7 +72,7 @@ public abstract class AbstractChangeSteamFunctionalTest {
                     + "    },"
                     + "    data: {"
                     + "        failCommands: ['getMore'],"
-                    + "        errorCode: 10107,"
+                    + "        errorCode: 9001,"
                     + "        errorLabels: ['ResumableChangeStreamError']"
                     + "    }"
                     + "}");
