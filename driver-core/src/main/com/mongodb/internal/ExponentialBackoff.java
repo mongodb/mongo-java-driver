@@ -19,6 +19,9 @@ package com.mongodb.internal;
 import com.mongodb.annotations.NotThreadSafe;
 
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.DoubleSupplier;
+
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
 /**
  * Implements exponential backoff with jitter for retry scenarios.
@@ -47,6 +50,9 @@ public final class ExponentialBackoff {
     private final double maxBackoffMs;
     private final double growthFactor;
     private int retryCount = 0;
+
+    // Test-only jitter supplier - when set, overrides ThreadLocalRandom
+    private static volatile DoubleSupplier testJitterSupplier = null;
 
     /**
      * Creates an exponential backoff instance with specified parameters.
@@ -95,7 +101,10 @@ public final class ExponentialBackoff {
      * @return delay in milliseconds
      */
     public long calculateDelayMs() {
-        double jitter = ThreadLocalRandom.current().nextDouble();
+        // Use test jitter supplier if set, otherwise use ThreadLocalRandom
+        double jitter = testJitterSupplier != null
+                ? testJitterSupplier.getAsDouble()
+                : ThreadLocalRandom.current().nextDouble();
         double exponentialBackoff = baseBackoffMs * Math.pow(growthFactor, retryCount);
         double cappedBackoff = Math.min(exponentialBackoff, maxBackoffMs);
         retryCount++;
@@ -103,31 +112,23 @@ public final class ExponentialBackoff {
     }
 
     /**
-     * Apply backoff delay by sleeping current thread.
+     * Set a custom jitter supplier for testing purposes.
+     * This overrides the default ThreadLocalRandom jitter generation.
      *
-     * @throws InterruptedException if thread is interrupted during sleep
+     * @param supplier A DoubleSupplier that returns values in [0, 1) range, or null to use default
      */
-    public void applyBackoff() throws InterruptedException {
-        long delayMs = calculateDelayMs();
-        if (delayMs > 0) {
-            Thread.sleep(delayMs);
-        }
+    @VisibleForTesting(otherwise = PRIVATE)
+    public static void setTestJitterSupplier(final DoubleSupplier supplier) {
+        testJitterSupplier = supplier;
     }
 
     /**
-     * Check if applying backoff would exceed the retry time limit.
-     * @param startTimeMs start time of retry attempts
-     * @param maxRetryTimeMs maximum retry time allowed
-     * @return true if backoff would exceed limit, false otherwise
+     * Clear the test jitter supplier, reverting to default ThreadLocalRandom behavior.
      */
-//    public boolean wouldExceedTimeLimit(final long startTimeMs, final long maxRetryTimeMs) {
-//        long elapsedMs = ClientSessionClock.INSTANCE.now() - startTimeMs;
-//        // Peek at next delay without incrementing counter
-//        double exponentialBackoff = baseBackoffMs * Math.pow(growthFactor, retryCount);
-//        double cappedBackoff = Math.min(exponentialBackoff, maxBackoffMs);
-//        long maxPossibleDelay = Math.round(cappedBackoff); // worst case with jitter=1
-//        return elapsedMs + maxPossibleDelay > maxRetryTimeMs;
-//    }
+    @VisibleForTesting(otherwise = PRIVATE)
+    public static void clearTestJitterSupplier() {
+        testJitterSupplier = null;
+    }
 
     /**
      * Reset retry counter for new sequence of retries.
