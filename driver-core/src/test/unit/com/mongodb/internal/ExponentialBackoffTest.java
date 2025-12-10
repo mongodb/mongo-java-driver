@@ -16,12 +16,19 @@
 
 package com.mongodb.internal;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ExponentialBackoffTest {
+
+    @AfterEach
+    void cleanup() {
+        // Always clear the test jitter supplier after each test to avoid test pollution
+        ExponentialBackoff.clearTestJitterSupplier();
+    }
 
     @Test
     void testTransactionRetryBackoff() {
@@ -73,13 +80,11 @@ public class ExponentialBackoffTest {
 
         ExponentialBackoff backoff = ExponentialBackoff.forTransactionRetry();
 
-        double[] expectedMaxValues = {5.0, 7.5, 11.25, 16.875, 25.3125, 37.96875, 56.953125, 85.4296875,
-                128.14453125, 192.21679688, 288.32519531, 432.48779297, 500.0};
+        double[] expectedMaxValues = {5.0, 7.5, 11.25, 16.875, 25.3125, 37.96875, 56.953125, 85.4296875, 128.14453125, 192.21679688, 288.32519531, 432.48779297, 500.0};
 
         for (int i = 0; i < expectedMaxValues.length; i++) {
             long delay = backoff.calculateDelayMs();
-            assertTrue(delay >= 0 && delay <= Math.round(expectedMaxValues[i]),
-                    String.format("Retry %d: delay should be 0-%d ms, got: %d", i, Math.round(expectedMaxValues[i]), delay));
+            assertTrue(delay >= 0 && delay <= Math.round(expectedMaxValues[i]), String.format("Retry %d: delay should be 0-%d ms, got: %d", i, Math.round(expectedMaxValues[i]), delay));
         }
     }
 
@@ -162,32 +167,6 @@ public class ExponentialBackoffTest {
         assertTrue(delay >= 0 && delay <= 5, "First delay after reset should be 0-5ms, got: " + delay);
     }
 
-//    @Test
-//    void testWouldExceedTimeLimitTransactionRetry() {
-//        ExponentialBackoff backoff = ExponentialBackoff.forTransactionRetry();
-//        long startTime = ClientSessionClock.INSTANCE.now();
-//
-//        // Initially, should not exceed time limit
-//        assertFalse(backoff.wouldExceedTimeLimit(startTime, 120000));
-//
-//        // With very little time remaining (4ms), first backoff (up to 5ms) would exceed
-//        long nearLimitTime = startTime - 119996; // 4ms remaining
-//        assertTrue(backoff.wouldExceedTimeLimit(nearLimitTime, 120000));
-//    }
-
-//    @Test
-//    void testWouldExceedTimeLimitCommandRetry() {
-//        ExponentialBackoff backoff = ExponentialBackoff.forCommandRetry();
-//        long startTime = ClientSessionClock.INSTANCE.now();
-//
-//        // Initially, should not exceed time limit
-//        assertFalse(backoff.wouldExceedTimeLimit(startTime, 10000));
-//
-//        // With 99ms remaining, first backoff (up to 100ms) would exceed
-//        long nearLimitTime = startTime - 9901; // 99ms remaining
-//        assertTrue(backoff.wouldExceedTimeLimit(nearLimitTime, 10000));
-//    }
-
     @Test
     void testCommandRetrySequenceMatchesSpec() {
         // Test that command retry follows spec: 100ms * 2^i capped at 10000ms
@@ -198,8 +177,117 @@ public class ExponentialBackoffTest {
         for (int i = 0; i < expectedMaxValues.length; i++) {
             long delay = backoff.calculateDelayMs();
             double expectedMax = expectedMaxValues[i];
-            assertTrue(delay >= 0 && delay <= Math.round(expectedMax),
-                    String.format("Retry %d: delay should be 0-%d ms, got: %d", i, Math.round(expectedMax), delay));
+            assertTrue(delay >= 0 && delay <= Math.round(expectedMax), String.format("Retry %d: delay should be 0-%d ms, got: %d", i, Math.round(expectedMax), delay));
         }
+    }
+
+    // Tests for the test jitter supplier functionality
+
+    @Test
+    void testJitterSupplierWithZeroJitter() {
+        // Set jitter to always return 0 (no backoff)
+        ExponentialBackoff.setTestJitterSupplier(() -> 0.0);
+
+        ExponentialBackoff backoff = ExponentialBackoff.forTransactionRetry();
+
+        // With jitter = 0, all delays should be 0
+        for (int i = 0; i < 10; i++) {
+            long delay = backoff.calculateDelayMs();
+            assertEquals(0, delay, "With jitter=0, delay should always be 0ms");
+        }
+    }
+
+    @Test
+    void testJitterSupplierWithFullJitter() {
+        // Set jitter to always return 1.0 (full backoff)
+        ExponentialBackoff.setTestJitterSupplier(() -> 1.0);
+
+        ExponentialBackoff backoff = ExponentialBackoff.forTransactionRetry();
+
+        // Expected delays with jitter=1.0 and growth factor 1.5
+        double[] expectedDelays = {5.0, 7.5, 11.25, 16.875, 25.3125, 37.96875, 56.953125, 85.4296875, 128.14453125, 192.21679688, 288.32519531, 432.48779297, 500.0};
+
+        for (int i = 0; i < expectedDelays.length; i++) {
+            long delay = backoff.calculateDelayMs();
+            long expected = Math.round(expectedDelays[i]);
+            assertEquals(expected, delay, String.format("Retry %d: with jitter=1.0, delay should be %dms", i, expected));
+        }
+    }
+
+    @Test
+    void testJitterSupplierWithHalfJitter() {
+        // Set jitter to always return 0.5 (half backoff)
+        ExponentialBackoff.setTestJitterSupplier(() -> 0.5);
+
+        ExponentialBackoff backoff = ExponentialBackoff.forTransactionRetry();
+
+        // Expected delays with jitter=0.5 and growth factor 1.5
+        double[] expectedMaxDelays = {5.0, 7.5, 11.25, 16.875, 25.3125, 37.96875, 56.953125, 85.4296875, 128.14453125, 192.21679688, 288.32519531, 432.48779297, 500.0};
+
+        for (int i = 0; i < expectedMaxDelays.length; i++) {
+            long delay = backoff.calculateDelayMs();
+            long expected = Math.round(0.5 * expectedMaxDelays[i]);
+            assertEquals(expected, delay, String.format("Retry %d: with jitter=0.5, delay should be %dms", i, expected));
+        }
+    }
+
+    @Test
+    void testJitterSupplierForCommandRetry() {
+        // Test that custom jitter also works with command retry configuration
+        ExponentialBackoff.setTestJitterSupplier(() -> 1.0);
+
+        ExponentialBackoff backoff = ExponentialBackoff.forCommandRetry();
+
+        // Expected first few delays with jitter=1.0 and growth factor 2.0
+        long[] expectedDelays = {100, 200, 400, 800, 1600, 3200, 6400, 10000};
+
+        for (int i = 0; i < expectedDelays.length; i++) {
+            long delay = backoff.calculateDelayMs();
+            assertEquals(expectedDelays[i], delay, String.format("Command retry %d: with jitter=1.0, delay should be %dms", i, expectedDelays[i]));
+        }
+    }
+
+    @Test
+    void testClearingJitterSupplierReturnsToRandom() {
+        // First set a fixed jitter
+        ExponentialBackoff.setTestJitterSupplier(() -> 0.0);
+
+        ExponentialBackoff backoff1 = ExponentialBackoff.forTransactionRetry();
+        long delay1 = backoff1.calculateDelayMs();
+        assertEquals(0, delay1, "With jitter=0, delay should be 0ms");
+
+        // Clear the test jitter supplier
+        ExponentialBackoff.clearTestJitterSupplier();
+
+        // Now delays should be random again
+        ExponentialBackoff backoff2 = ExponentialBackoff.forTransactionRetry();
+
+        // Run multiple times to verify randomness (statistically very unlikely to get all zeros)
+        boolean foundNonZero = false;
+        for (int i = 0; i < 20; i++) {
+            long delay = backoff2.calculateDelayMs();
+            assertTrue(delay >= 0 && delay <= Math.round(5.0 * Math.pow(1.5, i)), "Delay should be within expected range");
+            if (delay > 0) {
+                foundNonZero = true;
+            }
+        }
+        assertTrue(foundNonZero, "After clearing test jitter, should get some non-zero delays (random behavior)");
+    }
+
+    @Test
+    void testJitterSupplierWithCustomBackoff() {
+        // Test that custom jitter works with custom backoff parameters
+        ExponentialBackoff.setTestJitterSupplier(() -> 0.75);
+
+        ExponentialBackoff backoff = new ExponentialBackoff(100.0, 1000.0, 2.5);
+
+        // First delay: 0.75 * 100 = 75
+        assertEquals(75, backoff.calculateDelayMs());
+
+        // Second delay: 0.75 * 100 * 2.5 = 0.75 * 250 = 188 (rounded)
+        assertEquals(188, backoff.calculateDelayMs());
+
+        // Third delay: 0.75 * 100 * 2.5^2 = 0.75 * 625 = 469 (rounded)
+        assertEquals(469, backoff.calculateDelayMs());
     }
 }
