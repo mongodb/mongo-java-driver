@@ -179,6 +179,10 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
      */
     @Test
     public void testUnexpectedEndOfStreamFromKmsProvider() throws Exception {
+        String kmsKeystoreLocation = System.getProperty("org.mongodb.test.kms.keystore.location");
+        assumeTrue(kmsKeystoreLocation != null && !kmsKeystoreLocation.isEmpty(),
+                "System property org.mongodb.test.kms.keystore.location is not set");
+
         int kmsPort = 5555;
         ClientEncryptionSettings clientEncryptionSettings = ClientEncryptionSettings.builder()
                 .keyVaultMongoClientSettings(getMongoClientSettings())
@@ -193,7 +197,7 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
         Thread serverThread = null;
         try (ClientEncryption clientEncryption = getClientEncryption(clientEncryptionSettings)) {
             serverThread = startKmsServerSimulatingEof(EncryptionFixture.buildSslContextFromKeyStore(
-                    System.getProperty("org.mongodb.test.kms.keystore.location"),
+                    kmsKeystoreLocation,
                     "server.p12"), kmsPort);
 
             MongoClientException mongoException = assertThrows(MongoClientException.class,
