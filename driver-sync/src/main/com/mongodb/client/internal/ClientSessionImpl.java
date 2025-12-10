@@ -22,7 +22,6 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoOperationTimeoutException;
-import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
@@ -258,23 +257,27 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         long maxRetryTimeMS = timeoutMS != null ? timeoutMS : MAX_RETRY_TIME_LIMIT_MS;
         ExponentialBackoff transactionBackoff = null;
         boolean isRetry = false;
+        MongoException lastError = null;
 
         try {
             outer:
             while (true) {
                 // Apply exponential backoff before retrying transaction
                 if (isRetry) {
-                    // Check if we've exceeded the retry time limit BEFORE applying backoff
-                    if (ClientSessionClock.INSTANCE.now() - startTime >= maxRetryTimeMS) {
-                        throw withTransactionTimeoutContext.hasTimeoutMS()
-                                ? new MongoOperationTimeoutException("Transaction retry time limit of " + maxRetryTimeMS + "ms exceeded")
-                                : new MongoTimeoutException("Transaction retry time limit of " + maxRetryTimeMS + "ms exceeded");
-                    }
                     if (transactionBackoff == null) {
                         transactionBackoff = ExponentialBackoff.forTransactionRetry();
                     }
+                    // Calculate backoff delay and check if it would exceed timeout
+                    long backoffMs = transactionBackoff.calculateDelayMs();
+                    if (ClientSessionClock.INSTANCE.now() - startTime + backoffMs >= maxRetryTimeMS) {
+                        // Throw the last error as per spec
+                        // lastError is always set here since we only retry on MongoException
+                        throw lastError;
+                    }
                     try {
-                        transactionBackoff.applyBackoff();
+                        if (backoffMs > 0) {
+                            Thread.sleep(backoffMs);
+                        }
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         throw new MongoClientException("Transaction retry interrupted", e);
@@ -296,6 +299,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                         MongoException exceptionToHandle = OperationHelper.unwrap((MongoException) e);
                         if (exceptionToHandle.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)
                                 && ClientSessionClock.INSTANCE.now() - startTime < maxRetryTimeMS) {
+                            lastError = exceptionToHandle;  // Track the last error for timeout scenarios
                             if (transactionSpan != null) {
                                 transactionSpan.spanFinalizing(false);
                             }
@@ -310,6 +314,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                             commitTransaction(false);
                             break;
                         } catch (MongoException e) {
+                            lastError = e;  // Track the last error for timeout scenarios
                             clearTransactionContextOnError(e);
                             if (!(e instanceof MongoOperationTimeoutException)
                                     && ClientSessionClock.INSTANCE.now() - startTime < maxRetryTimeMS) {

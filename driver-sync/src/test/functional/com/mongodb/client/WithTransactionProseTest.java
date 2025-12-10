@@ -119,12 +119,12 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     public void testRetryTimeoutEnforcedUnknownTransactionCommit() {
         MongoDatabase failPointAdminDb = client.getDatabase("admin");
         failPointAdminDb.runCommand(
-                Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 1}, "
+                Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 2}, "
                         + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 91, 'closeConnection': false}}"));
 
         try (ClientSession session = client.startSession()) {
             ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
-            session.withTransaction(() -> {
+            session.withTransaction((TransactionBody<Void>) () -> {
                 ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
                 collection.insertOne(session, new Document("_id", 2));
                 return null;
@@ -147,13 +147,13 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     public void testRetryTimeoutEnforcedTransientTransactionErrorOnCommit() {
         MongoDatabase failPointAdminDb = client.getDatabase("admin");
         failPointAdminDb.runCommand(
-                Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 1}, "
+                Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 2}, "
                         + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 251, 'codeName': 'NoSuchTransaction', "
                         + "'errmsg': 'Transaction 0 has been aborted', 'closeConnection': false}}"));
 
         try (ClientSession session = client.startSession()) {
             ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
-            session.withTransaction(() -> {
+            session.withTransaction((TransactionBody<Void>) () -> {
                 ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
                 collection.insertOne(session, Document.parse("{ _id : 1 }"));
                 return null;
@@ -218,8 +218,6 @@ public class WithTransactionProseTest extends DatabaseTestCase {
                         + "'errorLabels': ['TransientTransactionError']}}"));
 
         try (ClientSession session = client.startSession()) {
-            long startTime = System.currentTimeMillis();
-
             // Track retry count
             AtomicInteger retryCount = new AtomicInteger(0);
 
