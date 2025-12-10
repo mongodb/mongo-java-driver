@@ -25,6 +25,7 @@ import com.mongodb.client.model.Sorts;
 import com.mongodb.internal.ExponentialBackoff;
 import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -239,6 +240,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     // This test verifies that exponential backoff is enforced during commit retries
     // See: https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#retry-backoff-is-enforced
     //
+    @DisplayName("Retry Backoff is Enforced")
     @Test
     public void testRetryBackoffIsEnforced() {
         MongoDatabase failPointAdminDb = client.getDatabase("admin");
