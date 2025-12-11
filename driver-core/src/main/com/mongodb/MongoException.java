@@ -50,6 +50,22 @@ public class MongoException extends RuntimeException {
      */
     public static final String UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL = "UnknownTransactionCommitResult";
 
+    /**
+     * An error label indicating that the server is overloaded.
+     *
+     * @see #hasErrorLabel(String)
+     * @since 5.7
+     */
+    public static final String SYSTEM_OVERLOADED_ERROR_LABEL = "SystemOverloadedError";
+
+    /**
+     * An error label indicating that the operation is safely retryable.
+     *
+     * @see #hasErrorLabel(String)
+     * @since 5.7
+     */
+    public static final String RETRYABLE_ERROR_LABEL = "RetryableError";
+
     private static final long serialVersionUID = -4415279469780082174L;
 
     private final int code;

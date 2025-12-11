@@ -198,6 +198,8 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
                 helloCommandDocument.append("speculativeAuthenticate", speculativeAuthenticateDocument);
             }
         }
+        // Add backpressure support indication
+        helloCommandDocument.append("backpressure", BsonBoolean.TRUE);
         return helloCommandDocument;
     }
 
