@@ -678,7 +678,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     // The timing of when the timeout check occurred relative to the retry attempts and backoff delays could vary based on system load and jitter values, sometimes allowing
     //    the LockTimeout error to surface before the timeout was detected.
     @FlakyTest(maxAttempts = 3)
-    @Test
     public void test10CustomTestWithTransactionUsesASingleTimeoutWithLock() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeFalse(isStandalone());
