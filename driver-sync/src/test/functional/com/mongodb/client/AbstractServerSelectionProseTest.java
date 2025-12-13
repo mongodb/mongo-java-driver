@@ -80,12 +80,7 @@ public abstract class AbstractServerSelectionProseTest {
         MongoClientSettings clientSettings = getMongoClientSettingsBuilder()
                 .applicationName(appName)
                 .applyConnectionString(multiMongosConnectionString)
-                // our default `localThreshold` value is 15 ms,
-                // which deviates from the default value 3000 ms required by the specification
-                // such a small localThreshold disrupts server
-                // selection in this probabilistic test enough to make it fail noticeably often.
-                // with 3000 ms the test passes reliably.
-                .applyToClusterSettings(builder -> builder.localThreshold(3000L, TimeUnit.MILLISECONDS))
+                .applyToClusterSettings(builder -> builder.localThreshold(30_000L, TimeUnit.MILLISECONDS))
                 .applyToConnectionPoolSettings(builder -> builder
                         .minSize(tasks))
                 .addCommandListener(commandListener)
