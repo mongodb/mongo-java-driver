@@ -22,11 +22,14 @@ import com.mongodb.MongoException;
 import com.mongodb.TransactionOptions;
 import com.mongodb.client.internal.ClientSessionClock;
 import com.mongodb.client.model.Sorts;
+import com.mongodb.internal.ExponentialBackoff;
 import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.ClusterFixture.TIMEOUT;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
@@ -201,6 +204,90 @@ public class WithTransactionProseTest extends DatabaseTestCase {
             });
             assertEquals(document, returnValueFromCallback);
         }
+    }
+
+    //
+    // Test that exponential backoff is applied when retrying transactions
+    // Backoff uses growth factor of 1.5 as per spec
+    //
+    @Test
+    public void testExponentialBackoffOnTransientError() {
+        // Configure failpoint to simulate transient errors
+        MongoDatabase failPointAdminDb = client.getDatabase("admin");
+        failPointAdminDb.runCommand(
+                Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 3}, "
+                        + "'data': {'failCommands': ['insert'], 'errorCode': 112, "
+                        + "'errorLabels': ['TransientTransactionError']}}"));
+
+        try (ClientSession session = client.startSession()) {
+            // Track retry count
+            AtomicInteger retryCount = new AtomicInteger(0);
+
+            session.withTransaction(() -> {
+                retryCount.incrementAndGet();  // Count the attempt before the operation that might fail
+                collection.insertOne(session, Document.parse("{ _id : 'backoff-test' }"));
+                return retryCount;
+            });
+
+            assertEquals(4, retryCount.get(), "Expected 1 initial attempt + 3 retries");
+        } finally {
+            failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': 'off'}"));
+        }
+    }
+
+    //
+    // Test that retries within withTransaction do not occur immediately
+    // This test verifies that exponential backoff is enforced during commit retries
+    // See: https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#retry-backoff-is-enforced
+    //
+    @DisplayName("Retry Backoff is Enforced")
+    @Test
+    public void testRetryBackoffIsEnforced() {
+        MongoDatabase failPointAdminDb = client.getDatabase("admin");
+
+        // Test 1: Run with jitter = 0 (no backoff)
+        ExponentialBackoff.setTestJitterSupplier(() -> 0.0);
+
+        failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 13}, " + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 251}}"));
+
+        long noBackoffTime;
+        try (ClientSession session = client.startSession()) {
+            long startNanos = System.nanoTime();
+            session.withTransaction(() -> {
+                collection.insertOne(session, Document.parse("{ _id : 'backoff-test-no-jitter' }"));
+                return null;
+            });
+            long endNanos = System.nanoTime();
+            noBackoffTime = TimeUnit.NANOSECONDS.toMillis(endNanos - startNanos);
+        } finally {
+            // Clear the test jitter supplier to avoid affecting other tests
+            ExponentialBackoff.clearTestJitterSupplier();
+            failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': 'off'}"));
+        }
+
+        // Test 2: Run with jitter = 1 (full backoff)
+        ExponentialBackoff.setTestJitterSupplier(() -> 1.0);
+
+        failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 13}, " + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 251}}"));
+
+        long withBackoffTime;
+        try (ClientSession session = client.startSession()) {
+            long startNanos = System.nanoTime();
+            session.withTransaction(() -> {
+                collection.insertOne(session, Document.parse("{ _id : 'backoff-test-full-jitter' }"));
+                return null;
+            });
+            long endNanos = System.nanoTime();
+            withBackoffTime = TimeUnit.NANOSECONDS.toMillis(endNanos - startNanos);
+        } finally {
+            ExponentialBackoff.clearTestJitterSupplier();
+            failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': 'off'}"));
+        }
+
+        long expectedWithBackoffTime = noBackoffTime + 2200;  // 2.2 seconds as per spec
+        long actualDifference = Math.abs(withBackoffTime - expectedWithBackoffTime);
+
+        assertTrue(actualDifference < 1000, String.format("Expected withBackoffTime to be ~%dms (noBackoffTime %dms + 2200ms), " + "but got %dms. Difference: %dms (tolerance: 1000ms per spec)", expectedWithBackoffTime, noBackoffTime, withBackoffTime, actualDifference));
     }
 
     private boolean canRunTests() {
