@@ -27,8 +27,10 @@ import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.TransactionBody;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.ExponentialBackoff;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.observability.micrometer.TracingManager;
+import com.mongodb.internal.observability.micrometer.TransactionSpan;
 import com.mongodb.internal.operation.AbortTransactionOperation;
 import com.mongodb.internal.operation.CommitTransactionOperation;
 import com.mongodb.internal.operation.OperationHelper;
@@ -37,8 +39,6 @@ import com.mongodb.internal.operation.WriteConcernHelper;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
-import com.mongodb.internal.observability.micrometer.TracingManager;
-import com.mongodb.internal.observability.micrometer.TransactionSpan;
 import com.mongodb.lang.Nullable;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
@@ -252,12 +252,8 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         notNull("transactionBody", transactionBody);
         long startTime = ClientSessionClock.INSTANCE.now();
         TimeoutContext withTransactionTimeoutContext = createTimeoutContext(options);
-        // Use CSOT timeout if set, otherwise default to MAX_RETRY_TIME_LIMIT_MS
-        Long timeoutMS = withTransactionTimeoutContext.getTimeoutSettings().getTimeoutMS();
-        long maxRetryTimeMS = timeoutMS != null ? timeoutMS : MAX_RETRY_TIME_LIMIT_MS;
         ExponentialBackoff transactionBackoff = null;
         boolean isRetry = false;
-        MongoException lastError = null;
 
         try {
             outer:
@@ -267,19 +263,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     if (transactionBackoff == null) {
                         transactionBackoff = ExponentialBackoff.forTransactionRetry();
                     }
-                    // Calculate backoff delay and check if it would exceed timeout
                     long backoffMs = transactionBackoff.calculateDelayMs();
-                    if (ClientSessionClock.INSTANCE.now() - startTime + backoffMs >= maxRetryTimeMS) {
-                        // If CSOT is enabled (timeoutMS is set), throw MongoOperationTimeoutException
-                        // Otherwise, throw the last error directly for backward compatibility
-                        if (timeoutMS != null) {
-                            throw new MongoOperationTimeoutException(
-                                    "Transaction retry timeout exceeded after " + (ClientSessionClock.INSTANCE.now() - startTime) + "ms",
-                                    lastError);
-                        } else {
-                            throw lastError;
-                        }
-                    }
                     try {
                         if (backoffMs > 0) {
                             Thread.sleep(backoffMs);
@@ -304,8 +288,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     if (e instanceof MongoException && !(e instanceof MongoOperationTimeoutException)) {
                         MongoException exceptionToHandle = OperationHelper.unwrap((MongoException) e);
                         if (exceptionToHandle.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)
-                                && ClientSessionClock.INSTANCE.now() - startTime < maxRetryTimeMS) {
-                            lastError = exceptionToHandle;  // Track the last error for timeout scenarios
+                                && ClientSessionClock.INSTANCE.now() - startTime < MAX_RETRY_TIME_LIMIT_MS) {
                             if (transactionSpan != null) {
                                 transactionSpan.spanFinalizing(false);
                             }
@@ -320,10 +303,9 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                             commitTransaction(false);
                             break;
                         } catch (MongoException e) {
-                            lastError = e;  // Track the last error for timeout scenarios
                             clearTransactionContextOnError(e);
                             if (!(e instanceof MongoOperationTimeoutException)
-                                    && ClientSessionClock.INSTANCE.now() - startTime < maxRetryTimeMS) {
+                                    && ClientSessionClock.INSTANCE.now() - startTime < MAX_RETRY_TIME_LIMIT_MS) {
                                 applyMajorityWriteConcernToTransactionOptions();
 
                                 if (!(e instanceof MongoExecutionTimeoutException)
