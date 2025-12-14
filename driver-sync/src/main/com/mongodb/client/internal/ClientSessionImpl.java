@@ -270,9 +270,15 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     // Calculate backoff delay and check if it would exceed timeout
                     long backoffMs = transactionBackoff.calculateDelayMs();
                     if (ClientSessionClock.INSTANCE.now() - startTime + backoffMs >= maxRetryTimeMS) {
-                        // Throw the last error as per spec
-                        // lastError is always set here since we only retry on MongoException
-                        throw lastError;
+                        // If CSOT is enabled (timeoutMS is set), throw MongoOperationTimeoutException
+                        // Otherwise, throw the last error directly for backward compatibility
+                        if (timeoutMS != null) {
+                            throw new MongoOperationTimeoutException(
+                                    "Transaction retry timeout exceeded after " + (ClientSessionClock.INSTANCE.now() - startTime) + "ms",
+                                    lastError);
+                        } else {
+                            throw lastError;
+                        }
                     }
                     try {
                         if (backoffMs > 0) {
