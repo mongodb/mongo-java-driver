@@ -23,6 +23,8 @@ import java.util.Arrays;
 import java.util.Objects;
 
 import static org.bson.assertions.Assertions.assertNotNull;
+import static org.bson.assertions.Assertions.isTrueArgument;
+import static org.bson.assertions.Assertions.notNull;
 
 /**
  * Represents a packed bit vector, where each element of the vector is represented by a single bit (0 or 1).
@@ -43,8 +45,17 @@ public final class PackedBitBinaryVector extends BinaryVector {
 
     PackedBitBinaryVector(final byte[] data, final byte padding) {
         super(DataType.PACKED_BIT);
-        this.data = assertNotNull(data);
+        this.data = notNull("data", data);
         this.padding = padding;
+        isTrueArgument("Padding must be between 0 and 7 bits. Provided padding: " + padding, padding >= 0 && padding <= 7);
+        isTrueArgument("Padding must be 0 if vector is empty. Provided padding: " + padding, padding == 0 || data.length > 0);
+        if (padding > 0) {
+            int mask = (1 << padding) - 1;
+            if ((data[data.length - 1] & mask) != 0) {
+                // JAVA-5848 in version 6.0.0 will convert this logging into an IllegalArgumentException
+                LOGGER.warn("The last " + padding + " padded bits should be zero in the final byte.");
+            }
+        }
     }
 
     /**
