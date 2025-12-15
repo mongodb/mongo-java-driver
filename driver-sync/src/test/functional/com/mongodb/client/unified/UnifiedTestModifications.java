@@ -420,6 +420,24 @@ public final class UnifiedTestModifications {
                 .file("server-discovery-and-monitoring", "pool-clear-on-error-checkout");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5664")
                 .file("server-discovery-and-monitoring", "pool-cleared-on-min-pool-size-population-error");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5949")
+                .file("server-discovery-and-monitoring", "backpressure-network-error-fail");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5949")
+                .file("server-discovery-and-monitoring", "backpressure-network-timeout-error");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5949")
+                .file("server-discovery-and-monitoring", "backpressure-server-description-unchanged-on-min-pool-size-population-error");
+
+        // session tests
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5968")
+                .test("sessions", "snapshot-sessions", "Find operation with snapshot and snapshot time");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5968")
+                .test("sessions", "snapshot-sessions", "Distinct operation with snapshot and snapshot time");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5968")
+                .test("sessions", "snapshot-sessions", "Aggregate operation with snapshot and snapshot time");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5968")
+                .test("sessions", "snapshot-sessions", "countDocuments operation with snapshot and snapshot time");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5968")
+                .test("sessions", "snapshot-sessions", "Mixed operation with snapshot and snapshotTime");
 
         // transactions
 
