@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
-// See Prose Tests README: https://github.com/mongodb/specifications/tree/master/source/bson-binary-vector/tests#prose-tests 
+// See Prose Tests README: https://github.com/mongodb/specifications/tree/master/source/bson-binary-vector/tests#prose-tests
 class BinaryVectorProseTest {
 
     private ListAppender<ILoggingEvent> logWatcher;
