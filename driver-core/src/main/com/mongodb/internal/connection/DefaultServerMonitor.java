@@ -216,6 +216,18 @@ class DefaultServerMonitor implements ServerMonitor {
                         continue;
                     }
 
+                    // For POLL mode, if we just established initial connection, do an immediate heartbeat
+                    boolean justConnected = previousServerDescription.getType() == UNKNOWN
+                            && currentServerDescription.getType() != UNKNOWN
+                            && !shouldStreamResponses
+                            && connection != null && !connection.isClosed();
+
+                    if (justConnected) {
+                        // Do immediate heartbeat for newly connected server in POLL mode
+                        // to fire the ServerHeartbeatSucceededEvent
+                        continue;
+                    }
+
                     logStateChange(previousServerDescription, currentServerDescription);
                     sdamProvider.get().monitorUpdate(currentServerDescription);
 
