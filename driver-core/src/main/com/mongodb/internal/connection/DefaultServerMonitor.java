@@ -227,6 +227,34 @@ class DefaultServerMonitor implements ServerMonitor {
                         // to fire the ServerHeartbeatSucceededEvent
                         continue;
                     }
+            boolean isPollMode = serverSettings.getServerMonitoringMode().equals(ServerMonitoringMode.POLL);
+            ServerDescription unknownConnectingServerDescription = unknownConnectingServerDescription(serverId, null);
+            ServerDescription currentServerDescription = unknownConnectingServerDescription;
+            try {
+                while (!isClosed) {
+                    ServerDescription previousServerDescription = currentServerDescription;
+                    currentServerDescription = lookupServerDescription(currentServerDescription);
+                    boolean shouldStreamResponses = shouldStreamResponses(currentServerDescription);
+                    if (shouldStreamResponses) {
+                        ensureRoundTripTimeMonitorStarted();
+                    }
+
+                    if (isClosed) {
+                        continue;
+                    }
+
+                    if (currentCheckCancelled) {
+                        waitForNext();
+                        currentCheckCancelled = false;
+                        continue;
+                    }
+
+                    // For POLL mode, if we just established initial connection, do an immediate heartbeat
+                    if (isPollMode && connection != null && !connection.isClosed()
+                            && previousServerDescription.equals(unknownConnectingServerDescription)
+                            && currentServerDescription.equals(connection.getInitialServerDescription())) {
+                        continue;
+                    }
 
                     logStateChange(previousServerDescription, currentServerDescription);
                     sdamProvider.get().monitorUpdate(currentServerDescription);
