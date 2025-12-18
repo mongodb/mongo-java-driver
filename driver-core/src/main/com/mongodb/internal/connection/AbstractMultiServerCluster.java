@@ -231,7 +231,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
 
     private boolean handleReplicaSetMemberChanged(final ServerDescription newDescription) {
         if (!newDescription.isReplicaSetMember()) {
-            LOGGER.error(format("Expecting replica set member, but found a %s.  Removing %s from client view of cluster.",
+            LOGGER.warn(format("Expecting replica set member, but found a %s.  Removing %s from client view of cluster.",
                                 newDescription.getType(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
             return true;
@@ -247,7 +247,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         }
 
         if (!replicaSetName.equals(newDescription.getSetName())) {
-            LOGGER.error(format("Expecting replica set member from set '%s', but found one from set '%s'.  "
+            LOGGER.warn(format("Expecting replica set member from set '%s', but found one from set '%s'.  "
                                  + "Removing %s from client view of cluster.",
                                  replicaSetName, newDescription.getSetName(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
@@ -259,7 +259,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         if (newDescription.getCanonicalAddress() != null
                 && !newDescription.getAddress().equals(new ServerAddress(newDescription.getCanonicalAddress()))
                 && !newDescription.isPrimary()) {
-            LOGGER.info(format("Canonical address %s does not match server address.  Removing %s from client view of cluster",
+            LOGGER.warn(format("Canonical address %s does not match server address.  Removing %s from client view of cluster",
                     newDescription.getCanonicalAddress(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
             return true;
@@ -342,7 +342,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
 
     private boolean handleShardRouterChanged(final ServerDescription newDescription) {
         if (!newDescription.isShardRouter()) {
-            LOGGER.error(format("Expecting a %s, but found a %s.  Removing %s from client view of cluster.",
+            LOGGER.warn(format("Expecting a %s, but found a %s.  Removing %s from client view of cluster.",
                     SHARD_ROUTER, newDescription.getType(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
         }
@@ -351,7 +351,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
 
     private boolean handleStandAloneChanged(final ServerDescription newDescription) {
         if (getSettings().getHosts().size() > 1) {
-            LOGGER.error(format("Expecting a single %s, but found more than one.  Removing %s from client view of cluster.",
+            LOGGER.warn(format("Expecting a single %s, but found more than one.  Removing %s from client view of cluster.",
                                  STANDALONE, newDescription.getAddress()));
             clusterType = UNKNOWN;
             removeServer(newDescription.getAddress());
