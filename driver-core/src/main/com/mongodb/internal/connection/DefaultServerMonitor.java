@@ -196,38 +196,6 @@ class DefaultServerMonitor implements ServerMonitor {
 
         @Override
         public void run() {
-            ServerDescription currentServerDescription = unknownConnectingServerDescription(serverId, null);
-            try {
-                while (!isClosed) {
-                    ServerDescription previousServerDescription = currentServerDescription;
-                    currentServerDescription = lookupServerDescription(currentServerDescription);
-                    boolean shouldStreamResponses = shouldStreamResponses(currentServerDescription);
-                    if (shouldStreamResponses) {
-                        ensureRoundTripTimeMonitorStarted();
-                    }
-
-                    if (isClosed) {
-                        continue;
-                    }
-
-                    if (currentCheckCancelled) {
-                        waitForNext();
-                        currentCheckCancelled = false;
-                        continue;
-                    }
-
-                    // For POLL mode, if we just established initial connection, do an immediate heartbeat
-                    boolean justConnected = previousServerDescription.getType() == UNKNOWN
-                            && currentServerDescription.getType() != UNKNOWN
-                            && !shouldStreamResponses
-                            && connection != null && !connection.isClosed();
-
-                    if (justConnected) {
-                        // Do immediate heartbeat for newly connected server in POLL mode
-                        // to fire the ServerHeartbeatSucceededEvent
-                        continue;
-                    }
-            boolean isPollMode = serverSettings.getServerMonitoringMode().equals(ServerMonitoringMode.POLL);
             ServerDescription unknownConnectingServerDescription = unknownConnectingServerDescription(serverId, null);
             ServerDescription currentServerDescription = unknownConnectingServerDescription;
             try {
@@ -250,7 +218,7 @@ class DefaultServerMonitor implements ServerMonitor {
                     }
 
                     // For POLL mode, if we just established initial connection, do an immediate heartbeat
-                    if (isPollMode && connection != null && !connection.isClosed()
+                    if (!shouldStreamResponses && connection != null && !connection.isClosed()
                             && previousServerDescription.equals(unknownConnectingServerDescription)
                             && currentServerDescription.equals(connection.getInitialServerDescription())) {
                         continue;
