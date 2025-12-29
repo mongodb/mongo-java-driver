@@ -20,6 +20,10 @@ import com.mongodb.MongoServerException;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.VisibleForTesting;
+
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
+
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
@@ -38,8 +42,10 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
  */
 public final class CommandHelper {
 
-    static final String HELLO = "hello";
-    static final String LEGACY_HELLO = "isMaster";
+    @VisibleForTesting(otherwise = PRIVATE)
+    public static final String HELLO = "hello";
+    @VisibleForTesting(otherwise = PRIVATE)
+    public static final String LEGACY_HELLO = "isMaster";
     static final String LEGACY_HELLO_LOWER = LEGACY_HELLO.toLowerCase(Locale.ROOT);
 
     static BsonDocument executeCommand(final String database, final BsonDocument command, final ClusterConnectionMode clusterConnectionMode,
@@ -127,7 +133,6 @@ public final class CommandHelper {
     public static void applyMaxTimeMS(final TimeoutContext timeoutContext, final BsonDocument command) {
         if (!timeoutContext.hasTimeoutMS()) {
             command.append("maxTimeMS", new BsonInt64(timeoutContext.getTimeoutSettings().getMaxTimeMS()));
-            timeoutContext.disableMaxTimeOverride();
         }
     }
 

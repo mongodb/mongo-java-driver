@@ -16,10 +16,13 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
+import com.mongodb.internal.MongoNamespaceHelper;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -61,23 +64,28 @@ public class DropDatabaseOperation implements WriteOperation<Void> {
     }
 
     @Override
-    public Void execute(final WriteBinding binding) {
-        return withConnection(binding, connection -> {
-            executeCommand(binding, databaseName, getCommand(), connection, writeConcernErrorTransformer(binding.getOperationContext()
+    public MongoNamespace getNamespace() {
+        return new MongoNamespace(databaseName, MongoNamespaceHelper.COMMAND_COLLECTION_NAME);
+    }
+
+    @Override
+    public Void execute(final WriteBinding binding, final OperationContext operationContext) {
+        return withConnection(binding, operationContext, (connection, operationContextWithMinRtt) -> {
+            executeCommand(binding, operationContextWithMinRtt,  databaseName, getCommand(), connection, writeConcernErrorTransformer(operationContextWithMinRtt
                     .getTimeoutContext()));
             return null;
         });
     }
 
     @Override
-    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(binding, (connection, t) -> {
+    public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<Void> callback) {
+        withAsyncConnection(binding, operationContext, (connection, operationContextWithMinRtt, t) -> {
             SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
             if (t != null) {
                 errHandlingCallback.onResult(null, t);
             } else {
-                executeCommandAsync(binding, databaseName, getCommand(), connection,
-                        writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()),
+                executeCommandAsync(binding, operationContextWithMinRtt,  databaseName, getCommand(), connection,
+                        writeConcernErrorTransformerAsync(operationContextWithMinRtt.getTimeoutContext()),
                         releasingCallback(errHandlingCallback, connection));
 
             }

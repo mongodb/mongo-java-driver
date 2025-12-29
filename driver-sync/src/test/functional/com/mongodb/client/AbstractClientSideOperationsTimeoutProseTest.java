@@ -47,6 +47,11 @@ import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.event.ConnectionClosedEvent;
 import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionReadyEvent;
+
+import static com.mongodb.internal.connection.CommandHelper.HELLO;
+import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
+
+import com.mongodb.internal.connection.InternalStreamConnection;
 import com.mongodb.internal.connection.ServerHelper;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
@@ -898,9 +903,9 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     /**
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
-    @DisplayName("KillCursors is not executed after getMore network error when timeout is not enabled")
+    @DisplayName("KillCursors is not executed after getMore network error when timeoutMs is not enabled")
     @Test
-    public void testKillCursorsIsNotExecutedAfterGetMoreNetworkErrorWhenTimeoutIsNotEnabled() {
+    public void testKillCursorsIsNotExecutedAfterGetMoreNetworkErrorWhenTimeoutMsIsNotEnabled() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeTrue(isLoadBalanced());
 
@@ -1029,6 +1034,43 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         assertEquals(1, failedEvents.size());
     }
 
+    /**
+     * Not a prose spec test. However, it is additional test case for better coverage.
+     * <p>
+     * From the spec:
+     * - When doing `minPoolSize` maintenance, `connectTimeoutMS` is used as the timeout for socket establishment.
+     */
+    @Test
+    @DisplayName("Should use connectTimeoutMS when establishing connection in background")
+    public void shouldUseConnectTimeoutMsWhenEstablishingConnectionInBackground() {
+        assumeTrue(serverVersionAtLeast(4, 4));
+
+        collectionHelper.runAdminCommand("{"
+                + "configureFailPoint: \"" + FAIL_COMMAND_NAME + "\","
+                + "mode: \"alwaysOn\","
+                + "  data: {"
+                + "    failCommands: [\"hello\", \"isMaster\"],"
+                + "    blockConnection: true,"
+                + "    blockTimeMS: " + 500
+                + "  }"
+                + "}");
+
+        try (MongoClient ignored = createMongoClient(getMongoClientSettingsBuilder()
+                .applyToConnectionPoolSettings(builder -> builder.minSize(1))
+                // Use a very short timeout to ensure that the connection establishment will fail on the first handshake command.
+                .timeout(10, TimeUnit.MILLISECONDS))) {
+            InternalStreamConnection.setRecordEverything(true);
+
+            // Wait for the connection to start establishment in the background.
+            sleep(1000);
+        } finally {
+            InternalStreamConnection.setRecordEverything(false);
+        }
+        List<CommandFailedEvent> commandFailedEvents = commandListener.getCommandFailedEvents(getHandshakeCommandName());
+        assertFalse(commandFailedEvents.isEmpty());
+        assertInstanceOf(MongoOperationTimeoutException.class, commandFailedEvents.get(0).getThrowable());
+    }
+
     private static Stream<Arguments> test8ServerSelectionArguments() {
         return Stream.of(
                 Arguments.of(Named.of("serverSelectionTimeoutMS honored if timeoutMS is not set",
@@ -1113,8 +1155,16 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         return createMongoClient(builder.build());
     }
 
-   private long msElapsedSince(final long t1) {
+    private long msElapsedSince(final long t1) {
         return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t1);
+    }
+
+    /**
+     * Get the handshake command name based on the server API version.
+     * @return the handshake command name
+     */
+    private String getHandshakeCommandName() {
+        return ClusterFixture.getServerApi() == null ? LEGACY_HELLO : HELLO;
     }
 
     protected long withRttAdjustment(int timeout, int countOfOperations) {

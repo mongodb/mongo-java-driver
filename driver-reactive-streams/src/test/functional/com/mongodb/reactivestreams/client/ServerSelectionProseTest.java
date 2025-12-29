@@ -22,6 +22,6 @@ import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 
 final class ServerSelectionProseTest extends AbstractServerSelectionProseTest {
     protected MongoClient createClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
+        return new SyncMongoClient(settings);
     }
 }

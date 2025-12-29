@@ -110,18 +110,15 @@ class OperationUnitSpecification extends Specification {
         }
 
         def connectionSource = Stub(ConnectionSource) {
-            getConnection() >> connection
+            getConnection(_) >> connection
             getReadPreference() >> readPreference
-            getOperationContext() >> operationContext
         }
         def readBinding = Stub(ReadBinding) {
-            getReadConnectionSource() >> connectionSource
+            getReadConnectionSource(_) >> connectionSource
             getReadPreference() >> readPreference
-            getOperationContext() >> operationContext
         }
         def writeBinding = Stub(WriteBinding) {
-            getWriteConnectionSource() >> connectionSource
-            getOperationContext() >> operationContext
+            getWriteConnectionSource(_) >> connectionSource
         }
 
         if (checkCommand) {
@@ -144,9 +141,9 @@ class OperationUnitSpecification extends Specification {
         1 * connection.release()
 
         if (operation instanceof ReadOperation) {
-            operation.execute(readBinding)
+            operation.execute(readBinding, operationContext)
         } else if (operation instanceof WriteOperation) {
-            operation.execute(writeBinding)
+            operation.execute(writeBinding, operationContext)
         }
     }
 
@@ -167,18 +164,15 @@ class OperationUnitSpecification extends Specification {
         }
 
         def connectionSource = Stub(AsyncConnectionSource) {
-            getConnection(_) >> { it[0].onResult(connection, null) }
+            getConnection(_, _) >> { it[1].onResult(connection, null) }
             getReadPreference() >> readPreference
-            getOperationContext() >> getOperationContext() >> operationContext
         }
         def readBinding = Stub(AsyncReadBinding) {
-            getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+            getReadConnectionSource(_, _) >> { it[1].onResult(connectionSource, null) }
             getReadPreference() >> readPreference
-            getOperationContext() >> operationContext
         }
         def writeBinding = Stub(AsyncWriteBinding) {
-            getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
-            getOperationContext() >> operationContext
+            getWriteConnectionSource(_, _) >> { it[1].onResult(connectionSource, null) }
         }
         def callback = new FutureResultCallback()
 
@@ -202,9 +196,9 @@ class OperationUnitSpecification extends Specification {
         1 * connection.release()
 
         if (operation instanceof ReadOperation) {
-            operation.executeAsync(readBinding, callback)
+            operation.executeAsync(readBinding, operationContext, callback)
         } else if (operation instanceof WriteOperation) {
-            operation.executeAsync(writeBinding, callback)
+            operation.executeAsync(writeBinding, operationContext, callback)
         }
          try {
              callback.get(1000, TimeUnit.MILLISECONDS)

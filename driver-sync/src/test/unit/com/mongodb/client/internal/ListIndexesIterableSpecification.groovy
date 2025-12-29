@@ -105,11 +105,12 @@ class ListIndexesIterableSpecification extends Specification {
         def cannedResults = [new Document('_id', 1), new Document('_id', 2), new Document('_id', 3)]
         def cursor = {
             Stub(BatchCursor) {
+                def batchToReturn = cannedResults.collect()
                 def count = 0
                 def results
                 def getResult = {
                     count++
-                    results = count == 1 ? cannedResults : null
+                    results = count == 1 ? batchToReturn : null
                     results
                 }
                 next() >> {

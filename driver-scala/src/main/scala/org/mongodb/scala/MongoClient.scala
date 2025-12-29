@@ -111,7 +111,7 @@ object MongoClient {
  * @param wrapped the underlying java MongoClient
  * @since 1.0
  */
-case class MongoClient(private val wrapped: JMongoClient) extends MongoCluster(wrapped) with Closeable {
+case class MongoClient(protected[scala] val wrapped: JMongoClient) extends MongoCluster(wrapped) with Closeable {
 
   /**
    * Close the client, which will close all underlying cached resources, including, for example,

@@ -31,6 +31,7 @@ import org.junit.Test;
 import java.util.Locale;
 import java.util.UUID;
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.getBinding;
@@ -344,7 +345,7 @@ public class DBTest extends DatabaseTestCase {
 
     BsonDocument getCollectionInfo(final String collectionName) {
         return new ListCollectionsOperation<>(getDefaultDatabaseName(), new BsonDocumentCodec())
-                .filter(new BsonDocument("name", new BsonString(collectionName))).execute(getBinding()).next().get(0);
+                .filter(new BsonDocument("name", new BsonString(collectionName))).execute(getBinding(), OPERATION_CONTEXT).next().get(0);
     }
 
     private boolean isCapped(final DBCollection collection) {

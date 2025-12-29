@@ -81,11 +81,11 @@ public final class SocksSocket extends Socket {
     }
 
     @Override
-    public void connect(final SocketAddress endpoint, final int timeoutMs) throws IOException {
+    public void connect(final SocketAddress endpoint, final int connectTimeoutMs) throws IOException {
         // `Socket` requires `IllegalArgumentException`
-        isTrueArgument("timeoutMs", timeoutMs >= 0);
+        isTrueArgument("connectTimeoutMs", connectTimeoutMs >= 0);
         try {
-            Timeout timeout = Timeout.expiresIn(timeoutMs, MILLISECONDS, ZERO_DURATION_MEANS_INFINITE);
+            Timeout timeout = Timeout.expiresIn(connectTimeoutMs, MILLISECONDS, ZERO_DURATION_MEANS_INFINITE);
             InetSocketAddress unresolvedAddress = (InetSocketAddress) endpoint;
             assertTrue(unresolvedAddress.isUnresolved());
             this.remoteAddress = unresolvedAddress;

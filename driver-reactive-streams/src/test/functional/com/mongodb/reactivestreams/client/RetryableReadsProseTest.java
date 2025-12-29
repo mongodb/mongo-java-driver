@@ -40,7 +40,7 @@ final class RetryableReadsProseTest {
     @Test
     void poolClearedExceptionMustBeRetryable() throws InterruptedException, ExecutionException, TimeoutException {
         RetryableWritesProseTest.poolClearedExceptionMustBeRetryable(
-                mongoClientSettings -> new SyncMongoClient(MongoClients.create(mongoClientSettings)),
+                SyncMongoClient::new,
                 mongoCollection -> mongoCollection.find(eq(0)).iterator().hasNext(), "find", false);
     }
 
@@ -52,7 +52,7 @@ final class RetryableReadsProseTest {
     @Test
     void retriesOnDifferentMongosWhenAvailable() {
         RetryableWritesProseTest.retriesOnDifferentMongosWhenAvailable(
-                mongoClientSettings -> new SyncMongoClient(MongoClients.create(mongoClientSettings)),
+                SyncMongoClient::new,
                 mongoCollection -> {
                     try (MongoCursor<Document> cursor = mongoCollection.find().iterator()) {
                         return cursor.hasNext();
@@ -68,7 +68,7 @@ final class RetryableReadsProseTest {
     @Test
     void retriesOnSameMongosWhenAnotherNotAvailable() {
         RetryableWritesProseTest.retriesOnSameMongosWhenAnotherNotAvailable(
-                mongoClientSettings -> new SyncMongoClient(MongoClients.create(mongoClientSettings)),
+                SyncMongoClient::new,
                 mongoCollection -> {
                     try (MongoCursor<Document> cursor = mongoCollection.find().iterator()) {
                         return cursor.hasNext();

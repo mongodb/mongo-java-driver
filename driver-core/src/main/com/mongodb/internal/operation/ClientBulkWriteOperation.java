@@ -119,6 +119,7 @@ import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.fail;
+import static com.mongodb.internal.MongoNamespaceHelper.ADMIN_DB_COMMAND_NAMESPACE;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PACKAGE;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
@@ -183,13 +184,19 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     }
 
     @Override
-    public ClientBulkWriteResult execute(final WriteBinding binding) throws ClientBulkWriteException {
-        WriteConcern effectiveWriteConcern = validateAndGetEffectiveWriteConcern(binding.getOperationContext().getSessionContext());
+    public MongoNamespace getNamespace() {
+        // The bulkWrite command is executed on the "admin" database.
+        return ADMIN_DB_COMMAND_NAMESPACE;
+    }
+
+    @Override
+    public ClientBulkWriteResult execute(final WriteBinding binding, final OperationContext operationContext) throws ClientBulkWriteException {
+        WriteConcern effectiveWriteConcern = validateAndGetEffectiveWriteConcern(operationContext.getSessionContext());
         ResultAccumulator resultAccumulator = new ResultAccumulator();
         MongoException transformedTopLevelError = null;
 
         try {
-            executeAllBatches(effectiveWriteConcern, binding, resultAccumulator);
+            executeAllBatches(effectiveWriteConcern, binding, operationContext, resultAccumulator);
         } catch (MongoException topLevelError) {
             transformedTopLevelError = transformWriteException(topLevelError);
         }
@@ -199,13 +206,14 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding,
+                             final OperationContext operationContext,
                              final SingleResultCallback<ClientBulkWriteResult> finalCallback) {
-        WriteConcern effectiveWriteConcern = validateAndGetEffectiveWriteConcern(binding.getOperationContext().getSessionContext());
+        WriteConcern effectiveWriteConcern = validateAndGetEffectiveWriteConcern(operationContext.getSessionContext());
         ResultAccumulator resultAccumulator = new ResultAccumulator();
         MutableValue<MongoException> transformedTopLevelError = new MutableValue<>();
 
         beginAsync().<Void>thenSupply(c -> {
-            executeAllBatchesAsync(effectiveWriteConcern, binding, resultAccumulator, c);
+            executeAllBatchesAsync(effectiveWriteConcern, binding, operationContext, resultAccumulator, c);
         }).onErrorIf(topLevelError -> topLevelError instanceof MongoException, (topLevelError, c) -> {
             transformedTopLevelError.set(transformWriteException((MongoException) topLevelError));
             c.complete(c);
@@ -226,27 +234,29 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     private void executeAllBatches(
             final WriteConcern effectiveWriteConcern,
             final WriteBinding binding,
+            final OperationContext operationContext,
             final ResultAccumulator resultAccumulator) throws MongoException {
         Integer nextBatchStartModelIndex = INITIAL_BATCH_MODEL_START_INDEX;
 
         do {
-            nextBatchStartModelIndex = executeBatch(nextBatchStartModelIndex, effectiveWriteConcern, binding, resultAccumulator);
+            nextBatchStartModelIndex = executeBatch(nextBatchStartModelIndex, effectiveWriteConcern, binding, operationContext, resultAccumulator);
         } while (nextBatchStartModelIndex != null);
     }
 
     /**
-     * @see #executeAllBatches(WriteConcern, WriteBinding, ResultAccumulator)
+     * @see #executeAllBatches(WriteConcern, WriteBinding, OperationContext, ResultAccumulator)
      */
     private void executeAllBatchesAsync(
             final WriteConcern effectiveWriteConcern,
             final AsyncWriteBinding binding,
+            final OperationContext operationContext,
             final ResultAccumulator resultAccumulator,
             final SingleResultCallback<Void> finalCallback) {
         MutableValue<Integer> nextBatchStartModelIndex = new MutableValue<>(INITIAL_BATCH_MODEL_START_INDEX);
 
         beginAsync().thenRunDoWhileLoop(iterationCallback -> {
             beginAsync().<Integer>thenSupply(c -> {
-                executeBatchAsync(nextBatchStartModelIndex.get(), effectiveWriteConcern, binding, resultAccumulator, c);
+                executeBatchAsync(nextBatchStartModelIndex.get(), effectiveWriteConcern, binding, operationContext, resultAccumulator, c);
             }).<Void>thenApply((nextBatchStartModelIdx, c) -> {
                 nextBatchStartModelIndex.set(nextBatchStartModelIdx);
                 c.complete(c);
@@ -265,10 +275,10 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final int batchStartModelIndex,
             final WriteConcern effectiveWriteConcern,
             final WriteBinding binding,
+            final OperationContext operationContext,
             final ResultAccumulator resultAccumulator) {
         List<? extends ClientNamespacedWriteModel> unexecutedModels = models.subList(batchStartModelIndex, models.size());
         assertFalse(unexecutedModels.isEmpty());
-        OperationContext operationContext = binding.getOperationContext();
         SessionContext sessionContext = operationContext.getSessionContext();
         TimeoutContext timeoutContext = operationContext.getTimeoutContext();
         RetryState retryState = initialRetryState(retryWritesSetting, timeoutContext);
@@ -281,7 +291,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 // If connection pinning is required, `binding` handles that,
                 // and `ClientSession`, `TransactionContext` are aware of that.
                 () -> withSourceAndConnection(binding::getWriteConnectionSource, true,
-                        (connectionSource, connection) -> {
+                        (connectionSource, connection, operationContextWithMinRtt) -> {
                             ConnectionDescription connectionDescription = connection.getDescription();
                             boolean effectiveRetryWrites = isRetryableWrite(
                                     retryWritesSetting, effectiveWriteConcern, connectionDescription, sessionContext);
@@ -293,8 +303,8 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                     retryState, effectiveRetryWrites, effectiveWriteConcern, sessionContext, unexecutedModels, batchEncoder,
                                     () -> retryState.attach(AttachmentKeys.retryableCommandFlag(), true, true));
                             return executeBulkWriteCommandAndExhaustOkResponse(
-                                    retryState, connectionSource, connection, bulkWriteCommand, effectiveWriteConcern, operationContext);
-                        })
+                                    retryState, connectionSource, connection, bulkWriteCommand, effectiveWriteConcern, operationContextWithMinRtt);
+                        }, operationContext)
         );
 
         try {
@@ -318,17 +328,17 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     }
 
     /**
-     * @see #executeBatch(int, WriteConcern, WriteBinding, ResultAccumulator)
+     * @see #executeBatch(int, WriteConcern, WriteBinding, OperationContext, ResultAccumulator)
      */
     private void executeBatchAsync(
             final int batchStartModelIndex,
             final WriteConcern effectiveWriteConcern,
             final AsyncWriteBinding binding,
+            final OperationContext operationContext,
             final ResultAccumulator resultAccumulator,
             final SingleResultCallback<Integer> finalCallback) {
         List<? extends ClientNamespacedWriteModel> unexecutedModels = models.subList(batchStartModelIndex, models.size());
         assertFalse(unexecutedModels.isEmpty());
-        OperationContext operationContext = binding.getOperationContext();
         SessionContext sessionContext = operationContext.getSessionContext();
         TimeoutContext timeoutContext = operationContext.getTimeoutContext();
         RetryState retryState = initialRetryState(retryWritesSetting, timeoutContext);
@@ -340,8 +350,8 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 // and it is allowed by https://jira.mongodb.org/browse/DRIVERS-2502.
                 // If connection pinning is required, `binding` handles that,
                 // and `ClientSession`, `TransactionContext` are aware of that.
-                funcCallback -> withAsyncSourceAndConnection(binding::getWriteConnectionSource, true, funcCallback,
-                        (connectionSource, connection, resultCallback) -> {
+                funcCallback -> withAsyncSourceAndConnection(binding::getWriteConnectionSource, true, operationContext, funcCallback,
+                        (connectionSource, connection, operationContextWithMinRtt, resultCallback) -> {
                             ConnectionDescription connectionDescription = connection.getDescription();
                             boolean effectiveRetryWrites = isRetryableWrite(
                                     retryWritesSetting, effectiveWriteConcern, connectionDescription, sessionContext);
@@ -353,7 +363,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                     retryState, effectiveRetryWrites, effectiveWriteConcern, sessionContext, unexecutedModels, batchEncoder,
                                     () -> retryState.attach(AttachmentKeys.retryableCommandFlag(), true, true));
                             executeBulkWriteCommandAndExhaustOkResponseAsync(
-                                    retryState, connectionSource, connection, bulkWriteCommand, effectiveWriteConcern, operationContext, resultCallback);
+                                    retryState, connectionSource, connection, bulkWriteCommand, effectiveWriteConcern, operationContextWithMinRtt, resultCallback);
                         })
         );
 
@@ -401,7 +411,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final WriteConcern effectiveWriteConcern,
             final OperationContext operationContext) throws MongoWriteConcernWithResponseException {
         BsonDocument bulkWriteCommandOkResponse = connection.command(
-                "admin",
+                ADMIN_DB_COMMAND_NAMESPACE.getDatabaseName(),
                 bulkWriteCommand.getCommandDocument(),
                 NoOpFieldNameValidator.INSTANCE,
                 null,
@@ -413,7 +423,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             return null;
         }
         List<List<BsonDocument>> cursorExhaustBatches = doWithRetriesDisabledForCommand(retryState, "getMore", () ->
-                exhaustBulkWriteCommandOkResponseCursor(connectionSource, connection, bulkWriteCommandOkResponse));
+                exhaustBulkWriteCommandOkResponseCursor(connectionSource, operationContext, connection, bulkWriteCommandOkResponse));
         return createExhaustiveClientBulkWriteCommandOkResponse(
                 bulkWriteCommandOkResponse,
                 cursorExhaustBatches,
@@ -433,7 +443,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final SingleResultCallback<ExhaustiveClientBulkWriteCommandOkResponse> finalCallback) {
         beginAsync().<BsonDocument>thenSupply(callback -> {
             connection.commandAsync(
-                    "admin",
+                    ADMIN_DB_COMMAND_NAMESPACE.getDatabaseName(),
                     bulkWriteCommand.getCommandDocument(),
                     NoOpFieldNameValidator.INSTANCE,
                     null,
@@ -448,7 +458,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             }
             beginAsync().<List<List<BsonDocument>>>thenSupply(c -> {
                 doWithRetriesDisabledForCommandAsync(retryState, "getMore", (c1) -> {
-                    exhaustBulkWriteCommandOkResponseCursorAsync(connectionSource, connection, bulkWriteCommandOkResponse, c1);
+                    exhaustBulkWriteCommandOkResponseCursorAsync(connectionSource, connection, bulkWriteCommandOkResponse, operationContext, c1);
                 }, c);
             }).<ExhaustiveClientBulkWriteCommandOkResponse>thenApply((cursorExhaustBatches, c) -> {
                 c.complete(createExhaustiveClientBulkWriteCommandOkResponse(
@@ -514,6 +524,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
 
     private List<List<BsonDocument>> exhaustBulkWriteCommandOkResponseCursor(
             final ConnectionSource connectionSource,
+            final OperationContext operationContext,
             final Connection connection,
             final BsonDocument response) {
         try (CommandBatchCursor<BsonDocument> cursor = cursorDocumentToBatchCursor(
@@ -523,7 +534,8 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 codecRegistry.get(BsonDocument.class),
                 options.getComment().orElse(null),
                 connectionSource,
-                connection)) {
+                connection,
+                operationContext)) {
 
            return cursor.exhaust();
         }
@@ -532,6 +544,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     private void exhaustBulkWriteCommandOkResponseCursorAsync(final AsyncConnectionSource connectionSource,
                                                               final AsyncConnection connection,
                                                               final BsonDocument bulkWriteCommandOkResponse,
+                                                              final OperationContext operationContext,
                                                               final SingleResultCallback<List<List<BsonDocument>>> finalCallback) {
         AsyncBatchCursor<BsonDocument> cursor = cursorDocumentToAsyncBatchCursor(
                 TimeoutMode.CURSOR_LIFETIME,
@@ -540,7 +553,8 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 codecRegistry.get(BsonDocument.class),
                 options.getComment().orElse(null),
                 connectionSource,
-                connection);
+                connection,
+                operationContext);
 
         beginAsync().<List<List<BsonDocument>>>thenSupply(callback -> {
              cursor.exhaust(callback);
@@ -758,33 +772,25 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                     deletedCount += response.getNDeleted();
                     Map<Integer, BsonValue> insertModelDocumentIds = batchResult.getInsertModelDocumentIds();
                     for (BsonDocument individualOperationResponse : response.getCursorExhaust()) {
+                        boolean individualOperationSuccessful = individualOperationResponse.getNumber("ok").intValue() == 1;
+                        if (individualOperationSuccessful && !verboseResultsSetting) {
+                            //TODO-JAVA-6002 Previously, assertTrue(verboseResultsSetting) was used when ok == 1 because the server
+                            // was not supposed to return successful operation results in the cursor when verboseResultsSetting is false.
+                            // Due to server bug SERVER-113344, these unexpected results must be ignored until we stop supporting server
+                            // versions affected by this bug. When that happens, restore assertTrue(verboseResultsSetting).
+                            continue;
+                        }
                         int individualOperationIndexInBatch = individualOperationResponse.getInt32("idx").getValue();
                         int writeModelIndex = batchStartModelIndex + individualOperationIndexInBatch;
-                        if (individualOperationResponse.getNumber("ok").intValue() == 1) {
-                            assertTrue(verboseResultsSetting);
-                            AbstractClientNamespacedWriteModel writeModel = getNamespacedModel(models, writeModelIndex);
-                            if (writeModel instanceof ConcreteClientNamespacedInsertOneModel) {
-                                insertResults.put(
-                                        writeModelIndex,
-                                        new ConcreteClientInsertOneResult(insertModelDocumentIds.get(individualOperationIndexInBatch)));
-                            } else if (writeModel instanceof ConcreteClientNamespacedUpdateOneModel
-                                    || writeModel instanceof ConcreteClientNamespacedUpdateManyModel
-                                    || writeModel instanceof ConcreteClientNamespacedReplaceOneModel) {
-                                BsonDocument upsertedIdDocument = individualOperationResponse.getDocument("upserted", null);
-                                updateResults.put(
-                                        writeModelIndex,
-                                        new ConcreteClientUpdateResult(
-                                                individualOperationResponse.getInt32("n").getValue(),
-                                                individualOperationResponse.getInt32("nModified").getValue(),
-                                                upsertedIdDocument == null ? null : upsertedIdDocument.get("_id")));
-                            } else if (writeModel instanceof ConcreteClientNamespacedDeleteOneModel
-                                    || writeModel instanceof ConcreteClientNamespacedDeleteManyModel) {
-                                deleteResults.put(
-                                        writeModelIndex,
-                                        new ConcreteClientDeleteResult(individualOperationResponse.getInt32("n").getValue()));
-                            } else {
-                                fail(writeModel.getClass().toString());
-                            }
+                        if (individualOperationSuccessful) {
+                            collectSuccessfulIndividualOperationResult(
+                                    individualOperationResponse,
+                                    writeModelIndex,
+                                    individualOperationIndexInBatch,
+                                    insertModelDocumentIds,
+                                    insertResults,
+                                    updateResults,
+                                    deleteResults);
                         } else {
                             batchResultsHaveInfoAboutSuccessfulIndividualOperations = batchResultsHaveInfoAboutSuccessfulIndividualOperations
                                     || (orderedSetting && individualOperationIndexInBatch > 0);
@@ -824,6 +830,42 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             }
         }
 
+        private void collectSuccessfulIndividualOperationResult(final BsonDocument individualOperationResponse,
+                                                                final int writeModelIndex,
+                                                                final int individualOperationIndexInBatch,
+                                                                final Map<Integer, BsonValue> insertModelDocumentIds,
+                                                                final Map<Integer, ClientInsertOneResult> insertResults,
+                                                                final Map<Integer, ClientUpdateResult> updateResults,
+                                                                final Map<Integer, ClientDeleteResult> deleteResults) {
+            AbstractClientNamespacedWriteModel writeModel = getNamespacedModel(models, writeModelIndex);
+            if (writeModel instanceof ConcreteClientNamespacedInsertOneModel) {
+                insertResults.put(
+                        writeModelIndex,
+                        new ConcreteClientInsertOneResult(insertModelDocumentIds.get(individualOperationIndexInBatch)));
+            } else if (writeModel instanceof ConcreteClientNamespacedUpdateOneModel
+                    || writeModel instanceof ConcreteClientNamespacedUpdateManyModel
+                    || writeModel instanceof ConcreteClientNamespacedReplaceOneModel) {
+                BsonDocument upsertedIdDocument = individualOperationResponse.getDocument("upserted", null);
+                updateResults.put(
+                        writeModelIndex,
+                        new ConcreteClientUpdateResult(
+                                individualOperationResponse.getInt32("n").getValue(),
+                                //TODO-JAVA-6005 Previously, we did not provide a default value of 0 because the
+                                // server was supposed to return nModified as 0 when no documents were changed.
+                                // Due to server bug SERVER-113026, we must provide a default of 0 until we stop supporting
+                                // server versions affected by this bug. When that happens, remove the default value for nModified.
+                                individualOperationResponse.getInt32("nModified", new BsonInt32(0)).getValue(),
+                                upsertedIdDocument == null ? null : upsertedIdDocument.get("_id")));
+            } else if (writeModel instanceof ConcreteClientNamespacedDeleteOneModel
+                    || writeModel instanceof ConcreteClientNamespacedDeleteManyModel) {
+                deleteResults.put(
+                        writeModelIndex,
+                        new ConcreteClientDeleteResult(individualOperationResponse.getInt32("n").getValue()));
+            } else {
+                fail(writeModel.getClass().toString());
+            }
+        }
+
         void onNewServerAddress(final ServerAddress serverAddress) {
             this.serverAddress = serverAddress;
         }
@@ -838,7 +880,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         }
 
         /**
-         * @return See {@link #executeBatch(int, WriteConcern, WriteBinding, ResultAccumulator)}.
+         * @return See {@link #executeBatch(int, WriteConcern, WriteBinding, OperationContext, ResultAccumulator)}.
          */
         @Nullable
         Integer onBulkWriteCommandOkResponseWithWriteConcernError(
@@ -852,7 +894,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         }
 
         /**
-         * @return See {@link #executeBatch(int, WriteConcern, WriteBinding, ResultAccumulator)}.
+         * @return See {@link #executeBatch(int, WriteConcern, WriteBinding,OperationContext, ResultAccumulator)}.
          */
         @Nullable
         private Integer onBulkWriteCommandOkResponseOrNoResponse(
@@ -1165,7 +1207,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     }
 
     /**
-     * Exactly one instance must be used per {@linkplain #executeBatch(int, WriteConcern, WriteBinding, ResultAccumulator) batch}.
+     * Exactly one instance must be used per {@linkplain #executeBatch(int, WriteConcern, WriteBinding, OperationContext, ResultAccumulator) batch}.
      */
     @VisibleForTesting(otherwise = PRIVATE)
     public final class BatchEncoder {
@@ -1339,7 +1381,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
 
             /**
              * The key of each entry is the index of a model in the
-             * {@linkplain #executeBatch(int, WriteConcern, WriteBinding, ResultAccumulator) batch},
+             * {@linkplain #executeBatch(int, WriteConcern, WriteBinding, OperationContext, ResultAccumulator)}
              * the value is either the "_id" field value from {@linkplain ConcreteClientInsertOneModel#getDocument()},
              * or the value we generated for this field if the field is absent.
              */

@@ -21,7 +21,6 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoOperationTimeoutException;
-import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.AbstractClientSideOperationsTimeoutProseTest;
@@ -76,16 +75,13 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
 
     @Override
     protected com.mongodb.client.MongoClient createMongoClient(final MongoClientSettings mongoClientSettings) {
-        wrapped = createReactiveClient(mongoClientSettings);
-        return new SyncMongoClient(wrapped);
+        SyncMongoClient client = new SyncMongoClient(mongoClientSettings);
+        wrapped = client.getWrapped();
+        return client;
     }
 
     private static MongoClient createReactiveClient(final MongoClientSettings.Builder builder) {
         return MongoClients.create(builder.build());
-    }
-
-    private static MongoClient createReactiveClient(final MongoClientSettings mongoClientSettings) {
-        return MongoClients.create(mongoClientSettings);
     }
 
     @Override
@@ -148,10 +144,11 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
             assertEquals(1, onErrorEvents.size());
 
             Throwable commandError = onErrorEvents.get(0);
-            Throwable operationTimeoutErrorCause = commandError.getCause();
             assertInstanceOf(MongoOperationTimeoutException.class, commandError);
+
+            //TODO-merge (this line was removed on main, why?)
             assertTrue(operationTimeoutErrorCause instanceof MongoSocketReadTimeoutException
-                    || operationTimeoutErrorCause instanceof MongoExecutionTimeoutException,
+                            || operationTimeoutErrorCause instanceof MongoExecutionTimeoutException,
                     "Expected operationTimeoutErrorCause to be either MongoSocketReadTimeoutException"
                             + " or MongoExecutionTimeoutException, but was: "
                             + operationTimeoutErrorCause.getClass().getName());
@@ -206,9 +203,8 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
             //then
             Throwable droppedError = droppedErrorFuture.get(TIMEOUT_DURATION.toMillis(), TimeUnit.MILLISECONDS);
             Throwable commandError = droppedError.getCause();
-            Throwable operationTimeoutErrorCause = commandError.getCause();
-
             assertInstanceOf(MongoOperationTimeoutException.class, commandError);
+            //TODO-merge (this lien was removed on main why?)
             assertTrue(operationTimeoutErrorCause instanceof MongoSocketReadTimeoutException
                             || operationTimeoutErrorCause instanceof MongoExecutionTimeoutException,
                     "Expected operationTimeoutErrorCause to be either MongoSocketReadTimeoutException"
@@ -464,7 +460,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                     .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
 
             //when
-            ChangeStreamPublisher<Document> documentChangeStreamPublisher = collection.watch();
+            ChangeStreamPublisher<Document> documentChangeStreamPublisher = collection.watch().maxAwaitTime(1000, TimeUnit.MILLISECONDS);
             StepVerifier.create(documentChangeStreamPublisher, 2)
             //then
                     .expectError(MongoOperationTimeoutException.class)
