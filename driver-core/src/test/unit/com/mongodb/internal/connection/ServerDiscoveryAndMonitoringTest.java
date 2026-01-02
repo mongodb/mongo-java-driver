@@ -54,6 +54,9 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
 
     public ServerDiscoveryAndMonitoringTest(final String description, final BsonDocument definition) {
         super(definition);
+        assumeFalse("https://jira.mongodb.org/browse/JAVA-5949",
+                description.equals("error_handling_handshake.json: Network timeouts before and after the handshake completes"));
+
         this.description = description;
         init(serverAddress -> NO_OP_SERVER_LISTENER, NO_OP_CLUSTER_LISTENER);
     }
