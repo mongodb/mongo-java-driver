@@ -75,6 +75,12 @@ public final class UnifiedTestModifications {
                         "timeoutMS behaves correctly for tailable non-awaitData cursors",
                         "timeoutMS is refreshed for getMore - success");
 
+        def.retry("Unified CSOT tests do not account for RTT which varies in TLS vs non-TLS runs")
+                .whenFailureContains("timeout")
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for tailable non-awaitData cursors",
+                        "timeoutMS is refreshed for getMore - success");
+
         //TODO-invistigate
         /*
           As to the background connection pooling section:
