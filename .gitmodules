@@ -1,3 +1,4 @@
 [submodule "specifications"]
 	path = driver-core/src/test/resources/specifications
-	url = https://github.com/mongodb/specifications
+	url = https://github.com/vbabanin/specifications
+	branch = DRIVERS-3356
