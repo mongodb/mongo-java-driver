@@ -97,7 +97,7 @@ public final class EncryptionFixture {
     }
 
     /**
-     * Creates an SSLContext from a PKCS12 keystore file for TLS connections.
+     * Creates an {@link SSLContext} from a PKCS12 keystore file for TLS connections.
      *
      * Allows configuring MongoClient with a custom {@link SSLContext} to test scenarios like TLS connections using specific certificates
      * (e.g., expired or invalid) and setting up KMS servers.
