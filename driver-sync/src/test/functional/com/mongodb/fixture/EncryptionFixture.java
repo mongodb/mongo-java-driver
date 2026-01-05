@@ -33,6 +33,8 @@ import static com.mongodb.ClusterFixture.getEnv;
  */
 public final class EncryptionFixture {
 
+    private static final String KEYSTORE_PASSWORD = "test";
+
     private EncryptionFixture() {
         //NOP
     }
@@ -78,16 +80,28 @@ public final class EncryptionFixture {
         }};
     }
 
+    /**
+     * Creates a KeyManagerFactory from a PKCS12 keystore file for use in TLS connections.
+     * The keystore is loaded using the password {@value #KEYSTORE_PASSWORD}.
+     *
+     * @return a KeyManagerFactory initialized with the keystore's key material
+     */
     public static KeyManagerFactory getKeyManagerFactory(final String keystoreLocation, final String keystoreFileName) throws Exception {
         KeyStore ks = KeyStore.getInstance("PKCS12");
         try (FileInputStream fis = new FileInputStream(keystoreLocation + File.separator + keystoreFileName)) {
-            ks.load(fis, "test".toCharArray());
+            ks.load(fis, KEYSTORE_PASSWORD.toCharArray());
         }
         KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        keyManagerFactory.init(ks, "test".toCharArray());
+        keyManagerFactory.init(ks, KEYSTORE_PASSWORD.toCharArray());
         return keyManagerFactory;
     }
 
+    /**
+     * Builds an SSLContext from a PKCS12 keystore file for TLS connections.
+     *
+     * @return an initialized SSLContext configured with the keystore's key material
+     * @see #getKeyManagerFactory
+     */
     public static SSLContext buildSslContextFromKeyStore(final String keystoreLocation, final String keystoreFileName) throws Exception {
         KeyManagerFactory keyManagerFactory = getKeyManagerFactory(keystoreLocation, keystoreFileName);
         SSLContext sslContext = SSLContext.getInstance("TLS");
