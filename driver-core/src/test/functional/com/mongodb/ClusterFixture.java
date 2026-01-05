@@ -484,9 +484,7 @@ public final class ClusterFixture {
     }
 
     private static Cluster createCluster(final ConnectionString connectionString, final StreamFactory streamFactory) {
-        MongoClientSettings mongoClientSettings = MongoClientSettings.builder().applyConnectionString(connectionString)
-                .applyToServerSettings(builder -> builder.heartbeatFrequency(1, SECONDS).minHeartbeatFrequency(1, MILLISECONDS))
-                .build();
+        MongoClientSettings mongoClientSettings = MongoClientSettings.builder().applyConnectionString(connectionString).build();
 
         return new DefaultClusterFactory().createCluster(mongoClientSettings.getClusterSettings(),
                 mongoClientSettings.getServerSettings(), mongoClientSettings.getConnectionPoolSettings(),
