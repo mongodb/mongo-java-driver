@@ -81,10 +81,10 @@ public final class EncryptionFixture {
     }
 
     /**
-     * Creates a KeyManagerFactory from a PKCS12 keystore file for use in TLS connections.
+     * Creates a {@link KeyManagerFactory} from a PKCS12 keystore file for use in TLS connections.
      * The keystore is loaded using the password {@value #KEYSTORE_PASSWORD}.
      *
-     * @return a KeyManagerFactory initialized with the keystore's key material
+     * @return a {@link KeyManagerFactory initialized with the keystore's key material
      */
     private static KeyManagerFactory getKeyManagerFactory(final String keystoreLocation, final String keystoreFileName) throws Exception {
         KeyStore ks = KeyStore.getInstance("PKCS12");
@@ -102,7 +102,7 @@ public final class EncryptionFixture {
      * Allows configuring MongoClient with a custom {@link SSLContext} to test scenarios like TLS connections using specific certificates
      * (e.g., expired or invalid) and setting up KMS servers.
      *
-     * @return an initialized SSLContext configured with the keystore's key material
+     * @return an initialized {@link SSLContext} configured with the keystore's key material
      * @see #getKeyManagerFactory
      */
     public static SSLContext buildSslContextFromKeyStore(final String keystoreLocation, final String keystoreFileName) throws Exception {
