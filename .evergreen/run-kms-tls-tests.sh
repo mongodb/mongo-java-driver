@@ -17,6 +17,12 @@ echo "Running KMS TLS tests"
 cp ${JAVA_HOME}/lib/security/cacerts mongo-truststore
 ${JAVA_HOME}/bin/keytool -importcert -trustcacerts -file ${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem -keystore mongo-truststore -storepass changeit -storetype JKS -noprompt
 
+# Create keystore from server.pem to emulate KMS server in tests.
+openssl pkcs12 -export \
+  -in ${DRIVERS_TOOLS}/.evergreen/x509gen/server.pem \
+  -out server.p12 \
+  -password pass:test
+
 export GRADLE_EXTRA_VARS="-Pssl.enabled=true -Pssl.trustStoreType=jks -Pssl.trustStore=`pwd`/mongo-truststore -Pssl.trustStorePassword=changeit"
 export KMS_TLS_ERROR_TYPE=${KMS_TLS_ERROR_TYPE}
 
@@ -24,12 +30,14 @@ export KMS_TLS_ERROR_TYPE=${KMS_TLS_ERROR_TYPE}
 
 ./gradlew --stacktrace --info ${GRADLE_EXTRA_VARS} -Dorg.mongodb.test.uri=${MONGODB_URI} \
     -Dorg.mongodb.test.kms.tls.error.type=${KMS_TLS_ERROR_TYPE} \
+    -Dorg.mongodb.test.kms.keystore.location="$(pwd)" \
     driver-sync:cleanTest driver-sync:test --tests ClientSideEncryptionKmsTlsTest
 first=$?
 echo $first
 
 ./gradlew --stacktrace --info ${GRADLE_EXTRA_VARS} -Dorg.mongodb.test.uri=${MONGODB_URI} \
     -Dorg.mongodb.test.kms.tls.error.type=${KMS_TLS_ERROR_TYPE} \
+    -Dorg.mongodb.test.kms.keystore.location="$(pwd)" \
     driver-reactive-streams:cleanTest driver-reactive-streams:test --tests ClientSideEncryptionKmsTlsTest
 second=$?
 echo $second

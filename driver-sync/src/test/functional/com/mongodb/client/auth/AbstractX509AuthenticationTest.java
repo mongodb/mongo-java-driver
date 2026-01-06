@@ -22,6 +22,7 @@ import com.mongodb.MongoSecurityException;
 import com.mongodb.client.Fixture;
 import com.mongodb.client.MongoClient;
 import com.mongodb.connection.NettyTransportSettings;
+import com.mongodb.fixture.EncryptionFixture;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
@@ -34,14 +35,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 import java.util.stream.Stream;
 
 import static com.mongodb.AuthenticationMechanism.MONGODB_X509;
@@ -52,7 +45,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ExtendWith(AbstractX509AuthenticationTest.X509AuthenticationPropertyCondition.class)
 public abstract class AbstractX509AuthenticationTest {
 
-    private static final String KEYSTORE_PASSWORD = "test";
     protected abstract MongoClient createMongoClient(MongoClientSettings mongoClientSettings);
 
     private static Stream<Arguments> shouldAuthenticateWithClientCertificate() throws Exception {
@@ -128,22 +120,11 @@ public abstract class AbstractX509AuthenticationTest {
     }
 
     private static SSLContext buildSslContextFromKeyStore(final String keystoreFileName) throws Exception {
-        KeyManagerFactory keyManagerFactory = getKeyManagerFactory(keystoreFileName);
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(keyManagerFactory.getKeyManagers(), null, null);
-        return sslContext;
+        return EncryptionFixture.buildSslContextFromKeyStore(getKeystoreLocation(), keystoreFileName);
     }
 
-    private static KeyManagerFactory getKeyManagerFactory(final String keystoreFileName)
-            throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException, UnrecoverableKeyException {
-        KeyStore ks = KeyStore.getInstance("PKCS12");
-        try (FileInputStream fis = new FileInputStream(getKeystoreLocation() + File.separator + keystoreFileName)) {
-            ks.load(fis, KEYSTORE_PASSWORD.toCharArray());
-        }
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(
-                KeyManagerFactory.getDefaultAlgorithm());
-        keyManagerFactory.init(ks, KEYSTORE_PASSWORD.toCharArray());
-        return keyManagerFactory;
+    private static KeyManagerFactory getKeyManagerFactory(final String keystoreFileName) throws Exception {
+        return EncryptionFixture.getKeyManagerFactory(getKeystoreLocation(), keystoreFileName);
     }
 
     private static String getKeystoreLocation() {

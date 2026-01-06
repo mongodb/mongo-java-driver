@@ -20,14 +20,19 @@ import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientException;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.vault.ClientEncryption;
+import com.mongodb.fixture.EncryptionFixture;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.junit.jupiter.api.Test;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import java.io.IOException;
+import java.net.Socket;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
@@ -35,16 +40,20 @@ import java.security.cert.CertificateExpiredException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.getEnv;
 import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static java.util.Objects.requireNonNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
 public abstract class AbstractClientSideEncryptionKmsTlsTest {
 
     private static final String SYSTEM_PROPERTY_KEY = "org.mongodb.test.kms.tls.error.type";
@@ -128,7 +137,7 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
      * See <a href="https://github.com/mongodb/specifications/tree/master/source/client-side-encryption/tests#11-kms-tls-options-tests">
      * 11. KMS TLS Options Tests</a>.
      */
-    @Test()
+    @Test
     public void testThatCustomSslContextIsUsed() {
         assumeTrue(hasEncryptionTestsEnabled());
 
@@ -165,34 +174,71 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
         }
     }
 
+    /**
+     * Not a prose spec test. However, it is additional test case for better coverage.
+     */
+    @Test
+    public void testUnexpectedEndOfStreamFromKmsProvider() throws Exception {
+        String kmsKeystoreLocation = System.getProperty("org.mongodb.test.kms.keystore.location");
+        assumeTrue(kmsKeystoreLocation != null && !kmsKeystoreLocation.isEmpty(),
+                "System property org.mongodb.test.kms.keystore.location is not set");
+
+        int kmsPort = 5555;
+        ClientEncryptionSettings clientEncryptionSettings = ClientEncryptionSettings.builder()
+                .keyVaultMongoClientSettings(getMongoClientSettings())
+                .keyVaultNamespace("keyvault.datakeys")
+                .kmsProviders(new HashMap<String, Map<String, Object>>() {{
+                    put("kmip", new HashMap<String, Object>() {{
+                        put("endpoint", "localhost:" + kmsPort);
+                    }});
+                }})
+                .build();
+
+        Thread serverThread = null;
+        try (ClientEncryption clientEncryption = getClientEncryption(clientEncryptionSettings)) {
+            serverThread = startKmsServerSimulatingEof(EncryptionFixture.buildSslContextFromKeyStore(
+                    kmsKeystoreLocation,
+                    "server.p12"), kmsPort);
+
+            MongoClientException mongoException = assertThrows(MongoClientException.class,
+                    () -> clientEncryption.createDataKey("kmip", new DataKeyOptions()));
+            assertEquals("Exception in encryption library: Unexpected end of stream from KMS provider kmip",
+                    mongoException.getMessage());
+        } finally {
+            if (serverThread != null) {
+                serverThread.interrupt();
+            }
+        }
+    }
+
     private HashMap<String, Map<String, Object>> getKmsProviders() {
         return new HashMap<String, Map<String, Object>>() {{
-            put("aws",  new HashMap<String, Object>() {{
+            put("aws", new HashMap<String, Object>() {{
                 put("accessKeyId", getEnv("AWS_ACCESS_KEY_ID"));
                 put("secretAccessKey", getEnv("AWS_SECRET_ACCESS_KEY"));
             }});
-            put("aws:named",  new HashMap<String, Object>() {{
+            put("aws:named", new HashMap<String, Object>() {{
                 put("accessKeyId", getEnv("AWS_ACCESS_KEY_ID"));
                 put("secretAccessKey", getEnv("AWS_SECRET_ACCESS_KEY"));
             }});
-            put("azure",  new HashMap<String, Object>() {{
+            put("azure", new HashMap<String, Object>() {{
                 put("tenantId", getEnv("AZURE_TENANT_ID"));
                 put("clientId", getEnv("AZURE_CLIENT_ID"));
                 put("clientSecret", getEnv("AZURE_CLIENT_SECRET"));
                 put("identityPlatformEndpoint", "login.microsoftonline.com:443");
             }});
-            put("azure:named",  new HashMap<String, Object>() {{
+            put("azure:named", new HashMap<String, Object>() {{
                 put("tenantId", getEnv("AZURE_TENANT_ID"));
                 put("clientId", getEnv("AZURE_CLIENT_ID"));
                 put("clientSecret", getEnv("AZURE_CLIENT_SECRET"));
                 put("identityPlatformEndpoint", "login.microsoftonline.com:443");
             }});
-            put("gcp",  new HashMap<String, Object>() {{
+            put("gcp", new HashMap<String, Object>() {{
                 put("email", getEnv("GCP_EMAIL"));
                 put("privateKey", getEnv("GCP_PRIVATE_KEY"));
                 put("endpoint", "oauth2.googleapis.com:443");
             }});
-            put("gcp:named",  new HashMap<String, Object>() {{
+            put("gcp:named", new HashMap<String, Object>() {{
                 put("email", getEnv("GCP_EMAIL"));
                 put("privateKey", getEnv("GCP_PRIVATE_KEY"));
                 put("endpoint", "oauth2.googleapis.com:443");
@@ -256,6 +302,30 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
         } catch (KeyManagementException | NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private Thread startKmsServerSimulatingEof(final SSLContext sslContext, final int kmsPort)
+            throws Exception {
+        CompletableFuture<Void> confirmListening = new CompletableFuture<>();
+        Thread serverThread = new Thread(() -> {
+            try {
+                SSLServerSocketFactory serverSocketFactory = sslContext.getServerSocketFactory();
+                try (SSLServerSocket sslServerSocket = (SSLServerSocket) serverSocketFactory.createServerSocket(kmsPort)) {
+                    sslServerSocket.setNeedClientAuth(false);
+                    confirmListening.complete(null);
+                    try (Socket accept = sslServerSocket.accept()) {
+                        accept.setSoTimeout(10000);
+                        accept.getInputStream().read();
+                    }
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }, "KMIP-EOF-Fake-Server");
+        serverThread.setDaemon(true);
+        serverThread.start();
+        confirmListening.get(TimeUnit.SECONDS.toMillis(10), TimeUnit.MILLISECONDS);
+        return serverThread;
     }
 }
 
