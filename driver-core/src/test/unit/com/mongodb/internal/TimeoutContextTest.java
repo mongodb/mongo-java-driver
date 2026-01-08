@@ -332,8 +332,8 @@ final class TimeoutContextTest {
     }
 
     @DisplayName("should choose timeoutMS when timeoutMS is less than connectTimeoutMS")
-    @ParameterizedTest(name = "should choose timeoutMS when timeoutMS is less than connectTimeoutMS. " +
-            "Parameters: connectTimeoutMS: {0}, timeoutMS: {1}, expected: {2}")
+    @ParameterizedTest(name = "should choose timeoutMS when timeoutMS is less than connectTimeoutMS. "
+            + "Parameters: connectTimeoutMS: {0}, timeoutMS: {1}, expected: {2}")
     @MethodSource
     void shouldChooseTimeoutMsWhenItIsLessThenConnectTimeoutMS(final Long connectTimeoutMS,
                                                           final Long timeoutMS,
