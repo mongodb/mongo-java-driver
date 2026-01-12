@@ -25,29 +25,37 @@ import com.mongodb.connection.ServerConnectionState;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.internal.connection.OperationContext.ServerDeprioritization;
+import com.mongodb.selector.ServerSelector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.List;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.ClusterFixture.createOperationContext;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.params.provider.EnumSource.Mode.EXCLUDE;
 
 final class ServerDeprioritizationTest {
     private static final ServerDescription SERVER_A = serverDescription("a");
     private static final ServerDescription SERVER_B = serverDescription("b");
     private static final ServerDescription SERVER_C = serverDescription("c");
     private static final List<ServerDescription> ALL_SERVERS = unmodifiableList(asList(SERVER_A, SERVER_B, SERVER_C));
-    private static final ClusterDescription REPLICA_SET = clusterDescription(ClusterType.REPLICA_SET);
-    private static final ClusterDescription SHARDED_CLUSTER = clusterDescription(ClusterType.SHARDED);
+    private static final ClusterDescription REPLICA_SET_CLUSTER = multipleModeClusterDescription(ClusterType.REPLICA_SET);
+    private static final ClusterDescription SHARDED_CLUSTER = multipleModeClusterDescription(ClusterType.SHARDED);
+    private static final ClusterDescription LOAD_BALANCED_CLUSTER = singleModeClusterDescription(ClusterType.LOAD_BALANCED);
+    private static final ClusterDescription STANDALONE_CLUSTER = singleModeClusterDescription(ClusterType.STANDALONE);
+    private static final ClusterDescription UNKNOWN_CLUSTER = multipleModeClusterDescription(ClusterType.UNKNOWN);
 
     private ServerDeprioritization serverDeprioritization;
 
@@ -56,20 +64,60 @@ final class ServerDeprioritizationTest {
         serverDeprioritization = createOperationContext(TIMEOUT_SETTINGS).getServerDeprioritization();
     }
 
-    @Test
-    void selectNoneDeprioritized() {
+    private static Stream<Arguments> selectNoneDeprioritized() {
+        return Stream.of(
+                Arguments.of(singletonList(SERVER_A)),
+                Arguments.of(singletonList(SERVER_C)),
+                Arguments.of(singletonList(SERVER_B)),
+                Arguments.of(asList(SERVER_A, SERVER_C))
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void selectNoneDeprioritized(final List<ServerDescription> selectorResult) {
+        ServerSelector wrappedSelector = createAssertingSelector(ALL_SERVERS, selectorResult);
+        ServerSelector emptyListWrappedSelector = createAssertingSelector(ALL_SERVERS, emptyList());
         assertAll(
-                () -> assertEquals(ALL_SERVERS, serverDeprioritization.getServerSelector().select(SHARDED_CLUSTER)),
-                () -> assertEquals(ALL_SERVERS, serverDeprioritization.getServerSelector().select(REPLICA_SET))
+                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(wrappedSelector).select(SHARDED_CLUSTER)),
+                () -> assertEquals(emptyList(), serverDeprioritization.applyDeprioritization(emptyListWrappedSelector).select(SHARDED_CLUSTER)),
+                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(wrappedSelector).select(REPLICA_SET_CLUSTER)),
+                () -> assertEquals(emptyList(), serverDeprioritization.applyDeprioritization(emptyListWrappedSelector).select(REPLICA_SET_CLUSTER)),
+                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(wrappedSelector).select(UNKNOWN_CLUSTER)),
+                () -> assertEquals(emptyList(), serverDeprioritization.applyDeprioritization(emptyListWrappedSelector).select(UNKNOWN_CLUSTER))
         );
     }
 
     @Test
-    void selectSomeDeprioritized() {
-        deprioritize(SERVER_B);
+    void selectNoneDeprioritizedSingleServerCluster() {
+        ServerSelector wrappedSelector = createAssertingSelector(singletonList(SERVER_A), singletonList(SERVER_A));
+        ServerSelector emptyListWrappedSelector = createAssertingSelector(singletonList(SERVER_A), emptyList());
         assertAll(
-                () -> assertEquals(asList(SERVER_A, SERVER_C), serverDeprioritization.getServerSelector().select(SHARDED_CLUSTER)),
-                () -> assertEquals(ALL_SERVERS, serverDeprioritization.getServerSelector().select(REPLICA_SET))
+                () -> assertEquals(singletonList(SERVER_A), serverDeprioritization.applyDeprioritization(wrappedSelector).select(STANDALONE_CLUSTER)),
+                () -> assertEquals(emptyList(), serverDeprioritization.applyDeprioritization(emptyListWrappedSelector).select(STANDALONE_CLUSTER)),
+                () -> assertEquals(singletonList(SERVER_A), serverDeprioritization.applyDeprioritization(wrappedSelector).select(LOAD_BALANCED_CLUSTER)),
+                () -> assertEquals(emptyList(), serverDeprioritization.applyDeprioritization(emptyListWrappedSelector).select(LOAD_BALANCED_CLUSTER))
+        );
+    }
+
+    private static Stream<Arguments> selectSomeDeprioritized() {
+        return Stream.of(
+                Arguments.of(singletonList(SERVER_A)),
+                Arguments.of(singletonList(SERVER_C)),
+                Arguments.of(asList(SERVER_A, SERVER_C))
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void selectSomeDeprioritized(final List<ServerDescription> selectorResult) {
+        deprioritize(SERVER_B);
+        List<ServerDescription> expectedWrappedSelectorFilteredInput = asList(SERVER_A, SERVER_C);
+        ServerSelector selector = createAssertingSelector(expectedWrappedSelectorFilteredInput, selectorResult);
+        assertAll(
+                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selector).select(SHARDED_CLUSTER)),
+                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selector).select(REPLICA_SET_CLUSTER)),
+                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selector).select(UNKNOWN_CLUSTER))
         );
     }
 
@@ -78,18 +126,49 @@ final class ServerDeprioritizationTest {
         deprioritize(SERVER_A);
         deprioritize(SERVER_B);
         deprioritize(SERVER_C);
+        ServerSelector selector = createAssertingSelector(ALL_SERVERS, singletonList(SERVER_A));
         assertAll(
-                () -> assertEquals(ALL_SERVERS, serverDeprioritization.getServerSelector().select(SHARDED_CLUSTER)),
-                () -> assertEquals(ALL_SERVERS, serverDeprioritization.getServerSelector().select(REPLICA_SET))
+                () -> assertEquals(singletonList(SERVER_A), serverDeprioritization.applyDeprioritization(selector).select(SHARDED_CLUSTER)),
+                () -> assertEquals(singletonList(SERVER_A), serverDeprioritization.applyDeprioritization(selector).select(REPLICA_SET_CLUSTER)),
+                () -> assertEquals(singletonList(SERVER_A), serverDeprioritization.applyDeprioritization(selector).select(UNKNOWN_CLUSTER))
         );
     }
 
-    @ParameterizedTest
-    @EnumSource(value = ClusterType.class, mode = EXCLUDE, names = {"SHARDED"})
-    void serverSelectorSelectsAllIfNotShardedCluster(final ClusterType clusterType) {
-        serverDeprioritization.updateCandidate(SERVER_A.getAddress());
-        serverDeprioritization.onAttemptFailure(new RuntimeException());
-        assertEquals(ALL_SERVERS, serverDeprioritization.getServerSelector().select(clusterDescription(clusterType)));
+    @Test
+    void selectAllDeprioritizedSingleServerCluster() {
+        deprioritize(SERVER_A);
+        ServerSelector selector = createAssertingSelector(singletonList(SERVER_A), singletonList(SERVER_A));
+        assertAll(
+                () -> assertEquals(singletonList(SERVER_A), serverDeprioritization.applyDeprioritization(selector).select(STANDALONE_CLUSTER)),
+                () -> assertEquals(singletonList(SERVER_A),
+                        serverDeprioritization.applyDeprioritization(selector).select(LOAD_BALANCED_CLUSTER))
+        );
+    }
+
+    @Test
+    void selectWithRetryWhenWrappedReturnsEmpty() {
+        deprioritize(SERVER_A);
+        Supplier<ServerSelector> selector = () -> new ServerSelector() {
+            private boolean firstCall = true;
+
+            @Override
+            public List<ServerDescription> select(final ClusterDescription clusterDescription) {
+                List<ServerDescription> servers = clusterDescription.getServerDescriptions();
+                if (firstCall) {
+                    firstCall = false;
+                    assertEquals(asList(SERVER_B, SERVER_C), servers);
+                    return emptyList();
+                }
+                assertEquals(ALL_SERVERS, servers);
+                return singletonList(SERVER_A);
+            }
+        };
+
+        assertAll(
+                () -> assertEquals(singletonList(SERVER_A), serverDeprioritization.applyDeprioritization(selector.get()).select(SHARDED_CLUSTER)),
+                () -> assertEquals(singletonList(SERVER_A), serverDeprioritization.applyDeprioritization(selector.get()).select(REPLICA_SET_CLUSTER)),
+                () -> assertEquals(singletonList(SERVER_A), serverDeprioritization.applyDeprioritization(selector.get()).select(UNKNOWN_CLUSTER))
+        );
     }
 
     @Test
@@ -97,7 +176,8 @@ final class ServerDeprioritizationTest {
         serverDeprioritization.updateCandidate(SERVER_A.getAddress());
         serverDeprioritization.onAttemptFailure(
                 new MongoConnectionPoolClearedException(new ServerId(new ClusterId(), new ServerAddress()), null));
-        assertEquals(ALL_SERVERS, serverDeprioritization.getServerSelector().select(SHARDED_CLUSTER));
+        ServerSelector selector = createAssertingSelector(ALL_SERVERS, singletonList(SERVER_A));
+        assertEquals(singletonList(SERVER_A), serverDeprioritization.applyDeprioritization(selector).select(SHARDED_CLUSTER));
     }
 
     @Test
@@ -112,6 +192,15 @@ final class ServerDeprioritizationTest {
         }
     }
 
+    private static ServerSelector createAssertingSelector(
+            final List<ServerDescription> expectedInput,
+            final List<ServerDescription> selectorResult) {
+        return clusterDescription -> {
+            assertEquals(expectedInput, clusterDescription.getServerDescriptions());
+            return selectorResult;
+        };
+    }
+
     private static ServerDescription serverDescription(final String host) {
         return ServerDescription.builder()
                 .state(ServerConnectionState.CONNECTED)
@@ -120,7 +209,11 @@ final class ServerDeprioritizationTest {
                 .build();
     }
 
-    private static ClusterDescription clusterDescription(final ClusterType clusterType) {
+    private static ClusterDescription multipleModeClusterDescription(final ClusterType clusterType) {
         return new ClusterDescription(ClusterConnectionMode.MULTIPLE, clusterType, ALL_SERVERS);
+    }
+
+    private static ClusterDescription singleModeClusterDescription(final ClusterType clusterType) {
+        return new ClusterDescription(ClusterConnectionMode.SINGLE, clusterType, singletonList(SERVER_A));
     }
 }
