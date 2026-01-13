@@ -225,8 +225,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
 
             session.withTransaction(() -> {
                 retryCount.incrementAndGet();  // Count the attempt before the operation that might fail
-                collection.insertOne(session, Document.parse("{ _id : 'backoff-test' }"));
-                return retryCount;
+                return collection.insertOne(session, Document.parse("{ _id : 'backoff-test' }"));
             });
 
             assertEquals(4, retryCount.get(), "Expected 1 initial attempt + 3 retries");
