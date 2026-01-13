@@ -284,10 +284,12 @@ public class WithTransactionProseTest extends DatabaseTestCase {
             failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': 'off'}"));
         }
 
-        long expectedWithBackoffTime = noBackoffTime + 2200;  // 2.2 seconds as per spec
+        long expectedWithBackoffTime = noBackoffTime + 1800;  // 1.8 seconds as per spec
         long actualDifference = Math.abs(withBackoffTime - expectedWithBackoffTime);
 
-        assertTrue(actualDifference < 1000, String.format("Expected withBackoffTime to be ~%dms (noBackoffTime %dms + 2200ms), " + "but got %dms. Difference: %dms (tolerance: 1000ms per spec)", expectedWithBackoffTime, noBackoffTime, withBackoffTime, actualDifference));
+        assertTrue(actualDifference < 1000, String.format("Expected withBackoffTime to be ~%dms (noBackoffTime %dms + 1800ms), but"
+                + " got %dms. Difference: %dms (tolerance: 1000ms per spec)", expectedWithBackoffTime, noBackoffTime, withBackoffTime,
+                actualDifference));
     }
 
     private boolean canRunTests() {
