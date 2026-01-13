@@ -252,18 +252,22 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         notNull("transactionBody", transactionBody);
         long startTime = ClientSessionClock.INSTANCE.now();
         TimeoutContext withTransactionTimeoutContext = createTimeoutContext(options);
-        ExponentialBackoff transactionBackoff = null;
-        boolean isRetry = false;
+        ExponentialBackoff transactionBackoff = ExponentialBackoff.forTransactionRetry();
+        int transactionAttempt = 0;
+        MongoException lastError = null;
 
         try {
             outer:
             while (true) {
-                // Apply exponential backoff before retrying transaction
-                if (isRetry) {
-                    if (transactionBackoff == null) {
-                        transactionBackoff = ExponentialBackoff.forTransactionRetry();
+                if (transactionAttempt > 0) {
+                    long backoffMs = transactionBackoff.calculateDelayMs(transactionAttempt - 1);
+                    // Check if backoff would exceed timeout
+                    if (ClientSessionClock.INSTANCE.now() + backoffMs - startTime >= MAX_RETRY_TIME_LIMIT_MS) {
+                        if (lastError != null) {
+                            throw lastError;
+                        }
+                        throw new MongoClientException("Transaction retry timeout exceeded");
                     }
-                    long backoffMs = transactionBackoff.calculateDelayMs();
                     try {
                         if (backoffMs > 0) {
                             Thread.sleep(backoffMs);
@@ -273,10 +277,11 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                         throw new MongoClientException("Transaction retry interrupted", e);
                     }
                 }
-                isRetry = true;
                 T retVal;
                 try {
                     startTransaction(options, withTransactionTimeoutContext.copyTimeoutContext());
+                    transactionAttempt++;
+
                     if (transactionSpan != null) {
                         transactionSpan.setIsConvenientTransaction();
                     }
@@ -285,14 +290,17 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     if (transactionState == TransactionState.IN) {
                         abortTransaction();
                     }
-                    if (e instanceof MongoException && !(e instanceof MongoOperationTimeoutException)) {
-                        MongoException exceptionToHandle = OperationHelper.unwrap((MongoException) e);
-                        if (exceptionToHandle.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)
-                                && ClientSessionClock.INSTANCE.now() - startTime < MAX_RETRY_TIME_LIMIT_MS) {
-                            if (transactionSpan != null) {
-                                transactionSpan.spanFinalizing(false);
+                    if (e instanceof MongoException) {
+                        lastError = (MongoException) e;  // Store last error
+                        if (!(e instanceof MongoOperationTimeoutException)) {
+                            MongoException exceptionToHandle = OperationHelper.unwrap((MongoException) e);
+                            if (exceptionToHandle.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)
+                                    && ClientSessionClock.INSTANCE.now() - startTime < MAX_RETRY_TIME_LIMIT_MS) {
+                                if (transactionSpan != null) {
+                                    transactionSpan.spanFinalizing(false);
+                                }
+                                continue;
                             }
-                            continue;
                         }
                     }
                     throw e;
@@ -315,6 +323,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                                     if (transactionSpan != null) {
                                         transactionSpan.spanFinalizing(true);
                                     }
+                                    lastError = e;
                                     continue outer;
                                 }
                             }

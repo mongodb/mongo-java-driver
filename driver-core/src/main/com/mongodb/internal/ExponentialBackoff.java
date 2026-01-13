@@ -112,6 +112,22 @@ public final class ExponentialBackoff {
     }
 
     /**
+     * Calculate backoff delay with jitter for a specific retry count.
+     * This method does not modify the internal retry counter.
+     *
+     * @param retryCount the retry count to calculate delay for
+     * @return delay in milliseconds
+     */
+    public long calculateDelayMs(final int retryCount) {
+        double jitter = testJitterSupplier != null
+                ? testJitterSupplier.getAsDouble()
+                : ThreadLocalRandom.current().nextDouble();
+        double exponentialBackoff = baseBackoffMs * Math.pow(growthFactor, retryCount);
+        double cappedBackoff = Math.min(exponentialBackoff, maxBackoffMs);
+        return Math.round(jitter * cappedBackoff);
+    }
+
+    /**
      * Set a custom jitter supplier for testing purposes.
      * This overrides the default ThreadLocalRandom jitter generation.
      *
