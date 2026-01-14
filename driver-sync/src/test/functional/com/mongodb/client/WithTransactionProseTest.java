@@ -252,10 +252,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         long noBackoffTime;
         try (ClientSession session = client.startSession()) {
             long startNanos = System.nanoTime();
-            session.withTransaction(() -> {
-                collection.insertOne(session, Document.parse("{ _id : 'backoff-test-no-jitter' }"));
-                return null;
-            });
+            session.withTransaction(() -> collection.insertOne(session, Document.parse("{ _id : 'backoff-test-no-jitter' }")));
             noBackoffTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);```
         } finally {
             // Clear the test jitter supplier to avoid affecting other tests
