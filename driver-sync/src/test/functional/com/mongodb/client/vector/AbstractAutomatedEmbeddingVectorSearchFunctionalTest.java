@@ -127,6 +127,7 @@ public abstract class AbstractAutomatedEmbeddingVectorSearchFunctionalTest exten
         insertDocumentsForEmbedding();
         // TODO wait for embeddings to be generated
         // once there is an official way to check the index status, we should use it instead of sleep
+        // there is a workaround to pass a feature flag `internalListAllIndexesForTesting` but it's not official yet
         TimeUnit.SECONDS.sleep(2L);
         // then run vector search query
         runEmbeddingQuery();

@@ -41,10 +41,13 @@ import static com.mongodb.client.model.Accumulators.percentile;
 import static com.mongodb.client.model.Aggregates.geoNear;
 import static com.mongodb.client.model.Aggregates.group;
 import static com.mongodb.client.model.Aggregates.unset;
+import static com.mongodb.client.model.Aggregates.vectorSearch;
 import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
 import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Windows.Bound.UNBOUNDED;
 import static com.mongodb.client.model.Windows.documents;
+import static com.mongodb.client.model.search.SearchPath.fieldPath;
+import static com.mongodb.client.model.search.VectorSearchOptions.approximateVectorSearchOptions;
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -281,5 +284,49 @@ public class AggregatesTest extends OperationTest {
         assertEquals(
                 parseToList("[{_id:1, a:8, added: [{a: 5}]}, {_id:2, a:9, added: [{a: 5}]}]"),
                 getCollectionHelper().aggregate(Arrays.asList(lookupStage)));
+    }
+
+    @Test
+    public void testVectorSearchWithQueryObject() {
+        assertPipeline(
+                "{"
+                        + "  $vectorSearch: {"
+                        + "    path: 'plot',"
+                        + "    query: {text: 'movies about love'},"
+                        + "    index: 'test_index',"
+                        + "    limit: {$numberLong: '5'},"
+                        + "    numCandidates: {$numberLong: '5'}"
+                        + "  }"
+                        + "}",
+                vectorSearch(
+                        fieldPath("plot"),
+                        new Document("text", "movies about love"),
+                        "test_index",
+                        5L,
+                        approximateVectorSearchOptions(5L)
+                ));
+    }
+
+    @Test
+    public void testVectorSearchWithQueryObjectAndEmbeddingModel() {
+        assertPipeline(
+                "{"
+                        + "  $vectorSearch: {"
+                        + "    path: 'plot',"
+                        + "    query: {text: 'movies about love'},"
+                        + "    index: 'test_index',"
+                        + "    limit: {$numberLong: '5'}"
+                        + "    model: 'voyage-4-large',"
+                        + "    numCandidates: {$numberLong: '5'}"
+                        + "  }"
+                        + "}",
+                vectorSearch(
+                        fieldPath("plot"),
+                        new Document("text", "movies about love"),
+                        "voyage-4-large",
+                        "test_index",
+                        5L,
+                        approximateVectorSearchOptions(5L)
+                ));
     }
 }
