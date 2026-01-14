@@ -211,7 +211,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     // Backoff uses growth factor of 1.5 as per spec
     //
     @Test
-    public void testExponentialBackoffOnTransientError() {
+    void testExponentialBackoffOnTransientError() {
         // Configure failpoint to simulate transient errors
         MongoDatabase failPointAdminDb = client.getDatabase("admin");
         failPointAdminDb.runCommand(
