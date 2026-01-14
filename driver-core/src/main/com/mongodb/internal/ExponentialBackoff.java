@@ -69,7 +69,8 @@ public final class ExponentialBackoff {
 
     /**
      * Creates a backoff instance configured for withTransaction retries.
-     * Uses: 5ms base, 500ms max, 1.5 growth factor.
+     * Uses: {@value TRANSACTION_BASE_BACKOFF_MS} ms base, {@value TRANSACTION_MAX_BACKOFF_MS} ms max,
+     * {@value TRANSACTION_BACKOFF_GROWTH} growth factor.
      *
      * @return ExponentialBackoff configured for transaction retries
      */
