@@ -53,7 +53,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doNothing;
@@ -216,7 +215,7 @@ final class ChangeStreamBatchCursorTest {
                 verify(newCursor).next(operationContextCaptor.capture()));
         verify(changeStreamOperation).setChangeStreamOptionsForResume(resumeToken, maxWireVersion);
         verify(changeStreamOperation, times(1)).getDecoder();
-        verify(changeStreamOperation, times(1)).execute(eq(readBinding), any());
+        verify(changeStreamOperation, times(1)).execute(any(ReadBinding.class), any());
         verifyNoMoreInteractions(changeStreamOperation);
         verify(newCursor, times(1)).next(any());
         verify(newCursor, atLeastOnce()).getPostBatchResumeToken();
@@ -245,7 +244,7 @@ final class ChangeStreamBatchCursorTest {
     void shouldPropagateAnyErrorsOccurredInAggregateOperation() {
         when(cursor.next(any())).thenThrow(new MongoOperationTimeoutException("timeout"));
         MongoNotPrimaryException resumableError = new MongoNotPrimaryException(new BsonDocument(), new ServerAddress());
-        when(changeStreamOperation.execute(eq(readBinding), any())).thenThrow(resumableError);
+        when(changeStreamOperation.execute(any(ReadBinding.class), any())).thenThrow(resumableError);
 
         ChangeStreamBatchCursor<Document> cursor = createChangeStreamCursor();
         //when
@@ -272,12 +271,12 @@ final class ChangeStreamBatchCursorTest {
         clearInvocations(this.cursor, newCursor, timeoutContext, changeStreamOperation, readBinding);
 
         //second next operation times out on resume attempt when creating change stream
-        when(changeStreamOperation.execute(eq(readBinding), any())).thenThrow(
+        when(changeStreamOperation.execute(any(ReadBinding.class), any())).thenThrow(
                 new MongoOperationTimeoutException("timeout during resumption"));
         assertThrows(MongoOperationTimeoutException.class, cursor::next);
-        clearInvocations(this.cursor, newCursor, timeoutContext, changeStreamOperation);
+        clearInvocations(this.cursor, newCursor, timeoutContext, changeStreamOperation, readBinding);
 
-        doReturn(newChangeStreamCursor).when(changeStreamOperation).execute(eq(readBinding), any());
+        doReturn(newChangeStreamCursor).when(changeStreamOperation).execute(any(ReadBinding.class), any());
 
         //when third operation succeeds to resume and call next
         sleep(TIMEOUT_CONSUMPTION_SLEEP_MS);
@@ -308,7 +307,7 @@ final class ChangeStreamBatchCursorTest {
         clearInvocations(this.cursor, newCursor, timeoutContext, changeStreamOperation, readBinding);
 
         //when second next operation errors on resume attempt when creating change stream
-        when(changeStreamOperation.execute(eq(readBinding), any())).thenThrow(
+        when(changeStreamOperation.execute(any(ReadBinding.class), any())).thenThrow(
                 new MongoNotPrimaryException(new BsonDocument(), new ServerAddress()));
         assertThrows(MongoNotPrimaryException.class, cursor::next);
 
@@ -344,7 +343,11 @@ final class ChangeStreamBatchCursorTest {
     private void verifyResumeAttemptCalled() {
         verify(cursor, times(1)).close(any());
         verify(changeStreamOperation).setChangeStreamOptionsForResume(resumeToken, maxWireVersion);
-        verify(changeStreamOperation, times(1)).execute(eq(readBinding), any());
+        verify(changeStreamOperation, times(1)).execute(any(ReadBinding.class), any());
+        verifyNoMoreInteractions(cursor);
+        verify(changeStreamOperation, times(1)).execute(any(ReadBinding.class), any());
+        // Verify server selection is done once for the resume attempt.
+        verify(readBinding, times(1)).getReadConnectionSource(any());
         verifyNoMoreInteractions(cursor);
     }
 
@@ -394,9 +397,13 @@ final class ChangeStreamBatchCursorTest {
         changeStreamOperation = mock(ChangeStreamOperation.class);
         when(changeStreamOperation.getDecoder()).thenReturn(new DocumentCodec());
         doNothing().when(changeStreamOperation).setChangeStreamOptionsForResume(resumeToken, maxWireVersion);
-        when(changeStreamOperation.execute(eq(readBinding), any())).thenReturn(newChangeStreamCursor);
+        when(changeStreamOperation.execute(any(ReadBinding.class), any())).thenAnswer(invocation -> {
+            ReadBinding binding = invocation.getArgument(0);
+            OperationContext operationContext = invocation.getArgument(1);
+            binding.getReadConnectionSource(operationContext);
+            return newChangeStreamCursor;
+        });
     }
-
 
     private void assertTimeoutWasRefreshedForOperation(final TimeoutContext timeoutContextUsedForOperation) {
         assertNotNull(timeoutContextUsedForOperation.getTimeout(), "TimeoutMs was not set");
