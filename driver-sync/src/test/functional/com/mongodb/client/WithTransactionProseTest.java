@@ -256,8 +256,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
                 collection.insertOne(session, Document.parse("{ _id : 'backoff-test-no-jitter' }"));
                 return null;
             });
-            long endNanos = System.nanoTime();
-            noBackoffTime = TimeUnit.NANOSECONDS.toMillis(endNanos - startNanos);
+            noBackoffTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);```
         } finally {
             // Clear the test jitter supplier to avoid affecting other tests
             ExponentialBackoff.clearTestJitterSupplier();
