@@ -241,7 +241,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     //
     @DisplayName("Retry Backoff is Enforced")
     @Test
-    public void testRetryBackoffIsEnforced() {
+    void testRetryBackoffIsEnforced() {
         MongoDatabase failPointAdminDb = client.getDatabase("admin");
 
         // Test 1: Run with jitter = 0 (no backoff)
