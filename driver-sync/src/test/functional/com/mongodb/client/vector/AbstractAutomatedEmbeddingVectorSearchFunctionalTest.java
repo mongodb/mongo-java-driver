@@ -1,21 +1,29 @@
+/*
+ * Copyright 2008-present MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.mongodb.client.vector;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
-import com.mongodb.ReadConcern;
-import com.mongodb.ReadPreference;
-import com.mongodb.WriteConcern;
 import com.mongodb.client.Fixture;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.OperationTest;
 import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.client.model.SearchIndexType;
-
-import com.mongodb.client.result.InsertManyResult;
-
-import java.util.concurrent.TimeUnit;
-
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
@@ -30,10 +38,10 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 import static com.mongodb.client.model.Aggregates.vectorSearch;
-import static com.mongodb.client.model.search.AggregatesSearchFunctionalTest.waitForIndex;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.VectorSearchOptions.approximateVectorSearchOptions;
 import static java.util.Arrays.asList;
@@ -113,9 +121,13 @@ public abstract class AbstractAutomatedEmbeddingVectorSearchFunctionalTest exten
         // TODO-CLOUDP-332444
         // community search with automated embedding doesn't support queryable field yet
         // once supported remove the sleep and uncomment waitForIndex
+        TimeUnit.SECONDS.sleep(2L);
         //waitForIndex(documentCollection, INDEX_NAME);
         // then insert documents
         insertDocumentsForEmbedding();
+        // TODO wait for embeddings to be generated
+        // once there is an official way to check the index status, we should use it instead of sleep
+        TimeUnit.SECONDS.sleep(2L);
         // then run vector search query
         runEmbeddingQuery();
     }
@@ -178,7 +190,7 @@ public abstract class AbstractAutomatedEmbeddingVectorSearchFunctionalTest exten
      * <a href="https://github.com/mongodb-labs/ai-ml-pipeline-testing/blob/1d0213eb918ff502e774f70dd9f10f843c72dcdf/.evergreen/mongodb-community-search/self_test.py#L33">here</a>
      */
     private void insertDocumentsForEmbedding() {
-        final InsertManyResult insertManyResult = documentCollection.insertMany(asList(
+        documentCollection.insertMany(asList(
                 new Document()
                         .append("cast", asList("Cillian Murphy", "Emily Blunt", "Matt Damon"))
                         .append("director", "Christopher Nolan")
@@ -204,7 +216,7 @@ public abstract class AbstractAutomatedEmbeddingVectorSearchFunctionalTest exten
         ));
     }
 
-    private void createAutoEmbeddingIndex(String modelName) {
+    private void createAutoEmbeddingIndex(final String modelName) {
         SearchIndexModel indexModel = new SearchIndexModel(
                 INDEX_NAME,
                 new Document(
