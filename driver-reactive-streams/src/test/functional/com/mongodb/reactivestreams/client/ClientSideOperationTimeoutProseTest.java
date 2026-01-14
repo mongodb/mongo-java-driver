@@ -28,7 +28,6 @@ import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBucket;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBuckets;
-import com.mongodb.reactivestreams.client.gridfs.GridFSUploadPublisher;
 import com.mongodb.reactivestreams.client.syncadapter.SyncGridFSBucket;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonDocument;
@@ -129,8 +128,8 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
             TestEventPublisher<ByteBuffer> eventPublisher = new TestEventPublisher<>();
             TestSubscriber<ObjectId> testSubscriber = new TestSubscriber<>();
 
-            GridFSUploadPublisher<ObjectId> filename = gridFsBucket.uploadFromPublisher("filename", eventPublisher.getEventStream());
-            filename.subscribe(testSubscriber);
+            gridFsBucket.uploadFromPublisher("filename", eventPublisher.getEventStream())
+                    .subscribe(testSubscriber);
 
             //when
             eventPublisher.sendEvent(ByteBuffer.wrap(new byte[]{0x12}));
