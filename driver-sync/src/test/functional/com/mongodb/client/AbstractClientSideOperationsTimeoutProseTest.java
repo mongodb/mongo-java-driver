@@ -448,7 +448,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             // Expect this to fail with a server selection timeout error after no more than 15ms [this is increased]
             long elapsed = msElapsedSince(start);
             assertTrue(throwable.getMessage().contains("while waiting for a server"));
-            System.err.println("Elapsed time: " + elapsed + "ms");
             assertTrue(elapsed < 10 + timeoutBuffer, "Took too long to time out, elapsedMS: " + elapsed);
         }
     }
@@ -488,7 +487,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                         .insertOne(new Document("x", 1));
             });
             long elapsed = msElapsedSince(start);
-            System.err.println("test8ServerSelectionHandshake elapsed " + elapsed + "ms");
             assertTrue(elapsed <= 350, "Took too long to time out, elapsedMS: " + elapsed);
         }
     }
@@ -1194,15 +1192,5 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
      */
     private String getHandshakeCommandName() {
         return ClusterFixture.getServerApi() == null ? LEGACY_HELLO : HELLO;
-    }
-
-    protected long withRttAdjustment(int timeout, int countOfOperations) {
-        long primaryRTT = ClusterFixture.getPrimaryRTT();
-        long adjustedTimeout = timeout + (primaryRTT * countOfOperations);
-        return adjustedTimeout;
-    }
-
-    protected long withRttAdjustment(int timeout) {
-        return withRttAdjustment(timeout, 1);
     }
 }
