@@ -59,7 +59,6 @@ public class MongoClientSessionFunctionalTest {
     @BeforeEach
     public void setUp() {
         collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), NAMESPACE);
-        // in some test collection might not have been created yet, thus dropping it in afterEach will throw an error
         collectionHelper.create();
     }
 
