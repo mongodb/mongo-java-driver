@@ -38,6 +38,8 @@ import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.BinaryVector;
+import org.bson.annotations.Beta;
+import org.bson.annotations.Reason;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -64,6 +66,9 @@ import static java.util.Arrays.asList;
  */
 @SuppressWarnings("overloads")
 public final class Aggregates {
+
+    private Aggregates() {
+    }
 
     /**
      * Creates an $addFields pipeline stage
@@ -965,6 +970,71 @@ public final class Aggregates {
         notNull("index", index);
         notNull("options", options);
         return new VectorSearchBson(path, queryVector, index, limit, options);
+    }
+
+    /**
+     * Creates a {@code $vectorSearch} pipeline stage supported by MongoDB Atlas.
+     * You may use the {@code $meta: "vectorSearchScore"} expression, e.g., via {@link Projections#metaVectorSearchScore(String)},
+     * to extract the relevance score assigned to each found document.
+     * This overload is used for auto-embedding in atlas community edition
+     *
+     * @param query The query object. Right now it could only have a single field `text`: `string`
+     * @param path The field to be searched.
+     * @param index The name of the index to use.
+     * @param limit The limit on the number of documents produced by the pipeline stage.
+     * @param options Optional {@code $vectorSearch} pipeline stage fields.
+     * @return The {@code $vectorSearch} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-vector-search/vector-search-stage/ $vectorSearch
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @mongodb.server.release 6.0.11
+     * @since 5.7.0
+     */
+    @Beta(Reason.SERVER)
+    public static Bson vectorSearch(
+            final FieldSearchPath path,
+            final Bson query,
+            final String index,
+            final long limit,
+            final VectorSearchOptions options) {
+        notNull("path", path);
+        notNull("query", query);
+        notNull("index", index);
+        notNull("options", options);
+        return new VectorSearchQueryBson(path, query, index, limit, options);
+    }
+
+    /**
+     * Creates a {@code $vectorSearch} pipeline stage supported by MongoDB Atlas.
+     * You may use the {@code $meta: "vectorSearchScore"} expression, e.g., via {@link Projections#metaVectorSearchScore(String)},
+     * to extract the relevance score assigned to each found document.
+     * This overload is used for auto-embedding in atlas community edition
+     * @param query The query object. Right now it could only have a single field `text`: `string`
+     * @param path The field to be searched.
+     * @param index The name of the index to use.
+     * @param limit The limit on the number of documents produced by the pipeline stage.
+     * @param options Optional {@code $vectorSearch} pipeline stage fields.
+     * @param embeddingModelName Model name to use for generating embeddings for the query.
+     * @return The {@code $vectorSearch} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-vector-search/vector-search-stage/ $vectorSearch
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @mongodb.server.release 6.0.11
+     * @since 5.7.0
+     */
+    @Beta(Reason.SERVER)
+    public static Bson vectorSearch(
+            final FieldSearchPath path,
+            final Bson query,
+            final String embeddingModelName,
+            final String index,
+            final long limit,
+            final VectorSearchOptions options) {
+        notNull("path", path);
+        notNull("query", query);
+        notNull("index", index);
+        notNull("options", options);
+        return new VectorSearchQueryBson(path, query, index, limit, embeddingModelName, options);
     }
 
     /**
@@ -2155,6 +2225,72 @@ public final class Aggregates {
         }
     }
 
+
+    /**
+     * Same as {@link Aggregates.VectorSearchBson} but uses a query expression instead of a query vector.
+     */
+    private static class VectorSearchQueryBson implements Bson {
+        private final FieldSearchPath path;
+        private final Bson query;
+        private final String index;
+        private final long limit;
+        private final VectorSearchOptions options;
+
+        /**
+         * Given model name must be compatible with the one in the index definition.
+         */
+        private final String embeddingModelName;
+
+        VectorSearchQueryBson(final FieldSearchPath path, final Bson query,
+                final String index, final long limit,
+                final String embeddingModelName,
+                final VectorSearchOptions options) {
+            this.path = path;
+            this.query = query;
+            this.index = index;
+            this.limit = limit;
+            this.options = options;
+            this.embeddingModelName = embeddingModelName;
+        }
+
+        VectorSearchQueryBson(final FieldSearchPath path, final Bson query,
+                final String index, final long limit,
+                final VectorSearchOptions options) {
+            this.path = path;
+            this.query = query;
+            this.index = index;
+            this.limit = limit;
+            this.options = options;
+            // when null then model name from the index definition will be used by the server
+            this.embeddingModelName = null;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+            Document specificationDoc = new Document("path", path.toValue())
+                    .append("query", query)
+                    .append("index", index)
+                    .append("limit", limit);
+            if (embeddingModelName != null) {
+                specificationDoc.append("model", embeddingModelName);
+            }
+            specificationDoc.putAll(options.toBsonDocument(documentClass, codecRegistry));
+            return new Document("$vectorSearch", specificationDoc).toBsonDocument(documentClass, codecRegistry);
+        }
+
+        @Override
+        public String toString() {
+            return "Stage{name=$vectorSearch"
+                    + ", path=" + path
+                    + ", query=" + query
+                    + ", index=" + index
+                    + ", limit=" + limit
+                    + ", model=" + embeddingModelName
+                    + ", options=" + options
+                    + '}';
+        }
+    }
+
     private static class VectorSearchBson implements Bson {
         private final FieldSearchPath path;
         private final Object queryVector;
@@ -2192,8 +2328,5 @@ public final class Aggregates {
                     + ", options=" + options
                     + '}';
         }
-    }
-
-    private Aggregates() {
     }
 }
