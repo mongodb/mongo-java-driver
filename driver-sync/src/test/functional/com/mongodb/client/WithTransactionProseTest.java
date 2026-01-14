@@ -276,8 +276,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
                 collection.insertOne(session, Document.parse("{ _id : 'backoff-test-full-jitter' }"));
                 return null;
             });
-            long endNanos = System.nanoTime();
-            withBackoffTime = TimeUnit.NANOSECONDS.toMillis(endNanos - startNanos);
+            withBackoffTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
         } finally {
             ExponentialBackoff.clearTestJitterSupplier();
             failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': 'off'}"));
