@@ -55,7 +55,7 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
 
 
     ClientSessionPublisherImpl(final ServerSessionPool serverSessionPool, final MongoClientImpl mongoClient,
-                               final ClientSessionOptions options, final OperationExecutor executor) {
+            final ClientSessionOptions options, final OperationExecutor executor) {
         super(serverSessionPool, mongoClient, options);
         this.executor = executor;
         this.mongoClient = mongoClient;
