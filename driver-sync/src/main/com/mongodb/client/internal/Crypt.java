@@ -369,6 +369,9 @@ public class Crypt implements Closeable {
             while (bytesNeeded > 0) {
                 byte[] bytes = new byte[bytesNeeded];
                 int bytesRead = inputStream.read(bytes, 0, bytes.length);
+                if (bytesRead == -1) {
+                    throw new MongoException("Unexpected end of stream from KMS provider " + keyDecryptor.getKmsProvider());
+                }
                 keyDecryptor.feed(ByteBuffer.wrap(bytes, 0, bytesRead));
                 bytesNeeded = keyDecryptor.bytesNeeded();
             }
@@ -376,7 +379,7 @@ public class Crypt implements Closeable {
     }
 
     private MongoException wrapInMongoException(final Throwable t) {
-        if (t instanceof MongoException) {
+        if (t instanceof MongoClientException) {
             return (MongoException) t;
         } else {
             return new MongoClientException("Exception in encryption library: " + t.getMessage(), t);
