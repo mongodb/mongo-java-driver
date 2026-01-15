@@ -53,7 +53,7 @@ import org.bson.codecs.DocumentCodec
 import org.bson.codecs.ValueCodecProvider
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.isStandalone
@@ -635,7 +635,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
     def 'should set the startAtOperationTime on the sync cursor'() {
         given:
-        def operationContext = OPERATION_CONTEXT.withSessionContext(
+        def operationContext = getOperationContext().withSessionContext(
                 Stub(SessionContext) {
                     getReadConcern() >> ReadConcern.DEFAULT
                     getOperationTime() >> new BsonTimestamp()
@@ -690,7 +690,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
     def 'should set the startAtOperationTime on the async cursor'() {
         given:
-        def operationContext = OPERATION_CONTEXT.withSessionContext(
+        def operationContext = getOperationContext().withSessionContext(
                 Stub(SessionContext) {
                     getReadConcern() >> ReadConcern.DEFAULT
                     getOperationTime() >> new BsonTimestamp()

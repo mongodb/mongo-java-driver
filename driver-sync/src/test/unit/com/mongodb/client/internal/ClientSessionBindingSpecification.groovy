@@ -16,7 +16,7 @@
 
 package com.mongodb.client.internal
 
-
+import com.mongodb.ClusterFixture
 import com.mongodb.ReadPreference
 import com.mongodb.client.ClientSession
 import com.mongodb.internal.binding.ClusterBinding
@@ -25,29 +25,28 @@ import com.mongodb.internal.binding.ReadWriteBinding
 import com.mongodb.internal.connection.Cluster
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
-
 class ClientSessionBindingSpecification extends Specification {
 
     def 'should call underlying wrapped binding'() {
         given:
         def session = Stub(ClientSession)
+        def operationContext = ClusterFixture.getOperationContext()
         def wrappedBinding = Mock(ClusterBinding);
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
 
         when:
-        binding.getReadConnectionSource(OPERATION_CONTEXT)
+        binding.getReadConnectionSource(operationContext)
 
         then:
-        1 * wrappedBinding.getReadConnectionSource(OPERATION_CONTEXT) >> {
+        1 * wrappedBinding.getReadConnectionSource(operationContext) >> {
             Stub(ConnectionSource)
         }
 
         when:
-        binding.getWriteConnectionSource(OPERATION_CONTEXT)
+        binding.getWriteConnectionSource(operationContext)
 
         then:
-        1 * wrappedBinding.getWriteConnectionSource(OPERATION_CONTEXT) >> {
+        1 * wrappedBinding.getWriteConnectionSource(operationContext) >> {
             Stub(ConnectionSource)
         }
     }
@@ -77,8 +76,9 @@ class ClientSessionBindingSpecification extends Specification {
         def session = Mock(ClientSession)
         def wrappedBinding = createStubBinding()
         def binding = new ClientSessionBinding(session, true, wrappedBinding)
-        def readConnectionSource = binding.getReadConnectionSource(OPERATION_CONTEXT)
-        def writeConnectionSource = binding.getWriteConnectionSource(OPERATION_CONTEXT)
+        def operationContext = ClusterFixture.getOperationContext()
+        def readConnectionSource = binding.getReadConnectionSource(operationContext)
+        def writeConnectionSource = binding.getWriteConnectionSource(operationContext)
 
         when:
         binding.release()

@@ -30,7 +30,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
+import static com.mongodb.ClusterFixture.getOperationContext;
 import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.internal.connection.MessageHelper.getApiVersionField;
 import static com.mongodb.internal.connection.MessageHelper.getDbField;
@@ -54,7 +54,7 @@ public class PlainAuthenticatorUnitTest {
     public void testSuccessfulAuthentication() {
         enqueueSuccessfulReply();
 
-        subject.authenticate(connection, connectionDescription, OPERATION_CONTEXT);
+        subject.authenticate(connection, connectionDescription, getOperationContext());
 
         validateMessages();
     }
@@ -64,7 +64,7 @@ public class PlainAuthenticatorUnitTest {
         enqueueSuccessfulReply();
 
         FutureResultCallback<Void> futureCallback = new FutureResultCallback<>();
-        subject.authenticateAsync(connection, connectionDescription, OPERATION_CONTEXT, futureCallback);
+        subject.authenticateAsync(connection, connectionDescription, getOperationContext(), futureCallback);
         futureCallback.get();
 
         validateMessages();

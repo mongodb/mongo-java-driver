@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.connection
 
-
+import com.mongodb.ClusterFixture
 import com.mongodb.ReadPreference
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.internal.async.SingleResultCallback
@@ -27,7 +27,6 @@ import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.CustomMatchers.compare
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback
 import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO_LOWER
@@ -43,14 +42,16 @@ class DefaultServerConnectionSpecification extends Specification {
         def codec = new BsonDocumentCodec()
         def executor = Mock(ProtocolExecutor)
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
+        def operationContext = ClusterFixture.getOperationContext()
+
 
         when:
-        connection.commandAsync('test', command, validator, ReadPreference.primary(), codec, OPERATION_CONTEXT, callback)
+        connection.commandAsync('test', command, validator, ReadPreference.primary(), codec, operationContext, callback)
 
         then:
         1 * executor.executeAsync({
             compare(new CommandProtocolImpl('test', command, validator, ReadPreference.primary(), codec, true,
-                    MessageSequences.EmptyMessageSequences.INSTANCE, ClusterConnectionMode.MULTIPLE, OPERATION_CONTEXT), it)
-        }, internalConnection, OPERATION_CONTEXT.getSessionContext(), callback)
+                    MessageSequences.EmptyMessageSequences.INSTANCE, ClusterConnectionMode.MULTIPLE, operationContext), it)
+        }, internalConnection, operationContext.getSessionContext(), callback)
     }
 }

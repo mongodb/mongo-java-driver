@@ -16,6 +16,7 @@
 
 package com.mongodb.reactivestreams.client.internal
 
+import com.mongodb.ClusterFixture
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
@@ -31,32 +32,34 @@ import com.mongodb.internal.connection.ServerTuple
 import com.mongodb.reactivestreams.client.ClientSession
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.getOperationContext
 
 class ClientSessionBindingSpecification extends Specification {
 
     def 'should return the session context from the connection source'() {
         given:
         def session = Stub(ClientSession)
+        def operationContext = ClusterFixture.getOperationContext()
         def wrappedBinding = Mock(AsyncClusterAwareReadWriteBinding);
         wrappedBinding.retain() >> wrappedBinding
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
 
         when:
         def futureResultCallback = new FutureResultCallback<AsyncConnectionSource>()
-        binding.getReadConnectionSource(OPERATION_CONTEXT, futureResultCallback)
+
+        binding.getReadConnectionSource(operationContext, futureResultCallback)
 
         then:
-        1 * wrappedBinding.getReadConnectionSource(OPERATION_CONTEXT, _) >> {
+        1 * wrappedBinding.getReadConnectionSource(operationContext, _) >> {
             it[1].onResult(Stub(AsyncConnectionSource), null)
         }
 
         when:
         futureResultCallback = new FutureResultCallback<AsyncConnectionSource>()
-        binding.getWriteConnectionSource(OPERATION_CONTEXT, futureResultCallback)
+        binding.getWriteConnectionSource(operationContext, futureResultCallback)
 
         then:
-        1 * wrappedBinding.getWriteConnectionSource(OPERATION_CONTEXT, _) >> {
+        1 * wrappedBinding.getWriteConnectionSource(operationContext, _) >> {
             it[1].onResult(Stub(AsyncConnectionSource), null)
         }
     }
@@ -87,10 +90,10 @@ class ClientSessionBindingSpecification extends Specification {
         def wrappedBinding = createStubBinding()
         def binding = new ClientSessionBinding(session, true, wrappedBinding)
         def futureResultCallback = new FutureResultCallback<AsyncConnectionSource>()
-        binding.getReadConnectionSource(OPERATION_CONTEXT, futureResultCallback)
+        binding.getReadConnectionSource(getOperationContext(), futureResultCallback)
         def readConnectionSource = futureResultCallback.get()
         futureResultCallback = new FutureResultCallback<AsyncConnectionSource>()
-        binding.getWriteConnectionSource(OPERATION_CONTEXT, futureResultCallback)
+        binding.getWriteConnectionSource(getOperationContext(), futureResultCallback)
         def writeConnectionSource = futureResultCallback.get()
 
         when:

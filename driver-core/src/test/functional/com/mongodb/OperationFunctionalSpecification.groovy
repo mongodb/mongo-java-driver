@@ -61,7 +61,7 @@ import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.ClusterFixture.TIMEOUT
 import static com.mongodb.ClusterFixture.checkReferenceCountReachesTarget
 import static com.mongodb.ClusterFixture.executeAsync
@@ -108,7 +108,7 @@ class OperationFunctionalSpecification extends Specification {
 
     void acknowledgeWrite(final SingleConnectionBinding binding) {
         new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(new BsonDocument())], true,
-                ACKNOWLEDGED, false).execute(binding, OPERATION_CONTEXT)
+                ACKNOWLEDGED, false).execute(binding, getOperationContext())
         binding.release()
     }
 
@@ -279,7 +279,7 @@ class OperationFunctionalSpecification extends Specification {
                           BsonDocument expectedCommand=null, Boolean checkSecondaryOk=false,
                           ReadPreference readPreference=ReadPreference.primary(), Boolean retryable = false,
                           ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
-        def operationContext = OPERATION_CONTEXT
+        def operationContext = getOperationContext()
                 .withSessionContext(Stub(SessionContext) {
                     hasActiveTransaction() >> activeTransaction
                     getReadConcern() >> readConcern
@@ -353,7 +353,7 @@ class OperationFunctionalSpecification extends Specification {
                            Boolean checkCommand = true, BsonDocument expectedCommand = null, Boolean checkSecondaryOk = false,
                            ReadPreference readPreference = ReadPreference.primary(), Boolean retryable = false,
                            ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
-        def operationContext = OPERATION_CONTEXT
+        def operationContext = getOperationContext()
                 .withSessionContext(Stub(SessionContext) {
                     hasActiveTransaction() >> activeTransaction
                     getReadConcern() >> readConcern
@@ -447,7 +447,7 @@ class OperationFunctionalSpecification extends Specification {
             }
         }
 
-        def operationContext = OPERATION_CONTEXT.withSessionContext(
+        def operationContext = getOperationContext().withSessionContext(
                 Stub(SessionContext) {
                     hasSession() >> true
                     hasActiveTransaction() >> false
@@ -488,7 +488,7 @@ class OperationFunctionalSpecification extends Specification {
             }
         }
 
-        def operationContext = OPERATION_CONTEXT.withSessionContext(
+        def operationContext = getOperationContext().withSessionContext(
                 Stub(SessionContext) {
                     hasSession() >> true
                     hasActiveTransaction() >> false

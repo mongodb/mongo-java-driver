@@ -20,7 +20,7 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.session.ClientSession;
 import org.junit.jupiter.api.Test;
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
+import static com.mongodb.ClusterFixture.getOperationContext;
 import static com.mongodb.ClusterFixture.getCluster;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -28,7 +28,7 @@ class BaseClientSessionImplTest {
 
     @Test
     void shouldNotCheckoutServerSessionIfNeverRequested() {
-        ServerSessionPool serverSessionPool = new ServerSessionPool(getCluster(), OPERATION_CONTEXT);
+        ServerSessionPool serverSessionPool = new ServerSessionPool(getCluster(), getOperationContext());
         ClientSession clientSession = new BaseClientSessionImpl(serverSessionPool, new Object(), ClientSessionOptions.builder().build());
 
         assertEquals(0, serverSessionPool.getInUseCount());
@@ -40,7 +40,7 @@ class BaseClientSessionImplTest {
 
     @Test
     void shouldDelayServerSessionCheckoutUntilRequested() {
-        ServerSessionPool serverSessionPool = new ServerSessionPool(getCluster(), OPERATION_CONTEXT);
+        ServerSessionPool serverSessionPool = new ServerSessionPool(getCluster(), getOperationContext());
         ClientSession clientSession = new BaseClientSessionImpl(serverSessionPool, new Object(), ClientSessionOptions.builder().build());
 
         assertEquals(0, serverSessionPool.getInUseCount());

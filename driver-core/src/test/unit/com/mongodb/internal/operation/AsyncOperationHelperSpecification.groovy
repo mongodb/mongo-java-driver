@@ -36,7 +36,7 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.Decoder
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync
@@ -74,7 +74,7 @@ class AsyncOperationHelperSpecification extends Specification {
             _ * getDescription() >> connectionDescription
         }
 
-        def operationContext = OPERATION_CONTEXT.withSessionContext(
+        def operationContext = getOperationContext().withSessionContext(
                 Stub(SessionContext) {
                     hasSession() >> true
                     hasActiveTransaction() >> false
@@ -116,7 +116,7 @@ class AsyncOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeCommandAsync(asyncWriteBinding, OPERATION_CONTEXT, dbName, command, connection, { t, conn -> t }, callback)
+        executeCommandAsync(asyncWriteBinding, getOperationContext(), dbName, command, connection, { t, conn -> t }, callback)
 
         then:
         _ * connection.getDescription() >> connectionDescription
@@ -143,7 +143,7 @@ class AsyncOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeRetryableReadAsync(asyncReadBinding, OPERATION_CONTEXT, dbName, commandCreator, decoder, function, false, callback)
+        executeRetryableReadAsync(asyncReadBinding, getOperationContext(), dbName, commandCreator, decoder, function, false, callback)
 
         then:
         _ * connection.getDescription() >> connectionDescription

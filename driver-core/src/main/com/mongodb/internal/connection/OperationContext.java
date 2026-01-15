@@ -112,6 +112,12 @@ public class OperationContext {
                 operationName, tracingSpan);
     }
 
+    //TODO-JAVA
+    public OperationContext withServerDeprioritization(final ServerDeprioritization serverDeprioritization) {
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, tracingManager, serverApi,
+                operationName, tracingSpan);
+    }
+
     public long getId() {
         return id;
     }
@@ -228,7 +234,7 @@ public class OperationContext {
         private ServerAddress candidate;
         private final Set<ServerAddress> deprioritized;
 
-        private ServerDeprioritization() {
+        public ServerDeprioritization() {
             candidate = null;
             deprioritized = new HashSet<>();
         }
