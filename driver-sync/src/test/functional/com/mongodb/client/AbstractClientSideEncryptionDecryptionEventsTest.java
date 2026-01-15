@@ -24,6 +24,7 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoSocketReadException;
+import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.vault.ClientEncryption;
@@ -106,6 +107,7 @@ public abstract class AbstractClientSideEncryptionDecryptionEventsTest {
                                 .kmsProviders(kmsProviders)
                                 .build())
                 .retryReads(false)
+                .writeConcern(WriteConcern.MAJORITY)
                 .addCommandListener(commandListener)
                 .build());
     }
