@@ -22,7 +22,8 @@ import com.mongodb.MongoException;
 import com.mongodb.TransactionOptions;
 import com.mongodb.client.internal.ClientSessionClock;
 import com.mongodb.client.model.Sorts;
-import com.mongodb.internal.ExponentialBackoff;
+import com.mongodb.internal.time.ExponentialBackoff;
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,6 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.mongodb.ClusterFixture.TIMEOUT;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.client.Fixture.getPrimary;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -206,81 +208,74 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         }
     }
 
-    //
-    // Test that exponential backoff is applied when retrying transactions
-    // Backoff uses growth factor of 1.5 as per spec
-    //
-    @Test
-    void testExponentialBackoffOnTransientError() {
-        // Configure failpoint to simulate transient errors
-        MongoDatabase failPointAdminDb = client.getDatabase("admin");
-        failPointAdminDb.runCommand(
-                Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 3}, "
-                        + "'data': {'failCommands': ['insert'], 'errorCode': 112, "
-                        + "'errorLabels': ['TransientTransactionError']}}"));
-
-        try (ClientSession session = client.startSession()) {
-            // Track retry count
-            AtomicInteger retryCount = new AtomicInteger(0);
-
-            session.withTransaction(() -> {
-                retryCount.incrementAndGet();  // Count the attempt before the operation that might fail
-                return collection.insertOne(session, Document.parse("{ _id : 'backoff-test' }"));
-            });
-
-            assertEquals(4, retryCount.get(), "Expected 1 initial attempt + 3 retries");
-        } finally {
-            failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': 'off'}"));
-        }
-    }
-
-    //
-    // Test that retries within withTransaction do not occur immediately
-    // This test verifies that exponential backoff is enforced during commit retries
-    // See: https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#retry-backoff-is-enforced
-    //
+    /**
+     * See
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#retry-backoff-is-enforceds">Convenient API Prose Tests</a>.
+     */
     @DisplayName("Retry Backoff is Enforced")
     @Test
-    void testRetryBackoffIsEnforced() {
-        MongoDatabase failPointAdminDb = client.getDatabase("admin");
-
-        // Test 1: Run with jitter = 0 (no backoff)
+    public void testRetryBackoffIsEnforced() throws InterruptedException {
+        // Run with jitter = 0 (no backoff)
         ExponentialBackoff.setTestJitterSupplier(() -> 0.0);
 
-        failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 13}, " + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 251}}"));
+        BsonDocument failPointDocument = BsonDocument.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 13}, "
+                + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 251}}");
 
         long noBackoffTime;
-        try (ClientSession session = client.startSession()) {
+        try (ClientSession session = client.startSession();
+             FailPoint ignored = FailPoint.enable(failPointDocument, getPrimary())) {
             long startNanos = System.nanoTime();
-            session.withTransaction(() -> collection.insertOne(session, Document.parse("{ _id : 'backoff-test-no-jitter' }")));
-            noBackoffTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);```
+            session.withTransaction(() -> collection.insertOne(session, Document.parse("{}")));
+            noBackoffTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
         } finally {
             // Clear the test jitter supplier to avoid affecting other tests
             ExponentialBackoff.clearTestJitterSupplier();
-            failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': 'off'}"));
         }
 
-        // Test 2: Run with jitter = 1 (full backoff)
+        // Run with jitter = 1 (full backoff)
         ExponentialBackoff.setTestJitterSupplier(() -> 1.0);
 
-        failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 13}, " + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 251}}"));
+        failPointDocument = BsonDocument.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 13}, "
+                + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 251}}");
 
         long withBackoffTime;
-        try (ClientSession session = client.startSession()) {
+        try (ClientSession session = client.startSession();
+             FailPoint ignored = FailPoint.enable(failPointDocument, getPrimary())) {
             long startNanos = System.nanoTime();
-            session.withTransaction(() -> collection.insertOne(session, Document.parse("{ _id : 'backoff-test-full-jitter' }")));
+            session.withTransaction(() -> collection.insertOne(session, Document.parse("{}")));
             withBackoffTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
         } finally {
             ExponentialBackoff.clearTestJitterSupplier();
-            failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': 'off'}"));
         }
 
-        long expectedWithBackoffTime = noBackoffTime + 1800;  // 1.8 seconds as per spec
+        long expectedWithBackoffTime = noBackoffTime + 1800;
         long actualDifference = Math.abs(withBackoffTime - expectedWithBackoffTime);
 
-        assertTrue(actualDifference < 1000, String.format("Expected withBackoffTime to be ~%dms (noBackoffTime %dms + 1800ms), but"
-                + " got %dms. Difference: %dms (tolerance: 1000ms per spec)", expectedWithBackoffTime, noBackoffTime, withBackoffTime,
+        assertTrue(actualDifference < 1000, String.format("Expected withBackoffTime to be ~% dms (noBackoffTime %d ms + 1800 ms), but"
+                + " got %d ms. Difference: %d ms (tolerance: 1000 ms per spec)", expectedWithBackoffTime, noBackoffTime, withBackoffTime,
                 actualDifference));
+    }
+
+    /**
+     * This test is not from the specification.
+     */
+    @Test
+    public void testExponentialBackoffOnTransientError() throws InterruptedException {
+        BsonDocument failPointDocument = BsonDocument.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 3}, "
+                + "'data': {'failCommands': ['insert'], 'errorCode': 112, "
+                + "'errorLabels': ['TransientTransactionError']}}");
+
+        try (ClientSession session = client.startSession();
+             FailPoint ignored = FailPoint.enable(failPointDocument, getPrimary())) {
+            AtomicInteger attemptsCount = new AtomicInteger(0);
+
+            session.withTransaction(() -> {
+                attemptsCount.incrementAndGet();  // Count the attempt before the operation that might fail
+                return collection.insertOne(session, Document.parse("{}"));
+            });
+
+            assertEquals(4, attemptsCount.get(), "Expected 1 initial attempt + 3 retries");
+        }
     }
 
     private boolean canRunTests() {

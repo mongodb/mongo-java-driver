@@ -27,7 +27,6 @@ import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.TransactionBody;
-import com.mongodb.internal.ExponentialBackoff;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.observability.micrometer.TransactionSpan;
@@ -39,6 +38,7 @@ import com.mongodb.internal.operation.WriteConcernHelper;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
+import com.mongodb.internal.time.ExponentialBackoff;
 import com.mongodb.lang.Nullable;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
@@ -47,6 +47,7 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 
 final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
 
@@ -252,7 +253,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         notNull("transactionBody", transactionBody);
         long startTime = ClientSessionClock.INSTANCE.now();
         TimeoutContext withTransactionTimeoutContext = createTimeoutContext(options);
-        ExponentialBackoff transactionBackoff = ExponentialBackoff.forTransactionRetry();
+        ExponentialBackoff transactionBackoff = ExponentialBackoff.TRANSACTION;
         int transactionAttempt = 0;
         MongoException lastError = null;
 
@@ -260,22 +261,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
             outer:
             while (true) {
                 if (transactionAttempt > 0) {
-                    long backoffMs = transactionBackoff.calculateDelayMs(transactionAttempt - 1);
-                    // Check if backoff would exceed timeout
-                    if (ClientSessionClock.INSTANCE.now() + backoffMs - startTime >= MAX_RETRY_TIME_LIMIT_MS) {
-                        if (lastError != null) {
-                            throw lastError;
-                        }
-                        throw new MongoClientException("Transaction retry timeout exceeded");
-                    }
-                    try {
-                        if (backoffMs > 0) {
-                            Thread.sleep(backoffMs);
-                        }
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new MongoClientException("Transaction retry interrupted", e);
-                    }
+                    backoff(transactionBackoff, transactionAttempt, startTime, lastError);
                 }
                 T retVal;
                 try {
@@ -386,5 +372,23 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         return new TimeoutContext(getTimeoutSettings(
                 TransactionOptions.merge(transactionOptions, getOptions().getDefaultTransactionOptions()),
                 operationExecutor.getTimeoutSettings()));
+    }
+
+    private static void backoff(final ExponentialBackoff exponentialBackoff, final int transactionAttempt, final long startTime,
+            final MongoException lastError) {
+        long backoffMs = exponentialBackoff.calculateDelayBeforeNextRetryMs(transactionAttempt - 1);
+        if (ClientSessionClock.INSTANCE.now() + backoffMs - startTime >= MAX_RETRY_TIME_LIMIT_MS) {
+            if (lastError != null) {
+                throw lastError;
+            }
+            throw new MongoClientException("Transaction retry timeout exceeded");
+        }
+        try {
+            if (backoffMs > 0) {
+                Thread.sleep(backoffMs);
+            }
+        } catch (InterruptedException e) {
+            throw interruptAndCreateMongoInterruptedException("Transaction retry interrupted", e);
+        }
     }
 }
