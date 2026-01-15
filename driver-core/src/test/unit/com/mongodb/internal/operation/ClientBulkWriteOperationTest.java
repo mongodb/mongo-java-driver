@@ -124,7 +124,7 @@ class ClientBulkWriteOperationTest {
                 false,
                 getDefaultCodecRegistry());
         //when
-        ClientBulkWriteResult result = op.execute(binding, ClusterFixture.OPERATION_CONTEXT);
+        ClientBulkWriteResult result = op.execute(binding, ClusterFixture.getOperationContext());
 
         //then
         assertEquals(
@@ -176,7 +176,7 @@ class ClientBulkWriteOperationTest {
                 false,
                 getDefaultCodecRegistry());
         //when
-        ClientBulkWriteResult result = op.execute(binding, ClusterFixture.OPERATION_CONTEXT);
+        ClientBulkWriteResult result = op.execute(binding, ClusterFixture.getOperationContext());
 
         //then
         assertEquals(1, result.getInsertedCount());

@@ -33,7 +33,7 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import java.lang.reflect.Method
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.ClusterFixture.getPrimary
@@ -87,7 +87,7 @@ class SocketStreamHelperSpecification extends Specification {
 
         when:
         SocketStreamHelper.initialize(
-                OPERATION_CONTEXT.withTimeoutContext(new TimeoutContext(
+                getOperationContext().withTimeoutContext(new TimeoutContext(
                                 new TimeoutSettings(
                                         1,
                                         100,
@@ -110,7 +110,8 @@ class SocketStreamHelperSpecification extends Specification {
         Socket socket = SocketFactory.default.createSocket()
 
         when:
-        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
+        SocketStreamHelper.initialize(getOperationContext(), socket, getSocketAddresses(getPrimary(),
+                new DefaultInetAddressResolver()).get(0),
                 SocketSettings.builder().build(), SslSettings.builder().build())
 
         then:
@@ -126,7 +127,8 @@ class SocketStreamHelperSpecification extends Specification {
         SSLSocket socket = SSLSocketFactory.default.createSocket()
 
         when:
-        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
+        SocketStreamHelper.initialize(getOperationContext(), socket, getSocketAddresses(getPrimary(),
+                new DefaultInetAddressResolver()).get(0),
                 SocketSettings.builder().build(), sslSettings)
 
         then:
@@ -147,7 +149,8 @@ class SocketStreamHelperSpecification extends Specification {
         SSLSocket socket = SSLSocketFactory.default.createSocket()
 
         when:
-        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
+        SocketStreamHelper.initialize(getOperationContext(), socket, getSocketAddresses(getPrimary(),
+                new DefaultInetAddressResolver()).get(0),
                 SocketSettings.builder().build(), sslSettings)
 
         then:
@@ -166,7 +169,8 @@ class SocketStreamHelperSpecification extends Specification {
         Socket socket = SocketFactory.default.createSocket()
 
         when:
-        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
+        SocketStreamHelper.initialize(getOperationContext(), socket, getSocketAddresses(getPrimary(),
+                new DefaultInetAddressResolver()).get(0),
                 SocketSettings.builder().build(), SslSettings.builder().enabled(true).build())
 
         then:

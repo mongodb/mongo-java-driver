@@ -31,7 +31,7 @@ import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
+import static com.mongodb.ClusterFixture.getOperationContext;
 
 final class TestOperationHelper {
 
@@ -56,7 +56,7 @@ final class TestOperationHelper {
                 connection.command(namespace.getDatabaseName(),
                         new BsonDocument("getMore", new BsonInt64(serverCursor.getId()))
                                 .append("collection", new BsonString(namespace.getCollectionName())),
-                        NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(), OPERATION_CONTEXT));
+                        NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(), getOperationContext()));
     }
 
     static void makeAdditionalGetMoreCall(final MongoNamespace namespace, final ServerCursor serverCursor,
@@ -66,7 +66,7 @@ final class TestOperationHelper {
             connection.commandAsync(namespace.getDatabaseName(),
                     new BsonDocument("getMore", new BsonInt64(serverCursor.getId()))
                             .append("collection", new BsonString(namespace.getCollectionName())),
-                    NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(), OPERATION_CONTEXT, callback);
+                    NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(), getOperationContext(), callback);
             callback.get();
         });
     }

@@ -36,7 +36,7 @@ import javax.security.auth.Subject
 import javax.security.auth.login.LoginContext
 
 import static com.mongodb.AuthenticationMechanism.GSSAPI
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.ClusterFixture.getClusterConnectionMode
 import static com.mongodb.ClusterFixture.getConnectionString
 import static com.mongodb.ClusterFixture.getCredential
@@ -58,7 +58,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
         when:
         openConnection(connection, async)
         executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
-                getClusterConnectionMode(), null, connection, OPERATION_CONTEXT)
+                getClusterConnectionMode(), null, connection, getOperationContext())
 
         then:
         thrown(MongoCommandException)
@@ -77,7 +77,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
         when:
         openConnection(connection, async)
         executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
-                getClusterConnectionMode(), null, connection, OPERATION_CONTEXT)
+                getClusterConnectionMode(), null, connection, getOperationContext())
 
         then:
         true
@@ -99,7 +99,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
         when:
         openConnection(connection, async)
         executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
-                getClusterConnectionMode(), null, connection, OPERATION_CONTEXT)
+                getClusterConnectionMode(), null, connection, getOperationContext())
 
         then:
         thrown(MongoSecurityException)
@@ -131,7 +131,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
         def connection = createConnection(async, getMongoCredential(subject))
         openConnection(connection, async)
         executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
-                getClusterConnectionMode(), null, connection, OPERATION_CONTEXT)
+                getClusterConnectionMode(), null, connection, getOperationContext())
 
         then:
         true
@@ -175,7 +175,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
         def connection = createConnection(async, getMongoCredential(saslClientProperties))
         openConnection(connection, async)
         executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
-                getClusterConnectionMode(), null, connection, OPERATION_CONTEXT)
+                getClusterConnectionMode(), null, connection, getOperationContext())
 
         then:
         true
@@ -219,10 +219,10 @@ class GSSAPIAuthenticationSpecification extends Specification {
     private static void openConnection(final InternalConnection connection, final boolean async) {
         if (async) {
             FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>()
-            connection.openAsync(OPERATION_CONTEXT, futureResultCallback)
+            connection.openAsync(getOperationContext(), futureResultCallback)
             futureResultCallback.get(ClusterFixture.TIMEOUT, SECONDS)
         } else {
-            connection.open(OPERATION_CONTEXT)
+            connection.open(getOperationContext())
         }
     }
 }

@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation
 
+import com.mongodb.ClusterFixture
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
@@ -43,7 +44,6 @@ import org.bson.Document
 import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getOperationContext
@@ -398,6 +398,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should use the readPreference to set secondaryOk'() {
         given:
+        def operationContext = ClusterFixture.getOperationContext()
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
             getConnection(_) >> connection
@@ -410,12 +411,12 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         def operation = new ListCollectionsOperation(helper.dbName, helper.decoder)
 
         when: '3.6.0'
-        operation.execute(readBinding, OPERATION_CONTEXT)
+        operation.execute(readBinding, operationContext)
 
         then:
         _ * connection.getDescription() >> helper.threeSixConnectionDescription
         1 * connection.command(_, _, _, readPreference, _, _) >> {
-            assertEquals(((OperationContext) it[5]).getId(), OPERATION_CONTEXT.getId())
+            assertEquals(((OperationContext) it[5]).getId(), operationContext.getId())
             helper.commandResult
         }
         1 * connection.release()
@@ -426,6 +427,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should use the readPreference to set secondaryOk in async'() {
         given:
+        def operationContext = ClusterFixture.getOperationContext()
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
             getConnection(_, _) >> { it[1].onResult(connection, null) }
@@ -436,14 +438,13 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
             getReadPreference() >> readPreference
         }
         def operation = new ListCollectionsOperation(helper.dbName, helper.decoder)
-
         when: '3.6.0'
-        operation.executeAsync(readBinding, OPERATION_CONTEXT, Stub(SingleResultCallback))
+        operation.executeAsync(readBinding, operationContext, Stub(SingleResultCallback))
 
         then:
         _ * connection.getDescription() >> helper.threeSixConnectionDescription
         1 * connection.commandAsync(helper.dbName, _, _, readPreference, _, _, *_) >> {
-            assertEquals(((OperationContext) it[5]).getId(), OPERATION_CONTEXT.getId())
+            assertEquals(((OperationContext) it[5]).getId(), operationContext.getId())
             it.last().onResult(helper.commandResult, null) }
 
         where:

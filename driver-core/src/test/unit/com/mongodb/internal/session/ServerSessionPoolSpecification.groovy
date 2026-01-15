@@ -32,7 +32,7 @@ import org.bson.BsonDocument
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ReadPreference.primaryPreferred
@@ -120,7 +120,7 @@ class ServerSessionPoolSpecification extends Specification {
             millis() >>> [0, MINUTES.toMillis(29) + 1,
             ]
         }
-        def pool = new ServerSessionPool(cluster, OPERATION_CONTEXT, clock)
+        def pool = new ServerSessionPool(cluster, getOperationContext(), clock)
         def sessionOne = pool.get()
 
         when:
@@ -146,7 +146,7 @@ class ServerSessionPoolSpecification extends Specification {
         def clock = Stub(ServerSessionPool.Clock) {
             millis() >>> [0, 0, 0]
         }
-        def pool = new ServerSessionPool(cluster, OPERATION_CONTEXT, clock)
+        def pool = new ServerSessionPool(cluster, getOperationContext(), clock)
         def session = pool.get()
 
         when:
@@ -165,7 +165,7 @@ class ServerSessionPoolSpecification extends Specification {
         def clock = Stub(ServerSessionPool.Clock) {
             millis() >> 42
         }
-        def pool = new ServerSessionPool(cluster, OPERATION_CONTEXT, clock)
+        def pool = new ServerSessionPool(cluster, getOperationContext(), clock)
 
         when:
         def session = pool.get() as ServerSessionPool.ServerSessionImpl
@@ -187,7 +187,7 @@ class ServerSessionPoolSpecification extends Specification {
         def clock = Stub(ServerSessionPool.Clock) {
             millis() >> 42
         }
-        def pool = new ServerSessionPool(cluster, OPERATION_CONTEXT, clock)
+        def pool = new ServerSessionPool(cluster, getOperationContext(), clock)
 
         when:
         def session = pool.get() as ServerSessionPool.ServerSessionImpl

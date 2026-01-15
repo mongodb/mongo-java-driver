@@ -29,7 +29,7 @@ import org.bson.types.ObjectId
 import spock.lang.Specification
 
 import static com.mongodb.ClusterFixture.CLIENT_METADATA
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterType.REPLICA_SET
 import static com.mongodb.connection.ClusterType.SHARDED
@@ -96,8 +96,8 @@ class MultiServerClusterSpecification extends Specification {
 
         when:
         cluster.getServersSnapshot(
-                OPERATION_CONTEXT.getTimeoutContext().computeServerSelectionTimeout(),
-                OPERATION_CONTEXT.getTimeoutContext())
+                getOperationContext().getTimeoutContext().computeServerSelectionTimeout(),
+                getOperationContext().getTimeoutContext())
 
         then:
         thrown(IllegalStateException)
@@ -386,7 +386,7 @@ class MultiServerClusterSpecification extends Specification {
         cluster.close()
 
         when:
-        cluster.selectServer(new WritableServerSelector(), OPERATION_CONTEXT)
+        cluster.selectServer(new WritableServerSelector(), getOperationContext())
 
         then:
         thrown(IllegalStateException)

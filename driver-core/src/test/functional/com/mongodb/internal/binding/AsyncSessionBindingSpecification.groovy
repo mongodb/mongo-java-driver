@@ -16,10 +16,9 @@
 
 package com.mongodb.internal.binding
 
+import com.mongodb.ClusterFixture
 import com.mongodb.internal.async.SingleResultCallback
 import spock.lang.Specification
-
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 
 class AsyncSessionBindingSpecification extends Specification {
 
@@ -27,6 +26,7 @@ class AsyncSessionBindingSpecification extends Specification {
         given:
         def wrapped = Mock(AsyncReadWriteBinding)
         def binding = new AsyncSessionBinding(wrapped)
+        def operationContext = ClusterFixture.getOperationContext()
 
         when:
         binding.getCount()
@@ -52,17 +52,18 @@ class AsyncSessionBindingSpecification extends Specification {
         then:
         1 * wrapped.release()
 
-        when:
-        binding.getReadConnectionSource(OPERATION_CONTEXT, Stub(SingleResultCallback))
-
-        then:
-        1 * wrapped.getReadConnectionSource(OPERATION_CONTEXT, _)
 
         when:
-        binding.getWriteConnectionSource(OPERATION_CONTEXT, Stub(SingleResultCallback))
+        binding.getReadConnectionSource(operationContext, Stub(SingleResultCallback))
 
         then:
-        1 * wrapped.getWriteConnectionSource(OPERATION_CONTEXT, _)
+        1 * wrapped.getReadConnectionSource(operationContext, _)
+
+        when:
+        binding.getWriteConnectionSource(operationContext, Stub(SingleResultCallback))
+
+        then:
+        1 * wrapped.getWriteConnectionSource(operationContext, _)
     }
 
 }

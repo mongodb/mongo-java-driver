@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.operation
 
-
+import com.mongodb.ClusterFixture
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
@@ -44,7 +44,6 @@ import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
 import org.junit.jupiter.api.Assertions
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getOperationContext
@@ -226,6 +225,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
     def 'should use the readPreference to set secondaryOk'() {
         given:
         def connection = Mock(Connection)
+        def operationContext = ClusterFixture.getOperationContext()
         def connectionSource = Stub(ConnectionSource) {
             getConnection(_) >> connection
             getReadPreference() >> readPreference
@@ -237,12 +237,12 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         def operation = new ListIndexesOperation(helper.namespace, helper.decoder)
 
         when: '3.6.0'
-        operation.execute(readBinding, OPERATION_CONTEXT)
+        operation.execute(readBinding, operationContext)
 
         then:
         _ * connection.getDescription() >> helper.threeSixConnectionDescription
         1 * connection.command(_, _, _, readPreference, _, _) >> {
-            Assertions.assertEquals(((OperationContext) it[5]).getId(), OPERATION_CONTEXT.getId())
+            Assertions.assertEquals(((OperationContext) it[5]).getId(), operationContext.getId())
             helper.commandResult
         }
         1 * connection.release()
@@ -265,7 +265,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         def operation = new ListIndexesOperation(helper.namespace, helper.decoder)
 
         when: '3.6.0'
-        operation.executeAsync(readBinding, OPERATION_CONTEXT, Stub(SingleResultCallback))
+        operation.executeAsync(readBinding, getOperationContext(), Stub(SingleResultCallback))
 
         then:
         _ * connection.getDescription() >> helper.threeSixConnectionDescription
