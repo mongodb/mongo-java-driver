@@ -18,9 +18,12 @@ package com.mongodb.internal.operation;
 
 
 import com.mongodb.MongoException;
+import com.mongodb.ReadPreference;
+import com.mongodb.assertions.Assertions;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.NonNull;
@@ -232,8 +235,9 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
             } else {
                 changeStreamOperation.setChangeStreamOptionsForResume(resumeToken,
                         assertNotNull(source).getServerDescription().getMaxWireVersion());
-                source.release();
-                changeStreamOperation.executeAsync(binding, operationContext, (asyncBatchCursor, t1) -> {
+                // We wrap the binding so that the selected AsyncConnectionSource is reused, preventing redundant server selection.
+                // Consequently, the same AsyncConnectionSource remains pinned to the resulting AsyncCommandCursor.
+                changeStreamOperation.executeAsync(new AsyncSourceAwareReadBinding(source, binding), operationContext, (asyncBatchCursor, t1) -> {
                     if (t1 != null) {
                         callback.onResult(null, t1);
                     } else {
@@ -242,6 +246,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
                                     operationContext);
                         } finally {
                             try {
+                                source.release();
                                 binding.release(); // release the new change stream batch cursor's reference to the binding
                             } finally {
                                 resumeableOperation(asyncBlock, callback, operationContext, tryNext);
@@ -251,6 +256,52 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
                 });
             }
         });
+    }
+
+    /**
+     * Does not retain wrapped {@link AsyncReadBinding} as it serves as a wrapper only.
+     */
+    private static class AsyncSourceAwareReadBinding implements AsyncReadBinding {
+        private final AsyncConnectionSource source;
+        private final AsyncReadBinding binding;
+
+        AsyncSourceAwareReadBinding(final AsyncConnectionSource source, final AsyncReadBinding binding) {
+            this.source = source;
+            this.binding = binding;
+        }
+
+        @Override
+        public ReadPreference getReadPreference() {
+            return binding.getReadPreference();
+        }
+
+        @Override
+        public void getReadConnectionSource(final OperationContext operationContext, final SingleResultCallback<AsyncConnectionSource> callback) {
+            source.retain();
+            callback.onResult(source, null);
+        }
+
+        @Override
+        public void getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference,
+                                            final OperationContext operationContext,
+                                            final SingleResultCallback<AsyncConnectionSource> callback) {
+            throw Assertions.fail();
+        }
+
+        @Override
+        public AsyncReadBinding retain() {
+            return binding.retain();
+        }
+
+        @Override
+        public int release() {
+            return binding.release();
+        }
+
+        @Override
+        public int getCount() {
+            return binding.getCount();
+        }
     }
 }
 

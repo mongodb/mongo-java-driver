@@ -56,6 +56,10 @@ public class AuthConnectionStringTest extends TestCase {
         assumeFalse(description.equals("should accept forwardAndReverse hostname canonicalization (GSSAPI)"));
         assumeFalse(description.equals("should accept generic mechanism property (GSSAPI)"));
         assumeFalse(description.equals("should accept no hostname canonicalization (GSSAPI)"));
+        assumeFalse("https://jira.mongodb.org/browse/JAVA-6030",
+                description.equals("should throw an exception if AWS_SESSION_TOKEN provided (MONGODB-AWS)"));
+        assumeFalse("https://jira.mongodb.org/browse/JAVA-6030",
+                description.equals("should throw an exception if username and password provided (MONGODB-AWS)"));
 
         if (definition.getBoolean("valid").getValue()) {
             testValidUris();
