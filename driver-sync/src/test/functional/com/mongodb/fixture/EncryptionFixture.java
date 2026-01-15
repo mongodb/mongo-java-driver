@@ -86,7 +86,7 @@ public final class EncryptionFixture {
      *
      * @return a {@link KeyManagerFactory initialized with the keystore's key material
      */
-    private static KeyManagerFactory getKeyManagerFactory(final String keystoreLocation, final String keystoreFileName) throws Exception {
+    public static KeyManagerFactory getKeyManagerFactory(final String keystoreLocation, final String keystoreFileName) throws Exception {
         KeyStore ks = KeyStore.getInstance("PKCS12");
         try (FileInputStream fis = new FileInputStream(keystoreLocation + File.separator + keystoreFileName)) {
             ks.load(fis, KEYSTORE_PASSWORD.toCharArray());
