@@ -44,6 +44,7 @@ import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 import static com.mongodb.client.model.Aggregates.vectorSearch;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.VectorSearchOptions.approximateVectorSearchOptions;
+import static com.mongodb.client.model.search.VectorSearchQuery.textQuery;
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
@@ -174,7 +175,7 @@ public abstract class AbstractAutomatedEmbeddingVectorSearchFunctionalTest exten
         List<Bson> pipeline = asList(
                 vectorSearch(
                         fieldPath(FIELD_SEARCH_PATH),
-                        new Document().append("text", "movies about love"),
+                        textQuery("movies about love"),
                         INDEX_NAME,
                         5L, // limit
                         approximateVectorSearchOptions(5L) // numCandidates
