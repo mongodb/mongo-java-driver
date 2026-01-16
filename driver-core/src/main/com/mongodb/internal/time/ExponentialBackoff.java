@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.time;
 
-import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.internal.VisibleForTesting;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -27,7 +26,6 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 /**
  * Implements exponential backoff with jitter for retry scenarios.
  */
-@NotThreadSafe
 public enum ExponentialBackoff {
     TRANSACTION(5.0, 500.0, 1.5);
 

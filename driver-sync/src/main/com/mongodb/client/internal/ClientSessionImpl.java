@@ -277,7 +277,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                         abortTransaction();
                     }
                     if (e instanceof MongoException) {
-                        lastError = (MongoException) e;  // Store last error
+                        lastError = (MongoException) e;
                         if (!(e instanceof MongoOperationTimeoutException)) {
                             MongoException exceptionToHandle = OperationHelper.unwrap((MongoException) e);
                             if (exceptionToHandle.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)
