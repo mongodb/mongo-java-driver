@@ -18,7 +18,6 @@ package com.mongodb.client.model.search;
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
-import com.mongodb.lang.Nullable;
 
 /**
  * A text-based vector search query for MongoDB Atlas auto-embedding.
