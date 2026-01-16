@@ -999,7 +999,7 @@ public final class Aggregates {
     @Beta(Reason.SERVER)
     public static Bson vectorSearch(
             final FieldSearchPath path,
-            final TextVectorSearchQuery query,
+            final VectorSearchQuery query,
             final String index,
             final long limit,
             final VectorSearchOptions options) {
@@ -2222,7 +2222,6 @@ public final class Aggregates {
             this.index = index;
             this.limit = limit;
             this.options = options;
-            // Extract model name from query if it's a TextVectorSearchQuery
             // when null then model name from the index definition will be used by the server
             this.embeddingModelName = ((AbstractVectorSearchQuery) query).getModel();
         }
