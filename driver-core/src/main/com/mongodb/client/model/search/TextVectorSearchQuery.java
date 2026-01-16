@@ -45,12 +45,4 @@ public interface TextVectorSearchQuery extends VectorSearchQuery {
      * @return A new {@link TextVectorSearchQuery} with the specified model.
      */
     TextVectorSearchQuery model(String modelName);
-
-    /**
-     * Returns the embedding model name, if specified.
-     *
-     * @return The model name, or {@code null} if not specified.
-     */
-    @Nullable
-    String getModel();
 }

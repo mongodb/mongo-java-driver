@@ -115,31 +115,25 @@ public abstract class AbstractAutomatedEmbeddingVectorSearchFunctionalTest exten
     @Test
     @DisplayName("should create auto embedding index and run vector search query using query text")
     void shouldCreateAutoEmbeddingIndexAndRunVectorSearchQuery() throws InterruptedException {
-        // first create collection
         mongoClient.getDatabase(getDatabaseName()).createCollection(getCollectionName());
-        // then create embedding index
         createAutoEmbeddingIndex("voyage-4-large");
-        // TODO-CLOUDP-332444
+        // TODO-JAVA-6063
         // community search with automated embedding doesn't support queryable field yet
         // once supported remove the sleep and uncomment waitForIndex
         TimeUnit.SECONDS.sleep(2L);
         //waitForIndex(documentCollection, INDEX_NAME);
-        // then insert documents
         insertDocumentsForEmbedding();
-        // TODO wait for embeddings to be generated
+        // TODO-JAVA-6063 wait for embeddings to be generated
         // once there is an official way to check the index status, we should use it instead of sleep
         // there is a workaround to pass a feature flag `internalListAllIndexesForTesting` but it's not official yet
         TimeUnit.SECONDS.sleep(2L);
-        // then run vector search query
         runEmbeddingQuery();
     }
 
     @Test
     @DisplayName("should fail when invalid model name was used")
     void shouldFailWhenInvalidModelNameWasUsed() {
-        // first create collection
         mongoClient.getDatabase(getDatabaseName()).createCollection(getCollectionName());
-        // this index creation should fail because model is not specified
         Assertions.assertThrows(
                 MongoCommandException.class,
                 () -> createAutoEmbeddingIndex("test"),
@@ -150,9 +144,7 @@ public abstract class AbstractAutomatedEmbeddingVectorSearchFunctionalTest exten
     @Test
     @DisplayName("should fail to create auto embedding index without model")
     void shouldFailToCreateAutoEmbeddingIndexWithoutModel() {
-        // first create collection
         mongoClient.getDatabase(getDatabaseName()).createCollection(getCollectionName());
-        // this index creation should fail because model is not specified
         SearchIndexModel indexModel = new SearchIndexModel(
                 INDEX_NAME,
                 new Document(

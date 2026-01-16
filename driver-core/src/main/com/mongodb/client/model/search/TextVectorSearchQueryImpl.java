@@ -15,6 +15,7 @@
  */
 package com.mongodb.client.model.search;
 
+import com.mongodb.internal.client.model.search.AbstractVectorSearchQuery;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -25,7 +26,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * Package-private implementation of {@link TextVectorSearchQuery}.
  */
-final class TextVectorSearchQueryImpl implements TextVectorSearchQuery {
+final class TextVectorSearchQueryImpl extends AbstractVectorSearchQuery implements TextVectorSearchQuery {
     private final String text;
     @Nullable
     private final String model;
