@@ -19,6 +19,9 @@ package com.mongodb.client.model;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
 import com.mongodb.client.model.mql.MqlValues;
+
+import static com.mongodb.client.model.search.VectorSearchOptions.exactVectorSearchOptions;
+
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -68,8 +71,8 @@ public class AggregatesTest extends OperationTest {
     @ParameterizedTest
     @MethodSource("groupWithQuantileSource")
     public void shouldGroupWithQuantile(final BsonField quantileAccumulator,
-                                        final Object expectedGroup1,
-                                        final Object expectedGroup2) {
+            final Object expectedGroup1,
+            final Object expectedGroup2) {
         //given
         assumeTrue(serverVersionAtLeast(7, 0));
         getCollectionHelper().insertDocuments("[\n"
@@ -120,8 +123,8 @@ public class AggregatesTest extends OperationTest {
     @ParameterizedTest
     @MethodSource("setWindowFieldWithQuantileSource")
     public void shouldSetWindowFieldWithQuantile(@Nullable final Object partitionBy,
-                                                 final WindowOutputField output,
-                                                 final List<Object> expectedFieldValues) {
+            final WindowOutputField output,
+            final List<Object> expectedFieldValues) {
         //given
         assumeTrue(serverVersionAtLeast(7, 0));
         Document[] original = new Document[]{
@@ -203,18 +206,18 @@ public class AggregatesTest extends OperationTest {
                 ));
 
         List<Bson> pipeline = assertPipeline("{\n"
-                + "   $geoNear: {\n"
-                + "      near: { type: 'Point', coordinates: [ -73.99279 , 40.719296 ] },\n"
-                + "      distanceField: 'dist.calculated',\n"
-                + "      minDistance: 0,\n"
-                + "      maxDistance: 2,\n"
-                + "      query: { category: 'Parks' },\n"
-                + "      includeLocs: 'dist.location',\n"
-                + "      spherical: true,\n"
-                + "      key: 'location',\n"
-                + "      distanceMultiplier: 10.0\n"
-                + "   }\n"
-                + "}",
+                        + "   $geoNear: {\n"
+                        + "      near: { type: 'Point', coordinates: [ -73.99279 , 40.719296 ] },\n"
+                        + "      distanceField: 'dist.calculated',\n"
+                        + "      minDistance: 0,\n"
+                        + "      maxDistance: 2,\n"
+                        + "      query: { category: 'Parks' },\n"
+                        + "      includeLocs: 'dist.location',\n"
+                        + "      spherical: true,\n"
+                        + "      key: 'location',\n"
+                        + "      distanceMultiplier: 10.0\n"
+                        + "   }\n"
+                        + "}",
                 geoNear(
                         new Point(new Position(-73.99279, 40.719296)),
                         "dist.calculated",
@@ -288,7 +291,7 @@ public class AggregatesTest extends OperationTest {
     }
 
     @Test
-    public void testVectorSearchWithQueryObject() {
+    public void testAprVectorSearchWithQueryObject() {
         assertPipeline(
                 "{"
                         + "  $vectorSearch: {"
@@ -309,7 +312,7 @@ public class AggregatesTest extends OperationTest {
     }
 
     @Test
-    public void testVectorSearchWithQueryObjectAndEmbeddingModel() {
+    public void testAprVectorSearchWithQueryObjectAndEmbeddingModel() {
         assertPipeline(
                 "{"
                         + "  $vectorSearch: {"
@@ -327,6 +330,48 @@ public class AggregatesTest extends OperationTest {
                         "test_index",
                         5L,
                         approximateVectorSearchOptions(5L)
+                ));
+    }
+
+    @Test
+    public void testExactVectorSearchWithQueryObjectAndEmbeddingModel() {
+        assertPipeline(
+                "{"
+                        + "  $vectorSearch: {"
+                        + "    path: 'plot',"
+                        + "    query: {text: 'movies about love'},"
+                        + "    index: 'test_index',"
+                        + "    limit: {$numberLong: '5'},"
+                        + "    model: 'voyage-4-large',"
+                        + "    exact: true"
+                        + "  }"
+                        + "}",
+                vectorSearch(
+                        fieldPath("plot"),
+                        textQuery("movies about love").model("voyage-4-large"),
+                        "test_index",
+                        5L,
+                        exactVectorSearchOptions()
+                ));
+    }
+    @Test
+    public void testExactVectorSearchWithQueryObject() {
+        assertPipeline(
+                "{"
+                        + "  $vectorSearch: {"
+                        + "    path: 'plot',"
+                        + "    query: {text: 'movies about love'},"
+                        + "    index: 'test_index',"
+                        + "    limit: {$numberLong: '5'},"
+                        + "    exact: true"
+                        + "  }"
+                        + "}",
+                vectorSearch(
+                        fieldPath("plot"),
+                        textQuery("movies about love"),
+                        "test_index",
+                        5L,
+                        exactVectorSearchOptions()
                 ));
     }
 }
