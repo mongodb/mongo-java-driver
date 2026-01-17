@@ -46,6 +46,7 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.json.JsonWriterSettings;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import util.JsonPoweredTestHelper;
@@ -300,7 +301,8 @@ public class ServerSelectionSelectionTest {
 
     private OperationContext createOperationContext() {
         OperationContext operationContext =
-                OperationContext.simpleOperationContext(new TimeoutContext(TIMEOUT_SETTINGS.withServerSelectionTimeoutMS(SERVER_SELECTION_TIMEOUT_MS)));
+                OperationContext.simpleOperationContext(
+                        new TimeoutContext(TIMEOUT_SETTINGS.withServerSelectionTimeoutMS(SERVER_SELECTION_TIMEOUT_MS)));
         OperationContext.ServerDeprioritization serverDeprioritization = operationContext.getServerDeprioritization();
         for (ServerAddress address : deprioritizedServerAddresses) {
             serverDeprioritization.updateCandidate(address);
@@ -322,26 +324,7 @@ public class ServerSelectionSelectionTest {
     }
 
     private BaseCluster createTestCluster(final ClusterDescription clusterDescription, final Cluster.ServersSnapshot serversSnapshot) {
-        BaseCluster baseCluster = new BaseCluster(
-                new ClusterId(),
-                clusterDescription.getClusterSettings(),
-                new TestClusterableServerFactory(),
-                ClusterFixture.CLIENT_METADATA) {
-            @Override
-            protected void connect() {
-            }
-
-            @Override
-            public ServersSnapshot getServersSnapshot(final Timeout serverSelectionTimeout, final TimeoutContext timeoutContext) {
-                return serversSnapshot;
-            }
-
-            @Override
-            public void onChange(final ServerDescriptionChangedEvent event) {
-            }
-        };
-        baseCluster.updateDescription(clusterDescription);
-        return baseCluster;
+        return new TestCluster(clusterDescription, serversSnapshot);
     }
 
     private static void validateTestDescriptionFields(final Set<String> actualFields, final Set<String> knownFields) {
@@ -349,6 +332,34 @@ public class ServerSelectionSelectionTest {
         unknownFields.removeAll(knownFields);
         if (!unknownFields.isEmpty()) {
             throw new UnsupportedOperationException("Unknown fields: " + unknownFields);
+        }
+    }
+
+    private static class TestCluster extends BaseCluster {
+        private final ServersSnapshot serversSnapshot;
+
+        public TestCluster(final ClusterDescription clusterDescription, final ServersSnapshot serversSnapshot) {
+            super(new ClusterId(), clusterDescription.getClusterSettings(), new TestClusterableServerFactory(),
+                    ClusterFixture.CLIENT_METADATA);
+            this.serversSnapshot = serversSnapshot;
+            updateDescription(clusterDescription);
+        }
+
+        @Override
+        protected void connect() {
+            // We do not expect this to be called during server selection.
+            Assertions.fail();
+        }
+
+        @Override
+        public ServersSnapshot getServersSnapshot(final Timeout serverSelectionTimeout, final TimeoutContext timeoutContext) {
+            return serversSnapshot;
+        }
+
+        @Override
+        public void onChange(final ServerDescriptionChangedEvent event) {
+            // We do not expect this to be called during server selection.
+            Assertions.fail();
         }
     }
 }

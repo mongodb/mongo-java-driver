@@ -27,6 +27,7 @@ import com.mongodb.connection.ServerId;
 import com.mongodb.internal.connection.OperationContext.ServerDeprioritization;
 import com.mongodb.selector.ServerSelector;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -34,6 +35,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
@@ -45,6 +47,7 @@ import static java.util.Collections.unmodifiableList;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.params.provider.Arguments.of;
 
 final class ServerDeprioritizationTest {
     private static final ServerDescription SERVER_A = serverDescription("a");
@@ -66,25 +69,25 @@ final class ServerDeprioritizationTest {
 
     private static Stream<Arguments> selectNoneDeprioritized() {
         return Stream.of(
-                Arguments.of(singletonList(SERVER_A)),
-                Arguments.of(singletonList(SERVER_C)),
-                Arguments.of(singletonList(SERVER_B)),
-                Arguments.of(asList(SERVER_A, SERVER_C))
+                of(Named.of(generateArgumentName(emptyList()), emptyList())),
+                of(Named.of(generateArgumentName(singletonList(SERVER_A)), singletonList(SERVER_A))),
+                of(Named.of(generateArgumentName(singletonList(SERVER_B)), singletonList(SERVER_B))),
+                of(Named.of(generateArgumentName(singletonList(SERVER_C)), singletonList(SERVER_C))),
+                of(Named.of(generateArgumentName(asList(SERVER_A, SERVER_B)), asList(SERVER_A, SERVER_B))),
+                of(Named.of(generateArgumentName(asList(SERVER_B, SERVER_A)), asList(SERVER_B, SERVER_A))),
+                of(Named.of(generateArgumentName(asList(SERVER_A, SERVER_C)), asList(SERVER_A, SERVER_C))),
+                of(Named.of(generateArgumentName(asList(SERVER_C, SERVER_A)), asList(SERVER_C, SERVER_A))),
+                of(Named.of(generateArgumentName(ALL_SERVERS), ALL_SERVERS))
         );
     }
-
     @ParameterizedTest
     @MethodSource
     void selectNoneDeprioritized(final List<ServerDescription> selectorResult) {
         ServerSelector wrappedSelector = createAssertingSelector(ALL_SERVERS, selectorResult);
-        ServerSelector emptyListWrappedSelector = createAssertingSelector(ALL_SERVERS, emptyList());
         assertAll(
                 () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(wrappedSelector).select(SHARDED_CLUSTER)),
-                () -> assertEquals(emptyList(), serverDeprioritization.applyDeprioritization(emptyListWrappedSelector).select(SHARDED_CLUSTER)),
                 () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(wrappedSelector).select(REPLICA_SET_CLUSTER)),
-                () -> assertEquals(emptyList(), serverDeprioritization.applyDeprioritization(emptyListWrappedSelector).select(REPLICA_SET_CLUSTER)),
-                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(wrappedSelector).select(UNKNOWN_CLUSTER)),
-                () -> assertEquals(emptyList(), serverDeprioritization.applyDeprioritization(emptyListWrappedSelector).select(UNKNOWN_CLUSTER))
+                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(wrappedSelector).select(UNKNOWN_CLUSTER))
         );
     }
 
@@ -100,11 +103,12 @@ final class ServerDeprioritizationTest {
         );
     }
 
-    private static Stream<Arguments> selectSomeDeprioritized() {
+   private static Stream<Arguments> selectSomeDeprioritized() {
         return Stream.of(
-                Arguments.of(singletonList(SERVER_A)),
-                Arguments.of(singletonList(SERVER_C)),
-                Arguments.of(asList(SERVER_A, SERVER_C))
+                of(Named.of(generateArgumentName(singletonList(SERVER_A)), singletonList(SERVER_A))),
+                of(Named.of(generateArgumentName(singletonList(SERVER_C)), singletonList(SERVER_C))),
+                of(Named.of(generateArgumentName(asList(SERVER_A, SERVER_C)), asList(SERVER_A, SERVER_C))),
+                of(Named.of(generateArgumentName(asList(SERVER_C, SERVER_A)), asList(SERVER_C, SERVER_A)))
         );
     }
 
@@ -121,16 +125,17 @@ final class ServerDeprioritizationTest {
         );
     }
 
-    @Test
-    void selectAllDeprioritized() {
+    @ParameterizedTest
+    @MethodSource("selectNoneDeprioritized")
+    void selectAllDeprioritized(final List<ServerDescription> selectorResult) {
         deprioritize(SERVER_A);
         deprioritize(SERVER_B);
         deprioritize(SERVER_C);
-        ServerSelector selector = createAssertingSelector(ALL_SERVERS, singletonList(SERVER_A));
+        ServerSelector selector = createAssertingSelector(ALL_SERVERS, selectorResult);
         assertAll(
-                () -> assertEquals(singletonList(SERVER_A), serverDeprioritization.applyDeprioritization(selector).select(SHARDED_CLUSTER)),
-                () -> assertEquals(singletonList(SERVER_A), serverDeprioritization.applyDeprioritization(selector).select(REPLICA_SET_CLUSTER)),
-                () -> assertEquals(singletonList(SERVER_A), serverDeprioritization.applyDeprioritization(selector).select(UNKNOWN_CLUSTER))
+                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selector).select(SHARDED_CLUSTER)),
+                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selector).select(REPLICA_SET_CLUSTER)),
+                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selector).select(UNKNOWN_CLUSTER))
         );
     }
 
@@ -145,9 +150,10 @@ final class ServerDeprioritizationTest {
         );
     }
 
-    @Test
-    void selectWithRetryWhenWrappedReturnsEmpty() {
-        deprioritize(SERVER_A);
+    @ParameterizedTest
+    @MethodSource("selectSomeDeprioritized")
+    void selectWithRetryWhenWrappedReturnsEmpty(final List<ServerDescription> selectorResult) {
+        deprioritize(SERVER_B);
         Supplier<ServerSelector> selector = () -> new ServerSelector() {
             private boolean firstCall = true;
 
@@ -156,18 +162,18 @@ final class ServerDeprioritizationTest {
                 List<ServerDescription> servers = clusterDescription.getServerDescriptions();
                 if (firstCall) {
                     firstCall = false;
-                    assertEquals(asList(SERVER_B, SERVER_C), servers);
+                    assertEquals(asList(SERVER_A, SERVER_C), servers);
                     return emptyList();
                 }
                 assertEquals(ALL_SERVERS, servers);
-                return singletonList(SERVER_A);
+                return selectorResult;
             }
         };
 
         assertAll(
-                () -> assertEquals(singletonList(SERVER_A), serverDeprioritization.applyDeprioritization(selector.get()).select(SHARDED_CLUSTER)),
-                () -> assertEquals(singletonList(SERVER_A), serverDeprioritization.applyDeprioritization(selector.get()).select(REPLICA_SET_CLUSTER)),
-                () -> assertEquals(singletonList(SERVER_A), serverDeprioritization.applyDeprioritization(selector.get()).select(UNKNOWN_CLUSTER))
+                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selector.get()).select(SHARDED_CLUSTER)),
+                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selector.get()).select(REPLICA_SET_CLUSTER)),
+                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selector.get()).select(UNKNOWN_CLUSTER))
         );
     }
 
@@ -215,5 +221,12 @@ final class ServerDeprioritizationTest {
 
     private static ClusterDescription singleModeClusterDescription(final ClusterType clusterType) {
         return new ClusterDescription(ClusterConnectionMode.SINGLE, clusterType, singletonList(SERVER_A));
+    }
+
+    private static String generateArgumentName(final List<ServerDescription> servers) {
+        return "[" + servers.stream()
+                .map(ServerDescription::getAddress)
+                .map(ServerAddress::getHost)
+                .collect(Collectors.joining(", ")) + "]";
     }
 }

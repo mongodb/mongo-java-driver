@@ -87,7 +87,8 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         this.binding = binding.retain();
         this.initialOperationContext = operationContext
                 .withOverride(TimeoutContext::withMaxTimeAsMaxAwaitTimeOverride)
-                //TODO-JAVA
+                //TODO-JAVA-6058. Temporary workaround to reset any server deprioritization
+                // state from the previous find operation.
                 .withServerDeprioritization(new OperationContext.ServerDeprioritization());
         this.wrapped = wrapped;
         this.resumeToken = resumeToken;

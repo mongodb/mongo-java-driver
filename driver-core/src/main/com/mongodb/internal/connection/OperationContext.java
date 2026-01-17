@@ -39,6 +39,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PACKAGE;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -112,7 +114,8 @@ public class OperationContext {
                 operationName, tracingSpan);
     }
 
-    //TODO-JAVA
+    // TODO-JAVA-6058: This method enables overriding the ServerDeprioritization state.
+    //  It is a temporary solution to handle cases where deprioritization state persists across operations.
     public OperationContext withServerDeprioritization(final ServerDeprioritization serverDeprioritization) {
         return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, tracingManager, serverApi,
                 operationName, tracingSpan);
@@ -234,21 +237,24 @@ public class OperationContext {
         private ServerAddress candidate;
         private final Set<ServerAddress> deprioritized;
 
+        @VisibleForTesting(otherwise = PRIVATE)
         public ServerDeprioritization() {
             candidate = null;
             deprioritized = new HashSet<>();
         }
 
         /**
-         * The returned {@link ServerSelector} wraps the provided selector and tries to
-         * {@linkplain ServerSelector#select(ClusterDescription) select} only the {@link ServerDescription}s
-         * that do not have deprioritized {@link ServerAddress}es. If no such {@link ServerDescription} can be selected,
-         * then it retries without filtering deprioritized servers.
+         * The returned {@link ServerSelector} wraps the provided selector and attempts server selection in two passes:
+         * <ol>
+         *   <li>First pass: calls the wrapped selector with only non-deprioritized {@link ServerDescription}s</li>
+         *   <li>Second pass: if the first pass returns no servers, calls the wrapped selector again with all servers (including deprioritized ones)</li>
+         * </ol>
          */
         ServerSelector applyDeprioritization(final ServerSelector wrappedSelector) {
             return new DeprioritizingSelector(wrappedSelector);
         }
 
+        @VisibleForTesting(otherwise = PACKAGE)
         public void updateCandidate(final ServerAddress serverAddress) {
             candidate = serverAddress;
         }
