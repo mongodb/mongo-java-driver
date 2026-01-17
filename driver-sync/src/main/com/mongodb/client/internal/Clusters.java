@@ -21,7 +21,7 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
-import com.mongodb.internal.connection.InternalConnectionPoolSettings;
+import com.mongodb.internal.connection.InternalMongoClientSettings;
 import com.mongodb.internal.connection.StreamFactory;
 import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.lang.Nullable;
@@ -35,17 +35,42 @@ public final class Clusters {
         //NOP
     }
 
+    /**
+     * Creates a cluster with the given settings and default internal settings.
+     *
+     * @param settings the client settings
+     * @param mongoDriverInformation driver information
+     * @param streamFactoryFactory the stream factory
+     * @return the cluster
+     */
     public static Cluster createCluster(final MongoClientSettings settings,
                                         @Nullable final MongoDriverInformation mongoDriverInformation,
                                         final StreamFactoryFactory streamFactoryFactory) {
+        return createCluster(settings, mongoDriverInformation, streamFactoryFactory, InternalMongoClientSettings.getDefaults());
+    }
+
+    /**
+     * Creates a cluster with the given settings and internal settings.
+     *
+     * @param settings the client settings
+     * @param mongoDriverInformation driver information
+     * @param streamFactoryFactory the stream factory
+     * @param internalSettings the internal settings
+     * @return the cluster
+     */
+    public static Cluster createCluster(final MongoClientSettings settings,
+                                        @Nullable final MongoDriverInformation mongoDriverInformation,
+                                        final StreamFactoryFactory streamFactoryFactory,
+                                        final InternalMongoClientSettings internalSettings) {
         assertNotNull(streamFactoryFactory);
         assertNotNull(settings);
+        assertNotNull(internalSettings);
 
         StreamFactory streamFactory = getStreamFactory(streamFactoryFactory, settings, false);
         StreamFactory heartbeatStreamFactory = getStreamFactory(streamFactoryFactory, settings, true);
 
         return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
-                settings.getConnectionPoolSettings(), InternalConnectionPoolSettings.builder().build(),
+                settings.getConnectionPoolSettings(), internalSettings,
                 TimeoutSettings.create(settings), streamFactory,
                 TimeoutSettings.createHeartbeatSettings(settings), heartbeatStreamFactory,
                 settings.getCredential(), settings.getLoggerSettings(), getCommandListener(settings.getCommandListeners()),

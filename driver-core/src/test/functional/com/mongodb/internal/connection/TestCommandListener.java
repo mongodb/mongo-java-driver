@@ -90,7 +90,7 @@ public class TestCommandListener implements CommandListener {
      * type will be lowercase and will omit the terms "command" and "event".
      * For example: {@code "saslContinue succeeded"}.
      *
-     * @see InternalStreamConnection#setRecordEverything(boolean)
+     * @see InternalMongoClientSettings.Builder#recordEverything(boolean)
      * @param listener the test listener
      */
     public TestCommandListener(final TestListener listener) {

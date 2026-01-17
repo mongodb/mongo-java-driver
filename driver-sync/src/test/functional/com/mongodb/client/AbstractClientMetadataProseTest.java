@@ -20,12 +20,10 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.client.DriverInformation;
-import com.mongodb.internal.connection.InternalStreamConnection;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -65,12 +63,6 @@ public abstract class AbstractClientMetadataProseTest {
 
         commandListener = new TestCommandListener();
         connectionPoolListener = new TestConnectionPoolListener();
-        InternalStreamConnection.setRecordEverything(true);
-    }
-
-    @AfterEach
-    public void tearDown() {
-        InternalStreamConnection.setRecordEverything(false);
     }
 
     @DisplayName("Test 1: Test that the driver updates metadata")

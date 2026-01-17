@@ -66,7 +66,7 @@ public class SingleServerClusterTest {
         cluster = new SingleServerCluster(clusterId,
                 clusterSettings,
                 new DefaultClusterableServerFactory(ServerSettings.builder().build(),
-                        ConnectionPoolSettings.builder().maxSize(1).build(), InternalConnectionPoolSettings.builder().build(),
+                        ConnectionPoolSettings.builder().maxSize(1).build(), InternalMongoClientSettings.getDefaults(),
                         OPERATION_CONTEXT_FACTORY, streamFactory, OPERATION_CONTEXT_FACTORY, streamFactory, getCredential(),
                         LoggerSettings.builder().build(), null,
                         Collections.emptyList(), getServerApi(), false), CLIENT_METADATA);

@@ -41,7 +41,7 @@ import static java.util.Collections.emptyList;
 public class DefaultClusterableServerFactory implements ClusterableServerFactory {
     private final ServerSettings serverSettings;
     private final ConnectionPoolSettings connectionPoolSettings;
-    private final InternalConnectionPoolSettings internalConnectionPoolSettings;
+    private final InternalMongoClientSettings internalSettings;
     private final InternalOperationContextFactory clusterOperationContextFactory;
     private final StreamFactory streamFactory;
     private final InternalOperationContextFactory heartbeatOperationContextFactory;
@@ -56,7 +56,7 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
 
     public DefaultClusterableServerFactory(
             final ServerSettings serverSettings, final ConnectionPoolSettings connectionPoolSettings,
-            final InternalConnectionPoolSettings internalConnectionPoolSettings,
+            final InternalMongoClientSettings internalSettings,
             final InternalOperationContextFactory clusterOperationContextFactory, final StreamFactory streamFactory,
             final InternalOperationContextFactory heartbeatOperationContextFactory, final StreamFactory heartbeatStreamFactory,
             @Nullable final MongoCredential credential, final LoggerSettings loggerSettings,
@@ -64,7 +64,7 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
             final List<MongoCompressor> compressorList, @Nullable final ServerApi serverApi, final boolean isFunctionAsAServiceEnvironment) {
         this.serverSettings = serverSettings;
         this.connectionPoolSettings = connectionPoolSettings;
-        this.internalConnectionPoolSettings = internalConnectionPoolSettings;
+        this.internalSettings = internalSettings;
         this.clusterOperationContextFactory = clusterOperationContextFactory;
         this.streamFactory = streamFactory;
         this.heartbeatOperationContextFactory = heartbeatOperationContextFactory;
@@ -87,13 +87,13 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
         ServerMonitor serverMonitor = new DefaultServerMonitor(serverId, serverSettings,
                 // no credentials, compressor list, or command listener for the server monitor factory
                 new InternalStreamConnectionFactory(clusterMode, true, heartbeatStreamFactory, null, clientMetadata,
-                         emptyList(), loggerSettings, null, serverApi),
+                         emptyList(), loggerSettings, null, serverApi, internalSettings.isRecordEverything()),
                 clusterMode, serverApi, isFunctionAsAServiceEnvironment, sdamProvider, heartbeatOperationContextFactory);
 
         ConnectionPool connectionPool = new DefaultConnectionPool(serverId,
-                new InternalStreamConnectionFactory(clusterMode, streamFactory, credential, clientMetadata,
-                         compressorList, loggerSettings, commandListener, serverApi),
-                connectionPoolSettings, internalConnectionPoolSettings, sdamProvider, clusterOperationContextFactory);
+                new InternalStreamConnectionFactory(clusterMode, false, streamFactory, credential, clientMetadata,
+                         compressorList, loggerSettings, commandListener, serverApi, internalSettings.isRecordEverything()),
+                connectionPoolSettings, internalSettings.getInternalConnectionPoolSettings(), sdamProvider, clusterOperationContextFactory);
         ServerListener serverListener = singleServerListener(serverSettings);
         SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(cluster, serverId, serverListener, serverMonitor,
                 connectionPool, clusterMode);

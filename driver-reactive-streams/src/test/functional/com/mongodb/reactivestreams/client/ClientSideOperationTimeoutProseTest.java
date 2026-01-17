@@ -28,8 +28,10 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.internal.connection.InternalMongoClientSettings;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBucket;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBuckets;
+import com.mongodb.reactivestreams.client.internal.InternalMongoClients;
 import com.mongodb.reactivestreams.client.syncadapter.SyncGridFSBucket;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonDocument;
@@ -77,6 +79,15 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     protected com.mongodb.client.MongoClient createMongoClient(final MongoClientSettings mongoClientSettings) {
         SyncMongoClient client = new SyncMongoClient(mongoClientSettings);
         wrapped = client.getWrapped();
+        return client;
+    }
+
+    @Override
+    protected com.mongodb.client.MongoClient createMongoClientWithInternalSettings(final MongoClientSettings mongoClientSettings,
+                                                                                   final InternalMongoClientSettings internalSettings) {
+        MongoClient reactiveClient = InternalMongoClients.create(mongoClientSettings, null, internalSettings);
+        SyncMongoClient client = new SyncMongoClient(reactiveClient);
+        wrapped = reactiveClient;
         return client;
     }
 

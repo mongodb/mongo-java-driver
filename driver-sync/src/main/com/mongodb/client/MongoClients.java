@@ -19,15 +19,9 @@ package com.mongodb.client;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
-import com.mongodb.client.internal.Clusters;
-import com.mongodb.client.internal.MongoClientImpl;
-import com.mongodb.internal.connection.Cluster;
-import com.mongodb.internal.connection.StreamFactoryFactory;
+import com.mongodb.client.internal.InternalMongoClients;
+import com.mongodb.internal.connection.InternalMongoClientSettings;
 import com.mongodb.lang.Nullable;
-
-import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.connection.ServerAddressHelper.getInetAddressResolver;
-import static com.mongodb.internal.connection.StreamFactoryHelper.getSyncStreamFactoryFactory;
 
 
 /**
@@ -38,13 +32,15 @@ import static com.mongodb.internal.connection.StreamFactoryHelper.getSyncStreamF
  */
 public final class MongoClients {
 
+    private static final InternalMongoClientSettings DEFAULT_INTERNAL_SETTINGS = InternalMongoClientSettings.getDefaults();
+
     /**
      * Creates a new client with the default connection string "mongodb://localhost".
      *
      * @return the client
      */
     public static MongoClient create() {
-        return create(new ConnectionString("mongodb://localhost"));
+        return InternalMongoClients.create(DEFAULT_INTERNAL_SETTINGS);
     }
 
     /**
@@ -54,7 +50,7 @@ public final class MongoClients {
      * @return the client
      */
     public static MongoClient create(final MongoClientSettings settings) {
-        return create(settings, null);
+        return InternalMongoClients.create(settings, DEFAULT_INTERNAL_SETTINGS);
     }
 
     /**
@@ -65,7 +61,7 @@ public final class MongoClients {
      * @see #create(ConnectionString)
      */
     public static MongoClient create(final String connectionString) {
-        return create(new ConnectionString(connectionString));
+        return InternalMongoClients.create(connectionString, DEFAULT_INTERNAL_SETTINGS);
     }
 
     /**
@@ -82,7 +78,7 @@ public final class MongoClients {
      * @see com.mongodb.MongoClientSettings.Builder#applyConnectionString(ConnectionString)
      */
     public static MongoClient create(final ConnectionString connectionString) {
-        return create(connectionString, null);
+        return InternalMongoClients.create(connectionString, DEFAULT_INTERNAL_SETTINGS);
     }
 
     /**
@@ -97,7 +93,7 @@ public final class MongoClients {
      */
     public static MongoClient create(final ConnectionString connectionString,
                                      @Nullable final MongoDriverInformation mongoDriverInformation) {
-        return create(MongoClientSettings.builder().applyConnectionString(connectionString).build(), mongoDriverInformation);
+        return InternalMongoClients.create(connectionString, mongoDriverInformation, DEFAULT_INTERNAL_SETTINGS);
     }
 
     /**
@@ -110,23 +106,7 @@ public final class MongoClients {
      * @return the client
      */
     public static MongoClient create(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
-        notNull("settings", settings);
-
-        MongoDriverInformation.Builder builder = mongoDriverInformation == null ? MongoDriverInformation.builder()
-                : MongoDriverInformation.builder(mongoDriverInformation);
-
-        MongoDriverInformation driverInfo = builder.driverName("sync").build();
-
-        StreamFactoryFactory syncStreamFactoryFactory = getSyncStreamFactoryFactory(
-                settings.getTransportSettings(),
-                getInetAddressResolver(settings));
-
-        Cluster cluster = Clusters.createCluster(
-                settings,
-                driverInfo,
-                syncStreamFactoryFactory);
-
-        return new MongoClientImpl(cluster, settings, driverInfo, syncStreamFactoryFactory);
+        return InternalMongoClients.create(settings, mongoDriverInformation, DEFAULT_INTERNAL_SETTINGS);
     }
 
     private MongoClients() {
