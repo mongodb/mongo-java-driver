@@ -104,12 +104,10 @@ public class ServerSelectionSelectionTest {
         // skip this test because the driver prohibits maxStaleness or tagSets with mode of primary at a much lower level
         assumeTrue(!description.endsWith("/max-staleness/tests/ReplicaSetWithPrimary/MaxStalenessWithModePrimary.json"));
         ServerTuple serverTuple;
-        BaseCluster cluster = null;
-        try {
-            ServerSelector serverSelector = getServerSelector();
-            OperationContext operationContext = createOperationContext();
-            Cluster.ServersSnapshot serversSnapshot = createServersSnapshot(clusterDescription);
-            cluster = createTestCluster(clusterDescription, serversSnapshot);
+        ServerSelector serverSelector = getServerSelector();
+        OperationContext operationContext = createOperationContext();
+        Cluster.ServersSnapshot serversSnapshot = createServersSnapshot(clusterDescription);
+        try (BaseCluster cluster = createTestCluster(clusterDescription, serversSnapshot);) {
             serverTuple = cluster.selectServer(serverSelector, operationContext);
             if (error) {
                 fail("Should have thrown exception");
@@ -125,10 +123,6 @@ public class ServerSelectionSelectionTest {
                     JsonWriterSettings.builder()
                             .indent(true).build()), inLatencyWindowServers.isEmpty());
             return;
-        } finally {
-            if (cluster != null) {
-                cluster.close();
-            }
         }
         List<ServerDescription> inLatencyWindowServers = buildServerDescriptions(definition.getArray("in_latency_window"));
         assertNotNull(serverTuple);
@@ -338,7 +332,7 @@ public class ServerSelectionSelectionTest {
     private static class TestCluster extends BaseCluster {
         private final ServersSnapshot serversSnapshot;
 
-        public TestCluster(final ClusterDescription clusterDescription, final ServersSnapshot serversSnapshot) {
+        TestCluster(final ClusterDescription clusterDescription, final ServersSnapshot serversSnapshot) {
             super(new ClusterId(), clusterDescription.getClusterSettings(), new TestClusterableServerFactory(),
                     ClusterFixture.CLIENT_METADATA);
             this.serversSnapshot = serversSnapshot;
