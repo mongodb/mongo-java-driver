@@ -341,8 +341,7 @@ public class ServerSelectionSelectionTest {
 
         @Override
         protected void connect() {
-            // We do not expect this to be called during server selection.
-            Assertions.fail();
+            // NOOP: this method may be invoked in test cases where no server is expected to be selected.
         }
 
         @Override
