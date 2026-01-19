@@ -31,6 +31,7 @@ import com.mongodb.event.ClusterListener;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.diagnostics.logging.Logger;

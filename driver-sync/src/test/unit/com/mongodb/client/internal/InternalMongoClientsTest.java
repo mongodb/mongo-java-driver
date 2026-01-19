@@ -18,7 +18,7 @@ package com.mongodb.client.internal;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.internal.connection.InternalConnectionPoolSettings;
-import com.mongodb.internal.connection.InternalMongoClientSettings;
+import com.mongodb.internal.InternalMongoClientSettings;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

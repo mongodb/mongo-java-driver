@@ -21,7 +21,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.client.MongoClient;
 import com.mongodb.internal.connection.Cluster;
-import com.mongodb.internal.connection.InternalMongoClientSettings;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.lang.Nullable;
 

@@ -19,7 +19,7 @@ package com.mongodb.reactivestreams.client;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
-import com.mongodb.internal.connection.InternalMongoClientSettings;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.internal.InternalMongoClients;
 import org.bson.codecs.configuration.CodecRegistry;

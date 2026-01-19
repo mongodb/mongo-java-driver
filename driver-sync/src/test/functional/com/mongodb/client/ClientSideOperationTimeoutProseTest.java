@@ -20,7 +20,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.internal.InternalMongoClients;
-import com.mongodb.internal.connection.InternalMongoClientSettings;
+import com.mongodb.internal.InternalMongoClientSettings;
 
 
 /**

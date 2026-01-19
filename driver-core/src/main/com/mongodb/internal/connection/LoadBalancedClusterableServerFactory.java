@@ -27,6 +27,7 @@ import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.internal.inject.EmptyProvider;
 import com.mongodb.lang.Nullable;
 

@@ -25,6 +25,7 @@ import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.internal.selector.ServerAddressSelector;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonDocument;

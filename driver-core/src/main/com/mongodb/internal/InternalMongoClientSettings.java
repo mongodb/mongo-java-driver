@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.internal.connection;
+package com.mongodb.internal;
 
 import com.mongodb.annotations.Immutable;
+import com.mongodb.internal.connection.InternalConnectionPoolSettings;
 
 import java.util.Objects;
 

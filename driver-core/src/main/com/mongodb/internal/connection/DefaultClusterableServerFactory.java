@@ -27,6 +27,7 @@ import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ServerListener;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.internal.inject.SameObjectProvider;
 import com.mongodb.lang.Nullable;
 

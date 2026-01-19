@@ -20,7 +20,7 @@ import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.client.internal.InternalMongoClients;
-import com.mongodb.internal.connection.InternalMongoClientSettings;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.lang.Nullable;
 
 

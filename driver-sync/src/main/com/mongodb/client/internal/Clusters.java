@@ -21,7 +21,7 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
-import com.mongodb.internal.connection.InternalMongoClientSettings;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.internal.connection.StreamFactory;
 import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.lang.Nullable;

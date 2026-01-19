@@ -28,7 +28,7 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
-import com.mongodb.internal.connection.InternalMongoClientSettings;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBucket;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBuckets;
 import com.mongodb.reactivestreams.client.internal.InternalMongoClients;

@@ -23,6 +23,7 @@ import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;

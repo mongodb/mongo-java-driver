@@ -47,7 +47,7 @@ import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.event.ConnectionClosedEvent;
 import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionReadyEvent;
-import com.mongodb.internal.connection.InternalMongoClientSettings;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.internal.connection.ServerHelper;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;

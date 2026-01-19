@@ -20,7 +20,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.client.AbstractClientMetadataProseTest;
 import com.mongodb.client.MongoClient;
-import com.mongodb.internal.connection.InternalMongoClientSettings;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.internal.InternalMongoClients;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;

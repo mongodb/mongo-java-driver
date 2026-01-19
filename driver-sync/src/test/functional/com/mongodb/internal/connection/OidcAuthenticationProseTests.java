@@ -33,6 +33,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.TestListener;
 import com.mongodb.client.internal.InternalMongoClients;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;

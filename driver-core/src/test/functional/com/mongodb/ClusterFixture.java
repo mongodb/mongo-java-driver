@@ -52,7 +52,7 @@ import com.mongodb.internal.connection.ClientMetadata;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
 import com.mongodb.internal.connection.DefaultInetAddressResolver;
-import com.mongodb.internal.connection.InternalMongoClientSettings;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.internal.connection.InternalOperationContextFactory;
 import com.mongodb.internal.connection.MongoCredentialWithCache;
 import com.mongodb.internal.connection.OperationContext;
