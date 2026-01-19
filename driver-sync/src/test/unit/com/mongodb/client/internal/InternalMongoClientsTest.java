@@ -75,7 +75,7 @@ class InternalMongoClientsTest {
     void testGetDefaultsReturnsSameInstance() {
         InternalMongoClientSettings defaults1 = InternalMongoClientSettings.getDefaults();
         InternalMongoClientSettings defaults2 = InternalMongoClientSettings.getDefaults();
-        assertSame(defaults1, defaults2, "getDefaults() should return the same instances");
+        assertSame(defaults1, defaults2, "getDefaults() should return the same instance");
     }
 
     @Test
