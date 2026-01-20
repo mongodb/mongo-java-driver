@@ -234,10 +234,12 @@ class DefaultServerSpecification extends Specification {
         ]
     }
 
-    def 'failed open should invalidate the server'() {
+    def 'network error should not invalidate the pool'() {
         given:
         def connectionPool = Mock(ConnectionPool)
-        connectionPool.get(_) >> { throw exceptionToThrow }
+        connectionPool.get(_) >> {
+            throw exceptionToThrow
+        }
         def serverMonitor = Mock(ServerMonitor)
         def server = defaultServer(connectionPool, serverMonitor)
 
@@ -247,8 +249,8 @@ class DefaultServerSpecification extends Specification {
         then:
         def e = thrown(MongoException)
         e.is(exceptionToThrow)
-        1 * connectionPool.invalidate(exceptionToThrow)
-        1 * serverMonitor.cancelCurrentCheck()
+        0 * connectionPool.invalidate(_)
+        0 * serverMonitor.cancelCurrentCheck()
 
         where:
         exceptionToThrow << [
@@ -281,7 +283,7 @@ class DefaultServerSpecification extends Specification {
         ]
     }
 
-    def 'failed open should invalidate the server asynchronously'() {
+    def 'failed open should not invalidate the pool asynchronously'() {
         given:
         def connectionPool = Mock(ConnectionPool)
         connectionPool.getAsync(_, _) >> { it.last().onResult(null, exceptionToThrow) }
@@ -301,8 +303,8 @@ class DefaultServerSpecification extends Specification {
         then:
         !receivedConnection
         receivedThrowable.is(exceptionToThrow)
-        1 * connectionPool.invalidate(exceptionToThrow)
-        1 * serverMonitor.cancelCurrentCheck()
+        0 * connectionPool.invalidate(exceptionToThrow)
+        0 * serverMonitor.cancelCurrentCheck()
 
 
         where:
