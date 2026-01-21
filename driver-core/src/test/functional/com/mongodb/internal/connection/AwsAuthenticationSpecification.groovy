@@ -13,7 +13,6 @@ import com.mongodb.connection.SocketSettings
 import com.mongodb.internal.authentication.AwsCredentialHelper
 import org.bson.BsonDocument
 import org.bson.BsonString
-import spock.lang.Ignore
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -115,9 +114,7 @@ class AwsAuthenticationSpecification extends Specification {
     }
 
     // This test is just proving that the credential provider is not being totally ignored
-    //@IgnoreIf({ System.getenv('AWS_SESSION_TOKEN') == null || System.getenv('AWS_SESSION_TOKEN') == '' })
-    //TODO-JAVA-6064
-    @Ignore
+    @IgnoreIf({ System.getenv('AWS_SESSION_TOKEN') == null || System.getenv('AWS_SESSION_TOKEN') == '' })
     def 'should not authenticate when provider gives invalid session token'() {
         given:
         def connection = createConnection(async,
