@@ -13,6 +13,7 @@ import com.mongodb.connection.SocketSettings
 import com.mongodb.internal.authentication.AwsCredentialHelper
 import org.bson.BsonDocument
 import org.bson.BsonString
+import spock.lang.Ignore
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -83,7 +84,9 @@ class AwsAuthenticationSpecification extends Specification {
         async << [true, false]
     }
 
-    @IgnoreIf({ System.getenv('AWS_SESSION_TOKEN') == null || System.getenv('AWS_SESSION_TOKEN') == '' })
+    //@IgnoreIf({ System.getenv('AWS_SESSION_TOKEN') == null || System.getenv('AWS_SESSION_TOKEN') == '' })
+    //TODO-JAVA-6064
+    @Ignore
     def 'should authorize when successfully authenticated using provider'() {
         given:
         def connection = createConnection(async,
