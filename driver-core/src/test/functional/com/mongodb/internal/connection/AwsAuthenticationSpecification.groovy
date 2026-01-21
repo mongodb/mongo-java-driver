@@ -84,9 +84,7 @@ class AwsAuthenticationSpecification extends Specification {
         async << [true, false]
     }
 
-    //@IgnoreIf({ System.getenv('AWS_SESSION_TOKEN') == null || System.getenv('AWS_SESSION_TOKEN') == '' })
-    //TODO-JAVA-6064
-    @Ignore
+    @IgnoreIf({ System.getenv('AWS_SESSION_TOKEN') == null || System.getenv('AWS_SESSION_TOKEN') == '' })
     def 'should authorize when successfully authenticated using provider'() {
         given:
         def connection = createConnection(async,
@@ -117,7 +115,9 @@ class AwsAuthenticationSpecification extends Specification {
     }
 
     // This test is just proving that the credential provider is not being totally ignored
-    @IgnoreIf({ System.getenv('AWS_SESSION_TOKEN') == null || System.getenv('AWS_SESSION_TOKEN') == '' })
+    //@IgnoreIf({ System.getenv('AWS_SESSION_TOKEN') == null || System.getenv('AWS_SESSION_TOKEN') == '' })
+    //TODO-JAVA-6064
+    @Ignore
     def 'should not authenticate when provider gives invalid session token'() {
         given:
         def connection = createConnection(async,
