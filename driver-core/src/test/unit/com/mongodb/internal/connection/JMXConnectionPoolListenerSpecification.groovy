@@ -29,7 +29,7 @@ import spock.lang.Unroll
 import javax.management.ObjectName
 import java.lang.management.ManagementFactory
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT_FACTORY
 
 class JMXConnectionPoolListenerSpecification extends Specification {
@@ -50,8 +50,8 @@ class JMXConnectionPoolListenerSpecification extends Specification {
         provider.ready()
 
         when:
-        provider.get(OPERATION_CONTEXT)
-        provider.get(OPERATION_CONTEXT).close()
+        provider.get(getOperationContext())
+        provider.get(getOperationContext()).close()
 
         then:
         with(jmxListener.getMBean(SERVER_ID)) {

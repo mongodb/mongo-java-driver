@@ -54,7 +54,6 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.executeSync
 import static com.mongodb.ClusterFixture.getAsyncCluster
@@ -482,7 +481,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should add read concern to command'() {
         given:
-        def operationContext = OPERATION_CONTEXT.withSessionContext(sessionContext)
+        def operationContext = getOperationContext().withSessionContext(sessionContext)
         def binding = Stub(ReadBinding)
         def source = Stub(ConnectionSource)
         def connection = Mock(Connection)
@@ -522,7 +521,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should add read concern to command asynchronously'() {
         given:
-        def operationContext = OPERATION_CONTEXT.withSessionContext(sessionContext)
+        def operationContext = getOperationContext().withSessionContext(sessionContext)
         def binding = Stub(AsyncReadBinding)
         def source = Stub(AsyncConnectionSource)
         def connection = Mock(AsyncConnection)
@@ -562,7 +561,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should add allowDiskUse to command if the server version >= 3.2'() {
         given:
-        def operationContext = OPERATION_CONTEXT.withSessionContext(sessionContext)
+        def operationContext = getOperationContext().withSessionContext(sessionContext)
         def binding = Stub(ReadBinding)
         def source = Stub(ConnectionSource)
         def connection = Mock(Connection)
@@ -602,7 +601,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should add allowDiskUse to command if the server version >= 3.2 asynchronously'() {
         given:
-        def operationContext = OPERATION_CONTEXT.withSessionContext(sessionContext)
+        def operationContext = getOperationContext().withSessionContext(sessionContext)
         def binding = Stub(AsyncReadBinding)
         def source = Stub(AsyncConnectionSource)
         def connection = Mock(AsyncConnection)
@@ -646,7 +645,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def (cursorType, long maxAwaitTimeMS, long maxTimeMSForCursor) = cursorDetails
         def timeoutSettings = ClusterFixture.TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT.withMaxAwaitTimeMS(maxAwaitTimeMS)
         def timeoutContext = new TimeoutContext(timeoutSettings)
-        def operationContext = OPERATION_CONTEXT.withTimeoutContext(timeoutContext)
+        def operationContext = getOperationContext().withTimeoutContext(timeoutContext)
 
         collectionHelper.create(getCollectionName(), new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         def operation = new FindOperation<BsonDocument>(namespace, new BsonDocumentCodec())

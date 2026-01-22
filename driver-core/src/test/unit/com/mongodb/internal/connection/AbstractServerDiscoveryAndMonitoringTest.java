@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.CLIENT_METADATA;
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
+import static com.mongodb.ClusterFixture.getOperationContext;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.internal.connection.DescriptionHelper.createServerDescription;
@@ -82,7 +82,7 @@ public class AbstractServerDiscoveryAndMonitoringTest {
     }
 
     protected void applyApplicationError(final BsonDocument applicationError) {
-        Timeout serverSelectionTimeout = OPERATION_CONTEXT.getTimeoutContext().computeServerSelectionTimeout();
+        Timeout serverSelectionTimeout = getOperationContext().getTimeoutContext().computeServerSelectionTimeout();
         ServerAddress serverAddress = new ServerAddress(applicationError.getString("address").getValue());
         TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS);
         int errorGeneration = applicationError.getNumber("generation",
@@ -98,7 +98,7 @@ public class AbstractServerDiscoveryAndMonitoringTest {
         switch (type) {
             case "command":
                 exception = getCommandFailureException(applicationError.getDocument("response"), serverAddress,
-                        OPERATION_CONTEXT.getTimeoutContext());
+                        getOperationContext().getTimeoutContext());
                 break;
             case "network":
                 exception = new MongoSocketReadException("Read error", serverAddress, new IOException());

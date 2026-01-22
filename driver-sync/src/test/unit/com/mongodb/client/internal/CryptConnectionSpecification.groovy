@@ -61,7 +61,7 @@ class CryptConnectionSpecification extends Specification {
         def cryptConnection = new CryptConnection(wrappedConnection, crypt)
         def codec = new DocumentCodec()
         def timeoutContext = Mock(TimeoutContext)
-        def operationContext = ClusterFixture.OPERATION_CONTEXT.withTimeoutContext(timeoutContext)
+        def operationContext = ClusterFixture.getOperationContext().withTimeoutContext(timeoutContext)
         def operationTimeout = Mock(Timeout)
         timeoutContext.getTimeout() >> operationTimeout
 
@@ -127,7 +127,7 @@ class CryptConnectionSpecification extends Specification {
         def encryptedResponse = toRaw(new BsonDocument('ok', new BsonInt32(1)))
         def decryptedResponse = encryptedResponse
         def timeoutContext = Mock(TimeoutContext)
-        def operationContext = ClusterFixture.OPERATION_CONTEXT.withTimeoutContext(timeoutContext)
+        def operationContext = ClusterFixture.getOperationContext().withTimeoutContext(timeoutContext)
         def operationTimeout = Mock(Timeout)
         timeoutContext.getTimeout() >> operationTimeout
 
@@ -183,7 +183,7 @@ class CryptConnectionSpecification extends Specification {
         def encryptedResponse = toRaw(new BsonDocument('ok', new BsonInt32(1)))
         def decryptedResponse = encryptedResponse
         def timeoutContext = Mock(TimeoutContext)
-        def operationContext = ClusterFixture.OPERATION_CONTEXT.withTimeoutContext(timeoutContext)
+        def operationContext = ClusterFixture.getOperationContext().withTimeoutContext(timeoutContext)
         def operationTimeout = Mock(Timeout)
         timeoutContext.getTimeout() >> operationTimeout
 

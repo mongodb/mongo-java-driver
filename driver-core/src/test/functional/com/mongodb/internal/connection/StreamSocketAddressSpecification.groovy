@@ -13,7 +13,7 @@ import com.mongodb.spock.Slow
 import javax.net.SocketFactory
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.ClusterFixture.getSslSettings
 
 class StreamSocketAddressSpecification extends Specification {
@@ -44,7 +44,7 @@ class StreamSocketAddressSpecification extends Specification {
         def socketStream = new SocketStream(serverAddress, null, socketSettings, sslSettings, socketFactory, bufferProvider)
 
         when:
-        socketStream.open(OPERATION_CONTEXT)
+        socketStream.open(getOperationContext())
 
         then:
         !socket0.isConnected()
@@ -83,7 +83,7 @@ class StreamSocketAddressSpecification extends Specification {
         def socketStream = new SocketStream(serverAddress, inetAddressResolver, socketSettings, sslSettings, socketFactory, bufferProvider)
 
         when:
-        socketStream.open(OPERATION_CONTEXT)
+        socketStream.open(getOperationContext())
 
         then:
         thrown(MongoSocketOpenException)

@@ -33,7 +33,7 @@ import org.junit.Test;
 import java.util.Collections;
 
 import static com.mongodb.ClusterFixture.CLIENT_METADATA;
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
+import static com.mongodb.ClusterFixture.getOperationContext;
 import static com.mongodb.ClusterFixture.getClusterConnectionMode;
 import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.ClusterFixture.getSslSettings;
@@ -69,14 +69,14 @@ public class PlainAuthenticatorTest {
     public void testSuccessfulAuthentication() {
         PlainAuthenticator authenticator = new PlainAuthenticator(getCredentialWithCache(userName, source, password.toCharArray()),
                 getClusterConnectionMode(), getServerApi());
-        authenticator.authenticate(internalConnection, connectionDescription, OPERATION_CONTEXT);
+        authenticator.authenticate(internalConnection, connectionDescription, getOperationContext());
     }
 
     @Test(expected = MongoSecurityException.class)
     public void testUnsuccessfulAuthentication() {
         PlainAuthenticator authenticator = new PlainAuthenticator(getCredentialWithCache(userName, source, "wrong".toCharArray()),
                 getClusterConnectionMode(), getServerApi());
-        authenticator.authenticate(internalConnection, connectionDescription, OPERATION_CONTEXT);
+        authenticator.authenticate(internalConnection, connectionDescription, getOperationContext());
     }
 
     private static MongoCredentialWithCache getCredentialWithCache(final String userName, final String source, final char[] password) {

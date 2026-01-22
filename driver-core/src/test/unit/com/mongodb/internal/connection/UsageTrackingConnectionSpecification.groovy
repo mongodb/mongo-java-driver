@@ -26,7 +26,7 @@ import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 
@@ -49,7 +49,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         connection.openedAt == Long.MAX_VALUE
 
         when:
-        connection.open(OPERATION_CONTEXT)
+        connection.open(getOperationContext())
 
         then:
         connection.openedAt <= System.currentTimeMillis()
@@ -65,7 +65,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         connection.openedAt == Long.MAX_VALUE
 
         when:
-        connection.openAsync(OPERATION_CONTEXT, futureResultCallback)
+        connection.openAsync(getOperationContext(), futureResultCallback)
         futureResultCallback.get()
 
         then:
@@ -80,7 +80,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         connection.lastUsedAt == Long.MAX_VALUE
 
         when:
-        connection.open(OPERATION_CONTEXT)
+        connection.open(getOperationContext())
 
         then:
         connection.lastUsedAt <= System.currentTimeMillis()
@@ -96,7 +96,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         connection.lastUsedAt == Long.MAX_VALUE
 
         when:
-        connection.openAsync(OPERATION_CONTEXT, futureResultCallback)
+        connection.openAsync(getOperationContext(), futureResultCallback)
         futureResultCallback.get()
 
         then:
@@ -106,11 +106,11 @@ class UsageTrackingConnectionSpecification extends Specification {
     def 'lastUsedAt should be set on sendMessage'() {
         given:
         def connection = createConnection()
-        connection.open(OPERATION_CONTEXT)
+        connection.open(getOperationContext())
         def openedLastUsedAt = connection.lastUsedAt
 
         when:
-        connection.sendMessage([], 1, OPERATION_CONTEXT)
+        connection.sendMessage([], 1, getOperationContext())
 
         then:
         connection.lastUsedAt >= openedLastUsedAt
@@ -121,12 +121,12 @@ class UsageTrackingConnectionSpecification extends Specification {
     def 'lastUsedAt should be set on sendMessage asynchronously'() {
         given:
         def connection = createConnection()
-        connection.open(OPERATION_CONTEXT)
+        connection.open(getOperationContext())
         def openedLastUsedAt = connection.lastUsedAt
         def futureResultCallback = new FutureResultCallback<Void>()
 
         when:
-        connection.sendMessageAsync([], 1, OPERATION_CONTEXT, futureResultCallback)
+        connection.sendMessageAsync([], 1, getOperationContext(), futureResultCallback)
         futureResultCallback.get()
 
         then:
@@ -137,10 +137,10 @@ class UsageTrackingConnectionSpecification extends Specification {
     def 'lastUsedAt should be set on receiveMessage'() {
         given:
         def connection = createConnection()
-        connection.open(OPERATION_CONTEXT)
+        connection.open(getOperationContext())
         def openedLastUsedAt = connection.lastUsedAt
         when:
-        connection.receiveMessage(1, OPERATION_CONTEXT)
+        connection.receiveMessage(1, getOperationContext())
 
         then:
         connection.lastUsedAt >= openedLastUsedAt
@@ -150,12 +150,12 @@ class UsageTrackingConnectionSpecification extends Specification {
     def 'lastUsedAt should be set on receiveMessage asynchronously'() {
         given:
         def connection = createConnection()
-        connection.open(OPERATION_CONTEXT)
+        connection.open(getOperationContext())
         def openedLastUsedAt = connection.lastUsedAt
         def futureResultCallback = new FutureResultCallback<Void>()
 
         when:
-        connection.receiveMessageAsync(1, OPERATION_CONTEXT, futureResultCallback)
+        connection.receiveMessageAsync(1, getOperationContext(), futureResultCallback)
         futureResultCallback.get()
 
         then:
@@ -166,13 +166,13 @@ class UsageTrackingConnectionSpecification extends Specification {
     def 'lastUsedAt should be set on sendAndReceive'() {
         given:
         def connection = createConnection()
-        connection.open(OPERATION_CONTEXT)
+        connection.open(getOperationContext())
         def openedLastUsedAt = connection.lastUsedAt
 
         when:
         connection.sendAndReceive(new CommandMessage('test',
                 new BsonDocument('ping', new BsonInt32(1)), NoOpFieldNameValidator.INSTANCE, primary(),
-                MessageSettings.builder().build(), SINGLE, null), new BsonDocumentCodec(),  OPERATION_CONTEXT)
+                MessageSettings.builder().build(), SINGLE, null), new BsonDocumentCodec(),  getOperationContext())
 
         then:
         connection.lastUsedAt >= openedLastUsedAt
@@ -182,7 +182,7 @@ class UsageTrackingConnectionSpecification extends Specification {
     def 'lastUsedAt should be set on sendAndReceive asynchronously'() {
         given:
         def connection = createConnection()
-        connection.open(OPERATION_CONTEXT)
+        connection.open(getOperationContext())
         def openedLastUsedAt = connection.lastUsedAt
         def futureResultCallback = new FutureResultCallback<Void>()
 
@@ -190,7 +190,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         connection.sendAndReceiveAsync(new CommandMessage('test',
                 new BsonDocument('ping', new BsonInt32(1)), NoOpFieldNameValidator.INSTANCE, primary(),
                 MessageSettings.builder().build(), SINGLE, null),
-                new BsonDocumentCodec(), OPERATION_CONTEXT, futureResultCallback)
+                new BsonDocumentCodec(), getOperationContext(), futureResultCallback)
         futureResultCallback.get()
 
         then:

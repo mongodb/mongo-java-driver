@@ -52,7 +52,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.ClusterFixture.CLIENT_METADATA;
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
+import static com.mongodb.ClusterFixture.getOperationContext;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.ClusterFixture.createOperationContext;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -96,14 +96,14 @@ public class LoadBalancedClusterTest {
                 mock(DnsSrvRecordMonitorFactory.class));
 
         // when
-        ServerTuple serverTuple = cluster.selectServer(mock(ServerSelector.class), OPERATION_CONTEXT);
+        ServerTuple serverTuple = cluster.selectServer(mock(ServerSelector.class), getOperationContext());
 
         // then
         assertServerTupleExpectations(serverAddress, expectedServer, serverTuple);
 
         // when
         FutureResultCallback<ServerTuple> callback = new FutureResultCallback<>();
-        cluster.selectServerAsync(mock(ServerSelector.class), OPERATION_CONTEXT, callback);
+        cluster.selectServerAsync(mock(ServerSelector.class), getOperationContext(), callback);
         serverTuple = callback.get();
 
         // then
@@ -131,7 +131,7 @@ public class LoadBalancedClusterTest {
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, CLIENT_METADATA, dnsSrvRecordMonitorFactory);
 
         // when
-        ServerTuple serverTuple = cluster.selectServer(mock(ServerSelector.class), OPERATION_CONTEXT);
+        ServerTuple serverTuple = cluster.selectServer(mock(ServerSelector.class), getOperationContext());
 
         // then
         assertServerTupleExpectations(resolvedServerAddress, expectedServer, serverTuple);
@@ -159,7 +159,7 @@ public class LoadBalancedClusterTest {
 
         // when
         FutureResultCallback<ServerTuple> callback = new FutureResultCallback<>();
-        cluster.selectServerAsync(mock(ServerSelector.class), OPERATION_CONTEXT, callback);
+        cluster.selectServerAsync(mock(ServerSelector.class), getOperationContext(), callback);
         ServerTuple serverTuple = callback.get();
 
         // then
@@ -185,7 +185,7 @@ public class LoadBalancedClusterTest {
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, CLIENT_METADATA, dnsSrvRecordMonitorFactory);
 
         MongoClientException exception = assertThrows(MongoClientException.class, () -> cluster.selectServer(mock(ServerSelector.class),
-                OPERATION_CONTEXT));
+                getOperationContext()));
         assertEquals("In load balancing mode, the host must resolve to a single SRV record, but instead it resolved to multiple hosts",
                 exception.getMessage());
     }
@@ -209,7 +209,7 @@ public class LoadBalancedClusterTest {
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, CLIENT_METADATA, dnsSrvRecordMonitorFactory);
 
         FutureResultCallback<ServerTuple> callback = new FutureResultCallback<>();
-        cluster.selectServerAsync(mock(ServerSelector.class), OPERATION_CONTEXT, callback);
+        cluster.selectServerAsync(mock(ServerSelector.class), getOperationContext(), callback);
 
         MongoClientException exception = assertThrows(MongoClientException.class, callback::get);
         assertEquals("In load balancing mode, the host must resolve to a single SRV record, but instead it resolved to multiple hosts",
