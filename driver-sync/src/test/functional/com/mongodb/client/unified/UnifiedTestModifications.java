@@ -421,11 +421,17 @@ public final class UnifiedTestModifications {
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5664")
                 .file("server-discovery-and-monitoring", "pool-cleared-on-min-pool-size-population-error");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5949")
-                .file("server-discovery-and-monitoring", "backpressure-network-error-fail");
+                .file("server-discovery-and-monitoring", "backpressure-network-error-fail-single");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5949")
-                .file("server-discovery-and-monitoring", "backpressure-network-timeout-error");
+                .file("server-discovery-and-monitoring", "backpressure-network-timeout-error-single");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5949")
-                .file("server-discovery-and-monitoring", "backpressure-server-description-unchanged-on-min-pool-size-population-error");
+                .file("server-discovery-and-monitoring", "backpressure-server-description-unchanged-on-min-pool-size-population-error-single");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5949")
+                .file("server-discovery-and-monitoring", "backpressure-network-error-fail-replicaset");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5949")
+                .file("server-discovery-and-monitoring", "backpressure-network-timeout-error-replicaset");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5949")
+                .file("server-discovery-and-monitoring", "backpressure-server-description-unchanged-on-min-pool-size-population-error-replicaset");
 
         // session tests
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5968")
