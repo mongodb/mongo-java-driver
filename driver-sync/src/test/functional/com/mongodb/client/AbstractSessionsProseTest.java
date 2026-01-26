@@ -93,7 +93,7 @@ public abstract class AbstractSessionsProseTest {
                         .addCommandListener(new CommandListener() {
                             @Override
                             public void commandStarted(final CommandStartedEvent event) {
-                                lsidSet.add(event.getCommand().getDocument("lsid"));
+                                lsidSet.add(event.getCommand().getDocument("lsid").toBsonDocument());
                             }
                         })
                         .build())) {

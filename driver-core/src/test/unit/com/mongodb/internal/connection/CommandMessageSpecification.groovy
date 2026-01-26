@@ -159,16 +159,18 @@ class CommandMessageSpecification extends Specification {
         def output = new ByteBufferBsonOutput(new SimpleBufferProvider())
         message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
                 Stub(TimeoutContext), null))
+        def commandMessageBsonDocument = message.getCommandDocument(output)
 
         when:
-        def commandDocument = message.getCommandDocument(output)
-
         def expectedCommandDocument = new BsonDocument('insert', new BsonString('coll')).append('documents',
                 new BsonArray([new BsonDocument('_id', new BsonInt32(1)), new BsonDocument('_id', new BsonInt32(2))]))
         expectedCommandDocument.append('$db', new BsonString(namespace.getDatabaseName()))
-        then:
-        commandDocument == expectedCommandDocument
 
+        then:
+        commandMessageBsonDocument == expectedCommandDocument
+
+        cleanup:
+        commandMessageBsonDocument?.close()
 
         where:
         [maxWireVersion, originalCommandDocument, payload] << [
