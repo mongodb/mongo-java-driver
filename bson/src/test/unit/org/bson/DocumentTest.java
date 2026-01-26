@@ -151,6 +151,16 @@ public class DocumentTest {
         assertEquals(new BsonDocument("_id", new BsonBinary(uuid)), BsonDocument.parse(json));
     }
 
+    @Test
+    public void parseShouldHandleDoubleSignedExponent() {
+        BsonDocument expected = new BsonDocument("d", new BsonDouble(1.2345678921232E+18));
+        assertEquals(expected, BsonDocument.parse("{\"d\" : {\"$numberDouble\": \"1.2345678921232E18\"}}"), "implicit positive exponent");
+        assertEquals(expected, BsonDocument.parse("{\"d\" : {\"$numberDouble\": \"1.2345678921232E+18\"}}"), "explicit positive exponent");
+
+        expected = new BsonDocument("d", new BsonDouble(1.2345678921232E-18));
+        assertEquals(expected, BsonDocument.parse("{\"d\" : {\"$numberDouble\": \"1.2345678921232E-18\"}}"), "explicit negative exponent");
+    }
+
     public class Name {
         private final String name;
 
