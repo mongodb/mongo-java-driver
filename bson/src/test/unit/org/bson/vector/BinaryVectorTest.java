@@ -20,7 +20,7 @@ import org.bson.BinaryVector;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
-import org.bson.BsonString;
+import org.bson.BsonInt32;
 import org.bson.BsonValue;
 import org.bson.Float32BinaryVector;
 import org.bson.PackedBitBinaryVector;
@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.opentest4j.AssertionFailedError;
 import util.JsonPoweredTestHelper;
 
 import java.util.ArrayList;
@@ -36,44 +37,47 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 import static org.bson.BsonHelper.decodeToDocument;
 import static org.bson.BsonHelper.encodeToHex;
 import static org.bson.internal.vector.BinaryVectorHelper.determineVectorDType;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 /**
  * See
  * <a href="https://github.com/mongodb/specifications/tree/master/source/bson-binary-vector/tests">JSON-based tests that included in test resources</a>.
  */
-class BinaryVectorGenericBsonTest {
+class BinaryVectorTest {
 
-    private static final List<String> TEST_NAMES_TO_IGNORE = Arrays.asList(
-            //NO API to set padding for floats available.
-            "FLOAT32 with padding",
-            //NO API to set padding for floats available.
-            "INT8 with padding",
-            //It is impossible to provide float inputs for INT8 in the API.
-            "INT8 with float inputs",
-            //It is impossible to provide float inputs for INT8.
-            "Underflow Vector PACKED_BIT",
-            //It is impossible to provide float inputs for PACKED_BIT in the API.
-            "Vector with float values PACKED_BIT",
-            //It is impossible to provide float inputs for INT8.
-            "Overflow Vector PACKED_BIT",
-            //It is impossible to overflow byte with values higher than 127 in the API.
+    private static final List<String> TEST_NAMES_TO_IGNORE = asList(
+            // It is impossible to overflow byte with values higher than 127 in the API.
             "Overflow Vector INT8",
-            //It is impossible to underflow byte with values lower than -128 in the API.
-            "Underflow Vector INT8");
-
+            // It is impossible to underflow byte with values lower than -128 in the API.
+            "Underflow Vector INT8",
+            // It is impossible to overflow byte with values higher than 127 in the API.
+            "Overflow Vector PACKED_BIT",
+            // It is impossible to underflow byte with values lower than -128 in the API.
+            "Underflow Vector PACKED_BIT",
+            // It is impossible to provide float inputs for INT8 in the API.
+            "INT8 with float inputs",
+            // It is impossible to provide float inputs for PACKED_BIT in the API.
+            "Vector with float values PACKED_BIT",
+            // It is impossible to provide float inputs with padding for FLOAT32 in the API.
+            "FLOAT32 with padding",
+            // It is impossible to provide padding for INT8 in the API.
+            "INT8 with padding",
+            // TODO JAVA-5848 in 6.0.0 "Padding specified with no vector data PACKED_BIT" will throw an error (currently logs a warning).
+            "Padding specified with no vector data PACKED_BIT"
+);
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("data")
     void shouldPassAllOutcomes(@SuppressWarnings("unused") final String description,
                                final BsonDocument testDefinition, final BsonDocument testCase) {
-        assumeFalse(TEST_NAMES_TO_IGNORE.contains(testCase.get("description").asString().getValue()));
+        String testDescription = testCase.get("description").asString().getValue();
+        assumeFalse(TEST_NAMES_TO_IGNORE.contains(testDescription));
 
         String testKey = testDefinition.getString("test_key").getValue();
         boolean isValidVector = testCase.getBoolean("valid").getValue();
@@ -85,29 +89,35 @@ class BinaryVectorGenericBsonTest {
     }
 
     private static void runInvalidTestCase(final BsonDocument testCase) {
+        if (testCase.containsKey("vector")) {
+            runInvalidTestCaseVector(testCase);
+        }
+    }
+
+    private static void runInvalidTestCaseVector(final BsonDocument testCase) {
         BsonArray arrayVector = testCase.getArray("vector");
-        byte expectedPadding = (byte) testCase.getInt32("padding").getValue();
         byte dtypeByte = Byte.decode(testCase.getString("dtype_hex").getValue());
         BinaryVector.DataType expectedDType = determineVectorDType(dtypeByte);
 
-        switch (expectedDType) {
-            case INT8:
-                byte[] expectedVectorData = toByteArray(arrayVector);
-                assertValidationException(assertThrows(RuntimeException.class,
-                        () -> BinaryVector.int8Vector(expectedVectorData)));
-                break;
-            case PACKED_BIT:
-                byte[] expectedVectorPackedBitData = toByteArray(arrayVector);
-                assertValidationException(assertThrows(RuntimeException.class,
-                        () -> BinaryVector.packedBitVector(expectedVectorPackedBitData, expectedPadding)));
-                break;
-            case FLOAT32:
-                float[] expectedFloatVector = toFloatArray(arrayVector);
-                assertValidationException(assertThrows(RuntimeException.class, () -> BinaryVector.floatVector(expectedFloatVector)));
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported vector data type: " + expectedDType);
-        }
+        assertThrows(IllegalArgumentException.class, () -> {
+            switch (expectedDType) {
+                case INT8:
+                    byte[] expectedVectorData = toByteArray(arrayVector);
+                    BinaryVector.int8Vector(expectedVectorData);
+                    break;
+                case PACKED_BIT:
+                    byte expectedPadding = (byte) testCase.getInt32("padding", new BsonInt32(0)).getValue();
+                    byte[] expectedVectorPackedBitData = toByteArray(arrayVector);
+                    BinaryVector.packedBitVector(expectedVectorPackedBitData, expectedPadding);
+                    break;
+                case FLOAT32:
+                    float[] expectedFloatVector = toFloatArray(arrayVector);
+                    BinaryVector.floatVector(expectedFloatVector);
+                    break;
+                default:
+                    throw new AssertionFailedError("Unsupported vector data type: " + expectedDType);
+            }
+        });
     }
 
     private static void runValidTestCase(final String testKey, final BsonDocument testCase) {
@@ -168,12 +178,8 @@ class BinaryVectorGenericBsonTest {
                         description);
                 break;
             default:
-                throw new IllegalArgumentException("Unsupported vector data type: " + expectedDType);
+                throw new AssertionFailedError("Unsupported vector data type: " + expectedDType);
         }
-    }
-
-    private static void assertValidationException(final RuntimeException runtimeException) {
-        assertTrue(runtimeException instanceof IllegalArgumentException || runtimeException instanceof IllegalStateException);
     }
 
     private static void assertThatVectorCreationResultsInCorrectBinary(final BinaryVector expectedVectorData,
@@ -231,7 +237,7 @@ class BinaryVectorGenericBsonTest {
         for (int i = 0; i < arrayVector.size(); i++) {
             BsonValue bsonValue = arrayVector.get(i);
             if (bsonValue.isString()) {
-                floats[i] = parseFloat(bsonValue.asString());
+                floats[i] = Float.parseFloat(bsonValue.asString().getValue());
             } else {
                 floats[i] = (float) arrayVector.get(i).asDouble().getValue();
             }
@@ -239,21 +245,9 @@ class BinaryVectorGenericBsonTest {
         return floats;
     }
 
-    private static float parseFloat(final BsonString bsonValue) {
-        String floatValue = bsonValue.getValue();
-        switch (floatValue) {
-            case "-inf":
-                return Float.NEGATIVE_INFINITY;
-            case "inf":
-                return Float.POSITIVE_INFINITY;
-            default:
-                return Float.parseFloat(floatValue);
-        }
-    }
-
     private static Stream<Arguments> data() {
         List<Arguments> data = new ArrayList<>();
-        for (BsonDocument testDocument : JsonPoweredTestHelper.getTestDocuments("/bson-binary-vector")) {
+        for (BsonDocument testDocument : JsonPoweredTestHelper.getSpecTestDocuments("bson-binary-vector")) {
             for (BsonValue curValue : testDocument.getArray("tests", new BsonArray())) {
                 BsonDocument testCaseDocument = curValue.asDocument();
                 data.add(Arguments.of(createTestCaseDescription(testDocument, testCaseDocument), testDocument, testCaseDocument));

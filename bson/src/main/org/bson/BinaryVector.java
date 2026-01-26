@@ -18,9 +18,8 @@ package org.bson;
 
 import org.bson.annotations.Beta;
 import org.bson.annotations.Reason;
-
-import static org.bson.assertions.Assertions.isTrueArgument;
-import static org.bson.assertions.Assertions.notNull;
+import org.bson.diagnostics.Logger;
+import org.bson.diagnostics.Loggers;
 
 /**
  * Binary Vectors are densely packed arrays of numbers, all the same type, which are stored and retrieved efficiently using the BSON Binary
@@ -33,6 +32,7 @@ import static org.bson.assertions.Assertions.notNull;
  * @since 5.3
  */
 public abstract class BinaryVector {
+    protected static final Logger LOGGER = Loggers.getLogger("BinaryVector");
     private final DataType dataType;
 
     BinaryVector(final DataType dataType) {
@@ -64,9 +64,6 @@ public abstract class BinaryVector {
      */
     @Beta(Reason.SERVER)
     public static PackedBitBinaryVector packedBitVector(final byte[] data, final byte padding) {
-        notNull("data", data);
-        isTrueArgument("Padding must be between 0 and 7 bits. Provided padding: " + padding, padding >= 0 && padding <= 7);
-        isTrueArgument("Padding must be 0 if vector is empty. Provided padding: " + padding, padding == 0 || data.length > 0);
         return new PackedBitBinaryVector(data, padding);
     }
 
@@ -83,7 +80,6 @@ public abstract class BinaryVector {
      * @return A {@link Int8BinaryVector} instance with the {@link DataType#INT8} data type.
      */
     public static Int8BinaryVector int8Vector(final byte[] data) {
-        notNull("data", data);
         return new Int8BinaryVector(data);
     }
 
@@ -99,7 +95,6 @@ public abstract class BinaryVector {
      * @return A {@link Float32BinaryVector} instance with the {@link DataType#FLOAT32} data type.
      */
     public static Float32BinaryVector floatVector(final float[] data) {
-        notNull("data", data);
         return new Float32BinaryVector(data);
     }
 
