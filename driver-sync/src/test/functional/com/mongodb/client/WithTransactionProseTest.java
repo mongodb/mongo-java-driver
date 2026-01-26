@@ -20,17 +20,22 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.TransactionOptions;
-import com.mongodb.client.internal.ClientSessionClock;
 import com.mongodb.client.model.Sorts;
 import com.mongodb.internal.time.ExponentialBackoff;
+import com.mongodb.internal.time.StartTime;
+import com.mongodb.internal.time.SystemNanoTime;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import static com.mongodb.ClusterFixture.TIMEOUT;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
@@ -44,8 +49,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 // See https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#prose-tests
 public class WithTransactionProseTest extends DatabaseTestCase {
-    private static final long START_TIME_MS = 1L;
-    private static final long ERROR_GENERATING_INTERVAL = 121000L;
+    private static final Duration ERROR_GENERATING_INTERVAL = Duration.ofSeconds(120);
 
     @BeforeEach
     @Override
@@ -66,7 +70,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     public void testCallbackRaisesCustomError() {
         final String exceptionMessage = "NotTransientOrUnknownError";
         try (ClientSession session = client.startSession()) {
-            session.withTransaction((TransactionBody<Void>) () -> {
+            session.withTransaction(() -> {
                 throw new MongoException(exceptionMessage);
             });
             // should not get here
@@ -101,13 +105,13 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         final String errorMessage = "transient transaction error";
 
         try (ClientSession session = client.startSession()) {
-            ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
-            session.withTransaction((TransactionBody<Void>) () -> {
-                ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
-                MongoException e = new MongoException(112, errorMessage);
-                e.addLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL);
-                throw e;
-            });
+            doWithSystemNanoTimeHandle(systemNanoTimeHandle ->
+                session.withTransaction(() -> {
+                    systemNanoTimeHandle.setRelativeToStart(ERROR_GENERATING_INTERVAL);
+                    MongoException e = new MongoException(112, errorMessage);
+                    e.addLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL);
+                    throw e;
+                }));
             fail("Test should have thrown an exception.");
         } catch (Exception e) {
             assertEquals(errorMessage, e.getMessage());
@@ -127,12 +131,12 @@ public class WithTransactionProseTest extends DatabaseTestCase {
                         + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 91, 'closeConnection': false}}"));
 
         try (ClientSession session = client.startSession()) {
-            ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
-            session.withTransaction((TransactionBody<Void>) () -> {
-                ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
-                collection.insertOne(session, new Document("_id", 2));
-                return null;
-            });
+            doWithSystemNanoTimeHandle(systemNanoTimeHandle ->
+                session.withTransaction(() -> {
+                    systemNanoTimeHandle.setRelativeToStart(ERROR_GENERATING_INTERVAL);
+                    collection.insertOne(session, new Document("_id", 2));
+                    return null;
+                }));
             fail("Test should have thrown an exception.");
         } catch (Exception e) {
             assertEquals(91, ((MongoException) e).getCode());
@@ -156,12 +160,12 @@ public class WithTransactionProseTest extends DatabaseTestCase {
                         + "'errmsg': 'Transaction 0 has been aborted', 'closeConnection': false}}"));
 
         try (ClientSession session = client.startSession()) {
-            ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
-            session.withTransaction((TransactionBody<Void>) () -> {
-                ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
-                collection.insertOne(session, Document.parse("{ _id : 1 }"));
-                return null;
-            });
+            doWithSystemNanoTimeHandle(systemNanoTimeHandle ->
+                session.withTransaction(() -> {
+                    systemNanoTimeHandle.setRelativeToStart(ERROR_GENERATING_INTERVAL);
+                    collection.insertOne(session, Document.parse("{ _id : 1 }"));
+                    return null;
+                }));
             fail("Test should have thrown an exception.");
         } catch (Exception e) {
             assertEquals(251, ((MongoException) e).getCode());
@@ -224,9 +228,9 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         long noBackoffTime;
         try (ClientSession session = client.startSession();
              FailPoint ignored = FailPoint.enable(failPointDocument, getPrimary())) {
-            long startNanos = System.nanoTime();
+            StartTime startTime = StartTime.now();
             session.withTransaction(() -> collection.insertOne(session, Document.parse("{}")));
-            noBackoffTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+            noBackoffTime = startTime.elapsed().toMillis();
         } finally {
             // Clear the test jitter supplier to avoid affecting other tests
             ExponentialBackoff.clearTestJitterSupplier();
@@ -241,9 +245,9 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         long withBackoffTime;
         try (ClientSession session = client.startSession();
              FailPoint ignored = FailPoint.enable(failPointDocument, getPrimary())) {
-            long startNanos = System.nanoTime();
+            StartTime startTime = StartTime.now();
             session.withTransaction(() -> collection.insertOne(session, Document.parse("{}")));
-            withBackoffTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+            withBackoffTime = startTime.elapsed().toMillis();
         } finally {
             ExponentialBackoff.clearTestJitterSupplier();
         }
@@ -278,7 +282,18 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         }
     }
 
-    private boolean canRunTests() {
+    private static boolean canRunTests() {
         return isSharded() || isDiscoverableReplicaSet();
+    }
+
+    private static void doWithSystemNanoTimeHandle(final Consumer<SystemNanoTimeHandle> action) {
+        long startNanos = SystemNanoTime.get();
+        try (MockedStatic<SystemNanoTime> mockedStaticSystem = Mockito.mockStatic(SystemNanoTime.class)) {
+            action.accept(change -> mockedStaticSystem.when(SystemNanoTime::get).thenReturn(startNanos + change.toNanos()));
+        }
+    }
+
+    private interface SystemNanoTimeHandle {
+        void setRelativeToStart(Duration change);
     }
 }
