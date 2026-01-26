@@ -20,11 +20,13 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.connection.ServerVersion;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 
 import java.util.Map;
 import java.util.Objects;
 
+import static com.mongodb.ClusterFixture.getMongoCryptVersion;
 import static com.mongodb.ClusterFixture.getServerParameters;
 import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
 import static com.mongodb.JsonTestServerVersionChecker.getMaxServerVersionForField;
@@ -98,6 +100,16 @@ final class RunOnRequirementsMatcher {
                         if (!hasEncryptionTestsEnabled()) {
                             requirementMet = false;
                             break requirementLoop;
+                        }
+                        if (curRequirement.getValue().isDocument()) {
+                            BsonDocument csfleRequirements = curRequirement.getValue().asDocument();
+                            ServerVersion mongoCryptSharedLibVersion = getMongoCryptVersion();
+                            ServerVersion minLibmongocryptVersion = getMinServerVersion(csfleRequirements
+                                    .getString("minLibmongocryptVersion", new BsonString("0.0.0")).getValue());
+                            if (mongoCryptSharedLibVersion.compareTo(minLibmongocryptVersion) < 0) {
+                                requirementMet = false;
+                                break requirementLoop;
+                            }
                         }
                         break;
                     default:

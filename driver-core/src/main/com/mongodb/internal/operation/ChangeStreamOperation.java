@@ -22,11 +22,13 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -64,7 +66,7 @@ public class ChangeStreamOperation<T> implements ReadOperationCursor<T> {
     private BsonTimestamp startAtOperationTime;
     private boolean showExpandedEvents;
 
-
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
     public ChangeStreamOperation(final MongoNamespace namespace, final FullDocument fullDocument,
             final FullDocumentBeforeChange fullDocumentBeforeChange, final List<BsonDocument> pipeline, final Decoder<T> decoder) {
         this(namespace, fullDocument, fullDocumentBeforeChange, pipeline, decoder, ChangeStreamLevel.COLLECTION);
@@ -198,28 +200,34 @@ public class ChangeStreamOperation<T> implements ReadOperationCursor<T> {
     }
 
     @Override
-    public BatchCursor<T> execute(final ReadBinding binding) {
-        TimeoutContext timeoutContext = binding.getOperationContext().getTimeoutContext();
-        CommandBatchCursor<RawBsonDocument> cursor = ((CommandBatchCursor<RawBsonDocument>) getAggregateOperation(timeoutContext).execute(binding))
-                .disableTimeoutResetWhenClosing();
+    public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
+        Cursor<RawBsonDocument> cursor = ((CommandBatchCursor<RawBsonDocument>) getAggregateOperation(operationContext.getTimeoutContext())
+                .execute(binding, operationContext))
+                .getWrapped();
 
-            return new ChangeStreamBatchCursor<>(ChangeStreamOperation.this, cursor, binding,
-                    setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),
-                            cursor.getMaxWireVersion(), cursor.isFirstBatchEmpty()), cursor.getMaxWireVersion());
+        return new ChangeStreamBatchCursor<>(ChangeStreamOperation.this,
+                    cursor,
+                    binding,
+                    operationContext,
+                    setChangeStreamOptions(
+                            cursor.getPostBatchResumeToken(),
+                            cursor.getOperationTime(),
+                            cursor.getMaxWireVersion(),
+                            cursor.isFirstBatchEmpty()),
+                    cursor.getMaxWireVersion());
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        TimeoutContext timeoutContext = binding.getOperationContext().getTimeoutContext();
-        getAggregateOperation(timeoutContext).executeAsync(binding, (result, t) -> {
+    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+        getAggregateOperation(operationContext.getTimeoutContext()).executeAsync(binding, operationContext, (result, t) -> {
             if (t != null) {
                 callback.onResult(null, t);
             } else {
-                AsyncCommandBatchCursor<RawBsonDocument> cursor = ((AsyncCommandBatchCursor<RawBsonDocument>) assertNotNull(result))
-                        .disableTimeoutResetWhenClosing();
+                AsyncCursor<RawBsonDocument> cursor = ((AsyncCommandBatchCursor<RawBsonDocument>) assertNotNull(result))
+                        .getWrapped();
 
                 callback.onResult(new AsyncChangeStreamBatchCursor<>(ChangeStreamOperation.this, cursor, binding,
-                        setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),
+                        operationContext, setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),
                                 cursor.getMaxWireVersion(), cursor.isFirstBatchEmpty()), cursor.getMaxWireVersion()), null);
             }
         });

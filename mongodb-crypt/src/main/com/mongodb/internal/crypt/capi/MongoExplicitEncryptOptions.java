@@ -20,8 +20,6 @@ package com.mongodb.internal.crypt.capi;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 
-import java.util.Objects;
-
 /**
  * Options for explicit encryption.
  */
@@ -32,6 +30,7 @@ public final class MongoExplicitEncryptOptions {
     private final Long contentionFactor;
     private final String queryType;
     private final BsonDocument rangeOptions;
+    private final BsonDocument textOptions;
 
     /**
      * The builder for the options
@@ -43,6 +42,7 @@ public final class MongoExplicitEncryptOptions {
         private Long contentionFactor;
         private String queryType;
         private BsonDocument rangeOptions;
+        private BsonDocument textOptions;
 
         private Builder() {
         }
@@ -87,7 +87,7 @@ public final class MongoExplicitEncryptOptions {
         /**
          * The contention factor.
          *
-         * <p>It is an error to set contentionFactor when algorithm is not "Indexed".
+         * <p>Only applies when algorithm is "Indexed", "Range", or "TextPreview".</p>
          * @param contentionFactor the contention factor
          * @return this
          * @since 1.5
@@ -100,7 +100,7 @@ public final class MongoExplicitEncryptOptions {
         /**
          * The QueryType.
          *
-         * <p>It is an error to set queryType when algorithm is not "Indexed".</p>
+         * <p>Only applies when algorithm is "Indexed", "Range", or "TextPreview".</p>
          *
          * @param queryType the query type
          * @return this
@@ -114,7 +114,7 @@ public final class MongoExplicitEncryptOptions {
         /**
          * The Range Options.
          *
-         * <p>It is an error to set rangeOptions when the algorithm is not "range".</p>
+         * <p>Only applies when algorithm is "Range".</p>
          *
          * @param rangeOptions the range options
          * @return this
@@ -122,6 +122,20 @@ public final class MongoExplicitEncryptOptions {
          */
         public Builder rangeOptions(final BsonDocument rangeOptions) {
             this.rangeOptions = rangeOptions;
+            return this;
+        }
+
+        /**
+         * The Text Options.
+         *
+         * <p>Only applies when algorithm is "TextPreview".</p>
+         *
+         * @param textOptions the text options
+         * @return this
+         * @since 5.6
+         */
+        public Builder textOptions(final BsonDocument textOptions) {
+            this.textOptions = textOptions;
             return this;
         }
 
@@ -195,6 +209,15 @@ public final class MongoExplicitEncryptOptions {
         return rangeOptions;
     }
 
+    /**
+     * Gets the text options
+     * @return the text options
+     * @since 5.6
+     */
+    public BsonDocument getTextOptions() {
+        return textOptions;
+    }
+
     private MongoExplicitEncryptOptions(final Builder builder) {
         this.keyId = builder.keyId;
         this.keyAltName = builder.keyAltName;
@@ -202,15 +225,7 @@ public final class MongoExplicitEncryptOptions {
         this.contentionFactor = builder.contentionFactor;
         this.queryType = builder.queryType;
         this.rangeOptions = builder.rangeOptions;
-        if (!(Objects.equals(algorithm, "Indexed") || Objects.equals(algorithm, "Range"))) {
-            if (contentionFactor != null) {
-                throw new IllegalStateException(
-                        "Invalid configuration, contentionFactor can only be set if algorithm is 'Indexed' or 'Range'");
-            } else if (queryType != null) {
-                throw new IllegalStateException(
-                        "Invalid configuration, queryType can only be set if algorithm is 'Indexed' or 'Range'");
-            }
-        }
+        this.textOptions = builder.textOptions;
     }
 
     @Override
@@ -222,6 +237,7 @@ public final class MongoExplicitEncryptOptions {
                 + ", contentionFactor=" + contentionFactor
                 + ", queryType='" + queryType + '\''
                 + ", rangeOptions=" + rangeOptions
+                + ", textOptions=" + textOptions
                 + '}';
     }
 }

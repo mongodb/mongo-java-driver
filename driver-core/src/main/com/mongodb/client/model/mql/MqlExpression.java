@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.client.model.mql.MqlValues.of;
 import static com.mongodb.client.model.mql.MqlValues.ofNull;
 import static com.mongodb.client.model.mql.MqlValues.ofStringArray;
@@ -951,6 +952,12 @@ final class MqlExpression<T extends MqlValue>
                 .append("date", this.toBsonValue(cr))
                 .append("format", toBsonValue(cr, format))
                 .append("timezone", toBsonValue(cr, timezone))));
+    }
+
+    public MqlString asString(final MqlString timezone) {
+        // Given that server versions < 7.1 return a wrong format, not implementing this method helps prevent users
+        // from encountering the bug, described in DRIVERS-2620, by avoiding the method that requires a format as a parameter.
+        throw fail();
     }
 
     @Override

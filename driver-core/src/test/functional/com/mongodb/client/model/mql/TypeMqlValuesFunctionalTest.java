@@ -29,6 +29,7 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.client.model.mql.MqlValues.of;
 import static com.mongodb.client.model.mql.MqlValues.ofIntegerArray;
 import static com.mongodb.client.model.mql.MqlValues.ofMap;
@@ -186,14 +187,25 @@ class TypeMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
 
         // this is equivalent to $dateToString
         assertExpression("1970-01-01T00:00:00.123Z", of(Instant.ofEpochMilli(123)).asString());
+    }
+
+    @Test
+    public void asStringTestNestedPre82() {
+        assumeTrue(serverVersionLessThan(8, 2));
 
         // Arrays and documents are not (yet) supported:
         assertThrows(MongoCommandException.class, () ->
-                assertExpression("[]", ofIntegerArray(1, 2).asString()));
+                assertExpression("[1,2]", ofIntegerArray(1, 2).asString()));
         assertThrows(MongoCommandException.class, () ->
-                assertExpression("[1, 2]", ofIntegerArray(1, 2).asString()));
-        assertThrows(MongoCommandException.class, () ->
-                assertExpression("{a: 1}", of(Document.parse("{a: 1}")).asString()));
+                assertExpression("{\"a\":1}", of(Document.parse("{a: 1}")).asString()));
+    }
+
+    @Test
+    public void asStringTestNested() {
+        assumeTrue(serverVersionAtLeast(8, 2));
+
+        assertExpression("[1,2]", ofIntegerArray(1, 2).asString());
+        assertExpression("{\"a\":1}", of(Document.parse("{a: 1}")).asString());
     }
 
     @Test

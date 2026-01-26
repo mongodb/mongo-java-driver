@@ -12,7 +12,7 @@ NEXT_VERSION=$3
 
 SCRIPT_DIR=$(dirname ${BASH_SOURCE[0]})
 
-echo "Bump version in build.gradle to ${RELEASE_VERSION}"
+echo "Bump version in gradle.properties to ${RELEASE_VERSION}"
 ${SCRIPT_DIR}/bump-version.sh "${RELEASE_VERSION_WITHOUT_SUFFIX}-SNAPSHOT" "${RELEASE_VERSION}"
 
 echo "Create release tag for ${RELEASE_VERSION}"

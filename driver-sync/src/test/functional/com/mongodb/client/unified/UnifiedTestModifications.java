@@ -16,6 +16,7 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.ClusterFixture;
 import org.opentest4j.AssertionFailedError;
 
 import java.util.ArrayList;
@@ -24,7 +25,6 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static com.mongodb.ClusterFixture.isDataLakeTest;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
@@ -41,12 +41,6 @@ import static java.lang.String.format;
 public final class UnifiedTestModifications {
     public static void applyCustomizations(final TestDef def) {
 
-        // atlas-data-lake
-
-        def.skipAccordingToSpec("Data lake tests should only run on data lake")
-                .when(() -> !isDataLakeTest())
-                .directory("atlas-data-lake-testing");
-
         // change-streams
         def.skipNoncompliantReactive("error required from change stream initialization") // TODO-JAVA-5711 reason?
                 .test("change-streams", "change-streams", "Test with document comment - pre 4.4");
@@ -59,14 +53,31 @@ public final class UnifiedTestModifications {
         def.modify(SLEEP_AFTER_CURSOR_OPEN)
                 .directory("change-streams");
         def.modify(WAIT_FOR_BATCH_CURSOR_CREATION)
-                .test("change-streams", "change-streams-errors", "Change Stream should error when an invalid aggregation stage is passed in")
-                .test("change-streams", "change-streams-errors", "The watch helper must not throw a custom exception when executed against a single server topology, but instead depend on a server error");
+                .test("change-streams", "change-streams-errors",
+                        "Change Stream should error when an invalid aggregation stage is passed in")
+                .test("change-streams", "change-streams-errors",
+                        "The watch helper must not throw a custom exception when executed against a single server topology, but instead depend on a server error");
+
+        // Client side encryption (QE)
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5675 Support QE with Client.bulkWrite")
+                .file("client-side-encryption/tests/unified", "client bulkWrite with queryable encryption");
 
         // client-side-operation-timeout (CSOT)
-
+        /*
+          As to the background connection pooling section:
+         timeoutMS set at the MongoClient level MUST be used as the timeout for all commands sent as part of the handshake.
+         We first configure a failpoint to block all hello/isMaster commands for 50 ms, then set timeoutMS = 10 ms on MongoClient
+         and wait for awaitMinPoolSize = 1000. So that means the background thread tries to populate connections under a 10ms timeout
+         cap while the failpoint blocks for 50ms, so all attempts effectively fail.
+         */
+        def.skipAccordingToSpec("background connection pooling section")
+                .test("client-side-operations-timeout", "timeoutMS behaves correctly during command execution",
+                        "short-circuit is not enabled with only 1 RTT measurement")
+                .test("client-side-operations-timeout", "timeoutMS behaves correctly during command execution",
+                        "command is not sent if RTT is greater than timeoutMS");
         def.skipNoncompliantReactive("No good way to fulfill tryNext() requirement with a Publisher<T>")
                 .test("client-side-operations-timeout", "timeoutMS behaves correctly for tailable awaitData cursors",
-                      "apply remaining timeoutMS if less than maxAwaitTimeMS");
+                        "apply remaining timeoutMS if less than maxAwaitTimeMS");
 
         def.skipNoncompliantReactive("No good way to fulfill tryNext() requirement with a Publisher<T>")
                 .test("client-side-operations-timeout", "timeoutMS behaves correctly for tailable awaitData cursors",
@@ -74,10 +85,9 @@ public final class UnifiedTestModifications {
 
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5839")
                 .test("client-side-operations-timeout", "timeoutMS behaves correctly for GridFS download operations",
-                      "timeoutMS applied to entire download, not individual parts");
+                        "timeoutMS applied to entire download, not individual parts");
 
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5491")
-                .testContains("client-side-operations-timeout", "dropIndex")
                 .when(() -> !serverVersionLessThan(8, 3))
                 .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
                         "socketTimeoutMS is ignored if timeoutMS is set - dropIndex on collection")
@@ -168,12 +178,32 @@ public final class UnifiedTestModifications {
                 .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
                         "timeoutMS can be set to 0 on a MongoClient - dropIndexes on collection");
 
+        // OpenTelemetry
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5991")
+                .file("open-telemetry/tests", "operation find")
+                .file("open-telemetry/tests", "operation find_one_and_update")
+                .file("open-telemetry/tests", "operation update")
+                .file("open-telemetry/tests", "operation bulk_write")
+                .file("open-telemetry/tests", "operation drop collection")
+                .file("open-telemetry/tests", "transaction spans")
+                .file("open-telemetry/tests", "convenient transactions")
+                .file("open-telemetry/tests", "operation atlas_search")
+                .file("open-telemetry/tests", "operation insert")
+                .file("open-telemetry/tests", "operation map_reduce")
+                .file("open-telemetry/tests", "operation find without db.query.text")
+                .file("open-telemetry/tests", "operation find_retries");
+
+        def.skipAccordingToSpec("Micrometer tests expect the network transport to be tcp")
+                .when(ClusterFixture::isUnixSocket)
+                .directory("open-telemetry/tests");
+
         // TODO-JAVA-5712
 
         // collection-management
 
         def.skipNoncompliant("") // TODO-JAVA-5711 reason?
-                .test("collection-management", "modifyCollection-pre_and_post_images", "modifyCollection to changeStreamPreAndPostImages enabled");
+                .test("collection-management", "modifyCollection-pre_and_post_images",
+                        "modifyCollection to changeStreamPreAndPostImages enabled");
 
         // command-logging-and-monitoring
 
@@ -186,52 +216,66 @@ public final class UnifiedTestModifications {
 
         def.skipNoncompliant("The driver doesn't reduce the batchSize for the getMore")
                 .test("command-logging-and-monitoring/tests/monitoring", "find",
-                      "A successful find event with a getmore and the server kills the cursor (<= 4.4)");
-
-        def.skipNoncompliant("The driver doesn't reduce the batchSize for the getMore")
-                .test("atlas-data-lake-testing", "getMore", "A successful find event with getMore");
+                        "A successful find event with a getmore and the server kills the cursor (<= 4.4)");
 
         // connection-monitoring-and-pooling
         def.skipNoncompliant("According to the test, we should clear the pool then close the connection. Our implementation"
                         + "immediately closes the failed connection, then clears the pool.")
-                .test("connection-monitoring-and-pooling/tests/logging", "connection-logging", "Connection checkout fails due to error establishing connection");
+                .test("connection-monitoring-and-pooling/tests/logging", "connection-logging",
+                        "Connection checkout fails due to error establishing connection");
 
 
         def.skipNoncompliant("Driver does not support waitQueueSize or waitQueueMultiple options")
-                .test("connection-monitoring-and-pooling/tests/logging", "connection-pool-options", "waitQueueSize should be included in connection pool created message when specified")
-                .test("connection-monitoring-and-pooling/tests/logging", "connection-pool-options", "waitQueueMultiple should be included in connection pool created message when specified");
+                .test("connection-monitoring-and-pooling/tests/logging", "connection-pool-options",
+                        "waitQueueSize should be included in connection pool created message when specified")
+                .test("connection-monitoring-and-pooling/tests/logging", "connection-pool-options",
+                        "waitQueueMultiple should be included in connection pool created message when specified");
 
         // load-balancers
 
         def.modify(SLEEP_AFTER_CURSOR_OPEN)
-                .test("load-balancers", "state change errors are correctly handled", "only connections for a specific serviceId are closed when pools are cleared")
+                .test("load-balancers", "state change errors are correctly handled",
+                        "only connections for a specific serviceId are closed when pools are cleared")
                 .test("load-balancers", "state change errors are correctly handled", "stale errors are ignored")
-                .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters", "pinned connections are returned when the cursor is drained")
-                .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters", "pinned connections are returned to the pool when the cursor is closed")
-                .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters", "no connection is pinned if all documents are returned in the initial batch")
-                .test("load-balancers", "transactions are correctly pinned to connections for load-balanced clusters", "a connection can be shared by a transaction and a cursor")
-                .test("load-balancers", "wait queue timeout errors include details about checked out connections", "wait queue timeout errors include cursor statistics");
+                .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters",
+                        "pinned connections are returned when the cursor is drained")
+                .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters",
+                        "pinned connections are returned to the pool when the cursor is closed")
+                .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters",
+                        "no connection is pinned if all documents are returned in the initial batch")
+                .test("load-balancers", "transactions are correctly pinned to connections for load-balanced clusters",
+                        "a connection can be shared by a transaction and a cursor")
+                .test("load-balancers", "wait queue timeout errors include details about checked out connections",
+                        "wait queue timeout errors include cursor statistics");
         def.modify(SLEEP_AFTER_CURSOR_CLOSE)
-                .test("load-balancers", "state change errors are correctly handled", "only connections for a specific serviceId are closed when pools are cleared")
-                .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters", "pinned connections are returned to the pool when the cursor is closed")
-                .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters", "pinned connections are returned after a network error during a killCursors request")
-                .test("load-balancers", "transactions are correctly pinned to connections for load-balanced clusters", "a connection can be shared by a transaction and a cursor");
+                .test("load-balancers", "state change errors are correctly handled",
+                        "only connections for a specific serviceId are closed when pools are cleared")
+                .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters",
+                        "pinned connections are returned to the pool when the cursor is closed")
+                .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters",
+                        "pinned connections are returned after a network error during a killCursors request")
+                .test("load-balancers", "transactions are correctly pinned to connections for load-balanced clusters",
+                        "a connection can be shared by a transaction and a cursor");
         def.skipNoncompliantReactive("Reactive streams driver can't implement "
                         + "these tests because the underlying cursor is closed "
                         + "on error, which  breaks assumption in the tests that "
                         + "closing the cursor is something that happens under "
                         + "user control")
-                .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters", "pinned connections are not returned after an network error during getMore")
-                .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters", "pinned connections are not returned to the pool after a non-network error on getMore");
+                .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters",
+                        "pinned connections are not returned after an network error during getMore")
+                .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters",
+                        "pinned connections are not returned to the pool after a non-network error on getMore");
         def.skipNoncompliantReactive("Reactive streams driver can't implement "
                         + "this test because there is no way to tell that a "
                         + "change stream cursor that has not yet received any "
                         + "results has even initiated the change stream")
-                .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters", "change streams pin to a connection");
+                .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters",
+                        "change streams pin to a connection");
 
         // crud
 
-        def.skipDeprecated("Deprecated count method removed, cf https://github.com/mongodb/mongo-java-driver/pull/1328#discussion_r1513641410")
+        def.skipDeprecated(
+                        "Deprecated count method removed, cf https://github.com/mongodb/mongo-java-driver/pull/1328#discussion_r1513641410")
                 .test("crud", "count-empty", "Deprecated count with empty collection")
                 .test("crud", "count-collation", "Deprecated count with collation")
                 .test("crud", "count", "Deprecated count without a filter")
@@ -249,8 +293,12 @@ public final class UnifiedTestModifications {
                 .when(() -> def.isReactive() && UnifiedTest.Language.KOTLIN.equals(def.getLanguage()))
                 .file("crud", "findOne");
 
+        def.skipNoncompliant("Scala Mono pulls the data and sets the batch size https://jira.mongodb.org/browse/JAVA-5838")
+                .when(() -> UnifiedTest.Language.SCALA.equals(def.getLanguage()))
+                .file("crud", "findOne");
+
         def.skipNoncompliant("Updates and Replace bulk operations are split in the java driver")
-                        .file("crud", "bulkWrite-comment");
+                .file("crud", "bulkWrite-comment");
 
         // gridfs
 
@@ -299,12 +347,18 @@ public final class UnifiedTestModifications {
 
         def.modify(WAIT_FOR_BATCH_CURSOR_CREATION, IGNORE_EXTRA_EVENTS)
                 //.testContains("retryable-reads", "ChangeStream")
-                .test("retryable-reads", "retryable reads handshake failures", "client.createChangeStream succeeds after retryable handshake network error")
-                .test("retryable-reads", "retryable reads handshake failures", "client.createChangeStream succeeds after retryable handshake server error (ShutdownInProgress)")
-                .test("retryable-reads", "retryable reads handshake failures", "database.createChangeStream succeeds after retryable handshake network error")
-                .test("retryable-reads", "retryable reads handshake failures", "database.createChangeStream succeeds after retryable handshake server error (ShutdownInProgress)")
-                .test("retryable-reads", "retryable reads handshake failures", "collection.createChangeStream succeeds after retryable handshake network error")
-                .test("retryable-reads", "retryable reads handshake failures", "collection.createChangeStream succeeds after retryable handshake server error (ShutdownInProgress)");
+                .test("retryable-reads", "retryable reads handshake failures",
+                        "client.createChangeStream succeeds after retryable handshake network error")
+                .test("retryable-reads", "retryable reads handshake failures",
+                        "client.createChangeStream succeeds after retryable handshake server error (ShutdownInProgress)")
+                .test("retryable-reads", "retryable reads handshake failures",
+                        "database.createChangeStream succeeds after retryable handshake network error")
+                .test("retryable-reads", "retryable reads handshake failures",
+                        "database.createChangeStream succeeds after retryable handshake server error (ShutdownInProgress)")
+                .test("retryable-reads", "retryable reads handshake failures",
+                        "collection.createChangeStream succeeds after retryable handshake network error")
+                .test("retryable-reads", "retryable reads handshake failures",
+                        "collection.createChangeStream succeeds after retryable handshake server error (ShutdownInProgress)");
         def.modify(WAIT_FOR_BATCH_CURSOR_CREATION, IGNORE_EXTRA_EVENTS)
                 .file("retryable-reads", "changeStreams-client.watch-serverErrors")
                 .file("retryable-reads", "changeStreams-client.watch")
@@ -330,20 +384,26 @@ public final class UnifiedTestModifications {
                 .test("retryable-writes", "updateOne-errorLabels", "UpdateOne succeeds after WriteConcernError ShutdownInProgress")
                 .test("retryable-writes", "deleteOne-errorLabels", "DeleteOne succeeds after WriteConcernError ShutdownInProgress")
                 .test("retryable-writes", "insertOne-errorLabels", "InsertOne succeeds after WriteConcernError InterruptedAtShutdown")
-                .test("retryable-writes", "insertOne-errorLabels", "InsertOne succeeds after WriteConcernError InterruptedDueToReplStateChange")
+                .test("retryable-writes", "insertOne-errorLabels",
+                        "InsertOne succeeds after WriteConcernError InterruptedDueToReplStateChange")
                 .test("retryable-writes", "insertOne-errorLabels", "InsertOne succeeds after WriteConcernError PrimarySteppedDown")
                 .test("retryable-writes", "insertOne-errorLabels", "InsertOne succeeds after WriteConcernError ShutdownInProgress")
                 .test("retryable-writes", "insertMany-errorLabels", "InsertMany succeeds after WriteConcernError ShutdownInProgress")
                 .test("retryable-writes", "replaceOne-errorLabels", "ReplaceOne succeeds after WriteConcernError ShutdownInProgress")
-                .test("retryable-writes", "findOneAndUpdate-errorLabels", "FindOneAndUpdate succeeds after WriteConcernError ShutdownInProgress")
-                .test("retryable-writes", "findOneAndDelete-errorLabels", "FindOneAndDelete succeeds after WriteConcernError ShutdownInProgress")
-                .test("retryable-writes", "findOneAndReplace-errorLabels", "FindOneAndReplace succeeds after WriteConcernError ShutdownInProgress")
+                .test("retryable-writes", "findOneAndUpdate-errorLabels",
+                        "FindOneAndUpdate succeeds after WriteConcernError ShutdownInProgress")
+                .test("retryable-writes", "findOneAndDelete-errorLabels",
+                        "FindOneAndDelete succeeds after WriteConcernError ShutdownInProgress")
+                .test("retryable-writes", "findOneAndReplace-errorLabels",
+                        "FindOneAndReplace succeeds after WriteConcernError ShutdownInProgress")
                 //.testContains("retryable-writes", "succeeds after retryable writeConcernError")
                 .test("retryable-writes", "retryable-writes insertOne serverErrors", "InsertOne succeeds after retryable writeConcernError")
-                .test("retryable-writes", "retryable-writes bulkWrite serverErrors", "BulkWrite succeeds after retryable writeConcernError in first batch");
+                .test("retryable-writes", "retryable-writes bulkWrite serverErrors",
+                        "BulkWrite succeeds after retryable writeConcernError in first batch");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5341")
                 .when(() -> isDiscoverableReplicaSet() && serverVersionLessThan(4, 4))
-                .test("retryable-writes", "retryable-writes insertOne serverErrors", "RetryableWriteError label is added based on writeConcernError in pre-4.4 mongod response");
+                .test("retryable-writes", "retryable-writes insertOne serverErrors",
+                        "RetryableWriteError label is added based on writeConcernError in pre-4.4 mongod response");
 
         // server-discovery-and-monitoring (SDAM)
 
@@ -360,6 +420,24 @@ public final class UnifiedTestModifications {
                 .file("server-discovery-and-monitoring", "pool-clear-on-error-checkout");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5664")
                 .file("server-discovery-and-monitoring", "pool-cleared-on-min-pool-size-population-error");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5949")
+                .file("server-discovery-and-monitoring", "backpressure-network-error-fail");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5949")
+                .file("server-discovery-and-monitoring", "backpressure-network-timeout-error");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5949")
+                .file("server-discovery-and-monitoring", "backpressure-server-description-unchanged-on-min-pool-size-population-error");
+
+        // session tests
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5968")
+                .test("sessions", "snapshot-sessions", "Find operation with snapshot and snapshot time");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5968")
+                .test("sessions", "snapshot-sessions", "Distinct operation with snapshot and snapshot time");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5968")
+                .test("sessions", "snapshot-sessions", "Aggregate operation with snapshot and snapshot time");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5968")
+                .test("sessions", "snapshot-sessions", "countDocuments operation with snapshot and snapshot time");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5968")
+                .test("sessions", "snapshot-sessions", "Mixed operation with snapshot and snapshotTime");
 
         // transactions
 
@@ -383,7 +461,8 @@ public final class UnifiedTestModifications {
                         + "than handle that in code, we skip the test on older "
                         + "server versions.")
                 .when(() -> serverVersionLessThan(4, 4))
-                .test("unified-test-format/tests/valid-pass", "poc-retryable-writes", "InsertOne fails after multiple retryable writeConcernErrors");
+                .test("unified-test-format/tests/valid-pass", "poc-retryable-writes",
+                        "InsertOne fails after multiple retryable writeConcernErrors");
 
         def.skipNoncompliant("The driver doesn't reduce the batchSize for the getMore")
                 .test("unified-test-format/tests/valid-pass", "poc-command-monitoring",
@@ -405,10 +484,11 @@ public final class UnifiedTestModifications {
                 .file("unified-test-format/tests/valid-fail", "operator-matchAsDocument");
     }
 
-    private UnifiedTestModifications() {}
+    private UnifiedTestModifications() {
+    }
 
     public static TestDef testDef(final String dir, final String file, final String test, final boolean reactive,
-            final UnifiedTest.Language language) {
+                                  final UnifiedTest.Language language) {
         return new TestDef(dir, file, test, reactive, language);
     }
 
@@ -423,7 +503,8 @@ public final class UnifiedTestModifications {
         private final List<Modifier> modifiers = new ArrayList<>();
         private Function<Throwable, Boolean> matchesThrowable;
 
-        private TestDef(final String dir, final String file, final String test, final boolean reactive, final UnifiedTest.Language language) {
+        private TestDef(final String dir, final String file, final String test, final boolean reactive,
+                        final UnifiedTest.Language language) {
             this.dir = assertNotNull(dir);
             this.file = assertNotNull(file);
             this.test = assertNotNull(test);
@@ -572,6 +653,7 @@ public final class UnifiedTestModifications {
 
         /**
          * Applies to all tests in directory.
+         *
          * @param dir the directory name
          * @return this
          */
@@ -582,7 +664,8 @@ public final class UnifiedTestModifications {
 
         /**
          * Applies to all tests in file under the directory.
-         * @param dir the directory name
+         *
+         * @param dir  the directory name
          * @param file the test file's "description" field
          * @return this
          */
@@ -594,7 +677,8 @@ public final class UnifiedTestModifications {
 
         /**
          * Applies to the test where dir, file, and test match.
-         * @param dir the directory name
+         *
+         * @param dir  the directory name
          * @param file the test file's "description" field
          * @param test the individual test's "description" field
          * @return this
@@ -608,7 +692,8 @@ public final class UnifiedTestModifications {
 
         /**
          * Utility method: emit replacement to standard out.
-         * @param dir the directory name
+         *
+         * @param dir      the directory name
          * @param fragment the substring to check in the test "description" field
          * @return this
          */
@@ -628,7 +713,8 @@ public final class UnifiedTestModifications {
 
         /**
          * Utility method: emit file info to standard out
-         * @param dir the directory name
+         *
+         * @param dir  the directory name
          * @param test the individual test's "description" field
          * @return this
          */
@@ -647,6 +733,7 @@ public final class UnifiedTestModifications {
          * For example, if tests should only be skipped (or modified) on
          * sharded clusters, check for sharded in the condition.
          * Must be the first method called in the chain.
+         *
          * @param precondition the condition; methods are no-op when false.
          * @return this
          */

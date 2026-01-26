@@ -102,6 +102,27 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         version << [[3, 2, 0]] * 10 + [[3, 4, 0]] * 10
     }
 
+    def 'should find with correct command with effective batch size'() {
+        when:
+        def operation = new FindOperation<BsonDocument>(namespace, new BsonDocumentCodec())
+                .batchSize(batchSize)
+                .limit(limit)
+
+        def expectedCommand = new BsonDocument('find', new BsonString(namespace.getCollectionName()))
+                .append('batchSize', new BsonInt32(commandBatchSize))
+                .append('limit', new BsonInt32(commandLimit))
+
+        then:
+        testOperation(operation, [7, 0, 0], expectedCommand, async, commandResult)
+
+        where:
+        async << [true, true, false, false]
+        batchSize << [10, Integer.MAX_VALUE] * 2
+        limit << [10, Integer.MAX_VALUE] * 2
+        commandLimit << [10, Integer.MAX_VALUE] * 2
+        commandBatchSize << [11, Integer.MAX_VALUE] * 2
+    }
+
     def 'should use the readPreference to set secondaryOk for commands'() {
         when:
         def operation = new FindOperation<Document>(namespace, new DocumentCodec())

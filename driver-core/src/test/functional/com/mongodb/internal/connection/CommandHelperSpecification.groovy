@@ -43,6 +43,7 @@ class CommandHelperSpecification extends Specification {
     InternalConnection connection
 
     def setup() {
+        InternalStreamConnection.setRecordEverything(true)
         connection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE,
                 new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                 getCredentialWithCache(), CLIENT_METADATA, [], LoggerSettings.builder().build(), null, getServerApi())
@@ -65,9 +66,9 @@ class CommandHelperSpecification extends Specification {
         latch1.await()
 
         then:
+        !receivedException
         !receivedDocument.isEmpty()
         receivedDocument.containsKey('ok')
-        !receivedException
 
         when:
         def latch2 = new CountDownLatch(1)

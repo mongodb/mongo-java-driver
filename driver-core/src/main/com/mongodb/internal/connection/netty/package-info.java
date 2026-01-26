@@ -15,9 +15,12 @@
  */
 
 /**
- * Contains <a href="https://netty.io/">Netty</a>-specific program elements.
+ * This package contains internal functionality that may change at any time.
  */
+
+@Internal
 @NonNullApi
 package com.mongodb.internal.connection.netty;
 
+import com.mongodb.annotations.Internal;
 import com.mongodb.lang.NonNullApi;
