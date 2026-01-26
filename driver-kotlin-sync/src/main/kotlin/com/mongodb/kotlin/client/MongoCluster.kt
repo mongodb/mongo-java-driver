@@ -78,8 +78,8 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
      * - `0` means infinite timeout.
      * - `> 0` The time limit to use for the full execution of an operation.
      *
-     *  <p><strong>NOTE:</strong> This timeout does not limit socket writes, therefore there is a possibility that the
-     *  operation might not be timed out when expected.
+     * <p><strong>NOTE:</strong> This timeout does not limit socket writes, therefore there is a possibility that the
+     * operation might not be timed out when expected.
      *
      * @return the optional timeout duration
      */
@@ -134,8 +134,8 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
      * - `0` means an infinite timeout
      * - `> 0` The time limit to use for the full execution of an operation.
      *
-     *  <p><strong>NOTE:</strong> This timeout does not limit socket writes, therefore there is a possibility that the
-     *  operation might not be timed out when expected.
+     * <p><strong>NOTE:</strong> This timeout does not limit socket writes, therefore there is a possibility that the
+     * operation might not be timed out when expected.
      *
      * @param timeout the timeout, which must be greater than or equal to 0
      * @param timeUnit the time unit, defaults to Milliseconds
