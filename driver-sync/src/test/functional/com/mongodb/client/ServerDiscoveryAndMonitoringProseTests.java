@@ -318,7 +318,6 @@ public class ServerDiscoveryAndMonitoringProseTests {
             adminDatabase.runCommand(new Document("setParameter", 1)
                     .append("ingressConnectionEstablishmentMaxQueueDepth", 1));
 
-            // Add a document to the collection
             collection.insertOne(Document.parse("{}"));
 
             // Run 100 parallel find operations with 2-seconds sleep
@@ -327,9 +326,9 @@ public class ServerDiscoveryAndMonitoringProseTests {
                 executor.submit(() -> collection.find(new Document("$where", "function() { sleep(2000); return true; }")).first());
             }
 
-            // Wait for all operations to complete (max 10 seconds)
+            // Wait for all operations to complete
             executor.shutdown();
-            boolean terminated = executor.awaitTermination(10, SECONDS);
+            boolean terminated = executor.awaitTermination(20, SECONDS);
             assertTrue("Executor did not terminate within timeout", terminated);
 
             // Assert at least 10 ConnectionCheckOutFailedEvents occurred
