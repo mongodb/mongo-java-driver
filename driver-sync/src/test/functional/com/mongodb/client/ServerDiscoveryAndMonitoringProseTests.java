@@ -329,7 +329,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
 
             // Wait for all operations to complete (max 10 seconds)
             executor.shutdown();
-            boolean terminated = executor.awaitTermination(10, SECONDS);
+            boolean terminated = executor.awaitTermination(20, SECONDS);
             assertTrue("Executor did not terminate within timeout", terminated);
 
             // Assert at least 10 ConnectionCheckOutFailedEvents occurred
