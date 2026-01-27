@@ -32,6 +32,8 @@ import com.mongodb.lang.Nullable;
 
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLProtocolException;
+import java.security.cert.CertPathBuilderException;
 import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertificateException;
 import java.util.Optional;
@@ -180,9 +182,11 @@ interface SdamServerDescriptionManager {
             while (cause != null) {
                 // Check for various certificate validation and TLS configuration errors
                 if (cause instanceof CertificateException
+                        || cause instanceof CertPathBuilderException
                         || cause instanceof CertPathValidatorException
-                        || cause instanceof SSLPeerUnverifiedException) {
-                    return true;  // Certificate/peer validation failure
+                        || cause instanceof SSLPeerUnverifiedException
+                        || cause instanceof SSLProtocolException) {
+                    return true;  // Certificate/peer validation failure or protocol error
                 }
 
                 // Check for SunCertPathBuilderException by class name to avoid compile-time dependency on internal classes
