@@ -29,10 +29,11 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.Fixture;
 import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.TestListener;
+import com.mongodb.client.internal.InternalMongoClients;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -40,7 +41,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.Document;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -141,19 +141,14 @@ public class OidcAuthenticationProseTests {
     }
 
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return MongoClients.create(settings);
+        return InternalMongoClients.create(settings,
+                InternalMongoClientSettings.builder().recordEverything(true).build());
     }
 
     @BeforeEach
     public void beforeEach() {
         assumeTrue(oidcTestsEnabled());
-        InternalStreamConnection.setRecordEverything(true);
         this.appName = this.getClass().getSimpleName() + "-" + new Random().nextInt(Integer.MAX_VALUE);
-    }
-
-    @AfterEach
-    public void afterEach() {
-        InternalStreamConnection.setRecordEverything(false);
     }
 
     @Test

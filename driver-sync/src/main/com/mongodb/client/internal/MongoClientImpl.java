@@ -36,15 +36,10 @@ import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
 import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.connection.ClusterDescription;
-import com.mongodb.connection.SocketSettings;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.connection.ClientMetadata;
 import com.mongodb.internal.connection.Cluster;
-import com.mongodb.internal.connection.DefaultClusterFactory;
-import com.mongodb.internal.connection.InternalConnectionPoolSettings;
-import com.mongodb.internal.connection.StreamFactory;
-import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.ServerSessionPool;
@@ -61,7 +56,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.internal.Crypts.createCrypt;
-import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
 import static java.lang.String.format;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
 
@@ -308,27 +302,6 @@ public final class MongoClientImpl implements MongoClient {
             final List<? extends ClientNamespacedWriteModel> clientWriteModels,
             final ClientBulkWriteOptions options) throws ClientBulkWriteException {
         return delegate.bulkWrite(clientSession, clientWriteModels, options);
-    }
-
-    private static Cluster createCluster(final MongoClientSettings settings,
-                                         @Nullable final MongoDriverInformation mongoDriverInformation,
-                                         final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory) {
-        notNull("settings", settings);
-        return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
-                settings.getConnectionPoolSettings(), InternalConnectionPoolSettings.builder().build(),
-                TimeoutSettings.create(settings), streamFactory,
-                TimeoutSettings.createHeartbeatSettings(settings), heartbeatStreamFactory,
-                settings.getCredential(), settings.getLoggerSettings(), getCommandListener(settings.getCommandListeners()),
-                settings.getApplicationName(), mongoDriverInformation, settings.getCompressorList(), settings.getServerApi(),
-                settings.getDnsClient());
-    }
-
-    private static StreamFactory getStreamFactory(
-            final StreamFactoryFactory streamFactoryFactory,
-            final MongoClientSettings settings,
-            final boolean isHeartbeat) {
-        SocketSettings socketSettings = isHeartbeat ? settings.getHeartbeatSocketSettings() : settings.getSocketSettings();
-        return streamFactoryFactory.create(socketSettings, settings.getSslSettings());
     }
 
     public Cluster getCluster() {

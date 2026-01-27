@@ -19,6 +19,8 @@ package com.mongodb.client;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
+import com.mongodb.client.internal.InternalMongoClients;
+import com.mongodb.internal.InternalMongoClientSettings;
 
 
 /**
@@ -29,6 +31,12 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings mongoClientSettings) {
         return MongoClients.create(mongoClientSettings);
+    }
+
+    @Override
+    protected MongoClient createMongoClientWithInternalSettings(final MongoClientSettings mongoClientSettings,
+                                                                final InternalMongoClientSettings internalSettings) {
+        return InternalMongoClients.create(mongoClientSettings, internalSettings);
     }
 
     @Override

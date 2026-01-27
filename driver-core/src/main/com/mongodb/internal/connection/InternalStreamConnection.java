@@ -105,19 +105,6 @@ import static java.util.Arrays.asList;
 @NotThreadSafe
 public class InternalStreamConnection implements InternalConnection {
 
-    private static volatile boolean recordEverything = false;
-
-    /**
-     * Will attempt to record events to the command listener that are usually
-     * suppressed.
-     *
-     * @param recordEverything whether to attempt to record everything
-     */
-    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
-    public static void setRecordEverything(final boolean recordEverything) {
-        InternalStreamConnection.recordEverything = recordEverything;
-    }
-
     private static final Set<String> SECURITY_SENSITIVE_COMMANDS = new HashSet<>(asList(
             "authenticate",
             "saslStart",
@@ -160,6 +147,7 @@ public class InternalStreamConnection implements InternalConnection {
     private volatile boolean hasMoreToCome;
     private volatile int responseTo;
     private int generation = NOT_INITIALIZED_GENERATION;
+    private final boolean recordEverything;
 
     // Package-level access provided to avoid duplicating the list in test code
     static Set<String> getSecuritySensitiveCommands() {
@@ -177,7 +165,7 @@ public class InternalStreamConnection implements InternalConnection {
             final StreamFactory streamFactory, final List<MongoCompressor> compressorList,
             final CommandListener commandListener, final InternalConnectionInitializer connectionInitializer) {
         this(clusterConnectionMode, null, false, serverId, connectionGenerationSupplier, streamFactory, compressorList,
-                LoggerSettings.builder().build(), commandListener, connectionInitializer);
+                LoggerSettings.builder().build(), commandListener, connectionInitializer, false);
     }
 
     public InternalStreamConnection(final ClusterConnectionMode clusterConnectionMode,
@@ -188,6 +176,19 @@ public class InternalStreamConnection implements InternalConnection {
             final StreamFactory streamFactory, final List<MongoCompressor> compressorList,
             final LoggerSettings loggerSettings,
             final CommandListener commandListener, final InternalConnectionInitializer connectionInitializer) {
+        this(clusterConnectionMode, authenticator, isMonitoringConnection, serverId, connectionGenerationSupplier,
+                streamFactory, compressorList, loggerSettings, commandListener, connectionInitializer, false);
+    }
+
+    public InternalStreamConnection(final ClusterConnectionMode clusterConnectionMode,
+            @Nullable final Authenticator authenticator,
+            final boolean isMonitoringConnection,
+            final ServerId serverId,
+            final ConnectionGenerationSupplier connectionGenerationSupplier,
+            final StreamFactory streamFactory, final List<MongoCompressor> compressorList,
+            final LoggerSettings loggerSettings,
+            final CommandListener commandListener, final InternalConnectionInitializer connectionInitializer,
+            final boolean recordEverything) {
         this.clusterConnectionMode = clusterConnectionMode;
         this.authenticator = authenticator;
         this.isMonitoringConnection = isMonitoringConnection;
@@ -199,6 +200,7 @@ public class InternalStreamConnection implements InternalConnection {
         this.loggerSettings = loggerSettings;
         this.commandListener = commandListener;
         this.connectionInitializer = notNull("connectionInitializer", connectionInitializer);
+        this.recordEverything = recordEverything;
         description = new ConnectionDescription(serverId);
         initialServerDescription = ServerDescription.builder()
                 .address(serverId.getAddress())

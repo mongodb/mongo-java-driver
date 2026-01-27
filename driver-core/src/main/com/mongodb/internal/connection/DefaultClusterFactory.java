@@ -31,6 +31,7 @@ import com.mongodb.event.ClusterListener;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.diagnostics.logging.Logger;
@@ -60,7 +61,7 @@ public final class DefaultClusterFactory {
 
     public Cluster createCluster(final ClusterSettings originalClusterSettings, final ServerSettings originalServerSettings,
                                  final ConnectionPoolSettings connectionPoolSettings,
-                                 final InternalConnectionPoolSettings internalConnectionPoolSettings,
+                                 final InternalMongoClientSettings internalSettings,
                                  final TimeoutSettings clusterTimeoutSettings,
                                  final StreamFactory streamFactory,
                                  final TimeoutSettings heartbeatTimeoutSettings,
@@ -113,12 +114,12 @@ public final class DefaultClusterFactory {
 
         if (clusterSettings.getMode() == ClusterConnectionMode.LOAD_BALANCED) {
             ClusterableServerFactory serverFactory = new LoadBalancedClusterableServerFactory(serverSettings,
-                    connectionPoolSettings, internalConnectionPoolSettings, streamFactory, credential, loggerSettings, commandListener,
+                    connectionPoolSettings, internalSettings, streamFactory, credential, loggerSettings, commandListener,
                     compressorList, serverApi, clusterOperationContextFactory);
             return new LoadBalancedCluster(clusterId, clusterSettings, serverFactory, clientMetadata, dnsSrvRecordMonitorFactory);
         } else {
             ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(serverSettings,
-                    connectionPoolSettings, internalConnectionPoolSettings,
+                    connectionPoolSettings, internalSettings,
                     clusterOperationContextFactory, streamFactory, heartBeatOperationContextFactory, heartbeatStreamFactory, credential,
                     loggerSettings, commandListener, compressorList,
                     serverApi, FaasEnvironment.getFaasEnvironment() != FaasEnvironment.UNKNOWN);

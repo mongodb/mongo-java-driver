@@ -18,6 +18,8 @@ package com.mongodb.client;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
+import com.mongodb.client.internal.InternalMongoClients;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.lang.Nullable;
 
 public class ClientMetadataProseTest extends AbstractClientMetadataProseTest {
@@ -25,6 +27,7 @@ public class ClientMetadataProseTest extends AbstractClientMetadataProseTest {
     @Override
     protected MongoClient createMongoClient(@Nullable final MongoDriverInformation mongoDriverInformation,
                                             final MongoClientSettings mongoClientSettings) {
-        return MongoClients.create(mongoClientSettings, mongoDriverInformation);
+        return InternalMongoClients.create(mongoClientSettings, mongoDriverInformation,
+                InternalMongoClientSettings.builder().recordEverything(true).build());
     }
 }
