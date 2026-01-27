@@ -319,7 +319,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
                     .append("ingressConnectionEstablishmentMaxQueueDepth", 1));
 
             // Add a document to the collection
-            collection.insertOne(Document.parse("{}"));// change
+            collection.insertOne(Document.parse("{}"));
 
             // Run 100 parallel find operations with 2-seconds sleep
             ExecutorService executor = Executors.newFixedThreadPool(100);
@@ -329,7 +329,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
 
             // Wait for all operations to complete (max 10 seconds)
             executor.shutdown();
-            boolean terminated = executor.awaitTermination(20, SECONDS);
+            boolean terminated = executor.awaitTermination(10, SECONDS);
             assertTrue("Executor did not terminate within timeout", terminated);
 
             // Assert at least 10 ConnectionCheckOutFailedEvents occurred
