@@ -251,7 +251,7 @@ public final class NettyByteBuf implements ByteBuf {
 
     @Override
     public ByteBuf asReadOnly() {
-        return new NettyByteBuf(proxied.asReadOnly().retain(), false);
+        return this;
     }
 
     @Override
