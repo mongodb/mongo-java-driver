@@ -47,6 +47,9 @@ class ReplyHeaderSpecification extends Specification {
         replyHeader.requestId == 45
         replyHeader.responseTo == 23
 
+        cleanup:
+        byteBuf?.release()
+
         where:
         responseFlags << [0, 1, 2, 3]
         cursorNotFound << [false, true, false, true]
@@ -79,6 +82,9 @@ class ReplyHeaderSpecification extends Specification {
         replyHeader.requestId == 45
         replyHeader.responseTo == 23
 
+        cleanup:
+        byteBuf?.release()
+
         where:
         responseFlags << [0, 1, 2, 3]
         cursorNotFound << [false, true, false, true]
@@ -105,6 +111,9 @@ class ReplyHeaderSpecification extends Specification {
         then:
         def ex = thrown(MongoInternalException)
         ex.getMessage() == 'Unexpected reply message opCode 2'
+
+        cleanup:
+        byteBuf?.release()
     }
 
     def 'should throw MongoInternalException on message size < 36'() {
@@ -127,6 +136,9 @@ class ReplyHeaderSpecification extends Specification {
         then:
         def ex = thrown(MongoInternalException)
         ex.getMessage() == 'The reply message length 35 is less than the minimum message length 36'
+
+        cleanup:
+        byteBuf?.release()
     }
 
     def 'should throw MongoInternalException on message size > max message size'() {
@@ -149,6 +161,9 @@ class ReplyHeaderSpecification extends Specification {
         then:
         def ex = thrown(MongoInternalException)
         ex.getMessage() == 'The reply message length 400 is greater than the maximum message length 399'
+
+        cleanup:
+        byteBuf?.release()
     }
 
     def 'should throw MongoInternalException on num documents < 0'() {
@@ -171,6 +186,9 @@ class ReplyHeaderSpecification extends Specification {
         then:
         def ex = thrown(MongoInternalException)
         ex.getMessage() == 'The reply message number of returned documents, -1, is expected to be 1'
+
+        cleanup:
+        byteBuf?.release()
     }
 
     def 'should throw MongoInternalException on num documents < 0 with compressed header'() {
@@ -197,5 +215,8 @@ class ReplyHeaderSpecification extends Specification {
         then:
         def ex = thrown(MongoInternalException)
         ex.getMessage() == 'The reply message number of returned documents, -1, is expected to be 1'
+
+        cleanup:
+        byteBuf?.release()
     }
 }

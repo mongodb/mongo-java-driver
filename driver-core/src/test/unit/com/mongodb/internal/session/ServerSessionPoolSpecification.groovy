@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.session
 
+import com.mongodb.MongoException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterDescription
 import com.mongodb.connection.ClusterSettings
@@ -225,5 +226,35 @@ class ServerSessionPoolSpecification extends Specification {
                 { it instanceof NoOpFieldNameValidator }, primaryPreferred(),
                 { it instanceof BsonDocumentCodec }, _) >> new BsonDocument()
         1 * connection.release()
+    }
+
+    def 'should handle MongoException during endSessions without leaking resources'() {
+        given:
+        def connection = Mock(Connection)
+        def server = Stub(Server) {
+            getConnection(_) >> connection
+        }
+        def cluster = Mock(Cluster) {
+            getCurrentDescription() >> connectedDescription
+        }
+        def pool = new ServerSessionPool(cluster, TIMEOUT_SETTINGS, getServerApi())
+        def sessions = []
+        5.times { sessions.add(pool.get()) }
+
+        for (def cur : sessions) {
+            pool.release(cur)
+        }
+
+        when:
+        pool.close()
+
+        then:
+        1 * cluster.selectServer(_, _)  >> new ServerTuple(server, connectedDescription.serverDescriptions[0])
+        1 * connection.command('admin',
+                new BsonDocument('endSessions', new BsonArray(sessions*.getIdentifier())),
+                { it instanceof NoOpFieldNameValidator }, primaryPreferred(),
+                { it instanceof BsonDocumentCodec }, _) >> { throw new MongoException("Simulated error") }
+        1 * connection.release()
+        // The test passes if no exception is propagated and connection is still released
     }
 }

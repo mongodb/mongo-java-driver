@@ -921,10 +921,12 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
             new BsonDocumentCodec().encode(new BsonBinaryWriter(buffer), document, EncoderContext.builder().build());
             this.bytes = new byte[buffer.size()];
             int curPos = 0;
-            for (ByteBuf cur : buffer.getByteBuffers()) {
+            List<ByteBuf> byteBuffers = buffer.getByteBuffers();
+            for (ByteBuf cur : byteBuffers) {
                 System.arraycopy(cur.array(), cur.position(), bytes, curPos, cur.limit());
                 curPos += cur.position();
             }
+            byteBuffers.forEach(ByteBuf::release);
         }
 
         private Object readResolve() {

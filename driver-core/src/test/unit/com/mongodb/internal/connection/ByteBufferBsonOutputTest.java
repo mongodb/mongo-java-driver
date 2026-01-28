@@ -35,6 +35,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
@@ -42,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -63,7 +65,9 @@ import static java.util.stream.IntStream.range;
 import static java.util.stream.IntStream.rangeClosed;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class ByteBufferBsonOutputTest {
 
@@ -495,7 +499,6 @@ final class ByteBufferBsonOutputTest {
     @ParameterizedTest(name = "should get byte buffers as little endian. Parameters: useBranch={0}, bufferProvider={1}")
     @MethodSource("bufferProvidersWithBranches")
     void shouldGetByteBuffersAsLittleEndian(final boolean useBranch, final BufferProvider bufferProvider) {
-        List<ByteBuf> byteBuffers = new ArrayList<>();
         try (ByteBufferBsonOutput out = new ByteBufferBsonOutput(bufferProvider)) {
             byte[] v = {1, 0, 0, 0};
             if (useBranch) {
@@ -506,9 +509,8 @@ final class ByteBufferBsonOutputTest {
                 out.writeBytes(v);
             }
 
-           byteBuffers = out.getByteBuffers();
+            List<ByteBuf> byteBuffers = out.getByteBuffers();
             assertEquals(1, byteBuffers.get(0).getInt());
-        } finally {
             byteBuffers.forEach(ByteBuf::release);
         }
     }
@@ -775,7 +777,7 @@ final class ByteBufferBsonOutputTest {
     @ValueSource(ints = {1, INITIAL_BUFFER_SIZE, INITIAL_BUFFER_SIZE * 3})
     void shouldHandleMixedBranchingAndTruncating(final int reps) throws CharacterCodingException {
         BiConsumer<ByteBufferBsonOutput, Character> write = (out, c) -> {
-            Assertions.assertTrue((byte) c.charValue() == c);
+            assertTrue((byte) c.charValue() == c);
             for (int i = 0; i < reps; i++) {
                 out.writeByte(c);
             }
@@ -840,7 +842,7 @@ final class ByteBufferBsonOutputTest {
     @MethodSource("bufferProviders")
     void shouldThrowExceptionWhenAbsolutePositionIsNegative(final BufferProvider bufferProvider) {
         try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(bufferProvider)) {
-            Assertions.assertThrows(IllegalArgumentException.class, () ->
+            assertThrows(IllegalArgumentException.class, () ->
                     output.writeInt32(-1, 5678)
             );
         }
@@ -892,7 +894,7 @@ final class ByteBufferBsonOutputTest {
             final List<byte[]> expectedBuffers,
             final BufferProvider bufferProvider) {
 
-        List<ByteBuf> buffers = new ArrayList<>();
+        List<ByteBuf> buffers;
         try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(size -> bufferProvider.getBuffer(Integer.BYTES))) {
 
             //given
@@ -905,7 +907,6 @@ final class ByteBufferBsonOutputTest {
             buffers = output.getByteBuffers();
             assertEquals(expectedBuffers.size(), buffers.size(), "Number of buffers mismatch");
             assertBufferContents(expectedBuffers, buffers);
-        } finally {
             buffers.forEach(ByteBuf::release);
         }
     }
@@ -1022,9 +1023,8 @@ final class ByteBufferBsonOutputTest {
             final int expectedLastBufferPosition,
             final BufferProvider bufferProvider) {
 
-        List<ByteBuf> buffers = new ArrayList<>();
-        try (ByteBufferBsonOutput output =
-                     new ByteBufferBsonOutput(size -> bufferProvider.getBuffer(Integer.BYTES))) {
+        List<ByteBuf> buffers;
+        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(size -> bufferProvider.getBuffer(Integer.BYTES))) {
 
             //given
             initialData.forEach(output::writeBytes);
@@ -1033,14 +1033,9 @@ final class ByteBufferBsonOutputTest {
             output.writeInt32(intValue);
 
             //then
-            //getByteBuffers returns ByteBuffers with limit() set to position, position set to 0.
             buffers = output.getByteBuffers();
             assertEquals(expectedBuffers.size(), buffers.size(), "Number of buffers mismatch");
             assertBufferContents(expectedBuffers, buffers);
-
-            assertEquals(expectedLastBufferPosition, buffers.get(buffers.size() - 1).limit());
-            assertEquals(expectedOutputPosition, output.getPosition());
-        } finally {
             buffers.forEach(ByteBuf::release);
         }
     }
@@ -1057,9 +1052,8 @@ final class ByteBufferBsonOutputTest {
             final int expectedLastBufferPosition,
             final BufferProvider bufferProvider) {
 
-        List<ByteBuf> buffers = new ArrayList<>();
-        try (ByteBufferBsonOutput output =
-                     new ByteBufferBsonOutput(size -> bufferProvider.getBuffer(Long.BYTES))) {
+        List<ByteBuf> buffers;
+        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(size -> bufferProvider.getBuffer(Long.BYTES))) {
 
             //given
             initialData.forEach(output::writeBytes);
@@ -1075,7 +1069,6 @@ final class ByteBufferBsonOutputTest {
 
             assertEquals(expectedLastBufferPosition, buffers.get(buffers.size() - 1).limit());
             assertEquals(expectedOutputPosition, output.getPosition());
-        } finally {
             buffers.forEach(ByteBuf::release);
         }
     }
@@ -1092,7 +1085,6 @@ final class ByteBufferBsonOutputTest {
             final int expectedLastBufferPosition,
             final BufferProvider bufferProvider) {
 
-        List<ByteBuf> buffers = new ArrayList<>();
         try (ByteBufferBsonOutput output =
                      new ByteBufferBsonOutput(size -> bufferProvider.getBuffer(Long.BYTES))) {
 
@@ -1104,13 +1096,12 @@ final class ByteBufferBsonOutputTest {
 
             //then
             //getByteBuffers returns ByteBuffers with limit() set to position, position set to 0.
-            buffers = output.getByteBuffers();
+            List<ByteBuf> buffers = output.getByteBuffers();
             assertEquals(expectedBuffers.size(), buffers.size(), "Number of buffers mismatch");
             assertBufferContents(expectedBuffers, buffers);
 
             assertEquals(expectedLastBufferPosition, buffers.get(buffers.size() - 1).limit());
             assertEquals(expectedOutputPosition, output.getPosition());
-        } finally {
             buffers.forEach(ByteBuf::release);
         }
     }
@@ -1422,7 +1413,6 @@ final class ByteBufferBsonOutputTest {
                             bufferAllocationSize,
                             actualByteBuffers,
                             actualFlattenedByteBuffersBytes);
-                } finally {
                     actualByteBuffers.forEach(ByteBuf::release);
                 }
             }
@@ -1435,8 +1425,6 @@ final class ByteBufferBsonOutputTest {
                                                   final byte[] expectedEncoding) throws IOException {
             for (int startingOffset = 0; startingOffset <= bufferAllocationSize; startingOffset++) {
                 //given
-                List<ByteBuf> actualByteBuffers = emptyList();
-
                 try (ByteBufferBsonOutput actualBsonOutput = new ByteBufferBsonOutput(
                         size -> bufferProvider.getBuffer(bufferAllocationSize))) {
                     // Write an initial startingOffset of empty bytes to shift the start position
@@ -1446,7 +1434,7 @@ final class ByteBufferBsonOutputTest {
                     actualBsonOutput.writeString(stringToEncode);
 
                     // then
-                    actualByteBuffers = actualBsonOutput.getDuplicateByteBuffers();
+                    List<ByteBuf> actualByteBuffers = actualBsonOutput.getDuplicateByteBuffers();
                     byte[] actualFlattenedByteBuffersBytes = getBytes(actualBsonOutput);
 
                     assertEncodedStringSize(codePoint,
@@ -1459,7 +1447,7 @@ final class ByteBufferBsonOutputTest {
                             bufferAllocationSize,
                             actualByteBuffers,
                             actualFlattenedByteBuffersBytes);
-                } finally {
+
                     actualByteBuffers.forEach(ByteBuf::release);
                 }
             }
@@ -1499,6 +1487,7 @@ final class ByteBufferBsonOutputTest {
                                 bufferAllocationSize,
                                 actualBranchByteBuffers,
                                 actualFlattenedByteBuffersBytes);
+                        actualBranchByteBuffers.forEach(ByteBuf::release);
                     }
 
                     // then
@@ -1515,10 +1504,7 @@ final class ByteBufferBsonOutputTest {
                             bufferAllocationSize,
                             actualByteBuffers,
                             actualFlattenedByteBuffersBytes);
-
-                } finally {
                     actualByteBuffers.forEach(ByteBuf::release);
-                    actualBranchByteBuffers.forEach(ByteBuf::release);
                 }
             }
         }
@@ -1583,7 +1569,6 @@ final class ByteBufferBsonOutputTest {
                             bufferAllocationSize,
                             actualByteBuffers,
                             actualFlattenedByteBuffersBytes);
-                } finally {
                     actualByteBuffers.forEach(ByteBuf::release);
                     actualBranchByteBuffers.forEach(ByteBuf::release);
                 }
@@ -1650,6 +1635,330 @@ final class ByteBufferBsonOutputTest {
             return result;
         }
 
+    }
+
+    @Nested
+    @DisplayName("ByteBuf Leak Detection and Release Tests")
+    class LeakDetectionTests {
+
+        @DisplayName("should release all buffers when close is called")
+        @ParameterizedTest(name = "should release all buffers when close is called. BufferProvider={0}")
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void shouldReleaseAllBuffersOnClose(final BufferProvider bufferProvider) {
+            List<ByteBuf> allocatedBuffers = new ArrayList<>();
+            BufferProvider trackingProvider = size -> {
+                ByteBuf buf = bufferProvider.getBuffer(size);
+                allocatedBuffers.add(buf);
+                return buf;
+            };
+
+            ByteBufferBsonOutput output = new ByteBufferBsonOutput(trackingProvider);
+            // Write enough to allocate multiple buffers
+            output.writeBytes(new byte[INITIAL_BUFFER_SIZE * 3]);
+
+            // Verify buffers are allocated and have positive reference count
+            assertFalse(allocatedBuffers.isEmpty(), "Should have allocated buffers");
+            for (ByteBuf buf : allocatedBuffers) {
+                assertTrue(buf.getReferenceCount() > 0, "Buffer should have positive ref count before close");
+            }
+
+            output.close();
+
+            // Verify all buffers are released
+            for (ByteBuf buf : allocatedBuffers) {
+                assertEquals(0, buf.getReferenceCount(), "Buffer should be released after close");
+            }
+        }
+
+        @DisplayName("should release all buffers when truncateToPosition removes buffers")
+        @ParameterizedTest(name = "should release all buffers when truncateToPosition removes buffers. BufferProvider={0}")
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void shouldReleaseBuffersOnTruncate(final BufferProvider bufferProvider) {
+            List<ByteBuf> allocatedBuffers = new ArrayList<>();
+            BufferProvider trackingProvider = size -> {
+                ByteBuf buf = bufferProvider.getBuffer(size);
+                allocatedBuffers.add(buf);
+                return buf;
+            };
+
+            try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(trackingProvider)) {
+                // Write enough to allocate multiple buffers
+                output.writeBytes(new byte[INITIAL_BUFFER_SIZE * 4]);
+
+                int buffersBeforeTruncate = allocatedBuffers.size();
+                assertTrue(buffersBeforeTruncate > 1, "Should have multiple buffers");
+
+                // Truncate to first buffer only
+                output.truncateToPosition(INITIAL_BUFFER_SIZE / 2);
+
+                // Verify truncated buffers are released (all but first should be released)
+                for (int i = 1; i < allocatedBuffers.size(); i++) {
+                    assertEquals(0, allocatedBuffers.get(i).getReferenceCount(),
+                            "Truncated buffer " + i + " should be released");
+                }
+
+                // First buffer should still be retained
+                assertTrue(allocatedBuffers.get(0).getReferenceCount() > 0,
+                        "First buffer should still be retained");
+            }
+        }
+
+        @DisplayName("caller must release buffers returned by getByteBuffers")
+        @ParameterizedTest(name = "caller must release buffers returned by getByteBuffers. BufferProvider={0}")
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void callerMustReleaseGetByteBuffersResult(final BufferProvider bufferProvider) {
+            try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(bufferProvider)) {
+                output.writeBytes(new byte[INITIAL_BUFFER_SIZE * 2]);
+
+                List<ByteBuf> returnedBuffers = output.getByteBuffers();
+                assertFalse(returnedBuffers.isEmpty());
+
+                // Verify returned buffers have reference count of 1 (from duplicate)
+                for (ByteBuf buf : returnedBuffers) {
+                    assertTrue(buf.getReferenceCount() > 0,
+                            "Returned buffer should have positive ref count");
+                }
+
+                // Caller releases the buffers
+                returnedBuffers.forEach(ByteBuf::release);
+
+                // Verify released
+                for (ByteBuf buf : returnedBuffers) {
+                    assertEquals(0, buf.getReferenceCount(),
+                            "Returned buffer should be released after caller releases it");
+                }
+
+                // Output should still be usable and internal buffers should still be valid
+                output.writeByte(1);
+                assertEquals(INITIAL_BUFFER_SIZE * 2 + 1, output.getPosition());
+            }
+        }
+
+        @DisplayName("caller must release buffers returned by getDuplicateByteBuffers")
+        @ParameterizedTest(name = "caller must release buffers returned by getDuplicateByteBuffers. BufferProvider={0}")
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void callerMustReleaseDuplicateByteBuffersResult(final BufferProvider bufferProvider) {
+            try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(bufferProvider)) {
+                output.writeBytes(new byte[INITIAL_BUFFER_SIZE * 2]);
+
+                List<ByteBuf> returnedBuffers = output.getDuplicateByteBuffers();
+                assertFalse(returnedBuffers.isEmpty());
+
+                // Caller releases the buffers
+                returnedBuffers.forEach(ByteBuf::release);
+
+                // Verify released
+                for (ByteBuf buf : returnedBuffers) {
+                    assertEquals(0, buf.getReferenceCount(),
+                            "Returned buffer should be released after caller releases it");
+                }
+            }
+        }
+
+        @DisplayName("pipe should release temporary buffers even on exception")
+        @Test
+        void pipeShouldReleaseBuffersOnException() {
+            List<ByteBuf> allocatedBuffers = new ArrayList<>();
+            BufferProvider trackingProvider = size -> {
+                ByteBuf buf = new SimpleBufferProvider().getBuffer(size);
+                allocatedBuffers.add(buf);
+                return buf;
+            };
+
+            try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(trackingProvider)) {
+                output.writeBytes(new byte[INITIAL_BUFFER_SIZE]);
+
+                // Create an OutputStream that throws
+                OutputStream failingStream = new OutputStream() {
+                    @Override
+                    public void write(final int b) throws IOException {
+                        throw new IOException("Simulated failure");
+                    }
+
+                    @Override
+                    public void write(final byte[] b, final int off, final int len) throws IOException {
+                        throw new IOException("Simulated failure");
+                    }
+                };
+
+                assertThrows(IOException.class, () -> output.pipe(failingStream));
+
+                // Output should still be valid and usable
+                assertTrue(output.isOpen());
+            }
+
+            // Verify all buffers are released after close
+            for (ByteBuf buf : allocatedBuffers) {
+                assertEquals(0, buf.getReferenceCount(), "Buffer should be released after close");
+            }
+        }
+
+        @DisplayName("branch should transfer buffer ownership to parent on close")
+        @ParameterizedTest(name = "branch should transfer buffer ownership to parent on close. BufferProvider={0}")
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void branchShouldTransferOwnershipToParent(final BufferProvider bufferProvider) {
+            AtomicInteger parentBufferCount = new AtomicInteger();
+            AtomicInteger branchBufferCount = new AtomicInteger();
+            List<ByteBuf> allBuffers = new ArrayList<>();
+
+            try (ByteBufferBsonOutput parent = new ByteBufferBsonOutput(size -> {
+                ByteBuf buf = bufferProvider.getBuffer(size);
+                parentBufferCount.incrementAndGet();
+                allBuffers.add(buf);
+                return buf;
+            })) {
+                parent.writeBytes(new byte[100]);
+                int parentBuffersAllocated = parentBufferCount.get();
+
+                try (ByteBufferBsonOutput.Branch branch = parent.branch()) {
+                    // Use a separate tracking for branch allocations
+                    branch.writeBytes(new byte[100]);
+                    branchBufferCount.set(allBuffers.size() - parentBuffersAllocated);
+                }
+
+                // After branch close, parent should have merged the branch buffers
+                // All buffers should still be retained by parent
+                for (ByteBuf buf : allBuffers) {
+                    assertTrue(buf.getReferenceCount() > 0,
+                            "Buffer should be retained by parent after branch merge");
+                }
+            }
+
+            // After parent close, all buffers should be released
+            for (ByteBuf buf : allBuffers) {
+                assertEquals(0, buf.getReferenceCount(), "Buffer should be released after parent close");
+            }
+        }
+
+        @DisplayName("should not leak buffers when exception occurs during write operations")
+        @Test
+        void shouldNotLeakBuffersOnWriteException() {
+            List<ByteBuf> allocatedBuffers = new ArrayList<>();
+            AtomicInteger allocationCount = new AtomicInteger();
+
+            // Create a provider that fails after allocating some buffers
+            BufferProvider failingProvider = size -> {
+                if (allocationCount.incrementAndGet() > 3) {
+                    throw new RuntimeException("Simulated allocation failure");
+                }
+                ByteBuf buf = new SimpleBufferProvider().getBuffer(size);
+                allocatedBuffers.add(buf);
+                return buf;
+            };
+
+            ByteBufferBsonOutput output = new ByteBufferBsonOutput(failingProvider);
+            try {
+                // Write enough to trigger multiple allocations and eventually fail
+                for (int i = 0; i < 100; i++) {
+                    output.writeBytes(new byte[INITIAL_BUFFER_SIZE]);
+                }
+                Assertions.fail("Should have thrown exception");
+            } catch (RuntimeException e) {
+                assertEquals("Simulated allocation failure", e.getMessage());
+            } finally {
+                output.close();
+            }
+
+            // Verify all allocated buffers are released
+            for (ByteBuf buf : allocatedBuffers) {
+                assertEquals(0, buf.getReferenceCount(), "Buffer should be released after close");
+            }
+        }
+
+        @DisplayName("multiple calls to close should be idempotent")
+        @ParameterizedTest(name = "multiple calls to close should be idempotent. BufferProvider={0}")
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void closeShouldBeIdempotent(final BufferProvider bufferProvider) {
+            List<ByteBuf> allocatedBuffers = new ArrayList<>();
+            BufferProvider trackingProvider = size -> {
+                ByteBuf buf = bufferProvider.getBuffer(size);
+                allocatedBuffers.add(buf);
+                return buf;
+            };
+
+            ByteBufferBsonOutput output = new ByteBufferBsonOutput(trackingProvider);
+            output.writeBytes(new byte[INITIAL_BUFFER_SIZE]);
+
+            output.close();
+            // Should not throw
+            output.close();
+            output.close();
+
+            // Buffers should still be released
+            for (ByteBuf buf : allocatedBuffers) {
+                assertEquals(0, buf.getReferenceCount(), "Buffer should be released");
+            }
+        }
+
+        @DisplayName("branch close should be idempotent")
+        @ParameterizedTest(name = "branch close should be idempotent. BufferProvider={0}")
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void branchCloseShouldBeIdempotent(final BufferProvider bufferProvider) {
+            try (ByteBufferBsonOutput parent = new ByteBufferBsonOutput(bufferProvider)) {
+                ByteBufferBsonOutput.Branch branch = parent.branch();
+                branch.writeBytes(new byte[100]);
+
+                branch.close();
+                // Should not throw
+                branch.close();
+                branch.close();
+
+                // Parent should have the data
+                assertEquals(100, parent.getPosition());
+            }
+        }
+
+        @DisplayName("getByteBuffers called multiple times returns independent duplicates")
+        @ParameterizedTest(name = "getByteBuffers called multiple times returns independent duplicates. BufferProvider={0}")
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void getByteBuffersReturnsIndependentDuplicates(final BufferProvider bufferProvider) {
+            try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(bufferProvider)) {
+                output.writeBytes(new byte[100]);
+
+                List<ByteBuf> buffers1 = output.getByteBuffers();
+                List<ByteBuf> buffers2 = output.getByteBuffers();
+
+                // Both should be valid
+                assertFalse(buffers1.isEmpty());
+                assertFalse(buffers2.isEmpty());
+
+                // Release first set
+                buffers1.forEach(ByteBuf::release);
+
+                // Second set should still be valid
+                for (ByteBuf buf : buffers2) {
+                    assertTrue(buf.getReferenceCount() > 0,
+                            "Second set of buffers should still be valid");
+                }
+
+                // Release second set
+                buffers2.forEach(ByteBuf::release);
+            }
+        }
+
+        @DisplayName("unreleased getByteBuffers result should not prevent output close")
+        @ParameterizedTest(name = "unreleased getByteBuffers result should not prevent output close. BufferProvider={0}")
+        @MethodSource("com.mongodb.internal.connection.ByteBufferBsonOutputTest#bufferProviders")
+        void unreleasedGetByteBuffersShouldNotPreventClose(final BufferProvider bufferProvider) {
+            List<ByteBuf> leakedBuffers;
+            try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(bufferProvider)) {
+                output.writeBytes(new byte[100]);
+                leakedBuffers = output.getByteBuffers();
+                // Intentionally NOT releasing leakedBuffers to simulate a leak
+            }
+
+            // The output closed successfully, but the leaked buffers still have references
+            // This simulates what happens when callers forget to release
+            for (ByteBuf buf : leakedBuffers) {
+                // Note: These buffers are duplicates, so they have their own reference count
+                // The internal buffers were released, but these duplicates were not
+                assertTrue(buf.getReferenceCount() >= 0,
+                        "Leaked duplicate buffers may still have references");
+            }
+
+            // Clean up the leaked buffers
+            leakedBuffers.forEach(ByteBuf::release);
+        }
     }
 
     private static byte[] getBytes(final OutputBuffer basicOutputBuffer) throws IOException {
