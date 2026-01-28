@@ -186,13 +186,7 @@ interface SdamServerDescriptionManager {
                         || cause instanceof CertPathValidatorException
                         || cause instanceof SSLPeerUnverifiedException
                         || cause instanceof SSLProtocolException) {
-                    return true;  // Certificate/peer validation failure or protocol error
-                }
-
-                // Check for SunCertPathBuilderException by class name to avoid compile-time dependency on internal classes
-                String className = cause.getClass().getName();
-                if (className.equals("sun.security.provider.certpath.SunCertPathBuilderException")) {
-                    return true;  // Certificate path building failure
+                    return true;
                 }
 
                 // SSLHandshakeException can be either network or config, so we check the message
