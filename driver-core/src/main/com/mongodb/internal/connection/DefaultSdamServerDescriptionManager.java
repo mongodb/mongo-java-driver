@@ -143,8 +143,7 @@ final class DefaultSdamServerDescriptionManager implements SdamServerDescription
             // clear the pool as they're not related to overload.
             // TLS configuration errors (certificate validation, protocol mismatches) should also clear the pool
             // as they indicate configuration issues, not server overload.
-            if (beforeHandshake && (sdamIssue.relatedToNetworkNotTimeout() || sdamIssue.relatedToNetworkTimeout())
-                    && !sdamIssue.relatedToAuth() && !sdamIssue.relatedToTlsConfigurationError()) {
+            if (beforeHandshake && !sdamIssue.relatedToAuth() && !sdamIssue.relatedToTlsConfigurationError()) {
                 // Don't update server description to Unknown
                 // Don't invalidate the connection pool
                 // Apply error labels for backpressure
