@@ -251,7 +251,7 @@ public final class NettyByteBuf implements ByteBuf {
 
     @Override
     public ByteBuf asReadOnly() {
-        return new NettyByteBuf(proxied.asReadOnly().retain(), false);
+        return this;  // TODO: do we need this method really?  Netty ByteBuf does not have this concept
     }
 
     @Override
