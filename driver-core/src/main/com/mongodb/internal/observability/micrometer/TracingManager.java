@@ -37,6 +37,7 @@ import java.util.function.Supplier;
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.CLIENT_CONNECTION_ID;
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.COLLECTION;
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.COMMAND_NAME;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.CURSOR_ID;
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.NAMESPACE;
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.NETWORK_TRANSPORT;
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.QUERY_SUMMARY;
@@ -46,7 +47,6 @@ import static com.mongodb.internal.observability.micrometer.MongodbObservation.L
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SESSION_ID;
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SYSTEM;
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.TRANSACTION_NUMBER;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.CURSOR_ID;
 import static java.lang.System.getenv;
 
 /**
@@ -178,7 +178,7 @@ public class TracingManager {
      *
      * @param message          the command message to trace
      * @param operationContext the operation context containing tracing and session information
-     * @param commandDocumentSupplier a supplier that provides the command document when needed
+     * @param commandDocument the command document, note this is an internally managed resource
      * @param isSensitiveCommand a predicate that determines if a command is security-sensitive based on its name
      * @param serverAddressSupplier a supplier that provides the server address when needed
      * @param connectionIdSupplier a supplier that provides the connection ID when needed
@@ -187,26 +187,26 @@ public class TracingManager {
     @Nullable
     public Span createTracingSpan(final CommandMessage message,
             final OperationContext operationContext,
-            final Supplier<BsonDocument> commandDocumentSupplier,
+            final BsonDocument commandDocument,
             final Predicate<String> isSensitiveCommand,
             final Supplier<ServerAddress> serverAddressSupplier,
             final Supplier<ConnectionId> connectionIdSupplier
             ) {
 
-       if (!isEnabled()) {
+        if (!isEnabled()) {
             return null;
         }
-        BsonDocument command = commandDocumentSupplier.get();
-        String commandName = command.getFirstKey();
+
+        String commandName = commandDocument.getFirstKey();
         if (isSensitiveCommand.test(commandName)) {
             return null;
         }
 
         Span operationSpan = operationContext.getTracingSpan();
-        Span span = addSpan(commandName,  operationSpan != null ? operationSpan.context() : null);
+        Span span = addSpan(commandName, operationSpan != null ? operationSpan.context() : null);
 
-        if (command.containsKey("getMore")) {
-            long cursorId = command.getInt64("getMore").longValue();
+        if (commandDocument.containsKey("getMore")) {
+            long cursorId = commandDocument.getInt64("getMore").longValue();
             span.tagLowCardinality(CURSOR_ID.withValue(String.valueOf(cursorId)));
             if (operationSpan != null) {
                 operationSpan.tagLowCardinality(CURSOR_ID.withValue(String.valueOf(cursorId)));

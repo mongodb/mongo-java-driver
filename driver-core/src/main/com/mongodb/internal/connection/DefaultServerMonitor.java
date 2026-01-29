@@ -187,11 +187,17 @@ class DefaultServerMonitor implements ServerMonitor {
 
         @Override
         public void close() {
-            interrupt();
-            InternalConnection connection = this.connection;
-            if (connection != null) {
-                connection.close();
+            InternalConnection localConnection = withLock(lock, () -> {
+                InternalConnection result = connection;
+                connection = null;
+                return result;
+            });
+
+            if (localConnection != null) {
+                localConnection.close();
             }
+
+            interrupt();
         }
 
         @Override
@@ -293,24 +299,36 @@ class DefaultServerMonitor implements ServerMonitor {
          */
         private ServerDescription doHeartbeat(final ServerDescription currentServerDescription,
                                               final boolean shouldStreamResponses) {
+            // Check if monitor was closed or connection is unusable
+            InternalConnection localConnection = withLock(lock, () -> {
+                if (isClosed || connection == null || connection.isClosed()) {
+                    return null;
+                }
+                return connection;
+            });
+
+            if (localConnection == null) {
+                throw new MongoSocketException("Monitor closed", serverId.getAddress());
+            }
+
             try {
                 OperationContext operationContext = operationContextFactory.create();
-                if (!connection.hasMoreToCome()) {
+                if (!localConnection.hasMoreToCome()) {
                     BsonDocument helloDocument = new BsonDocument(getHandshakeCommandName(currentServerDescription), new BsonInt32(1))
                             .append("helloOk", BsonBoolean.TRUE);
                     if (shouldStreamResponses) {
                         helloDocument.append("topologyVersion", assertNotNull(currentServerDescription.getTopologyVersion()).asDocument());
                         helloDocument.append("maxAwaitTimeMS", new BsonInt64(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
                     }
-                    connection.send(createCommandMessage(helloDocument, connection, currentServerDescription), new BsonDocumentCodec(),
+                    localConnection.send(createCommandMessage(helloDocument, localConnection, currentServerDescription), new BsonDocumentCodec(),
                             operationContext);
                 }
 
                 BsonDocument helloResult;
                 if (shouldStreamResponses) {
-                    helloResult = connection.receive(new BsonDocumentCodec(), operationContextWithAdditionalTimeout(operationContext));
+                    helloResult = localConnection.receive(new BsonDocumentCodec(), operationContextWithAdditionalTimeout(operationContext));
                 } else {
-                    helloResult = connection.receive(new BsonDocumentCodec(), operationContext);
+                    helloResult = localConnection.receive(new BsonDocumentCodec(), operationContext);
                 }
                 logAndNotifyHeartbeatSucceeded(shouldStreamResponses, helloResult);
                 return createServerDescription(serverId.getAddress(), helloResult, roundTripTimeSampler.getAverage(),
@@ -322,10 +340,18 @@ class DefaultServerMonitor implements ServerMonitor {
         }
 
         private void logAndNotifyHeartbeatStarted(final boolean shouldStreamResponses) {
-            alreadyLoggedHeartBeatStarted = true;
-            logHeartbeatStarted(serverId, connection.getDescription(), shouldStreamResponses);
-            serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(
-                    connection.getDescription().getConnectionId(), shouldStreamResponses));
+            ConnectionDescription description = connection.getDescription();
+            if (description != null) {
+                alreadyLoggedHeartBeatStarted = true;
+                logHeartbeatStarted(serverId, description, shouldStreamResponses);
+                serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(
+                        description.getConnectionId(), shouldStreamResponses));
+            } else {
+                // Connection not fully established yet - skip logging for this heartbeat
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug(format("Skipping heartbeat started event for %s - connection description not available", serverId));
+                }
+            }
         }
 
         private void logAndNotifyHeartbeatSucceeded(final boolean shouldStreamResponses, final BsonDocument helloResult) {
@@ -343,12 +369,20 @@ class DefaultServerMonitor implements ServerMonitor {
         private void logAndNotifyHeartbeatFailed(final boolean shouldStreamResponses, final Exception e) {
             alreadyLoggedHeartBeatStarted = false;
             long elapsedTimeNanos = getElapsedTimeNanos();
-            logHeartbeatFailed(serverId, connection.getDescription(), shouldStreamResponses, elapsedTimeNanos, e);
-            serverMonitorListener.serverHeartbeatFailed(
-                    new ServerHeartbeatFailedEvent(connection.getDescription().getConnectionId(), elapsedTimeNanos,
-                            shouldStreamResponses, e));
-        }
 
+            ConnectionDescription description = connection != null ? connection.getDescription() : null;
+            if (description != null) {
+                logHeartbeatFailed(serverId, description, shouldStreamResponses, elapsedTimeNanos, e);
+                serverMonitorListener.serverHeartbeatFailed(
+                        new ServerHeartbeatFailedEvent(description.getConnectionId(), elapsedTimeNanos,
+                                shouldStreamResponses, e));
+            } else {
+                // Log failure without connection details
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug(format("Heartbeat failed for %s but connection description not available", serverId), e);
+                }
+            }
+        }
         private long getElapsedTimeNanos() {
             return System.nanoTime() - lookupStartTimeNanos;
         }
@@ -514,11 +548,17 @@ class DefaultServerMonitor implements ServerMonitor {
 
         @Override
         public void close() {
-            interrupt();
-            InternalConnection connection = this.connection;
-            if (connection != null) {
-                connection.close();
+            InternalConnection localConnection = withLock(lock, () -> {
+                InternalConnection result = connection;
+                connection = null;
+                return result;
+            });
+
+            if (localConnection != null) {
+                localConnection.close();
             }
+
+            interrupt();
         }
 
         @Override
@@ -552,13 +592,45 @@ class DefaultServerMonitor implements ServerMonitor {
         }
 
         private void initialize() {
-            connection = null;
-            connection = internalConnectionFactory.create(serverId);
-            connection.open(operationContextFactory.create());
-            roundTripTimeSampler.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
+            boolean shouldProceed = withLock(lock, () -> !isClosed);
+
+            if (!shouldProceed) {
+                return;
+            }
+
+            InternalConnection newConnection = internalConnectionFactory.create(serverId);
+            newConnection.open(operationContextFactory.create());
+
+            // Check again after the potentially long open() operation
+            boolean stillValid = withLock(lock, () -> {
+                if (!isClosed) {
+                    connection = newConnection;
+                    return true;
+                }
+                return false;
+            });
+
+            if (stillValid) {
+                roundTripTimeSampler.addSample(newConnection.getInitialServerDescription().getRoundTripTimeNanos());
+            } else {
+                // Monitor was closed during open(), clean up the connection
+                newConnection.close();
+            }
         }
 
         private void pingServer(final InternalConnection connection) {
+            // Atomically check if monitor was closed and connection is still valid
+            boolean shouldProceed = withLock(lock, () ->
+                    !isClosed && this.connection == connection
+            );
+
+            if (!shouldProceed) {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug(format("Skipping ping for %s - monitor closed or connection changed", serverId));
+                }
+                return;  // Monitor closed or connection changed, skip ping
+            }
+
             long start = System.nanoTime();
             OperationContext operationContext = operationContextFactory.create();
             executeCommand("admin",
