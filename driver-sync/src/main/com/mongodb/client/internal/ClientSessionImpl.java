@@ -28,6 +28,8 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.TransactionBody;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.observability.micrometer.TracingManager;
+import com.mongodb.internal.observability.micrometer.TransactionSpan;
 import com.mongodb.internal.operation.AbortTransactionOperation;
 import com.mongodb.internal.operation.CommitTransactionOperation;
 import com.mongodb.internal.operation.OperationHelper;
@@ -36,9 +38,12 @@ import com.mongodb.internal.operation.WriteConcernHelper;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
-import com.mongodb.internal.observability.micrometer.TracingManager;
-import com.mongodb.internal.observability.micrometer.TransactionSpan;
+import com.mongodb.internal.time.ExponentialBackoff;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
+
+import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
@@ -46,10 +51,11 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 
 final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
 
-    private static final int MAX_RETRY_TIME_LIMIT_MS = 120000;
+    private static final long MAX_RETRY_TIME_LIMIT_MS = 120000;
 
     private final OperationExecutor operationExecutor;
     private TransactionState transactionState = TransactionState.NONE;
@@ -249,15 +255,25 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
     @Override
     public <T> T withTransaction(final TransactionBody<T> transactionBody, final TransactionOptions options) {
         notNull("transactionBody", transactionBody);
-        long startTime = ClientSessionClock.INSTANCE.now();
         TimeoutContext withTransactionTimeoutContext = createTimeoutContext(options);
+        Timeout withTransactionTimeout = withTransactionTimeoutContext.timeoutOrAlternative(
+                assertNotNull(TimeoutContext.startTimeout(MAX_RETRY_TIME_LIMIT_MS)));
+        BooleanSupplier withTransactionTimeoutExpired = () -> withTransactionTimeout.call(TimeUnit.MILLISECONDS,
+                () -> false, ms -> false, () -> true);
+        int transactionAttempt = 0;
+        MongoException lastError = null;
 
         try {
             outer:
             while (true) {
+                if (transactionAttempt > 0) {
+                    backoff(transactionAttempt, withTransactionTimeout, assertNotNull(lastError));
+                }
                 T retVal;
                 try {
-                    startTransaction(options, withTransactionTimeoutContext.copyTimeoutContext());
+                    startTransaction(options, withTransactionTimeoutContext);
+                    transactionAttempt++;
+
                     if (transactionSpan != null) {
                         transactionSpan.setIsConvenientTransaction();
                     }
@@ -266,14 +282,17 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     if (transactionState == TransactionState.IN) {
                         abortTransaction();
                     }
-                    if (e instanceof MongoException && !(e instanceof MongoOperationTimeoutException)) {
-                        MongoException exceptionToHandle = OperationHelper.unwrap((MongoException) e);
-                        if (exceptionToHandle.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)
-                                && ClientSessionClock.INSTANCE.now() - startTime < MAX_RETRY_TIME_LIMIT_MS) {
-                            if (transactionSpan != null) {
-                                transactionSpan.spanFinalizing(false);
+                    if (e instanceof MongoException) {
+                        lastError = (MongoException) e;
+                        if (!(e instanceof MongoOperationTimeoutException)) {
+                            MongoException exceptionToHandle = OperationHelper.unwrap((MongoException) e);
+                            if (exceptionToHandle.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)
+                                    && !withTransactionTimeoutExpired.getAsBoolean()) {
+                                if (transactionSpan != null) {
+                                    transactionSpan.spanFinalizing(false);
+                                }
+                                continue;
                             }
-                            continue;
                         }
                     }
                     throw e;
@@ -284,9 +303,10 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                             commitTransaction(false);
                             break;
                         } catch (MongoException e) {
+                            lastError = e;
                             clearTransactionContextOnError(e);
                             if (!(e instanceof MongoOperationTimeoutException)
-                                    && ClientSessionClock.INSTANCE.now() - startTime < MAX_RETRY_TIME_LIMIT_MS) {
+                                    && !withTransactionTimeoutExpired.getAsBoolean()) {
                                 applyMajorityWriteConcernToTransactionOptions();
 
                                 if (!(e instanceof MongoExecutionTimeoutException)
@@ -358,5 +378,20 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         return new TimeoutContext(getTimeoutSettings(
                 TransactionOptions.merge(transactionOptions, getOptions().getDefaultTransactionOptions()),
                 operationExecutor.getTimeoutSettings()));
+    }
+
+    private static void backoff(final int transactionAttempt,
+            final Timeout withTransactionTimeout, final MongoException lastError) {
+        long backoffMs = ExponentialBackoff.calculateTransactionBackoffMs(transactionAttempt - 1);
+        withTransactionTimeout.shortenBy(backoffMs, TimeUnit.MILLISECONDS).onExpired(() -> {
+            throw lastError;
+        });
+        try {
+            if (backoffMs > 0) {
+                Thread.sleep(backoffMs);
+            }
+        } catch (InterruptedException e) {
+            throw interruptAndCreateMongoInterruptedException("Transaction retry interrupted", e);
+        }
     }
 }

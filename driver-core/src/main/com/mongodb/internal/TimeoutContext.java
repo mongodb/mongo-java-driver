@@ -168,6 +168,10 @@ public class TimeoutContext {
         return timeout == null ? null : timeout.shortenBy(minRoundTripTimeMS, MILLISECONDS);
     }
 
+    public Timeout timeoutOrAlternative(final Timeout alternative) {
+        return timeout == null ? alternative : timeout;
+    }
+
     /**
      * Returns the remaining {@code timeoutMS} if set or the {@code alternativeTimeoutMS}.
      *
@@ -176,6 +180,7 @@ public class TimeoutContext {
      * @param alternativeTimeoutMS the alternative timeout.
      * @return timeout to use.
      */
+    @VisibleForTesting(otherwise = PRIVATE)
     public long timeoutOrAlternative(final long alternativeTimeoutMS) {
         if (timeout == null) {
             return alternativeTimeoutMS;
@@ -378,11 +383,6 @@ public class TimeoutContext {
 
         long newReadTimeout = getReadTimeoutMS() + additionalReadTimeout;
         return new TimeoutContext(timeoutSettings.withReadTimeoutMS(newReadTimeout > 0 ? newReadTimeout : Long.MAX_VALUE));
-    }
-
-    // Creates a copy of the timeout context that can be reset without resetting the original.
-    public TimeoutContext copyTimeoutContext() {
-        return new TimeoutContext(getTimeoutSettings(), getTimeout());
     }
 
     @Override
