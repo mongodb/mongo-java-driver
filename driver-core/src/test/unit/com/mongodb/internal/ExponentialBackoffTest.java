@@ -31,43 +31,50 @@ public class ExponentialBackoffTest {
         // With jitter, actual values will be between 0 and these maxima
         double[] expectedMaxValues = {5.0, 7.5, 11.25, 16.875, 25.3125, 37.96875, 56.953125, 85.4296875, 128.14453125, 192.21679688, 288.32519531, 432.48779297, 500.0};
 
-        ExponentialBackoff backoff = ExponentialBackoff.TRANSACTION;
-        for (int retry = 0; retry < expectedMaxValues.length; retry++) {
-            long delay = backoff.calculateDelayBeforeNextRetryMs(retry);
-            assertTrue(delay >= 0 && delay <= Math.round(expectedMaxValues[retry]), String.format("Retry %d: delay should be 0-%d ms, got: %d", retry, Math.round(expectedMaxValues[retry]), delay));
+        for (int attemptNumber = 0; attemptNumber < expectedMaxValues.length; attemptNumber++) {
+            long backoff = ExponentialBackoff.calculateTransactionBackoffMs(attemptNumber);
+            assertTrue(backoff >= 0 && backoff <= Math.round(expectedMaxValues[attemptNumber]),
+                String.format("Attempt %d: backoff should be 0-%d ms, got: %d", attemptNumber, Math.round(expectedMaxValues[attemptNumber]), backoff));
         }
     }
 
     @Test
     void testTransactionRetryBackoffRespectsMaximum() {
-        ExponentialBackoff backoff = ExponentialBackoff.TRANSACTION;
-
-        // Even at high retry counts, delay should never exceed 500ms
-        for (int retry = 0; retry < 25; retry++) {
-            long delay = backoff.calculateDelayBeforeNextRetryMs(retry);
-            assertTrue(delay >= 0 && delay <= 500, String.format("Retry %d: delay should be capped at 500 ms, got: %d ms", retry, delay));
+        // Even at high attempt numbers, backoff should never exceed 500ms
+        for (int attemptNumber = 0; attemptNumber < 25; attemptNumber++) {
+            long backoff = ExponentialBackoff.calculateTransactionBackoffMs(attemptNumber);
+            assertTrue(backoff >= 0 && backoff <= 500,
+                String.format("Attempt %d: backoff should be capped at 500 ms, got: %d ms", attemptNumber, backoff));
         }
     }
 
     @Test
     void testCustomJitter() {
-        ExponentialBackoff backoff = ExponentialBackoff.TRANSACTION;
+        // Expected backoffs with jitter=1.0 and growth factor 1.5
+        double[] expectedBackoffs = {5.0, 7.5, 11.25, 16.875, 25.3125, 37.96875, 56.953125, 85.4296875, 128.14453125, 192.21679688, 288.32519531, 432.48779297, 500.0};
 
-        // Expected delays with jitter=1.0 and growth factor 1.5
-        double[] expectedDelays = {5.0, 7.5, 11.25, 16.875, 25.3125, 37.96875, 56.953125, 85.4296875, 128.14453125, 192.21679688, 288.32519531, 432.48779297, 500.0};
-        double jitter = 1.0;
-
-        for (int retry = 0; retry < expectedDelays.length; retry++) {
-            long delay = backoff.calculateDelayBeforeNextRetryMs(retry, jitter);
-            long expected = Math.round(expectedDelays[retry]);
-            assertEquals(expected, delay, String.format("Retry %d: with jitter=1.0, delay should be %d ms", retry, expected));
+        // Test with jitter = 1.0
+        ExponentialBackoff.setTestJitterSupplier(() -> 1.0);
+        try {
+            for (int attemptNumber = 0; attemptNumber < expectedBackoffs.length; attemptNumber++) {
+                long backoff = ExponentialBackoff.calculateTransactionBackoffMs(attemptNumber);
+                long expected = Math.round(expectedBackoffs[attemptNumber]);
+                assertEquals(expected, backoff,
+                    String.format("Attempt %d: with jitter=1.0, backoff should be %d ms", attemptNumber, expected));
+            }
+        } finally {
+            ExponentialBackoff.clearTestJitterSupplier();
         }
 
-        // With jitter = 0, all delays should be 0
-        jitter = 0;
-        for (int retry = 0; retry < 10; retry++) {
-            long delay = backoff.calculateDelayBeforeNextRetryMs(retry, jitter);
-            assertEquals(0, delay, "With jitter=0, delay should always be 0 ms");
+        // Test with jitter = 0, all backoffs should be 0
+        ExponentialBackoff.setTestJitterSupplier(() -> 0.0);
+        try {
+            for (int attemptNumber = 0; attemptNumber < 10; attemptNumber++) {
+                long backoff = ExponentialBackoff.calculateTransactionBackoffMs(attemptNumber);
+                assertEquals(0, backoff, "With jitter=0, backoff should always be 0 ms");
+            }
+        } finally {
+            ExponentialBackoff.clearTestJitterSupplier();
         }
     }
 }

@@ -288,8 +288,9 @@ public class WithTransactionProseTest extends DatabaseTestCase {
 
     private static void doWithSystemNanoTimeHandle(final Consumer<SystemNanoTimeHandle> action) {
         long startNanos = SystemNanoTime.get();
-        try (MockedStatic<SystemNanoTime> mockedStaticSystem = Mockito.mockStatic(SystemNanoTime.class)) {
-            action.accept(change -> mockedStaticSystem.when(SystemNanoTime::get).thenReturn(startNanos + change.toNanos()));
+        try (MockedStatic<SystemNanoTime> mockedStaticSystemNanoTime = Mockito.mockStatic(SystemNanoTime.class)) {
+            mockedStaticSystemNanoTime.when(SystemNanoTime::get).thenReturn(startNanos);
+            action.accept(change -> mockedStaticSystemNanoTime.when(SystemNanoTime::get).thenReturn(startNanos + change.toNanos()));
         }
     }
 

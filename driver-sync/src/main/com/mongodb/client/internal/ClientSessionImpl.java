@@ -382,7 +382,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
 
     private static void backoff(final int transactionAttempt,
             final Timeout withTransactionTimeout, final MongoException lastError) {
-        long backoffMs = ExponentialBackoff.TRANSACTION.calculateDelayBeforeNextRetryMs(transactionAttempt - 1);
+        long backoffMs = ExponentialBackoff.calculateTransactionBackoffMs(transactionAttempt - 1);
         withTransactionTimeout.shortenBy(backoffMs, TimeUnit.MILLISECONDS).onExpired(() -> {
             throw lastError;
         });
