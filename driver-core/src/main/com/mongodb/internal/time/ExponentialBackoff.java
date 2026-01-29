@@ -24,46 +24,34 @@ import java.util.function.DoubleSupplier;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
 /**
- * Implements exponential backoff with jitter for retry scenarios.
+ * Provides exponential backoff calculations with jitter for retry scenarios.
  */
-public enum ExponentialBackoff {
-    TRANSACTION(5.0, 500.0, 1.5);
+public final class ExponentialBackoff {
 
-    private final double baseMs, maxMs, growth;
+    // Constants for transaction retry backoff
+    private static final double TRANSACTION_BASE_MS = 5.0;
+    private static final double TRANSACTION_MAX_MS = 500.0;
+    private static final double TRANSACTION_GROWTH = 1.5;
 
-    // TODO remove this global state once https://jira.mongodb.org/browse/JAVA-6060 is done
+    // TODO-JAVA-6079
     private static DoubleSupplier testJitterSupplier = null;
 
-    ExponentialBackoff(final double baseMs, final double maxMs, final  double growth) {
-        this.baseMs = baseMs;
-        this.maxMs = maxMs;
-        this.growth = growth;
+    private ExponentialBackoff() {
     }
 
     /**
-     * Calculate the next delay in milliseconds based on the retry count.
+     * Calculate the backoff in milliseconds for transaction retries.
      *
-     * @param retryCount The number of retries that have occurred.
-     * @return The calculated delay in milliseconds.
+     * @param attemptNumber The 0-based attempt number
+     * @return The calculated backoff in milliseconds.
      */
-    public long calculateDelayBeforeNextRetryMs(final int retryCount) {
+    public static long calculateTransactionBackoffMs(final int attemptNumber) {
         double jitter = testJitterSupplier != null
                 ? testJitterSupplier.getAsDouble()
                 : ThreadLocalRandom.current().nextDouble();
-        double backoff = Math.min(baseMs * Math.pow(growth, retryCount), maxMs);
-        return Math.round(jitter * backoff);
-    }
-
-    /**
-     * Calculate the next delay in milliseconds based on the retry count and a provided jitter.
-     *
-     * @param retryCount The number of retries that have occurred.
-     * @param jitter     A double in the range [0, 1) to apply as jitter.
-     * @return The calculated delay in milliseconds.
-     */
-    public long calculateDelayBeforeNextRetryMs(final int retryCount, final double jitter) {
-        double backoff = Math.min(baseMs * Math.pow(growth, retryCount), maxMs);
-        return Math.round(jitter * backoff);
+        return Math.round(jitter * Math.min(
+                TRANSACTION_BASE_MS * Math.pow(TRANSACTION_GROWTH, attemptNumber),
+                TRANSACTION_MAX_MS));
     }
 
     /**
