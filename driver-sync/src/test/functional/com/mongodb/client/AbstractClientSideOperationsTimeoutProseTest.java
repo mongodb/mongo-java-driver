@@ -47,14 +47,11 @@ import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.event.ConnectionClosedEvent;
 import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionReadyEvent;
-
-import static com.mongodb.internal.connection.CommandHelper.HELLO;
-import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
-
 import com.mongodb.internal.connection.InternalStreamConnection;
 import com.mongodb.internal.connection.ServerHelper;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
+import com.mongodb.internal.time.ExponentialBackoff;
 import com.mongodb.test.FlakyTest;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -93,6 +90,8 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.sleep;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getPrimary;
+import static com.mongodb.internal.connection.CommandHelper.HELLO;
+import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
 import static java.lang.Long.MAX_VALUE;
 import static java.lang.String.join;
 import static java.util.Arrays.asList;
@@ -1106,6 +1105,11 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         filesCollectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), gridFsFileNamespace);
         chunksCollectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), gridFsChunksNamespace);
         commandListener = new TestCommandListener();
+
+        // setting jitter to 0 to make test using withTransaction deterministic (i.e retries immediately) otherwise we might get
+        // MongoCommandException setup in the failpoint instead of MongoOperationTimeoutException depending on the random jitter value.
+        ExponentialBackoff.setTestJitterSupplier(() -> 1.0);
+
     }
 
     @AfterEach
@@ -1128,6 +1132,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             //noinspection ResultOfMethodCallIgnored
             executor.awaitTermination(MAX_VALUE, NANOSECONDS);
         }
+
+        ExponentialBackoff.clearTestJitterSupplier();
     }
 
     @AfterAll
