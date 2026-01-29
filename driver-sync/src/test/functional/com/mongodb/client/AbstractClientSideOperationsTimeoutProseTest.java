@@ -1106,10 +1106,11 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         chunksCollectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), gridFsChunksNamespace);
         commandListener = new TestCommandListener();
 
-        // setting jitter to 0 to make test using withTransaction deterministic (i.e retries immediately) otherwise we might get
-        // MongoCommandException setup in the failpoint instead of MongoOperationTimeoutException depending on the random jitter value.
-        ExponentialBackoff.setTestJitterSupplier(() -> 0);
-
+        if (!isAsync()) {
+            // setting jitter to 0 to make test using withTransaction deterministic (i.e retries immediately) otherwise we might get
+            // MongoCommandException setup in the failpoint instead of MongoOperationTimeoutException depending on the random jitter value.
+            ExponentialBackoff.setTestJitterSupplier(() -> 0);
+        }
     }
 
     @AfterEach
@@ -1133,7 +1134,9 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             executor.awaitTermination(MAX_VALUE, NANOSECONDS);
         }
 
-        ExponentialBackoff.clearTestJitterSupplier();
+        if (!isAsync()) {
+            ExponentialBackoff.clearTestJitterSupplier();
+        }
     }
 
     @AfterAll
