@@ -21,6 +21,7 @@ import com.mongodb.internal.VisibleForTesting;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.DoubleSupplier;
 
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
 /**
@@ -42,10 +43,11 @@ public final class ExponentialBackoff {
     /**
      * Calculate the backoff in milliseconds for transaction retries.
      *
-     * @param attemptNumber The attempt number
+     * @param attemptNumber 0-based attempt number
      * @return The calculated backoff in milliseconds.
      */
     public static long calculateTransactionBackoffMs(final int attemptNumber) {
+        assertTrue(attemptNumber > 0, "Attempt number must be greater than 0 in the context of transaction backoff calculation");
         double jitter = testJitterSupplier != null
                 ? testJitterSupplier.getAsDouble()
                 : ThreadLocalRandom.current().nextDouble();
