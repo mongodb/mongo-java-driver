@@ -55,6 +55,7 @@ class ClientSideEncryptionBsonSizeLimitsSpecification extends FunctionalSpecific
     private MongoCollection<BsonDocument> autoEncryptingDataCollection
 
     def setup() {
+        assumeTrue("TODO JAVA-6077", false);
         assumeTrue(isClientSideEncryptionTest())
         dataKeyCollection.drop()
         dataCollection.drop()

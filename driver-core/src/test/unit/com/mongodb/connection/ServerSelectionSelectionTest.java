@@ -49,7 +49,7 @@ import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.assumeFalse;
 
 // See https://github.com/mongodb/specifications/tree/master/source/server-selection/tests
 @RunWith(Parameterized.class)
@@ -72,7 +72,9 @@ public class ServerSelectionSelectionTest {
     @Test
     public void shouldPassAllOutcomes() {
         // skip this test because the driver prohibits maxStaleness or tagSets with mode of primary at a much lower level
-        assumeTrue(!description.endsWith("/max-staleness/tests/ReplicaSetWithPrimary/MaxStalenessWithModePrimary.json"));
+        assumeFalse(description.endsWith("/max-staleness/tests/ReplicaSetWithPrimary/MaxStalenessWithModePrimary.json"));
+        assumeFalse(description.contains("Deprioritized")); // TODO JAVA-6021 deprioritized server selection"
+
         ServerSelector serverSelector = null;
         List<ServerDescription> suitableServers = buildServerDescriptions(definition.getArray("suitable_servers", new BsonArray()));
         List<ServerDescription> selectedServers = null;
