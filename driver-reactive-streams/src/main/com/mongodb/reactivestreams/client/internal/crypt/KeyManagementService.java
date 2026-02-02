@@ -16,6 +16,7 @@
 
 package com.mongodb.reactivestreams.client.internal.crypt;
 
+import com.mongodb.MongoException;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketReadTimeoutException;
@@ -131,6 +132,11 @@ class KeyManagementService implements Closeable {
 
                                               @Override
                                               public void completed(final Integer integer, final Void aVoid) {
+                                                  if (integer == -1) {
+                                                      sink.error(new MongoException(
+                                                              "Unexpected end of stream from KMS provider " + keyDecryptor.getKmsProvider()));
+                                                      return;
+                                                  }
                                                   buffer.flip();
                                                   try {
                                                       keyDecryptor.feed(buffer.asNIO());

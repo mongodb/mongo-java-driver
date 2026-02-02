@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-package org.bson.json;
+package com.mongodb.client.vector;
 
-class JsonDoubleConverter implements Converter<Double> {
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+
+public class AutomatedEmbeddingVectorFunctionalTest extends AbstractAutomatedEmbeddingVectorSearchFunctionalTest {
     @Override
-    public void convert(final Double value, final StrictJsonWriter writer) {
-        writer.writeNumber(JsonDoubleHelper.toString(value));
+    protected MongoClient getMongoClient(final MongoClientSettings settings) {
+        return MongoClients.create(settings);
     }
 }

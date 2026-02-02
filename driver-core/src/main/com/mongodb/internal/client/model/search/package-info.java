@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package org.bson.json;
+/**
+ * This package contains internal functionality that may change at any time.
+ */
 
-class JsonDoubleConverter implements Converter<Double> {
-    @Override
-    public void convert(final Double value, final StrictJsonWriter writer) {
-        writer.writeNumber(JsonDoubleHelper.toString(value));
-    }
-}
+@Internal
+@NonNullApi
+package com.mongodb.internal.client.model.search;
+
+import com.mongodb.annotations.Internal;
+import com.mongodb.lang.NonNullApi;
