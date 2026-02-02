@@ -69,7 +69,7 @@ public class ExponentialBackoffTest {
         // Test with jitter = 0, all backoffs should be 0
         ExponentialBackoff.setTestJitterSupplier(() -> 0.0);
         try {
-            for (int attemptNumber = 0; attemptNumber < 10; attemptNumber++) {
+            for (int attemptNumber = 1; attemptNumber < 11; attemptNumber++) {
                 long backoff = ExponentialBackoff.calculateTransactionBackoffMs(attemptNumber);
                 assertEquals(0, backoff, "With jitter=0, backoff should always be 0 ms");
             }
