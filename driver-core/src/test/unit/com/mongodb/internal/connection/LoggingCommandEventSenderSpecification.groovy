@@ -64,8 +64,10 @@ class LoggingCommandEventSenderSpecification extends Specification {
             isDebugEnabled() >> debugLoggingEnabled
         }
         def operationContext = OPERATION_CONTEXT
+        def commandMessageDocument = message.getCommandDocument(bsonOutput)
+
         def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener,
-                operationContext, message, message.getCommandDocument(bsonOutput),
+                operationContext, message, commandMessageDocument,
                 new StructuredLogger(logger), LoggerSettings.builder().build())
 
         when:
@@ -86,6 +88,9 @@ class LoggingCommandEventSenderSpecification extends Specification {
                 new CommandFailedEvent(null, operationContext.id, message.getId(), connectionDescription,
                         database, commandDocument.getFirstKey(), 1, failureException)
         ])
+
+        cleanup:
+        commandMessageDocument?.close()
 
         where:
         debugLoggingEnabled << [true, false]
@@ -110,8 +115,10 @@ class LoggingCommandEventSenderSpecification extends Specification {
             isDebugEnabled() >> true
         }
         def operationContext = OPERATION_CONTEXT
+        def commandMessageDocument = message.getCommandDocument(bsonOutput)
+
         def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener,
-                operationContext, message, message.getCommandDocument(bsonOutput), new StructuredLogger(logger),
+                operationContext, message, commandMessageDocument, new StructuredLogger(logger),
                 LoggerSettings.builder().build())
         when:
         sender.sendStartedEvent()
@@ -146,6 +153,9 @@ class LoggingCommandEventSenderSpecification extends Specification {
                     "request ID is ${message.getId()} and the operation ID is ${operationContext.getId()}.")
        }, failureException)
 
+        cleanup:
+        commandMessageDocument?.close()
+
         where:
         commandListener << [null, Stub(CommandListener)]
     }
@@ -167,6 +177,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
             isDebugEnabled() >> true
         }
         def operationContext = OPERATION_CONTEXT
+        def commandMessageDocument = message.getCommandDocument(bsonOutput)
 
         def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, null, operationContext,
                 message, message.getCommandDocument(bsonOutput), new StructuredLogger(logger), LoggerSettings.builder().build())
@@ -182,6 +193,9 @@ class LoggingCommandEventSenderSpecification extends Specification {
                     "request ID is ${message.getId()} and the operation ID is ${operationContext.getId()}. " +
                     "Command: {\"fake\": {\"\$binary\": {\"base64\": \"${'A' * 967} ..."
         }
+
+        cleanup:
+        commandMessageDocument?.close()
     }
 
     def 'should log redacted command with ellipses'() {
@@ -201,8 +215,9 @@ class LoggingCommandEventSenderSpecification extends Specification {
             isDebugEnabled() >> true
         }
         def operationContext = OPERATION_CONTEXT
+        def commandMessageDocument = message.getCommandDocument(bsonOutput)
         def sender = new LoggingCommandEventSender(['createUser'] as Set, [] as Set, connectionDescription, null,
-                operationContext, message, message.getCommandDocument(bsonOutput), new StructuredLogger(logger),
+                operationContext, message, commandMessageDocument, new StructuredLogger(logger),
                 LoggerSettings.builder().build())
 
         when:
@@ -215,5 +230,8 @@ class LoggingCommandEventSenderSpecification extends Specification {
                     "${connectionDescription.connectionId.serverValue} to 127.0.0.1:27017. The " +
                     "request ID is ${message.getId()} and the operation ID is ${operationContext.getId()}. Command: {}"
         }
+
+        cleanup:
+        commandMessageDocument?.close()
     }
 }
