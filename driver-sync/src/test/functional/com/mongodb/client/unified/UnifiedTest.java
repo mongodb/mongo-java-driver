@@ -311,6 +311,7 @@ public abstract class UnifiedTest {
         if (testDef != null) {
             postCleanUp(testDef);
         }
+        System.gc();
     }
 
     protected void postCleanUp(final TestDef testDef) {

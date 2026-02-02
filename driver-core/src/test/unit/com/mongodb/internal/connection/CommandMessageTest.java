@@ -164,8 +164,10 @@ class CommandMessageTest {
                     new OperationContext(
                             IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
                             new TimeoutContext(TimeoutSettings.DEFAULT), null));
-            BsonDocument actualCommandDocument = commandMessage.getCommandDocument(output);
-            assertEquals(expectedCommandDocument, actualCommandDocument);
+
+            try (ByteBufBsonDocument actualCommandDocument = commandMessage.getCommandDocument(output)) {
+                assertEquals(expectedCommandDocument, actualCommandDocument);
+            }
         }
     }
 }

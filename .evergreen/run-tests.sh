@@ -67,14 +67,17 @@ provision_ssl () {
 }
 
 provision_multi_mongos_uri_for_ssl () {
-  # Arguments for auth + SSL
-  if [ "$AUTH" != "noauth" ] || [ "$TOPOLOGY" == "replica_set" ]; then
-    export MONGODB_URI="${MONGODB_URI}&ssl=true&sslInvalidHostNameAllowed=true"
-    export MULTI_MONGOS_URI="${MULTI_MONGOS_URI}&ssl=true&sslInvalidHostNameAllowed=true"
-  else
-    export MONGODB_URI="${MONGODB_URI}/?ssl=true&sslInvalidHostNameAllowed=true"
-    export MULTI_MONGOS_URI="${MULTI_MONGOS_URI}/?ssl=true&sslInvalidHostNameAllowed=true"
-  fi
+     if [[ "$MONGODB_URI" == *"?"* ]]; then
+       export MONGODB_URI="${MONGODB_URI}&ssl=true&sslInvalidHostNameAllowed=true"
+     else
+       export MONGODB_URI="${MONGODB_URI}/?ssl=true&sslInvalidHostNameAllowed=true"
+     fi
+
+     if [[ "$MULTI_MONGOS_URI" == *"?"* ]]; then
+       export MULTI_MONGOS_URI="${MULTI_MONGOS_URI}&ssl=true&sslInvalidHostNameAllowed=true"
+     else
+       export MULTI_MONGOS_URI="${MULTI_MONGOS_URI}/?ssl=true&sslInvalidHostNameAllowed=true"
+     fi
 }
 
 ############################################
@@ -136,6 +139,8 @@ echo "Running tests with Java ${JAVA_VERSION}"
           --stacktrace --info --continue ${TESTS} | tee -a logs.txt
 
 if grep -q 'LEAK:' logs.txt ; then
-    echo "Netty Leak detected, please inspect build log"
+    echo "==============================================="
+    echo " Netty Leak detected, please inspect build log "
+    echo "==============================================="
     exit 1
 fi
