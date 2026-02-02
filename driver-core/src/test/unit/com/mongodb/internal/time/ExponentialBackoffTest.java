@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal;
+package com.mongodb.internal.time;
 
-import com.mongodb.internal.time.ExponentialBackoff;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,17 +30,18 @@ public class ExponentialBackoffTest {
         // With jitter, actual values will be between 0 and these maxima
         double[] expectedMaxValues = {5.0, 7.5, 11.25, 16.875, 25.3125, 37.96875, 56.953125, 85.4296875, 128.14453125, 192.21679688, 288.32519531, 432.48779297, 500.0};
 
-        for (int attemptNumber = 0; attemptNumber < expectedMaxValues.length; attemptNumber++) {
+        for (int attemptNumber = 1; attemptNumber <= expectedMaxValues.length; attemptNumber++) {
             long backoff = ExponentialBackoff.calculateTransactionBackoffMs(attemptNumber);
-            assertTrue(backoff >= 0 && backoff <= Math.round(expectedMaxValues[attemptNumber]),
-                String.format("Attempt %d: backoff should be 0-%d ms, got: %d", attemptNumber, Math.round(expectedMaxValues[attemptNumber]), backoff));
+            assertTrue(backoff >= 0 && backoff <= Math.round(expectedMaxValues[attemptNumber - 1]),
+                String.format("Attempt %d: backoff should be 0-%d ms, got: %d", attemptNumber,
+                        Math.round(expectedMaxValues[attemptNumber - 1]), backoff));
         }
     }
 
     @Test
     void testTransactionRetryBackoffRespectsMaximum() {
         // Even at high attempt numbers, backoff should never exceed 500ms
-        for (int attemptNumber = 0; attemptNumber < 25; attemptNumber++) {
+        for (int attemptNumber = 1; attemptNumber < 26; attemptNumber++) {
             long backoff = ExponentialBackoff.calculateTransactionBackoffMs(attemptNumber);
             assertTrue(backoff >= 0 && backoff <= 500,
                 String.format("Attempt %d: backoff should be capped at 500 ms, got: %d ms", attemptNumber, backoff));
@@ -56,9 +56,9 @@ public class ExponentialBackoffTest {
         // Test with jitter = 1.0
         ExponentialBackoff.setTestJitterSupplier(() -> 1.0);
         try {
-            for (int attemptNumber = 0; attemptNumber < expectedBackoffs.length; attemptNumber++) {
+            for (int attemptNumber = 1; attemptNumber <= expectedBackoffs.length; attemptNumber++) {
                 long backoff = ExponentialBackoff.calculateTransactionBackoffMs(attemptNumber);
-                long expected = Math.round(expectedBackoffs[attemptNumber]);
+                long expected = Math.round(expectedBackoffs[attemptNumber - 1]);
                 assertEquals(expected, backoff,
                     String.format("Attempt %d: with jitter=1.0, backoff should be %d ms", attemptNumber, expected));
             }

@@ -42,7 +42,7 @@ public final class ExponentialBackoff {
     /**
      * Calculate the backoff in milliseconds for transaction retries.
      *
-     * @param attemptNumber The 0-based attempt number
+     * @param attemptNumber The attempt number
      * @return The calculated backoff in milliseconds.
      */
     public static long calculateTransactionBackoffMs(final int attemptNumber) {
@@ -50,7 +50,7 @@ public final class ExponentialBackoff {
                 ? testJitterSupplier.getAsDouble()
                 : ThreadLocalRandom.current().nextDouble();
         return Math.round(jitter * Math.min(
-                TRANSACTION_BASE_MS * Math.pow(TRANSACTION_GROWTH, attemptNumber),
+                TRANSACTION_BASE_MS * Math.pow(TRANSACTION_GROWTH, attemptNumber - 1),
                 TRANSACTION_MAX_MS));
     }
 
