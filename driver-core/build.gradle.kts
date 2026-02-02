@@ -66,6 +66,11 @@ dependencies {
     }
 }
 
+tasks.processTestResources {
+    from("${rootProject.projectDir}/testing/resources")
+    into("${layout.buildDirectory.get()}/resources/test")
+}
+
 configureMavenPublication {
     pom {
         name.set("MongoDB Java Driver Core")
