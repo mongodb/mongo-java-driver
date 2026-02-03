@@ -18,7 +18,7 @@ package org.bson;
 
 import java.util.Arrays;
 
-import static org.bson.assertions.Assertions.assertNotNull;
+import static org.bson.assertions.Assertions.notNull;
 
 /**
  * Represents a vector of 32-bit floating-point numbers, where each element in the vector is a float.
@@ -35,9 +35,9 @@ public final class Float32BinaryVector extends BinaryVector {
 
     private final float[] data;
 
-    Float32BinaryVector(final float[] vectorData) {
+    Float32BinaryVector(final float[] data) {
         super(DataType.FLOAT32);
-        this.data = assertNotNull(vectorData);
+        this.data = notNull("data", data);
     }
 
     /**
@@ -49,7 +49,7 @@ public final class Float32BinaryVector extends BinaryVector {
      * @return the underlying float array representing this {@link Float32BinaryVector} vector.
      */
     public float[] getData() {
-        return assertNotNull(data);
+        return data;
     }
 
     @Override
