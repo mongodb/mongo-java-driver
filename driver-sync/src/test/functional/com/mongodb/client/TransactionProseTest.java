@@ -21,6 +21,9 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
+
+import java.util.concurrent.TimeUnit;
+
 import org.bson.Document;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,6 +60,8 @@ public class TransactionProseTest {
         }
 
         client = MongoClients.create(MongoClientSettings.builder()
+                .writeConcern(WriteConcern.MAJORITY)
+                .applyToClusterSettings(builder -> builder.localThreshold(1000L, TimeUnit.MILLISECONDS))
                 .applyConnectionString(connectionString)
                 .build());
 

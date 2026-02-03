@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
-package org.bson.json;
+package com.mongodb.reactivestreams.client;
 
-class JsonDoubleConverter implements Converter<Double> {
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.AbstractChangeSteamFunctionalTest;
+import com.mongodb.client.MongoClient;
+import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
+
+public class ChangeStreamFunctionalTest extends AbstractChangeSteamFunctionalTest {
     @Override
-    public void convert(final Double value, final StrictJsonWriter writer) {
-        writer.writeNumber(JsonDoubleHelper.toString(value));
+    protected MongoClient createMongoClient(final MongoClientSettings mongoClientSettings) {
+        return new SyncMongoClient(mongoClientSettings);
     }
 }

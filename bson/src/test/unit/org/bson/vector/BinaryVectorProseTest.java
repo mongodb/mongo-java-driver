@@ -14,19 +14,110 @@
  * limitations under the License.
  */
 
-package org.bson;
+package org.bson.vector;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import org.bson.BinaryVector;
+import org.bson.BsonBinary;
+import org.bson.Float32BinaryVector;
+import org.bson.Int8BinaryVector;
+import org.bson.PackedBitBinaryVector;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class BinaryVectorTest {
 
+// See Prose Tests README: https://github.com/mongodb/specifications/tree/master/source/bson-binary-vector/tests#prose-tests
+class BinaryVectorProseTest {
+
+    private ListAppender<ILoggingEvent> logWatcher;
+
+    @BeforeEach
+    void setup() {
+        logWatcher = new ListAppender<>();
+        logWatcher.start();
+        ((Logger) LoggerFactory.getLogger("org.bson.BinaryVector")).addAppender(logWatcher);
+    }
+
+    @AfterEach
+    void teardown() {
+        ((Logger) LoggerFactory.getLogger("org.bson.BinaryVector")).detachAndStopAllAppenders();
+    }
+
+    @DisplayName("Treatment of non-zero ignored bits: 1. Encoding")
+    @Test
+    void shouldEncodeWithNonZeroIgnoredBits() {
+        // when
+        byte[] data = {(byte) 0b11111111};
+
+        // then
+        Assertions.assertDoesNotThrow(()-> BinaryVector.packedBitVector(data, (byte) 7));
+        ILoggingEvent iLoggingEvent = logWatcher.list.get(0);
+        assertEquals(Level.WARN, iLoggingEvent.getLevel());
+        assertEquals("The last 7 padded bits should be zero in the final byte.", iLoggingEvent.getMessage());
+    }
+
+    @DisplayName("Treatment of non-zero ignored bits: 2. Decoding")
+    @Test
+    void decodingWithNonZeroIgnoredBits() {
+        // when
+        byte[] bytearray = {0x10, 0x07, (byte) 0xFF};
+        BsonBinary data = new BsonBinary((byte) 9, bytearray);
+
+        // then
+        assertDoesNotThrow(data::asVector);
+        ILoggingEvent iLoggingEvent = logWatcher.list.get(0);
+        assertEquals(Level.WARN, iLoggingEvent.getLevel());
+        assertEquals("The last 7 padded bits should be zero in the final byte.", iLoggingEvent.getMessage());
+    }
+
+    @DisplayName("Treatment of non-zero ignored bits: 3. Comparison")
+    @Test
+    void shouldCompareVectorsWithIgnoredBits() {
+        // b1: 1-bit vector, all 0 ignored bits
+        byte[] b1Bytes = {0x10, 0x07, (byte) 0x80};
+        BsonBinary b1 = new BsonBinary((byte) 9, b1Bytes);
+
+        // b2: 1-bit vector, all 1 ignored bits
+        byte[] b2Bytes = {0x10, 0x07, (byte) 0xFF};
+        BsonBinary b2 = new BsonBinary((byte) 9, b2Bytes);
+
+        // b3: same data as b1, constructed from vector
+        PackedBitBinaryVector vector = BinaryVector.packedBitVector(new byte[]{(byte) 0x80}, (byte) 7);
+        BsonBinary b3 = new BsonBinary(vector);
+
+        // Vector representations
+        BinaryVector v1 = b1.asVector();
+        BinaryVector v2 = b2.asVector();
+        BinaryVector v3 = b3.asVector();
+
+        // Raw binary equality
+        assertNotEquals(b1, b2); // Unequal at naive Binary level
+        assertEquals(b1, b3);    // Equal at naive Binary level
+
+        // Vector equality
+        assertNotEquals(v2, v1); // Unequal at BinaryVector level ([255] != [128])
+        assertEquals(v1, v3);    // Equal at BinaryVector level
+    }
+
+    //
+    // Extra non specification based tests
+    //
     @Test
     void shouldCreateInt8Vector() {
         // given

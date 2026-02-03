@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package org.bson.json;
+package com.mongodb.internal.client.model.search;
 
-class JsonDoubleConverter implements Converter<Double> {
-    @Override
-    public void convert(final Double value, final StrictJsonWriter writer) {
-        writer.writeNumber(JsonDoubleHelper.toString(value));
-    }
+import com.mongodb.client.model.search.VectorSearchQuery;
+
+public abstract class AbstractVectorSearchQuery implements VectorSearchQuery {
+
+    public abstract String getModel();
+
 }
