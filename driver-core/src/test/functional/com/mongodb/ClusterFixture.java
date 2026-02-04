@@ -52,7 +52,7 @@ import com.mongodb.internal.connection.ClientMetadata;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
 import com.mongodb.internal.connection.DefaultInetAddressResolver;
-import com.mongodb.internal.connection.InternalConnectionPoolSettings;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.internal.connection.InternalOperationContextFactory;
 import com.mongodb.internal.connection.MongoCredentialWithCache;
 import com.mongodb.internal.connection.OperationContext;
@@ -478,7 +478,7 @@ public final class ClusterFixture {
     private static Cluster createCluster(final MongoCredential credential, final StreamFactory streamFactory) {
         return new DefaultClusterFactory().createCluster(ClusterSettings.builder().hosts(asList(getPrimary())).build(),
                 ServerSettings.builder().build(),
-                ConnectionPoolSettings.builder().maxSize(1).build(), InternalConnectionPoolSettings.builder().build(),
+                ConnectionPoolSettings.builder().maxSize(1).build(), InternalMongoClientSettings.getDefaults(),
                 TIMEOUT_SETTINGS.connectionOnly(), streamFactory, TIMEOUT_SETTINGS.connectionOnly(), streamFactory, credential,
                 LoggerSettings.builder().build(), null, null, null, Collections.emptyList(), getServerApi(), null);
     }
@@ -488,7 +488,7 @@ public final class ClusterFixture {
 
         return new DefaultClusterFactory().createCluster(mongoClientSettings.getClusterSettings(),
                 mongoClientSettings.getServerSettings(), mongoClientSettings.getConnectionPoolSettings(),
-                InternalConnectionPoolSettings.builder().build(), TimeoutSettings.create(mongoClientSettings).connectionOnly(),
+                InternalMongoClientSettings.getDefaults(), TimeoutSettings.create(mongoClientSettings).connectionOnly(),
                 streamFactory, TimeoutSettings.createHeartbeatSettings(mongoClientSettings).connectionOnly(),
                 new SocketStreamFactory(new DefaultInetAddressResolver(), SocketSettings.builder().readTimeout(5, SECONDS).build(),
                         getSslSettings(connectionString)),

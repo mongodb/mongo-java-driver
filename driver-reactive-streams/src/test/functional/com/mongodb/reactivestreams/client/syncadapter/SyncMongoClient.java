@@ -158,6 +158,17 @@ public class SyncMongoClient implements MongoClient {
         this.delegate = new SyncMongoCluster(wrapped);
     }
 
+    /**
+     * Wraps an existing reactive MongoClient as a sync client adapter.
+     *
+     * @param reactiveMongoClient the reactive MongoClient to wrap
+     */
+    public SyncMongoClient(final com.mongodb.reactivestreams.client.MongoClient reactiveMongoClient) {
+        this.connectionPoolCounter = new ConnectionPoolCounter();
+        this.wrapped = reactiveMongoClient;
+        this.delegate = new SyncMongoCluster(wrapped);
+    }
+
     public com.mongodb.reactivestreams.client.MongoClient getWrapped() {
         return wrapped;
     }
