@@ -579,7 +579,7 @@ public final class ClusterFixture {
         return serverDescriptions.get(0).getAddress();
     }
 
-    public static void sleep(final long sleepMS) {
+    public static void sleep(final int sleepMS) {
         try {
             Thread.sleep(sleepMS);
         } catch (InterruptedException e) {

@@ -129,31 +129,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
     protected TestCommandListener commandListener;
 
-//    @RegisterExtension
-//    public TestWatcher commandEventPrinter = new TestWatcher() {
-//        @Override
-//        public void testFailed(ExtensionContext context, Throwable cause) {
-//            System.err.println("\n=== TEST FAILED: " + context.getDisplayName() + " ===");
-//            System.err.println("Failure: " + cause.getMessage());
-//            if (commandListener != null) {
-//                System.err.println("\n--- Command Events ---");
-//                commandListener.getEvents().forEach(event -> {
-//                    if (event instanceof CommandStartedEvent) {
-//                        CommandStartedEvent e = (CommandStartedEvent) event;
-//                        System.err.println("STARTED: " + e.getCommandName() + " - " + e.getCommand().toJson());
-//                    } else if (event instanceof CommandSucceededEvent) {
-//                        CommandSucceededEvent e = (CommandSucceededEvent) event;
-//                        System.err.println("SUCCEEDED: " + e.getCommandName() + " (elapsed: " + e.getElapsedTime(TimeUnit.MILLISECONDS) + "ms)");
-//                    } else if (event instanceof CommandFailedEvent) {
-//                        CommandFailedEvent e = (CommandFailedEvent) event;
-//                        System.err.println("FAILED: " + e.getCommandName() + " (elapsed: " + e.getElapsedTime(TimeUnit.MILLISECONDS) + "ms) - " + e.getThrowable().getMessage());
-//                    }
-//                });
-//                System.err.println("=== END COMMAND EVENTS ===\n");
-//            }
-//        }
-//    };
-
     protected abstract MongoClient createMongoClient(MongoClientSettings mongoClientSettings);
 
     protected abstract GridFSBucket createGridFsBucket(MongoDatabase mongoDatabase, String bucketName);
@@ -584,7 +559,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName());
 
-            long defaultTimeout = 300;
+            int defaultTimeout = 300;
             try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
                     .defaultTimeout(defaultTimeout, TimeUnit.MILLISECONDS).build())) {
                 session.startTransaction();
@@ -616,7 +591,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName());
 
-            long defaultTimeout = 300;
+            int defaultTimeout = 300;
             try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
                     .defaultTimeout(defaultTimeout, TimeUnit.MILLISECONDS).build())) {
                 session.startTransaction();
@@ -684,7 +659,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName());
 
-            long defaultTimeout = 200;
+            int defaultTimeout = 200;
             try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
                     .defaultTimeout(defaultTimeout, TimeUnit.MILLISECONDS).build())) {
                 assertThrows(MongoOperationTimeoutException.class,
@@ -720,7 +695,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName());
 
-            long defaultTimeout = 200;
+            int defaultTimeout = 200;
             try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
                     .defaultTimeout(defaultTimeout, TimeUnit.MILLISECONDS).build())) {
                 assertThrows(MongoOperationTimeoutException.class,
@@ -786,7 +761,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName());
 
-            long defaultTimeout = 200;
+            int defaultTimeout = 200;
             try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
                     .defaultTimeout(defaultTimeout, TimeUnit.MILLISECONDS)
                     .build())) {
