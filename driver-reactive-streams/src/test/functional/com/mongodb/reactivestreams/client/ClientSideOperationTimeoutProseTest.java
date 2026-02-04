@@ -212,7 +212,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                     .longValue();
 
             assertTrue(deleteMaxTimeMS <= 420
-                            // some leeway for timing variations, when compression is used it is often lees then 300.
+                            // some leeway for timing variations, when compression is used it is often less then 300.
                             // Without it, it is more than 300.
                             && deleteMaxTimeMS >= 150,
                     "Expected maxTimeMS for delete command to be between 150s and 420ms, " + "but was: " + deleteMaxTimeMS + "ms");
