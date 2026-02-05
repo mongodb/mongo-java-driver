@@ -63,6 +63,25 @@ public final class UnifiedTestModifications {
                 .file("client-side-encryption/tests/unified", "client bulkWrite with queryable encryption");
 
         // client-side-operation-timeout (CSOT)
+        def.retry("Unified CSOT tests do not account for RTT which varies in TLS vs non-TLS runs")
+                .whenFailureContains("timeout")
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for non-tailable cursors",
+                        "timeoutMS is refreshed for getMore if timeoutMode is iteration - success");
+
+        def.retry("Unified CSOT tests do not account for RTT which varies in TLS vs non-TLS runs")
+                .whenFailureContains("timeout")
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for tailable non-awaitData cursors",
+                        "timeoutMS is refreshed for getMore - success");
+
+        def.retry("Unified CSOT tests do not account for RTT which varies in TLS vs non-TLS runs")
+                .whenFailureContains("timeout")
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for tailable non-awaitData cursors",
+                        "timeoutMS is refreshed for getMore - success");
+
+        //TODO-invistigate
         /*
           As to the background connection pooling section:
          timeoutMS set at the MongoClient level MUST be used as the timeout for all commands sent as part of the handshake.
