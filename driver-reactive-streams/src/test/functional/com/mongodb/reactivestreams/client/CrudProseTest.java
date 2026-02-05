@@ -28,4 +28,10 @@ final class CrudProseTest extends com.mongodb.client.CrudProseTest {
     protected MongoClient createMongoClient(final MongoClientSettings.Builder mongoClientSettingsBuilder) {
         return new SyncMongoClient(mongoClientSettingsBuilder);
     }
+
+    @Override
+    protected MongoClient createMongoClientWithExtendedCloseWait(final MongoClientSettings.Builder mongoClientSettingsBuilder,
+            final int waitIterations) {
+        return new SyncMongoClient(mongoClientSettingsBuilder, null, waitIterations);
+    }
 }
