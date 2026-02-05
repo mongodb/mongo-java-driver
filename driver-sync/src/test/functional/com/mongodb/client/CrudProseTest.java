@@ -243,9 +243,11 @@ public class CrudProseTest {
     protected void testBulkWriteHandlesWriteErrorsAcrossBatches(final boolean ordered) {
         assumeTrue(serverVersionAtLeast(8, 0));
         TestCommandListener commandListener = new TestCommandListener();
-        try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
+        // Use longer timeout (300 iterations = 60 seconds) as this test involves many write errors
+        // and the async cleanup takes longer than the default 2 seconds
+        try (MongoClient client = createMongoClientWithExtendedCloseWait(getMongoClientSettingsBuilder()
                 .retryWrites(false)
-                .addCommandListener(commandListener))) {
+                .addCommandListener(commandListener), 300)) {
             int maxWriteBatchSize = droppedDatabase(client).runCommand(new Document("hello", 1)).getInteger("maxWriteBatchSize");
             Document document = new Document("_id", 1);
             MongoCollection<Document> collection = droppedCollection(client, Document.class);
@@ -562,6 +564,16 @@ public class CrudProseTest {
 
     protected MongoClient createMongoClient(final MongoClientSettings.Builder mongoClientSettingsBuilder) {
         return MongoClients.create(mongoClientSettingsBuilder.build());
+    }
+
+    /**
+     * Should be ignored by sync driver.
+     * The only reason for this method to exist is
+     * to allow async driver to extend the close wait time
+     */
+    protected MongoClient createMongoClientWithExtendedCloseWait(final MongoClientSettings.Builder mongoClientSettingsBuilder,
+            final int waitIterations) {
+        return createMongoClient(mongoClientSettingsBuilder);
     }
 
     private <TDocument> MongoCollection<TDocument> droppedCollection(final MongoClient client, final Class<TDocument> documentClass) {

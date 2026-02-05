@@ -152,7 +152,12 @@ public class SyncMongoClient implements MongoClient {
     }
 
     public SyncMongoClient(final MongoClientSettings.Builder builder, @Nullable final MongoDriverInformation mongoDriverInformation) {
-        this.connectionPoolCounter = new ConnectionPoolCounter();
+        this(builder, mongoDriverInformation, ConnectionPoolCounter.DEFAULT_MAX_ITERATIONS);
+    }
+
+    public SyncMongoClient(final MongoClientSettings.Builder builder, @Nullable final MongoDriverInformation mongoDriverInformation,
+            final int connectionCloseWaitIterations) {
+        this.connectionPoolCounter = new ConnectionPoolCounter(connectionCloseWaitIterations);
         builder.applyToConnectionPoolSettings(b -> b.addConnectionPoolListener(connectionPoolCounter));
         this.wrapped = MongoClients.create(builder.build(), mongoDriverInformation);
         this.delegate = new SyncMongoCluster(wrapped);
@@ -345,7 +350,13 @@ public class SyncMongoClient implements MongoClient {
     }
 
     static class ConnectionPoolCounter implements ConnectionPoolListener {
+        static final int DEFAULT_MAX_ITERATIONS = 10; // 10 * 200ms = 2 seconds
         private final AtomicInteger activeConnections = new AtomicInteger(0);
+        private final int maxIterations;
+
+        ConnectionPoolCounter(final int maxIterations) {
+            this.maxIterations = maxIterations;
+        }
 
         @Override
         public void connectionCheckedOut(final ConnectionCheckedOutEvent event) {
@@ -354,22 +365,26 @@ public class SyncMongoClient implements MongoClient {
 
         @Override
         public void connectionCheckedIn(final ConnectionCheckedInEvent event) {
-            activeConnections.decrementAndGet();
+            final int i = activeConnections.decrementAndGet();
+            System.out.println("Connection closed " + i + " " + Thread.currentThread().getName());
         }
 
         protected void assertConnectionsClosed() {
             int activeConnectionsCount = activeConnections.get();
             boolean connectionsClosed = activeConnectionsCount == 0;
             int counter = 0;
-            while (counter < 10 && !connectionsClosed) {
+            // Wait up to maxIterations (default 2 seconds) for connections to close.
+            // This allows time for long-running operations (like bulk writes with many errors)
+            // to complete their cleanup after cancellation.
+            while (counter < maxIterations && !connectionsClosed) {
                 activeConnectionsCount = activeConnections.get();
                 connectionsClosed = activeConnectionsCount == 0;
                 if (!connectionsClosed) {
+                    System.out.println("Waiting "+ Thread.currentThread().getName());
                     sleep(200);
                     counter++;
                 }
             }
-
             Assertions.assertTrue(activeConnectionsCount == 0,
                     format("Expected all connections to be closed after closing the client. %n"
                             + "The connection pool listener reports '%d' open connections.", activeConnectionsCount));

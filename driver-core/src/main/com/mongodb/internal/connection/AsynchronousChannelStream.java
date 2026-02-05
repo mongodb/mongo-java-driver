@@ -41,6 +41,8 @@ import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+import org.bson.ByteBufNIO;
+
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
@@ -174,7 +176,11 @@ public abstract class AsynchronousChannelStream implements Stream {
         byteChannel.write(byteBuffer.asNIO(), operationContext, new AsyncCompletionHandler<Void>() {
             @Override
             public void completed(@Nullable final Void t) {
-                if (byteBuffer.hasRemaining()) {
+                boolean isNioBuf = byteBuffer instanceof ByteBufNIO;
+                // in a rare case when ByteBufNIO was already released
+                // the call to `hasRemaining` may throw an NPE
+                // so we add this new if condition to catch this case
+                if ((isNioBuf && byteBuffer.asNIO() != null && byteBuffer.hasRemaining()) || byteBuffer.hasRemaining()) {
                     byteChannel.write(byteBuffer.asNIO(), operationContext, this);
                 } else {
                     outerHandler.completed(null);
