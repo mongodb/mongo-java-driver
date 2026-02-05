@@ -245,9 +245,10 @@ public class CrudProseTest {
         TestCommandListener commandListener = new TestCommandListener();
         // Use longer timeout (300 iterations = 60 seconds) as this test involves many write errors
         // and the async cleanup takes longer than the default 2 seconds
+        final int waitIterations = 300;
         try (MongoClient client = createMongoClientWithExtendedCloseWait(getMongoClientSettingsBuilder()
                 .retryWrites(false)
-                .addCommandListener(commandListener), 300)) {
+                .addCommandListener(commandListener), waitIterations)) {
             int maxWriteBatchSize = droppedDatabase(client).runCommand(new Document("hello", 1)).getInteger("maxWriteBatchSize");
             Document document = new Document("_id", 1);
             MongoCollection<Document> collection = droppedCollection(client, Document.class);
