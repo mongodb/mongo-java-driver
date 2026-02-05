@@ -365,8 +365,7 @@ public class SyncMongoClient implements MongoClient {
 
         @Override
         public void connectionCheckedIn(final ConnectionCheckedInEvent event) {
-            final int i = activeConnections.decrementAndGet();
-            System.out.println("Connection closed " + i + " " + Thread.currentThread().getName());
+            activeConnections.decrementAndGet();
         }
 
         protected void assertConnectionsClosed() {
@@ -380,7 +379,6 @@ public class SyncMongoClient implements MongoClient {
                 activeConnectionsCount = activeConnections.get();
                 connectionsClosed = activeConnectionsCount == 0;
                 if (!connectionsClosed) {
-                    System.out.println("Waiting "+ Thread.currentThread().getName());
                     sleep(200);
                     counter++;
                 }
