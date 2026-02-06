@@ -23,11 +23,12 @@ jobs:
     steps:
       - name: "Create release output"
         run: echo '🎬 Release process for version ${{ env.RELEASE_VERSION }} started by @${{ github.triggering_actor }}' >> $GITHUB_STEP_SUMMARY
-
+      
       - uses: mongodb-labs/drivers-github-tools/secure-checkout@v2
         with:
           app_id: ${{ vars.APP_ID }}
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
+          fetch-depth: 0
 
       - name: "Store version numbers in env variables"
         # The awk command to increase the version number was copied from
@@ -43,6 +44,7 @@ jobs:
         #   Example: 5.2.0 => 5.2.x
         #   Example: 5.2.0-beta1 => <current branch>
         run: |
+          echo CURRENT_TAG=$(git describe --tags --abbrev=0) >> $GITHUB_ENV
           echo RELEASE_VERSION=${{ inputs.version }} >> $GITHUB_ENV
           echo RELEASE_VERSION_WITHOUT_SUFFIX=$(echo ${{ inputs.version }} | awk -F- '{print $1}') >> $GITHUB_ENV
           if [[ "${{ inputs.version }}" =~ (alpha|beta|rc)[0-9]+$ ]]; then
@@ -130,6 +132,7 @@ jobs:
             --target ${{ env.RELEASE_BRANCH }} \
             --title "Java Driver ${{ env.RELEASE_VERSION }} ($(date '+%B %d, %Y'))" \
             --generate-notes \
+            --notes-start-tag "${{ env.CURRENT_TAG }}" \
             --draft\
           )" >> "$GITHUB_ENV"
 
