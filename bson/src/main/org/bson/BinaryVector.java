@@ -32,6 +32,9 @@ import org.bson.diagnostics.Loggers;
  * @since 5.3
  */
 public abstract class BinaryVector {
+    /**
+     * The BinaryVector logger
+     */
     protected static final Logger LOGGER = Loggers.getLogger("BinaryVector");
     private final DataType dataType;
 
