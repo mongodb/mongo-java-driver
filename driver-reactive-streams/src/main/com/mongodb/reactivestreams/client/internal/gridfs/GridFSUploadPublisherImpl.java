@@ -54,7 +54,8 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Void> {
 
-    private static final String TIMEOUT_ERROR_MESSAGE = "Saving chunks exceeded the timeout limit.";
+    private static final String TIMEOUT_ERROR_MESSAGE_CHUNKS_SAVING = "Saving chunks exceeded the timeout limit.";
+    private static final String TIMEOUT_ERROR_MESSAGE_UPLOAD_CANCELLATION = "Upload cancellation exceeded the timeout limit.";
     private static final Document PROJECTION = new Document("_id", 1);
     private static final Document FILES_INDEX = new Document("filename", 1).append("uploadDate", 1);
     private static final Document CHUNKS_INDEX = new Document("files_id", 1).append("n", 1);
@@ -226,8 +227,8 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
                             .append("data", data);
 
                     Publisher<InsertOneResult> insertOnePublisher = clientSession == null
-                            ? collectionWithTimeout(chunksCollection, timeout, TIMEOUT_ERROR_MESSAGE).insertOne(chunkDocument)
-                            : collectionWithTimeout(chunksCollection, timeout, TIMEOUT_ERROR_MESSAGE)
+                            ? collectionWithTimeout(chunksCollection, timeout, TIMEOUT_ERROR_MESSAGE_CHUNKS_SAVING).insertOne(chunkDocument)
+                            : collectionWithTimeout(chunksCollection, timeout, TIMEOUT_ERROR_MESSAGE_CHUNKS_SAVING)
                                .insertOne(clientSession, chunkDocument);
 
                     return Mono.from(insertOnePublisher).thenReturn(data.length());
@@ -270,7 +271,8 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
     }
 
     private Mono<DeleteResult> createCancellationMono(final AtomicBoolean terminated, @Nullable final Timeout timeout) {
-        Mono<MongoCollection<Document>> chunksCollectionMono = collectionWithTimeoutDeferred(chunksCollection, timeout);
+        Mono<MongoCollection<Document>> chunksCollectionMono = collectionWithTimeoutDeferred(chunksCollection, timeout,
+                TIMEOUT_ERROR_MESSAGE_UPLOAD_CANCELLATION);
         if (terminated.compareAndSet(false, true)) {
             if (clientSession != null) {
                 return chunksCollectionMono.flatMap(collection -> Mono.from(collection
