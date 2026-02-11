@@ -225,7 +225,16 @@ public class AsynchronousTlsChannelGroup {
     }
 
     void submit(final Runnable r) {
-        executor.submit(r);
+        executor.submit(() -> {
+            try {
+                r.run();
+            } catch (Throwable e) {
+                // catch Throwable to also catch unexpected StackoverflowErrors and similar,
+                // to avoid silent loss of exceptions in asynchronous code
+                // see JAVA-6071 for an example of such a case
+                LOGGER.error("error in submitted runnable in AsynchronousTlsChannelGroup", e);
+            }
+        });
     }
 
     RegisteredSocket registerSocket(TlsChannel reader, SocketChannel socketChannel) {
