@@ -30,9 +30,12 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 public final class ExponentialBackoff {
 
     // Constants for transaction retry backoff
-    private static final double TRANSACTION_BASE_MS = 5.0;
-    private static final double TRANSACTION_MAX_MS = 500.0;
-    private static final double TRANSACTION_GROWTH = 1.5;
+    @VisibleForTesting(otherwise = PRIVATE)
+    static final double TRANSACTION_BASE_MS = 5.0;
+    @VisibleForTesting(otherwise = PRIVATE)
+    static final double TRANSACTION_MAX_MS = 500.0;
+    @VisibleForTesting(otherwise = PRIVATE)
+    static final double TRANSACTION_GROWTH = 1.5;
 
     // TODO-JAVA-6079
     private static DoubleSupplier testJitterSupplier = null;

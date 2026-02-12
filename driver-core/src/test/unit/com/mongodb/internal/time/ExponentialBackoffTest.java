@@ -22,43 +22,44 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ExponentialBackoffTest {
+    // Expected backoffs with jitter=1.0 and growth factor ExponentialBackoff.TRANSACTION_GROWTH
+    private static final double[] EXPECTED_BACKOFFS_MAX_VALUES = {5.0, 7.5, 11.25, 16.875, 25.3125, 37.96875, 56.953125, 85.4296875, 128.14453125,
+            192.21679688, 288.32519531, 432.48779297, 500.0};
 
     @Test
-    void testTransactionRetryBackoff() {
-        // Test that the backoff sequence follows the expected pattern with growth factor 1.5
+    void testCalculateTransactionBackoffMs() {
+        // Test that the backoff sequence follows the expected pattern with growth factor ExponentialBackoff.TRANSACTION_GROWTH
         // Expected sequence (without jitter): 5, 7.5, 11.25, ...
         // With jitter, actual values will be between 0 and these maxima
-        double[] expectedMaxValues = {5.0, 7.5, 11.25, 16.875, 25.3125, 37.96875, 56.953125, 85.4296875, 128.14453125, 192.21679688, 288.32519531, 432.48779297, 500.0};
 
-        for (int attemptNumber = 1; attemptNumber <= expectedMaxValues.length; attemptNumber++) {
+        for (int attemptNumber = 1; attemptNumber <= EXPECTED_BACKOFFS_MAX_VALUES.length; attemptNumber++) {
             long backoff = ExponentialBackoff.calculateTransactionBackoffMs(attemptNumber);
-            assertTrue(backoff >= 0 && backoff <= Math.round(expectedMaxValues[attemptNumber - 1]),
+            long expectedBackoff = Math.round(EXPECTED_BACKOFFS_MAX_VALUES[attemptNumber - 1]);
+                    assertTrue(backoff >= 0 && backoff <= expectedBackoff,
                 String.format("Attempt %d: backoff should be 0-%d ms, got: %d", attemptNumber,
-                        Math.round(expectedMaxValues[attemptNumber - 1]), backoff));
+                        expectedBackoff, backoff));
         }
     }
 
     @Test
-    void testTransactionRetryBackoffRespectsMaximum() {
-        // Even at high attempt numbers, backoff should never exceed 500ms
+    void testCalculateTransactionBackoffMsRespectsMaximum() {
+        // Even at high attempt numbers, backoff should never exceed ExponentialBackoff.TRANSACTION_MAX_MS
         for (int attemptNumber = 1; attemptNumber < 26; attemptNumber++) {
             long backoff = ExponentialBackoff.calculateTransactionBackoffMs(attemptNumber);
-            assertTrue(backoff >= 0 && backoff <= 500,
-                String.format("Attempt %d: backoff should be capped at 500 ms, got: %d ms", attemptNumber, backoff));
+            assertTrue(backoff >= 0 && backoff <= ExponentialBackoff.TRANSACTION_MAX_MS,
+                String.format("Attempt %d: backoff should be capped at %f ms, got: %d ms",
+                        attemptNumber, ExponentialBackoff.TRANSACTION_MAX_MS, backoff));
         }
     }
 
     @Test
     void testCustomJitter() {
-        // Expected backoffs with jitter=1.0 and growth factor 1.5
-        double[] expectedBackoffs = {5.0, 7.5, 11.25, 16.875, 25.3125, 37.96875, 56.953125, 85.4296875, 128.14453125, 192.21679688, 288.32519531, 432.48779297, 500.0};
-
         // Test with jitter = 1.0
         ExponentialBackoff.setTestJitterSupplier(() -> 1.0);
         try {
-            for (int attemptNumber = 1; attemptNumber <= expectedBackoffs.length; attemptNumber++) {
+            for (int attemptNumber = 1; attemptNumber <= EXPECTED_BACKOFFS_MAX_VALUES.length; attemptNumber++) {
                 long backoff = ExponentialBackoff.calculateTransactionBackoffMs(attemptNumber);
-                long expected = Math.round(expectedBackoffs[attemptNumber - 1]);
+                long expected = Math.round(EXPECTED_BACKOFFS_MAX_VALUES[attemptNumber - 1]);
                 assertEquals(expected, backoff,
                     String.format("Attempt %d: with jitter=1.0, backoff should be %d ms", attemptNumber, expected));
             }
