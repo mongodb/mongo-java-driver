@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ExponentialBackoffTest {
+class ExponentialBackoffTest {
     // Expected backoffs with jitter=1.0 and growth factor ExponentialBackoff.TRANSACTION_GROWTH
     private static final double[] EXPECTED_BACKOFFS_MAX_VALUES = {5.0, 7.5, 11.25, 16.875, 25.3125, 37.96875, 56.953125, 85.4296875, 128.14453125,
             192.21679688, 288.32519531, 432.48779297, 500.0};
@@ -36,8 +36,7 @@ public class ExponentialBackoffTest {
             long backoff = ExponentialBackoff.calculateTransactionBackoffMs(attemptNumber);
             long expectedBackoff = Math.round(EXPECTED_BACKOFFS_MAX_VALUES[attemptNumber - 1]);
                     assertTrue(backoff >= 0 && backoff <= expectedBackoff,
-                String.format("Attempt %d: backoff should be 0-%d ms, got: %d", attemptNumber,
-                        expectedBackoff, backoff));
+                String.format("Attempt %d: backoff should be between 0 ms and %d ms, got: %d", attemptNumber, expectedBackoff, backoff));
         }
     }
 
@@ -70,7 +69,7 @@ public class ExponentialBackoffTest {
         // Test with jitter = 0, all backoffs should be 0
         ExponentialBackoff.setTestJitterSupplier(() -> 0.0);
         try {
-            for (int attemptNumber = 1; attemptNumber < 11; attemptNumber++) {
+            for (int attemptNumber = 1; attemptNumber < EXPECTED_BACKOFFS_MAX_VALUES.length; attemptNumber++) {
                 long backoff = ExponentialBackoff.calculateTransactionBackoffMs(attemptNumber);
                 assertEquals(0, backoff, "With jitter=0, backoff should always be 0 ms");
             }
