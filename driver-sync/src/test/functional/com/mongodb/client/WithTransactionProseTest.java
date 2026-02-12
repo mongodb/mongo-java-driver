@@ -214,7 +214,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
 
     /**
      * See
-     * <a href="https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#retry-backoff-is-enforceds">Convenient API Prose Tests</a>.
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#retry-backoff-is-enforced">Retry Backoff is Enforced</a>.
      */
     @DisplayName("Retry Backoff is Enforced")
     @Test
