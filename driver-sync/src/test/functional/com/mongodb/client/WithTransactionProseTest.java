@@ -219,44 +219,17 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     @DisplayName("Retry Backoff is Enforced")
     @Test
     public void testRetryBackoffIsEnforced() throws InterruptedException {
-        // Run with jitter = 0 (no backoff)
-        ExponentialBackoff.setTestJitterSupplier(() -> 0.0);
-
-        BsonDocument failPointDocument = BsonDocument.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 13}, "
+        final BsonDocument failPointDocument = BsonDocument.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 13}, "
                 + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 251}}");
 
-        long noBackoffTime;
-        try (ClientSession session = client.startSession();
-             FailPoint ignored = FailPoint.enable(failPointDocument, getPrimary())) {
-            StartTime startTime = StartTime.now();
-            session.withTransaction(() -> collection.insertOne(session, Document.parse("{}")));
-            noBackoffTime = startTime.elapsed().toMillis();
-        } finally {
-            // Clear the test jitter supplier to avoid affecting other tests
-            ExponentialBackoff.clearTestJitterSupplier();
-        }
-
-        // Run with jitter = 1 (full backoff)
-        ExponentialBackoff.setTestJitterSupplier(() -> 1.0);
-
-        failPointDocument = BsonDocument.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 13}, "
-                + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 251}}");
-
-        long withBackoffTime;
-        try (ClientSession session = client.startSession();
-             FailPoint ignored = FailPoint.enable(failPointDocument, getPrimary())) {
-            StartTime startTime = StartTime.now();
-            session.withTransaction(() -> collection.insertOne(session, Document.parse("{}")));
-            withBackoffTime = startTime.elapsed().toMillis();
-        } finally {
-            ExponentialBackoff.clearTestJitterSupplier();
-        }
+        long noBackoffTime = measureTransactionLatency(0.0, failPointDocument);
+        long withBackoffTime = measureTransactionLatency(1.0, failPointDocument);
 
         long expectedWithBackoffTime = noBackoffTime + 1800;
         long actualDifference = Math.abs(withBackoffTime - expectedWithBackoffTime);
 
-        assertTrue(actualDifference < 1000, String.format("Expected withBackoffTime to be ~% dms (noBackoffTime %d ms + 1800 ms), but"
-                + " got %d ms. Difference: %d ms (tolerance: 1000 ms per spec)", expectedWithBackoffTime, noBackoffTime, withBackoffTime,
+        assertTrue(actualDifference < 500, String.format("Expected withBackoffTime to be ~% dms (noBackoffTime %d ms + 1800 ms), but"
+                + " got %d ms. Difference: %d ms (tolerance: 500 ms per spec)", expectedWithBackoffTime, noBackoffTime, withBackoffTime,
                 actualDifference));
     }
 
@@ -279,6 +252,18 @@ public class WithTransactionProseTest extends DatabaseTestCase {
             });
 
             assertEquals(4, attemptsCount.get(), "Expected 1 initial attempt + 3 retries");
+        }
+    }
+
+    private long measureTransactionLatency(final double jitter, final BsonDocument failPointDocument) throws InterruptedException {
+        ExponentialBackoff.setTestJitterSupplier(() -> jitter);
+        try (ClientSession session = client.startSession();
+             FailPoint ignored = FailPoint.enable(failPointDocument, getPrimary())) {
+            StartTime startTime = StartTime.now();
+            session.withTransaction(() -> collection.insertOne(session, Document.parse("{}")));
+            return startTime.elapsed().toMillis();
+        } finally {
+            ExponentialBackoff.clearTestJitterSupplier();
         }
     }
 
