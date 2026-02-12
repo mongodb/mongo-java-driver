@@ -28,7 +28,6 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
-import com.mongodb.internal.time.ExponentialBackoff;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBucket;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBuckets;
 import com.mongodb.reactivestreams.client.syncadapter.SyncGridFSBucket;
@@ -502,7 +501,6 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     public void setUp() {
         super.setUp();
         SyncMongoClient.enableSleepAfterSessionClose(postSessionCloseSleep());
-        ExponentialBackoff.setTestJitterSupplier(() -> 0);
     }
 
     @Override
@@ -510,7 +508,6 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     public void tearDown() throws InterruptedException {
         super.tearDown();
         SyncMongoClient.disableSleep();
-        ExponentialBackoff.clearTestJitterSupplier();
     }
 
     @Override
