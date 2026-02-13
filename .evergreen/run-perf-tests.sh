@@ -19,6 +19,8 @@ export OUTPUT_FILE="${PROJECT_DIRECTORY}/results.json"
 
 if [ "${PROVIDER}" = "Netty" ]; then
     TASK="driver-benchmarks:runNetty"
+elif [ "${PROVIDER}" = "Pojo" ]; then
+    TASK="driver-benchmarks:runPojo"
 else
     TASK="driver-benchmarks:run"
 fi
