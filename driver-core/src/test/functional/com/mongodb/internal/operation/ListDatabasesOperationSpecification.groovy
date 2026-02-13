@@ -33,7 +33,7 @@ import org.bson.Document
 import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.getOperationContext
 
 class ListDatabasesOperationSpecification extends OperationFunctionalSpecification {
     def codec = new DocumentCodec()
@@ -82,7 +82,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         def operation = new ListDatabasesOperation(helper.decoder)
 
         when:
-        operation.execute(readBinding, OPERATION_CONTEXT)
+        operation.execute(readBinding, getOperationContext())
 
         then:
         _ * connection.getDescription() >> helper.connectionDescription
@@ -107,7 +107,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         def operation = new ListDatabasesOperation(helper.decoder)
 
         when:
-        operation.executeAsync(readBinding, OPERATION_CONTEXT, Stub(SingleResultCallback))
+        operation.executeAsync(readBinding, getOperationContext(), Stub(SingleResultCallback))
 
         then:
         _ * connection.getDescription() >> helper.connectionDescription

@@ -32,7 +32,7 @@ import org.bson.BsonArray
 import org.bson.BsonDocument
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.connection.ServerConnectionState.CONNECTED
@@ -108,8 +108,8 @@ class OperationHelperSpecification extends Specification {
         }
 
         expect:
-        canRetryRead(retryableServerDescription, OPERATION_CONTEXT.withSessionContext(noTransactionSessionContext))
-        !canRetryRead(retryableServerDescription, OPERATION_CONTEXT.withSessionContext(activeTransactionSessionContext))
+        canRetryRead(retryableServerDescription, getOperationContext().withSessionContext(noTransactionSessionContext))
+        !canRetryRead(retryableServerDescription, getOperationContext().withSessionContext(activeTransactionSessionContext))
     }
 
 

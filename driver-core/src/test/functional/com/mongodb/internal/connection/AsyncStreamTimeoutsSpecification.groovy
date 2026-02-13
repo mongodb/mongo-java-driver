@@ -30,7 +30,7 @@ import com.mongodb.spock.Slow
 
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.getSslSettings
@@ -49,7 +49,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
                 .create(new ServerId(new ClusterId(), new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))))
 
         when:
-        connection.open(OPERATION_CONTEXT)
+        connection.open(getOperationContext())
 
         then:
         thrown(MongoSocketOpenException)
@@ -63,7 +63,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
                 new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))))
 
         when:
-        connection.open(OPERATION_CONTEXT)
+        connection.open(getOperationContext())
 
         then:
         thrown(MongoSocketOpenException)

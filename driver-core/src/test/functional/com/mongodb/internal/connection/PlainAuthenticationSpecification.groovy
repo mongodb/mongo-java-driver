@@ -32,7 +32,7 @@ import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import static com.mongodb.AuthenticationMechanism.PLAIN
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.ClusterFixture.getClusterConnectionMode
 import static com.mongodb.ClusterFixture.getConnectionString
 import static com.mongodb.ClusterFixture.getCredential
@@ -52,7 +52,7 @@ class PlainAuthenticationSpecification extends Specification {
         when:
         openConnection(connection, async)
         executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
-                getClusterConnectionMode(), null, connection, OPERATION_CONTEXT)
+                getClusterConnectionMode(), null, connection, getOperationContext())
 
         then:
         thrown(MongoCommandException)
@@ -71,7 +71,7 @@ class PlainAuthenticationSpecification extends Specification {
         when:
         openConnection(connection, async)
         executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
-                getClusterConnectionMode(), null, connection, OPERATION_CONTEXT)
+                getClusterConnectionMode(), null, connection, getOperationContext())
 
         then:
         true
@@ -90,7 +90,7 @@ class PlainAuthenticationSpecification extends Specification {
         when:
         openConnection(connection, async)
         executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
-                getClusterConnectionMode(), null, connection, OPERATION_CONTEXT)
+                getClusterConnectionMode(), null, connection, getOperationContext())
 
         then:
         thrown(MongoSecurityException)
@@ -123,10 +123,10 @@ class PlainAuthenticationSpecification extends Specification {
     private static void openConnection(final InternalConnection connection, final boolean async) {
         if (async) {
             FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>()
-            connection.openAsync(OPERATION_CONTEXT, futureResultCallback)
+            connection.openAsync(getOperationContext(), futureResultCallback)
             futureResultCallback.get(ClusterFixture.TIMEOUT, SECONDS)
         } else {
-            connection.open(OPERATION_CONTEXT)
+            connection.open(getOperationContext())
         }
     }
 }

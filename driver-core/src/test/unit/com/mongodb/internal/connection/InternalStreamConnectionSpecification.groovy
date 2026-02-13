@@ -58,7 +58,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
@@ -114,7 +114,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def getOpenedConnection() {
         def connection = getConnection()
-        connection.open(OPERATION_CONTEXT)
+        connection.open(getOperationContext())
         connection
     }
 
@@ -132,7 +132,7 @@ class InternalStreamConnectionSpecification extends Specification {
                 .lastUpdateTimeNanos(connection.getInitialServerDescription().getLastUpdateTime(NANOSECONDS))
                 .build()
         when:
-        connection.open(OPERATION_CONTEXT)
+        connection.open(getOperationContext())
 
         then:
         connection.opened()
@@ -159,7 +159,7 @@ class InternalStreamConnectionSpecification extends Specification {
                 .build()
 
         when:
-        connection.openAsync(OPERATION_CONTEXT, futureResultCallback)
+        connection.openAsync(getOperationContext(), futureResultCallback)
         futureResultCallback.get()
 
         then:
@@ -177,7 +177,7 @@ class InternalStreamConnectionSpecification extends Specification {
                 failedInitializer)
 
         when:
-        connection.open(OPERATION_CONTEXT)
+        connection.open(getOperationContext())
 
         then:
         thrown MongoInternalException
@@ -195,7 +195,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
         when:
         def futureResultCallback = new FutureResultCallback<Void>()
-        connection.openAsync(OPERATION_CONTEXT, futureResultCallback)
+        connection.openAsync(getOperationContext(), futureResultCallback)
         futureResultCallback.get()
 
         then:
@@ -212,14 +212,14 @@ class InternalStreamConnectionSpecification extends Specification {
         def (buffers2, messageId2) = helper.hello()
 
         when:
-        connection.sendMessage(buffers1, messageId1, OPERATION_CONTEXT)
+        connection.sendMessage(buffers1, messageId1, getOperationContext())
 
         then:
         connection.isClosed()
         thrown MongoSocketWriteException
 
         when:
-        connection.sendMessage(buffers2, messageId2, OPERATION_CONTEXT)
+        connection.sendMessage(buffers2, messageId2, getOperationContext())
 
         then:
         thrown MongoSocketClosedException
@@ -243,7 +243,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def connection = getOpenedConnection()
 
         when:
-        connection.sendMessageAsync(buffers1, messageId1, OPERATION_CONTEXT, sndCallbck1)
+        connection.sendMessageAsync(buffers1, messageId1, getOperationContext(), sndCallbck1)
         sndCallbck1.get(10, SECONDS)
 
         then:
@@ -251,7 +251,7 @@ class InternalStreamConnectionSpecification extends Specification {
         connection.isClosed()
 
         when:
-        connection.sendMessageAsync(buffers2, messageId2, OPERATION_CONTEXT, sndCallbck2)
+        connection.sendMessageAsync(buffers2, messageId2, getOperationContext(), sndCallbck2)
         sndCallbck2.get(10, SECONDS)
 
         then:
@@ -267,16 +267,16 @@ class InternalStreamConnectionSpecification extends Specification {
         def (buffers2, messageId2) = helper.hello()
 
         when:
-        connection.sendMessage(buffers1, messageId1, OPERATION_CONTEXT)
-        connection.sendMessage(buffers2, messageId2, OPERATION_CONTEXT)
-        connection.receiveMessage(messageId1, OPERATION_CONTEXT)
+        connection.sendMessage(buffers1, messageId1, getOperationContext())
+        connection.sendMessage(buffers2, messageId2, getOperationContext())
+        connection.receiveMessage(messageId1, getOperationContext())
 
         then:
         connection.isClosed()
         thrown MongoSocketReadException
 
         when:
-        connection.receiveMessage(messageId2, OPERATION_CONTEXT)
+        connection.receiveMessage(messageId2, getOperationContext())
 
         then:
         thrown MongoSocketClosedException
@@ -289,7 +289,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def connection = getOpenedConnection()
 
         when:
-        connection.receiveMessage(1, OPERATION_CONTEXT)
+        connection.receiveMessage(1, getOperationContext())
 
         then:
         thrown(MongoInternalException)
@@ -306,7 +306,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def callback = new FutureResultCallback()
 
         when:
-        connection.receiveMessageAsync(1, OPERATION_CONTEXT, callback)
+        connection.receiveMessageAsync(1, getOperationContext(), callback)
         callback.get()
 
         then:
@@ -321,7 +321,7 @@ class InternalStreamConnectionSpecification extends Specification {
         Thread.currentThread().interrupt()
 
         when:
-        connection.sendMessage([new ByteBufNIO(ByteBuffer.allocate(1))], 1, OPERATION_CONTEXT)
+        connection.sendMessage([new ByteBufNIO(ByteBuffer.allocate(1))], 1, getOperationContext())
 
         then:
         Thread.interrupted()
@@ -335,7 +335,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def connection = getOpenedConnection()
 
         when:
-        connection.sendMessage([new ByteBufNIO(ByteBuffer.allocate(1))], 1, OPERATION_CONTEXT)
+        connection.sendMessage([new ByteBufNIO(ByteBuffer.allocate(1))], 1, getOperationContext())
 
         then:
         !Thread.interrupted()
@@ -350,7 +350,7 @@ class InternalStreamConnectionSpecification extends Specification {
         Thread.currentThread().interrupt()
 
         when:
-        connection.sendMessage([new ByteBufNIO(ByteBuffer.allocate(1))], 1, OPERATION_CONTEXT)
+        connection.sendMessage([new ByteBufNIO(ByteBuffer.allocate(1))], 1, getOperationContext())
 
         then:
         Thread.interrupted()
@@ -365,7 +365,7 @@ class InternalStreamConnectionSpecification extends Specification {
         Thread.currentThread().interrupt()
 
         when:
-        connection.sendMessage([new ByteBufNIO(ByteBuffer.allocate(1))], 1, OPERATION_CONTEXT)
+        connection.sendMessage([new ByteBufNIO(ByteBuffer.allocate(1))], 1, getOperationContext())
 
         then:
         Thread.interrupted()
@@ -379,7 +379,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def connection = getOpenedConnection()
 
         when:
-        connection.sendMessage([new ByteBufNIO(ByteBuffer.allocate(1))], 1, OPERATION_CONTEXT)
+        connection.sendMessage([new ByteBufNIO(ByteBuffer.allocate(1))], 1, getOperationContext())
 
         then:
         thrown(MongoSocketWriteException)
@@ -393,7 +393,7 @@ class InternalStreamConnectionSpecification extends Specification {
         Thread.currentThread().interrupt()
 
         when:
-        connection.receiveMessage(1, OPERATION_CONTEXT)
+        connection.receiveMessage(1, getOperationContext())
 
         then:
         Thread.interrupted()
@@ -407,7 +407,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def connection = getOpenedConnection()
 
         when:
-        connection.receiveMessage(1, OPERATION_CONTEXT)
+        connection.receiveMessage(1, getOperationContext())
 
         then:
         !Thread.interrupted()
@@ -422,7 +422,7 @@ class InternalStreamConnectionSpecification extends Specification {
         Thread.currentThread().interrupt()
 
         when:
-        connection.receiveMessage(1, OPERATION_CONTEXT)
+        connection.receiveMessage(1, getOperationContext())
 
         then:
         Thread.interrupted()
@@ -437,7 +437,7 @@ class InternalStreamConnectionSpecification extends Specification {
         Thread.currentThread().interrupt()
 
         when:
-        connection.receiveMessage(1, OPERATION_CONTEXT)
+        connection.receiveMessage(1, getOperationContext())
 
         then:
         Thread.interrupted()
@@ -451,7 +451,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def connection = getOpenedConnection()
 
         when:
-        connection.receiveMessage(1, OPERATION_CONTEXT)
+        connection.receiveMessage(1, getOperationContext())
 
         then:
         thrown(MongoSocketReadException)
@@ -464,7 +464,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def connection = getOpenedConnection()
 
         when:
-        connection.receiveMessage(1, OPERATION_CONTEXT.withTimeoutContext(
+        connection.receiveMessage(1, getOperationContext().withTimeoutContext(
                 new TimeoutContext(TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT)))
 
         then:
@@ -482,7 +482,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def connection = getOpenedConnection()
 
         when:
-        connection.receiveMessage(1, OPERATION_CONTEXT.withTimeoutContext(
+        connection.receiveMessage(1, getOperationContext().withTimeoutContext(
                 new TimeoutContext(TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT)))
 
         then:
@@ -502,7 +502,7 @@ class InternalStreamConnectionSpecification extends Specification {
         }
         def connection = getOpenedConnection()
         def callback = new FutureResultCallback()
-        def operationContext = OPERATION_CONTEXT.withTimeoutContext(
+        def operationContext = getOperationContext().withTimeoutContext(
                 new TimeoutContext(TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT))
         when:
         connection.receiveMessageAsync(1, operationContext, callback)
@@ -525,7 +525,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
         def connection = getOpenedConnection()
         def callback = new FutureResultCallback()
-        def operationContext = OPERATION_CONTEXT.withTimeoutContext(
+        def operationContext = getOperationContext().withTimeoutContext(
                 new TimeoutContext(TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT))
         when:
         connection.receiveMessageAsync(1, operationContext, callback)
@@ -563,10 +563,10 @@ class InternalStreamConnectionSpecification extends Specification {
         def connection = getOpenedConnection()
 
         when:
-        connection.sendMessageAsync(buffers1, messageId1, OPERATION_CONTEXT, sndCallbck1)
-        connection.sendMessageAsync(buffers2, messageId2, OPERATION_CONTEXT, sndCallbck2)
-        connection.receiveMessageAsync(messageId1, OPERATION_CONTEXT, rcvdCallbck1)
-        connection.receiveMessageAsync(messageId2, OPERATION_CONTEXT, rcvdCallbck2)
+        connection.sendMessageAsync(buffers1, messageId1, getOperationContext(), sndCallbck1)
+        connection.sendMessageAsync(buffers2, messageId2, getOperationContext(), sndCallbck2)
+        connection.receiveMessageAsync(messageId1, getOperationContext(), rcvdCallbck1)
+        connection.receiveMessageAsync(messageId2, getOperationContext(), rcvdCallbck2)
         rcvdCallbck1.get(1, SECONDS)
 
         then:
@@ -588,14 +588,14 @@ class InternalStreamConnectionSpecification extends Specification {
         def connection = getOpenedConnection()
 
         when:
-        connection.receiveMessage(1, OPERATION_CONTEXT)
+        connection.receiveMessage(1, getOperationContext())
 
         then:
         connection.isClosed()
         thrown MongoSocketReadException
 
         when:
-        connection.receiveMessage(1, OPERATION_CONTEXT)
+        connection.receiveMessage(1, getOperationContext())
 
         then:
         thrown MongoSocketClosedException
@@ -620,9 +620,9 @@ class InternalStreamConnectionSpecification extends Specification {
         def connection = getOpenedConnection()
 
         when:
-        connection.sendMessageAsync(buffers1, messageId1, OPERATION_CONTEXT, sndCallbck1)
-        connection.sendMessageAsync(buffers2, messageId2, OPERATION_CONTEXT, sndCallbck2)
-        connection.receiveMessageAsync(messageId1, OPERATION_CONTEXT, rcvdCallbck1)
+        connection.sendMessageAsync(buffers1, messageId1, getOperationContext(), sndCallbck1)
+        connection.sendMessageAsync(buffers2, messageId2, getOperationContext(), sndCallbck2)
+        connection.receiveMessageAsync(messageId1, getOperationContext(), rcvdCallbck1)
         rcvdCallbck1.get(1, SECONDS)
 
         then:
@@ -630,7 +630,7 @@ class InternalStreamConnectionSpecification extends Specification {
         connection.isClosed()
 
         when:
-        connection.receiveMessageAsync(messageId2, OPERATION_CONTEXT, rcvdCallbck2)
+        connection.receiveMessageAsync(messageId2, getOperationContext(), rcvdCallbck2)
         rcvdCallbck2.get(1, SECONDS)
 
         then:
@@ -649,7 +649,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(_, _) >> helper.reply(response)
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT)
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), getOperationContext())
 
         then:
         thrown(MongoCommandException)
@@ -677,7 +677,7 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT, callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), getOperationContext(), callback)
         callback.get()
 
         then:
@@ -705,7 +705,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def callbacks = []
         (1..numberOfOperations).each { n ->
             def (buffers, messageId, sndCallbck, rcvdCallbck) = messages.pop()
-            connection.sendMessageAsync(buffers, messageId, OPERATION_CONTEXT, sndCallbck)
+            connection.sendMessageAsync(buffers, messageId, getOperationContext(), sndCallbck)
             callbacks.add(sndCallbck)
         }
         streamLatch.countDown()
@@ -730,7 +730,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(90, _) >> helper.defaultReply()
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT)
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), getOperationContext())
 
         then:
         commandListener.eventsWereDelivered([
@@ -753,7 +753,7 @@ class InternalStreamConnectionSpecification extends Specification {
         when:
         connection.sendAndReceive(commandMessage, {
             BsonReader reader, DecoderContext decoderContext -> throw new CodecConfigurationException('')
-        }, OPERATION_CONTEXT)
+        }, getOperationContext())
 
         then:
         thrown(CodecConfigurationException)
@@ -783,7 +783,7 @@ class InternalStreamConnectionSpecification extends Specification {
             1 * advanceClusterTime(BsonDocument.parse(response).getDocument('$clusterTime'))
             getReadConcern() >> ReadConcern.DEFAULT
         }
-        def operationContext = OPERATION_CONTEXT.withSessionContext(sessionContext)
+        def operationContext = getOperationContext().withSessionContext(sessionContext)
 
         when:
         connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), operationContext)
@@ -819,7 +819,7 @@ class InternalStreamConnectionSpecification extends Specification {
             1 * advanceClusterTime(BsonDocument.parse(response).getDocument('$clusterTime'))
             getReadConcern() >> ReadConcern.DEFAULT
         }
-        def operationContext = OPERATION_CONTEXT.withSessionContext(sessionContext)
+        def operationContext = getOperationContext().withSessionContext(sessionContext)
 
         when:
         connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), operationContext, callback)
@@ -839,7 +839,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.write(_, _) >> { throw new MongoSocketWriteException('Failed to write', serverAddress, new IOException()) }
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT)
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), getOperationContext())
 
         then:
         def e = thrown(MongoSocketWriteException)
@@ -859,7 +859,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(16, _) >> { throw new MongoSocketReadException('Failed to read', serverAddress) }
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT)
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), getOperationContext())
 
         then:
         def e = thrown(MongoSocketReadException)
@@ -880,7 +880,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(90, _) >> { throw new MongoSocketReadException('Failed to read', serverAddress) }
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT)
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), getOperationContext())
 
         then:
         def e = thrown(MongoSocketException)
@@ -902,7 +902,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(_, _) >> helper.reply(response)
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT)
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), getOperationContext())
 
         then:
         def e = thrown(MongoCommandException)
@@ -923,7 +923,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(90, _) >> helper.defaultReply()
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT)
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), getOperationContext())
 
         then:
         commandListener.eventsWereDelivered([
@@ -959,7 +959,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(_, _) >> helper.reply('{ok : 0, errmsg : "failed"}')
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT)
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), getOperationContext())
 
         then:
         thrown(MongoCommandException)
@@ -1005,7 +1005,7 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT, callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), getOperationContext(), callback)
         callback.get()
 
         then:
@@ -1038,7 +1038,7 @@ class InternalStreamConnectionSpecification extends Specification {
         when:
         connection.sendAndReceiveAsync(commandMessage, {
             BsonReader reader, DecoderContext decoderContext -> throw new CodecConfigurationException('')
-        }, OPERATION_CONTEXT, callback)
+        }, getOperationContext(), callback)
         callback.get()
 
         then:
@@ -1065,7 +1065,7 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT, callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), getOperationContext(), callback)
         callback.get()
 
         then:
@@ -1093,7 +1093,7 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT, callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), getOperationContext(), callback)
         callback.get()
 
         then:
@@ -1124,7 +1124,7 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT, callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), getOperationContext(), callback)
         callback.get()
 
         then:
@@ -1156,7 +1156,7 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT, callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), getOperationContext(), callback)
         callback.get()
 
         then:
@@ -1187,7 +1187,7 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT, callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), getOperationContext(), callback)
         callback.get()
 
         then:

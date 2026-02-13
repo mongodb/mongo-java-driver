@@ -46,7 +46,7 @@ import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand
@@ -217,7 +217,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
 
     def 'should add read concern to command'() {
         given:
-        def operationContext = OPERATION_CONTEXT.withSessionContext(sessionContext)
+        def operationContext = getOperationContext().withSessionContext(sessionContext)
         def binding = Stub(ReadBinding)
         def source = Stub(ConnectionSource)
         def connection = Mock(Connection)
@@ -264,7 +264,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
 
     def 'should add read concern to command asynchronously'() {
         given:
-        def operationContext = OPERATION_CONTEXT.withSessionContext(sessionContext)
+        def operationContext = getOperationContext().withSessionContext(sessionContext)
         def binding = Stub(AsyncReadBinding)
         def source = Stub(AsyncConnectionSource)
         def connection = Mock(AsyncConnection)
