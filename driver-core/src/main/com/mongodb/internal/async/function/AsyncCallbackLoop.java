@@ -17,6 +17,7 @@ package com.mongodb.internal.async.function;
 
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.async.function.CallbackChain.Element;
 import com.mongodb.lang.Nullable;
 
 import java.util.function.Supplier;
@@ -39,10 +40,8 @@ import java.util.function.Supplier;
  */
 @NotThreadSafe
 public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
-    @Nullable
-    private final CallbackChain chain;
     private final LoopState state;
-    private final AsyncCallbackRunnable body;
+    private final Body body;
 
     /**
      * @param state The {@link LoopState} to be deemed as initial for the purpose of the new {@link AsyncCallbackLoop}.
@@ -53,9 +52,8 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
     }
 
     public AsyncCallbackLoop(final boolean optimized, final LoopState state, final AsyncCallbackRunnable body) {
-        this.chain = optimized ? new CallbackChain() : null;
         this.state = state;
-        this.body = body;
+        this.body = new Body(optimized, body);
     }
 
     @Override
@@ -63,33 +61,58 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
         body.run(new LoopingCallback(callback));
     }
 
+    private static final class Body {
+        private final AsyncCallbackRunnable wrapped;
+        @Nullable
+        private final CallbackChain chain;
+
+        private Body(final boolean optimized, final AsyncCallbackRunnable body) {
+            this.wrapped = body;
+            this.chain = optimized ? new CallbackChain() : null;
+        }
+
+        @Nullable
+        Element run(final LoopingCallback loopingCallback) {
+            Element[] mutableElement = new Element[1];
+            wrapped.run((r, t) -> {
+                Element nextCallbackToComplete = loopingCallback.onResult(r, t);
+                if (!CallbackChain.execute(chain, nextCallbackToComplete)) {
+                    mutableElement[0] = nextCallbackToComplete;
+                }
+            });
+            return mutableElement[0];
+        }
+    }
+
     /**
      * This callback is allowed to be completed more than once.
      */
     @NotThreadSafe
-    private class LoopingCallback implements SingleResultCallback<Void> {
+    private class LoopingCallback {
         private final SingleResultCallback<Void> wrapped;
 
         LoopingCallback(final SingleResultCallback<Void> callback) {
             wrapped = callback;
         }
 
-        @Override
-        public void onResult(@Nullable final Void result, @Nullable final Throwable t) {
+        @Nullable
+        public Element onResult(@Nullable final Void result, @Nullable final Throwable t) {
             if (t != null) {
                 wrapped.onResult(null, t);
+                return null;
             } else {
                 boolean continueLooping;
                 try {
                     continueLooping = state.advance();
                 } catch (Throwable e) {
                     wrapped.onResult(null, e);
-                    return;
+                    return null;
                 }
                 if (continueLooping) {
-                    CallbackChain.execute(chain, () -> body.run(this));
+                    return () -> body.run(this);
                 } else {
                     wrapped.onResult(result, null);
+                    return null;
                 }
             }
         }

@@ -15,52 +15,47 @@
  */
 package com.mongodb.internal.async.function;
 
+import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.lang.Nullable;
 
-import java.util.concurrent.atomic.AtomicReference;
-
-import static com.mongodb.assertions.Assertions.assertNotNull;
-import static com.mongodb.assertions.Assertions.assertNull;
-
+@NotThreadSafe
 final class CallbackChain {
-    @Nullable
-    private Runnable next;
-    private int runEnteredCounter;
-    private final AtomicReference<Thread> thread;
+    private int enteringCounter;
 
     CallbackChain() {
-        runEnteredCounter = 0;
-        thread = new AtomicReference<>();
+        enteringCounter = 0;
     }
 
-    static void execute(@Nullable final CallbackChain chain, final Runnable next) {
+    static boolean execute(@Nullable final CallbackChain chain, @Nullable final Element element) {
+        if (element == null) {
+            return false;
+        }
         if (chain != null) {
-            chain.execute(next);
+            return chain.execute(element);
         } else {
-            next.run();
+            element.execute();
+            return true;
         }
     }
 
-    // VAKOTODO figure out thread safety
-    private void execute(final Runnable next) {
-        assertNotNull(next);
-        assertNull(this.next);
-        this.next = next;
-
-//        if (!thread.compareAndSet(null, Thread.currentThread())) {
-//            assertTrue(Thread.currentThread() == thread.get());
-//        }
-        boolean recursive = ++runEnteredCounter > 1;
+    private boolean execute(final Element element) {
+        boolean reentered = ++enteringCounter > 1;
         try {
-            if (recursive) {
-                return;
+            if (reentered) {
+                return false;
             }
-            for (Runnable localNext = next; localNext != null; localNext = this.next) {
-                this.next = null;
-                localNext.run();
+            Element next = element.execute();
+            while (next != null) {
+                next = next.execute();
             }
         } finally {
-            runEnteredCounter--;
+            enteringCounter--;
         }
+        return true;
+    }
+
+    interface Element {
+        @Nullable
+        Element execute();
     }
 }
