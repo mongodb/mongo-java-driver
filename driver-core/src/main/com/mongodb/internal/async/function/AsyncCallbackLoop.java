@@ -39,6 +39,8 @@ import java.util.function.Supplier;
  */
 @NotThreadSafe
 public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
+    @Nullable
+    private final CallbackChain chain;
     private final LoopState state;
     private final AsyncCallbackRunnable body;
 
@@ -47,6 +49,11 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
      * @param body The body of the loop.
      */
     public AsyncCallbackLoop(final LoopState state, final AsyncCallbackRunnable body) {
+        this(true, state, body);
+    }
+
+    public AsyncCallbackLoop(final boolean optimized, final LoopState state, final AsyncCallbackRunnable body) {
+        this.chain = optimized ? new CallbackChain() : null;
         this.state = state;
         this.body = body;
     }
@@ -54,6 +61,7 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
     @Override
     public void run(final SingleResultCallback<Void> callback) {
         body.run(new LoopingCallback(callback));
+        CallbackChain.run(chain);
     }
 
     /**
@@ -80,7 +88,7 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
                     return;
                 }
                 if (continueLooping) {
-                    body.run(this);
+                    CallbackChain.addOrRun(chain, () -> body.run(this));
                 } else {
                     wrapped.onResult(result, null);
                 }
