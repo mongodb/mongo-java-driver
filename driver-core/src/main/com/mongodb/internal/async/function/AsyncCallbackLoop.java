@@ -17,7 +17,6 @@ package com.mongodb.internal.async.function;
 
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.async.function.CallbackChain.Element;
 import com.mongodb.lang.Nullable;
 
 import java.util.function.Supplier;
@@ -63,21 +62,35 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
 
     private static final class Body {
         private final AsyncCallbackRunnable wrapped;
-        @Nullable
-        private final CallbackChain chain;
+        private final boolean optimized;
+        private boolean executingChain;
 
         private Body(final boolean optimized, final AsyncCallbackRunnable body) {
             this.wrapped = body;
-            this.chain = optimized ? new CallbackChain() : null;
+            this.optimized = optimized;
+            executingChain = false;
         }
 
         @Nullable
         Element run(final LoopingCallback loopingCallback) {
             Element[] mutableElement = new Element[1];
             wrapped.run((r, t) -> {
-                Element nextCallbackToComplete = loopingCallback.onResult(r, t);
-                if (!CallbackChain.execute(chain, nextCallbackToComplete)) {
-                    mutableElement[0] = nextCallbackToComplete;
+                Element element = loopingCallback.onResult(r, t);
+                if (!optimized && element != null) {
+                    element.execute();
+                    return;
+                }
+                if (element == null || executingChain) {
+                    mutableElement[0] = element;
+                } else {
+                    executingChain = true;
+                    try {
+                        do {
+                            element = element.execute();
+                        } while (element != null);
+                    } finally {
+                        executingChain = false;
+                    }
                 }
             });
             return mutableElement[0];
@@ -116,5 +129,10 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
                 }
             }
         }
+    }
+
+    interface Element {
+        @Nullable
+        Element execute();
     }
 }

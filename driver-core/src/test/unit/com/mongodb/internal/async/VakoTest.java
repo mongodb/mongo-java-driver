@@ -34,7 +34,10 @@ import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 
 class VakoTest {
     @ParameterizedTest
-    @CsvSource({"false, 30", "true, 30"})
+    @CsvSource({
+            "false, 30",
+            "true, 30"
+    })
     void asyncCallbackLoop(final boolean optimized, final int iterations) throws Exception {
         System.err.printf("baselineStackDepth=%d%n", Thread.currentThread().getStackTrace().length);
         CompletableFuture<Void> join = new CompletableFuture<>();
@@ -59,8 +62,11 @@ class VakoTest {
 
     @ParameterizedTest
     @CsvSource({
-            "false, false, 30", "false, true, 30",
-            "true, false, 30", "true, true, 30"})
+            "false, false, 30",
+            "false, true, 30",
+            "true, false, 30",
+            "true, true, 30"
+    })
     void testThenRunDoWhileLoop(final boolean optimized, final boolean separateThread, final int counterInitialValue) throws Exception {
         StartTime start = StartTime.now();
         System.err.printf("baselineStackDepth=%d%n", Thread.currentThread().getStackTrace().length);
