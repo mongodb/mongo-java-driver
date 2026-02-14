@@ -61,7 +61,7 @@ public abstract class AbstractBsonDocumentBenchmark<T> extends Benchmark {
         return fileLength * NUM_INTERNAL_ITERATIONS;
     }
 
-    private byte[] getDocumentAsBuffer(final T document) throws IOException {
+    protected byte[] getDocumentAsBuffer(final T document) throws IOException {
         BasicOutputBuffer buffer = new BasicOutputBuffer();
         codec.encode(new BsonBinaryWriter(buffer), document, EncoderContext.builder().build());
 

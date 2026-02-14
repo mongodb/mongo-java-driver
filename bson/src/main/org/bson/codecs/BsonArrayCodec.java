@@ -21,6 +21,7 @@ import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
+import org.bson.RawBsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import static org.bson.assertions.Assertions.notNull;
@@ -36,6 +37,7 @@ public class BsonArrayCodec implements Codec<BsonArray> {
 
     private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(new BsonValueCodecProvider());
     private static final BsonTypeCodecMap DEFAULT_BSON_TYPE_CODEC_MAP = new BsonTypeCodecMap(getBsonTypeClassMap(), DEFAULT_REGISTRY);
+    private static final RawBsonDocumentCodec RAW_BSON_DOCUMENT_CODEC = new RawBsonDocumentCodec();
     private final BsonTypeCodecMap bsonTypeCodecMap;
 
     /**
@@ -77,7 +79,9 @@ public class BsonArrayCodec implements Codec<BsonArray> {
         writer.writeStartArray();
 
         for (BsonValue value : array) {
-            Codec codec = bsonTypeCodecMap.get(value.getBsonType());
+            Codec codec = value instanceof RawBsonDocument
+                    ? RAW_BSON_DOCUMENT_CODEC
+                    : bsonTypeCodecMap.get(value.getBsonType());
             encoderContext.encodeWithChildContext(codec, writer, value);
         }
 
