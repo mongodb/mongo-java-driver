@@ -61,7 +61,6 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
     @Override
     public void run(final SingleResultCallback<Void> callback) {
         body.run(new LoopingCallback(callback));
-        CallbackChain.run(chain);
     }
 
     /**
@@ -88,7 +87,7 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
                     return;
                 }
                 if (continueLooping) {
-                    CallbackChain.addOrRun(chain, () -> body.run(this));
+                    CallbackChain.execute(chain, () -> body.run(this));
                 } else {
                     wrapped.onResult(result, null);
                 }

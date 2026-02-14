@@ -17,40 +17,50 @@ package com.mongodb.internal.async.function;
 
 import com.mongodb.lang.Nullable;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
 
-public final class CallbackChain {
+final class CallbackChain {
     @Nullable
     private Runnable next;
+    private int runEnteredCounter;
+    private final AtomicReference<Thread> thread;
 
-    public CallbackChain() {
+    CallbackChain() {
+        runEnteredCounter = 0;
+        thread = new AtomicReference<>();
     }
 
-    public static void addOrRun(@Nullable final CallbackChain chain, final Runnable next) {
+    static void execute(@Nullable final CallbackChain chain, final Runnable next) {
         if (chain != null) {
-            chain.add(next);
+            chain.execute(next);
         } else {
             next.run();
         }
     }
 
-    public static void run(final @Nullable CallbackChain chain) {
-        if (chain != null) {
-            chain.run();
-        }
-    }
-
-    private void add(final Runnable next) {
+    // VAKOTODO figure out thread safety
+    private void execute(final Runnable next) {
         assertNotNull(next);
         assertNull(this.next);
         this.next = next;
-    }
 
-    private void run() {
-        for (Runnable localNext = next; localNext != null; localNext = next) {
-            next = null;
-            localNext.run();
+//        if (!thread.compareAndSet(null, Thread.currentThread())) {
+//            assertTrue(Thread.currentThread() == thread.get());
+//        }
+        boolean recursive = ++runEnteredCounter > 1;
+        try {
+            if (recursive) {
+                return;
+            }
+            for (Runnable localNext = next; localNext != null; localNext = this.next) {
+                this.next = null;
+                localNext.run();
+            }
+        } finally {
+            runEnteredCounter--;
         }
     }
 }
