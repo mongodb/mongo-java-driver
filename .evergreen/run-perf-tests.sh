@@ -3,18 +3,18 @@
 set -o xtrace
 set -o errexit
 
-rm -rf driver-performance-test-data
-git clone https://github.com/mongodb-labs/driver-performance-test-data.git
-cd driver-performance-test-data
+BENCHMARKING_DATA="${PROJECT_DIRECTORY}/testing/resources/specifications/source/benchmarking/data"
+
+cd "${BENCHMARKING_DATA}"
 tar xf extended_bson.tgz
 tar xf parallel.tgz
 tar xf single_and_multi_document.tgz
-cd ..
+cd "${PROJECT_DIRECTORY}"
 
 RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
 . "${RELATIVE_DIR_PATH}/setup-env.bash"
 
-export TEST_PATH="${PROJECT_DIRECTORY}/driver-performance-test-data/"
+export TEST_PATH="${BENCHMARKING_DATA}/"
 export OUTPUT_FILE="${PROJECT_DIRECTORY}/results.json"
 
 if [ "${PROVIDER}" = "Netty" ]; then
