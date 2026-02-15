@@ -21,6 +21,8 @@ import com.mongodb.lang.Nullable;
 
 import java.util.function.Supplier;
 
+import static com.mongodb.assertions.Assertions.assertTrue;
+
 /**
  * A decorator that implements automatic repeating of an {@link AsyncCallbackRunnable}.
  * {@link AsyncCallbackLoop} may execute the original asynchronous function multiple times sequentially,
@@ -39,7 +41,6 @@ import java.util.function.Supplier;
  */
 @NotThreadSafe
 public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
-    private final LoopState state;
     private final Body body;
 
     /**
@@ -51,88 +52,96 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
     }
 
     public AsyncCallbackLoop(final boolean optimized, final LoopState state, final AsyncCallbackRunnable body) {
-        this.state = state;
-        this.body = new Body(optimized, body);
+        this.body = new Body(optimized, state, body);
     }
 
     @Override
     public void run(final SingleResultCallback<Void> callback) {
-        body.run(new LoopingCallback(callback));
+        body.loop(new ReusableLoopCallback(callback));
     }
 
     private static final class Body {
         private final AsyncCallbackRunnable wrapped;
         private final boolean optimized;
-        private boolean executingChain;
+        private final LoopState state;
+        private boolean reenteredLoopMethod;
 
-        private Body(final boolean optimized, final AsyncCallbackRunnable body) {
+        private Body(final boolean optimized, final LoopState state, final AsyncCallbackRunnable body) {
             this.wrapped = body;
             this.optimized = optimized;
-            executingChain = false;
+            this.state = state;
+            reenteredLoopMethod = false;
         }
 
-        @Nullable
-        Element run(final LoopingCallback loopingCallback) {
-            Element[] mutableElement = new Element[1];
+        /**
+         * @return {@code true} to indicate that the looping completed;
+         * {@code false} to indicate that the looping is still executing, potentially asynchronously.
+         */
+        boolean loop(final ReusableLoopCallback callback) {
+            boolean[] done = new boolean[] {true};
             wrapped.run((r, t) -> {
-                Element element = loopingCallback.onResult(r, t);
-                if (!optimized && element != null) {
-                    element.execute();
+                boolean localDone = callback.onResult(state, r, t);
+                if (localDone) {
+                    done[0] = localDone;
                     return;
                 }
-                if (element == null || executingChain) {
-                    mutableElement[0] = element;
-                } else {
-                    executingChain = true;
+                if (!optimized) {
+                    localDone = loop(callback);
+                    done[0] = localDone;
+                    return;
+                }
+                if (!reenteredLoopMethod) {
+                    reenteredLoopMethod = true;
                     try {
                         do {
-                            element = element.execute();
-                        } while (element != null);
+                            localDone = loop(callback);
+                        } while (!localDone);
+                        done[0] = assertTrue(localDone);
                     } finally {
-                        executingChain = false;
+                        reenteredLoopMethod = false;
                     }
+                } else {
+                    done[0] = localDone;
                 }
             });
-            return mutableElement[0];
+            return done[0];
         }
     }
 
     /**
-     * This callback is allowed to be completed more than once.
+     * This callback is allowed to be {@linkplain #onResult(LoopState, Void, Throwable) completed} more than once.
      */
     @NotThreadSafe
-    private class LoopingCallback {
+    private static final class ReusableLoopCallback {
         private final SingleResultCallback<Void> wrapped;
 
-        LoopingCallback(final SingleResultCallback<Void> callback) {
+        ReusableLoopCallback(final SingleResultCallback<Void> callback) {
             wrapped = callback;
         }
 
-        @Nullable
-        public Element onResult(@Nullable final Void result, @Nullable final Throwable t) {
+        /**
+         * @return {@code true} iff the {@linkplain ReusableLoopCallback#ReusableLoopCallback(SingleResultCallback) wrapped}
+         * {@link SingleResultCallback} is {@linkplain SingleResultCallback#onResult(Object, Throwable) completed}.
+         */
+        public boolean onResult(final LoopState state, @Nullable final Void result, @Nullable final Throwable t) {
             if (t != null) {
                 wrapped.onResult(null, t);
-                return null;
+                return true;
             } else {
                 boolean continueLooping;
                 try {
                     continueLooping = state.advance();
                 } catch (Throwable e) {
                     wrapped.onResult(null, e);
-                    return null;
+                    return true;
                 }
                 if (continueLooping) {
-                    return () -> body.run(this);
+                    return false;
                 } else {
                     wrapped.onResult(result, null);
-                    return null;
+                    return true;
                 }
             }
         }
-    }
-
-    interface Element {
-        @Nullable
-        Element execute();
     }
 }

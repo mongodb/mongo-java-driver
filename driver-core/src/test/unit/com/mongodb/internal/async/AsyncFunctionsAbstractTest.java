@@ -769,6 +769,25 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
     }
 
     @Test
+    void testDoWhileLoop2() {
+        assertBehavesSameVariations(8,
+                () -> {
+                    int i = 0;
+                    do {
+                        i++;
+                        sync(i);
+                    } while (i < 3 && plainTest(i));
+                },
+                (callback) -> {
+                    final int[] i = new int[1];
+                    beginAsync().thenRunDoWhileLoop((c) -> {
+                        i[0]++;
+                        async(i[0], c);
+                    }, () -> i[0] < 3 && plainTest(i[0])).finish(callback);
+                });
+    }
+
+    @Test
     void testFinallyWithPlainInsideTry() {
         // (in try: normal flow + exception + exception) * (in finally: normal + exception) = 6
         assertBehavesSameVariations(6,
@@ -988,25 +1007,6 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                     }).thenRun(c -> {
                         async(2, c);
                     }).finish(callback);
-                });
-    }
-
-    @Test
-    void testThenRunDoWhileLoop() {
-        assertBehavesSameVariations(8,
-                () -> {
-                    int i = 0;
-                    do {
-                        i++;
-                        sync(i);
-                    } while (i < 3 && plainTest(i));
-                },
-                (callback) -> {
-                    final int[] i = new int[1];
-                    beginAsync().thenRunDoWhileLoop((c) -> {
-                        i[0]++;
-                        async(i[0], c);
-                    }, () -> i[0] < 3 && plainTest(i[0])).finish(callback);
                 });
     }
 }
