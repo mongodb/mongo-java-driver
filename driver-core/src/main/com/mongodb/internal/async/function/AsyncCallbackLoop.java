@@ -78,7 +78,7 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
          * {@code false} to indicate that the looping is still executing, potentially asynchronously.
          */
         boolean loop(final ReusableLoopCallback callback) {
-            boolean[] done = new boolean[] {true};
+            boolean[] done = {true};
             wrapped.run((r, t) -> {
                 boolean localDone = callback.onResult(state, r, t);
                 if (localDone) {

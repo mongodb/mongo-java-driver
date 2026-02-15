@@ -25,6 +25,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
@@ -35,8 +36,8 @@ import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 class VakoTest {
     @ParameterizedTest
     @CsvSource({
-            "false, 30",
-            "true, 30"
+            "false, 20",
+            "true, 20"
     })
     void asyncCallbackLoop(final boolean optimized, final int iterations) throws Exception {
         System.err.printf("baselineStackDepth=%d%n", Thread.currentThread().getStackTrace().length);
@@ -60,19 +61,24 @@ class VakoTest {
         join.get();
     }
 
-    @ParameterizedTest
+    @ParameterizedTest()
     @CsvSource({
-            "false, false, 30",
-            "false, true, 30",
-            "true, false, 30",
-            "true, true, 30"
+            "false, false, 0, 20",
+            "false, true, 4, 20",
+            "true, false, 0, 20",
+            "true, true, 4, 20"
     })
-    void testThenRunDoWhileLoop(final boolean optimized, final boolean separateThread, final int counterInitialValue) throws Exception {
+    void testThenRunDoWhileLoop(
+            final boolean optimized,
+            final boolean separateThread,
+            final int sleepSeconds,
+            final int counterInitialValue) throws Exception {
+        Duration totalSleepDuration = Duration.ofSeconds(sleepSeconds);
         StartTime start = StartTime.now();
         System.err.printf("baselineStackDepth=%d%n", Thread.currentThread().getStackTrace().length);
         CompletableFuture<Void> join = new CompletableFuture<>();
-        asyncMethod1(optimized, separateThread, new Counter(counterInitialValue), (r, t) -> {
-            System.err.printf("test callback completed callStackDepth=%s, r=%s, t=%s%n",
+        asyncMethod1(optimized, separateThread, totalSleepDuration, new Counter(counterInitialValue), (r, t) -> {
+            System.err.printf("TEST callback completed callStackDepth=%s, r=%s, t=%s%n",
                     Thread.currentThread().getStackTrace().length, r, exceptionToString(t));
             if (t != null) {
                 join.completeExceptionally(t);
@@ -80,27 +86,37 @@ class VakoTest {
                 join.complete(r);
             }
         });
-        System.err.printf("asyncMethod1 executed in %s%n", start.elapsed());
+        System.err.printf("asyncMethod1 returned in %s%n", start.elapsed());
         join.get();
+        sleep(Duration.ofSeconds(1));
+        System.err.printf("%nDONE%n");
     }
 
-    private static void asyncMethod1(final boolean optimized, final boolean separateThread,
-            final Counter counter, final SingleResultCallback<Void> callback) {
+    private static void asyncMethod1(
+            final boolean optimized,
+            final boolean separateThread,
+            final Duration totalSleepDuration,
+            final Counter counter,
+            final SingleResultCallback<Void> callback) {
         beginAsync().thenRunDoWhileLoop(optimized, c -> {
-            asyncMethod2(separateThread, counter, c);
+//            sleep(totalSleepDuration.dividedBy(counter.initial()));
+            StartTime start = StartTime.now();
+            asyncMethod2(separateThread, totalSleepDuration, counter, c);
+            System.err.printf("asyncMethod2 returned in %s%n", start.elapsed());
         }, () -> !counter.done()).finish(callback);
     }
 
-    private static void asyncMethod2(final boolean separateThread, final Counter counter, final SingleResultCallback<Void> callback) {
+    private static void asyncMethod2(
+            final boolean separateThread,
+            final Duration totalSleepDuration,
+            final Counter counter,
+            final SingleResultCallback<Void> callback) {
         Runnable action = () -> {
-            try {
-                Thread.sleep(TimeUnit.SECONDS.toMillis(1) / counter.initial());
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException(e);
-            }
+            sleep(totalSleepDuration.dividedBy(counter.initial()));
             counter.countDown();
+            StartTime start = StartTime.now();
             callback.complete(callback);
+            System.err.printf("asyncMethod2 callback.complete returned in %s%n", start.elapsed());
         };
         if (separateThread) {
             ForkJoinPool.commonPool().execute(action);
@@ -149,6 +165,23 @@ class VakoTest {
             pw.flush();
             return sw.toString();
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void sleep(Duration duration) {
+        if (duration.isZero()) {
+            return;
+        }
+        try {
+            long durationNsPart = duration.getNano();
+            long durationMsPartFromNsPart = TimeUnit.MILLISECONDS.convert(duration.getNano(), TimeUnit.NANOSECONDS);
+            long sleepMs = TimeUnit.MILLISECONDS.convert(duration.getSeconds(), TimeUnit.SECONDS) + durationMsPartFromNsPart;
+            int sleepNs = Math.toIntExact(durationNsPart - TimeUnit.NANOSECONDS.convert(durationMsPartFromNsPart, TimeUnit.MILLISECONDS));
+            System.err.printf("sleeping for %d ms %d ns%n", sleepMs, sleepNs);
+            Thread.sleep(sleepMs, sleepNs);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
     }
