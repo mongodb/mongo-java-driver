@@ -48,11 +48,7 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
      * @param body The body of the loop.
      */
     public AsyncCallbackLoop(final LoopState state, final AsyncCallbackRunnable body) {
-        this(true, state, body);
-    }
-
-    public AsyncCallbackLoop(final boolean optimized, final LoopState state, final AsyncCallbackRunnable body) {
-        this.body = new Body(optimized, state, body);
+        this.body = new Body(state, body);
     }
 
     @Override
@@ -62,13 +58,11 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
 
     private static final class Body {
         private final AsyncCallbackRunnable wrapped;
-        private final boolean optimized;
         private final LoopState state;
         private boolean reenteredLoopMethod;
 
-        private Body(final boolean optimized, final LoopState state, final AsyncCallbackRunnable body) {
+        private Body(final LoopState state, final AsyncCallbackRunnable body) {
             this.wrapped = body;
-            this.optimized = optimized;
             this.state = state;
             reenteredLoopMethod = false;
         }
@@ -82,11 +76,6 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
             wrapped.run((r, t) -> {
                 boolean localDone = callback.onResult(state, r, t);
                 if (localDone) {
-                    done[0] = localDone;
-                    return;
-                }
-                if (!optimized) {
-                    localDone = loop(callback);
                     done[0] = localDone;
                     return;
                 }
