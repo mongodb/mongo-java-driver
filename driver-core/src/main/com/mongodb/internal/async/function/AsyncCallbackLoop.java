@@ -53,47 +53,67 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
 
     @Override
     public void run(final SingleResultCallback<Void> callback) {
-        body.loop(new ReusableLoopCallback(callback));
+        body.initiateIteration(false, new ReusableLoopCallback(callback));
     }
 
     private static final class Body {
         private final AsyncCallbackRunnable wrapped;
         private final LoopState state;
-        private boolean reenteredLoopMethod;
+        private final ThreadLocal<Boolean> iterationIsExecutingSynchronously;
+        private final ThreadLocal<Status> status;
+
+        private enum Status {
+            ITERATION_INITIATED,
+            LAST_ITERATION_COMPLETED,
+            ANOTHER_ITERATION_NEEDED
+        }
 
         private Body(final LoopState state, final AsyncCallbackRunnable body) {
             this.wrapped = body;
             this.state = state;
-            reenteredLoopMethod = false;
+            iterationIsExecutingSynchronously = ThreadLocal.withInitial(() -> false);
+            status = ThreadLocal.withInitial(() -> Status.ITERATION_INITIATED);
         }
 
         /**
-         * @return {@code true} to indicate that the looping completed;
-         * {@code false} to indicate that the looping is still executing, potentially asynchronously.
+         * Invoking this method initiates a new iteration of the loop. An iteration may be executed either
+         * synchronously or asynchronously with the execution of this method:
+         *
+         * <ul>
+         *     <li>synchronous execution: iteration completes before (in the happens-before order) the method completes;</li>
+         *     <li>asynchronous execution: the aforementioned relation does not exist.</li>
+         * </ul>
+         *
+         * @return {@code true} iff it is known that another iteration must be initiated.
+         * Such information is available to this method only if the iteration it initiated has completed synchronously.
          */
-        boolean loop(final ReusableLoopCallback callback) {
-            boolean[] done = {true};
+        Status initiateIteration(final boolean trampolining, final ReusableLoopCallback callback) {
+            iterationIsExecutingSynchronously.set(true);
             wrapped.run((r, t) -> {
-                boolean localDone = callback.onResult(state, r, t);
-                if (localDone) {
-                    done[0] = localDone;
+                boolean localIterationIsExecutingSynchronously = iterationIsExecutingSynchronously.get();
+                if (callback.onResult(state, r, t)) {
+                    status.set(Status.LAST_ITERATION_COMPLETED);
                     return;
                 }
-                if (!reenteredLoopMethod) {
-                    reenteredLoopMethod = true;
-                    try {
-                        do {
-                            localDone = loop(callback);
-                        } while (!localDone);
-                        done[0] = assertTrue(localDone);
-                    } finally {
-                        reenteredLoopMethod = false;
-                    }
-                } else {
-                    done[0] = localDone;
+                if (trampolining && localIterationIsExecutingSynchronously) {
+                    // bounce
+                    status.set(Status.ANOTHER_ITERATION_NEEDED);
+                    return;
                 }
+                Status localStatus;
+                do {
+                    localStatus = initiateIteration(true, callback);
+                } while (localStatus.equals(Status.ANOTHER_ITERATION_NEEDED));
+                status.set(localStatus);
+
+                // VAKOTODO remove thread-locals if executed asynchronously
             });
-            return done[0];
+            try {
+                return status.get();
+            } finally {
+                status.remove();
+                iterationIsExecutingSynchronously.remove();
+            }
         }
     }
 
