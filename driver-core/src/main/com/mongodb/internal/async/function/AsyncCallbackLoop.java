@@ -16,6 +16,7 @@
 package com.mongodb.internal.async.function;
 
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.internal.async.AsyncTrampoline;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 
@@ -70,19 +71,19 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
         @Override
         public void onResult(@Nullable final Void result, @Nullable final Throwable t) {
             if (t != null) {
-                wrapped.onResult(null, t);
+                AsyncTrampoline.complete(wrapped, null, t);
             } else {
                 boolean continueLooping;
                 try {
                     continueLooping = state.advance();
                 } catch (Throwable e) {
-                    wrapped.onResult(null, e);
+                    AsyncTrampoline.complete(wrapped, null, e);
                     return;
                 }
                 if (continueLooping) {
                     body.run(this);
                 } else {
-                    wrapped.onResult(result, null);
+                    AsyncTrampoline.complete(wrapped, result, null);
                 }
             }
         }
