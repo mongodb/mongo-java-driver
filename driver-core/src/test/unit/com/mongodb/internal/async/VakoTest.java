@@ -32,6 +32,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
@@ -77,20 +78,23 @@ class VakoTest {
         SYNC_SAME_THREAD,
         SYNC_DIFFERENT_THREAD,
         ASYNC,
+        MIXED_SYNC_SAME_AND_ASYNC
     }
 
     @ParameterizedTest()
     @CsvSource({
-            "10, 0, SYNC_SAME_THREAD, 0",
-//            "10, 0, SYNC_DIFFERENT_THREAD, 0",
-            "10, 0, ASYNC, 4",
-            "10, 4, ASYNC, 0"
+            "10, 0, SYNC_SAME_THREAD, 0, true",
+//            "10, 0, SYNC_DIFFERENT_THREAD, 0, true",
+            "10, 0, ASYNC, 4, true",
+            "10, 4, ASYNC, 0, true",
+            "1_000_000, 0, MIXED_SYNC_SAME_AND_ASYNC, 0, false",
     })
     void testThenRunDoWhileLoop(
             final int counterInitialValue,
             final int blockSyncPartOfIterationTotalSeconds,
             final IterationExecutionType executionType,
-            final int delayAsyncExecutionTotalSeconds) throws Exception {
+            final int delayAsyncExecutionTotalSeconds,
+            final boolean verbose) throws Exception {
         System.err.printf("baselineStackDepth=%d%n%n", Thread.currentThread().getStackTrace().length);
         Duration blockSyncPartOfIterationTotalDuration = Duration.ofSeconds(blockSyncPartOfIterationTotalSeconds);
         com.mongodb.assertions.Assertions.assertTrue(
@@ -98,7 +102,8 @@ class VakoTest {
         Duration delayAsyncExecutionTotalDuration = Duration.ofSeconds(delayAsyncExecutionTotalSeconds);
         StartTime start = StartTime.now();
         CompletableFuture<Void> join = new CompletableFuture<>();
-        asyncLoop(new Counter(counterInitialValue), blockSyncPartOfIterationTotalDuration, executionType, delayAsyncExecutionTotalDuration,
+        asyncLoop(new Counter(counterInitialValue, verbose),
+                blockSyncPartOfIterationTotalDuration, executionType, delayAsyncExecutionTotalDuration, verbose,
             (r, t) -> {
                 System.err.printf("test callback completed callStackDepth=%s, r=%s, t=%s%n",
                         Thread.currentThread().getStackTrace().length, r, exceptionToString(t));
@@ -114,12 +119,15 @@ class VakoTest {
             final Duration blockSyncPartOfIterationTotalDuration,
             final IterationExecutionType executionType,
             final Duration delayAsyncExecutionTotalDuration,
+            final boolean verbose,
             final SingleResultCallback<Void> callback) {
         beginAsync().thenRunDoWhileLoop(c -> {
             sleep(blockSyncPartOfIterationTotalDuration.dividedBy(counter.initial()));
             StartTime start = StartTime.now();
-            asyncPartOfIteration(counter, executionType, delayAsyncExecutionTotalDuration, c);
-            System.err.printf("\tasyncPartOfIteration returned in %s%n", start.elapsed());
+            asyncPartOfIteration(counter, executionType, delayAsyncExecutionTotalDuration, verbose, c);
+            if (verbose) {
+                System.err.printf("\tasyncPartOfIteration returned in %s%n", start.elapsed());
+            }
         }, () -> !counter.done()).finish(callback);
     }
 
@@ -127,12 +135,15 @@ class VakoTest {
             final Counter counter,
             final IterationExecutionType executionType,
             final Duration delayAsyncExecutionTotalDuration,
+            final boolean verbose,
             final SingleResultCallback<Void> callback) {
         Runnable asyncPartOfIteration = () -> {
             counter.countDown();
             StartTime start = StartTime.now();
             callback.complete(callback);
-            System.err.printf("\tasyncPartOfIteration callback.complete returned in %s%n", start.elapsed());
+            if (verbose) {
+                System.err.printf("\tasyncPartOfIteration callback.complete returned in %s%n", start.elapsed());
+            }
         };
         switch (executionType) {
             case SYNC_SAME_THREAD: {
@@ -150,6 +161,15 @@ class VakoTest {
                         delayAsyncExecutionTotalDuration.dividedBy(counter.initial()).toNanos(), TimeUnit.NANOSECONDS);
                 break;
             }
+            case MIXED_SYNC_SAME_AND_ASYNC: {
+                if (ThreadLocalRandom.current().nextBoolean()) {
+                    asyncPartOfIteration.run();
+                } else {
+                    executor.schedule(asyncPartOfIteration,
+                            delayAsyncExecutionTotalDuration.dividedBy(counter.initial()).toNanos(), TimeUnit.NANOSECONDS);
+                }
+                break;
+            }
             default: {
                 com.mongodb.assertions.Assertions.fail(executionType.toString());
             }
@@ -159,10 +179,12 @@ class VakoTest {
     private static final class Counter {
         private final int initial;
         private int current;
+        private final boolean verbose;
 
-        Counter(final int initial) {
+        Counter(final int initial, final boolean verbose) {
             this.initial = initial;
             this.current = initial;
+            this.verbose = verbose;
         }
 
         int initial() {
@@ -173,7 +195,10 @@ class VakoTest {
             com.mongodb.assertions.Assertions.assertTrue(current > 0);
             int previous = current;
             int decremented = --current;
-            System.err.printf("counted %d->%d callStackDepth=%d %n", previous, decremented, Thread.currentThread().getStackTrace().length);
+            if (verbose || decremented % 100_000 == 0) {
+                System.err.printf("counted %d->%d callStackDepth=%d %n",
+                        previous, decremented, Thread.currentThread().getStackTrace().length);
+            }
         }
 
         boolean done() {

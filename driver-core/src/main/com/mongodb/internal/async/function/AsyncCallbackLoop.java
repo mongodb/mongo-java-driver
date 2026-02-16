@@ -51,7 +51,7 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
 
     @Override
     public void run(final SingleResultCallback<Void> callback) {
-        body.run(false, new ReusableLoopCallback(callback));
+        body.run(false, callback);
     }
 
     private static final class Body {
@@ -82,7 +82,7 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
          *
          * <p>If another iteration is needed, it is initiated from the callback passed to
          * {@link #body}{@code .}{@link AsyncCallbackRunnable#run(SingleResultCallback) run}
-         * by invoking {@link #run(boolean, ReusableLoopCallback)}.
+         * by invoking {@link #run(boolean, SingleResultCallback)}.
          * Completing the initiated iteration is {@linkplain SingleResultCallback#onResult(Object, Throwable) invoking} the callback.
          * Thus, it is guaranteed that all iterations are executed sequentially with each other
          * (that is, completion of one iteration happens-before initiation of the next one)
@@ -109,7 +109,7 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
          *     <li>therefore, we would not have an iteration that is executed synchronously but in a different thread.</li>
          * </ul>
          */
-        boolean run(final boolean trampolining, final ReusableLoopCallback callback) {
+        boolean run(final boolean trampolining, final SingleResultCallback<Void> afterLoopCallback) {
             // The `trampoliningResult` variable must be used only if the initiated iteration is executed synchronously with
             // the current method, which must be detected separately.
             //
@@ -122,7 +122,7 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
             boolean[] trampoliningResult = {false};
             sameThreadDetector.set(SameThreadDetectionStatus.PROBING);
             body.run((r, t) -> {
-                if (callback.onResult(state, r, t)) {
+                if (completeIfNeeded(afterLoopCallback, r, t)) {
                     // If we are trampolining, then here we bounce up, trampolining completes and so is the whole loop;
                     // otherwise, the whole loop simply completes.
                     return;
@@ -139,9 +139,10 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
                         sameThreadDetector.remove();
                     }
                 }
+                // trampolining
                 boolean anotherIterationNeeded;
-                do { // trampolining
-                    anotherIterationNeeded = run(true, callback);
+                do {
+                    anotherIterationNeeded = run(true, afterLoopCallback);
                 } while (anotherIterationNeeded);
             });
             try {
@@ -150,39 +151,28 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
                 sameThreadDetector.remove();
             }
         }
-    }
-
-    /**
-     * This callback is allowed to be {@linkplain #onResult(LoopState, Void, Throwable) completed} more than once.
-     */
-    @NotThreadSafe
-    private static final class ReusableLoopCallback {
-        private final SingleResultCallback<Void> wrapped;
-
-        ReusableLoopCallback(final SingleResultCallback<Void> callback) {
-            wrapped = callback;
-        }
 
         /**
-         * @return {@code true} iff the {@linkplain ReusableLoopCallback#ReusableLoopCallback(SingleResultCallback) wrapped}
-         * {@link SingleResultCallback} is {@linkplain SingleResultCallback#onResult(Object, Throwable) completed}.
+         * @return {@code true} iff the {@code afterLoopCallback} was
+         * {@linkplain SingleResultCallback#onResult(Object, Throwable) completed}.
          */
-        public boolean onResult(final LoopState state, @Nullable final Void result, @Nullable final Throwable t) {
+        private boolean completeIfNeeded(final SingleResultCallback<Void> afterLoopCallback,
+                @Nullable final Void result, @Nullable final Throwable t) {
             if (t != null) {
-                wrapped.onResult(null, t);
+                afterLoopCallback.onResult(null, t);
                 return true;
             } else {
-                boolean continueLooping;
+                boolean anotherIterationNeeded;
                 try {
-                    continueLooping = state.advance();
+                    anotherIterationNeeded = state.advance();
                 } catch (Throwable e) {
-                    wrapped.onResult(null, e);
+                    afterLoopCallback.onResult(null, e);
                     return true;
                 }
-                if (continueLooping) {
+                if (anotherIterationNeeded) {
                     return false;
                 } else {
-                    wrapped.onResult(result, null);
+                    afterLoopCallback.onResult(result, null);
                     return true;
                 }
             }
