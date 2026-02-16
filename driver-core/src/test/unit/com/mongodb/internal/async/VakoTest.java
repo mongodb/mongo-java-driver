@@ -19,6 +19,8 @@ import com.mongodb.internal.async.function.AsyncCallbackLoop;
 import com.mongodb.internal.async.function.LoopState;
 import com.mongodb.internal.time.StartTime;
 import com.mongodb.lang.Nullable;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -28,18 +30,32 @@ import java.io.StringWriter;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 
 class VakoTest {
+    private static ScheduledExecutorService executor;
+
+    @BeforeAll
+    static void beforeAll() {
+        executor = Executors.newScheduledThreadPool(2);
+    }
+
+    @AfterAll
+    static void afterAll() throws InterruptedException {
+        executor.shutdownNow();
+        com.mongodb.assertions.Assertions.assertTrue(executor.awaitTermination(1, TimeUnit.MINUTES));
+    }
+
     @ParameterizedTest
     @CsvSource({
             "10"
     })
     void asyncCallbackLoop(final int iterations) throws Exception {
-        System.err.printf("baselineStackDepth=%d%n", Thread.currentThread().getStackTrace().length);
+        System.err.printf("baselineStackDepth=%d%n%n", Thread.currentThread().getStackTrace().length);
         CompletableFuture<Void> join = new CompletableFuture<>();
         LoopState loopState = new LoopState();
         new AsyncCallbackLoop(loopState, c -> {
@@ -51,78 +67,92 @@ class VakoTest {
         }).run((r, t) -> {
             System.err.printf("test callback completed callStackDepth=%d, r=%s, t=%s%n",
                     Thread.currentThread().getStackTrace().length, r, exceptionToString(t));
-            if (t != null) {
-                join.completeExceptionally(t);
-            } else {
-                join.complete(r);
-            }
+            complete(join, r, t);
         });
         join.get();
         System.err.printf("%n%nDONE%n%n");
+    }
+
+    private enum IterationExecutionType {
+        SYNC_SAME_THREAD,
+        SYNC_DIFFERENT_THREAD,
+        ASYNC,
     }
 
     @ParameterizedTest()
     @CsvSource({
-            "0, false, 0, 10",
-            "0, true, 4, 10",
-            "4, true, 0, 10"
+            "10, 0, SYNC_SAME_THREAD, 0",
+//            "10, 0, SYNC_DIFFERENT_THREAD, 0",
+            "10, 0, ASYNC, 4",
+            "10, 4, ASYNC, 0"
     })
     void testThenRunDoWhileLoop(
-            final int blockInAsyncMethodTotalSeconds,
-            final boolean asyncExecution,
-            final int delayAsyncExecutionTotalSeconds,
-            final int counterInitialValue) throws Exception {
-        Duration blockInAsyncMethodTotalDuration = Duration.ofSeconds(blockInAsyncMethodTotalSeconds);
-        com.mongodb.assertions.Assertions.assertTrue(asyncExecution || delayAsyncExecutionTotalSeconds == 0);
+            final int counterInitialValue,
+            final int blockSyncPartOfIterationTotalSeconds,
+            final IterationExecutionType executionType,
+            final int delayAsyncExecutionTotalSeconds) throws Exception {
+        System.err.printf("baselineStackDepth=%d%n%n", Thread.currentThread().getStackTrace().length);
+        Duration blockSyncPartOfIterationTotalDuration = Duration.ofSeconds(blockSyncPartOfIterationTotalSeconds);
+        com.mongodb.assertions.Assertions.assertTrue(
+                executionType.equals(IterationExecutionType.ASYNC) || delayAsyncExecutionTotalSeconds == 0);
         Duration delayAsyncExecutionTotalDuration = Duration.ofSeconds(delayAsyncExecutionTotalSeconds);
         StartTime start = StartTime.now();
-        System.err.printf("baselineStackDepth=%d%n", Thread.currentThread().getStackTrace().length);
         CompletableFuture<Void> join = new CompletableFuture<>();
-        asyncMethod1(blockInAsyncMethodTotalDuration, asyncExecution, delayAsyncExecutionTotalDuration, new Counter(counterInitialValue),
+        asyncLoop(new Counter(counterInitialValue), blockSyncPartOfIterationTotalDuration, executionType, delayAsyncExecutionTotalDuration,
             (r, t) -> {
-                System.err.printf("TEST callback completed callStackDepth=%s, r=%s, t=%s%n",
+                System.err.printf("test callback completed callStackDepth=%s, r=%s, t=%s%n",
                         Thread.currentThread().getStackTrace().length, r, exceptionToString(t));
-                if (t != null) {
-                    join.completeExceptionally(t);
-                } else {
-                    join.complete(r);
-                }
+                complete(join, r, t);
         });
-        System.err.printf("asyncMethod1 returned in %s%n", start.elapsed());
+        System.err.printf("\tasyncLoop returned in %s%n", start.elapsed());
         join.get();
         System.err.printf("%n%nDONE%n%n");
     }
 
-    private static void asyncMethod1(
-            final Duration blockInAsyncMethodTotalDuration,
-            final boolean asyncExecution,
-            final Duration delayAsyncExecutionTotalDuration,
+    private static void asyncLoop(
             final Counter counter,
+            final Duration blockSyncPartOfIterationTotalDuration,
+            final IterationExecutionType executionType,
+            final Duration delayAsyncExecutionTotalDuration,
             final SingleResultCallback<Void> callback) {
         beginAsync().thenRunDoWhileLoop(c -> {
-            sleep(blockInAsyncMethodTotalDuration.dividedBy(counter.initial()));
+            sleep(blockSyncPartOfIterationTotalDuration.dividedBy(counter.initial()));
             StartTime start = StartTime.now();
-            asyncMethod2(asyncExecution, delayAsyncExecutionTotalDuration, counter, c);
-            System.err.printf("asyncMethod2 returned in %s%n", start.elapsed());
+            asyncPartOfIteration(counter, executionType, delayAsyncExecutionTotalDuration, c);
+            System.err.printf("\tasyncPartOfIteration returned in %s%n", start.elapsed());
         }, () -> !counter.done()).finish(callback);
     }
 
-    private static void asyncMethod2(
-            final boolean asyncExecution,
-            final Duration delayAsyncExecutionTotalDuration,
+    private static void asyncPartOfIteration(
             final Counter counter,
+            final IterationExecutionType executionType,
+            final Duration delayAsyncExecutionTotalDuration,
             final SingleResultCallback<Void> callback) {
-        Runnable action = () -> {
-            sleep(delayAsyncExecutionTotalDuration.dividedBy(counter.initial()));
+        Runnable asyncPartOfIteration = () -> {
             counter.countDown();
             StartTime start = StartTime.now();
             callback.complete(callback);
-            System.err.printf("asyncMethod2 callback.complete returned in %s%n", start.elapsed());
+            System.err.printf("\tasyncPartOfIteration callback.complete returned in %s%n", start.elapsed());
         };
-        if (asyncExecution) {
-            ForkJoinPool.commonPool().execute(action);
-        } else {
-            action.run();
+        switch (executionType) {
+            case SYNC_SAME_THREAD: {
+                asyncPartOfIteration.run();
+                break;
+            }
+            case SYNC_DIFFERENT_THREAD: {
+                Thread guaranteedDifferentThread = new Thread(asyncPartOfIteration);
+                guaranteedDifferentThread.start();
+                join(guaranteedDifferentThread);
+                break;
+            }
+            case ASYNC: {
+                executor.schedule(asyncPartOfIteration,
+                        delayAsyncExecutionTotalDuration.dividedBy(counter.initial()).toNanos(), TimeUnit.NANOSECONDS);
+                break;
+            }
+            default: {
+                com.mongodb.assertions.Assertions.fail(executionType.toString());
+            }
         }
     }
 
@@ -170,6 +200,23 @@ class VakoTest {
         }
     }
 
+    private static <T> void complete(final CompletableFuture<T> future, @Nullable final T result, @Nullable final Throwable t) {
+        if (t != null) {
+            future.completeExceptionally(t);
+        } else {
+            future.complete(result);
+        }
+    }
+
+    private static void join(final Thread thread) {
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
+    }
+
     private static void sleep(final Duration duration) {
         if (duration.isZero()) {
             return;
@@ -179,7 +226,6 @@ class VakoTest {
             long durationMsPartFromNsPart = TimeUnit.MILLISECONDS.convert(duration.getNano(), TimeUnit.NANOSECONDS);
             long sleepMs = TimeUnit.MILLISECONDS.convert(duration.getSeconds(), TimeUnit.SECONDS) + durationMsPartFromNsPart;
             int sleepNs = Math.toIntExact(durationNsPart - TimeUnit.NANOSECONDS.convert(durationMsPartFromNsPart, TimeUnit.MILLISECONDS));
-            System.err.printf("sleeping for %d ms %d ns%n", sleepMs, sleepNs);
             Thread.sleep(sleepMs, sleepNs);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

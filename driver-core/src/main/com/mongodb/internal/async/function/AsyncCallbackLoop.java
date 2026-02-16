@@ -21,8 +21,6 @@ import com.mongodb.lang.Nullable;
 
 import java.util.function.Supplier;
 
-import static com.mongodb.assertions.Assertions.assertTrue;
-
 /**
  * A decorator that implements automatic repeating of an {@link AsyncCallbackRunnable}.
  * {@link AsyncCallbackLoop} may execute the original asynchronous function multiple times sequentially,
@@ -53,66 +51,103 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
 
     @Override
     public void run(final SingleResultCallback<Void> callback) {
-        body.initiateIteration(false, new ReusableLoopCallback(callback));
+        body.run(false, new ReusableLoopCallback(callback));
     }
 
     private static final class Body {
-        private final AsyncCallbackRunnable wrapped;
+        private final AsyncCallbackRunnable body;
         private final LoopState state;
-        private final ThreadLocal<Boolean> iterationIsExecutingSynchronously;
-        private final ThreadLocal<Status> status;
+        private final ThreadLocal<SameThreadDetectionStatus> sameThreadDetector;
 
-        private enum Status {
-            ITERATION_INITIATED,
-            LAST_ITERATION_COMPLETED,
-            ANOTHER_ITERATION_NEEDED
+        private enum SameThreadDetectionStatus {
+            NEGATIVE,
+            PROBING,
+            POSITIVE
         }
 
         private Body(final LoopState state, final AsyncCallbackRunnable body) {
-            this.wrapped = body;
+            this.body = body;
             this.state = state;
-            iterationIsExecutingSynchronously = ThreadLocal.withInitial(() -> false);
-            status = ThreadLocal.withInitial(() -> Status.ITERATION_INITIATED);
+            sameThreadDetector = ThreadLocal.withInitial(() -> SameThreadDetectionStatus.NEGATIVE);
         }
 
         /**
-         * Invoking this method initiates a new iteration of the loop. An iteration may be executed either
-         * synchronously or asynchronously with the execution of this method:
-         *
+         * Initiates a new iteration of the loop by invoking
+         * {@link #body}{@code .}{@link AsyncCallbackRunnable#run(SingleResultCallback) run}.
+         * The initiated iteration may be executed either synchronously or asynchronously with the method that initiated it:
          * <ul>
-         *     <li>synchronous execution: iteration completes before (in the happens-before order) the method completes;</li>
-         *     <li>asynchronous execution: the aforementioned relation does not exist.</li>
+         *     <li>synchronous execution—completion of the initiated iteration happens-before the method completion;</li>
+         *     <li>asynchronous execution—the aforementioned relation does not exist.</li>
          * </ul>
          *
+         * <p>If another iteration is needed, it is initiated from the callback passed to
+         * {@link #body}{@code .}{@link AsyncCallbackRunnable#run(SingleResultCallback) run}
+         * by invoking {@link #run(boolean, ReusableLoopCallback)}.
+         * Completing the initiated iteration is {@linkplain SingleResultCallback#onResult(Object, Throwable) invoking} the callback.
+         * Thus, it is guaranteed that all iterations are executed sequentially with each other
+         * (that is, completion of one iteration happens-before initiation of the next one)
+         * regardless of them being executed synchronously or asynchronously with the method that initiated them.
+         *
+         * <p>Initiating any but the {@linkplain LoopState#isFirstIteration() first} iteration is done using trampolining,
+         * which allows us to do it iteratively rather than recursively, if iterations are executed synchronously,
+         * and ensures stack usage does not increase with the number of iterations.
+         *
          * @return {@code true} iff it is known that another iteration must be initiated.
-         * Such information is available to this method only if the iteration it initiated has completed synchronously.
+         * This information is used only for trampolining, and is available only if the iteration executed synchronously.
+         *
+         * <p>It is impossible to detect whether an iteration is executed synchronously.
+         * It is, however, possible to detect whether an iteration is executed in the same thread as the method that initiated it,
+         * and we use it as proxy indicator of synchronous execution. Unfortunately, this means we do not support and behave incorrectly
+         * if an iteration is executed synchronously but in a thread different from the one in which the method that
+         * initiated the iteration was invoked.
+         *
+         * <p>The above limitation should not be a problem in practice:
+         * <ul>
+         *     <li>the only way to execute an iteration synchronously but in a different thread is to block the thread that
+         *     initiated the iteration by waiting for completion of the iteration by that other thread;</li>
+         *     <li>blocking a thread is forbidden in asynchronous code, and we do not do it;</li>
+         *     <li>therefore, we would not have an iteration that is executed synchronously but in a different thread.</li>
+         * </ul>
          */
-        Status initiateIteration(final boolean trampolining, final ReusableLoopCallback callback) {
-            iterationIsExecutingSynchronously.set(true);
-            wrapped.run((r, t) -> {
-                boolean localIterationIsExecutingSynchronously = iterationIsExecutingSynchronously.get();
+        boolean run(final boolean trampolining, final ReusableLoopCallback callback) {
+            // The `trampoliningResult` variable must be used only if the initiated iteration is executed synchronously with
+            // the current method, which must be detected separately.
+            //
+            // It may be tempting to detect whether the iteration was executed synchronously by reading from the variable
+            // and observing a write that is part of the callback execution. However, if the iteration is executed asynchronously with
+            // the current method, then the aforementioned conflicting write and read actions are not ordered by
+            // the happens-before relation, the execution contains a data race and the read is allowed to observe the write.
+            // If such observation happens when the iteration is executed asynchronously, then we have a false positive.
+            // Furthermore, depending on the nature of the value read, it may not be trustworthy.
+            boolean[] trampoliningResult = {false};
+            sameThreadDetector.set(SameThreadDetectionStatus.PROBING);
+            body.run((r, t) -> {
                 if (callback.onResult(state, r, t)) {
-                    status.set(Status.LAST_ITERATION_COMPLETED);
+                    // If we are trampolining, then here we bounce up, trampolining completes and so is the whole loop;
+                    // otherwise, the whole loop simply completes.
                     return;
                 }
-                if (trampolining && localIterationIsExecutingSynchronously) {
-                    // bounce
-                    status.set(Status.ANOTHER_ITERATION_NEEDED);
-                    return;
+                if (trampolining) {
+                    boolean sameThread = sameThreadDetector.get().equals(SameThreadDetectionStatus.PROBING);
+                    if (sameThread) {
+                        // Bounce up if we are trampolining and the iteration was executed synchronously;
+                        // otherwise proceed to begin trampolining.
+                        sameThreadDetector.set(SameThreadDetectionStatus.POSITIVE);
+                        trampoliningResult[0] = true;
+                        return;
+                    } else {
+                        sameThreadDetector.remove();
+                    }
                 }
-                Status localStatus;
-                do {
-                    localStatus = initiateIteration(true, callback);
-                } while (localStatus.equals(Status.ANOTHER_ITERATION_NEEDED));
-                status.set(localStatus);
-
-                // VAKOTODO remove thread-locals if executed asynchronously
+                boolean anotherIterationNeeded;
+                do { // trampolining
+                    anotherIterationNeeded = run(true, callback);
+                } while (anotherIterationNeeded);
             });
             try {
-                return status.get();
+                return sameThreadDetector.get().equals(SameThreadDetectionStatus.POSITIVE) && trampoliningResult[0];
             } finally {
-                status.remove();
-                iterationIsExecutingSynchronously.remove();
+                sameThreadDetector.remove();
             }
         }
     }
