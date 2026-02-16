@@ -83,11 +83,12 @@ class VakoTest {
 
     @ParameterizedTest()
     @CsvSource({
-            "10, 0, SYNC_SAME_THREAD, 0, true",
-//            "10, 0, SYNC_DIFFERENT_THREAD, 0, true",
-            "10, 0, ASYNC, 4, true",
-            "10, 4, ASYNC, 0, true",
+            "1_000_000, 0, SYNC_SAME_THREAD, 0, false",
+//            "1_000_000, 0, SYNC_DIFFERENT_THREAD, 0, false",
+            "1_000_000, 0, ASYNC, 0, false",
             "1_000_000, 0, MIXED_SYNC_SAME_AND_ASYNC, 0, false",
+            "4, 0, ASYNC, 4, true",
+            "4, 4, ASYNC, 0, true",
     })
     void testThenRunDoWhileLoop(
             final int counterInitialValue,
@@ -109,7 +110,7 @@ class VakoTest {
                         Thread.currentThread().getStackTrace().length, r, exceptionToString(t));
                 complete(join, r, t);
         });
-        System.err.printf("\tasyncLoop returned in %s%n", start.elapsed());
+        System.err.printf("\tasyncLoop method completed in %s%n", start.elapsed());
         join.get();
         System.err.printf("%n%nDONE%n%n");
     }
@@ -126,7 +127,7 @@ class VakoTest {
             StartTime start = StartTime.now();
             asyncPartOfIteration(counter, executionType, delayAsyncExecutionTotalDuration, verbose, c);
             if (verbose) {
-                System.err.printf("\tasyncPartOfIteration returned in %s%n", start.elapsed());
+                System.err.printf("\tasyncPartOfIteration method completed in %s%n", start.elapsed());
             }
         }, () -> !counter.done()).finish(callback);
     }
@@ -142,7 +143,7 @@ class VakoTest {
             StartTime start = StartTime.now();
             callback.complete(callback);
             if (verbose) {
-                System.err.printf("\tasyncPartOfIteration callback.complete returned in %s%n", start.elapsed());
+                System.err.printf("\tasyncPartOfIteration callback.complete method completed in %s%n", start.elapsed());
             }
         };
         switch (executionType) {
