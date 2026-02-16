@@ -1040,17 +1040,15 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
             assertTrue(stepCount.get() == 1000, "Expected 1000 steps, got " + stepCount.get());
             int depth = maxDepth.get();
             int mongoDepth = maxMongoDepth.get();
-            StringBuilder sb = new StringBuilder();
-            sb.append("Stack depth: min=").append(minDepth.get()).append(", max=").append(depth)
-                    .append(" | MongoDB frames: min=").append(minMongoDepth.get()).append(", max=").append(mongoDepth)
-                    .append("\n");
+            String summary = "Stack depth: min=" + minDepth.get() + ", max=" + depth
+                    + " | MongoDB frames: min=" + minMongoDepth.get() + ", max=" + mongoDepth;
+            System.out.println(summary);
             if (sampleMongoFrames[0] != null) {
-                sb.append("MongoDB stack frames (sample):\n");
+                System.out.println("MongoDB stack frames (sample):");
                 for (int i = 0; i < sampleMongoFrames[0].length; i++) {
-                    sb.append("  ").append(i + 1).append(". ").append(sampleMongoFrames[0][i]).append("\n");
+                    System.out.println("  " + (i + 1) + ". " + sampleMongoFrames[0][i]);
                 }
             }
-            System.out.println(sb);
             assertTrue(depth < 200,
                     "Stack depth too deep (min=" + minDepth.get() + ", max=" + depth
                     + "). Trampoline may not be working correctly.");
