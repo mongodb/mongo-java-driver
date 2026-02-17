@@ -43,7 +43,7 @@ public final class TestBufferProviders {
     }
 
 
-    public static java.util.stream.Stream<Arguments> bufferProviders() {
+    public static Stream<Arguments> bufferProviders() {
         TestBufferProviders.TrackingBufferProvider nioBufferProvider = TestBufferProviders.trackingBufferProvider(size -> new ByteBufNIO(ByteBuffer.allocate(size)));
         PowerOfTwoBufferPool bufferPool = new PowerOfTwoBufferPool(1);
         bufferPool.disablePruning();
@@ -53,13 +53,6 @@ public final class TestBufferProviders {
                 Arguments.of("NIO", nioBufferProvider),
                 Arguments.of("pooled NIO", pooledNioBufferProvider),
                 Arguments.of("Netty", nettyBufferProvider));
-    }
-
-    /**
-     * Creates a NettyBufferProvider that validates cleanup.
-     */
-    public static BufferProvider nettyValidatingBufferProvider() {
-        return new NettyBufferProvider();
     }
 
     /**
