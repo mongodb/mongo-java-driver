@@ -63,8 +63,30 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
      * {@link #body}{@code .}{@link AsyncCallbackRunnable#run(SingleResultCallback) run}.
      * The initiated iteration may be executed either synchronously or asynchronously with the method that initiated it:
      * <ul>
-     *     <li>synchronous execution—completion of the initiated iteration happens-before the method completion;</li>
-     *     <li>asynchronous execution—the aforementioned relation does not exist.</li>
+     *     <li>synchronous execution—completion of the initiated iteration is guaranteed to happen-before the method completion;
+     *          <ul>
+     *              <li>Note that the formulations
+     *                  <ol>
+     *                      <li>"completion of the initiated iteration is guaranteed to happen-before the method completion"</li>
+     *                      <li>"completion of the initiated iteration happens-before the method completion"</li>
+     *                  </ol>
+     *                  are different: the former is about the program while the latter is about the execution, and follows from the former.
+     *                  For us the former is useful.
+     *              </li>
+     *          </ul>
+     *     </li>
+     *     <li>asynchronous execution—the aforementioned guarantee does not exist.
+     *          <ul>
+     *              <li>Note that the formulations
+     *                  <ol>
+     *                      <li>"the aforementioned guarantee does not exist"</li>
+     *                      <li>"the aforementioned relation does not exist"</li>
+     *                  </ol>
+     *                  are different: the former is about the program while the latter is about the execution, and follows from the former.
+     *                  For us the former is useful.
+     *              </li>
+     *          </ul>
+     *     </li>
      * </ul>
      *
      * <p>If another iteration is needed, it is initiated from the callback passed to

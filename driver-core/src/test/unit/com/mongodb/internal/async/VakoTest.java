@@ -78,7 +78,7 @@ class VakoTest {
         SYNC_SAME_THREAD,
         SYNC_DIFFERENT_THREAD,
         ASYNC,
-        MIXED_SYNC_SAME_AND_ASYNC
+        MIXED_SYNC_SAME_THREAD_AND_ASYNC
     }
 
     @ParameterizedTest()
@@ -86,7 +86,7 @@ class VakoTest {
             "1_000_000, 0, SYNC_SAME_THREAD, 0, false",
 //            "1_000_000, 0, SYNC_DIFFERENT_THREAD, 0, false",
             "1_000_000, 0, ASYNC, 0, false",
-            "1_000_000, 0, MIXED_SYNC_SAME_AND_ASYNC, 0, false",
+            "1_000_000, 0, MIXED_SYNC_SAME_THREAD_AND_ASYNC, 0, false",
             "4, 0, ASYNC, 4, true",
             "4, 4, ASYNC, 0, true",
     })
@@ -105,10 +105,10 @@ class VakoTest {
         CompletableFuture<Void> join = new CompletableFuture<>();
         asyncLoop(new Counter(counterInitialValue, verbose),
                 blockSyncPartOfIterationTotalDuration, executionType, delayAsyncExecutionTotalDuration, verbose,
-            (r, t) -> {
-                System.err.printf("test callback completed callStackDepth=%s, r=%s, t=%s%n",
-                        Thread.currentThread().getStackTrace().length, r, exceptionToString(t));
-                complete(join, r, t);
+                (r, t) -> {
+                        System.err.printf("test callback completed callStackDepth=%s, r=%s, t=%s%n",
+                                Thread.currentThread().getStackTrace().length, r, exceptionToString(t));
+                        complete(join, r, t);
         });
         System.err.printf("\tasyncLoop method completed in %s%n", start.elapsed());
         join.get();
@@ -162,7 +162,7 @@ class VakoTest {
                         delayAsyncExecutionTotalDuration.dividedBy(counter.initial()).toNanos(), TimeUnit.NANOSECONDS);
                 break;
             }
-            case MIXED_SYNC_SAME_AND_ASYNC: {
+            case MIXED_SYNC_SAME_THREAD_AND_ASYNC: {
                 if (ThreadLocalRandom.current().nextBoolean()) {
                     asyncPartOfIteration.run();
                 } else {
@@ -180,11 +180,13 @@ class VakoTest {
     private static final class Counter {
         private final int initial;
         private int current;
+        private boolean doneReturnedTrue;
         private final boolean verbose;
 
         Counter(final int initial, final boolean verbose) {
             this.initial = initial;
             this.current = initial;
+            this.doneReturnedTrue = false;
             this.verbose = verbose;
         }
 
@@ -197,14 +199,16 @@ class VakoTest {
             int previous = current;
             int decremented = --current;
             if (verbose || decremented % 100_000 == 0) {
-                System.err.printf("counted %d->%d callStackDepth=%d %n",
-                        previous, decremented, Thread.currentThread().getStackTrace().length);
+                System.err.printf("counted %d->%d tid=%d callStackDepth=%d %n",
+                        previous, decremented, Thread.currentThread().getId(), Thread.currentThread().getStackTrace().length);
             }
         }
 
         boolean done() {
             if (current == 0) {
+                com.mongodb.assertions.Assertions.assertFalse(doneReturnedTrue);
                 System.err.printf("counting done callStackDepth=%d %n", Thread.currentThread().getStackTrace().length);
+                doneReturnedTrue = true;
                 return true;
             }
             return false;
