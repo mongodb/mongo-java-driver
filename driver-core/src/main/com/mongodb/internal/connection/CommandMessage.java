@@ -17,17 +17,16 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoClientException;
-import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.MongoNamespaceHelper;
+import com.mongodb.internal.ResourceUtil;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
-import org.bson.BsonArray;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -38,9 +37,6 @@ import org.bson.ByteBuf;
 import org.bson.FieldNameValidator;
 import org.bson.io.BsonOutput;
 
-import java.io.ByteArrayOutputStream;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,8 +57,6 @@ import static com.mongodb.internal.connection.BsonWriterHelper.createBsonBinaryW
 import static com.mongodb.internal.connection.BsonWriterHelper.encodeUsingRegistry;
 import static com.mongodb.internal.connection.BsonWriterHelper.writeDocumentsOfDualMessageSequences;
 import static com.mongodb.internal.connection.BsonWriterHelper.writePayload;
-import static com.mongodb.internal.connection.ByteBufBsonDocument.createList;
-import static com.mongodb.internal.connection.ByteBufBsonDocument.createOne;
 import static com.mongodb.internal.connection.ReadConcernHelper.getReadConcernDocument;
 import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION;
 
@@ -143,74 +137,26 @@ public final class CommandMessage extends RequestMessage {
     }
 
     /**
-     * Create a BsonDocument representing the logical document encoded by an OP_MSG.
+     * Create a ByteBufBsonDocument representing the logical document encoded by an OP_MSG.
      * <p>
      * The returned document will contain all the fields from the `PAYLOAD_TYPE_0_DOCUMENT` section, as well as all fields represented by
      * `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE` sections.
+     *
+     * <p>Note: This document MUST be closed after use, otherwise when using Netty it could report the leaking of resources when the
+     * underlying {@code byteBuf's} are garbage collected
      */
-    BsonDocument getCommandDocument(final ByteBufferBsonOutput bsonOutput) {
+    ByteBufBsonDocument getCommandDocument(final ByteBufferBsonOutput bsonOutput) {
         List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
         try {
-            CompositeByteBuf byteBuf = new CompositeByteBuf(byteBuffers);
+            CompositeByteBuf compositeByteBuf = new CompositeByteBuf(byteBuffers);
             try {
-                byteBuf.position(firstDocumentPosition);
-                ByteBufBsonDocument byteBufBsonDocument = createOne(byteBuf);
-
-                // If true, it means there is at least one `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE` section in the OP_MSG
-                if (byteBuf.hasRemaining()) {
-                    BsonDocument commandBsonDocument = byteBufBsonDocument.toBaseBsonDocument();
-
-                    // Each loop iteration processes one Document Sequence
-                    // When there are no more bytes remaining, there are no more Document Sequences
-                    while (byteBuf.hasRemaining()) {
-                        // skip reading the payload type, we know it is `PAYLOAD_TYPE_1`
-                        byteBuf.position(byteBuf.position() + 1);
-                        int sequenceStart = byteBuf.position();
-                        int sequenceSizeInBytes = byteBuf.getInt();
-                        int sectionEnd = sequenceStart + sequenceSizeInBytes;
-
-                        String fieldName = getSequenceIdentifier(byteBuf);
-                        // If this assertion fires, it means that the driver has started using document sequences for nested fields.  If
-                        // so, this method will need to change in order to append the value to the correct nested document.
-                        assertFalse(fieldName.contains("."));
-
-                        ByteBuf documentsByteBufSlice = byteBuf.duplicate().limit(sectionEnd);
-                        try {
-                            commandBsonDocument.append(fieldName, new BsonArray(createList(documentsByteBufSlice)));
-                        } finally {
-                            documentsByteBufSlice.release();
-                        }
-                        byteBuf.position(sectionEnd);
-                    }
-                    return commandBsonDocument;
-                } else {
-                    return byteBufBsonDocument;
-                }
+                compositeByteBuf.position(firstDocumentPosition);
+                return ByteBufBsonDocument.createCommandMessage(compositeByteBuf);
             } finally {
-                byteBuf.release();
+                compositeByteBuf.release();
             }
         } finally {
-            byteBuffers.forEach(ByteBuf::release);
-        }
-    }
-
-    /**
-     * Get the field name from a buffer positioned at the start of the document sequence identifier of an OP_MSG Section of type
-     * `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE`.
-     * <p>
-     * Upon normal completion of the method, the buffer will be positioned at the start of the first BSON object in the sequence.
-    */
-    private String getSequenceIdentifier(final ByteBuf byteBuf) {
-        ByteArrayOutputStream sequenceIdentifierBytes = new ByteArrayOutputStream();
-        byte curByte = byteBuf.get();
-        while (curByte != 0) {
-            sequenceIdentifierBytes.write(curByte);
-            curByte = byteBuf.get();
-        }
-        try {
-            return sequenceIdentifierBytes.toString(StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            throw new MongoInternalException("Unexpected exception", e);
+            ResourceUtil.release(byteBuffers);
         }
     }
 
