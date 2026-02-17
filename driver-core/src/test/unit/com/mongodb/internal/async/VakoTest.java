@@ -42,7 +42,7 @@ class VakoTest {
 
     @BeforeAll
     static void beforeAll() {
-        executor = Executors.newScheduledThreadPool(2);
+        executor = Executors.newScheduledThreadPool(1);
     }
 
     @AfterAll

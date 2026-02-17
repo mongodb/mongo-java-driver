@@ -128,13 +128,17 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
         // the happens-before relation, the execution contains a data race and the read is allowed to observe the write.
         // If such observation happens when the iteration is executed asynchronously, then we have a false positive.
         // Furthermore, depending on the nature of the value read, it may not be trustworthy.
+        //
+        // Making `trampoliningResult` a `volatile`, or even making it an `AtomicReference`/`AtomicInteger` and calling `compareAndSet`
+        // does not resolve the issue: it gets rid of the data race, but still leave us with a race condition
+        // that allows for false positives.
         boolean[] trampoliningResult = {false};
         sameThreadDetector.set(SameThreadDetectionStatus.PROBING);
         body.run((r, t) -> {
             if (completeIfNeeded(afterLoopCallback, r, t)) {
                 // Bounce if we are trampolining and the iteration was executed synchronously,
-                // trampolining completes and so is the whole loop;
-                // otherwise, the whole loop simply completes.
+                // trampolining completes and so is the loop;
+                // otherwise, the loop simply completes.
                 return;
             }
             if (trampolining) {
