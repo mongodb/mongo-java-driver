@@ -426,7 +426,22 @@ class ByteBufBsonDocumentTest {
         assertEquals(complexDoc, hydrated);
 
         byteBufDoc.close();
-        assertThrows(IllegalStateException.class, byteBufDoc::size);
+    }
+
+    @Test
+    @DisplayName("cachedDocument is usable after close")
+    void cachedDocumentIsUsableAfterClose() {
+        BsonDocument complexDoc = new BsonDocument()
+                .append("doc", new BsonDocument("x", new BsonInt32(1)))
+                .append("arr", new BsonArray(asList(new BsonDocument("y", new BsonInt32(2)), new BsonInt32(3))));
+
+        ByteBuf buf = createByteBufFromDocument(complexDoc);
+        ByteBufBsonDocument byteBufDoc = new ByteBufBsonDocument(buf);
+        BsonDocument hydrated = byteBufDoc.toBsonDocument();
+
+        byteBufDoc.close();
+        assertEquals(complexDoc, hydrated);
+        assertEquals(complexDoc.toJson(), hydrated.toJson());
     }
 
     // Sequence Fields (OP_MSG)

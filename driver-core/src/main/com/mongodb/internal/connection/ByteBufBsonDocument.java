@@ -18,6 +18,8 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoInternalException;
 import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBinaryReader;
@@ -128,6 +130,7 @@ import static java.util.Collections.emptyMap;
  * @see ByteBufBsonHelper
  */
 public final class ByteBufBsonDocument extends BsonDocument implements Closeable {
+    private static final Logger LOGGER = Loggers.getLogger("connection");
     private static final long serialVersionUID = 2L;
 
     /**
@@ -470,6 +473,7 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
                 cachedDocument = doc;
                 // Release buffers since we no longer need them
                 releaseResources();
+                closed = true;
             } finally {
                 dup.release();
             }
@@ -712,9 +716,9 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
     @SuppressWarnings("unchecked")
     private <T> Iterator<T> createBodyIterator(final IteratorMode mode) {
         return new Iterator<T>() {
+            private final Closeable resourceHandle;
             private ByteBuf duplicatedByteBuf;
             private BsonBinaryReader reader;
-            private Closeable resourceHandle;
             private boolean started;
             private boolean finished;
 
@@ -797,7 +801,7 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
      * Each entry contains the field name and its array value.
      */
     private Iterator<Entry<String, BsonValue>> createSequenceEntryIterator() {
-        Iterator<Map.Entry<String, SequenceField>> iter = sequenceFields.entrySet().iterator();
+        Iterator<Entry<String, SequenceField>> iter = sequenceFields.entrySet().iterator();
         return new Iterator<Entry<String, BsonValue>>() {
             @Override
             public boolean hasNext() {
@@ -806,7 +810,7 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
 
             @Override
             public Entry<String, BsonValue> next() {
-                Map.Entry<String, SequenceField> entry = iter.next();
+                Entry<String, SequenceField> entry = iter.next();
                 return new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), entry.getValue().asArray());
             }
         };
@@ -844,6 +848,7 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
                 resource.close();
             } catch (Exception e) {
                 // Log and continue closing other resources
+                LOGGER.error("Error closing resource", e);
             }
         }
 
@@ -858,11 +863,12 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
     }
 
     /**
-     * Throws IllegalStateException if this document has been closed.
+     * Throws IllegalStateException if this document has been closed and there is no cached document.
      */
     private void ensureOpen() {
-        if (closed) {
-            throw new IllegalStateException("The BsonDocument resources have been released.");
+        if (closed && cachedDocument == null) {
+            throw new IllegalStateException("The underlying BsonDocument resources have been released and the data is no longer "
+                    + "accessible. Use `ByteBufBsonDocument.toBsonDocument()` to create a fully hydrated BsonDocument.");
         }
     }
 
