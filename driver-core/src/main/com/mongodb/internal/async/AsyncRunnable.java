@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.async;
 
+import com.mongodb.assertions.Assertions;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.function.AsyncCallbackLoop;
 import com.mongodb.internal.async.function.LoopState;
@@ -204,6 +205,15 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
                 }
             });
         };
+    }
+
+    /**
+     * @param condition The condition to check before each iteration
+     * @param body      The body to run on each iteration
+     * @return the composition of this runnable and the loop, a runnable
+     */
+    default AsyncRunnable loopWhile(final BooleanSupplier condition, final AsyncRunnable body) {
+        throw Assertions.fail("Not implemented");
     }
 
     /**
