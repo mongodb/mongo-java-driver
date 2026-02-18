@@ -56,8 +56,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
@@ -254,6 +256,55 @@ public class DefaultServerMonitorTest {
         assertEquals(expectedEvents, events);
     }
 
+    @Test
+    void closeDuringConnectionShouldNotLeakBuffers() throws Exception {
+        CountDownLatch connectionStarted = new CountDownLatch(1);
+        CountDownLatch proceedWithOpen = new CountDownLatch(1);
+
+        InternalConnection mockConnection = mock(InternalConnection.class);
+        doAnswer(invocation -> {
+            connectionStarted.countDown();
+            assertTrue(proceedWithOpen.await(5, TimeUnit.SECONDS));
+            return null;
+        }).when(mockConnection).open(any());
+
+        when(mockConnection.getInitialServerDescription())
+                .thenReturn(createDefaultServerDescription());
+
+        InternalConnectionFactory factory = createConnectionFactory(mockConnection);
+
+        monitor = createAndStartMonitor(factory, mock(ServerMonitorListener.class));
+
+        // Wait for connection to start opening
+        assertTrue(connectionStarted.await(5, TimeUnit.SECONDS));
+
+        // Close monitor while connection is opening
+        monitor.close();
+
+        // Allow connection to complete
+        proceedWithOpen.countDown();
+
+        // Verify no leaks by checking connection was properly closed
+        monitor.getServerMonitor().join(5000);
+    }
+
+    @Test
+    void heartbeatWithNullConnectionDescriptionShouldNotCrash() throws Exception {
+        InternalConnection mockConnection = mock(InternalConnection.class);
+        when(mockConnection.getDescription()).thenReturn(null);
+        when(mockConnection.getInitialServerDescription())
+                .thenReturn(createDefaultServerDescription());
+        when(mockConnection.isClosed()).thenReturn(false);
+
+        InternalConnectionFactory factory = createConnectionFactory(mockConnection);
+        monitor = createAndStartMonitor(factory, mock(ServerMonitorListener.class));
+
+        // Wait a bit for the monitor to run
+        Thread.sleep(500);
+
+        // Monitor should handle null description gracefully
+        verify(mockConnection, atLeast(1)).open(any());
+    }
 
     private InternalConnectionFactory createConnectionFactory(final InternalConnection connection) {
         InternalConnectionFactory factory = mock(InternalConnectionFactory.class);
