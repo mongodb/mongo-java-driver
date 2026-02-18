@@ -127,7 +127,7 @@ public class DefaultConnectionPoolTest {
 
         // when
         TimeoutTrackingConnectionGetter connectionGetter = new TimeoutTrackingConnectionGetter(provider, timeoutSettings);
-        cachedExecutor.submit(connectionGetter);
+        cachedExecutor.execute(connectionGetter);
 
         connectionGetter.getLatch().await();
 
@@ -152,7 +152,7 @@ public class DefaultConnectionPoolTest {
 
         // when
         TimeoutTrackingConnectionGetter connectionGetter = new TimeoutTrackingConnectionGetter(provider, timeoutSettings);
-        cachedExecutor.submit(connectionGetter);
+        cachedExecutor.execute(connectionGetter);
 
         sleep(70); // wait for more than maxWaitTimeMS but less than timeoutMs.
         internalConnection.close();

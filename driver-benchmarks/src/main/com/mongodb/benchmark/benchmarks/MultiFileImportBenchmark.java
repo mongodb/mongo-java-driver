@@ -86,7 +86,7 @@ public class MultiFileImportBenchmark extends AbstractMongoBenchmark {
         CountDownLatch latch = new CountDownLatch(500);
 
         for (int i = 0; i < 100; i++) {
-            fileReadingService.submit(importJsonFile(latch, i));
+            fileReadingService.execute(importJsonFile(latch, i));
         }
 
         latch.await(1, TimeUnit.MINUTES);
@@ -104,7 +104,7 @@ public class MultiFileImportBenchmark extends AbstractMongoBenchmark {
                     documents.add(document);
                     if (documents.size() == 1000) {
                         List<RawBsonDocument> documentsToInsert = documents;
-                        documentWritingService.submit(() -> {
+                        documentWritingService.execute(() -> {
                             collection.insertMany(documentsToInsert, new InsertManyOptions().ordered(false));
                             latch.countDown();
                         });

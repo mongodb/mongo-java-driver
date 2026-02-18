@@ -816,7 +816,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                     + "    }"
                     + "}");
 
-            executor.submit(() -> collection.find().first());
+            executor.execute(() -> collection.find().first());
             sleep(150);
 
             //when && then
@@ -851,7 +851,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                     + "    }"
                     + "}");
 
-            executor.submit(() -> collection.withTimeout(0, TimeUnit.MILLISECONDS).find().first());
+            executor.execute(() -> collection.withTimeout(0, TimeUnit.MILLISECONDS).find().first());
             sleep(100);
 
             //when && then
@@ -886,7 +886,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                     + "    }"
                     + "}");
 
-            executor.submit(() -> collection.find().first());
+            executor.execute(() -> collection.find().first());
             sleep(200);
 
             //when & then
