@@ -94,7 +94,7 @@ public abstract class AbstractSessionsProseTest {
                             @Override
                             public void commandStarted(final CommandStartedEvent event) {
                                 if (event.getCommand().containsKey("lsid")) {
-                                    lsidSet.add(event.getCommand().getDocument("lsid").toBsonDocument());
+                                    lsidSet.add(event.getCommand().getDocument("lsid"));
                                 }
                             }
                         })
