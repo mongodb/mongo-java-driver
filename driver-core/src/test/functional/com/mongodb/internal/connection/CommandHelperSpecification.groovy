@@ -57,7 +57,6 @@ class CommandHelperSpecification extends Specification {
         connection?.close()
     }
 
-    @Ignore("JAVA-5982")
     def 'should execute command asynchronously'() {
         when:
         BsonDocument receivedDocument = null
@@ -84,5 +83,4 @@ class CommandHelperSpecification extends Specification {
         !receivedDocument
         receivedException instanceof MongoCommandException
     }
-
 }
