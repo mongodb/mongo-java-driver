@@ -103,6 +103,10 @@ public class BsonDocumentCodec implements CollectibleCodec<BsonDocument> {
 
     @Override
     public void encode(final BsonWriter writer, final BsonDocument value, final EncoderContext encoderContext) {
+        if (value instanceof RawBsonDocument) {
+            RAW_BSON_DOCUMENT_CODEC.encode(writer, (RawBsonDocument) value, encoderContext);
+            return;
+        }
         writer.writeStartDocument();
 
         beforeFields(writer, encoderContext, value);
@@ -132,9 +136,7 @@ public class BsonDocumentCodec implements CollectibleCodec<BsonDocument> {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void writeValue(final BsonWriter writer, final EncoderContext encoderContext, final BsonValue value) {
-        Codec codec = value instanceof RawBsonDocument
-                ? RAW_BSON_DOCUMENT_CODEC
-                : bsonTypeCodecMap.get(value.getBsonType());
+        Codec codec = bsonTypeCodecMap.get(value.getBsonType());
         encoderContext.encodeWithChildContext(codec, writer, value);
     }
 
