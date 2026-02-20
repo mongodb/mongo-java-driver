@@ -16,6 +16,7 @@
 package com.mongodb.internal.async.function;
 
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.internal.async.AsyncTrampoline;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
@@ -118,12 +119,12 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
                 try {
                     state.advanceOrThrow(t, onAttemptFailureOperator, retryPredicate);
                 } catch (Throwable failedResult) {
-                    wrapped.onResult(null, failedResult);
+                    AsyncTrampoline.complete(wrapped, null, failedResult);
                     return;
                 }
                 asyncFunction.get(this);
             } else {
-                wrapped.onResult(result, null);
+                AsyncTrampoline.complete(wrapped, result, null);
             }
         }
     }

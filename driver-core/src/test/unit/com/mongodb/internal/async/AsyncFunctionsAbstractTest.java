@@ -20,12 +20,14 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
     private static final TimeoutContext TIMEOUT_CONTEXT = new TimeoutContext(new TimeoutSettings(0, 0, 0, 0L, 0));
@@ -989,5 +991,67 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                         async(2, c);
                     }).finish(callback);
                 });
+    }
+
+    @Test
+    void testStackDepthBounded() {
+        AtomicInteger maxDepth = new AtomicInteger(0);
+        AtomicInteger minDepth = new AtomicInteger(Integer.MAX_VALUE);
+        AtomicInteger maxMongoDepth = new AtomicInteger(0);
+        AtomicInteger minMongoDepth = new AtomicInteger(Integer.MAX_VALUE);
+        AtomicInteger stepCount = new AtomicInteger(0);
+        // Capture one sample of mongodb package frames for printing
+        String[][] sampleMongoFrames = {null};
+
+        AsyncRunnable chain = beginAsync();
+        for (int i = 0; i < 1000; i++) {
+            chain = chain.thenRun(c -> {
+                stepCount.incrementAndGet();
+                StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+                int depth = stack.length;
+                maxDepth.updateAndGet(current -> Math.max(current, depth));
+                minDepth.updateAndGet(current -> Math.min(current, depth));
+                int mongoFrames = 0;
+                for (StackTraceElement frame : stack) {
+                    if (frame.getClassName().startsWith("com.mongodb")) {
+                        mongoFrames++;
+                    }
+                }
+                int mf = mongoFrames;
+                maxMongoDepth.updateAndGet(current -> Math.max(current, mf));
+                minMongoDepth.updateAndGet(current -> Math.min(current, mf));
+                // Capture first sample
+                if (sampleMongoFrames[0] == null) {
+                    String[] frames = new String[mf];
+                    int idx = 0;
+                    for (StackTraceElement frame : stack) {
+                        if (frame.getClassName().startsWith("com.mongodb")) {
+                            frames[idx++] = frame.getClassName() + "." + frame.getMethodName()
+                                    + "(" + frame.getFileName() + ":" + frame.getLineNumber() + ")";
+                        }
+                    }
+                    sampleMongoFrames[0] = frames;
+                }
+                c.complete(c);
+            });
+        }
+
+        chain.finish((v, e) -> {
+            assertTrue(stepCount.get() == 1000, "Expected 1000 steps, got " + stepCount.get());
+            int depth = maxDepth.get();
+            int mongoDepth = maxMongoDepth.get();
+            String summary = "Stack depth: min=" + minDepth.get() + ", max=" + depth
+                    + " | MongoDB frames: min=" + minMongoDepth.get() + ", max=" + mongoDepth;
+            System.out.println(summary);
+            if (sampleMongoFrames[0] != null) {
+                System.out.println("MongoDB stack frames (sample):");
+                for (int i = 0; i < sampleMongoFrames[0].length; i++) {
+                    System.out.println("  " + (i + 1) + ". " + sampleMongoFrames[0][i]);
+                }
+            }
+            assertTrue(depth < 200,
+                    "Stack depth too deep (min=" + minDepth.get() + ", max=" + depth
+                    + "). Trampoline may not be working correctly.");
+        });
     }
 }
