@@ -43,6 +43,7 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -65,7 +66,7 @@ import static java.lang.String.format;
  * instance of this class is a singleton-like object that manages a thread pool that makes it
  * possible to run a group of asynchronous channels.
  */
-public class AsynchronousTlsChannelGroup {
+public class AsynchronousTlsChannelGroup implements Executor {
 
     private static final Logger LOGGER = Loggers.getLogger("connection.tls");
 
@@ -224,8 +225,15 @@ public class AsynchronousTlsChannelGroup {
         selectorThread.start();
     }
 
-    void submit(final Runnable r) {
-        executor.submit(r);
+    @Override
+    public void execute(final Runnable r) {
+        executor.execute(() -> {
+            try {
+                r.run();
+            } catch (Throwable e) {
+                LOGGER.error(null, e);
+            }
+        });
     }
 
     RegisteredSocket registerSocket(TlsChannel reader, SocketChannel socketChannel) {

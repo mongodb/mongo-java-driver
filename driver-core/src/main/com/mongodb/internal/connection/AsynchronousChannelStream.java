@@ -234,21 +234,26 @@ public abstract class AsynchronousChannelStream implements Stream {
 
         @Override
         public void completed(final Integer result, final Void attachment) {
-            AsyncCompletionHandler<ByteBuf> localHandler = getHandlerAndClear();
-            beginAsync().<ByteBuf>thenSupply((c) -> {
+            if (result == -1) {
+                AsyncCompletionHandler<ByteBuf> localHandler = getHandlerAndClear();
                 ByteBuf localByteBuf = byteBufReference.getAndSet(null);
-                if (result == -1) {
-                    localByteBuf.release();
-                    throw new MongoSocketReadException("Prematurely reached end of stream", serverAddress);
-                } else if (!localByteBuf.hasRemaining()) {
-                    localByteBuf.flip();
-                    c.complete(localByteBuf);
-                } else {
+                localByteBuf.release();
+                localHandler.failed(new MongoSocketReadException("Prematurely reached end of stream", serverAddress));
+            } else if (!byteBufReference.get().hasRemaining()) {
+                AsyncCompletionHandler<ByteBuf> localHandler = getHandlerAndClear();
+                ByteBuf localByteBuf = byteBufReference.getAndSet(null);
+                localByteBuf.flip();
+                localHandler.completed(localByteBuf);
+            } else {
+                // this try catch simulate beginAsync
+                try {
                     long readTimeoutMS = operationContext.getTimeoutContext().getReadTimeoutMS();
-                    getChannel().read(localByteBuf.asNIO(), readTimeoutMS, MILLISECONDS, null,
-                            new BasicCompletionHandler(localByteBuf, operationContext, c.asHandler()));
+                    // we pass `this` as a handler to avoid excessive stacktrace chain
+                    getChannel().read(byteBufReference.get().asNIO(), readTimeoutMS, MILLISECONDS, null, this);
+                } catch (Exception e) {
+                    failed(e, attachment);
                 }
-            }).finish(localHandler.asCallback());
+            }
         }
 
         @Override

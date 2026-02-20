@@ -36,6 +36,12 @@ tasks.withType<Test> {
 
     jvmArgs.add("-Dio.netty.leakDetection.level=paranoid")
 
+    // deliberately small stack size to trigger StackOverflowErrors in tests that
+    // silently pass because of the default large stack size on x64 machines
+    // see JAVA-6071 for details
+    jvmArgs.add("-Xss512k")
+
+
     // Pass any `org.mongodb.*` system settings
     systemProperties =
         System.getProperties()
