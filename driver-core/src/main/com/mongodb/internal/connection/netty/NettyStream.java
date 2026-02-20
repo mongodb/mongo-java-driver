@@ -307,7 +307,8 @@ final class NettyStream implements Stream {
                             composite.addComponent(next);
                             iter.remove();
                         } else {
-                            composite.addComponent(next.readRetainedSlice(bytesNeededFromCurrentBuffer));
+                            next.retain();
+                            composite.addComponent(next.readSlice(bytesNeededFromCurrentBuffer));
                         }
                         composite.writerIndex(composite.writerIndex() + bytesNeededFromCurrentBuffer);
                         bytesNeeded -= bytesNeededFromCurrentBuffer;
