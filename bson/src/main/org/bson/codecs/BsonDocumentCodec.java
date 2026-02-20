@@ -22,6 +22,7 @@ import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
+import org.bson.RawBsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
@@ -40,6 +41,7 @@ public class BsonDocumentCodec implements CollectibleCodec<BsonDocument> {
     private static final String ID_FIELD_NAME = "_id";
     private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(new BsonValueCodecProvider());
     private static final BsonTypeCodecMap DEFAULT_BSON_TYPE_CODEC_MAP = new BsonTypeCodecMap(getBsonTypeClassMap(), DEFAULT_REGISTRY);
+    private static final RawBsonDocumentCodec RAW_BSON_DOCUMENT_CODEC = new RawBsonDocumentCodec();
 
     private final CodecRegistry codecRegistry;
     private final BsonTypeCodecMap bsonTypeCodecMap;
@@ -101,6 +103,10 @@ public class BsonDocumentCodec implements CollectibleCodec<BsonDocument> {
 
     @Override
     public void encode(final BsonWriter writer, final BsonDocument value, final EncoderContext encoderContext) {
+        if (value instanceof RawBsonDocument) {
+            RAW_BSON_DOCUMENT_CODEC.encode(writer, (RawBsonDocument) value, encoderContext);
+            return;
+        }
         writer.writeStartDocument();
 
         beforeFields(writer, encoderContext, value);
