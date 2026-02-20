@@ -62,6 +62,14 @@ tasks.register<JavaExec>("runNetty") {
     jvmArgs = application.applicationDefaultJvmArgs.toList()
 }
 
+tasks.register<JavaExec>("runPojo") {
+    group = "application"
+    description = "Run the POJO benchmark suite."
+    mainClass.set("com.mongodb.benchmark.benchmarks.PojoBenchmarkSuite")
+    classpath = sourceSets["main"].runtimeClasspath
+    jvmArgs = application.applicationDefaultJvmArgs.toList()
+}
+
 tasks.withType<Javadoc>().configureEach {
     enabled = false
 }

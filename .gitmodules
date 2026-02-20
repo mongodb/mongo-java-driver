@@ -1,3 +1,3 @@
 [submodule "specifications"]
 	path = testing/resources/specifications
-	url = https://github.com/mongodb/specifications
+	url = https://github.com/BorisDog/specifications
