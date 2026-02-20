@@ -256,7 +256,7 @@ public final class NettyByteBuf implements ByteBuf {
 
     @Override
     public ByteBuf duplicate() {
-        return new NettyByteBuf(proxied.retainedDuplicate(), isWriting);
+        return new NettyByteBuf(proxied.duplicate().retain(), isWriting);
     }
 
     @Override
