@@ -136,6 +136,6 @@ echo "Running tests with Java ${JAVA_VERSION}"
           --stacktrace --info --continue ${TESTS} | tee -a logs.txt
 
 if grep -q 'LEAK:' logs.txt ; then
-    echo -e "\033[31m!!!!Netty Leak detected, please inspect build log!!!\033[0m"
+    echo "Netty Leak detected, please inspect build log"
     exit 1
 fi
