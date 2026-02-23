@@ -228,7 +228,7 @@ public class AsynchronousTlsChannelGroup implements Executor {
 
     @Override
     public void execute(final Runnable r) {
-        executor.execute(()->{
+        executor.execute(() -> {
             try {
                 r.run();
             } catch (Throwable t) {
