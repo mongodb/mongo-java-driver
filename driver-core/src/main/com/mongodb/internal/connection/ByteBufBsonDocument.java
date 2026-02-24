@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoInternalException;
+import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
@@ -129,6 +130,7 @@ import static java.util.Collections.emptyMap;
  * @see ByteBufBsonArray
  * @see ByteBufBsonHelper
  */
+@NotThreadSafe
 public final class ByteBufBsonDocument extends BsonDocument implements Closeable {
     private static final Logger LOGGER = Loggers.getLogger("connection");
     private static final long serialVersionUID = 2L;
@@ -471,9 +473,9 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
                     doc.put(entry.getKey(), entry.getValue().toHydratedArray());
                 }
                 cachedDocument = doc;
+                closed = true;
                 // Release buffers since we no longer need them
                 releaseResources();
-                closed = true;
             } finally {
                 dup.release();
             }

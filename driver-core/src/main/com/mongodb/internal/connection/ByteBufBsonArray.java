@@ -16,6 +16,9 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import org.bson.BsonArray;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonType;
@@ -34,7 +37,9 @@ import java.util.Objects;
 
 import static com.mongodb.internal.connection.ByteBufBsonHelper.readBsonValue;
 
+@NotThreadSafe
 final class ByteBufBsonArray extends BsonArray implements Closeable {
+    private static final Logger LOGGER = Loggers.getLogger("connection");
     private final ByteBuf byteBuf;
 
     /**
@@ -302,6 +307,7 @@ final class ByteBufBsonArray extends BsonArray implements Closeable {
                     closeable.close();
                 } catch (Exception e) {
                     // Log and continue closing other resources
+                    LOGGER.error("Error closing resource", e);
                 }
             }
             trackedResources.clear();
@@ -317,32 +323,42 @@ final class ByteBufBsonArray extends BsonArray implements Closeable {
 
     private class ByteBufBsonArrayIterator implements Iterator<BsonValue> {
         private ByteBuf duplicatedByteBuf;
-        private BsonBinaryReader bsonReader;
+        private BsonBinaryReader reader;
         private Closeable resourceHandle;
         private boolean finished;
 
         {
             ensureOpen();
+            // Create duplicate buffer for iteration and track it temporarily
             duplicatedByteBuf = byteBuf.duplicate();
             resourceHandle = () -> {
                 if (duplicatedByteBuf != null) {
+                    try {
+                        if (reader != null) {
+                            reader.close();
+                        }
+                    } catch (Exception e) {
+                        // Ignore
+                    }
                     duplicatedByteBuf.release();
                     duplicatedByteBuf = null;
+                    reader = null;
                 }
             };
             trackedResources.add(resourceHandle);
-            bsonReader = new BsonBinaryReader(new ByteBufferBsonInput(duplicatedByteBuf));
+            reader = new BsonBinaryReader(new ByteBufferBsonInput(duplicatedByteBuf));
             // While one might expect that this would be a call to BsonReader#readStartArray that doesn't work because BsonBinaryReader
             // expects to be positioned at the start at the beginning of a document, not an array.  Fortunately, a BSON array has exactly
             // the same structure as a BSON document (the keys are just the array indices converted to a strings).  So it works fine to
             // call BsonReader#readStartDocument here, and just skip all the names via BsonReader#skipName below.
-            bsonReader.readStartDocument();
-            bsonReader.readBsonType();
+            reader.readStartDocument();
+            reader.readBsonType();
         }
 
         @Override
         public boolean hasNext() {
-            boolean hasNext = bsonReader.getCurrentBsonType() != BsonType.END_OF_DOCUMENT;
+            ensureOpen();
+            boolean hasNext = reader.getCurrentBsonType() != BsonType.END_OF_DOCUMENT;
             if (!hasNext) {
                 cleanup();
             }
@@ -351,12 +367,13 @@ final class ByteBufBsonArray extends BsonArray implements Closeable {
 
         @Override
         public BsonValue next() {
+            ensureOpen();
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
-            bsonReader.skipName();
-            BsonValue value = readBsonValue(duplicatedByteBuf, bsonReader, trackedResources);
-            bsonReader.readBsonType();
+            reader.skipName();
+            BsonValue value = readBsonValue(duplicatedByteBuf, reader, trackedResources);
+            reader.readBsonType();
             return value;
         }
 
