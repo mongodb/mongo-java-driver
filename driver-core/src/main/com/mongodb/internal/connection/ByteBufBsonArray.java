@@ -357,6 +357,9 @@ final class ByteBufBsonArray extends BsonArray implements Closeable {
 
         @Override
         public boolean hasNext() {
+            if (finished) {
+                return false;
+            }
             ensureOpen();
             boolean hasNext = reader.getCurrentBsonType() != BsonType.END_OF_DOCUMENT;
             if (!hasNext) {
@@ -367,7 +370,6 @@ final class ByteBufBsonArray extends BsonArray implements Closeable {
 
         @Override
         public BsonValue next() {
-            ensureOpen();
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }

@@ -750,6 +750,7 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
                 if (finished) {
                     return false;
                 }
+                ensureOpen();
                 if (!started) {
                     reader.readStartDocument();
                     reader.readBsonType();
@@ -767,6 +768,7 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
                 if (!hasNext()) {
                     throw new NoSuchElementException();
                 }
+                ensureOpen();
                 String key = reader.readName();
                 BsonValue value = readBsonValue(duplicatedByteBuf, reader, trackedResources);
                 reader.readBsonType();

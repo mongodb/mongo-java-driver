@@ -46,6 +46,7 @@ import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -63,145 +64,242 @@ import static java.util.Collections.singletonList;
 import static org.bson.BsonBoolean.FALSE;
 import static org.bson.BsonBoolean.TRUE;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@DisplayName("ByteBufBsonArray")
 class ByteBufBsonArrayTest {
 
+    // Basic Operations
+
     @Test
+    @DisplayName("getValues() returns array values")
     void testGetValues() {
         List<BsonInt32> values = asList(new BsonInt32(0), new BsonInt32(1), new BsonInt32(2));
-        ByteBufBsonArray bsonArray = fromBsonValues(values);
-        assertEquals(values, bsonArray.getValues());
+        try (ByteBufBsonArray bsonArray = fromBsonValues(values)) {
+            assertEquals(values, bsonArray.getValues());
+        }
     }
 
     @Test
+    @DisplayName("size() returns correct count")
     void testSize() {
-        assertEquals(0, fromBsonValues(emptyList()).size());
-        assertEquals(1, fromBsonValues(singletonList(TRUE)).size());
-        assertEquals(2, fromBsonValues(asList(TRUE, TRUE)).size());
+        try (ByteBufBsonArray bsonArray = fromBsonValues(emptyList())) {
+            assertEquals(0, bsonArray.size());
+        }
+        try (ByteBufBsonArray bsonArray = fromBsonValues(singletonList(TRUE))) {
+            assertEquals(1, bsonArray.size());
+        }
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(TRUE, TRUE))) {
+            assertEquals(2, bsonArray.size());
+        }
     }
 
     @Test
+    @DisplayName("isEmpty() returns correct result")
     void testIsEmpty() {
-        assertTrue(fromBsonValues(emptyList()).isEmpty());
-        assertFalse(fromBsonValues(singletonList(TRUE)).isEmpty());
-        assertFalse(fromBsonValues(asList(TRUE, TRUE)).isEmpty());
+        try (ByteBufBsonArray bsonArray = fromBsonValues(emptyList())) {
+            assertTrue(bsonArray.isEmpty());
+        }
+        try (ByteBufBsonArray bsonArray = fromBsonValues(singletonList(TRUE))) {
+            assertFalse(bsonArray.isEmpty());
+        }
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(TRUE, TRUE))) {
+            assertFalse(bsonArray.isEmpty());
+        }
     }
 
     @Test
+    @DisplayName("contains() finds existing values and rejects missing values")
     void testContains() {
-        assertFalse(fromBsonValues(emptyList()).contains(TRUE));
-        assertTrue(fromBsonValues(singletonList(TRUE)).contains(TRUE));
-        assertTrue(fromBsonValues(asList(FALSE, TRUE)).contains(TRUE));
-        assertFalse(fromBsonValues(singletonList(FALSE)).contains(TRUE));
-        assertFalse(fromBsonValues(asList(FALSE, FALSE)).contains(TRUE));
+        try (ByteBufBsonArray bsonArray = fromBsonValues(emptyList())) {
+            assertFalse(bsonArray.contains(TRUE));
+        }
+        try (ByteBufBsonArray bsonArray = fromBsonValues(singletonList(TRUE))) {
+            assertTrue(bsonArray.contains(TRUE));
+        }
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(FALSE, TRUE))) {
+            assertTrue(bsonArray.contains(TRUE));
+        }
+        try (ByteBufBsonArray bsonArray = fromBsonValues(singletonList(FALSE))) {
+            assertFalse(bsonArray.contains(TRUE));
+        }
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(FALSE, FALSE))) {
+            assertFalse(bsonArray.contains(TRUE));
+        }
     }
 
     @Test
+    @DisplayName("iterator() navigates through all elements")
     void testIterator() {
-        Iterator<BsonValue> iterator = fromBsonValues(emptyList()).iterator();
-        assertFalse(iterator.hasNext());
-        assertThrows(NoSuchElementException.class, iterator::next);
+        try (ByteBufBsonArray bsonArray = fromBsonValues(emptyList())) {
+            Iterator<BsonValue> iterator = bsonArray.iterator();
+            assertFalse(iterator.hasNext());
+            assertThrows(NoSuchElementException.class, iterator::next);
+        }
 
-        iterator = fromBsonValues(singletonList(TRUE)).iterator();
-        assertTrue(iterator.hasNext());
-        assertEquals(TRUE, iterator.next());
-        assertFalse(iterator.hasNext());
-        assertThrows(NoSuchElementException.class, iterator::next);
+        try (ByteBufBsonArray bsonArray = fromBsonValues(singletonList(TRUE))) {
+            Iterator<BsonValue> iterator = bsonArray.iterator();
+            assertTrue(iterator.hasNext());
+            assertEquals(TRUE, iterator.next());
+            assertFalse(iterator.hasNext());
+            assertThrows(NoSuchElementException.class, iterator::next);
+        }
 
-        iterator = fromBsonValues(asList(TRUE, FALSE)).iterator();
-        assertTrue(iterator.hasNext());
-        assertEquals(TRUE, iterator.next());
-        assertTrue(iterator.hasNext());
-        assertEquals(FALSE, iterator.next());
-        assertFalse(iterator.hasNext());
-        assertThrows(NoSuchElementException.class, iterator::next);
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(TRUE, FALSE))) {
+            Iterator<BsonValue> iterator = bsonArray.iterator();
+            assertTrue(iterator.hasNext());
+            assertEquals(TRUE, iterator.next());
+            assertTrue(iterator.hasNext());
+            assertEquals(FALSE, iterator.next());
+            assertFalse(iterator.hasNext());
+            assertThrows(NoSuchElementException.class, iterator::next);
+        }
     }
 
     @Test
+    @DisplayName("Iterators ensure the resource is still open")
+    void iteratorsEnsureResourceIsStillOpen() {
+        ByteBufBsonArray bsonArray = fromBsonValues(singletonList(TRUE));
+        Iterator<BsonValue> arrayIterator = bsonArray.iterator();
+
+        assertDoesNotThrow(arrayIterator::hasNext);
+
+        bsonArray.close();
+        assertThrows(IllegalStateException.class, arrayIterator::hasNext);
+    }
+
+    @Test
+    @DisplayName("toArray() converts array to Object array")
     void testToArray() {
-        assertArrayEquals(new BsonValue[]{TRUE, FALSE}, fromBsonValues(asList(TRUE, FALSE)).toArray());
-        assertArrayEquals(new BsonValue[]{TRUE, FALSE}, fromBsonValues(asList(TRUE, FALSE)).toArray(new BsonValue[0]));
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(TRUE, FALSE))) {
+            assertArrayEquals(new BsonValue[]{TRUE, FALSE}, bsonArray.toArray());
+        }
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(TRUE, FALSE))) {
+            assertArrayEquals(new BsonValue[]{TRUE, FALSE}, bsonArray.toArray(new BsonValue[0]));
+        }
     }
 
     @Test
+    @DisplayName("containsAll() checks if all elements are present")
     void testContainsAll() {
-        assertTrue(fromBsonValues(asList(TRUE, FALSE)).containsAll(asList(TRUE, FALSE)));
-        assertFalse(fromBsonValues(asList(TRUE, TRUE)).containsAll(asList(TRUE, FALSE)));
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(TRUE, FALSE))) {
+            assertTrue(bsonArray.containsAll(asList(TRUE, FALSE)));
+        }
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(TRUE, TRUE))) {
+            assertFalse(bsonArray.containsAll(asList(TRUE, FALSE)));
+        }
     }
 
     @Test
+    @DisplayName("get() retrieves element at index and throws for out of bounds")
     void testGet() {
-        ByteBufBsonArray bsonArray = fromBsonValues(asList(TRUE, FALSE));
-        assertEquals(TRUE, bsonArray.get(0));
-        assertEquals(FALSE, bsonArray.get(1));
-        assertThrows(IndexOutOfBoundsException.class, () -> bsonArray.get(-1));
-        assertThrows(IndexOutOfBoundsException.class, () -> bsonArray.get(2));
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(TRUE, FALSE))) {
+            assertEquals(TRUE, bsonArray.get(0));
+            assertEquals(FALSE, bsonArray.get(1));
+            assertThrows(IndexOutOfBoundsException.class, () -> bsonArray.get(-1));
+            assertThrows(IndexOutOfBoundsException.class, () -> bsonArray.get(2));
+        }
     }
 
     @Test
+    @DisplayName("indexOf() finds element position or returns -1")
     void testIndexOf() {
-        ByteBufBsonArray bsonArray = fromBsonValues(asList(TRUE, FALSE));
-        assertEquals(0, bsonArray.indexOf(TRUE));
-        assertEquals(1, bsonArray.indexOf(FALSE));
-        assertEquals(-1, bsonArray.indexOf(BsonNull.VALUE));
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(TRUE, FALSE))) {
+            assertEquals(0, bsonArray.indexOf(TRUE));
+            assertEquals(1, bsonArray.indexOf(FALSE));
+            assertEquals(-1, bsonArray.indexOf(BsonNull.VALUE));
+        }
     }
 
     @Test
+    @DisplayName("lastIndexOf() finds last element position or returns -1")
     void testLastIndexOf() {
-        ByteBufBsonArray bsonArray = fromBsonValues(asList(TRUE, FALSE, TRUE, FALSE));
-        assertEquals(2, bsonArray.lastIndexOf(TRUE));
-        assertEquals(3, bsonArray.lastIndexOf(FALSE));
-        assertEquals(-1, bsonArray.lastIndexOf(BsonNull.VALUE));
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(TRUE, FALSE, TRUE, FALSE))) {
+            assertEquals(2, bsonArray.lastIndexOf(TRUE));
+            assertEquals(3, bsonArray.lastIndexOf(FALSE));
+            assertEquals(-1, bsonArray.lastIndexOf(BsonNull.VALUE));
+        }
     }
 
     @Test
+    @DisplayName("listIterator() supports bidirectional iteration")
     void testListIterator() {
         // implementation is delegated to ArrayList, so not much testing is needed
-        ListIterator<BsonValue> iterator = fromBsonValues(emptyList()).listIterator();
-        assertFalse(iterator.hasNext());
-        assertFalse(iterator.hasPrevious());
+        try (ByteBufBsonArray bsonArray = fromBsonValues(emptyList())) {
+            ListIterator<BsonValue> iterator = bsonArray.listIterator();
+            assertFalse(iterator.hasNext());
+            assertFalse(iterator.hasPrevious());
+        }
     }
 
     @Test
+    @DisplayName("subList() returns subset of array elements")
     void testSubList() {
-        ByteBufBsonArray bsonArray = fromBsonValues(asList(new BsonInt32(0), new BsonInt32(1), new BsonInt32(2)));
-        assertEquals(emptyList(), bsonArray.subList(0, 0));
-        assertEquals(singletonList(new BsonInt32(0)), bsonArray.subList(0, 1));
-        assertEquals(singletonList(new BsonInt32(2)), bsonArray.subList(2, 3));
-        assertThrows(IndexOutOfBoundsException.class, () -> bsonArray.subList(-1, 1));
-        assertThrows(IllegalArgumentException.class, () -> bsonArray.subList(3, 2));
-        assertThrows(IndexOutOfBoundsException.class, () -> bsonArray.subList(2, 4));
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(new BsonInt32(0), new BsonInt32(1), new BsonInt32(2)))) {
+            assertEquals(emptyList(), bsonArray.subList(0, 0));
+            assertEquals(singletonList(new BsonInt32(0)), bsonArray.subList(0, 1));
+            assertEquals(singletonList(new BsonInt32(2)), bsonArray.subList(2, 3));
+            assertThrows(IndexOutOfBoundsException.class, () -> bsonArray.subList(-1, 1));
+            assertThrows(IllegalArgumentException.class, () -> bsonArray.subList(3, 2));
+            assertThrows(IndexOutOfBoundsException.class, () -> bsonArray.subList(2, 4));
+        }
     }
 
+    // Equality and HashCode
+
     @Test
+    @DisplayName("equals() and hashCode() work correctly")
     void testEquals() {
-        assertEquals(new BsonArray(asList(TRUE, FALSE)), fromBsonValues(asList(TRUE, FALSE)));
-        assertEquals(fromBsonValues(asList(TRUE, FALSE)), new BsonArray(asList(TRUE, FALSE)));
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(TRUE, FALSE))) {
+            assertEquals(new BsonArray(asList(TRUE, FALSE)), bsonArray);
+        }
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(TRUE, FALSE))) {
+            assertEquals(bsonArray, new BsonArray(asList(TRUE, FALSE)));
+        }
 
-        assertNotEquals(new BsonArray(asList(TRUE, FALSE)), fromBsonValues(asList(FALSE, TRUE)));
-        assertNotEquals(fromBsonValues(asList(TRUE, FALSE)), new BsonArray(asList(FALSE, TRUE)));
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(FALSE, TRUE))) {
+            assertNotEquals(new BsonArray(asList(TRUE, FALSE)), bsonArray);
+        }
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(TRUE, FALSE))) {
+            assertNotEquals(bsonArray, new BsonArray(asList(FALSE, TRUE)));
+        }
 
-        assertNotEquals(new BsonArray(asList(TRUE, FALSE)), fromBsonValues(asList(TRUE, FALSE, TRUE)));
-        assertNotEquals(fromBsonValues(asList(TRUE, FALSE)), new BsonArray(asList(TRUE, FALSE, TRUE)));
-        assertNotEquals(fromBsonValues(asList(TRUE, FALSE, TRUE)), new BsonArray(asList(TRUE, FALSE)));
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(TRUE, FALSE, TRUE))) {
+            assertNotEquals(new BsonArray(asList(TRUE, FALSE)), bsonArray);
+        }
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(TRUE, FALSE))) {
+            assertNotEquals(bsonArray, new BsonArray(asList(TRUE, FALSE, TRUE)));
+        }
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(TRUE, FALSE, TRUE))) {
+            assertNotEquals(bsonArray, new BsonArray(asList(TRUE, FALSE)));
+        }
     }
 
     @Test
+    @DisplayName("hashCode() is consistent with equals()")
     void testHashCode() {
-        assertEquals(new BsonArray(asList(TRUE, FALSE)).hashCode(), fromBsonValues(asList(TRUE, FALSE)).hashCode());
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(TRUE, FALSE))) {
+            assertEquals(new BsonArray(asList(TRUE, FALSE)).hashCode(), bsonArray.hashCode());
+        }
     }
 
     @Test
+    @DisplayName("toString() returns equivalent string")
     void testToString() {
-        assertEquals(new BsonArray(asList(TRUE, FALSE)).toString(), fromBsonValues(asList(TRUE, FALSE)).toString());
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(TRUE, FALSE))) {
+            assertEquals(new BsonArray(asList(TRUE, FALSE)).toString(), bsonArray.toString());
+        }
     }
 
+    // Type Support
+
     @Test
+    @DisplayName("All BSON types are supported")
     void testAllBsonTypes() {
         BsonValue bsonNull = new BsonNull();
         BsonValue bsonInt32 = new BsonInt32(42);
@@ -225,30 +323,31 @@ class ByteBufBsonArrayTest {
         BsonValue document = new BsonDocument("a", new BsonInt32(1));
         BsonValue dbPointer = new BsonDbPointer("db.coll", new ObjectId());
 
-        ByteBufBsonArray bsonArray = fromBsonValues(asList(
+        try (ByteBufBsonArray bsonArray = fromBsonValues(asList(
                 bsonNull, bsonInt32, bsonInt64, bsonDecimal128, bsonBoolean, bsonDateTime, bsonDouble, bsonString, minKey, maxKey,
-                javaScript, objectId, scope, regularExpression, symbol, timestamp, undefined, binary, array, document, dbPointer));
-        assertEquals(bsonNull, bsonArray.get(0));
-        assertEquals(bsonInt32, bsonArray.get(1));
-        assertEquals(bsonInt64, bsonArray.get(2));
-        assertEquals(bsonDecimal128, bsonArray.get(3));
-        assertEquals(bsonBoolean, bsonArray.get(4));
-        assertEquals(bsonDateTime, bsonArray.get(5));
-        assertEquals(bsonDouble, bsonArray.get(6));
-        assertEquals(bsonString, bsonArray.get(7));
-        assertEquals(minKey, bsonArray.get(8));
-        assertEquals(maxKey, bsonArray.get(9));
-        assertEquals(javaScript, bsonArray.get(10));
-        assertEquals(objectId, bsonArray.get(11));
-        assertEquals(scope, bsonArray.get(12));
-        assertEquals(regularExpression, bsonArray.get(13));
-        assertEquals(symbol, bsonArray.get(14));
-        assertEquals(timestamp, bsonArray.get(15));
-        assertEquals(undefined, bsonArray.get(16));
-        assertEquals(binary, bsonArray.get(17));
-        assertEquals(array, bsonArray.get(18));
-        assertEquals(document, bsonArray.get(19));
-        assertEquals(dbPointer, bsonArray.get(20));
+                javaScript, objectId, scope, regularExpression, symbol, timestamp, undefined, binary, array, document, dbPointer))) {
+            assertEquals(bsonNull, bsonArray.get(0));
+            assertEquals(bsonInt32, bsonArray.get(1));
+            assertEquals(bsonInt64, bsonArray.get(2));
+            assertEquals(bsonDecimal128, bsonArray.get(3));
+            assertEquals(bsonBoolean, bsonArray.get(4));
+            assertEquals(bsonDateTime, bsonArray.get(5));
+            assertEquals(bsonDouble, bsonArray.get(6));
+            assertEquals(bsonString, bsonArray.get(7));
+            assertEquals(minKey, bsonArray.get(8));
+            assertEquals(maxKey, bsonArray.get(9));
+            assertEquals(javaScript, bsonArray.get(10));
+            assertEquals(objectId, bsonArray.get(11));
+            assertEquals(scope, bsonArray.get(12));
+            assertEquals(regularExpression, bsonArray.get(13));
+            assertEquals(symbol, bsonArray.get(14));
+            assertEquals(timestamp, bsonArray.get(15));
+            assertEquals(undefined, bsonArray.get(16));
+            assertEquals(binary, bsonArray.get(17));
+            assertEquals(array, bsonArray.get(18));
+            assertEquals(document, bsonArray.get(19));
+            assertEquals(dbPointer, bsonArray.get(20));
+        }
     }
 
     static ByteBufBsonArray fromBsonValues(final List<? extends BsonValue> values) {

@@ -49,12 +49,14 @@ import java.nio.ByteOrder;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
 import static java.util.Arrays.asList;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -67,15 +69,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("ByteBufBsonDocument")
 class ByteBufBsonDocumentTest {
-    private ByteBuf emptyDocumentByteBuf;
     private ByteBuf documentByteBuf;
     private ByteBufBsonDocument emptyByteBufDocument;
-    private ByteBufBsonDocument byteBufDocument;
     private BsonDocument document;
 
     @BeforeEach
     void setUp() {
-        emptyDocumentByteBuf = new ByteBufNIO(ByteBuffer.wrap(new byte[]{5, 0, 0, 0, 0}));
+        ByteBuf emptyDocumentByteBuf = new ByteBufNIO(ByteBuffer.wrap(new byte[]{5, 0, 0, 0, 0}));
         emptyByteBufDocument = new ByteBufBsonDocument(emptyDocumentByteBuf);
 
         document = new BsonDocument()
@@ -89,14 +89,10 @@ class ByteBufBsonDocumentTest {
 
         RawBsonDocument rawBsonDocument = RawBsonDocument.parse(document.toString());
         documentByteBuf = rawBsonDocument.getByteBuffer();
-        byteBufDocument = new ByteBufBsonDocument(documentByteBuf);
     }
 
     @AfterEach
     void tearDown() {
-        if (byteBufDocument != null) {
-            byteBufDocument.close();
-        }
         if (emptyByteBufDocument != null) {
             emptyByteBufDocument.close();
         }
@@ -108,56 +104,70 @@ class ByteBufBsonDocumentTest {
     @DisplayName("get() returns value for existing key, null for missing key")
     void getShouldReturnCorrectValue() {
         assertNull(emptyByteBufDocument.get("a"));
-        assertNull(byteBufDocument.get("z"));
-        assertEquals(new BsonInt32(1), byteBufDocument.get("a"));
-        assertEquals(new BsonInt32(2), byteBufDocument.get("b"));
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            assertNull(byteBufDocument.get("z"));
+            assertEquals(new BsonInt32(1), byteBufDocument.get("a"));
+            assertEquals(new BsonInt32(2), byteBufDocument.get("b"));
+        }
     }
 
     @Test
     @DisplayName("get() throws IllegalArgumentException for null key")
     void getShouldThrowForNullKey() {
-        assertThrows(IllegalArgumentException.class, () -> byteBufDocument.get(null));
-        assertEquals(1, documentByteBuf.getReferenceCount());
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            assertThrows(IllegalArgumentException.class, () -> byteBufDocument.get(null));
+            assertEquals(1, documentByteBuf.getReferenceCount());
+        }
     }
 
     @Test
     @DisplayName("containsKey() finds existing keys and rejects missing keys")
     void containsKeyShouldWork() {
-        assertThrows(IllegalArgumentException.class, () -> byteBufDocument.containsKey(null));
-        assertTrue(byteBufDocument.containsKey("a"));
-        assertTrue(byteBufDocument.containsKey("d"));
-        assertFalse(byteBufDocument.containsKey("z"));
-        assertEquals(1, documentByteBuf.getReferenceCount());
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            assertThrows(IllegalArgumentException.class, () -> byteBufDocument.containsKey(null));
+            assertTrue(byteBufDocument.containsKey("a"));
+            assertTrue(byteBufDocument.containsKey("d"));
+            assertFalse(byteBufDocument.containsKey("z"));
+            assertEquals(1, documentByteBuf.getReferenceCount());
+        }
     }
 
     @Test
     @DisplayName("containsValue() finds existing values and rejects missing values")
     void containsValueShouldWork() {
-        assertTrue(byteBufDocument.containsValue(document.get("a")));
-        assertTrue(byteBufDocument.containsValue(document.get("c")));
-        assertFalse(byteBufDocument.containsValue(new BsonInt32(999)));
-        assertEquals(1, documentByteBuf.getReferenceCount());
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            assertTrue(byteBufDocument.containsValue(document.get("a")));
+            assertTrue(byteBufDocument.containsValue(document.get("c")));
+            assertFalse(byteBufDocument.containsValue(new BsonInt32(999)));
+            assertEquals(1, documentByteBuf.getReferenceCount());
+        }
     }
 
     @Test
     @DisplayName("isEmpty() returns correct result")
     void isEmptyShouldWork() {
         assertTrue(emptyByteBufDocument.isEmpty());
-        assertFalse(byteBufDocument.isEmpty());
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            assertFalse(byteBufDocument.isEmpty());
+        }
     }
 
     @Test
     @DisplayName("size() returns correct count")
     void sizeShouldWork() {
         assertEquals(0, emptyByteBufDocument.size());
-        assertEquals(4, byteBufDocument.size());
-        assertEquals(4, byteBufDocument.size()); // Verify caching works
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            assertEquals(4, byteBufDocument.size());
+            assertEquals(4, byteBufDocument.size()); // Verify caching works
+        }
     }
 
     @Test
     @DisplayName("getFirstKey() returns first key or throws for empty document")
     void getFirstKeyShouldWork() {
-        assertEquals("a", byteBufDocument.getFirstKey());
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            assertEquals("a", byteBufDocument.getFirstKey());
+        }
         assertThrows(NoSuchElementException.class, () -> emptyByteBufDocument.getFirstKey());
     }
 
@@ -167,7 +177,9 @@ class ByteBufBsonDocumentTest {
     @DisplayName("keySet() returns all keys")
     void keySetShouldWork() {
         assertTrue(emptyByteBufDocument.keySet().isEmpty());
-        assertEquals(new HashSet<>(asList("a", "b", "c", "d")), byteBufDocument.keySet());
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            assertEquals(new HashSet<>(asList("a", "b", "c", "d")), byteBufDocument.keySet());
+        }
     }
 
     @Test
@@ -177,7 +189,9 @@ class ByteBufBsonDocumentTest {
         Set<BsonValue> expected = new HashSet<>(asList(
                 document.get("a"), document.get("b"), document.get("c"), document.get("d")
         ));
-        assertEquals(expected, new HashSet<>(byteBufDocument.values()));
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            assertEquals(expected, new HashSet<>(byteBufDocument.values()));
+        }
     }
 
     @Test
@@ -190,7 +204,9 @@ class ByteBufBsonDocumentTest {
                 new AbstractMap.SimpleImmutableEntry<>("c", document.get("c")),
                 new AbstractMap.SimpleImmutableEntry<>("d", document.get("d"))
         ));
-        assertEquals(expected, byteBufDocument.entrySet());
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            assertEquals(expected, byteBufDocument.entrySet());
+        }
     }
 
     // Type-Specific Accessors
@@ -198,34 +214,42 @@ class ByteBufBsonDocumentTest {
     @Test
     @DisplayName("getDocument() returns nested document")
     void getDocumentShouldWork() {
-        BsonDocument nested = byteBufDocument.getDocument("c");
-        assertNotNull(nested);
-        assertEquals(BsonBoolean.TRUE, nested.get("x"));
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            BsonDocument nested = byteBufDocument.getDocument("c");
+            assertNotNull(nested);
+            assertEquals(BsonBoolean.TRUE, nested.get("x"));
+        }
     }
 
     @Test
     @DisplayName("getArray() returns array")
     void getArrayShouldWork() {
-        BsonArray array = byteBufDocument.getArray("d");
-        assertNotNull(array);
-        assertEquals(2, array.size());
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            BsonArray array = byteBufDocument.getArray("d");
+            assertNotNull(array);
+            assertEquals(2, array.size());
+        }
     }
 
     @Test
     @DisplayName("get() with default value works correctly")
     void getWithDefaultShouldWork() {
-        assertEquals(new BsonInt32(1), byteBufDocument.get("a", new BsonInt32(999)));
-        assertEquals(new BsonInt32(999), byteBufDocument.get("missing", new BsonInt32(999)));
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            assertEquals(new BsonInt32(1), byteBufDocument.get("a", new BsonInt32(999)));
+            assertEquals(new BsonInt32(999), byteBufDocument.get("missing", new BsonInt32(999)));
+        }
     }
 
     @Test
     @DisplayName("Type check methods return correct results")
     void typeChecksShouldWork() {
-        assertTrue(byteBufDocument.isNumber("a"));
-        assertTrue(byteBufDocument.isInt32("a"));
-        assertTrue(byteBufDocument.isDocument("c"));
-        assertTrue(byteBufDocument.isArray("d"));
-        assertFalse(byteBufDocument.isDocument("a"));
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            assertTrue(byteBufDocument.isNumber("a"));
+            assertTrue(byteBufDocument.isInt32("a"));
+            assertTrue(byteBufDocument.isDocument("c"));
+            assertTrue(byteBufDocument.isArray("d"));
+            assertFalse(byteBufDocument.isDocument("a"));
+        }
     }
 
     // Immutability
@@ -233,11 +257,13 @@ class ByteBufBsonDocumentTest {
     @Test
     @DisplayName("All write methods throw UnsupportedOperationException")
     void writeMethodsShouldThrow() {
-        assertThrows(UnsupportedOperationException.class, () -> byteBufDocument.clear());
-        assertThrows(UnsupportedOperationException.class, () -> byteBufDocument.put("x", new BsonInt32(1)));
-        assertThrows(UnsupportedOperationException.class, () -> byteBufDocument.append("x", new BsonInt32(1)));
-        assertThrows(UnsupportedOperationException.class, () -> byteBufDocument.putAll(new BsonDocument()));
-        assertThrows(UnsupportedOperationException.class, () -> byteBufDocument.remove("a"));
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            assertThrows(UnsupportedOperationException.class, () -> byteBufDocument.clear());
+            assertThrows(UnsupportedOperationException.class, () -> byteBufDocument.put("x", new BsonInt32(1)));
+            assertThrows(UnsupportedOperationException.class, () -> byteBufDocument.append("x", new BsonInt32(1)));
+            assertThrows(UnsupportedOperationException.class, () -> byteBufDocument.putAll(new BsonDocument()));
+            assertThrows(UnsupportedOperationException.class, () -> byteBufDocument.remove("a"));
+        }
     }
 
     // Conversion and Serialization
@@ -245,51 +271,69 @@ class ByteBufBsonDocumentTest {
     @Test
     @DisplayName("toBsonDocument() returns equivalent document and caches result")
     void toBsonDocumentShouldWork() {
-        assertEquals(document, byteBufDocument.toBsonDocument());
-        BsonDocument first = byteBufDocument.toBsonDocument();
-        BsonDocument second = byteBufDocument.toBsonDocument();
-        assertEquals(first, second);
-    }
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            assertEquals(document, byteBufDocument.toBsonDocument());
+            BsonDocument first = byteBufDocument.toBsonDocument();
+            BsonDocument second = byteBufDocument.toBsonDocument();
+            assertEquals(first, second);
+        }    }
 
     @Test
     @DisplayName("asBsonReader() creates valid reader")
     void asBsonReaderShouldWork() {
-        try (BsonReader reader = byteBufDocument.asBsonReader()) {
-            BsonDocument decoded = new BsonDocumentCodec().decode(reader, DecoderContext.builder().build());
-            assertEquals(document, decoded);
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            try (BsonReader reader = byteBufDocument.asBsonReader()) {
+                BsonDocument decoded = new BsonDocumentCodec().decode(reader, DecoderContext.builder().build());
+                assertEquals(document, decoded);
+            }
         }
     }
 
     @Test
-    @DisplayName("toJson() returns correct JSON with different settings")
+    @DisplayName("toJson() returns correct JSON ")
     void toJsonShouldWork() {
+        ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf);
         assertEquals(document.toJson(), byteBufDocument.toJson());
-        assertNotNull(byteBufDocument.toJson()); // Verify caching
+        byteBufDocument.close();
 
-        JsonWriterSettings shellSettings = JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build();
-        assertEquals(document.toJson(shellSettings), byteBufDocument.toJson(shellSettings));
+        assertNotNull(byteBufDocument.toJson()); // Verify caching
+    }
+
+    @Test
+    @DisplayName("toJson() returns correct JSON with different settings")
+    void toJsonWithSettingsShouldWork() {
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            JsonWriterSettings shellSettings = JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build();
+            assertEquals(document.toJson(shellSettings), byteBufDocument.toJson(shellSettings));
+        }
     }
 
     @Test
     @DisplayName("toString() returns equivalent string")
     void toStringShouldWork() {
-        assertEquals(document.toString(), byteBufDocument.toString());
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            assertEquals(document.toString(), byteBufDocument.toString());
+        }
     }
 
     @Test
     @DisplayName("clone() creates deep copy")
     void cloneShouldWork() {
-        BsonDocument cloned = byteBufDocument.clone();
-        assertEquals(byteBufDocument, cloned);
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            BsonDocument cloned = byteBufDocument.clone();
+            assertEquals(byteBufDocument, cloned);
+        }
     }
 
     @Test
     @DisplayName("Java serialization works correctly")
     void serializationShouldWork() throws Exception {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        new ObjectOutputStream(baos).writeObject(byteBufDocument);
-        Object deserialized = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray())).readObject();
-        assertEquals(byteBufDocument, deserialized);
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            new ObjectOutputStream(baos).writeObject(byteBufDocument);
+            Object deserialized = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray())).readObject();
+            assertEquals(byteBufDocument, deserialized);
+        }
     }
 
     // Equality and HashCode
@@ -297,10 +341,12 @@ class ByteBufBsonDocumentTest {
     @Test
     @DisplayName("equals() and hashCode() work correctly")
     void equalsAndHashCodeShouldWork() {
-        assertEquals(document, byteBufDocument);
-        assertEquals(byteBufDocument, document);
-        assertEquals(document.hashCode(), byteBufDocument.hashCode());
-        assertNotEquals(byteBufDocument, new BsonDocument("x", new BsonInt32(99)));
+        try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
+            assertEquals(document, byteBufDocument);
+            assertEquals(byteBufDocument, document);
+            assertEquals(document.hashCode(), byteBufDocument.hashCode());
+            assertNotEquals(byteBufDocument, new BsonDocument("x", new BsonInt32(99)));
+        }
     }
 
     // Resource Management
@@ -308,6 +354,7 @@ class ByteBufBsonDocumentTest {
     @Test
     @DisplayName("Closed document throws IllegalStateException on all operations")
     void closedDocumentShouldThrow() {
+        ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf);
         byteBufDocument.close();
         assertThrows(IllegalStateException.class, () -> byteBufDocument.size());
         assertThrows(IllegalStateException.class, () -> byteBufDocument.isEmpty());
@@ -324,6 +371,7 @@ class ByteBufBsonDocumentTest {
     @Test
     @DisplayName("close() can be called multiple times safely")
     void closeIsIdempotent() {
+        ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf);
         byteBufDocument.close();
         byteBufDocument.close(); // Should not throw
     }
@@ -410,6 +458,32 @@ class ByteBufBsonDocumentTest {
 
         byteBufDoc.close();
         assertThrows(IllegalStateException.class, byteBufDoc::size);
+    }
+
+    @Test
+    @DisplayName("Iterators ensure the resource is still open")
+    void iteratorsEnsureResourceIsStillOpen() {
+        BsonDocument doc = new BsonDocument()
+                .append("doc1", new BsonDocument("a", new BsonInt32(1)))
+                .append("arr1", new BsonArray(asList(new BsonInt32(2), new BsonInt32(3))))
+                .append("primitive", new BsonString("test"));
+
+        ByteBuf buf = createByteBufFromDocument(doc);
+        ByteBufBsonDocument byteBufDoc = new ByteBufBsonDocument(buf);
+
+        Iterator<String> keysIterator = byteBufDoc.keySet().iterator();
+        assertDoesNotThrow(keysIterator::hasNext);
+
+        Iterator<String> nestedKeysIterator = byteBufDoc.getDocument("doc1").keySet().iterator();
+        assertDoesNotThrow(nestedKeysIterator::hasNext);
+
+        Iterator<BsonValue> arrayIterator = byteBufDoc.getArray("arr1").iterator();
+        assertDoesNotThrow(arrayIterator::hasNext);
+
+        byteBufDoc.close();
+        assertThrows(IllegalStateException.class, keysIterator::hasNext);
+        assertThrows(IllegalStateException.class, nestedKeysIterator::hasNext);
+        assertThrows(IllegalStateException.class, arrayIterator::hasNext);
     }
 
     @Test
