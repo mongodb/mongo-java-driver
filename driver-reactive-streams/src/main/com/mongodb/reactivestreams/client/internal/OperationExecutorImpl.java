@@ -108,20 +108,21 @@ public class OperationExecutorImpl implements OperationExecutor {
                                     try {
                                         binding.release();
                                     } finally {
+                                        if (t != null) {
+                                            Throwable exceptionToHandle = t instanceof MongoException
+                                                    ? OperationHelper.unwrap((MongoException) t) : t;
+                                            labelException(session, exceptionToHandle);
+                                            unpinServerAddressOnTransientTransactionError(session, exceptionToHandle);
+                                            if (span != null) {
+                                                span.error(t);
+                                            }
+                                        }
+                                        if (span != null) {
+                                            span.end();
+                                        }
                                         sinkToCallback(sink).onResult(result, t);
                                     }
-                                })).doOnError((t) -> {
-                                    Throwable exceptionToHandle = t instanceof MongoException ? OperationHelper.unwrap((MongoException) t) : t;
-                                    labelException(session, exceptionToHandle);
-                                    unpinServerAddressOnTransientTransactionError(session, exceptionToHandle);
-                                    if (span != null) {
-                                        span.error(t);
-                                    }
-                                }).doFinally(signal -> {
-                                    if (span != null) {
-                                        span.end();
-                                    }
-                                });
+                                }));
                             }
                         }).subscribe(subscriber)
         );
@@ -153,20 +154,21 @@ public class OperationExecutorImpl implements OperationExecutor {
                                     try {
                                         binding.release();
                                     } finally {
+                                        if (t != null) {
+                                            Throwable exceptionToHandle = t instanceof MongoException
+                                                    ? OperationHelper.unwrap((MongoException) t) : t;
+                                            labelException(session, exceptionToHandle);
+                                            unpinServerAddressOnTransientTransactionError(session, exceptionToHandle);
+                                            if (span != null) {
+                                                span.error(t);
+                                            }
+                                        }
+                                        if (span != null) {
+                                            span.end();
+                                        }
                                         sinkToCallback(sink).onResult(result, t);
                                     }
-                                })).doOnError((t) -> {
-                                    Throwable exceptionToHandle = t instanceof MongoException ? OperationHelper.unwrap((MongoException) t) : t;
-                                    labelException(session, exceptionToHandle);
-                                    unpinServerAddressOnTransientTransactionError(session, exceptionToHandle);
-                                    if (span != null) {
-                                        span.error(t);
-                                    }
-                                }).doFinally(signal -> {
-                                    if (span != null) {
-                                        span.end();
-                                    }
-                                });
+                                }));
                                 }
                         ).subscribe(subscriber)
         );
