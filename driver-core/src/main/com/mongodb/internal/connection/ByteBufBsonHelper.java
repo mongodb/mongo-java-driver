@@ -38,18 +38,25 @@ import org.bson.ByteBuf;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DecoderContext;
 
+import java.io.Closeable;
+import java.util.List;
+
 final class ByteBufBsonHelper {
-    static BsonValue readBsonValue(final ByteBuf byteBuf, final BsonBinaryReader bsonReader) {
+    static BsonValue readBsonValue(final ByteBuf byteBuf, final BsonBinaryReader bsonReader, final List<Closeable> trackedResources) {
         BsonValue value;
         switch (bsonReader.getCurrentBsonType()) {
             case DOCUMENT:
                 ByteBuf documentByteBuf = byteBuf.duplicate();
-                value = new ByteBufBsonDocument(documentByteBuf);
+                ByteBufBsonDocument document = new ByteBufBsonDocument(documentByteBuf);
+                trackedResources.add(document);
+                value = document;
                 bsonReader.skipValue();
                 break;
             case ARRAY:
                 ByteBuf arrayByteBuf = byteBuf.duplicate();
-                value = new ByteBufBsonArray(arrayByteBuf);
+                ByteBufBsonArray array = new ByteBufBsonArray(arrayByteBuf);
+                trackedResources.add(array);
+                value = array;
                 bsonReader.skipValue();
                 break;
             case INT32:
