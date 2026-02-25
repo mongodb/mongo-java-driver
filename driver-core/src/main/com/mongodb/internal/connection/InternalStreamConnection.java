@@ -607,10 +607,11 @@ public class InternalStreamConnection implements InternalConnection {
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this);
         ByteBufferBsonOutput compressedBsonOutput = new ByteBufferBsonOutput(this);
 
+        Span tracingSpan = null;
         try {
             message.encode(bsonOutput, operationContext);
 
-            Span tracingSpan = operationContext
+            tracingSpan = operationContext
                     .getTracingManager()
                     .createTracingSpan(message,
                             operationContext,
@@ -641,17 +642,18 @@ public class InternalStreamConnection implements InternalConnection {
                 tracingSpan.tagHighCardinality(QUERY_TEXT.asString(), commandDocument);
             }
 
-            SingleResultCallback<T> tracingCallback = tracingSpan == null ? callback : (result, t) -> {
+            final Span commandSpan = tracingSpan;
+            SingleResultCallback<T> tracingCallback = commandSpan == null ? callback : (result, t) -> {
                 try {
                     if (t != null) {
                         if (t instanceof MongoCommandException) {
-                            tracingSpan.tagLowCardinality(
+                            commandSpan.tagLowCardinality(
                                     RESPONSE_STATUS_CODE.withValue(String.valueOf(((MongoCommandException) t).getErrorCode())));
                         }
-                        tracingSpan.error(t);
+                        commandSpan.error(t);
                     }
                 } finally {
-                    tracingSpan.end();
+                    commandSpan.end();
                     callback.onResult(result, t);
                 }
             };
@@ -677,6 +679,10 @@ public class InternalStreamConnection implements InternalConnection {
         } catch (Throwable t) {
             bsonOutput.close();
             compressedBsonOutput.close();
+            if (tracingSpan != null) {
+                tracingSpan.error(t);
+                tracingSpan.end();
+            }
             callback.onResult(null, t);
         }
     }

@@ -102,7 +102,12 @@ public class OperationExecutorImpl implements OperationExecutor {
 
                             if (session != null && session.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
                                 binding.release();
-                                return Mono.error(new MongoClientException("Read preference in a transaction must be primary"));
+                                MongoClientException error = new MongoClientException("Read preference in a transaction must be primary");
+                                if (span != null) {
+                                    span.error(error);
+                                    span.end();
+                                }
+                                return Mono.error(error);
                             } else {
                                 return Mono.<T>create(sink -> operation.executeAsync(binding, operationContext, (result, t) -> {
                                     try {
