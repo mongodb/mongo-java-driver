@@ -18,7 +18,10 @@ package com.mongodb.client;
 
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
+import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
+import com.mongodb.MongoNodeIsRecoveringException;
+import com.mongodb.MongoTimeoutException;
 import com.mongodb.TransactionOptions;
 import com.mongodb.client.model.Sorts;
 import com.mongodb.internal.time.ExponentialBackoff;
@@ -42,6 +45,7 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.client.Fixture.getPrimary;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -114,8 +118,10 @@ public class WithTransactionProseTest extends DatabaseTestCase {
                 }));
             fail("Test should have thrown an exception.");
         } catch (Exception e) {
-            assertEquals(errorMessage, e.getMessage());
-            assertTrue(((MongoException) e).getErrorLabels().contains(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL));
+            assertInstanceOf(MongoTimeoutException.class, e);
+            MongoException cause = (MongoException) e.getCause();
+            assertEquals(errorMessage, cause.getMessage());
+            assertTrue(cause.getErrorLabels().contains(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL));
         }
     }
 
@@ -139,8 +145,10 @@ public class WithTransactionProseTest extends DatabaseTestCase {
                 }));
             fail("Test should have thrown an exception.");
         } catch (Exception e) {
-            assertEquals(91, ((MongoException) e).getCode());
-            assertTrue(((MongoException) e).getErrorLabels().contains(MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL));
+            assertInstanceOf(MongoNodeIsRecoveringException.class, e.getCause());
+            MongoNodeIsRecoveringException cause = (MongoNodeIsRecoveringException) e.getCause();
+            assertEquals(91, cause.getCode());
+            assertTrue(cause.getErrorLabels().contains(MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL));
         } finally {
             failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': 'off'}"));
         }
@@ -168,8 +176,11 @@ public class WithTransactionProseTest extends DatabaseTestCase {
                 }));
             fail("Test should have thrown an exception.");
         } catch (Exception e) {
-            assertEquals(251, ((MongoException) e).getCode());
-            assertTrue(((MongoException) e).getErrorLabels().contains(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL));
+            assertEquals(-4, ((MongoException) e).getCode());
+            assertInstanceOf(MongoCommandException.class, e.getCause());
+            MongoCommandException cause = (MongoCommandException) e.getCause();
+            assertEquals(251, cause.getCode());
+            assertTrue(cause.getErrorLabels().contains(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL));
         } finally {
             failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': 'off'}"));
         }
