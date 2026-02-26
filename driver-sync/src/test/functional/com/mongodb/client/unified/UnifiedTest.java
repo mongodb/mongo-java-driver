@@ -311,6 +311,9 @@ public abstract class UnifiedTest {
         if (testDef != null) {
             postCleanUp(testDef);
         }
+        // Ask the JVM to run garbage collection.
+        // This should help with Nettys leak detection
+        System.gc();
     }
 
     protected void postCleanUp(final TestDef testDef) {

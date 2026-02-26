@@ -93,7 +93,9 @@ public abstract class AbstractSessionsProseTest {
                         .addCommandListener(new CommandListener() {
                             @Override
                             public void commandStarted(final CommandStartedEvent event) {
-                                lsidSet.add(event.getCommand().getDocument("lsid"));
+                                if (event.getCommand().containsKey("lsid")) {
+                                    lsidSet.add(event.getCommand().getDocument("lsid"));
+                                }
                             }
                         })
                         .build())) {
