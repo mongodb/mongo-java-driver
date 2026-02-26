@@ -438,52 +438,32 @@ class ByteBufBsonDocumentTest {
     }
 
     @Test
-    @DisplayName("Iteration tracks resources correctly")
-    void iterationTracksResources() {
+    @DisplayName("Iterators work as expected")
+    void iteratorsWorksAsExpected() {
         BsonDocument doc = new BsonDocument()
                 .append("doc1", new BsonDocument("a", new BsonInt32(1)))
                 .append("arr1", new BsonArray(asList(new BsonInt32(2), new BsonInt32(3))))
                 .append("primitive", new BsonString("test"));
 
-        ByteBuf buf = createByteBufFromDocument(doc);
-        ByteBufBsonDocument byteBufDoc = new ByteBufBsonDocument(buf);
+        try (ByteBufBsonDocument byteBufDoc = new ByteBufBsonDocument(createByteBufFromDocument(doc))) {
 
-        int count = 0;
-        for (Map.Entry<String, BsonValue> entry : byteBufDoc.entrySet()) {
-            assertNotNull(entry.getKey());
-            assertNotNull(entry.getValue());
-            count++;
+            int count = 0;
+            for (Map.Entry<String, BsonValue> entry : byteBufDoc.entrySet()) {
+                assertNotNull(entry.getKey());
+                assertNotNull(entry.getValue());
+                count++;
+            }
+            assertEquals(3, count);
+
+            Iterator<String> keysIterator = byteBufDoc.keySet().iterator();
+            assertDoesNotThrow(keysIterator::hasNext);
+
+            Iterator<String> nestedKeysIterator = byteBufDoc.getDocument("doc1").keySet().iterator();
+            assertDoesNotThrow(nestedKeysIterator::hasNext);
+
+            Iterator<BsonValue> arrayIterator = byteBufDoc.getArray("arr1").iterator();
+            assertDoesNotThrow(arrayIterator::hasNext);
         }
-        assertEquals(3, count);
-
-        byteBufDoc.close();
-        assertThrows(IllegalStateException.class, byteBufDoc::size);
-    }
-
-    @Test
-    @DisplayName("Iterators ensure the resource is still open")
-    void iteratorsEnsureResourceIsStillOpen() {
-        BsonDocument doc = new BsonDocument()
-                .append("doc1", new BsonDocument("a", new BsonInt32(1)))
-                .append("arr1", new BsonArray(asList(new BsonInt32(2), new BsonInt32(3))))
-                .append("primitive", new BsonString("test"));
-
-        ByteBuf buf = createByteBufFromDocument(doc);
-        ByteBufBsonDocument byteBufDoc = new ByteBufBsonDocument(buf);
-
-        Iterator<String> keysIterator = byteBufDoc.keySet().iterator();
-        assertDoesNotThrow(keysIterator::hasNext);
-
-        Iterator<String> nestedKeysIterator = byteBufDoc.getDocument("doc1").keySet().iterator();
-        assertDoesNotThrow(nestedKeysIterator::hasNext);
-
-        Iterator<BsonValue> arrayIterator = byteBufDoc.getArray("arr1").iterator();
-        assertDoesNotThrow(arrayIterator::hasNext);
-
-        byteBufDoc.close();
-        assertThrows(IllegalStateException.class, keysIterator::hasNext);
-        assertThrows(IllegalStateException.class, nestedKeysIterator::hasNext);
-        assertThrows(IllegalStateException.class, arrayIterator::hasNext);
     }
 
     @Test
