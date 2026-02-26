@@ -49,8 +49,6 @@ import org.bson.types.ObjectId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.Iterator;
@@ -351,17 +349,19 @@ class ByteBufBsonArrayTest {
     }
 
     static ByteBufBsonArray fromBsonValues(final List<? extends BsonValue> values) {
-        BsonDocument document = new BsonDocument()
-                .append("a", new BsonArray(values));
+        BsonDocument document = new BsonDocument("a", new BsonArray(values));
         BasicOutputBuffer buffer = new BasicOutputBuffer();
         new BsonDocumentCodec().encode(new BsonBinaryWriter(buffer), document, EncoderContext.builder().build());
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try {
-            buffer.pipe(baos);
-        } catch (IOException e) {
-            throw new RuntimeException("impossible!");
-        }
-        ByteBuf documentByteBuf = new ByteBufNIO(ByteBuffer.wrap(baos.toByteArray()));
-        return (ByteBufBsonArray) new ByteBufBsonDocument(documentByteBuf).entrySet().iterator().next().getValue();
+        byte[] bytes = new byte[buffer.getPosition()];
+        System.arraycopy(buffer.getInternalBuffer(), 0, bytes, 0, bytes.length);
+        // Skip past the outer document header to the array value bytes.
+        // Document format: [4-byte size][type byte (0x04)][field name "a\0"][array bytes...][0x00]
+        int arrayOffset = 4 + 1 + 2; // doc size + type byte + "a" + null terminator
+        int arraySize = (bytes[arrayOffset] & 0xFF)
+                | ((bytes[arrayOffset + 1] & 0xFF) << 8)
+                | ((bytes[arrayOffset + 2] & 0xFF) << 16)
+                | ((bytes[arrayOffset + 3] & 0xFF) << 24);
+        ByteBuf arrayByteBuf = new ByteBufNIO(ByteBuffer.wrap(bytes, arrayOffset, arraySize));
+        return new ByteBufBsonArray(arrayByteBuf);
     }
 }
