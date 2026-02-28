@@ -237,10 +237,13 @@ final class CommandOperationHelper {
         return exception.hasErrorLabel(RETRYABLE_WRITE_ERROR_LABEL);
     }
 
+    static boolean shouldAddRetryableWriteErrorLabel(final MongoException exception, final int maxWireVersion) {
+        return (maxWireVersion >= 9 && exception instanceof MongoSocketException)
+                || (maxWireVersion < 9 && isRetryableException(exception));
+    }
+
     static void addRetryableWriteErrorLabel(final MongoException exception, final int maxWireVersion) {
-        if (maxWireVersion >= 9 && exception instanceof MongoSocketException) {
-            exception.addLabel(RETRYABLE_WRITE_ERROR_LABEL);
-        } else if (maxWireVersion < 9 && isRetryableException(exception)) {
+        if (shouldAddRetryableWriteErrorLabel(exception, maxWireVersion)) {
             exception.addLabel(RETRYABLE_WRITE_ERROR_LABEL);
         }
     }
