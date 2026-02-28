@@ -48,7 +48,7 @@ public interface SingleResultCallback<T> {
         return new AsyncCompletionHandler<T>() {
             @Override
             public void completed(@Nullable final T result) {
-                onResult(result, null);
+                complete(result);
             }
             @Override
             public void failed(final Throwable t) {
@@ -62,14 +62,14 @@ public interface SingleResultCallback<T> {
         // is not accidentally used when "complete(T)" should have been used
         // instead, since results are not marked nullable.
         Assertions.assertTrue(callback == this);
-        this.onResult(null, null);
+        AsyncTrampoline.complete(this, null, null);
     }
 
     default void complete(@Nullable final T result) {
-        this.onResult(result, null);
+        AsyncTrampoline.complete(this, result, null);
     }
 
     default void completeExceptionally(final Throwable t) {
-        this.onResult(null, assertNotNull(t));
+        AsyncTrampoline.complete(this, null, assertNotNull(t));
     }
 }

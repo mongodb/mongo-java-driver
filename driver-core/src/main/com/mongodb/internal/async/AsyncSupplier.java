@@ -64,21 +64,34 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
      */
     default void finish(final SingleResultCallback<T> callback) {
         final AtomicBoolean callbackInvoked = new AtomicBoolean(false);
-        try {
-            this.unsafeFinish((v, e) -> {
+        // The trampoline bounds two sources of stack growth that occur when
+        // callbacks complete synchronously on the same thread:
+        //
+        //   Chain unwinding (unsafeFinish nesting):
+        //     finish -> unsafeFinish[C] -> unsafeFinish[B] -> unsafeFinish[A] -> ...
+        //
+        //   Callback completion (onResult nesting):
+        //     onResult[A] -> onResult[B] -> onResult[C] -> ...
+        //
+        // Without the trampoline, a 1000-step chain would produce ~2000 frames.
+        // With it, re-entrant calls are deferred to the drain loop, keeping depth constant.
+        AsyncTrampoline.execute(() -> {
+            try {
+                this.unsafeFinish((v, e) -> {
+                    if (!callbackInvoked.compareAndSet(false, true)) {
+                        throw new AssertionError(String.format("Callback has been already completed. It could happen "
+                                + "if code throws an exception after invoking an async method. Value: %s", v), e);
+                    }
+                    AsyncTrampoline.complete(callback, v, e);
+                });
+            } catch (Throwable t) {
                 if (!callbackInvoked.compareAndSet(false, true)) {
-                    throw new AssertionError(String.format("Callback has been already completed. It could happen "
-                            + "if code throws an exception after invoking an async method. Value: %s", v), e);
+                    throw t;
+                } else {
+                    AsyncTrampoline.complete(callback, null, t);
                 }
-                callback.onResult(v, e);
-            });
-        } catch (Throwable t) {
-            if (!callbackInvoked.compareAndSet(false, true)) {
-                throw t;
-            } else {
-                callback.completeExceptionally(t);
             }
-        }
+        });
     }
 
     /**
