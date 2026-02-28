@@ -18,14 +18,17 @@ package com.mongodb.internal.async;
 import com.mongodb.MongoException;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
     private static final TimeoutContext TIMEOUT_CONTEXT = new TimeoutContext(new TimeoutSettings(0, 0, 0, 0L, 0));
@@ -724,7 +727,85 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
     }
 
     @Test
+    @Disabled("Tests AsyncRunnable.loopWhile, but we agreed to improve and test AsyncRunnable.thenRunDoWhileLoop")
+    void testWhile() {
+        assertBehavesSameVariations(10, // TODO check expected variations
+                () -> {
+                    int i = 0;
+                    while (i < 3 && plainTest(i)) {
+                        i++;
+                        sync(i);
+                    }
+                },
+                (callback) -> {
+                    final int[] i = new int[1];
+                    beginAsync().loopWhile(() -> i[0] < 3 && plainTest(i[0]), (c2) -> {
+                        i[0]++;
+                        async(i[0], c2);
+                    }).finish(callback);
+                });
+    }
+
+    @Test
+    @Disabled("Tests AsyncRunnable.loopWhile, but we agreed to improve and test AsyncRunnable.thenRunDoWhileLoop")
+    void testWhile2() {
+        assertBehavesSameVariations(14, // TODO check expected variations
+                () -> {
+                    int i = 0;
+                    while (i < 3 && plainTest(i)) {
+                        i++;
+                        sync(i);
+                    }
+                    sync(i + 100);
+                },
+                (callback) -> {
+                    final int[] i = new int[1];
+                    beginAsync().thenRun(c -> {
+                        beginAsync().loopWhile(() -> i[0] < 3 && plainTest(i[0]), (c2) -> {
+                            i[0]++;
+                            async(i[0], c2);
+                        }).finish(c);
+                    }).thenRun(c -> {
+                        async(i[0] + 100, c);
+                    }).finish(callback);
+                });
+    }
+
+    @Test
+    @Disabled("Tests AsyncRunnable.loopWhile, but we agreed to improve and test AsyncRunnable.thenRunDoWhileLoop")
     void testRetryLoop() {
+        assertBehavesSameVariations(InvocationTracker.DEPTH_LIMIT * 2 + 1,
+                () -> {
+                    while (true) {
+                        try {
+                            sync(plainTest(0) ? 1 : 2);
+                        } catch (RuntimeException e) {
+                            if (e.getMessage().equals("exception-1")) {
+                                continue;
+                            }
+                            throw e;
+                        }
+                        break;
+                    }
+                },
+                (callback) -> {
+                    final boolean[] shouldContinue = new boolean[]{true};
+                    beginAsync().loopWhile(() -> shouldContinue[0], (c) -> {
+                        beginAsync().thenRun(c2 -> {
+                            async(plainTest(0) ? 1 : 2, c2);
+                        }).thenRun(c2 -> {
+                            shouldContinue[0] = false;
+                            c2.complete(c2);
+                        }).onErrorIf(e -> e.getMessage().equals("exception-1"), (e, c2) -> {
+                            c2.complete(c2);
+                        }).finish(c);
+                    }).finish(callback);
+                });
+    }
+
+    @Test
+    void testThenRunRetryingWhile() {
+        for (int i = 0; i < 1000; i++) {
         assertBehavesSameVariations(InvocationTracker.DEPTH_LIMIT * 2 + 1,
                 () -> {
                     while (true) {
@@ -746,10 +827,11 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                             e -> e.getMessage().equals("exception-1")
                     ).finish(callback);
                 });
-    }
+    }}
 
     @Test
     void testDoWhileLoop() {
+        for (int i = 0; i < 1000; i++) {
         assertBehavesSameVariations(67,
                 () -> {
                     do {
@@ -765,6 +847,25 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                           },
                           () -> plainTest(2)
                     ).finish(finalCallback);
+                });
+    }}
+
+    @Test
+    void testDoWhileLoop2() {
+        assertBehavesSameVariations(8,
+                () -> {
+                    int i = 0;
+                    do {
+                        i++;
+                        sync(i);
+                    } while (i < 3 && plainTest(i));
+                },
+                (callback) -> {
+                    final int[] i = new int[1];
+                    beginAsync().thenRunDoWhileLoop((c) -> {
+                        i[0]++;
+                        async(i[0], c);
+                    }, () -> i[0] < 3 && plainTest(i[0])).finish(callback);
                 });
     }
 
@@ -989,5 +1090,68 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                         async(2, c);
                     }).finish(callback);
                 });
+    }
+
+    @Test
+    @Disabled("Tests AsyncRunnable.thenRun/finish, but we agreed to improve and test AsyncRunnable.thenRunDoWhileLoop")
+    void testStackDepthBounded() {
+        AtomicInteger maxDepth = new AtomicInteger(0);
+        AtomicInteger minDepth = new AtomicInteger(Integer.MAX_VALUE);
+        AtomicInteger maxMongoDepth = new AtomicInteger(0);
+        AtomicInteger minMongoDepth = new AtomicInteger(Integer.MAX_VALUE);
+        AtomicInteger stepCount = new AtomicInteger(0);
+        // Capture one sample of mongodb package frames for printing
+        String[][] sampleMongoFrames = {null};
+
+        AsyncRunnable chain = beginAsync();
+        for (int i = 0; i < 1000; i++) {
+            chain = chain.thenRun(c -> {
+                stepCount.incrementAndGet();
+                StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+                int depth = stack.length;
+                maxDepth.updateAndGet(current -> Math.max(current, depth));
+                minDepth.updateAndGet(current -> Math.min(current, depth));
+                int mongoFrames = 0;
+                for (StackTraceElement frame : stack) {
+                    if (frame.getClassName().startsWith("com.mongodb")) {
+                        mongoFrames++;
+                    }
+                }
+                int mf = mongoFrames;
+                maxMongoDepth.updateAndGet(current -> Math.max(current, mf));
+                minMongoDepth.updateAndGet(current -> Math.min(current, mf));
+                // Capture first sample
+                if (sampleMongoFrames[0] == null) {
+                    String[] frames = new String[mf];
+                    int idx = 0;
+                    for (StackTraceElement frame : stack) {
+                        if (frame.getClassName().startsWith("com.mongodb")) {
+                            frames[idx++] = frame.getClassName() + "." + frame.getMethodName()
+                                    + "(" + frame.getFileName() + ":" + frame.getLineNumber() + ")";
+                        }
+                    }
+                    sampleMongoFrames[0] = frames;
+                }
+                c.complete(c);
+            });
+        }
+
+        chain.finish((v, e) -> {
+            assertTrue(stepCount.get() == 1000, "Expected 1000 steps, got " + stepCount.get());
+            int depth = maxDepth.get();
+            int mongoDepth = maxMongoDepth.get();
+            String summary = "Stack depth: min=" + minDepth.get() + ", max=" + depth
+                    + " | MongoDB frames: min=" + minMongoDepth.get() + ", max=" + mongoDepth;
+            System.out.printf(summary + "%n");
+            if (sampleMongoFrames[0] != null) {
+                System.out.printf("MongoDB stack frames (sample):%n");
+                for (int i = 0; i < sampleMongoFrames[0].length; i++) {
+                    System.out.printf("  " + (i + 1) + ". " + sampleMongoFrames[0][i] + "%n");
+                }
+            }
+            assertTrue(depth < 200,
+                    "Stack depth too deep (min=" + minDepth.get() + ", max=" + depth
+                            + "). Trampoline may not be working correctly.");
+        });
     }
 }
