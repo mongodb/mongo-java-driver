@@ -193,12 +193,12 @@ public final class ClusterFixture {
         if (serverVersion == null) {
             serverVersion = getVersion(new CommandReadOperation<>("admin",
                     new BsonDocument("buildInfo", new BsonInt32(1)), new BsonDocumentCodec())
-                    .execute(new ClusterBinding(getCluster(), ReadPreference.nearest()), getOperationContext()));
+                    .execute(new ClusterBinding(getCluster(), ReadPreference.nearest()), createOperationContext()));
         }
         return serverVersion;
     }
 
-    public static OperationContext getOperationContext() {
+    public static OperationContext createOperationContext() {
         return new OperationContext(
                 IgnorableRequestContext.INSTANCE,
                 new ReadConcernAwareNoOpSessionContext(ReadConcern.DEFAULT),
@@ -257,7 +257,7 @@ public final class ClusterFixture {
     public static Document getServerStatus() {
         return new CommandReadOperation<>("admin", new BsonDocument("serverStatus", new BsonInt32(1)),
                 new DocumentCodec())
-                .execute(getBinding(), getOperationContext());
+                .execute(getBinding(), createOperationContext());
     }
 
     public static boolean supportsFsync() {
@@ -272,7 +272,7 @@ public final class ClusterFixture {
         public void run() {
             if (cluster != null) {
                 try {
-                    new DropDatabaseOperation(getDefaultDatabaseName(), WriteConcern.ACKNOWLEDGED).execute(getBinding(), getOperationContext());
+                    new DropDatabaseOperation(getDefaultDatabaseName(), WriteConcern.ACKNOWLEDGED).execute(getBinding(), createOperationContext());
                 } catch (MongoCommandException e) {
                     // if we do not have permission to drop the database, assume it is cleaned up in some other way
                     if (!e.getMessage().contains("Command dropDatabase requires authentication")) {
@@ -324,7 +324,7 @@ public final class ClusterFixture {
         try {
             BsonDocument helloResult = new CommandReadOperation<>("admin",
                     new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), new BsonDocumentCodec())
-                    .execute(new ClusterBinding(cluster, ReadPreference.nearest()), getOperationContext());
+                    .execute(new ClusterBinding(cluster, ReadPreference.nearest()), createOperationContext());
             if (helloResult.containsKey("setName")) {
                 connectionString = new ConnectionString(DEFAULT_URI + "/?replicaSet="
                         + helloResult.getString("setName").getValue());
@@ -384,11 +384,11 @@ public final class ClusterFixture {
     }
 
     public static ReadWriteBinding getBinding(final ReadPreference readPreference) {
-        return getBinding(getCluster(), readPreference, getOperationContext());
+        return getBinding(getCluster(), readPreference, createOperationContext());
     }
 
     public static OperationContext createNewOperationContext(final TimeoutSettings timeoutSettings) {
-        return getOperationContext().withTimeoutContext(new TimeoutContext(timeoutSettings));
+        return createOperationContext().withTimeoutContext(new TimeoutContext(timeoutSettings));
     }
 
     private static ReadWriteBinding getBinding(final Cluster cluster,
@@ -405,7 +405,7 @@ public final class ClusterFixture {
     }
 
     public static SingleConnectionBinding getSingleConnectionBinding() {
-        return new SingleConnectionBinding(getCluster(), ReadPreference.primary(), getOperationContext());
+        return new SingleConnectionBinding(getCluster(), ReadPreference.primary(), createOperationContext());
     }
 
     public static AsyncSingleConnectionBinding getAsyncSingleConnectionBinding() {
@@ -413,7 +413,7 @@ public final class ClusterFixture {
     }
 
     public static AsyncSingleConnectionBinding getAsyncSingleConnectionBinding(final Cluster cluster) {
-        return new AsyncSingleConnectionBinding(cluster,  ReadPreference.primary(), getOperationContext());
+        return new AsyncSingleConnectionBinding(cluster,  ReadPreference.primary(), createOperationContext());
     }
 
     public static AsyncReadWriteBinding getAsyncBinding(final Cluster cluster) {
@@ -421,7 +421,7 @@ public final class ClusterFixture {
     }
 
     public static AsyncReadWriteBinding getAsyncBinding() {
-        return getAsyncBinding(getAsyncCluster(), ReadPreference.primary(), getOperationContext());
+        return getAsyncBinding(getAsyncCluster(), ReadPreference.primary(), createOperationContext());
     }
 
     public static AsyncReadWriteBinding getAsyncBinding(final TimeoutSettings timeoutSettings) {
@@ -433,7 +433,7 @@ public final class ClusterFixture {
     }
 
     public static AsyncReadWriteBinding getAsyncBinding(final ReadPreference readPreference) {
-        return getAsyncBinding(getAsyncCluster(), readPreference, getOperationContext());
+        return getAsyncBinding(getAsyncCluster(), readPreference, createOperationContext());
     }
 
     public static AsyncReadWriteBinding getAsyncBinding(
@@ -607,7 +607,7 @@ public final class ClusterFixture {
         if (serverParameters == null) {
             serverParameters = new CommandReadOperation<>("admin",
                     new BsonDocument("getParameter", new BsonString("*")), new BsonDocumentCodec())
-                    .execute(getBinding(), getOperationContext());
+                    .execute(getBinding(), createOperationContext());
         }
         return serverParameters;
     }
@@ -675,7 +675,7 @@ public final class ClusterFixture {
         if (!isSharded()) {
             try {
                 new CommandReadOperation<>("admin", failPointDocument, new BsonDocumentCodec())
-                        .execute(getBinding(), getOperationContext());
+                        .execute(getBinding(), createOperationContext());
             } catch (MongoCommandException e) {
                 if (e.getErrorCode() == COMMAND_NOT_FOUND_ERROR_CODE) {
                     failsPointsSupported = false;
@@ -691,7 +691,7 @@ public final class ClusterFixture {
                     .append("mode", new BsonString("off"));
             try {
                 new CommandReadOperation<>("admin", failPointDocument, new BsonDocumentCodec())
-                        .execute(getBinding(), getOperationContext());
+                        .execute(getBinding(), createOperationContext());
             } catch (MongoCommandException e) {
                 // ignore
             }
@@ -705,7 +705,7 @@ public final class ClusterFixture {
 
     @SuppressWarnings("overloads")
     public static <T> T executeSync(final WriteOperation<T> op, final ReadWriteBinding binding) {
-        return op.execute(binding, applySessionContext(getOperationContext(), binding.getReadPreference()));
+        return op.execute(binding, applySessionContext(createOperationContext(), binding.getReadPreference()));
     }
 
     @SuppressWarnings("overloads")
@@ -715,7 +715,7 @@ public final class ClusterFixture {
 
     @SuppressWarnings("overloads")
     public static <T> T executeSync(final ReadOperation<T, ?> op, final ReadWriteBinding binding) {
-        return op.execute(binding, getOperationContext());
+        return op.execute(binding, createOperationContext());
     }
 
     @SuppressWarnings("overloads")
@@ -731,7 +731,7 @@ public final class ClusterFixture {
     @SuppressWarnings("overloads")
     public static <T> T executeAsync(final WriteOperation<T> op, final AsyncReadWriteBinding binding) throws Throwable {
         FutureResultCallback<T> futureResultCallback = new FutureResultCallback<>();
-        op.executeAsync(binding, applySessionContext(getOperationContext(), binding.getReadPreference()), futureResultCallback);
+        op.executeAsync(binding, applySessionContext(createOperationContext(), binding.getReadPreference()), futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
@@ -743,7 +743,7 @@ public final class ClusterFixture {
     @SuppressWarnings("overloads")
     public static <T> T executeAsync(final ReadOperation<?, T> op, final AsyncReadBinding binding) throws Throwable {
         FutureResultCallback<T> futureResultCallback = new FutureResultCallback<>();
-        op.executeAsync(binding, getOperationContext(), futureResultCallback);
+        op.executeAsync(binding, createOperationContext(), futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
@@ -813,19 +813,19 @@ public final class ClusterFixture {
 
     public static AsyncConnectionSource getWriteConnectionSource(final AsyncReadWriteBinding binding) throws Throwable {
         FutureResultCallback<AsyncConnectionSource> futureResultCallback = new FutureResultCallback<>();
-        binding.getWriteConnectionSource(getOperationContext(), futureResultCallback);
+        binding.getWriteConnectionSource(createOperationContext(), futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
     public static AsyncConnectionSource getReadConnectionSource(final AsyncReadWriteBinding binding) throws Throwable {
         FutureResultCallback<AsyncConnectionSource> futureResultCallback = new FutureResultCallback<>();
-        binding.getReadConnectionSource(getOperationContext(), futureResultCallback);
+        binding.getReadConnectionSource(createOperationContext(), futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
     public static AsyncConnection getConnection(final AsyncConnectionSource source) throws Throwable {
         FutureResultCallback<AsyncConnection> futureResultCallback = new FutureResultCallback<>();
-        source.getConnection(getOperationContext(), futureResultCallback);
+        source.getConnection(createOperationContext(), futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
@@ -868,7 +868,7 @@ public final class ClusterFixture {
         return operationContext.withSessionContext(simpleSessionContext);
     }
 
-    public static OperationContext getOperationContext(final ReadPreference readPreference) {
-        return applySessionContext(getOperationContext(), readPreference);
+    public static OperationContext createOperationContext(final ReadPreference readPreference) {
+        return applySessionContext(createOperationContext(), readPreference);
     }
 }

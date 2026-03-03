@@ -15,6 +15,7 @@
  */
 package com.mongodb.internal.mockito;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.operation.ListCollectionsOperation;
 import org.bson.BsonDocument;
@@ -24,7 +25,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.mockito.internal.stubbing.answers.ThrowsException;
 
-import static com.mongodb.ClusterFixture.getOperationContext;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
@@ -40,33 +40,33 @@ final class InsufficientStubbingDetectorDemoTest {
     @Test
     void mockObjectWithDefaultAnswer() {
         ReadBinding binding = Mockito.mock(ReadBinding.class);
-        assertThrows(NullPointerException.class, () -> operation.execute(binding, getOperationContext()));
+        assertThrows(NullPointerException.class, () -> operation.execute(binding, ClusterFixture.createOperationContext()));
     }
 
     @Test
     void mockObjectWithThrowsException() {
         ReadBinding binding = Mockito.mock(ReadBinding.class,
                 new ThrowsException(new AssertionError("Insufficient stubbing for " + ReadBinding.class)));
-        assertThrows(AssertionError.class, () -> operation.execute(binding, getOperationContext()));
+        assertThrows(AssertionError.class, () -> operation.execute(binding, ClusterFixture.createOperationContext()));
     }
 
     @Test
     void mockObjectWithInsufficientStubbingDetector() {
         ReadBinding binding = MongoMockito.mock(ReadBinding.class);
-        assertThrows(AssertionError.class, () -> operation.execute(binding, getOperationContext()));
+        assertThrows(AssertionError.class, () -> operation.execute(binding, ClusterFixture.createOperationContext()));
     }
 
     @Test
     void stubbingWithThrowsException() {
         ReadBinding binding = Mockito.mock(ReadBinding.class,
                 new ThrowsException(new AssertionError("Unfortunately, you cannot do stubbing")));
-        assertThrows(AssertionError.class, () -> when(binding.getReadConnectionSource(getOperationContext())).thenReturn(null));
+        assertThrows(AssertionError.class, () -> when(binding.getReadConnectionSource(ClusterFixture.createOperationContext())).thenReturn(null));
     }
 
     @Test
     void stubbingWithInsufficientStubbingDetector() {
         MongoMockito.mock(ReadBinding.class, bindingMock ->
-                when(bindingMock.getReadConnectionSource(getOperationContext())).thenReturn(null)
+                when(bindingMock.getReadConnectionSource(ClusterFixture.createOperationContext())).thenReturn(null)
         );
     }
 }

@@ -30,7 +30,7 @@ import spock.lang.Specification
 import javax.security.auth.login.LoginContext
 
 import static com.mongodb.AuthenticationMechanism.GSSAPI
-import static com.mongodb.ClusterFixture.getOperationContext
+import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.ClusterFixture.getLoginContextName
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getServerApi
@@ -57,7 +57,7 @@ class GSSAPIAuthenticatorSpecification extends Specification {
                 .create(new ServerId(new ClusterId(), getPrimary()))
 
         when:
-        internalConnection.open(getOperationContext())
+        internalConnection.open(createOperationContext())
 
         then:
         1 * subjectProvider.getSubject() >> subject

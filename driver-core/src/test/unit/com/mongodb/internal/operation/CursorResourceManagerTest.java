@@ -15,6 +15,7 @@
  */
 package com.mongodb.internal.operation;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerCursor;
 import com.mongodb.internal.binding.AsyncConnectionSource;
@@ -24,7 +25,6 @@ import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.mockito.MongoMockito;
 import org.junit.jupiter.api.Test;
 
-import static com.mongodb.ClusterFixture.getOperationContext;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.when;
 
@@ -50,12 +50,12 @@ final class CursorResourceManagerTest {
         cursorResourceManager.tryStartOperation();
         try {
             assertDoesNotThrow(() -> {
-                cursorResourceManager.close(getOperationContext());
-                cursorResourceManager.close(getOperationContext());
+                cursorResourceManager.close(ClusterFixture.createOperationContext());
+                cursorResourceManager.close(ClusterFixture.createOperationContext());
                 cursorResourceManager.setServerCursor(null);
             });
         } finally {
-            cursorResourceManager.endOperation(getOperationContext());
+            cursorResourceManager.endOperation(ClusterFixture.createOperationContext());
         }
     }
 }

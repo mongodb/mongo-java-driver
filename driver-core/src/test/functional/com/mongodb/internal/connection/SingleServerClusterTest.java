@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.LoggerSettings;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
@@ -37,7 +38,6 @@ import org.junit.Test;
 import java.util.Collections;
 
 import static com.mongodb.ClusterFixture.CLIENT_METADATA;
-import static com.mongodb.ClusterFixture.getOperationContext;
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT_FACTORY;
 import static com.mongodb.ClusterFixture.getCredential;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
@@ -93,7 +93,7 @@ public class SingleServerClusterTest {
         setUpCluster(getPrimary());
 
         // when
-        ServerTuple serverTuple = cluster.selectServer(clusterDescription -> getPrimaries(clusterDescription), getOperationContext());
+        ServerTuple serverTuple = cluster.selectServer(clusterDescription -> getPrimaries(clusterDescription), ClusterFixture.createOperationContext());
 
         // then
         assertTrue(serverTuple.getServerDescription().isOk());
@@ -102,7 +102,7 @@ public class SingleServerClusterTest {
     @Test
     public void shouldSuccessfullyQueryASecondaryWithPrimaryReadPreference() {
         // given
-        OperationContext operationContext = getOperationContext();
+        OperationContext operationContext = ClusterFixture.createOperationContext();
         ServerAddress secondary = getSecondary();
         setUpCluster(secondary);
         String collectionName = getClass().getName();

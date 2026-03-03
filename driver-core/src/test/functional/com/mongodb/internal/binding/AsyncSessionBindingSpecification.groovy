@@ -26,7 +26,7 @@ class AsyncSessionBindingSpecification extends Specification {
         given:
         def wrapped = Mock(AsyncReadWriteBinding)
         def binding = new AsyncSessionBinding(wrapped)
-        def operationContext = ClusterFixture.getOperationContext()
+        def operationContext = ClusterFixture.createOperationContext()
 
         when:
         binding.getCount()

@@ -26,7 +26,7 @@ import com.mongodb.internal.connection.Server
 import com.mongodb.internal.connection.ServerTuple
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.getOperationContext
+import static com.mongodb.ClusterFixture.createOperationContext
 
 class SingleServerBindingSpecification extends Specification {
 
@@ -68,7 +68,7 @@ class SingleServerBindingSpecification extends Specification {
         binding.count == 1
 
         when:
-        def source = binding.getReadConnectionSource(getOperationContext())
+        def source = binding.getReadConnectionSource(createOperationContext())
 
         then:
         source.count == 1
@@ -96,7 +96,7 @@ class SingleServerBindingSpecification extends Specification {
         binding.count == 1
 
         when:
-        source = binding.getWriteConnectionSource(getOperationContext())
+        source = binding.getWriteConnectionSource(createOperationContext())
 
         then:
         source.count == 1

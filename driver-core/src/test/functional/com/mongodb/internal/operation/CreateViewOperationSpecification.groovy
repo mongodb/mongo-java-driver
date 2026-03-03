@@ -30,7 +30,6 @@ import org.bson.codecs.BsonDocumentCodec
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.getBinding
-import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 
 class CreateViewOperationSpecification extends OperationFunctionalSpecification {

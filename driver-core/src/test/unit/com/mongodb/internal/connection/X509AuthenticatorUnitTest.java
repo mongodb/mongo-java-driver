@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
@@ -31,7 +32,6 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static com.mongodb.ClusterFixture.getOperationContext;
 import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.internal.connection.MessageHelper.buildSuccessfulReply;
 import static com.mongodb.internal.connection.MessageHelper.getApiVersionField;
@@ -58,7 +58,7 @@ public class X509AuthenticatorUnitTest {
         enqueueFailedAuthenticationReply();
 
         try {
-            subject.authenticate(connection, connectionDescription, getOperationContext());
+            subject.authenticate(connection, connectionDescription, ClusterFixture.createOperationContext());
             fail();
         } catch (MongoSecurityException e) {
             // all good
@@ -70,7 +70,7 @@ public class X509AuthenticatorUnitTest {
         enqueueFailedAuthenticationReply();
 
         FutureResultCallback<Void> futureCallback = new FutureResultCallback<>();
-        subject.authenticateAsync(connection, connectionDescription, getOperationContext(), futureCallback);
+        subject.authenticateAsync(connection, connectionDescription, ClusterFixture.createOperationContext(), futureCallback);
 
         try {
             futureCallback.get();
@@ -92,7 +92,7 @@ public class X509AuthenticatorUnitTest {
     public void testSuccessfulAuthentication() {
         enqueueSuccessfulAuthenticationReply();
 
-        subject.authenticate(connection, connectionDescription, getOperationContext());
+        subject.authenticate(connection, connectionDescription, ClusterFixture.createOperationContext());
 
         validateMessages();
     }
@@ -102,7 +102,7 @@ public class X509AuthenticatorUnitTest {
         enqueueSuccessfulAuthenticationReply();
 
         FutureResultCallback<Void> futureCallback = new FutureResultCallback<>();
-        subject.authenticateAsync(connection, connectionDescription, getOperationContext(), futureCallback);
+        subject.authenticateAsync(connection, connectionDescription, ClusterFixture.createOperationContext(), futureCallback);
 
         futureCallback.get();
 
@@ -117,7 +117,7 @@ public class X509AuthenticatorUnitTest {
                 + "user: \"CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US\", "
                 + "mechanism: \"MONGODB-X509\", db: \"$external\"}");
         subject.setSpeculativeAuthenticateResponse(BsonDocument.parse(speculativeAuthenticateResponse));
-        subject.authenticate(connection, connectionDescription, getOperationContext());
+        subject.authenticate(connection, connectionDescription, ClusterFixture.createOperationContext());
 
         assertEquals(connection.getSent().size(), 0);
         assertEquals(expectedSpeculativeAuthenticateCommand, subject.createSpeculativeAuthenticateCommand(connection));

@@ -23,7 +23,6 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.selector.ServerAddressSelector;
 
-import static com.mongodb.ClusterFixture.getOperationContext;
 import static com.mongodb.ClusterFixture.getAsyncCluster;
 import static com.mongodb.ClusterFixture.getCluster;
 import static com.mongodb.assertions.Assertions.fail;
@@ -54,7 +53,7 @@ public final class ServerHelper {
 
     public static void waitForLastRelease(final ServerAddress address, final Cluster cluster) {
         ConcurrentPool<UsageTrackingInternalConnection> pool = connectionPool(
-                cluster.selectServer(new ServerAddressSelector(address), getOperationContext()).getServer());
+                cluster.selectServer(new ServerAddressSelector(address), ClusterFixture.createOperationContext()).getServer());
         long startTime = System.currentTimeMillis();
         while (pool.getInUseCount() > 0) {
             try {
@@ -70,7 +69,7 @@ public final class ServerHelper {
     }
 
     private static ConcurrentPool<UsageTrackingInternalConnection> getConnectionPool(final ServerAddress address, final Cluster cluster) {
-        return connectionPool(cluster.selectServer(new ServerAddressSelector(address), getOperationContext()).getServer());
+        return connectionPool(cluster.selectServer(new ServerAddressSelector(address), ClusterFixture.createOperationContext()).getServer());
     }
 
     private static void checkPool(final ServerAddress address, final Cluster cluster) {
