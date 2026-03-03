@@ -272,7 +272,7 @@ class GridFSObservableSpec extends RequiresMongoDBISpec with FuturesSpec with Be
   }
 
   it should "not create indexes if the files collection is not empty" in {
-    filesCollection.withDocumentClass[Document].insertOne(Document("filename" -> "bad file")).futureValue
+    filesCollection.withDocumentClass[Document]().insertOne(Document("filename" -> "bad file")).futureValue
 
     filesCollection.listIndexes().futureValue.size should equal(1)
     chunksCollection.listIndexes().futureValue.size should equal(0)
@@ -333,7 +333,7 @@ class GridFSObservableSpec extends RequiresMongoDBISpec with FuturesSpec with Be
       def subscription(): Subscription
     }
 
-    val observer = new SubscriptionObserver[ObjectId] {
+    class CompletedObserver extends SubscriptionObserver[ObjectId] {
       var s: Option[Subscription] = None
       var completed: Boolean = false
       def subscription(): Subscription = s.get
@@ -346,6 +346,8 @@ class GridFSObservableSpec extends RequiresMongoDBISpec with FuturesSpec with Be
 
       override def onComplete(): Unit = completed = true
     }
+
+    val observer = new CompletedObserver()
     gridFSBucket
       .uploadFromObservable(
         "myFile",

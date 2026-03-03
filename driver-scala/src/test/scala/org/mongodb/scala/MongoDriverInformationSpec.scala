@@ -26,14 +26,10 @@ class MongoDriverInformationSpec extends BaseSpec {
       MongoDriverInformationClass.getDeclaredFields.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
     val wrappedMethods =
       MongoDriverInformationClass.getDeclaredMethods.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
-    val exclusions = Set("$VALUES", "$values", "valueOf", "values", "access$200")
+    val exclusions = DEFAULT_EXCLUSIONS + "access$200"
 
     val wrapped = (wrappedFields ++ wrappedMethods) -- exclusions
-    val local = MongoDriverInformation.getClass.getDeclaredMethods.map(_.getName).toSet -- Set(
-      "apply",
-      "$deserializeLambda$",
-      "$anonfun$fromString$1"
-    )
+    val local = MongoDriverInformation.getClass.getDeclaredMethods.map(_.getName).toSet -- DEFAULT_EXCLUSIONS
 
     local should equal(wrapped)
   }

@@ -98,7 +98,7 @@ object ClientSideEncryptionExplicitEncryptionOnlyTour {
 
     collection.insertOne(Document("encryptedField" -> encryptedFieldValue)).headResult()
 
-    println(collection.find.first().headResult().toJson())
+    println(collection.find().first().headResult().toJson())
 
     // release resources
     clientEncryption.close()
