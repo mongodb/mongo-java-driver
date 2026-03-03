@@ -29,7 +29,7 @@ import com.mongodb.internal.selector.WritableServerSelector
 import spock.lang.Specification
 
 import static com.mongodb.ClusterFixture.CLIENT_METADATA
-import static com.mongodb.ClusterFixture.getOperationContext
+import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.connection.ClusterType.REPLICA_SET
 import static com.mongodb.connection.ClusterType.UNKNOWN
@@ -78,10 +78,10 @@ class SingleServerClusterSpecification extends Specification {
         sendNotification(firstServer, STANDALONE)
 
         then:
-        cluster.getServersSnapshot(getOperationContext()
+        cluster.getServersSnapshot(createOperationContext()
                         .getTimeoutContext()
                         .computeServerSelectionTimeout(),
-                getOperationContext().getTimeoutContext()).getServer(firstServer) == factory.getServer(firstServer)
+                createOperationContext().getTimeoutContext()).getServer(firstServer) == factory.getServer(firstServer)
 
         cleanup:
         cluster?.close()
@@ -95,8 +95,8 @@ class SingleServerClusterSpecification extends Specification {
         cluster.close()
 
         when:
-        cluster.getServersSnapshot(getOperationContext().getTimeoutContext().computeServerSelectionTimeout(),
-                getOperationContext().getTimeoutContext())
+        cluster.getServersSnapshot(createOperationContext().getTimeoutContext().computeServerSelectionTimeout(),
+                createOperationContext().getTimeoutContext())
 
         then:
         thrown(IllegalStateException)
@@ -146,7 +146,7 @@ class SingleServerClusterSpecification extends Specification {
         sendNotification(firstServer, getBuilder(firstServer).minWireVersion(1000).maxWireVersion(1000).build())
 
         when:
-        cluster.selectServer(new WritableServerSelector(), getOperationContext())
+        cluster.selectServer(new WritableServerSelector(), createOperationContext())
 
         then:
         thrown(MongoIncompatibleDriverException)

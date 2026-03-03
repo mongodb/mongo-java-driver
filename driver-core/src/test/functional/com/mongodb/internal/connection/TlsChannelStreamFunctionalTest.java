@@ -184,11 +184,11 @@ class TlsChannelStreamFunctionalTest {
                             .build());
 
             Stream stream = streamFactory.create(getPrimaryServerDescription().getAddress());
-            stream.open(ClusterFixture.getOperationContext());
+            stream.open(ClusterFixture.createOperationContext());
             ByteBuf wrap = new ByteBufNIO(ByteBuffer.wrap(new byte[]{1, 3, 4}));
 
             //when
-            stream.write(Collections.singletonList(wrap), ClusterFixture.getOperationContext());
+            stream.write(Collections.singletonList(wrap), ClusterFixture.createOperationContext());
 
             //then
             SECONDS.sleep(5);

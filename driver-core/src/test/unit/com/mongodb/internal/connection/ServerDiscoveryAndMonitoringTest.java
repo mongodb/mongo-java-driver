@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
@@ -32,7 +33,6 @@ import org.junit.runners.Parameterized;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import static com.mongodb.ClusterFixture.getOperationContext;
 import static com.mongodb.ClusterFixture.getClusterDescription;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
 import static com.mongodb.internal.event.EventListenerHelper.NO_OP_CLUSTER_LISTENER;
@@ -154,9 +154,9 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
 
         if (expectedServerDescriptionDocument.isDocument("pool")) {
             int expectedGeneration = expectedServerDescriptionDocument.getDocument("pool").getNumber("generation").intValue();
-            Timeout serverSelectionTimeout = getOperationContext().getTimeoutContext().computeServerSelectionTimeout();
+            Timeout serverSelectionTimeout = ClusterFixture.createOperationContext().getTimeoutContext().computeServerSelectionTimeout();
             DefaultServer server = (DefaultServer) getCluster()
-                    .getServersSnapshot(serverSelectionTimeout, getOperationContext().getTimeoutContext())
+                    .getServersSnapshot(serverSelectionTimeout, ClusterFixture.createOperationContext().getTimeoutContext())
                     .getServer(new ServerAddress(serverName));
             assertEquals(expectedGeneration, server.getConnectionPool().getGeneration());
         }

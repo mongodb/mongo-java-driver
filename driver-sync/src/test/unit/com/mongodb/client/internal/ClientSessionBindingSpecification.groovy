@@ -30,7 +30,7 @@ class ClientSessionBindingSpecification extends Specification {
     def 'should call underlying wrapped binding'() {
         given:
         def session = Stub(ClientSession)
-        def operationContext = ClusterFixture.getOperationContext()
+        def operationContext = ClusterFixture.createOperationContext()
         def wrappedBinding = Mock(ClusterBinding);
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
 
@@ -76,7 +76,7 @@ class ClientSessionBindingSpecification extends Specification {
         def session = Mock(ClientSession)
         def wrappedBinding = createStubBinding()
         def binding = new ClientSessionBinding(session, true, wrappedBinding)
-        def operationContext = ClusterFixture.getOperationContext()
+        def operationContext = ClusterFixture.createOperationContext()
         def readConnectionSource = binding.getReadConnectionSource(operationContext)
         def writeConnectionSource = binding.getWriteConnectionSource(operationContext)
 

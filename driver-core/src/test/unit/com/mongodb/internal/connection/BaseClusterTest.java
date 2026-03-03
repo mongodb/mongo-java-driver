@@ -48,7 +48,7 @@ final class BaseClusterTest {
                 new ServerAddressSelector(serverAddressA),
                 clusterDescriptionAB,
                 serversSnapshotB,
-                ClusterFixture.getOperationContext().getServerDeprioritization(),
+                ClusterFixture.createOperationContext().getServerDeprioritization(),
                 ClusterSettings.builder().build()));
     }
 

@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.MongoConnectionPoolClearedException;
 import com.mongodb.MongoServerUnavailableException;
 import com.mongodb.ServerAddress;
@@ -60,7 +61,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
-import static com.mongodb.ClusterFixture.getOperationContext;
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT_FACTORY;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.ClusterFixture.createOperationContext;
@@ -173,7 +173,7 @@ public class DefaultConnectionPoolTest {
 
         String expectedExceptionMessage = "The server at 127.0.0.1:27017 is no longer available";
         MongoServerUnavailableException exception;
-        exception = assertThrows(MongoServerUnavailableException.class, () -> provider.get(getOperationContext()));
+        exception = assertThrows(MongoServerUnavailableException.class, () -> provider.get(ClusterFixture.createOperationContext()));
         assertEquals(expectedExceptionMessage, exception.getMessage());
         SupplyingCallback<InternalConnection> supplyingCallback = new SupplyingCallback<>();
         provider.getAsync(createOperationContext(TIMEOUT_SETTINGS.withMaxWaitTimeMS(50)), supplyingCallback);
@@ -194,10 +194,10 @@ public class DefaultConnectionPoolTest {
         provider.ready();
 
         // when
-        provider.get(getOperationContext()).close();
+        provider.get(ClusterFixture.createOperationContext()).close();
         sleep(100);
         provider.doMaintenance();
-        provider.get(getOperationContext());
+        provider.get(ClusterFixture.createOperationContext());
 
         // then
         assertTrue(connectionFactory.getNumCreatedConnections() >= 2);  // should really be two, but it's racy
@@ -215,7 +215,7 @@ public class DefaultConnectionPoolTest {
         provider.ready();
 
         // when
-        InternalConnection connection = provider.get(getOperationContext());
+        InternalConnection connection = provider.get(ClusterFixture.createOperationContext());
         sleep(50);
         connection.close();
 
@@ -236,10 +236,10 @@ public class DefaultConnectionPoolTest {
         provider.ready();
 
         // when
-        provider.get(getOperationContext()).close();
+        provider.get(ClusterFixture.createOperationContext()).close();
         sleep(100);
         provider.doMaintenance();
-        provider.get(getOperationContext());
+        provider.get(ClusterFixture.createOperationContext());
 
         // then
         assertTrue(connectionFactory.getNumCreatedConnections() >= 2);  // should really be two, but it's racy
@@ -258,10 +258,10 @@ public class DefaultConnectionPoolTest {
         provider.ready();
 
         // when
-        provider.get(getOperationContext()).close();
+        provider.get(ClusterFixture.createOperationContext()).close();
         sleep(50);
         provider.doMaintenance();
-        provider.get(getOperationContext());
+        provider.get(ClusterFixture.createOperationContext());
 
         // then
         assertTrue(connectionFactory.getCreatedConnections().get(0).isClosed());
@@ -280,10 +280,10 @@ public class DefaultConnectionPoolTest {
         provider.ready();
 
         // when
-        provider.get(getOperationContext()).close();
+        provider.get(ClusterFixture.createOperationContext()).close();
         sleep(50);
         provider.doMaintenance();
-        InternalConnection secondConnection = provider.get(getOperationContext());
+        InternalConnection secondConnection = provider.get(ClusterFixture.createOperationContext());
 
         // then
         assertNotNull(secondConnection);
@@ -302,7 +302,7 @@ public class DefaultConnectionPoolTest {
                         .build(),
                 mockSdamProvider(), OPERATION_CONTEXT_FACTORY);
         provider.ready();
-        provider.get(getOperationContext()).close();
+        provider.get(ClusterFixture.createOperationContext()).close();
 
 
         // when
@@ -322,7 +322,7 @@ public class DefaultConnectionPoolTest {
         List<InternalConnection> connections = new ArrayList<>();
         try {
             for (int i = 0; i < 2 * defaultMaxSize; i++) {
-                connections.add(provider.get(getOperationContext()));
+                connections.add(provider.get(ClusterFixture.createOperationContext()));
             }
         } finally {
             connections.forEach(connection -> {

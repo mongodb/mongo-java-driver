@@ -42,7 +42,6 @@ import spock.lang.Specification
 import java.util.concurrent.CountDownLatch
 
 import static com.mongodb.ClusterFixture.CLIENT_METADATA
-import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
@@ -135,7 +134,7 @@ class BaseClusterSpecification extends Specification {
         factory.sendNotification(thirdServer, REPLICA_SET_PRIMARY, allServers)
 
         expect:
-        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.secondary()), getOperationContext())
+        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.secondary()), createOperationContext())
                 .serverDescription.address == firstServer
     }
 
@@ -171,7 +170,7 @@ class BaseClusterSpecification extends Specification {
         factory.sendNotification(thirdServer, 1, REPLICA_SET_PRIMARY, allServers)
 
         expect:
-        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.nearest()), getOperationContext())
+        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.nearest()), createOperationContext())
                 .serverDescription.address == firstServer
     }
 
@@ -189,7 +188,7 @@ class BaseClusterSpecification extends Specification {
         factory.sendNotification(thirdServer, 1, REPLICA_SET_PRIMARY, allServers)
 
         expect: // firstServer is the only secondary within the latency threshold
-        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.secondary()), getOperationContext())
+        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.secondary()), createOperationContext())
                 .serverDescription.address == firstServer
     }
 

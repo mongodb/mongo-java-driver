@@ -32,14 +32,14 @@ import com.mongodb.internal.connection.ServerTuple
 import com.mongodb.reactivestreams.client.ClientSession
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.getOperationContext
+import static com.mongodb.ClusterFixture.createOperationContext
 
 class ClientSessionBindingSpecification extends Specification {
 
     def 'should return the session context from the connection source'() {
         given:
         def session = Stub(ClientSession)
-        def operationContext = ClusterFixture.getOperationContext()
+        def operationContext = ClusterFixture.createOperationContext()
         def wrappedBinding = Mock(AsyncClusterAwareReadWriteBinding);
         wrappedBinding.retain() >> wrappedBinding
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
@@ -90,10 +90,10 @@ class ClientSessionBindingSpecification extends Specification {
         def wrappedBinding = createStubBinding()
         def binding = new ClientSessionBinding(session, true, wrappedBinding)
         def futureResultCallback = new FutureResultCallback<AsyncConnectionSource>()
-        binding.getReadConnectionSource(getOperationContext(), futureResultCallback)
+        binding.getReadConnectionSource(createOperationContext(), futureResultCallback)
         def readConnectionSource = futureResultCallback.get()
         futureResultCallback = new FutureResultCallback<AsyncConnectionSource>()
-        binding.getWriteConnectionSource(getOperationContext(), futureResultCallback)
+        binding.getWriteConnectionSource(createOperationContext(), futureResultCallback)
         def writeConnectionSource = futureResultCallback.get()
 
         when:

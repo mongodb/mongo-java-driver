@@ -46,7 +46,6 @@ import org.bson.codecs.DocumentCodec
 
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
-import static com.mongodb.ClusterFixture.getOperationContext
 import static org.junit.jupiter.api.Assertions.assertEquals
 
 class ListCollectionsOperationSpecification extends OperationFunctionalSpecification {
@@ -398,7 +397,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should use the readPreference to set secondaryOk'() {
         given:
-        def operationContext = ClusterFixture.getOperationContext()
+        def operationContext = ClusterFixture.createOperationContext()
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
             getConnection(_) >> connection
@@ -427,7 +426,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should use the readPreference to set secondaryOk in async'() {
         given:
-        def operationContext = ClusterFixture.getOperationContext()
+        def operationContext = ClusterFixture.createOperationContext()
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
             getConnection(_, _) >> { it[1].onResult(connection, null) }

@@ -46,7 +46,7 @@ import org.junit.jupiter.api.Assertions
 
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
-import static com.mongodb.ClusterFixture.getOperationContext
+import static com.mongodb.ClusterFixture.createOperationContext
 
 class ListIndexesOperationSpecification extends OperationFunctionalSpecification {
 
@@ -225,7 +225,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
     def 'should use the readPreference to set secondaryOk'() {
         given:
         def connection = Mock(Connection)
-        def operationContext = ClusterFixture.getOperationContext()
+        def operationContext = ClusterFixture.createOperationContext()
         def connectionSource = Stub(ConnectionSource) {
             getConnection(_) >> connection
             getReadPreference() >> readPreference
@@ -265,7 +265,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         def operation = new ListIndexesOperation(helper.namespace, helper.decoder)
 
         when: '3.6.0'
-        operation.executeAsync(readBinding, getOperationContext(), Stub(SingleResultCallback))
+        operation.executeAsync(readBinding, createOperationContext(), Stub(SingleResultCallback))
 
         then:
         _ * connection.getDescription() >> helper.threeSixConnectionDescription

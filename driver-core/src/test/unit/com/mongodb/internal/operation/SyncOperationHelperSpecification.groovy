@@ -34,7 +34,7 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.Decoder
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.getOperationContext
+import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer
@@ -61,7 +61,7 @@ class SyncOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeCommand(writeBinding, getOperationContext(), dbName, command, decoder, function)
+        executeCommand(writeBinding, createOperationContext(), dbName, command, decoder, function)
 
         then:
         _ * connection.getDescription() >> connectionDescription
@@ -71,7 +71,7 @@ class SyncOperationHelperSpecification extends Specification {
 
     def 'should retry with retryable exception'() {
         given:
-        def operationContext = getOperationContext()
+        def operationContext = createOperationContext()
                 .withSessionContext(Stub(SessionContext) {
                     hasSession() >> true
                     hasActiveTransaction() >> false
@@ -132,7 +132,7 @@ class SyncOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeRetryableRead(readBinding, getOperationContext(), dbName, commandCreator, decoder, function, false)
+        executeRetryableRead(readBinding, createOperationContext(), dbName, commandCreator, decoder, function, false)
 
         then:
         _ * connection.getDescription() >> connectionDescription
