@@ -20,6 +20,8 @@ import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.lang.Nullable;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
+
 /**
  * A trampoline that converts recursive callback invocations into an iterative loop,
  * preventing stack overflow in async loops.
@@ -66,8 +68,10 @@ public final class AsyncTrampoline {
             try {
                 work.run();
                 // drain any re-entrant work iteratively
-                while (bounce.hasWork()) {
-                    bounce.runNext();
+                while (bounce.work != null) {
+                    Runnable workToRun = bounce.work;
+                    bounce.work = null;
+                    workToRun.run();
                 }
             } finally {
                 TRAMPOLINE.remove();
@@ -90,17 +94,6 @@ public final class AsyncTrampoline {
                         + "It could happen if there are multiple concurrent operations in a sequential async chain.");
             }
             this.work = task;
-        }
-
-        boolean hasWork() {
-            return work != null;
-        }
-
-        void runNext() {
-            Runnable task = this.work;
-            this.work = null;
-            Assertions.assertNotNull(task);
-            task.run();
         }
     }
 }
