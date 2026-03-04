@@ -183,8 +183,8 @@ final class ServerDeprioritizationTest {
         serverDeprioritization.updateCandidate(SERVER_A.getAddress());
         serverDeprioritization.onAttemptFailure(
                 new MongoConnectionPoolClearedException(new ServerId(new ClusterId(), new ServerAddress()), null));
-        ServerSelector selector = createAssertingSelector(ALL_SERVERS, singletonList(SERVER_A));
-        assertEquals(singletonList(SERVER_A), serverDeprioritization.apply(selector).select(SHARDED_CLUSTER));
+        ServerSelector selector = createAssertingSelector(ALL_SERVERS, ALL_SERVERS);
+        assertEquals(ALL_SERVERS, serverDeprioritization.apply(selector).select(SHARDED_CLUSTER));
     }
 
     @Test
