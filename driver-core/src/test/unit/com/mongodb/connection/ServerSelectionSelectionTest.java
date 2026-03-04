@@ -78,7 +78,6 @@ public class ServerSelectionSelectionTest {
     private final String description;
     private final BsonDocument definition;
     private final ClusterDescription clusterDescription;
-    private final long heartbeatFrequencyMS;
     private final boolean error;
     private final List<ServerAddress> deprioritizedServerAddresses;
 
@@ -92,7 +91,8 @@ public class ServerSelectionSelectionTest {
     public ServerSelectionSelectionTest(final String description, final BsonDocument definition) {
         this.description = description;
         this.definition = definition;
-        this.heartbeatFrequencyMS = definition.getNumber("heartbeatFrequencyMS", new BsonInt64(10000)).longValue();
+
+        long heartbeatFrequencyMS = definition.getNumber("heartbeatFrequencyMS", new BsonInt64(10000)).longValue();
         this.error = definition.getBoolean("error", BsonBoolean.FALSE).getValue();
         this.clusterDescription = buildClusterDescription(definition.getDocument("topology_description"),
                 ServerSettings.builder().heartbeatFrequency(heartbeatFrequencyMS, TimeUnit.MILLISECONDS).build());
