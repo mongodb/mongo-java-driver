@@ -17,10 +17,7 @@
 package com.mongodb.internal.async;
 
 import com.mongodb.annotations.NotThreadSafe;
-import com.mongodb.assertions.Assertions;
 import com.mongodb.lang.Nullable;
-
-import static com.mongodb.assertions.Assertions.assertNotNull;
 
 /**
  * A trampoline that converts recursive callback invocations into an iterative loop,
