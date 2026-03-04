@@ -244,10 +244,12 @@ public class OperationContext {
         }
 
         /**
-         * The returned {@link ServerSelector} wraps the provided selector and attempts server selection in two passes:
+         * The returned {@link ServerSelector} wraps the provided selector and attempts
+         * {@linkplain ServerSelector#select(ClusterDescription) server selection} in two passes:
          * <ol>
-         *   <li>First pass: calls the wrapped selector with only non-deprioritized {@link ServerDescription}s</li>
-         *   <li>Second pass: if the first pass returns no servers, calls the wrapped selector again with all servers (including deprioritized ones)</li>
+         *   <li>First pass: selects using the wrapped selector with only non-deprioritized {@link ServerDescription}s.</li>
+         *   <li>Second pass: if the first pass selects no {@link ServerDescription}s,
+         *   selects using the wrapped selector again with all {@link ServerDescription}s, including deprioritized ones.</li>
          * </ol>
          */
         ServerSelector applyDeprioritization(final ServerSelector wrappedSelector) {
