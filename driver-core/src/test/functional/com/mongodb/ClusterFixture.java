@@ -36,12 +36,10 @@ import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncClusterBinding;
 import com.mongodb.internal.binding.AsyncConnectionSource;
-import com.mongodb.internal.binding.AsyncOperationContextBinding;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
 import com.mongodb.internal.binding.AsyncSingleConnectionBinding;
 import com.mongodb.internal.binding.ClusterBinding;
-import com.mongodb.internal.binding.OperationContextBinding;
 import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.internal.binding.SimpleSessionContext;
@@ -373,33 +371,18 @@ public final class ClusterFixture {
         return new ClusterBinding(cluster, ReadPreference.primary());
     }
 
-    public static ReadWriteBinding getBinding(final TimeoutSettings timeoutSettings) {
-        return getBinding(getCluster(), ReadPreference.primary(), createNewOperationContext(timeoutSettings));
-    }
-
-    public static ReadWriteBinding getBinding(final OperationContext operationContext) {
-       return getBinding(getCluster(), ReadPreference.primary(), operationContext);
-    }
-
     public static ReadWriteBinding getBinding(final ReadPreference readPreference) {
-        return getBinding(getCluster(), readPreference, OPERATION_CONTEXT);
-    }
-
-    public static OperationContext createNewOperationContext(final TimeoutSettings timeoutSettings) {
-        return OPERATION_CONTEXT.withTimeoutContext(new TimeoutContext(timeoutSettings));
+        return getBinding(getCluster(), readPreference);
     }
 
     private static ReadWriteBinding getBinding(final Cluster cluster,
-            final ReadPreference readPreference,
-            final OperationContext operationContext) {
+            final ReadPreference readPreference) {
         if (!BINDING_MAP.containsKey(readPreference)) {
             ReadWriteBinding binding = new ClusterBinding(cluster, readPreference);
             BINDING_MAP.put(readPreference, binding);
             SESSION_CONTEXT_MAP.put(readPreference, new SimpleSessionContext());
         }
-        ReadWriteBinding readWriteBinding = BINDING_MAP.get(readPreference);
-        return new OperationContextBinding(readWriteBinding,
-                operationContext.withSessionContext(SESSION_CONTEXT_MAP.get(readPreference)));
+        return BINDING_MAP.get(readPreference);
     }
 
     public static SingleConnectionBinding getSingleConnectionBinding() {
@@ -419,33 +402,18 @@ public final class ClusterFixture {
     }
 
     public static AsyncReadWriteBinding getAsyncBinding() {
-        return getAsyncBinding(getAsyncCluster(), ReadPreference.primary(), OPERATION_CONTEXT);
-    }
-
-    public static AsyncReadWriteBinding getAsyncBinding(final TimeoutSettings timeoutSettings) {
-        return getAsyncBinding(createNewOperationContext(timeoutSettings));
-    }
-
-    public static AsyncReadWriteBinding getAsyncBinding(final OperationContext operationContext) {
-        return getAsyncBinding(getAsyncCluster(), ReadPreference.primary(), operationContext);
-    }
-
-    public static AsyncReadWriteBinding getAsyncBinding(final ReadPreference readPreference) {
-        return getAsyncBinding(getAsyncCluster(), readPreference, OPERATION_CONTEXT);
+        return getAsyncBinding(getAsyncCluster(), ReadPreference.primary());
     }
 
     public static AsyncReadWriteBinding getAsyncBinding(
             final Cluster cluster,
-            final ReadPreference readPreference,
-            final OperationContext operationContext) {
+            final ReadPreference readPreference) {
         if (!ASYNC_BINDING_MAP.containsKey(readPreference)) {
             AsyncReadWriteBinding binding = new AsyncClusterBinding(cluster, readPreference);
             ASYNC_BINDING_MAP.put(readPreference, binding);
             ASYNC_SESSION_CONTEXT_MAP.put(readPreference, new SimpleSessionContext());
         }
-        AsyncReadWriteBinding readWriteBinding = ASYNC_BINDING_MAP.get(readPreference);
-        return new AsyncOperationContextBinding(readWriteBinding,
-                operationContext.withSessionContext(ASYNC_SESSION_CONTEXT_MAP.get(readPreference)));
+        return ASYNC_BINDING_MAP.get(readPreference);
     }
 
     public static synchronized Cluster getCluster() {
@@ -713,12 +681,12 @@ public final class ClusterFixture {
 
     @SuppressWarnings("overloads")
     public static <T> T executeSync(final ReadOperation<T, ?> op, final ReadWriteBinding binding) {
-        return op.execute(binding, OPERATION_CONTEXT);
+        return op.execute(binding, applySessionContext(OPERATION_CONTEXT, binding.getReadPreference()));
     }
 
     @SuppressWarnings("overloads")
     public static <T> T executeSync(final ReadOperation<T, ?> op, final ReadWriteBinding binding, final OperationContext operationContext) {
-        return op.execute(binding, operationContext);
+        return op.execute(binding, applySessionContext(operationContext, binding.getReadPreference()));
     }
 
     @SuppressWarnings("overloads")
