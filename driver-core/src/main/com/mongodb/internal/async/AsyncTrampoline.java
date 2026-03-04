@@ -1,0 +1,106 @@
+/*
+ * Copyright 2008-present MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.mongodb.internal.async;
+
+import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.assertions.Assertions;
+import com.mongodb.lang.Nullable;
+
+/**
+ * A trampoline that converts recursive callback invocations into an iterative loop,
+ * preventing stack overflow in async loops.
+ *
+ * <p>When async loop iterations complete synchronously on the same thread, callback
+ * recursion occurs: each iteration's {@code callback.onResult()} immediately triggers
+ * the next iteration, causing unbounded stack growth. For example, a 1000-iteration
+ * loop would create > 1000 stack frames and cause {@code StackOverflowError}.</p>
+ *
+ * <p>The trampoline intercepts this recursion: instead of executing the next iteration
+ * immediately (which would deepen the stack), it enqueues the work and returns, allowing
+ * the stack to unwind. A flat loop at the top then processes enqueued work iteratively,
+ * maintaining constant stack depth regardless of iteration count.</p>
+ *
+ * <p>Since async chains are sequential, at most one task is pending at any time.
+ * The trampoline uses a single slot rather than a queue.</p>
+ *
+ * The first call on a thread becomes the "trampoline owner" and runs the drain loop.
+ * Subsequent (re-entrant) calls on the same thread enqueue their work and return immediately.</p>
+ *
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
+@NotThreadSafe
+public final class AsyncTrampoline {
+
+    private static final ThreadLocal<Bounce> TRAMPOLINE = new ThreadLocal<>();
+
+    private AsyncTrampoline() {
+    }
+
+    /**
+     * Execute work through the trampoline. If no trampoline is active, become the owner
+     * and drain all enqueued work. If a trampoline is already active, enqueue and return.
+     */
+    public static void run(final Runnable work) {
+        Bounce bounce = TRAMPOLINE.get();
+        if (bounce != null) {
+            // Re-entrant, enqueue and return
+            bounce.enqueue(work);
+        } else {
+            // Become the trampoline owner.
+            bounce = new Bounce();
+            TRAMPOLINE.set(bounce);
+            try {
+                work.run();
+                // drain any re-entrant work iteratively
+                while (bounce.hasWork()) {
+                    bounce.runNext();
+                }
+            } finally {
+                TRAMPOLINE.remove();
+            }
+        }
+    }
+
+    /**
+     * A single-slot container for deferred work.
+     * At most one task is pending at any time in a sequential async chain.
+     */
+    @NotThreadSafe
+    private static final class Bounce {
+        @Nullable
+        private Runnable work;
+
+        void enqueue(final Runnable task) {
+            if (this.work != null) {
+                throw new AssertionError("Trampoline slot already occupied. "
+                        + "It could happen if there are multiple concurrent operations in a sequential async chain.");
+            }
+            this.work = task;
+        }
+
+        boolean hasWork() {
+            return work != null;
+        }
+
+        void runNext() {
+            Runnable task = this.work;
+            this.work = null;
+            Assertions.assertNotNull(task);
+            task.run();
+        }
+    }
+}
