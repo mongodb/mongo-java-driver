@@ -27,11 +27,7 @@ class ReadConcernSpec extends BaseSpec {
   "ReadConcern" should "have the same static fields as the wrapped ReadConcern" in {
     val wrapped =
       classOf[com.mongodb.ReadConcern].getDeclaredFields.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
-    val local = ReadConcern.getClass.getDeclaredMethods.map(_.getName).toSet -- Set(
-      "apply",
-      "$deserializeLambda$",
-      "$anonfun$fromString$1"
-    )
+    val local = ReadConcern.getClass.getDeclaredMethods.map(_.getName).toSet -- DEFAULT_EXCLUSIONS
 
     local should equal(wrapped)
   }

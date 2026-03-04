@@ -19,175 +19,35 @@ package org.mongodb.scala.bson.codecs
 import java.nio.ByteBuffer
 import java.util
 import java.util.Date
-
-import org.bson._
-import org.bson.codecs.configuration.{ CodecProvider, CodecRegistries, CodecRegistry }
-import org.bson.codecs.{ Codec, DecoderContext, EncoderContext }
-import org.bson.io.{ BasicOutputBuffer, ByteBufferBsonInput, OutputBuffer }
+import org.bson.*
+import org.bson.codecs.configuration.{CodecProvider, CodecRegistries, CodecRegistry}
+import org.bson.codecs.{BsonValueCodecProvider, Codec, DecoderContext, EncoderContext, ValueCodecProvider}
+import org.bson.io.{BasicOutputBuffer, ByteBufferBsonInput, OutputBuffer}
 import org.bson.types.ObjectId
-import org.mongodb.scala.bson.BaseSpec
-import org.mongodb.scala.bson.annotations.{ BsonIgnore, BsonProperty }
-import org.mongodb.scala.bson.codecs.Macros.{ createCodecProvider, createCodecProviderIgnoreNone }
-import org.mongodb.scala.bson.codecs.Registry.DEFAULT_CODEC_REGISTRY
+import org.mongodb.scala.bson.Document
+import org.mongodb.scala.bson.codecs.{DocumentCodecProvider, IterableCodecProvider}
 import org.mongodb.scala.bson.collection.immutable.Document
-import scala.collection.immutable.Vector
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-import scala.collection.JavaConverters._
+import Models.*
+import Macros.createCodecProvider
+
+import scala.language.implicitConversions
+import scala.collection.immutable.Vector
 import scala.reflect.ClassTag
 
+
 //scalastyle:off
-class MacrosSpec extends BaseSpec {
+class MacrosSpec extends AnyFlatSpec with Matchers {
 
-  case class Empty()
-  case class Person(firstName: String, lastName: String)
-  case class DefaultValue(name: String, active: Boolean = false)
-  case class SeqOfStrings(name: String, value: Seq[String])
-  case class RecursiveSeq(name: String, value: Seq[RecursiveSeq])
-  case class AnnotatedClass(@BsonProperty("annotated_name") name: String)
-  case class IgnoredFieldClass(name: String, @BsonIgnore meta: String = "ignored_default")
-
-  case class Binary(binary: Array[Byte]) {
-
-    /**
-     * Custom equals
-     *
-     * Because `Array[Byte]` only does equality based on identity we use toSeq helper to compare the actual values.
-     *
-     * @param arg the other value
-     * @return true if equal else false
-     */
-    override def equals(arg: Any): Boolean = arg match {
-      case that: Binary => that.binary.toSeq == binary.toSeq
-      case _            => false
-    }
-  }
-  case class AllTheBsonTypes(
-      documentMap: Map[String, String],
-      array: Seq[String],
-      date: Date,
-      boolean: Boolean,
-      double: Double,
-      int32: Int,
-      int64: Long,
-      string: String,
-      binary: Binary,
-      none: Option[String]
+  val DEFAULT_CODEC_REGISTRY: CodecRegistry = CodecRegistries.fromProviders(
+    DocumentCodecProvider(),
+    IterableCodecProvider(),
+    new ValueCodecProvider(),
+    new BsonValueCodecProvider()
   )
 
-  case class MapOfStrings(name: String, value: Map[String, String])
-  case class SeqOfMapOfStrings(name: String, value: Seq[Map[String, String]])
-  case class RecursiveMapOfStrings(name: String, value: Seq[Map[String, RecursiveMapOfStrings]])
-
-  type StringAlias = String
-  case class MapOfStringAliases(name: String, value: Map[StringAlias, StringAlias])
-
-  case class ContainsCaseClass(name: String, friend: Person)
-  case class ContainsSeqCaseClass(name: String, friends: Seq[Person])
-  case class ContainsNestedSeqCaseClass(name: String, friends: Seq[Seq[Person]])
-  case class ContainsMapOfCaseClasses(name: String, friends: Map[String, Person])
-  case class ContainsMapOfMapOfCaseClasses(name: String, friends: Map[String, Map[String, Person]])
-  case class ContainsCaseClassWithDefault(name: String, friend: Person = Person("Frank", "Sinatra"))
-
-  case class ContainsSet(name: String, friends: Set[String])
-  case class ContainsVector(name: String, friends: Vector[String])
-  case class ContainsList(name: String, friends: List[String])
-  case class ContainsStream(name: String, friends: Stream[String])
-
-  case class CaseClassWithVal(_id: ObjectId, name: String) {
-    val id: String = _id.toString
-  }
-
-  case class OptionalValue(name: String, value: Option[String])
-  case class OptionalCaseClass(name: String, value: Option[Person])
-  case class OptionalRecursive(name: String, value: Option[OptionalRecursive])
-
-  sealed class Tree
-  case class Branch(@BsonProperty("l1") b1: Tree, @BsonProperty("r1") b2: Tree, value: Int) extends Tree
-  case class Leaf(value: Int) extends Tree
-
-  sealed trait WithIgnored
-  case class MetaIgnoredField(data: String, @BsonIgnore meta: Seq[String] = Vector("ignore_me")) extends WithIgnored
-  case class LeafCountIgnoredField(branchCount: Int, @BsonIgnore leafCount: Int = 100) extends WithIgnored
-  case class ContainsIgnoredField(list: Seq[WithIgnored])
-
-  case class ContainsADT(name: String, tree: Tree)
-  case class ContainsSeqADT(name: String, trees: Seq[Tree])
-  case class ContainsNestedSeqADT(name: String, trees: Seq[Seq[Tree]])
-
-  sealed class Graph
-  case class Node(name: String, value: Option[Graph]) extends Graph
-
-  sealed class NotImplementedSealedClass
-  sealed trait NotImplementedSealedTrait
-  case class UnsupportedTuple(value: (String, String))
-  case class UnsupportedMap(value: Map[Int, Int])
-
-  type SimpleTypeAlias = Map[String, String]
-  case class ContainsSimpleTypeAlias(a: String, b: SimpleTypeAlias = Map.empty)
-  type CaseClassTypeAlias = Person
-  case class ContainsCaseClassTypeAlias(a: String, b: CaseClassTypeAlias)
-  type ADTCaseClassTypeAlias = ContainsADT
-  case class ContainsADTCaseClassTypeAlias(a: String, b: ADTCaseClassTypeAlias)
-
-  trait Tag
-  case class ContainsTaggedTypes(
-      a: Int with Tag,
-      b: String with Tag,
-      c: Map[String with Tag, Int with Tag] with Tag,
-      d: Empty with Tag
-  ) extends Tag
-
-  case class ContainsTypeLessMap(a: BsonDocument)
-
-  sealed class SealedClassCaseObject
-  object SealedClassCaseObject {
-    case object Alpha extends SealedClassCaseObject
-  }
-
-  sealed trait CaseObjectEnum
-  case object Alpha extends CaseObjectEnum
-  case object Bravo extends CaseObjectEnum
-  case object Charlie extends CaseObjectEnum
-
-  case class ContainsEnumADT(name: String, enum: CaseObjectEnum)
-
-  sealed class SealedClass
-  case class SealedClassA(stringField: String) extends SealedClass
-  case class SealedClassB(intField: Int) extends SealedClass
-  case class ContainsSealedClass(list: List[SealedClass])
-
-  sealed abstract class SealedAbstractClass
-  case class SealedAbstractClassA(stringField: String) extends SealedAbstractClass
-  case class SealedAbstractClassB(intField: Int) extends SealedAbstractClass
-  case class ContainsSealedAbstractClass(list: List[SealedAbstractClass])
-
-  sealed class SealedClassWithParams(val superField: String)
-  case class SealedClassWithParamsA(stringField: String, override val superField: String)
-      extends SealedClassWithParams(superField)
-  case class SealedClassWithParamsB(intField: Int, override val superField: String)
-      extends SealedClassWithParams(superField)
-  case class ContainsSealedClassWithParams(list: List[SealedClassWithParams])
-
-  sealed abstract class SealedAbstractClassWithParams(val superField: String)
-  case class SealedAbstractClassWithParamsA(stringField: String, override val superField: String)
-      extends SealedAbstractClassWithParams(superField)
-  case class SealedAbstractClassWithParamsB(intField: Int, override val superField: String)
-      extends SealedAbstractClassWithParams(superField)
-  case class ContainsSealedAbstractClassWithParams(list: List[SealedAbstractClassWithParams])
-
-  sealed trait SealedTrait
-  case class SealedTraitA(stringField: String) extends SealedTrait
-  case class SealedTraitB(intField: Int) extends SealedTrait
-  case class ContainsSealedTrait(list: List[SealedTrait])
-
-  sealed class SingleSealedClass
-  case class SingleSealedClassImpl() extends SingleSealedClass
-
-  sealed abstract class SingleSealedAbstractClass
-  case class SingleSealedAbstractClassImpl() extends SingleSealedAbstractClass
-
-  sealed trait SingleSealedTrait
-  case class SingleSealedTraitImpl() extends SingleSealedTrait
 
   "Macros" should "be able to round trip simple case classes" in {
     roundTrip(Empty(), "{}", classOf[Empty])
@@ -222,22 +82,22 @@ class MacrosSpec extends BaseSpec {
     roundTrip(
       ContainsSet("Bob", Set("Tom", "Charlie")),
       """{name: "Bob", friends: ["Tom","Charlie"]}""",
-      Macros.createCodecProvider(classOf[ContainsSet])
+      classOf[ContainsSet]
     )
     roundTrip(
       ContainsVector("Bob", Vector("Tom", "Charlie")),
       """{name: "Bob", friends: ["Tom","Charlie"]}""",
-      Macros.createCodecProvider(classOf[ContainsVector])
+      classOf[ContainsVector]
     )
     roundTrip(
       ContainsList("Bob", List("Tom", "Charlie")),
       """{name: "Bob", friends: ["Tom","Charlie"]}""",
-      Macros.createCodecProvider(classOf[ContainsList])
+      classOf[ContainsList]
     )
     roundTrip(
-      ContainsStream("Bob", Stream("Tom", "Charlie")),
+      ContainsLazyList("Bob", LazyList("Tom", "Charlie")),
       """{name: "Bob", friends: ["Tom","Charlie"]}""",
-      Macros.createCodecProvider(classOf[ContainsStream])
+      classOf[ContainsLazyList]
     )
   }
 
@@ -371,8 +231,7 @@ class MacrosSpec extends BaseSpec {
   }
 
   it should "be able to decode case classes missing optional values" in {
-    val registry =
-      CodecRegistries.fromRegistries(CodecRegistries.fromProviders(classOf[OptionalValue]), DEFAULT_CODEC_REGISTRY)
+    val registry = toRegistry(classOf[OptionalValue])
     val buffer = encode(registry.get(classOf[Document]), Document("name" -> "Bob"))
 
     decode(registry.get(classOf[OptionalValue]), buffer) should equal(OptionalValue("Bob", None))
@@ -397,10 +256,7 @@ class MacrosSpec extends BaseSpec {
   }
 
   it should "be able to decode case class with vals" in {
-    val registry = CodecRegistries.fromRegistries(
-      CodecRegistries.fromProviders(classOf[CaseClassWithVal]),
-      DEFAULT_CODEC_REGISTRY
-    )
+    val registry = toRegistry(classOf[CaseClassWithVal])
 
     val id = new ObjectId
     val buffer = encode(
@@ -415,25 +271,25 @@ class MacrosSpec extends BaseSpec {
   }
 
   it should "be able to round trip optional values, when None is ignored" in {
-    roundTrip(OptionalValue("Bob", None), """{name: "Bob"}""", createCodecProviderIgnoreNone[OptionalValue]())
+    roundTrip(OptionalValue("Bob", None), """{name: "Bob"}""", Macros.createCodecProviderIgnoreNone[OptionalValue]())
     roundTrip(
       OptionalValue("Bob", Some("value")),
       """{name: "Bob", value: "value"}""",
-      createCodecProviderIgnoreNone[OptionalValue]()
+      Macros.createCodecProviderIgnoreNone[OptionalValue]()
     )
-    roundTrip(OptionalCaseClass("Bob", None), """{name: "Bob"}""", createCodecProviderIgnoreNone[OptionalCaseClass]())
+    roundTrip(OptionalCaseClass("Bob", None), """{name: "Bob"}""", Macros.createCodecProviderIgnoreNone[OptionalCaseClass]())
     roundTrip(
       OptionalCaseClass("Bob", Some(Person("Charlie", "Jones"))),
       """{name: "Bob", value: {firstName: "Charlie", lastName: "Jones"}}""",
-      createCodecProviderIgnoreNone[OptionalCaseClass](),
-      createCodecProviderIgnoreNone[Person]()
+      Macros.createCodecProviderIgnoreNone[OptionalCaseClass](),
+      Macros.createCodecProviderIgnoreNone[Person]()
     )
 
-    roundTrip(OptionalRecursive("Bob", None), """{name: "Bob"}""", createCodecProviderIgnoreNone[OptionalRecursive]())
+    roundTrip(OptionalRecursive("Bob", None), """{name: "Bob"}""", Macros.createCodecProviderIgnoreNone[OptionalRecursive]())
     roundTrip(
       OptionalRecursive("Bob", Some(OptionalRecursive("Charlie", None))),
       """{name: "Bob", value: {name: "Charlie"}}""",
-      createCodecProviderIgnoreNone[OptionalRecursive]()
+      Macros.createCodecProviderIgnoreNone[OptionalRecursive]()
     )
   }
 
@@ -452,8 +308,8 @@ class MacrosSpec extends BaseSpec {
         None
       ),
       """{"documentMap" : { "a" : "b" }, "array" : ["a", "b", "c"], "date" : { "$date" : 123 }, "boolean" : true,
-      | "double" : 1.0, "int32" : 10, "int64" : { "$numberLong" : "100" }, "string" : "string",
-      | "binary" : { "binary": { "$binary" : "ew==", "$type" : "00" } }, "none" : null }""".stripMargin,
+        | "double" : 1.0, "int32" : 10, "int64" : { "$numberLong" : "100" }, "string" : "string",
+        | "binary" : { "binary": { "$binary" : "ew==", "$type" : "00" } }, "none" : null }""".stripMargin,
       classOf[Binary],
       classOf[AllTheBsonTypes]
     )
@@ -532,10 +388,10 @@ class MacrosSpec extends BaseSpec {
 
   it should "support tagged types in case classes" in {
     assume(!scala.util.Properties.versionNumberString.startsWith("2.11"))
-    val a = 1.asInstanceOf[Int with Tag]
-    val b = "b".asInstanceOf[String with Tag]
-    val c = Map("c" -> 0).asInstanceOf[Map[String with Tag, Int with Tag] with Tag]
-    val d = Empty().asInstanceOf[Empty with Tag]
+    val a = 1.asInstanceOf[Int & Tag]
+    val b = "b".asInstanceOf[String & Tag]
+    val c = Map("c" -> 0).asInstanceOf[Map[String & Tag, Int & Tag]]
+    val d = Empty().asInstanceOf[Empty & Tag]
     roundTrip(
       ContainsTaggedTypes(a, b, c, d),
       """{a: 1, b: "b", c: {c: 0}, d: {}}""",
@@ -565,7 +421,7 @@ class MacrosSpec extends BaseSpec {
     roundTrip(
       ContainsValueClass(IsValueClass(1), "string value"),
       """{id: 1, myString: 'string value'}""",
-      classOf[ContainsValueClass],
+      Macros.createCodecProvider[ContainsValueClass](),
       valueClassCodecProvider
     )
   }
@@ -591,7 +447,7 @@ class MacrosSpec extends BaseSpec {
 
   it should "support throw a CodecConfigurationException missing _t field" in {
     val missing_t = """{name: "nodeA", value: null}"""
-    val registry = CodecRegistries.fromRegistries(CodecRegistries.fromProviders(classOf[Graph]), DEFAULT_CODEC_REGISTRY)
+    val registry = toRegistry(classOf[Graph])
 
     val buffer = encode(registry.get(classOf[Document]), Document(missing_t))
 
@@ -602,7 +458,7 @@ class MacrosSpec extends BaseSpec {
 
   it should "support throw a CodecConfigurationException with an unknown class name in the _t field" in {
     val missing_t = """{_t: "Wibble", name: "nodeA", value: null}"""
-    val registry = CodecRegistries.fromRegistries(CodecRegistries.fromProviders(classOf[Graph]), DEFAULT_CODEC_REGISTRY)
+    val registry = toRegistry(classOf[Graph])
     val buffer = encode(registry.get(classOf[Document]), Document(missing_t))
 
     an[BsonInvalidOperationException] should be thrownBy {
@@ -611,8 +467,7 @@ class MacrosSpec extends BaseSpec {
   }
 
   it should "throw a CodecConfigurationException when encountering null values in case classes" in {
-    val registry =
-      CodecRegistries.fromRegistries(CodecRegistries.fromProviders(classOf[Person]), DEFAULT_CODEC_REGISTRY)
+    val registry = toRegistry(classOf[Person])
     an[BsonInvalidOperationException] should be thrownBy {
       encode(registry.get(classOf[Person]), null)
     }
@@ -620,6 +475,188 @@ class MacrosSpec extends BaseSpec {
     an[BsonInvalidOperationException] should be thrownBy {
       encode(registry.get(classOf[Person]), Person(null, null))
     }
+  }
+
+  it should "support multiple @BsonProperty annotations" in {
+    roundTrip(
+      MultiAnnotated("Bob", "Jones", 30),
+      """{first: "Bob", last: "Jones", age: 30}""",
+      classOf[MultiAnnotated]
+    )
+  }
+
+  it should "support mixed @BsonProperty and @BsonIgnore annotations" in {
+    roundTrip(
+      MixedAnnotations("Bob", "singer", "bob@test.com"),
+      MixedAnnotations("Bob", "default", "bob@test.com"),
+      """{n: "Bob", email: "bob@test.com"}""",
+      classOf[MixedAnnotations]
+    )
+  }
+
+  it should "handle multiple default values" in {
+    roundTrip(
+      MultipleDefaults(required = "yes"),
+      """{name: "unknown", active: false, count: 0, required: "yes"}""",
+      classOf[MultipleDefaults]
+    )
+    roundTrip(
+      MultipleDefaults("Bob", true, 5, "yes"),
+      """{name: "Bob", active: true, count: 5, required: "yes"}""",
+      classOf[MultipleDefaults]
+    )
+  }
+
+  it should "handle default + Option combinations" in {
+    roundTrip(
+      DefaultOption(),
+      """{name: "unknown", age: null, email: "default@test.com"}""",
+      classOf[DefaultOption]
+    )
+    roundTrip(
+      DefaultOption("Bob", Some(30), Some("bob@test.com")),
+      """{name: "Bob", age: 30, email: "bob@test.com"}""",
+      classOf[DefaultOption]
+    )
+  }
+
+  it should "handle nested default values" in {
+    roundTrip(
+      WithNestedDefault("Charlie"),
+      """{name: "Charlie", friend: {firstName: "Default", lastName: "Friend"}}""",
+      classOf[WithNestedDefault],
+      classOf[Person]
+    )
+  }
+
+  it should "round trip all primitive types" in {
+    roundTrip(
+      AllPrimitives(true, 1.toShort, 42, 100L, 1.5f, 2.5, "hello"),
+      """{b: true, sh: 1, i: 42, l: {"$numberLong": "100"}, f: 1.5, d: 2.5, str: "hello"}""",
+      classOf[AllPrimitives]
+    )
+  }
+
+  it should "round trip empty collections" in {
+    roundTrip(
+      EmptyCollections(Seq.empty, Map.empty, Set.empty, List.empty),
+      """{emptySeq: [], emptyMap: {}, emptySet: [], emptyList: []}""",
+      classOf[EmptyCollections]
+    )
+  }
+
+  it should "handle case classes with many fields" in {
+    roundTrip(
+      ManyFields("a", 1, true, 2L, 3.0, "b", 4, false, 5L, 6.0, "c", 7, true, 8L, 9.0, "d", 10, false, 11L, 12.0),
+      """{f1:"a",f2:1,f3:true,f4:{"$numberLong":"2"},f5:3.0,f6:"b",f7:4,f8:false,f9:{"$numberLong":"5"},f10:6.0,f11:"c",f12:7,f13:true,f14:{"$numberLong":"8"},f15:9.0,f16:"d",f17:10,f18:false,f19:{"$numberLong":"11"},f20:12.0}""",
+      classOf[ManyFields]
+    )
+  }
+
+  it should "handle deeply nested case classes" in {
+    roundTrip(
+      Level1(Level2(Level3("deep"))),
+      """{inner: {inner: {value: "deep"}}}""",
+      classOf[Level1],
+      classOf[Level2],
+      classOf[Level3]
+    )
+  }
+
+  it should "support sealed traits with many subclasses" in {
+    roundTrip(
+      Dog("Rex", "Labrador"),
+      """{_t: "Dog", name: "Rex", breed: "Labrador"}""",
+      classOf[Animal]
+    )
+    roundTrip(
+      Cat("Whiskers", true),
+      """{_t: "Cat", name: "Whiskers", indoor: true}""",
+      classOf[Animal]
+    )
+    roundTrip(
+      Bird("Parrot"),
+      """{_t: "Bird", species: "Parrot"}""",
+      classOf[Animal]
+    )
+    roundTrip(
+      Fish("Goldfish", true),
+      """{_t: "Fish", species: "Goldfish", freshwater: true}""",
+      classOf[Animal]
+    )
+  }
+
+  it should "support self-referential case classes via Option" in {
+    roundTrip(
+      LinkedNode("first", None),
+      """{value: "first", next: null}""",
+      classOf[LinkedNode]
+    )
+    roundTrip(
+      LinkedNode("first", Some(LinkedNode("second", None))),
+      """{value: "first", next: {value: "second", next: null}}""",
+      classOf[LinkedNode]
+    )
+  }
+
+  it should "support mixed sealed hierarchies with case objects and case classes" in {
+    roundTrip(
+      DataNode("hello"),
+      """{_t: "DataNode", value: "hello"}""",
+      classOf[MixedADT]
+    )
+    roundTrip(
+      EmptyNode,
+      """{_t: "EmptyNode"}""",
+      classOf[MixedADT]
+    )
+  }
+
+  it should "support maps with case class values" in {
+    roundTrip(
+      MapOfCaseClassValues(Map("friend" -> Person("Jane", "Doe"))),
+      """{entries: {friend: {firstName: "Jane", lastName: "Doe"}}}""",
+      classOf[MapOfCaseClassValues],
+      classOf[Person]
+    )
+  }
+
+  it should "use default values when decoding documents with missing fields" in {
+    val registry = toRegistry(classOf[MultipleDefaults])
+    val codec = registry.get(classOf[MultipleDefaults])
+
+    // Decode document with only the required field — all others should use defaults
+    decode(MultipleDefaults(required = "yes"), """{required: "yes"}""", codec)
+
+    // Decode document with some optional fields provided
+    decode(MultipleDefaults("Bob", true, 0, "yes"), """{name: "Bob", active: true, required: "yes"}""", codec)
+  }
+
+  it should "use default values for Option fields when missing from document" in {
+    val registry = toRegistry(classOf[DefaultOption])
+    val codec = registry.get(classOf[DefaultOption])
+
+    // Decode empty document — all fields should use their defaults
+    decode(DefaultOption(), """{  }""", codec)
+
+    // Decode with only name — age and email should use their defaults (None and Some("default@test.com"))
+    decode(DefaultOption("Bob"), """{name: "Bob"}""", codec)
+  }
+
+  it should "use nested default values when decoding documents with missing fields" in {
+    val registry = toRegistry(classOf[WithNestedDefault], classOf[Person])
+    val codec = registry.get(classOf[WithNestedDefault])
+
+    // Decode document missing the friend field — should use default Person("Default", "Friend")
+    decode(WithNestedDefault("Charlie"), """{name: "Charlie"}""", codec)
+  }
+
+  it should "use default value for DefaultValue case class when active is missing" in {
+    val registry = toRegistry(classOf[DefaultValue])
+    val codec = registry.get(classOf[DefaultValue])
+
+    // Decode document with only name — active should default to false
+    decode(DefaultValue("Bob"), """{name: "Bob"}""", codec)
   }
 
   it should "not compile case classes with unsupported values" in {
@@ -633,10 +670,7 @@ class MacrosSpec extends BaseSpec {
   }
 
   it should "error when reading unexpected lists" in {
-    val registry = CodecRegistries.fromRegistries(
-      CodecRegistries.fromProviders(classOf[ContainsCaseClass], classOf[Person]),
-      DEFAULT_CODEC_REGISTRY
-    )
+    val registry = toRegistry(classOf[ContainsCaseClass], classOf[Person])
     an[BsonInvalidOperationException] should be thrownBy {
       val json = """{name: "Bob", friend: [{firstName: "Jane", lastName: "Ada"}]}"""
       decode(ContainsCaseClass("Bob", Person("Jane", "Ada")), json, registry.get(classOf[ContainsCaseClass]))
@@ -644,33 +678,66 @@ class MacrosSpec extends BaseSpec {
   }
 
   it should "error when reading unexpected documents" in {
-    val registry = CodecRegistries.fromRegistries(
-      CodecRegistries.fromProviders(classOf[ContainsCaseClass], classOf[Person]),
-      DEFAULT_CODEC_REGISTRY
-    )
+    val registry = toRegistry(classOf[ContainsCaseClass], classOf[Person])
     an[BsonInvalidOperationException] should be thrownBy {
       val json = """{name: "Bob", friend: {first: {firstName: "Jane", lastName: "Ada"}}}"""
       decode(ContainsCaseClass("Bob", Person("Jane", "Ada")), json, registry.get(classOf[ContainsCaseClass]))
     }
   }
 
-  def roundTrip[T](value: T, expected: String, provider: CodecProvider, providers: CodecProvider*)(
-      implicit ct: ClassTag[T]
-  ): Unit = {
-    val codecProviders: util.List[CodecProvider] = (provider +: providers).asJava
-    val registry = CodecRegistries.fromRegistries(CodecRegistries.fromProviders(codecProviders), DEFAULT_CODEC_REGISTRY)
-    val codec = registry.get(ct.runtimeClass).asInstanceOf[Codec[T]]
+  def toRegistry(providers: CodecProvider*): CodecRegistry = {
+    CodecRegistries.fromRegistries(
+      CodecRegistries.fromProviders(providers*),
+      DEFAULT_CODEC_REGISTRY
+    )
+  }
+
+  def roundTrip[T](
+                    value: T,
+                    expected: String,
+                    providers: CodecProvider*
+                  )(implicit
+                    ct: ClassTag[T]
+                  ): Unit = {
+    val codecRegistry = toRegistry(providers*)
+    val codec = codecRegistry.get(ct.runtimeClass).asInstanceOf[Codec[T]]
     roundTripCodec(value, Document(expected), codec)
   }
 
-  def roundTrip[T](value: T, decodedValue: T, expected: String, provider: CodecProvider, providers: CodecProvider*)(
-      implicit ct: ClassTag[T]
-  ): Unit = {
-    val codecProviders: util.List[CodecProvider] = (provider +: providers).asJava
-    val registry = CodecRegistries.fromRegistries(CodecRegistries.fromProviders(codecProviders), DEFAULT_CODEC_REGISTRY)
-    val codec = registry.get(ct.runtimeClass).asInstanceOf[Codec[T]]
+  def roundTrip[T](
+                    value: T,
+                    expected: String,
+                    codecRegistry: CodecRegistry
+                  )(implicit
+                    ct: ClassTag[T]
+                  ): Unit = {
+    val codec = codecRegistry.get(ct.runtimeClass).asInstanceOf[Codec[T]]
+    roundTripCodec(value, Document(expected), codec)
+  }
+
+  def roundTripWithRegistry[T](
+                                value: T,
+                                expected: String,
+                                codecRegistry: CodecRegistry
+                              )(implicit
+                                ct: ClassTag[T]
+                              ): Unit = {
+    val codec = codecRegistry.get(ct.runtimeClass).asInstanceOf[Codec[T]]
+    roundTripCodec(value, Document(expected), codec)
+  }
+
+  def roundTrip[T](
+                    value: T,
+                    decodedValue: T,
+                    expected: String,
+                    providers: CodecProvider*
+                  )(implicit
+                    ct: ClassTag[T]
+                  ): Unit = {
+    val codec = toRegistry(providers*).get(ct.runtimeClass).asInstanceOf[Codec[T]]
     roundTripCodec(value, decodedValue, Document(expected), codec)
   }
+
 
   def roundTripCodec[T](value: T, expected: Document, codec: Codec[T]): Unit = {
     val encoded = encode(codec, value)
@@ -710,6 +777,34 @@ class MacrosSpec extends BaseSpec {
     assert(roundTripped == value, s"Round Tripped case class: ($roundTripped) did not equal the original: ($value)")
   }
 
+  def assertEncodes[T](
+                        value: T,
+                        decodedValue: String,
+                        providers: CodecProvider*
+                      )(implicit
+                        ct: ClassTag[T]
+                      ): Unit = {
+    val codec = toRegistry(providers *).get(ct.runtimeClass).asInstanceOf[Codec[T]]
+    val encoded = encode(codec, value)
+    val expected = Document(decodedValue)
+    val actual = decode(documentCodec, encoded)
+    assert(expected == actual, s"Encoded document: (${actual.toJson()}) did not equal: (${expected.toJson()})")
+  }
+
+  def assertDecodes[T](
+                        value: T,
+                        decodedValue: String,
+                        providers: CodecProvider*
+                      )(implicit
+                        ct: ClassTag[T]
+                      ): Unit = {
+    val codec = toRegistry(providers *).get(ct.runtimeClass).asInstanceOf[Codec[T]]
+    val expected = Document(decodedValue)
+    val buffer = encode(documentCodec, expected)
+    val actual = decode(codec, buffer)
+    assert(value == actual, s"Decoded document: (${expected.toJson()}) did not equal: ($value)")
+  }
+
   val documentCodec: Codec[Document] = DEFAULT_CODEC_REGISTRY.get(classOf[Document])
 
   def createTreeJson(tree: Tree): String = {
@@ -722,6 +817,3 @@ class MacrosSpec extends BaseSpec {
   }
 
 }
-
-case class IsValueClass(id: Int) extends AnyVal
-case class ContainsValueClass(id: IsValueClass, myString: String)

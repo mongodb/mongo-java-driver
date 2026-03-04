@@ -88,7 +88,7 @@ object ClientSideEncryptionExplicitEncryptionAndDecryptionTour {
 
     collection.insertOne(Document("encryptedField" -> encryptedFieldValue)).headResult()
 
-    val doc = collection.find.first().headResult()
+    val doc = collection.find().first().headResult()
     println(doc.toJson())
 
     // Explicitly decrypt the field

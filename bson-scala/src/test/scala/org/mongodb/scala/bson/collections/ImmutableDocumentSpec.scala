@@ -77,8 +77,12 @@ class ImmutableDocumentSpec extends BaseSpec {
   }
 
   it should "support multiple additions" in {
-    val doc1: Document = emptyDoc + ("key" -> "value", "key2" -> "value2",
-    "key3" -> "value3")
+    val doc1: Document = emptyDoc +
+      (
+        "key" -> "value",
+        "key2" -> "value2",
+        "key3" -> "value3"
+      )
     emptyDoc should not be doc1
     doc1 should equal(Document("key" -> "value", "key2" -> "value2", "key3" -> "value3"))
 

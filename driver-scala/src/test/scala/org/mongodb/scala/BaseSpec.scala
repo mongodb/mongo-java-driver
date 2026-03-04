@@ -18,4 +18,21 @@ package org.mongodb.scala
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-abstract class BaseSpec extends AnyFlatSpec with Matchers {}
+abstract class BaseSpec extends AnyFlatSpec with Matchers {
+  val DEFAULT_EXCLUSIONS: Set[String] =
+    Set(
+      "$VALUES",
+      "$anonfun$fromInt$1",
+      "$anonfun$fromString$1",
+      "$deserializeLambda$",
+      "$deserializeLambda$",
+      "$values",
+      "apply",
+      "fromInt$$anonfun$1",
+      "fromString$$anonfun$1",
+      "unapply",
+      "valueOf",
+      "values",
+      "writeReplace"
+    )
+}

@@ -54,7 +54,7 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
   def mongoClient(): MongoClient = TestMongoClientHelper.mongoClient
 
   def checkMongoDB(): Unit = {
-    if (!TestMongoClientHelper.isMongoDBOnline) {
+    if (!TestMongoClientHelper.isMongoDBOnline()) {
       cancel("No Available Database")
     }
   }
@@ -74,7 +74,7 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
   }
 
   def withDatabase(dbName: String)(testCode: MongoDatabase => Any): Unit = {
-    withClient { client =>
+    withClient { (client: MongoClient) =>
       val databaseName =
         if (dbName.startsWith(DB_PREFIX)) dbName.take(63) else s"$DB_PREFIX$dbName".take(63) // scalastyle:ignore
       val mongoDatabase = client.getDatabase(databaseName)
@@ -89,7 +89,7 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
   def withDatabase(testCode: MongoDatabase => Any): Unit = withDatabase(databaseName)(testCode: MongoDatabase => Any)
 
   def withCollection(testCode: MongoCollection[Document] => Any): Unit = {
-    withDatabase(databaseName) { mongoDatabase =>
+    withDatabase(databaseName) { (mongoDatabase: MongoDatabase) =>
       val mongoCollection = mongoDatabase.getCollection(collectionName)
       try testCode(mongoCollection) // "loan" the fixture to the test
       finally {
@@ -100,7 +100,7 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
   }
 
   lazy val isSharded: Boolean =
-    if (!TestMongoClientHelper.isMongoDBOnline) {
+    if (!TestMongoClientHelper.isMongoDBOnline()) {
       false
     } else {
       Await
@@ -114,7 +114,7 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
     }
 
   lazy val buildInfo: Document = {
-    if (TestMongoClientHelper.isMongoDBOnline) {
+    if (TestMongoClientHelper.isMongoDBOnline()) {
       Await.result(
         mongoClient().getDatabase("admin").runCommand(Document("buildInfo" -> 1)).toFuture(),
         WAIT_DURATION
@@ -144,14 +144,14 @@ trait RequiresMongoDBISpec extends BaseSpec with BeforeAndAfterAll {
     }
   }
 
-  override def beforeAll() {
-    if (TestMongoClientHelper.isMongoDBOnline) {
+  override def beforeAll(): Unit = {
+    if (TestMongoClientHelper.isMongoDBOnline()) {
       Await.result(TestMongoClientHelper.mongoClient.getDatabase(databaseName).drop().toFuture(), WAIT_DURATION)
     }
   }
 
-  override def afterAll() {
-    if (TestMongoClientHelper.isMongoDBOnline) {
+  override def afterAll(): Unit = {
+    if (TestMongoClientHelper.isMongoDBOnline()) {
       Await.result(TestMongoClientHelper.mongoClient.getDatabase(databaseName).drop().toFuture(), WAIT_DURATION)
     }
   }

@@ -83,10 +83,10 @@ object QuickTour {
     collection.insertOne(doc).results()
 
     // get it (since it's the only one in there since we dropped the rest earlier on)
-    collection.find.first().printResults()
+    collection.find().first().printResults()
 
     // now, lets add lots of little documents to the collection so we can explore queries and cursors
-    val documents: IndexedSeq[Document] = (1 to 100) map { i: Int =>
+    val documents: IndexedSeq[Document] = (1 to 100) map { (i: Int) =>
       Document("i" -> i)
     }
     val insertObservable = collection.insertMany(documents)
