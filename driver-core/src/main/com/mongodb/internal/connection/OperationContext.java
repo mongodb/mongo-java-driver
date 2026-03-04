@@ -252,7 +252,7 @@ public class OperationContext {
          *   selects using the wrapped selector again with all {@link ServerDescription}s, including deprioritized ones.</li>
          * </ol>
          */
-        ServerSelector applyDeprioritization(final ServerSelector wrappedSelector) {
+        ServerSelector apply(final ServerSelector wrappedSelector) {
             return new DeprioritizingSelector(wrappedSelector);
         }
 
