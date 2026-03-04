@@ -111,7 +111,6 @@ import static org.junit.Assume.assumeTrue;
  * Helper class for the acceptance tests.  Used primarily by DatabaseTestCase and FunctionalSpecification.  This fixture allows Test
  * super-classes to share functionality whilst minimising duplication.
  */
-//NOTE: Split the commits between automatic refactoring changes (e.g methods renaming) and manual changes (e.g. adding new methods) to make it easier to review the changes.
 public final class ClusterFixture {
     public static final String DEFAULT_URI = "mongodb://localhost:27017";
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
