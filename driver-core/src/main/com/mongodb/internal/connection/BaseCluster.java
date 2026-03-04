@@ -67,6 +67,7 @@ import static com.mongodb.connection.ServerDescription.MAX_DRIVER_WIRE_VERSION;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_SERVER_VERSION;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
 import static com.mongodb.internal.Locks.withInterruptibleLock;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PACKAGE;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.connection.EventHelper.wouldDescriptionsGenerateEquivalentEvents;
 import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
@@ -113,7 +114,7 @@ public abstract class BaseCluster implements Cluster {
     private volatile boolean isClosed;
     private volatile ClusterDescription description;
 
-    @VisibleForTesting(otherwise = PRIVATE)
+    @VisibleForTesting(otherwise = PACKAGE)
     protected BaseCluster(final ClusterId clusterId,
                           final ClusterSettings settings,
                           final ClusterableServerFactory serverFactory,
