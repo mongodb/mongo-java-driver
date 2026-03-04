@@ -85,9 +85,9 @@ final class ServerDeprioritizationTest {
     void selectNoneDeprioritized(final List<ServerDescription> selectorResult) {
         ServerSelector wrappedSelector = createAssertingSelector(ALL_SERVERS, selectorResult);
         assertAll(
-                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(wrappedSelector).select(SHARDED_CLUSTER)),
-                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(wrappedSelector).select(REPLICA_SET_CLUSTER)),
-                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(wrappedSelector).select(UNKNOWN_CLUSTER))
+                () -> assertEquals(selectorResult, serverDeprioritization.apply(wrappedSelector).select(SHARDED_CLUSTER)),
+                () -> assertEquals(selectorResult, serverDeprioritization.apply(wrappedSelector).select(REPLICA_SET_CLUSTER)),
+                () -> assertEquals(selectorResult, serverDeprioritization.apply(wrappedSelector).select(UNKNOWN_CLUSTER))
         );
     }
 
@@ -96,10 +96,10 @@ final class ServerDeprioritizationTest {
         ServerSelector wrappedSelector = createAssertingSelector(singletonList(SERVER_A), singletonList(SERVER_A));
         ServerSelector emptyListWrappedSelector = createAssertingSelector(singletonList(SERVER_A), emptyList());
         assertAll(
-                () -> assertEquals(singletonList(SERVER_A), serverDeprioritization.applyDeprioritization(wrappedSelector).select(STANDALONE_CLUSTER)),
-                () -> assertEquals(emptyList(), serverDeprioritization.applyDeprioritization(emptyListWrappedSelector).select(STANDALONE_CLUSTER)),
-                () -> assertEquals(singletonList(SERVER_A), serverDeprioritization.applyDeprioritization(wrappedSelector).select(LOAD_BALANCED_CLUSTER)),
-                () -> assertEquals(emptyList(), serverDeprioritization.applyDeprioritization(emptyListWrappedSelector).select(LOAD_BALANCED_CLUSTER))
+                () -> assertEquals(singletonList(SERVER_A), serverDeprioritization.apply(wrappedSelector).select(STANDALONE_CLUSTER)),
+                () -> assertEquals(emptyList(), serverDeprioritization.apply(emptyListWrappedSelector).select(STANDALONE_CLUSTER)),
+                () -> assertEquals(singletonList(SERVER_A), serverDeprioritization.apply(wrappedSelector).select(LOAD_BALANCED_CLUSTER)),
+                () -> assertEquals(emptyList(), serverDeprioritization.apply(emptyListWrappedSelector).select(LOAD_BALANCED_CLUSTER))
         );
     }
 
@@ -119,9 +119,9 @@ final class ServerDeprioritizationTest {
         List<ServerDescription> expectedWrappedSelectorFilteredInput = asList(SERVER_A, SERVER_C);
         ServerSelector selector = createAssertingSelector(expectedWrappedSelectorFilteredInput, selectorResult);
         assertAll(
-                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selector).select(SHARDED_CLUSTER)),
-                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selector).select(REPLICA_SET_CLUSTER)),
-                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selector).select(UNKNOWN_CLUSTER))
+                () -> assertEquals(selectorResult, serverDeprioritization.apply(selector).select(SHARDED_CLUSTER)),
+                () -> assertEquals(selectorResult, serverDeprioritization.apply(selector).select(REPLICA_SET_CLUSTER)),
+                () -> assertEquals(selectorResult, serverDeprioritization.apply(selector).select(UNKNOWN_CLUSTER))
         );
     }
 
@@ -133,9 +133,9 @@ final class ServerDeprioritizationTest {
         deprioritize(SERVER_C);
         ServerSelector selector = createAssertingSelector(ALL_SERVERS, selectorResult);
         assertAll(
-                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selector).select(SHARDED_CLUSTER)),
-                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selector).select(REPLICA_SET_CLUSTER)),
-                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selector).select(UNKNOWN_CLUSTER))
+                () -> assertEquals(selectorResult, serverDeprioritization.apply(selector).select(SHARDED_CLUSTER)),
+                () -> assertEquals(selectorResult, serverDeprioritization.apply(selector).select(REPLICA_SET_CLUSTER)),
+                () -> assertEquals(selectorResult, serverDeprioritization.apply(selector).select(UNKNOWN_CLUSTER))
         );
     }
 
@@ -144,9 +144,9 @@ final class ServerDeprioritizationTest {
         deprioritize(SERVER_A);
         ServerSelector selector = createAssertingSelector(singletonList(SERVER_A), singletonList(SERVER_A));
         assertAll(
-                () -> assertEquals(singletonList(SERVER_A), serverDeprioritization.applyDeprioritization(selector).select(STANDALONE_CLUSTER)),
+                () -> assertEquals(singletonList(SERVER_A), serverDeprioritization.apply(selector).select(STANDALONE_CLUSTER)),
                 () -> assertEquals(singletonList(SERVER_A),
-                        serverDeprioritization.applyDeprioritization(selector).select(LOAD_BALANCED_CLUSTER))
+                        serverDeprioritization.apply(selector).select(LOAD_BALANCED_CLUSTER))
         );
     }
 
@@ -171,9 +171,9 @@ final class ServerDeprioritizationTest {
         };
 
         assertAll(
-                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selector.get()).select(SHARDED_CLUSTER)),
-                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selector.get()).select(REPLICA_SET_CLUSTER)),
-                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selector.get()).select(UNKNOWN_CLUSTER))
+                () -> assertEquals(selectorResult, serverDeprioritization.apply(selector.get()).select(SHARDED_CLUSTER)),
+                () -> assertEquals(selectorResult, serverDeprioritization.apply(selector.get()).select(REPLICA_SET_CLUSTER)),
+                () -> assertEquals(selectorResult, serverDeprioritization.apply(selector.get()).select(UNKNOWN_CLUSTER))
         );
     }
 
@@ -183,7 +183,7 @@ final class ServerDeprioritizationTest {
         serverDeprioritization.onAttemptFailure(
                 new MongoConnectionPoolClearedException(new ServerId(new ClusterId(), new ServerAddress()), null));
         ServerSelector selector = createAssertingSelector(ALL_SERVERS, singletonList(SERVER_A));
-        assertEquals(singletonList(SERVER_A), serverDeprioritization.applyDeprioritization(selector).select(SHARDED_CLUSTER));
+        assertEquals(singletonList(SERVER_A), serverDeprioritization.apply(selector).select(SHARDED_CLUSTER));
     }
 
     @Test

@@ -364,7 +364,7 @@ public abstract class BaseCluster implements Cluster {
             final ClusterSettings settings) {
         List<ServerSelector> selectors = Stream.of(
                 getRaceConditionPreFilteringSelector(serversSnapshot),
-                serverDeprioritization.applyDeprioritization(serverSelector),
+                serverDeprioritization.apply(serverSelector),
                 settings.getServerSelector(), // may be null
                 new LatencyMinimizingServerSelector(settings.getLocalThreshold(MILLISECONDS), MILLISECONDS),
                 AtMostTwoRandomServerSelector.instance(),
