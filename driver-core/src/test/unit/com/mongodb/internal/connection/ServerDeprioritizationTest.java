@@ -80,6 +80,7 @@ final class ServerDeprioritizationTest {
                 of(Named.of(generateArgumentName(ALL_SERVERS), ALL_SERVERS))
         );
     }
+
     @ParameterizedTest
     @MethodSource
     void selectNoneDeprioritized(final List<ServerDescription> selectorResult) {
