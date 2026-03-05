@@ -237,8 +237,7 @@ public class OperationContext {
         private ServerAddress candidate;
         private final Set<ServerAddress> deprioritized;
 
-        @VisibleForTesting(otherwise = PRIVATE)
-        public ServerDeprioritization() {
+        private ServerDeprioritization() {
             candidate = null;
             deprioritized = new HashSet<>();
         }
