@@ -71,7 +71,9 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.when;
 
-// See https://github.com/mongodb/specifications/tree/master/source/server-selection/tests
+/**
+ * See <a href="https://github.com/mongodb/specifications/tree/master/source/server-selection/tests/server_selection">Server Selection Tests</a>.
+ */
 @RunWith(Parameterized.class)
 public class ServerSelectionSelectionTest {
     private final String description;
