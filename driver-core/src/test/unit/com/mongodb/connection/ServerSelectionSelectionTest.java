@@ -109,7 +109,7 @@ public class ServerSelectionSelectionTest {
         Cluster.ServersSnapshot serversSnapshot = createServersSnapshot(clusterDescription);
         List<ServerDescription> inLatencyWindowServers = buildServerDescriptions(definition.getArray("in_latency_window", new BsonArray()));
 
-        try (BaseCluster cluster = createTestCluster(clusterDescription, serversSnapshot)) {
+        try (BaseCluster cluster = new TestCluster(clusterDescription, serversSnapshot)) {
             serverTuple = cluster.selectServer(serverSelector, operationContext);
             if (error) {
                 fail(format("Should have thrown exception"));
@@ -316,11 +316,7 @@ public class ServerSelectionSelectionTest {
         return serverMap::get;
     }
 
-    private BaseCluster createTestCluster(final ClusterDescription clusterDescription, final Cluster.ServersSnapshot serversSnapshot) {
-        return new TestCluster(clusterDescription, serversSnapshot);
-    }
-
-    private static void validateTestDescriptionFields(final Set<String> actualFields, final Set<String> knownFields) {
+        private static void validateTestDescriptionFields(final Set<String> actualFields, final Set<String> knownFields) {
         Set<String> unknownFields = new HashSet<>(actualFields);
         unknownFields.removeAll(knownFields);
         if (!unknownFields.isEmpty()) {
