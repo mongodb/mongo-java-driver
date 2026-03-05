@@ -77,7 +77,7 @@ public class OperationContext {
                 null);
     }
 
-    public static OperationContext simpleOperationContext(
+    static OperationContext simpleOperationContext(
             final TimeoutSettings timeoutSettings, @Nullable final ServerApi serverApi) {
         return new OperationContext(
                 IgnorableRequestContext.INSTANCE,
@@ -160,8 +160,7 @@ public class OperationContext {
         this.tracingSpan = tracingSpan;
     }
 
-    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
-    public OperationContext(final long id,
+    private OperationContext(final long id,
             final RequestContext requestContext,
             final SessionContext sessionContext,
             final TimeoutContext timeoutContext,
@@ -181,26 +180,6 @@ public class OperationContext {
         this.operationName = operationName;
         this.tracingSpan = tracingSpan;
     }
-
-    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
-    public OperationContext(final long id,
-            final RequestContext requestContext,
-            final SessionContext sessionContext,
-            final TimeoutContext timeoutContext,
-            final TracingManager tracingManager,
-            @Nullable final ServerApi serverApi,
-            @Nullable final String operationName) {
-        this.id = id;
-        this.serverDeprioritization = new ServerDeprioritization();
-        this.requestContext = requestContext;
-        this.sessionContext = sessionContext;
-        this.timeoutContext = timeoutContext;
-        this.tracingManager = tracingManager;
-        this.serverApi = serverApi;
-        this.operationName = operationName;
-        this.tracingSpan = null;
-    }
-
 
     /**
      * @return The same {@link ServerDeprioritization} if called on the same {@link OperationContext}.
