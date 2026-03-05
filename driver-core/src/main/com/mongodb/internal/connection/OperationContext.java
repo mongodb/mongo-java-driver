@@ -275,7 +275,7 @@ public class OperationContext {
                         .filter(serverDescription -> !deprioritized.contains(serverDescription.getAddress()))
                         .collect(toList());
 
-                // TODO-JAVA-5908: Evaluate whether the early-return optimization has a meaningful performance impact on server selection.
+                // TODO-JAVA-5908: Evaluate whether using the early-return optimization has a meaningful performance impact on server selection.
                 if (nonDeprioritizedServerDescriptions.isEmpty()) {
                     return wrappedSelector.select(clusterDescription);
                 }
