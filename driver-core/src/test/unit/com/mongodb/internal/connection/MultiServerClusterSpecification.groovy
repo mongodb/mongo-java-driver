@@ -93,11 +93,12 @@ class MultiServerClusterSpecification extends Specification {
         def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts(Arrays.asList(firstServer)).mode(MULTIPLE).build(),
                 factory, CLIENT_METADATA)
         cluster.close()
+        def operationContext = createOperationContext()
 
         when:
         cluster.getServersSnapshot(
-                createOperationContext().getTimeoutContext().computeServerSelectionTimeout(),
-                createOperationContext().getTimeoutContext())
+                operationContext.getTimeoutContext().computeServerSelectionTimeout(),
+                operationContext.getTimeoutContext())
 
         then:
         thrown(IllegalStateException)

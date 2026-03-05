@@ -154,9 +154,10 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
 
         if (expectedServerDescriptionDocument.isDocument("pool")) {
             int expectedGeneration = expectedServerDescriptionDocument.getDocument("pool").getNumber("generation").intValue();
-            Timeout serverSelectionTimeout = ClusterFixture.createOperationContext().getTimeoutContext().computeServerSelectionTimeout();
+            OperationContext operationContext = ClusterFixture.createOperationContext();
+            Timeout serverSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
             DefaultServer server = (DefaultServer) getCluster()
-                    .getServersSnapshot(serverSelectionTimeout, ClusterFixture.createOperationContext().getTimeoutContext())
+                    .getServersSnapshot(serverSelectionTimeout, operationContext.getTimeoutContext())
                     .getServer(new ServerAddress(serverName));
             assertEquals(expectedGeneration, server.getConnectionPool().getGeneration());
         }

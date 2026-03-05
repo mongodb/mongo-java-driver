@@ -82,7 +82,8 @@ public class AbstractServerDiscoveryAndMonitoringTest {
     }
 
     protected void applyApplicationError(final BsonDocument applicationError) {
-        Timeout serverSelectionTimeout = ClusterFixture.createOperationContext().getTimeoutContext().computeServerSelectionTimeout();
+        OperationContext operationContext = ClusterFixture.createOperationContext();
+        Timeout serverSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
         ServerAddress serverAddress = new ServerAddress(applicationError.getString("address").getValue());
         TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS);
         int errorGeneration = applicationError.getNumber("generation",
@@ -98,7 +99,7 @@ public class AbstractServerDiscoveryAndMonitoringTest {
         switch (type) {
             case "command":
                 exception = getCommandFailureException(applicationError.getDocument("response"), serverAddress,
-                        ClusterFixture.createOperationContext().getTimeoutContext());
+                        operationContext.getTimeoutContext());
                 break;
             case "network":
                 exception = new MongoSocketReadException("Read error", serverAddress, new IOException());

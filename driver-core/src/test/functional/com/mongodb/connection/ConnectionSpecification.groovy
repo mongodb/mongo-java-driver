@@ -17,6 +17,7 @@
 package com.mongodb.connection
 
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.internal.connection.OperationContext
 import com.mongodb.internal.operation.CommandReadOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -32,8 +33,9 @@ class ConnectionSpecification extends OperationFunctionalSpecification {
 
     def 'should have id'() {
         when:
-        def source = getBinding().getReadConnectionSource(createOperationContext())
-        def connection = source.getConnection(createOperationContext())
+        def operationContext = createOperationContext()
+        def source = getBinding().getReadConnectionSource(operationContext)
+        def connection = source.getConnection(operationContext)
 
         then:
         connection.getDescription().getConnectionId() != null
@@ -45,13 +47,14 @@ class ConnectionSpecification extends OperationFunctionalSpecification {
 
     def 'should have description'() {
         when:
-        def commandResult = getHelloResult()
+        def operationContext = createOperationContext()
+        def commandResult = getHelloResult(operationContext)
         def expectedMaxMessageSize = commandResult.getNumber('maxMessageSizeBytes',
                                                              new BsonInt32(getDefaultMaxMessageSize())).intValue()
         def expectedMaxBatchCount = commandResult.getNumber('maxWriteBatchSize',
                                                             new BsonInt32(getDefaultMaxWriteBatchSize())).intValue()
-        def source = getBinding().getReadConnectionSource(createOperationContext())
-        def connection = source.getConnection(createOperationContext())
+        def source = getBinding().getReadConnectionSource(operationContext)
+        def connection = source.getConnection(operationContext)
 
         then:
         connection.description.serverAddress == source.getServerDescription().getAddress()
@@ -64,8 +67,8 @@ class ConnectionSpecification extends OperationFunctionalSpecification {
         connection?.release()
         source?.release()
     }
-   private static BsonDocument getHelloResult() {
+   private static BsonDocument getHelloResult(OperationContext operationContext) {
         new CommandReadOperation<BsonDocument>('admin', new BsonDocument(LEGACY_HELLO, new BsonInt32(1)),
-                new BsonDocumentCodec()).execute(getBinding(), createOperationContext())
+                new BsonDocumentCodec()).execute(getBinding(), operationContext)
     }
 }
