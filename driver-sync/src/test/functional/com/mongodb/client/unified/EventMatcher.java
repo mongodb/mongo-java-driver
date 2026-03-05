@@ -436,9 +436,16 @@ final class EventMatcher {
         switch (newType) {
             case "Unknown":
                 return event.getNewDescription().getType() == ServerType.UNKNOWN;
-            case "LoadBalancer": {
+            case "LoadBalancer":
                 return event.getNewDescription().getType() == ServerType.LOAD_BALANCER;
-            }
+            case "Mongos":
+                return event.getNewDescription().getType() == ServerType.SHARD_ROUTER;
+            case "Standalone":
+                return event.getNewDescription().getType() == ServerType.STANDALONE;
+            case "RSPrimary":
+                return event.getNewDescription().getType() == ServerType.REPLICA_SET_PRIMARY;
+            case "RSSecondary":
+                return event.getNewDescription().getType() == ServerType.REPLICA_SET_SECONDARY;
             default:
                 throw new UnsupportedOperationException();
         }
