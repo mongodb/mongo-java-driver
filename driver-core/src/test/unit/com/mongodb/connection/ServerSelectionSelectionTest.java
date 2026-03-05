@@ -310,7 +310,7 @@ public class ServerSelectionSelectionTest {
         Map<ServerAddress, Server> serverMap = new HashMap<>();
         for (ServerDescription desc : clusterDescription.getServerDescriptions()) {
             serverMap.put(desc.getAddress(), MongoMockito.mock(Server.class, server -> {
-                // Operation count selector should select any server since they all have 0 operation count.
+                // `MinimumOperationCountServerSelector` should select any server since they all have 0 operation count.
                 when(server.operationCount()).thenReturn(0);
             }));
         }
