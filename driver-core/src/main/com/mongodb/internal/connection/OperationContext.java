@@ -264,18 +264,18 @@ public class OperationContext {
             public List<ServerDescription> select(final ClusterDescription clusterDescription) {
                 List<ServerDescription> serverDescriptions = clusterDescription.getServerDescriptions();
 
-                // TODO-JAVA-5908: Evaluate whether the early-return optimization a meaningful performance impact on server selection.
+                // TODO-JAVA-5908: Evaluate whether using the early-return optimization has a meaningful performance impact on server selection.
                 if (serverDescriptions.size() == 1 || deprioritized.isEmpty()) {
                     return wrappedSelector.select(clusterDescription);
                 }
 
-                // TODO-JAVA-5908: Evaluate whether using a loop instead of Stream a meaningful performance impact on server selection.
+                // TODO-JAVA-5908: Evaluate whether using a loop instead of Stream has a meaningful performance impact on server selection.
                 List<ServerDescription> nonDeprioritizedServerDescriptions = serverDescriptions
                         .stream()
                         .filter(serverDescription -> !deprioritized.contains(serverDescription.getAddress()))
                         .collect(toList());
 
-                // TODO-JAVA-5908: Evaluate whether the early-return optimization a meaningful performance impact on server selection.
+                // TODO-JAVA-5908: Evaluate whether the early-return optimization has a meaningful performance impact on server selection.
                 if (nonDeprioritizedServerDescriptions.isEmpty()) {
                     return wrappedSelector.select(clusterDescription);
                 }
