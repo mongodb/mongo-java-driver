@@ -106,6 +106,8 @@ public class ServerSelectionSelectionTest {
         ServerSelector serverSelector = getServerSelector();
         OperationContext operationContext = createOperationContext();
         Cluster.ServersSnapshot serversSnapshot = createServersSnapshot(clusterDescription);
+        List<ServerDescription> inLatencyWindowServers = buildServerDescriptions(definition.getArray("in_latency_window", new BsonArray()));
+
         try (BaseCluster cluster = createTestCluster(clusterDescription, serversSnapshot);) {
             serverTuple = cluster.selectServer(serverSelector, operationContext);
             if (error) {
@@ -117,13 +119,11 @@ public class ServerSelectionSelectionTest {
             }
             return;
         } catch (MongoTimeoutException mongoTimeoutException) {
-            List<ServerDescription> inLatencyWindowServers = buildServerDescriptions(definition.getArray("in_latency_window"));
             assertTrue("Expected emtpy but was " + inLatencyWindowServers.size() + " " + definition.toJson(
                     JsonWriterSettings.builder()
                             .indent(true).build()), inLatencyWindowServers.isEmpty());
             return;
         }
-        List<ServerDescription> inLatencyWindowServers = buildServerDescriptions(definition.getArray("in_latency_window"));
         assertNotNull(serverTuple);
         assertTrue(inLatencyWindowServers.stream().anyMatch(s -> s.equals(serverTuple.getServerDescription())));
     }
