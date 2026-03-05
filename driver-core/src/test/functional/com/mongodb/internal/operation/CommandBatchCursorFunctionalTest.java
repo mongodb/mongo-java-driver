@@ -27,6 +27,7 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.OperationTest;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.connection.Connection;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -86,8 +87,9 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
                 .collect(Collectors.toList());
         getCollectionHelper().insertDocuments(documents);
 
-        connectionSource = getBinding().getWriteConnectionSource(ClusterFixture.createOperationContext());
-        connection = connectionSource.getConnection(ClusterFixture.createOperationContext());
+        OperationContext operationContext = ClusterFixture.createOperationContext();
+        connectionSource = getBinding().getWriteConnectionSource(operationContext);
+        connection = connectionSource.getConnection(operationContext);
     }
 
     @AfterEach

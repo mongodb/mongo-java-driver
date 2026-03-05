@@ -40,7 +40,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PACKAGE;
-import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static java.util.stream.Collectors.toList;
 
 /**
