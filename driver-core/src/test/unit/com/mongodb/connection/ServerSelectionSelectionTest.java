@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.ClusterFixture;
 import com.mongodb.MongoConfigurationException;
+import com.mongodb.MongoException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
@@ -298,7 +299,7 @@ public class ServerSelectionSelectionTest {
         OperationContext.ServerDeprioritization serverDeprioritization = operationContext.getServerDeprioritization();
         for (ServerAddress address : extractDeprioritizedServerAddresses(definition)) {
             serverDeprioritization.updateCandidate(address);
-            serverDeprioritization.onAttemptFailure(new MongoConfigurationException("test"));
+            serverDeprioritization.onAttemptFailure(new MongoException("test"));
         }
         return operationContext;
     }
