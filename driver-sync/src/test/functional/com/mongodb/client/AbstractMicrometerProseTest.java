@@ -14,43 +14,58 @@
  * limitations under the License.
  */
 
-package com.mongodb.observability;
+package com.mongodb.client;
 
 import com.mongodb.MongoClientSettings;
-import com.mongodb.client.Fixture;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
+import com.mongodb.lang.Nullable;
+import com.mongodb.observability.ObservabilitySettings;
+import com.mongodb.client.observability.SpanTree;
+import com.mongodb.client.observability.SpanTree.SpanNode;
 import com.mongodb.observability.micrometer.MicrometerObservabilitySettings;
 import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.tracing.exporter.FinishedSpan;
 import io.micrometer.tracing.test.reporter.inmemory.InMemoryOtelSetup;
 import org.bson.Document;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
+import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.HighCardinalityKeyNames.QUERY_TEXT;
 import static com.mongodb.internal.observability.micrometer.TracingManager.ENV_OBSERVABILITY_ENABLED;
 import static com.mongodb.internal.observability.micrometer.TracingManager.ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.HighCardinalityKeyNames.QUERY_TEXT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Implementation of the <a href="https://github.com/mongodb/specifications/blob/master/source/open-telemetry/tests/README.md">prose tests</a> for Micrometer OpenTelemetry tracing.
+ * Implementation of the <a href="https://github.com/mongodb/specifications/blob/master/source/open-telemetry/tests/README.md">prose tests</a>
+ * for Micrometer OpenTelemetry tracing.
  */
-public class MicrometerProseTest {
+public abstract class AbstractMicrometerProseTest {
     private final ObservationRegistry observationRegistry = ObservationRegistry.create();
     private InMemoryOtelSetup memoryOtelSetup;
     private InMemoryOtelSetup.Builder.OtelBuildingBlocks inMemoryOtel;
     private static String previousEnvVarMdbTracingEnabled;
     private static String previousEnvVarMdbQueryTextLength;
+
+    protected abstract MongoClient createMongoClient(MongoClientSettings settings);
 
     @BeforeAll
     static void beforeAll() {
@@ -77,18 +92,19 @@ public class MicrometerProseTest {
         memoryOtelSetup.close();
     }
 
+    @DisplayName("Test 1: Tracing Enable/Disable via Environment Variable")
     @Test
     void testControlOtelInstrumentationViaEnvironmentVariable() throws Exception {
         setEnv(ENV_OBSERVABILITY_ENABLED, "false");
         // don't enable command payload by default
-        MongoClientSettings clientSettings = Fixture.getMongoClientSettingsBuilder()
+        MongoClientSettings clientSettings = getMongoClientSettingsBuilder()
                 .observabilitySettings(ObservabilitySettings.micrometerBuilder()
                         .observationRegistry(observationRegistry)
                         .build())
                 .build();
 
 
-        try (MongoClient client = MongoClients.create(clientSettings)) {
+        try (MongoClient client = createMongoClient(clientSettings)) {
             MongoDatabase database = client.getDatabase(getDefaultDatabaseName());
             MongoCollection<Document> collection = database.getCollection("test");
             collection.find().first();
@@ -98,7 +114,7 @@ public class MicrometerProseTest {
         }
 
         setEnv(ENV_OBSERVABILITY_ENABLED, "true");
-        try (MongoClient client = MongoClients.create(clientSettings)) {
+        try (MongoClient client = createMongoClient(clientSettings)) {
             MongoDatabase database = client.getDatabase(getDefaultDatabaseName());
             MongoCollection<Document> collection = database.getCollection("test");
             collection.find().first();
@@ -114,6 +130,7 @@ public class MicrometerProseTest {
         }
     }
 
+    @DisplayName("Test 2: Command Payload Emission via Environment Variable")
     @Test
     void testControlCommandPayloadViaEnvironmentVariable() throws Exception {
         setEnv(ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH, "42");
@@ -123,13 +140,13 @@ public class MicrometerProseTest {
                 .maxQueryTextLength(75) // should be overridden by env var
                 .build();
 
-        MongoClientSettings clientSettings = Fixture.getMongoClientSettingsBuilder()
+        MongoClientSettings clientSettings = getMongoClientSettingsBuilder()
                 .observabilitySettings(ObservabilitySettings.micrometerBuilder()
                         .applySettings(settings)
                         .build()).
                 build();
 
-        try (MongoClient client = MongoClients.create(clientSettings)) {
+        try (MongoClient client = createMongoClient(clientSettings)) {
             MongoDatabase database = client.getDatabase(getDefaultDatabaseName());
             MongoCollection<Document> collection = database.getCollection("test");
             collection.find().first();
@@ -153,14 +170,14 @@ public class MicrometerProseTest {
         setEnv(ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH, null); // Unset the environment variable
 
 
-        clientSettings = Fixture.getMongoClientSettingsBuilder()
+        clientSettings = getMongoClientSettingsBuilder()
                 .observabilitySettings(ObservabilitySettings.micrometerBuilder()
                         .observationRegistry(observationRegistry)
                         .maxQueryTextLength(42) // setting this will not matter since env var is not set and enableCommandPayloadTracing is false
                         .build())
                 .build();
 
-        try (MongoClient client = MongoClients.create(clientSettings)) {
+        try (MongoClient client = createMongoClient(clientSettings)) {
             MongoDatabase database = client.getDatabase(getDefaultDatabaseName());
             MongoCollection<Document> collection = database.getCollection("test");
             collection.find().first();
@@ -182,11 +199,11 @@ public class MicrometerProseTest {
                 .maxQueryTextLength(7) // setting this will be used;
                 .build();
 
-        clientSettings = Fixture.getMongoClientSettingsBuilder()
+        clientSettings = getMongoClientSettingsBuilder()
                 .observabilitySettings(settings)
                 .build();
 
-        try (MongoClient client = MongoClients.create(clientSettings)) {
+        try (MongoClient client = createMongoClient(clientSettings)) {
             MongoDatabase database = client.getDatabase(getDefaultDatabaseName());
             MongoCollection<Document> collection = database.getCollection("test");
             collection.find().first();
@@ -200,8 +217,108 @@ public class MicrometerProseTest {
         }
     }
 
+    /**
+     * Verifies that concurrent operations produce isolated span trees with no cross-contamination.
+     * Each operation should get its own trace ID, correct parent-child linkage, and collection-specific tags,
+     * even when multiple operations execute simultaneously on the same client.
+     *
+     * <p>This test is not from the specification.</p>
+     */
+    @Test
+    void testConcurrentOperationsHaveSeparateSpans() throws Exception {
+        setEnv(ENV_OBSERVABILITY_ENABLED, "true");
+        int nbrConcurrentOps = 10;
+        MongoClientSettings clientSettings = getMongoClientSettingsBuilder()
+                .applyToConnectionPoolSettings(pool -> pool.maxSize(nbrConcurrentOps))
+                .observabilitySettings(ObservabilitySettings.micrometerBuilder()
+                        .observationRegistry(observationRegistry)
+                        .build())
+                .build();
+
+        try (MongoClient client = createMongoClient(clientSettings)) {
+            MongoDatabase database = client.getDatabase(getDefaultDatabaseName());
+
+            // Warm up connections so the concurrent phase doesn't include handshake overhead
+            for (int i = 0; i < nbrConcurrentOps; i++) {
+                database.getCollection("concurrent_test_" + i).find().first();
+            }
+            // Clear spans from warm-up before the actual concurrent test
+            memoryOtelSetup.close();
+            memoryOtelSetup = InMemoryOtelSetup.builder().register(observationRegistry);
+            inMemoryOtel = memoryOtelSetup.getBuildingBlocks();
+
+            ExecutorService executor = Executors.newFixedThreadPool(nbrConcurrentOps);
+            try {
+                CountDownLatch startLatch = new CountDownLatch(1);
+                List<Future<?>> futures = new ArrayList<>();
+
+                for (int i = 0; i < nbrConcurrentOps; i++) {
+                    String collectionName = "concurrent_test_" + i;
+                    futures.add(executor.submit(() -> {
+                        try {
+                            startLatch.await(10, TimeUnit.SECONDS);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            return;
+                        }
+                        database.getCollection(collectionName).find().first();
+                    }));
+                }
+
+                // Release all threads simultaneously to maximize concurrency
+                startLatch.countDown();
+
+                for (Future<?> future : futures) {
+                    future.get(30, TimeUnit.SECONDS);
+                }
+            } finally {
+                executor.shutdown();
+            }
+
+            List<FinishedSpan> allSpans = inMemoryOtel.getFinishedSpans();
+
+            // Each find() produces 2 spans: operation-level span + command-level span
+            assertEquals(nbrConcurrentOps * 2, allSpans.size(),
+                    "Each concurrent operation should produce exactly 2 spans (operation + command).");
+
+            // Verify trace isolation: each independent operation should get its own traceId
+            Map<String, List<FinishedSpan>> spansByTrace = allSpans.stream()
+                    .collect(Collectors.groupingBy(FinishedSpan::getTraceId));
+            assertEquals(nbrConcurrentOps, spansByTrace.size(),
+                    "Each concurrent operation should have its own distinct trace ID.");
+
+            // Use SpanTree to validate parent-child structure built from spanId/parentId linkage
+            SpanTree spanTree = SpanTree.from(allSpans);
+            List<SpanNode> roots = spanTree.getRoots();
+
+            // Each operation span is a root; its command span is a child
+            assertEquals(nbrConcurrentOps, roots.size(),
+                    "SpanTree should have one root per concurrent operation.");
+
+            Set<String> observedCollections = new HashSet<>();
+            for (SpanNode root : roots) {
+                assertTrue(root.getName().startsWith("find " + getDefaultDatabaseName() + ".concurrent_test_"),
+                        "Root span should be an operation span, but was: " + root.getName());
+
+                assertEquals(1, root.getChildren().size(),
+                        "Each operation span should have exactly one child (command span).");
+                assertEquals("find", root.getChildren().get(0).getName(),
+                        "Child span should be the command span 'find'.");
+
+                // Extract collection name from the operation span name to verify no cross-contamination
+                String collectionName = root.getName().substring(
+                        ("find " + getDefaultDatabaseName() + ".").length());
+                assertTrue(observedCollections.add(collectionName),
+                        "Each operation should target a unique collection, but found duplicate: " + collectionName);
+            }
+
+            assertEquals(nbrConcurrentOps, observedCollections.size(),
+                    "All " + nbrConcurrentOps + " concurrent operations should be represented in distinct traces.");
+        }
+    }
+
     @SuppressWarnings("unchecked")
-    private static void setEnv(final String key, final String value) throws Exception {
+    private static void setEnv(final String key, @Nullable final String value) throws Exception {
         // Get the unmodifiable Map from System.getenv()
         Map<String, String> env = System.getenv();
 
