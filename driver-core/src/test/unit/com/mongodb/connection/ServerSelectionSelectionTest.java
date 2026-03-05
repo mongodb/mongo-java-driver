@@ -132,7 +132,6 @@ public class ServerSelectionSelectionTest {
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         List<Object[]> data = new ArrayList<>();
-        //source/server-selection/tests/server_selection/ReplicaSetNoPrimary/read/DeprioritizedPrimary.json
         for (BsonDocument testDocument : JsonPoweredTestHelper.getSpecTestDocuments("server-selection/tests/server_selection")) {
             String resourcePath = testDocument.getString("resourcePath").getValue();
             data.add(new Object[]{resourcePath, testDocument});
