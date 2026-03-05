@@ -108,7 +108,7 @@ public class ServerSelectionSelectionTest {
         Cluster.ServersSnapshot serversSnapshot = createServersSnapshot(clusterDescription);
         List<ServerDescription> inLatencyWindowServers = buildServerDescriptions(definition.getArray("in_latency_window", new BsonArray()));
 
-        try (BaseCluster cluster = createTestCluster(clusterDescription, serversSnapshot);) {
+        try (BaseCluster cluster = createTestCluster(clusterDescription, serversSnapshot)) {
             serverTuple = cluster.selectServer(serverSelector, operationContext);
             if (error) {
                 fail("Should have thrown exception");
