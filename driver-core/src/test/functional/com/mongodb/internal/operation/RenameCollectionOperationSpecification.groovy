@@ -26,6 +26,7 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
@@ -37,7 +38,7 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
     def cleanup() {
         def binding = getBinding()
         new DropCollectionOperation(new MongoNamespace(getDatabaseName(), 'newCollection'),
-                WriteConcern.ACKNOWLEDGED).execute(binding, getOperationContext(binding.getReadPreference()))
+                WriteConcern.ACKNOWLEDGED).execute(binding, createOperationContext(binding.getReadPreference()))
     }
 
     def 'should return rename a collection'() {
@@ -86,7 +87,7 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
 
         def binding = getBinding()
         when:
-        async ? executeAsync(operation) : operation.execute(binding, getOperationContext(binding.getReadPreference()))
+        async ? executeAsync(operation) : operation.execute(binding, createOperationContext(binding.getReadPreference()))
 
         then:
         def ex = thrown(MongoWriteConcernException)
@@ -100,7 +101,7 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
     def collectionNameExists(String collectionName) {
         def binding = getBinding()
         def cursor = new ListCollectionsOperation(databaseName, new DocumentCodec()).execute(binding,
-                getOperationContext(binding.getReadPreference()))
+                createOperationContext(binding.getReadPreference()))
         if (!cursor.hasNext()) {
             return false
         }

@@ -355,7 +355,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
         def binding = ClusterFixture.getBinding()
         new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(2)),
-                new BsonDocumentCodec()).execute(binding, getOperationContext(binding.getReadPreference()))
+                new BsonDocumentCodec()).execute(binding, createOperationContext(binding.getReadPreference()))
         def expectedComment = 'this is a comment'
         def operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
                 .comment(new BsonString(expectedComment))
@@ -371,7 +371,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         cleanup:
         binding = ClusterFixture.getBinding()
         new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)),
-                new BsonDocumentCodec()).execute(binding, getOperationContext(binding.getReadPreference()))
+                new BsonDocumentCodec()).execute(binding, createOperationContext(binding.getReadPreference()))
         profileCollectionHelper.drop()
 
         where:
