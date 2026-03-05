@@ -65,6 +65,7 @@ import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
+import static java.lang.String.format;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
@@ -111,21 +112,21 @@ public class ServerSelectionSelectionTest {
         try (BaseCluster cluster = createTestCluster(clusterDescription, serversSnapshot)) {
             serverTuple = cluster.selectServer(serverSelector, operationContext);
             if (error) {
-                fail("Should have thrown exception");
+                fail(format("Should have thrown exception"));
             }
         } catch (MongoConfigurationException e) {
             if (!error) {
-                fail("Should not have thrown exception: " + e);
+                fail(format("Should not have thrown exception: %s", e));
             }
             return;
         } catch (MongoTimeoutException mongoTimeoutException) {
-            assertTrue("Expected emtpy but was " + inLatencyWindowServers.size() + " " + definition.toJson(
-                    JsonWriterSettings.builder()
-                            .indent(true).build()), inLatencyWindowServers.isEmpty());
+            assertTrue(format("Expected empty but was %s", inLatencyWindowServers.size()),
+                    inLatencyWindowServers.isEmpty());
             return;
         }
-        assertNotNull(serverTuple);
-        assertTrue(inLatencyWindowServers.stream().anyMatch(s -> s.equals(serverTuple.getServerDescription())));
+        assertNotNull(format("Server tuple should not be null"), serverTuple);
+        assertTrue(format("Selected server should be in latency window"),
+                inLatencyWindowServers.stream().anyMatch(s -> s.equals(serverTuple.getServerDescription())));
     }
 
     @Parameterized.Parameters(name = "{0}")
@@ -353,5 +354,10 @@ public class ServerSelectionSelectionTest {
             // We do not expect this to be called during server selection.
             fail();
         }
+    }
+
+    private String format(final String messageFormat, final Object... args) {
+        String message = String.format(messageFormat, args);
+        return message + "\nTest Definition:\n" + definition.toJson(JsonWriterSettings.builder().indent(true).build());
     }
 }
