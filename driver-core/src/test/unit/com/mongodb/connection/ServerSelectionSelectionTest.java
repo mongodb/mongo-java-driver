@@ -46,7 +46,6 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.json.JsonWriterSettings;
 import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import util.JsonPoweredTestHelper;
@@ -69,7 +68,7 @@ import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.when;
 
 // See https://github.com/mongodb/specifications/tree/master/source/server-selection/tests
@@ -352,7 +351,7 @@ public class ServerSelectionSelectionTest {
         @Override
         public void onChange(final ServerDescriptionChangedEvent event) {
             // We do not expect this to be called during server selection.
-            Assertions.fail();
+            fail();
         }
     }
 }
