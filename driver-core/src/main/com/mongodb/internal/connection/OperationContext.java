@@ -114,8 +114,10 @@ public class OperationContext {
                 operationName, tracingSpan);
     }
 
-    // TODO-JAVA-6058: This method enables overriding the ServerDeprioritization state.
-    //  It is a temporary solution to handle cases where deprioritization state persists across operations.
+    /**
+     * TODO-JAVA-6058: This method enables overriding the ServerDeprioritization state.
+     * It is a temporary solution to handle cases where deprioritization state persists across operations.
+     */
     public OperationContext withNewServerDeprioritization() {
         return new OperationContext(id, requestContext, sessionContext, timeoutContext, new ServerDeprioritization(), tracingManager, serverApi,
                 operationName, tracingSpan);
