@@ -25,6 +25,7 @@ import com.mongodb.connection.ServerConnectionState;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.internal.connection.OperationContext.ServerDeprioritization;
+import com.mongodb.internal.mockito.MongoMockito;
 import com.mongodb.selector.ServerSelector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Named;
@@ -32,6 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mockito;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -48,6 +50,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.params.provider.Arguments.of;
+import static org.mockito.ArgumentMatchers.any;
 
 final class ServerDeprioritizationTest {
     private static final ServerDescription SERVER_A = serverDescription("a");
@@ -167,9 +170,9 @@ final class ServerDeprioritizationTest {
                         })
             );
         assertAll(
-                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selectorSupplier.get()).select(SHARDED_CLUSTER)),
-                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selectorSupplier.get()).select(REPLICA_SET_CLUSTER)),
-                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selectorSupplier.get()).select(UNKNOWN_CLUSTER))
+                () -> assertEquals(selectorResult, serverDeprioritization.apply(selectorSupplier.get()).select(SHARDED_CLUSTER)),
+                () -> assertEquals(selectorResult, serverDeprioritization.apply(selectorSupplier.get()).select(REPLICA_SET_CLUSTER)),
+                () -> assertEquals(selectorResult, serverDeprioritization.apply(selectorSupplier.get()).select(UNKNOWN_CLUSTER))
         );
     }
 
