@@ -44,6 +44,7 @@ import org.bson.Document
 import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
 
+import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static org.junit.jupiter.api.Assertions.assertEquals
@@ -59,7 +60,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         def binding = getBinding()
         when:
-        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
+        def cursor = operation.execute(binding, createOperationContext(binding.getReadPreference()))
 
         then:
         !cursor.hasNext()
@@ -97,7 +98,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         def binding = getBinding()
         when:
-        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
+        def cursor = operation.execute(binding, createOperationContext(binding.getReadPreference()))
         def collections = cursor.next()
         def names = collections*.get('name')
 
@@ -120,7 +121,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         def binding = getBinding()
         when:
-        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference())
+        def cursor = operation.execute(binding, createOperationContext(binding.getReadPreference())
         )
         def collections = cursor.next()
         def names = collections*.get('name')
@@ -142,7 +143,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         def binding = getBinding()
         when:
-        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
+        def cursor = operation.execute(binding, createOperationContext(binding.getReadPreference()))
         def collections = cursor.next()
         def names = collections*.get('name')
 
@@ -160,7 +161,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         def binding = getBinding()
         when:
-        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
+        def cursor = operation.execute(binding, createOperationContext(binding.getReadPreference()))
         def collection = cursor.next()[0]
 
         then:
@@ -177,7 +178,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         def binding = getBinding()
         when:
-        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
+        def cursor = operation.execute(binding, createOperationContext(binding.getReadPreference()))
         def collection = cursor.next()[0]
 
         then:
@@ -194,7 +195,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         def binding = getBinding()
         when:
-        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
+        def cursor = operation.execute(binding, createOperationContext(binding.getReadPreference()))
         def collection = cursor.next()[0]
 
         then:
@@ -226,14 +227,14 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         def binding = getBinding()
         given:
         new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED)
-                .execute(binding, getOperationContext(binding.getReadPreference()))
+                .execute(binding, createOperationContext(binding.getReadPreference()))
         addSeveralIndexes()
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
 
 
         when:
         binding = getBinding()
-        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
+        def cursor = operation.execute(binding, createOperationContext(binding.getReadPreference()))
 
         then:
         cursor.hasNext()
@@ -246,13 +247,13 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         def binding = getBinding()
         given:
         new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED)
-                .execute(binding, getOperationContext(binding.getReadPreference()))
+                .execute(binding, createOperationContext(binding.getReadPreference()))
         addSeveralIndexes()
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
 
         when:
         binding = getBinding()
-        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
+        def cursor = operation.execute(binding, createOperationContext(binding.getReadPreference()))
         def list = cursorToListWithNext(cursor)
 
         then:
@@ -271,14 +272,14 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         def binding = getBinding()
         given:
         new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED)
-                .execute(binding, getOperationContext(binding.getReadPreference()))
+                .execute(binding, createOperationContext(binding.getReadPreference()))
         addSeveralIndexes()
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
 
 
         when:
         binding = getBinding()
-        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
+        def cursor = operation.execute(binding, createOperationContext(binding.getReadPreference()))
 
         then:
         cursor.hasNext()
@@ -297,13 +298,13 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         given:
         def binding = getBinding()
         new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED)
-                .execute(binding, getOperationContext(binding.getReadPreference()))
+                .execute(binding, createOperationContext(binding.getReadPreference()))
         addSeveralIndexes()
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
 
         when:
         binding = getBinding()
-        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
+        def cursor = operation.execute(binding, createOperationContext(binding.getReadPreference()))
         def list = cursorToListWithTryNext(cursor)
 
         then:
@@ -317,7 +318,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         given:
         def binding = getBinding()
         new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED)
-                .execute(binding, getOperationContext(binding.getReadPreference()))
+                .execute(binding, createOperationContext(binding.getReadPreference()))
         addSeveralIndexes()
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
 
@@ -343,7 +344,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         when:
         def binding = getBinding()
-        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
+        def cursor = operation.execute(binding, createOperationContext(binding.getReadPreference()))
         def collections = cursor.next()
 
         then:

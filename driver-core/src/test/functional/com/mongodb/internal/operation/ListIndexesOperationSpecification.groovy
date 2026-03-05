@@ -57,7 +57,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
         def binding = getBinding()
         when:
-        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
+        def cursor = operation.execute(binding, createOperationContext(binding.getReadPreference()))
 
         then:
         !cursor.hasNext()
@@ -86,7 +86,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
         def binding = getBinding()
         when:
-        BatchCursor<Document> indexes = operation.execute(binding, getOperationContext(binding.getReadPreference()))
+        BatchCursor<Document> indexes = operation.execute(binding, createOperationContext(binding.getReadPreference()))
 
         then:
         def firstBatch = indexes.next()
@@ -121,11 +121,11 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         def binding = getBinding()
         new CreateIndexesOperation(namespace,
                 [new IndexRequest(new BsonDocument('unique', new BsonInt32(1))).unique(true)], null).execute(binding,
-                getOperationContext(binding.getReadPreference()))
+                createOperationContext(binding.getReadPreference()))
 
         when:
         binding = getBinding()
-        BatchCursor cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
+        BatchCursor cursor = operation.execute(binding, createOperationContext(binding.getReadPreference()))
 
         then:
         def indexes = cursor.next()
@@ -145,7 +145,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         def binding = getBinding()
         new CreateIndexesOperation(namespace,
                 [new IndexRequest(new BsonDocument('unique', new BsonInt32(1))).unique(true)], null).execute(binding,
-                getOperationContext(binding.getReadPreference()))
+                createOperationContext(binding.getReadPreference()))
 
         when:
         def cursor = executeAsync(operation)
@@ -171,7 +171,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
         def binding = getBinding()
         when:
-        def cursor = operation.execute(binding, getOperationContext(binding.getReadPreference()))
+        def cursor = operation.execute(binding, createOperationContext(binding.getReadPreference()))
         def collections = cursor.next()
 
         then:
