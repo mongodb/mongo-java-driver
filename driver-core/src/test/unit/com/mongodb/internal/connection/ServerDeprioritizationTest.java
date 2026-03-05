@@ -155,26 +155,21 @@ final class ServerDeprioritizationTest {
     @MethodSource("selectSomeDeprioritized")
     void selectWithRetryWhenWrappedReturnsEmpty(final List<ServerDescription> selectorResult) {
         deprioritize(SERVER_B);
-        Supplier<ServerSelector> selector = () -> new ServerSelector() {
-            private boolean firstCall = true;
-
-            @Override
-            public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-                List<ServerDescription> servers = clusterDescription.getServerDescriptions();
-                if (firstCall) {
-                    firstCall = false;
-                    assertEquals(asList(SERVER_A, SERVER_C), servers);
-                    return emptyList();
-                }
-                assertEquals(ALL_SERVERS, servers);
-                return selectorResult;
-            }
-        };
-
+        Supplier<ServerSelector> selectorSupplier = () -> MongoMockito.mock(ServerSelector.class, tuner ->
+                Mockito.when(tuner.select(any(ClusterDescription.class)))
+                        .thenAnswer(invocation -> {
+                            assertEquals(asList(SERVER_A, SERVER_C), invocation.<ClusterDescription>getArgument(0).getServerDescriptions());
+                            return emptyList();
+                        })
+                        .thenAnswer(invocation -> {
+                            assertEquals(ALL_SERVERS, invocation.<ClusterDescription>getArgument(0).getServerDescriptions());
+                            return selectorResult;
+                        })
+            );
         assertAll(
-                () -> assertEquals(selectorResult, serverDeprioritization.apply(selector.get()).select(SHARDED_CLUSTER)),
-                () -> assertEquals(selectorResult, serverDeprioritization.apply(selector.get()).select(REPLICA_SET_CLUSTER)),
-                () -> assertEquals(selectorResult, serverDeprioritization.apply(selector.get()).select(UNKNOWN_CLUSTER))
+                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selectorSupplier.get()).select(SHARDED_CLUSTER)),
+                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selectorSupplier.get()).select(REPLICA_SET_CLUSTER)),
+                () -> assertEquals(selectorResult, serverDeprioritization.applyDeprioritization(selectorSupplier.get()).select(UNKNOWN_CLUSTER))
         );
     }
 
