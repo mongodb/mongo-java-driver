@@ -80,7 +80,6 @@ public class ServerSelectionSelectionTest {
     private final BsonDocument definition;
     private final ClusterDescription clusterDescription;
     private final boolean error;
-    private final List<ServerAddress> deprioritizedServerAddresses;
 
     private static final long SERVER_SELECTION_TIMEOUT_MS = 200;
     private static final Set<String> TOPOLOGY_DESCRIPTION_FIELDS = new HashSet<>(Arrays.asList("type", "servers"));
@@ -97,7 +96,6 @@ public class ServerSelectionSelectionTest {
         this.error = definition.getBoolean("error", BsonBoolean.FALSE).getValue();
         this.clusterDescription = buildClusterDescription(definition.getDocument("topology_description"),
                 ServerSettings.builder().heartbeatFrequency(heartbeatFrequencyMS, TimeUnit.MILLISECONDS).build());
-        this.deprioritizedServerAddresses = extractDeprioritizedServerAddresses(definition);
     }
 
     @Test
@@ -299,7 +297,7 @@ public class ServerSelectionSelectionTest {
                 OperationContext.simpleOperationContext(
                         new TimeoutContext(TIMEOUT_SETTINGS.withServerSelectionTimeoutMS(SERVER_SELECTION_TIMEOUT_MS)));
         OperationContext.ServerDeprioritization serverDeprioritization = operationContext.getServerDeprioritization();
-        for (ServerAddress address : deprioritizedServerAddresses) {
+        for (ServerAddress address : extractDeprioritizedServerAddresses(definition)) {
             serverDeprioritization.updateCandidate(address);
             serverDeprioritization.onAttemptFailure(new MongoConfigurationException("test"));
         }
