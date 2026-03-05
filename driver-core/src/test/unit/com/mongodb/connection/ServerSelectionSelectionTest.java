@@ -24,6 +24,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.Tag;
 import com.mongodb.TagSet;
+import com.mongodb.assertions.Assertions;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.connection.BaseCluster;
@@ -346,8 +347,7 @@ public class ServerSelectionSelectionTest {
 
         @Override
         public void onChange(final ServerDescriptionChangedEvent event) {
-            // We do not expect this to be called during server selection.
-            fail();
+            Assertions.fail();
         }
     }
 
