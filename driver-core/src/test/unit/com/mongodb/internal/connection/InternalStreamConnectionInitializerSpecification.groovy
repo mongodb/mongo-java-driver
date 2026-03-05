@@ -201,6 +201,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         def initializer = new InternalStreamConnectionInitializer(SINGLE, null, clientMetadataDocument, [], null)
         def expectedHelloCommandDocument = new BsonDocument(LEGACY_HELLO, new BsonInt32(1))
                 .append('helloOk', BsonBoolean.TRUE)
+                .append('backpressure', BsonBoolean.TRUE)
                 .append('\$db', new BsonString('admin'))
         if (clientMetadataDocument != null) {
              expectedHelloCommandDocument.append('client', clientMetadataDocument)
@@ -233,6 +234,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         def initializer = new InternalStreamConnectionInitializer(SINGLE, null, null, compressors, null)
         def expectedHelloCommandDocument = new BsonDocument(LEGACY_HELLO, new BsonInt32(1))
                 .append('helloOk', BsonBoolean.TRUE)
+                .append('backpressure', BsonBoolean.TRUE)
                 .append('\$db', new BsonString('admin'))
 
         def compressionArray = new BsonArray()
@@ -403,7 +405,8 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         ((SpeculativeAuthenticator) authenticator).getSpeculativeAuthenticateResponse() == null
         ((SpeculativeAuthenticator) authenticator)
                 .createSpeculativeAuthenticateCommand(internalConnection) == null
-        BsonDocument.parse("{$LEGACY_HELLO: 1, helloOk: true, '\$db': 'admin'}") == decodeCommand(internalConnection.getSent()[0])
+        BsonDocument.parse("{$LEGACY_HELLO: 1, helloOk: true, backpressure: true, '\$db': 'admin'}") ==
+                decodeCommand(internalConnection.getSent()[0])
 
         where:
         async << [true, false]
@@ -500,7 +503,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
     def createHelloCommand(final String firstClientChallenge, final String mechanism,
                               final boolean hasSaslSupportedMechs) {
-        String hello = "{$LEGACY_HELLO: 1, helloOk: true, " +
+        String hello = "{$LEGACY_HELLO: 1, helloOk: true, backpressure: true, " +
                 (hasSaslSupportedMechs ? 'saslSupportedMechs: "database.user", ' : '') +
                 (mechanism == 'MONGODB-X509' ?
                         'speculativeAuthenticate: { authenticate: 1, ' +
