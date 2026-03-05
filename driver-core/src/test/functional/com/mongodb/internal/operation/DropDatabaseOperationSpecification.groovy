@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
@@ -25,10 +24,10 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.ClusterFixture.configureFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
-import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
 
@@ -80,7 +79,7 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
 
         def binding = getBinding()
         when:
-        async ? executeAsync(operation) : operation.execute(binding, getOperationContext(binding.getReadPreference()))
+        async ? executeAsync(operation) : operation.execute(binding, createOperationContext(binding.getReadPreference()))
 
         then:
         def ex = thrown(MongoWriteConcernException)
@@ -93,7 +92,7 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
 
     def databaseNameExists(String databaseName) {
         new ListDatabasesOperation(new DocumentCodec()).execute(binding,
-                getOperationContext(binding.getReadPreference())).next()*.name.contains(databaseName)
+                createOperationContext(binding.getReadPreference())).next()*.name.contains(databaseName)
     }
 
 }
