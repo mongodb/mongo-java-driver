@@ -126,7 +126,7 @@ public class ServerSelectionSelectionTest {
             return;
         }
         assertNotNull(format("Server tuple should not be null"), serverTuple);
-        assertTrue(format("Selected server should be in latency window"),
+        assertTrue(format("Selected server should be in latency window. Selected server: %s", serverTuple.getServerDescription()),
                 inLatencyWindowServers.stream().anyMatch(s -> s.equals(serverTuple.getServerDescription())));
     }
 
