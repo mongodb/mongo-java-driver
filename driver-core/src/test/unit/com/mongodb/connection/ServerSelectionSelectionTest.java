@@ -126,7 +126,7 @@ public class ServerSelectionSelectionTest {
         }
         List<ServerDescription> inLatencyWindowServers = buildServerDescriptions(definition.getArray("in_latency_window"));
         assertNotNull(serverTuple);
-        assertTrue(inLatencyWindowServers.stream().anyMatch(s -> s.getAddress().equals(serverTuple.getServerDescription().getAddress())));
+        assertTrue(inLatencyWindowServers.stream().anyMatch(s -> s.equals(serverTuple.getServerDescription())));
     }
 
     @Parameterized.Parameters(name = "{0}")
