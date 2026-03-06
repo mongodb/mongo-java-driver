@@ -59,19 +59,15 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
 
     /**
      * This callback is allowed to be completed more than once.
-     * Also implements {@linkplain Runnable} to avoid lambda allocation per iteration when using trampoline.
      */
     @NotThreadSafe
-    private class LoopingCallback implements SingleResultCallback<Void>, Runnable {
+    private class LoopingCallback implements SingleResultCallback<Void> {
         private final SingleResultCallback<Void> wrapped;
+        private final Runnable nextIteration;
 
         LoopingCallback(final SingleResultCallback<Void> callback) {
             wrapped = callback;
-        }
-
-        @Override
-        public void run() {
-            body.run(this);
+            nextIteration = () -> body.run(this);
         }
 
         @Override
@@ -87,7 +83,7 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
                     return;
                 }
                 if (continueLooping) {
-                    AsyncTrampoline.run(this);
+                    AsyncTrampoline.run(nextIteration);
                 } else {
                     wrapped.onResult(result, null);
                 }

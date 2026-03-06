@@ -46,8 +46,7 @@ public final class AsyncTrampoline {
 
     private static final ThreadLocal<Bounce> TRAMPOLINE = new ThreadLocal<>();
 
-    private AsyncTrampoline() {
-    }
+    private AsyncTrampoline() {}
 
     /**
      * Execute work through the trampoline. If no trampoline is active, become the owner
@@ -56,15 +55,12 @@ public final class AsyncTrampoline {
     public static void run(final Runnable work) {
         Bounce bounce = TRAMPOLINE.get();
         if (bounce != null) {
-            // Re-entrant, enqueue and return
             bounce.enqueue(work);
         } else {
-            // Become the trampoline owner.
             bounce = new Bounce();
             TRAMPOLINE.set(bounce);
             try {
                 work.run();
-                // drain any re-entrant work iteratively
                 while (bounce.work != null) {
                     Runnable workToRun = bounce.work;
                     bounce.work = null;
@@ -87,8 +83,7 @@ public final class AsyncTrampoline {
 
         void enqueue(final Runnable task) {
             if (this.work != null) {
-                throw new AssertionError("Trampoline slot already occupied. "
-                        + "It could happen if there are multiple concurrent operations in a sequential async chain.");
+                throw new AssertionError("Trampoline slot already occupied");
             }
             this.work = task;
         }
