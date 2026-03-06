@@ -18,20 +18,34 @@ package com.mongodb.client;
 
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
+import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
+import com.mongodb.MongoNodeIsRecoveringException;
+import com.mongodb.MongoTimeoutException;
 import com.mongodb.TransactionOptions;
-import com.mongodb.client.internal.ClientSessionClock;
 import com.mongodb.client.model.Sorts;
+import com.mongodb.internal.time.ExponentialBackoff;
+import com.mongodb.internal.time.StartTime;
+import com.mongodb.internal.time.SystemNanoTime;
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import static com.mongodb.ClusterFixture.TIMEOUT;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.client.Fixture.getPrimary;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -39,8 +53,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 // See https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#prose-tests
 public class WithTransactionProseTest extends DatabaseTestCase {
-    private static final long START_TIME_MS = 1L;
-    private static final long ERROR_GENERATING_INTERVAL = 121000L;
+    private static final Duration ERROR_GENERATING_INTERVAL = Duration.ofSeconds(120);
 
     @BeforeEach
     @Override
@@ -61,7 +74,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     public void testCallbackRaisesCustomError() {
         final String exceptionMessage = "NotTransientOrUnknownError";
         try (ClientSession session = client.startSession()) {
-            session.withTransaction((TransactionBody<Void>) () -> {
+            session.withTransaction(() -> {
                 throw new MongoException(exceptionMessage);
             });
             // should not get here
@@ -96,17 +109,19 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         final String errorMessage = "transient transaction error";
 
         try (ClientSession session = client.startSession()) {
-            ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
-            session.withTransaction((TransactionBody<Void>) () -> {
-                ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
-                MongoException e = new MongoException(112, errorMessage);
-                e.addLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL);
-                throw e;
-            });
+            doWithSystemNanoTimeHandle(systemNanoTimeHandle ->
+                session.withTransaction(() -> {
+                    systemNanoTimeHandle.setRelativeToStart(ERROR_GENERATING_INTERVAL);
+                    MongoException e = new MongoException(112, errorMessage);
+                    e.addLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL);
+                    throw e;
+                }));
             fail("Test should have thrown an exception.");
         } catch (Exception e) {
-            assertEquals(errorMessage, e.getMessage());
-            assertTrue(((MongoException) e).getErrorLabels().contains(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL));
+            assertInstanceOf(MongoTimeoutException.class, e);
+            MongoException cause = (MongoException) e.getCause();
+            assertEquals(errorMessage, cause.getMessage());
+            assertTrue(cause.getErrorLabels().contains(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL));
         }
     }
 
@@ -122,16 +137,18 @@ public class WithTransactionProseTest extends DatabaseTestCase {
                         + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 91, 'closeConnection': false}}"));
 
         try (ClientSession session = client.startSession()) {
-            ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
-            session.withTransaction((TransactionBody<Void>) () -> {
-                ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
-                collection.insertOne(session, new Document("_id", 2));
-                return null;
-            });
+            doWithSystemNanoTimeHandle(systemNanoTimeHandle ->
+                session.withTransaction(() -> {
+                    systemNanoTimeHandle.setRelativeToStart(ERROR_GENERATING_INTERVAL);
+                    collection.insertOne(session, new Document("_id", 2));
+                    return null;
+                }));
             fail("Test should have thrown an exception.");
         } catch (Exception e) {
-            assertEquals(91, ((MongoException) e).getCode());
-            assertTrue(((MongoException) e).getErrorLabels().contains(MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL));
+            assertInstanceOf(MongoNodeIsRecoveringException.class, e.getCause());
+            MongoNodeIsRecoveringException cause = (MongoNodeIsRecoveringException) e.getCause();
+            assertEquals(91, cause.getCode());
+            assertTrue(cause.getErrorLabels().contains(MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL));
         } finally {
             failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': 'off'}"));
         }
@@ -151,16 +168,19 @@ public class WithTransactionProseTest extends DatabaseTestCase {
                         + "'errmsg': 'Transaction 0 has been aborted', 'closeConnection': false}}"));
 
         try (ClientSession session = client.startSession()) {
-            ClientSessionClock.INSTANCE.setTime(START_TIME_MS);
-            session.withTransaction((TransactionBody<Void>) () -> {
-                ClientSessionClock.INSTANCE.setTime(ERROR_GENERATING_INTERVAL);
-                collection.insertOne(session, Document.parse("{ _id : 1 }"));
-                return null;
-            });
+            doWithSystemNanoTimeHandle(systemNanoTimeHandle ->
+                session.withTransaction(() -> {
+                    systemNanoTimeHandle.setRelativeToStart(ERROR_GENERATING_INTERVAL);
+                    collection.insertOne(session, Document.parse("{ _id : 1 }"));
+                    return null;
+                }));
             fail("Test should have thrown an exception.");
         } catch (Exception e) {
-            assertEquals(251, ((MongoException) e).getCode());
-            assertTrue(((MongoException) e).getErrorLabels().contains(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL));
+            assertEquals(-4, ((MongoException) e).getCode());
+            assertInstanceOf(MongoCommandException.class, e.getCause());
+            MongoCommandException cause = (MongoCommandException) e.getCause();
+            assertEquals(251, cause.getCode());
+            assertTrue(cause.getErrorLabels().contains(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL));
         } finally {
             failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': 'off'}"));
         }
@@ -203,7 +223,74 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         }
     }
 
-    private boolean canRunTests() {
+    /**
+     * See
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#retry-backoff-is-enforced">Retry Backoff is Enforced</a>.
+     */
+    @DisplayName("Retry Backoff is Enforced")
+    @Test
+    public void testRetryBackoffIsEnforced() throws InterruptedException {
+        final BsonDocument failPointDocument = BsonDocument.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 13}, "
+                + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 251}}");
+
+        long noBackoffTime = measureTransactionLatency(0.0, failPointDocument);
+        long withBackoffTime = measureTransactionLatency(1.0, failPointDocument);
+
+        long expectedWithBackoffTime = noBackoffTime + 1800;
+        long actualDifference = Math.abs(withBackoffTime - expectedWithBackoffTime);
+
+        assertTrue(actualDifference < 500, String.format("Expected withBackoffTime to be ~% dms (noBackoffTime %d ms + 1800 ms), but"
+                + " got %d ms. Difference: %d ms (tolerance: 500 ms per spec)", expectedWithBackoffTime, noBackoffTime, withBackoffTime,
+                actualDifference));
+    }
+
+    /**
+     * This test is not from the specification.
+     */
+    @Test
+    public void testExponentialBackoffOnTransientError() throws InterruptedException {
+        BsonDocument failPointDocument = BsonDocument.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 3}, "
+                + "'data': {'failCommands': ['insert'], 'errorCode': 112, "
+                + "'errorLabels': ['TransientTransactionError']}}");
+
+        try (ClientSession session = client.startSession();
+             FailPoint ignored = FailPoint.enable(failPointDocument, getPrimary())) {
+            AtomicInteger attemptsCount = new AtomicInteger(0);
+
+            session.withTransaction(() -> {
+                attemptsCount.incrementAndGet();  // Count the attempt before the operation that might fail
+                return collection.insertOne(session, Document.parse("{}"));
+            });
+
+            assertEquals(4, attemptsCount.get(), "Expected 1 initial attempt + 3 retries");
+        }
+    }
+
+    private long measureTransactionLatency(final double jitter, final BsonDocument failPointDocument) throws InterruptedException {
+        ExponentialBackoff.setTestJitterSupplier(() -> jitter);
+        try (ClientSession session = client.startSession();
+             FailPoint ignored = FailPoint.enable(failPointDocument, getPrimary())) {
+            StartTime startTime = StartTime.now();
+            session.withTransaction(() -> collection.insertOne(session, Document.parse("{}")));
+            return startTime.elapsed().toMillis();
+        } finally {
+            ExponentialBackoff.clearTestJitterSupplier();
+        }
+    }
+
+    private static boolean canRunTests() {
         return isSharded() || isDiscoverableReplicaSet();
+    }
+
+    private static void doWithSystemNanoTimeHandle(final Consumer<SystemNanoTimeHandle> action) {
+        long startNanos = SystemNanoTime.get();
+        try (MockedStatic<SystemNanoTime> mockedStaticSystemNanoTime = Mockito.mockStatic(SystemNanoTime.class)) {
+            mockedStaticSystemNanoTime.when(SystemNanoTime::get).thenReturn(startNanos);
+            action.accept(change -> mockedStaticSystemNanoTime.when(SystemNanoTime::get).thenReturn(startNanos + change.toNanos()));
+        }
+    }
+
+    private interface SystemNanoTimeHandle {
+        void setRelativeToStart(Duration change);
     }
 }
