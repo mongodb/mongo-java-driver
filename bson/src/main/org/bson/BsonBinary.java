@@ -127,9 +127,14 @@ public class BsonBinary extends BsonValue {
     }
 
     /**
-     * Returns the binary as a UUID. The binary type must be 4.
+     * Returns the binary as a UUID.
+     *
+     * <p><strong>Note:</strong>The BsonBinary subtype must be {@link BsonBinarySubType#UUID_STANDARD}.</p>
      *
      * @return the uuid
+     * @throws BsonInvalidOperationException if BsonBinary subtype is not {@link BsonBinarySubType#UUID_STANDARD}
+     * @see #asUuid(UuidRepresentation)
+     * @see BsonBinarySubType
      * @since 3.9
      */
     public UUID asUuid() {
@@ -162,8 +167,15 @@ public class BsonBinary extends BsonValue {
     /**
      * Returns the binary as a UUID.
      *
-     * @param uuidRepresentation the UUID representation
+     * <p><strong>Note:</strong>The BsonBinary subtype must be either {@link BsonBinarySubType#UUID_STANDARD} or
+     * {@link BsonBinarySubType#UUID_LEGACY}.</p>
+     *
+     * @param uuidRepresentation the UUID representation, must be {@link UuidRepresentation#STANDARD} or
+     *                           {@link UuidRepresentation#JAVA_LEGACY}
      * @return the uuid
+     * @throws BsonInvalidOperationException if the BsonBinary subtype is incompatible with the given {@code uuidRepresentation}, or if
+     *                                       the {@code uuidRepresentation} is not {@link UuidRepresentation#STANDARD} or
+     *                                       {@link UuidRepresentation#JAVA_LEGACY}.
      * @since 3.9
      */
     public UUID asUuid(final UuidRepresentation uuidRepresentation) {

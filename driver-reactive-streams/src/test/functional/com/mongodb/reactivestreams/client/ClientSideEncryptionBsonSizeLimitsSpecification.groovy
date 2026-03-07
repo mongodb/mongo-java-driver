@@ -50,6 +50,7 @@ class ClientSideEncryptionBsonSizeLimitsSpecification extends FunctionalSpecific
     private MongoCollection<BsonDocument> autoEncryptingDataCollection
 
     def setup() {
+        assumeTrue("TODO JAVA-6077", false);
         assumeTrue('Key vault tests disabled',
                 !System.getProperty('AWS_ACCESS_KEY_ID', '').isEmpty())
         drop(keyVaultNamespace)

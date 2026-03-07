@@ -19,6 +19,9 @@ package com.mongodb.client.model;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
 import com.mongodb.client.model.mql.MqlValues;
+
+import static com.mongodb.client.model.search.VectorSearchOptions.exactVectorSearchOptions;
+
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -41,10 +44,14 @@ import static com.mongodb.client.model.Accumulators.percentile;
 import static com.mongodb.client.model.Aggregates.geoNear;
 import static com.mongodb.client.model.Aggregates.group;
 import static com.mongodb.client.model.Aggregates.unset;
+import static com.mongodb.client.model.Aggregates.vectorSearch;
 import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
 import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Windows.Bound.UNBOUNDED;
 import static com.mongodb.client.model.Windows.documents;
+import static com.mongodb.client.model.search.SearchPath.fieldPath;
+import static com.mongodb.client.model.search.VectorSearchOptions.approximateVectorSearchOptions;
+import static com.mongodb.client.model.search.VectorSearchQuery.textQuery;
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -64,8 +71,8 @@ public class AggregatesTest extends OperationTest {
     @ParameterizedTest
     @MethodSource("groupWithQuantileSource")
     public void shouldGroupWithQuantile(final BsonField quantileAccumulator,
-                                        final Object expectedGroup1,
-                                        final Object expectedGroup2) {
+            final Object expectedGroup1,
+            final Object expectedGroup2) {
         //given
         assumeTrue(serverVersionAtLeast(7, 0));
         getCollectionHelper().insertDocuments("[\n"
@@ -116,8 +123,8 @@ public class AggregatesTest extends OperationTest {
     @ParameterizedTest
     @MethodSource("setWindowFieldWithQuantileSource")
     public void shouldSetWindowFieldWithQuantile(@Nullable final Object partitionBy,
-                                                 final WindowOutputField output,
-                                                 final List<Object> expectedFieldValues) {
+            final WindowOutputField output,
+            final List<Object> expectedFieldValues) {
         //given
         assumeTrue(serverVersionAtLeast(7, 0));
         Document[] original = new Document[]{
@@ -199,18 +206,18 @@ public class AggregatesTest extends OperationTest {
                 ));
 
         List<Bson> pipeline = assertPipeline("{\n"
-                + "   $geoNear: {\n"
-                + "      near: { type: 'Point', coordinates: [ -73.99279 , 40.719296 ] },\n"
-                + "      distanceField: 'dist.calculated',\n"
-                + "      minDistance: 0,\n"
-                + "      maxDistance: 2,\n"
-                + "      query: { category: 'Parks' },\n"
-                + "      includeLocs: 'dist.location',\n"
-                + "      spherical: true,\n"
-                + "      key: 'location',\n"
-                + "      distanceMultiplier: 10.0\n"
-                + "   }\n"
-                + "}",
+                        + "   $geoNear: {\n"
+                        + "      near: { type: 'Point', coordinates: [ -73.99279 , 40.719296 ] },\n"
+                        + "      distanceField: 'dist.calculated',\n"
+                        + "      minDistance: 0,\n"
+                        + "      maxDistance: 2,\n"
+                        + "      query: { category: 'Parks' },\n"
+                        + "      includeLocs: 'dist.location',\n"
+                        + "      spherical: true,\n"
+                        + "      key: 'location',\n"
+                        + "      distanceMultiplier: 10.0\n"
+                        + "   }\n"
+                        + "}",
                 geoNear(
                         new Point(new Position(-73.99279, 40.719296)),
                         "dist.calculated",
@@ -281,5 +288,90 @@ public class AggregatesTest extends OperationTest {
         assertEquals(
                 parseToList("[{_id:1, a:8, added: [{a: 5}]}, {_id:2, a:9, added: [{a: 5}]}]"),
                 getCollectionHelper().aggregate(Arrays.asList(lookupStage)));
+    }
+
+    @Test
+    public void testAprVectorSearchWithQueryObject() {
+        assertPipeline(
+                "{"
+                        + "  $vectorSearch: {"
+                        + "    path: 'plot',"
+                        + "    query: {text: 'movies about love'},"
+                        + "    index: 'test_index',"
+                        + "    limit: {$numberLong: '5'},"
+                        + "    numCandidates: {$numberLong: '5'}"
+                        + "  }"
+                        + "}",
+                vectorSearch(
+                        fieldPath("plot"),
+                        textQuery("movies about love"),
+                        "test_index",
+                        5L,
+                        approximateVectorSearchOptions(5L)
+                ));
+    }
+
+    @Test
+    public void testAprVectorSearchWithQueryObjectAndEmbeddingModel() {
+        assertPipeline(
+                "{"
+                        + "  $vectorSearch: {"
+                        + "    path: 'plot',"
+                        + "    query: {text: 'movies about love'},"
+                        + "    index: 'test_index',"
+                        + "    limit: {$numberLong: '5'},"
+                        + "    model: 'voyage-4-large',"
+                        + "    numCandidates: {$numberLong: '5'}"
+                        + "  }"
+                        + "}",
+                vectorSearch(
+                        fieldPath("plot"),
+                        textQuery("movies about love").model("voyage-4-large"),
+                        "test_index",
+                        5L,
+                        approximateVectorSearchOptions(5L)
+                ));
+    }
+
+    @Test
+    public void testExactVectorSearchWithQueryObjectAndEmbeddingModel() {
+        assertPipeline(
+                "{"
+                        + "  $vectorSearch: {"
+                        + "    path: 'plot',"
+                        + "    query: {text: 'movies about love'},"
+                        + "    index: 'test_index',"
+                        + "    limit: {$numberLong: '5'},"
+                        + "    model: 'voyage-4-large',"
+                        + "    exact: true"
+                        + "  }"
+                        + "}",
+                vectorSearch(
+                        fieldPath("plot"),
+                        textQuery("movies about love").model("voyage-4-large"),
+                        "test_index",
+                        5L,
+                        exactVectorSearchOptions()
+                ));
+    }
+    @Test
+    public void testExactVectorSearchWithQueryObject() {
+        assertPipeline(
+                "{"
+                        + "  $vectorSearch: {"
+                        + "    path: 'plot',"
+                        + "    query: {text: 'movies about love'},"
+                        + "    index: 'test_index',"
+                        + "    limit: {$numberLong: '5'},"
+                        + "    exact: true"
+                        + "  }"
+                        + "}",
+                vectorSearch(
+                        fieldPath("plot"),
+                        textQuery("movies about love"),
+                        "test_index",
+                        5L,
+                        exactVectorSearchOptions()
+                ));
     }
 }

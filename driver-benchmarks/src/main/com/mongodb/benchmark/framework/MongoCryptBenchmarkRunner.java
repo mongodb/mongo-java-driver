@@ -177,7 +177,7 @@ public class MongoCryptBenchmarkRunner {
                 for (int i = 0; i < threadCount; i++) {
                     DecryptTask decryptTask = new DecryptTask(mongoCrypt, encrypted, NUM_SECS, doneSignal);
                     decryptTasks.add(decryptTask);
-                    executorService.submit(decryptTask);
+                    executorService.execute(decryptTask);
                 }
 
                 // Await completion of all tasks. Tasks are expected to complete shortly after NUM_SECS. Time out `await` if time exceeds 2 * NUM_SECS.

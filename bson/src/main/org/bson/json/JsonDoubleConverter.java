@@ -19,6 +19,6 @@ package org.bson.json;
 class JsonDoubleConverter implements Converter<Double> {
     @Override
     public void convert(final Double value, final StrictJsonWriter writer) {
-        writer.writeNumber(Double.toString(value));
+        writer.writeNumber(JsonDoubleHelper.toString(value));
     }
 }

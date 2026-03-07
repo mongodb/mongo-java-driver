@@ -18,6 +18,11 @@
 
 package com.mongodb.fixture;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import java.io.File;
+import java.io.FileInputStream;
+import java.security.KeyStore;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,6 +32,8 @@ import static com.mongodb.ClusterFixture.getEnv;
  * Helper class for the CSFLE/QE tests.
  */
 public final class EncryptionFixture {
+
+    private static final String KEYSTORE_PASSWORD = "test";
 
     private EncryptionFixture() {
         //NOP
@@ -71,6 +78,38 @@ public final class EncryptionFixture {
                 }
             }
         }};
+    }
+
+    /**
+     * Creates a {@link KeyManagerFactory} from a PKCS12 keystore file for use in TLS connections.
+     * The keystore is loaded using the password {@value #KEYSTORE_PASSWORD}.
+     *
+     * @return a {@link KeyManagerFactory initialized with the keystore's key material
+     */
+    public static KeyManagerFactory getKeyManagerFactory(final String keystoreLocation, final String keystoreFileName) throws Exception {
+        KeyStore ks = KeyStore.getInstance("PKCS12");
+        try (FileInputStream fis = new FileInputStream(keystoreLocation + File.separator + keystoreFileName)) {
+            ks.load(fis, KEYSTORE_PASSWORD.toCharArray());
+        }
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        keyManagerFactory.init(ks, KEYSTORE_PASSWORD.toCharArray());
+        return keyManagerFactory;
+    }
+
+    /**
+     * Creates an {@link SSLContext} from a PKCS12 keystore file for TLS connections.
+     *
+     * Allows configuring MongoClient with a custom {@link SSLContext} to test scenarios like TLS connections using specific certificates
+     * (e.g., expired or invalid) and setting up KMS servers.
+     *
+     * @return an initialized {@link SSLContext} configured with the keystore's key material
+     * @see #getKeyManagerFactory
+     */
+    public static SSLContext buildSslContextFromKeyStore(final String keystoreLocation, final String keystoreFileName) throws Exception {
+        KeyManagerFactory keyManagerFactory = getKeyManagerFactory(keystoreLocation, keystoreFileName);
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(keyManagerFactory.getKeyManagers(), null, null);
+        return sslContext;
     }
 
     public enum KmsProviderType {

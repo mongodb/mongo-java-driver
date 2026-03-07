@@ -272,6 +272,27 @@ package object search {
   type SearchOptions = com.mongodb.client.model.search.SearchOptions
 
   /**
+   * A query specification for MongoDB Atlas vector search with automated embedding.
+   *
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
+   * @since 5.7
+   */
+  @Sealed
+  @Beta(Array(Reason.SERVER))
+  type VectorSearchQuery = com.mongodb.client.model.search.VectorSearchQuery
+
+  /**
+   * A text-based vector search query for MongoDB Atlas auto-embedding.
+   *
+   * @see `VectorSearchQuery.textQuery(String)`
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
+   * @since 5.7
+   */
+  @Sealed
+  @Beta(Array(Reason.SERVER))
+  type TextVectorSearchQuery = com.mongodb.client.model.search.TextVectorSearchQuery
+
+  /**
    * Represents optional fields of the `\$vectorSearch` pipeline stage of an aggregation pipeline.
    *
    * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
