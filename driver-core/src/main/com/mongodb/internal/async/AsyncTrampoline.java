@@ -29,42 +29,42 @@ import com.mongodb.lang.Nullable;
  * loop would create > 1000 stack frames and cause {@code StackOverflowError}.</p>
  *
  * <p>The trampoline intercepts this recursion: instead of executing the next iteration
- * immediately (which would deepen the stack), it enqueues the work and returns, allowing
- * the stack to unwind. A flat loop at the top then processes enqueued work iteratively,
+ * immediately (which would deepen the stack), it enqueues the continuation and returns, allowing
+ * the stack to unwind. A flat loop at the top then processes enqueued continuation iteratively,
  * maintaining constant stack depth regardless of iteration count.</p>
  *
  * <p>Since async chains are sequential, at most one task is pending at any time.
  * The trampoline uses a single slot rather than a queue.</p>
  *
  * The first call on a thread becomes the "trampoline owner" and runs the drain loop.
- * Subsequent (re-entrant) calls on the same thread enqueue their work and return immediately.</p>
+ * Subsequent (re-entrant) calls on the same thread enqueue their continuation and return immediately.</p>
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 @NotThreadSafe
 public final class AsyncTrampoline {
 
-    private static final ThreadLocal<Bounce> TRAMPOLINE = new ThreadLocal<>();
+    private static final ThreadLocal<ContinuationHolder> TRAMPOLINE = new ThreadLocal<>();
 
     private AsyncTrampoline() {}
 
     /**
-     * Execute work through the trampoline. If no trampoline is active, become the owner
-     * and drain all enqueued work. If a trampoline is already active, enqueue and return.
+     * Execute continuation through the trampoline. If no trampoline is active, become the owner
+     * and drain all enqueued continuations. If a trampoline is already active, enqueue and return.
      */
-    public static void run(final Runnable work) {
-        Bounce bounce = TRAMPOLINE.get();
-        if (bounce != null) {
-            bounce.enqueue(work);
+    public static void run(final Runnable continuation) {
+        ContinuationHolder continuationHolder = TRAMPOLINE.get();
+        if (continuationHolder != null) {
+            continuationHolder.enqueue(continuation);
         } else {
-            bounce = new Bounce();
-            TRAMPOLINE.set(bounce);
+            continuationHolder = new ContinuationHolder();
+            TRAMPOLINE.set(continuationHolder);
             try {
-                work.run();
-                while (bounce.work != null) {
-                    Runnable workToRun = bounce.work;
-                    bounce.work = null;
-                    workToRun.run();
+                continuation.run();
+                while (continuationHolder.continuation != null) {
+                    Runnable continuationToRun = continuationHolder.continuation;
+                    continuationHolder.continuation = null;
+                    continuationToRun.run();
                 }
             } finally {
                 TRAMPOLINE.remove();
@@ -73,19 +73,19 @@ public final class AsyncTrampoline {
     }
 
     /**
-     * A single-slot container for deferred work.
-     * At most one task is pending at any time in a sequential async chain.
+     * A single-slot container for continuation.
+     * At most one continuation is pending at any time in a sequential async chain.
      */
     @NotThreadSafe
-    private static final class Bounce {
+    private static final class ContinuationHolder {
         @Nullable
-        private Runnable work;
+        private Runnable continuation;
 
-        void enqueue(final Runnable task) {
-            if (this.work != null) {
+        void enqueue(final Runnable continuation) {
+            if (this.continuation != null) {
                 throw new AssertionError("Trampoline slot already occupied");
             }
-            this.work = task;
+            this.continuation = continuation;
         }
     }
 }

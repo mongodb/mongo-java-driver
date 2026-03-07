@@ -888,8 +888,8 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
         // inner do-while: 3 success + 5 exception = 8
         // last outer iteration: 3 < 3 = 1
         // 5(inner exception) + 3(inner success) * 1(transition to next iteration) = 8
-        // 5(inner exception) + 3(inner success) * 1(outer plainTest exception) + 1(outer plainTest false) + 8(transition to next iteration) = 35
-        // 5(inner exception) + 3(inner success) * 1(outer plainTest exception) + 1(outer plainTest false) + 35(transition to next iteration) = 116
+        // 5(inner exception) + 3(inner success) * (1(outer plainTest exception) + 1(outer plainTest false) + 8(transition to next iteration)) = 35
+        // 5(inner exception) + 3(inner success) * (1(outer plainTest exception) + 1(outer plainTest false) + 35(transition to next iteration)) = 116
         assertBehavesSameVariations(116,
                 () -> {
                     int outer = 0;
