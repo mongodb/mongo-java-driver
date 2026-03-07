@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
@@ -64,7 +65,7 @@ public class MongoClientSessionFunctionalTest {
 
     @Test
     @DisplayName("should issue only one abortTransaction when close is called multiple times")
-    void shouldIssueOnlyOneAbortTransactionWhenCloseCalledMultipleTimes() {
+    void shouldIssueOnlyOneAbortTransactionWhenCloseCalledMultipleTimes() throws TimeoutException {
         assumeTrue(isDiscoverableReplicaSet());
 
         collectionHelper.runAdminCommand("{"
@@ -95,10 +96,10 @@ public class MongoClientSessionFunctionalTest {
             session.close();
             session.close();
 
-            // wait for async abort operations to complete
-            sleep(1000);
+            //then
+            commandListener.waitForEvents(CommandStartedEvent.class,
+                    event -> event.getCommandName().equals("abortTransaction"), 1);
 
-            // then
             List<CommandStartedEvent> abortCommands = commandListener.getCommandStartedEvents().stream()
                     .filter(event -> event.getCommandName().equals("abortTransaction"))
                     .collect(Collectors.toList());
