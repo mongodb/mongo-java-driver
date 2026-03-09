@@ -127,12 +127,13 @@ public final class RawBsonDocument extends BsonDocument {
     public <T> RawBsonDocument(final T document, final Codec<T> codec) {
         notNull("document", document);
         notNull("codec", codec);
-        BasicOutputBuffer buffer = new BasicOutputBuffer();
-        try (BsonBinaryWriter writer = new BsonBinaryWriter(buffer)) {
-            codec.encode(writer, document, EncoderContext.builder().build());
-            this.bytes = buffer.getInternalBuffer();
-            this.offset = 0;
-            this.length = buffer.getPosition();
+        try (BasicOutputBuffer buffer = new BasicOutputBuffer()) {
+            try (BsonBinaryWriter writer = new BsonBinaryWriter(buffer)) {
+                codec.encode(writer, document, EncoderContext.builder().build());
+                this.bytes = buffer.getInternalBuffer();
+                this.offset = 0;
+                this.length = buffer.getPosition();
+            }
         }
     }
 
@@ -251,7 +252,7 @@ public final class RawBsonDocument extends BsonDocument {
                 values.add(RawBsonValueHelper.decode(bytes, bsonReader));
             }
         }
-        return new LinkedHashSet<>(values);
+        return values;
     }
 
     @Override

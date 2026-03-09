@@ -424,19 +424,20 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
                 cachedDocument = new RawBsonDocument(clonedBytes);
             } else {
                 // With sequence fields: pipe body + extra elements
-                BasicOutputBuffer buffer = new BasicOutputBuffer();
-                ByteBuf dup = bodyByteBuf.duplicate();
-                try (BsonBinaryWriter writer = new BsonBinaryWriter(buffer);
-                     BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(dup))) {
-                    List<BsonElement> extraElements = new ArrayList<>();
-                    for (Map.Entry<String, SequenceField> entry : sequenceFields.entrySet()) {
-                        extraElements.add(new BsonElement(entry.getKey(), entry.getValue().asArray()));
+                try (BasicOutputBuffer buffer = new BasicOutputBuffer()) {
+                    ByteBuf dup = bodyByteBuf.duplicate();
+                    try (BsonBinaryWriter writer = new BsonBinaryWriter(buffer);
+                         BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(dup))) {
+                        List<BsonElement> extraElements = new ArrayList<>();
+                        for (Entry<String, SequenceField> entry : sequenceFields.entrySet()) {
+                            extraElements.add(new BsonElement(entry.getKey(), entry.getValue().asArray()));
+                        }
+                        writer.pipe(reader, extraElements);
+                    } finally {
+                        dup.release();
                     }
-                    writer.pipe(reader, extraElements);
-                } finally {
-                    dup.release();
+                    cachedDocument = new RawBsonDocument(buffer.getInternalBuffer(), 0, buffer.getPosition());
                 }
-                cachedDocument = new RawBsonDocument(buffer.getInternalBuffer(), 0, buffer.getPosition());
             }
             closed = true;
             releaseResources();
@@ -465,6 +466,9 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
     @Override
     public BsonDocument clone() {
         ensureOpen();
+        if (cachedDocument != null) {
+            return cachedDocument.clone();
+        }
         return toBsonDocument();
     }
 

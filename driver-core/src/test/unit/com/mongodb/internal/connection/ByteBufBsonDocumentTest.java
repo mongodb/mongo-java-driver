@@ -62,6 +62,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -321,7 +322,10 @@ class ByteBufBsonDocumentTest {
     void cloneShouldWork() {
         try (ByteBufBsonDocument byteBufDocument = new ByteBufBsonDocument(documentByteBuf)) {
             BsonDocument cloned = byteBufDocument.clone();
+            assertNotSame(byteBufDocument, cloned);
             assertEquals(byteBufDocument, cloned);
+
+            assertNotSame(byteBufDocument.clone(), byteBufDocument.clone());
         }
     }
 
