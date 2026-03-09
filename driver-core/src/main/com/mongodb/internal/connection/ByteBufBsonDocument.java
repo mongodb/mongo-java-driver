@@ -299,12 +299,14 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
     @Override
     public boolean containsKey(final Object key) {
         ensureOpen();
-        if (cachedDocument != null) {
-            return cachedDocument.containsKey(key);
-        }
         if (key == null) {
             throw new IllegalArgumentException("key can not be null");
         }
+
+        if (cachedDocument != null) {
+            return cachedDocument.containsKey(key);
+        }
+
         // Check sequence fields first (fast HashMap lookup), then scan body
         if (sequenceFields.containsKey(key)) {
             return true;
@@ -396,7 +398,6 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
 
     @Override
     public BsonReader asBsonReader() {
-        ensureOpen();
         // Must hydrate first since we need to include sequence fields
         return toBsonDocument().asBsonReader();
     }
@@ -452,20 +453,17 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
 
     @Override
     public String toJson(final JsonWriterSettings settings) {
-        ensureOpen();
         return toBsonDocument().toJson(settings);
     }
 
     @Override
     public String toString() {
-        ensureOpen();
         return toBsonDocument().toString();
     }
 
     @SuppressWarnings("MethodDoesntCallSuperMethod")
     @Override
     public BsonDocument clone() {
-        ensureOpen();
         if (cachedDocument != null) {
             return cachedDocument.clone();
         }
@@ -475,13 +473,11 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
     @SuppressWarnings("EqualsDoesntCheckParameterClass")
     @Override
     public boolean equals(final Object o) {
-        ensureOpen();
         return toBsonDocument().equals(o);
     }
 
     @Override
     public int hashCode() {
-        ensureOpen();
         return toBsonDocument().hashCode();
     }
 
@@ -537,6 +533,7 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
 
     // ==================== Private Body Field Operations ====================
     // These methods read from bodyByteBuf using a temporary duplicate buffer
+    // Must be guarded by `ensureOpen`
 
     /**
      * Searches the body for a field with the given key.
