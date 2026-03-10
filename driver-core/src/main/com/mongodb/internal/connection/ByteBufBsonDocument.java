@@ -24,13 +24,15 @@ import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBinaryReader;
+import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
+import org.bson.BsonElement;
 import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.ByteBuf;
-import org.bson.codecs.BsonDocumentCodec;
-import org.bson.codecs.DecoderContext;
+import org.bson.RawBsonDocument;
+import org.bson.io.BasicOutputBuffer;
 import org.bson.io.ByteBufferBsonInput;
 import org.bson.json.JsonMode;
 import org.bson.json.JsonWriterSettings;
@@ -41,13 +43,9 @@ import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.util.AbstractCollection;
-import java.util.AbstractMap;
-import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -186,7 +184,6 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
      */
     private transient boolean closed;
 
-
     /**
      * Creates a {@code ByteBufBsonDocument} from an OP_MSG command message.
      *
@@ -302,12 +299,14 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
     @Override
     public boolean containsKey(final Object key) {
         ensureOpen();
-        if (cachedDocument != null) {
-            return cachedDocument.containsKey(key);
-        }
         if (key == null) {
             throw new IllegalArgumentException("key can not be null");
         }
+
+        if (cachedDocument != null) {
+            return cachedDocument.containsKey(key);
+        }
+
         // Check sequence fields first (fast HashMap lookup), then scan body
         if (sequenceFields.containsKey(key)) {
             return true;
@@ -382,67 +381,23 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
 
     @Override
     public Set<Entry<String, BsonValue>> entrySet() {
-        ensureOpen();
-        if (cachedDocument != null) {
-            return cachedDocument.entrySet();
-        }
-        return new AbstractSet<Entry<String, BsonValue>>() {
-            @Override
-            public Iterator<Entry<String, BsonValue>> iterator() {
-                // Combine body entries with sequence entries
-                return new CombinedIterator<>(createBodyIterator(IteratorMode.ENTRIES), createSequenceEntryIterator());
-            }
-
-            @Override
-            public int size() {
-                return ByteBufBsonDocument.this.size();
-            }
-        };
+        return toBsonDocument().entrySet();
     }
 
     @Override
     public Collection<BsonValue> values() {
-        ensureOpen();
-        if (cachedDocument != null) {
-            return cachedDocument.values();
-        }
-        return new AbstractCollection<BsonValue>() {
-            @Override
-            public Iterator<BsonValue> iterator() {
-                return new CombinedIterator<>(createBodyIterator(IteratorMode.VALUES), createSequenceValueIterator());
-            }
-
-            @Override
-            public int size() {
-                return ByteBufBsonDocument.this.size();
-            }
-        };
+        return toBsonDocument().values();
     }
 
     @Override
     public Set<String> keySet() {
-        ensureOpen();
-        if (cachedDocument != null) {
-            return cachedDocument.keySet();
-        }
-        return new AbstractSet<String>() {
-            @Override
-            public Iterator<String> iterator() {
-                return new CombinedIterator<>(createBodyIterator(IteratorMode.KEYS), sequenceFields.keySet().iterator());
-            }
-
-            @Override
-            public int size() {
-                return ByteBufBsonDocument.this.size();
-            }
-        };
+        return toBsonDocument().keySet();
     }
 
     // ==================== Conversion Methods ====================
 
     @Override
     public BsonReader asBsonReader() {
-        ensureOpen();
         // Must hydrate first since we need to include sequence fields
         return toBsonDocument().asBsonReader();
     }
@@ -452,9 +407,8 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
      *
      * <p>After this method is called:</p>
      * <ul>
-     *   <li>The result is cached for future calls</li>
+     *   <li>The result is cached as a {@link RawBsonDocument} for future calls</li>
      *   <li>All underlying byte buffers are released</li>
-     *   <li>Sequence field documents are hydrated to regular {@code BsonDocument} instances</li>
      *   <li>All subsequent read operations use the cached document</li>
      * </ul>
      *
@@ -464,21 +418,30 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
     public BsonDocument toBsonDocument() {
         ensureOpen();
         if (cachedDocument == null) {
-            ByteBuf dup = bodyByteBuf.duplicate();
-            try (BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(dup))) {
-                // Decode body document
-                BsonDocument doc = new BsonDocumentCodec().decode(reader, DecoderContext.builder().build());
-                // Add hydrated sequence fields
-                for (Map.Entry<String, SequenceField> entry : sequenceFields.entrySet()) {
-                    doc.put(entry.getKey(), entry.getValue().toHydratedArray());
+            if (sequenceFields.isEmpty()) {
+                // No sequence fields: clone body bytes directly
+                byte[] clonedBytes = new byte[bodyByteBuf.remaining()];
+                bodyByteBuf.get(bodyByteBuf.position(), clonedBytes);
+                cachedDocument = new RawBsonDocument(clonedBytes);
+            } else {
+                // With sequence fields: pipe body + extra elements
+                try (BasicOutputBuffer buffer = new BasicOutputBuffer()) {
+                    ByteBuf dup = bodyByteBuf.duplicate();
+                    try (BsonBinaryWriter writer = new BsonBinaryWriter(buffer);
+                         BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(dup))) {
+                        List<BsonElement> extraElements = new ArrayList<>();
+                        for (Entry<String, SequenceField> entry : sequenceFields.entrySet()) {
+                            extraElements.add(new BsonElement(entry.getKey(), entry.getValue().asArray()));
+                        }
+                        writer.pipe(reader, extraElements);
+                    } finally {
+                        dup.release();
+                    }
+                    cachedDocument = new RawBsonDocument(buffer.getInternalBuffer(), 0, buffer.getPosition());
                 }
-                cachedDocument = doc;
-                closed = true;
-                // Release buffers since we no longer need them
-                releaseResources();
-            } finally {
-                dup.release();
             }
+            closed = true;
+            releaseResources();
         }
         return cachedDocument;
     }
@@ -490,33 +453,31 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
 
     @Override
     public String toJson(final JsonWriterSettings settings) {
-        ensureOpen();
         return toBsonDocument().toJson(settings);
     }
 
     @Override
     public String toString() {
-        ensureOpen();
         return toBsonDocument().toString();
     }
 
     @SuppressWarnings("MethodDoesntCallSuperMethod")
     @Override
     public BsonDocument clone() {
-        ensureOpen();
-        return toBsonDocument().clone();
+        if (cachedDocument != null) {
+            return cachedDocument.clone();
+        }
+        return toBsonDocument();
     }
 
     @SuppressWarnings("EqualsDoesntCheckParameterClass")
     @Override
     public boolean equals(final Object o) {
-        ensureOpen();
         return toBsonDocument().equals(o);
     }
 
     @Override
     public int hashCode() {
-        ensureOpen();
         return toBsonDocument().hashCode();
     }
 
@@ -572,6 +533,7 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
 
     // ==================== Private Body Field Operations ====================
     // These methods read from bodyByteBuf using a temporary duplicate buffer
+    // Must be guarded by `ensureOpen`
 
     /**
      * Searches the body for a field with the given key.
@@ -645,8 +607,8 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
     }
 
     /**
-     * Gets the first key from the body, or from sequence fields if body is empty.
-     * Throws NoSuchElementException if the document is completely empty.
+     * Gets the first key from the body.
+     * Throws NoSuchElementException if the body document is completely empty.
      */
     private String getFirstKeyFromBody() {
         ByteBuf dup = bodyByteBuf.duplicate();
@@ -654,10 +616,6 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
             reader.readStartDocument();
             if (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 return reader.readName();
-            }
-            // Body is empty, try sequence fields
-            if (!sequenceFields.isEmpty()) {
-                return sequenceFields.keySet().iterator().next();
             }
             throw new NoSuchElementException();
         } finally {
@@ -695,147 +653,6 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
         } finally {
             dup.release();
         }
-    }
-
-    // ==================== Iterator Support ====================
-
-    /**
-     * Mode for the body iterator, determining what type of elements it produces.
-     */
-    private enum IteratorMode { ENTRIES, KEYS, VALUES }
-
-    /**
-     * Creates an iterator over the body document fields.
-     *
-     * <p>The iterator creates a duplicated ByteBuf that is temporarily tracked for safety.
-     * When iteration completes normally, the buffer is released immediately and removed from tracking.
-     * This prevents accumulation of finished iterator buffers while ensuring cleanup if the parent
-     * document is closed before iteration completes.</p>
-     *
-     * @param mode Determines whether to return entries, keys, or values
-     * @return An iterator of the appropriate type
-     */
-    @SuppressWarnings("unchecked")
-    private <T> Iterator<T> createBodyIterator(final IteratorMode mode) {
-        return new Iterator<T>() {
-            private final Closeable resourceHandle;
-            private ByteBuf duplicatedByteBuf;
-            private BsonBinaryReader reader;
-            private boolean started;
-            private boolean finished;
-
-            {
-                // Create duplicate buffer for iteration and track it temporarily
-                duplicatedByteBuf = bodyByteBuf.duplicate();
-                resourceHandle = () -> {
-                    if (duplicatedByteBuf != null) {
-                        try {
-                            if (reader != null) {
-                                reader.close();
-                            }
-                        } catch (Exception e) {
-                            // Ignore
-                        }
-                        duplicatedByteBuf.release();
-                        duplicatedByteBuf = null;
-                        reader = null;
-                    }
-                };
-                trackedResources.add(resourceHandle);
-                reader = new BsonBinaryReader(new ByteBufferBsonInput(duplicatedByteBuf));
-            }
-
-            @Override
-            public boolean hasNext() {
-                if (finished) {
-                    return false;
-                }
-                ensureOpen();
-                if (!started) {
-                    reader.readStartDocument();
-                    reader.readBsonType();
-                    started = true;
-                }
-                boolean hasNext = reader.getCurrentBsonType() != BsonType.END_OF_DOCUMENT;
-                if (!hasNext) {
-                    cleanup();
-                }
-                return hasNext;
-            }
-
-            @Override
-            public T next() {
-                if (!hasNext()) {
-                    throw new NoSuchElementException();
-                }
-                ensureOpen();
-                String key = reader.readName();
-                BsonValue value = readBsonValue(duplicatedByteBuf, reader, trackedResources);
-                reader.readBsonType();
-
-                switch (mode) {
-                    case ENTRIES:
-                        return (T) new AbstractMap.SimpleImmutableEntry<>(key, value);
-                    case KEYS:
-                        return (T) key;
-                    case VALUES:
-                        return (T) value;
-                    default:
-                        throw new IllegalStateException("Unknown iterator mode: " + mode);
-                }
-            }
-
-            private void cleanup() {
-                if (!finished) {
-                    finished = true;
-                    // Remove from tracked resources since we're cleaning up immediately
-                    trackedResources.remove(resourceHandle);
-                    try {
-                        resourceHandle.close();
-                    } catch (Exception e) {
-                        // Ignore
-                    }
-                }
-            }
-        };
-    }
-
-    /**
-     * Creates an iterator over sequence fields as map entries.
-     * Each entry contains the field name and its array value.
-     */
-    private Iterator<Entry<String, BsonValue>> createSequenceEntryIterator() {
-        Iterator<Entry<String, SequenceField>> iter = sequenceFields.entrySet().iterator();
-        return new Iterator<Entry<String, BsonValue>>() {
-            @Override
-            public boolean hasNext() {
-                return iter.hasNext();
-            }
-
-            @Override
-            public Entry<String, BsonValue> next() {
-                Entry<String, SequenceField> entry = iter.next();
-                return new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), entry.getValue().asArray());
-            }
-        };
-    }
-
-    /**
-     * Creates an iterator over sequence field values (arrays).
-     */
-    private Iterator<BsonValue> createSequenceValueIterator() {
-        Iterator<SequenceField> iter = sequenceFields.values().iterator();
-        return new Iterator<BsonValue>() {
-            @Override
-            public boolean hasNext() {
-                return iter.hasNext();
-            }
-
-            @Override
-            public BsonValue next() {
-                return iter.next().asArray();
-            }
-        };
     }
 
     // ==================== Resource Management Helpers ====================
@@ -977,69 +794,6 @@ public final class ByteBufBsonDocument extends BsonDocument implements Closeable
             return value instanceof BsonValue && asArray().asArray().contains(value);
         }
 
-        /**
-         * Converts this sequence to a BsonArray of regular BsonDocument instances.
-         *
-         * <p>Used by {@link ByteBufBsonDocument#toBsonDocument()} to fully hydrate the document.
-         * Unlike {@link #asArray()}, this creates regular BsonDocument instances, not
-         * ByteBufBsonDocument wrappers.</p>
-         *
-         * @return A BsonArray containing fully deserialized BsonDocument instances
-         */
-        BsonArray toHydratedArray() {
-            ByteBuf dup = sequenceByteBuf.duplicate();
-            try {
-                List<BsonValue> hydratedDocs = new ArrayList<>();
-                while (dup.hasRemaining()) {
-                    int docStart = dup.position();
-                    int docSize = dup.getInt();
-                    int docEnd = docStart + docSize;
-                    ByteBuf docBuf = dup.duplicate().position(docStart).limit(docEnd);
-                    try (BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(docBuf))) {
-                        hydratedDocs.add(new BsonDocumentCodec().decode(reader, DecoderContext.builder().build()));
-                    } finally {
-                        docBuf.release();
-                    }
-                    dup.position(docEnd);
-                }
-                return new BsonArray(hydratedDocs);
-            } finally {
-                dup.release();
-            }
-        }
     }
 
-    /**
-     * An iterator that combines two iterators sequentially.
-     *
-     * <p>Used to merge body field iteration with sequence field iteration,
-     * presenting a unified view of all document fields.</p>
-     *
-     * @param <T> The type of elements returned by the iterator
-     */
-    private static final class CombinedIterator<T> implements Iterator<T> {
-        private final Iterator<? extends T> primary;
-        private final Iterator<? extends T> secondary;
-
-        CombinedIterator(final Iterator<? extends T> primary, final Iterator<? extends T> secondary) {
-            this.primary = primary;
-            this.secondary = secondary;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return primary.hasNext() || secondary.hasNext();
-        }
-
-        @Override
-        public T next() {
-            if (primary.hasNext()) {
-                return primary.next();
-            }
-            if (secondary.hasNext()) {
-                return secondary.next();
-            }
-            throw new NoSuchElementException();
-        }
-    }
 }
