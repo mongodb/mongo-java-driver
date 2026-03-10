@@ -618,37 +618,73 @@ public class InternalStreamConnection implements InternalConnection {
 
         // Async try with resources release after the write
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this);
+        Span tracingSpan = null;
         try {
             message.encode(bsonOutput, operationContext);
-
-            String commandName;
             CommandEventSender commandEventSender;
             try (ByteBufBsonDocument commandDocument = message.getCommandDocument(bsonOutput)) {
-                commandName = commandDocument.getFirstKey();
-                if (isLoggingCommandNeeded()) {
+                tracingSpan = operationContext
+                        .getTracingManager()
+                        .createTracingSpan(message,
+                                operationContext,
+                                commandDocument,
+                                cmdName -> SECURITY_SENSITIVE_COMMANDS.contains(cmdName)
+                                        || SECURITY_SENSITIVE_HELLO_COMMANDS.contains(cmdName),
+                                () -> getDescription().getServerAddress(),
+                                () -> getDescription().getConnectionId()
+                        );
+
+                boolean isLoggingCommandNeeded = isLoggingCommandNeeded();
+
+                if (isLoggingCommandNeeded) {
                     commandEventSender = new LoggingCommandEventSender(
                             SECURITY_SENSITIVE_COMMANDS, SECURITY_SENSITIVE_HELLO_COMMANDS, description, commandListener,
                             operationContext, message, commandDocument,
                             COMMAND_PROTOCOL_LOGGER, loggerSettings);
+                    commandEventSender.sendStartedEvent();
                 } else {
                     commandEventSender = new NoOpCommandEventSender();
                 }
-                commandEventSender.sendStartedEvent();
-            }
 
-            List<ByteBuf> messageByteBuffers = getMessageByteBuffers(commandName, message, bsonOutput, operationContext);
+                boolean isTracingCommandPayloadNeeded = tracingSpan != null && operationContext.getTracingManager().isCommandPayloadEnabled();
+                if (isTracingCommandPayloadNeeded) {
+                    tracingSpan.tagHighCardinality(QUERY_TEXT.asString(), commandDocument);
+                }
+
+            final Span commandSpan = tracingSpan;
+            SingleResultCallback<T> tracingCallback = commandSpan == null ? callback : (result, t) -> {
+                try {
+                    if (t != null) {
+                        if (t instanceof MongoCommandException) {
+                            commandSpan.tagLowCardinality(
+                                    RESPONSE_STATUS_CODE.withValue(String.valueOf(((MongoCommandException) t).getErrorCode())));
+                        }
+                        commandSpan.error(t);
+                    }
+                } finally {
+                    commandSpan.end();
+                    callback.onResult(result, t);
+                }
+            };
+
+            List<ByteBuf> messageByteBuffers = getMessageByteBuffers(commandDocument.getFirstKey(), message, bsonOutput, operationContext);
             sendCommandMessageAsync(messageByteBuffers, message.getId(), decoder, operationContext,
                     commandEventSender, message.isResponseExpected(), (r, t) -> {
                         ResourceUtil.release(messageByteBuffers);
                         bsonOutput.close(); // Close AFTER async write completes
                         if (t != null) {
-                            callback.onResult(null, t);
+                            tracingCallback.onResult(null, t);
                         } else {
-                            callback.onResult(r, null);
+                            tracingCallback.onResult(r, null);
                         }
                     });
+            }
         } catch (Throwable t) {
             bsonOutput.close();
+            if (tracingSpan != null) {
+                tracingSpan.error(t);
+                tracingSpan.end();
+            }
             callback.onResult(null, t);
         }
     }

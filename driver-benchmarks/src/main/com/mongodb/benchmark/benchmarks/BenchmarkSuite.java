@@ -71,6 +71,9 @@ public class BenchmarkSuite {
         runBenchmark(new BsonDecodingBenchmark<>("Deep", "extended_bson/deep_bson.json", DOCUMENT_CODEC));
         runBenchmark(new BsonDecodingBenchmark<>("Full", "extended_bson/full_bson.json", DOCUMENT_CODEC));
 
+        runBenchmark(new RawBsonNestedEncodingBenchmark("Full RawBsonDocument in BsonDocument BSON Encoding", "extended_bson/full_bson.json"));
+        runBenchmark(new RawBsonArrayEncodingBenchmark("Full RawBsonDocument Array in BsonDocument BSON Encoding", "extended_bson/full_bson.json", 10));
+
         runBenchmark(new RunCommandBenchmark<>(DOCUMENT_CODEC));
         runBenchmark(new FindOneBenchmark<Document>("single_and_multi_document/tweet.json", BenchmarkSuite.DOCUMENT_CLASS));
 

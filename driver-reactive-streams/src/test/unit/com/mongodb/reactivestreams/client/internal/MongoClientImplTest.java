@@ -25,6 +25,7 @@ import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.connection.ClientMetadata;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.mockito.MongoMockito;
+import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
@@ -179,7 +180,7 @@ public class MongoClientImplTest extends TestHelper {
     @Test
     void testStartSession() {
         ServerSessionPool serverSessionPool = mock(ServerSessionPool.class);
-        ClientSessionHelper clientSessionHelper = new ClientSessionHelper(mongoClient, serverSessionPool);
+        ClientSessionHelper clientSessionHelper = new ClientSessionHelper(mongoClient, serverSessionPool, TracingManager.NO_OP);
 
         assertAll("Start Session Tests",
                   () -> assertAll("check validation",

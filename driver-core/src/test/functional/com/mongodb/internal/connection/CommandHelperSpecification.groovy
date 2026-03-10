@@ -52,6 +52,7 @@ class CommandHelperSpecification extends Specification {
     }
 
     def cleanup() {
+        InternalStreamConnection.setRecordEverything(false)
         connection?.close()
     }
 
@@ -81,5 +82,4 @@ class CommandHelperSpecification extends Specification {
         !receivedDocument
         receivedException instanceof MongoCommandException
     }
-
 }

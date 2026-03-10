@@ -1939,16 +1939,18 @@ task_groups:
     setup_group:
       - func: "fetch-source"
       - func: "prepare-resources"
+      - func: "assume-aws-test-secrets-role"
       - command: subprocess.exec
         type: "setup"
         params:
           working_dir: "src"
           binary: bash
-          add_expansions_to_env: true
+          include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
           env:
+            CLUSTER_PREFIX: "dbx-java"
             MONGODB_VERSION: "8.0"
           args:
-            - ${DRIVERS_TOOLS}/.evergreen/atlas/setup-atlas-cluster.sh
+            - ${DRIVERS_TOOLS}/.evergreen/atlas/setup.sh
       - command: expansions.update
         params:
           file: src/atlas-expansion.yml
@@ -1960,7 +1962,7 @@ task_groups:
           binary: bash
           add_expansions_to_env: true
           args:
-            - ${DRIVERS_TOOLS}/.evergreen/atlas/teardown-atlas-cluster.sh
+            - ${DRIVERS_TOOLS}/.evergreen/atlas/teardown.sh
     tasks:
       - "atlas-search-index-management-task"
       - "aws-lambda-deployed-task"
