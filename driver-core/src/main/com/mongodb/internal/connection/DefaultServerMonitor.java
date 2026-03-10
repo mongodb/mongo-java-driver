@@ -340,7 +340,12 @@ class DefaultServerMonitor implements ServerMonitor {
         }
 
         private void logAndNotifyHeartbeatStarted(final boolean shouldStreamResponses) {
-            ConnectionDescription description = connection.getDescription();
+            ConnectionDescription description = withLock(lock, () -> {
+                if (connection != null) {
+                    return connection.getDescription();
+                }
+                return null;
+            });
             if (description != null) {
                 alreadyLoggedHeartBeatStarted = true;
                 logHeartbeatStarted(serverId, description, shouldStreamResponses);
@@ -357,20 +362,34 @@ class DefaultServerMonitor implements ServerMonitor {
         private void logAndNotifyHeartbeatSucceeded(final boolean shouldStreamResponses, final BsonDocument helloResult) {
             alreadyLoggedHeartBeatStarted = false;
             long elapsedTimeNanos = getElapsedTimeNanos();
-            if (!shouldStreamResponses) {
-                roundTripTimeSampler.addSample(elapsedTimeNanos);
+
+            ConnectionDescription description = withLock(lock, () -> {
+                if (connection != null) {
+                    return connection.getDescription();
+                }
+                return null;
+            });
+            if (description != null) {
+                if (!shouldStreamResponses) {
+                    roundTripTimeSampler.addSample(elapsedTimeNanos);
+                }
+                logHeartbeatSucceeded(serverId, description, shouldStreamResponses, elapsedTimeNanos, helloResult);
+                serverMonitorListener.serverHeartbeatSucceeded(
+                        new ServerHeartbeatSucceededEvent(description.getConnectionId(), helloResult,
+                                elapsedTimeNanos, shouldStreamResponses));
             }
-            logHeartbeatSucceeded(serverId, connection.getDescription(), shouldStreamResponses, elapsedTimeNanos, helloResult);
-            serverMonitorListener.serverHeartbeatSucceeded(
-                    new ServerHeartbeatSucceededEvent(connection.getDescription().getConnectionId(), helloResult,
-                            elapsedTimeNanos, shouldStreamResponses));
         }
 
         private void logAndNotifyHeartbeatFailed(final boolean shouldStreamResponses, final Exception e) {
             alreadyLoggedHeartBeatStarted = false;
             long elapsedTimeNanos = getElapsedTimeNanos();
 
-            ConnectionDescription description = connection != null ? connection.getDescription() : null;
+            ConnectionDescription description = withLock(lock, () -> {
+                if (connection != null) {
+                    return connection.getDescription();
+                }
+                return null;
+            });
             if (description != null) {
                 logHeartbeatFailed(serverId, description, shouldStreamResponses, elapsedTimeNanos, e);
                 serverMonitorListener.serverHeartbeatFailed(
@@ -383,6 +402,7 @@ class DefaultServerMonitor implements ServerMonitor {
                 }
             }
         }
+
         private long getElapsedTimeNanos() {
             return System.nanoTime() - lookupStartTimeNanos;
         }

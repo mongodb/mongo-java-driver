@@ -24,6 +24,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.util.List;
+
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -45,12 +47,15 @@ class ReplyHeaderTest {
             outputBuffer.writeInt(4);
             outputBuffer.writeInt(1);
 
-            ByteBuf byteBuf = outputBuffer.getByteBuffers().get(0);
+            List<ByteBuf> byteBuffers = outputBuffer.getByteBuffers();
+            ByteBuf byteBuf = byteBuffers.get(0);
             ReplyHeader replyHeader = new ReplyHeader(byteBuf, new MessageHeader(byteBuf, getDefaultMaxMessageSize()));
 
             assertEquals(186, replyHeader.getMessageLength());
             assertEquals(45, replyHeader.getRequestId());
             assertEquals(23, replyHeader.getResponseTo());
+
+            byteBuffers.forEach(ByteBuf::release);
         }
     }
 

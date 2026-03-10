@@ -48,13 +48,13 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements ClientSession {
 
+    private final AtomicBoolean closed = new AtomicBoolean();
     private final MongoClientImpl mongoClient;
     private final OperationExecutor executor;
     private TransactionState transactionState = TransactionState.NONE;
     private boolean messageSentInCurrentTransaction;
     private boolean commitInProgress;
     private TransactionOptions transactionOptions;
-    private AtomicBoolean closed = new AtomicBoolean();
 
     ClientSessionPublisherImpl(final ServerSessionPool serverSessionPool, final MongoClientImpl mongoClient,
             final ClientSessionOptions options, final OperationExecutor executor) {

@@ -312,7 +312,7 @@ public abstract class UnifiedTest {
             postCleanUp(testDef);
         }
         // Ask the JVM to run garbage collection.
-        // This should help with Nettys leak detection
+        // This should help with Netty's leak detection
         System.gc();
     }
 

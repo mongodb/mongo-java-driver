@@ -292,7 +292,7 @@
 
     <!-- DefaultServerMonitor -->
     <Match>
-        <class name="com.mongodb.internal.connection.DefaultServerMonitor" />
+        <Class name="com.mongodb.internal.connection.DefaultServerMonitor" />
         <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE" />
     </Match>
 

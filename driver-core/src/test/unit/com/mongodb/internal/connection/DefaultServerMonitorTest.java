@@ -286,6 +286,7 @@ public class DefaultServerMonitorTest {
 
         // Verify no leaks by checking connection was properly closed
         monitor.getServerMonitor().join(5000);
+        assertFalse(monitor.getServerMonitor().isAlive());
     }
 
     @Test

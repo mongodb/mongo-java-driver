@@ -56,6 +56,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
@@ -157,7 +158,7 @@ class ServerSessionPoolTest {
         ServerSession sessionTwo = pool.get();
 
         assertNotEquals(sessionTwo, sessionOne);
-        // Note: Actual closed state verification depends on implementation details
+        assertTrue(sessionOne.isClosed());
     }
 
     @Test
