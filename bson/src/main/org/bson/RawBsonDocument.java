@@ -35,7 +35,11 @@ import java.io.Serializable;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -123,12 +127,13 @@ public final class RawBsonDocument extends BsonDocument {
     public <T> RawBsonDocument(final T document, final Codec<T> codec) {
         notNull("document", document);
         notNull("codec", codec);
-        BasicOutputBuffer buffer = new BasicOutputBuffer();
-        try (BsonBinaryWriter writer = new BsonBinaryWriter(buffer)) {
-            codec.encode(writer, document, EncoderContext.builder().build());
-            this.bytes = buffer.getInternalBuffer();
-            this.offset = 0;
-            this.length = buffer.getPosition();
+        try (BasicOutputBuffer buffer = new BasicOutputBuffer()) {
+            try (BsonBinaryWriter writer = new BsonBinaryWriter(buffer)) {
+                codec.encode(writer, document, EncoderContext.builder().build());
+                this.bytes = buffer.getInternalBuffer();
+                this.offset = 0;
+                this.length = buffer.getPosition();
+            }
         }
     }
 
@@ -225,17 +230,42 @@ public final class RawBsonDocument extends BsonDocument {
 
     @Override
     public Set<Entry<String, BsonValue>> entrySet() {
-        return toBaseBsonDocument().entrySet();
+        List<Entry<String, BsonValue>> entries = new ArrayList<>();
+        try (BsonBinaryReader bsonReader = createReader()) {
+            bsonReader.readStartDocument();
+            while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+                String key = bsonReader.readName();
+                BsonValue value = RawBsonValueHelper.decode(bytes, bsonReader);
+                entries.add(new AbstractMap.SimpleImmutableEntry<>(key, value));
+            }
+        }
+        return new LinkedHashSet<>(entries);
     }
 
     @Override
     public Collection<BsonValue> values() {
-        return toBaseBsonDocument().values();
+        List<BsonValue> values = new ArrayList<>();
+        try (BsonBinaryReader bsonReader = createReader()) {
+            bsonReader.readStartDocument();
+            while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+                bsonReader.skipName();
+                values.add(RawBsonValueHelper.decode(bytes, bsonReader));
+            }
+        }
+        return values;
     }
 
     @Override
     public Set<String> keySet() {
-        return toBaseBsonDocument().keySet();
+        List<String> keys = new ArrayList<>();
+        try (BsonBinaryReader bsonReader = createReader()) {
+            bsonReader.readStartDocument();
+            while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+                keys.add(bsonReader.readName());
+                bsonReader.skipValue();
+            }
+        }
+        return new LinkedHashSet<>(keys);
     }
 
     @Override
@@ -318,12 +348,19 @@ public final class RawBsonDocument extends BsonDocument {
 
     @Override
     public boolean equals(final Object o) {
-        return toBaseBsonDocument().equals(o);
+        return toBsonDocument().equals(o);
     }
 
     @Override
     public int hashCode() {
-        return toBaseBsonDocument().hashCode();
+        return toBsonDocument().hashCode();
+    }
+
+    @Override
+    public BsonDocument toBsonDocument() {
+        try (BsonBinaryReader bsonReader = createReader()) {
+            return new BsonDocumentCodec().decode(bsonReader, DecoderContext.builder().build());
+        }
     }
 
     @Override
@@ -333,13 +370,6 @@ public final class RawBsonDocument extends BsonDocument {
 
     private BsonBinaryReader createReader() {
         return new BsonBinaryReader(new ByteBufferBsonInput(getByteBuffer()));
-    }
-
-    // Transform to an org.bson.BsonDocument instance
-    private BsonDocument toBaseBsonDocument() {
-        try (BsonBinaryReader bsonReader = createReader()) {
-            return new BsonDocumentCodec().decode(bsonReader, DecoderContext.builder().build());
-        }
     }
 
     /**
