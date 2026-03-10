@@ -76,7 +76,8 @@ class ReplyHeaderTest {
             outputBuffer.writeInt(4);
             outputBuffer.writeInt(1);
 
-            ByteBuf byteBuf = outputBuffer.getByteBuffers().get(0);
+            List<ByteBuf> byteBuffers = outputBuffer.getByteBuffers();
+            ByteBuf byteBuf = byteBuffers.get(0);
             CompressedHeader compressedHeader = new CompressedHeader(byteBuf,
                     new MessageHeader(byteBuf, getDefaultMaxMessageSize()));
             ReplyHeader replyHeader = new ReplyHeader(byteBuf, compressedHeader);
@@ -84,6 +85,7 @@ class ReplyHeaderTest {
             assertEquals(274, replyHeader.getMessageLength());
             assertEquals(45, replyHeader.getRequestId());
             assertEquals(23, replyHeader.getResponseTo());
+            byteBuffers.forEach(ByteBuf::release);
         }
     }
 
@@ -100,12 +102,14 @@ class ReplyHeaderTest {
             outputBuffer.writeInt(0);
             outputBuffer.writeInt(0);
 
-            ByteBuf byteBuf = outputBuffer.getByteBuffers().get(0);
+            List<ByteBuf> byteBuffers = outputBuffer.getByteBuffers();
+            ByteBuf byteBuf = byteBuffers.get(0);
 
             MongoInternalException ex = assertThrows(MongoInternalException.class,
                     () -> new ReplyHeader(byteBuf, new MessageHeader(byteBuf, getDefaultMaxMessageSize())));
 
             assertEquals("Unexpected reply message opCode 2", ex.getMessage());
+            byteBuffers.forEach(ByteBuf::release);
         }
     }
 
@@ -122,12 +126,13 @@ class ReplyHeaderTest {
             outputBuffer.writeInt(0);
             outputBuffer.writeInt(0);
 
-            ByteBuf byteBuf = outputBuffer.getByteBuffers().get(0);
-
+            List<ByteBuf> byteBuffers = outputBuffer.getByteBuffers();
+            ByteBuf byteBuf = byteBuffers.get(0);
             MongoInternalException ex = assertThrows(MongoInternalException.class,
                     () -> new ReplyHeader(byteBuf, new MessageHeader(byteBuf, getDefaultMaxMessageSize())));
 
             assertEquals("The reply message length 35 is less than the minimum message length 36", ex.getMessage());
+            byteBuffers.forEach(ByteBuf::release);
         }
     }
 
@@ -144,12 +149,13 @@ class ReplyHeaderTest {
             outputBuffer.writeInt(0);
             outputBuffer.writeInt(0);
 
-            ByteBuf byteBuf = outputBuffer.getByteBuffers().get(0);
-
+            List<ByteBuf> byteBuffers = outputBuffer.getByteBuffers();
+            ByteBuf byteBuf = byteBuffers.get(0);
             MongoInternalException ex = assertThrows(MongoInternalException.class,
                     () -> new ReplyHeader(byteBuf, new MessageHeader(byteBuf, 399)));
 
             assertEquals("The reply message length 400 is greater than the maximum message length 399", ex.getMessage());
+            byteBuffers.forEach(ByteBuf::release);
         }
     }
 
@@ -166,12 +172,13 @@ class ReplyHeaderTest {
             outputBuffer.writeInt(4);
             outputBuffer.writeInt(-1);
 
-            ByteBuf byteBuf = outputBuffer.getByteBuffers().get(0);
-
+            List<ByteBuf> byteBuffers = outputBuffer.getByteBuffers();
+            ByteBuf byteBuf = byteBuffers.get(0);
             MongoInternalException ex = assertThrows(MongoInternalException.class,
                     () -> new ReplyHeader(byteBuf, new MessageHeader(byteBuf, getDefaultMaxMessageSize())));
 
             assertEquals("The reply message number of returned documents, -1, is expected to be 1", ex.getMessage());
+            byteBuffers.forEach(ByteBuf::release);
         }
     }
 
@@ -191,7 +198,8 @@ class ReplyHeaderTest {
             outputBuffer.writeInt(4);
             outputBuffer.writeInt(-1);
 
-            ByteBuf byteBuf = outputBuffer.getByteBuffers().get(0);
+            List<ByteBuf> byteBuffers = outputBuffer.getByteBuffers();
+            ByteBuf byteBuf = byteBuffers.get(0);
             CompressedHeader compressedHeader = new CompressedHeader(byteBuf,
                     new MessageHeader(byteBuf, getDefaultMaxMessageSize()));
 
@@ -199,6 +207,7 @@ class ReplyHeaderTest {
                     () -> new ReplyHeader(byteBuf, compressedHeader));
 
             assertEquals("The reply message number of returned documents, -1, is expected to be 1", ex.getMessage());
+            byteBuffers.forEach(ByteBuf::release);
         }
     }
 }

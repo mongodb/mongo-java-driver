@@ -225,8 +225,9 @@ class DefaultServerMonitor implements ServerMonitor {
                     logStateChange(previousServerDescription, currentServerDescription);
                     sdamProvider.get().monitorUpdate(currentServerDescription);
 
+                    InternalConnection localConnection = connection;
                     if ((shouldStreamResponses && currentServerDescription.getType() != UNKNOWN)
-                            || (connection != null && connection.hasMoreToCome())
+                            || (localConnection != null && localConnection.hasMoreToCome())
                             || (currentServerDescription.getException() instanceof MongoSocketException
                             && previousServerDescription.getType() != UNKNOWN)) {
                         continue;
@@ -239,8 +240,9 @@ class DefaultServerMonitor implements ServerMonitor {
                 LOGGER.error(format("%s for %s stopped working. You may want to recreate the MongoClient", this, serverId), t);
                 throw t;
             } finally {
-                if (connection != null) {
-                    connection.close();
+                InternalConnection localConnection = connection;
+                if (localConnection != null) {
+                    localConnection.close();
                 }
             }
         }
@@ -255,7 +257,8 @@ class DefaultServerMonitor implements ServerMonitor {
                 lookupStartTimeNanos = System.nanoTime();
 
                 // Handle connection setup
-                if (connection == null || connection.isClosed()) {
+                InternalConnection localConnection = connection;
+                if (localConnection == null || localConnection.isClosed()) {
                     return setupNewConnectionAndGetInitialDescription(shouldStreamResponses);
                 }
 
@@ -281,17 +284,47 @@ class DefaultServerMonitor implements ServerMonitor {
         }
 
         private ServerDescription setupNewConnectionAndGetInitialDescription(final boolean shouldStreamResponses) {
-            connection = internalConnectionFactory.create(serverId);
+            InternalConnection newConnection = internalConnectionFactory.create(serverId);
+
+            // Publish the connection to the field under the lock so that heartbeat
+            // started logging (which reads the field) can see it, but only if the
+            // monitor has not been closed in the meantime.
+            boolean published = withLock(lock, () -> {
+                if (!isClosed) {
+                    connection = newConnection;
+                    return true;
+                }
+                return false;
+            });
+
+            if (!published) {
+                newConnection.close();
+                throw new MongoSocketException("Monitor closed", serverId.getAddress());
+            }
+
             logAndNotifyHeartbeatStarted(shouldStreamResponses);
 
             try {
-                connection.open(operationContextFactory.create());
-                roundTripTimeSampler.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
-                return connection.getInitialServerDescription();
+                newConnection.open(operationContextFactory.create());
             } catch (Exception e) {
                 logAndNotifyHeartbeatFailed(shouldStreamResponses, e);
                 throw e;
             }
+
+            // After the potentially long open(), verify the monitor is still open
+            // before using the connection. If close() ran during open(), it already
+            // nulled the field and closed the connection, so we must not use it.
+            boolean stillValid = withLock(lock, () -> !isClosed && connection == newConnection);
+
+            if (!stillValid) {
+                // close() may or may not have closed newConnection already;
+                // closing an already-closed connection is a safe no-op.
+                newConnection.close();
+                throw new MongoSocketException("Monitor closed during connection open", serverId.getAddress());
+            }
+
+            roundTripTimeSampler.addSample(newConnection.getInitialServerDescription().getRoundTripTimeNanos());
+            return newConnection.getInitialServerDescription();
         }
 
         /**
@@ -586,15 +619,20 @@ class DefaultServerMonitor implements ServerMonitor {
             try {
                 while (!isClosed) {
                     try {
-                        if (connection == null) {
+                        InternalConnection localConnection = connection;
+                        if (localConnection == null) {
                             initialize();
                         } else {
-                            pingServer(connection);
+                            pingServer(localConnection);
                         }
                     } catch (Exception t) {
-                        if (connection != null) {
-                            connection.close();
+                        InternalConnection localConnection = withLock(lock, () -> {
+                            InternalConnection result = connection;
                             connection = null;
+                            return result;
+                        });
+                        if (localConnection != null) {
+                            localConnection.close();
                         }
                     }
                     waitForNext();
@@ -605,8 +643,9 @@ class DefaultServerMonitor implements ServerMonitor {
                 LOGGER.error(format("%s for %s stopped working. You may want to recreate the MongoClient", this, serverId), t);
                 throw t;
             } finally {
-                if (connection != null) {
-                    connection.close();
+                InternalConnection localConnection = connection;
+                if (localConnection != null) {
+                    localConnection.close();
                 }
             }
         }
