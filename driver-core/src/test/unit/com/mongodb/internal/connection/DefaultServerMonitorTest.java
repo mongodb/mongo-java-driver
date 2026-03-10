@@ -56,9 +56,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -287,6 +287,7 @@ public class DefaultServerMonitorTest {
         // Verify no leaks by checking connection was properly closed
         monitor.getServerMonitor().join(5000);
         assertFalse(monitor.getServerMonitor().isAlive());
+        verify(mockConnection, timeout(500)).close();
     }
 
     @Test
@@ -300,11 +301,8 @@ public class DefaultServerMonitorTest {
         InternalConnectionFactory factory = createConnectionFactory(mockConnection);
         monitor = createAndStartMonitor(factory, mock(ServerMonitorListener.class));
 
-        // Wait a bit for the monitor to run
-        Thread.sleep(500);
-
         // Monitor should handle null description gracefully
-        verify(mockConnection, atLeast(1)).open(any());
+        verify(mockConnection, timeout(500).atLeast(1)).open(any());
     }
 
     private InternalConnectionFactory createConnectionFactory(final InternalConnection connection) {
