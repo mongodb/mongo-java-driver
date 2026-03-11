@@ -24,6 +24,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerVersion;
+import com.mongodb.connection.TransportSettings;
 import com.mongodb.reactivestreams.client.internal.MongoClientImpl;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -33,6 +34,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.ClusterFixture.getOverriddenTransportSettings;
 import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.Thread.sleep;
@@ -67,11 +69,18 @@ public final class Fixture {
     }
 
     public static MongoClientSettings.Builder getMongoClientSettingsBuilder(final ConnectionString connectionString) {
-        MongoClientSettings.Builder builder = MongoClientSettings.builder();
+        MongoClientSettings.Builder builder = MongoClientSettings.builder()
+                .applyConnectionString(connectionString);
+
+        TransportSettings overriddenTransportSettings = getOverriddenTransportSettings();
+        if (overriddenTransportSettings != null) {
+            builder.transportSettings(overriddenTransportSettings);
+        }
+
         if (getServerApi() != null) {
             builder.serverApi(getServerApi());
         }
-        return builder.applyConnectionString(connectionString);
+        return builder;
     }
 
     public static String getDefaultDatabaseName() {
@@ -164,6 +173,11 @@ public final class Fixture {
     public static MongoClientSettings.Builder getMongoClientBuilderFromConnectionString() {
         MongoClientSettings.Builder builder = MongoClientSettings.builder()
                 .applyConnectionString(getConnectionString());
+
+        TransportSettings overriddenTransportSettings = getOverriddenTransportSettings();
+        if (overriddenTransportSettings != null) {
+            builder.transportSettings(overriddenTransportSettings);
+        }
         if (getServerApi() != null) {
             builder.serverApi(getServerApi());
         }
