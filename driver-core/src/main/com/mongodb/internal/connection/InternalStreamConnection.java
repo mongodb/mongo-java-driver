@@ -454,9 +454,7 @@ public class InternalStreamConnection implements InternalConnection {
                                 () -> getDescription().getConnectionId()
                         );
 
-                boolean isLoggingCommandNeeded = isLoggingCommandNeeded();
-
-                if (isLoggingCommandNeeded) {
+                if (isLoggingCommandNeeded()) {
                     commandEventSender = new LoggingCommandEventSender(
                             SECURITY_SENSITIVE_COMMANDS, SECURITY_SENSITIVE_HELLO_COMMANDS, description, commandListener,
                             operationContext, message, commandDocument,
@@ -634,9 +632,7 @@ public class InternalStreamConnection implements InternalConnection {
                                 () -> getDescription().getConnectionId()
                         );
 
-                boolean isLoggingCommandNeeded = isLoggingCommandNeeded();
-
-                if (isLoggingCommandNeeded) {
+                if (isLoggingCommandNeeded()) {
                     commandEventSender = new LoggingCommandEventSender(
                             SECURITY_SENSITIVE_COMMANDS, SECURITY_SENSITIVE_HELLO_COMMANDS, description, commandListener,
                             operationContext, message, commandDocument,
