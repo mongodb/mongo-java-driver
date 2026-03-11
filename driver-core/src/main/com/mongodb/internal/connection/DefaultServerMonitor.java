@@ -395,6 +395,9 @@ class DefaultServerMonitor implements ServerMonitor {
         private void logAndNotifyHeartbeatSucceeded(final boolean shouldStreamResponses, final BsonDocument helloResult) {
             alreadyLoggedHeartBeatStarted = false;
             long elapsedTimeNanos = getElapsedTimeNanos();
+            if (!shouldStreamResponses) {
+                roundTripTimeSampler.addSample(elapsedTimeNanos);
+            }
 
             ConnectionDescription description = withLock(lock, () -> {
                 if (connection != null) {
@@ -403,9 +406,6 @@ class DefaultServerMonitor implements ServerMonitor {
                 return null;
             });
             if (description != null) {
-                if (!shouldStreamResponses) {
-                    roundTripTimeSampler.addSample(elapsedTimeNanos);
-                }
                 logHeartbeatSucceeded(serverId, description, shouldStreamResponses, elapsedTimeNanos, helloResult);
                 serverMonitorListener.serverHeartbeatSucceeded(
                         new ServerHeartbeatSucceededEvent(description.getConnectionId(), helloResult,
