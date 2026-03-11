@@ -109,7 +109,7 @@ public class MultiFileExportBenchmark extends AbstractMongoBenchmark {
         CountDownLatch latch = new CountDownLatch(100);
 
         for (int i = 0; i < 100; i++) {
-            documentReadingService.submit(exportJsonFile(i, latch));
+            documentReadingService.execute(exportJsonFile(i, latch));
         }
 
         latch.await(1, TimeUnit.MINUTES);
@@ -125,7 +125,7 @@ public class MultiFileExportBenchmark extends AbstractMongoBenchmark {
             List<RawBsonDocument> documents = collection.find(new BsonDocument("fileId", new BsonInt32(fileId)))
                     .batchSize(5000)
                     .into(new ArrayList<>(5000));
-            fileWritingService.submit(writeJsonFile(fileId, documents, latch));
+            fileWritingService.execute(writeJsonFile(fileId, documents, latch));
         };
     }
 
@@ -154,7 +154,7 @@ public class MultiFileExportBenchmark extends AbstractMongoBenchmark {
 
         for (int i = 0; i < 100; i++) {
             int fileId = i;
-            importService.submit(() -> {
+            importService.execute(() -> {
                 String resourcePath = "parallel/ldjson_multi/ldjson" + String.format("%03d", fileId) + ".txt";
                 try (BufferedReader reader = new BufferedReader(readFromRelativePath(resourcePath), 1024 * 64)) {
                     String json;

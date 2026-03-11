@@ -33,6 +33,7 @@ import com.mongodb.internal.connection.ClientMetadata;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
@@ -88,9 +89,10 @@ public final class MongoClientImpl implements MongoClient {
         notNull("settings", settings);
         notNull("cluster", cluster);
 
+        TracingManager tracingManager = new TracingManager(settings.getObservabilitySettings());
         TimeoutSettings timeoutSettings = TimeoutSettings.create(settings);
         ServerSessionPool serverSessionPool = new ServerSessionPool(cluster, timeoutSettings, settings.getServerApi());
-        ClientSessionHelper clientSessionHelper = new ClientSessionHelper(this, serverSessionPool);
+        ClientSessionHelper clientSessionHelper = new ClientSessionHelper(this, serverSessionPool, tracingManager);
 
         AutoEncryptionSettings autoEncryptSettings = settings.getAutoEncryptionSettings();
         Crypt crypt = autoEncryptSettings != null ? Crypts.createCrypt(settings, autoEncryptSettings) : null;
@@ -100,7 +102,8 @@ public final class MongoClientImpl implements MongoClient {
                     + ReactiveContextProvider.class.getName() + " when using the Reactive Streams driver");
         }
         OperationExecutor operationExecutor = executor != null ? executor
-                : new OperationExecutorImpl(this, clientSessionHelper, timeoutSettings, (ReactiveContextProvider) contextProvider);
+                : new OperationExecutorImpl(this, clientSessionHelper, timeoutSettings, (ReactiveContextProvider) contextProvider,
+                tracingManager);
         MongoOperationPublisher<Document> mongoOperationPublisher = new MongoOperationPublisher<>(Document.class,
                 withUuidRepresentation(settings.getCodecRegistry(),
                         settings.getUuidRepresentation()),

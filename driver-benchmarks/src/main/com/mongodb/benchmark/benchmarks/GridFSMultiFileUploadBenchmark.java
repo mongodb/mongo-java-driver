@@ -75,7 +75,7 @@ public class GridFSMultiFileUploadBenchmark extends AbstractMongoBenchmark {
         CountDownLatch latch = new CountDownLatch(50);
 
         for (int i = 0; i < 50; i++) {
-            fileService.submit(importFile(latch, i));
+            fileService.execute(importFile(latch, i));
         }
 
         latch.await(1, TimeUnit.MINUTES);
