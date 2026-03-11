@@ -117,7 +117,7 @@ afterEvaluate {
             sourceSets { main { scala { setSrcDirs(listOf("src/main/scala", "src/main/scala-2", "src/main/scala-2.13-")) } } }
             sourceSets { test { scala { setSrcDirs(listOf("src/test/scala", "src/test/scala-2", "src/test/scala-2.13-")) } } }
 
-            compileOptions.addAll(listOf("-target:jvm-1.8","-Xexperimental"))
+            compileOptions.addAll(listOf("-target:jvm-1.8", "-Xexperimental"))
         }
     }
 

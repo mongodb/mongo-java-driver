@@ -24,7 +24,6 @@ import org.bson.codecs.configuration.{CodecProvider, CodecRegistries, CodecRegis
 import org.bson.codecs.{BsonValueCodecProvider, Codec, DecoderContext, EncoderContext, ValueCodecProvider}
 import org.bson.io.{BasicOutputBuffer, ByteBufferBsonInput, OutputBuffer}
 import org.bson.types.ObjectId
-import org.mongodb.scala.bson.Document
 import org.mongodb.scala.bson.codecs.{DocumentCodecProvider, IterableCodecProvider}
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.scalatest.flatspec.AnyFlatSpec
@@ -246,7 +245,7 @@ class MacrosSpec extends AnyFlatSpec with Matchers {
     )
   }
 
-  it should "rountrip case classes containing vals" in {
+  it should "roundtrip case classes containing vals" in {
     val id = new ObjectId
     roundTrip(
       CaseClassWithVal(id, "Bob"),

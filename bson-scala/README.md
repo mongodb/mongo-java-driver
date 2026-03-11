@@ -5,18 +5,18 @@ It currently supports: **Scala 2.11**, **Scala 2.12**, **Scala 2.13**, and **Sca
 
 ## Scala Versions
 
-Supported Scala versions and their exact version numbers are defined in [`gradle.properties`](gradle.properties):
+Supported Scala versions and their exact version numbers are defined in [`gradle.properties`](../gradle.properties):
 
 - `supportedScalaVersions` — the list of supported Scala versions
 - `defaultScalaVersion` — the version used when no `-PscalaVersion` flag is provided (currently `2.13`)
 
 ## Build Configuration
 
-The Scala source set configuration, compiler options, and dependency wiring are all handled in [`buildSrc/src/main/kotlin/project/scala.gradle.kts`](buildSrc/src/main/kotlin/project/scala.gradle.kts).
+The Scala source set configuration, compiler options, and dependency wiring are all handled in [`buildSrc/src/main/kotlin/project/scala.gradle.kts`](../buildSrc/src/main/kotlin/project/scala.gradle.kts).
 
 ## Library Dependencies
 
-Scala library and test dependencies for each version are defined in [`gradle/libs.versions.toml`](gradle/libs.versions.toml). Look for entries prefixed with `scala-` in the `[versions]`, `[libraries]`, and `[bundles]` sections.
+Scala library and test dependencies for each version are defined in [`gradle/libs.versions.toml`](../gradle/libs.versions.toml). Look for entries prefixed with `scala-` in the `[versions]`, `[libraries]`, and `[bundles]` sections.
 
 ## Directory Layout
 
@@ -33,7 +33,7 @@ src/main/
 ```
 
 Test code also supports the same directory structure.
-The source sets for each Scala version are configured in [`buildSrc/src/main/kotlin/project/scala.gradle.kts`](buildSrc/src/main/kotlin/project/scala.gradle.kts).
+The source sets for each Scala version are configured in [`buildSrc/src/main/kotlin/project/scala.gradle.kts`](../buildSrc/src/main/kotlin/project/scala.gradle.kts).
 When adding new code, place it in the most general directory that applies. Only use a version-specific directory when the code requires syntax or APIs unique to that version.
 
 ## Code Formatting (Spotless)

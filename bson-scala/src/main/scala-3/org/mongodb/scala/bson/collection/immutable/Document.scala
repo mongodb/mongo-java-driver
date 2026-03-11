@@ -44,7 +44,7 @@ object Document extends SpecificIterableFactory[(String, BsonValue), Document] {
   /**
    * Parses a string in MongoDB Extended JSON format to a `Document`
    *
-   * @param json the JSON stringN
+   * @param json the JSON string
    * @return a corresponding `Document` object
    * @see org.bson.json.JsonReader
    * @see [[https://www.mongodb.com/docs/manual/reference/mongodb-extended-json/ MongoDB Extended JSON]]

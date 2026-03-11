@@ -25,7 +25,6 @@ abstract class BaseSpec extends AnyFlatSpec with Matchers {
       "$anonfun$fromInt$1",
       "$anonfun$fromString$1",
       "$deserializeLambda$",
-      "$deserializeLambda$",
       "$values",
       "apply",
       "fromInt$$anonfun$1",

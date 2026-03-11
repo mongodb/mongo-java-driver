@@ -108,7 +108,7 @@ case class Document(protected[scala] val underlying: BsonDocument)
   import BsonMagnets._
 
   /**
-   * Creates a new immutable document
+   * Creates a new mutable document
    * @param underlying the underlying BsonDocument
    * @return a new document
    */

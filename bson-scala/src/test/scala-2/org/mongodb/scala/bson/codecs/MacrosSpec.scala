@@ -385,7 +385,7 @@ class MacrosSpec extends BaseSpec {
     )
   }
 
-  it should "rountrip case classes containing vals" in {
+  it should "roundtrip case classes containing vals" in {
     val id = new ObjectId
     roundTrip(
       CaseClassWithVal(id, "Bob"),

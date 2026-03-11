@@ -38,13 +38,12 @@ class FiltersSpec extends BaseSpec {
     val exclusions = DEFAULT_EXCLUSIONS ++ Set(
       "equal",
       "notEqual",
-      "bsonType",
-      "$anonfun$geoWithinPolygon$1",
-      "org$mongodb$scala$model$Filters$ScalaOptionDoubleToJavaDoubleOrNull$$_$asJava$$anonfun$adapted$1"
+      "bsonType"
     )
     val local = model.Filters.getClass.getDeclaredMethods
       .filter(f => isPublic(f.getModifiers))
       .map(_.getName)
+      .filterNot((name: String) => name.contains("$anonfun$"))
       .toSet -- exclusions
 
     local should equal(wrapped)
