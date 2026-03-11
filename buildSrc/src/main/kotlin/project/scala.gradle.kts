@@ -65,7 +65,7 @@ afterEvaluate {
     // ============================================
     //     Scala version specific configuration
     // ============================================
-    val compileOptions = mutableListOf("-target:jvm-1.8")
+    val compileOptions: MutableList<String> = mutableListOf()
     when (scalaVersion) {
         "3" -> {
             dependencies {
@@ -76,7 +76,7 @@ afterEvaluate {
             sourceSets { main { scala { setSrcDirs(listOf("src/main/scala", "src/main/scala-3")) } } }
             sourceSets { test { scala { setSrcDirs(listOf("src/test/scala", "src/test/scala-3")) } } }
 
-            compileOptions.addAll(listOf("-Xcheck-macros", "-Ycheck:all"))
+            compileOptions.addAll(listOf("-release:8", "-Xcheck-macros", "-Ycheck:all"))
         }
         "2.13" -> {
             dependencies {
@@ -89,6 +89,7 @@ afterEvaluate {
 
             compileOptions.addAll(
                 listOf(
+                    "-release:8",
                     "-feature",
                     "-unchecked",
                     "-language:reflectiveCalls",
@@ -103,6 +104,8 @@ afterEvaluate {
             }
             sourceSets { main { scala { setSrcDirs(listOf("src/main/scala", "src/main/scala-2", "src/main/scala-2.13-")) } } }
             sourceSets { test { scala { setSrcDirs(listOf("src/test/scala", "src/test/scala-2", "src/test/scala-2.13-")) } } }
+
+            compileOptions.add("-target:jvm-1.8")
         }
         "2.11" -> {
             dependencies {
@@ -114,7 +117,7 @@ afterEvaluate {
             sourceSets { main { scala { setSrcDirs(listOf("src/main/scala", "src/main/scala-2", "src/main/scala-2.13-")) } } }
             sourceSets { test { scala { setSrcDirs(listOf("src/test/scala", "src/test/scala-2", "src/test/scala-2.13-")) } } }
 
-            compileOptions.add("-Xexperimental")
+            compileOptions.addAll(listOf("-target:jvm-1.8","-Xexperimental"))
         }
     }
 
