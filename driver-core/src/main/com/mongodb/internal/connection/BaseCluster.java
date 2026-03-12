@@ -67,7 +67,9 @@ import static com.mongodb.connection.ServerDescription.MAX_DRIVER_WIRE_VERSION;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_SERVER_VERSION;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
 import static com.mongodb.internal.Locks.withInterruptibleLock;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PACKAGE;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PROTECTED;
 import static com.mongodb.internal.connection.EventHelper.wouldDescriptionsGenerateEquivalentEvents;
 import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
 import static com.mongodb.internal.logging.LogMessage.Component.SERVER_SELECTION;
@@ -94,7 +96,8 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.stream.Collectors.toList;
 
-abstract class BaseCluster implements Cluster {
+@VisibleForTesting(otherwise = PROTECTED)
+public abstract class BaseCluster implements Cluster {
     private static final Logger LOGGER = Loggers.getLogger("cluster");
     private static final StructuredLogger STRUCTURED_LOGGER = new StructuredLogger("cluster");
 
@@ -112,10 +115,11 @@ abstract class BaseCluster implements Cluster {
     private volatile boolean isClosed;
     private volatile ClusterDescription description;
 
-    BaseCluster(final ClusterId clusterId,
-                final ClusterSettings settings,
-                final ClusterableServerFactory serverFactory,
-                final ClientMetadata clientMetadata) {
+    @VisibleForTesting(otherwise = PACKAGE)
+    protected BaseCluster(final ClusterId clusterId,
+                          final ClusterSettings settings,
+                          final ClusterableServerFactory serverFactory,
+                          final ClientMetadata clientMetadata) {
         this.clusterId = notNull("clusterId", clusterId);
         this.settings = notNull("settings", settings);
         this.serverFactory = notNull("serverFactory", serverFactory);
@@ -361,8 +365,7 @@ abstract class BaseCluster implements Cluster {
             final ClusterSettings settings) {
         List<ServerSelector> selectors = Stream.of(
                 getRaceConditionPreFilteringSelector(serversSnapshot),
-                serverSelector,
-                serverDeprioritization.getServerSelector(),
+                serverDeprioritization.apply(serverSelector),
                 settings.getServerSelector(), // may be null
                 new LatencyMinimizingServerSelector(settings.getLocalThreshold(MILLISECONDS), MILLISECONDS),
                 AtMostTwoRandomServerSelector.instance(),
