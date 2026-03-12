@@ -20,12 +20,13 @@ import org.bson.ByteBuf;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class NettyByteBuf implements ByteBuf {
-
+    private final AtomicInteger referenceCount = new AtomicInteger(1);
     private io.netty.buffer.ByteBuf proxied;
     private boolean isWriting = true;
 
@@ -271,17 +272,26 @@ public final class NettyByteBuf implements ByteBuf {
 
     @Override
     public int getReferenceCount() {
-        return proxied.refCnt();
+        return referenceCount.get();
     }
 
     @Override
     public ByteBuf retain() {
+        if (referenceCount.incrementAndGet() == 1) {
+            referenceCount.decrementAndGet();
+            throw new IllegalStateException("Attempted to increment the reference count when it is already 0");
+        }
         proxied.retain();
         return this;
     }
 
     @Override
     public void release() {
+        int newRefCount = referenceCount.decrementAndGet();
+        if (newRefCount < 0) {
+            referenceCount.incrementAndGet();
+            throw new IllegalStateException("Attempted to decrement the reference count below 0");
+        }
         proxied.release();
     }
 }
