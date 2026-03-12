@@ -21,7 +21,6 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoInternalException;
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.TransactionOptions;
@@ -33,7 +32,6 @@ import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.observability.micrometer.TransactionSpan;
 import com.mongodb.internal.operation.AbortTransactionOperation;
 import com.mongodb.internal.operation.CommitTransactionOperation;
-import com.mongodb.internal.operation.OperationHelper;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteConcernHelper;
 import com.mongodb.internal.operation.WriteOperation;
@@ -160,6 +158,12 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         }
     }
 
+    private void abortIfInTransaction() {
+        if (transactionState == TransactionState.IN) {
+            abortTransaction();
+        }
+    }
+
     private void startTransaction(final TransactionOptions transactionOptions, final TimeoutContext timeoutContext) {
         Boolean snapshot = getOptions().isSnapshot();
         if (snapshot != null && snapshot) {
@@ -258,9 +262,10 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
     public <T> T withTransaction(final TransactionBody<T> transactionBody, final TransactionOptions options) {
         notNull("transactionBody", transactionBody);
         TimeoutContext withTransactionTimeoutContext = createTimeoutContext(options);
-        final boolean hasTimeoutMS = withTransactionTimeoutContext.hasTimeoutMS();
-        Timeout withTransactionTimeout = withTransactionTimeoutContext.timeoutOrAlternative(
-                assertNotNull(TimeoutContext.startTimeout(MAX_RETRY_TIME_LIMIT_MS)));
+        boolean timeoutMsConfigured = withTransactionTimeoutContext.hasTimeoutMS();
+        Timeout withTransactionTimeout = assertNotNull(timeoutMsConfigured
+                ? withTransactionTimeoutContext.getTimeout()
+                : TimeoutContext.startTimeout(MAX_RETRY_TIME_LIMIT_MS));
         BooleanSupplier withTransactionTimeoutExpired = () -> withTransactionTimeout.call(TimeUnit.MILLISECONDS,
                 () -> false, ms -> false, () -> true);
         int transactionAttempt = 0;
@@ -270,35 +275,37 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
             outer:
             while (true) {
                 if (transactionAttempt > 0) {
-                    backoff(transactionAttempt, withTransactionTimeout, assertNotNull(lastError), hasTimeoutMS);
+                    backoff(transactionAttempt, withTransactionTimeout, assertNotNull(lastError), timeoutMsConfigured);
                 }
-                T retVal;
                 try {
                     startTransaction(options, withTransactionTimeoutContext);
                     transactionAttempt++;
-
                     if (transactionSpan != null) {
                         transactionSpan.setIsConvenientTransaction();
                     }
+                } catch (Throwable e) {
+                    abortIfInTransaction();
+                    throw e;
+                }
+                T retVal;
+                try {
                     retVal = transactionBody.execute();
                 } catch (Throwable e) {
-                    if (transactionState == TransactionState.IN) {
-                        abortTransaction();
-                    }
+                    abortIfInTransaction();
                     if (e instanceof MongoException) {
-                        lastError = (MongoException) e;
-                        if (!(e instanceof MongoOperationTimeoutException)) {
-                            MongoException exceptionToHandle = OperationHelper.unwrap((MongoException) e);
-                            if (exceptionToHandle.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
-                                if (withTransactionTimeoutExpired.getAsBoolean()) {
-                                    throw timeoutException(hasTimeoutMS, e);
-                                } else {
-                                    if (transactionSpan != null) {
-                                        transactionSpan.spanFinalizing(false);
-                                    }
-                                    continue;
-                                }
+                        MongoException mongoException = (MongoException) e;
+                        if (mongoException.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
+                            if (transactionSpan != null) {
+                                transactionSpan.spanFinalizing(false);
                             }
+                            lastError = mongoException;
+                            continue;
+                        } else if (mongoException.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
+                            throw e;
+                        } else {
+                            throw withTransactionTimeoutExpired.getAsBoolean()
+                                    ? wrapInMongoTimeoutException(mongoException, timeoutMsConfigured)
+                                    : mongoException;
                         }
                     }
                     throw e;
@@ -308,28 +315,22 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                         try {
                             commitTransaction(false);
                             break;
-                        } catch (MongoException e) {
-                            lastError = e;
-                            clearTransactionContextOnError(e);
-                            if (!(e instanceof MongoOperationTimeoutException)) {
-                                if (withTransactionTimeoutExpired.getAsBoolean()) {
-                                    throw timeoutException(hasTimeoutMS, e);
-
-                                } else {
-                                    applyMajorityWriteConcernToTransactionOptions();
-
-                                    if (!(e instanceof MongoExecutionTimeoutException)
-                                            && e.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
-                                        continue;
-                                    } else if (e.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
-                                        if (transactionSpan != null) {
-                                            transactionSpan.spanFinalizing(true);
-                                        }
-                                        continue outer;
-                                    }
+                        } catch (MongoException mongoException) {
+                            if (mongoException.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
+                                    && !(mongoException instanceof MongoExecutionTimeoutException)
+                                    && !withTransactionTimeoutExpired.getAsBoolean()) {
+                                applyMajorityWriteConcernToTransactionOptions();
+                                continue;
+                            } else if (mongoException.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
+                                if (transactionSpan != null) {
+                                    transactionSpan.spanFinalizing(true);
                                 }
+                                lastError = mongoException;
+                                continue outer;
                             }
-                            throw e;
+                            throw withTransactionTimeoutExpired.getAsBoolean()
+                                    ? wrapInMongoTimeoutException(mongoException, timeoutMsConfigured)
+                                    : mongoException;
                         }
                     }
                 }
@@ -351,9 +352,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
     @Override
     public void close() {
         try {
-            if (transactionState == TransactionState.IN) {
-                abortTransaction();
-            }
+            abortIfInTransaction();
         } finally {
             clearTransactionContext();
             super.close();
@@ -391,10 +390,10 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
     }
 
     private static void backoff(final int transactionAttempt,
-            final Timeout withTransactionTimeout, final MongoException lastError, final boolean hasTimeoutMS) {
+            final Timeout withTransactionTimeout, final MongoException lastError, final boolean timeoutMsConfigured) {
         long backoffMs = ExponentialBackoff.calculateTransactionBackoffMs(transactionAttempt);
         withTransactionTimeout.shortenBy(backoffMs, TimeUnit.MILLISECONDS).onExpired(() -> {
-            throw timeoutException(hasTimeoutMS, lastError);
+            throw wrapInMongoTimeoutException(lastError, timeoutMsConfigured);
         });
         try {
             if (backoffMs > 0) {
@@ -405,9 +404,15 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         }
     }
 
-    private static MongoException timeoutException(final boolean hasTimeoutMS, final Throwable cause) {
-        return hasTimeoutMS
-                ? createMongoTimeoutException(cause) // CSOT timeout exception
-                : new MongoTimeoutException("Operation exceeded the timeout limit", cause); // Legacy timeout exception
+    private static MongoException wrapInMongoTimeoutException(final MongoException cause, final boolean timeoutMsConfigured) {
+        return timeoutMsConfigured
+                ? createMongoTimeoutException(cause)
+                : wrapInNonTimeoutMsMongoTimeoutException(cause);
+    }
+
+    private static MongoTimeoutException wrapInNonTimeoutMsMongoTimeoutException(final MongoException cause) {
+        return cause instanceof MongoTimeoutException
+                ? (MongoTimeoutException) cause
+                : new MongoTimeoutException("Operation exceeded the timeout limit", cause);
     }
 }
