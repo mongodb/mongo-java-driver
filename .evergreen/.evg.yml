@@ -1894,6 +1894,10 @@ axes:
         display_name: "Scala 2.13"
         variables:
           SCALA: "2.13"
+      - id: "3"
+        display_name: "Scala 3"
+        variables:
+          SCALA: "3"
 
   - id: "api-version"
     display_name: "API Version"
@@ -2503,13 +2507,22 @@ buildvariants:
     tasks:
       - name: ".ocsp"
 
-  - matrix_name: "scala-tests"
+  - matrix_name: "scala-tests-2"
     matrix_spec: { auth: "noauth", ssl: "nossl", jdk: [ "jdk8", "jdk17", "jdk21" ], version: [ "7.0" ], topology: "replicaset",
-                   scala: "*", os: "ubuntu" }
+                   scala: ["2.11", "2.12", "2.13"] , os: "ubuntu" }
     display_name: "${scala} ${jdk} ${version} ${topology} ${os}"
     tags: [ "test-scala-variant" ]
     tasks:
       - name: "scala-test-task"
+
+  - matrix_name: "scala-tests-3"
+    matrix_spec: { auth: "noauth", ssl: "nossl", jdk: [ "jdk17", "jdk21" ], version: [ "8.0" ], topology: "replicaset",
+                   scala: "3", os: "ubuntu" }
+    display_name: "${scala} ${jdk} ${version} ${topology} ${os}"
+    tags: [ "test-scala-variant" ]
+    tasks:
+      - name: "scala-test-task"
+
 
   - matrix_name: "kotlin-tests"
     matrix_spec: { auth: "noauth", ssl: "nossl", jdk: [ "jdk8", "jdk17", "jdk21" ], version: [ "7.0" ], topology: "replicaset", os: "ubuntu" }
