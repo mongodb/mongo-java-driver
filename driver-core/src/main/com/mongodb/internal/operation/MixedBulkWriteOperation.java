@@ -51,9 +51,7 @@ import org.bson.BsonValue;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
@@ -61,10 +59,12 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.exceptionTransformingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
+import static com.mongodb.internal.operation.CommandOperationHelper.RETRYABLE_WRITE_ERROR_LABEL;
 import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabel;
 import static com.mongodb.internal.operation.CommandOperationHelper.logRetryExecute;
 import static com.mongodb.internal.operation.CommandOperationHelper.loggingShouldAttemptToRetryWriteAndAddRetryableLabel;
 import static com.mongodb.internal.operation.CommandOperationHelper.onRetryableWriteAttemptFailure;
+import static com.mongodb.internal.operation.CommandOperationHelper.shouldAddRetryableWriteErrorLabel;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
 import static com.mongodb.internal.operation.CommandOperationHelper.validateAndGetEffectiveWriteConcern;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
@@ -287,8 +287,11 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                             connection.getDescription().getServerAddress(), "errMsg", timeoutContext);
                     if (writeConcernBasedError != null) {
                         if (currentBulkWriteTracker.lastAttempt()) {
-                            addRetryableWriteErrorLabel(writeConcernBasedError, maxWireVersion);
-                            addErrorLabelsToWriteConcern(result.getDocument("writeConcernError"), writeConcernBasedError.getErrorLabels());
+                            // The raw result is not exposed to the user, so labels can be added directly here.
+                            // They are further processed as if they originated from the server.
+                            if (shouldAddRetryableWriteErrorLabel(writeConcernBasedError, maxWireVersion)) {
+                                addRetryableErrorLabelToResult(result);
+                            }
                         } else if (loggingShouldAttemptToRetryWriteAndAddRetryableLabel(retryState, writeConcernBasedError)) {
                             throw new MongoWriteConcernWithResponseException(writeConcernBasedError, result);
                         }
@@ -341,9 +344,11 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                                 connection.getDescription().getServerAddress(), "errMsg", operationContext.getTimeoutContext());
                         if (writeConcernBasedError != null) {
                             if (currentBulkWriteTracker.lastAttempt()) {
-                                addRetryableWriteErrorLabel(writeConcernBasedError, maxWireVersion);
-                                addErrorLabelsToWriteConcern(result.getDocument("writeConcernError"),
-                                        writeConcernBasedError.getErrorLabels());
+                                // The raw result is not exposed to the user, so labels can be added directly here.
+                                // They are further processed as if they originated from the server.
+                                if (shouldAddRetryableWriteErrorLabel(writeConcernBasedError, maxWireVersion)) {
+                                    addRetryableErrorLabelToResult(result);
+                                }
                             } else if (loggingShouldAttemptToRetryWriteAndAddRetryableLabel(retryState, writeConcernBasedError)) {
                                 iterationCallback.onResult(null,
                                         new MongoWriteConcernWithResponseException(writeConcernBasedError, result));
@@ -456,9 +461,11 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
         return effectiveWriteConcern.isAcknowledged() || (ordered && batch.hasAnotherBatch());
     }
 
-    private void addErrorLabelsToWriteConcern(final BsonDocument result, final Set<String> errorLabels) {
+    private void addRetryableErrorLabelToResult(final BsonDocument result) {
         if (!result.containsKey("errorLabels")) {
-            result.put("errorLabels", new BsonArray(errorLabels.stream().map(BsonString::new).collect(Collectors.toList())));
+            BsonArray labelsArray = new BsonArray();
+            labelsArray.add(new BsonString(RETRYABLE_WRITE_ERROR_LABEL));
+            result.put("errorLabels", labelsArray);
         }
     }
 

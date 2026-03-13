@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.assertions.Assertions.assertNotNull;
@@ -419,10 +418,6 @@ public final class UnifiedTestModifications {
                 .test("retryable-writes", "retryable-writes insertOne serverErrors", "InsertOne succeeds after retryable writeConcernError")
                 .test("retryable-writes", "retryable-writes bulkWrite serverErrors",
                         "BulkWrite succeeds after retryable writeConcernError in first batch");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5341")
-                .when(() -> isDiscoverableReplicaSet() && serverVersionLessThan(4, 4))
-                .test("retryable-writes", "retryable-writes insertOne serverErrors",
-                        "RetryableWriteError label is added based on writeConcernError in pre-4.4 mongod response");
 
         // server-discovery-and-monitoring (SDAM)
 
