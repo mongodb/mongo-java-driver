@@ -26,6 +26,7 @@ import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
     private static final TimeoutContext TIMEOUT_CONTEXT = new TimeoutContext(new TimeoutSettings(0, 0, 0, 0L, 0));
@@ -724,6 +725,120 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
     }
 
     @Test
+    void testWhile() {
+        // last iteration: 3 < 3 = 1
+        // 1(plainTest exception) + 1(plainTest false) + 1(sync exception) + 1(sync success) * 1(transition to next iteration) = 4
+        // 1(plainTest exception) + 1(plainTest false) + 1(sync exception) + 1(sync success) * 4(transition to next iteration) = 7
+        // 1(plainTest exception) + 1(plainTest false) + 1(sync exception) + 1(sync success) * 7(transition to next iteration) = 10
+        assertBehavesSameVariations(10,
+                () -> {
+                    int counter = 0;
+                    while (counter < 3 && plainTest(counter)) {
+                        counter++;
+                        sync(counter);
+                    }
+                },
+                (callback) -> {
+                    MutableValue<Integer> counter = new MutableValue<>(0);
+                    beginAsync().thenRunWhileLoop(() -> counter.get() < 3 && plainTest(counter.get()), c2 -> {
+                        counter.set(counter.get() + 1);
+                        async(counter.get(), c2);
+                    }).finish(callback);
+                });
+    }
+
+    @Test
+    void testWhileWithThenRun() {
+        // while: last iteration: 3 < 3 = 1
+        // 1(plainTest exception) + 1(plainTest false) + 1(sync exception) + 1(sync success) * 1(transition to next iteration) = 4
+        // 1(plainTest exception) + 1(plainTest false) + 1(sync exception) + 1(sync success) * 4(transition to next iteration) = 7
+        // 1(plainTest exception) + 1(plainTest false) + 1(sync exception) + 1(sync success) * 7(transition to next iteration) = 10
+        // trailing sync: 1(exception) + 1(success) = 2
+        // 6(while exception) + 4(while success) * 2(trailing sync) = 14
+        assertBehavesSameVariations(14,
+                () -> {
+                    int counter = 0;
+                    while (counter < 3 && plainTest(counter)) {
+                        counter++;
+                        sync(counter);
+                    }
+                    sync(counter + 1);
+                },
+                (callback) -> {
+                    MutableValue<Integer> counter = new MutableValue<>(0);
+                    beginAsync().thenRun(c -> {
+                        beginAsync().thenRunWhileLoop(() -> counter.get() < 3 && plainTest(counter.get()),  c2 -> {
+                            counter.set(counter.get() + 1);
+                            async(counter.get(), c2);
+                        }).finish(c);
+                    }).thenRun(c -> {
+                        async(counter.get() + 1, c);
+                    }).finish(callback);
+                });
+    }
+
+    @Test
+    void testNestedWhileLoops() {
+        // inner while: 4 success + 6 exception = 10
+        // last inner iteration: 3 < 3 = 1
+        // 1(outer plainTest exception) + 1(outer plainTest false) + (inner while) * 1(transition to next iteration) = 12
+        // 1(outer plainTest exception) + 1(outer plainTest false) + (inner while) * 12(transition to next iteration) = 56
+        // 1(outer plainTest exception) + 1(outer plainTest false) + (inner while) * 56(transition to next iteration) = 232
+        assertBehavesSameVariations(232,
+                () -> {
+                    int outer = 0;
+                    while (outer < 3 && plainTest(outer)) {
+                        int inner = 0;
+                        while (inner < 3 && plainTest(inner)) {
+                            sync(outer + inner);
+                            inner++;
+                        }
+                        outer++;
+                    }
+                },
+                (callback) -> {
+                    MutableValue<Integer> outer = new MutableValue<>(0);
+                    beginAsync().thenRunWhileLoop(() -> outer.get() < 3 && plainTest(outer.get()), c -> {
+                        MutableValue<Integer> inner = new MutableValue<>(0);
+                        beginAsync().thenRunWhileLoop(
+                                () -> inner.get() < 3 && plainTest(inner.get()),
+                                c2 -> {
+                                    beginAsync().thenRun(c3 -> {
+                                        async(outer.get() + inner.get(), c3);
+                                    }).thenRun(c3 -> {
+                                        inner.set(inner.get() + 1);
+                                        c3.complete(c3);
+                                    }).finish(c2);
+                                }
+                        ).thenRun(c2 -> {
+                            outer.set(outer.get() + 1);
+                            c2.complete(c2);
+                        }).finish(c);
+                    }).finish(callback);
+                });
+    }
+
+    @Test
+    void testWhileLoopStackConstant() {
+        int depthWith100 = maxStackDepthForIterations(100);
+        int depthWith10000 = maxStackDepthForIterations(10_000);
+        assertEquals(depthWith100, depthWith10000, "Stack depth should be constant regardless of iteration count (trampoline)");
+    }
+
+    private int maxStackDepthForIterations(final int iterations) {
+        MutableValue<Integer> counter = new MutableValue<>(0);
+        MutableValue<Integer> maxDepth = new MutableValue<>(0);
+        beginAsync().thenRunWhileLoop(() -> counter.get() < iterations, c -> {
+            maxDepth.set(Math.max(maxDepth.get(), Thread.currentThread().getStackTrace().length));
+            counter.set(counter.get() + 1);
+            c.complete(c);
+        }).finish((v, t) -> {});
+
+        assertEquals(iterations, counter.get());
+        return maxDepth.get();
+    }
+
+    @Test
     void testRetryLoop() {
         assertBehavesSameVariations(InvocationTracker.DEPTH_LIMIT * 2 + 1,
                 () -> {
@@ -766,6 +881,65 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                           () -> plainTest(2)
                     ).finish(finalCallback);
                 });
+    }
+
+    @Test
+    void testNestedDoWhileLoops() {
+        // inner do-while: 3 success + 5 exception = 8
+        // last outer iteration: 3 < 3 = 1
+        // 5(inner exception) + 3(inner success) * 1(transition to next iteration) = 8
+        // 5(inner exception) + 3(inner success) * (1(outer plainTest exception) + 1(outer plainTest false) + 8(transition to next iteration)) = 35
+        // 5(inner exception) + 3(inner success) * (1(outer plainTest exception) + 1(outer plainTest false) + 35(transition to next iteration)) = 116
+        assertBehavesSameVariations(116,
+                () -> {
+                    int outer = 0;
+                    do {
+                        int inner = 0;
+                        do {
+                            sync(outer + inner);
+                            inner++;
+                        } while (inner < 3 && plainTest(inner));
+                        outer++;
+                    } while (outer < 3 && plainTest(outer));
+                },
+                (callback) -> {
+                    MutableValue<Integer> outer = new MutableValue<>(0);
+                    beginAsync().thenRunDoWhileLoop(c -> {
+                        MutableValue<Integer> inner = new MutableValue<>(0);
+                        beginAsync().thenRunDoWhileLoop(c2 -> {
+                                    beginAsync().thenRun(c3 -> {
+                                        async(outer.get() + inner.get(), c3);
+                                    }).thenRun(c3 -> {
+                                        inner.set(inner.get() + 1);
+                                        c3.complete(c3);
+                                    }).finish(c2);
+                                }, () -> inner.get() < 3 && plainTest(inner.get())
+                        ).thenRun(c2 -> {
+                            outer.set(outer.get() + 1);
+                            c2.complete(c2);
+                        }).finish(c);
+                    }, () -> outer.get() < 3 && plainTest(outer.get())).finish(callback);
+                });
+    }
+
+    @Test
+    void testDoWhileLoopStackConstant() {
+        int depthWith100 = maxDoWhileStackDepthForIterations(100);
+        int depthWith10000 = maxDoWhileStackDepthForIterations(10_000);
+        assertEquals(depthWith100, depthWith10000,
+                "Stack depth should be constant regardless of iteration count");
+    }
+
+    private int maxDoWhileStackDepthForIterations(final int iterations) {
+        MutableValue<Integer> counter = new MutableValue<>(0);
+        MutableValue<Integer> maxDepth = new MutableValue<>(0);
+        beginAsync().thenRunDoWhileLoop(c -> {
+            maxDepth.set(Math.max(maxDepth.get(), Thread.currentThread().getStackTrace().length));
+            counter.set(counter.get() + 1);
+            c.complete(c);
+        }, () -> counter.get() < iterations).finish((v, t) -> {});
+        assertEquals(iterations, counter.get());
+        return maxDepth.get();
     }
 
     @Test
