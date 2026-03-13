@@ -254,6 +254,11 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
             return true;
         }
 
+        // When onlyConnectOriginalUrl is true, skip topology-based host management (no adding/removing hosts)
+        if (getSettings().isOnlyConnectOriginalUrl()) {
+            return true;
+        }
+
         ensureServers(newDescription);
 
         if (newDescription.getCanonicalAddress() != null
