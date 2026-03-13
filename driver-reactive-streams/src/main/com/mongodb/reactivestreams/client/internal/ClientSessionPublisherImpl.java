@@ -39,6 +39,8 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
 import static com.mongodb.assertions.Assertions.assertNotNull;
@@ -57,6 +59,7 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
     private TransactionOptions transactionOptions;
     @Nullable
     private TransactionSpan transactionSpan;
+    private final AtomicBoolean closeInvoked = new AtomicBoolean(false);
 
 
     ClientSessionPublisherImpl(final ServerSessionPool serverSessionPool, final MongoClientImpl mongoClient,
@@ -256,10 +259,12 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
 
     @Override
     public void close() {
-        if (transactionState == TransactionState.IN) {
-            Mono.from(abortTransaction()).doFinally(it -> super.close()).subscribe();
-        } else {
-            super.close();
+        if (closeInvoked.compareAndSet(false, true)) {
+            if (transactionState == TransactionState.IN) {
+                Mono.from(abortTransaction()).doFinally(it -> super.close()).subscribe();
+            } else {
+                super.close();
+            }
         }
     }
 
