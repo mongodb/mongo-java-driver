@@ -536,6 +536,7 @@ class ConnectionStringSpecification extends Specification {
         connectionString.getCompressorList() == []
         connectionString.getRetryWritesValue() == null
         connectionString.getRetryReads() == null
+        connectionString.getOnlyConnectOriginalUrl() == null
     }
 
     @Unroll
@@ -844,5 +845,25 @@ class ConnectionStringSpecification extends Specification {
 
         then:
         connectionString.getRequiredReplicaSetName() == 'java'
+    }
+
+    def 'should parse onlyConnectOriginalUrl option correctly'() {
+        when:
+        def connectionString = new ConnectionString('mongodb://localhost:27017,localhost:27018/?onlyConnectOriginalUrl=true')
+
+        then:
+        connectionString.getOnlyConnectOriginalUrl() == true
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost:27017/?onlyConnectOriginalUrl=false')
+
+        then:
+        connectionString.getOnlyConnectOriginalUrl() == false
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost:27017/')
+
+        then:
+        connectionString.getOnlyConnectOriginalUrl() == null
     }
 }

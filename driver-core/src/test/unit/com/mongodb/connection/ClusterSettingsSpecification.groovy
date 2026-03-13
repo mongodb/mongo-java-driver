@@ -43,6 +43,7 @@ class ClusterSettingsSpecification extends Specification {
         settings.clusterListeners == []
         settings.srvMaxHosts == null
         settings.srvServiceName == 'mongodb'
+        settings.onlyConnectOriginalUrl == false
     }
 
     def 'should set all properties'() {
@@ -519,6 +520,53 @@ class ClusterSettingsSpecification extends Specification {
 
        then:
        thrown(IllegalArgumentException)
+    }
+
+    def 'should support onlyConnectOriginalUrl via builder'() {
+        when:
+        def settings = ClusterSettings.builder()
+                .hosts([new ServerAddress('localhost:27017'), new ServerAddress('localhost:27018')])
+                .mode(ClusterConnectionMode.MULTIPLE)
+                .onlyConnectOriginalUrl(true)
+                .build()
+
+        then:
+        settings.onlyConnectOriginalUrl == true
+
+        when:
+        def copy = ClusterSettings.builder().applySettings(settings).build()
+
+        then:
+        copy.onlyConnectOriginalUrl == true
+        copy == settings
+    }
+
+    def 'should read onlyConnectOriginalUrl from connection string'() {
+        when:
+        def settings = ClusterSettings.builder()
+                .applyConnectionString(new ConnectionString(
+                        'mongodb://localhost:27017,localhost:27018/?onlyConnectOriginalUrl=true'))
+                .build()
+
+        then:
+        settings.onlyConnectOriginalUrl == true
+
+        when:
+        settings = ClusterSettings.builder()
+                .applyConnectionString(new ConnectionString(
+                        'mongodb://localhost:27017,localhost:27018/?onlyConnectOriginalUrl=false'))
+                .build()
+
+        then:
+        settings.onlyConnectOriginalUrl == false
+
+        when:
+        settings = ClusterSettings.builder()
+                .applyConnectionString(new ConnectionString('mongodb://localhost:27017,localhost:27018/'))
+                .build()
+
+        then:
+        settings.onlyConnectOriginalUrl == false
     }
 
     static class ServerAddressSubclass extends ServerAddress {
