@@ -92,6 +92,11 @@ public final class ClientSessionOptions {
      *   <li>{@code withTransaction}</li>
      *   <li>{@code close}</li>
      * </ul>
+     *
+     *  <p>Note: When using synchronous API, this timeout does not limit socket writes, therefore
+     *  there is a possibility that the operation might not be timed out when expected. This limitation does not
+     *  apply to the reactive streams API.
+     *
      * @param timeUnit the time unit
      * @return the default timeout
      * @since 5.2
@@ -221,7 +226,7 @@ public final class ClientSessionOptions {
          *   <li>{@code close}</li>
          * </ul>
          *
-         *  <p><strong>NOTE:</strong> When using synchronous API, this timeout does not limit socket writes, therefore
+         *  <p>Note: When using synchronous API, this timeout does not limit socket writes, therefore
          *  there is a possibility that the operation might not be timed out when expected. This limitation does not
          *  apply to the reactive streams API.
          *

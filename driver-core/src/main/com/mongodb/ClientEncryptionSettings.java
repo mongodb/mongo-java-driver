@@ -172,7 +172,7 @@ public final class ClientEncryptionSettings {
          *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
          * </ul>
          *
-         * <p><strong>NOTE:</strong></p>
+         * <p>Note:</p>
          * <ul>
          *   <li>The timeout set through this method overrides the timeout defined in the key vault client settings
          *       specified in {@link #keyVaultMongoClientSettings(MongoClientSettings)}.
@@ -371,6 +371,16 @@ public final class ClientEncryptionSettings {
      *   </li>
      *   <li>{@code 0} means infinite timeout.</li>
      *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * <p>Note:</p>
+     * <ul>
+     *   <li>The timeout set through this method overrides the timeout defined in the key vault client settings
+     *       specified in {@link Builder#keyVaultMongoClientSettings(MongoClientSettings)}.
+     *       Essentially, for operations that require accessing the key vault, the remaining timeout from the initial operation
+     *       determines the duration allowed for key vault access.</li>
+     *   <li>When using synchronous API, this timeout does not limit socket writes, therefore there is a possibility that the
+     *       operation might not be timed out when expected. This limitation does not apply to the reactive streams API.</li>
      * </ul>
      *
      * @param timeUnit the time unit
