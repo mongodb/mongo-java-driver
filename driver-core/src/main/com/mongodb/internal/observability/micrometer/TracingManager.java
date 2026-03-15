@@ -38,6 +38,8 @@ import static com.mongodb.internal.observability.micrometer.MongodbObservation.L
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.COLLECTION;
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.COMMAND_NAME;
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.NAMESPACE;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.OPERATION_NAME;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.OPERATION_SUMMARY;
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.NETWORK_TRANSPORT;
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.QUERY_SUMMARY;
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SERVER_ADDRESS;
@@ -264,6 +266,49 @@ public class TracingManager {
             ));
         }
 
+        return span;
+    }
+
+    /**
+     * Creates an operation-level tracing span for a database command.
+     * <p>
+     * The span is named "{commandName} {database}[.{collection}]" and tagged with standard
+     * low-cardinality attributes (system, namespace, collection, operation name, operation summary).
+     * The span is also set on the {@link OperationContext} for use by downstream command-level tracing.
+     *
+     * @param transactionSpan  the active transaction span (for parent context), or null
+     * @param operationContext the operation context to attach the span to
+     * @param commandName      the name of the command (e.g. "find", "insert")
+     * @param namespace        the MongoDB namespace for the operation
+     * @return the created span, or null if tracing is disabled
+     */
+    @Nullable
+    public Span createOperationSpan(@Nullable final TransactionSpan transactionSpan,
+            final OperationContext operationContext, final String commandName, final MongoNamespace namespace) {
+        if (!isEnabled()) {
+            return null;
+        }
+        TraceContext parentContext = null;
+        if (transactionSpan != null) {
+            parentContext = transactionSpan.getContext();
+        }
+        String name = commandName + " " + namespace.getDatabaseName()
+                + (MongoNamespaceHelper.COMMAND_COLLECTION_NAME.equalsIgnoreCase(namespace.getCollectionName())
+                ? ""
+                : "." + namespace.getCollectionName());
+
+        KeyValues keyValues = KeyValues.of(
+                SYSTEM.withValue("mongodb"),
+                NAMESPACE.withValue(namespace.getDatabaseName()));
+        if (!MongoNamespaceHelper.COMMAND_COLLECTION_NAME.equalsIgnoreCase(namespace.getCollectionName())) {
+            keyValues = keyValues.and(COLLECTION.withValue(namespace.getCollectionName()));
+        }
+        keyValues = keyValues.and(OPERATION_NAME.withValue(commandName),
+                OPERATION_SUMMARY.withValue(name));
+
+        Span span = addSpan(name, parentContext, namespace);
+        span.tagLowCardinality(keyValues);
+        operationContext.setTracingSpan(span);
         return span;
     }
 }

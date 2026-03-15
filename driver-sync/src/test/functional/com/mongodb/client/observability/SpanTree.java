@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.observability;
+package com.mongodb.client.observability;
 
 import com.mongodb.lang.Nullable;
 import io.micrometer.tracing.exporter.FinishedSpan;
@@ -202,6 +202,10 @@ public class SpanTree {
         for (int i = 0; i < reportedNode.children.size(); i++) {
             assertValid(reportedNode.children.get(i), expectedNode.children.get(i), valueMatcher);
         }
+    }
+
+    public List<SpanNode> getRoots() {
+        return Collections.unmodifiableList(roots);
     }
 
     @Override

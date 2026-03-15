@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,11 +14,19 @@
  * limitations under the License.
  */
 
-package org.bson.json;
+package com.mongodb.client.observability;
 
-class JsonDoubleConverter implements Converter<Double> {
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.AbstractMicrometerProseTest;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+
+/**
+ * Sync driver implementation of the Micrometer prose tests.
+ */
+public class MicrometerProseTest extends AbstractMicrometerProseTest {
     @Override
-    public void convert(final Double value, final StrictJsonWriter writer) {
-        writer.writeNumber(JsonDoubleHelper.toString(value));
+    protected MongoClient createMongoClient(final MongoClientSettings settings) {
+        return MongoClients.create(settings);
     }
 }

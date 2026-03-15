@@ -71,6 +71,10 @@ printf "\nSpotBugs created the following SARIF reports\n"
 IFS=$'\n'
 declare -a SARIF_PATHS=($(find "${RELATIVE_DIR_PATH}/.." -path "*/spotbugs/*.sarif"))
 unset IFS
+if [ ${#SARIF_PATHS[@]} -eq 0 ]; then
+   printf "\nERROR: No SARIF files found matching pattern */spotbugs/*.sarif\n"
+   exit 1
+fi
 for SARIF_PATH in "${SARIF_PATHS[@]}"; do
     GRADLE_PROJECT_NAME="$(basename "$(dirname "$(dirname "$(dirname "$(dirname "${SARIF_PATH}")")")")")"
     NEW_SARIF_PATH="${SSDLC_STATIC_ANALYSIS_REPORTS_PATH}/${GRADLE_PROJECT_NAME}_$(basename "${SARIF_PATH}")"
