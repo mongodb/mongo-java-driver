@@ -187,7 +187,7 @@ trait MacroCodec[T] extends Codec[T] {
     currentType match {
       case BsonType.DOCUMENT => readDocument(reader, decoderContext, clazz, typeArgs)
       case BsonType.ARRAY    => readArray(reader, decoderContext, clazz, typeArgs)
-      case BsonType.NULL =>
+      case BsonType.NULL     =>
         reader.readNull()
         null.asInstanceOf[V] // scalastyle:ignore
       case _ => registry.get(clazz).decode(reader, decoderContext)
@@ -239,12 +239,13 @@ trait MacroCodec[T] extends Codec[T] {
         if (typeArgs.isEmpty) {
           reader.skipValue()
         } else {
-          map += (name -> readValue(
-            reader,
-            decoderContext,
-            typeArgs.head,
-            typeArgs.tail
-          ))
+          map +=
+            (name -> readValue(
+              reader,
+              decoderContext,
+              typeArgs.head,
+              typeArgs.tail
+            ))
         }
       }
       reader.readEndDocument()

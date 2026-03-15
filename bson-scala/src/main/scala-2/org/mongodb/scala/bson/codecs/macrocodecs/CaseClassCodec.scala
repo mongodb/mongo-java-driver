@@ -345,7 +345,7 @@ private[codecs] object CaseClassCodec {
       val cases: Seq[Tree] = {
         fields.map {
           case (classType, _) if isCaseObject(classType) => cq""" ${keyName(classType)} =>"""
-          case (classType, fields) =>
+          case (classType, fields)                       =>
             cq""" ${keyName(classType)} =>
                   val instanceValue = value.asInstanceOf[${classType}]
                   ..${writeClassValues(fields, ignoredFields(classType))}"""

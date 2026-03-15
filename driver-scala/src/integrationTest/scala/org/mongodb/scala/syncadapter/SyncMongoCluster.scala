@@ -1,12 +1,12 @@
 package org.mongodb.scala.syncadapter
 
 import com.mongodb.client.model.bulk.{ ClientBulkWriteOptions, ClientBulkWriteResult, ClientNamespacedWriteModel }
-import com.mongodb.{ ClientSessionOptions, ReadConcern, ReadPreference, WriteConcern }
 import com.mongodb.client.{ ClientSession, MongoCluster => JMongoCluster, MongoDatabase => JMongoDatabase }
+import com.mongodb.{ ClientSessionOptions, ReadConcern, ReadPreference, WriteConcern }
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
-import org.mongodb.scala.MongoCluster
+import org.mongodb.scala.{ MongoCluster, SingleObservableFuture }
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 
 import java.util
