@@ -26,7 +26,7 @@ import org.mongodb.scala._
 object Helpers {
 
   implicit class DocumentObservable[C](val observable: Observable[Document]) extends ImplicitObservable[Document] {
-    override val converter: (Document) => String = (doc) => doc.toJson
+    override val converter: (Document) => String = (doc) => doc.toJson()
   }
 
   implicit class GenericObservable[C](val observable: Observable[C]) extends ImplicitObservable[C] {

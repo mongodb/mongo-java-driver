@@ -16,10 +16,6 @@
 
 package org.mongodb.scala.bson.codecs
 
-import java.nio.ByteBuffer
-import java.util
-import java.util.Date
-
 import org.bson._
 import org.bson.codecs.configuration.{ CodecProvider, CodecRegistries, CodecRegistry }
 import org.bson.codecs.{ Codec, DecoderContext, EncoderContext }
@@ -30,8 +26,10 @@ import org.mongodb.scala.bson.annotations.{ BsonIgnore, BsonProperty }
 import org.mongodb.scala.bson.codecs.Macros.{ createCodecProvider, createCodecProviderIgnoreNone }
 import org.mongodb.scala.bson.codecs.Registry.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.collection.immutable.Document
-import scala.collection.immutable.Vector
 
+import java.nio.ByteBuffer
+import java.util
+import java.util.Date
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
@@ -387,7 +385,7 @@ class MacrosSpec extends BaseSpec {
     )
   }
 
-  it should "rountrip case classes containing vals" in {
+  it should "roundtrip case classes containing vals" in {
     val id = new ObjectId
     roundTrip(
       CaseClassWithVal(id, "Bob"),
@@ -714,7 +712,7 @@ class MacrosSpec extends BaseSpec {
 
   def createTreeJson(tree: Tree): String = {
     tree match {
-      case l: Leaf => s"""{_t: "Leaf", value: ${l.value}}"""
+      case l: Leaf   => s"""{_t: "Leaf", value: ${l.value}}"""
       case b: Branch =>
         s"""{_t: "Branch", l1: ${createTreeJson(b.b1)}, r1: ${createTreeJson(b.b2)}, value: ${b.value}}"""
       case _ => "{}"

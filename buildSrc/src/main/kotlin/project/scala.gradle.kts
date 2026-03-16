@@ -65,18 +65,31 @@ afterEvaluate {
     // ============================================
     //     Scala version specific configuration
     // ============================================
-    val compileOptions = mutableListOf("-target:jvm-1.8")
+    val compileOptions: MutableList<String> = mutableListOf()
     when (scalaVersion) {
+        "3" -> {
+            dependencies {
+                api(libs.bundles.scala.v3)
+
+                testImplementation(libs.bundles.scala.test.v3)
+            }
+            sourceSets { main { scala { setSrcDirs(listOf("src/main/scala", "src/main/scala-3")) } } }
+            sourceSets { test { scala { setSrcDirs(listOf("src/test/scala", "src/test/scala-3")) } } }
+
+            compileOptions.addAll(listOf("-release:8", "-Xcheck-macros", "-Ycheck:all"))
+        }
         "2.13" -> {
             dependencies {
                 api(libs.bundles.scala.v2.v13)
 
                 testImplementation(libs.bundles.scala.test.v2.v13)
             }
-            sourceSets { main { scala { setSrcDirs(listOf("src/main/scala", "src/main/scala-2.13+")) } } }
+            sourceSets { main { scala { setSrcDirs(listOf("src/main/scala", "src/main/scala-2", "src/main/scala-2.13")) } } }
+            sourceSets { test { scala { setSrcDirs(listOf("src/test/scala", "src/test/scala-2", "src/test/scala-2.13")) } } }
 
             compileOptions.addAll(
                 listOf(
+                    "-release:8",
                     "-feature",
                     "-unchecked",
                     "-language:reflectiveCalls",
@@ -89,7 +102,10 @@ afterEvaluate {
 
                 testImplementation(libs.bundles.scala.test.v2.v12)
             }
-            sourceSets { main { scala { setSrcDirs(listOf("src/main/scala", "src/main/scala-2.13-")) } } }
+            sourceSets { main { scala { setSrcDirs(listOf("src/main/scala", "src/main/scala-2", "src/main/scala-2.13-")) } } }
+            sourceSets { test { scala { setSrcDirs(listOf("src/test/scala", "src/test/scala-2", "src/test/scala-2.13-")) } } }
+
+            compileOptions.add("-target:jvm-1.8")
         }
         "2.11" -> {
             dependencies {
@@ -98,9 +114,10 @@ afterEvaluate {
                 testImplementation(libs.bundles.scala.test.v2.v11)
             }
             // Reuse the scala-2.12 source as its compatible.
-            sourceSets { main { scala { setSrcDirs(listOf("src/main/scala", "src/main/scala-2.13-")) } } }
+            sourceSets { main { scala { setSrcDirs(listOf("src/main/scala", "src/main/scala-2", "src/main/scala-2.13-")) } } }
+            sourceSets { test { scala { setSrcDirs(listOf("src/test/scala", "src/test/scala-2", "src/test/scala-2.13-")) } } }
 
-            compileOptions.add("-Xexperimental")
+            compileOptions.addAll(listOf("-target:jvm-1.8", "-Xexperimental"))
         }
     }
 
