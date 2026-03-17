@@ -55,7 +55,7 @@ class FlatMapObservableTest extends BaseSpec with Futures with Eventually {
       .subscribe(
         _ => (),
         _ => {
-          p.trySuccess()
+          p.trySuccess(())
           errorCounter.incrementAndGet()
         },
         () => {
