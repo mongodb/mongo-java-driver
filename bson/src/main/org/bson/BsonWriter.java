@@ -16,8 +16,12 @@
 
 package org.bson;
 
+import org.bson.io.ByteBufferBsonInput;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * An interface for writing a logical BSON document using a push-oriented API.
@@ -356,5 +360,26 @@ public interface BsonWriter {
      * @param reader The source.
      */
     void pipe(BsonReader reader);
+
+    /**
+     * Pipes a raw BSON document from the given byte array to this writer.
+     *
+     * <p>The default implementation wraps the bytes in a {@linkplain BsonBinaryReader}
+     * and calls {@link #pipe(BsonReader)}. Implementations may override this
+     * to write the raw bytes directly without intermediate object allocation.</p>
+     *
+     * @param bytes the byte array containing the BSON document
+     * @param offset the offset into the byte array
+     * @param length the length of the BSON document
+     * @since 5.7
+     */
+    default void pipe(byte[] bytes, int offset, int length) {
+        try (BsonBinaryReader reader = new BsonBinaryReader(
+                new ByteBufferBsonInput(
+                        new ByteBufNIO(ByteBuffer.wrap(bytes, offset, length)
+                        .order(ByteOrder.LITTLE_ENDIAN))))) {
+            pipe(reader);
+        }
+    }
 
 }

@@ -145,6 +145,36 @@ public final class RawBsonDocument extends BsonDocument {
     }
 
     /**
+     * Returns the byte array backing this document. Changes to the returned array will be reflected in this document.
+     *
+     * @return the backing byte array
+     * @since 5.7
+     */
+    public byte[] getByteBacking() {
+        return bytes;
+    }
+
+    /**
+     * Returns the offset into the {@linkplain #getByteBacking() backing byte array} where this document starts.
+     *
+     * @return the offset
+     * @since 5.7
+     */
+    public int getByteOffset() {
+        return offset;
+    }
+
+    /**
+     * Returns the length of this document within the {@linkplain #getByteBacking() backing byte array}.
+     *
+     * @return the length
+     * @since 5.7
+     */
+    public int getByteLength() {
+        return length;
+    }
+
+    /**
      * Decode this into a document.
      *
      * @param codec the codec to facilitate the transformation
