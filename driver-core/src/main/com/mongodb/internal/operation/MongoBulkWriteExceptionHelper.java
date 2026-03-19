@@ -23,6 +23,7 @@ import com.mongodb.MongoWriteException;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.WriteError;
 import com.mongodb.bulk.BulkWriteResult;
+import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.internal.bulk.WriteRequest;
 import org.bson.BsonDocument;
 
@@ -34,8 +35,9 @@ public final class MongoBulkWriteExceptionHelper {
     public static MongoException translateSingleOperationBulkWriteResultException(
             final WriteRequest.Type type, final MongoBulkWriteException e) {
         MongoException exception;
-        if (e.getWriteConcernError() != null) {
-            exception = new MongoWriteConcernException(e.getWriteConcernError(),
+        WriteConcernError writeConcernError = e.getWriteConcernError();
+        if (writeConcernError != null) {
+            exception = new MongoWriteConcernException(writeConcernError,
                     translateBulkWriteResult(type, e.getWriteResult()), e.getServerAddress(), e.getErrorLabels(), e);
         } else if (!e.getWriteErrors().isEmpty()) {
             exception = new MongoWriteException(new WriteError(e.getWriteErrors().get(0)), e.getServerAddress(),
@@ -44,7 +46,6 @@ public final class MongoBulkWriteExceptionHelper {
             exception = new MongoWriteException(new WriteError(-1, "Unknown write error", new BsonDocument()),
                     e.getServerAddress(), e.getErrorLabels());
         }
-
         return exception;
     }
 
