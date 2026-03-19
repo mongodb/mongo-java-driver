@@ -172,7 +172,7 @@ public final class ClientEncryptionSettings {
          *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
          * </ul>
          *
-         * <p>Note:</p>
+         * <p>Note:
          * <ul>
          *   <li>The timeout set through this method overrides the timeout defined in the key vault client settings
          *       specified in {@link #keyVaultMongoClientSettings(MongoClientSettings)}.
@@ -373,7 +373,7 @@ public final class ClientEncryptionSettings {
      *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
      * </ul>
      *
-     * <p>Note:</p>
+     * <p>Note:
      * <ul>
      *   <li>The timeout set through this method overrides the timeout defined in the key vault client settings
      *       specified in {@link Builder#keyVaultMongoClientSettings(MongoClientSettings)}.
