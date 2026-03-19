@@ -72,6 +72,21 @@ public abstract class MongoServerException extends MongoException {
     }
 
     /**
+     * Construct a new instance.
+     *
+     * @param code the error code from the server
+     * @param message the message from the server
+     * @param t the throwable cause
+     * @param serverAddress the address of the server
+     * @since 5.7
+     */
+    public MongoServerException(final int code, final String message, final Throwable t, final ServerAddress serverAddress) {
+        super(code, message, t);
+        this.errorCodeName = null;
+        this.serverAddress = serverAddress;
+    }
+
+    /**
      * Gets the address of the server.
      *
      * @return the address

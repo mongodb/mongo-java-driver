@@ -18,17 +18,11 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoClientException;
-import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
-import com.mongodb.MongoWriteConcernException;
-import com.mongodb.MongoWriteException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
-import com.mongodb.WriteConcernResult;
-import com.mongodb.WriteError;
 import com.mongodb.bulk.BulkWriteResult;
-import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateCollectionOptions;
@@ -66,7 +60,6 @@ import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
-import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -86,6 +79,7 @@ import java.util.function.Supplier;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.operation.MongoBulkWriteExceptionHelper.translateSingleOperationBulkWriteResultException;
 import static java.util.Collections.singletonList;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
 
@@ -530,34 +524,7 @@ public final class MongoOperationPublisher<T> {
             @Nullable final ClientSession clientSession,
             final WriteRequest.Type type) {
         return createWriteOperationMono(operations::getTimeoutSettings, operation, clientSession)
-                .onErrorMap(MongoBulkWriteException.class, e -> {
-                    MongoException exception;
-                    WriteConcernError writeConcernError = e.getWriteConcernError();
-                    if (e.getWriteErrors().isEmpty() && writeConcernError != null) {
-                        WriteConcernResult writeConcernResult;
-                        if (type == WriteRequest.Type.INSERT) {
-                            writeConcernResult = WriteConcernResult.acknowledged(e.getWriteResult().getInsertedCount(), false, null);
-                        } else if (type == WriteRequest.Type.DELETE) {
-                            writeConcernResult = WriteConcernResult.acknowledged(e.getWriteResult().getDeletedCount(), false, null);
-                        } else {
-                            writeConcernResult = WriteConcernResult
-                                    .acknowledged(e.getWriteResult().getMatchedCount() + e.getWriteResult().getUpserts().size(),
-                                                  e.getWriteResult().getMatchedCount() > 0,
-                                                  e.getWriteResult().getUpserts().isEmpty()
-                                                          ? null : e.getWriteResult().getUpserts().get(0).getId());
-                        }
-                        exception = new MongoWriteConcernException(writeConcernError, writeConcernResult, e.getServerAddress(),
-                                e.getErrorLabels());
-                    } else if (!e.getWriteErrors().isEmpty()) {
-                        exception = new MongoWriteException(new WriteError(e.getWriteErrors().get(0)), e.getServerAddress(),
-                                e.getErrorLabels());
-                    } else {
-                        exception = new MongoWriteException(new WriteError(-1, "Unknown write error", new BsonDocument()),
-                                                            e.getServerAddress(), e.getErrorLabels());
-                    }
-
-                    return exception;
-                });
+                .onErrorMap(MongoBulkWriteException.class, e -> translateSingleOperationBulkWriteResultException(type, e));
     }
 
     private OperationExecutor getExecutor(final TimeoutSettings timeoutSettings) {
