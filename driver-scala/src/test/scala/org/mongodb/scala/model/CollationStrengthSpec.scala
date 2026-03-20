@@ -31,14 +31,9 @@ class CollationStrengthSpec extends BaseSpec {
       collationStrengthClass.getDeclaredFields.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
     val wrappedMethods =
       collationStrengthClass.getDeclaredMethods.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
-    val exclusions = Set("$VALUES", "$values", "valueOf", "values")
 
-    val wrapped = (wrappedFields ++ wrappedMethods) -- exclusions
-    val local = CollationStrength.getClass.getDeclaredMethods.map(_.getName).toSet -- Set(
-      "apply",
-      "$deserializeLambda$",
-      "$anonfun$fromInt$1"
-    )
+    val wrapped = (wrappedFields ++ wrappedMethods) -- DEFAULT_EXCLUSIONS
+    val local = CollationStrength.getClass.getDeclaredMethods.map(_.getName).toSet -- DEFAULT_EXCLUSIONS
 
     local should equal(wrapped)
   }

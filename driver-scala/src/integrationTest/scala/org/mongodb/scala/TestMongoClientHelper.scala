@@ -18,12 +18,13 @@
 package org.mongodb.scala
 
 import com.mongodb.ClusterFixture.getServerApi
-import org.mongodb.scala.syncadapter.WAIT_DURATION
 
 import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 import scala.util.{ Properties, Try }
 
 object TestMongoClientHelper {
+  private val WAIT_DURATION: Duration = Duration(60, "second")
   private val DEFAULT_URI: String = "mongodb://localhost:27017/"
   private val MONGODB_URI_SYSTEM_PROPERTY_NAME: String = "org.mongodb.test.uri"
 
@@ -44,18 +45,18 @@ object TestMongoClientHelper {
   val mongoClientSettings: MongoClientSettings = mongoClientSettingsBuilder.build()
   val mongoClient: MongoClient = MongoClient(mongoClientSettings)
 
-  def isMongoDBOnline: Boolean = {
+  def isMongoDBOnline(): Boolean = {
     Try(Await.result(TestMongoClientHelper.mongoClient.listDatabaseNames().toFuture(), WAIT_DURATION)).isSuccess
   }
 
-  def hasSingleHost: Boolean = {
+  def hasSingleHost(): Boolean = {
     TestMongoClientHelper.connectionString.getHosts.size() == 1
   }
 
   Runtime.getRuntime.addShutdownHook(new ShutdownHook())
 
   private[mongodb] class ShutdownHook extends Thread {
-    override def run() {
+    override def run(): Unit = {
       mongoClient.close()
     }
   }

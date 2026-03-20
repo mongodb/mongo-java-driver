@@ -21,7 +21,9 @@ import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
 
 /**
- * An exception indicating that the driver has timed out waiting for either a server or a connection to become available.
+ * An exception indicating that the driver has timed out doing something.
+ *
+ * @see MongoExecutionTimeoutException
  */
 public class MongoTimeoutException extends MongoClientException {
 

@@ -50,7 +50,7 @@ class ProjectionsSpec extends BaseSpec {
   }
 
   it should "excludeId" in {
-    toBson(model.Projections.excludeId) should equal(Document("""{_id : 0}"""))
+    toBson(model.Projections.excludeId()) should equal(Document("""{_id : 0}"""))
   }
 
   it should "firstElem" in {

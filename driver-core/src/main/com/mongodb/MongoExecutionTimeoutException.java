@@ -16,29 +16,17 @@
 
 package com.mongodb;
 
-import com.mongodb.annotations.Alpha;
-import com.mongodb.annotations.Reason;
 import org.bson.BsonDocument;
 
 /**
- * Exception indicating that the execution of the current operation timed out as a result of the maximum operation time being exceeded.
+ * Exception indicating that the execution of the current command timed out by the server
+ * as a result of the {@linkplain ErrorCategory#EXECUTION_TIMEOUT maximum operation time being exceeded}.
  *
+ * @see MongoTimeoutException
  * @since 2.12
  */
 public class MongoExecutionTimeoutException extends MongoException {
     private static final long serialVersionUID = 5955669123800274594L;
-
-    /**
-     * Construct a new instance.
-     *
-     * @param message the error message
-     * @since 5.2
-     */
-    @Alpha(Reason.CLIENT)
-    public MongoExecutionTimeoutException(final String message) {
-        super(message);
-
-    }
 
     /**
      * Construct a new instance.

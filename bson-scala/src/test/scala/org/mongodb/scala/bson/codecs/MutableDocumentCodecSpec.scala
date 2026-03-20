@@ -93,10 +93,11 @@ class MutableDocumentCodecSpec extends BaseSpec {
     original should equal(decodedDocument)
     decodedDocument.keys.toList should contain theSameElementsInOrderAs (List("_id", "a", "nested"))
 
-    Document(decodedDocument[BsonDocument]("nested")).keys.toList should contain theSameElementsInOrderAs (List(
-      "a",
-      "_id"
-    ))
+    Document(decodedDocument[BsonDocument]("nested")).keys.toList should contain theSameElementsInOrderAs
+      (List(
+        "a",
+        "_id"
+      ))
   }
 
   it should "encoder class should work as expected" in {

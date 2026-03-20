@@ -18,6 +18,8 @@
 package com.mongodb.reactivestreams.client;
 
 import com.mongodb.TransactionOptions;
+import com.mongodb.internal.observability.micrometer.TransactionSpan;
+import com.mongodb.lang.Nullable;
 import org.reactivestreams.Publisher;
 
 /**
@@ -94,4 +96,13 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      * @mongodb.server.release 4.0
      */
     Publisher<Void> abortTransaction();
+
+    /**
+     * Get the transaction span (if started).
+     *
+     * @return the transaction span
+     * @since 5.7
+     */
+    @Nullable
+    TransactionSpan getTransactionSpan();
 }

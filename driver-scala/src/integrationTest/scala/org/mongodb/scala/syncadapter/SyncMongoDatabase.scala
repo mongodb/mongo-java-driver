@@ -15,18 +15,18 @@
  */
 package org.mongodb.scala.syncadapter
 
-import com.mongodb.{ ReadConcern, ReadPreference, WriteConcern }
 import com.mongodb.client.model.{ CreateCollectionOptions, CreateViewOptions }
 import com.mongodb.client.{ ClientSession, MongoDatabase => JMongoDatabase }
+import com.mongodb.{ ReadConcern, ReadPreference, WriteConcern }
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
-import org.mongodb.scala.MongoDatabase
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
+import org.mongodb.scala.{ documentToUntypedDocument, MongoDatabase, SingleObservableFuture }
 
 import java.util.concurrent.TimeUnit
 import scala.collection.JavaConverters._
-import scala.concurrent.duration.MILLISECONDS
+import scala.concurrent.duration.{ Duration, MILLISECONDS }
 import scala.reflect.ClassTag
 
 case class SyncMongoDatabase(wrapped: MongoDatabase) extends JMongoDatabase {
@@ -59,7 +59,7 @@ case class SyncMongoDatabase(wrapped: MongoDatabase) extends JMongoDatabase {
   override def withReadConcern(readConcern: ReadConcern) = SyncMongoDatabase(wrapped.withReadConcern(readConcern))
 
   override def withTimeout(timeout: Long, timeUnit: TimeUnit) =
-    SyncMongoDatabase(wrapped.withTimeout(timeout, timeUnit))
+    SyncMongoDatabase(wrapped.withTimeout(Duration(timeout, timeUnit)))
 
   override def getCollection(collectionName: String) =
     SyncMongoCollection[Document](wrapped.getCollection(collectionName))
