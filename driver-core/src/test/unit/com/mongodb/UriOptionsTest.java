@@ -43,9 +43,9 @@ public class UriOptionsTest extends AbstractConnectionStringTest {
         assumeFalse(getDescription().contains("tlsDisableCertificateRevocationCheck"));
         // Skip because Java driver does not support the tlsDisableOCSPEndpointCheck option
         assumeFalse(getDescription().contains("tlsDisableOCSPEndpointCheck"));
-
         // No CANONICALIZE_HOST_NAME support https://jira.mongodb.org/browse/JAVA-4278
         assumeFalse(getDescription().equals("Valid auth options are parsed correctly (GSSAPI)"));
+        skipAdaptiveRetriesTests(getDescription());
 
         if (getDefinition().getBoolean("valid", BsonBoolean.TRUE).getValue()) {
             testValidOptions();
@@ -57,5 +57,13 @@ public class UriOptionsTest extends AbstractConnectionStringTest {
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() {
         return JsonPoweredTestHelper.getTestData("uri-options");
+    }
+
+    /**
+     * <a href=https://jira.mongodb.org/browse/JAVA-5956>TODO-JAVA-5956</a>.
+     */
+    private void skipAdaptiveRetriesTests(final String description) {
+        assumeFalse(description.equals("adaptiveRetries=true is parsed correctly"));
+        assumeFalse(description.equals("adaptiveRetries=false is parsed correctly"));
     }
 }
