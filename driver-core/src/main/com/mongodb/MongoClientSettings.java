@@ -716,6 +716,9 @@ public final class MongoClientSettings {
          *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
          * </ul>
          *
+         *  <p>Note: When using synchronous API, this timeout does not limit socket writes, therefore there is a possibility that the
+         *  operation might not be timed out when expected. This limitation does not apply to the reactive streams API.
+         *
          * @param timeout the timeout
          * @param timeUnit the time unit
          * @return this
@@ -930,6 +933,9 @@ public final class MongoClientSettings {
      *   <li>{@code 0} means infinite timeout.</li>
      *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
      * </ul>
+     *
+     *  <p>Note: When using synchronous API, this timeout does not limit socket writes, therefore there is a possibility that the
+     *  operation might not be timed out when expected. This limitation does not apply to the reactive streams API.
      *
      * @param timeUnit the time unit
      * @return the timeout in the given time unit
