@@ -54,15 +54,6 @@ class AsyncTransportSettingsTest {
         verify(executorService, atLeastOnce()).execute(any());
     }
 
-    /**
-     * When TLS is disabled, {@link com.mongodb.internal.connection.StreamFactoryHelper} wraps the
-     * provided {@link ExecutorService} in an
-     * {@link java.nio.channels.AsynchronousChannelGroup#withThreadPool(ExecutorService) AsynchronousChannelGroup}.
-     * The group shuts down the executor only upon termination, which requires all channels to be closed first.
-     * Hence {@code awaitTermination} uses a longer timeout.
-     * @param tlsEnabled If TLS is enabled
-     * @throws InterruptedException
-     */
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     @SuppressWarnings("try")
@@ -76,9 +67,7 @@ class AsyncTransportSettingsTest {
                 .transportSettings(asyncTransportSettings)
                 .build();
 
-        try (MongoClient ignored = new SyncMongoClient(mongoClientSettings)) {
-            // ignored
-        }
+        new SyncMongoClient(mongoClientSettings).close();
 
         assertTrue(executorService.awaitTermination(2, TimeUnit.SECONDS));
     }
