@@ -110,7 +110,8 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
 
     private void awaitLatch(final CountDownLatch latch) {
         try {
-            if (!latch.await(operationContext.getTimeoutContext().timeoutOrAlternative(10000), TimeUnit.MILLISECONDS)) {
+            long readTimeoutMS = operationContext.getTimeoutContext().getReadTimeoutMS();
+            if (!latch.await(readTimeoutMS > 0 ? readTimeoutMS : 10000, TimeUnit.MILLISECONDS)) {
                 throw new MongoTimeoutException("Failed to get servers");
             }
         } catch (InterruptedException e) {

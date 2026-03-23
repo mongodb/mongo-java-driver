@@ -174,24 +174,6 @@ public class TimeoutContext {
         return timeout == null ? null : timeout.shortenBy(minRoundTripTimeMS, MILLISECONDS);
     }
 
-    /**
-     * Returns the remaining {@code timeoutMS} if set or the {@code alternativeTimeoutMS}.
-     * zero means infinite timeout.
-     *
-     * @param alternativeTimeoutMS the alternative timeout.
-     * @return timeout to use.
-     */
-    public long timeoutOrAlternative(final long alternativeTimeoutMS) {
-        if (timeout == null) {
-            return alternativeTimeoutMS;
-        } else {
-            return timeout.call(MILLISECONDS,
-                    () -> 0L,
-                    (ms) -> ms,
-                    () -> throwMongoTimeoutException("The operation exceeded the timeout limit."));
-        }
-    }
-
     public TimeoutSettings getTimeoutSettings() {
         return timeoutSettings;
     }
@@ -211,16 +193,34 @@ public class TimeoutContext {
 
     @VisibleForTesting(otherwise = PRIVATE)
     public long getMaxCommitTimeMS() {
-        Long maxCommitTimeMS = timeoutSettings.getMaxCommitTimeMS();
-        return timeoutOrAlternative(maxCommitTimeMS != null ? maxCommitTimeMS : 0);
+        if (timeout == null) {
+            Long maxCommitTimeMS = timeoutSettings.getMaxCommitTimeMS();
+            return maxCommitTimeMS != null ? maxCommitTimeMS : 0;
+        }
+        return timeout.call(MILLISECONDS,
+                () -> 0L,
+                (ms) -> ms,
+                () -> throwMongoTimeoutException("The operation exceeded the timeout limit."));
     }
 
     public long getReadTimeoutMS() {
-        return timeoutOrAlternative(timeoutSettings.getReadTimeoutMS());
+        if (timeout == null) {
+            return timeoutSettings.getReadTimeoutMS();
+        }
+        return timeout.call(MILLISECONDS,
+                () -> 0L,
+                (ms) -> ms,
+                () -> throwMongoTimeoutException("The operation exceeded the timeout limit."));
     }
 
     public long getWriteTimeoutMS() {
-        return timeoutOrAlternative(0);
+        if (timeout == null) {
+            return 0;
+        }
+        return timeout.call(MILLISECONDS,
+                () -> 0L,
+                (ms) -> ms,
+                () -> throwMongoTimeoutException("The operation exceeded the timeout limit."));
     }
 
     public int getConnectTimeoutMs() {

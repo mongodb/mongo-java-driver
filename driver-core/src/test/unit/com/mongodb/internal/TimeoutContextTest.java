@@ -140,22 +140,22 @@ final class TimeoutContextTest {
     @Test
     @DisplayName("Use timeout if available or the alternative")
     void testUseTimeoutIfAvailableOrTheAlternative() {
+        // No CSOT: returns alternative values
         TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS);
-        assertEquals(99L, timeoutContext.timeoutOrAlternative(99));
-
-        timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(0L));
-        assertEquals(0L, timeoutContext.timeoutOrAlternative(99));
-
-        timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(999L));
-        assertTrue(timeoutContext.timeoutOrAlternative(0) <= 999);
-
-        timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(999L));
-        assertTrue(timeoutContext.timeoutOrAlternative(999999) <= 999);
-
-        timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS);
+        assertEquals(TIMEOUT_SETTINGS.getReadTimeoutMS(), timeoutContext.getReadTimeoutMS());
+        assertEquals(0, timeoutContext.getWriteTimeoutMS());
         assertEquals(0, timeoutContext.getMaxCommitTimeMS());
 
+        // CSOT with infinite timeout (0): returns 0
+        timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(0L));
+        assertEquals(0L, timeoutContext.getReadTimeoutMS());
+        assertEquals(0L, timeoutContext.getWriteTimeoutMS());
+        assertEquals(0L, timeoutContext.getMaxCommitTimeMS());
+
+        // CSOT with finite timeout: returns remaining time
         timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(999L));
+        assertTrue(timeoutContext.getReadTimeoutMS() <= 999);
+        assertTrue(timeoutContext.getWriteTimeoutMS() <= 999);
         assertTrue(timeoutContext.getMaxCommitTimeMS() <= 999);
     }
 
@@ -207,19 +207,16 @@ final class TimeoutContextTest {
         assertThrows(MongoOperationTimeoutException.class, smallTimeout::getConnectTimeoutMs);
         assertThrows(MongoOperationTimeoutException.class, () -> getMaxTimeMS(smallTimeout));
         assertThrows(MongoOperationTimeoutException.class, smallTimeout::getMaxCommitTimeMS);
-        assertThrows(MongoOperationTimeoutException.class, () -> smallTimeout.timeoutOrAlternative(1));
         assertDoesNotThrow(longTimeout::getReadTimeoutMS);
         assertDoesNotThrow(longTimeout::getWriteTimeoutMS);
         assertDoesNotThrow(longTimeout::getConnectTimeoutMs);
         assertDoesNotThrow(() -> getMaxTimeMS(longTimeout));
         assertDoesNotThrow(longTimeout::getMaxCommitTimeMS);
-        assertDoesNotThrow(() -> longTimeout.timeoutOrAlternative(1));
         assertDoesNotThrow(noTimeout::getReadTimeoutMS);
         assertDoesNotThrow(noTimeout::getWriteTimeoutMS);
         assertDoesNotThrow(noTimeout::getConnectTimeoutMs);
         assertDoesNotThrow(() -> getMaxTimeMS(noTimeout));
         assertDoesNotThrow(noTimeout::getMaxCommitTimeMS);
-        assertDoesNotThrow(() -> noTimeout.timeoutOrAlternative(1));
     }
 
     @Test
