@@ -48,11 +48,12 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.mongodb.assertions.Assertions.assertNotNull;
-import static com.mongodb.assertions.Assertions.assertNull;
-import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -84,11 +85,9 @@ class AsyncCommandCursorTest {
     private OperationContext operationContext;
     private TimeoutContext timeoutContext;
     private ServerDescription serverDescription;
-    private AsyncCursor<Document> coreCursor;
 
     @BeforeEach
     void setUp() {
-        coreCursor = mock(AsyncCursor.class);
         timeoutContext = spy(new TimeoutContext(TimeoutSettings.create(
                 MongoClientSettings.builder().timeout(TIMEOUT.toMillis(), MILLISECONDS).build())));
         operationContext = spy(new OperationContext(
@@ -130,9 +129,9 @@ class AsyncCommandCursorTest {
 
         //when
         commandBatchCursor.next(operationContext, (result, t) -> {
-            Assertions.assertNull(result);
-            Assertions.assertNotNull(t);
-            Assertions.assertEquals(MongoSocketException.class, t.getClass());
+            assertNull(result);
+            assertNotNull(t);
+            assertEquals(MongoSocketException.class, t.getClass());
         });
 
         //then
@@ -155,9 +154,9 @@ class AsyncCommandCursorTest {
 
         //when
         commandBatchCursor.next(operationContext, (result, t) -> {
-            Assertions.assertNull(result);
-            Assertions.assertNotNull(t);
-            Assertions.assertEquals(MongoOperationTimeoutException.class, t.getClass());
+            assertNull(result);
+            assertNotNull(t);
+            assertEquals(MongoOperationTimeoutException.class, t.getClass());
         });
 
         commandBatchCursor.close(operationContext);
@@ -186,9 +185,9 @@ class AsyncCommandCursorTest {
 
         //when
         commandBatchCursor.next(operationContext, (result, t) -> {
-            Assertions.assertNull(result);
-            Assertions.assertNotNull(t);
-            Assertions.assertEquals(MongoOperationTimeoutException.class, t.getClass());
+            assertNull(result);
+            assertNotNull(t);
+            assertEquals(MongoOperationTimeoutException.class, t.getClass());
         });
 
         commandBatchCursor.close(operationContext);
@@ -224,10 +223,10 @@ class AsyncCommandCursorTest {
         });
 
         // 2 empty-batch getMores + 1 exhausted getMore = 3 getMores, but the 3rd
-        // exhausts the cursor (id=0), which makes the cursor to return an empty result.
+        // exhausts the cursor (id=0), which makes the cursor to break the loop and return an empty result.
         verify(mockConnection, times(3)).release();
         verify(connectionSource, times(3)).getConnection(any(), any());
-        Assertions.assertEquals(3, callCount.get());
+        assertEquals(3, callCount.get());
     }
 
     private AsyncCursor<Document> createBatchCursor() {

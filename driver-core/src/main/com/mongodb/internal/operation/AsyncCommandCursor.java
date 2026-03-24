@@ -113,8 +113,9 @@ class AsyncCommandCursor<T> implements AsyncCursor<T> {
         }, operationContext, callback);
     }
 
-    private void getMoreLoop(final ServerCursor localServerCursor, final OperationContext operationContext,
-                           final SingleResultCallback<List<T>> funcCallback) {
+    private void getMoreLoop(final ServerCursor localServerCursor,
+                             final OperationContext operationContext,
+                             final SingleResultCallback<List<T>> funcCallback) {
         getMore(localServerCursor, operationContext, (nextBatch, t) -> {
             if (t != null) {
                 funcCallback.onResult(null, t);
@@ -183,9 +184,10 @@ class AsyncCommandCursor<T> implements AsyncCursor<T> {
                 getMoreCommand(assertNotNull(connection), cursor, operationContext, wrappedCallback), callback);
     }
 
-    private void getMoreCommand(final AsyncConnection connection, final ServerCursor serverCursor,
-                             final OperationContext operationContext,
-                             final SingleResultCallback<List<T>> callback) {
+    private void getMoreCommand(final AsyncConnection connection,
+                                final ServerCursor serverCursor,
+                                final OperationContext operationContext,
+                                final SingleResultCallback<List<T>> callback) {
         connection.commandAsync(namespace.getDatabaseName(),
                 getMoreCommandDocument(serverCursor.getId(), connection.getDescription(), namespace, batchSize, comment),
                 NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
