@@ -13,7 +13,7 @@ description: Detailed code style rules for Java, Kotlin, Scala, and Groovy in th
 - **Star imports:** Prohibited (AvoidStarImport)
 - **Final parameters:** Required (FinalParameters checkstyle rule)
 - **Braces:** Required for all control structures (NeedBraces)
-- **Else placement:** On its own line (not cuddled)
+- **Else placement:** `} else {` on the same line (Palantir Java Format default)
 - **Copyright header:** Every Java / Kotlin / Scala file must contain `Copyright 2008-present MongoDB, Inc.`
 - **Formatter:** Palantir Java Format
 
