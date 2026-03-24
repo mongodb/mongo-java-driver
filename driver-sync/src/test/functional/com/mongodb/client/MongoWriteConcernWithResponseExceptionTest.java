@@ -43,6 +43,8 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static com.mongodb.internal.operation.CommandOperationHelper.NO_WRITES_PERFORMED_ERROR_LABEL;
+import static com.mongodb.internal.operation.CommandOperationHelper.RETRYABLE_WRITE_ERROR_LABEL;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
@@ -69,7 +71,7 @@ public final class MongoWriteConcernWithResponseExceptionTest {
                 .append("data", new BsonDocument()
                         .append("writeConcernError", new BsonDocument()
                                 .append("code", new BsonInt32(91))
-                                .append("errorLabels", new BsonArray(Stream.of("RetryableWriteError")
+                                .append("errorLabels", new BsonArray(Stream.of(RETRYABLE_WRITE_ERROR_LABEL)
                                         .map(BsonString::new).collect(Collectors.toList())))
                                 .append("errmsg", new BsonString(""))
                         )
@@ -81,7 +83,7 @@ public final class MongoWriteConcernWithResponseExceptionTest {
                 .append("data", new BsonDocument()
                         .append("failCommands", new BsonArray(singletonList(new BsonString("insert"))))
                         .append("errorCode", new BsonInt32(10107))
-                        .append("errorLabels", new BsonArray(Stream.of("RetryableWriteError", "NoWritesPerformed")
+                        .append("errorLabels", new BsonArray(Stream.of(RETRYABLE_WRITE_ERROR_LABEL, NO_WRITES_PERFORMED_ERROR_LABEL)
                                 .map(BsonString::new).collect(Collectors.toList()))));
         doesNotLeak(clientCreator, writeConcernErrorFpDoc, true, noWritesPerformedFpDoc);
         doesNotLeak(clientCreator, noWritesPerformedFpDoc, false, writeConcernErrorFpDoc);
