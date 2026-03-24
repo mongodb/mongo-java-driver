@@ -11,7 +11,6 @@ Client-side field-level encryption (CSFLE) support via JNA bindings to libmongoc
 
 ## Notes
 
-- Every package must have a `package-info.java`
 - Tests are primarily integration tests requiring libmongocrypt native libraries
 - Build downloads JNA libs for multiple platforms, embedded in the JAR
 - **Security-critical module — changes require careful review**

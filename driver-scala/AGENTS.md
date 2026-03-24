@@ -4,13 +4,16 @@ Scala async driver providing Observable-based API wrapping `driver-reactive-stre
 
 **Depends on:** `bson-scala`, `driver-reactive-streams`
 
-**Supported Scala versions:** 2.11, 2.12, 2.13, 3 (configured in root `gradle.properties`). Default: 2.13.
+**Supported Scala versions:** 2.11, 2.12, 2.13, 3 (configured in root
+`gradle.properties`). Default: 2.13.
 
-See [README.md](./README.md) for full details on directory layout, formatting, and testing commands.
+See [README.md](./README.md) for full details on directory layout, formatting, and
+testing commands.
 
 ## Key Packages
 
-- `org.mongodb.scala` — Scala async driver (`MongoClient`, `MongoDatabase`, `MongoCollection`, Observable-based)
+- `org.mongodb.scala` — Scala async driver (`MongoClient`, `MongoDatabase`,
+  `MongoCollection`, Observable-based)
 - `org.mongodb.scala.model` — Scala wrappers around filter/update builders
 
 ## Before Submitting

@@ -1,12 +1,15 @@
 # AGENTS.md - graalvm-native-image-app
 
-GraalVM Native Image test application verifying driver compatibility with native compilation.
+GraalVM Native Image test application verifying driver compatibility with native
+compilation.
 
-**Depends on:** `bson`, `driver-core`, `driver-sync`, `driver-legacy`, `driver-reactive-streams`, `mongodb-crypt`
+**Depends on:** `bson`, `driver-core`, `driver-sync`, `driver-legacy`,
+`driver-reactive-streams`, `mongodb-crypt`
 
 ## Key Packages
 
-- `com.mongodb.internal.graalvm` — Native image test app, GraalVM substitutions, and custom DNS support
+- `com.mongodb.internal.graalvm` — Native image test app, GraalVM substitutions, and
+  custom DNS support
 
 ## Notes
 

@@ -1,16 +1,17 @@
 # AGENTS.md - driver-reactive-streams
 
-Reactive Streams driver implementing the [Reactive Streams specification](https://www.reactive-streams.org/).
+Reactive Streams driver implementing the
+[Reactive Streams specification](https://www.reactive-streams.org/).
 
 **Depends on:** `bson`, `driver-core`
 
 ## Key Packages
 
-- `com.mongodb.reactivestreams.client` — Publisher-based API (`MongoClient`, `MongoDatabase`, `MongoCollection`)
+- `com.mongodb.reactivestreams.client` — Publisher-based API (`MongoClient`,
+  `MongoDatabase`, `MongoCollection`)
 
 ## Notes
 
-- Every package must have a `package-info.java`
 - JUnit 5 + Spock (Groovy) + Project Reactor (test utilities)
 
 ## Key Patterns

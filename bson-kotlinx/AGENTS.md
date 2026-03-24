@@ -8,7 +8,3 @@ Kotlinx serialization integration for BSON, providing a pluggable serialization 
 
 - `org.bson.codecs.kotlinx` — Kotlinx serialization BSON format support
 - `org.bson.codecs.kotlinx.utils` — Helper utilities
-
-## Notes
-
-- Formatting: ktfmt dropbox style, max width 120
