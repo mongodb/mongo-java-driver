@@ -36,7 +36,7 @@ class ExponentialBackoffTest {
             long backoff = ExponentialBackoff.calculateTransactionBackoffMs(attemptNumber);
             long expectedBackoff = Math.round(EXPECTED_BACKOFFS_MAX_VALUES[attemptNumber - 1]);
                     assertTrue(backoff >= 0 && backoff <= expectedBackoff,
-                String.format("Attempt %d: backoff should be 0-%d ms, got: %d", attemptNumber,
+                String.format("Attempt %d: backoff should be between 0 ms and %d ms, got: %d", attemptNumber,
                         expectedBackoff, backoff));
         }
     }
