@@ -1,12 +1,10 @@
 # AGENTS.md - bson-scala
 
-Scala extensions for the BSON library, providing Scala-idiomatic wrappers and
-macro-based codecs.
+Scala extensions for the BSON library, providing Scala-idiomatic wrappers and macro-based codecs.
 
 **Depends on:** `bson`
 
-**Supported Scala versions:** 2.11, 2.12, 2.13, 3 (default: 2.13, configured in root
-`gradle.properties`).
+**Supported Scala versions:** 2.11, 2.12, 2.13, 3 (default: 2.13, configured in root `gradle.properties`).
 
 - Work here if: modifying Scala BSON wrappers, macro codecs, or Scala collection support
 

@@ -1,14 +1,12 @@
 # AGENTS.md - driver-sync
 
-Synchronous (blocking) Java driver — the most commonly used entry point for Java
-applications.
+Synchronous (blocking) Java driver — the most commonly used entry point for Java applications.
 
 **Depends on:** `bson`, `driver-core`
 
-- Work here if: modifying the blocking Java API surface (`MongoClient`, `MongoDatabase`,
-  `MongoCollection`), GridFS, or CSFLE vault client
-- Do not: add new Spock tests (legacy only), add internal connection/protocol code (that
-  belongs in `driver-core`)
+- Work here if: modifying the blocking Java API surface (`MongoClient`, `MongoDatabase`, `MongoCollection`), GridFS, or
+  CSFLE vault client
+- Do not: add new Spock tests (legacy only), add internal connection/protocol code (that belongs in `driver-core`)
 
 ## Key Packages
 
@@ -23,7 +21,6 @@ applications.
 ./gradlew :driver-sync:check
 ```
 
-Primary entry point: `MongoClients.create()` or
-`MongoClients.create(MongoClientSettings)`.
+Primary entry point: `MongoClients.create()` or `MongoClients.create(MongoClientSettings)`.
 
 For global rules see [root AGENTS.md](../AGENTS.md).

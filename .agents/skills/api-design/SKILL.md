@@ -2,15 +2,18 @@
 name: api-design
 description: API stability annotations, design principles, and patterns for the MongoDB Java Driver. Use when adding or modifying public API surface — new classes, methods, interfaces, or changing method signatures.
 ---
-
 # API Design
 
 ## API Stability Annotations
 
-- `@Alpha` — Early development, may be removed. Not for production use.
-- `@Beta` — Subject to change or removal. Libraries should not depend on these.
-- `@Evolving` — May add abstract methods in future releases. Safe to use, but implementing/extending bears upgrade risk.
-- `@Sealed` — Must not be extended or implemented by consumers. Safe to use, but not to subclass.
+- `@Alpha` — Early development, may be removed.
+  Not for production use.
+- `@Beta` — Subject to change or removal.
+  Libraries should not depend on these.
+- `@Evolving` — May add abstract methods in future releases.
+  Safe to use, but implementing/extending bears upgrade risk.
+- `@Sealed` — Must not be extended or implemented by consumers.
+  Safe to use, but not to subclass.
 - `@Deprecated` — Supported until next major release but should be migrated away from.
 
 ## Design Principles

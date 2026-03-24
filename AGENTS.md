@@ -1,13 +1,10 @@
 # AGENTS.md - MongoDB Java Driver
 
-Official MongoDB JVM driver monorepo (Java, Kotlin, Scala).
 All changes require human review.
-Breaking changes to public API require a major version bump — always warn if binary
-compatibility is affected.
+Breaking changes to public API require a major version bump — always warn if binary compatibility is affected.
 Also consult `.AGENTS.md` / `~/.AGENTS.md` if present for local agent settings.
 
-See [`.agents/skills/project-guide`](.agents/skills/project-guide/SKILL.md) for module
-structure and dependency graph.
+See [`.agents/skills/project-guide`](.agents/skills/project-guide/SKILL.md) for module structure and dependency graph.
 Each module has its own `AGENTS.md`.
 
 ## Core Rules
@@ -23,8 +20,7 @@ Each module has its own `AGENTS.md`.
 
 ## Build
 
-Gradle with Kotlin DSL. Build JDK: 17+. Source baseline: Java 8. Versions in
-`gradle/libs.versions.toml`.
+Gradle with Kotlin DSL. Build JDK: 17+. Source baseline: Java 8. Versions in `gradle/libs.versions.toml`.
 
 ```bash
 ./gradlew check                        # Full validation (format + static checks + tests)
@@ -36,8 +32,7 @@ Gradle with Kotlin DSL. Build JDK: 17+. Source baseline: Java 8. Versions in
 
 `check` runs `spotlessApply` automatically — formatting is enforced.
 Do not reformat outside your changes.
-See [`.agents/skills/style-reference`](.agents/skills/style-reference/SKILL.md) for full
-rules.
+See [`.agents/skills/style-reference`](.agents/skills/style-reference/SKILL.md) for full rules.
 
 - No `System.out.println` / `System.err.println` — use SLF4J
 - No `e.printStackTrace()` — use proper error handling
@@ -48,15 +43,14 @@ rules.
 
 - Every code change must include tests.
   Do not reduce coverage.
-- JUnit 5 primary. Spock is legacy — do not add new Spock tests.
-- Unit tests must not require a running MongoDB instance.
-- Descriptive method names or `@DisplayName`. Clean up in `@AfterEach`.
+- See [`.agents/skills/testing-guide`](.agents/skills/testing-guide/SKILL.md) for framework details and running specific
+  tests.
+- See [`.agents/skills/spec-tests`](.agents/skills/spec-tests/SKILL.md) for MongoDB specification test conventions.
 
 ## API
 
-All `com.mongodb.internal.*` / `org.bson.internal.*` is private API — never expose in
-public APIs. See [`.agents/skills/api-design`](.agents/skills/api-design/SKILL.md) for
-stability annotations and design principles.
+All `com.mongodb.internal.*` / `org.bson.internal.*` is private API — never expose in public APIs.
+See [`.agents/skills/api-design`](.agents/skills/api-design/SKILL.md) for stability annotations and design principles.
 
 ## Do Not Modify Without Human Approval
 
@@ -68,14 +62,10 @@ stability annotations and design principles.
 - Spec test data submodule (`testing/resources/specifications/`)
 - Release/versioning scripts, `.evergreen/` config, credentials/secrets
 
-See [`.agents/skills/evergreen`](.agents/skills/evergreen/SKILL.md) for CI validation
-and patch builds.
+See [`.agents/skills/evergreen`](.agents/skills/evergreen/SKILL.md) for CI validation and patch builds.
 
 ## Before Submitting
 
 ```bash
-./gradlew doc check scalaCheck   # Docs + formatting (spotlessApply) + static checks + all tests
+./gradlew spotlessApply doc check scalaCheck   # formatting + Docs + static checks + all tests
 ```
-
-Note: `check` includes `spotlessApply` for all modules.
-`buildSrc` uses `spotlessCheck` instead (no auto-fix).

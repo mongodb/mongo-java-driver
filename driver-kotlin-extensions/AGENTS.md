@@ -2,11 +2,9 @@
 
 Kotlin extensions providing type-safe DSLs for query and update construction.
 
-**Depends on:** `driver-core`, optionally `driver-kotlin-sync`,
-`driver-kotlin-coroutine`
+**Depends on:** `driver-core`, optionally `driver-kotlin-sync`, `driver-kotlin-coroutine`
 
-- Work here if: adding or modifying Kotlin type-safe DSL builders for `Filters`,
-  `Updates`, `Aggregates`, etc.
+- Work here if: adding or modifying Kotlin type-safe DSL builders for `Filters`, `Updates`, `Aggregates`, etc.
 - Works with both `driver-kotlin-sync` and `driver-kotlin-coroutine`
 
 ## Key Packages

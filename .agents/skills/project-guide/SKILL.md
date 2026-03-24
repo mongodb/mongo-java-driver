@@ -2,7 +2,6 @@
 name: project-guide
 description: Project structure, dependency graph, and guide for finding the right project to work in. Use when starting a task and unsure which project owns the relevant code, or when you need to understand cross-project dependencies.
 ---
-
 # Project Guide
 
 ## Project Structure

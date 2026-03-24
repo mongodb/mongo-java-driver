@@ -1,7 +1,6 @@
 # AGENTS.md - driver-reactive-streams
 
-Reactive Streams driver implementing the
-[Reactive Streams specification](https://www.reactive-streams.org/).
+Reactive Streams driver implementing the [Reactive Streams specification](https://www.reactive-streams.org/).
 
 **Depends on:** `bson`, `driver-core`
 
@@ -10,8 +9,7 @@ Reactive Streams driver implementing the
 
 ## Key Packages
 
-- `com.mongodb.reactivestreams.client` — Publisher-based API (`MongoClient`,
-  `MongoDatabase`, `MongoCollection`)
+- `com.mongodb.reactivestreams.client` — Publisher-based API (`MongoClient`, `MongoDatabase`, `MongoCollection`)
 
 ## Build & Test
 

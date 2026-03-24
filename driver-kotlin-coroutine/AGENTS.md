@@ -9,8 +9,7 @@ Kotlin Coroutines driver providing `suspend` function-based async API.
 
 ## Key Packages
 
-- `com.mongodb.kotlin.client.coroutine` — Coroutine-based driver API (`MongoClient`,
-  `MongoDatabase`, `MongoCollection`)
+- `com.mongodb.kotlin.client.coroutine` — Coroutine-based driver API (`MongoClient`, `MongoDatabase`, `MongoCollection`)
 
 ## Build & Test
 

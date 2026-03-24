@@ -1,7 +1,6 @@
 # AGENTS.md - driver-lambda
 
-AWS Lambda test application for validating the MongoDB Java Driver in Lambda
-environments.
+AWS Lambda test application for validating the MongoDB Java Driver in Lambda environments.
 
 **Depends on:** `bson`, `driver-sync`
 

@@ -9,8 +9,7 @@ Kotlin synchronous (blocking) driver — idiomatic Kotlin wrapper over `driver-s
 
 ## Key Packages
 
-- `com.mongodb.kotlin.client` — Blocking sync API (`MongoClient`, `MongoDatabase`,
-  `MongoCollection`)
+- `com.mongodb.kotlin.client` — Blocking sync API (`MongoClient`, `MongoDatabase`, `MongoCollection`)
 
 ## Build & Test
 

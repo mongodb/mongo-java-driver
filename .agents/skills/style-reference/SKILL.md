@@ -2,7 +2,6 @@
 name: style-reference
 description: Detailed code style rules for Java, Kotlin, Scala, and Groovy in the MongoDB Java Driver. Use when you need specific formatting rules beyond the basics in root AGENTS.md — e.g., line length, import ordering, brace style, or language-specific formatter configuration. Spotless auto-enforces most rules.
 ---
-
 # Style Reference
 
 ## Java Style Rules

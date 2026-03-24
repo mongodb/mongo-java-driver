@@ -10,8 +10,8 @@ Legacy MongoDB Java driver API — backwards compatibility facade for the 3.x AP
 
 ## Key Packages
 
-- `com.mongodb` — Legacy API (`MongoClient`, `DB`, `DBCollection`, `DBCursor`) —
-  distinct from `driver-core` classes in the same namespace
+- `com.mongodb` — Legacy API (`MongoClient`, `DB`, `DBCollection`, `DBCursor`) — distinct from `driver-core` classes in
+  the same namespace
 - `com.mongodb.gridfs` — Legacy GridFS
 
 ## Build & Test

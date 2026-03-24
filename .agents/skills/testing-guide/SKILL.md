@@ -2,7 +2,6 @@
 name: testing-guide
 description: Testing frameworks, conventions, and commands for the MongoDB Java Driver. Use when writing or running tests — covers framework selection per module, test naming conventions, integration test setup, and how to run specific test subsets.
 ---
-
 # Testing Guide
 
 ## Frameworks
@@ -49,7 +48,7 @@ description: Testing frameworks, conventions, and commands for the MongoDB Java 
 ## Module-Specific Notes
 
 - **driver-core:** Largest test suite — JUnit 5 + Spock + Mockito
-- **driver-sync:** JUnit 5 + Spock (heavy Spock usage, but don't add new)
+- **driver-sync:** JUnit 5 + Spock (heavy Spock usage, but don’t add new)
 - **driver-reactive-streams:** JUnit 5 + Spock + Project Reactor
 - **bson-scala / driver-scala:** ScalaTest, test per Scala version
 - **Kotlin modules:** JUnit 5 + mockito-kotlin

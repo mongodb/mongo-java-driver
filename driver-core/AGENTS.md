@@ -3,17 +3,15 @@
 Core driver internals shared by all driver variants (sync, reactive, Kotlin, Scala).
 Largest and most complex module.
 
-**Depends on:** `bson`, `bson-record-codec`, optionally `bson-kotlin`, `bson-kotlinx`,
-`mongodb-crypt`
+**Depends on:** `bson`, `bson-record-codec`, optionally `bson-kotlin`, `bson-kotlinx`, `mongodb-crypt`
 
-- Work here if: modifying query builders (`Filters`, `Updates`, `Aggregates`),
-  connection handling, wire protocol, server selection, or operation execution
+- Work here if: modifying query builders (`Filters`, `Updates`, `Aggregates`), connection handling, wire protocol,
+  server selection, or operation execution
 - Do not: block in async code paths, modify wire protocol or auth without human approval
 
 ## Key Packages
 
-- `com.mongodb.client.model` — `Filters`, `Updates`, `Projections`, `Aggregates`,
-  `Sorts`, `Indexes`
+- `com.mongodb.client.model` — `Filters`, `Updates`, `Projections`, `Aggregates`, `Sorts`, `Indexes`
 - `com.mongodb.internal.connection` — Wire protocol, command execution (safety-critical)
 - `com.mongodb.internal.operation` — Concrete operations (find, insert, aggregate)
 - `com.mongodb.internal.authentication` — SASL, SCRAM, X.509, OIDC (safety-critical)
