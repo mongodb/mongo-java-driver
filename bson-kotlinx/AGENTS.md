@@ -4,7 +4,18 @@ Kotlinx serialization integration for BSON, providing a pluggable serialization 
 
 **Depends on:** `bson`
 
+- Work here if: modifying the kotlinx-serialization BSON codec integration
+
 ## Key Packages
 
 - `org.bson.codecs.kotlinx` — Kotlinx serialization BSON format support
 - `org.bson.codecs.kotlinx.utils` — Helper utilities
+
+## Build & Test
+
+```bash
+./gradlew :bson-kotlinx:test
+./gradlew :bson-kotlinx:check
+```
+
+For global rules see [root AGENTS.md](../AGENTS.md).

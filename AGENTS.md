@@ -1,9 +1,14 @@
 # AGENTS.md - MongoDB Java Driver
 
 Official MongoDB JVM driver monorepo (Java, Kotlin, Scala).
-Implements the
-[MongoDB Driver Specifications](https://github.com/mongodb/specifications).
-Each module has its own `AGENTS.md` with module-specific guidance.
+All changes require human review.
+Breaking changes to public API require a major version bump — always warn if binary
+compatibility is affected.
+Also consult `.AGENTS.md` / `~/.AGENTS.md` if present for local agent settings.
+
+See [`.agents/skills/project-guide`](.agents/skills/project-guide/SKILL.md) for module
+structure and dependency graph.
+Each module has its own `AGENTS.md`.
 
 ## Core Rules
 
@@ -15,14 +20,11 @@ Each module has its own `AGENTS.md` with module-specific guidance.
   Only remove if provably incorrect.
 - No rewrites without explicit permission.
 - When stuck or uncertain: stop, explain, propose alternatives, ask.
-- All `com.mongodb.internal.*` / `org.bson.internal.*` is private API — never expose in
-  public APIs.
 
 ## Build
 
-- Gradle with Kotlin DSL. Build JDK: 17+. Source baseline: Java 8.
-- Versions: `gradle/libs.versions.toml`. Plugins:
-  `buildSrc/src/main/kotlin/conventions/`.
+Gradle with Kotlin DSL. Build JDK: 17+. Source baseline: Java 8. Versions in
+`gradle/libs.versions.toml`.
 
 ```bash
 ./gradlew check                        # Full validation (format + static checks + tests)
@@ -30,10 +32,12 @@ Each module has its own `AGENTS.md` with module-specific guidance.
 ./gradlew integrationTest -Dorg.mongodb.test.uri="mongodb://localhost:27017"
 ```
 
-## Formatting
+## Style
 
-`check` runs `spotlessApply` automatically.
+`check` runs `spotlessApply` automatically — formatting is enforced.
 Do not reformat outside your changes.
+See [`.agents/skills/style-reference`](.agents/skills/style-reference/SKILL.md) for full
+rules.
 
 - No `System.out.println` / `System.err.println` — use SLF4J
 - No `e.printStackTrace()` — use proper error handling
@@ -48,16 +52,30 @@ Do not reformat outside your changes.
 - Unit tests must not require a running MongoDB instance.
 - Descriptive method names or `@DisplayName`. Clean up in `@AfterEach`.
 
-## Safety — Do Not Modify Without Review
+## API
 
-- Wire protocol / authentication handshakes
-- Security-critical encryption code
+All `com.mongodb.internal.*` / `org.bson.internal.*` is private API — never expose in
+public APIs. See [`.agents/skills/api-design`](.agents/skills/api-design/SKILL.md) for
+stability annotations and design principles.
+
+## Do Not Modify Without Human Approval
+
+- Wire protocol / authentication handshakes (`com.mongodb.internal.connection`)
+- Connection pool core code (`com.mongodb.internal.connection.pool`)
+- Security-critical encryption code / JNA bindings (`mongodb-crypt`)
 - Public API contracts (breaking changes need major version bump)
 - BSON specification compliance
-- Credentials, secrets, `.evergreen/` config, release scripts
+- Spec test data submodule (`testing/resources/specifications/`)
+- Release/versioning scripts, `.evergreen/` config, credentials/secrets
+
+See [`.agents/skills/evergreen`](.agents/skills/evergreen/SKILL.md) for CI validation
+and patch builds.
 
 ## Before Submitting
 
 ```bash
-./gradlew doc check scalaCheck
+./gradlew doc check scalaCheck   # Docs + formatting (spotlessApply) + static checks + all tests
 ```
+
+Note: `check` includes `spotlessApply` for all modules.
+`buildSrc` uses `spotlessCheck` instead (no auto-fix).

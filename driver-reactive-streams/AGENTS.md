@@ -5,17 +5,24 @@ Reactive Streams driver implementing the
 
 **Depends on:** `bson`, `driver-core`
 
+- Work here if: modifying the Publisher-based async API
+- Do not: block in any code path, break backpressure contracts
+
 ## Key Packages
 
 - `com.mongodb.reactivestreams.client` — Publisher-based API (`MongoClient`,
   `MongoDatabase`, `MongoCollection`)
 
+## Build & Test
+
+```bash
+./gradlew :driver-reactive-streams:test
+./gradlew :driver-reactive-streams:check
+```
+
 ## Notes
 
-- JUnit 5 + Spock (Groovy) + Project Reactor (test utilities)
-
-## Key Patterns
-
 - All operations return `Publisher<T>` — never block
-- Respect backpressure in all implementations
 - `driver-kotlin-coroutine` and `driver-scala` both build on top of this module
+
+For global rules see [root AGENTS.md](../AGENTS.md).

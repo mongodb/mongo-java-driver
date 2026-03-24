@@ -5,19 +5,25 @@ applications.
 
 **Depends on:** `bson`, `driver-core`
 
+- Work here if: modifying the blocking Java API surface (`MongoClient`, `MongoDatabase`,
+  `MongoCollection`), GridFS, or CSFLE vault client
+- Do not: add new Spock tests (legacy only), add internal connection/protocol code (that
+  belongs in `driver-core`)
+
 ## Key Packages
 
-- `com.mongodb.client` — Public sync API (`MongoClient`, `MongoDatabase`,
-  `MongoCollection`)
+- `com.mongodb.client` — Public sync API
 - `com.mongodb.client.gridfs` — GridFS sync implementation
 - `com.mongodb.client.vault` — Client-side field-level encryption client
-- `com.mongodb.client.internal` — Implementation helpers (private API)
 
-## Notes
+## Build & Test
 
-- JUnit 5 + Spock (Groovy).
-  Spock is heavily used but do not add new Spock tests.
-- Blocking wrapper over `driver-core` async infrastructure
-- Primary entry point: `MongoClients.create()` or
-  `MongoClients.create(MongoClientSettings)`
-- Optional Micrometer integration for observability
+```bash
+./gradlew :driver-sync:test
+./gradlew :driver-sync:check
+```
+
+Primary entry point: `MongoClients.create()` or
+`MongoClients.create(MongoClientSettings)`.
+
+For global rules see [root AGENTS.md](../AGENTS.md).

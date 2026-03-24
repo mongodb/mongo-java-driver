@@ -1,30 +1,27 @@
 # AGENTS.md - bson
 
-Core BSON (Binary JSON) library.
-This is the foundation module — all other modules depend on it.
+Core BSON (Binary JSON) library — the foundation module.
+All other modules depend on it.
 
 **Depends on:** None (foundation module)
 
+- Work here if: adding/modifying BSON types, codecs, JSON conversion, or binary I/O
+- Do not: expose `org.bson.internal` types in public API
+
 ## Key Packages
 
-- `org.bson` — Core BSON value types (`BsonDocument`, `BsonValue`, `BsonReader`,
-  `BsonWriter`)
-- `org.bson.codecs` — Codec framework (`Encoder`, `Decoder`, `Codec`)
-- `org.bson.codecs.configuration` — Codec registry and provider infrastructure
-  (`CodecRegistry`, `CodecProvider`)
-- `org.bson.codecs.pojo` — POJO codec support with conventions and property modeling
-- `org.bson.codecs.jsr310` — Java 8+ date/time codec support
-- `org.bson.json` — JSON conversion (`JsonReader`, `JsonWriter`, `JsonMode`)
-- `org.bson.io` — Binary I/O (`ByteBuffer`, `OutputBuffer`)
-- `org.bson.types` — Legacy types (`ObjectId`, `Decimal128`, etc.)
-- `org.bson.internal` — Private API (vector support, encoding utilities)
+- `org.bson` — Core types (`BsonDocument`, `BsonValue`, `BsonReader`, `BsonWriter`)
+- `org.bson.codecs` — Codec framework (`Encoder`, `Decoder`, `Codec`, `CodecRegistry`)
+- `org.bson.codecs.pojo` — POJO codec support
+- `org.bson.json` — JSON conversion (`JsonReader`, `JsonWriter`)
+- `org.bson.internal` — Private API — do not expose
 
-## Notes
+## Build & Test
 
-- JUnit 5 + Spock (Groovy) tests in both unit and functional dirs
+```bash
+./gradlew :bson:test
+./gradlew :bson:check
+```
 
-## Key Patterns
-
-- Codec-based serialization with type-safe `BsonValue` hierarchy
-- `BsonDocument` implements `Map<String, BsonValue>`
-- All public types in `org.bson` — internal types in `org.bson.internal`
+For global rules see [root AGENTS.md](../AGENTS.md).
+For API design see [api-design skill](../.agents/skills/api-design/SKILL.md).

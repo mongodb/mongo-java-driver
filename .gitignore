@@ -55,6 +55,9 @@ local.properties
 # security-sensitive files
 *.gpg
 
+# per-developer agent overrides
+.AGENTS.md
+
 # bin build directories
 **/bin
 
