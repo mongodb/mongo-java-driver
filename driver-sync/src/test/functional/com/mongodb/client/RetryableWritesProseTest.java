@@ -67,6 +67,8 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static com.mongodb.client.Fixture.getMultiMongosMongoClientSettingsBuilder;
+import static com.mongodb.internal.operation.CommandOperationHelper.NO_WRITES_PERFORMED_ERROR_LABEL;
+import static com.mongodb.internal.operation.CommandOperationHelper.RETRYABLE_WRITE_ERROR_LABEL;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -135,7 +137,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
                         .append("failCommands", new BsonArray(singletonList(new BsonString(operationName))))
                         .append("errorCode", new BsonInt32(91))
                         .append("errorLabels", write
-                                ? new BsonArray(singletonList(new BsonString("RetryableWriteError")))
+                                ? new BsonArray(singletonList(new BsonString(RETRYABLE_WRITE_ERROR_LABEL)))
                                 : new BsonArray())
                         .append("blockConnection", BsonBoolean.valueOf(true))
                         .append("blockTimeMS", new BsonInt32(1000)));
@@ -193,7 +195,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
                                     .append("data", new BsonDocument()
                                             .append("failCommands", new BsonArray(singletonList(new BsonString("insert"))))
                                             .append("errorCode", new BsonInt32(10107))
-                                            .append("errorLabels", new BsonArray(Stream.of("RetryableWriteError", "NoWritesPerformed")
+                                            .append("errorLabels", new BsonArray(Stream.of(RETRYABLE_WRITE_ERROR_LABEL, NO_WRITES_PERFORMED_ERROR_LABEL)
                                                     .map(BsonString::new).collect(Collectors.toList())))),
                             primaryServerAddress
                     )));
@@ -207,7 +209,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
                 .append("data", new BsonDocument()
                         .append("writeConcernError", new BsonDocument()
                                 .append("code", new BsonInt32(91))
-                                .append("errorLabels", new BsonArray(Stream.of("RetryableWriteError")
+                                .append("errorLabels", new BsonArray(Stream.of(RETRYABLE_WRITE_ERROR_LABEL)
                                         .map(BsonString::new).collect(Collectors.toList())))
                                 .append("errmsg", new BsonString(""))
                         )
