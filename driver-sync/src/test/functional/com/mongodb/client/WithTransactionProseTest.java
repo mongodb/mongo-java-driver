@@ -37,7 +37,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-// See https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#prose-tests
+/**
+ * <a href="https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#prose-tests">Prose Tests</a>.
+ */
 public class WithTransactionProseTest extends DatabaseTestCase {
     private static final long START_TIME_MS = 1L;
     private static final long ERROR_GENERATING_INTERVAL = 121000L;
@@ -52,11 +54,10 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         collection.insertOne(Document.parse("{ _id : 0 }"));
     }
 
-    //
-    // Test that the callback raises a custom exception or error that does not include either UnknownTransactionCommitResult or
-    // TransientTransactionError error labels. The callback will execute using withTransaction and assert that the callback's error
-    // bypasses any retry logic within withTransaction and is propagated to the caller of withTransaction.
-    //
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#callback-raises-a-custom-error">
+     * Callback Raises a Custom Error</a>.
+     */
     @Test
     public void testCallbackRaisesCustomError() {
         final String exceptionMessage = "NotTransientOrUnknownError";
@@ -71,10 +72,10 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         }
     }
 
-    //
-    // Test that the callback that returns a custom value (e.g. boolean, string, object). Execute this callback using withTransaction
-    // and assert that the callback's return value is propagated to the caller of withTransaction.
-    //
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#callback-returns-a-value">
+     * Callback Returns a Value</a>.
+     */
     @Test
     public void testCallbackReturnsValue() {
         try (ClientSession session = client.startSession()) {
@@ -87,10 +88,10 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         }
     }
 
-    //
-    // If the callback raises an error with the TransientTransactionError label and the retry timeout has been exceeded, withTransaction
-    // should propagate the error to its caller.
-    //
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#retry-timeout-is-enforced">
+     * Retry Timeout is Enforced</a>, first scenario on the list.
+     */
     @Test
     public void testRetryTimeoutEnforcedTransientTransactionError() {
         final String errorMessage = "transient transaction error";
@@ -110,10 +111,10 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         }
     }
 
-    //
-    // If committing raises an error with the UnknownTransactionCommitResult label, the error is not a write concern timeout, and the
-    // retry timeout has been exceeded, withTransaction should propagate the error to its caller.
-    //
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#retry-timeout-is-enforced">
+     * Retry Timeout is Enforced</a>, second scenario on the list.
+     */
     @Test
     public void testRetryTimeoutEnforcedUnknownTransactionCommit() {
         MongoDatabase failPointAdminDb = client.getDatabase("admin");
@@ -137,11 +138,10 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         }
     }
 
-    //
-    // If committing raises an error with the TransientTransactionError label and the retry timeout has been exceeded, withTransaction
-    // should propagate the error to its caller. This case may occur if the commit was internally retried against a new primary after
-    // a failover and the second primary returned a NoSuchTransaction error response.
-    //
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#retry-timeout-is-enforced">
+     * Retry Timeout is Enforced</a>, third scenario on the list.
+     */
     @Test
     public void testRetryTimeoutEnforcedTransientTransactionErrorOnCommit() {
         MongoDatabase failPointAdminDb = client.getDatabase("admin");
@@ -166,9 +166,9 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         }
     }
 
-    //
-    // Ensure cannot override timeout in transaction
-    //
+    /**
+     * Ensure cannot override timeout in transaction.
+     */
     @Test
     public void testTimeoutMS() {
         try (ClientSession session = client.startSession(ClientSessionOptions.builder()
@@ -182,9 +182,9 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         }
     }
 
-    //
-    // Ensure legacy settings don't cause issues in sessions
-    //
+    /**
+     * Ensure legacy settings don't cause issues in sessions.
+     */
     @Test
     public void testTimeoutMSAndLegacySettings() {
         try (ClientSession session = client.startSession(ClientSessionOptions.builder()
