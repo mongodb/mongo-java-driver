@@ -1,4 +1,4 @@
-# CLAUDE.md - bson
+# AGENTS.md - bson
 
 Core BSON (Binary JSON) library. This is the foundation module — all other modules depend on it.
 

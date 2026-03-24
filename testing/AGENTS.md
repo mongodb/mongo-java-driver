@@ -1,4 +1,4 @@
-# CLAUDE.md - testing
+# AGENTS.md - testing
 
 Shared test resources and MongoDB specification test data.
 

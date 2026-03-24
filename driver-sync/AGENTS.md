@@ -1,4 +1,4 @@
-# CLAUDE.md - driver-sync
+# AGENTS.md - driver-sync
 
 Synchronous (blocking) Java driver — the most commonly used entry point for Java applications.
 

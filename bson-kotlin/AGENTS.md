@@ -1,4 +1,4 @@
-# CLAUDE.md - bson-kotlin
+# AGENTS.md - bson-kotlin
 
 Kotlin extensions for the BSON library, providing idiomatic Kotlin codec support.
 

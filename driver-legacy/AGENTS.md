@@ -1,4 +1,4 @@
-# CLAUDE.md - driver-legacy
+# AGENTS.md - driver-legacy
 
 Legacy MongoDB Java driver API — backwards compatibility facade for the 3.x API.
 

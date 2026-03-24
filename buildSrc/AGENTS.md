@@ -1,4 +1,4 @@
-# CLAUDE.md - buildSrc
+# AGENTS.md - buildSrc
 
 Gradle build infrastructure providing convention plugins and shared configuration for all modules.
 
@@ -49,12 +49,12 @@ Gradle build infrastructure providing convention plugins and shared configuratio
 - `check` depends on `spotlessCheck` in buildSrc itself
 - Java toolchain is set to Java 17
 
-## Keeping CLAUDE.md Files in Sync
+## Keeping AGENTS.md Files in Sync
 
-When modifying buildSrc, you **must** update the relevant CLAUDE.md files if your changes affect:
+When modifying buildSrc, you **must** update the relevant AGENTS.md files if your changes affect:
 
-- **Formatting conventions** (e.g., changes to `spotless.gradle.kts`) — update the root `CLAUDE.md` "Code Style and Formatting" section and any module CLAUDE.md files that reference formatting rules
-- **Convention plugins added or removed** — update this file's plugin table and the root `CLAUDE.md` if the change affects build commands or developer workflow
-- **Testing conventions** (e.g., changes to `testing-*.gradle.kts`) — update the root `CLAUDE.md` "Testing" section and affected module CLAUDE.md files
+- **Formatting conventions** (e.g., changes to `spotless.gradle.kts`) — update the root `AGENTS.md` "Code Style and Formatting" section and any module AGENTS.md files that reference formatting rules
+- **Convention plugins added or removed** — update this file's plugin table and the root `AGENTS.md` if the change affects build commands or developer workflow
+- **Testing conventions** (e.g., changes to `testing-*.gradle.kts`) — update the root `AGENTS.md` "Testing" section and affected module AGENTS.md files
 - **Project plugins added or removed** — update this file's project plugin table
-- **Build commands or task names changed** — update the root `CLAUDE.md` "Essential Build Commands" and "Before Submitting" sections, and any module "Before Submitting" sections
+- **Build commands or task names changed** — update the root `AGENTS.md` "Essential Build Commands" and "Before Submitting" sections, and any module "Before Submitting" sections

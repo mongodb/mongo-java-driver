@@ -1,4 +1,4 @@
-# CLAUDE.md - bson-record-codec
+# AGENTS.md - bson-record-codec
 
 Java record codec support for BSON serialization. **Requires Java 17+.**
 

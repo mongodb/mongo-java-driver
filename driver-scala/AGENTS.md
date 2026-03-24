@@ -1,4 +1,4 @@
-# CLAUDE.md - driver-scala
+# AGENTS.md - driver-scala
 
 Scala async driver providing Observable-based API wrapping `driver-reactive-streams`.
 

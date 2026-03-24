@@ -1,4 +1,4 @@
-# CLAUDE.md - driver-kotlin-sync
+# AGENTS.md - driver-kotlin-sync
 
 Kotlin synchronous (blocking) driver — idiomatic Kotlin wrapper over `driver-sync`.
 

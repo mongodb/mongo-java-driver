@@ -1,4 +1,4 @@
-# CLAUDE.md - driver-core
+# AGENTS.md - driver-core
 
 Core driver internals shared by all driver variants (sync, reactive, Kotlin, Scala). Largest and most complex module.
 

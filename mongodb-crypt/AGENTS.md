@@ -1,4 +1,4 @@
-# CLAUDE.md - mongodb-crypt
+# AGENTS.md - mongodb-crypt
 
 Client-side field-level encryption (CSFLE) support via JNA bindings to libmongocrypt.
 

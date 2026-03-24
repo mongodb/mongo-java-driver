@@ -1,4 +1,4 @@
-# CLAUDE.md - driver-reactive-streams
+# AGENTS.md - driver-reactive-streams
 
 Reactive Streams driver implementing the [Reactive Streams specification](https://www.reactive-streams.org/).
 

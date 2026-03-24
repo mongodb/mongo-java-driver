@@ -1,4 +1,4 @@
-# CLAUDE.md - driver-kotlin-coroutine
+# AGENTS.md - driver-kotlin-coroutine
 
 Kotlin Coroutines driver providing `suspend` function-based async API.
 

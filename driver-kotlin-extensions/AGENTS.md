@@ -1,4 +1,4 @@
-# CLAUDE.md - driver-kotlin-extensions
+# AGENTS.md - driver-kotlin-extensions
 
 Kotlin extensions providing type-safe DSLs for query and update construction.
 

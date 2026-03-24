@@ -1,4 +1,4 @@
-# CLAUDE.md - bson-kotlinx
+# AGENTS.md - bson-kotlinx
 
 Kotlinx serialization integration for BSON, providing a pluggable serialization format.
 

@@ -1,4 +1,4 @@
-# CLAUDE.md - bson-scala
+# AGENTS.md - bson-scala
 
 Scala extensions for the BSON library, providing Scala-idiomatic wrappers and macro-based codecs.
 
