@@ -222,7 +222,7 @@ class AsyncCommandCursorTest {
         });
 
         // 2 empty-batch getMores + 1 exhausted getMore = 3 getMores, but the 3rd
-        // exhausts the cursor (id=0), which makes the cursor to break the loop and return an empty result.
+        // exhausts the cursor (id=0), which makes the cursor break the loop and return an empty result.
         verify(mockConnection, times(3)).release();
         verify(connectionSource, times(3)).getConnection(any(), any());
         assertEquals(3, callCount.get());
