@@ -44,7 +44,7 @@ class ExponentialBackoffTest {
     @Test
     void testCalculateTransactionBackoffMsRespectsMaximum() {
         // Even at high attempt numbers, backoff should never exceed ExponentialBackoff.TRANSACTION_MAX_MS
-        for (int attemptNumber = 1; attemptNumber < 26; attemptNumber++) {
+        for (int attemptNumber = 1; attemptNumber < EXPECTED_BACKOFFS_MAX_VALUES.length * 2; attemptNumber++) {
             long backoff = ExponentialBackoff.calculateTransactionBackoffMs(attemptNumber);
             assertTrue(backoff >= 0 && backoff <= ExponentialBackoff.TRANSACTION_MAX_MS,
                 String.format("Attempt %d: backoff should be capped at %f ms, got: %d ms",
