@@ -30,7 +30,7 @@ Gradle with Kotlin DSL. Build JDK: 17+. Source baseline: Java 8. Versions in `gr
 
 ## Style
 
-`check` runs `spotlessApply` automatically — formatting is enforced.
+`check` runs `spotlessCheck` to verify formatting — run `./gradlew spotlessApply` to auto-format when needed.
 Do not reformat outside your changes.
 See [`.agents/skills/style-reference`](.agents/skills/style-reference/SKILL.md) for full rules.
 
