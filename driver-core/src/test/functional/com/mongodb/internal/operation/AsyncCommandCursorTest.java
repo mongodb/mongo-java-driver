@@ -41,7 +41,6 @@ import org.bson.BsonString;
 import org.bson.Document;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DocumentCodec;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
