@@ -181,13 +181,13 @@ class AsyncCommandCursor<T> implements AsyncCursor<T> {
 
     private void getMore(final ServerCursor cursor, final OperationContext operationContext, final SingleResultCallback<List<T>> callback) {
         resourceManager.executeWithConnection(operationContext, (connection, wrappedCallback) ->
-                getMoreCommand(assertNotNull(connection), cursor, operationContext, wrappedCallback), callback);
+                executeGetMoreCommand(assertNotNull(connection), cursor, operationContext, wrappedCallback), callback);
     }
 
-    private void getMoreCommand(final AsyncConnection connection,
-                                final ServerCursor serverCursor,
-                                final OperationContext operationContext,
-                                final SingleResultCallback<List<T>> callback) {
+    private void executeGetMoreCommand(final AsyncConnection connection,
+                                       final ServerCursor serverCursor,
+                                       final OperationContext operationContext,
+                                       final SingleResultCallback<List<T>> callback) {
         connection.commandAsync(namespace.getDatabaseName(),
                 getMoreCommandDocument(serverCursor.getId(), connection.getDescription(), namespace, batchSize, comment),
                 NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
