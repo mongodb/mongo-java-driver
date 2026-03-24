@@ -108,9 +108,25 @@ class AsyncCommandCursor<T> implements AsyncCursor<T> {
                 commandCursorResult = withEmptyResults(commandCursorResult);
                 funcCallback.onResult(batchResults, null);
             } else {
-                getMore(localServerCursor, operationContext, funcCallback);
+                getMoreLoop(localServerCursor, operationContext, funcCallback);
             }
         }, operationContext, callback);
+    }
+
+    private void getMoreLoop(final ServerCursor localServerCursor, final OperationContext operationContext,
+                           final SingleResultCallback<List<T>> funcCallback) {
+        getMore(localServerCursor, operationContext, (nextBatch, t) -> {
+            if (t != null) {
+                funcCallback.onResult(null, t);
+            } else if (resourceManager.getServerCursor() == null || (nextBatch != null && !nextBatch.isEmpty())) {
+                commandCursorResult = withEmptyResults(commandCursorResult);
+                funcCallback.onResult(nextBatch, null);
+            } else if (!resourceManager.operable()) {
+                funcCallback.onResult(emptyList(), null);
+            } else {
+                getMoreLoop(assertNotNull(resourceManager.getServerCursor()), operationContext, funcCallback);
+            }
+        });
     }
 
     @Override
@@ -164,10 +180,10 @@ class AsyncCommandCursor<T> implements AsyncCursor<T> {
 
     private void getMore(final ServerCursor cursor, final OperationContext operationContext, final SingleResultCallback<List<T>> callback) {
         resourceManager.executeWithConnection(operationContext, (connection, wrappedCallback) ->
-                getMoreLoop(assertNotNull(connection), cursor, operationContext, wrappedCallback), callback);
+                getMoreCommand(assertNotNull(connection), cursor, operationContext, wrappedCallback), callback);
     }
 
-    private void getMoreLoop(final AsyncConnection connection, final ServerCursor serverCursor,
+    private void getMoreCommand(final AsyncConnection connection, final ServerCursor serverCursor,
                              final OperationContext operationContext,
                              final SingleResultCallback<List<T>> callback) {
         connection.commandAsync(namespace.getDatabaseName(),
@@ -188,19 +204,7 @@ class AsyncCommandCursor<T> implements AsyncCursor<T> {
                             connection.getDescription().getServerAddress(), NEXT_BATCH, assertNotNull(commandResult));
                     ServerCursor nextServerCursor = commandCursorResult.getServerCursor();
                     resourceManager.setServerCursor(nextServerCursor);
-                    List<T> nextBatch = commandCursorResult.getResults();
-                    if (nextServerCursor == null || !nextBatch.isEmpty()) {
-                        commandCursorResult = withEmptyResults(commandCursorResult);
-                        callback.onResult(nextBatch, null);
-                        return;
-                    }
-
-                    if (!resourceManager.operable()) {
-                        callback.onResult(emptyList(), null);
-                        return;
-                    }
-
-                    getMoreLoop(connection, nextServerCursor, operationContext, callback);
+                    callback.onResult(commandCursorResult.getResults(), null);
                 });
     }
 
