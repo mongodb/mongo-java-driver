@@ -97,7 +97,7 @@ public class GridFSMultiFileDownloadBenchmark extends AbstractMongoBenchmark {
         CountDownLatch latch = new CountDownLatch(50);
 
         for (int i = 0; i < 50; i++) {
-            gridFSService.submit(exportFile(latch, i));
+            gridFSService.execute(exportFile(latch, i));
         }
 
         latch.await(1, TimeUnit.MINUTES);
@@ -107,7 +107,7 @@ public class GridFSMultiFileDownloadBenchmark extends AbstractMongoBenchmark {
         return () -> {
             UnsafeByteArrayOutputStream outputStream = new UnsafeByteArrayOutputStream(5242880);
             bucket.downloadToStream(GridFSMultiFileDownloadBenchmark.this.getFileName(fileId), outputStream);
-            fileService.submit(() -> {
+            fileService.execute(() -> {
                 try {
                     FileOutputStream fos = new FileOutputStream(new File(tempDirectory, String.format("%02d", fileId) + ".txt"));
                     fos.write(outputStream.getByteArray());
@@ -124,7 +124,7 @@ public class GridFSMultiFileDownloadBenchmark extends AbstractMongoBenchmark {
         CountDownLatch latch = new CountDownLatch(50);
 
         for (int i = 0; i < 50; i++) {
-            fileService.submit(importFile(latch, i));
+            fileService.execute(importFile(latch, i));
         }
 
         latch.await(1, TimeUnit.MINUTES);
