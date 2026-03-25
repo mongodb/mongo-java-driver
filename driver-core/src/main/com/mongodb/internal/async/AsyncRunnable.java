@@ -247,8 +247,8 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
      * This method is equivalent to a while loop, where the condition is checked before each iteration.
      * If the condition returns {@code false} on the first check, the body is never executed.
      *
-     * @param loopBodyRunnable the asynchronous task to be executed in each iteration of the loop
      * @param whileCheck a condition to check before each iteration; the loop continues as long as this condition returns true
+     * @param loopBodyRunnable the asynchronous task to be executed in each iteration of the loop
      * @return the composition of this and the looping branch
      * @see AsyncCallbackLoop
      */
