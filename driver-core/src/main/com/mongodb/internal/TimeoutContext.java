@@ -168,10 +168,6 @@ public class TimeoutContext {
         return timeout == null ? null : timeout.shortenBy(minRoundTripTimeMS, MILLISECONDS);
     }
 
-    public Timeout timeoutOrAlternative(final Timeout alternative) {
-        return timeout == null ? alternative : timeout;
-    }
-
     /**
      * Returns the remaining {@code timeoutMS} if set or the {@code alternativeTimeoutMS}.
      *
