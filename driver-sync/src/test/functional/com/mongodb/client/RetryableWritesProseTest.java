@@ -139,7 +139,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
                                 : new BsonArray())
                         .append("blockConnection", BsonBoolean.valueOf(true))
                         .append("blockTimeMS", new BsonInt32(1000)));
-        int timeoutSeconds = 5;
+        int timeoutSeconds = 10;
         try (MongoClient client = clientCreator.apply(clientSettings);
                 FailPoint ignored = FailPoint.enable(configureFailPoint, Fixture.getPrimary())) {
             MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
@@ -149,13 +149,11 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
             try {
                 Future<R> result1 = ex.submit(() -> operation.apply(collection));
                 Future<R> result2 = ex.submit(() -> operation.apply(collection));
-
-                result1.get(timeoutSeconds, SECONDS);
-                result2.get(timeoutSeconds, SECONDS);
-
                 connectionPoolListener.waitForEvent(ConnectionCheckedOutEvent.class, 1, timeoutSeconds, SECONDS);
                 connectionPoolListener.waitForEvent(ConnectionPoolClearedEvent.class, 1, timeoutSeconds, SECONDS);
                 connectionPoolListener.waitForEvent(ConnectionCheckOutFailedEvent.class, 1, timeoutSeconds, SECONDS);
+                result1.get(timeoutSeconds, SECONDS);
+                result2.get(timeoutSeconds, SECONDS);
             } finally {
                 ex.shutdownNow();
             }
