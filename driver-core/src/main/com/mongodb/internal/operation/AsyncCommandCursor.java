@@ -113,22 +113,6 @@ class AsyncCommandCursor<T> implements AsyncCursor<T> {
         }, operationContext, callback);
     }
 
-    private void getMoreLoop(final ServerCursor localServerCursor,
-                             final OperationContext operationContext,
-                             final SingleResultCallback<List<T>> funcCallback) {
-        getMore(localServerCursor, operationContext, (nextBatch, t) -> {
-            if (t != null) {
-                funcCallback.onResult(null, t);
-            } else if (resourceManager.getServerCursor() == null || (nextBatch != null && !nextBatch.isEmpty())) {
-                commandCursorResult = withEmptyResults(commandCursorResult);
-                funcCallback.onResult(nextBatch, null);
-            } else if (!resourceManager.operable()) {
-                funcCallback.onResult(emptyList(), null);
-            } else {
-                getMoreLoop(assertNotNull(resourceManager.getServerCursor()), operationContext, funcCallback);
-            }
-        });
-    }
 
     @Override
     public boolean isClosed() {
@@ -177,6 +161,23 @@ class AsyncCommandCursor<T> implements AsyncCursor<T> {
     @Override
     public int getMaxWireVersion() {
         return maxWireVersion;
+    }
+
+    private void getMoreLoop(final ServerCursor localServerCursor,
+                             final OperationContext operationContext,
+                             final SingleResultCallback<List<T>> funcCallback) {
+        getMore(localServerCursor, operationContext, (nextBatch, t) -> {
+            if (t != null) {
+                funcCallback.onResult(null, t);
+            } else if (resourceManager.getServerCursor() == null || (nextBatch != null && !nextBatch.isEmpty())) {
+                commandCursorResult = withEmptyResults(commandCursorResult);
+                funcCallback.onResult(nextBatch, null);
+            } else if (!resourceManager.operable()) {
+                funcCallback.onResult(emptyList(), null);
+            } else {
+                getMoreLoop(assertNotNull(resourceManager.getServerCursor()), operationContext, funcCallback);
+            }
+        });
     }
 
     private void getMore(final ServerCursor cursor, final OperationContext operationContext, final SingleResultCallback<List<T>> callback) {
