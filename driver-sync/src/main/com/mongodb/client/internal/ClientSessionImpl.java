@@ -407,9 +407,13 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
     }
 
     private static MongoException wrapInMongoTimeoutException(final MongoException cause, final boolean timeoutMsConfigured) {
-        return timeoutMsConfigured
+        MongoException timeoutException = timeoutMsConfigured
                 ? createMongoTimeoutException(cause)
                 : wrapInNonTimeoutMsMongoTimeoutException(cause);
+        if (timeoutException != cause) {
+            cause.getErrorLabels().forEach(timeoutException::addLabel);
+        }
+        return timeoutException;
     }
 
     private static MongoTimeoutException wrapInNonTimeoutMsMongoTimeoutException(final MongoException cause) {
