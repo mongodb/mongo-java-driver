@@ -32,6 +32,7 @@ import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.observability.micrometer.TransactionSpan;
 import com.mongodb.internal.operation.AbortTransactionOperation;
 import com.mongodb.internal.operation.CommitTransactionOperation;
+import com.mongodb.internal.operation.OperationHelper;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteConcernHelper;
 import com.mongodb.internal.operation.WriteOperation;
@@ -294,13 +295,14 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     abortIfInTransaction();
                     if (e instanceof MongoException) {
                         MongoException mongoException = (MongoException) e;
-                        if (mongoException.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
+                        MongoException labelCarryingException = OperationHelper.unwrap(mongoException);
+                        if (labelCarryingException.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
                             if (transactionSpan != null) {
                                 transactionSpan.spanFinalizing(false);
                             }
                             lastError = mongoException;
                             continue;
-                        } else if (mongoException.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
+                        } else if (labelCarryingException.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
                             throw e;
                         } else {
                             throw withTransactionTimeoutExpired.getAsBoolean()
