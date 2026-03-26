@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client;
 
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.Document;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -66,5 +67,37 @@ final class RetryableWritesProseTest {
         com.mongodb.client.RetryableWritesProseTest.retriesOnSameMongosWhenAnotherNotAvailable(
                 SyncMongoClient::new,
                 mongoCollection -> mongoCollection.insertOne(new Document()), "insert", true);
+    }
+
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#case-1-test-that-drivers-return-the-correct-error-when-receiving-only-errors-without-nowritesperformed">
+     * 6. Test error propagation after encountering multiple errors.
+     * Case 1: Test that drivers return the correct error when receiving only errors without NoWritesPerformed</a>.
+     */
+    @Test
+    @Disabled("TODO-BACKPRESSURE Valentin Enable when implementing JAVA-6055")
+    void errorPropagationAfterEncounteringMultipleErrorsCase1() throws Exception {
+        com.mongodb.client.RetryableWritesProseTest.errorPropagationAfterEncounteringMultipleErrorsCase1(SyncMongoClient::new);
+    }
+
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#case-2-test-that-drivers-return-the-correct-error-when-receiving-only-errors-with-nowritesperformed">
+     * 6. Test error propagation after encountering multiple errors.
+     * Case 2: Test that drivers return the correct error when receiving only errors with NoWritesPerformed</a>.
+     */
+    @Test
+    void errorPropagationAfterEncounteringMultipleErrorsCase2() throws Exception {
+        com.mongodb.client.RetryableWritesProseTest.errorPropagationAfterEncounteringMultipleErrorsCase2(SyncMongoClient::new);
+    }
+
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#case-3-test-that-drivers-return-the-correct-error-when-receiving-some-errors-with-nowritesperformed-and-some-without-nowritesperformed">
+     * 6. Test error propagation after encountering multiple errors.
+     * Case 3: Test that drivers return the correct error when receiving some errors with NoWritesPerformed and some without NoWritesPerformed</a>.
+     */
+    @Test
+    @Disabled("TODO-BACKPRESSURE Valentin Enable when implementing JAVA-6055, fails on MongoDB 6.0")
+    void errorPropagationAfterEncounteringMultipleErrorsCase3() throws Exception {
+        com.mongodb.client.RetryableWritesProseTest.errorPropagationAfterEncounteringMultipleErrorsCase3(SyncMongoClient::new);
     }
 }

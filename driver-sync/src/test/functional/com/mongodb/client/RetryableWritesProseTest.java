@@ -19,6 +19,7 @@ package com.mongodb.client;
 import com.mongodb.ConnectionString;
 import com.mongodb.Function;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoException;
 import com.mongodb.MongoServerException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ServerAddress;
@@ -34,9 +35,11 @@ import com.mongodb.internal.connection.ServerAddressHelper;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.internal.event.ConfigureFailPointCommandListener;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.Document;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
@@ -55,6 +58,8 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.MongoException.RETRYABLE_ERROR_LABEL;
+import static com.mongodb.MongoException.SYSTEM_OVERLOADED_ERROR_LABEL;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static com.mongodb.client.Fixture.getMultiMongosMongoClientSettingsBuilder;
@@ -66,6 +71,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -330,6 +336,180 @@ public class RetryableWritesProseTest {
             assertEquals(s0Address, commandEvents.get(0).getConnectionDescription().getServerAddress(), commandEvents::toString);
             assertInstanceOf(CommandSucceededEvent.class, commandEvents.get(1), commandEvents::toString);
             assertEquals(s0Address, commandEvents.get(1).getConnectionDescription().getServerAddress(), commandEvents::toString);
+        }
+    }
+
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#case-1-test-that-drivers-return-the-correct-error-when-receiving-only-errors-without-nowritesperformed">
+     * 6. Test error propagation after encountering multiple errors.
+     * Case 1: Test that drivers return the correct error when receiving only errors without NoWritesPerformed</a>.
+     */
+    @Test
+    @Disabled("TODO-BACKPRESSURE Valentin Enable when implementing JAVA-6055")
+    void errorPropagationAfterEncounteringMultipleErrorsCase1() throws Exception {
+        errorPropagationAfterEncounteringMultipleErrorsCase1(MongoClients::create);
+    }
+
+    public static void errorPropagationAfterEncounteringMultipleErrorsCase1(final Function<MongoClientSettings, MongoClient> clientCreator)
+            throws Exception {
+        BsonDocument configureFailPoint = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: 'failCommand',\n"
+                + "    mode: {'times': 1},\n"
+                + "    data: {\n"
+                + "        failCommands: ['insert'],\n"
+                + "        errorLabels: ['" + RETRYABLE_ERROR_LABEL + "', '" + SYSTEM_OVERLOADED_ERROR_LABEL + "'],\n"
+                + "        errorCode: 91\n"
+                + "    }\n"
+                + "}\n");
+        BsonDocument configureFailPointFromListener = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: \"failCommand\",\n"
+                + "    mode: 'alwaysOn',\n"
+                + "    data: {\n"
+                + "        failCommands: ['insert'],\n"
+                + "        errorCode: 10107,\n"
+                + "        errorLabels: ['" + RETRYABLE_ERROR_LABEL + "', '" + SYSTEM_OVERLOADED_ERROR_LABEL + "']\n"
+                + "    }\n"
+                + "}\n");
+        Predicate<CommandEvent> configureFailPointEventMatcher = event -> {
+            if (event instanceof CommandFailedEvent) {
+                CommandFailedEvent commandFailedEvent = (CommandFailedEvent) event;
+                MongoException cause = assertInstanceOf(MongoException.class, commandFailedEvent.getThrowable());
+                return cause.getCode() == 91;
+            }
+            return false;
+        };
+        errorPropagationAfterEncounteringMultipleErrors(
+                clientCreator,
+                configureFailPoint,
+                configureFailPointFromListener,
+                configureFailPointEventMatcher,
+                10107,
+                null);
+    }
+
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#case-2-test-that-drivers-return-the-correct-error-when-receiving-only-errors-with-nowritesperformed">
+     * 6. Test error propagation after encountering multiple errors.
+     * Case 2: Test that drivers return the correct error when receiving only errors with NoWritesPerformed</a>.
+     */
+    @Test
+    void errorPropagationAfterEncounteringMultipleErrorsCase2() throws Exception {
+        errorPropagationAfterEncounteringMultipleErrorsCase2(MongoClients::create);
+    }
+
+    public static void errorPropagationAfterEncounteringMultipleErrorsCase2(final Function<MongoClientSettings, MongoClient> clientCreator)
+            throws Exception {
+        BsonDocument configureFailPoint = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: 'failCommand',\n"
+                + "    mode: {'times': 1},\n"
+                + "    data: {\n"
+                + "        failCommands: ['insert'],\n"
+                + "        errorLabels: ['" + RETRYABLE_ERROR_LABEL + "', '" + SYSTEM_OVERLOADED_ERROR_LABEL
+                + "', '" + NO_WRITES_PERFORMED_ERROR_LABEL + "'],\n"
+                + "        errorCode: 91\n"
+                + "    }\n"
+                + "}\n");
+        BsonDocument configureFailPointFromListener = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: \"failCommand\",\n"
+                + "    mode: 'alwaysOn',\n"
+                + "    data: {\n"
+                + "        failCommands: ['insert'],\n"
+                + "        errorCode: 10107,\n"
+                + "        errorLabels: ['" + RETRYABLE_ERROR_LABEL + "', '" + SYSTEM_OVERLOADED_ERROR_LABEL
+                + "', '" + NO_WRITES_PERFORMED_ERROR_LABEL + "']\n"
+                + "    }\n"
+                + "}\n");
+        Predicate<CommandEvent> configureFailPointEventMatcher = event -> {
+            if (event instanceof CommandFailedEvent) {
+                CommandFailedEvent commandFailedEvent = (CommandFailedEvent) event;
+                MongoException cause = assertInstanceOf(MongoException.class, commandFailedEvent.getThrowable());
+                return cause.getCode() == 91;
+            }
+            return false;
+        };
+        errorPropagationAfterEncounteringMultipleErrors(
+                clientCreator,
+                configureFailPoint,
+                configureFailPointFromListener,
+                configureFailPointEventMatcher,
+                91,
+                null);
+    }
+
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#case-3-test-that-drivers-return-the-correct-error-when-receiving-some-errors-with-nowritesperformed-and-some-without-nowritesperformed">
+     * 6. Test error propagation after encountering multiple errors.
+     * Case 3: Test that drivers return the correct error when receiving some errors with NoWritesPerformed and some without NoWritesPerformed</a>.
+     */
+    @Test
+    @Disabled("TODO-BACKPRESSURE Valentin Enable when implementing JAVA-6055, fails on MongoDB 6.0")
+    void errorPropagationAfterEncounteringMultipleErrorsCase3() throws Exception {
+        errorPropagationAfterEncounteringMultipleErrorsCase3(MongoClients::create);
+    }
+
+    public static void errorPropagationAfterEncounteringMultipleErrorsCase3(final Function<MongoClientSettings, MongoClient> clientCreator)
+            throws Exception {
+        BsonDocument configureFailPoint = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: 'failCommand',\n"
+                + "    mode: {'times': 1},\n"
+                + "    data: {\n"
+                + "        failCommands: ['insert'],\n"
+                + "        errorLabels: ['" + RETRYABLE_ERROR_LABEL + "', '" + SYSTEM_OVERLOADED_ERROR_LABEL + "'],\n"
+                + "        errorCode: 91\n"
+                + "    }\n"
+                + "}\n");
+        BsonDocument configureFailPointFromListener = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: \"failCommand\",\n"
+                + "    mode: 'alwaysOn',\n"
+                + "    data: {\n"
+                + "        failCommands: ['insert'],\n"
+                + "        errorCode: 91,\n"
+                + "        errorLabels: ['" + RETRYABLE_ERROR_LABEL + "', '" + SYSTEM_OVERLOADED_ERROR_LABEL
+                + "', '" + NO_WRITES_PERFORMED_ERROR_LABEL + "']\n"
+                + "    }\n"
+                + "}\n");
+        Predicate<CommandEvent> configureFailPointEventMatcher = event -> event instanceof CommandFailedEvent;
+        errorPropagationAfterEncounteringMultipleErrors(
+                clientCreator,
+                configureFailPoint,
+                configureFailPointFromListener,
+                configureFailPointEventMatcher,
+                91,
+                NO_WRITES_PERFORMED_ERROR_LABEL);
+    }
+
+    /**
+     * @param unexpectedErrorLabel {@code null} means there is no expectation.
+     */
+    private static void errorPropagationAfterEncounteringMultipleErrors(
+            final Function<MongoClientSettings, MongoClient> clientCreator,
+            final BsonDocument configureFailPoint,
+            final BsonDocument configureFailPointFromListener,
+            final Predicate<CommandEvent> configureFailPointEventMatcher,
+            final int expectedErrorCode,
+            @Nullable final String unexpectedErrorLabel) throws Exception {
+        assumeTrue(serverVersionAtLeast(6, 0));
+        assumeTrue(isDiscoverableReplicaSet());
+        ServerAddress primaryServerAddress = getPrimary();
+        try (ConfigureFailPointCommandListener commandListener = new ConfigureFailPointCommandListener(
+                configureFailPointFromListener, primaryServerAddress, configureFailPointEventMatcher);
+             MongoClient client = clientCreator.apply(getMongoClientSettingsBuilder()
+                     .retryWrites(true)
+                     .addCommandListener(commandListener)
+                     .build());
+             FailPoint ignored = FailPoint.enable(configureFailPoint, primaryServerAddress)) {
+            MongoCollection<Document> collection = dropAndGetCollection("errorPropagationAfterEncounteringMultipleErrors", client);
+            MongoException e = assertThrows(MongoException.class, () -> collection.insertOne(new Document()));
+            assertEquals(expectedErrorCode, e.getCode());
+            if (unexpectedErrorLabel != null) {
+                assertFalse(e.hasErrorLabel(unexpectedErrorLabel));
+            }
         }
     }
 
