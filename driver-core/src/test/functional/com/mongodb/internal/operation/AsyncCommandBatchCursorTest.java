@@ -47,10 +47,14 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -252,6 +256,32 @@ class AsyncCommandBatchCursorTest {
                 Assertions::fail);
     }
 
+    @Test
+    void shouldReleaseConnectionBetweenEmptyGetMoreResponses() {
+        AtomicInteger callCount = new AtomicInteger();
+        doAnswer(invocation -> {
+            SingleResultCallback<BsonDocument> cb = invocation.getArgument(6);
+            cb.onResult(new BsonDocument("cursor",
+                    new BsonDocument("ns", new BsonString(NAMESPACE.getFullName()))
+                            .append("id", new BsonInt64(callCount.incrementAndGet() < 3 ? 1 : 0))
+                            .append("nextBatch", new BsonArrayWrapper<>(new BsonArray()))), null);
+            return null;
+        }).when(mockConnection).commandAsync(eq(NAMESPACE.getDatabaseName()),
+                argThat(doc -> doc.containsKey("getMore")), any(), any(), any(), any(), any());
+
+        when(serverDescription.getType()).thenReturn(ServerType.STANDALONE);
+        createBatchCursor(0).next((result, t) -> {
+            assertNotNull(result);
+            assertTrue(result.isEmpty());
+            assertNull(t);
+        });
+
+        // 2 empty-batch getMores + 1 exhausted getMore = 3 getMores, but the 3rd
+        // exhausts the cursor (id=0), which makes the cursor break the loop and return an empty result.
+        verify(mockConnection, times(3)).release();
+        verify(connectionSource, times(3)).getConnection(any());
+        assertEquals(3, callCount.get());
+    }
 
     private AsyncCommandBatchCursor<Document> createBatchCursor(final long maxTimeMS) {
         return new AsyncCommandBatchCursor<Document>(
