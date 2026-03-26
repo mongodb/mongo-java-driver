@@ -16,66 +16,53 @@
 
 package com.mongodb.reactivestreams.client;
 
-import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.Document;
-import org.bson.codecs.DocumentCodec;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
 /**
- * See
- * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#prose-tests">Retryable Write Prose Tests</a>.
+ * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#prose-tests">
+ * Prose Tests</a>.
  */
-public class RetryableWritesProseTest extends DatabaseTestCase {
-    private CollectionHelper<Document> collectionHelper;
-
-    @BeforeEach
-    @Override
-    public void setUp() {
-        super.setUp();
-
-        collectionHelper = new CollectionHelper<>(new DocumentCodec(), collection.getNamespace());
-        collectionHelper.create();
-    }
-
+final class RetryableWritesProseTest {
     /**
-     * Prose test #2.
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#2-test-that-drivers-properly-retry-after-encountering-poolclearederrors">
+     * 2. Test that drivers properly retry after encountering PoolClearedErrors</a>.
      */
     @Test
-    public void poolClearedExceptionMustBeRetryable() throws InterruptedException, ExecutionException, TimeoutException {
+    void poolClearedExceptionMustBeRetryable() throws Exception {
         com.mongodb.client.RetryableWritesProseTest.poolClearedExceptionMustBeRetryable(
                 SyncMongoClient::new,
                 mongoCollection -> mongoCollection.insertOne(new Document()), "insert", true);
     }
 
     /**
-     * Prose test #3.
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#3-test-that-drivers-return-the-original-error-after-encountering-a-writeconcernerror-with-a-retryablewriteerror-label">
+     * 3. Test that drivers return the original error after encountering a WriteConcernError with a RetryableWriteError label</a>.
      */
     @Test
-    public void originalErrorMustBePropagatedIfNoWritesPerformed() throws InterruptedException {
+    void originalErrorMustBePropagatedIfNoWritesPerformed() throws Exception {
         com.mongodb.client.RetryableWritesProseTest.originalErrorMustBePropagatedIfNoWritesPerformed(
                 SyncMongoClient::new);
     }
 
     /**
-     * Prose test #4.
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#4-test-that-in-a-sharded-cluster-writes-are-retried-on-a-different-mongos-when-one-is-available">
+     * 4. Test that in a sharded cluster writes are retried on a different mongos when one is available</a>.
      */
     @Test
-    public void retriesOnDifferentMongosWhenAvailable() {
+    void retriesOnDifferentMongosWhenAvailable() {
         com.mongodb.client.RetryableWritesProseTest.retriesOnDifferentMongosWhenAvailable(
                 SyncMongoClient::new,
                 mongoCollection -> mongoCollection.insertOne(new Document()), "insert", true);
     }
 
     /**
-     * Prose test #5.
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#5-test-that-in-a-sharded-cluster-writes-are-retried-on-the-same-mongos-when-no-others-are-available">
+     * 5. Test that in a sharded cluster writes are retried on the same mongos when no others are available</a>.
      */
     @Test
-    public void retriesOnSameMongosWhenAnotherNotAvailable() {
+    void retriesOnSameMongosWhenAnotherNotAvailable() {
         com.mongodb.client.RetryableWritesProseTest.retriesOnSameMongosWhenAnotherNotAvailable(
                 SyncMongoClient::new,
                 mongoCollection -> mongoCollection.insertOne(new Document()), "insert", true);
