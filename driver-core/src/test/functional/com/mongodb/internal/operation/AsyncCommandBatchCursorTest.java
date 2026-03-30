@@ -123,17 +123,17 @@ class AsyncCommandBatchCursorTest {
             return null;
         }).when(mockConnection).commandAsync(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any(), any());
         when(serverDescription.getType()).thenReturn(ServerType.LOAD_BALANCER);
-        AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor(0);
 
         //when
-        commandBatchCursor.next((result, t) -> {
-            Assertions.assertNull(result);
-            Assertions.assertNotNull(t);
-            Assertions.assertEquals(MongoSocketException.class, t.getClass());
-        });
+        try (AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor(0)) {
+            commandBatchCursor.next((result, t) -> {
+                Assertions.assertNull(result);
+                Assertions.assertNotNull(t);
+                Assertions.assertEquals(MongoSocketException.class, t.getClass());
+            });
+        }
 
         //then
-        commandBatchCursor.close();
         verify(mockConnection, times(1)).commandAsync(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any(), any());
     }
 
@@ -148,17 +148,14 @@ class AsyncCommandBatchCursorTest {
         }).when(mockConnection).commandAsync(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any(), any());
         when(serverDescription.getType()).thenReturn(ServerType.LOAD_BALANCER);
 
-        AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor(0);
-
         //when
-        commandBatchCursor.next((result, t) -> {
-            Assertions.assertNull(result);
-            Assertions.assertNotNull(t);
-            Assertions.assertEquals(MongoOperationTimeoutException.class, t.getClass());
-        });
-
-        commandBatchCursor.close();
-
+        try (AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor(0)) {
+            commandBatchCursor.next((result, t) -> {
+                Assertions.assertNull(result);
+                Assertions.assertNotNull(t);
+                Assertions.assertEquals(MongoOperationTimeoutException.class, t.getClass());
+            });
+        }
 
         //then
         verify(mockConnection, times(2)).commandAsync(any(),
@@ -179,16 +176,14 @@ class AsyncCommandBatchCursorTest {
         }).when(mockConnection).commandAsync(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any(), any());
         when(serverDescription.getType()).thenReturn(ServerType.LOAD_BALANCER);
 
-        AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor(0);
-
         //when
-        commandBatchCursor.next((result, t) -> {
-            Assertions.assertNull(result);
-            Assertions.assertNotNull(t);
-            Assertions.assertEquals(MongoOperationTimeoutException.class, t.getClass());
-        });
-
-        commandBatchCursor.close();
+        try (AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor(0)) {
+            commandBatchCursor.next((result, t) -> {
+                Assertions.assertNull(result);
+                Assertions.assertNotNull(t);
+                Assertions.assertEquals(MongoOperationTimeoutException.class, t.getClass());
+            });
+        }
 
         //then
         verify(mockConnection, times(1)).commandAsync(any(),
@@ -207,8 +202,6 @@ class AsyncCommandBatchCursorTest {
         try (AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor(maxTimeMS)) {
             // verify that the `maxTimeMS` override was applied
             timeoutContext.runMaxTimeMS(remainingMillis -> assertTrue(remainingMillis <= maxTimeMS));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
         timeoutContext.runMaxTimeMS(remainingMillis -> {
             // verify that the `maxTimeMS` override was reset
@@ -240,8 +233,6 @@ class AsyncCommandBatchCursorTest {
                 Thread.sleep(thirdOfTimeout.toMillis());
                 return null;
             });
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
         verify(mockConnection, times(1)).release();
         // at this point at least (2 * thirdOfTimeout) have passed
@@ -270,11 +261,13 @@ class AsyncCommandBatchCursorTest {
                 argThat(doc -> doc.containsKey("getMore")), any(), any(), any(), any(), any());
 
         when(serverDescription.getType()).thenReturn(ServerType.STANDALONE);
-        createBatchCursor(0).next((result, t) -> {
-            assertNotNull(result);
-            assertTrue(result.isEmpty());
-            assertNull(t);
-        });
+        try (AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor(0)) {
+            commandBatchCursor.next((result, t) -> {
+                assertNotNull(result);
+                assertTrue(result.isEmpty());
+                assertNull(t);
+            });
+        }
 
         // 2 empty-batch getMores + 1 exhausted getMore = 3 getMores, but the 3rd
         // exhausts the cursor (id=0), which makes the cursor break the loop and return an empty result.
