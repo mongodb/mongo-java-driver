@@ -17,6 +17,7 @@
 package com.mongodb.internal.event;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.FailPoint;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
@@ -33,6 +34,7 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.fail;
 
+@ThreadSafe
 public final class ConfigureFailPointCommandListener implements CommandListener, AutoCloseable {
     private final BsonDocument configureFailPoint;
     private final ServerAddress serverAddress;
