@@ -48,7 +48,22 @@ public final class FailPoint implements AutoCloseable {
                         .hosts(Collections.singletonList(serverAddress)))
                 .build();
         MongoClient client = MongoClients.create(clientSettings);
-        return enable(configureFailPointDoc, client);
+        RuntimeException enableException = null;
+        try {
+            return enable(configureFailPointDoc, client);
+        } catch (RuntimeException e) {
+            enableException = e;
+            throw e;
+        } finally {
+            if (enableException != null) {
+                try {
+                    disableAndClose(configureFailPointDoc, client);
+                } catch (RuntimeException closeException) {
+                    enableException.addSuppressed(closeException);
+                }
+            }
+        }
+
     }
 
     private static FailPoint enable(final BsonDocument configureFailPointDoc, final MongoClient client) {
@@ -59,6 +74,10 @@ public final class FailPoint implements AutoCloseable {
 
     @Override
     public void close() {
+        disableAndClose(failPointDocument, client);
+    }
+
+    private static void disableAndClose(final BsonDocument failPointDocument, final MongoClient client) {
         try {
             client.getDatabase("admin").runCommand(new BsonDocument()
                     .append("configureFailPoint", failPointDocument.getString("configureFailPoint"))
