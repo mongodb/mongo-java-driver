@@ -194,9 +194,12 @@ public class RetryableWritesProseTest {
         Predicate<CommandEvent> configureFailPointEventMatcher = event -> {
             if (event instanceof CommandSucceededEvent) {
                 CommandSucceededEvent commandSucceededEvent = (CommandSucceededEvent) event;
-                return commandSucceededEvent.getCommandName().equals("insert")
-                        && commandSucceededEvent.getResponse().getDocument("writeConcernError", new BsonDocument())
-                        .getInt32("code", new BsonInt32(-1)).intValue() == 91;
+                if (commandSucceededEvent.getCommandName().equals("insert")) {
+                    assertEquals(91, commandSucceededEvent.getResponse().getDocument("writeConcernError", new BsonDocument())
+                            .getInt32("code", new BsonInt32(-1)).intValue());
+                    return true;
+                }
+                return false;
             }
             return false;
         };
@@ -376,7 +379,8 @@ public class RetryableWritesProseTest {
             if (event instanceof CommandFailedEvent) {
                 CommandFailedEvent commandFailedEvent = (CommandFailedEvent) event;
                 MongoException cause = assertInstanceOf(MongoException.class, commandFailedEvent.getThrowable());
-                return cause.getCode() == 91;
+                assertEquals(91, cause.getCode());
+                return true;
             }
             return false;
         };
@@ -427,7 +431,8 @@ public class RetryableWritesProseTest {
             if (event instanceof CommandFailedEvent) {
                 CommandFailedEvent commandFailedEvent = (CommandFailedEvent) event;
                 MongoException cause = assertInstanceOf(MongoException.class, commandFailedEvent.getThrowable());
-                return cause.getCode() == 91;
+                assertEquals(91, cause.getCode());
+                return true;
             }
             return false;
         };
