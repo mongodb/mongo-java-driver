@@ -375,20 +375,10 @@ public class RetryableWritesProseTest {
                 + "        errorLabels: ['" + RETRYABLE_ERROR_LABEL + "', '" + SYSTEM_OVERLOADED_ERROR_LABEL + "']\n"
                 + "    }\n"
                 + "}\n");
-        Predicate<CommandEvent> configureFailPointEventMatcher = event -> {
-            if (event instanceof CommandFailedEvent) {
-                CommandFailedEvent commandFailedEvent = (CommandFailedEvent) event;
-                MongoException cause = assertInstanceOf(MongoException.class, commandFailedEvent.getThrowable());
-                assertEquals(91, cause.getCode());
-                return true;
-            }
-            return false;
-        };
         errorPropagationAfterEncounteringMultipleErrors(
                 clientCreator,
                 configureFailPoint,
                 configureFailPointFromListener,
-                configureFailPointEventMatcher,
                 10107,
                 null);
     }
@@ -427,20 +417,10 @@ public class RetryableWritesProseTest {
                 + "', '" + NO_WRITES_PERFORMED_ERROR_LABEL + "']\n"
                 + "    }\n"
                 + "}\n");
-        Predicate<CommandEvent> configureFailPointEventMatcher = event -> {
-            if (event instanceof CommandFailedEvent) {
-                CommandFailedEvent commandFailedEvent = (CommandFailedEvent) event;
-                MongoException cause = assertInstanceOf(MongoException.class, commandFailedEvent.getThrowable());
-                assertEquals(91, cause.getCode());
-                return true;
-            }
-            return false;
-        };
         errorPropagationAfterEncounteringMultipleErrors(
                 clientCreator,
                 configureFailPoint,
                 configureFailPointFromListener,
-                configureFailPointEventMatcher,
                 91,
                 null);
     }
@@ -479,12 +459,10 @@ public class RetryableWritesProseTest {
                 + "', '" + NO_WRITES_PERFORMED_ERROR_LABEL + "']\n"
                 + "    }\n"
                 + "}\n");
-        Predicate<CommandEvent> configureFailPointEventMatcher = event -> event instanceof CommandFailedEvent;
         errorPropagationAfterEncounteringMultipleErrors(
                 clientCreator,
                 configureFailPoint,
                 configureFailPointFromListener,
-                configureFailPointEventMatcher,
                 91,
                 NO_WRITES_PERFORMED_ERROR_LABEL);
     }
@@ -496,12 +474,20 @@ public class RetryableWritesProseTest {
             final Function<MongoClientSettings, MongoClient> clientCreator,
             final BsonDocument configureFailPoint,
             final BsonDocument configureFailPointFromListener,
-            final Predicate<CommandEvent> configureFailPointEventMatcher,
             final int expectedErrorCode,
             @Nullable final String unexpectedErrorLabel) throws Exception {
         assumeTrue(serverVersionAtLeast(6, 0));
         assumeTrue(isDiscoverableReplicaSet());
         ServerAddress primaryServerAddress = getPrimary();
+        Predicate<CommandEvent> configureFailPointEventMatcher = event -> {
+            if (event instanceof CommandFailedEvent) {
+                CommandFailedEvent commandFailedEvent = (CommandFailedEvent) event;
+                MongoException cause = assertInstanceOf(MongoException.class, commandFailedEvent.getThrowable());
+                assertEquals(91, cause.getCode());
+                return true;
+            }
+            return false;
+        };
         try (ConfigureFailPointCommandListener commandListener = new ConfigureFailPointCommandListener(
                 configureFailPointFromListener, primaryServerAddress, configureFailPointEventMatcher);
              MongoClient client = clientCreator.apply(getMongoClientSettingsBuilder()
