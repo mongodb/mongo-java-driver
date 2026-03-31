@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ExponentialBackoffTest {
     /**
      * Expected {@linkplain ExponentialBackoff#calculateTransactionBackoffMs(int) backoffs} with 1.0 as
-     * {@link ExponentialBackoff#setTestJitterSupplier(DoubleSupplier)  jitter}.
+     * {@link ExponentialBackoff#setTestJitterSupplier(DoubleSupplier) jitter}.
      */
     private static final double[] EXPECTED_BACKOFFS_MAX_VALUES = {5.0, 7.5, 11.25, 16.875, 25.3125, 37.96875, 56.953125, 85.4296875, 128.14453125,
             192.21679688, 288.32519531, 432.48779297, 500.0};
