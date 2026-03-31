@@ -63,7 +63,6 @@ public final class FailPoint implements AutoCloseable {
                 }
             }
         }
-
     }
 
     private static FailPoint enable(final BsonDocument configureFailPointDoc, final MongoClient client) {
