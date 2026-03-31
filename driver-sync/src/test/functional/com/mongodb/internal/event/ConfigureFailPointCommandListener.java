@@ -46,7 +46,10 @@ public final class ConfigureFailPointCommandListener implements CommandListener,
      * @param configureFailPoint See {@link FailPoint#enable(BsonDocument, ServerAddress)}.
      * @param serverAddress See {@link FailPoint#enable(BsonDocument, ServerAddress)}.
      * @param eventMatcher When an event is matched, an attempt to configure the fail point
-     * specified via {@code configureFailPoint} is made. The attempt is made at most once regardless of how many events are matched.
+     * specified via {@code configureFailPoint} is made.
+     * The {@code eventMatcher} is guaranteed to be {@linkplain Predicate#test(Object) used} sequentially.
+     * The attempt is made at most once,
+     * and the {@code eventMatcher} {@linkplain Predicate#test(Object) test} that caused the attempt is the last one.
      */
     public ConfigureFailPointCommandListener(
             final BsonDocument configureFailPoint,
