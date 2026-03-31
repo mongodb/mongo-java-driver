@@ -48,17 +48,17 @@ public final class FailPoint implements AutoCloseable {
                         .hosts(Collections.singletonList(serverAddress)))
                 .build();
         MongoClient client = MongoClients.create(clientSettings);
-        RuntimeException enableException = null;
+        Throwable enableException = null;
         try {
             return enable(configureFailPointDoc, client);
-        } catch (RuntimeException e) {
+        } catch (Throwable e) {
             enableException = e;
             throw e;
         } finally {
             if (enableException != null) {
                 try {
                     disableAndClose(configureFailPointDoc, client);
-                } catch (RuntimeException closeException) {
+                } catch (Throwable closeException) {
                     enableException.addSuppressed(closeException);
                 }
             }
