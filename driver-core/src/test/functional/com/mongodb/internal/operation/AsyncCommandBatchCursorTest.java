@@ -47,10 +47,14 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -119,17 +123,17 @@ class AsyncCommandBatchCursorTest {
             return null;
         }).when(mockConnection).commandAsync(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any(), any());
         when(serverDescription.getType()).thenReturn(ServerType.LOAD_BALANCER);
-        AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor(0);
 
         //when
-        commandBatchCursor.next((result, t) -> {
-            Assertions.assertNull(result);
-            Assertions.assertNotNull(t);
-            Assertions.assertEquals(MongoSocketException.class, t.getClass());
-        });
+        try (AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor(0)) {
+            commandBatchCursor.next((result, t) -> {
+                Assertions.assertNull(result);
+                Assertions.assertNotNull(t);
+                Assertions.assertEquals(MongoSocketException.class, t.getClass());
+            });
+        }
 
         //then
-        commandBatchCursor.close();
         verify(mockConnection, times(1)).commandAsync(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any(), any());
     }
 
@@ -144,17 +148,14 @@ class AsyncCommandBatchCursorTest {
         }).when(mockConnection).commandAsync(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any(), any());
         when(serverDescription.getType()).thenReturn(ServerType.LOAD_BALANCER);
 
-        AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor(0);
-
         //when
-        commandBatchCursor.next((result, t) -> {
-            Assertions.assertNull(result);
-            Assertions.assertNotNull(t);
-            Assertions.assertEquals(MongoOperationTimeoutException.class, t.getClass());
-        });
-
-        commandBatchCursor.close();
-
+        try (AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor(0)) {
+            commandBatchCursor.next((result, t) -> {
+                Assertions.assertNull(result);
+                Assertions.assertNotNull(t);
+                Assertions.assertEquals(MongoOperationTimeoutException.class, t.getClass());
+            });
+        }
 
         //then
         verify(mockConnection, times(2)).commandAsync(any(),
@@ -175,16 +176,14 @@ class AsyncCommandBatchCursorTest {
         }).when(mockConnection).commandAsync(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any(), any());
         when(serverDescription.getType()).thenReturn(ServerType.LOAD_BALANCER);
 
-        AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor(0);
-
         //when
-        commandBatchCursor.next((result, t) -> {
-            Assertions.assertNull(result);
-            Assertions.assertNotNull(t);
-            Assertions.assertEquals(MongoOperationTimeoutException.class, t.getClass());
-        });
-
-        commandBatchCursor.close();
+        try (AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor(0)) {
+            commandBatchCursor.next((result, t) -> {
+                Assertions.assertNull(result);
+                Assertions.assertNotNull(t);
+                Assertions.assertEquals(MongoOperationTimeoutException.class, t.getClass());
+            });
+        }
 
         //then
         verify(mockConnection, times(1)).commandAsync(any(),
@@ -203,8 +202,6 @@ class AsyncCommandBatchCursorTest {
         try (AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor(maxTimeMS)) {
             // verify that the `maxTimeMS` override was applied
             timeoutContext.runMaxTimeMS(remainingMillis -> assertTrue(remainingMillis <= maxTimeMS));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
         timeoutContext.runMaxTimeMS(remainingMillis -> {
             // verify that the `maxTimeMS` override was reset
@@ -236,8 +233,6 @@ class AsyncCommandBatchCursorTest {
                 Thread.sleep(thirdOfTimeout.toMillis());
                 return null;
             });
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
         verify(mockConnection, times(1)).release();
         // at this point at least (2 * thirdOfTimeout) have passed
@@ -252,6 +247,34 @@ class AsyncCommandBatchCursorTest {
                 Assertions::fail);
     }
 
+    @Test
+    void shouldReleaseConnectionBetweenEmptyGetMoreResponses() {
+        AtomicInteger callCount = new AtomicInteger();
+        doAnswer(invocation -> {
+            SingleResultCallback<BsonDocument> cb = invocation.getArgument(6);
+            cb.onResult(new BsonDocument("cursor",
+                    new BsonDocument("ns", new BsonString(NAMESPACE.getFullName()))
+                            .append("id", new BsonInt64(callCount.incrementAndGet() < 3 ? 1 : 0))
+                            .append("nextBatch", new BsonArrayWrapper<>(new BsonArray()))), null);
+            return null;
+        }).when(mockConnection).commandAsync(eq(NAMESPACE.getDatabaseName()),
+                argThat(doc -> doc.containsKey("getMore")), any(), any(), any(), any(), any());
+
+        when(serverDescription.getType()).thenReturn(ServerType.STANDALONE);
+        try (AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor(0)) {
+            commandBatchCursor.next((result, t) -> {
+                assertNotNull(result);
+                assertTrue(result.isEmpty());
+                assertNull(t);
+            });
+        }
+
+        // 2 empty-batch getMores + 1 exhausted getMore = 3 getMores, but the 3rd
+        // exhausts the cursor (id=0), which makes the cursor break the loop and return an empty result.
+        verify(mockConnection, times(3)).release();
+        verify(connectionSource, times(3)).getConnection(any());
+        assertEquals(3, callCount.get());
+    }
 
     private AsyncCommandBatchCursor<Document> createBatchCursor(final long maxTimeMS) {
         return new AsyncCommandBatchCursor<Document>(
