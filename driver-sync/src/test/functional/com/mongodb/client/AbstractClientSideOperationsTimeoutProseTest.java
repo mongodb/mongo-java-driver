@@ -84,6 +84,7 @@ import static com.mongodb.ClusterFixture.isLoadBalanced;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.sleep;
+import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getPrimary;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
@@ -685,7 +686,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "    blockConnection: true,"
                 + "    blockTimeMS: " + 25
                 + "    errorCode: " + 24
-                + "    errorLabels: [\"TransientTransactionError\"]"
+                + "    errorLabels: [\"" + TRANSIENT_TRANSACTION_ERROR_LABEL + "\"]"
                 + "  }"
                 + "}");
 

@@ -51,7 +51,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-// See https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#prose-tests
+/**
+ * <a href="https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#prose-tests">Prose Tests</a>.
+ */
 public class WithTransactionProseTest extends DatabaseTestCase {
     private static final Duration ERROR_GENERATING_INTERVAL = Duration.ofSeconds(120);
 
@@ -65,11 +67,10 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         collection.insertOne(Document.parse("{ _id : 0 }"));
     }
 
-    //
-    // Test that the callback raises a custom exception or error that does not include either UnknownTransactionCommitResult or
-    // TransientTransactionError error labels. The callback will execute using withTransaction and assert that the callback's error
-    // bypasses any retry logic within withTransaction and is propagated to the caller of withTransaction.
-    //
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#callback-raises-a-custom-error">
+     * Callback Raises a Custom Error</a>.
+     */
     @Test
     public void testCallbackRaisesCustomError() {
         final String exceptionMessage = "NotTransientOrUnknownError";
@@ -84,10 +85,10 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         }
     }
 
-    //
-    // Test that the callback that returns a custom value (e.g. boolean, string, object). Execute this callback using withTransaction
-    // and assert that the callback's return value is propagated to the caller of withTransaction.
-    //
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#callback-returns-a-value">
+     * Callback Returns a Value</a>.
+     */
     @Test
     public void testCallbackReturnsValue() {
         try (ClientSession session = client.startSession()) {
@@ -100,10 +101,10 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         }
     }
 
-    //
-    // If the callback raises an error with the TransientTransactionError label and the retry timeout has been exceeded, withTransaction
-    // should propagate the error to its caller.
-    //
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#retry-timeout-is-enforced">
+     * Retry Timeout is Enforced</a>, first scenario on the list.
+     */
     @Test
     public void testRetryTimeoutEnforcedTransientTransactionError() {
         final String errorMessage = "transient transaction error";
@@ -126,10 +127,10 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         }
     }
 
-    //
-    // If committing raises an error with the UnknownTransactionCommitResult label, the error is not a write concern timeout, and the
-    // retry timeout has been exceeded, withTransaction should propagate the error to its caller.
-    //
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#retry-timeout-is-enforced">
+     * Retry Timeout is Enforced</a>, second scenario on the list.
+     */
     @Test
     public void testRetryTimeoutEnforcedUnknownTransactionCommit() {
         MongoDatabase failPointAdminDb = client.getDatabase("admin");
@@ -156,11 +157,10 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         }
     }
 
-    //
-    // If committing raises an error with the TransientTransactionError label and the retry timeout has been exceeded, withTransaction
-    // should propagate the error to its caller. This case may occur if the commit was internally retried against a new primary after
-    // a failover and the second primary returned a NoSuchTransaction error response.
-    //
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#retry-timeout-is-enforced">
+     * Retry Timeout is Enforced</a>, third scenario on the list.
+     */
     @Test
     public void testRetryTimeoutEnforcedTransientTransactionErrorOnCommit() {
         MongoDatabase failPointAdminDb = client.getDatabase("admin");
@@ -188,9 +188,9 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         }
     }
 
-    //
-    // Ensure cannot override timeout in transaction
-    //
+    /**
+     * Ensure cannot override timeout in transaction.
+     */
     @Test
     public void testTimeoutMS() {
         try (ClientSession session = client.startSession(ClientSessionOptions.builder()
@@ -204,9 +204,9 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         }
     }
 
-    //
-    // Ensure legacy settings don't cause issues in sessions
-    //
+    /**
+     * Ensure legacy settings don't cause issues in sessions.
+     */
     @Test
     public void testTimeoutMSAndLegacySettings() {
         try (ClientSession session = client.startSession(ClientSessionOptions.builder()
@@ -232,18 +232,16 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     @DisplayName("Retry Backoff is Enforced")
     @Test
     public void testRetryBackoffIsEnforced() throws InterruptedException {
-        final BsonDocument failPointDocument = BsonDocument.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 13}, "
-                + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 251}}");
+        long noBackoffTimeMs = measureTransactionLatencyMs(0.0);
+        long withBackoffTimeMs = measureTransactionLatencyMs(1.0);
 
-        long noBackoffTime = measureTransactionLatency(0.0, failPointDocument);
-        long withBackoffTime = measureTransactionLatency(1.0, failPointDocument);
+        long sumOfBackoffsMs = 1800;
+        long toleranceMs = 500;
+        long actualDifferenceMs = Math.abs(withBackoffTimeMs - (noBackoffTimeMs + sumOfBackoffsMs));
 
-        long expectedWithBackoffTime = noBackoffTime + 1800;
-        long actualDifference = Math.abs(withBackoffTime - expectedWithBackoffTime);
-
-        assertTrue(actualDifference < 500, String.format("Expected withBackoffTime to be ~% dms (noBackoffTime %d ms + 1800 ms), but"
-                + " got %d ms. Difference: %d ms (tolerance: 500 ms per spec)", expectedWithBackoffTime, noBackoffTime, withBackoffTime,
-                actualDifference));
+        assertTrue(actualDifferenceMs < toleranceMs,
+                String.format("The actual difference between with and no backoff (%d ms) exceeds the specified tolerance (%d ms)",
+                        actualDifferenceMs, toleranceMs));
     }
 
     /**
@@ -268,7 +266,9 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         }
     }
 
-    private long measureTransactionLatency(final double jitter, final BsonDocument failPointDocument) throws InterruptedException {
+    private long measureTransactionLatencyMs(final double jitter) throws InterruptedException {
+        BsonDocument failPointDocument = BsonDocument.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 13}, "
+                + "'data': {'failCommands': ['commitTransaction'], 'errorCode': 251}}");
         ExponentialBackoff.setTestJitterSupplier(() -> jitter);
         try (ClientSession session = client.startSession();
              FailPoint ignored = FailPoint.enable(failPointDocument, getPrimary())) {

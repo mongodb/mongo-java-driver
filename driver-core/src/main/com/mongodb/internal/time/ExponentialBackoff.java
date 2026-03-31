@@ -29,13 +29,10 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
  */
 public final class ExponentialBackoff {
 
-    // Constants for transaction retry backoff
-    @VisibleForTesting(otherwise = PRIVATE)
-    static final double TRANSACTION_BASE_MS = 5.0;
+    private static final double TRANSACTION_BASE_MS = 5.0;
     @VisibleForTesting(otherwise = PRIVATE)
     static final double TRANSACTION_MAX_MS = 500.0;
-    @VisibleForTesting(otherwise = PRIVATE)
-    static final double TRANSACTION_GROWTH = 1.5;
+    private static final double TRANSACTION_GROWTH = 1.5;
 
     // TODO-JAVA-6079
     private static DoubleSupplier testJitterSupplier = null;
@@ -46,11 +43,11 @@ public final class ExponentialBackoff {
     /**
      * Calculate the backoff in milliseconds for transaction retries.
      *
-     * @param attemptNumber 0-based attempt number
+     * @param attemptNumber attempt number > 0
      * @return The calculated backoff in milliseconds.
      */
     public static long calculateTransactionBackoffMs(final int attemptNumber) {
-        assertTrue(attemptNumber > 0, "Attempt number must be greater than 0 in the context of transaction backoff calculation");
+        assertTrue(attemptNumber > 0, "Attempt number must be at least 1 (1-based) in the context of transaction backoff calculation");
         double jitter = testJitterSupplier != null
                 ? testJitterSupplier.getAsDouble()
                 : ThreadLocalRandom.current().nextDouble();
@@ -62,7 +59,7 @@ public final class ExponentialBackoff {
     /**
      * Set a custom jitter supplier for testing purposes.
      *
-     * @param supplier A DoubleSupplier that returns values in [0, 1) range.
+     * @param supplier A DoubleSupplier that returns values in [0, 1] range.
      */
     @VisibleForTesting(otherwise = PRIVATE)
     public static void setTestJitterSupplier(final DoubleSupplier supplier) {

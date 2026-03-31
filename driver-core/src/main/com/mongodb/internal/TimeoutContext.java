@@ -109,10 +109,6 @@ public class TimeoutContext {
         this(false, timeoutSettings, startTimeout(timeoutSettings.getTimeoutMS()));
     }
 
-    private TimeoutContext(final TimeoutSettings timeoutSettings, @Nullable final Timeout timeout) {
-        this(false, timeoutSettings, timeout);
-    }
-
     private TimeoutContext(final boolean isMaintenanceContext,
                            final TimeoutSettings timeoutSettings,
                            @Nullable final Timeout timeout) {
