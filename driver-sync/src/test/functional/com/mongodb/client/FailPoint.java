@@ -24,6 +24,7 @@ import org.bson.conversions.Bson;
 
 import java.util.Collections;
 
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 
 public final class FailPoint implements AutoCloseable {
@@ -48,27 +49,10 @@ public final class FailPoint implements AutoCloseable {
                         .hosts(Collections.singletonList(serverAddress)))
                 .build();
         MongoClient client = MongoClients.create(clientSettings);
-        Throwable enableException = null;
-        try {
-            return enable(configureFailPointDoc, client);
-        } catch (Throwable e) {
-            enableException = e;
-            throw e;
-        } finally {
-            if (enableException != null) {
-                try {
-                    disableAndClose(configureFailPointDoc, client);
-                } catch (Throwable closeException) {
-                    enableException.addSuppressed(closeException);
-                }
-            }
+        try (Guard guard = new Guard(configureFailPointDoc, client)) {
+            client.getDatabase("admin").runCommand(configureFailPointDoc);
+            return guard.intoFailPoint();
         }
-    }
-
-    private static FailPoint enable(final BsonDocument configureFailPointDoc, final MongoClient client) {
-        FailPoint result = new FailPoint(configureFailPointDoc, client);
-        client.getDatabase("admin").runCommand(configureFailPointDoc);
-        return result;
     }
 
     @Override
@@ -83,6 +67,39 @@ public final class FailPoint implements AutoCloseable {
                     .append("mode", new BsonString("off")));
         } finally {
             client.close();
+        }
+    }
+
+    private static final class Guard implements AutoCloseable {
+        private final BsonDocument failPointDocument;
+        private final MongoClient client;
+        private boolean consumed;
+
+        Guard(final BsonDocument failPointDocument, final MongoClient client) {
+            this.failPointDocument = failPointDocument;
+            this.client = client;
+            consumed = false;
+        }
+
+        /**
+         * May be invoked at most once.
+         *
+         * @see #close()
+         */
+        FailPoint intoFailPoint() {
+            assertFalse(consumed);
+            consumed = true;
+            return new FailPoint(failPointDocument, client);
+        }
+
+        /**
+         * Invokes {@link #disableAndClose(BsonDocument, MongoClient)} unless {@link #intoFailPoint()} was invoked.
+         */
+        @Override
+        public void close() {
+            if (!consumed) {
+                disableAndClose(failPointDocument, client);
+            }
         }
     }
 }
