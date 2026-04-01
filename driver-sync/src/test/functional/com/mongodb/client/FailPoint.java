@@ -61,12 +61,10 @@ public final class FailPoint implements AutoCloseable {
     }
 
     private static void disableAndClose(final BsonDocument failPointDocument, final MongoClient client) {
-        try {
+        try (MongoClient ignored = client) {
             client.getDatabase("admin").runCommand(new BsonDocument()
                     .append("configureFailPoint", failPointDocument.getString("configureFailPoint"))
                     .append("mode", new BsonString("off")));
-        } finally {
-            client.close();
         }
     }
 
@@ -88,8 +86,9 @@ public final class FailPoint implements AutoCloseable {
          */
         FailPoint intoFailPoint() {
             assertFalse(consumed);
+            FailPoint result = new FailPoint(failPointDocument, client);
             consumed = true;
-            return new FailPoint(failPointDocument, client);
+            return result;
         }
 
         /**
