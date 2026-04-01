@@ -33,7 +33,7 @@ import org.junit.jupiter.api.extension.TestWatcher;
  */
 public final class ThreadDumpOnFailureExtension implements TestWatcher {
 
-    private static final Logger LOGGER = Loggers.getLogger(ThreadDumpOnFailureExtension.class.getName());
+    private static final Logger LOGGER = Loggers.getLogger(ThreadDumpOnFailureExtension.class.getSimpleName());
 
     @Override
     public void testFailed(final ExtensionContext context, final Throwable cause) {
@@ -43,15 +43,19 @@ public final class ThreadDumpOnFailureExtension implements TestWatcher {
     }
 
     private static String getAllThreadsDump() {
-        final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-        ThreadInfo[] threadInfos = threadMXBean.dumpAllThreads(
-                threadMXBean.isObjectMonitorUsageSupported(),
-                threadMXBean.isSynchronizerUsageSupported()
-        );
-        StringBuilder sb = new StringBuilder(1024);
-        for (ThreadInfo info : threadInfos) {
-            sb.append(info);
+        try {
+            final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+            ThreadInfo[] threadInfos = threadMXBean.dumpAllThreads(
+                    threadMXBean.isObjectMonitorUsageSupported(),
+                    threadMXBean.isSynchronizerUsageSupported()
+            );
+            StringBuilder sb = new StringBuilder(1024);
+            for (ThreadInfo info : threadInfos) {
+                sb.append(info);
+            }
+            return sb.toString();
+        } catch (final SecurityException exc) {
+            return "Unable to get thread dump due to security manager restrictions: " + exc.getMessage();
         }
-        return sb.toString();
     }
 }
