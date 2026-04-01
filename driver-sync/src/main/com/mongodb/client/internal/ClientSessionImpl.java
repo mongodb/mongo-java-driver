@@ -419,6 +419,6 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
     private static MongoTimeoutException wrapInNonTimeoutMsMongoTimeoutException(final MongoException cause) {
         return cause instanceof MongoTimeoutException
                 ? (MongoTimeoutException) cause
-                : new MongoTimeoutException("Operation exceeded the timeout limit", cause);
+                : new MongoTimeoutException("Operation exceeded the timeout limit.", cause);
     }
 }
