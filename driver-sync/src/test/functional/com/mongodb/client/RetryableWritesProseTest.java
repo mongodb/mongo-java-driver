@@ -482,6 +482,10 @@ public class RetryableWritesProseTest {
         Predicate<CommandEvent> configureFailPointEventMatcher = event -> {
             if (event instanceof CommandFailedEvent) {
                 CommandFailedEvent commandFailedEvent = (CommandFailedEvent) event;
+                if (commandFailedEvent.getCommandName().equals("drop")) {
+                    // this code may run against MongoDB 6, where dropping a nonexistent collection results in an error
+                    return false;
+                }
                 MongoException cause = assertInstanceOf(MongoException.class, commandFailedEvent.getThrowable());
                 assertEquals(91, cause.getCode());
                 return true;
