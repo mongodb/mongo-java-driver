@@ -240,8 +240,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         long actualDifferenceMs = Math.abs(withBackoffTimeMs - (noBackoffTimeMs + sumOfBackoffsMs));
 
         assertTrue(actualDifferenceMs < toleranceMs,
-                String.format("The actual difference between with and no backoff (%d ms) exceeds the specified tolerance (%d ms)",
-                        actualDifferenceMs, toleranceMs));
+                String.format("Observed backoff time deviates from expected by %d ms (tolerance: %d ms)", actualDifferenceMs, toleranceMs));
     }
 
     /**
