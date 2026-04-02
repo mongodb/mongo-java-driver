@@ -305,9 +305,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                         } else if (labelCarryingException.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
                             throw e;
                         } else {
-                            throw withTransactionTimeoutExpired.getAsBoolean()
-                                    ? wrapInMongoTimeoutException(mongoException, timeoutMsConfigured)
-                                    : mongoException;
+                            throw mongoException;
                         }
                     }
                     throw e;
@@ -330,9 +328,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                                 lastError = mongoException;
                                 continue outer;
                             }
-                            throw withTransactionTimeoutExpired.getAsBoolean()
-                                    ? wrapInMongoTimeoutException(mongoException, timeoutMsConfigured)
-                                    : mongoException;
+                            throw mongoException;
                         }
                     }
                 }
