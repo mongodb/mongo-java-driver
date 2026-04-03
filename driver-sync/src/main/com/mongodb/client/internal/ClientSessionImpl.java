@@ -317,8 +317,10 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                             break;
                         } catch (MongoException mongoException) {
                             if (mongoException.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
-                                    && !(mongoException instanceof MongoExecutionTimeoutException)
-                                    && !withTransactionTimeoutExpired.getAsBoolean()) {
+                                    && !(mongoException instanceof MongoExecutionTimeoutException)) {
+                                if (withTransactionTimeoutExpired.getAsBoolean()) {
+                                    throw wrapInMongoTimeoutException(mongoException, timeoutMsConfigured);
+                                }
                                 applyMajorityWriteConcernToTransactionOptions();
                                 continue;
                             } else if (mongoException.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {

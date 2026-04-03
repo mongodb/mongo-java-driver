@@ -147,9 +147,11 @@ public class WithTransactionProseTest extends DatabaseTestCase {
                 }));
             fail("Test should have thrown an exception.");
         } catch (Exception e) {
-            MongoNodeIsRecoveringException exception = assertInstanceOf(MongoNodeIsRecoveringException.class, e);
+            MongoTimeoutException exception = assertInstanceOf(MongoTimeoutException.class, e);
             assertTrue(exception.hasErrorLabel(MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL));
-            assertEquals(91, exception.getCode());
+            MongoNodeIsRecoveringException cause = assertInstanceOf(MongoNodeIsRecoveringException.class, exception.getCause());
+            assertEquals(91, cause.getCode());
+            assertTrue(cause.hasErrorLabel(MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL));
         } finally {
             failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': 'off'}"));
         }
