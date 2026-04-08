@@ -67,7 +67,7 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
 
         LoopingCallback(final SingleResultCallback<Void> callback) {
             wrapped = callback;
-            nextIteration = () -> body.run(this);
+            nextIteration = () -> AsyncCallbackLoop.this.body.run(this);
         }
 
         @Override
