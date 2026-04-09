@@ -101,16 +101,16 @@ internal class JsonBsonEncoder(
             primitive.isString -> encodeString(content)
             content == "true" || content == "false" -> encodeBoolean(content.toBooleanStrict())
             else -> {
-                val decimal = BigDecimal(content)
+                val decimal = BigDecimal(content).stripTrailingZeros()
                 when {
-                    decimal.scale() != 0 ->
+                    decimal.scale() > 0 ->
                         if (DOUBLE_MIN_VALUE <= decimal && decimal <= DOUBLE_MAX_VALUE) {
                             encodeDouble(primitive.double)
                         } else {
                             writer.writeDecimal128(Decimal128(decimal))
                         }
-                    INT_MIN_VALUE <= decimal && decimal <= INT_MAX_VALUE -> encodeInt(primitive.int)
-                    LONG_MIN_VALUE <= decimal && decimal <= LONG_MAX_VALUE -> encodeLong(primitive.long)
+                    INT_MIN_VALUE <= decimal && decimal <= INT_MAX_VALUE -> encodeInt(decimal.toInt())
+                    LONG_MIN_VALUE <= decimal && decimal <= LONG_MAX_VALUE -> encodeLong(decimal.toLong())
                     else -> writer.writeDecimal128(Decimal128(decimal))
                 }
             }
