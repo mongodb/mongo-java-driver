@@ -77,7 +77,7 @@ public abstract class AbstractAutomatedEmbeddingVectorSearchFunctionalTest exten
         //TODO-JAVA-6059 remove this line when Atlas Vector Search with automated embedding is generally available
         // right now atlas search with automated embedding is in private preview and
         // only available via a custom docker image
-        Assumptions.assumeTrue(true);
+        Assumptions.assumeTrue(false);
 
         super.beforeEach();
         mongoClient = getMongoClient(getMongoClientSettingsBuilder()
