@@ -48,6 +48,7 @@ import com.mongodb.event.ConnectionClosedEvent;
 import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionReadyEvent;
 
+import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
 
@@ -687,7 +688,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "    blockConnection: true,"
                 + "    blockTimeMS: " + 25
                 + "    errorCode: " + 24
-                + "    errorLabels: [\"TransientTransactionError\"]"
+                + "    errorLabels: [\"" + TRANSIENT_TRANSACTION_ERROR_LABEL + "\"]"
                 + "  }"
                 + "}");
 

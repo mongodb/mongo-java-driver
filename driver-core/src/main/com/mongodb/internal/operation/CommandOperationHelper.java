@@ -51,7 +51,7 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
 @SuppressWarnings("overloads")
-final class CommandOperationHelper {
+public final class CommandOperationHelper {
     static WriteConcern validateAndGetEffectiveWriteConcern(final WriteConcern writeConcernSetting, final SessionContext sessionContext)
             throws MongoClientException {
         boolean activeTransaction = sessionContext.hasActiveTransaction();
@@ -223,8 +223,8 @@ final class CommandOperationHelper {
                 || command.getFirstKey().equals("commitTransaction") || command.getFirstKey().equals("abortTransaction")));
     }
 
-    static final String RETRYABLE_WRITE_ERROR_LABEL = "RetryableWriteError";
-    private static final String NO_WRITES_PERFORMED_ERROR_LABEL = "NoWritesPerformed";
+    public static final String RETRYABLE_WRITE_ERROR_LABEL = "RetryableWriteError";
+    public static final String NO_WRITES_PERFORMED_ERROR_LABEL = "NoWritesPerformed";
 
     private static boolean decideRetryableAndAddRetryableWriteErrorLabel(final Throwable t, @Nullable final Integer maxWireVersion) {
         if (!(t instanceof MongoException)) {
