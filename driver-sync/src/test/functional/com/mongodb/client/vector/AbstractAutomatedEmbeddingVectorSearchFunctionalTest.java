@@ -34,6 +34,8 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,6 +46,7 @@ import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 import static com.mongodb.client.model.Aggregates.vectorSearch;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.VectorSearchOptions.approximateVectorSearchOptions;
+import static com.mongodb.client.model.search.VectorSearchOptions.exactVectorSearchOptions;
 import static com.mongodb.client.model.search.VectorSearchQuery.textQuery;
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -74,7 +77,7 @@ public abstract class AbstractAutomatedEmbeddingVectorSearchFunctionalTest exten
         //TODO-JAVA-6059 remove this line when Atlas Vector Search with automated embedding is generally available
         // right now atlas search with automated embedding is in private preview and
         // only available via a custom docker image
-        Assumptions.assumeTrue(false);
+        Assumptions.assumeTrue(true);
 
         super.beforeEach();
         mongoClient = getMongoClient(getMongoClientSettingsBuilder()
@@ -208,6 +211,220 @@ public abstract class AbstractAutomatedEmbeddingVectorSearchFunctionalTest exten
                         .append("title", MOVIE_NAME)
                         .append("year", 2017)
         ));
+    }
+
+    @Test
+    @DisplayName("should create auto embedding index with all optional fields")
+    void shouldCreateAutoEmbeddingIndexWithAllOptionalFields() {
+        mongoClient.getDatabase(getDatabaseName()).createCollection(getCollectionName());
+        SearchIndexModel indexModel = new SearchIndexModel(
+                INDEX_NAME,
+                new Document(
+                        "fields",
+                        Collections.singletonList(
+                                new Document("type", "autoEmbed")
+                                        .append("modality", "text")
+                                        .append("path", FIELD_SEARCH_PATH)
+                                        .append("model", "voyage-4-large")
+                                        .append("quantization", "binary")
+                                        .append("similarity", "euclidean")
+                        )),
+                SearchIndexType.vectorSearch()
+        );
+        List<String> result = documentCollection.createSearchIndexes(Collections.singletonList(indexModel));
+        Assertions.assertFalse(result.isEmpty());
+    }
+
+    @ParameterizedTest(name = "should create auto embedding index with {0} quantization")
+    @ValueSource(strings = {"float", "scalar", "binary", "binaryNoRescore"})
+    void shouldCreateAutoEmbeddingIndexWithQuantization(final String quantization) {
+        final String indexName = INDEX_NAME + "_" + quantization;
+        mongoClient.getDatabase(getDatabaseName()).createCollection(getCollectionName());
+        SearchIndexModel indexModel = new SearchIndexModel(
+                indexName,
+                new Document(
+                        "fields",
+                        Collections.singletonList(
+                                new Document("type", "autoEmbed")
+                                        .append("modality", "text")
+                                        .append("path", FIELD_SEARCH_PATH)
+                                        .append("model", "voyage-4-large")
+                                        .append("quantization", quantization)
+                        )),
+                SearchIndexType.vectorSearch()
+        );
+        List<String> result = documentCollection.createSearchIndexes(Collections.singletonList(indexModel));
+        Assertions.assertFalse(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("should create auto embedding index with custom numDimensions")
+    void shouldCreateAutoEmbeddingIndexWithCustomNumDimensions() {
+        mongoClient.getDatabase(getDatabaseName()).createCollection(getCollectionName());
+        SearchIndexModel indexModel = new SearchIndexModel(
+                INDEX_NAME,
+                new Document(
+                        "fields",
+                        Collections.singletonList(
+                                new Document("type", "autoEmbed")
+                                        .append("modality", "text")
+                                        .append("path", FIELD_SEARCH_PATH)
+                                        .append("model", "voyage-4-large")
+                                        .append("numDimensions", 512)
+                        )),
+                SearchIndexType.vectorSearch()
+        );
+        List<String> result = documentCollection.createSearchIndexes(Collections.singletonList(indexModel));
+        Assertions.assertFalse(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("should create auto embedding index with filter field")
+    void shouldCreateAutoEmbeddingIndexWithFilterField() {
+        mongoClient.getDatabase(getDatabaseName()).createCollection(getCollectionName());
+        SearchIndexModel indexModel = new SearchIndexModel(
+                INDEX_NAME,
+                new Document(
+                        "fields",
+                        asList(
+                                new Document("type", "autoEmbed")
+                                        .append("modality", "text")
+                                        .append("path", FIELD_SEARCH_PATH)
+                                        .append("model", "voyage-4-large"),
+                                new Document("type", "filter")
+                                        .append("path", "director")
+                        )),
+                SearchIndexType.vectorSearch()
+        );
+        List<String> result = documentCollection.createSearchIndexes(Collections.singletonList(indexModel));
+        Assertions.assertFalse(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("should fail when mixing vector and autoEmbed types in the same index")
+    void shouldFailWhenMixingVectorAndAutoEmbedTypes() {
+        mongoClient.getDatabase(getDatabaseName()).createCollection(getCollectionName());
+        SearchIndexModel indexModel = new SearchIndexModel(
+                INDEX_NAME,
+                new Document(
+                        "fields",
+                        asList(
+                                new Document("type", "autoEmbed")
+                                        .append("modality", "text")
+                                        .append("path", FIELD_SEARCH_PATH)
+                                        .append("model", "voyage-4-large"),
+                                new Document("type", "vector")
+                                        .append("path", "plot_embedding")
+                                        .append("numDimensions", 1024)
+                                        .append("similarity", "cosine")
+                        )),
+                SearchIndexType.vectorSearch()
+        );
+        Assertions.assertThrows(
+                MongoCommandException.class,
+                () -> documentCollection.createSearchIndexes(Collections.singletonList(indexModel)),
+                "Expected index creation to fail because vector and autoEmbed types cannot be mixed"
+        );
+    }
+
+    @Test
+    @DisplayName("should fail when duplicate paths are used")
+    void shouldFailWhenDuplicatePathsAreUsed() {
+        mongoClient.getDatabase(getDatabaseName()).createCollection(getCollectionName());
+        SearchIndexModel indexModel = new SearchIndexModel(
+                INDEX_NAME,
+                new Document(
+                        "fields",
+                        asList(
+                                new Document("type", "autoEmbed")
+                                        .append("modality", "text")
+                                        .append("path", FIELD_SEARCH_PATH)
+                                        .append("model", "voyage-4-large"),
+                                new Document("type", "autoEmbed")
+                                        .append("modality", "text")
+                                        .append("path", FIELD_SEARCH_PATH)
+                                        .append("model", "voyage-4-large")
+                        )),
+                SearchIndexType.vectorSearch()
+        );
+        Assertions.assertThrows(
+                MongoCommandException.class,
+                () -> documentCollection.createSearchIndexes(Collections.singletonList(indexModel)),
+                "Expected index creation to fail because of duplicate paths"
+        );
+    }
+
+    @Test
+    @DisplayName("should fail when autoEmbed field is used as filter field")
+    void shouldFailWhenAutoEmbedFieldUsedAsFilterField() {
+        mongoClient.getDatabase(getDatabaseName()).createCollection(getCollectionName());
+        SearchIndexModel indexModel = new SearchIndexModel(
+                INDEX_NAME,
+                new Document(
+                        "fields",
+                        asList(
+                                new Document("type", "autoEmbed")
+                                        .append("modality", "text")
+                                        .append("path", FIELD_SEARCH_PATH)
+                                        .append("model", "voyage-4-large"),
+                                new Document("type", "filter")
+                                        .append("path", FIELD_SEARCH_PATH)
+                        )),
+                SearchIndexType.vectorSearch()
+        );
+        Assertions.assertThrows(
+                MongoCommandException.class,
+                () -> documentCollection.createSearchIndexes(Collections.singletonList(indexModel)),
+                "Expected index creation to fail because autoEmbed field cannot be used as a filter field"
+        );
+    }
+
+    @Test
+    @DisplayName("should create auto embedding index and run query with model override")
+    void shouldCreateAutoEmbeddingIndexAndRunQueryWithModelOverride() throws InterruptedException {
+        mongoClient.getDatabase(getDatabaseName()).createCollection(getCollectionName());
+        createAutoEmbeddingIndex("voyage-4-large");
+        TimeUnit.SECONDS.sleep(2L);
+        insertDocumentsForEmbedding();
+        TimeUnit.SECONDS.sleep(2L);
+
+        List<Bson> pipeline = asList(
+                vectorSearch(
+                        fieldPath(FIELD_SEARCH_PATH),
+                        textQuery("movies about love").model("voyage-4-large"),
+                        INDEX_NAME,
+                        5L,
+                        approximateVectorSearchOptions(5L)
+                )
+        );
+        List<Document> documents = documentCollection.aggregate(pipeline).into(new ArrayList<>());
+
+        Assertions.assertFalse(documents.isEmpty(), "Expected to get some results from vector search query");
+        Assertions.assertEquals(MOVIE_NAME, documents.get(0).getString("title"));
+    }
+
+    @Test
+    @DisplayName("should create auto embedding index and run exact vector search query")
+    void shouldCreateAutoEmbeddingIndexAndRunExactVectorSearchQuery() throws InterruptedException {
+        mongoClient.getDatabase(getDatabaseName()).createCollection(getCollectionName());
+        createAutoEmbeddingIndex("voyage-4-large");
+        TimeUnit.SECONDS.sleep(2L);
+        insertDocumentsForEmbedding();
+        TimeUnit.SECONDS.sleep(2L);
+
+        List<Bson> pipeline = asList(
+                vectorSearch(
+                        fieldPath(FIELD_SEARCH_PATH),
+                        textQuery("movies about love"),
+                        INDEX_NAME,
+                        5L,
+                        exactVectorSearchOptions()
+                )
+        );
+        List<Document> documents = documentCollection.aggregate(pipeline).into(new ArrayList<>());
+
+        Assertions.assertFalse(documents.isEmpty(), "Expected to get some results from exact vector search query");
+        Assertions.assertEquals(MOVIE_NAME, documents.get(0).getString("title"));
     }
 
     private void createAutoEmbeddingIndex(final String modelName) {
