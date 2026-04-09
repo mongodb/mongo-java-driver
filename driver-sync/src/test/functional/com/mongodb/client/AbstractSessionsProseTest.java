@@ -271,7 +271,7 @@ public abstract class AbstractSessionsProseTest {
                 "--port", port,
                 "--pidfilepath", "mongocryptd-" + port + ".pid"));
         processBuilder.redirectErrorStream(true);
-        processBuilder.redirectOutput(new File("/tmp/mongocryptd.log"));
+        processBuilder.redirectOutput(new File(System.getProperty("java.io.tmpdir"), "mongocryptd.log"));
         return processBuilder.start();
     }
 

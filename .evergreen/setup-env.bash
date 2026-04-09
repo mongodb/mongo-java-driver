@@ -1,9 +1,16 @@
 # Java configurations for evergreen
 
-export JDK8="/opt/java/jdk8"
-export JDK11="/opt/java/jdk11"
-export JDK17="/opt/java/jdk17"
-export JDK21="/opt/java/jdk21"
+if [ "Windows_NT" == "$OS" ]; then
+  export JDK8="/cygdrive/c/java/jdk8"
+  export JDK11="/cygdrive/c/java/jdk11"
+  export JDK17="/cygdrive/c/java/jdk17"
+  export JDK21="/cygdrive/c/java/jdk21"
+else
+  export JDK8="/opt/java/jdk8"
+  export JDK11="/opt/java/jdk11"
+  export JDK17="/opt/java/jdk17"
+  export JDK21="/opt/java/jdk21"
+fi
 # note that `JDK21_GRAALVM` is used in `run-graalvm-native-image-app.sh`
 # by dynamically constructing the variable name
 export JDK21_GRAALVM="/opt/java/jdk21-graalce"

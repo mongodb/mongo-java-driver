@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.AuthenticationMechanism;
+import com.mongodb.internal.EnvironmentProvider;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoConfigurationException;
@@ -235,8 +236,8 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
     static OidcCallback getK8sCallback() {
         return (context) -> {
-            String azure = System.getenv(K8S_AZURE_FILE);
-            String aws = System.getenv(K8S_AWS_FILE);
+            String azure = EnvironmentProvider.getEnv(K8S_AZURE_FILE);
+            String aws = EnvironmentProvider.getEnv(K8S_AWS_FILE);
             String path;
             if (azure != null) {
                 path = azure;
@@ -542,7 +543,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     }
 
     private static String readTokenFromFile() {
-        String path = System.getenv(OIDC_TOKEN_FILE);
+        String path = EnvironmentProvider.getEnv(OIDC_TOKEN_FILE);
         if (path == null) {
             throw new MongoClientException(
                     format("Environment variable must be specified: %s", OIDC_TOKEN_FILE));

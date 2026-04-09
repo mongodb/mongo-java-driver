@@ -16,13 +16,12 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.internal.EnvironmentProvider;
 import com.mongodb.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 enum FaasEnvironment {
     AWS_LAMBDA("aws.lambda"),
@@ -30,8 +29,6 @@ enum FaasEnvironment {
     GCP_FUNC("gcp.func"),
     VERCEL("vercel"),
     UNKNOWN(null);
-
-    static final Map<String, String> ENV_OVERRIDES_FOR_TESTING = new HashMap<>();
 
     static FaasEnvironment getFaasEnvironment() {
         List<FaasEnvironment> result = new ArrayList<>();
@@ -62,10 +59,7 @@ enum FaasEnvironment {
 
     @Nullable
     public static String getEnv(final String key) {
-        if (ENV_OVERRIDES_FOR_TESTING.containsKey(key)) {
-            return ENV_OVERRIDES_FOR_TESTING.get(key);
-        }
-        return System.getenv(key);
+        return EnvironmentProvider.getEnv(key);
     }
 
     @Nullable

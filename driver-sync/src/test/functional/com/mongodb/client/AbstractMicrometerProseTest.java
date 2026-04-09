@@ -17,7 +17,7 @@
 package com.mongodb.client;
 
 import com.mongodb.MongoClientSettings;
-import com.mongodb.lang.Nullable;
+import com.mongodb.internal.EnvironmentProvider;
 import com.mongodb.observability.ObservabilitySettings;
 import com.mongodb.client.observability.SpanTree;
 import com.mongodb.client.observability.SpanTree.SpanNode;
@@ -33,7 +33,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -62,23 +61,18 @@ public abstract class AbstractMicrometerProseTest {
     private final ObservationRegistry observationRegistry = ObservationRegistry.create();
     private InMemoryOtelSetup memoryOtelSetup;
     private InMemoryOtelSetup.Builder.OtelBuildingBlocks inMemoryOtel;
-    private static String previousEnvVarMdbTracingEnabled;
-    private static String previousEnvVarMdbQueryTextLength;
+    private static EnvironmentProvider.EnvironmentOverride environmentOverride;
 
     protected abstract MongoClient createMongoClient(MongoClientSettings settings);
 
     @BeforeAll
     static void beforeAll() {
-        // preserve original env var values
-        previousEnvVarMdbTracingEnabled = System.getenv(ENV_OBSERVABILITY_ENABLED);
-        previousEnvVarMdbQueryTextLength = System.getenv(ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH);
+        environmentOverride = EnvironmentProvider.envOverride();
     }
 
     @AfterAll
-    static void afterAll() throws Exception {
-        // restore original env var values
-        setEnv(ENV_OBSERVABILITY_ENABLED, previousEnvVarMdbTracingEnabled);
-        setEnv(ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH, previousEnvVarMdbQueryTextLength);
+    static void afterAll() {
+        environmentOverride.close();
     }
 
     @BeforeEach
@@ -95,7 +89,7 @@ public abstract class AbstractMicrometerProseTest {
     @DisplayName("Test 1: Tracing Enable/Disable via Environment Variable")
     @Test
     void testControlOtelInstrumentationViaEnvironmentVariable() throws Exception {
-        setEnv(ENV_OBSERVABILITY_ENABLED, "false");
+        environmentOverride.set(ENV_OBSERVABILITY_ENABLED, "false");
         // don't enable command payload by default
         MongoClientSettings clientSettings = getMongoClientSettingsBuilder()
                 .observabilitySettings(ObservabilitySettings.micrometerBuilder()
@@ -113,7 +107,7 @@ public abstract class AbstractMicrometerProseTest {
             assertTrue(inMemoryOtel.getFinishedSpans().isEmpty(), "Spans should not be emitted when instrumentation is disabled.");
         }
 
-        setEnv(ENV_OBSERVABILITY_ENABLED, "true");
+        environmentOverride.set(ENV_OBSERVABILITY_ENABLED, "true");
         try (MongoClient client = createMongoClient(clientSettings)) {
             MongoDatabase database = client.getDatabase(getDefaultDatabaseName());
             MongoCollection<Document> collection = database.getCollection("test");
@@ -133,7 +127,7 @@ public abstract class AbstractMicrometerProseTest {
     @DisplayName("Test 2: Command Payload Emission via Environment Variable")
     @Test
     void testControlCommandPayloadViaEnvironmentVariable() throws Exception {
-        setEnv(ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH, "42");
+        environmentOverride.set(ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH, "42");
         MicrometerObservabilitySettings settings = MicrometerObservabilitySettings.builder()
                 .observationRegistry(observationRegistry)
                 .enableCommandPayloadTracing(true)
@@ -167,7 +161,7 @@ public abstract class AbstractMicrometerProseTest {
 
         memoryOtelSetup = InMemoryOtelSetup.builder().register(observationRegistry);
         inMemoryOtel = memoryOtelSetup.getBuildingBlocks();
-        setEnv(ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH, null); // Unset the environment variable
+        environmentOverride.set(ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH, null); // Unset the environment variable
 
 
         clientSettings = getMongoClientSettingsBuilder()
@@ -226,7 +220,7 @@ public abstract class AbstractMicrometerProseTest {
      */
     @Test
     void testConcurrentOperationsHaveSeparateSpans() throws Exception {
-        setEnv(ENV_OBSERVABILITY_ENABLED, "true");
+        environmentOverride.set(ENV_OBSERVABILITY_ENABLED, "true");
         int nbrConcurrentOps = 10;
         MongoClientSettings clientSettings = getMongoClientSettingsBuilder()
                 .applyToConnectionPoolSettings(pool -> pool.maxSize(nbrConcurrentOps))
@@ -317,26 +311,4 @@ public abstract class AbstractMicrometerProseTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private static void setEnv(final String key, @Nullable final String value) throws Exception {
-        // Get the unmodifiable Map from System.getenv()
-        Map<String, String> env = System.getenv();
-
-        // Use reflection to get the class of the unmodifiable map
-        Class<?> unmodifiableMapClass = env.getClass();
-
-        // Get the 'm' field which holds the actual modifiable map
-        Field mField = unmodifiableMapClass.getDeclaredField("m");
-        mField.setAccessible(true);
-
-        // Get the modifiable map from the 'm' field
-        Map<String, String> modifiableEnv = (Map<String, String>) mField.get(env);
-
-        // Modify the map
-        if (value == null) {
-            modifiableEnv.remove(key);
-        } else {
-            modifiableEnv.put(key, value);
-        }
-    }
 }
