@@ -276,7 +276,7 @@ public abstract class AsyncFunctionsTestBase {
         assertEquals(expectedException == null, actualException.get() == null,
                 format("both or neither should have produced an exception. Expected exception: %s, actual exception: %s",
                         expectedException,
-                        actualException));
+                        actualException.get()));
         if (expectedException != null) {
             assertEquals(expectedException.getMessage(), actualException.get().getMessage());
             assertEquals(expectedException.getClass(), actualException.get().getClass());
