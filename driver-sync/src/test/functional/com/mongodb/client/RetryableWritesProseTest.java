@@ -431,7 +431,6 @@ public class RetryableWritesProseTest {
      * Case 3: Test that drivers return the correct error when receiving some errors with NoWritesPerformed and some without NoWritesPerformed</a>.
      */
     @Test
-    @Disabled("TODO-BACKPRESSURE Valentin Enable when implementing JAVA-6055, fails on MongoDB 6.0")
     void errorPropagationAfterEncounteringMultipleErrorsCase3() throws Exception {
         errorPropagationAfterEncounteringMultipleErrorsCase3(MongoClients::create);
     }
