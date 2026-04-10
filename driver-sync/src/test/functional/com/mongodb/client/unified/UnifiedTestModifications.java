@@ -102,10 +102,6 @@ public final class UnifiedTestModifications {
                 .test("client-side-operations-timeout", "timeoutMS behaves correctly for tailable awaitData cursors",
                         "apply maxAwaitTimeMS if less than remaining timeout");
 
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5839")
-                .test("client-side-operations-timeout", "timeoutMS behaves correctly for GridFS download operations",
-                        "timeoutMS applied to entire download, not individual parts");
-
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5491")
                 .when(() -> !serverVersionLessThan(8, 3))
                 .test("client-side-operations-timeout", "operations ignore deprecated timeout options if timeoutMS is set",
