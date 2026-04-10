@@ -19,6 +19,7 @@ package com.mongodb.reactivestreams.client;
 import com.mongodb.ContextProvider;
 import com.mongodb.RequestContext;
 import com.mongodb.WriteConcern;
+import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
@@ -186,6 +187,7 @@ public class ContextProviderTest {
         }
     }
 
+    @NotThreadSafe
     private static final class TestCommandListener implements CommandListener {
         private int numCommandStartedEventsWithExpectedContext;
         private int numCommandSucceededEventsWithExpectedContext;
