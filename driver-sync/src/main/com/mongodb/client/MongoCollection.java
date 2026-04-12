@@ -138,9 +138,25 @@ public interface MongoCollection<TDocument> {
      *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
      * </ul>
      *
+     * <p>The timeout can be set at the following levels (ordered by lowest precedence):
+     * <ul>
+     *   <li>{@link com.mongodb.MongoClientSettings.Builder#timeout(long, TimeUnit) MongoClientSettings}</li>
+     *   <li>{@link MongoCluster#withTimeout MongoCluster}</li>
+     *   <li>{@link MongoDatabase#withTimeout MongoDatabase}</li>
+     *   <li>{@link #withTimeout MongoCollection} (current)</li>
+     *   <li>{@link com.mongodb.ClientSessionOptions.Builder#defaultTimeout(long, TimeUnit) ClientSessionOptions}</li>
+     *   <li>{@link com.mongodb.TransactionOptions.Builder#timeout(Long, TimeUnit) TransactionOptions}</li>
+     * </ul>
+     * If not set at a given level, the timeout is inherited from the level above.
+     *
+     * <p>If {@linkplain com.mongodb.MongoClientSettings.Builder#retryWrites(boolean) write} or
+     * {@linkplain com.mongodb.MongoClientSettings.Builder#retryReads(boolean) read} retries are enabled,
+     * the driver may retry multiple times until the timeout expires.
+     *
      * @param timeUnit the time unit
      * @return the timeout in the given time unit
      * @since 5.2
+     * @see #withTimeout
      */
     @Alpha(Reason.CLIENT)
     @Nullable
@@ -203,6 +219,21 @@ public interface MongoCollection<TDocument> {
      *   <li>{@code 0} means infinite timeout.</li>
      *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
      * </ul>
+     *
+     * <p>The timeout can be set at the following levels (ordered by lowest precedence):
+     * <ul>
+     *   <li>{@link com.mongodb.MongoClientSettings.Builder#timeout(long, TimeUnit) MongoClientSettings}</li>
+     *   <li>{@link MongoCluster#withTimeout MongoCluster}</li>
+     *   <li>{@link MongoDatabase#withTimeout MongoDatabase}</li>
+     *   <li>{@link #withTimeout MongoCollection} (current)</li>
+     *   <li>{@link com.mongodb.ClientSessionOptions.Builder#defaultTimeout(long, TimeUnit) ClientSessionOptions}</li>
+     *   <li>{@link com.mongodb.TransactionOptions.Builder#timeout(Long, TimeUnit) TransactionOptions}</li>
+     * </ul>
+     * If not set at a given level, the timeout is inherited from the level above.
+     *
+     * <p>If {@linkplain com.mongodb.MongoClientSettings.Builder#retryWrites(boolean) write} or
+     * {@linkplain com.mongodb.MongoClientSettings.Builder#retryReads(boolean) read} retries are enabled,
+     * the driver may retry multiple times until the timeout expires.
      *
      * @param timeout the timeout, which must be greater than or equal to 0
      * @param timeUnit the time unit
