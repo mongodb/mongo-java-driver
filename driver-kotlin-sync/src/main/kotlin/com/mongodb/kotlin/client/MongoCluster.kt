@@ -21,6 +21,7 @@ import com.mongodb.MongoClientSettings
 import com.mongodb.MongoException
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
+import com.mongodb.TransactionOptions
 import com.mongodb.WriteConcern
 import com.mongodb.annotations.Alpha
 import com.mongodb.annotations.Reason
@@ -83,8 +84,8 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
      * - [MongoCluster.withTimeout] (current)
      * - [MongoDatabase.withTimeout]
      * - [MongoCollection.withTimeout]
-     * - [com.mongodb.ClientSessionOptions.Builder.defaultTimeout]
-     * - [com.mongodb.TransactionOptions.Builder.timeout]
+     * - [ClientSessionOptions.Builder.defaultTimeout]
+     * - [TransactionOptions.Builder.timeout]
      *
      * If not set at a given level, the timeout is inherited from the level above.
      *
@@ -154,8 +155,8 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
      * - [MongoCluster.withTimeout] (current)
      * - [MongoDatabase.withTimeout]
      * - [MongoCollection.withTimeout]
-     * - [com.mongodb.ClientSessionOptions.Builder.defaultTimeout]
-     * - [com.mongodb.TransactionOptions.Builder.timeout]
+     * - [ClientSessionOptions.Builder.defaultTimeout]
+     * - [TransactionOptions.Builder.timeout]
      *
      * If not set at a given level, the timeout is inherited from the level above.
      *
@@ -421,9 +422,9 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
     /**
      * Executes a client-level bulk write operation.
      *
-     * This operation supports [retryable writes][com.mongodb.MongoClientSettings.getRetryWrites]. Depending on the
-     * number of `models`, encoded size of `models`, and the size limits in effect, executing this operation may require
-     * multiple `bulkWrite` commands. The eligibility for retries is determined per each `bulkWrite` command:
+     * This operation supports [retryable writes][MongoClientSettings.getRetryWrites]. Depending on the number of
+     * `models`, encoded size of `models`, and the size limits in effect, executing this operation may require multiple
+     * `bulkWrite` commands. The eligibility for retries is determined per each `bulkWrite` command:
      * [ClientNamespacedUpdateManyModel], [ClientNamespacedDeleteManyModel] in a command render it non-retryable.
      *
      * @param clientSession The [client session][ClientSession] with which to associate this operation.

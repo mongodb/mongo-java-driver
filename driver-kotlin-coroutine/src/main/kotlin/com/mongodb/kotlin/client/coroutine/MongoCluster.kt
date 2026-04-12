@@ -21,6 +21,7 @@ import com.mongodb.MongoClientSettings
 import com.mongodb.MongoException
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
+import com.mongodb.TransactionOptions
 import com.mongodb.WriteConcern
 import com.mongodb.annotations.Alpha
 import com.mongodb.annotations.Reason
@@ -86,8 +87,8 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
      * - [MongoCluster.withTimeout] (current)
      * - [MongoDatabase.withTimeout]
      * - [MongoCollection.withTimeout]
-     * - [com.mongodb.ClientSessionOptions.Builder.defaultTimeout]
-     * - [com.mongodb.TransactionOptions.Builder.timeout]
+     * - [ClientSessionOptions.Builder.defaultTimeout]
+     * - [TransactionOptions.Builder.timeout]
      *
      * If not set at a given level, the timeout is inherited from the level above.
      *
@@ -153,8 +154,8 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
      * - [MongoCluster.withTimeout] (current)
      * - [MongoDatabase.withTimeout]
      * - [MongoCollection.withTimeout]
-     * - [com.mongodb.ClientSessionOptions.Builder.defaultTimeout]
-     * - [com.mongodb.TransactionOptions.Builder.timeout]
+     * - [ClientSessionOptions.Builder.defaultTimeout]
+     * - [TransactionOptions.Builder.timeout]
      *
      * If not set at a given level, the timeout is inherited from the level above.
      *

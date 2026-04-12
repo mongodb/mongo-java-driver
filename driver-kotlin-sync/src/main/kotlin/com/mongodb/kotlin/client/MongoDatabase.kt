@@ -15,8 +15,11 @@
  */
 package com.mongodb.kotlin.client
 
+import com.mongodb.ClientSessionOptions
+import com.mongodb.MongoClientSettings
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
+import com.mongodb.TransactionOptions
 import com.mongodb.WriteConcern
 import com.mongodb.annotations.Alpha
 import com.mongodb.annotations.Reason
@@ -76,8 +79,8 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
      * - [MongoCluster.withTimeout]
      * - [MongoDatabase.withTimeout] (current)
      * - [MongoCollection.withTimeout]
-     * - [com.mongodb.ClientSessionOptions.Builder.defaultTimeout]
-     * - [com.mongodb.TransactionOptions.Builder.timeout]
+     * - [ClientSessionOptions.Builder.defaultTimeout]
+     * - [TransactionOptions.Builder.timeout]
      *
      * If not set at a given level, the timeout is inherited from the level above.
      *
@@ -147,8 +150,8 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
      * - [MongoCluster.withTimeout]
      * - [MongoDatabase.withTimeout] (current)
      * - [MongoCollection.withTimeout]
-     * - [com.mongodb.ClientSessionOptions.Builder.defaultTimeout]
-     * - [com.mongodb.TransactionOptions.Builder.timeout]
+     * - [ClientSessionOptions.Builder.defaultTimeout]
+     * - [TransactionOptions.Builder.timeout]
      *
      * If not set at a given level, the timeout is inherited from the level above.
      *

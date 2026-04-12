@@ -15,9 +15,12 @@
  */
 package com.mongodb.kotlin.client.coroutine
 
+import com.mongodb.ClientSessionOptions
+import com.mongodb.MongoClientSettings
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
+import com.mongodb.TransactionOptions
 import com.mongodb.WriteConcern
 import com.mongodb.annotations.Alpha
 import com.mongodb.annotations.Reason
@@ -110,8 +113,8 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * - [MongoCluster.withTimeout]
      * - [MongoDatabase.withTimeout]
      * - [MongoCollection.withTimeout] (current)
-     * - [com.mongodb.ClientSessionOptions.Builder.defaultTimeout]
-     * - [com.mongodb.TransactionOptions.Builder.timeout]
+     * - [ClientSessionOptions.Builder.defaultTimeout]
+     * - [TransactionOptions.Builder.timeout]
      *
      * If not set at a given level, the timeout is inherited from the level above.
      *
@@ -163,7 +166,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
     /**
      * Create a new collection instance with a different read preference.
      *
-     * @param newReadPreference the new [com.mongodb.ReadPreference] for the collection
+     * @param newReadPreference the new [ReadPreference] for the collection
      * @return a new MongoCollection instance with the different readPreference
      */
     public fun withReadPreference(newReadPreference: ReadPreference): MongoCollection<T> =
@@ -182,7 +185,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
     /**
      * Create a new collection instance with a different write concern.
      *
-     * @param newWriteConcern the new [com.mongodb.WriteConcern] for the collection
+     * @param newWriteConcern the new [WriteConcern] for the collection
      * @return a new MongoCollection instance with the different writeConcern
      */
     public fun withWriteConcern(newWriteConcern: WriteConcern): MongoCollection<T> =
@@ -198,8 +201,8 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * - [MongoCluster.withTimeout]
      * - [MongoDatabase.withTimeout]
      * - [MongoCollection.withTimeout] (current)
-     * - [com.mongodb.ClientSessionOptions.Builder.defaultTimeout]
-     * - [com.mongodb.TransactionOptions.Builder.timeout]
+     * - [ClientSessionOptions.Builder.defaultTimeout]
+     * - [TransactionOptions.Builder.timeout]
      *
      * If not set at a given level, the timeout is inherited from the level above.
      *
