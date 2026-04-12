@@ -738,6 +738,9 @@ public final class MongoClientSettings {
          * <p>If {@linkplain #retryWrites(boolean) write} or {@linkplain #retryReads(boolean) read} retries are enabled,
          * the driver may retry multiple times until the timeout expires.
          *
+         * <p>Note: When using synchronous API, this timeout does not limit socket writes, therefore there is a possibility that the
+         * operation might not be timed out when expected. This limitation does not apply to the reactive streams API.
+         *
          * @param timeout the timeout
          * @param timeUnit the time unit
          * @return this
@@ -973,6 +976,9 @@ public final class MongoClientSettings {
      *
      * <p>If {@linkplain #getRetryWrites() write} or {@linkplain #getRetryReads() read} retries are enabled,
      * the driver may retry multiple times until the timeout expires. Otherwise, at most one retry attempt is made.
+     *
+     * <p>Note: When using synchronous API, this timeout does not limit socket writes, therefore there is a possibility that the
+     * operation might not be timed out when expected. This limitation does not apply to the reactive streams API.
      *
      * @param timeUnit the time unit
      * @return the timeout in the given time unit

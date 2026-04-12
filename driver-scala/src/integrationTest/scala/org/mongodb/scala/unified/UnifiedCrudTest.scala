@@ -16,6 +16,6 @@
 
 package org.mongodb.scala.unified
 
-object UnifiedCrudTest extends UnifiedTest {
+class UnifiedCrudTest extends UnifiedTest {
   val directory = "crud"
 }

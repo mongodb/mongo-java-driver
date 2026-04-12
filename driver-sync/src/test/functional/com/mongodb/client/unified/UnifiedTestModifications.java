@@ -211,9 +211,10 @@ public final class UnifiedTestModifications {
                 .file("open-telemetry/tests", "operation map_reduce")
                 .file("open-telemetry/tests", "operation find without db.query.text")
                 .file("open-telemetry/tests", "operation find_retries");
-
         def.skipAccordingToSpec("Micrometer tests expect the network transport to be tcp")
                 .when(ClusterFixture::isUnixSocket)
+                .directory("open-telemetry/tests");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-6094 TODO-JAVA-6094")
                 .directory("open-telemetry/tests");
 
         // TODO-JAVA-5712
@@ -475,6 +476,14 @@ public final class UnifiedTestModifications {
         def.skipNoncompliant("`MongoCluster.getWriteConcern`/`MongoCollection.getWriteConcern` are silently ignored in a transaction")
                 .test("transactions", "client bulkWrite transactions",
                         "client bulkWrite with writeConcern in a transaction causes a transaction error");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
+                .file("transactions", "backpressure-retryable-writes");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
+                .file("transactions", "backpressure-retryable-reads");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
+                .file("transactions", "backpressure-retryable-commit");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
+                .file("transactions", "backpressure-retryable-abort");
 
         // valid-pass
 

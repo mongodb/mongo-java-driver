@@ -118,6 +118,9 @@ public interface MongoDatabase {
      * {@linkplain com.mongodb.MongoClientSettings.Builder#retryReads(boolean) read} retries are enabled,
      * the driver may retry multiple times until the timeout expires.
      *
+     * <p>Note: This timeout does not limit socket writes, therefore there is a possibility that the
+     * operation might not be timed out when expected.
+     *
      * @param timeUnit the time unit
      * @return the timeout in the given time unit
      * @since 5.2
@@ -190,6 +193,9 @@ public interface MongoDatabase {
      * <p>If {@linkplain com.mongodb.MongoClientSettings.Builder#retryWrites(boolean) write} or
      * {@linkplain com.mongodb.MongoClientSettings.Builder#retryReads(boolean) read} retries are enabled,
      * the driver may retry multiple times until the timeout expires.
+     *
+     *  <p>Note: This timeout does not limit socket writes, therefore there is a possibility that the
+     *  operation might not be timed out when expected.
      *
      * @param timeout the timeout, which must be greater than or equal to 0
      * @param timeUnit the time unit

@@ -115,6 +115,9 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * If [write][MongoClientSettings.Builder.retryWrites] or [read][MongoClientSettings.Builder.retryReads] retries are
      * enabled, the driver may retry multiple times until the timeout expires.
      *
+     * Note: This timeout does not limit socket writes, therefore there is a possibility that the operation might not be
+     * timed out when expected.
+     *
      * @return the optional timeout duration
      * @see [withTimeout]
      * @since 5.2
@@ -202,6 +205,9 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      *
      * If [write][MongoClientSettings.Builder.retryWrites] or [read][MongoClientSettings.Builder.retryReads] retries are
      * enabled, the driver may retry multiple times until the timeout expires.
+     *
+     * Note: This timeout does not limit socket writes, therefore there is a possibility that the operation might not be
+     * timed out when expected.
      *
      * @param timeout the timeout, which must be greater than or equal to 0
      * @param timeUnit the time unit, defaults to Milliseconds
