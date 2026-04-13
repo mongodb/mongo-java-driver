@@ -22,8 +22,6 @@ import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.transport.Kind;
-import io.micrometer.observation.transport.SenderContext;
 import org.bson.BsonDocument;
 import org.bson.BsonReader;
 import org.bson.json.JsonMode;
@@ -96,8 +94,7 @@ public class MicrometerTracer implements Tracer {
     }
 
     private Observation getObservation(final MongodbObservation observationType, final String name) {
-        return observationType.observation(observationRegistry,
-                        () -> new SenderContext<>((carrier, key, value) -> {}, Kind.CLIENT))
+        return observationType.observation(observationRegistry, MongodbContext::new)
                 .contextualName(name);
     }
     /**
