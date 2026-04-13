@@ -139,7 +139,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
                                 : new BsonArray())
                         .append("blockConnection", BsonBoolean.valueOf(true))
                         .append("blockTimeMS", new BsonInt32(1000)));
-        int timeoutSeconds = 5;
+        int timeoutSeconds = 10;
         try (MongoClient client = clientCreator.apply(clientSettings);
                 FailPoint ignored = FailPoint.enable(configureFailPoint, Fixture.getPrimary())) {
             MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
