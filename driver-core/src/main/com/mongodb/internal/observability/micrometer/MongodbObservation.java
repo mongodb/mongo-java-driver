@@ -159,6 +159,25 @@ public enum MongodbObservation implements ObservationDocumentation {
                 return "server.port";
             }
         },
+        RESPONSE_STATUS_CODE {
+            @Override
+            public String asString() {
+                return "db.response.status_code";
+            }
+        }
+    }
+
+    /**
+     * High cardinality (highly variable values) key names for command-level observations.
+     */
+    public enum HighCardinalityKeyNames implements KeyName {
+
+        QUERY_TEXT {
+            @Override
+            public String asString() {
+                return "db.query.text";
+            }
+        },
         CLIENT_CONNECTION_ID {
             @Override
             public String asString() {
@@ -189,10 +208,10 @@ public enum MongodbObservation implements ObservationDocumentation {
                 return "db.mongodb.lsid";
             }
         },
-        EXCEPTION_STACKTRACE {
+        EXCEPTION_MESSAGE {
             @Override
             public String asString() {
-                return "exception.stacktrace";
+                return "exception.message";
             }
         },
         EXCEPTION_TYPE {
@@ -201,29 +220,10 @@ public enum MongodbObservation implements ObservationDocumentation {
                 return "exception.type";
             }
         },
-        EXCEPTION_MESSAGE {
+        EXCEPTION_STACKTRACE {
             @Override
             public String asString() {
-                return "exception.message";
-            }
-        },
-        RESPONSE_STATUS_CODE {
-            @Override
-            public String asString() {
-                return "db.response.status_code";
-            }
-        }
-    }
-
-    /**
-     * High cardinality (highly variable values) key names for command-level observations.
-     */
-    public enum HighCardinalityKeyNames implements KeyName {
-
-        QUERY_TEXT {
-            @Override
-            public String asString() {
-                return "db.query.text";
+                return "exception.stacktrace";
             }
         }
     }

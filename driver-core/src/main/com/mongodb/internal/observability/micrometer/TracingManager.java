@@ -37,6 +37,7 @@ import java.util.function.Supplier;
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.MONGODB_COMMAND;
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.MONGODB_OPERATION;
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.CommandLowCardinalityKeyNames;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.HighCardinalityKeyNames;
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.OperationLowCardinalityKeyNames;
 import static java.lang.System.getenv;
 
@@ -194,9 +195,9 @@ public class TracingManager {
 
         if (command.containsKey("getMore")) {
             long cursorId = command.getInt64("getMore").longValue();
-            span.tagLowCardinality(CommandLowCardinalityKeyNames.CURSOR_ID.withValue(String.valueOf(cursorId)));
+            span.tagHighCardinality(HighCardinalityKeyNames.CURSOR_ID.withValue(String.valueOf(cursorId)));
             if (operationSpan != null) {
-                operationSpan.tagLowCardinality(CommandLowCardinalityKeyNames.CURSOR_ID.withValue(String.valueOf(cursorId)));
+                operationSpan.tagHighCardinality(HighCardinalityKeyNames.CURSOR_ID.withValue(String.valueOf(cursorId)));
             }
         }
 
@@ -231,21 +232,25 @@ public class TracingManager {
 
         // tag server and connection info
         ServerAddress serverAddress = serverAddressSupplier.get();
-        ConnectionId connectionId = connectionIdSupplier.get();
         span.tagLowCardinality(KeyValues.of(
                 CommandLowCardinalityKeyNames.SERVER_ADDRESS.withValue(serverAddress.getHost()),
                 CommandLowCardinalityKeyNames.SERVER_PORT.withValue(String.valueOf(serverAddress.getPort())),
-                CommandLowCardinalityKeyNames.CLIENT_CONNECTION_ID.withValue(String.valueOf(connectionId.getLocalValue())),
-                CommandLowCardinalityKeyNames.SERVER_CONNECTION_ID.withValue(String.valueOf(connectionId.getServerValue())),
                 CommandLowCardinalityKeyNames.NETWORK_TRANSPORT.withValue(serverAddress instanceof UnixServerAddress ? "unix" : "tcp")
+        ));
+
+        // tag connection info
+        ConnectionId connectionId = connectionIdSupplier.get();
+        span.tagHighCardinality(KeyValues.of(
+                HighCardinalityKeyNames.CLIENT_CONNECTION_ID.withValue(String.valueOf(connectionId.getLocalValue())),
+                HighCardinalityKeyNames.SERVER_CONNECTION_ID.withValue(String.valueOf(connectionId.getServerValue()))
         ));
 
         // tag session and transaction info
         SessionContext sessionContext = operationContext.getSessionContext();
         if (sessionContext.hasSession() && !sessionContext.isImplicitSession()) {
-            span.tagLowCardinality(KeyValues.of(
-                    CommandLowCardinalityKeyNames.TRANSACTION_NUMBER.withValue(String.valueOf(sessionContext.getTransactionNumber())),
-                    CommandLowCardinalityKeyNames.SESSION_ID.withValue(String.valueOf(sessionContext.getSessionId()
+            span.tagHighCardinality(KeyValues.of(
+                    HighCardinalityKeyNames.TRANSACTION_NUMBER.withValue(String.valueOf(sessionContext.getTransactionNumber())),
+                    HighCardinalityKeyNames.SESSION_ID.withValue(String.valueOf(sessionContext.getSessionId()
                             .get(sessionContext.getSessionId().getFirstKey())
                             .asBinary().asUuid()))
             ));

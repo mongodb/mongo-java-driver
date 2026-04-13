@@ -33,9 +33,9 @@ import org.bson.json.JsonWriterSettings;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.CommandLowCardinalityKeyNames.EXCEPTION_MESSAGE;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.CommandLowCardinalityKeyNames.EXCEPTION_STACKTRACE;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.CommandLowCardinalityKeyNames.EXCEPTION_TYPE;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.HighCardinalityKeyNames.EXCEPTION_MESSAGE;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.HighCardinalityKeyNames.EXCEPTION_STACKTRACE;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.HighCardinalityKeyNames.EXCEPTION_TYPE;
 import static com.mongodb.internal.observability.micrometer.TracingManager.ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH;
 import static java.lang.System.getenv;
 import static java.util.Optional.ofNullable;
@@ -162,6 +162,16 @@ public class MicrometerTracer implements Tracer {
         }
 
         @Override
+        public void tagHighCardinality(final KeyValue keyValue) {
+            observation.highCardinalityKeyValue(keyValue);
+        }
+
+        @Override
+        public void tagHighCardinality(final KeyValues keyValues) {
+            observation.highCardinalityKeyValues(keyValues);
+        }
+
+        @Override
         public void tagHighCardinality(final String keyName, final BsonDocument value) {
             observation.highCardinalityKeyValue(keyName,
                     (queryTextLength < Integer.MAX_VALUE) // truncate values that are too long
@@ -176,7 +186,7 @@ public class MicrometerTracer implements Tracer {
 
         @Override
         public void error(final Throwable throwable) {
-            observation.lowCardinalityKeyValues(KeyValues.of(
+            observation.highCardinalityKeyValues(KeyValues.of(
                     EXCEPTION_MESSAGE.withValue(throwable.getMessage()),
                     EXCEPTION_TYPE.withValue(throwable.getClass().getName()),
                     EXCEPTION_STACKTRACE.withValue(getStackTraceAsString(throwable))
