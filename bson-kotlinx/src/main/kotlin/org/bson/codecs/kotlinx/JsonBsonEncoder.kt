@@ -26,8 +26,6 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.double
-import kotlinx.serialization.json.int
-import kotlinx.serialization.json.long
 import kotlinx.serialization.modules.SerializersModule
 import org.bson.BsonWriter
 import org.bson.codecs.kotlinx.utils.BsonCodecUtils.toJsonNamingStrategy
@@ -41,7 +39,6 @@ internal class JsonBsonEncoder(
 ) : BsonEncoderImpl(writer, serializersModule, configuration), JsonEncoder {
 
     companion object {
-        private val DOUBLE_MIN_VALUE = BigDecimal.valueOf(Double.MIN_VALUE)
         private val DOUBLE_MAX_VALUE = BigDecimal.valueOf(Double.MAX_VALUE)
         private val INT_MIN_VALUE = BigDecimal.valueOf(Int.MIN_VALUE.toLong())
         private val INT_MAX_VALUE = BigDecimal.valueOf(Int.MAX_VALUE.toLong())
@@ -104,7 +101,7 @@ internal class JsonBsonEncoder(
                 val decimal = BigDecimal(content).stripTrailingZeros()
                 when {
                     decimal.scale() > 0 ->
-                        if (DOUBLE_MIN_VALUE <= decimal && decimal <= DOUBLE_MAX_VALUE) {
+                        if (decimal.abs() <= DOUBLE_MAX_VALUE) {
                             encodeDouble(primitive.double)
                         } else {
                             writer.writeDecimal128(Decimal128(decimal))

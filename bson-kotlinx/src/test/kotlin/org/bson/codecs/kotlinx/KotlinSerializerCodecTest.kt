@@ -117,7 +117,6 @@ import org.bson.codecs.kotlinx.samples.SealedInterface
 import org.bson.codecs.kotlinx.samples.ValueClass
 import org.bson.json.JsonMode
 import org.bson.json.JsonWriterSettings
-import org.bson.types.Decimal128
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
@@ -224,18 +223,27 @@ class KotlinSerializerCodecTest {
         @JvmStatic
         fun testJsonPrimitiveNumberEncoding(): Stream<Pair<String, String>> {
             return Stream.of(
-        """{"value": 0}""" to """{"value": 0}""",
+                """{"value": 0}""" to """{"value": 0}""",
                 """{"value": 0}""" to """{"value": 0.0}""",
-            """{"value": 1.1}""" to """{"value": 1.1E0}""",
-            """{"value": 11}""" to """{"value": 1.1E1}""",
-            """{"value": 110}""" to """{"value": 1.1E2}""",
-            """{"value": 1100}""" to """{"value": 1.1E3}""",
-            """{"value": 0.1}""" to """{"value": 1E-1}""",
-            """{"value": 0.01}""" to """{"value": 1E-2}""",
-            """{"value": 0.001}""" to """{"value": 1E-3}""",
-            """{"value": 35485464}""" to """{"value": 35485464}""",
-            """{"value": 35485464}""" to """{"value": 35485464.0}""",
-            """{"value": {"${'$'}numberDecimal": "123456789123456789123456789"}}""" to """{"value": 123456789123456789123456789}"""
+                """{"value": 1.1}""" to """{"value": 1.1E0}""",
+                """{"value": 11}""" to """{"value": 1.1E1}""",
+                """{"value": 110}""" to """{"value": 1.1E2}""",
+                """{"value": 1100}""" to """{"value": 1.1E3}""",
+                """{"value": 0.1}""" to """{"value": 1E-1}""",
+                """{"value": 0.01}""" to """{"value": 1E-2}""",
+                """{"value": 0.001}""" to """{"value": 1E-3}""",
+                """{"value": -1.1}""" to """{"value": -1.1E0}""",
+                """{"value": -11}""" to """{"value": -1.1E1}""",
+                """{"value": -110}""" to """{"value": -1.1E2}""",
+                """{"value": -1100}""" to """{"value": -1.1E3}""",
+                """{"value": -0.1}""" to """{"value": -1E-1}""",
+                """{"value": -0.01}""" to """{"value": -1E-2}""",
+                """{"value": -0.001}""" to """{"value": -1E-3}""",
+                """{"value": 9223372036854775807}""" to """{"value": 9223372036854775807}""",
+                """{"value": {"${'$'}numberDecimal": "9223372036854775808"}}""" to """{"value": 9223372036854775808}""",
+                """{"value": -9223372036854775808}""" to """{"value": -9223372036854775808}""",
+                """{"value": {"${'$'}numberDecimal": "-9223372036854775809"}}""" to
+                    """{"value": -9223372036854775809}""",
             )
         }
     }
