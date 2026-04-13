@@ -105,6 +105,9 @@ internal data class DataClassCodec<T : Any>(
         // Optional parameters (with defaults) are left absent so callBy uses the default value.
         fieldNamePropertyModelMap.values.forEach {
             if (it.param !in args && !it.param.isOptional) {
+                // Only error for concrete types (KClass). Generic type parameters (KTypeParameter)
+                // may be nullable at runtime even though isMarkedNullable is false at the
+                // declaration site (e.g. Box<T>(val boxed: T) instantiated as Box<String?>).
                 if (!it.param.type.isMarkedNullable && it.param.type.classifier is KClass<*>) {
                     throw CodecConfigurationException(
                         "Required field '${it.fieldName}' is missing from the document for ${kClass.simpleName} data class")
