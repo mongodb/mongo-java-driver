@@ -22,5 +22,3 @@ Synchronous (blocking) Java driver — the most commonly used entry point for Ja
 ```
 
 Primary entry point: `MongoClients.create()` or `MongoClients.create(MongoClientSettings)`.
-
-For global rules see [root AGENTS.md](../AGENTS.md).

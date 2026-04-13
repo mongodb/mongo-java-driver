@@ -18,5 +18,3 @@ Kotlin extensions providing type-safe DSLs for query and update construction.
 ./gradlew :driver-kotlin-extensions:test
 ./gradlew :driver-kotlin-extensions:check
 ```
-
-For global rules see [root AGENTS.md](../AGENTS.md).

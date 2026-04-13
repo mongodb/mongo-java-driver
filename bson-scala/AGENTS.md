@@ -21,5 +21,4 @@ Scala extensions for the BSON library, providing Scala-idiomatic wrappers and ma
 ./gradlew :bson-scala:scalaCheck -PscalaVersion=<version> # Test specific Scala version
 ```
 
-For global rules see [root AGENTS.md](../AGENTS.md).
 See [README.md](./README.md) for directory layout details.

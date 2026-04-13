@@ -22,5 +22,3 @@ Reactive Streams driver implementing the [Reactive Streams specification](https:
 
 - All operations return `Publisher<T>` — never block
 - `driver-kotlin-coroutine` and `driver-scala` both build on top of this module
-
-For global rules see [root AGENTS.md](../AGENTS.md).

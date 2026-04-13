@@ -16,5 +16,3 @@ Kotlin extensions for the BSON library, providing idiomatic Kotlin codec support
 ./gradlew :bson-kotlin:test
 ./gradlew :bson-kotlin:check
 ```
-
-For global rules see [root AGENTS.md](../AGENTS.md).

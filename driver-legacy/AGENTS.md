@@ -20,5 +20,3 @@ Legacy MongoDB Java driver API — backwards compatibility facade for the 3.x AP
 ./gradlew :driver-legacy:test
 ./gradlew :driver-legacy:check
 ```
-
-For global rules see [root AGENTS.md](../AGENTS.md).

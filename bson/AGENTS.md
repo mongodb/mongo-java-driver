@@ -22,6 +22,3 @@ All other modules depend on it.
 ./gradlew :bson:test
 ./gradlew :bson:check
 ```
-
-For global rules see [root AGENTS.md](../AGENTS.md).
-For API design see [api-design skill](../.agents/skills/api-design/SKILL.md).

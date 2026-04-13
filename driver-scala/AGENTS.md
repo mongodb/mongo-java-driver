@@ -22,5 +22,4 @@ Scala async driver providing Observable-based API wrapping `driver-reactive-stre
 ./gradlew :driver-scala:scalaCheck -PscalaVersion=<version> # Test specific Scala version
 ```
 
-For global rules see [root AGENTS.md](../AGENTS.md).
 See [README.md](./README.md) for directory layout details.

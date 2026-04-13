@@ -14,6 +14,13 @@ description: Testing frameworks, conventions, and commands for the MongoDB Java 
 | ScalaTest | Scala module testing | FlatSpec + ShouldMatchers |
 | Project Reactor | Reactive test utilities | `driver-reactive-streams` tests |
 
+## Assertions
+
+- **JUnit Jupiter Assertions** (`org.junit.jupiter.api.Assertions`) is the standard for all new tests
+- Hamcrest matchers appear in older tests but should not be used in new code
+- AssertJ is in the dependency catalog but is not used — do not introduce it
+- Spock tests use Spock's built-in `expect:`/`then:` assertions (no external assertion library)
+
 ## Writing Tests
 
 - Every code change must include tests
@@ -58,3 +65,5 @@ description: Testing frameworks, conventions, and commands for the MongoDB Java 
 - Require a running MongoDB instance
 - Set connection URI: `-Dorg.mongodb.test.uri="mongodb://localhost:27017"`
 - Integration test source set configured via `conventions/testing-integration.gradle.kts`
+
+See [examples.md](examples.md) for Java, Scala, and Kotlin test skeletons.

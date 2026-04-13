@@ -17,5 +17,3 @@ Kotlin synchronous (blocking) driver — idiomatic Kotlin wrapper over `driver-s
 ./gradlew :driver-kotlin-sync:test
 ./gradlew :driver-kotlin-sync:check
 ```
-
-For global rules see [root AGENTS.md](../AGENTS.md).

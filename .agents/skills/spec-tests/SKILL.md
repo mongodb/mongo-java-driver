@@ -1,6 +1,6 @@
 ---
 name: spec-tests
-description: How to work with MongoDB specification tests — structure, rules, and adding new spec test support. Use when implementing or modifying behavior defined by the MongoDB Driver Specifications, or when working with the test data in testing/resources/specifications/.
+description: How to work with MongoDB specification tests — structure, rules, and adding new spec test support. Use when implementing or modifying behavior defined by the MongoDB Driver Specifications.
 ---
 # MongoDB Specification Tests
 
@@ -11,9 +11,8 @@ Specification test data files live in `testing/resources/specifications/` — a 
 
 ## Rules
 
-- **Do not modify existing specification tests** unless they test incorrect behavior
-- **Do not modify spec test data** — it is managed upstream
-- Create new tests instead of modifying existing ones
+- **Do not modify spec test data files** (JSON/YAML in `testing/resources/specifications/`) — managed upstream
+- Test runners (Java code) may be modified to fix bugs or add support for new spec tests
 - Update the submodule via `git submodule update`
 
 ## Structure

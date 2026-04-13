@@ -17,5 +17,3 @@ Kotlin Coroutines driver providing `suspend` function-based async API.
 ./gradlew :driver-kotlin-coroutine:test
 ./gradlew :driver-kotlin-coroutine:check
 ```
-
-For global rules see [root AGENTS.md](../AGENTS.md).

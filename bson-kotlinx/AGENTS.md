@@ -17,5 +17,3 @@ Kotlinx serialization integration for BSON, providing a pluggable serialization 
 ./gradlew :bson-kotlinx:test
 ./gradlew :bson-kotlinx:check
 ```
-
-For global rules see [root AGENTS.md](../AGENTS.md).

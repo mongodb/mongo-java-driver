@@ -1,6 +1,8 @@
 ---
 name: evergreen
 description: Evergreen CI infrastructure, configuration validation. Use when modifying .evergreen/ config, preparing to submit changes or understanding the Evergreen test matrix.
+disable-model-invocation: true
+allowed-tools: Bash(evergreen *)
 ---
 # Evergreen
 
@@ -17,7 +19,7 @@ Configuration lives in `.evergreen/`.
 After modifying `.evergreen/` files, validate the config locally:
 
 ```bash
-evergreen validate $PROJECT_PATH/.evergreen/.evg.yml
+evergreen validate .evergreen/.evg.yml
 ```
 
 Always run this before submitting changes to `.evergreen/` to catch syntax errors and invalid task definitions.

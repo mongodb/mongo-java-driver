@@ -6,6 +6,8 @@ Java record codec support for BSON serialization.
 **Depends on:** `bson`
 
 - Work here if: modifying Java record serialization support
+- This module targets **Java 17** (`sourceCompatibility = 17`) — Java 17 features (records, sealed classes, text blocks,
+  etc.) are permitted here, unlike most other modules which target Java 8
 
 ## Key Packages
 
@@ -17,5 +19,3 @@ Java record codec support for BSON serialization.
 ./gradlew :bson-record-codec:test
 ./gradlew :bson-record-codec:check
 ```
-
-For global rules see [root AGENTS.md](../AGENTS.md).

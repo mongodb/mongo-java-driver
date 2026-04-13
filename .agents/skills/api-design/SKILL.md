@@ -7,9 +7,9 @@ description: API stability annotations, design principles, and patterns for the 
 ## API Stability Annotations
 
 - `@Alpha` — Early development, may be removed.
-  Not for production use.
+  Not recommended for production use.
 - `@Beta` — Subject to change or removal.
-  Libraries should not depend on these.
+  It's not recommended for Libraries to depend on these APIs.
 - `@Evolving` — May add abstract methods in future releases.
   Safe to use, but implementing/extending bears upgrade risk.
 - `@Sealed` — Must not be extended or implemented by consumers.
@@ -24,22 +24,8 @@ description: API stability annotations, design principles, and patterns for the 
 - **General-purpose over special-case:** Fewer flexible methods over many specialized ones.
 - **Define errors out of existence:** Design APIs so errors cannot happen rather than detecting and handling them.
 
-## Search Before Implementing
-
-Before writing new code, search the codebase for existing implementations:
-
-- Check if a utility method already exists in `com.mongodb.internal.*`
-- Check if a similar pattern is established elsewhere in the module
-- Reuse existing well-tested infrastructure over creating duplicates
-
 ## Key Patterns
 
 - Static factory methods: `Filters.eq()`, `Updates.set()`, `Aggregates.match()`
 - Fluent builders: `MongoClientSettings.builder()` is the primary entry point
 - Abstract core with pluggable transports
-
-## Public API Rules
-
-- Breaking changes require a major version bump - ALWAYS warn if breaking binary compatibility
-- All `com.mongodb.internal.*` / `org.bson.internal.*` is private API — never expose in public APIs
-- Every public package must have a `package-info.java`
