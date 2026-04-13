@@ -110,7 +110,8 @@ internal data class DataClassCodec<T : Any>(
                 // declaration site (e.g. Box<T>(val boxed: T) instantiated as Box<String?>).
                 if (!it.param.type.isMarkedNullable && it.param.type.classifier is KClass<*>) {
                     throw CodecConfigurationException(
-                        "Required field '${it.fieldName}' is missing from the document for ${kClass.simpleName} data class")
+                        "Required field '${it.fieldName}' is missing from the document for " +
+                            "${kClass.simpleName} data class")
                 }
                 args[it.param] = null
             }
