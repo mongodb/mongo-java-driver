@@ -18,8 +18,6 @@ package com.mongodb.internal.observability.micrometer;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.lang.Nullable;
-import io.micrometer.common.KeyValue;
-import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import org.bson.BsonDocument;
@@ -28,12 +26,8 @@ import org.bson.json.JsonMode;
 import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
 
-import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.HighCardinalityKeyNames.EXCEPTION_MESSAGE;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.HighCardinalityKeyNames.EXCEPTION_STACKTRACE;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.HighCardinalityKeyNames.EXCEPTION_TYPE;
 import static com.mongodb.internal.observability.micrometer.TracingManager.ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH;
 import static java.lang.System.getenv;
 import static java.util.Optional.ofNullable;
@@ -66,6 +60,10 @@ public class MicrometerTracer implements Tracer {
         this.textMaxLength = ofNullable(getenv(ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH))
                 .map(Integer::parseInt)
                 .orElse(textMaxLength);
+        // Register default convention. Users can override by registering their own GlobalObservationConvention
+        // after the MongoClient is created — the last matching convention wins.
+        DefaultMongodbObservationConvention defaultConvention = new DefaultMongodbObservationConvention();
+        observationRegistry.observationConfig().observationConvention(defaultConvention);
     }
 
     @Override
@@ -94,8 +92,11 @@ public class MicrometerTracer implements Tracer {
     }
 
     private Observation getObservation(final MongodbObservation observationType, final String name) {
-        return observationType.observation(observationRegistry, MongodbContext::new)
-                .contextualName(name);
+        return observationType.observation(observationRegistry, () -> {
+            MongodbContext ctx = new MongodbContext();
+            ctx.setObservationType(observationType);
+            return ctx;
+        }).contextualName(name);
     }
     /**
      * Represents a Micrometer-based trace context.
@@ -136,31 +137,13 @@ public class MicrometerTracer implements Tracer {
         }
 
         @Override
-        public void tagLowCardinality(final KeyValue keyValue) {
-            observation.lowCardinalityKeyValue(keyValue);
-        }
-
-        @Override
-        public void tagLowCardinality(final KeyValues keyValues) {
-            observation.lowCardinalityKeyValues(keyValues);
-        }
-
-        @Override
-        public void tagHighCardinality(final KeyValue keyValue) {
-            observation.highCardinalityKeyValue(keyValue);
-        }
-
-        @Override
-        public void tagHighCardinality(final KeyValues keyValues) {
-            observation.highCardinalityKeyValues(keyValues);
-        }
-
-        @Override
-        public void tagHighCardinality(final String keyName, final BsonDocument value) {
-            observation.highCardinalityKeyValue(keyName,
-                    (queryTextLength < Integer.MAX_VALUE) // truncate values that are too long
-                            ? getTruncatedBsonDocument(value)
-                            : value.toString());
+        public void setQueryText(final BsonDocument commandDocument) {
+            MongodbContext ctx = getMongodbContext();
+            if (ctx != null) {
+                ctx.setQueryText((queryTextLength < Integer.MAX_VALUE)
+                        ? getTruncatedBsonDocument(commandDocument)
+                        : commandDocument.toString());
+            }
         }
 
         @Override
@@ -170,11 +153,6 @@ public class MicrometerTracer implements Tracer {
 
         @Override
         public void error(final Throwable throwable) {
-            observation.highCardinalityKeyValues(KeyValues.of(
-                    EXCEPTION_MESSAGE.withValue(throwable.getMessage()),
-                    EXCEPTION_TYPE.withValue(throwable.getClass().getName()),
-                    EXCEPTION_STACKTRACE.withValue(getStackTraceAsString(throwable))
-            ));
             observation.error(throwable);
         }
 
@@ -190,15 +168,17 @@ public class MicrometerTracer implements Tracer {
 
         @Override
         @Nullable
-        public MongoNamespace getNamespace() {
-            return namespace;
+        public MongodbContext getMongodbContext() {
+            if (observation.getContext() instanceof MongodbContext) {
+                return (MongodbContext) observation.getContext();
+            }
+            return null;
         }
 
-        private String getStackTraceAsString(final Throwable throwable) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            throwable.printStackTrace(pw);
-            return sw.toString();
+        @Override
+        @Nullable
+        public MongoNamespace getNamespace() {
+            return namespace;
         }
 
         private String getTruncatedBsonDocument(final BsonDocument commandDocument) {

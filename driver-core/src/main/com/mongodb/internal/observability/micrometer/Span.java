@@ -18,8 +18,6 @@ package com.mongodb.internal.observability.micrometer;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.lang.Nullable;
-import io.micrometer.common.KeyValue;
-import io.micrometer.common.KeyValues;
 import org.bson.BsonDocument;
 
 /**
@@ -48,23 +46,7 @@ public interface Span {
      */
     Span EMPTY = new Span() {
         @Override
-        public void tagLowCardinality(final KeyValue tag) {
-        }
-
-        @Override
-        public void tagLowCardinality(final KeyValues keyValues) {
-        }
-
-        @Override
-        public void tagHighCardinality(final KeyValue keyValue) {
-        }
-
-        @Override
-        public void tagHighCardinality(final KeyValues keyValues) {
-        }
-
-        @Override
-        public void tagHighCardinality(final String keyName, final BsonDocument value) {
+        public void setQueryText(final BsonDocument commandDocument) {
         }
 
         @Override
@@ -89,43 +71,21 @@ public interface Span {
         public MongoNamespace getNamespace() {
             return null;
         }
+
+        @Override
+        @Nullable
+        public MongodbContext getMongodbContext() {
+            return null;
+        }
     };
 
     /**
-     * Adds a low-cardinality tag to the span.
+     * Sets the query text on the observation context from the given command document.
+     * The document is converted to a JSON string and may be truncated based on configuration.
      *
-     * @param keyValue The key-value pair representing the tag.
+     * @param commandDocument The BSON command document.
      */
-    void tagLowCardinality(KeyValue keyValue);
-
-    /**
-     * Adds multiple low-cardinality tags to the span.
-     *
-     * @param keyValues The key-value pairs representing the tags.
-     */
-    void tagLowCardinality(KeyValues keyValues);
-
-    /**
-     * Adds a high-cardinality tag to the span.
-     *
-     * @param keyValue The key-value pair representing the tag.
-     */
-    void tagHighCardinality(KeyValue keyValue);
-
-    /**
-     * Adds multiple high-cardinality tags to the span.
-     *
-     * @param keyValues The key-value pairs representing the tags.
-     */
-    void tagHighCardinality(KeyValues keyValues);
-
-    /**
-     * Adds a high-cardinality (highly variable values) tag to the span with a BSON document value.
-     *
-     * @param keyName The name of the tag.
-     * @param value   The BSON document representing the value of the tag.
-     */
-    void tagHighCardinality(String keyName, BsonDocument value);
+    void setQueryText(BsonDocument commandDocument);
 
     /**
      * Records an event in the span.
@@ -152,6 +112,15 @@ public interface Span {
      * @return The trace context associated with the span.
      */
     TraceContext context();
+
+    /**
+     * Retrieves the {@link MongodbContext} associated with the span, if any.
+     * Returns null for no-op spans or non-Micrometer implementations.
+     *
+     * @return The MongoDB observation context, or null.
+     */
+    @Nullable
+    MongodbContext getMongodbContext();
 
     /**
      * Retrieves the MongoDB namespace associated with the span, if any.

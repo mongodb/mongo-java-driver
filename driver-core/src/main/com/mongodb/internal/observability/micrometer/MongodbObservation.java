@@ -17,7 +17,6 @@
 package com.mongodb.internal.observability.micrometer;
 
 import io.micrometer.common.docs.KeyName;
-import io.micrometer.observation.Observation;
 import io.micrometer.observation.docs.ObservationDocumentation;
 
 /**

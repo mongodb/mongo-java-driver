@@ -49,6 +49,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.StructuredLogger;
+import com.mongodb.internal.observability.micrometer.MongodbContext;
 import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.time.Timeout;
@@ -94,8 +95,7 @@ import static com.mongodb.internal.connection.ProtocolHelper.getRecoveryToken;
 import static com.mongodb.internal.connection.ProtocolHelper.getSnapshotTimestamp;
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
 import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.HighCardinalityKeyNames.QUERY_TEXT;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.CommandLowCardinalityKeyNames.RESPONSE_STATUS_CODE;
+
 import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedException;
 import static java.util.Arrays.asList;
 
@@ -473,7 +473,7 @@ public class InternalStreamConnection implements InternalConnection {
                 commandEventSender = new NoOpCommandEventSender();
             }
             if (isTracingCommandPayloadNeeded) {
-                tracingSpan.tagHighCardinality(QUERY_TEXT.asString(), commandDocument);
+                tracingSpan.setQueryText(commandDocument);
             }
 
             try {
@@ -585,7 +585,10 @@ public class InternalStreamConnection implements InternalConnection {
             }
             if (tracingSpan != null) {
                 if (e instanceof MongoCommandException) {
-                    tracingSpan.tagLowCardinality(RESPONSE_STATUS_CODE.withValue(String.valueOf(((MongoCommandException) e).getErrorCode())));
+                    MongodbContext ctx = tracingSpan.getMongodbContext();
+                    if (ctx != null) {
+                        ctx.setResponseStatusCode(String.valueOf(((MongoCommandException) e).getErrorCode()));
+                    }
                 }
                 tracingSpan.error(e);
             }
@@ -639,7 +642,7 @@ public class InternalStreamConnection implements InternalConnection {
                 commandEventSender = new NoOpCommandEventSender();
             }
             if (isTracingCommandPayloadNeeded) {
-                tracingSpan.tagHighCardinality(QUERY_TEXT.asString(), commandDocument);
+                tracingSpan.setQueryText(commandDocument);
             }
 
             final Span commandSpan = tracingSpan;
@@ -647,8 +650,10 @@ public class InternalStreamConnection implements InternalConnection {
                 try {
                     if (t != null) {
                         if (t instanceof MongoCommandException) {
-                            commandSpan.tagLowCardinality(
-                                    RESPONSE_STATUS_CODE.withValue(String.valueOf(((MongoCommandException) t).getErrorCode())));
+                            MongodbContext ctx = commandSpan.getMongodbContext();
+                            if (ctx != null) {
+                                ctx.setResponseStatusCode(String.valueOf(((MongoCommandException) t).getErrorCode()));
+                            }
                         }
                         commandSpan.error(t);
                     }

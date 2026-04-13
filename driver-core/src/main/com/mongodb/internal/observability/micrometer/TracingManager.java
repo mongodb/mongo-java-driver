@@ -27,7 +27,6 @@ import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import com.mongodb.observability.ObservabilitySettings;
 import com.mongodb.observability.micrometer.MicrometerObservabilitySettings;
-import io.micrometer.common.KeyValues;
 import io.micrometer.observation.ObservationRegistry;
 import org.bson.BsonDocument;
 
@@ -36,9 +35,6 @@ import java.util.function.Supplier;
 
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.MONGODB_COMMAND;
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.MONGODB_OPERATION;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.CommandLowCardinalityKeyNames;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.HighCardinalityKeyNames;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.OperationLowCardinalityKeyNames;
 import static java.lang.System.getenv;
 
 /**
@@ -132,9 +128,7 @@ public class TracingManager {
      * @return The created transaction span.
      */
     public Span addTransactionSpan() {
-        Span span = tracer.nextSpan(MONGODB_OPERATION, "transaction", null, null);
-        span.tagLowCardinality(OperationLowCardinalityKeyNames.SYSTEM.withValue("mongodb"));
-        return span;
+        return tracer.nextSpan(MONGODB_OPERATION, "transaction", null, null);
     }
 
     /**
@@ -193,15 +187,7 @@ public class TracingManager {
         Span operationSpan = operationContext.getTracingSpan();
         Span span = addSpan(MONGODB_COMMAND, commandName, operationSpan != null ? operationSpan.context() : null);
 
-        if (command.containsKey("getMore")) {
-            long cursorId = command.getInt64("getMore").longValue();
-            span.tagHighCardinality(HighCardinalityKeyNames.CURSOR_ID.withValue(String.valueOf(cursorId)));
-            if (operationSpan != null) {
-                operationSpan.tagHighCardinality(HighCardinalityKeyNames.CURSOR_ID.withValue(String.valueOf(cursorId)));
-            }
-        }
-
-        // Tag namespace
+        // Resolve namespace from parent operation span or message
         String namespace;
         String collection = "";
         if (operationSpan != null) {
@@ -217,43 +203,40 @@ public class TracingManager {
         } else {
             namespace = message.getDatabase();
         }
-        String summary = commandName + " " + namespace + (collection.isEmpty() ? "" : "." + collection);
 
-        KeyValues keyValues = KeyValues.of(
-                CommandLowCardinalityKeyNames.SYSTEM.withValue("mongodb"),
-                CommandLowCardinalityKeyNames.NAMESPACE.withValue(namespace),
-                CommandLowCardinalityKeyNames.QUERY_SUMMARY.withValue(summary),
-                CommandLowCardinalityKeyNames.COMMAND_NAME.withValue(commandName));
+        // Populate domain fields on MongodbContext — the convention reads these to produce tags
+        MongodbContext mongodbContext = span.getMongodbContext();
+        if (mongodbContext != null) {
+            mongodbContext.setCommandName(commandName);
+            mongodbContext.setDatabaseName(namespace);
+            if (!collection.isEmpty()) {
+                mongodbContext.setCollectionName(collection);
+            }
 
-        if (!collection.isEmpty()) {
-            keyValues = keyValues.and(CommandLowCardinalityKeyNames.COLLECTION.withValue(collection));
-        }
-        span.tagLowCardinality(keyValues);
+            ServerAddress serverAddress = serverAddressSupplier.get();
+            mongodbContext.setServerAddress(serverAddress);
+            mongodbContext.setUnixSocket(serverAddress instanceof UnixServerAddress);
 
-        // tag server and connection info
-        ServerAddress serverAddress = serverAddressSupplier.get();
-        span.tagLowCardinality(KeyValues.of(
-                CommandLowCardinalityKeyNames.SERVER_ADDRESS.withValue(serverAddress.getHost()),
-                CommandLowCardinalityKeyNames.SERVER_PORT.withValue(String.valueOf(serverAddress.getPort())),
-                CommandLowCardinalityKeyNames.NETWORK_TRANSPORT.withValue(serverAddress instanceof UnixServerAddress ? "unix" : "tcp")
-        ));
+            ConnectionId connectionId = connectionIdSupplier.get();
+            mongodbContext.setConnectionId(connectionId);
 
-        // tag connection info
-        ConnectionId connectionId = connectionIdSupplier.get();
-        span.tagHighCardinality(KeyValues.of(
-                HighCardinalityKeyNames.CLIENT_CONNECTION_ID.withValue(String.valueOf(connectionId.getLocalValue())),
-                HighCardinalityKeyNames.SERVER_CONNECTION_ID.withValue(String.valueOf(connectionId.getServerValue()))
-        ));
+            if (command.containsKey("getMore")) {
+                long cursorId = command.getInt64("getMore").longValue();
+                mongodbContext.setCursorId(cursorId);
+                // Also set on parent operation span context for correlation
+                MongodbContext parentContext = operationSpan != null ? operationSpan.getMongodbContext() : null;
+                if (parentContext != null) {
+                    parentContext.setCursorId(cursorId);
+                }
+            }
 
-        // tag session and transaction info
-        SessionContext sessionContext = operationContext.getSessionContext();
-        if (sessionContext.hasSession() && !sessionContext.isImplicitSession()) {
-            span.tagHighCardinality(KeyValues.of(
-                    HighCardinalityKeyNames.TRANSACTION_NUMBER.withValue(String.valueOf(sessionContext.getTransactionNumber())),
-                    HighCardinalityKeyNames.SESSION_ID.withValue(String.valueOf(sessionContext.getSessionId()
-                            .get(sessionContext.getSessionId().getFirstKey())
-                            .asBinary().asUuid()))
-            ));
+            SessionContext sessionContext = operationContext.getSessionContext();
+            if (sessionContext.hasSession() && !sessionContext.isImplicitSession()) {
+                mongodbContext.setTransactionNumber(sessionContext.getTransactionNumber());
+                mongodbContext.setSessionId(String.valueOf(sessionContext.getSessionId()
+                        .get(sessionContext.getSessionId().getFirstKey())
+                        .asBinary().asUuid()));
+            }
         }
 
         return span;
@@ -287,17 +270,18 @@ public class TracingManager {
                 ? ""
                 : "." + namespace.getCollectionName());
 
-        KeyValues keyValues = KeyValues.of(
-                OperationLowCardinalityKeyNames.SYSTEM.withValue("mongodb"),
-                OperationLowCardinalityKeyNames.NAMESPACE.withValue(namespace.getDatabaseName()));
-        if (!MongoNamespaceHelper.COMMAND_COLLECTION_NAME.equalsIgnoreCase(namespace.getCollectionName())) {
-            keyValues = keyValues.and(OperationLowCardinalityKeyNames.COLLECTION.withValue(namespace.getCollectionName()));
-        }
-        keyValues = keyValues.and(OperationLowCardinalityKeyNames.OPERATION_NAME.withValue(commandName),
-                OperationLowCardinalityKeyNames.OPERATION_SUMMARY.withValue(name));
-
         Span span = addSpan(MONGODB_OPERATION, name, parentContext, namespace);
-        span.tagLowCardinality(keyValues);
+
+        // Populate domain fields on MongodbContext — the convention reads these to produce tags
+        MongodbContext mongodbContext = span.getMongodbContext();
+        if (mongodbContext != null) {
+            mongodbContext.setCommandName(commandName);
+            mongodbContext.setDatabaseName(namespace.getDatabaseName());
+            if (!MongoNamespaceHelper.COMMAND_COLLECTION_NAME.equalsIgnoreCase(namespace.getCollectionName())) {
+                mongodbContext.setCollectionName(namespace.getCollectionName());
+            }
+        }
+
         operationContext.setTracingSpan(span);
         return span;
     }
