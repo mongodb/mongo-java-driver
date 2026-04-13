@@ -95,7 +95,7 @@ import static com.mongodb.internal.connection.ProtocolHelper.getSnapshotTimestam
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
 import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
 import static com.mongodb.internal.observability.micrometer.MongodbObservation.HighCardinalityKeyNames.QUERY_TEXT;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.RESPONSE_STATUS_CODE;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.CommandLowCardinalityKeyNames.RESPONSE_STATUS_CODE;
 import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedException;
 import static java.util.Arrays.asList;
 

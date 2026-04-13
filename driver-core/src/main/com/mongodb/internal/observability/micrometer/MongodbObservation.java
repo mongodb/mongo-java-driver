@@ -21,34 +21,58 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.docs.ObservationDocumentation;
 
 /**
- * A MongoDB-based {@link Observation}.
+ * MongoDB {@link ObservationDocumentation} definitions for operation-level and command-level observations.
+ * <p>
+ * These are split into two separate observation types so that each has a distinct name and a fixed set
+ * of low-cardinality tag keys. This is required by Prometheus which rejects meters that share a name
+ * but have different tag key sets.
+ * </p>
  *
  * @since 5.7
  */
 public enum MongodbObservation implements ObservationDocumentation {
 
-    MONGODB_OBSERVATION {
+    /**
+     * Observation for high-level MongoDB operations (e.g. find, insert, update).
+     * Created per user-initiated operation, may contain multiple command spans.
+     */
+    MONGODB_OPERATION {
         @Override
         public String getName() {
-            return "mongodb";
+            return "mongodb.operation";
         }
 
         @Override
         public KeyName[] getLowCardinalityKeyNames() {
-            return LowCardinalityKeyNames.values();
+            return OperationLowCardinalityKeyNames.values();
+        }
+    },
+
+    /**
+     * Observation for wire-protocol MongoDB commands sent to the server.
+     * Created per actual command (nested under an operation span).
+     */
+    MONGODB_COMMAND {
+        @Override
+        public String getName() {
+            return "mongodb.command";
+        }
+
+        @Override
+        public KeyName[] getLowCardinalityKeyNames() {
+            return CommandLowCardinalityKeyNames.values();
         }
 
         @Override
         public KeyName[] getHighCardinalityKeyNames() {
             return HighCardinalityKeyNames.values();
         }
-
     };
 
     /**
-     * Enums related to low cardinality key names for MongoDB tags.
+     * Low cardinality key names for operation-level observations.
      */
-    public enum LowCardinalityKeyNames implements KeyName {
+    public enum OperationLowCardinalityKeyNames implements KeyName {
 
         SYSTEM {
             @Override
@@ -74,22 +98,41 @@ public enum MongodbObservation implements ObservationDocumentation {
                 return "db.operation.name";
             }
         },
-        COMMAND_NAME {
-            @Override
-            public String asString() {
-                return "db.command.name";
-            }
-        },
-        NETWORK_TRANSPORT {
-            @Override
-            public String asString() {
-                return "network.transport";
-            }
-        },
         OPERATION_SUMMARY {
             @Override
             public String asString() {
                 return "db.operation.summary";
+            }
+        }
+    }
+
+    /**
+     * Low cardinality key names for command-level observations.
+     */
+    public enum CommandLowCardinalityKeyNames implements KeyName {
+
+        SYSTEM {
+            @Override
+            public String asString() {
+                return "db.system";
+            }
+        },
+        NAMESPACE {
+            @Override
+            public String asString() {
+                return "db.namespace";
+            }
+        },
+        COLLECTION {
+            @Override
+            public String asString() {
+                return "db.collection.name";
+            }
+        },
+        COMMAND_NAME {
+            @Override
+            public String asString() {
+                return "db.command.name";
             }
         },
         QUERY_SUMMARY {
@@ -98,10 +141,10 @@ public enum MongodbObservation implements ObservationDocumentation {
                 return "db.query.summary";
             }
         },
-        CURSOR_ID {
+        NETWORK_TRANSPORT {
             @Override
             public String asString() {
-                return "db.mongodb.cursor_id";
+                return "network.transport";
             }
         },
         SERVER_ADDRESS {
@@ -126,6 +169,12 @@ public enum MongodbObservation implements ObservationDocumentation {
             @Override
             public String asString() {
                 return "db.mongodb.server_connection_id";
+            }
+        },
+        CURSOR_ID {
+            @Override
+            public String asString() {
+                return "db.mongodb.cursor_id";
             }
         },
         TRANSACTION_NUMBER {
@@ -167,7 +216,7 @@ public enum MongodbObservation implements ObservationDocumentation {
     }
 
     /**
-     * Enums related to high cardinality (highly variable values) key names for MongoDB tags.
+     * High cardinality (highly variable values) key names for command-level observations.
      */
     public enum HighCardinalityKeyNames implements KeyName {
 

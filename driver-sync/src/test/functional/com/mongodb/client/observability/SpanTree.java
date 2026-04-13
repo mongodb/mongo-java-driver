@@ -34,12 +34,12 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.CLIENT_CONNECTION_ID;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.CURSOR_ID;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SERVER_CONNECTION_ID;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SERVER_PORT;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SESSION_ID;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.TRANSACTION_NUMBER;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.CommandLowCardinalityKeyNames.CLIENT_CONNECTION_ID;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.CommandLowCardinalityKeyNames.CURSOR_ID;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.CommandLowCardinalityKeyNames.SERVER_CONNECTION_ID;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.CommandLowCardinalityKeyNames.SERVER_PORT;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.CommandLowCardinalityKeyNames.SESSION_ID;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.CommandLowCardinalityKeyNames.TRANSACTION_NUMBER;
 import static org.bson.assertions.Assertions.notNull;
 import static org.junit.jupiter.api.Assertions.fail;
 

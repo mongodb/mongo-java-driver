@@ -33,10 +33,9 @@ import org.bson.json.JsonWriterSettings;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_MESSAGE;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_STACKTRACE;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_TYPE;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.MONGODB_OBSERVATION;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.CommandLowCardinalityKeyNames.EXCEPTION_MESSAGE;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.CommandLowCardinalityKeyNames.EXCEPTION_STACKTRACE;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.CommandLowCardinalityKeyNames.EXCEPTION_TYPE;
 import static com.mongodb.internal.observability.micrometer.TracingManager.ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH;
 import static java.lang.System.getenv;
 import static java.util.Optional.ofNullable;
@@ -81,8 +80,9 @@ public class MicrometerTracer implements Tracer {
     }
 
     @Override
-    public Span nextSpan(final String name, @Nullable final TraceContext parent, @Nullable final MongoNamespace namespace) {
-        Observation observation = getObservation(name);
+    public Span nextSpan(final MongodbObservation observationType, final String name,
+            @Nullable final TraceContext parent, @Nullable final MongoNamespace namespace) {
+        Observation observation = getObservation(observationType, name);
 
         if (parent instanceof MicrometerTraceContext) {
             Observation parentObservation = ((MicrometerTraceContext) parent).observation;
@@ -104,8 +104,8 @@ public class MicrometerTracer implements Tracer {
         return allowCommandPayload;
     }
 
-    private Observation getObservation(final String name) {
-        Observation observation = MONGODB_OBSERVATION.observation(observationRegistry,
+    private Observation getObservation(final MongodbObservation observationType, final String name) {
+        Observation observation = observationType.observation(observationRegistry,
                         () -> new SenderContext<>((carrier, key, value) -> {}, Kind.CLIENT))
                 .contextualName(name);
         observation.getContext().put(QUERY_TEXT_LENGTH_CONTEXT_KEY, textMaxLength);

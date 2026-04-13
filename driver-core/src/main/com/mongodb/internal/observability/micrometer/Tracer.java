@@ -30,7 +30,8 @@ import com.mongodb.lang.Nullable;
 public interface Tracer {
     Tracer NO_OP = new Tracer() {
         @Override
-        public Span nextSpan(final String name, @Nullable final TraceContext parent, @Nullable final MongoNamespace namespace) {
+        public Span nextSpan(final MongodbObservation observationType, final String name,
+                @Nullable final TraceContext parent, @Nullable final MongoNamespace namespace) {
             return Span.EMPTY;
         }
 
@@ -46,14 +47,15 @@ public interface Tracer {
     };
 
     /**
-     * Creates a new span with the specified name and optional parent trace context.
+     * Creates a new span with the specified observation type, name and optional parent trace context.
      *
+     * @param observationType The {@link MongodbObservation} type (operation or command).
      * @param name   The name of the span.
      * @param parent The parent {@link TraceContext}, or null if no parent context is provided.
      * @param namespace The {@link MongoNamespace} associated with the span, or null if none is provided.
      * @return A {@link Span} representing the newly created span.
      */
-    Span nextSpan(String name, @Nullable TraceContext parent, @Nullable MongoNamespace namespace);
+    Span nextSpan(MongodbObservation observationType, String name, @Nullable TraceContext parent, @Nullable MongoNamespace namespace);
 
     /**
      * Indicates whether tracing is enabled.

@@ -34,21 +34,10 @@ import org.bson.BsonDocument;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.CLIENT_CONNECTION_ID;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.COLLECTION;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.COMMAND_NAME;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.NAMESPACE;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.OPERATION_NAME;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.OPERATION_SUMMARY;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.NETWORK_TRANSPORT;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.QUERY_SUMMARY;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SERVER_ADDRESS;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SERVER_CONNECTION_ID;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SERVER_PORT;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SESSION_ID;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.SYSTEM;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.TRANSACTION_NUMBER;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.CURSOR_ID;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.MONGODB_COMMAND;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.MONGODB_OPERATION;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.CommandLowCardinalityKeyNames;
+import static com.mongodb.internal.observability.micrometer.MongodbObservation.OperationLowCardinalityKeyNames;
 import static java.lang.System.getenv;
 
 /**
@@ -109,35 +98,31 @@ public class TracingManager {
     }
 
     /**
-     * Creates a new span with the specified name and parent trace context.
-     * <p>
-     * This method is used to create a span that is linked to a parent context,
-     * enabling hierarchical tracing of operations.
-     * </p>
+     * Creates a new span with the specified observation type, name and parent trace context.
      *
-     * @param name          The name of the span.
-     * @param parentContext The parent trace context to associate with the span.
+     * @param observationType The observation type (operation or command).
+     * @param name            The name of the span.
+     * @param parentContext   The parent trace context to associate with the span.
      * @return The created span.
      */
-    public Span addSpan(final String name, @Nullable final TraceContext parentContext) {
-        return tracer.nextSpan(name, parentContext, null);
+    public Span addSpan(final MongodbObservation observationType, final String name,
+            @Nullable final TraceContext parentContext) {
+        return tracer.nextSpan(observationType, name, parentContext, null);
     }
 
     /**
-     * Creates a new span with the specified name, parent trace context, and MongoDB namespace.
-     * <p>
-     * This method is used to create a span that is linked to a parent context,
-     * enabling hierarchical tracing of operations. The MongoDB namespace can be used
-     * by nested spans to access the database and collection name (which might not be easily accessible at connection layer).
-     * </p>
+     * Creates a new span with the specified observation type, name, parent trace context,
+     * and MongoDB namespace.
      *
-     * @param name          The name of the span.
-     * @param parentContext The parent trace context to associate with the span.
-     * @param namespace     The MongoDB namespace associated with the operation.
+     * @param observationType The observation type (operation or command).
+     * @param name            The name of the span.
+     * @param parentContext   The parent trace context to associate with the span.
+     * @param namespace       The MongoDB namespace associated with the operation.
      * @return The created span.
      */
-    public Span addSpan(final String name, @Nullable final TraceContext parentContext, final MongoNamespace namespace) {
-        return tracer.nextSpan(name, parentContext, namespace);
+    public Span addSpan(final MongodbObservation observationType, final String name,
+            @Nullable final TraceContext parentContext, final MongoNamespace namespace) {
+        return tracer.nextSpan(observationType, name, parentContext, namespace);
     }
 
     /**
@@ -146,8 +131,8 @@ public class TracingManager {
      * @return The created transaction span.
      */
     public Span addTransactionSpan() {
-        Span span = tracer.nextSpan("transaction", null, null);
-        span.tagLowCardinality(SYSTEM.withValue("mongodb"));
+        Span span = tracer.nextSpan(MONGODB_OPERATION, "transaction", null, null);
+        span.tagLowCardinality(OperationLowCardinalityKeyNames.SYSTEM.withValue("mongodb"));
         return span;
     }
 
@@ -205,13 +190,13 @@ public class TracingManager {
         }
 
         Span operationSpan = operationContext.getTracingSpan();
-        Span span = addSpan(commandName,  operationSpan != null ? operationSpan.context() : null);
+        Span span = addSpan(MONGODB_COMMAND, commandName, operationSpan != null ? operationSpan.context() : null);
 
         if (command.containsKey("getMore")) {
             long cursorId = command.getInt64("getMore").longValue();
-            span.tagLowCardinality(CURSOR_ID.withValue(String.valueOf(cursorId)));
+            span.tagLowCardinality(CommandLowCardinalityKeyNames.CURSOR_ID.withValue(String.valueOf(cursorId)));
             if (operationSpan != null) {
-                operationSpan.tagLowCardinality(CURSOR_ID.withValue(String.valueOf(cursorId)));
+                operationSpan.tagLowCardinality(CommandLowCardinalityKeyNames.CURSOR_ID.withValue(String.valueOf(cursorId)));
             }
         }
 
@@ -234,13 +219,13 @@ public class TracingManager {
         String summary = commandName + " " + namespace + (collection.isEmpty() ? "" : "." + collection);
 
         KeyValues keyValues = KeyValues.of(
-                SYSTEM.withValue("mongodb"),
-                NAMESPACE.withValue(namespace),
-                QUERY_SUMMARY.withValue(summary),
-                COMMAND_NAME.withValue(commandName));
+                CommandLowCardinalityKeyNames.SYSTEM.withValue("mongodb"),
+                CommandLowCardinalityKeyNames.NAMESPACE.withValue(namespace),
+                CommandLowCardinalityKeyNames.QUERY_SUMMARY.withValue(summary),
+                CommandLowCardinalityKeyNames.COMMAND_NAME.withValue(commandName));
 
         if (!collection.isEmpty()) {
-            keyValues = keyValues.and(COLLECTION.withValue(collection));
+            keyValues = keyValues.and(CommandLowCardinalityKeyNames.COLLECTION.withValue(collection));
         }
         span.tagLowCardinality(keyValues);
 
@@ -248,19 +233,19 @@ public class TracingManager {
         ServerAddress serverAddress = serverAddressSupplier.get();
         ConnectionId connectionId = connectionIdSupplier.get();
         span.tagLowCardinality(KeyValues.of(
-                SERVER_ADDRESS.withValue(serverAddress.getHost()),
-                SERVER_PORT.withValue(String.valueOf(serverAddress.getPort())),
-                CLIENT_CONNECTION_ID.withValue(String.valueOf(connectionId.getLocalValue())),
-                SERVER_CONNECTION_ID.withValue(String.valueOf(connectionId.getServerValue())),
-                NETWORK_TRANSPORT.withValue(serverAddress instanceof UnixServerAddress ? "unix" : "tcp")
+                CommandLowCardinalityKeyNames.SERVER_ADDRESS.withValue(serverAddress.getHost()),
+                CommandLowCardinalityKeyNames.SERVER_PORT.withValue(String.valueOf(serverAddress.getPort())),
+                CommandLowCardinalityKeyNames.CLIENT_CONNECTION_ID.withValue(String.valueOf(connectionId.getLocalValue())),
+                CommandLowCardinalityKeyNames.SERVER_CONNECTION_ID.withValue(String.valueOf(connectionId.getServerValue())),
+                CommandLowCardinalityKeyNames.NETWORK_TRANSPORT.withValue(serverAddress instanceof UnixServerAddress ? "unix" : "tcp")
         ));
 
         // tag session and transaction info
         SessionContext sessionContext = operationContext.getSessionContext();
         if (sessionContext.hasSession() && !sessionContext.isImplicitSession()) {
             span.tagLowCardinality(KeyValues.of(
-                    TRANSACTION_NUMBER.withValue(String.valueOf(sessionContext.getTransactionNumber())),
-                    SESSION_ID.withValue(String.valueOf(sessionContext.getSessionId()
+                    CommandLowCardinalityKeyNames.TRANSACTION_NUMBER.withValue(String.valueOf(sessionContext.getTransactionNumber())),
+                    CommandLowCardinalityKeyNames.SESSION_ID.withValue(String.valueOf(sessionContext.getSessionId()
                             .get(sessionContext.getSessionId().getFirstKey())
                             .asBinary().asUuid()))
             ));
@@ -298,15 +283,15 @@ public class TracingManager {
                 : "." + namespace.getCollectionName());
 
         KeyValues keyValues = KeyValues.of(
-                SYSTEM.withValue("mongodb"),
-                NAMESPACE.withValue(namespace.getDatabaseName()));
+                OperationLowCardinalityKeyNames.SYSTEM.withValue("mongodb"),
+                OperationLowCardinalityKeyNames.NAMESPACE.withValue(namespace.getDatabaseName()));
         if (!MongoNamespaceHelper.COMMAND_COLLECTION_NAME.equalsIgnoreCase(namespace.getCollectionName())) {
-            keyValues = keyValues.and(COLLECTION.withValue(namespace.getCollectionName()));
+            keyValues = keyValues.and(OperationLowCardinalityKeyNames.COLLECTION.withValue(namespace.getCollectionName()));
         }
-        keyValues = keyValues.and(OPERATION_NAME.withValue(commandName),
-                OPERATION_SUMMARY.withValue(name));
+        keyValues = keyValues.and(OperationLowCardinalityKeyNames.OPERATION_NAME.withValue(commandName),
+                OperationLowCardinalityKeyNames.OPERATION_SUMMARY.withValue(name));
 
-        Span span = addSpan(name, parentContext, namespace);
+        Span span = addSpan(MONGODB_OPERATION, name, parentContext, namespace);
         span.tagLowCardinality(keyValues);
         operationContext.setTracingSpan(span);
         return span;
