@@ -76,7 +76,7 @@ public enum MongodbObservation implements ObservationDocumentation {
         SYSTEM {
             @Override
             public String asString() {
-                return "db.system";
+                return "db.system.name";
             }
         },
         NAMESPACE {
@@ -113,7 +113,7 @@ public enum MongodbObservation implements ObservationDocumentation {
         SYSTEM {
             @Override
             public String asString() {
-                return "db.system";
+                return "db.system.name";
             }
         },
         NAMESPACE {
