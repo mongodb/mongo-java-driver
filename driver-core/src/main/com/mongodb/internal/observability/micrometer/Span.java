@@ -46,6 +46,14 @@ public interface Span {
      */
     Span EMPTY = new Span() {
         @Override
+        public void openScope() {
+        }
+
+        @Override
+        public void closeScope() {
+        }
+
+        @Override
         public void setQueryText(final BsonDocument commandDocument) {
         }
 
@@ -78,6 +86,17 @@ public interface Span {
             return null;
         }
     };
+
+    /**
+     * Opens a scope for this span, making it the current observation on the thread.
+     * Must be paired with {@link #closeScope()} in a try-finally block.
+     */
+    void openScope();
+
+    /**
+     * Closes the scope previously opened by {@link #openScope()}, restoring the previous observation.
+     */
+    void closeScope();
 
     /**
      * Sets the query text on the observation context from the given command document.

@@ -31,6 +31,7 @@ public class TransactionSpan {
 
     public TransactionSpan(final TracingManager tracingManager) {
         this.span = tracingManager.addTransactionSpan();
+        this.span.openScope();
     }
 
     /**
@@ -54,6 +55,7 @@ public class TransactionSpan {
         }
 
         if (!isConvenientTransaction) {
+            span.closeScope();
             span.end();
         }
     }
@@ -67,6 +69,7 @@ public class TransactionSpan {
         span.event(status);
         // clear previous commit error if any
         if (!isConvenientTransaction) {
+            span.closeScope();
             span.end();
         }
         reportedError = null; // clear previous commit error if any
@@ -82,6 +85,7 @@ public class TransactionSpan {
         if (reportedError != null) {
             span.error(reportedError);
         }
+        span.closeScope();
         span.end();
         reportedError = null;
         // Don't clean up transaction context if we're still retrying (we want the retries to fold under the original transaction span)

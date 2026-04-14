@@ -426,8 +426,10 @@ final class MongoClusterImpl implements MongoCluster {
                     .withSessionContext(new ClientSessionBinding.SyncClientSessionContext(actualClientSession, readConcern, implicitSession));
             Span span = operationContext.getTracingManager().createOperationSpan(
                     actualClientSession.getTransactionSpan(), operationContext, operation.getCommandName(), operation.getNamespace());
+            if (span != null) {
+                span.openScope();
+            }
             ReadBinding binding = getReadBinding(readPreference, actualClientSession, implicitSession);
-
 
             try {
                 if (actualClientSession.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
@@ -445,6 +447,7 @@ final class MongoClusterImpl implements MongoCluster {
             } finally {
                 binding.release();
                 if (span != null) {
+                    span.closeScope();
                     span.end();
                 }
             }
@@ -462,6 +465,9 @@ final class MongoClusterImpl implements MongoCluster {
                     .withSessionContext(new ClientSessionBinding.SyncClientSessionContext(actualClientSession, readConcern, isImplicitSession(session)));
             Span span = operationContext.getTracingManager().createOperationSpan(
                     actualClientSession.getTransactionSpan(), operationContext, operation.getCommandName(), operation.getNamespace());
+            if (span != null) {
+                span.openScope();
+            }
             WriteBinding binding = getWriteBinding(actualClientSession, isImplicitSession(session));
 
             try {
@@ -477,6 +483,7 @@ final class MongoClusterImpl implements MongoCluster {
             } finally {
                 binding.release();
                 if (span != null) {
+                    span.closeScope();
                     span.end();
                 }
             }

@@ -122,6 +122,8 @@ public class MicrometerTracer implements Tracer {
         @Nullable
         private final MongoNamespace namespace;
         private final int queryTextLength;
+        @Nullable
+        private Observation.Scope scope;
 
         /**
          * Constructs a new {@link MicrometerSpan} instance with an associated Observation and MongoDB namespace.
@@ -134,6 +136,19 @@ public class MicrometerTracer implements Tracer {
             this.namespace = namespace;
             this.observation = observation;
             this.queryTextLength = queryTextLength;
+        }
+
+        @Override
+        public void openScope() {
+            this.scope = observation.openScope();
+        }
+
+        @Override
+        public void closeScope() {
+            if (scope != null) {
+                scope.close();
+                scope = null;
+            }
         }
 
         @Override

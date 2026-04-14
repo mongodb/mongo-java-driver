@@ -454,6 +454,9 @@ public class InternalStreamConnection implements InternalConnection {
                             () -> getDescription().getServerAddress(),
                             () -> getDescription().getConnectionId()
                     );
+            if (tracingSpan != null) {
+                tracingSpan.openScope();
+            }
 
             boolean isLoggingCommandNeeded = isLoggingCommandNeeded();
             boolean isTracingCommandPayloadNeeded = tracingSpan != null && operationContext.getTracingManager().isCommandPayloadEnabled();
@@ -481,6 +484,8 @@ public class InternalStreamConnection implements InternalConnection {
             } catch (Exception e) {
                 if (tracingSpan != null) {
                     tracingSpan.error(e);
+                    tracingSpan.closeScope();
+                    tracingSpan.end();
                 }
                 commandEventSender.sendFailedEvent(e);
                 throw e;
@@ -492,6 +497,7 @@ public class InternalStreamConnection implements InternalConnection {
         } else {
             commandEventSender.sendSucceededEventForOneWayCommand();
             if (tracingSpan != null) {
+                tracingSpan.closeScope();
                 tracingSpan.end();
             }
             return null;
@@ -595,6 +601,7 @@ public class InternalStreamConnection implements InternalConnection {
             throw e;
         } finally {
             if (tracingSpan != null) {
+                tracingSpan.closeScope();
                 tracingSpan.end();
             }
         }
