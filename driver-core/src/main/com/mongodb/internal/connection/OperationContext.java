@@ -224,6 +224,7 @@ public class OperationContext {
         private ServerDeprioritization() {
             candidate = null;
             deprioritized = new HashSet<>();
+            clusterType = null;
         }
 
         /**
