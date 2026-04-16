@@ -284,6 +284,7 @@ public class OperationContext {
                         new ClusterDescription(
                                 clusterDescription.getConnectionMode(),
                                 clusterDescription.getType(),
+                                clusterDescription.getSrvResolutionException(),
                                 nonDeprioritizedServerDescriptions,
                                 clusterDescription.getClusterSettings(),
                                 clusterDescription.getServerSettings()));

@@ -78,10 +78,9 @@ class SingleServerClusterSpecification extends Specification {
         sendNotification(firstServer, STANDALONE)
 
         then:
-        cluster.getServersSnapshot(createOperationContext()
-                        .getTimeoutContext()
-                        .computeServerSelectionTimeout(),
-                createOperationContext().getTimeoutContext()).getServer(firstServer) == factory.getServer(firstServer)
+        def operationContext = createOperationContext()
+        cluster.getServersSnapshot(operationContext.getTimeoutContext().computeServerSelectionTimeout(),
+                operationContext.getTimeoutContext()).getServer(firstServer) == factory.getServer(firstServer)
 
         cleanup:
         cluster?.close()
@@ -95,8 +94,9 @@ class SingleServerClusterSpecification extends Specification {
         cluster.close()
 
         when:
-        cluster.getServersSnapshot(createOperationContext().getTimeoutContext().computeServerSelectionTimeout(),
-                createOperationContext().getTimeoutContext())
+        def operationContext = createOperationContext()
+        cluster.getServersSnapshot(operationContext.getTimeoutContext().computeServerSelectionTimeout(),
+                operationContext.getTimeoutContext())
 
         then:
         thrown(IllegalStateException)
