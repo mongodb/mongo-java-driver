@@ -302,7 +302,7 @@ public class ServerSelectionSelectionTest {
             // The spec defines deprioritized_servers as a pre-populated list to feed into the selection mechanism - not as "simulate the
             // failure that caused deprioritization." Thus, SystemOverloadedError used unconditionally regardless of the cluster type.
             MongoException error = new MongoException("test");
-            error.addLabel("SystemOverloadedError");
+            error.addLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL);
             serverDeprioritization.onAttemptFailure(error);
         }
         return operationContext;
