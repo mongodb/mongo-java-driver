@@ -197,6 +197,10 @@ public final class UnifiedTestModifications {
                 .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
                         "timeoutMS can be set to 0 on a MongoClient - dropIndexes on collection");
 
+        // OpenTelemetry
+        def.skipNoncompliantReactive("withTransaction is not supported in the reactive driver unified test runner")
+                .file("open-telemetry/tests", "convenient transactions");
+
         // TODO-JAVA-5712
 
         // collection-management

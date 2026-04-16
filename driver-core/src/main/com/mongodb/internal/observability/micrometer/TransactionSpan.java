@@ -31,7 +31,6 @@ public class TransactionSpan {
 
     public TransactionSpan(final TracingManager tracingManager) {
         this.span = tracingManager.addTransactionSpan();
-        this.span.openScope();
     }
 
     /**
@@ -112,5 +111,13 @@ public class TransactionSpan {
      */
     public TraceContext getContext() {
         return span.context();
+    }
+
+    /**
+     * Opens a scope for the transaction span, making it the current observation on the thread.
+     * Must only be called from the sync driver where open and close happen on the same thread.
+     */
+    public void openScope() {
+        span.openScope();
     }
 }

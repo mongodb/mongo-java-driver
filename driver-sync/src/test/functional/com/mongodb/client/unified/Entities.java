@@ -49,7 +49,6 @@ import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.lang.Nullable;
 import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.observability.ObservabilitySettings;
-import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.tracing.test.reporter.inmemory.InMemoryOtelSetup;
 import org.bson.BsonArray;
@@ -114,7 +113,6 @@ public final class Entities {
     private final Map<String, TestLoggingInterceptor> clientLoggingInterceptors = new HashMap<>();
     private final Map<String, InMemoryOtelSetup.Builder.OtelBuildingBlocks> clientTracing = new HashMap<>();
     private final Set<InMemoryOtelSetup> inMemoryOTelInstances = new HashSet<>();
-    private final Set<Observation.Scope> observationScopes = new HashSet<>();
     private final Map<String, TestConnectionPoolListener> clientConnectionPoolListeners = new HashMap<>();
     private final Map<String, TestServerListener> clientServerListeners = new HashMap<>();
     private final Map<String, TestClusterListener> clientClusterListeners = new HashMap<>();
@@ -596,11 +594,6 @@ public final class Entities {
                     .observationRegistry(observationRegistry)
                     .enableCommandPayloadTracing(enableCommandPayload).build());
 
-            // Simulate what Spring Boot's observation does
-            // open a parent observation's scope before running the MongoDB operation
-            Observation parentObservation = Observation.createNotStarted("http.request", observationRegistry)
-                    .start();
-            observationScopes.add(parentObservation.openScope());
         }
 
         MongoClientSettings clientSettings = clientSettingsBuilder.build();
@@ -824,6 +817,5 @@ public final class Entities {
         clientLoggingInterceptors.values().forEach(TestLoggingInterceptor::close);
         threads.values().forEach(ExecutorService::shutdownNow);
         inMemoryOTelInstances.forEach(InMemoryOtelSetup::close);
-        observationScopes.forEach(Observation.Scope::close);
     }
 }
