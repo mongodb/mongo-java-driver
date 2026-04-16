@@ -42,7 +42,7 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
@@ -53,7 +53,7 @@ public abstract class AbstractRetryableReadsProseTest {
 
     private static final String COLLECTION_NAME = "test";
 
-    protected abstract MongoClient createClient(MongoClientSettings settings);
+    protected abstract MongoClient createClient(final MongoClientSettings settings);
 
     @AfterEach
     void afterEach() {
@@ -102,7 +102,7 @@ public abstract class AbstractRetryableReadsProseTest {
      * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-reads/tests/README.md#31-retryable-reads-caused-by-overload-errors-are-retried-on-a-different-replicaset-server-when-one-is-available">
      * 3.1 Retryable Reads Caused by Overload Errors Are Retried on a Different Replicaset Server When One is Available</a>.
      */
-    //TODO-JAVA-6141 add overloadRetargeting into tests.
+    //TODO-BACKPRESSURE Slav Babanin JAVA-6167 add overloadRetargeting into tests.
     @Test
     void overloadErrorRetriedOnDifferentReplicaSetServer() throws InterruptedException {
         //given
@@ -115,11 +115,12 @@ public abstract class AbstractRetryableReadsProseTest {
                         + "    configureFailPoint: \"failCommand\",\n"
                         + "    mode: { times: 1 },\n"
                         + "    data: {\n"
-                        + "        failCommands: [\"find\"],\n"
+                        + "        failCommands: [\"insert\"],\n"
                         + "        errorLabels: ['" + RETRYABLE_ERROR_LABEL + "', '" + SYSTEM_OVERLOADED_ERROR_LABEL + "'],\n"
                         + "        errorCode: 6\n"
                         + "    }\n"
                         + "}\n");
+
 
         try (FailPoint ignored = FailPoint.enable(configureFailPoint, primaryServerAddress);
              MongoClient client = createClient(getMongoClientSettingsBuilder()
@@ -133,7 +134,7 @@ public abstract class AbstractRetryableReadsProseTest {
             commandListener.reset();
 
             //when
-            collection.find().first();
+            collection.insertOne(new Document());
 
             //then
             List<CommandFailedEvent> commandFailedEvents = commandListener.getCommandFailedEvents();
@@ -144,7 +145,7 @@ public abstract class AbstractRetryableReadsProseTest {
             ServerAddress failedServer = commandFailedEvents.get(0).getConnectionDescription().getServerAddress();
             ServerAddress succeededServer = commandSucceededEvents.get(0).getConnectionDescription().getServerAddress();
 
-            assertFalse(failedServer.equals(succeededServer),
+            assertNotEquals(failedServer, succeededServer,
                     format("Expected retry on different server but both were %s", failedServer));
         }
     }
@@ -153,7 +154,7 @@ public abstract class AbstractRetryableReadsProseTest {
      * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-reads/tests/README.md#32-retryable-reads-caused-by-non-overload-errors-are-retried-on-the-same-replicaset-server">
      * 3.2 Retryable Reads Caused by Non-Overload Errors Are Retried on the Same Replicaset Server</a>.
      */
-    //TODO-JAVA-6141 add overloadRetargeting into tests.
+    //TODO-BACKPRESSURE Slav Babanin JAVA-6167 add overloadRetargeting into tests.
     @Test
     void nonOverloadErrorRetriedOnSameReplicaSetServer() throws InterruptedException {
         //given

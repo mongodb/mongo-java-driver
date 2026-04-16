@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.mongodb.MongoException.SYSTEM_OVERLOADED_ERROR_LABEL;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PACKAGE;
 import static java.util.stream.Collectors.toList;
 
@@ -253,7 +254,7 @@ public class OperationContext {
             }
 
             boolean isSystemOverloadedError = failure instanceof MongoException 
-                    && ((MongoException) failure).hasErrorLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL);
+                    && ((MongoException) failure).hasErrorLabel(SYSTEM_OVERLOADED_ERROR_LABEL);
             if (clusterType == ClusterType.SHARDED || isSystemOverloadedError) {
                 deprioritized.add(candidate);
             }

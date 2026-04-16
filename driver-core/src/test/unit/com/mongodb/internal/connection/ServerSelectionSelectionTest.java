@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
 
 import com.mongodb.ClusterFixture;
 import com.mongodb.MongoConfigurationException;
@@ -25,14 +25,17 @@ import com.mongodb.ServerAddress;
 import com.mongodb.Tag;
 import com.mongodb.TagSet;
 import com.mongodb.assertions.Assertions;
+import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ClusterId;
+import com.mongodb.connection.ClusterSettings;
+import com.mongodb.connection.ClusterType;
+import com.mongodb.connection.ServerConnectionState;
+import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.ServerSettings;
+import com.mongodb.connection.ServerType;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.internal.TimeoutContext;
-import com.mongodb.internal.connection.BaseCluster;
-import com.mongodb.internal.connection.Cluster;
-import com.mongodb.internal.connection.OperationContext;
-import com.mongodb.internal.connection.Server;
-import com.mongodb.internal.connection.ServerTuple;
-import com.mongodb.internal.connection.TestClusterableServerFactory;
 import com.mongodb.internal.mockito.MongoMockito;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.selector.WritableServerSelector;

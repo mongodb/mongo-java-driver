@@ -210,18 +210,19 @@ final class ServerDeprioritizationTest {
     @ParameterizedTest
     @EnumSource(value = ClusterType.class, names = "SHARDED", mode = EnumSource.Mode.EXCLUDE)
     void onAttemptFailureIgnoresIfNonShardedWithoutOverloadError(final ClusterType clusterType) {
+        ClusterDescription cluster = multipleModeClusterDescription(clusterType);
         ServerSelector selector = createAssertingSelector(ALL_SERVERS, singletonList(SERVER_A));
 
         assertAll(() -> {
                     serverDeprioritization.updateCandidate(SERVER_B.getAddress(), clusterType);
                     serverDeprioritization.onAttemptFailure(new RuntimeException());
-                    assertEquals(singletonList(SERVER_A), serverDeprioritization.apply(selector).select(SHARDED_CLUSTER),
+                    assertEquals(singletonList(SERVER_A), serverDeprioritization.apply(selector).select(cluster),
                             "Expected no deprioritization for " + clusterType + " with RuntimeException");
                 }, () -> {
                     serverDeprioritization = createOperationContext(TIMEOUT_SETTINGS).getServerDeprioritization();
                     serverDeprioritization.updateCandidate(SERVER_B.getAddress(), clusterType);
                     serverDeprioritization.onAttemptFailure(new MongoException(1, "error"));
-                    assertEquals(singletonList(SERVER_A), serverDeprioritization.apply(selector).select(SHARDED_CLUSTER),
+                    assertEquals(singletonList(SERVER_A), serverDeprioritization.apply(selector).select(cluster),
                             "Expected no deprioritization for " + clusterType + " with no SystemOverloadedError MongoException");
                 }
         );
