@@ -223,11 +223,6 @@ public class TracingManager {
             if (command.containsKey("getMore")) {
                 long cursorId = command.getInt64("getMore").longValue();
                 mongodbContext.setCursorId(cursorId);
-                // Also set on parent operation span context for correlation
-                MongodbContext parentContext = operationSpan != null ? operationSpan.getMongodbContext() : null;
-                if (parentContext != null) {
-                    parentContext.setCursorId(cursorId);
-                }
             }
 
             SessionContext sessionContext = operationContext.getSessionContext();
