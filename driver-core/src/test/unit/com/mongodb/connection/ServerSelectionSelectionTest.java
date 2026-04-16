@@ -67,11 +67,10 @@ import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
-import static java.lang.String.format;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.when;
 
 /**
@@ -299,8 +298,12 @@ public class ServerSelectionSelectionTest {
                         new TimeoutContext(TIMEOUT_SETTINGS.withServerSelectionTimeoutMS(0)));
         OperationContext.ServerDeprioritization serverDeprioritization = operationContext.getServerDeprioritization();
         for (ServerAddress address : extractDeprioritizedServerAddresses(definition)) {
-            serverDeprioritization.updateCandidate(address);
-            serverDeprioritization.onAttemptFailure(new MongoException("test"));
+            serverDeprioritization.updateCandidate(address, clusterDescription.getType());
+            // The spec defines deprioritized_servers as a pre-populated list to feed into the selection mechanism - not as "simulate the
+            // failure that caused deprioritization." Thus, SystemOverloadedError used unconditionally regardless of the cluster type.
+            MongoException error = new MongoException("test");
+            error.addLabel("SystemOverloadedError");
+            serverDeprioritization.onAttemptFailure(error);
         }
         return operationContext;
     }
@@ -317,7 +320,7 @@ public class ServerSelectionSelectionTest {
         return serverMap::get;
     }
 
-        private static void validateTestDescriptionFields(final Set<String> actualFields, final Set<String> knownFields) {
+    private static void validateTestDescriptionFields(final Set<String> actualFields, final Set<String> knownFields) {
         Set<String> unknownFields = new HashSet<>(actualFields);
         unknownFields.removeAll(knownFields);
         if (!unknownFields.isEmpty()) {

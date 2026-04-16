@@ -17,11 +17,13 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.Function;
 import com.mongodb.MongoConnectionPoolClearedException;
+import com.mongodb.MongoException;
 import com.mongodb.ReadConcern;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutContext;
@@ -215,6 +217,7 @@ public class OperationContext {
     public static final class ServerDeprioritization {
         @Nullable
         private ServerAddress candidate;
+        private ClusterType clusterType;
         private final Set<ServerAddress> deprioritized;
 
         private ServerDeprioritization() {
@@ -236,8 +239,9 @@ public class OperationContext {
         }
 
         @VisibleForTesting(otherwise = PACKAGE)
-        public void updateCandidate(final ServerAddress serverAddress) {
-            candidate = serverAddress;
+        public void updateCandidate(final ServerAddress serverAddress, final ClusterType clusterType) {
+            this.candidate = serverAddress;
+            this.clusterType = clusterType;
         }
 
         public void onAttemptFailure(final Throwable failure) {
@@ -245,7 +249,11 @@ public class OperationContext {
                 candidate = null;
                 return;
             }
-            deprioritized.add(candidate);
+
+            boolean isSystemOverloadedError = failure instanceof MongoException && ((MongoException) failure).hasErrorLabel("SystemOverloadedError");
+            if (clusterType == ClusterType.SHARDED || isSystemOverloadedError) {
+                deprioritized.add(candidate);
+            }
         }
 
         /**

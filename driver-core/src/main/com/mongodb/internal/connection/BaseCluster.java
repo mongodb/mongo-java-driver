@@ -163,7 +163,7 @@ public abstract class BaseCluster implements Cluster {
             if (serverTuple != null) {
                 ServerAddress serverAddress = serverTuple.getServerDescription().getAddress();
                 logServerSelectionSucceeded(operationContext, clusterId, serverAddress, serverSelector, currentDescription);
-                serverDeprioritization.updateCandidate(serverAddress);
+                serverDeprioritization.updateCandidate(serverAddress, currentDescription.getType());
                 return serverTuple;
             }
             computedServerSelectionTimeout.onExpired(() ->
@@ -306,7 +306,7 @@ public abstract class BaseCluster implements Cluster {
                 if (serverTuple != null) {
                     ServerAddress serverAddress = serverTuple.getServerDescription().getAddress();
                     logServerSelectionSucceeded(operationContext, clusterId, serverAddress, request.originalSelector, description);
-                    serverDeprioritization.updateCandidate(serverAddress);
+                    serverDeprioritization.updateCandidate(serverAddress, description.getType());
                     request.onResult(serverTuple, null);
                     return true;
                 }
