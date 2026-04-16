@@ -101,16 +101,6 @@ public abstract class AbstractAutoEmbeddingVectorSearchFunctionalTest extends Op
         }
     }
 
-    @Override
-    public void beforeEach() {
-        // Intentionally empty -- setup is done once in @BeforeAll
-    }
-
-    @Override
-    public void afterEach() {
-        // Intentionally empty -- teardown is done once in @AfterAll
-    }
-
     private static MongoClientSettings.Builder getMongoClientSettingsBuilder() {
         return Fixture.getMongoClientSettingsBuilder();
     }
