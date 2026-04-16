@@ -244,6 +244,35 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
     }
 
     /**
+     * This method is equivalent to a while loop, where the condition is checked before each iteration.
+     * If the condition returns {@code false} on the first check, the body is never executed.
+     *
+     * @param whileCheck a condition to check before each iteration; the loop continues as long as this condition returns true
+     * @param loopBodyRunnable the asynchronous task to be executed in each iteration of the loop
+     * @return the composition of this and the looping branch
+     * @see AsyncCallbackLoop
+     */
+    default AsyncRunnable thenRunWhileLoop(final BooleanSupplier whileCheck, final AsyncRunnable loopBodyRunnable) {
+        return thenRun(finalCallback -> {
+            LoopState loopState = new LoopState();
+            new AsyncCallbackLoop(loopState, iterationCallback -> {
+
+                if (loopState.breakAndCompleteIf(() -> !whileCheck.getAsBoolean(), iterationCallback)) {
+                    return;
+                }
+                loopBodyRunnable.finish((result, t) -> {
+                    if (t != null) {
+                        iterationCallback.completeExceptionally(t);
+                        return;
+                    }
+                    iterationCallback.complete(iterationCallback);
+                });
+
+            }).run(finalCallback);
+        });
+    }
+
+    /**
      * This method is equivalent to a do-while loop, where the loop body is executed first and
      * then the condition is checked to determine whether the loop should continue.
      *
