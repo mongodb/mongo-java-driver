@@ -217,6 +217,7 @@ public class OperationContext {
     public static final class ServerDeprioritization {
         @Nullable
         private ServerAddress candidate;
+        @Nullable
         private ClusterType clusterType;
         private final Set<ServerAddress> deprioritized;
 
