@@ -68,7 +68,6 @@ import static com.mongodb.connection.ServerDescription.MIN_DRIVER_SERVER_VERSION
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
 import static com.mongodb.internal.Locks.withInterruptibleLock;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
-import static com.mongodb.internal.VisibleForTesting.AccessModifier.PROTECTED;
 import static com.mongodb.internal.connection.EventHelper.wouldDescriptionsGenerateEquivalentEvents;
 import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
 import static com.mongodb.internal.logging.LogMessage.Component.SERVER_SELECTION;
@@ -95,8 +94,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.stream.Collectors.toList;
 
-@VisibleForTesting(otherwise = PROTECTED)
-public abstract class BaseCluster implements Cluster {
+abstract class BaseCluster implements Cluster {
     private static final Logger LOGGER = Loggers.getLogger("cluster");
     private static final StructuredLogger STRUCTURED_LOGGER = new StructuredLogger("cluster");
 

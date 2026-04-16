@@ -53,7 +53,7 @@ public abstract class AbstractRetryableReadsProseTest {
 
     private static final String COLLECTION_NAME = "test";
 
-    protected abstract MongoClient createClient(final MongoClientSettings settings);
+    protected abstract MongoClient createClient(MongoClientSettings settings);
 
     @AfterEach
     void afterEach() {

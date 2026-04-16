@@ -241,8 +241,7 @@ public class OperationContext {
             return new DeprioritizingSelector(wrappedSelector);
         }
 
-        @VisibleForTesting(otherwise = PACKAGE)
-        public void updateCandidate(final ServerAddress serverAddress, final ClusterType clusterType) {
+        void updateCandidate(final ServerAddress serverAddress, final ClusterType clusterType) {
             this.candidate = serverAddress;
             this.clusterType = clusterType;
         }
@@ -253,7 +252,7 @@ public class OperationContext {
                 return;
             }
 
-            boolean isSystemOverloadedError = failure instanceof MongoException 
+            boolean isSystemOverloadedError = failure instanceof MongoException
                     && ((MongoException) failure).hasErrorLabel(SYSTEM_OVERLOADED_ERROR_LABEL);
             if (clusterType == ClusterType.SHARDED || isSystemOverloadedError) {
                 deprioritized.add(candidate);
