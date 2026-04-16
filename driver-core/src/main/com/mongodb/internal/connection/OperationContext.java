@@ -28,7 +28,6 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.session.SessionContext;
@@ -42,7 +41,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.mongodb.MongoException.SYSTEM_OVERLOADED_ERROR_LABEL;
-import static com.mongodb.internal.VisibleForTesting.AccessModifier.PACKAGE;
 import static java.util.stream.Collectors.toList;
 
 /**
