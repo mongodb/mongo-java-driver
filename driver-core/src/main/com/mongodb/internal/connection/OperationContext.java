@@ -250,7 +250,8 @@ public class OperationContext {
                 return;
             }
 
-            boolean isSystemOverloadedError = failure instanceof MongoException && ((MongoException) failure).hasErrorLabel("SystemOverloadedError");
+            boolean isSystemOverloadedError = failure instanceof MongoException 
+                    && ((MongoException) failure).hasErrorLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL);
             if (clusterType == ClusterType.SHARDED || isSystemOverloadedError) {
                 deprioritized.add(candidate);
             }
