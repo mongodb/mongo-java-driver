@@ -18,6 +18,7 @@ package com.mongodb.internal.observability.micrometer;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.lang.Nullable;
+import com.mongodb.observability.micrometer.MongodbObservationContext;
 import org.bson.BsonDocument;
 
 /**
@@ -82,7 +83,7 @@ public interface Span {
 
         @Override
         @Nullable
-        public MongodbContext getMongodbContext() {
+        public MongodbObservationContext getMongodbObservationContext() {
             return null;
         }
     };
@@ -133,13 +134,13 @@ public interface Span {
     TraceContext context();
 
     /**
-     * Retrieves the {@link MongodbContext} associated with the span, if any.
+     * Retrieves the {@link MongodbObservationContext} associated with the span, if any.
      * Returns null for no-op spans or non-Micrometer implementations.
      *
      * @return The MongoDB observation context, or null.
      */
     @Nullable
-    MongodbContext getMongodbContext();
+    MongodbObservationContext getMongodbObservationContext();
 
     /**
      * Retrieves the MongoDB namespace associated with the span, if any.

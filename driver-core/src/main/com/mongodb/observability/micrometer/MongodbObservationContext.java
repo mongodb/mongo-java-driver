@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.observability.micrometer;
+package com.mongodb.observability.micrometer;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.connection.ConnectionId;
+import com.mongodb.internal.observability.micrometer.MongodbObservation;
 import com.mongodb.lang.Nullable;
 import io.micrometer.observation.transport.Kind;
 import io.micrometer.observation.transport.SenderContext;
@@ -37,7 +40,8 @@ import io.micrometer.observation.transport.SenderContext;
  *
  * @since 5.7
  */
-public class MongodbContext extends SenderContext<Object> {
+@Beta(Reason.CLIENT)
+public class MongodbObservationContext extends SenderContext<Object> {
 
     private MongodbObservation observationType;
     @Nullable
@@ -62,7 +66,7 @@ public class MongodbContext extends SenderContext<Object> {
     private String responseStatusCode;
     private boolean isUnixSocket;
 
-    public MongodbContext() {
+    public MongodbObservationContext() {
         super((carrier, key, value) -> { }, Kind.CLIENT);
     }
 

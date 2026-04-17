@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.observability.micrometer;
+package com.mongodb.observability.micrometer;
 
+import com.mongodb.ServerAddress;
+import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
+import com.mongodb.connection.ConnectionId;
+import com.mongodb.internal.observability.micrometer.MongodbObservation;
 import io.micrometer.common.KeyValues;
-import io.micrometer.observation.GlobalObservationConvention;
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationConvention;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -26,22 +31,23 @@ import java.io.StringWriter;
 /**
  * Default {@link ObservationConvention} for MongoDB observations.
  * <p>
- * Reads domain fields from {@link MongodbContext} and produces the standard MongoDB
- * low-cardinality and high-cardinality key-values. Users can override this by registering
- * a {@code GlobalObservationConvention<MongodbContext>} on their {@code ObservationRegistry}.
+ * Reads domain fields from {@link MongodbObservationContext} and produces the standard MongoDB
+ * low-cardinality and high-cardinality key-values. Users can provide a custom convention via
+ * {@link MicrometerObservabilitySettings.Builder#observationConvention(ObservationConvention)}.
  * </p>
  *
  * @since 5.7
  */
-public class DefaultMongodbObservationConvention implements GlobalObservationConvention<MongodbContext> {
+@Beta(Reason.CLIENT)
+public class DefaultMongodbObservationConvention implements ObservationConvention<MongodbObservationContext> {
 
     @Override
     public boolean supportsContext(final Observation.Context context) {
-        return context instanceof MongodbContext;
+        return context instanceof MongodbObservationContext;
     }
 
     @Override
-    public KeyValues getLowCardinalityKeyValues(final MongodbContext context) {
+    public KeyValues getLowCardinalityKeyValues(final MongodbObservationContext context) {
         if (context.getObservationType() == MongodbObservation.MONGODB_OPERATION) {
             return getOperationLowCardinalityKeyValues(context);
         } else {
@@ -50,14 +56,14 @@ public class DefaultMongodbObservationConvention implements GlobalObservationCon
     }
 
     @Override
-    public KeyValues getHighCardinalityKeyValues(final MongodbContext context) {
+    public KeyValues getHighCardinalityKeyValues(final MongodbObservationContext context) {
         if (context.getObservationType() == MongodbObservation.MONGODB_COMMAND) {
             return getCommandHighCardinalityKeyValues(context);
         }
         return KeyValues.empty();
     }
 
-    private KeyValues getOperationLowCardinalityKeyValues(final MongodbContext context) {
+    private KeyValues getOperationLowCardinalityKeyValues(final MongodbObservationContext context) {
         String commandName = context.getCommandName();
         String databaseName = context.getDatabaseName();
         String collectionName = context.getCollectionName();
@@ -82,7 +88,7 @@ public class DefaultMongodbObservationConvention implements GlobalObservationCon
         return kv;
     }
 
-    private KeyValues getCommandLowCardinalityKeyValues(final MongodbContext context) {
+    private KeyValues getCommandLowCardinalityKeyValues(final MongodbObservationContext context) {
         String commandName = context.getCommandName();
         String databaseName = context.getDatabaseName();
         String collectionName = context.getCollectionName();
@@ -99,7 +105,7 @@ public class DefaultMongodbObservationConvention implements GlobalObservationCon
         if (collectionName != null) {
             kv = kv.and(MongodbObservation.CommandLowCardinalityKeyNames.COLLECTION.withValue(collectionName));
         }
-        com.mongodb.ServerAddress serverAddress = context.getServerAddress();
+        ServerAddress serverAddress = context.getServerAddress();
         if (serverAddress != null) {
             kv = kv.and(
                     MongodbObservation.CommandLowCardinalityKeyNames.SERVER_ADDRESS.withValue(serverAddress.getHost()),
@@ -115,14 +121,14 @@ public class DefaultMongodbObservationConvention implements GlobalObservationCon
         return kv;
     }
 
-    private KeyValues getCommandHighCardinalityKeyValues(final MongodbContext context) {
+    private KeyValues getCommandHighCardinalityKeyValues(final MongodbObservationContext context) {
         KeyValues kv = KeyValues.empty();
 
         String queryText = context.getQueryText();
         if (queryText != null) {
             kv = kv.and(MongodbObservation.HighCardinalityKeyNames.QUERY_TEXT.withValue(queryText));
         }
-        com.mongodb.connection.ConnectionId connectionId = context.getConnectionId();
+        ConnectionId connectionId = context.getConnectionId();
         if (connectionId != null) {
             kv = kv.and(
                     MongodbObservation.HighCardinalityKeyNames.CLIENT_CONNECTION_ID.withValue(

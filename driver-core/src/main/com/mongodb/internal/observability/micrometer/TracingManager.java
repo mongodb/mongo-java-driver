@@ -26,7 +26,9 @@ import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import com.mongodb.observability.ObservabilitySettings;
+import com.mongodb.observability.micrometer.DefaultMongodbObservationConvention;
 import com.mongodb.observability.micrometer.MicrometerObservabilitySettings;
+import com.mongodb.observability.micrometer.MongodbObservationContext;
 import io.micrometer.observation.ObservationRegistry;
 import org.bson.BsonDocument;
 
@@ -87,7 +89,8 @@ public class TracingManager {
 
             ObservationRegistry observationRegistry = settings.getObservationRegistry();
             tracer = enableTracing && observationRegistry != null
-                    ? new MicrometerTracer(observationRegistry, settings.isEnableCommandPayloadTracing(), settings.getMaxQueryTextLength())
+                    ? new MicrometerTracer(observationRegistry, settings.isEnableCommandPayloadTracing(),
+                            settings.getMaxQueryTextLength(), settings.getObservationConvention())
                     : Tracer.NO_OP;
 
             this.enableCommandPayload = tracer.includeCommandPayload();
@@ -153,7 +156,7 @@ public class TracingManager {
     /** Create a tracing span for the given command message.
      * <p>
      * The span is only created if tracing is enabled and the command is not security-sensitive.
-     * It populates domain fields on the span's {@link MongodbContext} (command name, namespace,
+     * It populates domain fields on the span's {@link MongodbObservationContext} (command name, namespace,
      * server address, connection ID, session/transaction info, cursor ID for getMore commands).
      * The {@link DefaultMongodbObservationConvention} reads these fields at observation stop time
      * to produce the final tag key-values.
@@ -204,8 +207,8 @@ public class TracingManager {
             namespace = message.getDatabase();
         }
 
-        // Populate domain fields on MongodbContext — the convention reads these to produce tags
-        MongodbContext mongodbContext = span.getMongodbContext();
+        // Populate domain fields on MongodbObservationContext — the convention reads these to produce tags
+        MongodbObservationContext mongodbContext = span.getMongodbObservationContext();
         if (mongodbContext != null) {
             mongodbContext.setCommandName(commandName);
             mongodbContext.setDatabaseName(namespace);
@@ -267,8 +270,8 @@ public class TracingManager {
 
         Span span = addSpan(MONGODB_OPERATION, name, parentContext, namespace);
 
-        // Populate domain fields on MongodbContext — the convention reads these to produce tags
-        MongodbContext mongodbContext = span.getMongodbContext();
+        // Populate domain fields on MongodbObservationContext — the convention reads these to produce tags
+        MongodbObservationContext mongodbContext = span.getMongodbObservationContext();
         if (mongodbContext != null) {
             mongodbContext.setCommandName(commandName);
             mongodbContext.setDatabaseName(namespace.getDatabaseName());

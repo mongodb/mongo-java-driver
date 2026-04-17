@@ -49,7 +49,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.StructuredLogger;
-import com.mongodb.internal.observability.micrometer.MongodbContext;
+import com.mongodb.observability.micrometer.MongodbObservationContext;
 import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.time.Timeout;
@@ -590,7 +590,7 @@ public class InternalStreamConnection implements InternalConnection {
             }
             if (tracingSpan != null) {
                 if (e instanceof MongoCommandException) {
-                    MongodbContext ctx = tracingSpan.getMongodbContext();
+                    MongodbObservationContext ctx = tracingSpan.getMongodbObservationContext();
                     if (ctx != null) {
                         ctx.setResponseStatusCode(String.valueOf(((MongoCommandException) e).getErrorCode()));
                     }
@@ -656,7 +656,7 @@ public class InternalStreamConnection implements InternalConnection {
                 try {
                     if (t != null) {
                         if (t instanceof MongoCommandException) {
-                            MongodbContext ctx = commandSpan.getMongodbContext();
+                            MongodbObservationContext ctx = commandSpan.getMongodbObservationContext();
                             if (ctx != null) {
                                 ctx.setResponseStatusCode(String.valueOf(((MongoCommandException) t).getErrorCode()));
                             }

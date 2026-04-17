@@ -18,7 +18,10 @@ package com.mongodb.internal.observability.micrometer;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.lang.Nullable;
+import com.mongodb.observability.micrometer.DefaultMongodbObservationConvention;
+import com.mongodb.observability.micrometer.MongodbObservationContext;
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.ObservationRegistry;
 import org.bson.BsonDocument;
 import org.bson.BsonReader;
@@ -46,6 +49,7 @@ public class MicrometerTracer implements Tracer {
     private final ObservationRegistry observationRegistry;
     private final boolean allowCommandPayload;
     private final int textMaxLength;
+    private final ObservationConvention<MongodbObservationContext> convention;
 
     /**
      * Constructs a new {@link MicrometerTracer} instance.
@@ -53,17 +57,16 @@ public class MicrometerTracer implements Tracer {
      * @param observationRegistry The Micrometer {@link ObservationRegistry} to delegate tracing operations to.
      * @param allowCommandPayload Whether to allow command payloads in the trace context.
      * @param textMaxLength       The maximum length for query text truncation.
+     * @param customConvention    A custom observation convention, or null to use the default.
      */
-    public MicrometerTracer(final ObservationRegistry observationRegistry, final boolean allowCommandPayload, final int textMaxLength) {
+    public MicrometerTracer(final ObservationRegistry observationRegistry, final boolean allowCommandPayload,
+            final int textMaxLength, @Nullable final ObservationConvention<MongodbObservationContext> customConvention) {
         this.allowCommandPayload = allowCommandPayload;
         this.observationRegistry = observationRegistry;
         this.textMaxLength = ofNullable(getenv(ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH))
                 .map(Integer::parseInt)
                 .orElse(textMaxLength);
-        // Register default convention. Users can override by registering their own GlobalObservationConvention
-        // after the MongoClient is created — the last matching convention wins.
-        DefaultMongodbObservationConvention defaultConvention = new DefaultMongodbObservationConvention();
-        observationRegistry.observationConfig().observationConvention(defaultConvention);
+        this.convention = customConvention != null ? customConvention : new DefaultMongodbObservationConvention();
     }
 
     @Override
@@ -93,10 +96,10 @@ public class MicrometerTracer implements Tracer {
 
     private Observation getObservation(final MongodbObservation observationType, final String name) {
         return observationType.observation(observationRegistry, () -> {
-            MongodbContext ctx = new MongodbContext();
+            MongodbObservationContext ctx = new MongodbObservationContext();
             ctx.setObservationType(observationType);
             return ctx;
-        }).contextualName(name);
+        }).observationConvention(convention).contextualName(name);
     }
     /**
      * Represents a Micrometer-based trace context.
@@ -153,7 +156,7 @@ public class MicrometerTracer implements Tracer {
 
         @Override
         public void setQueryText(final BsonDocument commandDocument) {
-            MongodbContext ctx = getMongodbContext();
+            MongodbObservationContext ctx = getMongodbObservationContext();
             if (ctx != null) {
                 ctx.setQueryText((queryTextLength < Integer.MAX_VALUE)
                         ? getTruncatedBsonDocument(commandDocument)
@@ -183,9 +186,9 @@ public class MicrometerTracer implements Tracer {
 
         @Override
         @Nullable
-        public MongodbContext getMongodbContext() {
-            if (observation.getContext() instanceof MongodbContext) {
-                return (MongodbContext) observation.getContext();
+        public MongodbObservationContext getMongodbObservationContext() {
+            if (observation.getContext() instanceof MongodbObservationContext) {
+                return (MongodbObservationContext) observation.getContext();
             }
             return null;
         }
