@@ -17,6 +17,7 @@
 
 package com.mongodb.reactivestreams.client;
 
+import com.mongodb.MongoException;
 import com.mongodb.TransactionOptions;
 import org.reactivestreams.Publisher;
 
@@ -65,6 +66,7 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      * Start a transaction in the context of this session with default transaction options. A transaction can not be started if there is
      * already an active transaction on this session.
      *
+     * @see MongoException#TRANSIENT_TRANSACTION_ERROR_LABEL
      * @mongodb.server.release 4.0
      */
     void startTransaction();
@@ -75,6 +77,7 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      *
      * @param transactionOptions the options to apply to the transaction
      *
+     * @see MongoException#TRANSIENT_TRANSACTION_ERROR_LABEL
      * @mongodb.server.release 4.0
      */
     void startTransaction(TransactionOptions transactionOptions);
@@ -83,6 +86,7 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      * Commit a transaction in the context of this session.  A transaction can only be commmited if one has first been started.
      *
      * @return an empty publisher that indicates when the operation has completed
+     * @see MongoException#UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL
      * @mongodb.server.release 4.0
      */
     Publisher<Void> commitTransaction();

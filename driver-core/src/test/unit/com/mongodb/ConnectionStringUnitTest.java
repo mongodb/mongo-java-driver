@@ -37,7 +37,30 @@ final class ConnectionStringUnitTest {
     @Test
     void defaults() {
         ConnectionString connectionStringDefault = new ConnectionString(DEFAULT_OPTIONS);
-        assertAll(() -> assertNull(connectionStringDefault.getServerMonitoringMode()));
+        assertAll(
+                () -> assertNull(connectionStringDefault.getServerMonitoringMode()),
+                () -> assertNull(connectionStringDefault.getMaxAdaptiveRetries())
+        );
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "serverMonitoringMode=stream",
+            "maxAdaptiveRetries=42"
+    })
+    void equalAndHashCode(final String connectionStringOptions) {
+        ConnectionString default1 = new ConnectionString(DEFAULT_OPTIONS);
+        ConnectionString default2 = new ConnectionString(DEFAULT_OPTIONS);
+        String connectionString = DEFAULT_OPTIONS + connectionStringOptions;
+        ConnectionString actual1 = new ConnectionString(connectionString);
+        ConnectionString actual2 = new ConnectionString(connectionString);
+        assertAll(
+                () -> assertEquals(default1, default2),
+                () -> assertEquals(default1.hashCode(), default2.hashCode()),
+                () -> assertEquals(actual1, actual2),
+                () -> assertEquals(actual1.hashCode(), actual2.hashCode()),
+                () -> assertNotEquals(default1, actual1)
+        );
     }
 
     @Test
@@ -68,22 +91,6 @@ final class ConnectionStringUnitTest {
         }
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {DEFAULT_OPTIONS + "serverMonitoringMode=stream"})
-    void equalAndHashCode(final String connectionString) {
-        ConnectionString default1 = new ConnectionString(DEFAULT_OPTIONS);
-        ConnectionString default2 = new ConnectionString(DEFAULT_OPTIONS);
-        ConnectionString actual1 = new ConnectionString(connectionString);
-        ConnectionString actual2 = new ConnectionString(connectionString);
-        assertAll(
-                () -> assertEquals(default1, default2),
-                () -> assertEquals(default1.hashCode(), default2.hashCode()),
-                () -> assertEquals(actual1, actual2),
-                () -> assertEquals(actual1.hashCode(), actual2.hashCode()),
-                () -> assertNotEquals(default1, actual1)
-        );
-    }
-
     @Test
     void serverMonitoringMode() {
         assertAll(
@@ -93,7 +100,6 @@ final class ConnectionStringUnitTest {
                         () -> new ConnectionString(DEFAULT_OPTIONS + "serverMonitoringMode=invalid"))
         );
     }
-
 
     @ParameterizedTest
     @ValueSource(strings = {"mongodb://foo:bar/@hostname/java?", "mongodb://foo:bar?@hostname/java/",
@@ -108,5 +114,19 @@ final class ConnectionStringUnitTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> new ConnectionString(input));
         assertFalse(exception.getMessage().contains("bar"));
         assertFalse(exception.getMessage().contains("12345678"));
+    }
+
+    @Test
+    void maxAdaptiveRetries() {
+        assertAll(
+                () -> assertEquals(42,
+                        new ConnectionString(DEFAULT_OPTIONS + "maxAdaptiveRetries=42").getMaxAdaptiveRetries()),
+                () -> assertEquals(0,
+                        new ConnectionString(DEFAULT_OPTIONS + "maxAdaptiveRetries=0").getMaxAdaptiveRetries()),
+                () -> assertThrows(IllegalArgumentException.class,
+                        () -> new ConnectionString(DEFAULT_OPTIONS + "maxAdaptiveRetries=-1")),
+                () -> assertThrows(IllegalArgumentException.class,
+                        () -> new ConnectionString(DEFAULT_OPTIONS + "maxAdaptiveRetries=invalid"))
+        );
     }
 }

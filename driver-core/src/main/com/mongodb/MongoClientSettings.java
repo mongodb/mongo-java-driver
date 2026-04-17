@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.annotations.Reason;
@@ -93,6 +94,8 @@ public final class MongoClientSettings {
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
     private final boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetries;
     private final ReadConcern readConcern;
     private final MongoCredential credential;
     private final TransportSettings transportSettings;
@@ -214,6 +217,8 @@ public final class MongoClientSettings {
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
         private boolean retryWrites = true;
         private boolean retryReads = true;
+        @Nullable
+        private Integer maxAdaptiveRetries;
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClientSettings.getDefaultCodecRegistry();
         private TransportSettings transportSettings;
@@ -255,6 +260,7 @@ public final class MongoClientSettings {
             writeConcern = settings.getWriteConcern();
             retryWrites = settings.getRetryWrites();
             retryReads = settings.getRetryReads();
+            maxAdaptiveRetries = settings.getMaxAdaptiveRetries();
             readConcern = settings.getReadConcern();
             credential = settings.getCredential();
             uuidRepresentation = settings.getUuidRepresentation();
@@ -313,6 +319,9 @@ public final class MongoClientSettings {
             Boolean retryReadsValue = connectionString.getRetryReads();
             if (retryReadsValue != null) {
                 retryReads = retryReadsValue;
+            }
+            if (connectionString.getMaxAdaptiveRetries() != null) {
+                maxAdaptiveRetries = connectionString.getMaxAdaptiveRetries();
             }
             if (connectionString.getUuidRepresentation() != null) {
                 uuidRepresentation = connectionString.getUuidRepresentation();
@@ -428,13 +437,24 @@ public final class MongoClientSettings {
         }
 
         /**
-         * Sets whether writes should be retried if they fail due to a network error.
+         * Sets whether attempts to execute write commands should be retried if they fail due to a retryable error.
+         * <p>
+         * The errors {@linkplain MongoException#hasErrorLabel(String) having}
+         * the {@value MongoException#RETRYABLE_ERROR_LABEL} label are not the only ones considered retryable here:
+         * unlike applications, which may retry operations, the driver retries commands, which gives it more control
+         * and allows it to safely retry attempts failed due to a broader set of errors
+         * than what applications may {@linkplain MongoException#RETRYABLE_ERROR_LABEL safely retry}.
+         * <p>
+         * For more information on how transactions affect retries,
+         * see the documentation of the {@value MongoException#TRANSIENT_TRANSACTION_ERROR_LABEL},
+         * {@value MongoException#UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL} error labels.
          *
          * <p>Starting with the 3.11.0 release, the default value is true</p>
          *
-         * @param retryWrites sets if writes should be retried if they fail due to a network error.
+         * @param retryWrites sets if write commands should be retried if they fail due to a retryable error.
          * @return this
          * @see #getRetryWrites()
+         * @see #maxAdaptiveRetries(Integer)
          * @mongodb.server.release 3.6
          */
         public Builder retryWrites(final boolean retryWrites) {
@@ -443,16 +463,99 @@ public final class MongoClientSettings {
         }
 
         /**
-         * Sets whether reads should be retried if they fail due to a network error.
+         * Sets whether attempts to execute read commands should be retried if they fail due to a retryable error.
+         * <p>
+         * The errors {@linkplain MongoException#hasErrorLabel(String) having}
+         * the {@value MongoException#RETRYABLE_ERROR_LABEL} label are not the only ones considered retryable here:
+         * unlike applications, which may retry operations, the driver retries commands, which gives it more control
+         * and allows it to safely retry attempts failed due to a broader set of errors
+         * than what applications may {@linkplain MongoException#RETRYABLE_ERROR_LABEL safely retry}.
+         * <p>
+         * For more information on how transactions affect retries,
+         * see the documentation of the {@value MongoException#TRANSIENT_TRANSACTION_ERROR_LABEL},
+         * {@value MongoException#UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL} error labels.
+         * <p>
+         * Default is {@code true}.
          *
-         * @param retryReads sets if reads should be retried if they fail due to a network error.
+         * @param retryReads sets if read commands should be retried if they fail due to a retryable error.
          * @return this
          * @see #getRetryReads()
+         * @see #maxAdaptiveRetries(Integer)
          * @since 3.11
          * @mongodb.server.release 3.6
          */
         public Builder retryReads(final boolean retryReads) {
             this.retryReads = retryReads;
+            return this;
+        }
+
+        /**
+         * Sets the maximum number of retry attempts when executing a command and encountering
+         * an error {@linkplain MongoException#hasErrorLabel(String) having}
+         * the {@value MongoException#SYSTEM_OVERLOADED_ERROR_LABEL} and {@value MongoException#RETRYABLE_ERROR_LABEL} labels.
+         * Such errors are referred to as retryable overload errors.
+         * <p>
+         * Default is {@code null}, implies the value 2 and the above retry behavior. The implied value and behavior may change in
+         * the future in a <a href="https://semver.org/spec/v2.0.0.html#summary">minor version</a>.
+         * This means, there is no guarantee that not setting a value is equivalent to setting the value 2.
+         * The value 0 results in not retrying the attempts failed due to retryable overload errors.
+         *
+         * <table>
+         *     <caption>Interactions with {@link #retryWrites(boolean)}/{@link #retryReads(boolean)}</caption>
+         *     <thead>
+         *         <tr>
+         *             <th>Command kind</th>
+         *             <th>Interaction</th>
+         *         </tr>
+         *     </thead>
+         *     <tbody>
+         *         <tr>
+         *             <td style="vertical-align: top;">write</td>
+         *             <td>
+         *                 The attempts failed due to retryable overload errors are retried only if
+         *                 {@link #retryWrites(boolean)} is {@code true}.
+         *             </td>
+         *         </tr>
+         *         <tr>
+         *             <td style="vertical-align: top;">read</td>
+         *             <td>
+         *                 The attempts failed due to retryable overload errors are retried only if
+         *                 {@link #retryReads(boolean)} is {@code true}.
+         *                 <p>
+         *                 Executing a write operation, for example, {@code MongoCluster.bulkWrite},
+         *                 may involve executing not only write commands, but also read commands. In such a situation,
+         *                 just like in other situations, the behavior related to retries depends on
+         *                 the known kind of command, not on the kind of operation.
+         *             </td>
+         *         </tr>
+         *         <tr>
+         *             <td style="vertical-align: top;">unknown</td>
+         *             <td>
+         *                 The attempts failed due to retryable overload errors are retried only if
+         *                 {@link #retryWrites(boolean)} is {@code true} and {@link #retryReads(boolean)} is {@code true}.
+         *                 <p>
+         *                 The command kind is unknown when a command is executed via the {@code MongoDatabase.runCommand} operation.
+         *             </td>
+         *         </tr>
+         *     </tbody>
+         * </table>
+         *
+         * @param maxAdaptiveRetries Sets the maximum number of retry attempts when encountering a retryable overload error.
+         *
+         * @return {@code this}.
+         * @see #getMaxAdaptiveRetries()
+         * @mongodb.driver.manual reference/parameters/#mongodb-parameter-param.overloadAwareServerSelectionEnabled
+         * overloadAwareServerSelectionEnabled: the server-side counterpart, which is configured independently
+         * and affects the server behavior as opposed to the client behavior.
+         * @since 5.7
+         */
+        // TODO-BACKPRESSURE Valentin Document commands that we do not retry now, but should retry according to the spec.
+        @Beta(Reason.CLIENT)
+        public Builder maxAdaptiveRetries(@Nullable final Integer maxAdaptiveRetries) {
+            if (maxAdaptiveRetries != null) {
+                isTrueArgument("maxAdaptiveRetries >= 0", maxAdaptiveRetries >= 0);
+            }
+            this.maxAdaptiveRetries = maxAdaptiveRetries;
             return this;
         }
 
@@ -785,11 +888,14 @@ public final class MongoClientSettings {
     }
 
     /**
-     * Returns true if writes should be retried if they fail due to a network error or other retryable error.
+     * Returns whether attempts to execute write commands should be retried if they fail due to a retryable error.
+     * See {@link Builder#retryWrites(boolean)} for more information.
      *
      * <p>Starting with the 3.11.0 release, the default value is true</p>
      *
      * @return the retryWrites value
+     * @see Builder#retryWrites(boolean)
+     * @see #getMaxAdaptiveRetries()
      * @mongodb.server.release 3.6
      */
     public boolean getRetryWrites() {
@@ -797,14 +903,34 @@ public final class MongoClientSettings {
     }
 
     /**
-     * Returns true if reads should be retried if they fail due to a network error or other retryable error. The default value is true.
+     * Returns whether attempts to execute read commands should be retried if they fail due to a retryable error.
+     * See {@link Builder#retryReads(boolean)} for more information.
+     * <p>
+     * Default is {@code true}.
      *
      * @return the retryReads value
+     * @see Builder#retryReads(boolean)
+     * @see #getMaxAdaptiveRetries()
      * @since 3.11
      * @mongodb.server.release 3.6
      */
     public boolean getRetryReads() {
         return retryReads;
+    }
+
+    /**
+     * Returns the maximum number of retry attempts when encountering a retryable overload error.
+     * See {@link Builder#maxAdaptiveRetries(Integer)} for more information.
+     *
+     * @return The maximum number of retry attempts when encountering a retryable overload error.
+     * @see Builder#maxAdaptiveRetries(Integer)
+     * @since 5.7
+     */
+    @Beta(Reason.CLIENT)
+    @Nullable
+    // TODO-BACKPRESSURE Valentin Use the `maxAdaptiveRetries` setting when retrying.
+    public Integer getMaxAdaptiveRetries() {
+        return maxAdaptiveRetries;
     }
 
     /**
@@ -1080,6 +1206,7 @@ public final class MongoClientSettings {
         MongoClientSettings that = (MongoClientSettings) o;
         return retryWrites == that.retryWrites
                 && retryReads == that.retryReads
+                && Objects.equals(maxAdaptiveRetries, that.maxAdaptiveRetries)
                 && heartbeatSocketTimeoutSetExplicitly == that.heartbeatSocketTimeoutSetExplicitly
                 && heartbeatConnectTimeoutSetExplicitly == that.heartbeatConnectTimeoutSetExplicitly
                 && Objects.equals(readPreference, that.readPreference)
@@ -1109,7 +1236,7 @@ public final class MongoClientSettings {
 
     @Override
     public int hashCode() {
-        return Objects.hash(readPreference, writeConcern, retryWrites, retryReads, readConcern, credential, transportSettings,
+        return Objects.hash(readPreference, writeConcern, retryWrites, retryReads, maxAdaptiveRetries, readConcern, credential, transportSettings,
                 commandListeners, codecRegistry, loggerSettings, clusterSettings, socketSettings,
                 heartbeatSocketSettings, connectionPoolSettings, serverSettings, sslSettings, applicationName, compressorList,
                 uuidRepresentation, serverApi, autoEncryptionSettings, heartbeatSocketTimeoutSetExplicitly,
@@ -1124,6 +1251,7 @@ public final class MongoClientSettings {
                 + ", writeConcern=" + writeConcern
                 + ", retryWrites=" + retryWrites
                 + ", retryReads=" + retryReads
+                + ", maxAdaptiveRetries=" + maxAdaptiveRetries
                 + ", readConcern=" + readConcern
                 + ", credential=" + credential
                 + ", transportSettings=" + transportSettings
@@ -1153,6 +1281,7 @@ public final class MongoClientSettings {
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
         retryWrites = builder.retryWrites;
+        maxAdaptiveRetries = builder.maxAdaptiveRetries;
         retryReads = builder.retryReads;
         readConcern = builder.readConcern;
         credential = builder.credential;
