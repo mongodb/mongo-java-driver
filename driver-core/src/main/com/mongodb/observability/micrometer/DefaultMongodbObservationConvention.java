@@ -155,7 +155,7 @@ public class DefaultMongodbObservationConvention implements ObservationConventio
         Throwable error = context.getError();
         if (error != null) {
             kv = kv.and(
-                    MongodbObservation.HighCardinalityKeyNames.EXCEPTION_MESSAGE.withValue(error.getMessage()),
+                    MongodbObservation.HighCardinalityKeyNames.EXCEPTION_MESSAGE.withValue(String.valueOf(error.getMessage())),
                     MongodbObservation.HighCardinalityKeyNames.EXCEPTION_TYPE.withValue(error.getClass().getName()),
                     MongodbObservation.HighCardinalityKeyNames.EXCEPTION_STACKTRACE.withValue(getStackTraceAsString(error)));
         }

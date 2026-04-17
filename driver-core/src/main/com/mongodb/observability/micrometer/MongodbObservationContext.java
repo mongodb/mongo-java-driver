@@ -115,6 +115,7 @@ public class MongodbObservationContext extends SenderContext<Object> {
         this.connectionId = connectionId;
     }
 
+    @Nullable
     public MongodbObservation getObservationType() {
         return observationType;
     }
