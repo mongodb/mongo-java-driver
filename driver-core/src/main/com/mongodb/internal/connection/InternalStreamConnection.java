@@ -454,10 +454,6 @@ public class InternalStreamConnection implements InternalConnection {
                             () -> getDescription().getServerAddress(),
                             () -> getDescription().getConnectionId()
                     );
-            if (tracingSpan != null) {
-                tracingSpan.openScope();
-            }
-
             boolean isLoggingCommandNeeded = isLoggingCommandNeeded();
             boolean isTracingCommandPayloadNeeded = tracingSpan != null && operationContext.getTracingManager().isCommandPayloadEnabled();
 
@@ -477,6 +473,9 @@ public class InternalStreamConnection implements InternalConnection {
             }
             if (isTracingCommandPayloadNeeded) {
                 tracingSpan.setQueryText(commandDocument);
+            }
+            if (tracingSpan != null) {
+                tracingSpan.openScope();
             }
 
             try {

@@ -16,7 +16,6 @@
 
 package com.mongodb.client.unified;
 
-import com.mongodb.ClusterFixture;
 import org.opentest4j.AssertionFailedError;
 
 import java.util.ArrayList;

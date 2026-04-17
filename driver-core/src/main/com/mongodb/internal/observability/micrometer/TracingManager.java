@@ -153,10 +153,10 @@ public class TracingManager {
     /** Create a tracing span for the given command message.
      * <p>
      * The span is only created if tracing is enabled and the command is not security-sensitive.
-     * It attaches various tags to the span, such as database system, namespace, query summary, opcode,
-     * server address, port, server type, client and server connection IDs, and, if applicable,
-     * transaction number and session ID.
-     * If command payload tracing is enabled, the command document is also attached as a tag.
+     * It populates domain fields on the span's {@link MongodbContext} (command name, namespace,
+     * server address, connection ID, session/transaction info, cursor ID for getMore commands).
+     * The {@link DefaultMongodbObservationConvention} reads these fields at observation stop time
+     * to produce the final tag key-values.
      *
      * @param message          the command message to trace
      * @param operationContext the operation context containing tracing and session information

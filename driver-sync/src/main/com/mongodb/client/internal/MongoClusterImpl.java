@@ -426,11 +426,10 @@ final class MongoClusterImpl implements MongoCluster {
                     .withSessionContext(new ClientSessionBinding.SyncClientSessionContext(actualClientSession, readConcern, implicitSession));
             Span span = operationContext.getTracingManager().createOperationSpan(
                     actualClientSession.getTransactionSpan(), operationContext, operation.getCommandName(), operation.getNamespace());
+            ReadBinding binding = getReadBinding(readPreference, actualClientSession, implicitSession);
             if (span != null) {
                 span.openScope();
             }
-            ReadBinding binding = getReadBinding(readPreference, actualClientSession, implicitSession);
-
             try {
                 if (actualClientSession.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
                     throw new MongoClientException("Read preference in a transaction must be primary");
@@ -465,11 +464,10 @@ final class MongoClusterImpl implements MongoCluster {
                     .withSessionContext(new ClientSessionBinding.SyncClientSessionContext(actualClientSession, readConcern, isImplicitSession(session)));
             Span span = operationContext.getTracingManager().createOperationSpan(
                     actualClientSession.getTransactionSpan(), operationContext, operation.getCommandName(), operation.getNamespace());
+            WriteBinding binding = getWriteBinding(actualClientSession, isImplicitSession(session));
             if (span != null) {
                 span.openScope();
             }
-            WriteBinding binding = getWriteBinding(actualClientSession, isImplicitSession(session));
-
             try {
                 return operation.execute(binding, operationContext);
             } catch (MongoException e) {
