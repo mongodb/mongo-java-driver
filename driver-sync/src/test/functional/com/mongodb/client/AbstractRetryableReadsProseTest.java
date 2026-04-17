@@ -115,12 +115,11 @@ public abstract class AbstractRetryableReadsProseTest {
                         + "    configureFailPoint: \"failCommand\",\n"
                         + "    mode: { times: 1 },\n"
                         + "    data: {\n"
-                        + "        failCommands: [\"insert\"],\n"
+                        + "        failCommands: [\"find\"],\n"
                         + "        errorLabels: ['" + RETRYABLE_ERROR_LABEL + "', '" + SYSTEM_OVERLOADED_ERROR_LABEL + "'],\n"
                         + "        errorCode: 6\n"
                         + "    }\n"
                         + "}\n");
-
 
         try (FailPoint ignored = FailPoint.enable(configureFailPoint, primaryServerAddress);
              MongoClient client = createClient(getMongoClientSettingsBuilder()
