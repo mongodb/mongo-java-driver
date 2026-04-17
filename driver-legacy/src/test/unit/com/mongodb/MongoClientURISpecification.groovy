@@ -132,6 +132,7 @@ class MongoClientURISpecification extends Specification {
                 + 'retryWrites=true&'
                 + 'retryReads=true&'
                 + 'maxAdaptiveRetries=42&'
+                + 'enableOverloadRetargeting=true&'
                 + 'uuidRepresentation=csharpLegacy&'
                 + 'appName=app1&'
                 + 'timeoutMS=10000')
@@ -160,6 +161,7 @@ class MongoClientURISpecification extends Specification {
         options.getRetryWrites()
         options.getRetryReads()
         options.getMaxAdaptiveRetries() == 42
+        options.getEnableOverloadRetargeting()
         options.getUuidRepresentation() == UuidRepresentation.C_SHARP_LEGACY
         options.getApplicationName() == 'app1'
     }
@@ -181,6 +183,7 @@ class MongoClientURISpecification extends Specification {
         options.getRetryWrites()
         options.getRetryReads()
         options.getMaxAdaptiveRetries() == null
+        !options.getEnableOverloadRetargeting()
         options.getUuidRepresentation() == UuidRepresentation.UNSPECIFIED
     }
 
@@ -192,6 +195,7 @@ class MongoClientURISpecification extends Specification {
                 .retryWrites(true)
                 .retryReads(true)
                 .maxAdaptiveRetries(42)
+                .enableOverloadRetargeting(true)
                 .writeConcern(WriteConcern.JOURNALED)
                 .minConnectionsPerHost(30)
                 .connectionsPerHost(500)
@@ -225,6 +229,7 @@ class MongoClientURISpecification extends Specification {
         options.getRetryWrites()
         options.getRetryReads()
         options.getMaxAdaptiveRetries() == 42
+        options.getEnableOverloadRetargeting()
         options.getTimeout() == 10_000
         options.getServerSelectionTimeout() == 150
         options.getMaxWaitTime() == 200
@@ -321,7 +326,8 @@ class MongoClientURISpecification extends Specification {
         given:
         def uri = new MongoClientURI('mongodb://localhost/', MongoClientOptions.builder()
                 .connectionsPerHost(200)
-                .maxAdaptiveRetries(42))
+                .maxAdaptiveRetries(42)
+                .enableOverloadRetargeting(true))
 
         when:
         def options = uri.getOptions()
@@ -329,6 +335,7 @@ class MongoClientURISpecification extends Specification {
         then:
         options.getConnectionsPerHost() == 200
         options.getMaxAdaptiveRetries() == 42
+        options.getEnableOverloadRetargeting()
     }
 
     def 'should override MongoClientOptions builder'() {
@@ -336,8 +343,9 @@ class MongoClientURISpecification extends Specification {
         def uri = new MongoClientURI('mongodb://localhost/?'
                 + 'maxPoolSize=250'
                 + '&maxAdaptiveRetries=43',
-                MongoClientOptions.builder().
-                        connectionsPerHost(200)
+                + '&enableOverloadRetargeting=false',
+                MongoClientOptions.builder()
+                        .connectionsPerHost(200)
                         .maxAdaptiveRetries(42))
 
         when:
@@ -346,6 +354,7 @@ class MongoClientURISpecification extends Specification {
         then:
         options.getConnectionsPerHost() == 250
         options.getMaxAdaptiveRetries() == 43
+        !options.getEnableOverloadRetargeting()
     }
 
     def 'should be equal to another MongoClientURI with the same string values'() {

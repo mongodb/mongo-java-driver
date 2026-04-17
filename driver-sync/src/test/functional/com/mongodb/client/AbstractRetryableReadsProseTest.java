@@ -109,10 +109,9 @@ public abstract class AbstractRetryableReadsProseTest {
     }
 
     /**
-     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-reads/tests/README.md#31-retryable-reads-caused-by-overload-errors-are-retried-on-a-different-replicaset-server-when-one-is-available">
-     * 3.1 Retryable Reads Caused by Overload Errors Are Retried on a Different Replicaset Server When One is Available</a>.
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-reads/tests/README.md#31-retryable-reads-caused-by-overload-errors-are-retried-on-a-different-replicaset-server-when-one-is-available-and-enableoverloadretargeting-is-enabled">
+     * 3.1 Retryable Reads Caused by Overload Errors Are Retried on a Different Replicaset Server When One is Available and enableOverloadRetargeting is enabled</a>.
      */
-    //TODO-BACKPRESSURE Slav Babanin JAVA-6167 add overloadRetargeting into tests.
     @Test
     void overloadErrorRetriedOnDifferentReplicaSetServer() throws InterruptedException, TimeoutException {
         //given
@@ -133,6 +132,7 @@ public abstract class AbstractRetryableReadsProseTest {
              MongoClient client = createClient(getMongoClientSettingsBuilder()
                      .retryReads(true)
                      .readPreference(ReadPreference.primaryPreferred())
+                     .enableOverloadRetargeting(true)
                      .addCommandListener(commandListener)
                      .applyToClusterSettings(builder -> builder.addClusterListener(clusterListener))
                      .build())) {
@@ -164,12 +164,8 @@ public abstract class AbstractRetryableReadsProseTest {
      * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-reads/tests/README.md#32-retryable-reads-caused-by-non-overload-errors-are-retried-on-the-same-replicaset-server">
      * 3.2 Retryable Reads Caused by Non-Overload Errors Are Retried on the Same Replicaset Server</a>.
      */
-    //TODO-BACKPRESSURE Slav Babanin JAVA-6167 add overloadRetargeting into tests.
     @Test
     void nonOverloadErrorRetriedOnSameReplicaSetServer() throws InterruptedException, TimeoutException {
-        //given
-        assumeTrue(serverVersionAtLeast(4, 4));
-        assumeTrue(isDiscoverableReplicaSet());
         BsonDocument configureFailPoint = BsonDocument.parse(
                 "{\n"
                         + "    configureFailPoint: \"failCommand\",\n"
@@ -180,6 +176,33 @@ public abstract class AbstractRetryableReadsProseTest {
                         + "        errorCode: 6\n"
                         + "    }\n"
                         + "}\n");
+        testRetriedOnTheSameServer(configureFailPoint);
+    }
+
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-reads/tests/README.md#33-retryable-reads-caused-by-overload-errors-are-retried-on-same-replicaset-server-when-enableoverloadretargeting-is-disabled">
+     * 3.3 Retryable Reads Caused by Overload Errors Are Retried on Same Replicaset Server When enableOverloadRetargeting is disabled</a>.
+     */
+    @Test
+    void overloadErrorRetriedOnSameReplicaSetServerWhenRetargetingDisabled() throws InterruptedException, TimeoutException {
+        BsonDocument configureFailPoint = BsonDocument.parse(
+                "{\n"
+                        + "    configureFailPoint: \"failCommand\",\n"
+                        + "    mode: { times: 1 },\n"
+                        + "    data: {\n"
+                        + "        failCommands: [\"find\"],\n"
+                        + "        errorLabels: ['" + RETRYABLE_ERROR_LABEL + "', '" + SYSTEM_OVERLOADED_ERROR_LABEL + "'],\n"
+                        + "        errorCode: 6\n"
+                        + "    }\n"
+                        + "}\n");
+        testRetriedOnTheSameServer(configureFailPoint);
+    }
+
+    private void testRetriedOnTheSameServer(final BsonDocument configureFailPoint) throws InterruptedException, TimeoutException {
+        //given
+        assumeTrue(serverVersionAtLeast(4, 4));
+        assumeTrue(isDiscoverableReplicaSet());
+        TestCommandListener commandListener = new TestCommandListener(asList("commandFailedEvent", "commandSucceededEvent"), emptyList());
 
         try (FailPoint ignored = FailPoint.enable(configureFailPoint, getPrimary());
              MongoClient client = createClient(getMongoClientSettingsBuilder()

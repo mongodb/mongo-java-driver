@@ -489,6 +489,18 @@ public class MongoClientOptions {
     }
 
     /**
+     * Returns whether overload retargeting is enabled.
+     * See {@link MongoClientSettings.Builder#enableOverloadRetargeting(boolean)} for more information.
+     *
+     * @return the enableOverloadRetargeting value
+     * @see MongoClientSettings.Builder#enableOverloadRetargeting(boolean)
+     * @since 5.7
+     */
+    public boolean getEnableOverloadRetargeting() {
+        return wrapped.getEnableOverloadRetargeting();
+    }
+
+    /**
      * <p>The read concern to use.</p>
      *
      * @return the read concern
@@ -1090,6 +1102,20 @@ public class MongoClientOptions {
         @Beta(Reason.CLIENT)
         public Builder maxAdaptiveRetries(@Nullable final Integer maxAdaptiveRetries) {
             wrapped.maxAdaptiveRetries(maxAdaptiveRetries);
+            return this;
+        }
+
+        /**
+         * Sets whether to enable overload retargeting.
+         * See {@link MongoClientSettings.Builder#enableOverloadRetargeting(boolean)} for more information.
+         *
+         * @param enableOverloadRetargeting whether to enable overload retargeting
+         * @return {@code this}
+         * @see #getEnableOverloadRetargeting()
+         * @since 5.7
+         */
+        public Builder enableOverloadRetargeting(final boolean enableOverloadRetargeting) {
+            wrapped.enableOverloadRetargeting(enableOverloadRetargeting);
             return this;
         }
 

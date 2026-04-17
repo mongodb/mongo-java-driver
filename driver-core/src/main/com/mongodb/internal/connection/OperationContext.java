@@ -62,15 +62,27 @@ public class OperationContext {
     private Span tracingSpan;
 
     public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
-            @Nullable final ServerApi serverApi) {
+                            @Nullable final ServerApi serverApi) {
         this(requestContext, sessionContext, timeoutContext, TracingManager.NO_OP, serverApi, null);
     }
 
     public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
-            final TracingManager tracingManager,
-            @Nullable final ServerApi serverApi,
-            @Nullable final String operationName) {
+                            final TracingManager tracingManager,
+                            @Nullable final ServerApi serverApi,
+                            @Nullable final String operationName) {
         this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, new ServerDeprioritization(),
+                tracingManager,
+                serverApi,
+                operationName,
+                null);
+    }
+
+    public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
+                            final TracingManager tracingManager,
+                            @Nullable final ServerApi serverApi,
+                            @Nullable final String operationName,
+                            final ServerDeprioritization serverDeprioritization) {
+        this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, serverDeprioritization,
                 tracingManager,
                 serverApi,
                 operationName,
@@ -86,7 +98,7 @@ public class OperationContext {
                 TracingManager.NO_OP,
                 serverApi,
                 null
-                );
+        );
     }
 
     public static OperationContext simpleOperationContext(final TimeoutContext timeoutContext) {
@@ -119,7 +131,8 @@ public class OperationContext {
      * It is a temporary solution to handle cases where deprioritization state persists across operations.
      */
     public OperationContext withNewServerDeprioritization() {
-        return new OperationContext(id, requestContext, sessionContext, timeoutContext, new ServerDeprioritization(), tracingManager, serverApi,
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext,
+                new ServerDeprioritization(serverDeprioritization.enableOverloadRetargeting), tracingManager, serverApi,
                 operationName, tracingSpan);
     }
 
@@ -163,14 +176,14 @@ public class OperationContext {
     }
 
     private OperationContext(final long id,
-            final RequestContext requestContext,
-            final SessionContext sessionContext,
-            final TimeoutContext timeoutContext,
-            final ServerDeprioritization serverDeprioritization,
-            final TracingManager tracingManager,
-            @Nullable final ServerApi serverApi,
-            @Nullable final String operationName,
-            @Nullable final Span tracingSpan) {
+                             final RequestContext requestContext,
+                             final SessionContext sessionContext,
+                             final TimeoutContext timeoutContext,
+                             final ServerDeprioritization serverDeprioritization,
+                             final TracingManager tracingManager,
+                             @Nullable final ServerApi serverApi,
+                             @Nullable final String operationName,
+                             @Nullable final Span tracingSpan) {
 
         this.id = id;
         this.serverDeprioritization = serverDeprioritization;
@@ -206,7 +219,8 @@ public class OperationContext {
     }
 
     public OperationContext withMinRoundTripTime(final ServerDescription serverDescription) {
-        return withTimeoutContext(timeoutContext.withMinRoundTripTime(TimeUnit.NANOSECONDS.toMillis(serverDescription.getMinRoundTripTimeNanos())));
+        return withTimeoutContext(
+                timeoutContext.withMinRoundTripTime(TimeUnit.NANOSECONDS.toMillis(serverDescription.getMinRoundTripTimeNanos())));
     }
 
     public OperationContext withOverride(final TimeoutContextOverride timeoutContextOverrideFunction) {
@@ -219,11 +233,17 @@ public class OperationContext {
         @Nullable
         private ClusterType clusterType;
         private final Set<ServerAddress> deprioritized;
+        private final boolean enableOverloadRetargeting;
 
-        private ServerDeprioritization() {
-            candidate = null;
-            deprioritized = new HashSet<>();
-            clusterType = null;
+        public ServerDeprioritization() {
+            this(false);
+        }
+
+        public ServerDeprioritization(final boolean enableOverloadRetargeting) {
+            this.enableOverloadRetargeting = enableOverloadRetargeting;
+            this.candidate = null;
+            this.deprioritized = new HashSet<>();
+            this.clusterType = null;
         }
 
         /**
@@ -253,7 +273,8 @@ public class OperationContext {
             // As per spec: sharded clusters deprioritize on any error, other topologies only on overload
             boolean isSystemOverloadedError = failure instanceof MongoException
                     && ((MongoException) failure).hasErrorLabel(SYSTEM_OVERLOADED_ERROR_LABEL);
-            if (clusterType == ClusterType.SHARDED || isSystemOverloadedError) {
+
+            if (clusterType == ClusterType.SHARDED || (isSystemOverloadedError && enableOverloadRetargeting)) {
                 deprioritized.add(candidate);
             }
         }
@@ -303,6 +324,7 @@ public class OperationContext {
         }
     }
 
-    public interface TimeoutContextOverride extends Function<TimeoutContext, TimeoutContext> {}
+    public interface TimeoutContextOverride extends Function<TimeoutContext, TimeoutContext> {
+    }
 }
 

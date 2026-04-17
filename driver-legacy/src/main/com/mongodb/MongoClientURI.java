@@ -218,6 +218,9 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <li>{@code maxAdaptiveRetries=n}: This is {@linkplain Beta Beta API}.
  * The maximum number of retry attempts when encountering a retryable overload error.
  * See {@link MongoClientSettings.Builder#maxAdaptiveRetries(Integer)} for more information.</li>
+ * <li>{@code enableOverloadRetargeting=true|false}. If true the driver may route a request to a different server on a subsequent
+ * retry attempt if the previously used server is overloaded. Does not take effect for
+ * {@linkplain com.mongodb.connection.ClusterType#SHARDED sharded clusters}. Defaults to false.</li>
  * <li>{@code uuidRepresentation=unspecified|standard|javaLegacy|csharpLegacy|pythonLegacy}.  See
  * {@link MongoClientOptions#getUuidRepresentation()} for documentation of semantics of this parameter.  Defaults to "javaLegacy", but
  * will change to "unspecified" in the next major release.</li>
@@ -388,6 +391,11 @@ public class MongoClientURI {
         Integer maxAdaptiveRetries = proxied.getMaxAdaptiveRetries();
         if (maxAdaptiveRetries != null) {
             builder.maxAdaptiveRetries(maxAdaptiveRetries);
+        }
+
+        Boolean enableOverloadRetargeting = proxied.getEnableOverloadRetargeting();
+        if (enableOverloadRetargeting != null) {
+            builder.enableOverloadRetargeting(enableOverloadRetargeting);
         }
 
         Integer maxConnectionPoolSize = proxied.getMaxConnectionPoolSize();
