@@ -134,7 +134,7 @@ public abstract class AbstractRetryableReadsProseTest {
             commandListener.reset();
 
             //when
-            collection.insertOne(new Document());
+            collection.find().first();
 
             //then
             List<CommandFailedEvent> commandFailedEvents = commandListener.getCommandFailedEvents();
