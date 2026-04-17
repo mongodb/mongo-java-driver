@@ -16,7 +16,7 @@
 
 package com.mongodb.observability;
 
-import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
@@ -27,7 +27,7 @@ import com.mongodb.observability.micrometer.MicrometerObservabilitySettings;
  *
  * @since 5.7
  */
-@Alpha(Reason.CLIENT)
+@Beta(Reason.CLIENT)
 @Sealed
 @Immutable
 public abstract class ObservabilitySettings {

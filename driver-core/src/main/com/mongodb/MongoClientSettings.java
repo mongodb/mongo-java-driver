@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.annotations.Reason;
@@ -517,7 +518,7 @@ public final class MongoClientSettings {
          * @see #getObservabilitySettings()
          * @since 5.7
          */
-        @Alpha(Reason.CLIENT)
+        @Beta(Reason.CLIENT)
         public Builder observabilitySettings(final ObservabilitySettings observabilitySettings) {
             this.observabilitySettings = notNull("observabilitySettings", observabilitySettings);
             return this;

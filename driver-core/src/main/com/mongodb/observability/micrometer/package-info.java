@@ -19,10 +19,10 @@
  *
  * @since 5.7
  */
-@Alpha(Reason.CLIENT)
+@Beta(Reason.CLIENT)
 @NonNullApi
 package com.mongodb.observability.micrometer;
 
-import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Reason;
 import com.mongodb.lang.NonNullApi;
