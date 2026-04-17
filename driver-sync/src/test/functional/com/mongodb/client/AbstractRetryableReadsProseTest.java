@@ -22,13 +22,16 @@ import com.mongodb.ServerAddress;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandSucceededEvent;
+import com.mongodb.internal.connection.TestClusterListener;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
@@ -53,11 +56,17 @@ public abstract class AbstractRetryableReadsProseTest {
 
     private static final String COLLECTION_NAME = "test";
 
+    private final TestCommandListener commandListener =
+            new TestCommandListener(asList("commandFailedEvent", "commandSucceededEvent"), emptyList());
+    private final TestClusterListener clusterListener = new TestClusterListener();
+
     protected abstract MongoClient createClient(MongoClientSettings settings);
 
     @AfterEach
     void afterEach() {
         CollectionHelper.dropDatabase(getDefaultDatabaseName());
+        commandListener.reset();
+        clusterListener.clearClusterDescriptionChangedEvents();
     }
 
     /**
@@ -104,12 +113,10 @@ public abstract class AbstractRetryableReadsProseTest {
      */
     //TODO-BACKPRESSURE Slav Babanin JAVA-6167 add overloadRetargeting into tests.
     @Test
-    void overloadErrorRetriedOnDifferentReplicaSetServer() throws InterruptedException {
+    void overloadErrorRetriedOnDifferentReplicaSetServer() throws InterruptedException, TimeoutException {
         //given
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeTrue(isDiscoverableReplicaSet());
-        ServerAddress primaryServerAddress = getPrimary();
-        TestCommandListener commandListener = new TestCommandListener(asList("commandFailedEvent", "commandSucceededEvent"), emptyList());
         BsonDocument configureFailPoint = BsonDocument.parse(
                 "{\n"
                         + "    configureFailPoint: \"failCommand\",\n"
@@ -121,12 +128,15 @@ public abstract class AbstractRetryableReadsProseTest {
                         + "    }\n"
                         + "}\n");
 
-        try (FailPoint ignored = FailPoint.enable(configureFailPoint, primaryServerAddress);
+        try (FailPoint ignored = FailPoint.enable(configureFailPoint, getPrimary());
              MongoClient client = createClient(getMongoClientSettingsBuilder()
                      .retryReads(true)
                      .readPreference(ReadPreference.primaryPreferred())
                      .addCommandListener(commandListener)
+                     .applyToClusterSettings(builder -> builder.addClusterListener(clusterListener))
                      .build())) {
+
+            waitForPrimaryDiscovery();
 
             MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
                     .getCollection(COLLECTION_NAME);
@@ -155,12 +165,10 @@ public abstract class AbstractRetryableReadsProseTest {
      */
     //TODO-BACKPRESSURE Slav Babanin JAVA-6167 add overloadRetargeting into tests.
     @Test
-    void nonOverloadErrorRetriedOnSameReplicaSetServer() throws InterruptedException {
+    void nonOverloadErrorRetriedOnSameReplicaSetServer() throws InterruptedException, TimeoutException {
         //given
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeTrue(isDiscoverableReplicaSet());
-        ServerAddress primaryServerAddress = getPrimary();
-        TestCommandListener commandListener = new TestCommandListener(asList("commandFailedEvent", "commandSucceededEvent"), emptyList());
         BsonDocument configureFailPoint = BsonDocument.parse(
                 "{\n"
                         + "    configureFailPoint: \"failCommand\",\n"
@@ -172,12 +180,15 @@ public abstract class AbstractRetryableReadsProseTest {
                         + "    }\n"
                         + "}\n");
 
-        try (FailPoint ignored = FailPoint.enable(configureFailPoint, primaryServerAddress);
+        try (FailPoint ignored = FailPoint.enable(configureFailPoint, getPrimary());
              MongoClient client = createClient(getMongoClientSettingsBuilder()
                      .retryReads(true)
                      .readPreference(ReadPreference.primaryPreferred())
                      .addCommandListener(commandListener)
+                     .applyToClusterSettings(builder -> builder.addClusterListener(clusterListener))
                      .build())) {
+
+            waitForPrimaryDiscovery();
 
             MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
                     .getCollection(COLLECTION_NAME);
@@ -198,5 +209,11 @@ public abstract class AbstractRetryableReadsProseTest {
             assertEquals(failedServer, succeededServer,
                     format("Expected retry on same server but got %s and %s", failedServer, succeededServer));
         }
+    }
+
+    private void waitForPrimaryDiscovery() throws InterruptedException, TimeoutException {
+        clusterListener.waitForClusterDescriptionChangedEvents(
+                event -> event.getNewDescription().hasReadableServer(ReadPreference.primary()),
+                1, Duration.ofSeconds(10));
     }
 }
