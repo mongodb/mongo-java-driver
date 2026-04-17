@@ -83,7 +83,7 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
     void startTransaction(TransactionOptions transactionOptions);
 
     /**
-     * Commit a transaction in the context of this session.  A transaction can only be commmited if one has first been started.
+     * Commit a transaction in the context of this session.  A transaction can only be committed if one has first been started.
      *
      * @return an empty publisher that indicates when the operation has completed
      * @see MongoException#UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL

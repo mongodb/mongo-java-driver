@@ -66,7 +66,7 @@ public class ClientSession(public val wrapped: JClientSession) : Closeable {
         wrapped.startTransaction(transactionOptions)
 
     /**
-     * Commit a transaction in the context of this session. A transaction can only be commmited if one has first been
+     * Commit a transaction in the context of this session. A transaction can only be committed if one has first been
      * started.
      *
      * @see com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL

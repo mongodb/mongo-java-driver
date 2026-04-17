@@ -200,7 +200,7 @@ public class ClientSession(public val wrapped: reactiveClientSession) : jClientS
         wrapped.startTransaction(transactionOptions)
 
     /**
-     * Commit a transaction in the context of this session. A transaction can only be commmited if one has first been
+     * Commit a transaction in the context of this session. A transaction can only be committed if one has first been
      * started.
      *
      * @return an empty publisher that indicates when the operation has completed
