@@ -1474,7 +1474,7 @@ public class ConnectionString {
      * getRetryWrites() method, which returned a primitive {@code boolean} value, and didn't allow callers to differentiate
      * between a false value and an unset value.
      *
-     * @return the retryWrites value, or null if unset
+     * @return the {@code retryWrites} value, or {@code null} if unset
      * @see #getMaxAdaptiveRetries()
      * @since 3.9
      * @mongodb.server.release 3.6
@@ -1488,7 +1488,7 @@ public class ConnectionString {
      * Gets whether attempts to execute read commands should be retried if they fail due to a retryable error.
      * See {@link MongoClientSettings.Builder#retryReads(boolean)} for more information.
      *
-     * @return the retryReads value
+     * @return the {@code retryReads} value, or {@code null} if unset
      * @see #getMaxAdaptiveRetries()
      * @since 3.11
      * @mongodb.server.release 3.6
@@ -1502,7 +1502,7 @@ public class ConnectionString {
      * Gets the maximum number of retry attempts when encountering a retryable overload error.
      * See {@link MongoClientSettings.Builder#maxAdaptiveRetries(Integer)} for more information.
      *
-     * @return The {@code maxAdaptiveRetries} value.
+     * @return The {@code maxAdaptiveRetries} value, or {@code null} if unset.
      * @since 5.7
      */
     @Beta(Reason.CLIENT)

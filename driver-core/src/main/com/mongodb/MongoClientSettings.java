@@ -945,7 +945,7 @@ public final class MongoClientSettings {
     }
 
     /**
-     * The codec registry to use, or null if not set.
+     * The codec registry to use.
      *
      * @return the codec registry
      */
