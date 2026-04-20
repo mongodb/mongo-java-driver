@@ -426,27 +426,32 @@ final class MongoClusterImpl implements MongoCluster {
                     .withSessionContext(new ClientSessionBinding.SyncClientSessionContext(actualClientSession, readConcern, implicitSession));
             Span span = operationContext.getTracingManager().createOperationSpan(
                     actualClientSession.getTransactionSpan(), operationContext, operation.getCommandName(), operation.getNamespace());
-            ReadBinding binding = getReadBinding(readPreference, actualClientSession, implicitSession);
-            if (span != null) {
-                span.openScope();
-            }
             try {
-                if (actualClientSession.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
-                    throw new MongoClientException("Read preference in a transaction must be primary");
-                }
-                return operation.execute(binding, operationContext);
-            } catch (MongoException e) {
-                MongoException exceptionToHandle = OperationHelper.unwrap(e);
-                labelException(actualClientSession, exceptionToHandle);
-                clearTransactionContextOnTransientTransactionError(session, exceptionToHandle);
+                ReadBinding binding = getReadBinding(readPreference, actualClientSession, implicitSession);
                 if (span != null) {
-                    span.error(e);
+                    span.openScope();
                 }
-                throw e;
+                try {
+                    if (actualClientSession.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
+                        throw new MongoClientException("Read preference in a transaction must be primary");
+                    }
+                    return operation.execute(binding, operationContext);
+                } catch (MongoException e) {
+                    MongoException exceptionToHandle = OperationHelper.unwrap(e);
+                    labelException(actualClientSession, exceptionToHandle);
+                    clearTransactionContextOnTransientTransactionError(session, exceptionToHandle);
+                    if (span != null) {
+                        span.error(e);
+                    }
+                    throw e;
+                } finally {
+                    binding.release();
+                    if (span != null) {
+                        span.closeScope();
+                    }
+                }
             } finally {
-                binding.release();
                 if (span != null) {
-                    span.closeScope();
                     span.end();
                 }
             }
@@ -464,24 +469,29 @@ final class MongoClusterImpl implements MongoCluster {
                     .withSessionContext(new ClientSessionBinding.SyncClientSessionContext(actualClientSession, readConcern, isImplicitSession(session)));
             Span span = operationContext.getTracingManager().createOperationSpan(
                     actualClientSession.getTransactionSpan(), operationContext, operation.getCommandName(), operation.getNamespace());
-            WriteBinding binding = getWriteBinding(actualClientSession, isImplicitSession(session));
-            if (span != null) {
-                span.openScope();
-            }
             try {
-                return operation.execute(binding, operationContext);
-            } catch (MongoException e) {
-                MongoException exceptionToHandle = OperationHelper.unwrap(e);
-                labelException(actualClientSession, exceptionToHandle);
-                clearTransactionContextOnTransientTransactionError(session, exceptionToHandle);
+                WriteBinding binding = getWriteBinding(actualClientSession, isImplicitSession(session));
                 if (span != null) {
-                    span.error(e);
+                    span.openScope();
                 }
-                throw e;
+                try {
+                    return operation.execute(binding, operationContext);
+                } catch (MongoException e) {
+                    MongoException exceptionToHandle = OperationHelper.unwrap(e);
+                    labelException(actualClientSession, exceptionToHandle);
+                    clearTransactionContextOnTransientTransactionError(session, exceptionToHandle);
+                    if (span != null) {
+                        span.error(e);
+                    }
+                    throw e;
+                } finally {
+                    binding.release();
+                    if (span != null) {
+                        span.closeScope();
+                    }
+                }
             } finally {
-                binding.release();
                 if (span != null) {
-                    span.closeScope();
                     span.end();
                 }
             }

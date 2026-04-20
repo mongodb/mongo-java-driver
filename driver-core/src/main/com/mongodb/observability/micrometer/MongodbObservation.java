@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.observability.micrometer;
+package com.mongodb.observability.micrometer;
+
+import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.observation.docs.ObservationDocumentation;
@@ -29,6 +32,7 @@ import io.micrometer.observation.docs.ObservationDocumentation;
  *
  * @since 5.7
  */
+@Beta(Reason.CLIENT)
 public enum MongodbObservation implements ObservationDocumentation {
 
     /**
@@ -66,7 +70,36 @@ public enum MongodbObservation implements ObservationDocumentation {
         public KeyName[] getHighCardinalityKeyNames() {
             return HighCardinalityKeyNames.values();
         }
+    },
+
+    /**
+     * Observation for MongoDB transactions.
+     * Created per transaction lifecycle (startTransaction to commit/abort).
+     */
+    MONGODB_TRANSACTION {
+        @Override
+        public String getName() {
+            return "mongodb.transaction";
+        }
+
+        @Override
+        public KeyName[] getLowCardinalityKeyNames() {
+            return TransactionLowCardinalityKeyNames.values();
+        }
     };
+
+    /**
+     * Low cardinality key names for transaction observations.
+     */
+    public enum TransactionLowCardinalityKeyNames implements KeyName {
+
+        SYSTEM {
+            @Override
+            public String asString() {
+                return "db.system.name";
+            }
+        }
+    }
 
     /**
      * Low cardinality key names for operation-level observations.

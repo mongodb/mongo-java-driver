@@ -17,6 +17,7 @@ package com.mongodb.internal.observability.micrometer;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.lang.Nullable;
+import com.mongodb.observability.micrometer.MongodbObservation;
 
 /**
  * A Tracer interface that provides methods for tracing commands, operations and transactions.

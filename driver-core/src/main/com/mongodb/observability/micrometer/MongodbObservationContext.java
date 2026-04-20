@@ -20,7 +20,6 @@ import com.mongodb.ServerAddress;
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Reason;
 import com.mongodb.connection.ConnectionId;
-import com.mongodb.internal.observability.micrometer.MongodbObservation;
 import com.mongodb.lang.Nullable;
 import io.micrometer.observation.transport.Kind;
 import io.micrometer.observation.transport.SenderContext;

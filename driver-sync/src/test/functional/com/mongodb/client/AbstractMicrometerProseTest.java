@@ -18,7 +18,7 @@ package com.mongodb.client;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.observability.micrometer.MongodbObservationContext;
-import com.mongodb.internal.observability.micrometer.MongodbObservation;
+import com.mongodb.observability.micrometer.MongodbObservation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.observability.ObservabilitySettings;
 import com.mongodb.client.observability.SpanTree;
@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.HighCardinalityKeyNames.QUERY_TEXT;
+import static com.mongodb.observability.micrometer.MongodbObservation.HighCardinalityKeyNames.QUERY_TEXT;
 import static com.mongodb.internal.observability.micrometer.TracingManager.ENV_OBSERVABILITY_ENABLED;
 import static com.mongodb.internal.observability.micrometer.TracingManager.ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -338,7 +338,8 @@ public abstract class AbstractMicrometerProseTest {
      */
     @SuppressWarnings("NullableProblems")
     @Test
-    void testCustomObservationConvention() {
+    void testCustomObservationConvention() throws Exception {
+        setEnv(ENV_OBSERVABILITY_ENABLED, null);
         ObservationConvention<MongodbObservationContext> customConvention = new ObservationConvention<MongodbObservationContext>() {
             @Override
             public boolean supportsContext(final Observation.Context context) {

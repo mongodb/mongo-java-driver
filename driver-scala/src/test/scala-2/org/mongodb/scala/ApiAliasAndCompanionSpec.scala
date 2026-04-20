@@ -98,6 +98,7 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "MongoBaseInterfaceAssertions",
       "DefaultMongodbObservationConvention",
       "MicrometerObservabilitySettings",
+      "MongodbObservation",
       "MongodbObservationContext",
       "ObservabilitySettings"
     )

@@ -20,7 +20,6 @@ import com.mongodb.ServerAddress;
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Reason;
 import com.mongodb.connection.ConnectionId;
-import com.mongodb.internal.observability.micrometer.MongodbObservation;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
@@ -48,7 +47,9 @@ public class DefaultMongodbObservationConvention implements ObservationConventio
 
     @Override
     public KeyValues getLowCardinalityKeyValues(final MongodbObservationContext context) {
-        if (context.getObservationType() == MongodbObservation.MONGODB_OPERATION) {
+        if (context.getObservationType() == MongodbObservation.MONGODB_TRANSACTION) {
+            return KeyValues.of(MongodbObservation.TransactionLowCardinalityKeyNames.SYSTEM.withValue("mongodb"));
+        } else if (context.getObservationType() == MongodbObservation.MONGODB_OPERATION) {
             return getOperationLowCardinalityKeyValues(context);
         } else {
             return getCommandLowCardinalityKeyValues(context);

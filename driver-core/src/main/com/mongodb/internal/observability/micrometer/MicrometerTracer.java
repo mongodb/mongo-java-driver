@@ -19,6 +19,7 @@ package com.mongodb.internal.observability.micrometer;
 import com.mongodb.MongoNamespace;
 import com.mongodb.lang.Nullable;
 import com.mongodb.observability.micrometer.DefaultMongodbObservationConvention;
+import com.mongodb.observability.micrometer.MongodbObservation;
 import com.mongodb.observability.micrometer.MongodbObservationContext;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;

@@ -26,8 +26,8 @@ import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import com.mongodb.observability.ObservabilitySettings;
-import com.mongodb.observability.micrometer.DefaultMongodbObservationConvention;
 import com.mongodb.observability.micrometer.MicrometerObservabilitySettings;
+import com.mongodb.observability.micrometer.MongodbObservation;
 import com.mongodb.observability.micrometer.MongodbObservationContext;
 import io.micrometer.observation.ObservationRegistry;
 import org.bson.BsonDocument;
@@ -35,8 +35,9 @@ import org.bson.BsonDocument;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.MONGODB_COMMAND;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.MONGODB_OPERATION;
+import static com.mongodb.observability.micrometer.MongodbObservation.MONGODB_COMMAND;
+import static com.mongodb.observability.micrometer.MongodbObservation.MONGODB_OPERATION;
+import static com.mongodb.observability.micrometer.MongodbObservation.MONGODB_TRANSACTION;
 import static java.lang.System.getenv;
 
 /**
@@ -131,7 +132,7 @@ public class TracingManager {
      * @return The created transaction span.
      */
     public Span addTransactionSpan() {
-        return tracer.nextSpan(MONGODB_OPERATION, "transaction", null, null);
+        return tracer.nextSpan(MONGODB_TRANSACTION, "transaction", null, null);
     }
 
     /**
@@ -158,7 +159,7 @@ public class TracingManager {
      * The span is only created if tracing is enabled and the command is not security-sensitive.
      * It populates domain fields on the span's {@link MongodbObservationContext} (command name, namespace,
      * server address, connection ID, session/transaction info, cursor ID for getMore commands).
-     * The {@link DefaultMongodbObservationConvention} reads these fields at observation stop time
+     * The {@link com.mongodb.observability.micrometer.DefaultMongodbObservationConvention} reads these fields at observation stop time
      * to produce the final tag key-values.
      *
      * @param message          the command message to trace

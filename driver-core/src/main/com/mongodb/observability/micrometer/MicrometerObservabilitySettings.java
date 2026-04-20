@@ -229,13 +229,14 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
         }
         final MicrometerObservabilitySettings that = (MicrometerObservabilitySettings) o;
         return enableCommandPayloadTracing == that.enableCommandPayloadTracing
+                && maxQueryTextLength == that.maxQueryTextLength
                 && Objects.equals(observationRegistry, that.observationRegistry)
                 && Objects.equals(observationConvention, that.observationConvention);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(observationRegistry, enableCommandPayloadTracing, observationConvention);
+        return Objects.hash(observationRegistry, enableCommandPayloadTracing, maxQueryTextLength, observationConvention);
     }
 
     private MicrometerObservabilitySettings(@Nullable final ObservationRegistry observationRegistry,
