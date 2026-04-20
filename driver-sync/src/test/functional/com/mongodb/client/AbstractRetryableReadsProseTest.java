@@ -20,6 +20,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.test.CollectionHelper;
+import com.mongodb.connection.ClusterDescription;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.internal.connection.TestClusterListener;
@@ -136,7 +137,7 @@ public abstract class AbstractRetryableReadsProseTest {
                      .applyToClusterSettings(builder -> builder.addClusterListener(clusterListener))
                      .build())) {
 
-            waitForPrimaryDiscovery();
+            waitForClusterDiscovery();
 
             MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
                     .getCollection(COLLECTION_NAME);
@@ -188,7 +189,7 @@ public abstract class AbstractRetryableReadsProseTest {
                      .applyToClusterSettings(builder -> builder.addClusterListener(clusterListener))
                      .build())) {
 
-            waitForPrimaryDiscovery();
+            waitForClusterDiscovery();
 
             MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
                     .getCollection(COLLECTION_NAME);
@@ -211,9 +212,21 @@ public abstract class AbstractRetryableReadsProseTest {
         }
     }
 
-    private void waitForPrimaryDiscovery() throws InterruptedException, TimeoutException {
+    private void waitForClusterDiscovery() throws InterruptedException, TimeoutException {
         clusterListener.waitForClusterDescriptionChangedEvents(
-                event -> event.getNewDescription().hasReadableServer(ReadPreference.primary()),
+                event -> {
+                    ClusterDescription desc = event.getNewDescription();
+                    // We need both primary and secondary to be discovered (not UNKNOWN) before running the test.
+                    //
+                    // 1. The failpoint is set on the primary. If the primary is not yet discovered,
+                    //    primaryPreferred may route the find to a secondary, and the failpoint never fires.
+                    //
+                    // 2. When the primary is deprioritized on retry, primaryPreferred falls back to a secondary.
+                    //    If the secondaries are still UNKNOWN at that point, the fallback yields no selectable servers,
+                    //    causing the deprioritized primary to be selected again.
+                    return desc.hasReadableServer(ReadPreference.primary())
+                            && desc.hasReadableServer(ReadPreference.secondary());
+                },
                 1, Duration.ofSeconds(10));
     }
 }
