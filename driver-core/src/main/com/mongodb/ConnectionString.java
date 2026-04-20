@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Reason;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
@@ -264,14 +265,17 @@ import static java.util.Collections.unmodifiableList;
  * <p>SRV configuration:</p>
  * <ul>
  * <li>{@code srvServiceName=string}: The SRV service name. See {@link ClusterSettings#getSrvServiceName()} for details.</li>
- * <li>{@code srvMaxHosts=number}: The maximum number of hosts from the SRV record to connect to.</li>
+ * <li>{@code srvMaxHosts=n}: The maximum number of hosts from the SRV record to connect to.</li>
  * </ul>
  * <p>General configuration:</p>
  * <ul>
- * <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
- *  Defaults to true.</li>
- * <li>{@code retryReads=true|false}. If true the driver will retry supported read operations if they fail due to a network error.
- *  Defaults to true.</li>
+ * <li>{@code retryWrites=true|false}: Whether attempts to execute write commands should be retried if they fail due to a retryable error.
+ *  Defaults to true. See also {@code maxAdaptiveRetries}.</li>
+ * <li>{@code retryReads=true|false}: Whether attempts to execute read commands should be retried if they fail due to a retryable error.
+ *  Defaults to true. See also {@code maxAdaptiveRetries}.</li>
+ * <li>{@code maxAdaptiveRetries=n}: This is {@linkplain Beta Beta API}.
+ * The maximum number of retry attempts when encountering a retryable overload error.
+ * See {@link MongoClientSettings.Builder#maxAdaptiveRetries(Integer)} for more information.</li>
  * <li>{@code uuidRepresentation=unspecified|standard|javaLegacy|csharpLegacy|pythonLegacy}.  See
  * {@link MongoClientSettings#getUuidRepresentation()} for documentation of semantics of this parameter.  Defaults to "javaLegacy", but
  * will change to "unspecified" in the next major release.</li>
@@ -308,6 +312,7 @@ public class ConnectionString {
     private WriteConcern writeConcern;
     private Boolean retryWrites;
     private Boolean retryReads;
+    private Integer maxAdaptiveRetries;
     private ReadConcern readConcern;
 
     private Integer minConnectionPoolSize;
@@ -558,6 +563,7 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("servermonitoringmode");
         GENERAL_OPTIONS_KEYS.add("retrywrites");
         GENERAL_OPTIONS_KEYS.add("retryreads");
+        GENERAL_OPTIONS_KEYS.add("maxadaptiveretries");
 
         GENERAL_OPTIONS_KEYS.add("appname");
 
@@ -705,6 +711,12 @@ public class ConnectionString {
                     break;
                 case "retryreads":
                     retryReads = parseBoolean(value, "retryreads");
+                    break;
+                case "maxadaptiveretries":
+                    maxAdaptiveRetries = parseInteger(value, "maxadaptiveretries");
+                    if (maxAdaptiveRetries < 0) {
+                        throw new IllegalArgumentException("maxAdaptiveRetries must be >= 0");
+                    }
                     break;
                 case "uuidrepresentation":
                     uuidRepresentation = createUuidRepresentation(value);
@@ -1455,13 +1467,15 @@ public class ConnectionString {
     }
 
     /**
-     * <p>Gets whether writes should be retried if they fail due to a network error</p>
-     *
+     * Gets whether attempts to execute write commands should be retried if they fail due to a retryable error.
+     * See {@link MongoClientSettings.Builder#retryWrites(boolean)} for more information.
+     * <p>
      * The name of this method differs from others in this class so as not to conflict with the now removed
      * getRetryWrites() method, which returned a primitive {@code boolean} value, and didn't allow callers to differentiate
      * between a false value and an unset value.
      *
-     * @return the retryWrites value, or null if unset
+     * @return the {@code retryWrites} value, or {@code null} if unset
+     * @see #getMaxAdaptiveRetries()
      * @since 3.9
      * @mongodb.server.release 3.6
      */
@@ -1471,15 +1485,30 @@ public class ConnectionString {
     }
 
     /**
-     * <p>Gets whether reads should be retried if they fail due to a network error</p>
+     * Gets whether attempts to execute read commands should be retried if they fail due to a retryable error.
+     * See {@link MongoClientSettings.Builder#retryReads(boolean)} for more information.
      *
-     * @return the retryWrites value
+     * @return the {@code retryReads} value, or {@code null} if unset
+     * @see #getMaxAdaptiveRetries()
      * @since 3.11
      * @mongodb.server.release 3.6
      */
     @Nullable
     public Boolean getRetryReads() {
         return retryReads;
+    }
+
+    /**
+     * Gets the maximum number of retry attempts when encountering a retryable overload error.
+     * See {@link MongoClientSettings.Builder#maxAdaptiveRetries(Integer)} for more information.
+     *
+     * @return The {@code maxAdaptiveRetries} value, or {@code null} if unset.
+     * @since 5.7
+     */
+    @Beta(Reason.CLIENT)
+    @Nullable
+    public Integer getMaxAdaptiveRetries() {
+        return maxAdaptiveRetries;
     }
 
     /**
@@ -1795,6 +1824,7 @@ public class ConnectionString {
                 && Objects.equals(writeConcern, that.writeConcern)
                 && Objects.equals(retryWrites, that.retryWrites)
                 && Objects.equals(retryReads, that.retryReads)
+                && Objects.equals(maxAdaptiveRetries, that.maxAdaptiveRetries)
                 && Objects.equals(readConcern, that.readConcern)
                 && Objects.equals(minConnectionPoolSize, that.minConnectionPoolSize)
                 && Objects.equals(maxConnectionPoolSize, that.maxConnectionPoolSize)
@@ -1826,7 +1856,7 @@ public class ConnectionString {
     @Override
     public int hashCode() {
         return Objects.hash(credential, isSrvProtocol, hosts, database, collection, directConnection, readPreference,
-                writeConcern, retryWrites, retryReads, readConcern, minConnectionPoolSize, maxConnectionPoolSize, maxWaitTime,
+                writeConcern, retryWrites, retryReads, maxAdaptiveRetries, readConcern, minConnectionPoolSize, maxConnectionPoolSize, maxWaitTime,
                 maxConnectionIdleTime, maxConnectionLifeTime, maxConnecting, connectTimeout, timeout, socketTimeout, sslEnabled,
                 sslInvalidHostnameAllowed, requiredReplicaSetName, serverSelectionTimeout, localThreshold, heartbeatFrequency,
                 serverMonitoringMode, applicationName, compressorList, uuidRepresentation, srvServiceName, srvMaxHosts, proxyHost,
