@@ -33,7 +33,7 @@ trait ClientSessionImplicits {
     /**
      * Commit a transaction in the context of this session.
      *
-     * A transaction can only be commmited if one has first been started.
+     * A transaction can only be committed if one has first been started.
      */
     def commitTransaction(): SingleObservable[Unit] = clientSession.commitTransaction()
 

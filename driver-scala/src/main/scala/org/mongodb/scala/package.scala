@@ -215,18 +215,48 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
 
     /**
      * An error label indicating that the exception can be treated as a transient transaction error.
+     * See the documentation linked below for more information.
      *
+     * @see [[https://www.mongodb.com/docs/manual/core/transactions-in-applications/#std-label-transient-transaction-error TransientTransactionError]]
      * @since 2.4
      */
     val TRANSIENT_TRANSACTION_ERROR_LABEL: String = com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL
 
     /**
      * An error label indicating that the exception can be treated as an unknown transaction commit result.
+     * See the documentation linked below for more information.
      *
+     * @see [[https://www.mongodb.com/docs/manual/core/transactions-in-applications/#std-label-unknown-transaction-commit-result UnknownTransactionCommitResult]]
      * @since 2.4
      */
     val UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL: String =
       com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL
+
+    /**
+     * Server is overloaded and shedding load.
+     * If an application retries explicitly, it should use exponential backoff because the server has indicated overload.
+     * This label on its own does not mean that the operation can be [[MongoException.RETRYABLE_ERROR_LABEL safely retried]].
+     *
+     * @see [[https://www.mongodb.com/docs/atlas/overload-errors/ Overload errors]]
+     * @since 5.7
+     * @note Requires MongoDB 8.3 or greater
+     */
+    val SYSTEM_OVERLOADED_ERROR_LABEL: String = com.mongodb.MongoException.SYSTEM_OVERLOADED_ERROR_LABEL
+
+    /**
+     * The operation is safe to retry, that is,
+     * retry without rereading the relevant data or considering the semantics of the operation.
+     *
+     * For more information on how transactions affect retries,
+     * see the documentation of the
+     * [[MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL "TransientTransactionError"]],
+     * [[MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL "UnknownTransactionCommitResult"]] error labels.
+     *
+     * @see [[https://www.mongodb.com/docs/atlas/overload-errors/ Overload errors]]
+     * @since 5.7
+     * @note Requires MongoDB 8.3 or greater
+     */
+    val RETRYABLE_ERROR_LABEL: String = com.mongodb.MongoException.RETRYABLE_ERROR_LABEL
   }
 
   /**
