@@ -21,8 +21,8 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNodeIsRecoveringException;
-import com.mongodb.MongoTimeoutException;
 import com.mongodb.TransactionOptions;
+import com.mongodb.WithTransactionTimeoutException;
 import com.mongodb.client.model.Sorts;
 import com.mongodb.internal.time.ExponentialBackoff;
 import com.mongodb.internal.time.StartTime;
@@ -119,7 +119,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
                 }));
             fail("Test should have thrown an exception.");
         } catch (Exception e) {
-            MongoTimeoutException exception = assertInstanceOf(MongoTimeoutException.class, e);
+            WithTransactionTimeoutException exception = assertInstanceOf(WithTransactionTimeoutException.class, e);
             assertTrue(exception.hasErrorLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL));
             MongoException cause = assertInstanceOf(MongoException.class, exception.getCause());
             assertEquals(errorMessage, cause.getMessage());
@@ -147,7 +147,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
                 }));
             fail("Test should have thrown an exception.");
         } catch (Exception e) {
-            MongoTimeoutException exception = assertInstanceOf(MongoTimeoutException.class, e);
+            WithTransactionTimeoutException exception = assertInstanceOf(WithTransactionTimeoutException.class, e);
             assertTrue(exception.hasErrorLabel(MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL));
             MongoNodeIsRecoveringException cause = assertInstanceOf(MongoNodeIsRecoveringException.class, exception.getCause());
             assertEquals(91, cause.getCode());
@@ -178,7 +178,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
                 }));
             fail("Test should have thrown an exception.");
         } catch (Exception e) {
-            MongoTimeoutException exception = assertInstanceOf(MongoTimeoutException.class, e);
+            WithTransactionTimeoutException exception = assertInstanceOf(WithTransactionTimeoutException.class, e);
             assertTrue(exception.hasErrorLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL));
             MongoCommandException cause = assertInstanceOf(MongoCommandException.class, exception.getCause());
             assertEquals(251, cause.getCode());

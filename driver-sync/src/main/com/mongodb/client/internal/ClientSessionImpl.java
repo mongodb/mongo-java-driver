@@ -24,6 +24,7 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.TransactionOptions;
+import com.mongodb.WithTransactionTimeoutException;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.TransactionBody;
@@ -414,9 +415,9 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         return timeoutException;
     }
 
-    private static MongoTimeoutException wrapInNonTimeoutMsMongoTimeoutException(final MongoException cause) {
+    private static MongoException wrapInNonTimeoutMsMongoTimeoutException(final MongoException cause) {
         return cause instanceof MongoTimeoutException
                 ? (MongoTimeoutException) cause
-                : new MongoTimeoutException("Operation exceeded the timeout limit.", cause);
+                : new WithTransactionTimeoutException("Operation exceeded the timeout limit.", cause);
     }
 }
