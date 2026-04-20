@@ -250,6 +250,7 @@ public class OperationContext {
                 return;
             }
 
+            // As per spec: sharded clusters deprioritize on any error, other topologies only on overload
             boolean isSystemOverloadedError = failure instanceof MongoException
                     && ((MongoException) failure).hasErrorLabel(SYSTEM_OVERLOADED_ERROR_LABEL);
             if (clusterType == ClusterType.SHARDED || isSystemOverloadedError) {
