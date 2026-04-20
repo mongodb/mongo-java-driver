@@ -216,7 +216,7 @@ public abstract class AbstractRetryableReadsProseTest {
         clusterListener.waitForClusterDescriptionChangedEvents(
                 event -> {
                     ClusterDescription desc = event.getNewDescription();
-                    // We need both primary and secondary to be discovered (not UNKNOWN) before running the test.
+                    // We need both primary and secondary to be discovered (not UNKNOWN) before running the deprioritization tests.
                     //
                     // 1. The failpoint is set on the primary. If the primary is not yet discovered,
                     //    primaryPreferred may route the find to a secondary, and the failpoint never fires.
