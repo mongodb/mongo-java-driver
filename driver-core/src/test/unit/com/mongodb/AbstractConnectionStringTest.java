@@ -122,6 +122,9 @@ public abstract class AbstractConnectionStringTest extends TestCase {
             } else if (option.getKey().equalsIgnoreCase("retrywrites")) {
                 boolean expected = option.getValue().asBoolean().getValue();
                 assertEquals(expected, connectionString.getRetryWritesValue().booleanValue());
+            } else if (option.getKey().equalsIgnoreCase("maxadaptiveretries")) {
+                int expected = option.getValue().asInt32().getValue();
+                assertEquals(expected, connectionString.getMaxAdaptiveRetries().intValue());
             } else if (option.getKey().equalsIgnoreCase("replicaset")) {
                 String expected = option.getValue().asString().getValue();
                 assertEquals(expected, connectionString.getRequiredReplicaSetName());

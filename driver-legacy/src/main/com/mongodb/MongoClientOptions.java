@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.annotations.Reason;
@@ -442,11 +443,14 @@ public class MongoClientOptions {
     }
 
     /**
-     * Returns true if writes should be retried if they fail due to a network error or other retryable error.
+     * Returns whether attempts to execute write commands should be retried if they fail due to a retryable error.
+     * See {@link MongoClientSettings.Builder#retryWrites(boolean)} for more information.
      *
      * <p>Starting with the 3.11.0 release, the default value is true</p>
      *
      * @return the retryWrites value
+     * @see Builder#retryWrites(boolean)
+     * @see #getMaxAdaptiveRetries()
      * @mongodb.server.release 3.6
      * @since 3.6
      */
@@ -455,14 +459,33 @@ public class MongoClientOptions {
     }
 
     /**
-     * Returns true if reads should be retried if they fail due to a network error or other retryable error.
+     * Returns whether attempts to execute read commands should be retried if they fail due to a retryable error.
+     * See {@link MongoClientSettings.Builder#retryReads(boolean)} for more information.
+     * <p>
+     * Default is {@code true}.
      *
      * @return the retryReads value
+     * @see Builder#retryReads(boolean)
+     * @see #getMaxAdaptiveRetries()
      * @mongodb.server.release 3.6
      * @since 3.11
      */
     public boolean getRetryReads() {
         return wrapped.getRetryReads();
+    }
+
+    /**
+     * Returns the maximum number of retry attempts when encountering a retryable overload error.
+     * See {@link MongoClientSettings.Builder#maxAdaptiveRetries(Integer)} for more information.
+     *
+     * @return The maximum number of retry attempts when encountering a retryable overload error.
+     * @see Builder#maxAdaptiveRetries(Integer)
+     * @since 5.7
+     */
+    @Beta(Reason.CLIENT)
+    @Nullable
+    public Integer getMaxAdaptiveRetries() {
+        return wrapped.getMaxAdaptiveRetries();
     }
 
     /**
@@ -1020,14 +1043,16 @@ public class MongoClientOptions {
         }
 
         /**
-         * Sets whether writes should be retried if they fail due to a network error.
+         * Sets whether attempts to execute write commands should be retried if they fail due to a retryable error.
+         * See {@link MongoClientSettings.Builder#retryWrites(boolean)} for more information.
          *
          * <p>Starting with the 3.11.0 release, the default value is true</p>
          *
-         * @param retryWrites sets if writes should be retried if they fail due to a network error.
+         * @param retryWrites sets if write commands should be retried if they fail due to a retryable error.
          * @return {@code this}
          * @mongodb.server.release 3.6
          * @see #getRetryWrites()
+         * @see #maxAdaptiveRetries(Integer)
          * @since 3.6
          */
         public Builder retryWrites(final boolean retryWrites) {
@@ -1036,16 +1061,35 @@ public class MongoClientOptions {
         }
 
         /**
-         * Sets whether reads should be retried if they fail due to a network error.
+         * Sets whether attempts to execute read commands should be retried if they fail due to a retryable error.
+         * See {@link MongoClientSettings.Builder#retryReads(boolean)} for more information.
+         * <p>
+         * Default is {@code true}.
          *
-         * @param retryReads sets if reads should be retried if they fail due to a network error.
+         * @param retryReads sets if read commands should be retried if they fail due to a retryable error.
          * @return {@code this}
          * @mongodb.server.release 3.6
          * @see #getRetryReads()
+         * @see #maxAdaptiveRetries(Integer)
          * @since 3.11
          */
         public Builder retryReads(final boolean retryReads) {
             wrapped.retryReads(retryReads);
+            return this;
+        }
+
+        /**
+         * Sets the maximum number of retry attempts when encountering a retryable overload error.
+         * See {@link MongoClientSettings.Builder#maxAdaptiveRetries(Integer)} for more information.
+         *
+         * @param maxAdaptiveRetries Sets the maximum number of retry attempts when encountering a retryable overload error.
+         * @return {@code this}.
+         * @see #getMaxAdaptiveRetries()
+         * @since 5.7
+         */
+        @Beta(Reason.CLIENT)
+        public Builder maxAdaptiveRetries(@Nullable final Integer maxAdaptiveRetries) {
+            wrapped.maxAdaptiveRetries(maxAdaptiveRetries);
             return this;
         }
 
