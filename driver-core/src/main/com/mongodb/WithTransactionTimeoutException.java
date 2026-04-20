@@ -23,7 +23,7 @@ import com.mongodb.lang.Nullable;
  * (<a href="https://www.mongodb.com/docs/manual/core/transactions-in-applications/#callback-api">{@code withTransaction}</a>)
  * exceeded its overall timeout while retrying the user-supplied callback or the commit loop.
  * The last encountered error (if any) is attached as the
- * {@linkplain Throwable#getCause() cause}.</p>
+ * {@linkplain Throwable#getCause() cause}.
  *
  * @since 5.7
  */
