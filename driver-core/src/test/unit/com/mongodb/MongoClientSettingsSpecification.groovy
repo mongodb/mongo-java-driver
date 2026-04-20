@@ -46,6 +46,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getWriteConcern() == WriteConcern.ACKNOWLEDGED
         settings.getRetryWrites()
         settings.getRetryReads()
+        settings.getMaxAdaptiveRetries() == null
         settings.getReadConcern() == ReadConcern.DEFAULT
         settings.getReadPreference() == ReadPreference.primary()
         settings.getCommandListeners().isEmpty()
@@ -79,6 +80,11 @@ class MongoClientSettingsSpecification extends Specification {
 
         when:
         builder.writeConcern(null)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        builder.maxAdaptiveRetries(-1)
         then:
         thrown(IllegalArgumentException)
 
@@ -135,6 +141,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .writeConcern(WriteConcern.JOURNALED)
                 .retryWrites(true)
                 .retryReads(true)
+                .maxAdaptiveRetries(42)
                 .readConcern(ReadConcern.LOCAL)
                 .applicationName('app1')
                 .addCommandListener(commandListener)
@@ -160,6 +167,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getWriteConcern() == WriteConcern.JOURNALED
         settings.getRetryWrites()
         settings.getRetryReads()
+        settings.getMaxAdaptiveRetries() == 42
         settings.getReadConcern() == ReadConcern.LOCAL
         settings.getApplicationName() == 'app1'
         settings.getSocketSettings() == SocketSettings.builder().build()
@@ -200,6 +208,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .writeConcern(WriteConcern.JOURNALED)
                 .retryWrites(true)
                 .retryReads(true)
+                .maxAdaptiveRetries(42)
                 .readConcern(ReadConcern.LOCAL)
                 .applicationName('app1')
                 .addCommandListener(commandListener)
@@ -330,6 +339,7 @@ class MongoClientSettingsSpecification extends Specification {
                 + '&replicaSet=test'
                 + '&retryWrites=true'
                 + '&retryReads=true'
+                + '&maxAdaptiveRetries=42'
                 + '&ssl=true&sslInvalidHostNameAllowed=true'
                 + '&w=majority&wTimeoutMS=2500'
                 + '&readPreference=secondary'
@@ -398,6 +408,7 @@ class MongoClientSettingsSpecification extends Specification {
             .compressorList([MongoCompressor.createZlibCompressor().withProperty(MongoCompressor.LEVEL, 5)])
             .retryWrites(true)
             .retryReads(true)
+            .maxAdaptiveRetries(42)
             .uuidRepresentation(UuidRepresentation.STANDARD)
             .timeout(10000, TimeUnit.MILLISECONDS)
             .build()
@@ -462,6 +473,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .compressorList([MongoCompressor.createZlibCompressor().withProperty(MongoCompressor.LEVEL, 5)])
                 .retryWrites(true)
                 .retryReads(true)
+                .maxAdaptiveRetries(null)
 
         def expectedSettings = builder.build()
         def settingsWithDefaultConnectionStringApplied = builder
@@ -546,6 +558,18 @@ class MongoClientSettingsSpecification extends Specification {
                 .build()
     }
 
+    def 'should allow null, 0 maxAdaptiveRetries'() {
+        when:
+        def settings = MongoClientSettings.builder().maxAdaptiveRetries(null).build()
+        then:
+        settings.getMaxAdaptiveRetries() == null
+
+        when:
+        settings = MongoClientSettings.builder().maxAdaptiveRetries(0).build()
+        then:
+        settings.getMaxAdaptiveRetries() == 0
+    }
+
     def 'should only have the following fields in the builder'() {
         when:
         // A regression test so that if anymore fields are added then the builder(final MongoClientSettings settings) should be updated
@@ -553,7 +577,7 @@ class MongoClientSettingsSpecification extends Specification {
         def expected = ['applicationName', 'autoEncryptionSettings', 'clusterSettingsBuilder', 'codecRegistry', 'commandListeners',
                         'compressorList', 'connectionPoolSettingsBuilder', 'contextProvider', 'credential', 'dnsClient',
                         'heartbeatConnectTimeoutMS', 'heartbeatSocketTimeoutMS', 'inetAddressResolver', 'loggerSettingsBuilder',
-                        'observabilitySettings',
+                        'maxAdaptiveRetries', 'observabilitySettings',
                         'readConcern', 'readPreference', 'retryReads',
                         'retryWrites', 'serverApi', 'serverSettingsBuilder', 'socketSettingsBuilder', 'sslSettingsBuilder',
                         'timeoutMS', 'transportSettings', 'uuidRepresentation',
@@ -572,7 +596,7 @@ class MongoClientSettingsSpecification extends Specification {
                         'applyToSslSettings', 'autoEncryptionSettings', 'build', 'codecRegistry', 'commandListenerList',
                         'compressorList', 'contextProvider', 'credential', 'dnsClient',
                         'heartbeatConnectTimeoutMS',
-                        'heartbeatSocketTimeoutMS', 'inetAddressResolver', 'observabilitySettings', 'readConcern',
+                        'heartbeatSocketTimeoutMS', 'inetAddressResolver', 'maxAdaptiveRetries', 'observabilitySettings', 'readConcern',
                         'readPreference',
                         'retryReads', 'retryWrites',
                         'serverApi', 'timeout', 'transportSettings',

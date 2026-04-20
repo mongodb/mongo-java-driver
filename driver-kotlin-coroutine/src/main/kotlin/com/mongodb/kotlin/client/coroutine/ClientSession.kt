@@ -184,6 +184,8 @@ public class ClientSession(public val wrapped: reactiveClientSession) : jClientS
     /**
      * Start a transaction in the context of this session with default transaction options. A transaction can not be
      * started if there is already an active transaction on this session.
+     *
+     * @see com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL
      */
     public fun startTransaction(): Unit = wrapped.startTransaction()
 
@@ -192,15 +194,17 @@ public class ClientSession(public val wrapped: reactiveClientSession) : jClientS
      * started if there is already an active transaction on this session.
      *
      * @param transactionOptions the options to apply to the transaction
+     * @see com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL
      */
     public fun startTransaction(transactionOptions: TransactionOptions): Unit =
         wrapped.startTransaction(transactionOptions)
 
     /**
-     * Commit a transaction in the context of this session. A transaction can only be commmited if one has first been
+     * Commit a transaction in the context of this session. A transaction can only be committed if one has first been
      * started.
      *
      * @return an empty publisher that indicates when the operation has completed
+     * @see com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL
      */
     public suspend fun commitTransaction() {
         wrapped.commitTransaction().awaitFirstOrNull()
