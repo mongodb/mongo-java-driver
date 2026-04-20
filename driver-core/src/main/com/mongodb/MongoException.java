@@ -36,42 +36,52 @@ public class MongoException extends RuntimeException {
 
     /**
      * An error label indicating that the exception can be treated as a transient transaction error.
+     * See the documentation linked below for more information.
      *
      * @see #hasErrorLabel(String)
+     * @mongodb.driver.manual core/transactions-in-applications/#std-label-transient-transaction-error TransientTransactionError
      * @since 3.8
-     * @mongodb.driver.manual core/transactions-in-applications/#std-label-transient-transaction-error
      */
     public static final String TRANSIENT_TRANSACTION_ERROR_LABEL = "TransientTransactionError";
 
     /**
      * An error label indicating that the exception can be treated as an unknown transaction commit result.
+     * See the documentation linked below for more information.
      *
      * @see #hasErrorLabel(String)
+     * @mongodb.driver.manual core/transactions-in-applications/#std-label-unknown-transaction-commit-result UnknownTransactionCommitResult
      * @since 3.8
-     * @mongodb.driver.manual core/transactions-in-applications/#std-label-unknown-transaction-commit-result
      */
     public static final String UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL = "UnknownTransactionCommitResult";
 
     /**
      * Server is overloaded and shedding load.
-     * If you retry, use exponential backoff because the server has indicated overload.
-     * This label on its own does not mean that the operation can be safely retried.
+     * If an application retries explicitly, it should use exponential backoff because the server has indicated overload.
+     * This label on its own does not mean that the operation can be {@linkplain #RETRYABLE_ERROR_LABEL safely retried}.
      *
      * @see #hasErrorLabel(String)
+     * @see MongoClientSettings.Builder#maxAdaptiveRetries(Integer)
+     * @mongodb.atlas.manual overload-errors/ Overload errors
      * @since 5.7
      * @mongodb.server.release 8.3
      */
-    // TODO-BACKPRESSURE Valentin Add a @mongodb.driver.manual link or something similar, see `content/atlas/source/overload-errors.txt` in https://github.com/10gen/docs-mongodb-internal/pull/17281
     public static final String SYSTEM_OVERLOADED_ERROR_LABEL = "SystemOverloadedError";
 
     /**
-     * The operation was not executed and is safe to retry.
+     * The operation is safe to retry, that is,
+     * retry without rereading the relevant data or considering the semantics of the operation.
+     * <p>
+     * For more information on how transactions affect retries,
+     * see the documentation of the {@value #TRANSIENT_TRANSACTION_ERROR_LABEL}, {@value #UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL}
+     * error labels.
      *
      * @see #hasErrorLabel(String)
+     * @see MongoClientSettings.Builder#retryWrites(boolean)
+     * @see MongoClientSettings.Builder#retryReads(boolean)
+     * @mongodb.atlas.manual overload-errors/ Overload errors
      * @since 5.7
      * @mongodb.server.release 8.3
      */
-    // TODO-BACKPRESSURE Valentin Add a @mongodb.driver.manual link or something similar, see `content/atlas/source/overload-errors.txt` in https://github.com/10gen/docs-mongodb-internal/pull/17281
     public static final String RETRYABLE_ERROR_LABEL = "RetryableError";
 
     private static final long serialVersionUID = -4415279469780082174L;
