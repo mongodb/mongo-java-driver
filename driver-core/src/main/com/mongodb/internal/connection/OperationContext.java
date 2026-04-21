@@ -62,14 +62,14 @@ public class OperationContext {
     private Span tracingSpan;
 
     public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
-                            @Nullable final ServerApi serverApi) {
+            @Nullable final ServerApi serverApi) {
         this(requestContext, sessionContext, timeoutContext, TracingManager.NO_OP, serverApi, null);
     }
 
     public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
-                            final TracingManager tracingManager,
-                            @Nullable final ServerApi serverApi,
-                            @Nullable final String operationName) {
+            final TracingManager tracingManager,
+            @Nullable final ServerApi serverApi,
+            @Nullable final String operationName) {
         this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, new ServerDeprioritization(),
                 tracingManager,
                 serverApi,
@@ -78,10 +78,10 @@ public class OperationContext {
     }
 
     public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
-                            final TracingManager tracingManager,
-                            @Nullable final ServerApi serverApi,
-                            @Nullable final String operationName,
-                            final ServerDeprioritization serverDeprioritization) {
+            final TracingManager tracingManager,
+            @Nullable final ServerApi serverApi,
+            @Nullable final String operationName,
+            final ServerDeprioritization serverDeprioritization) {
         this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, serverDeprioritization,
                 tracingManager,
                 serverApi,
@@ -98,7 +98,7 @@ public class OperationContext {
                 TracingManager.NO_OP,
                 serverApi,
                 null
-        );
+                );
     }
 
     public static OperationContext simpleOperationContext(final TimeoutContext timeoutContext) {
@@ -176,13 +176,13 @@ public class OperationContext {
     }
 
     private OperationContext(final long id,
-                             final RequestContext requestContext,
-                             final SessionContext sessionContext,
-                             final TimeoutContext timeoutContext,
-                             final ServerDeprioritization serverDeprioritization,
-                             final TracingManager tracingManager,
-                             @Nullable final ServerApi serverApi,
-                             @Nullable final String operationName,
+            final RequestContext requestContext,
+            final SessionContext sessionContext,
+            final TimeoutContext timeoutContext,
+            final ServerDeprioritization serverDeprioritization,
+            final TracingManager tracingManager,
+            @Nullable final ServerApi serverApi,
+            @Nullable final String operationName,
                              @Nullable final Span tracingSpan) {
 
         this.id = id;
