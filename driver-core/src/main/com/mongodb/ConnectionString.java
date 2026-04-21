@@ -1527,6 +1527,7 @@ public class ConnectionString {
      * @see MongoClientSettings.Builder#enableOverloadRetargeting(boolean)
      * @since 5.7
      */
+    @Beta(Reason.CLIENT)
     @Nullable
     public Boolean getEnableOverloadRetargeting() {
         return enableOverloadRetargeting;

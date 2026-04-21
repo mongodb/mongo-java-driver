@@ -586,6 +586,7 @@ public final class MongoClientSettings {
          * @see #getEnableOverloadRetargeting()
          * @since 5.7
          */
+        @Beta(Reason.CLIENT)
         public Builder enableOverloadRetargeting(final boolean enableOverloadRetargeting) {
             this.enableOverloadRetargeting = enableOverloadRetargeting;
             return this;
@@ -973,6 +974,7 @@ public final class MongoClientSettings {
      * @see Builder#enableOverloadRetargeting(boolean)
      * @since 5.7
      */
+    @Beta(Reason.CLIENT)
     public boolean getEnableOverloadRetargeting() {
         return enableOverloadRetargeting;
     }
