@@ -20,7 +20,6 @@ import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Reason;
 import com.mongodb.connection.ClusterSettings;
-import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerMonitoringMode;
 import com.mongodb.connection.ServerSettings;
