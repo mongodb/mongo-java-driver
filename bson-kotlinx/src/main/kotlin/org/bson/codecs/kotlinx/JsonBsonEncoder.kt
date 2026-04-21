@@ -25,9 +25,6 @@ import kotlinx.serialization.json.JsonEncoder
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.double
-import kotlinx.serialization.json.int
-import kotlinx.serialization.json.long
 import kotlinx.serialization.modules.SerializersModule
 import org.bson.BsonWriter
 import org.bson.codecs.kotlinx.utils.BsonCodecUtils.toJsonNamingStrategy
@@ -41,8 +38,8 @@ internal class JsonBsonEncoder(
 ) : BsonEncoderImpl(writer, serializersModule, configuration), JsonEncoder {
 
     companion object {
-        private val DOUBLE_MIN_VALUE = BigDecimal.valueOf(Double.MIN_VALUE)
         private val DOUBLE_MAX_VALUE = BigDecimal.valueOf(Double.MAX_VALUE)
+        private val DOUBLE_MIN_VALUE = BigDecimal.valueOf(Double.MIN_VALUE)
         private val INT_MIN_VALUE = BigDecimal.valueOf(Int.MIN_VALUE.toLong())
         private val INT_MAX_VALUE = BigDecimal.valueOf(Int.MAX_VALUE.toLong())
         private val LONG_MIN_VALUE = BigDecimal.valueOf(Long.MIN_VALUE)
@@ -101,16 +98,18 @@ internal class JsonBsonEncoder(
             primitive.isString -> encodeString(content)
             content == "true" || content == "false" -> encodeBoolean(content.toBooleanStrict())
             else -> {
-                val decimal = BigDecimal(content)
+                val decimal = BigDecimal(content).stripTrailingZeros()
                 when {
-                    decimal.scale() != 0 ->
-                        if (DOUBLE_MIN_VALUE <= decimal && decimal <= DOUBLE_MAX_VALUE) {
-                            encodeDouble(primitive.double)
+                    decimal.scale() > 0 -> {
+                        val abs = decimal.abs()
+                        if ((decimal.signum() == 0 || abs >= DOUBLE_MIN_VALUE) && abs <= DOUBLE_MAX_VALUE) {
+                            encodeDouble(decimal.toDouble())
                         } else {
                             writer.writeDecimal128(Decimal128(decimal))
                         }
-                    INT_MIN_VALUE <= decimal && decimal <= INT_MAX_VALUE -> encodeInt(primitive.int)
-                    LONG_MIN_VALUE <= decimal && decimal <= LONG_MAX_VALUE -> encodeLong(primitive.long)
+                    }
+                    INT_MIN_VALUE <= decimal && decimal <= INT_MAX_VALUE -> encodeInt(decimal.toInt())
+                    LONG_MIN_VALUE <= decimal && decimal <= LONG_MAX_VALUE -> encodeLong(decimal.toLong())
                     else -> writer.writeDecimal128(Decimal128(decimal))
                 }
             }
