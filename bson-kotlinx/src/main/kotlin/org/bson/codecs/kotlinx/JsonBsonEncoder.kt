@@ -40,6 +40,7 @@ internal class JsonBsonEncoder(
 
     companion object {
         private val DOUBLE_MAX_VALUE = BigDecimal.valueOf(Double.MAX_VALUE)
+        private val DOUBLE_MIN_VALUE = BigDecimal.valueOf(Double.MIN_VALUE)
         private val INT_MIN_VALUE = BigDecimal.valueOf(Int.MIN_VALUE.toLong())
         private val INT_MAX_VALUE = BigDecimal.valueOf(Int.MAX_VALUE.toLong())
         private val LONG_MIN_VALUE = BigDecimal.valueOf(Long.MIN_VALUE)
