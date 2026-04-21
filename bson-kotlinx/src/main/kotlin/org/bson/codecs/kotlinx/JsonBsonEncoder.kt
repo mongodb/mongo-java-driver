@@ -25,7 +25,6 @@ import kotlinx.serialization.json.JsonEncoder
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.double
 import kotlinx.serialization.modules.SerializersModule
 import org.bson.BsonWriter
 import org.bson.codecs.kotlinx.utils.BsonCodecUtils.toJsonNamingStrategy
