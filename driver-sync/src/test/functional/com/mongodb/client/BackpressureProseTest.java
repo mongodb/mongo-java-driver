@@ -82,10 +82,8 @@ public class BackpressureProseTest {
     }
 
     private static Duration measureFailedInsertDuration(final MongoCollection<Document> collection, final boolean retryBackoff) {
-        if (!retryBackoff) {
-            // TODO-BACKPRESSURE Valentin uncomment below when https://github.com/mongodb/mongo-java-driver/pull/1899 is merged
-            // ExponentialBackoff.setTestJitterSupplier(() -> 0);
-        }
+        // TODO-BACKPRESSURE Valentin uncomment below when https://github.com/mongodb/mongo-java-driver/pull/1899 is merged
+        // ExponentialBackoff.setTestJitterSupplier(() -> retryBackoff ? 1 : 0);
         try {
             StartTime startTime = StartTime.now();
             assertThrows(MongoServerException.class, () -> collection.insertOne(Document.parse("{a: 1}")));
