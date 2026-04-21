@@ -277,7 +277,8 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code maxAdaptiveRetries=n}: This is {@linkplain Beta Beta API}.
  * The maximum number of retry attempts when encountering a retryable overload error.
  * See {@link MongoClientSettings.Builder#maxAdaptiveRetries(Integer)} for more information.</li>
- * <li>{@code enableOverloadRetargeting=true|false}: Whether to enable overload retargeting. Defaults to false.
+ * <li>{@code enableOverloadRetargeting=true|false}: This is {@linkplain Beta Beta API}.
+ *   Whether to enable overload retargeting. Defaults to false.
  *  See {@link MongoClientSettings.Builder#enableOverloadRetargeting(boolean)} for more information.</li>
  * <li>{@code uuidRepresentation=unspecified|standard|javaLegacy|csharpLegacy|pythonLegacy}.  See
  * {@link MongoClientSettings#getUuidRepresentation()} for documentation of semantics of this parameter.  Defaults to "javaLegacy", but
