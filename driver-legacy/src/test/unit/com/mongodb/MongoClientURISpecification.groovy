@@ -342,7 +342,7 @@ class MongoClientURISpecification extends Specification {
         given:
         def uri = new MongoClientURI('mongodb://localhost/?'
                 + 'maxPoolSize=250'
-                + '&maxAdaptiveRetries=43',
+                + '&maxAdaptiveRetries=43'
                 + '&enableOverloadRetargeting=false',
                 MongoClientOptions.builder()
                         .connectionsPerHost(200)

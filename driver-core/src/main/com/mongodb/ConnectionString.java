@@ -279,7 +279,7 @@ import static java.util.Collections.unmodifiableList;
  * See {@link MongoClientSettings.Builder#maxAdaptiveRetries(Integer)} for more information.</li>
  * <li>{@code enableOverloadRetargeting=true|false}. If true the driver may route a request to a different server on a subsequent
  *  retry attempt if the previously used server is overloaded. Does not take effect for {@linkplain ClusterType#SHARDED sharded clusters}.
- *  Defaults to false.</li> //TODO-SSLAV add see
+ *  Defaults to false. See {@link MongoClientSettings.Builder#enableOverloadRetargeting(boolean)} for more information.</li>
  * <li>{@code uuidRepresentation=unspecified|standard|javaLegacy|csharpLegacy|pythonLegacy}.  See
  * {@link MongoClientSettings#getUuidRepresentation()} for documentation of semantics of this parameter.  Defaults to "javaLegacy", but
  * will change to "unspecified" in the next major release.</li>
@@ -1522,17 +1522,7 @@ public class ConnectionString {
 
     /**
      * Gets whether overload retargeting is enabled.
-     *
-     * <p>When enabled, the previously selected servers on which attempts failed with an error
-     * {@linkplain MongoException#hasErrorLabel(String) having}
-     * the {@value MongoException#SYSTEM_OVERLOADED_ERROR_LABEL} label may be deprioritized during
-     * server selection on subsequent retry attempts. This applies to reads when retryReads is enabled,
-     * and to writes when retryWrites is enabled.</p>
-     *
-     * <p>This setting does not take effect for
-     * {@linkplain com.mongodb.connection.ClusterType#SHARDED sharded clusters}.</p>
-     *
-     * <p>Defaults to {@code false}.</p>
+     * See {@link MongoClientSettings.Builder#enableOverloadRetargeting(boolean)} for more information.
      *
      * @return the enableOverloadRetargeting value, or null if not set
      * @see MongoClientSettings.Builder#enableOverloadRetargeting(boolean)
