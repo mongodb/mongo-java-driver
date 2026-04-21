@@ -378,6 +378,14 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
   type MongoOperationTimeoutException = com.mongodb.MongoOperationTimeoutException
 
   /**
+   * An exception indicating that the convenient transactions API (`withTransaction`) exceeded its overall timeout
+   * while retrying the user-supplied callback or the commit loop.
+   *
+   * @since 5.7
+   */
+  type WithTransactionTimeoutException = com.mongodb.WithTransactionTimeoutException
+
+  /**
    * An exception indicating a failure to apply the write concern to the requested write operation
    *
    * @see [[WriteConcern]]
