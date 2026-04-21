@@ -244,6 +244,8 @@ class KotlinSerializerCodecTest {
                 """{"value": -9223372036854775808}""" to """{"value": -9223372036854775808}""",
                 """{"value": {"${'$'}numberDecimal": "-9223372036854775809"}}""" to
                     """{"value": -9223372036854775809}""",
+                """{"value": {"${'$'}numberDecimal": "1.8E+309"}}""" to """{"value": 1.8E+309}""",
+                """{"value": {"${'$'}numberDecimal": "1E-325"}}""" to """{"value": 1E-325}""",
             )
         }
     }
