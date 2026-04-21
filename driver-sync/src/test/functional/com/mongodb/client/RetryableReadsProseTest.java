@@ -16,51 +16,11 @@
 
 package com.mongodb.client;
 
-import org.bson.Document;
-import org.junit.jupiter.api.Test;
+import com.mongodb.MongoClientSettings;
 
-import static com.mongodb.client.model.Filters.eq;
-
-/**
- * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-reads/tests/README.md#prose-tests">
- * Prose Tests</a>.
- */
-final class RetryableReadsProseTest {
-    /**
-     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-reads/tests/README.md#1-poolclearederror-retryability-test">
-     * 1. PoolClearedError Retryability Test</a>.
-     */
-    @Test
-    void poolClearedExceptionMustBeRetryable() throws Exception {
-        RetryableWritesProseTest.poolClearedExceptionMustBeRetryable(MongoClients::create,
-                mongoCollection -> mongoCollection.find(eq(0)).iterator().hasNext(), "find", false);
-    }
-
-    /**
-     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-reads/tests/README.md#21-retryable-reads-are-retried-on-a-different-mongos-when-one-is-available">
-     * 2.1 Retryable Reads Are Retried on a Different mongos When One is Available</a>.
-     */
-    @Test
-    void retriesOnDifferentMongosWhenAvailable() {
-        RetryableWritesProseTest.retriesOnDifferentMongosWhenAvailable(MongoClients::create,
-            mongoCollection -> {
-                try (MongoCursor<Document> cursor = mongoCollection.find().iterator()) {
-                    return cursor.hasNext();
-                }
-            }, "find", false);
-    }
-
-    /**
-     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-reads/tests/README.md#22-retryable-reads-are-retried-on-the-same-mongos-when-no-others-are-available">
-     * 2.2 Retryable Reads Are Retried on the Same mongos When No Others are Available</a>.
-     */
-    @Test
-    void retriesOnSameMongosWhenAnotherNotAvailable() {
-        RetryableWritesProseTest.retriesOnSameMongosWhenAnotherNotAvailable(MongoClients::create,
-                mongoCollection -> {
-                    try (MongoCursor<Document> cursor = mongoCollection.find().iterator()) {
-                        return cursor.hasNext();
-                    }
-                }, "find", false);
+final class RetryableReadsProseTest extends AbstractRetryableReadsProseTest {
+    @Override
+    protected MongoClient createClient(final MongoClientSettings settings) {
+        return MongoClients.create(settings);
     }
 }

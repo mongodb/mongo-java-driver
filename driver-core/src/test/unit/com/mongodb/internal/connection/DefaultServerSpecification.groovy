@@ -54,7 +54,7 @@ import spock.lang.Specification
 import java.util.concurrent.CountDownLatch
 
 import static com.mongodb.ClusterFixture.CLIENT_METADATA
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
@@ -74,7 +74,7 @@ class DefaultServerSpecification extends Specification {
                 Mock(SdamServerDescriptionManager), Mock(ServerListener), Mock(CommandListener), new ClusterClock(), false)
 
         when:
-        def receivedConnection = server.getConnection(OPERATION_CONTEXT)
+        def receivedConnection = server.getConnection(createOperationContext())
 
         then:
         receivedConnection
@@ -100,7 +100,7 @@ class DefaultServerSpecification extends Specification {
 
         when:
         def callback = new SupplyingCallback<AsyncConnection>()
-        server.getConnectionAsync(OPERATION_CONTEXT, callback)
+        server.getConnectionAsync(createOperationContext(), callback)
 
         then:
         callback.get() == connection
@@ -117,7 +117,7 @@ class DefaultServerSpecification extends Specification {
         server.close()
 
         when:
-        server.getConnection(OPERATION_CONTEXT)
+        server.getConnection(createOperationContext())
 
         then:
         def ex = thrown(MongoServerUnavailableException)
@@ -127,7 +127,7 @@ class DefaultServerSpecification extends Specification {
         def latch = new CountDownLatch(1)
         def receivedConnection = null
         def receivedThrowable = null
-        server.getConnectionAsync(OPERATION_CONTEXT) {
+        server.getConnectionAsync(createOperationContext()) {
             result, throwable ->
                 receivedConnection = result; receivedThrowable = throwable; latch.countDown()
         }
@@ -210,7 +210,6 @@ class DefaultServerSpecification extends Specification {
         given:
         def connectionPool = Mock(ConnectionPool)
         def serverMonitor = Mock(ServerMonitor)
-        connectionPool.get(OPERATION_CONTEXT) >> { throw exceptionToThrow }
 
         def server = defaultServer(connectionPool, serverMonitor)
         server.close()
@@ -242,7 +241,7 @@ class DefaultServerSpecification extends Specification {
         def server = defaultServer(connectionPool, serverMonitor)
 
         when:
-        server.getConnection(OPERATION_CONTEXT)
+        server.getConnection(createOperationContext())
 
         then:
         def e = thrown(MongoException)
@@ -267,7 +266,7 @@ class DefaultServerSpecification extends Specification {
         def server = defaultServer(connectionPool, serverMonitor)
 
         when:
-        server.getConnection(OPERATION_CONTEXT)
+        server.getConnection(createOperationContext())
 
         then:
         def e = thrown(MongoSecurityException)
@@ -292,7 +291,7 @@ class DefaultServerSpecification extends Specification {
         def latch = new CountDownLatch(1)
         def receivedConnection = null
         def receivedThrowable = null
-        server.getConnectionAsync(OPERATION_CONTEXT) {
+        server.getConnectionAsync(createOperationContext()) {
             result, throwable ->
                 receivedConnection = result; receivedThrowable = throwable; latch.countDown()
         }
@@ -325,7 +324,7 @@ class DefaultServerSpecification extends Specification {
         def latch = new CountDownLatch(1)
         def receivedConnection = null
         def receivedThrowable = null
-        server.getConnectionAsync(OPERATION_CONTEXT) {
+        server.getConnectionAsync(createOperationContext()) {
             result, throwable ->
                 receivedConnection = result; receivedThrowable = throwable; latch.countDown()
         }
@@ -350,7 +349,7 @@ class DefaultServerSpecification extends Specification {
         clusterClock.advance(clusterClockClusterTime)
         def server = new DefaultServer(serverId, SINGLE, Mock(ConnectionPool), new TestConnectionFactory(), Mock(ServerMonitor),
                 Mock(SdamServerDescriptionManager), Mock(ServerListener), Mock(CommandListener), clusterClock, false)
-        def testConnection = (TestConnection) server.getConnection(OPERATION_CONTEXT)
+        def testConnection = (TestConnection) server.getConnection(createOperationContext())
         def sessionContext = new TestSessionContext(initialClusterTime)
         def response = BsonDocument.parse(
                 '''{
@@ -361,7 +360,7 @@ class DefaultServerSpecification extends Specification {
                           ''')
         def protocol = new TestCommandProtocol(response)
         testConnection.enqueueProtocol(protocol)
-        def operationContext = OPERATION_CONTEXT.withSessionContext(sessionContext)
+        def operationContext = createOperationContext().withSessionContext(sessionContext)
 
         when:
         if (async) {
