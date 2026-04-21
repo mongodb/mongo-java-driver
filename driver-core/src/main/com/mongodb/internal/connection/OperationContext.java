@@ -183,7 +183,7 @@ public class OperationContext {
             final TracingManager tracingManager,
             @Nullable final ServerApi serverApi,
             @Nullable final String operationName,
-                             @Nullable final Span tracingSpan) {
+            @Nullable final Span tracingSpan) {
 
         this.id = id;
         this.serverDeprioritization = serverDeprioritization;
