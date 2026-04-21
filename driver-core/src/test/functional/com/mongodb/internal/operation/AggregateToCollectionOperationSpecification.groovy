@@ -278,7 +278,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         def profileCollectionHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'system.profile'))
         def binding = getBinding()
         new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(2)),
-                new BsonDocumentCodec()).execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
+                new BsonDocumentCodec()).execute(binding, ClusterFixture.createOperationContext(binding.getReadPreference()))
         def expectedComment = 'this is a comment'
         AggregateToCollectionOperation operation = createOperation(getNamespace(),
                 [Aggregates.out('outputCollection').toBsonDocument(BsonDocument, registry)], ACKNOWLEDGED)
@@ -293,7 +293,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
 
         cleanup:
         new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)),
-                new BsonDocumentCodec()).execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
+                new BsonDocumentCodec()).execute(binding, ClusterFixture.createOperationContext(binding.getReadPreference()))
         profileCollectionHelper.drop()
 
         where:
