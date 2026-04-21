@@ -405,8 +405,8 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         }
     }
 
-    private static MongoException wrapInMongoTimeoutException(final MongoException cause, final boolean timeoutMsConfigured) {
-        MongoException timeoutException = timeoutMsConfigured
+    private static MongoClientException wrapInMongoTimeoutException(final MongoException cause, final boolean timeoutMsConfigured) {
+        MongoClientException timeoutException = timeoutMsConfigured
                 ? createMongoTimeoutException(cause)
                 : wrapInNonTimeoutMsMongoTimeoutException(cause);
         if (timeoutException != cause) {
@@ -415,7 +415,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         return timeoutException;
     }
 
-    private static MongoException wrapInNonTimeoutMsMongoTimeoutException(final MongoException cause) {
+    private static MongoClientException wrapInNonTimeoutMsMongoTimeoutException(final MongoException cause) {
         return cause instanceof MongoTimeoutException
                 ? (MongoTimeoutException) cause
                 : new WithTransactionTimeoutException("Operation exceeded the timeout limit.", cause);

@@ -19,15 +19,15 @@ package com.mongodb;
 import com.mongodb.lang.Nullable;
 
 /**
- * An exception indicating that the convenient transactions API
- * (<a href="https://www.mongodb.com/docs/manual/core/transactions-in-applications/#callback-api">{@code withTransaction}</a>)
+ * An exception indicating that the convenient transactions API ({@code withTransaction})
  * exceeded its overall timeout while retrying the user-supplied callback or the commit loop.
  * The last encountered error (if any) is attached as the
  * {@linkplain Throwable#getCause() cause}.
  *
  * @since 5.7
+ * @mongodb.driver.manual core/transactions-in-applications/#callback-api withTransaction
  */
-public class WithTransactionTimeoutException extends MongoClientException {
+public final class WithTransactionTimeoutException extends MongoClientException {
 
     private static final long serialVersionUID = 1L;
 
