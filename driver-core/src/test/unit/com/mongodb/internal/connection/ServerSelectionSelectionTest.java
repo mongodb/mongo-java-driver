@@ -14,19 +14,34 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.MongoConfigurationException;
+import com.mongodb.MongoException;
+import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.Tag;
 import com.mongodb.TagSet;
-import com.mongodb.internal.selector.LatencyMinimizingServerSelector;
+import com.mongodb.assertions.Assertions;
+import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ClusterId;
+import com.mongodb.connection.ClusterSettings;
+import com.mongodb.connection.ClusterType;
+import com.mongodb.connection.ServerConnectionState;
+import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.ServerSettings;
+import com.mongodb.connection.ServerType;
+import com.mongodb.event.ServerDescriptionChangedEvent;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.mockito.MongoMockito;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.selector.WritableServerSelector;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
-import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.ServerSelector;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -34,36 +49,54 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.json.JsonWriterSettings;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import util.JsonPoweredTestHelper;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
-import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
+import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
+import static org.mockito.Mockito.when;
 
-// See https://github.com/mongodb/specifications/tree/master/source/server-selection/tests
+/**
+ * See <a href="https://github.com/mongodb/specifications/tree/master/source/server-selection/tests/server_selection">Server Selection Tests</a>.
+ */
 @RunWith(Parameterized.class)
 public class ServerSelectionSelectionTest {
     private final String description;
     private final BsonDocument definition;
     private final ClusterDescription clusterDescription;
-    private final long heartbeatFrequencyMS;
     private final boolean error;
+
+    private static final Set<String> TOPOLOGY_DESCRIPTION_FIELDS = new HashSet<>(Arrays.asList("type", "servers"));
+    private static final Set<String> SERVER_DESCRIPTION_FIELDS = new HashSet<>(Arrays.asList(
+            "address", "type", "tags", "avg_rtt_ms", "lastWrite", "lastUpdateTime", "maxWireVersion"));
+    private static final Set<String> READ_PREFERENCE_FIELDS = new HashSet<>(
+            Arrays.asList("mode", "tag_sets", "maxStalenessSeconds"));
 
     public ServerSelectionSelectionTest(final String description, final BsonDocument definition) {
         this.description = description;
         this.definition = definition;
-        this.heartbeatFrequencyMS = definition.getNumber("heartbeatFrequencyMS", new BsonInt64(10000)).longValue();
+
+        long heartbeatFrequencyMS = definition.getNumber("heartbeatFrequencyMS", new BsonInt64(10000)).longValue();
         this.error = definition.getBoolean("error", BsonBoolean.FALSE).getValue();
         this.clusterDescription = buildClusterDescription(definition.getDocument("topology_description"),
                 ServerSettings.builder().heartbeatFrequency(heartbeatFrequencyMS, TimeUnit.MILLISECONDS).build());
@@ -73,37 +106,38 @@ public class ServerSelectionSelectionTest {
     public void shouldPassAllOutcomes() {
         // skip this test because the driver prohibits maxStaleness or tagSets with mode of primary at a much lower level
         assumeFalse(description.endsWith("/max-staleness/tests/ReplicaSetWithPrimary/MaxStalenessWithModePrimary.json"));
-        assumeFalse(description.contains("Deprioritized")); // TODO JAVA-6021 deprioritized server selection"
+        ServerTuple serverTuple;
+        ServerSelector serverSelector = getServerSelector();
+        OperationContext operationContext = createOperationContext();
+        Cluster.ServersSnapshot serversSnapshot = createServersSnapshot(clusterDescription);
+        List<ServerDescription> inLatencyWindowServers = buildServerDescriptions(definition.getArray("in_latency_window", new BsonArray()));
 
-        ServerSelector serverSelector = null;
-        List<ServerDescription> suitableServers = buildServerDescriptions(definition.getArray("suitable_servers", new BsonArray()));
-        List<ServerDescription> selectedServers = null;
-        try {
-            serverSelector = getServerSelector();
-            selectedServers = serverSelector.select(clusterDescription);
+        try (BaseCluster cluster = new TestCluster(clusterDescription, serversSnapshot)) {
+            serverTuple = cluster.selectServer(serverSelector, operationContext);
             if (error) {
-                fail("Should have thrown exception");
+                fail(format("Should have thrown exception"));
             }
         } catch (MongoConfigurationException e) {
             if (!error) {
-                fail("Should not have thrown exception: " + e);
+                fail(format("Should not have thrown exception: %s", e));
             }
             return;
+        } catch (MongoTimeoutException mongoTimeoutException) {
+            assertTrue(format("Expected empty but was %s", inLatencyWindowServers.size()),
+                    inLatencyWindowServers.isEmpty());
+            return;
         }
-        assertServers(selectedServers, suitableServers);
-
-        ServerSelector latencyBasedServerSelector = new CompositeServerSelector(asList(serverSelector,
-                new LatencyMinimizingServerSelector(15, TimeUnit.MILLISECONDS)));
-        List<ServerDescription> inLatencyWindowServers = buildServerDescriptions(definition.getArray("in_latency_window"));
-        List<ServerDescription> latencyBasedSelectedServers = latencyBasedServerSelector.select(clusterDescription);
-        assertServers(latencyBasedSelectedServers, inLatencyWindowServers);
+        assertNotNull(format("Server tuple should not be null"), serverTuple);
+        assertTrue(format("Selected server should be in latency window. Selected server: %s", serverTuple.getServerDescription()),
+                inLatencyWindowServers.stream().anyMatch(s -> s.equals(serverTuple.getServerDescription())));
     }
 
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         List<Object[]> data = new ArrayList<>();
         for (BsonDocument testDocument : JsonPoweredTestHelper.getSpecTestDocuments("server-selection/tests/server_selection")) {
-            data.add(new Object[]{testDocument.getString("resourcePath").getValue(), testDocument});
+            String resourcePath = testDocument.getString("resourcePath").getValue();
+            data.add(new Object[]{resourcePath, testDocument});
         }
         for (BsonDocument testDocument : JsonPoweredTestHelper.getSpecTestDocuments("max-staleness/tests")) {
             data.add(new Object[]{testDocument.getString("resourcePath").getValue(), testDocument});
@@ -112,11 +146,12 @@ public class ServerSelectionSelectionTest {
     }
 
     public static ClusterDescription buildClusterDescription(final BsonDocument topologyDescription,
-            @Nullable final ServerSettings serverSettings) {
+                                                             @Nullable final ServerSettings serverSettings) {
+        validateTestDescriptionFields(topologyDescription.keySet(), TOPOLOGY_DESCRIPTION_FIELDS);
         ClusterType clusterType = getClusterType(topologyDescription.getString("type").getValue());
         ClusterConnectionMode connectionMode = getClusterConnectionMode(clusterType);
         List<ServerDescription> servers = buildServerDescriptions(topologyDescription.getArray("servers"));
-        return new ClusterDescription(connectionMode, clusterType, servers, null,
+        return new ClusterDescription(connectionMode, clusterType, servers, ClusterSettings.builder().build(),
                 serverSettings == null ? ServerSettings.builder().build() : serverSettings);
     }
 
@@ -153,6 +188,7 @@ public class ServerSelectionSelectionTest {
     }
 
     private static ServerDescription buildServerDescription(final BsonDocument serverDescription) {
+        validateTestDescriptionFields(serverDescription.keySet(), SERVER_DESCRIPTION_FIELDS);
         ServerDescription.Builder builder = ServerDescription.builder();
         builder.address(new ServerAddress(serverDescription.getString("address").getValue()));
         ServerType serverType = getServerType(serverDescription.getString("type").getValue());
@@ -175,6 +211,8 @@ public class ServerSelectionSelectionTest {
         }
         if (serverDescription.containsKey("maxWireVersion")) {
             builder.maxWireVersion(serverDescription.getNumber("maxWireVersion").intValue());
+        } else {
+            builder.maxWireVersion(MIN_DRIVER_WIRE_VERSION);
         }
         return builder.build();
     }
@@ -229,6 +267,7 @@ public class ServerSelectionSelectionTest {
             return new WritableServerSelector();
         } else {
             BsonDocument readPreferenceDefinition = definition.getDocument("read_preference");
+            validateTestDescriptionFields(readPreferenceDefinition.keySet(), READ_PREFERENCE_FIELDS);
             ReadPreference readPreference;
             if (readPreferenceDefinition.getString("mode").getValue().equals("Primary")) {
                 readPreference = ReadPreference.valueOf("Primary");
@@ -244,8 +283,82 @@ public class ServerSelectionSelectionTest {
         }
     }
 
-    private void assertServers(final List<ServerDescription> actual, final List<ServerDescription> expected) {
-        assertEquals(expected.size(), actual.size());
-        assertTrue(actual.containsAll(expected));
+    private static List<ServerAddress> extractDeprioritizedServerAddresses(final BsonDocument definition) {
+        if (!definition.containsKey("deprioritized_servers")) {
+            return Collections.emptyList();
+        }
+        return definition.getArray("deprioritized_servers")
+                .stream()
+                .map(BsonValue::asDocument)
+                .map(ServerSelectionSelectionTest::buildServerDescription)
+                .map(ServerDescription::getAddress)
+                .collect(Collectors.toList());
+    }
+
+    private OperationContext createOperationContext() {
+        OperationContext operationContext =
+                OperationContext.simpleOperationContext(
+                        new TimeoutContext(TIMEOUT_SETTINGS.withServerSelectionTimeoutMS(0)));
+        OperationContext.ServerDeprioritization serverDeprioritization = operationContext.getServerDeprioritization();
+        for (ServerAddress address : extractDeprioritizedServerAddresses(definition)) {
+            serverDeprioritization.updateCandidate(address, clusterDescription.getType());
+            // The spec defines deprioritized_servers as a pre-populated list to feed into the selection mechanism - not as "simulate the
+            // failure that caused deprioritization." Thus, SystemOverloadedError used unconditionally regardless of the cluster type.
+            MongoException error = new MongoException("test");
+            error.addLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL);
+            serverDeprioritization.onAttemptFailure(error);
+        }
+        return operationContext;
+    }
+
+    private static Cluster.ServersSnapshot createServersSnapshot(
+            final ClusterDescription clusterDescription) {
+        Map<ServerAddress, Server> serverMap = new HashMap<>();
+        for (ServerDescription desc : clusterDescription.getServerDescriptions()) {
+            serverMap.put(desc.getAddress(), MongoMockito.mock(Server.class, server -> {
+                // `MinimumOperationCountServerSelector` should select any server since they all have 0 operation count.
+                when(server.operationCount()).thenReturn(0);
+            }));
+        }
+        return serverMap::get;
+    }
+
+    private static void validateTestDescriptionFields(final Set<String> actualFields, final Set<String> knownFields) {
+        Set<String> unknownFields = new HashSet<>(actualFields);
+        unknownFields.removeAll(knownFields);
+        if (!unknownFields.isEmpty()) {
+            throw new UnsupportedOperationException("Unknown fields: " + unknownFields);
+        }
+    }
+
+    private static class TestCluster extends BaseCluster {
+        private final ServersSnapshot serversSnapshot;
+
+        TestCluster(final ClusterDescription clusterDescription, final ServersSnapshot serversSnapshot) {
+            super(new ClusterId(), clusterDescription.getClusterSettings(), new TestClusterableServerFactory(),
+                    ClusterFixture.CLIENT_METADATA);
+            this.serversSnapshot = serversSnapshot;
+            updateDescription(clusterDescription);
+        }
+
+        @Override
+        protected void connect() {
+            // NOOP: this method may be invoked in test cases where no server is expected to be selected.
+        }
+
+        @Override
+        public ServersSnapshot getServersSnapshot(final Timeout serverSelectionTimeout, final TimeoutContext timeoutContext) {
+            return serversSnapshot;
+        }
+
+        @Override
+        public void onChange(final ServerDescriptionChangedEvent event) {
+            Assertions.fail();
+        }
+    }
+
+    private String format(final String messageFormat, final Object... args) {
+        String message = String.format(messageFormat, args);
+        return message + "\nTest Definition:\n" + definition.toJson(JsonWriterSettings.builder().indent(true).build());
     }
 }

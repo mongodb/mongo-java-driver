@@ -29,8 +29,8 @@ import org.bson.BsonString
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.ClusterFixture.getBinding
-import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 
 class CreateViewOperationSpecification extends OperationFunctionalSpecification {
@@ -124,7 +124,7 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
     def getCollectionInfo(String collectionName) {
         def binding = getBinding()
         new ListCollectionsOperation(databaseName, new BsonDocumentCodec()).filter(new BsonDocument('name',
-                new BsonString(collectionName))).execute(binding, getOperationContext(binding.getReadPreference())).tryNext()?.head()
+                new BsonString(collectionName))).execute(binding, createOperationContext(binding.getReadPreference())).tryNext()?.head()
     }
 
     def collectionNameExists(String collectionName) {
