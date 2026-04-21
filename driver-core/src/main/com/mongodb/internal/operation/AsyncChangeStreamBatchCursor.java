@@ -73,7 +73,9 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
         this.wrapped = new AtomicReference<>(assertNotNull(wrapped));
         this.binding = binding;
         binding.retain();
-        this.initialOperationContext = operationContext.withOverride(TimeoutContext::withMaxTimeAsMaxAwaitTimeOverride);
+        this.initialOperationContext = operationContext
+                .withOverride(TimeoutContext::withMaxTimeAsMaxAwaitTimeOverride)
+                .withNewServerDeprioritization();
         this.resumeToken = resumeToken;
         this.maxWireVersion = maxWireVersion;
         isClosed = new AtomicBoolean();

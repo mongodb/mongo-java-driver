@@ -15,6 +15,7 @@
  */
 package com.mongodb.internal.operation;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
@@ -39,7 +40,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.mockito.MongoMockito.mock;
 import static java.util.Collections.emptyList;
@@ -99,7 +99,7 @@ final class ListCollectionsOperationTest {
     }
 
     private BsonDocument executeOperationAndCaptureCommand() {
-        operation.execute(mocks.readBinding(), OPERATION_CONTEXT);
+        operation.execute(mocks.readBinding(), ClusterFixture.createOperationContext());
         ArgumentCaptor<BsonDocument> commandCaptor = forClass(BsonDocument.class);
         verify(mocks.connection()).command(any(), commandCaptor.capture(), any(), any(), any(), any());
         return commandCaptor.getValue();
