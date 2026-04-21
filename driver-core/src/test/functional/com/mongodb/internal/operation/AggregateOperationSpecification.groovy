@@ -52,12 +52,11 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.collectCursorResults
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getCluster
-import static com.mongodb.ClusterFixture.getOperationContext
+import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ExplainVerbosity.QUERY_PLANNER
@@ -232,7 +231,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
         def binding = ClusterFixture.getBinding(ClusterFixture.getCluster())
         new CreateViewOperation(getDatabaseName(), viewName, getCollectionName(), [], WriteConcern.ACKNOWLEDGED)
-                .execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
+                .execute(binding, ClusterFixture.createOperationContext(binding.getReadPreference()))
 
         when:
         AggregateOperation operation = new AggregateOperation<Document>(viewNamespace, [], new DocumentCodec())
@@ -246,7 +245,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         cleanup:
         binding = ClusterFixture.getBinding(ClusterFixture.getCluster())
         new DropCollectionOperation(viewNamespace, WriteConcern.ACKNOWLEDGED)
-                .execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
+                .execute(binding, ClusterFixture.createOperationContext(binding.getReadPreference()))
 
         where:
         async << [true, false]
@@ -273,7 +272,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
                 .allowDiskUse(allowDiskUse)
 
         def binding = ClusterFixture.getBinding()
-        def cursor = operation.execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
+        def cursor = operation.execute(binding, ClusterFixture.createOperationContext(binding.getReadPreference()))
 
         then:
         cursor.next()*.getString('name') == ['Pete', 'Sam', 'Pete']
@@ -288,7 +287,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
                 .batchSize(batchSize)
 
         def binding = ClusterFixture.getBinding()
-        def cursor = operation.execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
+        def cursor = operation.execute(binding, ClusterFixture.createOperationContext(binding.getReadPreference()))
 
         then:
         cursor.next()*.getString('name') == ['Pete', 'Sam', 'Pete']
@@ -356,7 +355,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
         def binding = ClusterFixture.getBinding()
         new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(2)),
-                new BsonDocumentCodec()).execute(binding, getOperationContext(binding.getReadPreference()))
+                new BsonDocumentCodec()).execute(binding, createOperationContext(binding.getReadPreference()))
         def expectedComment = 'this is a comment'
         def operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
                 .comment(new BsonString(expectedComment))
@@ -372,7 +371,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         cleanup:
         binding = ClusterFixture.getBinding()
         new CommandReadOperation<>(getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)),
-                new BsonDocumentCodec()).execute(binding, getOperationContext(binding.getReadPreference()))
+                new BsonDocumentCodec()).execute(binding, createOperationContext(binding.getReadPreference()))
         profileCollectionHelper.drop()
 
         where:
@@ -381,7 +380,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should add read concern to command'() {
         given:
-        def operationContext = OPERATION_CONTEXT.withSessionContext(sessionContext)
+        def operationContext = createOperationContext().withSessionContext(sessionContext)
         def binding = Stub(ReadBinding)
         def source = Stub(ConnectionSource)
         def connection = Mock(Connection)
@@ -423,7 +422,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should add read concern to command asynchronously'() {
         given:
-        def operationContext = OPERATION_CONTEXT.withSessionContext(sessionContext)
+        def operationContext = createOperationContext().withSessionContext(sessionContext)
         def binding = Stub(AsyncReadBinding)
         def source = Stub(AsyncConnectionSource)
         def connection = Mock(AsyncConnection)

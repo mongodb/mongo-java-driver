@@ -113,9 +113,9 @@ abstract class BaseCluster implements Cluster {
     private volatile ClusterDescription description;
 
     BaseCluster(final ClusterId clusterId,
-                final ClusterSettings settings,
-                final ClusterableServerFactory serverFactory,
-                final ClientMetadata clientMetadata) {
+                          final ClusterSettings settings,
+                          final ClusterableServerFactory serverFactory,
+                          final ClientMetadata clientMetadata) {
         this.clusterId = notNull("clusterId", clusterId);
         this.settings = notNull("settings", settings);
         this.serverFactory = notNull("serverFactory", serverFactory);
@@ -159,7 +159,7 @@ abstract class BaseCluster implements Cluster {
             if (serverTuple != null) {
                 ServerAddress serverAddress = serverTuple.getServerDescription().getAddress();
                 logServerSelectionSucceeded(operationContext, clusterId, serverAddress, serverSelector, currentDescription);
-                serverDeprioritization.updateCandidate(serverAddress);
+                serverDeprioritization.updateCandidate(serverAddress, currentDescription.getType());
                 return serverTuple;
             }
             computedServerSelectionTimeout.onExpired(() ->
@@ -302,7 +302,7 @@ abstract class BaseCluster implements Cluster {
                 if (serverTuple != null) {
                     ServerAddress serverAddress = serverTuple.getServerDescription().getAddress();
                     logServerSelectionSucceeded(operationContext, clusterId, serverAddress, request.originalSelector, description);
-                    serverDeprioritization.updateCandidate(serverAddress);
+                    serverDeprioritization.updateCandidate(serverAddress, description.getType());
                     request.onResult(serverTuple, null);
                     return true;
                 }
@@ -361,8 +361,7 @@ abstract class BaseCluster implements Cluster {
             final ClusterSettings settings) {
         List<ServerSelector> selectors = Stream.of(
                 getRaceConditionPreFilteringSelector(serversSnapshot),
-                serverSelector,
-                serverDeprioritization.getServerSelector(),
+                serverDeprioritization.apply(serverSelector),
                 settings.getServerSelector(), // may be null
                 new LatencyMinimizingServerSelector(settings.getLocalThreshold(MILLISECONDS), MILLISECONDS),
                 AtMostTwoRandomServerSelector.instance(),

@@ -43,7 +43,7 @@ import java.util.stream.IntStream;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.ClusterFixture.createOperationContext;
-import static com.mongodb.connection.ServerSelectionSelectionTest.buildClusterDescription;
+import static com.mongodb.internal.connection.ServerSelectionSelectionTest.buildClusterDescription;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
 import static org.junit.Assert.assertEquals;
