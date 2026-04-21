@@ -100,12 +100,14 @@ internal class JsonBsonEncoder(
             else -> {
                 val decimal = BigDecimal(content).stripTrailingZeros()
                 when {
-                    decimal.scale() > 0 ->
-                        if (decimal.abs() <= DOUBLE_MAX_VALUE) {
-                            encodeDouble(primitive.double)
+                    decimal.scale() > 0 -> {
+                        val abs = decimal.abs()
+                        if ((decimal.signum() == 0 || abs >= DOUBLE_MIN_VALUE) && abs <= DOUBLE_MAX_VALUE) {
+                            encodeDouble(decimal.toDouble())
                         } else {
                             writer.writeDecimal128(Decimal128(decimal))
                         }
+                    }
                     INT_MIN_VALUE <= decimal && decimal <= INT_MAX_VALUE -> encodeInt(decimal.toInt())
                     LONG_MIN_VALUE <= decimal && decimal <= LONG_MAX_VALUE -> encodeLong(decimal.toLong())
                     else -> writer.writeDecimal128(Decimal128(decimal))
