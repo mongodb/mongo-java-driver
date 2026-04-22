@@ -27,6 +27,7 @@ import com.mongodb.event.ServerHeartbeatFailedEvent;
 import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
+import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.time.TimePointTest;
@@ -51,7 +52,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.ClusterFixture.configureFailPoint;
 import static com.mongodb.ClusterFixture.disableFailPoint;
@@ -280,20 +280,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
     public void testConnectionPoolBackpressure() throws InterruptedException {
         assumeTrue(serverVersionAtLeast(7, 0));
 
-        AtomicInteger connectionCheckOutFailedEventCount = new AtomicInteger(0);
-        AtomicInteger poolClearedEventCount = new AtomicInteger(0);
-
-        ConnectionPoolListener connectionPoolListener = new ConnectionPoolListener() {
-            @Override
-            public void connectionCheckOutFailed(final ConnectionCheckOutFailedEvent event) {
-                connectionCheckOutFailedEventCount.incrementAndGet();
-            }
-
-            @Override
-            public void connectionPoolCleared(final ConnectionPoolClearedEvent event) {
-                poolClearedEventCount.incrementAndGet();
-            }
-        };
+        TestConnectionPoolListener connectionPoolListener = new TestConnectionPoolListener();
 
         MongoClientSettings clientSettings = getMongoClientSettingsBuilder()
                 .applyToConnectionPoolSettings(builder -> builder
@@ -308,40 +295,46 @@ public class ServerDiscoveryAndMonitoringProseTests {
             MongoDatabase database = client.getDatabase(getDefaultDatabaseName());
             MongoCollection<Document> collection = database.getCollection("testCollection");
 
-            // Configure rate limiter using admin commands
             adminDatabase.runCommand(new Document("setParameter", 1)
                     .append("ingressConnectionEstablishmentRateLimiterEnabled", true));
-            adminDatabase.runCommand(new Document("setParameter", 1)
-                    .append("ingressConnectionEstablishmentRatePerSec", 20));
-            adminDatabase.runCommand(new Document("setParameter", 1)
-                    .append("ingressConnectionEstablishmentBurstCapacitySecs", 1));
-            adminDatabase.runCommand(new Document("setParameter", 1)
-                    .append("ingressConnectionEstablishmentMaxQueueDepth", 1));
+            try {
+                adminDatabase.runCommand(new Document("setParameter", 1)
+                        .append("ingressConnectionEstablishmentRatePerSec", 20));
+                adminDatabase.runCommand(new Document("setParameter", 1)
+                        .append("ingressConnectionEstablishmentBurstCapacitySecs", 1));
+                adminDatabase.runCommand(new Document("setParameter", 1)
+                        .append("ingressConnectionEstablishmentMaxQueueDepth", 1));
 
-            collection.insertOne(Document.parse("{}"));
+                collection.insertOne(Document.parse("{}"));
 
-            // Run 100 parallel find operations with 2-seconds sleep
-            ExecutorService executor = Executors.newFixedThreadPool(100);
-            for (int i = 0; i < 100; i++) {
-                executor.submit(() -> collection.find(new Document("$where", "function() { sleep(2000); return true; }")).first());
+                ExecutorService executor = Executors.newFixedThreadPool(100);
+                try {
+                    for (int i = 0; i < 100; i++) {
+                        executor.submit(() ->
+                                collection.find(new Document("$where", "function() { sleep(2000); return true; }")).first());
+                    }
+                    executor.shutdown();
+                    assertTrue("Executor did not terminate within timeout",
+                            executor.awaitTermination(20, SECONDS));
+                } finally {
+                    if (!executor.isTerminated()) {
+                        executor.shutdownNow();
+                    }
+                }
+
+                long connectionErrorCount = connectionPoolListener.getEvents().stream()
+                        .filter(e -> e instanceof ConnectionCheckOutFailedEvent)
+                        .map(e -> ((ConnectionCheckOutFailedEvent) e).getReason())
+                        .filter(r -> r == ConnectionCheckOutFailedEvent.Reason.CONNECTION_ERROR)
+                        .count();
+                assertTrue("Expected at least 10 ConnectionCheckOutFailedEvents with CONNECTION_ERROR, but got "
+                                + connectionErrorCount,
+                        connectionErrorCount >= 10);
+                assertEquals(0, connectionPoolListener.countEvents(ConnectionPoolClearedEvent.class));
+            } finally {
+                adminDatabase.runCommand(new Document("setParameter", 1)
+                        .append("ingressConnectionEstablishmentRateLimiterEnabled", false));
             }
-
-            // Wait for all operations to complete
-            executor.shutdown();
-            boolean terminated = executor.awaitTermination(20, SECONDS);
-            assertTrue("Executor did not terminate within timeout", terminated);
-
-            // Assert at least 10 ConnectionCheckOutFailedEvents occurred
-            assertTrue("Expected at least 10 ConnectionCheckOutFailedEvents, but got " + connectionCheckOutFailedEventCount.get(),
-                    connectionCheckOutFailedEventCount.get() >= 10);
-
-            // Assert 0 PoolClearedEvents occurred
-            assertEquals("Expected 0 PoolClearedEvents", 0, poolClearedEventCount.get());
-
-            // Teardown: sleep 1 second and reset rate limiter
-            Thread.sleep(1000);
-            adminDatabase.runCommand(new Document("setParameter", 1)
-                    .append("ingressConnectionEstablishmentRateLimiterEnabled", false));
         }
     }
 

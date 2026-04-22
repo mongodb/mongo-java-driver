@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoException;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ServerDescription;
@@ -138,27 +137,12 @@ final class DefaultSdamServerDescriptionManager implements SdamServerDescription
             serverMonitor.connect();
         } else if (sdamIssue.relatedToNetworkNotTimeout()
                 || (beforeHandshake && (sdamIssue.relatedToNetworkTimeout() || sdamIssue.relatedToAuth()))) {
-            // Backpressure spec: Don't clear pool or mark server unknown for connection establishment failures
-            // (network errors or timeouts during handshake). Authentication errors after handshake should still
-            // clear the pool as they're not related to overload.
-            // TLS configuration errors (certificate validation, protocol mismatches) should also clear the pool
-            // as they indicate configuration issues, not server overload.
-            if (beforeHandshake && !sdamIssue.relatedToAuth() && !sdamIssue.relatedToTlsConfigurationError()) {
-                // Don't update server description to Unknown
-                // Don't invalidate the connection pool
-                // Apply error labels for backpressure
-                sdamIssue.exception().ifPresent(exception -> {
-                    if (exception instanceof MongoException) {
-                        MongoException mongoException = (MongoException) exception;
-                        mongoException.addLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL);
-                        mongoException.addLabel(MongoException.RETRYABLE_ERROR_LABEL);
-                    }
-                });
-            } else {
-                updateDescription(sdamIssue.serverDescription());
-                connectionPool.invalidate(sdamIssue.exception().orElse(null));
-                serverMonitor.cancelCurrentCheck();
+            if (sdamIssue.hasBackpressureLabel()) {
+                return;
             }
+            updateDescription(sdamIssue.serverDescription());
+            connectionPool.invalidate(sdamIssue.exception().orElse(null));
+            serverMonitor.cancelCurrentCheck();
         } else if (sdamIssue.relatedToWriteConcern() || sdamIssue.relatedToStalePrimary()) {
             updateDescription(sdamIssue.serverDescription());
             serverMonitor.connect();

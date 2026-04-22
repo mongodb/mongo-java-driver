@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoCommandException;
+import com.mongodb.MongoException;
 import com.mongodb.MongoNodeIsRecoveringException;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoSecurityException;
@@ -30,12 +31,6 @@ import com.mongodb.connection.ServerId;
 import com.mongodb.connection.TopologyVersion;
 import com.mongodb.lang.Nullable;
 
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLProtocolException;
-import java.security.cert.CertPathBuilderException;
-import java.security.cert.CertPathValidatorException;
-import java.security.cert.CertificateException;
 import java.util.Optional;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
@@ -168,47 +163,9 @@ interface SdamServerDescriptionManager {
             return exception instanceof MongoWriteConcernWithResponseException;
         }
 
-        /**
-         * Checks if the exception is related to TLS configuration errors that are NOT due to server overload.
-         * These include certificate validation failures, protocol mismatches, etc.
-         *
-         * @return true if this is a TLS configuration error (not network-related)
-         */
-        boolean relatedToTlsConfigurationError() {
-            if (!(exception instanceof MongoSocketException)) {
-                return false;
-            }
-            Throwable cause = exception.getCause();
-            while (cause != null) {
-                // Check for various certificate validation and TLS configuration errors
-                if (cause instanceof CertificateException
-                        || cause instanceof CertPathBuilderException
-                        || cause instanceof CertPathValidatorException
-                        || cause instanceof SSLPeerUnverifiedException
-                        || cause instanceof SSLProtocolException) {
-                    return true;
-                }
-
-                // SSLHandshakeException can be either network or config, so we check the message
-                if (cause instanceof SSLHandshakeException) {
-                    String message = cause.getMessage();
-                    if (message != null) {
-                        String lowerMessage = message.toLowerCase();
-                        // These indicate configuration issues, not network issues
-                        if (lowerMessage.contains("certificate")
-                                || lowerMessage.contains("verify")
-                                || lowerMessage.contains("trust")
-                                || lowerMessage.contains("hostname")
-                                || lowerMessage.contains("protocol")
-                                || lowerMessage.contains("cipher")
-                                || lowerMessage.contains("handshake_failure")) {
-                            return true;
-                        }
-                    }
-                }
-                cause = cause.getCause();
-            }
-            return false;
+        boolean hasBackpressureLabel() {
+            return exception instanceof MongoException
+                    && ((MongoException) exception).hasErrorLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL);
         }
 
         private static boolean stale(@Nullable final Throwable t, final ServerDescription currentServerDescription) {
