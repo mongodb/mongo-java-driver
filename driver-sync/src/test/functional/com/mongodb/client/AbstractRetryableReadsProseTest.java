@@ -20,7 +20,6 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.test.CollectionHelper;
-import com.mongodb.connection.ClusterDescription;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.internal.connection.TestClusterListener;
@@ -85,7 +84,7 @@ public abstract class AbstractRetryableReadsProseTest {
      * 2.1 Retryable Reads Are Retried on a Different mongos When One is Available</a>.
      */
     @Test
-    void retriesOnDifferentMongosWhenAvailable() {
+    void retriesOnDifferentMongosWhenAvailable() throws InterruptedException, TimeoutException {
         RetryableWritesProseTest.retriesOnDifferentMongosWhenAvailable(this::createClient,
             mongoCollection -> {
                 try (MongoCursor<Document> cursor = mongoCollection.find().iterator()) {
@@ -236,20 +235,14 @@ public abstract class AbstractRetryableReadsProseTest {
     }
 
     private void waitForClusterDiscovery() throws InterruptedException, TimeoutException {
-        clusterListener.waitForClusterDescriptionChangedEvents(
-                event -> {
-                    ClusterDescription desc = event.getNewDescription();
-                    // We need both primary and secondary to be discovered (not UNKNOWN) before running the deprioritization tests.
-                    //
-                    // 1. The failpoint is set on the primary. If the primary is not yet discovered,
-                    //    primaryPreferred may route the find to a secondary, and the failpoint never fires.
-                    //
-                    // 2. When the primary is deprioritized on retry, primaryPreferred falls back to a secondary.
-                    //    If the secondaries are still UNKNOWN at that point, the fallback yields no selectable servers,
-                    //    causing the deprioritized primary to be selected again.
-                    return desc.hasReadableServer(ReadPreference.primary())
-                            && desc.hasReadableServer(ReadPreference.secondary());
-                },
-                1, Duration.ofSeconds(10));
+        // We need both primary and secondary to be discovered (not UNKNOWN) before running the deprioritization tests.
+        //
+        // 1. The failpoint is set on the primary. If the primary is not yet discovered,
+        //    primaryPreferred may route the find to a secondary, and the failpoint never fires.
+        //
+        // 2. When the primary is deprioritized on retry, primaryPreferred falls back to a secondary.
+        //    If the secondaries are still UNKNOWN at that point, the fallback yields no selectable servers,
+        //    causing the deprioritized primary to be selected again.
+        clusterListener.waitForAllServersDiscovered(Duration.ofSeconds(10));
     }
 }
