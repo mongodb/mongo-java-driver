@@ -26,6 +26,7 @@ import kotlinx.datetime.LocalTime
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.MissingFieldException
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -146,10 +147,10 @@ class KotlinSerializerCodecTest {
     | "code": {"${'$'}code": "int i = 0;"},
     | "codeWithScope": {"${'$'}code": "int x = y", "${'$'}scope": {"y": 1}},
     | "dateTime": {"${'$'}date": {"${'$'}numberLong": "1577836801000"}},
-    | "decimal128": {"${'$'}numberDecimal": "1.0"},
+    | "decimal128": {"${'$'}numberDecimal": "1.1"},
     | "documentEmpty": {},
     | "document": {"a": {"${'$'}numberInt": "1"}},
-    | "double": {"${'$'}numberDouble": "62.0"},
+    | "double": {"${'$'}numberDouble": "62.1"},
     | "int32": {"${'$'}numberInt": "42"},
     | "int64": {"${'$'}numberLong": "52"},
     | "maxKey": {"${'$'}maxKey": 1},
@@ -217,6 +218,35 @@ class KotlinSerializerCodecTest {
                     .append("double", BsonInt64(3))
                     .append("boolean", BsonBoolean.TRUE)
                     .append("string", BsonString("String")))
+        }
+
+        @JvmStatic
+        fun testJsonPrimitiveNumberEncoding(): Stream<Pair<String, String>> {
+            return Stream.of(
+                """{"value": 0}""" to """{"value": 0}""",
+                """{"value": 0}""" to """{"value": 0.0}""",
+                """{"value": 1.1}""" to """{"value": 1.1E0}""",
+                """{"value": 11}""" to """{"value": 1.1E1}""",
+                """{"value": 110}""" to """{"value": 1.1E2}""",
+                """{"value": 1100}""" to """{"value": 1.1E3}""",
+                """{"value": 0.1}""" to """{"value": 1E-1}""",
+                """{"value": 0.01}""" to """{"value": 1E-2}""",
+                """{"value": 0.001}""" to """{"value": 1E-3}""",
+                """{"value": -1.1}""" to """{"value": -1.1E0}""",
+                """{"value": -11}""" to """{"value": -1.1E1}""",
+                """{"value": -110}""" to """{"value": -1.1E2}""",
+                """{"value": -1100}""" to """{"value": -1.1E3}""",
+                """{"value": -0.1}""" to """{"value": -1E-1}""",
+                """{"value": -0.01}""" to """{"value": -1E-2}""",
+                """{"value": -0.001}""" to """{"value": -1E-3}""",
+                """{"value": 9223372036854775807}""" to """{"value": 9223372036854775807}""",
+                """{"value": {"${'$'}numberDecimal": "9223372036854775808"}}""" to """{"value": 9223372036854775808}""",
+                """{"value": -9223372036854775808}""" to """{"value": -9223372036854775808}""",
+                """{"value": {"${'$'}numberDecimal": "-9223372036854775809"}}""" to
+                    """{"value": -9223372036854775809}""",
+                """{"value": {"${'$'}numberDecimal": "1.8E+309"}}""" to """{"value": 1.8E+309}""",
+                """{"value": {"${'$'}numberDecimal": "1E-325"}}""" to """{"value": 1E-325}""",
+            )
         }
     }
 
@@ -832,9 +862,9 @@ class KotlinSerializerCodecTest {
             |"short": 1,
             |"int":  22,
             |"long": {"$numberLong": "3000000000"},
-            |"decimal": {"$numberDecimal": "10000000000000000000"}
-            |"decimal2": {"$numberDecimal": "3.1230E+700"}
-            |"float": 4.0,
+            |"decimal": {"$numberDecimal": "1E+19"}
+            |"decimal2": {"$numberDecimal": "3.123E+700"}
+            |"float": 4.1,
             |"double": 4.2,
             |"boolean": true,
             |"string": "String"
@@ -849,9 +879,9 @@ class KotlinSerializerCodecTest {
                     put("short", 1)
                     put("int", 22)
                     put("long", 3_000_000_000)
-                    put("decimal", BigDecimal("10000000000000000000"))
-                    put("decimal2", BigDecimal("3.1230E+700"))
-                    put("float", 4.0)
+                    put("decimal", BigDecimal("1E+19"))
+                    put("decimal2", BigDecimal("3.123E+700"))
+                    put("float", 4.1)
                     put("double", 4.2)
                     put("boolean", true)
                     put("string", "String")
@@ -1023,10 +1053,10 @@ class KotlinSerializerCodecTest {
                     put("binary", JsonPrimitive("S2Fma2Egcm9ja3Mh"))
                     put("boolean", JsonPrimitive(true))
                     put("dateTime", JsonPrimitive(1577836801000))
-                    put("decimal128", JsonPrimitive(1.0))
+                    put("decimal128", JsonPrimitive(1.1))
                     put("documentEmpty", buildJsonObject {})
                     put("document", buildJsonObject { put("a", JsonPrimitive(1)) })
-                    put("double", JsonPrimitive(62.0))
+                    put("double", JsonPrimitive(62.1))
                     put("int32", JsonPrimitive(42))
                     put("int64", JsonPrimitive(52))
                     put("objectId", JsonPrimitive("211111111111111111111112"))
@@ -1048,6 +1078,13 @@ class KotlinSerializerCodecTest {
         assertEncodesTo(
             """{"value": $dataClassWithAllSupportedJsonTypesSimpleJson }""", dataClassWithAllSupportedJsonTypes)
         assertDecodesTo("""{"value": $jsonAllSupportedTypesDocument}""", dataClassWithAllSupportedJsonTypes)
+    }
+
+    @ParameterizedTest
+    @MethodSource("testJsonPrimitiveNumberEncoding")
+    fun testJsonPrimitiveNumberEncoding(test: Pair<String, String>) {
+        val (expected, actual) = test
+        assertEncodesTo(expected, Json.parseToJsonElement(actual))
     }
 
     @Test
