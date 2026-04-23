@@ -32,6 +32,7 @@ import com.mongodb.event.ConnectionCheckOutFailedEvent;
 import com.mongodb.event.ConnectionCheckedOutEvent;
 import com.mongodb.event.ConnectionPoolClearedEvent;
 import com.mongodb.internal.connection.ServerAddressHelper;
+import com.mongodb.internal.connection.TestClusterListener;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.internal.event.ConfigureFailPointCommandListener;
@@ -42,6 +43,7 @@ import org.bson.Document;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -49,6 +51,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -224,7 +227,7 @@ public class RetryableWritesProseTest {
      * 4. Test that in a sharded cluster writes are retried on a different mongos when one is available</a>.
      */
     @Test
-    void retriesOnDifferentMongosWhenAvailable() {
+    void retriesOnDifferentMongosWhenAvailable() throws InterruptedException, TimeoutException {
         retriesOnDifferentMongosWhenAvailable(MongoClients::create,
                 mongoCollection -> mongoCollection.insertOne(new Document()), "insert", true);
     }
@@ -232,7 +235,8 @@ public class RetryableWritesProseTest {
     @SuppressWarnings("try")
     public static <R> void retriesOnDifferentMongosWhenAvailable(
             final Function<MongoClientSettings, MongoClient> clientCreator,
-            final Function<MongoCollection<Document>, R> operation, final String expectedCommandName, final boolean write) {
+            final Function<MongoCollection<Document>, R> operation, final String expectedCommandName, final boolean write)
+            throws InterruptedException, TimeoutException {
         if (write) {
             assumeTrue(serverVersionAtLeast(4, 4));
         }
@@ -253,6 +257,7 @@ public class RetryableWritesProseTest {
                 + "    }\n"
                 + "}\n");
         TestCommandListener commandListener = new TestCommandListener(singletonList("commandFailedEvent"), emptyList());
+        TestClusterListener clusterListener = new TestClusterListener();
         try (FailPoint s0FailPoint = FailPoint.enable(configureFailPoint, s0Address);
              FailPoint s1FailPoint = FailPoint.enable(configureFailPoint, s1Address);
              MongoClient client = clientCreator.apply(getMultiMongosMongoClientSettingsBuilder()
@@ -260,8 +265,16 @@ public class RetryableWritesProseTest {
                      .retryWrites(true)
                      .addCommandListener(commandListener)
                      // explicitly specify only s0 and s1, in case `getMultiMongosMongoClientSettingsBuilder` has more
-                     .applyToClusterSettings(builder -> builder.hosts(asList(s0Address, s1Address)))
+                     .applyToClusterSettings(builder -> builder
+                             .hosts(asList(s0Address, s1Address))
+                             .addClusterListener(clusterListener))
                      .build())) {
+            // We need both mongos servers to be discovered (not UNKNOWN) before running the deprioritization test.
+            // When the first mongos is deprioritized on retry, the selector falls back to the second mongos.
+            // If the second mongos is still UNKNOWN at that point, the non-deprioritized pass yields no selectable servers,
+            // causing the deprioritized mongos to be selected again.
+            clusterListener.waitForAllServersDiscovered(Duration.ofSeconds(10));
+
             MongoCollection<Document> collection = dropAndGetCollection("retriesOnDifferentMongosWhenAvailable", client);
             commandListener.reset();
             assertThrows(MongoServerException.class, () -> operation.apply(collection));

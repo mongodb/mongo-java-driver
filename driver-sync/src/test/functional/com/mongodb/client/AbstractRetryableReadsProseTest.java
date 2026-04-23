@@ -20,7 +20,6 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.test.CollectionHelper;
-import com.mongodb.connection.ClusterDescription;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.internal.connection.TestClusterListener;
@@ -85,7 +84,7 @@ public abstract class AbstractRetryableReadsProseTest {
      * 2.1 Retryable Reads Are Retried on a Different mongos When One is Available</a>.
      */
     @Test
-    void retriesOnDifferentMongosWhenAvailable() {
+    void retriesOnDifferentMongosWhenAvailable() throws InterruptedException, TimeoutException {
         RetryableWritesProseTest.retriesOnDifferentMongosWhenAvailable(this::createClient,
             mongoCollection -> {
                 try (MongoCursor<Document> cursor = mongoCollection.find().iterator()) {
@@ -109,10 +108,9 @@ public abstract class AbstractRetryableReadsProseTest {
     }
 
     /**
-     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-reads/tests/README.md#31-retryable-reads-caused-by-overload-errors-are-retried-on-a-different-replicaset-server-when-one-is-available">
-     * 3.1 Retryable Reads Caused by Overload Errors Are Retried on a Different Replicaset Server When One is Available</a>.
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-reads/tests/README.md#31-retryable-reads-caused-by-overload-errors-are-retried-on-a-different-replicaset-server-when-one-is-available-and-enableoverloadretargeting-is-enabled">
+     * 3.1 Retryable Reads Caused by Overload Errors Are Retried on a Different Replicaset Server When One is Available and enableOverloadRetargeting is enabled</a>.
      */
-    //TODO-BACKPRESSURE Slav Babanin JAVA-6167 add overloadRetargeting into tests.
     @Test
     void overloadErrorRetriedOnDifferentReplicaSetServer() throws InterruptedException, TimeoutException {
         //given
@@ -133,6 +131,7 @@ public abstract class AbstractRetryableReadsProseTest {
              MongoClient client = createClient(getMongoClientSettingsBuilder()
                      .retryReads(true)
                      .readPreference(ReadPreference.primaryPreferred())
+                     .enableOverloadRetargeting(true)
                      .addCommandListener(commandListener)
                      .applyToClusterSettings(builder -> builder.addClusterListener(clusterListener))
                      .build())) {
@@ -164,12 +163,8 @@ public abstract class AbstractRetryableReadsProseTest {
      * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-reads/tests/README.md#32-retryable-reads-caused-by-non-overload-errors-are-retried-on-the-same-replicaset-server">
      * 3.2 Retryable Reads Caused by Non-Overload Errors Are Retried on the Same Replicaset Server</a>.
      */
-    //TODO-BACKPRESSURE Slav Babanin JAVA-6167 add overloadRetargeting into tests.
     @Test
     void nonOverloadErrorRetriedOnSameReplicaSetServer() throws InterruptedException, TimeoutException {
-        //given
-        assumeTrue(serverVersionAtLeast(4, 4));
-        assumeTrue(isDiscoverableReplicaSet());
         BsonDocument configureFailPoint = BsonDocument.parse(
                 "{\n"
                         + "    configureFailPoint: \"failCommand\",\n"
@@ -180,6 +175,33 @@ public abstract class AbstractRetryableReadsProseTest {
                         + "        errorCode: 6\n"
                         + "    }\n"
                         + "}\n");
+        testRetriedOnTheSameServer(configureFailPoint);
+    }
+
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-reads/tests/README.md#33-retryable-reads-caused-by-overload-errors-are-retried-on-same-replicaset-server-when-enableoverloadretargeting-is-disabled">
+     * 3.3 Retryable Reads Caused by Overload Errors Are Retried on Same Replicaset Server When enableOverloadRetargeting is disabled</a>.
+     */
+    @Test
+    void overloadErrorRetriedOnSameReplicaSetServerWhenRetargetingDisabled() throws InterruptedException, TimeoutException {
+        BsonDocument configureFailPoint = BsonDocument.parse(
+                "{\n"
+                        + "    configureFailPoint: \"failCommand\",\n"
+                        + "    mode: { times: 1 },\n"
+                        + "    data: {\n"
+                        + "        failCommands: [\"find\"],\n"
+                        + "        errorLabels: ['" + RETRYABLE_ERROR_LABEL + "', '" + SYSTEM_OVERLOADED_ERROR_LABEL + "'],\n"
+                        + "        errorCode: 6\n"
+                        + "    }\n"
+                        + "}\n");
+        testRetriedOnTheSameServer(configureFailPoint);
+    }
+
+    private void testRetriedOnTheSameServer(final BsonDocument configureFailPoint) throws InterruptedException, TimeoutException {
+        //given
+        assumeTrue(serverVersionAtLeast(4, 4));
+        assumeTrue(isDiscoverableReplicaSet());
+        TestCommandListener commandListener = new TestCommandListener(asList("commandFailedEvent", "commandSucceededEvent"), emptyList());
 
         try (FailPoint ignored = FailPoint.enable(configureFailPoint, getPrimary());
              MongoClient client = createClient(getMongoClientSettingsBuilder()
@@ -213,20 +235,14 @@ public abstract class AbstractRetryableReadsProseTest {
     }
 
     private void waitForClusterDiscovery() throws InterruptedException, TimeoutException {
-        clusterListener.waitForClusterDescriptionChangedEvents(
-                event -> {
-                    ClusterDescription desc = event.getNewDescription();
-                    // We need both primary and secondary to be discovered (not UNKNOWN) before running the deprioritization tests.
-                    //
-                    // 1. The failpoint is set on the primary. If the primary is not yet discovered,
-                    //    primaryPreferred may route the find to a secondary, and the failpoint never fires.
-                    //
-                    // 2. When the primary is deprioritized on retry, primaryPreferred falls back to a secondary.
-                    //    If the secondaries are still UNKNOWN at that point, the fallback yields no selectable servers,
-                    //    causing the deprioritized primary to be selected again.
-                    return desc.hasReadableServer(ReadPreference.primary())
-                            && desc.hasReadableServer(ReadPreference.secondary());
-                },
-                1, Duration.ofSeconds(10));
+        // We need both primary and secondary to be discovered (not UNKNOWN) before running the deprioritization tests.
+        //
+        // 1. The failpoint is set on the primary. If the primary is not yet discovered,
+        //    primaryPreferred may route the find to a secondary, and the failpoint never fires.
+        //
+        // 2. When the primary is deprioritized on retry, primaryPreferred falls back to a secondary.
+        //    If the secondaries are still UNKNOWN at that point, the fallback yields no selectable servers,
+        //    causing the deprioritized primary to be selected again.
+        clusterListener.waitForAllServersDiscovered(Duration.ofSeconds(10));
     }
 }

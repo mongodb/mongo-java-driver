@@ -47,6 +47,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getRetryWrites()
         options.getRetryReads()
         options.getMaxAdaptiveRetries() == null
+        !options.getEnableOverloadRetargeting()
         options.getCodecRegistry() == MongoClientSettings.defaultCodecRegistry
         options.getUuidRepresentation() == UuidRepresentation.UNSPECIFIED
         options.getMinConnectionsPerHost() == 0
@@ -123,6 +124,7 @@ class MongoClientOptionsSpecification extends Specification {
                                         .retryWrites(true)
                                         .retryReads(false)
                                         .maxAdaptiveRetries(42)
+                                        .enableOverloadRetargeting(true)
                                         .writeConcern(WriteConcern.JOURNALED)
                                         .readConcern(ReadConcern.MAJORITY)
                                         .minConnectionsPerHost(30)
@@ -170,6 +172,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getRetryWrites()
         !options.getRetryReads()
         options.getMaxAdaptiveRetries() == 42
+        options.getEnableOverloadRetargeting()
         options.getServerSelectionTimeout() == 150
         options.getTimeout() == 10_000
         options.getMaxWaitTime() == 200
@@ -328,6 +331,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .applicationName('appName')
                 .readPreference(ReadPreference.secondary())
                 .retryReads(true)
+                .enableOverloadRetargeting(true)
                 .uuidRepresentation(UuidRepresentation.STANDARD)
                 .writeConcern(WriteConcern.JOURNALED)
                 .minConnectionsPerHost(30)
@@ -630,6 +634,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .retryWrites(true)
                 .retryReads(true)
                 .maxAdaptiveRetries(42)
+                .enableOverloadRetargeting(true)
                 .uuidRepresentation(UuidRepresentation.STANDARD)
                 .minConnectionsPerHost(30)
                 .connectionsPerHost(500)

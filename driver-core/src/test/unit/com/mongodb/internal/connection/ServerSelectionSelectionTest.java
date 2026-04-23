@@ -35,8 +35,10 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.ServerType;
 import com.mongodb.event.ServerDescriptionChangedEvent;
+import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.mockito.MongoMockito;
+import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.selector.WritableServerSelector;
 import com.mongodb.internal.time.Timeout;
@@ -297,8 +299,14 @@ public class ServerSelectionSelectionTest {
 
     private OperationContext createOperationContext() {
         OperationContext operationContext =
-                OperationContext.simpleOperationContext(
-                        new TimeoutContext(TIMEOUT_SETTINGS.withServerSelectionTimeoutMS(0)));
+                new OperationContext(
+                        IgnorableRequestContext.INSTANCE,
+                        NoOpSessionContext.INSTANCE,
+                        new TimeoutContext(TIMEOUT_SETTINGS.withServerSelectionTimeoutMS(0)),
+                        TracingManager.NO_OP,
+                        null,
+                        null,
+                        new OperationContext.ServerDeprioritization(true));
         OperationContext.ServerDeprioritization serverDeprioritization = operationContext.getServerDeprioritization();
         for (ServerAddress address : extractDeprioritizedServerAddresses(definition)) {
             serverDeprioritization.updateCandidate(address, clusterDescription.getType());
