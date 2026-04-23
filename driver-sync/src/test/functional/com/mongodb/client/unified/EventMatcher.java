@@ -26,6 +26,7 @@ import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.event.ConnectionCheckOutFailedEvent;
+import com.mongodb.event.ConnectionCheckedInEvent;
 import com.mongodb.event.ConnectionClosedEvent;
 import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionPoolClearedEvent;
@@ -207,6 +208,12 @@ final class EventMatcher {
                 break;
             case "connectionReadyEvent":
                 eventClass = ConnectionReadyEvent.class;
+                break;
+            case "connectionClosedEvent":
+                eventClass = ConnectionClosedEvent.class;
+                break;
+            case "connectionCheckedInEvent":
+                eventClass = ConnectionCheckedInEvent.class;
                 break;
             default:
                 throw new UnsupportedOperationException("Unsupported event: " + event.getFirstKey());
