@@ -19,13 +19,13 @@ package com.mongodb.client;
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.client.vault.ClientEncryptions;
-import com.mongodb.crypt.capi.MongoCryptException;
 import com.mongodb.fixture.EncryptionFixture;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -216,8 +216,8 @@ public class ClientSideEncryption25LookupProseTests {
                 + "]").stream().map(stage -> stage.asDocument()).collect(Collectors.toList());
 
         assertCause(
-                MongoCryptException.class,
-                "not supported",
+                MongoCommandException.class,
+                "Cannot specify both encryptionInformation and csfleEncryptionSchemas",
                 () -> client.getDatabase("db").getCollection("csfle").aggregate(pipeline).first());
     }
 
