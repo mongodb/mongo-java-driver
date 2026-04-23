@@ -16,6 +16,8 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.ServerType;
 import com.mongodb.event.ClusterClosedEvent;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterListener;
@@ -113,6 +115,14 @@ public final class TestClusterListener implements ClusterListener {
         } finally {
             lock.unlock();
         }
+    }
+
+    public void waitForAllServersDiscovered(final Duration duration) throws InterruptedException, TimeoutException {
+        waitForClusterDescriptionChangedEvents(
+                event -> event.getNewDescription().getServerDescriptions().stream()
+                        .map(ServerDescription::getType)
+                        .noneMatch(ServerType.UNKNOWN::equals),
+                1, duration);
     }
 
     /**

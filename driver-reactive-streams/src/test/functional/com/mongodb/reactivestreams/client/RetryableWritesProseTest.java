@@ -21,6 +21,8 @@ import org.bson.Document;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.TimeoutException;
+
 /**
  * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#prose-tests">
  * Prose Tests</a>.
@@ -52,7 +54,7 @@ final class RetryableWritesProseTest {
      * 4. Test that in a sharded cluster writes are retried on a different mongos when one is available</a>.
      */
     @Test
-    void retriesOnDifferentMongosWhenAvailable() {
+    void retriesOnDifferentMongosWhenAvailable() throws InterruptedException, TimeoutException {
         com.mongodb.client.RetryableWritesProseTest.retriesOnDifferentMongosWhenAvailable(
                 SyncMongoClient::new,
                 mongoCollection -> mongoCollection.insertOne(new Document()), "insert", true);
