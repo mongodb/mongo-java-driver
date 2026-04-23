@@ -259,6 +259,28 @@ class DefaultServerSpecification extends Specification {
         ]
     }
 
+    def 'DNS lookup failure should invalidate the pool'() {
+        given:
+        def exceptionToThrow = new MongoSocketException('DNS lookup failed', new ServerAddress(),
+                new UnknownHostException('no such host'))
+        BackpressureErrorLabeler.applyLabelsIfEligible(exceptionToThrow)
+        assert !exceptionToThrow.hasErrorLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL)
+
+        def connectionPool = Mock(ConnectionPool)
+        connectionPool.get(_) >> { throw exceptionToThrow }
+        def serverMonitor = Mock(ServerMonitor)
+        def server = defaultServer(connectionPool, serverMonitor)
+
+        when:
+        server.getConnection(OPERATION_CONTEXT)
+
+        then:
+        def e = thrown(MongoException)
+        e.is(exceptionToThrow)
+        1 * connectionPool.invalidate(exceptionToThrow)
+        1 * serverMonitor.cancelCurrentCheck()
+    }
+
     def 'failed authentication should invalidate the connection pool'() {
         given:
         def connectionPool = Mock(ConnectionPool)
