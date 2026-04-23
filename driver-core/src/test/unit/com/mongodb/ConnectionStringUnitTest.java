@@ -46,7 +46,8 @@ final class ConnectionStringUnitTest {
     @ParameterizedTest
     @ValueSource(strings = {
             "serverMonitoringMode=stream",
-            "maxAdaptiveRetries=42"
+            "maxAdaptiveRetries=42",
+            "enableOverloadRetargeting=true"
     })
     void equalAndHashCode(final String connectionStringOptions) {
         ConnectionString default1 = new ConnectionString(DEFAULT_OPTIONS);
@@ -127,6 +128,16 @@ final class ConnectionStringUnitTest {
                         () -> new ConnectionString(DEFAULT_OPTIONS + "maxAdaptiveRetries=-1")),
                 () -> assertThrows(IllegalArgumentException.class,
                         () -> new ConnectionString(DEFAULT_OPTIONS + "maxAdaptiveRetries=invalid"))
+        );
+    }
+
+    @Test
+    void enableOverloadRetargeting() {
+        assertAll(
+                () -> assertNull(new ConnectionString("mongodb://localhost/").getEnableOverloadRetargeting()),
+                () -> assertEquals(false, new ConnectionString(DEFAULT_OPTIONS + "enableOverloadRetargeting=false").getEnableOverloadRetargeting()),
+                () -> assertEquals(true, new ConnectionString(DEFAULT_OPTIONS + "enableOverloadRetargeting=true").getEnableOverloadRetargeting()),
+                () -> assertNull(new ConnectionString(DEFAULT_OPTIONS + "enableOverloadRetargeting=foos").getEnableOverloadRetargeting())
         );
     }
 }

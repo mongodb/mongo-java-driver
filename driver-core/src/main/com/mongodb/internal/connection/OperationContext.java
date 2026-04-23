@@ -77,6 +77,18 @@ public class OperationContext {
                 null);
     }
 
+    public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
+            final TracingManager tracingManager,
+            @Nullable final ServerApi serverApi,
+            @Nullable final String operationName,
+            final ServerDeprioritization serverDeprioritization) {
+        this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, serverDeprioritization,
+                tracingManager,
+                serverApi,
+                operationName,
+                null);
+    }
+
     static OperationContext simpleOperationContext(
             final TimeoutSettings timeoutSettings, @Nullable final ServerApi serverApi) {
         return new OperationContext(
@@ -119,7 +131,8 @@ public class OperationContext {
      * It is a temporary solution to handle cases where deprioritization state persists across operations.
      */
     public OperationContext withNewServerDeprioritization() {
-        return new OperationContext(id, requestContext, sessionContext, timeoutContext, new ServerDeprioritization(), tracingManager, serverApi,
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext,
+                new ServerDeprioritization(serverDeprioritization.enableOverloadRetargeting), tracingManager, serverApi,
                 operationName, tracingSpan);
     }
 
@@ -206,7 +219,8 @@ public class OperationContext {
     }
 
     public OperationContext withMinRoundTripTime(final ServerDescription serverDescription) {
-        return withTimeoutContext(timeoutContext.withMinRoundTripTime(TimeUnit.NANOSECONDS.toMillis(serverDescription.getMinRoundTripTimeNanos())));
+        return withTimeoutContext(
+                timeoutContext.withMinRoundTripTime(TimeUnit.NANOSECONDS.toMillis(serverDescription.getMinRoundTripTimeNanos())));
     }
 
     public OperationContext withOverride(final TimeoutContextOverride timeoutContextOverrideFunction) {
@@ -219,11 +233,17 @@ public class OperationContext {
         @Nullable
         private ClusterType clusterType;
         private final Set<ServerAddress> deprioritized;
+        private final boolean enableOverloadRetargeting;
 
-        private ServerDeprioritization() {
-            candidate = null;
-            deprioritized = new HashSet<>();
-            clusterType = null;
+        public ServerDeprioritization() {
+            this(false);
+        }
+
+        public ServerDeprioritization(final boolean enableOverloadRetargeting) {
+            this.enableOverloadRetargeting = enableOverloadRetargeting;
+            this.candidate = null;
+            this.deprioritized = new HashSet<>();
+            this.clusterType = null;
         }
 
         /**
@@ -250,10 +270,12 @@ public class OperationContext {
                 return;
             }
 
-            // As per spec: sharded clusters deprioritize on any error, other topologies only on overload
+            // As per spec: sharded clusters deprioritize on any error,
+            // other topologies deprioritize on overload only when retargeting is enabled.
             boolean isSystemOverloadedError = failure instanceof MongoException
                     && ((MongoException) failure).hasErrorLabel(SYSTEM_OVERLOADED_ERROR_LABEL);
-            if (clusterType == ClusterType.SHARDED || isSystemOverloadedError) {
+
+            if (clusterType == ClusterType.SHARDED || (isSystemOverloadedError && enableOverloadRetargeting)) {
                 deprioritized.add(candidate);
             }
         }
@@ -303,6 +325,7 @@ public class OperationContext {
         }
     }
 
-    public interface TimeoutContextOverride extends Function<TimeoutContext, TimeoutContext> {}
+    public interface TimeoutContextOverride extends Function<TimeoutContext, TimeoutContext> {
+    }
 }
 

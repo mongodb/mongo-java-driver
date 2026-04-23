@@ -276,6 +276,9 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code maxAdaptiveRetries=n}: This is {@linkplain Beta Beta API}.
  * The maximum number of retry attempts when encountering a retryable overload error.
  * See {@link MongoClientSettings.Builder#maxAdaptiveRetries(Integer)} for more information.</li>
+ * <li>{@code enableOverloadRetargeting=true|false}: This is {@linkplain Beta Beta API}.
+ *   Whether to enable overload retargeting. Defaults to false.
+ *  See {@link MongoClientSettings.Builder#enableOverloadRetargeting(boolean)} for more information.</li>
  * <li>{@code uuidRepresentation=unspecified|standard|javaLegacy|csharpLegacy|pythonLegacy}.  See
  * {@link MongoClientSettings#getUuidRepresentation()} for documentation of semantics of this parameter.  Defaults to "javaLegacy", but
  * will change to "unspecified" in the next major release.</li>
@@ -313,6 +316,7 @@ public class ConnectionString {
     private Boolean retryWrites;
     private Boolean retryReads;
     private Integer maxAdaptiveRetries;
+    private Boolean enableOverloadRetargeting;
     private ReadConcern readConcern;
 
     private Integer minConnectionPoolSize;
@@ -564,6 +568,7 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("retrywrites");
         GENERAL_OPTIONS_KEYS.add("retryreads");
         GENERAL_OPTIONS_KEYS.add("maxadaptiveretries");
+        GENERAL_OPTIONS_KEYS.add("enableoverloadretargeting");
 
         GENERAL_OPTIONS_KEYS.add("appname");
 
@@ -717,6 +722,9 @@ public class ConnectionString {
                     if (maxAdaptiveRetries < 0) {
                         throw new IllegalArgumentException("maxAdaptiveRetries must be >= 0");
                     }
+                    break;
+                case "enableoverloadretargeting":
+                    enableOverloadRetargeting = parseBoolean(value, "enableoverloadretargeting");
                     break;
                 case "uuidrepresentation":
                     uuidRepresentation = createUuidRepresentation(value);
@@ -1512,6 +1520,20 @@ public class ConnectionString {
     }
 
     /**
+     * Gets whether overload retargeting is enabled.
+     * See {@link MongoClientSettings.Builder#enableOverloadRetargeting(boolean)} for more information.
+     *
+     * @return the enableOverloadRetargeting value, or null if not set
+     * @see MongoClientSettings.Builder#enableOverloadRetargeting(boolean)
+     * @since 5.7
+     */
+    @Beta(Reason.CLIENT)
+    @Nullable
+    public Boolean getEnableOverloadRetargeting() {
+        return enableOverloadRetargeting;
+    }
+
+    /**
      * Gets the minimum connection pool size specified in the connection string.
      * @return the minimum connection pool size
      */
@@ -1825,6 +1847,7 @@ public class ConnectionString {
                 && Objects.equals(retryWrites, that.retryWrites)
                 && Objects.equals(retryReads, that.retryReads)
                 && Objects.equals(maxAdaptiveRetries, that.maxAdaptiveRetries)
+                && Objects.equals(enableOverloadRetargeting, that.enableOverloadRetargeting)
                 && Objects.equals(readConcern, that.readConcern)
                 && Objects.equals(minConnectionPoolSize, that.minConnectionPoolSize)
                 && Objects.equals(maxConnectionPoolSize, that.maxConnectionPoolSize)
@@ -1856,7 +1879,7 @@ public class ConnectionString {
     @Override
     public int hashCode() {
         return Objects.hash(credential, isSrvProtocol, hosts, database, collection, directConnection, readPreference,
-                writeConcern, retryWrites, retryReads, maxAdaptiveRetries, readConcern, minConnectionPoolSize, maxConnectionPoolSize, maxWaitTime,
+                writeConcern, retryWrites, retryReads, maxAdaptiveRetries, enableOverloadRetargeting, readConcern, minConnectionPoolSize, maxConnectionPoolSize, maxWaitTime,
                 maxConnectionIdleTime, maxConnectionLifeTime, maxConnecting, connectTimeout, timeout, socketTimeout, sslEnabled,
                 sslInvalidHostnameAllowed, requiredReplicaSetName, serverSelectionTimeout, localThreshold, heartbeatFrequency,
                 serverMonitoringMode, applicationName, compressorList, uuidRepresentation, srvServiceName, srvMaxHosts, proxyHost,

@@ -245,7 +245,8 @@ public class OperationExecutorImpl implements OperationExecutor {
                 createTimeoutContext(session, timeoutSettings),
                 tracingManager,
                 mongoClient.getSettings().getServerApi(),
-                commandName);
+                commandName,
+                new OperationContext.ServerDeprioritization(mongoClient.getSettings().getEnableOverloadRetargeting()));
     }
 
     private ReadPreference getReadPreferenceForBinding(final ReadPreference readPreference, @Nullable final ClientSession session) {

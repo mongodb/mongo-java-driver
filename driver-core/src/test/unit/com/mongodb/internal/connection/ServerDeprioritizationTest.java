@@ -41,8 +41,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
-import static com.mongodb.ClusterFixture.createOperationContext;
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -62,11 +61,13 @@ final class ServerDeprioritizationTest {
     private static final ClusterDescription SHARDED_CLUSTER = multipleModeClusterDescription(ClusterType.SHARDED);
     private static final ClusterDescription UNKNOWN_CLUSTER = multipleModeClusterDescription(ClusterType.UNKNOWN);
     private static final List<ClusterDescription> CLUSTERS = asList(SHARDED_CLUSTER, REPLICA_SET_CLUSTER, UNKNOWN_CLUSTER);
+    private static final RuntimeException RUNTIME_EXCEPTION = new RuntimeException();
+    private static final MongoException MONGO_EXCEPTION_NO_LABEL = new MongoException(0, "test");
     private ServerDeprioritization serverDeprioritization;
 
     @BeforeEach
     void beforeEach() {
-        serverDeprioritization = createOperationContext(TIMEOUT_SETTINGS).getServerDeprioritization();
+        serverDeprioritization = new OperationContext.ServerDeprioritization(true);
     }
 
     private static Stream<Arguments> selectNoneDeprioritized() {
@@ -105,8 +106,8 @@ final class ServerDeprioritizationTest {
 
     private static Stream<Arguments> deprioritizableClusters() {
         return Stream.of(
-                of(SHARDED_CLUSTER, new RuntimeException()),
-                of(SHARDED_CLUSTER, new MongoException(0, "test")),
+                of(SHARDED_CLUSTER, RUNTIME_EXCEPTION),
+                of(SHARDED_CLUSTER, MONGO_EXCEPTION_NO_LABEL),
                 of(REPLICA_SET_CLUSTER, createSystemOverloadedError()),
                 of(UNKNOWN_CLUSTER, createSystemOverloadedError())
         );
@@ -204,7 +205,7 @@ final class ServerDeprioritizationTest {
 
     @Test
     void onAttemptFailureDoesNotThrowIfNoCandidate() {
-        assertDoesNotThrow(() -> serverDeprioritization.onAttemptFailure(new RuntimeException()));
+        assertDoesNotThrow(() -> serverDeprioritization.onAttemptFailure(RUNTIME_EXCEPTION));
     }
 
     @ParameterizedTest
@@ -214,18 +215,30 @@ final class ServerDeprioritizationTest {
         ServerSelector selector = createAssertingSelector(ALL_SERVERS, singletonList(SERVER_A));
 
         assertAll(() -> {
-                    serverDeprioritization.updateCandidate(SERVER_B.getAddress(), clusterType);
-                    serverDeprioritization.onAttemptFailure(new RuntimeException());
+                    deprioritize(clusterType, RUNTIME_EXCEPTION, SERVER_B);
                     assertEquals(singletonList(SERVER_A), serverDeprioritization.apply(selector).select(cluster),
-                            "Expected no deprioritization for " + clusterType + " with RuntimeException");
-                }, () -> {
-                    serverDeprioritization = createOperationContext(TIMEOUT_SETTINGS).getServerDeprioritization();
-                    serverDeprioritization.updateCandidate(SERVER_B.getAddress(), clusterType);
-                    serverDeprioritization.onAttemptFailure(new MongoException(1, "error"));
+                            format("Expected no deprioritization for %s with RuntimeException", clusterType));
+                },
+                () -> {
+                    deprioritize(clusterType, MONGO_EXCEPTION_NO_LABEL, SERVER_B);
                     assertEquals(singletonList(SERVER_A), serverDeprioritization.apply(selector).select(cluster),
-                            "Expected no deprioritization for " + clusterType + " with no SystemOverloadedError MongoException");
+                            format("Expected no deprioritization for %s with MongoException without SystemOverloadedError", clusterType));
                 }
         );
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ClusterType.class, names = "SHARDED", mode = EnumSource.Mode.EXCLUDE)
+    void onAttemptFailureIgnoresIfNonShardedWithOverloadErrorAndDisabledOverloadRetargeting(final ClusterType clusterType) {
+        ClusterDescription cluster = multipleModeClusterDescription(clusterType);
+        ServerSelector selector = createAssertingSelector(ALL_SERVERS, singletonList(SERVER_A));
+
+        ServerDeprioritization serverDeprioritization = new OperationContext.ServerDeprioritization(false);
+        serverDeprioritization.updateCandidate(SERVER_B.getAddress(), clusterType);
+        serverDeprioritization.onAttemptFailure(createSystemOverloadedError());
+
+        assertEquals(singletonList(SERVER_A), serverDeprioritization.apply(selector).select(cluster),
+                format("Expected no deprioritization when overloadRetargeting is disabled for %s with SystemOverloadedError", clusterType));
     }
 
     private void deprioritize(final ClusterType clusterType, final Throwable exception, final ServerDescription... serverDescriptions) {
