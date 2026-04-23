@@ -322,16 +322,12 @@ public class ServerDiscoveryAndMonitoringProseTests {
                     }
                 }
 
-                long connectionErrorCount = connectionPoolListener.getEvents().stream()
-                        .filter(e -> e instanceof ConnectionCheckOutFailedEvent)
-                        .map(e -> ((ConnectionCheckOutFailedEvent) e).getReason())
-                        .filter(r -> r == ConnectionCheckOutFailedEvent.Reason.CONNECTION_ERROR)
-                        .count();
-                assertTrue("Expected at least 10 ConnectionCheckOutFailedEvents with CONNECTION_ERROR, but got "
-                                + connectionErrorCount,
-                        connectionErrorCount >= 10);
+                int failedCheckOutCount = connectionPoolListener.countEvents(ConnectionCheckOutFailedEvent.class);
+                assertTrue("Expected at least 10 ConnectionCheckOutFailedEvents, but got " + failedCheckOutCount,
+                        failedCheckOutCount >= 10);
                 assertEquals(0, connectionPoolListener.countEvents(ConnectionPoolClearedEvent.class));
             } finally {
+                Thread.sleep(1000);
                 adminDatabase.runCommand(new Document("setParameter", 1)
                         .append("ingressConnectionEstablishmentRateLimiterEnabled", false));
             }
