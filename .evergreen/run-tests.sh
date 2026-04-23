@@ -62,8 +62,16 @@ provision_ssl () {
   cp ${JAVA_HOME}/lib/security/cacerts mongo-truststore
   ${JAVA_HOME}/bin/keytool -importcert -trustcacerts -file ${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem -keystore mongo-truststore -storepass changeit -storetype JKS -noprompt
 
+  # Use native paths on Windows (cygwin paths like /cygdrive/c/... are not understood by the JDK)
+  local CURRENT_DIR
+  if [ "Windows_NT" == "$OS" ]; then
+    CURRENT_DIR=$(cygpath -m "$(pwd)")
+  else
+    CURRENT_DIR=$(pwd)
+  fi
+
   # We add extra gradle arguments for SSL
-  export GRADLE_EXTRA_VARS="-Pssl.enabled=true -Pssl.keyStoreType=pkcs12 -Pssl.keyStore=`pwd`/client.pkc -Pssl.keyStorePassword=bithere -Pssl.trustStoreType=jks -Pssl.trustStore=`pwd`/mongo-truststore -Pssl.trustStorePassword=changeit"
+  export GRADLE_EXTRA_VARS="-Pssl.enabled=true -Pssl.keyStoreType=pkcs12 -Pssl.keyStore=${CURRENT_DIR}/client.pkc -Pssl.keyStorePassword=bithere -Pssl.trustStoreType=jks -Pssl.trustStore=${CURRENT_DIR}/mongo-truststore -Pssl.trustStorePassword=changeit"
 }
 
 provision_multi_mongos_uri_for_ssl () {
@@ -122,6 +130,12 @@ export MULTI_MONGOS_URI_SYSTEM_PROPERTY="-Dorg.mongodb.test.multi.mongos.uri=${M
 # For now it's sufficient to hard-code the API version to "1", since it's the only API version
 if [ ! -z "$REQUIRE_API_VERSION" ]; then
   export API_VERSION="-Dorg.mongodb.test.api.version=1"
+fi
+
+# Log Windows version info for diagnostics
+if [ "Windows_NT" == "$OS" ]; then
+  echo "Windows build info:"
+  cmd /c ver
 fi
 
 echo "Running $AUTH tests over $SSL for $TOPOLOGY and connecting to $MONGODB_URI"

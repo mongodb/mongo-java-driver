@@ -1740,6 +1740,12 @@ axes:
         display_name: "8.0"
         variables:
           VERSION: "8.0"
+      # 8.2 is used solely for Windows testing. MongoDB 8.0 binaries are affected by SERVER-116018 on Windows,
+      # and the fix is only available starting from 8.2.
+      - id: "8.2"
+        display_name: "8.2"
+        variables:
+          VERSION: "8.2"
       - id: "7.0"
         display_name: "7.0"
         variables:
@@ -1770,6 +1776,9 @@ axes:
       - id: "ubuntu"
         display_name: "Ubuntu"
         run_on: "ubuntu2004-small"
+      - id: "windows"
+        display_name: "Windows"
+        run_on: "windows-2022-latest-small"
 
   - id: "topology"
     display_name: "Topology"
@@ -2403,6 +2412,22 @@ buildvariants:
       - name: "test-core-task"
       - name: "test-legacy-task"
 
+  - matrix_name: "tests-jdk-secure-windows"
+    matrix_spec: { auth: "auth", ssl: "ssl", jdk: "jdk17",
+                   version: [ "8.2" ],
+                   topology: "*", os: "windows" }
+    display_name: "${os}: ${version} ${topology} ${auth} ${ssl} ${jdk}"
+    tags: [ "tests-variant" ]
+    tasks:
+      - name: "test-sync-task"
+        exec_timeout_secs: 7200
+      - name: "test-reactive-task"
+        exec_timeout_secs: 7200
+      - name: "test-core-task"
+        exec_timeout_secs: 7200
+      - name: "test-legacy-task"
+        exec_timeout_secs: 7200
+
   - matrix_name: "tests-require-api-version"
     matrix_spec: { api-version: "required", auth: "auth", ssl: "nossl", jdk: [ "jdk21" ], version: [ "5.0", "6.0", "7.0", "8.0", "latest" ],
                    topology: "standalone", os: "linux" }
@@ -2539,6 +2564,15 @@ buildvariants:
     display_name: "CSFLE with mongocryptd: ${version}"
     tasks:
       - name: "csfle-tests-with-mongocryptd-task"
+
+  - matrix_name: "csfle-tests-with-mongocryptd-windows"
+    matrix_spec: { os: "windows",
+                   version: [ "8.0", "latest" ],
+                   topology: [ "replicaset" ] }
+    display_name: "${os} CSFLE with mongocryptd: ${version}"
+    tasks:
+      - name: "csfle-tests-with-mongocryptd-task"
+        exec_timeout_secs: 7200
 
   - matrix_name: "socks5-tests"
     matrix_spec: { os: "linux", ssl: [ "nossl", "ssl" ], version: [ "latest" ], topology: [ "replicaset" ], socks-auth: [ "auth", "noauth" ] }

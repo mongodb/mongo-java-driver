@@ -234,7 +234,7 @@ public class ClientMetadataTest {
     @Test
     void testDockerAndKubernetesMetadataIncluded() {
         try (MockedStatic<Files> pathsMockedStatic = Mockito.mockStatic(Files.class)) {
-            Path path = Paths.get(File.separator + "/.dockerenv");
+            Path path = Paths.get(File.separator + ".dockerenv");
             pathsMockedStatic.when(() -> Files.exists(path)).thenReturn(true);
 
             withWrapper()
