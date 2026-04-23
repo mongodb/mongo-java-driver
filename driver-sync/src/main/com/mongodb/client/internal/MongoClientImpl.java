@@ -105,7 +105,7 @@ public final class MongoClientImpl implements MongoClient {
                                              (SynchronousContextProvider) settings.getContextProvider(),
                                              autoEncryptionSettings == null ? null : createCrypt(settings, autoEncryptionSettings), this,
                                              operationExecutor, settings.getReadConcern(), settings.getReadPreference(), settings.getRetryReads(),
-                                             settings.getRetryWrites(), settings.getServerApi(),
+                                             settings.getRetryWrites(), settings.getEnableOverloadRetargeting(), settings.getServerApi(),
                                              new ServerSessionPool(cluster, TimeoutSettings.create(settings), settings.getServerApi()),
                                              TimeoutSettings.create(settings), settings.getUuidRepresentation(),
                                              settings.getWriteConcern(), new TracingManager(settings.getObservabilitySettings()));
