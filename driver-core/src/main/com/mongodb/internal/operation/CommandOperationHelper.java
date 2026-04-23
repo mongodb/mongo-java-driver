@@ -166,7 +166,7 @@ final class CommandOperationHelper {
         }
     }
 
-    static boolean shouldAttemptToRetryRead(final RetryState retryState, final Throwable attemptFailure) {
+    static boolean loggingShouldAttemptToRetryRead(final RetryState retryState, final Throwable attemptFailure) {
         assertFalse(attemptFailure instanceof ResourceSupplierInternalException);
         boolean decision = isRetryableException(attemptFailure)
                 || (attemptFailure instanceof MongoSecurityException
@@ -178,7 +178,7 @@ final class CommandOperationHelper {
     }
 
     static boolean loggingShouldAttemptToRetryWriteAndAddRetryableLabel(final RetryState retryState, final Throwable attemptFailure) {
-        Throwable attemptFailureNotToBeRetried = getAttemptFailureNotToRetryOrAddRetryableLabel(retryState, attemptFailure);
+        Throwable attemptFailureNotToBeRetried = getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel(retryState, attemptFailure);
         boolean decision = attemptFailureNotToBeRetried == null;
         if (!decision && retryState.attachment(AttachmentKeys.retryableCommandFlag()).orElse(false)) {
             logUnableToRetry(
@@ -189,14 +189,14 @@ final class CommandOperationHelper {
     }
 
     static boolean shouldAttemptToRetryWriteAndAddRetryableLabel(final RetryState retryState, final Throwable attemptFailure) {
-        return getAttemptFailureNotToRetryOrAddRetryableLabel(retryState, attemptFailure) != null;
+        return getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel(retryState, attemptFailure) != null;
     }
 
     /**
      * @return {@code null} if the decision is {@code true}. Otherwise, returns the {@link Throwable} that must not be retried.
      */
     @Nullable
-    private static Throwable getAttemptFailureNotToRetryOrAddRetryableLabel(final RetryState retryState, final Throwable attemptFailure) {
+    private static Throwable getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel(final RetryState retryState, final Throwable attemptFailure) {
         Throwable failure = attemptFailure instanceof ResourceSupplierInternalException ? attemptFailure.getCause() : attemptFailure;
         boolean decision = false;
         MongoException exceptionRetryableRegardlessOfCommand = null;

@@ -332,7 +332,7 @@ final class SyncOperationHelper {
     static <R> Supplier<R> decorateReadWithRetries(final RetryState retryState, final OperationContext operationContext,
             final Supplier<R> readFunction) {
         return new RetryingSyncSupplier<>(retryState, onRetryableReadAttemptFailure(operationContext),
-                CommandOperationHelper::shouldAttemptToRetryRead, () -> {
+                CommandOperationHelper::loggingShouldAttemptToRetryRead, () -> {
             logRetryExecute(retryState, operationContext);
             return readFunction.get();
         });

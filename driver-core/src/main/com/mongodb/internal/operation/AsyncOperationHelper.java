@@ -335,7 +335,7 @@ final class AsyncOperationHelper {
     static <R> AsyncCallbackSupplier<R> decorateReadWithRetriesAsync(final RetryState retryState, final OperationContext operationContext,
             final AsyncCallbackSupplier<R> asyncReadFunction) {
         return new RetryingAsyncCallbackSupplier<>(retryState, onRetryableReadAttemptFailure(operationContext),
-                CommandOperationHelper::shouldAttemptToRetryRead, callback -> {
+                CommandOperationHelper::loggingShouldAttemptToRetryRead, callback -> {
             logRetryExecute(retryState, operationContext);
             asyncReadFunction.get(callback);
         });
