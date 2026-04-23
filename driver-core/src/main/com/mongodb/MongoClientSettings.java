@@ -25,6 +25,7 @@ import com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider;
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
 import com.mongodb.client.model.mql.ExpressionCodecProvider;
 import com.mongodb.connection.ClusterSettings;
+import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
@@ -96,6 +97,7 @@ public final class MongoClientSettings {
     private final boolean retryReads;
     @Nullable
     private final Integer maxAdaptiveRetries;
+    private final boolean enableOverloadRetargeting;
     private final ReadConcern readConcern;
     private final MongoCredential credential;
     private final TransportSettings transportSettings;
@@ -219,6 +221,7 @@ public final class MongoClientSettings {
         private boolean retryReads = true;
         @Nullable
         private Integer maxAdaptiveRetries;
+        private boolean enableOverloadRetargeting = false;
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClientSettings.getDefaultCodecRegistry();
         private TransportSettings transportSettings;
@@ -261,6 +264,7 @@ public final class MongoClientSettings {
             retryWrites = settings.getRetryWrites();
             retryReads = settings.getRetryReads();
             maxAdaptiveRetries = settings.getMaxAdaptiveRetries();
+            enableOverloadRetargeting = settings.getEnableOverloadRetargeting();
             readConcern = settings.getReadConcern();
             credential = settings.getCredential();
             uuidRepresentation = settings.getUuidRepresentation();
@@ -322,6 +326,10 @@ public final class MongoClientSettings {
             }
             if (connectionString.getMaxAdaptiveRetries() != null) {
                 maxAdaptiveRetries = connectionString.getMaxAdaptiveRetries();
+            }
+            Boolean enableOverloadRetargetingValue = connectionString.getEnableOverloadRetargeting();
+            if (enableOverloadRetargetingValue != null) {
+                enableOverloadRetargeting = enableOverloadRetargetingValue;
             }
             if (connectionString.getUuidRepresentation() != null) {
                 uuidRepresentation = connectionString.getUuidRepresentation();
@@ -556,6 +564,31 @@ public final class MongoClientSettings {
                 isTrueArgument("maxAdaptiveRetries >= 0", maxAdaptiveRetries >= 0);
             }
             this.maxAdaptiveRetries = maxAdaptiveRetries;
+            return this;
+        }
+
+        /**
+         * Sets whether to enable overload retargeting.
+         *
+         * <p>When enabled, the previously selected servers on which attempts failed with an error
+         * {@linkplain MongoException#hasErrorLabel(String) having}
+         * the {@value MongoException#SYSTEM_OVERLOADED_ERROR_LABEL} label may be deprioritized during
+         * server selection on subsequent retry attempts. This applies to reads when
+         * {@linkplain #retryReads(boolean) retryReads} is enabled, and to writes when
+         * {@linkplain #retryWrites(boolean) retryWrites} is enabled.</p>
+         *
+         * <p>This setting does not take effect for {@linkplain ClusterType#SHARDED sharded clusters}.</p>
+         *
+         * <p>Defaults to {@code false}.</p>
+         *
+         * @param enableOverloadRetargeting whether to enable overload retargeting.
+         * @return this
+         * @see #getEnableOverloadRetargeting()
+         * @since 5.7
+         */
+        @Beta(Reason.CLIENT)
+        public Builder enableOverloadRetargeting(final boolean enableOverloadRetargeting) {
+            this.enableOverloadRetargeting = enableOverloadRetargeting;
             return this;
         }
 
@@ -934,6 +967,19 @@ public final class MongoClientSettings {
     }
 
     /**
+     * Returns whether overload retargeting is enabled.
+     * See {@link Builder#enableOverloadRetargeting(boolean)} for more information.
+     *
+     * @return the enableOverloadRetargeting value
+     * @see Builder#enableOverloadRetargeting(boolean)
+     * @since 5.7
+     */
+    @Beta(Reason.CLIENT)
+    public boolean getEnableOverloadRetargeting() {
+        return enableOverloadRetargeting;
+    }
+
+    /**
      * The read concern to use.
      *
      * @return the read concern
@@ -1207,6 +1253,7 @@ public final class MongoClientSettings {
         return retryWrites == that.retryWrites
                 && retryReads == that.retryReads
                 && Objects.equals(maxAdaptiveRetries, that.maxAdaptiveRetries)
+                && enableOverloadRetargeting == that.enableOverloadRetargeting
                 && heartbeatSocketTimeoutSetExplicitly == that.heartbeatSocketTimeoutSetExplicitly
                 && heartbeatConnectTimeoutSetExplicitly == that.heartbeatConnectTimeoutSetExplicitly
                 && Objects.equals(readPreference, that.readPreference)
@@ -1236,7 +1283,8 @@ public final class MongoClientSettings {
 
     @Override
     public int hashCode() {
-        return Objects.hash(readPreference, writeConcern, retryWrites, retryReads, maxAdaptiveRetries, readConcern, credential, transportSettings,
+        return Objects.hash(readPreference, writeConcern, retryWrites, retryReads, maxAdaptiveRetries, enableOverloadRetargeting, readConcern,
+                credential, transportSettings,
                 commandListeners, codecRegistry, loggerSettings, clusterSettings, socketSettings,
                 heartbeatSocketSettings, connectionPoolSettings, serverSettings, sslSettings, applicationName, compressorList,
                 uuidRepresentation, serverApi, autoEncryptionSettings, heartbeatSocketTimeoutSetExplicitly,
@@ -1252,6 +1300,7 @@ public final class MongoClientSettings {
                 + ", retryWrites=" + retryWrites
                 + ", retryReads=" + retryReads
                 + ", maxAdaptiveRetries=" + maxAdaptiveRetries
+                + ", enableOverloadRetargeting=" + enableOverloadRetargeting
                 + ", readConcern=" + readConcern
                 + ", credential=" + credential
                 + ", transportSettings=" + transportSettings
@@ -1281,8 +1330,9 @@ public final class MongoClientSettings {
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
         retryWrites = builder.retryWrites;
-        maxAdaptiveRetries = builder.maxAdaptiveRetries;
         retryReads = builder.retryReads;
+        maxAdaptiveRetries = builder.maxAdaptiveRetries;
+        enableOverloadRetargeting = builder.enableOverloadRetargeting;
         readConcern = builder.readConcern;
         credential = builder.credential;
         transportSettings = builder.transportSettings;

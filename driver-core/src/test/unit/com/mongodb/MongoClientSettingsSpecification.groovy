@@ -576,6 +576,7 @@ class MongoClientSettingsSpecification extends Specification {
         def actual = MongoClientSettings.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
         def expected = ['applicationName', 'autoEncryptionSettings', 'clusterSettingsBuilder', 'codecRegistry', 'commandListeners',
                         'compressorList', 'connectionPoolSettingsBuilder', 'contextProvider', 'credential', 'dnsClient',
+                        'enableOverloadRetargeting',
                         'heartbeatConnectTimeoutMS', 'heartbeatSocketTimeoutMS', 'inetAddressResolver', 'loggerSettingsBuilder',
                         'maxAdaptiveRetries', 'observabilitySettings',
                         'readConcern', 'readPreference', 'retryReads',
@@ -595,6 +596,7 @@ class MongoClientSettingsSpecification extends Specification {
                         'applyToConnectionPoolSettings', 'applyToLoggerSettings', 'applyToServerSettings', 'applyToSocketSettings',
                         'applyToSslSettings', 'autoEncryptionSettings', 'build', 'codecRegistry', 'commandListenerList',
                         'compressorList', 'contextProvider', 'credential', 'dnsClient',
+                        'enableOverloadRetargeting',
                         'heartbeatConnectTimeoutMS',
                         'heartbeatSocketTimeoutMS', 'inetAddressResolver', 'maxAdaptiveRetries', 'observabilitySettings', 'readConcern',
                         'readPreference',
