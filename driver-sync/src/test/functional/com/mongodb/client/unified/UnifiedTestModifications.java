@@ -433,6 +433,14 @@ public final class UnifiedTestModifications {
                 .test("server-discovery-and-monitoring", "serverMonitoringMode", "poll waits after successful heartbeat");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-4536")
                 .file("server-discovery-and-monitoring", "interruptInUse");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5664")
+                .file("server-discovery-and-monitoring", "pool-clear-application-error");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5664")
+                .file("server-discovery-and-monitoring", "pool-clear-on-error-checkout");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5664")
+                .file("server-discovery-and-monitoring", "pool-cleared-on-min-pool-size-population-error");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-6174")
+                .file("server-discovery-and-monitoring", "backpressure-server-description-unchanged-on-min-pool-size-population-error");
 
         // session tests
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5968")
