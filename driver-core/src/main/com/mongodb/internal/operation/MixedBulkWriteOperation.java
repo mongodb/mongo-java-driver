@@ -215,7 +215,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                                     bypassDocumentValidation, retryWrites, writeRequests, operationContextWithMinRTT, comment, variables),
                             timeoutContextWithMinRtt);
                 }
-                return executeBulkWriteBatch(retryState, writeConcern, binding, operationContextWithMinRTT, connection);
+                return executeBulkWriteBatch(retryState, writeConcern, operationContextWithMinRTT, connection);
             }, operationContext)
         );
         try {
@@ -261,7 +261,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                     releasingCallback.onResult(null, t);
                     return;
                 }
-                executeBulkWriteBatchAsync(retryState, writeConcern, binding, operationContextWithMinRtt, connection, releasingCallback);
+                executeBulkWriteBatchAsync(retryState, writeConcern, operationContextWithMinRtt, connection, releasingCallback);
             })
         ).whenComplete(binding::release);
         retryingBulkWrite.get(exceptionTransformingCallback(errorHandlingCallback(callback, LOGGER)));
@@ -270,7 +270,6 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
     private BulkWriteResult executeBulkWriteBatch(
             final RetryState retryState,
             final WriteConcern effectiveWriteConcern,
-            final WriteBinding binding,
             final OperationContext operationContext,
             final Connection connection) {
         BulkWriteTracker currentBulkWriteTracker = retryState.attachment(AttachmentKeys.bulkWriteTracker())
@@ -318,7 +317,6 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
     private void executeBulkWriteBatchAsync(
             final RetryState retryState,
             final WriteConcern effectiveWriteConcern,
-            final AsyncWriteBinding binding,
             final OperationContext operationContext,
             final AsyncConnection connection,
             final SingleResultCallback<BulkWriteResult> callback) {
