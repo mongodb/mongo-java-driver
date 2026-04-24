@@ -68,7 +68,7 @@ class ExponentialBackoffTest {
     }
 
     @Test
-    void testCustomJitterWithZero() {
+    void testCalculateTransactionBackoffMsWithJitterZero() {
         ExponentialBackoff.setTestJitterSupplier(() -> 0.0);
         try {
             for (int attemptNumber = 1; attemptNumber <= EXPECTED_BACKOFFS_MAX_VALUES.length; attemptNumber++) {
