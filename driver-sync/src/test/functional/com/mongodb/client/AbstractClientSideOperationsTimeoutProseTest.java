@@ -1120,7 +1120,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         filesCollectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), gridFsFileNamespace);
         chunksCollectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), gridFsChunksNamespace);
         commandListener = new TestCommandListener();
-
     }
 
     @AfterEach
