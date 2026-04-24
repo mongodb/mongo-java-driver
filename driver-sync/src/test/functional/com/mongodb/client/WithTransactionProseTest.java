@@ -55,7 +55,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * <a href="https://github.com/mongodb/specifications/blob/master/source/transactions-convenient-api/tests/README.md#prose-tests">Prose Tests</a>.
  */
 public class WithTransactionProseTest extends DatabaseTestCase {
-    private static final Duration ERROR_GENERATING_INTERVAL = Duration.ofSeconds(120);
+    private static final Duration TIMEOUT_EXCEEDING_DURATION = Duration.ofSeconds(120);
 
     @BeforeEach
     @Override
@@ -112,7 +112,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         try (ClientSession session = client.startSession()) {
             doWithSystemNanoTimeHandle(systemNanoTimeHandle ->
                 session.withTransaction(() -> {
-                    systemNanoTimeHandle.setRelativeToStart(ERROR_GENERATING_INTERVAL);
+                    systemNanoTimeHandle.setRelativeToStart(TIMEOUT_EXCEEDING_DURATION);
                     MongoException e = new MongoException(112, errorMessage);
                     e.addLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL);
                     throw e;
@@ -141,7 +141,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         try (ClientSession session = client.startSession()) {
             doWithSystemNanoTimeHandle(systemNanoTimeHandle ->
                 session.withTransaction(() -> {
-                    systemNanoTimeHandle.setRelativeToStart(ERROR_GENERATING_INTERVAL);
+                    systemNanoTimeHandle.setRelativeToStart(TIMEOUT_EXCEEDING_DURATION);
                     collection.insertOne(session, new Document("_id", 2));
                     return null;
                 }));
@@ -172,7 +172,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         try (ClientSession session = client.startSession()) {
             doWithSystemNanoTimeHandle(systemNanoTimeHandle ->
                 session.withTransaction(() -> {
-                    systemNanoTimeHandle.setRelativeToStart(ERROR_GENERATING_INTERVAL);
+                    systemNanoTimeHandle.setRelativeToStart(TIMEOUT_EXCEEDING_DURATION);
                     collection.insertOne(session, Document.parse("{ _id : 1 }"));
                     return null;
                 }));
@@ -189,7 +189,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     }
 
     /**
-     * Ensure cannot override timeout in transaction.
+     * This test is not from the specification. Ensures cannot override timeout in transaction.
      */
     @Test
     public void testTimeoutMS() {
@@ -205,7 +205,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     }
 
     /**
-     * Ensure legacy settings don't cause issues in sessions.
+     * This test is not from the specification. Ensures legacy settings don't cause issues in sessions.
      */
     @Test
     public void testTimeoutMSAndLegacySettings() {
