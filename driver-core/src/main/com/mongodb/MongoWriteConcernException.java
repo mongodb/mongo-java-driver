@@ -96,7 +96,7 @@ public class MongoWriteConcernException extends MongoServerException {
             final ServerAddress serverAddress, final Collection<String> errorLabels, final Throwable t) {
         super(notNull("writeConcernError", writeConcernError).getCode(), writeConcernError.getMessage(), t, serverAddress);
         this.writeConcernResult = writeConcernResult;
-        this.writeConcernError =  writeConcernError;
+        this.writeConcernError = writeConcernError;
         addLabels(errorLabels);
     }
 
