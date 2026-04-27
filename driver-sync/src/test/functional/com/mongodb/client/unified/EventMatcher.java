@@ -454,7 +454,7 @@ final class EventMatcher {
             case "RSSecondary":
                 return event.getNewDescription().getType() == ServerType.REPLICA_SET_SECONDARY;
             default:
-                throw new UnsupportedOperationException();
+                throw new UnsupportedOperationException("Unsupported server type " + newType);
         }
     }
 
