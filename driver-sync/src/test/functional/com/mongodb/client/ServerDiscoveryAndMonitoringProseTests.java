@@ -295,9 +295,9 @@ public class ServerDiscoveryAndMonitoringProseTests {
             MongoDatabase database = client.getDatabase(getDefaultDatabaseName());
             MongoCollection<Document> collection = database.getCollection("testCollection");
 
-            adminDatabase.runCommand(new Document("setParameter", 1)
-                    .append("ingressConnectionEstablishmentRateLimiterEnabled", true));
             try {
+                adminDatabase.runCommand(new Document("setParameter", 1)
+                        .append("ingressConnectionEstablishmentRateLimiterEnabled", true));
                 adminDatabase.runCommand(new Document("setParameter", 1)
                         .append("ingressConnectionEstablishmentRatePerSec", 20));
                 adminDatabase.runCommand(new Document("setParameter", 1)
