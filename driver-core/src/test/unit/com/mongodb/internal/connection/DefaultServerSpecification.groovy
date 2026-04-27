@@ -271,7 +271,7 @@ class DefaultServerSpecification extends Specification {
         def server = defaultServer(connectionPool, serverMonitor)
 
         when:
-        server.getConnection(OPERATION_CONTEXT)
+        server.getConnection(createOperationContext())
 
         then:
         def e = thrown(MongoException)
