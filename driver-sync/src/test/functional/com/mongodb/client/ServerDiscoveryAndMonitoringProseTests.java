@@ -327,7 +327,11 @@ public class ServerDiscoveryAndMonitoringProseTests {
                         failedCheckOutCount >= 10);
                 assertEquals(0, connectionPoolListener.countEvents(ConnectionPoolClearedEvent.class));
             } finally {
-                Thread.sleep(1000);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
                 adminDatabase.runCommand(new Document("setParameter", 1)
                         .append("ingressConnectionEstablishmentRateLimiterEnabled", false));
             }

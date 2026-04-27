@@ -259,7 +259,7 @@ class DefaultServerSpecification extends Specification {
         ]
     }
 
-    def 'DNS lookup failure should invalidate the pool'() {
+    def 'DNS lookup failure should not be labeled as backpressure and should invalidate the pool'() {
         given:
         def exceptionToThrow = new MongoSocketException('DNS lookup failed', new ServerAddress(),
                 new UnknownHostException('no such host'))

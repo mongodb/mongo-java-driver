@@ -17,7 +17,6 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
-import com.mongodb.MongoSecurityException;
 import com.mongodb.MongoSocketException;
 
 import javax.net.ssl.SSLHandshakeException;
@@ -43,12 +42,6 @@ final class BackpressureErrorLabeler {
     }
 
     static void applyLabelsIfEligible(final Throwable t) {
-        if (!(t instanceof MongoException)) {
-            return;
-        }
-        if (t instanceof MongoSecurityException) {
-            return;
-        }
         if (!(t instanceof MongoSocketException)) {
             return;
         }
@@ -66,7 +59,7 @@ final class BackpressureErrorLabeler {
         mongoException.addLabel(MongoException.RETRYABLE_ERROR_LABEL);
     }
 
-    static boolean isDnsLookupFailure(final Throwable t) {
+    private static boolean isDnsLookupFailure(final Throwable t) {
         Throwable cause = t.getCause();
         while (cause != null) {
             if (cause instanceof UnknownHostException) {
@@ -77,10 +70,7 @@ final class BackpressureErrorLabeler {
         return false;
     }
 
-    static boolean isTlsConfigurationError(final Throwable t) {
-        if (!(t instanceof MongoSocketException)) {
-            return false;
-        }
+    private static boolean isTlsConfigurationError(final Throwable t) {
         Throwable cause = t.getCause();
         while (cause != null) {
             if (cause instanceof CertificateException
