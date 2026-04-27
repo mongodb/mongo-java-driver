@@ -70,7 +70,7 @@ final class BackpressureErrorLabeler {
         return false;
     }
 
-    private static boolean isTlsConfigurationError(final Throwable t) {
+    static boolean isTlsConfigurationError(final Throwable t) {
         Throwable cause = t.getCause();
         while (cause != null) {
             if (cause instanceof CertificateException
