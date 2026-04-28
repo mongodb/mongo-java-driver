@@ -303,11 +303,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                             }
                             lastError = mongoException;
                             continue;
-                        } else if (labelCarryingException.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
-                            throw e;
-                        } else {
-                            throw mongoException;
-                        }
+}
                     }
                     throw e;
                 }
