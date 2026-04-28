@@ -303,7 +303,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                             }
                             lastError = mongoException;
                             continue;
-}
+                        }
                     }
                     throw e;
                 }
@@ -405,7 +405,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         MongoClientException timeoutException = timeoutMsConfigured
                 ? createMongoTimeoutException(cause)
                 : wrapInNonTimeoutMsMongoTimeoutException(cause);
-        //TODO-JAVA-6154 constructor should be used. 
+        //TODO-JAVA-6154 constructor should be used.
         if (timeoutException != cause) {
             cause.getErrorLabels().forEach(timeoutException::addLabel);
         }
