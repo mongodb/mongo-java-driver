@@ -142,6 +142,12 @@ data class DataClassWithDefaults(
 
 data class DataClassWithNulls(val boolean: Boolean?, val string: String?, val listSimple: List<String?>?)
 
+data class DataClassWithDefaultsAndNulls(
+    val required: String,
+    val optional: String = "default",
+    val nullable: String? = null
+)
+
 data class DataClassWithListThatLastItemDefaultsToNull(val elements: List<DataClassLastItemDefaultsToNull>)
 
 data class DataClassLastItemDefaultsToNull(val required: String, val optional: String? = null)
