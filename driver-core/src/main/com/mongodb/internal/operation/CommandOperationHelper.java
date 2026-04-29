@@ -221,7 +221,7 @@ final class CommandOperationHelper {
         // https://github.com/mongodb/specifications/blame/7039e69945d463a14b1b727d16db063e21f48f53/source/transactions/transactions.md#L584-L586:
         //   When executing the `commitTransaction` and `abortTransaction` commands within a transaction
         //   drivers MUST use the same `txnNumber` used for all preceding commands in the transaction.
-        // the additional checks if the `command` is either `commitTransaction`/`abortTransaction, may seem unnecessary.
+        // the additional checks if the `command` is either `commitTransaction`/`abortTransaction`, may seem unnecessary.
         // However, since the `txnNumber` key is added to commands within transactions by `CommandMessage`,
         // the key is not present when the logic of automatic retries inspects a `commitTransaction`/`abortTransaction` command for it.
         return (command.containsKey("txnNumber")
