@@ -23,7 +23,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerType;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -168,11 +167,11 @@ public final class OperationHelper {
             LOGGER.debug("retryWrites set to true but in an active transaction.");
             return false;
         } else {
-            return canRetryWrite(connectionDescription, sessionContext);
+            return canRetryWrite(connectionDescription);
         }
     }
 
-    static boolean canRetryWrite(final ConnectionDescription connectionDescription, final SessionContext sessionContext) {
+    static boolean canRetryWrite(final ConnectionDescription connectionDescription) {
         if (connectionDescription.getLogicalSessionTimeoutMinutes() == null) {
             LOGGER.debug("retryWrites set to true but the server does not support sessions.");
             return false;
@@ -183,7 +182,7 @@ public final class OperationHelper {
         return true;
     }
 
-    static boolean canRetryRead(final ServerDescription serverDescription, final OperationContext operationContext) {
+    static boolean canRetryRead(final OperationContext operationContext) {
         if (operationContext.getSessionContext().hasActiveTransaction()) {
             LOGGER.debug("retryReads set to true but in an active transaction.");
             return false;

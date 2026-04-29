@@ -199,9 +199,7 @@ final class AsyncOperationHelper {
                         withAsyncSourceAndConnection(sourceAsyncFunction, false, operationContext, funcCallback,
                                 (source, connection, operationContextWithMinRtt, releasingCallback) -> {
                                     if (retryState.breakAndCompleteIfRetryAnd(
-                                            () -> !OperationHelper.canRetryRead(source.getServerDescription(),
-                                                    operationContextWithMinRtt),
-                                            releasingCallback)) {
+                                            () -> !OperationHelper.canRetryRead(operationContextWithMinRtt), releasingCallback)) {
                                         return;
                                     }
                                     createReadCommandAndExecuteAsync(retryState, operationContextWithMinRtt, source, database,
@@ -278,8 +276,7 @@ final class AsyncOperationHelper {
                                 ? releasingCallback
                                 : addingRetryableLabelCallback(releasingCallback, maxWireVersion);
                         if (retryState.breakAndCompleteIfRetryAnd(() ->
-                                        !OperationHelper.canRetryWrite(connection.getDescription(), operationContextWithMinRtt.getSessionContext()),
-                                addingRetryableLabelCallback)) {
+                                        !OperationHelper.canRetryWrite(connection.getDescription()), addingRetryableLabelCallback)) {
                             return;
                         }
                         BsonDocument command;
