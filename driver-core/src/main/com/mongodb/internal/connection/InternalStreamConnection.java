@@ -49,11 +49,11 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.StructuredLogger;
-import com.mongodb.observability.micrometer.MongodbObservationContext;
 import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
+import com.mongodb.observability.micrometer.MongodbObservationContext;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
 import org.bson.ByteBuf;
@@ -95,7 +95,6 @@ import static com.mongodb.internal.connection.ProtocolHelper.getRecoveryToken;
 import static com.mongodb.internal.connection.ProtocolHelper.getSnapshotTimestamp;
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
 import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
-
 import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedException;
 import static java.util.Arrays.asList;
 

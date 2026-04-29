@@ -16,9 +16,6 @@
 
 package com.mongodb.observability.micrometer;
 
-import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Reason;
-
 import io.micrometer.common.docs.KeyName;
 import io.micrometer.observation.docs.ObservationDocumentation;
 
@@ -32,7 +29,6 @@ import io.micrometer.observation.docs.ObservationDocumentation;
  *
  * @since 5.7
  */
-@Beta(Reason.CLIENT)
 public enum MongodbObservation implements ObservationDocumentation {
 
     /**

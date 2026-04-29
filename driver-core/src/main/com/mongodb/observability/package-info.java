@@ -19,10 +19,7 @@
  *
  * @since 5.7
  */
-@Beta(Reason.CLIENT)
 @NonNullApi
 package com.mongodb.observability;
 
-import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Reason;
 import com.mongodb.lang.NonNullApi;

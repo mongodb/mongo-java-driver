@@ -17,8 +17,6 @@
 package com.mongodb.observability.micrometer;
 
 import com.mongodb.ServerAddress;
-import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Reason;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.lang.Nullable;
 import io.micrometer.observation.transport.Kind;
@@ -39,7 +37,6 @@ import io.micrometer.observation.transport.SenderContext;
  *
  * @since 5.7
  */
-@Beta(Reason.CLIENT)
 public class MongodbObservationContext extends SenderContext<Object> {
 
     @Nullable

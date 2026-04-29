@@ -17,10 +17,8 @@
 package com.mongodb.observability.micrometer;
 
 import com.mongodb.MongoConfigurationException;
-import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
-import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
 import com.mongodb.observability.ObservabilitySettings;
 import io.micrometer.observation.ObservationConvention;
@@ -45,7 +43,6 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 5.7
  */
-@Beta(Reason.CLIENT)
 @Immutable
 public final class MicrometerObservabilitySettings extends ObservabilitySettings {
 
@@ -166,7 +163,6 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
          * @return this
          * @since 5.7
          */
-        @Beta(Reason.CLIENT)
         public Builder observationRegistry(@Nullable final ObservationRegistry observationRegistry) {
             this.observationRegistry = observationRegistry;
             return this;
@@ -180,7 +176,6 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
          * @return this
          * @since 5.7
          */
-        @Beta(Reason.CLIENT)
         public Builder enableCommandPayloadTracing(final boolean enableCommandPayload) {
             this.enableCommandPayloadTracing = enableCommandPayload;
             return this;
@@ -193,7 +188,6 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
          * @return this
          * @since 5.7
          */
-        @Beta(Reason.CLIENT)
         public Builder maxQueryTextLength(final int maxQueryTextLength) {
             this.maxQueryTextLength = maxQueryTextLength;
             return this;
@@ -207,7 +201,6 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
          * @return this
          * @since 5.7
          */
-        @Beta(Reason.CLIENT)
         public Builder observationConvention(@Nullable final ObservationConvention<MongodbObservationContext> observationConvention) {
             this.observationConvention = observationConvention;
             return this;

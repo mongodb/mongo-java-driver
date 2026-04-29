@@ -17,8 +17,6 @@
 package com.mongodb.observability.micrometer;
 
 import com.mongodb.ServerAddress;
-import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Reason;
 import com.mongodb.connection.ConnectionId;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
@@ -37,7 +35,6 @@ import java.io.StringWriter;
  *
  * @since 5.7
  */
-@Beta(Reason.CLIENT)
 public class DefaultMongodbObservationConvention implements ObservationConvention<MongodbObservationContext> {
 
     @Override
