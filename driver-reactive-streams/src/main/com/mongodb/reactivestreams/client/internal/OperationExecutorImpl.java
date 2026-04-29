@@ -188,6 +188,10 @@ public class OperationExecutorImpl implements OperationExecutor {
         notNull("operation", operation);
         notNull("readConcern", readConcern);
 
+        if (session != null) {
+            session.notifyOperationInitiated(operation);
+        }
+
         return Mono.from(subscriber ->
                 clientSessionHelper.withClientSession(session, this)
                         .flatMap(actualClientSession -> {

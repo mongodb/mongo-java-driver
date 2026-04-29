@@ -20,10 +20,10 @@ import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Sorts;
+import com.mongodb.internal.operation.AsyncWriteThenReadOperationCursor;
 import com.mongodb.internal.operation.MapReduceStatistics;
 import com.mongodb.internal.operation.MapReduceToCollectionOperation;
 import com.mongodb.internal.operation.MapReduceWithInlineResultsOperation;
-
 import com.mongodb.reactivestreams.client.MapReducePublisher;
 
 
@@ -52,6 +52,27 @@ public class MapReducePublisherImplTest extends TestHelper {
     private static final String MAP_FUNCTION = "mapFunction(){}";
     private static final String REDUCE_FUNCTION = "reduceFunction(){}";
     private static final String FINALIZE_FUNCTION = "finalizeFunction(){}";
+
+    @DisplayName("Non-inline MapReduce routes through the write-then-read executor path")
+    @Test
+    void shouldRouteNonInlineMapReduceThroughWriteThenReadPath() {
+        configureBatchCursor();
+        TestOperationExecutor executor = createOperationExecutor(asList(getBatchCursor()));
+
+        MapReducePublisher<Document> publisher =
+                new MapReducePublisherImpl<>(null, createMongoOperationPublisher(executor),
+                        MAP_FUNCTION, REDUCE_FUNCTION)
+                        .collectionName(NAMESPACE.getCollectionName());
+
+        Flux.from(publisher).blockFirst();
+
+        AsyncWriteThenReadOperationCursor<?> op = executor.getWriteThenReadOperation();
+        assertNotNull(op, "expected a write-then-read operation");
+        assertEquals(NAMESPACE, op.getNamespace());
+        // Must not fall through to the plain read-operation path.
+        assertNull(executor.getReadOperation());
+    }
+
 
     @DisplayName("Inline MapReduce still routes through the read-operation path")
     @Test
