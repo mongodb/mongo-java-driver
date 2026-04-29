@@ -56,19 +56,19 @@ public final class RetryState {
     private Throwable previouslyChosenException;
 
     /**
-     * Creates a {@code RetryState} with a positive number of allowed retries. {@link Integer#MAX_VALUE} is a special value interpreted as
-     * being unlimited.
+     * Creates a {@code RetryState} with a positive number of allowed retry attempts.
+     * {@link Integer#MAX_VALUE} is a special value interpreted as being unlimited.
      * <p>
-     * If a timeout is not specified in the {@link TimeoutContext#hasTimeoutMS()}, the specified {@code retries} param acts as a fallback
+     * If a timeout is not specified in the {@link TimeoutContext#hasTimeoutMS()}, the specified {@code retries} argument acts as a fallback
      * bound. Otherwise, retries are unbounded until the timeout is reached.
      * <p>
      * It is possible to provide an additional {@code retryPredicate} in the {@link #doAdvanceOrThrow} method,
-     * which can be used to stop retrying based on a custom condition additionally to {@code retires} and {@link TimeoutContext}.
+     * which can be used to stop retrying based on a custom condition additionally to {@code retries} and {@link TimeoutContext}.
      * </p>
      *
-     * @param retries A positive number of allowed retries. {@link Integer#MAX_VALUE} is a special value interpreted as being unlimited.
-     * @param retryUntilTimeoutThrowsException If {@code true}, then if a {@link MongoOperationTimeoutException} is throws then retrying stops.
-     * @see #attempts()
+     * @param retries A positive number of allowed retry attempts.
+     * {@link Integer#MAX_VALUE} is a special value interpreted as being unlimited.
+     * @param retryUntilTimeoutThrowsException If {@code true}, then if a {@link MongoOperationTimeoutException} is thrown then retrying stops.
      */
     public static RetryState withRetryableState(final int retries, final boolean retryUntilTimeoutThrowsException) {
         assertTrue(retries > 0);
@@ -80,23 +80,22 @@ public final class RetryState {
     }
 
     /**
-     * Creates a {@link RetryState} that does not limit the number of retries.
+     * Creates a {@link RetryState} that does not limit the number of attempts.
      * The number of attempts is limited iff {@link TimeoutContext#hasTimeoutMS()} is true and timeout has expired.
      * <p>
      * It is possible to provide an additional {@code retryPredicate} in the {@link #doAdvanceOrThrow} method,
-     * which can be used to stop retrying based on a custom condition additionally to {@code retires} and {@link TimeoutContext}.
+     * which can be used to stop retrying based on a custom condition additionally to {@link TimeoutContext}.
      * </p>
      *
      * @param timeoutContext A timeout context that will be used to determine if the operation has timed out.
-     * @see #attempts()
      */
     public RetryState(final TimeoutContext timeoutContext) {
         this(INFINITE_ATTEMPTS, timeoutContext.hasTimeoutMS());
     }
 
     /**
-     * @param retries A non-negative number of allowed retries. {@link Integer#MAX_VALUE} is a special value interpreted as being unlimited.
-     * @see #attempts()
+     * @param retries A non-negative number of allowed retry attempts.
+     * {@link Integer#MAX_VALUE} is a special value interpreted as being unlimited.
      */
     private RetryState(final int retries, final boolean retryUntilTimeoutThrowsException) {
         assertTrue(retries >= 0);
@@ -107,7 +106,7 @@ public final class RetryState {
 
     /**
      * Advances this {@link RetryState} such that it represents the state of a new attempt.
-     * If there is at least one more {@linkplain #attempts() attempt} left, it is consumed by this method.
+     * If there is at least one more attempt left, it is consumed by this method.
      * Must not be called before the {@linkplain #isFirstAttempt() first attempt}, must be called before each subsequent attempt.
      * <p>
      * This method is intended to be used by code that generally does not handle {@link Error}s explicitly,
@@ -353,31 +352,31 @@ public final class RetryState {
     }
 
     /**
-     * Returns {@code true} iff the current attempt is the first one, i.e., no retries have been made.
+     * Returns {@code true} iff the current attempt is the first one, i.e., no retry attempts have been made.
      *
-     * @see #attempts()
+     * @see #attempt()
      */
     public boolean isFirstAttempt() {
         return loopState.isFirstIteration();
     }
 
     /**
-     * Returns {@code true} iff the current attempt is known to be the last one, i.e., it is known that no more retries will be made.
+     * Returns {@code true} iff the current attempt is known to be the last one, i.e., it is known that no more attempts will be made.
      * An attempt is known to be the last one iff any of the following applies:
      * <ul>
      *   <li>{@link #breakAndThrowIfRetryAnd(Supplier)} / {@link #breakAndCompleteIfRetryAnd(Supplier, SingleResultCallback)} / {@link #markAsLastAttempt()} was called.</li>
      *   <li>A timeout is set and has been reached.</li>
-     *   <li>No timeout is set, and the number of {@linkplain #attempts() attempts} is limited, and the current attempt is the last one.</li>
+     *   <li>No timeout is set, and the number of attempts is limited, and the current attempt is the last one.</li>
      * </ul>
      *
-     * @see #attempts()
+     * @see #attempt()
      */
     public boolean isLastAttempt() {
-        if (loopState.isLastIteration()){
+        if (loopState.isLastIteration()) {
             return true;
         }
         if (retryUntilTimeoutThrowsException) {
-           return false;
+            return false;
         }
         return attempt() == attempts - 1;
     }
@@ -385,26 +384,11 @@ public final class RetryState {
     /**
      * A 0-based attempt number.
      *
-     * @see #attempts()
-     */
-    public int attempt() {
-        return loopState.iteration();
-    }
-
-    /**
-     * Returns a positive maximum number of attempts:
-     * <ul>
-     *     <li>0 if the number of retries is {@linkplain #RetryState(TimeoutContext) unlimited};</li>
-     *     <li>1 if no retries are allowed;</li>
-     *     <li>{@link #RetryState(int, boolean) retries} + 1 otherwise.</li>
-     * </ul>
-     *
-     * @see #attempt()
      * @see #isFirstAttempt()
      * @see #isLastAttempt()
      */
-    public int attempts() {
-        return attempts == INFINITE_ATTEMPTS ? 0 : attempts;
+    public int attempt() {
+        return loopState.iteration();
     }
 
     /**

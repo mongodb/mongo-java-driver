@@ -77,22 +77,19 @@ final class RetryStateTest {
         assertAll(
                 () -> assertTrue(retryState.isFirstAttempt()),
                 () -> assertEquals(0, retryState.attempt()),
-                () -> assertFalse(retryState.isLastAttempt()),
-                () -> assertEquals(0, retryState.attempts())
+                () -> assertFalse(retryState.isLastAttempt())
         );
         advance(retryState);
         assertAll(
                 () -> assertFalse(retryState.isFirstAttempt()),
                 () -> assertEquals(1, retryState.attempt()),
-                () -> assertFalse(retryState.isLastAttempt()),
-                () -> assertEquals(0, retryState.attempts())
+                () -> assertFalse(retryState.isLastAttempt())
         );
         retryState.markAsLastAttempt();
         assertAll(
                 () -> assertFalse(retryState.isFirstAttempt()),
                 () -> assertEquals(1, retryState.attempt()),
-                () -> assertTrue(retryState.isLastAttempt()),
-                () -> assertEquals(0, retryState.attempts())
+                () -> assertTrue(retryState.isLastAttempt())
         );
     }
 
@@ -105,14 +102,12 @@ final class RetryStateTest {
                 () -> assertTrue(retryState.isFirstAttempt()),
                 () -> assertEquals(0, retryState.attempt()),
                 () -> assertTrue(retryState.isLastAttempt()),
-                () -> assertEquals(1, retryState.attempts()),
                 () -> assertThrows(attemptException.getClass(), () ->
                         retryState.advanceOrThrow(attemptException, (e1, e2) -> e2, (rs, e) -> true)),
                 // when there is only one attempt, it is both the first and the last one
                 () -> assertTrue(retryState.isFirstAttempt()),
                 () -> assertEquals(0, retryState.attempt()),
-                () -> assertTrue(retryState.isLastAttempt()),
-                () -> assertEquals(1, retryState.attempts())
+                () -> assertTrue(retryState.isLastAttempt())
         );
     }
 
