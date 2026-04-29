@@ -22,6 +22,7 @@ import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.PointerType;
+import com.sun.jna.ptr.ByteByReference;
 import com.sun.jna.ptr.PointerByReference;
 
 //CHECKSTYLE:OFF
@@ -485,6 +486,21 @@ public class CAPI {
      */
     public static native void
     mongocrypt_setopt_bypass_query_analysis (mongocrypt_t crypt);
+
+    /**
+     * Opt-into handling the MONGOCRYPT_CTX_NEED_KMS state with retry logic.
+     *
+     * <p>If opted in, KMS requests will include retry information accessible via
+     * {@link #mongocrypt_kms_ctx_usleep}, {@link #mongocrypt_kms_ctx_feed_with_retry},
+     * and {@link #mongocrypt_kms_ctx_fail}.
+     *
+     * @param crypt  The @ref mongocrypt_t object to update
+     * @param enable Whether to enable KMS retry
+     * @return A boolean indicating success. If false, an error status is set.
+     * @since 5.8
+     */
+    public static native boolean
+    mongocrypt_setopt_retry_kms(mongocrypt_t crypt, boolean enable);
 
     /**
      * Set the expiration time for the data encryption key cache. Defaults to 60 seconds if not set.
@@ -1163,6 +1179,47 @@ public class CAPI {
      */
     public static native boolean
     mongocrypt_kms_ctx_feed(mongocrypt_kms_ctx_t kms, mongocrypt_binary_t bytes);
+
+    /**
+     * Get the number of microseconds to sleep before sending the next KMS request.
+     *
+     * <p>Requires {@link #mongocrypt_setopt_retry_kms} to be enabled.
+     * A return value of 0 indicates no delay is needed.
+     *
+     * @param kms The @ref mongocrypt_kms_ctx_t.
+     * @return The number of microseconds to sleep, or 0.
+     * @since 5.8
+     */
+    public static native long
+    mongocrypt_kms_ctx_usleep(mongocrypt_kms_ctx_t kms);
+
+    /**
+     * Feed bytes from the HTTP response, with retry support.
+     *
+     * <p>Requires {@link #mongocrypt_setopt_retry_kms} to be enabled.
+     *
+     * @param kms          The @ref mongocrypt_kms_ctx_t.
+     * @param bytes        The bytes to feed.
+     * @param should_retry Receives whether the driver should retry the KMS request.
+     * @return A boolean indicating success.
+     * @since 5.8
+     */
+    public static native boolean
+    mongocrypt_kms_ctx_feed_with_retry(mongocrypt_kms_ctx_t kms,
+                                       mongocrypt_binary_t bytes,
+                                       ByteByReference should_retry);
+
+    /**
+     * Signal to libmongocrypt that a network error occurred on this KMS request.
+     *
+     * <p>Requires {@link #mongocrypt_setopt_retry_kms} to be enabled.
+     *
+     * @param kms The @ref mongocrypt_kms_ctx_t.
+     * @return True if the request should be retried, false if retries are exhausted.
+     * @since 5.8
+     */
+    public static native boolean
+    mongocrypt_kms_ctx_fail(mongocrypt_kms_ctx_t kms);
 
 
     /**

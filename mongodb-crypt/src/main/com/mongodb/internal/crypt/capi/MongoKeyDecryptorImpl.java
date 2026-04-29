@@ -22,6 +22,7 @@ import com.mongodb.internal.crypt.capi.CAPI.mongocrypt_binary_t;
 import com.mongodb.internal.crypt.capi.CAPI.mongocrypt_kms_ctx_t;
 import com.mongodb.internal.crypt.capi.CAPI.mongocrypt_status_t;
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.ByteByReference;
 import com.sun.jna.ptr.PointerByReference;
 
 import java.nio.ByteBuffer;
@@ -30,9 +31,12 @@ import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_binary_destroy;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_binary_new;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_kms_ctx_bytes_needed;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_kms_ctx_endpoint;
+import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_kms_ctx_fail;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_kms_ctx_feed;
+import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_kms_ctx_feed_with_retry;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_kms_ctx_get_kms_provider;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_kms_ctx_message;
+import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_kms_ctx_usleep;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_kms_ctx_status;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_status_code;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_status_destroy;
@@ -42,6 +46,11 @@ import static com.mongodb.internal.crypt.capi.CAPIHelper.toBinary;
 import static com.mongodb.internal.crypt.capi.CAPIHelper.toByteBuffer;
 import static org.bson.assertions.Assertions.notNull;
 
+/**
+ * Note: Not thread-safe: methods mutate the underlying native {@code mongocrypt_kms_ctx_t} and must be invoked serially.
+ * Callers perform retries sequentially — the sync driver in a {@code while} loop and the reactive driver via
+ * {@code Mono.flatMap} — so no external synchronization is required.
+ */
 class MongoKeyDecryptorImpl implements MongoKeyDecryptor {
     private final mongocrypt_kms_ctx_t wrapped;
 
@@ -94,6 +103,29 @@ class MongoKeyDecryptorImpl implements MongoKeyDecryptor {
                 throwExceptionFromStatus();
             }
         }
+    }
+
+    @Override
+    public long sleepMicroseconds() {
+        return mongocrypt_kms_ctx_usleep(wrapped);
+    }
+
+    @Override
+    public boolean feedAndRetry(final ByteBuffer bytes) {
+        try (BinaryHolder binaryHolder = toBinary(bytes)) {
+            // Default 0 means "do not retry"; libmongocrypt writes 1 only when the driver should retry.
+            ByteByReference shouldRetry = new ByteByReference();
+            boolean success = mongocrypt_kms_ctx_feed_with_retry(wrapped, binaryHolder.getBinary(), shouldRetry);
+            if (!success) {
+                throwExceptionFromStatus();
+            }
+            return shouldRetry.getValue() != 0;
+        }
+    }
+
+    @Override
+    public boolean fail() {
+        return mongocrypt_kms_ctx_fail(wrapped);
     }
 
     private void throwExceptionFromStatus() {

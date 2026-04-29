@@ -73,6 +73,7 @@ import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_kms_provide
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_kms_provider_local;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_kms_providers;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_log_handler;
+import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_retry_kms;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_schema_map;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_set_crypt_shared_lib_path_override;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_setopt_use_need_kms_credentials_state;
@@ -197,6 +198,8 @@ class MongoCryptImpl implements MongoCrypt {
         if (options.isNeedsKmsCredentialsStateEnabled()) {
             mongocrypt_setopt_use_need_kms_credentials_state(wrapped);
         }
+
+        configure(() -> mongocrypt_setopt_retry_kms(wrapped, true));
 
         if (options.getKmsProviderOptions() != null) {
             withBinaryHolder(options.getKmsProviderOptions(),
