@@ -33,21 +33,22 @@ import com.mongodb.internal.connection.OperationContext;
 public interface AsyncWriteThenReadOperationCursor<T> {
 
     /**
-     * @return the command name of the operation, e.g. "insert", "update", "delete", "bulkWrite", etc.
+     * @return the command name of the write phase of this operation (e.g. "mapReduce", "aggregate")
      */
     String getCommandName();
 
     /**
-     * @return the namespace of the operation
+     * @return the namespace the write phase targets
      */
     MongoNamespace getNamespace();
 
     /**
-     * General execute which can return anything of type T
+     * Executes the write phase followed by the read phase, yielding an {@link AsyncBatchCursor}
+     * over the results of the read.
      *
-     * @param binding the binding to execute in the context of
+     * @param binding the read-write binding used by both phases
      * @param operationContext the operation context to use
-     * @param callback the callback to be called when the operation has been executed
+     * @param callback receives the {@link AsyncBatchCursor} on success, or the failure of either phase
      */
     void executeAsync(AsyncReadWriteBinding binding, OperationContext operationContext,
                       SingleResultCallback<AsyncBatchCursor<T>> callback);
