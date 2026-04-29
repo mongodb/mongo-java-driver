@@ -47,9 +47,12 @@ public class DefaultMongodbObservationConvention implements ObservationConventio
 
     @Override
     public KeyValues getLowCardinalityKeyValues(final MongodbObservationContext context) {
-        if (context.getObservationType() == MongodbObservation.MONGODB_TRANSACTION) {
+        MongodbObservation observationType = context.getObservationType();
+        if (observationType == null) {
+            return KeyValues.empty();
+        } else if  (observationType == MongodbObservation.MONGODB_TRANSACTION) {
             return KeyValues.of(MongodbObservation.TransactionLowCardinalityKeyNames.SYSTEM.withValue("mongodb"));
-        } else if (context.getObservationType() == MongodbObservation.MONGODB_OPERATION) {
+        } else if (observationType == MongodbObservation.MONGODB_OPERATION) {
             return getOperationLowCardinalityKeyValues(context);
         } else {
             return getCommandLowCardinalityKeyValues(context);
