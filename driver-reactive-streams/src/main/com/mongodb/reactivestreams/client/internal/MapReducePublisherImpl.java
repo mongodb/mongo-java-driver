@@ -28,7 +28,6 @@ import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.connection.OperationContext;
-import com.mongodb.internal.operation.AsyncWriteThenReadOperationCursor;
 import com.mongodb.internal.operation.MapReduceAsyncBatchCursor;
 import com.mongodb.internal.operation.MapReduceBatchCursor;
 import com.mongodb.internal.operation.MapReduceStatistics;
