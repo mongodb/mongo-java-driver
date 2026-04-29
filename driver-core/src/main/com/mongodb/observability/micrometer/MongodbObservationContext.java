@@ -42,6 +42,7 @@ import io.micrometer.observation.transport.SenderContext;
 @Beta(Reason.CLIENT)
 public class MongodbObservationContext extends SenderContext<Object> {
 
+    @Nullable
     private MongodbObservation observationType;
     @Nullable
     private String commandName;
