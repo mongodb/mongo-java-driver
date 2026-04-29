@@ -19,6 +19,8 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.operation.AsyncWriteThenReadOperationCursor;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
@@ -53,6 +55,20 @@ public interface OperationExecutor {
      * @param <T> the operations result type.
      */
     <T> Mono<T> execute(WriteOperation<T> operation, ReadConcern readConcern, @Nullable ClientSession session);
+
+    /**
+     * Execute an operation that writes and then reads a cursor within a single read-write binding.
+     *
+     * <p>The binding is acquired once and used for both phases, avoiding the need to narrow an
+     * {@code AsyncReadBinding} to an {@code AsyncWriteBinding}.
+     *
+     * @param operation the write-then-read operation.
+     * @param readConcern the read concern
+     * @param session the session to associate this operation with
+     * @param <T> the document type returned by the cursor.
+     */
+    <T> Mono<AsyncBatchCursor<T>> execute(AsyncWriteThenReadOperationCursor<T> operation,
+            ReadConcern readConcern, @Nullable ClientSession session);
 
     /**
      * Create a new OperationExecutor with a specific timeout settings

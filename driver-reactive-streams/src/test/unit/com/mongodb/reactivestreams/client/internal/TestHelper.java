@@ -26,6 +26,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.bulk.IndexRequest;
 import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.client.model.FindOptions;
+import com.mongodb.internal.operation.AsyncWriteThenReadOperationCursor;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.NonNull;
@@ -93,7 +94,10 @@ public class TestHelper {
 
         Mockito.lenient().doAnswer(invocation -> Mono.empty())
                 .when(executor)
-                .execute(any(), any(), any());
+                .execute(any(WriteOperation.class), any(), any());
+        Mockito.lenient().doAnswer(invocation -> Mono.empty())
+                .when(executor)
+                .execute(any(AsyncWriteThenReadOperationCursor.class), any(), any());
         Mockito.lenient().doAnswer(invocation -> Mono.empty())
                 .when(executor)
                 .execute(any(), any(), any(), any());

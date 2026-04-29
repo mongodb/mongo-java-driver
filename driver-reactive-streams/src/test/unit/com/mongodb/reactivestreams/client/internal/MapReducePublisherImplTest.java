@@ -23,6 +23,10 @@ import com.mongodb.client.model.Sorts;
 import com.mongodb.internal.operation.MapReduceStatistics;
 import com.mongodb.internal.operation.MapReduceToCollectionOperation;
 import com.mongodb.internal.operation.MapReduceWithInlineResultsOperation;
+
+import com.mongodb.reactivestreams.client.MapReducePublisher;
+
+
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonJavaScript;
@@ -39,6 +43,7 @@ import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SuppressWarnings({"rawtypes", "deprecation"})
@@ -47,6 +52,23 @@ public class MapReducePublisherImplTest extends TestHelper {
     private static final String MAP_FUNCTION = "mapFunction(){}";
     private static final String REDUCE_FUNCTION = "reduceFunction(){}";
     private static final String FINALIZE_FUNCTION = "finalizeFunction(){}";
+
+    @DisplayName("Inline MapReduce still routes through the read-operation path")
+    @Test
+    void shouldRouteInlineMapReduceThroughReadOperationPath() {
+        configureBatchCursor();
+        TestOperationExecutor executor = createOperationExecutor(asList(getBatchCursor()));
+
+        MapReducePublisher<Document> publisher =
+                new MapReducePublisherImpl<>(null, createMongoOperationPublisher(executor),
+                        MAP_FUNCTION, REDUCE_FUNCTION); // no collectionName -> inline
+
+        Flux.from(publisher).blockFirst();
+
+        assertNotNull(executor.getReadOperation());
+        assertNull(executor.getWriteThenReadOperation());
+    }
+
 
     @DisplayName("Should build the expected MapReduceWithInlineResultsOperation")
     @Test
