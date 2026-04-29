@@ -50,7 +50,7 @@ public class DefaultMongodbObservationConvention implements ObservationConventio
         MongodbObservation observationType = context.getObservationType();
         if (observationType == null) {
             return KeyValues.empty();
-        } else if  (observationType == MongodbObservation.MONGODB_TRANSACTION) {
+        } else if (observationType == MongodbObservation.MONGODB_TRANSACTION) {
             return KeyValues.of(MongodbObservation.TransactionLowCardinalityKeyNames.SYSTEM.withValue("mongodb"));
         } else if (observationType == MongodbObservation.MONGODB_OPERATION) {
             return getOperationLowCardinalityKeyValues(context);
