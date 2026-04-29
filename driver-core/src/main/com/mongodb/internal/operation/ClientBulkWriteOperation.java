@@ -301,7 +301,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                     .attach(AttachmentKeys.commandDescriptionSupplier(), () -> BULK_WRITE_COMMAND_NAME, false);
                             ClientBulkWriteCommand bulkWriteCommand = createBulkWriteCommand(
                                     retryState, effectiveRetryWrites, effectiveWriteConcern, sessionContext, unexecutedModels, batchEncoder,
-                                    () -> retryState.attach(AttachmentKeys.retryableCommandFlag(), true, true));
+                                    () -> retryState.attach(AttachmentKeys.retryableWriteCommandFlag(), true, true));
                             return executeBulkWriteCommandAndExhaustOkResponse(
                                     retryState, connectionSource, connection, bulkWriteCommand, effectiveWriteConcern, operationContextWithMinRtt);
                         }, operationContext)
@@ -361,7 +361,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                     .attach(AttachmentKeys.commandDescriptionSupplier(), () -> BULK_WRITE_COMMAND_NAME, false);
                             ClientBulkWriteCommand bulkWriteCommand = createBulkWriteCommand(
                                     retryState, effectiveRetryWrites, effectiveWriteConcern, sessionContext, unexecutedModels, batchEncoder,
-                                    () -> retryState.attach(AttachmentKeys.retryableCommandFlag(), true, true));
+                                    () -> retryState.attach(AttachmentKeys.retryableWriteCommandFlag(), true, true));
                             executeBulkWriteCommandAndExhaustOkResponseAsync(
                                     retryState, connectionSource, connection, bulkWriteCommand, effectiveWriteConcern, operationContextWithMinRtt, resultCallback);
                         })
@@ -495,14 +495,14 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     private <R> R doWithRetriesDisabled(
             final RetryState outerRetryState,
             final Supplier<R> action) {
-        // TODO-JAVA-5956 The current implementation incorrectly uses `retryableCommandFlag` to achieve the behavior needed.
-        Optional<Boolean> originalRetryableCommandFlag = outerRetryState.attachment(AttachmentKeys.retryableCommandFlag());
+        // TODO-JAVA-5956 The current implementation incorrectly uses `retryableWriteCommandFlag` to achieve the behavior needed.
+        Optional<Boolean> originalRetryableWriteCommandFlag = outerRetryState.attachment(AttachmentKeys.retryableWriteCommandFlag());
 
         try {
-            outerRetryState.attach(AttachmentKeys.retryableCommandFlag(), false, true);
+            outerRetryState.attach(AttachmentKeys.retryableWriteCommandFlag(), false, true);
             return action.get();
         } finally {
-            originalRetryableCommandFlag.ifPresent(value -> outerRetryState.attach(AttachmentKeys.retryableCommandFlag(), value, true));
+            originalRetryableWriteCommandFlag.ifPresent(value -> outerRetryState.attach(AttachmentKeys.retryableWriteCommandFlag(), value, true));
         }
     }
 
@@ -513,14 +513,14 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final RetryState retryState,
             final AsyncSupplier<R> action,
             final SingleResultCallback<R> callback) {
-        // TODO-JAVA-5956 The current implementation incorrectly uses `retryableCommandFlag` to achieve the behavior needed.
-        Optional<Boolean> originalRetryableCommandFlag = retryState.attachment(AttachmentKeys.retryableCommandFlag());
+        // TODO-JAVA-5956 The current implementation incorrectly uses `retryableWriteCommandFlag` to achieve the behavior needed.
+        Optional<Boolean> originalRetryableWriteCommandFlag = retryState.attachment(AttachmentKeys.retryableWriteCommandFlag());
 
         beginAsync().<R>thenSupply(c -> {
-            retryState.attach(AttachmentKeys.retryableCommandFlag(), false, true);
+            retryState.attach(AttachmentKeys.retryableWriteCommandFlag(), false, true);
             action.finish(c);
         }).thenAlwaysRunAndFinish(() -> {
-            originalRetryableCommandFlag.ifPresent(value -> retryState.attach(AttachmentKeys.retryableCommandFlag(), value, true));
+            originalRetryableWriteCommandFlag.ifPresent(value -> retryState.attach(AttachmentKeys.retryableWriteCommandFlag(), value, true));
         }, callback);
     }
 

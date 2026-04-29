@@ -96,7 +96,6 @@ public final class RetryState {
 
     /**
      * @param retries A non-negative number of allowed retries. {@link Integer#MAX_VALUE} is a special value interpreted as being unlimited.
-     * @param retryUntilTimeoutThrowsException
      * @see #attempts()
      */
     private RetryState(final int retries, final boolean retryUntilTimeoutThrowsException) {
@@ -147,7 +146,7 @@ public final class RetryState {
      *     <li>the {@code retryPredicate} is {@code false}.</li>
      * </ul>
      * The exception thrown represents the failed result of the associated retryable activity,
-     * i.e., the caller must not do any more attempts.
+     * i.e., the caller must not make any more attempts.
      * @see #advanceOrThrow(Throwable, BinaryOperator, BiPredicate)
      */
     void advanceOrThrow(final RuntimeException attemptException, final BinaryOperator<Throwable> onAttemptFailureOperator,

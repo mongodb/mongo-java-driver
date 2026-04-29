@@ -172,7 +172,7 @@ final class CommandOperationHelper {
                 || (attemptFailure instanceof MongoSecurityException
                 && attemptFailure.getCause() != null && isRetryableException(attemptFailure.getCause()));
         if (!decision) {
-            logUnableToRetry(retryState.attachment(AttachmentKeys.commandDescriptionSupplier()).orElse(null), attemptFailure);
+            logUnableToRetryCommand(retryState, attemptFailure);
         }
         return decision;
     }
@@ -180,10 +180,8 @@ final class CommandOperationHelper {
     static boolean loggingShouldAttemptToRetryWriteAndAddRetryableLabel(final RetryState retryState, final Throwable attemptFailure) {
         Throwable attemptFailureNotToBeRetried = getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel(retryState, attemptFailure);
         boolean decision = attemptFailureNotToBeRetried == null;
-        if (!decision && retryState.attachment(AttachmentKeys.retryableCommandFlag()).orElse(false)) {
-            logUnableToRetry(
-                    retryState.attachment(AttachmentKeys.commandDescriptionSupplier()).orElse(null),
-                    assertNotNull(attemptFailureNotToBeRetried));
+        if (!decision && retryState.attachment(AttachmentKeys.retryableWriteCommandFlag()).orElse(false)) {
+            logUnableToRetryCommand(retryState, assertNotNull(attemptFailureNotToBeRetried));
         }
         return decision;
     }
@@ -205,10 +203,10 @@ final class CommandOperationHelper {
             decision = true;
             exceptionRetryableRegardlessOfCommand = (MongoException) failure;
         }
-        if (retryState.attachment(AttachmentKeys.retryableCommandFlag()).orElse(false)) {
+        if (retryState.attachment(AttachmentKeys.retryableWriteCommandFlag()).orElse(false)) {
             if (exceptionRetryableRegardlessOfCommand != null) {
-                /* We are going to retry even if `retryableCommand` is false,
-                 * but we add the retryable label only if `retryableCommand` is true. */
+                /* We are going to retry even if `retryableWriteCommandFlag` is false,
+                 * but we add the retryable label only if `retryableWriteCommandFlag` is true. */
                 exceptionRetryableRegardlessOfCommand.addLabel(RETRYABLE_WRITE_ERROR_LABEL);
             } else if (decideRetryableAndAddRetryableWriteErrorLabel(failure, retryState.attachment(AttachmentKeys.maxWireVersion())
                     .orElse(null))) {
@@ -218,9 +216,20 @@ final class CommandOperationHelper {
         return decision ? null : assertNotNull(failure);
     }
 
-    static boolean isRetryWritesEnabled(@Nullable final BsonDocument command) {
-        return (command != null && (command.containsKey("txnNumber")
-                || command.getFirstKey().equals("commitTransaction") || command.getFirstKey().equals("abortTransaction")));
+    /**
+     * Returns {@code true} if the {@code command} is intended to be executed outside a transaction and supports being retried,
+     * or if the {@code command} is {@code commitTransaction}/{@code abortTransaction}; {@code false} otherwise.
+     */
+    static boolean isRetryableWriteCommand(final BsonDocument command) {
+        // Given the requirement
+        // https://github.com/mongodb/specifications/blame/7039e69945d463a14b1b727d16db063e21f48f53/source/transactions/transactions.md#L584-L586:
+        //   When executing the `commitTransaction` and `abortTransaction` commands within a transaction
+        //   drivers MUST use the same `txnNumber` used for all preceding commands in the transaction.
+        // the additional checks if the `command` is either `commitTransaction`/`abortTransaction, may seem unnecessary.
+        // However, since the `txnNumber` key is added to commands within transactions by `CommandMessage`,
+        // the key is not present when the logic of automatic retries inspects a `commitTransaction`/`abortTransaction` command for it.
+        return (command.containsKey("txnNumber")
+                || command.getFirstKey().equals("commitTransaction") || command.getFirstKey().equals("abortTransaction"));
     }
 
     static final String RETRYABLE_WRITE_ERROR_LABEL = "RetryableWriteError";
@@ -245,26 +254,26 @@ final class CommandOperationHelper {
         }
     }
 
-    static void logRetryExecute(final RetryState retryState, final OperationContext operationContext) {
+    static void logRetryCommand(final RetryState retryState, final OperationContext operationContext) {
         if (LOGGER.isDebugEnabled() && !retryState.isFirstAttempt()) {
             String commandDescription = retryState.attachment(AttachmentKeys.commandDescriptionSupplier()).map(Supplier::get).orElse(null);
             Throwable exception = retryState.exception().orElseThrow(Assertions::fail);
             int oneBasedAttempt = retryState.attempt() + 1;
             long operationId = operationContext.getId();
             LOGGER.debug(commandDescription == null
-                    ? format("Retrying the operation with operation ID %s due to the error \"%s\". Attempt number: #%d",
-                    operationId, exception, oneBasedAttempt)
-                    : format("Retrying the operation '%s' with operation ID %s due to the error \"%s\". Attempt number: #%d",
-                    commandDescription, operationId, exception, oneBasedAttempt));
+                    ? format("Retrying a command within the operation with operation ID %s due to the error \"%s\". Attempt number: #%d",
+                            operationId, exception, oneBasedAttempt)
+                    : format("Retrying the command '%s' within the operation with operation ID %s due to the error \"%s\". Attempt number: #%d",
+                            commandDescription, operationId, exception, oneBasedAttempt));
         }
     }
 
-    private static void logUnableToRetry(@Nullable final Supplier<String> commandDescriptionSupplier, final Throwable originalError) {
+    private static void logUnableToRetryCommand(final RetryState retryState, final Throwable originalError) {
         if (LOGGER.isDebugEnabled()) {
-            String commandDescription = commandDescriptionSupplier == null ? null : commandDescriptionSupplier.get();
+            String commandDescription = retryState.attachment(AttachmentKeys.commandDescriptionSupplier()).map(Supplier::get).orElse(null);
             LOGGER.debug(commandDescription == null
-                    ? format("Unable to retry an operation due to the error \"%s\"", originalError)
-                    : format("Unable to retry the operation %s due to the error \"%s\"", commandDescription, originalError));
+                    ? format("Unable to retry a command due to the error \"%s\"", originalError)
+                    : format("Unable to retry the command '%s' due to the error \"%s\"", commandDescription, originalError));
         }
     }
 

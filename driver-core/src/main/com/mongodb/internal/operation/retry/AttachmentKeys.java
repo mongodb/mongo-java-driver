@@ -15,8 +15,8 @@
  */
 package com.mongodb.internal.operation.retry;
 
+import com.mongodb.MongoConnectionPoolClearedException;
 import com.mongodb.annotations.Immutable;
-import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.internal.async.function.LoopState.AttachmentKey;
 import com.mongodb.internal.operation.MixedBulkWriteOperation.BulkWriteTracker;
 import org.bson.BsonDocument;
@@ -38,11 +38,10 @@ import static com.mongodb.assertions.Assertions.fail;
 public final class AttachmentKeys {
     private static final AttachmentKey<Integer> MAX_WIRE_VERSION = new DefaultAttachmentKey<>("maxWireVersion");
     private static final AttachmentKey<BsonDocument> COMMAND = new DefaultAttachmentKey<>("command");
-    private static final AttachmentKey<Boolean> RETRYABLE_COMMAND_FLAG = new DefaultAttachmentKey<>("retryableCommandFlag");
+    private static final AttachmentKey<Boolean> RETRYABLE_WRITE_COMMAND_FLAG = new DefaultAttachmentKey<>("retryableWriteCommandFlag");
     private static final AttachmentKey<Supplier<String>> COMMAND_DESCRIPTION_SUPPLIER = new DefaultAttachmentKey<>(
             "commandDescriptionSupplier");
     private static final AttachmentKey<BulkWriteTracker> BULK_WRITE_TRACKER = new DefaultAttachmentKey<>("bulkWriteTracker");
-    private static final AttachmentKey<BulkWriteResult> BULK_WRITE_RESULT = new DefaultAttachmentKey<>("bulkWriteResult");
 
     public static AttachmentKey<Integer> maxWireVersion() {
         return MAX_WIRE_VERSION;
@@ -52,8 +51,13 @@ public final class AttachmentKeys {
         return COMMAND;
     }
 
-    public static AttachmentKey<Boolean> retryableCommandFlag() {
-        return RETRYABLE_COMMAND_FLAG;
+    /**
+     * Setting this flag to {@code false}, or leaving it unset, does not completely disable retrying,
+     * but does change which failed results may be eligible for retry.
+     * For example, {@link MongoConnectionPoolClearedException} may be eligible for retry regardless of this flag.
+     */
+    public static AttachmentKey<Boolean> retryableWriteCommandFlag() {
+        return RETRYABLE_WRITE_COMMAND_FLAG;
     }
 
     public static AttachmentKey<Supplier<String>> commandDescriptionSupplier() {
@@ -62,10 +66,6 @@ public final class AttachmentKeys {
 
     public static AttachmentKey<BulkWriteTracker> bulkWriteTracker() {
         return BULK_WRITE_TRACKER;
-    }
-
-    public static AttachmentKey<BulkWriteResult> bulkWriteResult() {
-        return BULK_WRITE_RESULT;
     }
 
     private AttachmentKeys() {

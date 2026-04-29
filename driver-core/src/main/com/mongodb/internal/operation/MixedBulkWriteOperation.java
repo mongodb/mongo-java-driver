@@ -62,7 +62,7 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.internal.operation.AsyncOperationHelper.exceptionTransformingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
 import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabel;
-import static com.mongodb.internal.operation.CommandOperationHelper.logRetryExecute;
+import static com.mongodb.internal.operation.CommandOperationHelper.logRetryCommand;
 import static com.mongodb.internal.operation.CommandOperationHelper.loggingShouldAttemptToRetryWriteAndAddRetryableLabel;
 import static com.mongodb.internal.operation.CommandOperationHelper.onRetryableWriteAttemptFailure;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
@@ -149,7 +149,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final Supplier<R> writeFunction) {
         return new RetryingSyncSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext),
                 this::shouldAttemptToRetryWrite, () -> {
-            logRetryExecute(retryState, operationContext);
+            logRetryCommand(retryState, operationContext);
             return writeFunction.get();
         });
     }
@@ -158,7 +158,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final AsyncCallbackSupplier<R> writeFunction) {
         return new RetryingAsyncCallbackSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext),
                 this::shouldAttemptToRetryWrite, callback -> {
-            logRetryExecute(retryState, operationContext);
+            logRetryCommand(retryState, operationContext);
             writeFunction.get(callback);
         });
     }
@@ -486,7 +486,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             retryState.attach(AttachmentKeys.bulkWriteTracker(), tracker, false);
             BulkWriteBatch batch = tracker.batch;
             if (batch != null) {
-                retryState.attach(AttachmentKeys.retryableCommandFlag(), batch.getRetryWrites(), false)
+                retryState.attach(AttachmentKeys.retryableWriteCommandFlag(), batch.getRetryWrites(), false)
                         .attach(AttachmentKeys.commandDescriptionSupplier(), () -> batch.getPayload().getPayloadType().toString(), false);
             }
         }
