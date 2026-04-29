@@ -186,15 +186,11 @@ final class CommandOperationHelper {
         return decision;
     }
 
-    static boolean shouldAttemptToRetryWriteAndAddRetryableLabel(final RetryState retryState, final Throwable attemptFailure) {
-        return getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel(retryState, attemptFailure) != null;
-    }
-
     /**
      * @return {@code null} if the decision is {@code true}. Otherwise, returns the {@link Throwable} that must not be retried.
      */
     @Nullable
-    private static Throwable getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel(final RetryState retryState, final Throwable attemptFailure) {
+    static Throwable getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel(final RetryState retryState, final Throwable attemptFailure) {
         Throwable failure = attemptFailure instanceof ResourceSupplierInternalException ? attemptFailure.getCause() : attemptFailure;
         boolean decision = false;
         MongoException exceptionRetryableRegardlessOfCommand = null;

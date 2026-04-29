@@ -130,8 +130,8 @@ import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWriteW
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
 import static com.mongodb.internal.operation.BulkWriteBatch.logWriteModelDoesNotSupportRetries;
 import static com.mongodb.internal.operation.CommandOperationHelper.commandWriteConcern;
+import static com.mongodb.internal.operation.CommandOperationHelper.getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel;
 import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
-import static com.mongodb.internal.operation.CommandOperationHelper.shouldAttemptToRetryWriteAndAddRetryableLabel;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.internal.operation.SyncOperationHelper.cursorDocumentToBatchCursor;
@@ -321,7 +321,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             // The server does not have a chance to add "RetryableWriteError" label to `e`,
             // and if it is the last attempt failure, `RetryingSyncSupplier` also may not have a chance
             // to add the label. So we do that explicitly.
-            shouldAttemptToRetryWriteAndAddRetryableLabel(retryState, mongoException);
+            getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel(retryState, mongoException);
             resultAccumulator.onBulkWriteCommandErrorWithoutResponse(mongoException);
             throw mongoException;
         }
@@ -386,7 +386,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 // The server does not have a chance to add "RetryableWriteError" label to `e`,
                 // and if it is the last attempt failure, `RetryingSyncSupplier` also may not have a chance
                 // to add the label. So we do that explicitly.
-                shouldAttemptToRetryWriteAndAddRetryableLabel(retryState, mongoException);
+                getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel(retryState, mongoException);
                 resultAccumulator.onBulkWriteCommandErrorWithoutResponse(mongoException);
                 c.completeExceptionally(mongoException);
             } else {
