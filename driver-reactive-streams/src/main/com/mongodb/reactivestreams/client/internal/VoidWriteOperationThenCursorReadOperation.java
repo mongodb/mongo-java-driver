@@ -19,13 +19,13 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.MongoNamespace;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.binding.AsyncReadBinding;
-import com.mongodb.internal.binding.AsyncWriteBinding;
+import com.mongodb.internal.binding.AsyncReadWriteBinding;
 import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.operation.AsyncWriteThenReadOperationCursor;
 import com.mongodb.internal.operation.ReadOperationCursor;
 import com.mongodb.internal.operation.WriteOperation;
 
-class VoidWriteOperationThenCursorReadOperation<T> implements ReadOperationCursorAsyncOnly<T> {
+class VoidWriteOperationThenCursorReadOperation<T> implements AsyncWriteThenReadOperationCursor<T> {
     private final WriteOperation<Void> writeOperation;
     private final ReadOperationCursor<T> cursorReadOperation;
 
@@ -46,8 +46,9 @@ class VoidWriteOperationThenCursorReadOperation<T> implements ReadOperationCurso
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        writeOperation.executeAsync((AsyncWriteBinding) binding, operationContext,  (result, t) -> {
+    public void executeAsync(final AsyncReadWriteBinding binding, final OperationContext operationContext,
+                             final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+        writeOperation.executeAsync(binding, operationContext, (result, t) -> {
             if (t != null) {
                 callback.onResult(null, t);
             } else {

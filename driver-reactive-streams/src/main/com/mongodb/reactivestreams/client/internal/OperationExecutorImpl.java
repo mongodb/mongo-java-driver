@@ -33,6 +33,8 @@ import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.observability.micrometer.TracingManager;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.operation.AsyncWriteThenReadOperationCursor;
 import com.mongodb.internal.operation.OperationHelper;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
@@ -176,6 +178,51 @@ public class OperationExecutorImpl implements OperationExecutor {
                                 }));
                                 }
                         ).subscribe(subscriber)
+        );
+    }
+
+    @Override
+    public <T> Mono<AsyncBatchCursor<T>> execute(final AsyncWriteThenReadOperationCursor<T> operation, final ReadConcern readConcern,
+            @Nullable final ClientSession session) {
+        isTrue("open", !mongoClient.getCluster().isClosed());
+        notNull("operation", operation);
+        notNull("readConcern", readConcern);
+
+        if (session != null) {
+            session.notifyOperationInitiated(operation);
+        }
+
+        return Mono.from(subscriber ->
+                clientSessionHelper.withClientSession(session, this)
+                        .flatMap(actualClientSession -> {
+                            AsyncReadWriteBinding binding = getReadWriteBinding(primary(), actualClientSession, session == null);
+                            RequestContext requestContext = getContext(subscriber);
+                            OperationContext operationContext = getOperationContext(requestContext, actualClientSession, readConcern, operation.getCommandName())
+                                    .withSessionContext(new ClientSessionBinding.AsyncClientSessionContext(actualClientSession,
+                                            isImplicitSession(session), readConcern));
+                            Span span = tracingManager.createOperationSpan(actualClientSession.getTransactionSpan(),
+                                    operationContext, operation.getCommandName(), operation.getNamespace());
+
+                            return Mono.<AsyncBatchCursor<T>>create(sink -> operation.executeAsync(binding, operationContext, (result, t) -> {
+                                try {
+                                    binding.release();
+                                } finally {
+                                    if (t != null) {
+                                        Throwable exceptionToHandle = t instanceof MongoException
+                                                ? OperationHelper.unwrap((MongoException) t) : t;
+                                        labelException(session, exceptionToHandle);
+                                        unpinServerAddressOnTransientTransactionError(session, exceptionToHandle);
+                                        if (span != null) {
+                                            span.error(t);
+                                        }
+                                    }
+                                    if (span != null) {
+                                        span.end();
+                                    }
+                                    sinkToCallback(sink).onResult(result, t);
+                                }
+                            }));
+                        }).subscribe(subscriber)
         );
     }
 

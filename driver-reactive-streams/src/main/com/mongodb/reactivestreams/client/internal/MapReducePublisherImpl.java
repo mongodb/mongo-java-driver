@@ -40,6 +40,7 @@ import com.mongodb.reactivestreams.client.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -201,10 +202,46 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
         if (inline) {
             // initialBatchSize is ignored for map reduce operations.
             return createMapReduceInlineOperation();
-        } else {
-            return new VoidWriteOperationThenCursorReadOperation<>(createMapReduceToCollectionOperation(),
-                    createFindOperation(initialBatchSize));
         }
+        throw new IllegalStateException("Non-inline map-reduce uses the write-then-read path; "
+                + "asReadOperation must not be called.");
+    }
+
+    @Override
+    public Mono<BatchCursor<T>> batchCursor(final int initialBatchSize) {
+        if (inline) {
+            return super.batchCursor(initialBatchSize);
+        }
+        return writeThenReadBatchCursor(initialBatchSize);
+    }
+
+    @Override
+    public Publisher<T> first() {
+        if (inline) {
+            return super.first();
+        }
+        return writeThenReadBatchCursor(1)
+                .flatMap(batchCursor -> {
+                    batchCursor.setBatchSize(1);
+                    return Mono.from(batchCursor.next())
+                            .doOnTerminate(batchCursor::close)
+                            .flatMap(results -> {
+                                if (results == null || results.isEmpty()) {
+                                    return Mono.empty();
+                                }
+                                return Mono.fromCallable(() -> results.get(0));
+                            });
+                });
+    }
+
+    private Mono<BatchCursor<T>> writeThenReadBatchCursor(final int initialBatchSize) {
+        return getMongoOperationPublisher()
+                .createWriteThenReadOperationMono(
+                        operations -> operations.createTimeoutSettings(maxTimeMS),
+                        () -> new VoidWriteOperationThenCursorReadOperation<>(createMapReduceToCollectionOperation(),
+                                createFindOperation(initialBatchSize)),
+                        getClientSession())
+                .map(BatchCursor::new);
     }
 
     private WrappedMapReduceReadOperation<T> createMapReduceInlineOperation() {

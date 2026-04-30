@@ -19,6 +19,8 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.operation.AsyncWriteThenReadOperationCursor;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
@@ -37,6 +39,7 @@ public class TestOperationExecutor implements OperationExecutor {
 
     private final List<ReadOperation> readOperations = new ArrayList<>();
     private final List<WriteOperation> writeOperations = new ArrayList<>();
+    private final List<AsyncWriteThenReadOperationCursor> writeThenReadOperations = new ArrayList<>();
 
     public TestOperationExecutor(final List<Object> responses) {
         this.responses = new ArrayList<>(responses);
@@ -57,6 +60,14 @@ public class TestOperationExecutor implements OperationExecutor {
                                @Nullable final ClientSession session) {
         clientSessions.add(session);
         writeOperations.add(operation);
+        return createMono();
+    }
+
+    @Override
+    public <T> Mono<AsyncBatchCursor<T>> execute(final AsyncWriteThenReadOperationCursor<T> operation, final ReadConcern readConcern,
+                                                 @Nullable final ClientSession session) {
+        clientSessions.add(session);
+        writeThenReadOperations.add(operation);
         return createMono();
     }
 
@@ -104,6 +115,11 @@ public class TestOperationExecutor implements OperationExecutor {
     @Nullable
     WriteOperation getWriteOperation() {
         return writeOperations.isEmpty() ? null : writeOperations.remove(0);
+    }
+
+    @Nullable
+    AsyncWriteThenReadOperationCursor getWriteThenReadOperation() {
+        return writeThenReadOperations.isEmpty() ? null : writeThenReadOperations.remove(0);
     }
 
 }
