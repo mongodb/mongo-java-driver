@@ -16,11 +16,11 @@
 
 package com.mongodb.client.model.search;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.Fixture;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.OperationTest;
 import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.client.model.SearchIndexType;
 import org.bson.Document;
@@ -55,11 +55,12 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
  * Index creation and validation tests are in {@link com.mongodb.client.AbstractAtlasSearchIndexManagementProseTest}.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public abstract class AbstractAutoEmbeddingVectorSearchFunctionalTest extends OperationTest {
+public abstract class AbstractAutoEmbeddingVectorSearchFunctionalTest {
 
     private static final String FIELD_SEARCH_PATH = "plot";
     private static final String INDEX_NAME = "voyage_4";
     private static final String MOVIE_NAME = "Breathe";
+    private static final String COLLECTION_NAME = "test";
     private static final CodecRegistry CODEC_REGISTRY = fromRegistries(getDefaultCodecRegistry(),
             fromProviders(PojoCodecProvider
                     .builder()
@@ -73,15 +74,15 @@ public abstract class AbstractAutoEmbeddingVectorSearchFunctionalTest extends Op
         //TODO-JAVA-6059 remove this assumption when Atlas Vector Search with automated embedding is generally available
         Assumptions.assumeTrue(false);
 
-        super.beforeEach();
         mongoClient = getMongoClient(getMongoClientSettingsBuilder()
                 .codecRegistry(CODEC_REGISTRY)
                 .build());
         documentCollection = mongoClient
                 .getDatabase(getDatabaseName())
-                .getCollection(getCollectionName());
+                .getCollection(COLLECTION_NAME);
+        documentCollection.drop();
 
-        mongoClient.getDatabase(getDatabaseName()).createCollection(getCollectionName());
+        mongoClient.getDatabase(getDatabaseName()).createCollection(COLLECTION_NAME);
         createAutoEmbeddingIndex("voyage-4-large");
         // TODO-JAVA-6063
         // community search with automated embedding doesn't support queryable field yet
@@ -97,8 +98,14 @@ public abstract class AbstractAutoEmbeddingVectorSearchFunctionalTest extends Op
     @SuppressWarnings("try")
     void tearDownOnce() {
         try (MongoClient ignore = mongoClient) {
-            super.afterEach();
+            if (documentCollection != null) {
+                documentCollection.drop();
+            }
         }
+    }
+
+    private static String getDatabaseName() {
+        return ClusterFixture.getDefaultDatabaseName();
     }
 
     private static MongoClientSettings.Builder getMongoClientSettingsBuilder() {
