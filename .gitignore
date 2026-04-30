@@ -55,6 +55,11 @@ local.properties
 # security-sensitive files
 *.gpg
 
+# per-developer Agent overrides
+.AGENTS.md
+.claude/settings.local.json
+CLAUDE.local.md
+
 # bin build directories
 **/bin
 
