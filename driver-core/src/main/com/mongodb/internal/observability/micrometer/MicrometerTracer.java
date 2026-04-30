@@ -18,25 +18,20 @@ package com.mongodb.internal.observability.micrometer;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.lang.Nullable;
-import io.micrometer.common.KeyValue;
-import io.micrometer.common.KeyValues;
+import com.mongodb.observability.micrometer.DefaultMongodbObservationConvention;
+import com.mongodb.observability.micrometer.MongodbObservation;
+import com.mongodb.observability.micrometer.MongodbObservationContext;
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.observation.transport.Kind;
-import io.micrometer.observation.transport.SenderContext;
 import org.bson.BsonDocument;
 import org.bson.BsonReader;
 import org.bson.json.JsonMode;
 import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
 
-import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_MESSAGE;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_STACKTRACE;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.EXCEPTION_TYPE;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.MONGODB_OBSERVATION;
 import static com.mongodb.internal.observability.micrometer.TracingManager.ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH;
 import static java.lang.System.getenv;
 import static java.util.Optional.ofNullable;
@@ -55,34 +50,30 @@ public class MicrometerTracer implements Tracer {
     private final ObservationRegistry observationRegistry;
     private final boolean allowCommandPayload;
     private final int textMaxLength;
-    private static final String QUERY_TEXT_LENGTH_CONTEXT_KEY = "QUERY_TEXT_MAX_LENGTH";
+    private final ObservationConvention<MongodbObservationContext> convention;
 
     /**
      * Constructs a new {@link MicrometerTracer} instance.
      *
      * @param observationRegistry The Micrometer {@link ObservationRegistry} to delegate tracing operations to.
-     */
-    public MicrometerTracer(final ObservationRegistry observationRegistry) {
-        this(observationRegistry, false, 0);
-    }
-
-    /**
-     * Constructs a new {@link MicrometerTracer} instance with an option to allow command payloads.
-     *
-     * @param observationRegistry The Micrometer {@link ObservationRegistry} to delegate tracing operations to.
      * @param allowCommandPayload Whether to allow command payloads in the trace context.
+     * @param textMaxLength       The maximum length for query text truncation.
+     * @param customConvention    A custom observation convention, or null to use the default.
      */
-    public MicrometerTracer(final ObservationRegistry observationRegistry, final boolean allowCommandPayload, final int textMaxLength) {
+    public MicrometerTracer(final ObservationRegistry observationRegistry, final boolean allowCommandPayload,
+            final int textMaxLength, @Nullable final ObservationConvention<MongodbObservationContext> customConvention) {
         this.allowCommandPayload = allowCommandPayload;
         this.observationRegistry = observationRegistry;
         this.textMaxLength = ofNullable(getenv(ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH))
                 .map(Integer::parseInt)
                 .orElse(textMaxLength);
+        this.convention = customConvention != null ? customConvention : new DefaultMongodbObservationConvention();
     }
 
     @Override
-    public Span nextSpan(final String name, @Nullable final TraceContext parent, @Nullable final MongoNamespace namespace) {
-        Observation observation = getObservation(name);
+    public Span nextSpan(final MongodbObservation observationType, final String name,
+            @Nullable final TraceContext parent, @Nullable final MongoNamespace namespace) {
+        Observation observation = getObservation(observationType, name);
 
         if (parent instanceof MicrometerTraceContext) {
             Observation parentObservation = ((MicrometerTraceContext) parent).observation;
@@ -91,7 +82,7 @@ public class MicrometerTracer implements Tracer {
             }
         }
 
-        return new MicrometerSpan(observation.start(), namespace);
+        return new MicrometerSpan(observation.start(), namespace, textMaxLength);
     }
 
     @Override
@@ -104,12 +95,12 @@ public class MicrometerTracer implements Tracer {
         return allowCommandPayload;
     }
 
-    private Observation getObservation(final String name) {
-        Observation observation = MONGODB_OBSERVATION.observation(observationRegistry,
-                        () -> new SenderContext<>((carrier, key, value) -> {}, Kind.CLIENT))
-                .contextualName(name);
-        observation.getContext().put(QUERY_TEXT_LENGTH_CONTEXT_KEY, textMaxLength);
-        return observation;
+    private Observation getObservation(final MongodbObservation observationType, final String name) {
+        return observationType.observation(observationRegistry, () -> {
+            MongodbObservationContext ctx = new MongodbObservationContext();
+            ctx.setObservationType(observationType);
+            return ctx;
+        }).observationConvention(convention).contextualName(name);
     }
     /**
      * Represents a Micrometer-based trace context.
@@ -135,38 +126,43 @@ public class MicrometerTracer implements Tracer {
         @Nullable
         private final MongoNamespace namespace;
         private final int queryTextLength;
+        @Nullable
+        private Observation.Scope scope;
 
         /**
          * Constructs a new {@link MicrometerSpan} instance with an associated Observation and MongoDB namespace.
          *
-         * @param observation The Micrometer {@link Observation}, or null if none exists.
-         * @param namespace   The MongoDB namespace associated with the span.
+         * @param observation     The Micrometer {@link Observation}, or null if none exists.
+         * @param namespace       The MongoDB namespace associated with the span.
+         * @param queryTextLength The maximum length for query text truncation.
          */
-        MicrometerSpan(final Observation observation, @Nullable final MongoNamespace namespace) {
+        MicrometerSpan(final Observation observation, @Nullable final MongoNamespace namespace, final int queryTextLength) {
             this.namespace = namespace;
             this.observation = observation;
-            this.queryTextLength = ofNullable(observation.getContext().get(QUERY_TEXT_LENGTH_CONTEXT_KEY))
-                    .filter(Integer.class::isInstance)
-                    .map(Integer.class::cast)
-                    .orElse(Integer.MAX_VALUE);
+            this.queryTextLength = queryTextLength;
         }
 
         @Override
-        public void tagLowCardinality(final KeyValue keyValue) {
-            observation.lowCardinalityKeyValue(keyValue);
+        public void openScope() {
+            this.scope = observation.openScope();
         }
 
         @Override
-        public void tagLowCardinality(final KeyValues keyValues) {
-            observation.lowCardinalityKeyValues(keyValues);
+        public void closeScope() {
+            if (scope != null) {
+                scope.close();
+                scope = null;
+            }
         }
 
         @Override
-        public void tagHighCardinality(final String keyName, final BsonDocument value) {
-            observation.highCardinalityKeyValue(keyName,
-                    (queryTextLength < Integer.MAX_VALUE) // truncate values that are too long
-                            ? getTruncatedBsonDocument(value)
-                            : value.toString());
+        public void setQueryText(final BsonDocument commandDocument) {
+            MongodbObservationContext ctx = getMongodbObservationContext();
+            if (ctx != null) {
+                ctx.setQueryText((queryTextLength < Integer.MAX_VALUE)
+                        ? getTruncatedBsonDocument(commandDocument)
+                        : commandDocument.toString());
+            }
         }
 
         @Override
@@ -176,11 +172,6 @@ public class MicrometerTracer implements Tracer {
 
         @Override
         public void error(final Throwable throwable) {
-            observation.lowCardinalityKeyValues(KeyValues.of(
-                    EXCEPTION_MESSAGE.withValue(throwable.getMessage()),
-                    EXCEPTION_TYPE.withValue(throwable.getClass().getName()),
-                    EXCEPTION_STACKTRACE.withValue(getStackTraceAsString(throwable))
-            ));
             observation.error(throwable);
         }
 
@@ -196,15 +187,17 @@ public class MicrometerTracer implements Tracer {
 
         @Override
         @Nullable
-        public MongoNamespace getNamespace() {
-            return namespace;
+        public MongodbObservationContext getMongodbObservationContext() {
+            if (observation.getContext() instanceof MongodbObservationContext) {
+                return (MongodbObservationContext) observation.getContext();
+            }
+            return null;
         }
 
-        private String getStackTraceAsString(final Throwable throwable) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            throwable.printStackTrace(pw);
-            return sw.toString();
+        @Override
+        @Nullable
+        public MongoNamespace getNamespace() {
+            return namespace;
         }
 
         private String getTruncatedBsonDocument(final BsonDocument commandDocument) {
