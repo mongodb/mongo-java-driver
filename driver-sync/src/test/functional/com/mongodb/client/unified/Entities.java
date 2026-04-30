@@ -189,6 +189,12 @@ public final class Entities {
         return getEntity(id, databases, "database");
     }
 
+    public Set<String> getDatabaseNames() {
+        return databases.values().stream()
+                .map(MongoDatabase::getName)
+                .collect(Collectors.toSet());
+    }
+
     public boolean hasCollection(final String id) {
         return collections.containsKey(id);
     }

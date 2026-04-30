@@ -16,12 +16,21 @@
 
 package com.mongodb.reactivestreams.client.unified;
 
+import com.mongodb.client.unified.UnifiedTestModifications.TestDef;
 import org.junit.jupiter.params.provider.Arguments;
 
 import java.util.Collection;
 
+import static com.mongodb.client.Fixture.getMongoClient;
+
 final class MicrometerTracingTest extends UnifiedReactiveStreamsTest {
     private static Collection<Arguments> data() {
         return getTestData("open-telemetry/tests");
+    }
+
+    @Override
+    protected void postCleanUp(final TestDef testDef) {
+        super.postCleanUp(testDef);
+        getEntities().getDatabaseNames().forEach(name -> getMongoClient().getDatabase(name).drop());
     }
 }
