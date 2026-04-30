@@ -45,21 +45,21 @@ final class BackpressureErrorLabeler {
         if (!(t instanceof MongoSocketException)) {
             return;
         }
-        if (isDnsLookupFailure(t)) {
+        MongoSocketException socketException = (MongoSocketException) t;
+        if (isDnsLookupFailure(socketException)) {
             return;
         }
-        if (isTlsConfigurationError(t)) {
+        if (isTlsConfigurationError(socketException)) {
             return;
         }
         // TODO-BACKPRESSURE Nabil - SOCKS5 Revisit alongside JAVA-5205 (SOCKS5 in async) so both sync and
         // async proxy error surfaces can be handled together — likely via a dedicated internal
         // exception thrown from the proxy code path.
-        MongoException mongoException = (MongoException) t;
-        mongoException.addLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL);
-        mongoException.addLabel(MongoException.RETRYABLE_ERROR_LABEL);
+        socketException.addLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL);
+        socketException.addLabel(MongoException.RETRYABLE_ERROR_LABEL);
     }
 
-    private static boolean isDnsLookupFailure(final Throwable t) {
+    private static boolean isDnsLookupFailure(final MongoSocketException t) {
         Throwable cause = t.getCause();
         while (cause != null) {
             if (cause instanceof UnknownHostException) {
@@ -70,7 +70,7 @@ final class BackpressureErrorLabeler {
         return false;
     }
 
-    private static boolean isTlsConfigurationError(final MongoSocketException t) {
+    static boolean isTlsConfigurationError(final MongoSocketException t) {
         Throwable cause = t.getCause();
         while (cause != null) {
             if (cause instanceof CertificateException
@@ -90,7 +90,14 @@ final class BackpressureErrorLabeler {
                             || lowerMessage.contains("hostname")
                             || lowerMessage.contains("protocol")
                             || lowerMessage.contains("cipher")
-                            || lowerMessage.contains("handshake_failure")) {
+                            || lowerMessage.contains("handshake_failure")
+                            // PKIX path building/validation failures surface as SSLHandshakeException
+                            // when the underlying CertPath* cause is not in the chain.
+                            || lowerMessage.contains("pkix")
+                            // Any "Received fatal alert: X" from OpenJDK's JSSE provider means the
+                            // server actively answered with a TLS protocol error — not an overload
+                            // signal. Catches all 25 RFC handshake alert descriptions in one rule.
+                            || lowerMessage.contains("received fatal alert")) {
                         return true;
                     }
                 }

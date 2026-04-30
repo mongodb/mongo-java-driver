@@ -163,7 +163,7 @@ interface SdamServerDescriptionManager {
             return exception instanceof MongoWriteConcernWithResponseException;
         }
 
-        boolean hasBackpressureLabel() {
+        boolean hasSystemOverloadedLabel() {
             return exception instanceof MongoException
                     && ((MongoException) exception).hasErrorLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL);
         }

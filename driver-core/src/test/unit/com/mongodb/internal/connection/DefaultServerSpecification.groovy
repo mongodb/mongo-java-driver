@@ -263,7 +263,6 @@ class DefaultServerSpecification extends Specification {
         def exceptionToThrow = new MongoSocketException('DNS lookup failed', new ServerAddress(),
                 new UnknownHostException('no such host'))
         BackpressureErrorLabeler.applyLabelsIfEligible(exceptionToThrow)
-        assert !exceptionToThrow.hasErrorLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL)
 
         def connectionPool = Mock(ConnectionPool)
         connectionPool.get(_) >> { throw exceptionToThrow }
@@ -276,6 +275,7 @@ class DefaultServerSpecification extends Specification {
         then:
         def e = thrown(MongoException)
         e.is(exceptionToThrow)
+        !e.hasErrorLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL)
         1 * connectionPool.invalidate(exceptionToThrow)
         1 * serverMonitor.cancelCurrentCheck()
     }
