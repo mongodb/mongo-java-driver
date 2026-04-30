@@ -16,6 +16,7 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.ClusterFixture;
 import org.opentest4j.AssertionFailedError;
 
 import java.util.ArrayList;
@@ -199,6 +200,9 @@ public final class UnifiedTestModifications {
         // OpenTelemetry
         def.skipNoncompliantReactive("withTransaction is not supported in the reactive driver unified test runner")
                 .file("open-telemetry/tests", "convenient transactions");
+        def.skipAccordingToSpec("Micrometer tests expect the network transport to be tcp")
+                .when(ClusterFixture::isUnixSocket)
+                .directory("open-telemetry/tests");
 
         // TODO-JAVA-5712
 
