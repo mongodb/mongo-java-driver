@@ -19,6 +19,9 @@ package com.mongodb.client;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
+import com.mongodb.internal.time.ExponentialBackoff;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 
 /**
@@ -34,6 +37,23 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     @Override
     protected GridFSBucket createGridFsBucket(final MongoDatabase mongoDatabase, final String bucketName) {
         return GridFSBuckets.create(mongoDatabase, bucketName);
+    }
+
+    @BeforeEach
+    @Override
+    public void setUp() {
+        super.setUp();
+        ExponentialBackoff.setTestJitterSupplier(() -> 0);
+    }
+
+    @AfterEach
+    @Override
+    public void tearDown() throws InterruptedException {
+        try {
+            super.tearDown();
+        } finally {
+            ExponentialBackoff.clearTestJitterSupplier();
+        }
     }
 
     @Override

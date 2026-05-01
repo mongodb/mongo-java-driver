@@ -23,7 +23,6 @@ import java.util.Collection;
 
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
-
 // See https://github.com/mongodb/specifications/tree/master/source/client-side-operation-timeout/tests
 public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
 
