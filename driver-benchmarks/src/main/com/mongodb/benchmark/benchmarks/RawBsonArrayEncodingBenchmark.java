@@ -17,7 +17,8 @@
 
 package com.mongodb.benchmark.benchmarks;
 
-import org.bson.BsonArray;import org.bson.BsonDocument;
+import org.bson.BsonArray;
+import org.bson.BsonDocument;
 import org.bson.RawBsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
 
