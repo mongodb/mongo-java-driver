@@ -58,6 +58,7 @@ public final class ClusterSettings {
     private final long localThresholdMS;
     private final long serverSelectionTimeoutMS;
     private final List<ClusterListener> clusterListeners;
+    private final boolean onlyConnectOriginalUrl;
 
     /**
      * Get a builder for this class.
@@ -96,6 +97,7 @@ public final class ClusterSettings {
         private long serverSelectionTimeoutMS = MILLISECONDS.convert(30, TimeUnit.SECONDS);
         private long localThresholdMS = MILLISECONDS.convert(15, MILLISECONDS);
         private List<ClusterListener> clusterListeners = new ArrayList<>();
+        private boolean onlyConnectOriginalUrl = false;
 
         private Builder() {
         }
@@ -122,6 +124,7 @@ public final class ClusterSettings {
             serverSelectionTimeoutMS = clusterSettings.serverSelectionTimeoutMS;
             clusterListeners = new ArrayList<>(clusterSettings.clusterListeners);
             serverSelector = clusterSettings.serverSelector;
+            onlyConnectOriginalUrl = clusterSettings.onlyConnectOriginalUrl;
             return this;
         }
 
@@ -315,6 +318,19 @@ public final class ClusterSettings {
         }
 
         /**
+         * Sets whether to only connect to the servers specified in the original connection string,
+         * skipping replica set topology discovery (no new hosts added or removed).
+         *
+         * @param onlyConnectOriginalUrl true to disable topology-based host management
+         * @return this
+         * @since 5.7
+         */
+        public Builder onlyConnectOriginalUrl(final boolean onlyConnectOriginalUrl) {
+            this.onlyConnectOriginalUrl = onlyConnectOriginalUrl;
+            return this;
+        }
+
+        /**
          * Takes the settings from the given {@code ConnectionString} and applies them to the builder
          *
          * @param connectionString the connection string containing details of how to connect to MongoDB
@@ -363,6 +379,10 @@ public final class ClusterSettings {
             Integer localThreshold = connectionString.getLocalThreshold();
             if (localThreshold != null) {
                 localThreshold(localThreshold, MILLISECONDS);
+            }
+            Boolean onlyConnectOriginalUrl = connectionString.getOnlyConnectOriginalUrl();
+            if (onlyConnectOriginalUrl != null) {
+                onlyConnectOriginalUrl(onlyConnectOriginalUrl);
             }
             return this;
         }
@@ -540,6 +560,17 @@ public final class ClusterSettings {
         return clusterListeners;
     }
 
+    /**
+     * Gets whether the driver should only connect to the servers specified in the original connection string,
+     * skipping replica set topology discovery.
+     *
+     * @return true if only the original URL hosts should be connected
+     * @since 5.7
+     */
+    public boolean isOnlyConnectOriginalUrl() {
+        return onlyConnectOriginalUrl;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -551,6 +582,7 @@ public final class ClusterSettings {
         ClusterSettings that = (ClusterSettings) o;
         return localThresholdMS == that.localThresholdMS
                 && serverSelectionTimeoutMS == that.serverSelectionTimeoutMS
+                && onlyConnectOriginalUrl == that.onlyConnectOriginalUrl
                 && Objects.equals(srvHost, that.srvHost)
                 && Objects.equals(srvMaxHosts, that.srvMaxHosts)
                 && srvServiceName.equals(that.srvServiceName)
@@ -565,7 +597,7 @@ public final class ClusterSettings {
     @Override
     public int hashCode() {
         return Objects.hash(srvHost, srvMaxHosts, srvServiceName, hosts, mode, requiredClusterType, requiredReplicaSetName, serverSelector,
-                localThresholdMS, serverSelectionTimeoutMS, clusterListeners);
+                localThresholdMS, serverSelectionTimeoutMS, clusterListeners, onlyConnectOriginalUrl);
     }
 
     @Override
@@ -582,6 +614,7 @@ public final class ClusterSettings {
                + ", clusterListeners='" + clusterListeners + '\''
                + ", serverSelectionTimeout='" + serverSelectionTimeoutMS + " ms" + '\''
                + ", localThreshold='" + localThresholdMS + " ms" + '\''
+               + ", onlyConnectOriginalUrl=" + onlyConnectOriginalUrl
                + '}';
     }
 
@@ -659,5 +692,6 @@ public final class ClusterSettings {
         serverSelector = builder.serverSelector;
         serverSelectionTimeoutMS = builder.serverSelectionTimeoutMS;
         clusterListeners = unmodifiableList(builder.clusterListeners);
+        onlyConnectOriginalUrl = builder.onlyConnectOriginalUrl;
     }
 }
