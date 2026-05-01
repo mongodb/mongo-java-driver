@@ -70,7 +70,7 @@ final class BackpressureErrorLabeler {
         return false;
     }
 
-    static boolean isTlsConfigurationError(final MongoSocketException t) {
+    private static boolean isTlsConfigurationError(final MongoSocketException t) {
         Throwable cause = t.getCause();
         while (cause != null) {
             if (cause instanceof CertificateException
