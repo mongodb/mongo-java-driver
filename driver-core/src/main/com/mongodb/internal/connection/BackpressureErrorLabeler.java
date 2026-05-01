@@ -90,7 +90,6 @@ final class BackpressureErrorLabeler {
                             || lowerMessage.contains("hostname")
                             || lowerMessage.contains("protocol")
                             || lowerMessage.contains("cipher")
-                            || lowerMessage.contains("handshake_failure")
                             // PKIX path building/validation failures surface as SSLHandshakeException
                             // when the underlying CertPath* cause is not in the chain.
                             || lowerMessage.contains("pkix")
