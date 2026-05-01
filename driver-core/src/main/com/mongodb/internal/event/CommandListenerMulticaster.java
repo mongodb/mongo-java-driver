@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.event;
 
+import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
@@ -29,7 +30,11 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static java.lang.String.format;
 
-
+/**
+ * This {@link CommandListener} is {@linkplain ThreadSafe thread-safe},
+ * provided that the recipient listeners passed to {@link #CommandListenerMulticaster(List)} are.
+ */
+@ThreadSafe
 final class CommandListenerMulticaster implements CommandListener {
     private static final Logger LOGGER = Loggers.getLogger("protocol.event");
 

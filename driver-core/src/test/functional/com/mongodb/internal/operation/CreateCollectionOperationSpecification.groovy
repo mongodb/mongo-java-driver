@@ -113,7 +113,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         then:
         def binding = ClusterFixture.getBinding()
         new ListCollectionsOperation(getDatabaseName(), new BsonDocumentCodec())
-                .execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
+                .execute(binding, ClusterFixture.createOperationContext(binding.getReadPreference()))
                 .next()
                 .find { it -> it.getString('name').value == getCollectionName() }
                 .getDocument('options').getDocument('storageEngine') == operation.storageEngineOptions
@@ -134,7 +134,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         then:
         def binding = ClusterFixture.getBinding()
         new ListCollectionsOperation(getDatabaseName(), new BsonDocumentCodec())
-                .execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
+                .execute(binding, ClusterFixture.createOperationContext(binding.getReadPreference()))
                 .next()
                 .find { it -> it.getString('name').value == getCollectionName() }
                 .getDocument('options').getDocument('storageEngine') == operation.storageEngineOptions
@@ -255,7 +255,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         def binding = getBinding()
         new ListCollectionsOperation(databaseName, new BsonDocumentCodec()).filter(new BsonDocument('name',
                 new BsonString(collectionName))).execute(binding,
-                ClusterFixture.getOperationContext(binding.getReadPreference())).tryNext()?.head()
+                ClusterFixture.createOperationContext(binding.getReadPreference())).tryNext()?.head()
     }
 
     def collectionNameExists(String collectionName) {
@@ -268,13 +268,13 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
             def binding = getBinding()
             return new CommandReadOperation<>(getDatabaseName(),
                     new BsonDocument('collStats', new BsonString(getCollectionName())),
-                    new BsonDocumentCodec()).execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
+                    new BsonDocumentCodec()).execute(binding, ClusterFixture.createOperationContext(binding.getReadPreference()))
         }
         def binding = ClusterFixture.getBinding()
         BatchCursor<BsonDocument> cursor = new AggregateOperation(
                 getNamespace(),
                 singletonList(new BsonDocument('$collStats', new BsonDocument('storageStats', new BsonDocument()))),
-                new BsonDocumentCodec()).execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
+                new BsonDocumentCodec()).execute(binding, ClusterFixture.createOperationContext(binding.getReadPreference()))
         try {
             return cursor.next().first().getDocument('storageStats')
         } finally {

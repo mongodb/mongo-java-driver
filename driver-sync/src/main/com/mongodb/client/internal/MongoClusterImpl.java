@@ -104,6 +104,7 @@ final class MongoClusterImpl implements MongoCluster {
     private final ReadPreference readPreference;
     private final boolean retryReads;
     private final boolean retryWrites;
+    private final boolean enableOverloadRetargeting;
     @Nullable
     private final ServerApi serverApi;
     private final ServerSessionPool serverSessionPool;
@@ -117,10 +118,9 @@ final class MongoClusterImpl implements MongoCluster {
             @Nullable final AutoEncryptionSettings autoEncryptionSettings, final Cluster cluster, final CodecRegistry codecRegistry,
             @Nullable final SynchronousContextProvider contextProvider, @Nullable final Crypt crypt, final Object originator,
             @Nullable final OperationExecutor operationExecutor, final ReadConcern readConcern, final ReadPreference readPreference,
-            final boolean retryReads, final boolean retryWrites, @Nullable final ServerApi serverApi,
-            final ServerSessionPool serverSessionPool, final TimeoutSettings timeoutSettings, final UuidRepresentation uuidRepresentation,
-            final WriteConcern writeConcern,
-            final TracingManager tracingManager) {
+            final boolean retryReads, final boolean retryWrites, final boolean enableOverloadRetargeting,
+            @Nullable final ServerApi serverApi, final ServerSessionPool serverSessionPool, final TimeoutSettings timeoutSettings,
+            final UuidRepresentation uuidRepresentation, final WriteConcern writeConcern, final TracingManager tracingManager) {
         this.autoEncryptionSettings = autoEncryptionSettings;
         this.cluster = cluster;
         this.codecRegistry = codecRegistry;
@@ -132,6 +132,7 @@ final class MongoClusterImpl implements MongoCluster {
         this.readPreference = readPreference;
         this.retryReads = retryReads;
         this.retryWrites = retryWrites;
+        this.enableOverloadRetargeting = enableOverloadRetargeting;
         this.serverApi = serverApi;
         this.serverSessionPool = serverSessionPool;
         this.timeoutSettings = timeoutSettings;
@@ -180,35 +181,35 @@ final class MongoClusterImpl implements MongoCluster {
     @Override
     public MongoCluster withCodecRegistry(final CodecRegistry codecRegistry) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
-                operationExecutor, readConcern, readPreference, retryReads, retryWrites, serverApi, serverSessionPool, timeoutSettings,
+                operationExecutor, readConcern, readPreference, retryReads, retryWrites, enableOverloadRetargeting, serverApi, serverSessionPool, timeoutSettings,
                 uuidRepresentation, writeConcern, tracingManager);
     }
 
     @Override
     public MongoCluster withReadPreference(final ReadPreference readPreference) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
-                operationExecutor, readConcern, readPreference, retryReads, retryWrites, serverApi, serverSessionPool, timeoutSettings,
+                operationExecutor, readConcern, readPreference, retryReads, retryWrites, enableOverloadRetargeting, serverApi, serverSessionPool, timeoutSettings,
                 uuidRepresentation, writeConcern, tracingManager);
     }
 
     @Override
     public MongoCluster withWriteConcern(final WriteConcern writeConcern) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
-                operationExecutor, readConcern, readPreference, retryReads, retryWrites, serverApi, serverSessionPool, timeoutSettings,
+                operationExecutor, readConcern, readPreference, retryReads, retryWrites, enableOverloadRetargeting, serverApi, serverSessionPool, timeoutSettings,
                 uuidRepresentation, writeConcern, tracingManager);
     }
 
     @Override
     public MongoCluster withReadConcern(final ReadConcern readConcern) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
-                operationExecutor, readConcern, readPreference, retryReads, retryWrites, serverApi, serverSessionPool, timeoutSettings,
+                operationExecutor, readConcern, readPreference, retryReads, retryWrites, enableOverloadRetargeting, serverApi, serverSessionPool, timeoutSettings,
                 uuidRepresentation, writeConcern, tracingManager);
     }
 
     @Override
     public MongoCluster withTimeout(final long timeout, final TimeUnit timeUnit) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
-                operationExecutor, readConcern, readPreference, retryReads, retryWrites, serverApi, serverSessionPool,
+                operationExecutor, readConcern, readPreference, retryReads, retryWrites, enableOverloadRetargeting, serverApi, serverSessionPool,
                 timeoutSettings.withTimeout(timeout, timeUnit), uuidRepresentation, writeConcern, tracingManager);
     }
 
@@ -530,7 +531,8 @@ final class MongoClusterImpl implements MongoCluster {
                     createTimeoutContext(session, executorTimeoutSettings),
                     tracingManager,
                     serverApi,
-                    commandName);
+                    commandName,
+                    new OperationContext.ServerDeprioritization(enableOverloadRetargeting));
         }
 
         private RequestContext getRequestContext() {
@@ -591,9 +593,9 @@ final class MongoClusterImpl implements MongoCluster {
          * Create a tracing span for the given operation, and set it on operation context.
          *
          * @param actualClientSession the session that the operation is part of
-         * @param operationContext             the operation context for the operation
-         * @param commandName         the name of the command
-         * @param namespace           the namespace of the command
+         * @param operationContext the operation context for the operation
+         * @param commandName the name of the command
+         * @param namespace the namespace of the command
          * @return the created span, or null if tracing is not enabled
          */
         @Nullable

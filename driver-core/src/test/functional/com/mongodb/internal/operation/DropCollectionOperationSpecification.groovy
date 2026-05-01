@@ -39,7 +39,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         when:
         def binding = getBinding()
         new DropCollectionOperation(getNamespace(), WriteConcern.ACKNOWLEDGED)
-                .execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
+                .execute(binding, ClusterFixture.createOperationContext(binding.getReadPreference()))
 
         then:
         !collectionNameExists(getCollectionName())
@@ -64,7 +64,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
 
         when:
         new DropCollectionOperation(namespace, WriteConcern.ACKNOWLEDGED)
-                .execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
+                .execute(binding, ClusterFixture.createOperationContext(binding.getReadPreference()))
 
         then:
         !collectionNameExists('nonExistingCollection')
@@ -91,7 +91,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
 
         when:
         def binding = getBinding()
-        async ? executeAsync(operation) : operation.execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
+        async ? executeAsync(operation) : operation.execute(binding, ClusterFixture.createOperationContext(binding.getReadPreference()))
 
         then:
         def ex = thrown(MongoWriteConcernException)
@@ -104,7 +104,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
 
     def collectionNameExists(String collectionName) {
         def cursor = new ListCollectionsOperation(databaseName, new DocumentCodec())
-                .execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
+                .execute(binding, ClusterFixture.createOperationContext(binding.getReadPreference()))
         if (!cursor.hasNext()) {
             return false
         }

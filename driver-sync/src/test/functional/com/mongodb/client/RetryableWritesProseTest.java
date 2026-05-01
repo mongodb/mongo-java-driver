@@ -19,44 +19,41 @@ package com.mongodb.client;
 import com.mongodb.ConnectionString;
 import com.mongodb.Function;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoException;
 import com.mongodb.MongoServerException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ServerAddress;
-import com.mongodb.assertions.Assertions;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
-import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.event.ConnectionCheckOutFailedEvent;
 import com.mongodb.event.ConnectionCheckedOutEvent;
 import com.mongodb.event.ConnectionPoolClearedEvent;
 import com.mongodb.internal.connection.ServerAddressHelper;
+import com.mongodb.internal.connection.TestClusterListener;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
-import org.bson.BsonArray;
-import org.bson.BsonBoolean;
+import com.mongodb.internal.event.ConfigureFailPointCommandListener;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
-import org.bson.BsonString;
 import org.bson.Document;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
@@ -64,9 +61,12 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.MongoException.RETRYABLE_ERROR_LABEL;
+import static com.mongodb.MongoException.SYSTEM_OVERLOADED_ERROR_LABEL;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static com.mongodb.client.Fixture.getMultiMongosMongoClientSettingsBuilder;
+import static com.mongodb.client.Fixture.getPrimary;
 import static com.mongodb.internal.operation.CommandOperationHelper.NO_WRITES_PERFORMED_ERROR_LABEL;
 import static com.mongodb.internal.operation.CommandOperationHelper.RETRYABLE_WRITE_ERROR_LABEL;
 import static java.util.Arrays.asList;
@@ -74,28 +74,23 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
- * See
- * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#prose-tests">Retryable Write Prose Tests</a>.
+ * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#prose-tests">
+ * Prose Tests</a>.
  */
-public class RetryableWritesProseTest extends DatabaseTestCase {
-
-    @BeforeEach
-    @Override
-    public void setUp() {
-        super.setUp();
-    }
-
+public class RetryableWritesProseTest {
     /**
-     * Prose test #2.
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#2-test-that-drivers-properly-retry-after-encountering-poolclearederrors">
+     * 2. Test that drivers properly retry after encountering PoolClearedErrors</a>.
      */
     @Test
-    public void poolClearedExceptionMustBeRetryable() throws InterruptedException, ExecutionException, TimeoutException {
+    void poolClearedExceptionMustBeRetryable() throws Exception {
         poolClearedExceptionMustBeRetryable(MongoClients::create,
                 mongoCollection -> mongoCollection.insertOne(new Document()), "insert", true);
     }
@@ -103,8 +98,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
     @SuppressWarnings("try")
     public static <R> void poolClearedExceptionMustBeRetryable(
             final Function<MongoClientSettings, MongoClient> clientCreator,
-            final Function<MongoCollection<Document>, R> operation, final String operationName, final boolean write)
-            throws InterruptedException, ExecutionException, TimeoutException {
+            final Function<MongoCollection<Document>, R> operation, final String commandName, final boolean write) throws Exception {
         assumeTrue(serverVersionAtLeast(4, 3) && !(write && isStandalone()));
         TestConnectionPoolListener connectionPoolListener = new TestConnectionPoolListener(asList(
                 "connectionCheckedOutEvent",
@@ -120,7 +114,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
                         /* We fake server's state by configuring a fail point. This breaks the mechanism of the
                          * streaming server monitoring protocol
                          * (https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-monitoring.md#streaming-protocol)
-                         * that allows the server to determine whether or not it needs to send a new state to the client.
+                         * that allows the server to determine whether it needs to send a new state to the client.
                          * As a result, the client has to wait for at least its heartbeat delay until it hears back from a server
                          * (while it waits for a response, calling `ServerMonitor.connect` has no effect).
                          * Thus, we want to use small heartbeat delay to reduce delays in the test. */
@@ -129,24 +123,23 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
                 .retryWrites(true)
                 .addCommandListener(commandListener)
                 .build();
-        BsonDocument configureFailPoint = new BsonDocument()
-                .append("configureFailPoint", new BsonString("failCommand"))
-                .append("mode", new BsonDocument()
-                        .append("times", new BsonInt32(1)))
-                .append("data", new BsonDocument()
-                        .append("failCommands", new BsonArray(singletonList(new BsonString(operationName))))
-                        .append("errorCode", new BsonInt32(91))
-                        .append("errorLabels", write
-                                ? new BsonArray(singletonList(new BsonString(RETRYABLE_WRITE_ERROR_LABEL)))
-                                : new BsonArray())
-                        .append("blockConnection", BsonBoolean.valueOf(true))
-                        .append("blockTimeMS", new BsonInt32(1000)));
+        BsonDocument configureFailPoint = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: 'failCommand',\n"
+                + "    mode: {'times': 1},\n"
+                + "    data: {\n"
+                + "        failCommands: ['" + commandName + "'],\n"
+                + "        errorCode: 91,\n"
+                + "        blockConnection: true,\n"
+                + "        blockTimeMS: 1000,\n"
+                + (write
+                ? "        errorLabels: ['" + RETRYABLE_WRITE_ERROR_LABEL + "']\n" : "")
+                + "    }\n"
+                + "}\n");
         int timeoutSeconds = 5;
         try (MongoClient client = clientCreator.apply(clientSettings);
-                FailPoint ignored = FailPoint.enable(configureFailPoint, Fixture.getPrimary())) {
-            MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
-                    .getCollection("poolClearedExceptionMustBeRetryable");
-            collection.drop();
+                FailPoint ignored = FailPoint.enable(configureFailPoint, getPrimary())) {
+            MongoCollection<Document> collection = dropAndGetCollection("poolClearedExceptionMustBeRetryable", client);
             ExecutorService ex = Executors.newFixedThreadPool(2);
             try {
                 Future<R> result1 = ex.submit(() -> operation.apply(collection));
@@ -160,83 +153,81 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
                 ex.shutdownNow();
             }
             assertEquals(3, commandListener.getCommandStartedEvents().size());
-            commandListener.getCommandStartedEvents().forEach(event -> assertEquals(operationName, event.getCommandName()));
+            commandListener.getCommandStartedEvents().forEach(event -> assertEquals(commandName, event.getCommandName()));
         }
     }
 
     /**
-     * Prose test #3.
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#3-test-that-drivers-return-the-original-error-after-encountering-a-writeconcernerror-with-a-retryablewriteerror-label">
+     * 3. Test that drivers return the original error after encountering a WriteConcernError with a RetryableWriteError label</a>.
      */
     @Test
-    public void originalErrorMustBePropagatedIfNoWritesPerformed() throws InterruptedException {
+    void originalErrorMustBePropagatedIfNoWritesPerformed() throws Exception {
         originalErrorMustBePropagatedIfNoWritesPerformed(MongoClients::create);
     }
 
     @SuppressWarnings("try")
     public static void originalErrorMustBePropagatedIfNoWritesPerformed(
-            final Function<MongoClientSettings, MongoClient> clientCreator) throws InterruptedException {
+            final Function<MongoClientSettings, MongoClient> clientCreator) throws Exception {
         assumeTrue(serverVersionAtLeast(6, 0) && isDiscoverableReplicaSet());
-        ServerAddress primaryServerAddress = Fixture.getPrimary();
-        CompletableFuture<FailPoint> futureFailPointFromListener = new CompletableFuture<>();
-        CommandListener commandListener = new CommandListener() {
-            private final AtomicBoolean configureFailPoint = new AtomicBoolean(true);
-
-            @Override
-            public void commandSucceeded(final CommandSucceededEvent event) {
-                if (event.getCommandName().equals("insert")
-                        && event.getResponse().getDocument("writeConcernError", new BsonDocument())
-                                .getInt32("code", new BsonInt32(-1)).intValue() == 91
-                        && configureFailPoint.compareAndSet(true, false)) {
-                    Assertions.assertTrue(futureFailPointFromListener.complete(FailPoint.enable(
-                            new BsonDocument()
-                                    .append("configureFailPoint", new BsonString("failCommand"))
-                                    .append("mode", new BsonDocument()
-                                            .append("times", new BsonInt32(1)))
-                                    .append("data", new BsonDocument()
-                                            .append("failCommands", new BsonArray(singletonList(new BsonString("insert"))))
-                                            .append("errorCode", new BsonInt32(10107))
-                                            .append("errorLabels", new BsonArray(Stream.of(RETRYABLE_WRITE_ERROR_LABEL, NO_WRITES_PERFORMED_ERROR_LABEL)
-                                                    .map(BsonString::new).collect(Collectors.toList())))),
-                            primaryServerAddress
-                    )));
+        ServerAddress primaryServerAddress = getPrimary();
+        BsonDocument configureFailPoint = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: \"failCommand\",\n"
+                + "    mode: { times: 1 },\n"
+                + "    data: {\n"
+                + "        failCommands: ['insert'],\n"
+                + "        writeConcernError: {"
+                + "            errorLabels: ['" + RETRYABLE_WRITE_ERROR_LABEL + "'],\n"
+                + "            code: 91,\n"
+                + "            errmsg: ''\n"
+                + "        }\n"
+                + "    }\n"
+                + "}\n");
+        BsonDocument configureFailPointFromListener = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: \"failCommand\",\n"
+                + "    mode: { times: 1 },\n"
+                + "    data: {\n"
+                + "        failCommands: ['insert'],\n"
+                + "        errorCode: 10107,\n"
+                + "        errorLabels: ['" + RETRYABLE_WRITE_ERROR_LABEL + "', '" + NO_WRITES_PERFORMED_ERROR_LABEL + "']\n"
+                + "    }\n"
+                + "}\n");
+        Predicate<CommandEvent> configureFailPointEventMatcher = event -> {
+            if (event instanceof CommandSucceededEvent) {
+                CommandSucceededEvent commandSucceededEvent = (CommandSucceededEvent) event;
+                if (commandSucceededEvent.getCommandName().equals("insert")) {
+                    assertEquals(91, commandSucceededEvent.getResponse().getDocument("writeConcernError", new BsonDocument())
+                            .getInt32("code", new BsonInt32(-1)).intValue());
+                    return true;
                 }
+                return false;
             }
+            return false;
         };
-        BsonDocument failPointDocument = new BsonDocument()
-                .append("configureFailPoint", new BsonString("failCommand"))
-                .append("mode", new BsonDocument()
-                        .append("times", new BsonInt32(1)))
-                .append("data", new BsonDocument()
-                        .append("writeConcernError", new BsonDocument()
-                                .append("code", new BsonInt32(91))
-                                .append("errorLabels", new BsonArray(Stream.of(RETRYABLE_WRITE_ERROR_LABEL)
-                                        .map(BsonString::new).collect(Collectors.toList())))
-                                .append("errmsg", new BsonString(""))
-                        )
-                        .append("failCommands", new BsonArray(singletonList(new BsonString("insert")))));
-        try (MongoClient client = clientCreator.apply(getMongoClientSettingsBuilder()
-                .retryWrites(true)
-                .addCommandListener(commandListener)
-                .applyToServerSettings(builder ->
-                        // see `poolClearedExceptionMustBeRetryable` for the explanation
-                        builder.heartbeatFrequency(50, TimeUnit.MILLISECONDS))
-                .build());
-             FailPoint ignored = FailPoint.enable(failPointDocument, primaryServerAddress)) {
-            MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
-                    .getCollection("originalErrorMustBePropagatedIfNoWritesPerformed");
-            collection.drop();
+        try (ConfigureFailPointCommandListener commandListener = new ConfigureFailPointCommandListener(
+                configureFailPointFromListener, primaryServerAddress, configureFailPointEventMatcher);
+             MongoClient client = clientCreator.apply(getMongoClientSettingsBuilder()
+                     .retryWrites(true)
+                     .addCommandListener(commandListener)
+                     .applyToServerSettings(builder ->
+                             // see `poolClearedExceptionMustBeRetryable` for the explanation
+                             builder.heartbeatFrequency(50, TimeUnit.MILLISECONDS))
+                     .build());
+             FailPoint ignored = FailPoint.enable(configureFailPoint, primaryServerAddress)) {
+            MongoCollection<Document> collection = dropAndGetCollection("originalErrorMustBePropagatedIfNoWritesPerformed", client);
             MongoWriteConcernException e = assertThrows(MongoWriteConcernException.class, () -> collection.insertOne(new Document()));
             assertEquals(91, e.getCode());
-        } finally {
-            futureFailPointFromListener.thenAccept(FailPoint::close);
         }
     }
 
     /**
-     * Prose test #4.
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#4-test-that-in-a-sharded-cluster-writes-are-retried-on-a-different-mongos-when-one-is-available">
+     * 4. Test that in a sharded cluster writes are retried on a different mongos when one is available</a>.
      */
     @Test
-    public void retriesOnDifferentMongosWhenAvailable() {
+    void retriesOnDifferentMongosWhenAvailable() throws InterruptedException, TimeoutException {
         retriesOnDifferentMongosWhenAvailable(MongoClients::create,
                 mongoCollection -> mongoCollection.insertOne(new Document()), "insert", true);
     }
@@ -244,7 +235,8 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
     @SuppressWarnings("try")
     public static <R> void retriesOnDifferentMongosWhenAvailable(
             final Function<MongoClientSettings, MongoClient> clientCreator,
-            final Function<MongoCollection<Document>, R> operation, final String operationName, final boolean write) {
+            final Function<MongoCollection<Document>, R> operation, final String expectedCommandName, final boolean write)
+            throws InterruptedException, TimeoutException {
         if (write) {
             assumeTrue(serverVersionAtLeast(4, 4));
         }
@@ -253,37 +245,44 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
         assumeTrue(connectionString != null);
         ServerAddress s0Address = ServerAddressHelper.createServerAddress(connectionString.getHosts().get(0));
         ServerAddress s1Address = ServerAddressHelper.createServerAddress(connectionString.getHosts().get(1));
-        BsonDocument failPointDocument = BsonDocument.parse(
+        BsonDocument configureFailPoint = BsonDocument.parse(
                 "{\n"
                 + "    configureFailPoint: \"failCommand\",\n"
                 + "    mode: { times: 1 },\n"
                 + "    data: {\n"
-                + "        failCommands: [\"" + operationName + "\"],\n"
+                + "        failCommands: [\"" + expectedCommandName + "\"],\n"
+                + "        errorCode: 6,\n"
                 + (write
-                ? "        errorLabels: [\"RetryableWriteError\"]," : "")
-                + "        errorCode: 6\n"
+                ? "        errorLabels: ['" + RETRYABLE_WRITE_ERROR_LABEL + "']" : "")
                 + "    }\n"
                 + "}\n");
         TestCommandListener commandListener = new TestCommandListener(singletonList("commandFailedEvent"), emptyList());
-        try (FailPoint s0FailPoint = FailPoint.enable(failPointDocument, s0Address);
-             FailPoint s1FailPoint = FailPoint.enable(failPointDocument, s1Address);
+        TestClusterListener clusterListener = new TestClusterListener();
+        try (FailPoint s0FailPoint = FailPoint.enable(configureFailPoint, s0Address);
+             FailPoint s1FailPoint = FailPoint.enable(configureFailPoint, s1Address);
              MongoClient client = clientCreator.apply(getMultiMongosMongoClientSettingsBuilder()
                      .retryReads(true)
                      .retryWrites(true)
                      .addCommandListener(commandListener)
                      // explicitly specify only s0 and s1, in case `getMultiMongosMongoClientSettingsBuilder` has more
-                     .applyToClusterSettings(builder -> builder.hosts(asList(s0Address, s1Address)))
+                     .applyToClusterSettings(builder -> builder
+                             .hosts(asList(s0Address, s1Address))
+                             .addClusterListener(clusterListener))
                      .build())) {
-            MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
-                    .getCollection("retriesOnDifferentMongosWhenAvailable");
-            collection.drop();
+            // We need both mongos servers to be discovered (not UNKNOWN) before running the deprioritization test.
+            // When the first mongos is deprioritized on retry, the selector falls back to the second mongos.
+            // If the second mongos is still UNKNOWN at that point, the non-deprioritized pass yields no selectable servers,
+            // causing the deprioritized mongos to be selected again.
+            clusterListener.waitForAllServersDiscovered(Duration.ofSeconds(10));
+
+            MongoCollection<Document> collection = dropAndGetCollection("retriesOnDifferentMongosWhenAvailable", client);
             commandListener.reset();
             assertThrows(MongoServerException.class, () -> operation.apply(collection));
             List<CommandEvent> failedCommandEvents = commandListener.getEvents();
             assertEquals(2, failedCommandEvents.size(), failedCommandEvents::toString);
             List<String> unexpectedCommandNames = failedCommandEvents.stream()
                     .map(CommandEvent::getCommandName)
-                    .filter(commandName -> !commandName.equals(operationName))
+                    .filter(commandName -> !commandName.equals(expectedCommandName))
                     .collect(Collectors.toList());
             assertTrue(unexpectedCommandNames.isEmpty(), unexpectedCommandNames::toString);
             Set<ServerAddress> failedServerAddresses = failedCommandEvents.stream()
@@ -295,10 +294,11 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
     }
 
     /**
-     * Prose test #5.
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#5-test-that-in-a-sharded-cluster-writes-are-retried-on-the-same-mongos-when-no-others-are-available">
+     * 5. Test that in a sharded cluster writes are retried on the same mongos when no others are available</a>.
      */
     @Test
-    public void retriesOnSameMongosWhenAnotherNotAvailable() {
+    void retriesOnSameMongosWhenAnotherNotAvailable() {
         retriesOnSameMongosWhenAnotherNotAvailable(MongoClients::create,
                 mongoCollection -> mongoCollection.insertOne(new Document()), "insert", true);
     }
@@ -306,27 +306,29 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
     @SuppressWarnings("try")
     public static <R> void retriesOnSameMongosWhenAnotherNotAvailable(
             final Function<MongoClientSettings, MongoClient> clientCreator,
-            final Function<MongoCollection<Document>, R> operation, final String operationName, final boolean write) {
+            final Function<MongoCollection<Document>, R> operation, final String expectedCommandName, final boolean write) {
         if (write) {
             assumeTrue(serverVersionAtLeast(4, 4));
         }
         assumeTrue(isSharded());
         ConnectionString connectionString = getConnectionString();
         ServerAddress s0Address = ServerAddressHelper.createServerAddress(connectionString.getHosts().get(0));
-        BsonDocument failPointDocument = BsonDocument.parse(
+        BsonDocument configureFailPoint = BsonDocument.parse(
                 "{\n"
                 + "    configureFailPoint: \"failCommand\",\n"
                 + "    mode: { times: 1 },\n"
                 + "    data: {\n"
-                + "        failCommands: [\"" + operationName + "\"],\n"
+                + "        failCommands: [\"" + expectedCommandName + "\"],\n"
+                + "        errorCode: 6,\n"
                 + (write
-                ? "        errorLabels: [\"RetryableWriteError\"]," : "")
-                + "        errorCode: 6\n"
+                ? "        errorLabels: ['" + RETRYABLE_WRITE_ERROR_LABEL + "']," : "")
+                + (write
+                ? "        closeConnection: true\n" : "")
                 + "    }\n"
                 + "}\n");
         TestCommandListener commandListener = new TestCommandListener(
                 asList("commandFailedEvent", "commandSucceededEvent"), emptyList());
-        try (FailPoint s0FailPoint = FailPoint.enable(failPointDocument, s0Address);
+        try (FailPoint s0FailPoint = FailPoint.enable(configureFailPoint, s0Address);
              MongoClient client = clientCreator.apply(getMongoClientSettingsBuilder()
                      .retryReads(true)
                      .retryWrites(true)
@@ -336,16 +338,14 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
                              .hosts(singletonList(s0Address))
                              .mode(ClusterConnectionMode.MULTIPLE))
                      .build())) {
-            MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
-                    .getCollection("retriesOnSameMongosWhenAnotherNotAvailable");
-            collection.drop();
+            MongoCollection<Document> collection = dropAndGetCollection("retriesOnSameMongosWhenAnotherNotAvailable", client);
             commandListener.reset();
             operation.apply(collection);
             List<CommandEvent> commandEvents = commandListener.getEvents();
             assertEquals(2, commandEvents.size(), commandEvents::toString);
             List<String> unexpectedCommandNames = commandEvents.stream()
                     .map(CommandEvent::getCommandName)
-                    .filter(commandName -> !commandName.equals(operationName))
+                    .filter(commandName -> !commandName.equals(expectedCommandName))
                     .collect(Collectors.toList());
             assertTrue(unexpectedCommandNames.isEmpty(), unexpectedCommandNames::toString);
             assertInstanceOf(CommandFailedEvent.class, commandEvents.get(0), commandEvents::toString);
@@ -353,5 +353,176 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
             assertInstanceOf(CommandSucceededEvent.class, commandEvents.get(1), commandEvents::toString);
             assertEquals(s0Address, commandEvents.get(1).getConnectionDescription().getServerAddress(), commandEvents::toString);
         }
+    }
+
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#case-1-test-that-drivers-return-the-correct-error-when-receiving-only-errors-without-nowritesperformed">
+     * 6. Test error propagation after encountering multiple errors.
+     * Case 1: Test that drivers return the correct error when receiving only errors without NoWritesPerformed</a>.
+     */
+    @Test
+    @Disabled("TODO-BACKPRESSURE Valentin Enable when implementing JAVA-6055")
+    void errorPropagationAfterEncounteringMultipleErrorsCase1() throws Exception {
+        errorPropagationAfterEncounteringMultipleErrorsCase1(MongoClients::create);
+    }
+
+    public static void errorPropagationAfterEncounteringMultipleErrorsCase1(final Function<MongoClientSettings, MongoClient> clientCreator)
+            throws Exception {
+        BsonDocument configureFailPoint = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: 'failCommand',\n"
+                + "    mode: {'times': 1},\n"
+                + "    data: {\n"
+                + "        failCommands: ['insert'],\n"
+                + "        errorLabels: ['" + RETRYABLE_ERROR_LABEL + "', '" + SYSTEM_OVERLOADED_ERROR_LABEL + "'],\n"
+                + "        errorCode: 91\n"
+                + "    }\n"
+                + "}\n");
+        BsonDocument configureFailPointFromListener = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: \"failCommand\",\n"
+                + "    mode: 'alwaysOn',\n"
+                + "    data: {\n"
+                + "        failCommands: ['insert'],\n"
+                + "        errorCode: 10107,\n"
+                + "        errorLabels: ['" + RETRYABLE_ERROR_LABEL + "', '" + SYSTEM_OVERLOADED_ERROR_LABEL + "']\n"
+                + "    }\n"
+                + "}\n");
+        errorPropagationAfterEncounteringMultipleErrors(
+                clientCreator,
+                configureFailPoint,
+                configureFailPointFromListener,
+                10107,
+                null);
+    }
+
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#case-2-test-that-drivers-return-the-correct-error-when-receiving-only-errors-with-nowritesperformed">
+     * 6. Test error propagation after encountering multiple errors.
+     * Case 2: Test that drivers return the correct error when receiving only errors with NoWritesPerformed</a>.
+     */
+    @Test
+    void errorPropagationAfterEncounteringMultipleErrorsCase2() throws Exception {
+        errorPropagationAfterEncounteringMultipleErrorsCase2(MongoClients::create);
+    }
+
+    public static void errorPropagationAfterEncounteringMultipleErrorsCase2(final Function<MongoClientSettings, MongoClient> clientCreator)
+            throws Exception {
+        BsonDocument configureFailPoint = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: 'failCommand',\n"
+                + "    mode: {'times': 1},\n"
+                + "    data: {\n"
+                + "        failCommands: ['insert'],\n"
+                + "        errorLabels: ['" + RETRYABLE_ERROR_LABEL + "', '" + SYSTEM_OVERLOADED_ERROR_LABEL
+                + "', '" + NO_WRITES_PERFORMED_ERROR_LABEL + "'],\n"
+                + "        errorCode: 91\n"
+                + "    }\n"
+                + "}\n");
+        BsonDocument configureFailPointFromListener = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: \"failCommand\",\n"
+                + "    mode: 'alwaysOn',\n"
+                + "    data: {\n"
+                + "        failCommands: ['insert'],\n"
+                + "        errorCode: 10107,\n"
+                + "        errorLabels: ['" + RETRYABLE_ERROR_LABEL + "', '" + SYSTEM_OVERLOADED_ERROR_LABEL
+                + "', '" + NO_WRITES_PERFORMED_ERROR_LABEL + "']\n"
+                + "    }\n"
+                + "}\n");
+        errorPropagationAfterEncounteringMultipleErrors(
+                clientCreator,
+                configureFailPoint,
+                configureFailPointFromListener,
+                91,
+                null);
+    }
+
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/tests/README.md#case-3-test-that-drivers-return-the-correct-error-when-receiving-some-errors-with-nowritesperformed-and-some-without-nowritesperformed">
+     * 6. Test error propagation after encountering multiple errors.
+     * Case 3: Test that drivers return the correct error when receiving some errors with NoWritesPerformed and some without NoWritesPerformed</a>.
+     */
+    @Test
+    void errorPropagationAfterEncounteringMultipleErrorsCase3() throws Exception {
+        errorPropagationAfterEncounteringMultipleErrorsCase3(MongoClients::create);
+    }
+
+    public static void errorPropagationAfterEncounteringMultipleErrorsCase3(final Function<MongoClientSettings, MongoClient> clientCreator)
+            throws Exception {
+        BsonDocument configureFailPoint = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: 'failCommand',\n"
+                + "    mode: {'times': 1},\n"
+                + "    data: {\n"
+                + "        failCommands: ['insert'],\n"
+                + "        errorLabels: ['" + RETRYABLE_ERROR_LABEL + "', '" + SYSTEM_OVERLOADED_ERROR_LABEL + "'],\n"
+                + "        errorCode: 91\n"
+                + "    }\n"
+                + "}\n");
+        BsonDocument configureFailPointFromListener = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: \"failCommand\",\n"
+                + "    mode: 'alwaysOn',\n"
+                + "    data: {\n"
+                + "        failCommands: ['insert'],\n"
+                + "        errorCode: 91,\n"
+                + "        errorLabels: ['" + RETRYABLE_ERROR_LABEL + "', '" + SYSTEM_OVERLOADED_ERROR_LABEL
+                + "', '" + NO_WRITES_PERFORMED_ERROR_LABEL + "']\n"
+                + "    }\n"
+                + "}\n");
+        errorPropagationAfterEncounteringMultipleErrors(
+                clientCreator,
+                configureFailPoint,
+                configureFailPointFromListener,
+                91,
+                NO_WRITES_PERFORMED_ERROR_LABEL);
+    }
+
+    /**
+     * @param unexpectedErrorLabel {@code null} means there is no expectation.
+     */
+    private static void errorPropagationAfterEncounteringMultipleErrors(
+            final Function<MongoClientSettings, MongoClient> clientCreator,
+            final BsonDocument configureFailPoint,
+            final BsonDocument configureFailPointFromListener,
+            final int expectedErrorCode,
+            @Nullable final String unexpectedErrorLabel) throws Exception {
+        assumeTrue(serverVersionAtLeast(6, 0));
+        assumeTrue(isDiscoverableReplicaSet());
+        ServerAddress primaryServerAddress = getPrimary();
+        Predicate<CommandEvent> configureFailPointEventMatcher = event -> {
+            if (event instanceof CommandFailedEvent) {
+                CommandFailedEvent commandFailedEvent = (CommandFailedEvent) event;
+                if (commandFailedEvent.getCommandName().equals("drop")) {
+                    // this code may run against MongoDB 6, where dropping a nonexistent collection results in an error
+                    return false;
+                }
+                MongoException cause = assertInstanceOf(MongoException.class, commandFailedEvent.getThrowable());
+                assertEquals(91, cause.getCode());
+                return true;
+            }
+            return false;
+        };
+        try (ConfigureFailPointCommandListener commandListener = new ConfigureFailPointCommandListener(
+                configureFailPointFromListener, primaryServerAddress, configureFailPointEventMatcher);
+             MongoClient client = clientCreator.apply(getMongoClientSettingsBuilder()
+                     .retryWrites(true)
+                     .addCommandListener(commandListener)
+                     .build());
+             FailPoint ignored = FailPoint.enable(configureFailPoint, primaryServerAddress)) {
+            MongoCollection<Document> collection = dropAndGetCollection("errorPropagationAfterEncounteringMultipleErrors", client);
+            MongoException e = assertThrows(MongoException.class, () -> collection.insertOne(new Document()));
+            assertEquals(expectedErrorCode, e.getCode());
+            if (unexpectedErrorLabel != null) {
+                assertFalse(e.hasErrorLabel(unexpectedErrorLabel));
+            }
+        }
+    }
+
+    private static MongoCollection<Document> dropAndGetCollection(final String name, final MongoClient client) {
+        MongoCollection<Document> result = client.getDatabase(getDefaultDatabaseName()).getCollection(name);
+        result.drop();
+        return result;
     }
 }

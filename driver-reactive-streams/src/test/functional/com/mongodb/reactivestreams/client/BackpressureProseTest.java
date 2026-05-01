@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
-package com.mongodb.client;
+package com.mongodb.reactivestreams.client;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClient;
+import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 
-final class RetryableReadsProseTest extends AbstractRetryableReadsProseTest {
+/**
+ * <a href="https://github.com/mongodb/specifications/blob/master/source/client-backpressure/tests/README.md#prose-tests">
+ * Prose Tests</a>.
+ */
+final class BackpressureProseTest extends com.mongodb.client.BackpressureProseTest {
     @Override
-    protected MongoClient createClient(final MongoClientSettings settings) {
-        return MongoClients.create(settings);
+    protected MongoClient createClient(final MongoClientSettings mongoClientSettings) {
+        return new SyncMongoClient(mongoClientSettings);
     }
 }
