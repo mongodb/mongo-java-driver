@@ -53,6 +53,7 @@ import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
+import com.mongodb.observability.micrometer.MongodbObservationContext;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
 import org.bson.ByteBuf;
@@ -94,8 +95,6 @@ import static com.mongodb.internal.connection.ProtocolHelper.getRecoveryToken;
 import static com.mongodb.internal.connection.ProtocolHelper.getSnapshotTimestamp;
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
 import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.HighCardinalityKeyNames.QUERY_TEXT;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.RESPONSE_STATUS_CODE;
 import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedException;
 import static java.util.Arrays.asList;
 
@@ -454,7 +453,6 @@ public class InternalStreamConnection implements InternalConnection {
                             () -> getDescription().getServerAddress(),
                             () -> getDescription().getConnectionId()
                     );
-
             boolean isLoggingCommandNeeded = isLoggingCommandNeeded();
             boolean isTracingCommandPayloadNeeded = tracingSpan != null && operationContext.getTracingManager().isCommandPayloadEnabled();
 
@@ -473,7 +471,10 @@ public class InternalStreamConnection implements InternalConnection {
                 commandEventSender = new NoOpCommandEventSender();
             }
             if (isTracingCommandPayloadNeeded) {
-                tracingSpan.tagHighCardinality(QUERY_TEXT.asString(), commandDocument);
+                tracingSpan.setQueryText(commandDocument);
+            }
+            if (tracingSpan != null) {
+                tracingSpan.openScope();
             }
 
             try {
@@ -481,6 +482,8 @@ public class InternalStreamConnection implements InternalConnection {
             } catch (Exception e) {
                 if (tracingSpan != null) {
                     tracingSpan.error(e);
+                    tracingSpan.closeScope();
+                    tracingSpan.end();
                 }
                 commandEventSender.sendFailedEvent(e);
                 throw e;
@@ -492,6 +495,7 @@ public class InternalStreamConnection implements InternalConnection {
         } else {
             commandEventSender.sendSucceededEventForOneWayCommand();
             if (tracingSpan != null) {
+                tracingSpan.closeScope();
                 tracingSpan.end();
             }
             return null;
@@ -585,13 +589,17 @@ public class InternalStreamConnection implements InternalConnection {
             }
             if (tracingSpan != null) {
                 if (e instanceof MongoCommandException) {
-                    tracingSpan.tagLowCardinality(RESPONSE_STATUS_CODE.withValue(String.valueOf(((MongoCommandException) e).getErrorCode())));
+                    MongodbObservationContext ctx = tracingSpan.getMongodbObservationContext();
+                    if (ctx != null) {
+                        ctx.setResponseStatusCode(String.valueOf(((MongoCommandException) e).getErrorCode()));
+                    }
                 }
                 tracingSpan.error(e);
             }
             throw e;
         } finally {
             if (tracingSpan != null) {
+                tracingSpan.closeScope();
                 tracingSpan.end();
             }
         }
@@ -639,7 +647,7 @@ public class InternalStreamConnection implements InternalConnection {
                 commandEventSender = new NoOpCommandEventSender();
             }
             if (isTracingCommandPayloadNeeded) {
-                tracingSpan.tagHighCardinality(QUERY_TEXT.asString(), commandDocument);
+                tracingSpan.setQueryText(commandDocument);
             }
 
             final Span commandSpan = tracingSpan;
@@ -647,8 +655,10 @@ public class InternalStreamConnection implements InternalConnection {
                 try {
                     if (t != null) {
                         if (t instanceof MongoCommandException) {
-                            commandSpan.tagLowCardinality(
-                                    RESPONSE_STATUS_CODE.withValue(String.valueOf(((MongoCommandException) t).getErrorCode())));
+                            MongodbObservationContext ctx = commandSpan.getMongodbObservationContext();
+                            if (ctx != null) {
+                                ctx.setResponseStatusCode(String.valueOf(((MongoCommandException) t).getErrorCode()));
+                            }
                         }
                         commandSpan.error(t);
                     }

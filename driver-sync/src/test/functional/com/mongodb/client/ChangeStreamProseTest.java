@@ -53,6 +53,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 
@@ -364,6 +365,8 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     @Test
     public void testNameSpaceTypePresentChangeStreamEvents() {
         assumeTrue(serverVersionAtLeast(8, 1));
+        // TODO-JAVA-6181 temp disabling as failing on latest, while specs are updated
+        assumeFalse(serverVersionAtLeast(9, 0));
         collection.drop();
 
         ChangeStreamIterable<Document> changeStream = database

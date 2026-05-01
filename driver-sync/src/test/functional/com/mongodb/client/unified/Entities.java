@@ -593,6 +593,7 @@ public final class Entities {
                     .observabilitySettings(ObservabilitySettings.micrometerBuilder()
                     .observationRegistry(observationRegistry)
                     .enableCommandPayloadTracing(enableCommandPayload).build());
+
         }
 
         MongoClientSettings clientSettings = clientSettingsBuilder.build();

@@ -47,6 +47,8 @@ public final class UnifiedTestModifications {
         def.skipNoncompliantReactive("event sensitive tests. We can't guarantee the amount of GetMore commands sent in the reactive driver")
                 .test("change-streams", "change-streams", "Test that comment is set on getMore")
                 .test("change-streams", "change-streams", "Test that comment is not set on getMore - pre 4.4");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-6181 temp disabling as failing on latest, while specs are updated")
+                .test("change-streams", "change-streams-nsType", "nsType is present when creating timeseries");
         def.modify(IGNORE_EXTRA_EVENTS)
                 .test("change-streams", "change-streams", "Test with document comment")
                 .test("change-streams", "change-streams", "Test with string comment");
@@ -198,23 +200,10 @@ public final class UnifiedTestModifications {
                         "timeoutMS can be set to 0 on a MongoClient - dropIndexes on collection");
 
         // OpenTelemetry
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5991")
-                .file("open-telemetry/tests", "operation find")
-                .file("open-telemetry/tests", "operation find_one_and_update")
-                .file("open-telemetry/tests", "operation update")
-                .file("open-telemetry/tests", "operation bulk_write")
-                .file("open-telemetry/tests", "operation drop collection")
-                .file("open-telemetry/tests", "transaction spans")
-                .file("open-telemetry/tests", "convenient transactions")
-                .file("open-telemetry/tests", "operation atlas_search")
-                .file("open-telemetry/tests", "operation insert")
-                .file("open-telemetry/tests", "operation map_reduce")
-                .file("open-telemetry/tests", "operation find without db.query.text")
-                .file("open-telemetry/tests", "operation find_retries");
+        def.skipNoncompliantReactive("withTransaction is not supported in the reactive driver unified test runner")
+                .file("open-telemetry/tests", "convenient transactions");
         def.skipAccordingToSpec("Micrometer tests expect the network transport to be tcp")
                 .when(ClusterFixture::isUnixSocket)
-                .directory("open-telemetry/tests");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-6094 TODO-JAVA-6094")
                 .directory("open-telemetry/tests");
 
         // TODO-JAVA-5712
