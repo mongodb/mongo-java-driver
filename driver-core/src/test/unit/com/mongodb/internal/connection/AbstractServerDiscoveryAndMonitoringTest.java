@@ -113,6 +113,7 @@ public class AbstractServerDiscoveryAndMonitoringTest {
 
         switch (when) {
             case "beforeHandshakeCompletes":
+                BackpressureErrorLabeler.applyLabelsIfEligible(exception);
                 server.sdamServerDescriptionManager().handleExceptionBeforeHandshake(
                         SdamIssue.of(exception, new SdamIssue.Context(server.serverId(), errorGeneration, maxWireVersion)));
                 break;

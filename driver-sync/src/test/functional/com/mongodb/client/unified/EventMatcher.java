@@ -26,6 +26,7 @@ import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.event.ConnectionCheckOutFailedEvent;
+import com.mongodb.event.ConnectionCheckedInEvent;
 import com.mongodb.event.ConnectionClosedEvent;
 import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionPoolClearedEvent;
@@ -207,6 +208,12 @@ final class EventMatcher {
                 break;
             case "connectionReadyEvent":
                 eventClass = ConnectionReadyEvent.class;
+                break;
+            case "connectionClosedEvent":
+                eventClass = ConnectionClosedEvent.class;
+                break;
+            case "connectionCheckedInEvent":
+                eventClass = ConnectionCheckedInEvent.class;
                 break;
             default:
                 throw new UnsupportedOperationException("Unsupported event: " + event.getFirstKey());
@@ -436,11 +443,18 @@ final class EventMatcher {
         switch (newType) {
             case "Unknown":
                 return event.getNewDescription().getType() == ServerType.UNKNOWN;
-            case "LoadBalancer": {
+            case "LoadBalancer":
                 return event.getNewDescription().getType() == ServerType.LOAD_BALANCER;
-            }
+            case "Mongos":
+                return event.getNewDescription().getType() == ServerType.SHARD_ROUTER;
+            case "Standalone":
+                return event.getNewDescription().getType() == ServerType.STANDALONE;
+            case "RSPrimary":
+                return event.getNewDescription().getType() == ServerType.REPLICA_SET_PRIMARY;
+            case "RSSecondary":
+                return event.getNewDescription().getType() == ServerType.REPLICA_SET_SECONDARY;
             default:
-                throw new UnsupportedOperationException();
+                throw new UnsupportedOperationException("Unsupported server type " + newType);
         }
     }
 
