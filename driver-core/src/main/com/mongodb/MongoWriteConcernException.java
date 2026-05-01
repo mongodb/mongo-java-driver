@@ -76,9 +76,27 @@ public class MongoWriteConcernException extends MongoServerException {
      */
     public MongoWriteConcernException(final WriteConcernError writeConcernError, @Nullable final WriteConcernResult writeConcernResult,
             final ServerAddress serverAddress, final Collection<String> errorLabels) {
-        super(writeConcernError.getCode(), writeConcernError.getMessage(), serverAddress);
+        super(notNull("writeConcernError", writeConcernError).getCode(), writeConcernError.getMessage(), serverAddress);
         this.writeConcernResult = writeConcernResult;
-        this.writeConcernError = notNull("writeConcernError", writeConcernError);
+        this.writeConcernError = writeConcernError;
+        addLabels(errorLabels);
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param writeConcernError the non-null write concern error
+     * @param writeConcernResult the write result
+     * @param serverAddress the non-null server address
+     * @param errorLabels the server errorLabels
+     * @param t the throwable cause
+     * @since 5.7
+     */
+    public MongoWriteConcernException(final WriteConcernError writeConcernError, @Nullable final WriteConcernResult writeConcernResult,
+            final ServerAddress serverAddress, final Collection<String> errorLabels, final Throwable t) {
+        super(notNull("writeConcernError", writeConcernError).getCode(), writeConcernError.getMessage(), t, serverAddress);
+        this.writeConcernResult = writeConcernResult;
+        this.writeConcernError = writeConcernError;
         addLabels(errorLabels);
     }
 

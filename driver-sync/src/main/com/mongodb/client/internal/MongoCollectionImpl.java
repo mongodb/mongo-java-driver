@@ -18,15 +18,10 @@ package com.mongodb.client.internal;
 
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoBulkWriteException;
-import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
-import com.mongodb.MongoWriteConcernException;
-import com.mongodb.MongoWriteException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
-import com.mongodb.WriteConcernResult;
-import com.mongodb.WriteError;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.ChangeStreamIterable;
@@ -85,6 +80,7 @@ import static com.mongodb.internal.bulk.WriteRequest.Type.DELETE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
+import static com.mongodb.internal.operation.MongoBulkWriteExceptionHelper.translateSingleOperationBulkWriteResultException;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
@@ -1113,34 +1109,9 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                                       final WriteOperation<BulkWriteResult> writeOperation,
                                                       final WriteRequest.Type type) {
         try {
-            return getExecutor(timeoutSettings)
-                    .execute(writeOperation, readConcern, clientSession);
+            return getExecutor(timeoutSettings).execute(writeOperation, readConcern, clientSession);
         } catch (MongoBulkWriteException e) {
-            if (e.getWriteErrors().isEmpty()) {
-                throw new MongoWriteConcernException(e.getWriteConcernError(),
-                        translateBulkWriteResult(type, e.getWriteResult()),
-                        e.getServerAddress(), e.getErrorLabels());
-            } else {
-                throw new MongoWriteException(new WriteError(e.getWriteErrors().get(0)), e.getServerAddress(), e.getErrorLabels());
-            }
-
-        }
-    }
-
-    private WriteConcernResult translateBulkWriteResult(final WriteRequest.Type type, final BulkWriteResult writeResult) {
-        switch (type) {
-            case INSERT:
-                return WriteConcernResult.acknowledged(writeResult.getInsertedCount(), false, null);
-            case DELETE:
-                return WriteConcernResult.acknowledged(writeResult.getDeletedCount(), false, null);
-            case UPDATE:
-            case REPLACE:
-                return WriteConcernResult.acknowledged(writeResult.getMatchedCount() + writeResult.getUpserts().size(),
-                        writeResult.getMatchedCount() > 0,
-                        writeResult.getUpserts().isEmpty()
-                                ? null : writeResult.getUpserts().get(0).getId());
-            default:
-                throw new MongoInternalException("Unhandled write request type: " + type);
+            throw translateSingleOperationBulkWriteResultException(type, e);
         }
     }
 
