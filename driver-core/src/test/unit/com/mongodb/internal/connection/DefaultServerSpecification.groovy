@@ -51,6 +51,7 @@ import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Specification
 
+import java.security.cert.CertificateException
 import java.util.concurrent.CountDownLatch
 
 import static com.mongodb.ClusterFixture.CLIENT_METADATA
@@ -258,11 +259,39 @@ class DefaultServerSpecification extends Specification {
         ]
     }
 
-    def 'DNS lookup failure should not be labeled as backpressure and should invalidate the pool'() {
+    def 'should invalidate the pool when the exception without system overloaded label'() {
         given:
-        def exceptionToThrow = new MongoSocketException('DNS lookup failed', new ServerAddress(),
-                new UnknownHostException('no such host'))
-        BackpressureErrorLabeler.applyLabelsIfEligible(exceptionToThrow)
+        assert !exceptionToThrow.hasErrorLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL)
+        def connectionPool = Mock(ConnectionPool)
+        connectionPool.get(_) >> { throw exceptionToThrow }
+        def serverMonitor = Mock(ServerMonitor)
+        def server = defaultServer(connectionPool, serverMonitor)
+
+        when:
+        server.getConnection(createOperationContext())
+
+        then:
+        def e = thrown(MongoException)
+        e.is(exceptionToThrow)
+        1 * connectionPool.invalidate(exceptionToThrow)
+        1 * serverMonitor.cancelCurrentCheck()
+
+        where:
+        exceptionToThrow << [
+                new MongoSocketException('establishment failed', new ServerAddress()),
+                new MongoSocketOpenException('open failed', new ServerAddress(), new IOException()),
+                new MongoSocketReadTimeoutException('Read timed out', new ServerAddress(), new IOException()),
+                new MongoSocketException('DNS lookup failed', new ServerAddress(),
+                        new UnknownHostException('no such host')),
+                new MongoSocketException('TLS config error', new ServerAddress(),
+                        new CertificateException('bad cert')),
+        ]
+    }
+
+    def 'should not invalidate the pool when the exception carries SystemOverloadedError'() {
+        given:
+        def exceptionToThrow = new MongoSocketException('rate-limited establishment', new ServerAddress())
+        exceptionToThrow.addLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL)
 
         def connectionPool = Mock(ConnectionPool)
         connectionPool.get(_) >> { throw exceptionToThrow }
@@ -275,9 +304,9 @@ class DefaultServerSpecification extends Specification {
         then:
         def e = thrown(MongoException)
         e.is(exceptionToThrow)
-        !e.hasErrorLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL)
-        1 * connectionPool.invalidate(exceptionToThrow)
-        1 * serverMonitor.cancelCurrentCheck()
+        e.hasErrorLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL)
+        0 * connectionPool.invalidate(_)
+        0 * serverMonitor.cancelCurrentCheck()
     }
 
     def 'failed authentication should invalidate the connection pool'() {
