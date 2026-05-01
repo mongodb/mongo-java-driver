@@ -21,6 +21,7 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoNodeIsRecoveringException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
@@ -103,6 +104,7 @@ public class CommitTransactionOperation extends TransactionOperation {
     private static boolean shouldAddUnknownTransactionCommitResultLabel(final MongoException e) {
 
         if (e instanceof MongoSocketException || e instanceof MongoTimeoutException
+                || e instanceof MongoOperationTimeoutException
                 || e instanceof MongoNotPrimaryException || e instanceof MongoNodeIsRecoveringException
                 || e instanceof MongoExecutionTimeoutException) {
             return true;
