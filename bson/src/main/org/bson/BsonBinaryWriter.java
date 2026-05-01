@@ -335,6 +335,17 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     }
 
     @Override
+    public void pipe(final byte[] bytes, final int offset, final int length) {
+        if (getState() == State.VALUE) {
+            bsonOutput.writeByte(BsonType.DOCUMENT.getValue());
+            writeCurrentName();
+        }
+        int pipedDocumentStartPosition = bsonOutput.getPosition();
+        bsonOutput.writeBytes(bytes, offset, length);
+        completePipeDocument(pipedDocumentStartPosition);
+    }
+
+    @Override
     public void pipe(final BsonReader reader, final List<BsonElement> extraElements) {
         notNull("reader", reader);
         notNull("extraElements", extraElements);
@@ -355,9 +366,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
             }
             int pipedDocumentStartPosition = bsonOutput.getPosition();
             bsonOutput.writeInt32(size);
-            byte[] bytes = new byte[size - 4];
-            bsonInput.readBytes(bytes);
-            bsonOutput.writeBytes(bytes);
+            bsonInput.pipe(bsonOutput, size - 4);
 
             binaryReader.setState(AbstractBsonReader.State.TYPE);
 
@@ -371,22 +380,25 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
                 setContext(getContext().getParentContext());
             }
 
-            if (getContext() == null) {
-                setState(State.DONE);
-            } else {
-                if (getContext().getContextType() == BsonContextType.JAVASCRIPT_WITH_SCOPE) {
-                    backpatchSize(); // size of the JavaScript with scope value
-                    setContext(getContext().getParentContext());
-                }
-                setState(getNextState());
-            }
-
-            validateSize(bsonOutput.getPosition() - pipedDocumentStartPosition);
+            completePipeDocument(pipedDocumentStartPosition);
         } else if (extraElements != null) {
             super.pipe(reader, extraElements);
         } else {
             super.pipe(reader);
         }
+    }
+
+    private void completePipeDocument(final int pipedDocumentStartPosition) {
+        if (getContext() == null) {
+            setState(State.DONE);
+        } else {
+            if (getContext().getContextType() == BsonContextType.JAVASCRIPT_WITH_SCOPE) {
+                backpatchSize(); // size of the JavaScript with scope value
+                setContext(getContext().getParentContext());
+            }
+            setState(getNextState());
+        }
+        validateSize(bsonOutput.getPosition() - pipedDocumentStartPosition);
     }
 
     /**

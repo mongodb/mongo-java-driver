@@ -276,6 +276,24 @@ public class ByteBufferBsonInput implements BsonInput {
     }
 
     @Override
+    public void pipe(final BsonOutput output, final int numBytes) {
+        ensureOpen();
+        ensureAvailable(numBytes);
+
+        if (buffer.isBackedByArray()) {
+            int position = buffer.position();
+            int arrayOffset = buffer.arrayOffset();
+            output.writeBytes(buffer.array(), arrayOffset + position, numBytes);
+            buffer.position(position + numBytes);
+        } else {
+            // Fallback: use temporary buffer for non-array-backed buffers
+            byte[] temp = new byte[numBytes];
+            buffer.get(temp);
+            output.writeBytes(temp);
+        }
+    }
+
+    @Override
     public void close() {
         buffer.release();
         buffer = null;
