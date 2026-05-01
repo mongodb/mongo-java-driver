@@ -104,12 +104,16 @@ public interface GridFSBucket {
      *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
      * </ul>
      *
+     * <p>If not set, the timeout is inherited from whatever the
+     * {@linkplain MongoDatabase#getTimeout MongoDatabase} was resolved to.
+     *
      *  <p>Note: This timeout does not limit socket writes, therefore there is a possibility that the
      *  operation might not be timed out when expected.
      *
      * @param timeUnit the time unit
      * @return the timeout in the given time unit
      * @since 5.2
+     * @see #withTimeout
      */
     @Alpha(Reason.CLIENT)
     @Nullable
@@ -157,6 +161,9 @@ public interface GridFSBucket {
      *   <li>{@code 0} means infinite timeout.</li>
      *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
      * </ul>
+     *
+     * <p>If not set, the timeout is inherited from whatever the
+     * {@linkplain MongoDatabase#getTimeout MongoDatabase} was resolved to.
      *
      *  <p>Note: This timeout does not limit socket writes, therefore there is a possibility that the
      *  operation might not be timed out when expected.

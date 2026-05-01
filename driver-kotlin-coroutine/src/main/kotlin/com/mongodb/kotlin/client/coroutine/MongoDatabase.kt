@@ -15,8 +15,11 @@
  */
 package com.mongodb.kotlin.client.coroutine
 
+import com.mongodb.ClientSessionOptions
+import com.mongodb.MongoClientSettings
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
+import com.mongodb.TransactionOptions
 import com.mongodb.WriteConcern
 import com.mongodb.annotations.Alpha
 import com.mongodb.annotations.Reason
@@ -73,7 +76,21 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
      * - `0` means infinite timeout.
      * - `> 0` The time limit to use for the full execution of an operation.
      *
+     * The timeout can be set at the following levels (ordered by lowest precedence):
+     * - [MongoClientSettings.Builder.timeout]
+     * - [MongoCluster.withTimeout]
+     * - [MongoDatabase.withTimeout] (current)
+     * - [MongoCollection.withTimeout]
+     * - [ClientSessionOptions.Builder.defaultTimeout]
+     * - [TransactionOptions.Builder.timeout]
+     *
+     * If not set at a given level, the timeout is inherited from the level above.
+     *
+     * If [write][MongoClientSettings.Builder.retryWrites] or [read][MongoClientSettings.Builder.retryReads] retries are
+     * enabled, the driver may retry multiple times until the timeout expires.
+     *
      * @return the optional timeout duration
+     * @see [withTimeout]
      * @since 5.2
      */
     @Alpha(Reason.CLIENT)
@@ -127,10 +144,23 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
      * - `0` means an infinite timeout
      * - `> 0` The time limit to use for the full execution of an operation.
      *
+     * The timeout can be set at the following levels (ordered by lowest precedence):
+     * - [MongoClientSettings.Builder.timeout]
+     * - [MongoCluster.withTimeout]
+     * - [MongoDatabase.withTimeout] (current)
+     * - [MongoCollection.withTimeout]
+     * - [ClientSessionOptions.Builder.defaultTimeout]
+     * - [TransactionOptions.Builder.timeout]
+     *
+     * If not set at a given level, the timeout is inherited from the level above.
+     *
+     * If [write][MongoClientSettings.Builder.retryWrites] or [read][MongoClientSettings.Builder.retryReads] retries are
+     * enabled, the driver may retry multiple times until the timeout expires.
+     *
      * @param timeout the timeout, which must be greater than or equal to 0
      * @param timeUnit the time unit, defaults to Milliseconds
      * @return a new MongoDatabase instance with the set time limit for operations
-     * @see [MongoDatabase.timeout]
+     * @see [timeout]
      * @since 5.2
      */
     @Alpha(Reason.CLIENT)
