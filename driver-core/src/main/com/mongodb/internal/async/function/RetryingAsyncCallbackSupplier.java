@@ -69,7 +69,7 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
      * per attempt and only if all the following is true:
      * <ul>
      *     <li>{@code onAttemptFailureOperator} completed normally;</li>
-     *     <li>the most recent attempt is not the {@linkplain RetryState#isLastAttempt() last} one.</li>
+     *     <li>the most recent attempt is not known to be the last one.</li>
      * </ul>
      * The {@code retryPredicate} accepts this {@link RetryState} and the exception from the most recent attempt,
      * and may mutate the exception. The {@linkplain RetryState} advances to represent the state of a new attempt
