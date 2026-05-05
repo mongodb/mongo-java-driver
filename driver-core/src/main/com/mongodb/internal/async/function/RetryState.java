@@ -358,9 +358,10 @@ public final class RetryState {
      * @see #attempt()
      */
     private boolean isLastAttempt(final Throwable attemptException) {
-        boolean lastIteration = loopState.isLastIteration();
         boolean operationTimeout = retryUntilTimeoutThrowsException && attemptException instanceof MongoOperationTimeoutException;
-        return lastIteration || operationTimeout || attempt() == attempts - 1;
+        boolean attemptLimit = attempt() == attempts - 1;
+        assertFalse(operationTimeout && attemptLimit);
+        return loopState.isLastIteration() || operationTimeout || attemptLimit;
     }
 
     /**
