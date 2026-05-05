@@ -87,8 +87,16 @@ class BackpressureErrorLabelerTest {
                 named(new CertPathValidatorException("validation failed")),
                 named(new SSLPeerUnverifiedException("peer not verified")),
                 named(new SSLProtocolException("protocol error")),
-                named(new SSLHandshakeException("PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: "
-                        + "unable to find valid certification path to requested target"))
+                named(initCause(
+                        new SSLHandshakeException("SSLHandshakeException invoking https://1.2.3.4:8443/api/methodName: "
+                                + "sun.security.validator.ValidatorException: PKIX path building failed"),
+                        initCause(
+                                new SSLHandshakeException("sun.security.validator.ValidatorException: "
+                                        + "PKIX path building failed: "
+                                        + "sun.security.provider.certpath.SunCertPathBuilderException: "
+                                        + "unable to find valid certification path to requested target"),
+                                new CertPathBuilderException(
+                                        "unable to find valid certification path to requested target"))))
         );
     }
 

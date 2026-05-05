@@ -82,23 +82,8 @@ final class BackpressureErrorLabeler {
             }
             if (cause instanceof SSLHandshakeException) {
                 String message = cause.getMessage();
-                if (message != null) {
-                    String lowerMessage = message.toLowerCase(Locale.ROOT);
-                    if (lowerMessage.contains("certificate")
-                            || lowerMessage.contains("verify")
-                            || lowerMessage.contains("trust")
-                            || lowerMessage.contains("hostname")
-                            || lowerMessage.contains("protocol")
-                            || lowerMessage.contains("cipher")
-                            // PKIX path building/validation failures surface as SSLHandshakeException
-                            // when the underlying CertPath* cause is not in the chain.
-                            || lowerMessage.contains("pkix")
-                            // Any "Received fatal alert: X" from OpenJDK's JSSE provider means the
-                            // server actively answered with a TLS protocol error — not an overload
-                            // signal. Catches all 25 RFC handshake alert descriptions in one rule.
-                            || lowerMessage.contains("received fatal alert")) {
-                        return true;
-                    }
+                if (message != null && message.toLowerCase(Locale.ROOT).contains("received fatal alert")) {
+                    return true;
                 }
             }
             cause = cause.getCause();
