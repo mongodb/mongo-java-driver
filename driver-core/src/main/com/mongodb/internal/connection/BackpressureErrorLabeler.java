@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoSocketException;
+import com.mongodb.lang.Nullable;
 
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -26,7 +27,15 @@ import java.net.UnknownHostException;
 import java.security.cert.CertPathBuilderException;
 import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertificateException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Attaches {@link MongoException#SYSTEM_OVERLOADED_ERROR_LABEL} and
@@ -37,6 +46,35 @@ import java.util.Locale;
  * both default SDAM and load-balanced modes are covered.
  */
 final class BackpressureErrorLabeler {
+
+    /**
+     * BouncyCastle TLS fatal-alert exception types resolved at class-load time. If BC isn't on the
+     * classpath the list is empty and {@link #isBouncyCastleTlsError(Throwable)} short-circuits to false.
+     */
+    private static final List<Class<?>> BOUNCY_CASTLE_TLS_FATAL_TYPES = Stream.of(
+                    "org.bouncycastle.tls.TlsFatalAlert",
+                    "org.bouncycastle.tls.TlsFatalAlertReceived",
+                    "org.bouncycastle.tls.crypto.TlsCryptoException")
+            .map(BackpressureErrorLabeler::loadClassOrNull)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+
+    /**
+     * RFC 5246 / RFC 8446 alert descriptions that surface in BouncyCastle TLS exception messages.
+     * See <a href="https://github.com/bcgit/bc-java/blob/main/tls/src/main/java/org/bouncycastle/tls/AlertDescription.java">AlertDescription.java</a>.
+     * See <a href="https://datatracker.ietf.org/doc/html/rfc5246#section-7.2">(TLS) Protocol Version 1.2 - Alert Protocol</a>.
+     */
+    private static final Set<String> BOUNCY_CASTLE_TLS_ALERT_DESCRIPTIONS = Collections.unmodifiableSet(
+            new HashSet<>(Arrays.asList(
+                    "close_notify", "unexpected_message", "bad_record_mac", "decryption_failed",
+                    "record_overflow", "decompression_failure", "handshake_failure", "no_certificate",
+                    "bad_certificate", "unsupported_certificate", "certificate_revoked", "certificate_expired",
+                    "certificate_unknown", "illegal_parameter", "unknown_ca", "access_denied",
+                    "decode_error", "decrypt_error", "export_restriction", "protocol_version",
+                    "insufficient_security", "internal_error", "no_renegotiation", "unsupported_extension",
+                    "certificate_unobtainable", "unrecognized_name", "bad_certificate_status_response",
+                    "bad_certificate_hash_value", "unknown_psk_identity", "no_application_protocol",
+                    "inappropriate_fallback", "missing_extension", "certificate_required")));
 
     private BackpressureErrorLabeler() {
     }
@@ -82,12 +120,55 @@ final class BackpressureErrorLabeler {
             }
             if (cause instanceof SSLHandshakeException) {
                 String message = cause.getMessage();
-                if (message != null && message.toLowerCase(Locale.ROOT).contains("received fatal alert")) {
-                    return true;
+                if (message != null) {
+                    String lowerMessage = message.toLowerCase(Locale.ROOT);
+                    if (lowerMessage.contains("verify")
+                            || lowerMessage.contains("protocol")
+                            || lowerMessage.contains("cipher")
+                            || lowerMessage.contains("received fatal alert")) {
+                        return true;
+                    }
                 }
             }
+            if (isBouncyCastleTlsError(cause)) {
+                return true;
+            }
+
             cause = cause.getCause();
         }
         return false;
+    }
+
+    private static boolean isBouncyCastleTlsError(final Throwable cause) {
+        boolean isBcType = false;
+        for (Class<?> bcType : BOUNCY_CASTLE_TLS_FATAL_TYPES) {
+            if (bcType.isInstance(cause)) {
+                isBcType = true;
+                break;
+            }
+        }
+        if (!isBcType) {
+            return false;
+        }
+        String message = cause.getMessage();
+        if (message == null) {
+            return false;
+        }
+        String description = message.toLowerCase(Locale.ROOT);
+        for (String alertName : BOUNCY_CASTLE_TLS_ALERT_DESCRIPTIONS) {
+            if (description.contains(alertName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Nullable
+    private static Class<?> loadClassOrNull(final String fqn) {
+        try {
+            return Class.forName(fqn);
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
     }
 }
