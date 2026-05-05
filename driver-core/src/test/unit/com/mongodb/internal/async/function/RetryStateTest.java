@@ -148,8 +148,8 @@ final class RetryStateTest {
 
     @ParameterizedTest
     @MethodSource({"infiniteTimeout", "noTimeout"})
-    void breakAndThrowIfRetryAndTrue() {
-        RetryState retryState = new RetryState(TIMEOUT_CONTEXT_NO_GLOBAL_TIMEOUT);
+    void breakAndThrowIfRetryAndTrue(final TimeoutContext timeoutContext) {
+        RetryState retryState = new RetryState(timeoutContext);
         advance(retryState);
         assertThrows(RuntimeException.class, () -> retryState.breakAndThrowIfRetryAnd(() -> true));
         RuntimeException attemptException = new RuntimeException();
