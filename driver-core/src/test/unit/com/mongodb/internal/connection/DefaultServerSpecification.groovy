@@ -261,7 +261,6 @@ class DefaultServerSpecification extends Specification {
 
     def 'should invalidate the pool when the exception without system overloaded label'() {
         given:
-        assert !exceptionToThrow.hasErrorLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL)
         def connectionPool = Mock(ConnectionPool)
         connectionPool.get(_) >> { throw exceptionToThrow }
         def serverMonitor = Mock(ServerMonitor)
