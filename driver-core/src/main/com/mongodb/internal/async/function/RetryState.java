@@ -360,7 +360,6 @@ public final class RetryState {
     private boolean isLastAttempt(final Throwable attemptException) {
         boolean lastIteration = loopState.isLastIteration();
         boolean operationTimeout = retryUntilTimeoutThrowsException && attemptException instanceof MongoOperationTimeoutException;
-        assertFalse(lastIteration && operationTimeout);
         return lastIteration || operationTimeout || attempt() == attempts - 1;
     }
 
