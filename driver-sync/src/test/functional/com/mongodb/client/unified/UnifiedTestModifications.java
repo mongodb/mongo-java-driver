@@ -47,6 +47,8 @@ public final class UnifiedTestModifications {
         def.skipNoncompliantReactive("event sensitive tests. We can't guarantee the amount of GetMore commands sent in the reactive driver")
                 .test("change-streams", "change-streams", "Test that comment is set on getMore")
                 .test("change-streams", "change-streams", "Test that comment is not set on getMore - pre 4.4");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-6181 temp disabling as failing on latest, while specs are updated")
+                .test("change-streams", "change-streams-nsType", "nsType is present when creating timeseries");
         def.modify(IGNORE_EXTRA_EVENTS)
                 .test("change-streams", "change-streams", "Test with document comment")
                 .test("change-streams", "change-streams", "Test with string comment");
