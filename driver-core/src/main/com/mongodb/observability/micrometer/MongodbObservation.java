@@ -89,6 +89,9 @@ public enum MongodbObservation implements ObservationDocumentation {
      */
     public enum TransactionLowCardinalityKeyNames implements KeyName {
 
+        /**
+         * The database system name ({@code db.system.name}).
+         */
         SYSTEM {
             @Override
             public String asString() {
@@ -102,30 +105,45 @@ public enum MongodbObservation implements ObservationDocumentation {
      */
     public enum OperationLowCardinalityKeyNames implements KeyName {
 
+        /**
+         * The database system name ({@code db.system.name}).
+         */
         SYSTEM {
             @Override
             public String asString() {
                 return "db.system.name";
             }
         },
+        /**
+         * The database namespace ({@code db.namespace}).
+         */
         NAMESPACE {
             @Override
             public String asString() {
                 return "db.namespace";
             }
         },
+        /**
+         * The database collection name ({@code db.collection.name}).
+         */
         COLLECTION {
             @Override
             public String asString() {
                 return "db.collection.name";
             }
         },
+        /**
+         * The database operation name ({@code db.operation.name}).
+         */
         OPERATION_NAME {
             @Override
             public String asString() {
                 return "db.operation.name";
             }
         },
+        /**
+         * The database operation summary ({@code db.operation.summary}).
+         */
         OPERATION_SUMMARY {
             @Override
             public String asString() {
@@ -139,54 +157,81 @@ public enum MongodbObservation implements ObservationDocumentation {
      */
     public enum CommandLowCardinalityKeyNames implements KeyName {
 
+        /**
+         * The database system name ({@code db.system.name}).
+         */
         SYSTEM {
             @Override
             public String asString() {
                 return "db.system.name";
             }
         },
+        /**
+         * The database namespace ({@code db.namespace}).
+         */
         NAMESPACE {
             @Override
             public String asString() {
                 return "db.namespace";
             }
         },
+        /**
+         * The database collection name ({@code db.collection.name}).
+         */
         COLLECTION {
             @Override
             public String asString() {
                 return "db.collection.name";
             }
         },
+        /**
+         * The database command name ({@code db.command.name}).
+         */
         COMMAND_NAME {
             @Override
             public String asString() {
                 return "db.command.name";
             }
         },
+        /**
+         * The database query summary ({@code db.query.summary}).
+         */
         QUERY_SUMMARY {
             @Override
             public String asString() {
                 return "db.query.summary";
             }
         },
+        /**
+         * The network transport ({@code network.transport}).
+         */
         NETWORK_TRANSPORT {
             @Override
             public String asString() {
                 return "network.transport";
             }
         },
+        /**
+         * The server address ({@code server.address}).
+         */
         SERVER_ADDRESS {
             @Override
             public String asString() {
                 return "server.address";
             }
         },
+        /**
+         * The server port ({@code server.port}).
+         */
         SERVER_PORT {
             @Override
             public String asString() {
                 return "server.port";
             }
         },
+        /**
+         * The database response status code ({@code db.response.status_code}).
+         */
         RESPONSE_STATUS_CODE {
             @Override
             public String asString() {
@@ -200,54 +245,81 @@ public enum MongodbObservation implements ObservationDocumentation {
      */
     public enum HighCardinalityKeyNames implements KeyName {
 
+        /**
+         * The database query text ({@code db.query.text}).
+         */
         QUERY_TEXT {
             @Override
             public String asString() {
                 return "db.query.text";
             }
         },
+        /**
+         * The client-side driver connection ID ({@code db.mongodb.driver_connection_id}).
+         */
         CLIENT_CONNECTION_ID {
             @Override
             public String asString() {
                 return "db.mongodb.driver_connection_id";
             }
         },
+        /**
+         * The server-side connection ID ({@code db.mongodb.server_connection_id}).
+         */
         SERVER_CONNECTION_ID {
             @Override
             public String asString() {
                 return "db.mongodb.server_connection_id";
             }
         },
+        /**
+         * The cursor ID ({@code db.mongodb.cursor_id}).
+         */
         CURSOR_ID {
             @Override
             public String asString() {
                 return "db.mongodb.cursor_id";
             }
         },
+        /**
+         * The transaction number ({@code db.mongodb.txn_number}).
+         */
         TRANSACTION_NUMBER {
             @Override
             public String asString() {
                 return "db.mongodb.txn_number";
             }
         },
+        /**
+         * The logical session ID ({@code db.mongodb.lsid}).
+         */
         SESSION_ID {
             @Override
             public String asString() {
                 return "db.mongodb.lsid";
             }
         },
+        /**
+         * The exception message ({@code exception.message}).
+         */
         EXCEPTION_MESSAGE {
             @Override
             public String asString() {
                 return "exception.message";
             }
         },
+        /**
+         * The exception type ({@code exception.type}).
+         */
         EXCEPTION_TYPE {
             @Override
             public String asString() {
                 return "exception.type";
             }
         },
+        /**
+         * The exception stacktrace ({@code exception.stacktrace}).
+         */
         EXCEPTION_STACKTRACE {
             @Override
             public String asString() {
