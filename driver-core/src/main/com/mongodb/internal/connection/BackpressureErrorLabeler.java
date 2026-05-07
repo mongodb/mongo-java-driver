@@ -18,7 +18,6 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoSocketException;
-import com.mongodb.lang.Nullable;
 
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -30,12 +29,8 @@ import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Attaches {@link MongoException#SYSTEM_OVERLOADED_ERROR_LABEL} and
@@ -48,16 +43,13 @@ import java.util.stream.Stream;
 final class BackpressureErrorLabeler {
 
     /**
-     * BouncyCastle TLS fatal-alert exception types resolved at class-load time. If BC isn't on the
-     * classpath the list is empty and {@link #isBouncyCastleTlsError(Throwable)} short-circuits to false.
+     * BouncyCastle TLS fatal-alert exception type names.
      */
-    private static final List<Class<?>> BOUNCY_CASTLE_TLS_FATAL_TYPES = Stream.of(
+    private static final Set<String> BOUNCY_CASTLE_TLS_FATAL_TYPE_NAMES = Collections.unmodifiableSet(
+            new HashSet<>(Arrays.asList(
                     "org.bouncycastle.tls.TlsFatalAlert",
                     "org.bouncycastle.tls.TlsFatalAlertReceived",
-                    "org.bouncycastle.tls.crypto.TlsCryptoException")
-            .map(BackpressureErrorLabeler::loadClassOrNull)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+                    "org.bouncycastle.tls.crypto.TlsCryptoException")));
 
     /**
      * RFC 5246 / RFC 8446 alert descriptions that surface in BouncyCastle TLS exception messages.
@@ -90,7 +82,7 @@ final class BackpressureErrorLabeler {
         if (isTlsConfigurationError(socketException)) {
             return;
         }
-        // TODO-BACKPRESSURE Nabil - SOCKS5 Revisit alongside JAVA-5205 (SOCKS5 in async) so both sync and
+        // TODO-BACKPRESSURE Nabil - Add SOCKS5 check once JAVA-6194 is introduced
         // async proxy error surfaces can be handled together — likely via a dedicated internal
         // exception thrown from the proxy code path.
         socketException.addLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL);
@@ -140,14 +132,7 @@ final class BackpressureErrorLabeler {
     }
 
     private static boolean isBouncyCastleTlsError(final Throwable cause) {
-        boolean isBcType = false;
-        for (Class<?> bcType : BOUNCY_CASTLE_TLS_FATAL_TYPES) {
-            if (bcType.isInstance(cause)) {
-                isBcType = true;
-                break;
-            }
-        }
-        if (!isBcType) {
+        if (!isBouncyCastleTlsFatalType(cause.getClass())) {
             return false;
         }
         String message = cause.getMessage();
@@ -163,12 +148,18 @@ final class BackpressureErrorLabeler {
         return false;
     }
 
-    @Nullable
-    private static Class<?> loadClassOrNull(final String fqn) {
-        try {
-            return Class.forName(fqn);
-        } catch (ClassNotFoundException e) {
-            return null;
+    /**
+     * Walks the class hierarchy comparing fully qualified names so a subclass of a known BC type
+     * still matches without requiring the BC classes to be loadable at static-init time.
+     */
+    private static boolean isBouncyCastleTlsFatalType(final Class<?> exceptionClass) {
+        Class<?> cls = exceptionClass;
+        while (cls != null) {
+            if (BOUNCY_CASTLE_TLS_FATAL_TYPE_NAMES.contains(cls.getName())) {
+                return true;
+            }
+            cls = cls.getSuperclass();
         }
+        return false;
     }
 }

@@ -23,8 +23,11 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.ServerAddress;
+import net.bytebuddy.ByteBuddy;
 import org.junit.jupiter.api.Named;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -164,6 +167,72 @@ class BackpressureErrorLabelerTest {
         if (e instanceof MongoException) {
             assertLacksBackpressureLabels((MongoException) e);
         }
+    }
+
+    /**
+     * BouncyCastle isn't on the test classpath, so we use ByteBuddy to synthesise classes with the
+     * exact FQCNs the labeler matches against. This exercises the FQCN-walk in
+     * {@code isBouncyCastleTlsFatalType} without taking a compile- or runtime dependency on BC.
+     */
+    @ParameterizedTest(name = "{0} with alert {1}")
+    @MethodSource
+    void bouncyCastleTlsFatalAlertShouldNotBeLabeled(final String bcFqcn, final String alertMessage) throws Exception {
+        Throwable bcCause = newBouncyCastleStub(bcFqcn, alertMessage);
+        MongoSocketException e = new MongoSocketException("tls", ADDRESS, bcCause);
+        BackpressureErrorLabeler.applyLabelsIfEligible(e);
+        assertLacksBackpressureLabels(e);
+    }
+
+    static Stream<Arguments> bouncyCastleTlsFatalAlertShouldNotBeLabeled() {
+        return Stream.of(
+                Arguments.of("org.bouncycastle.tls.TlsFatalAlert", "handshake_failure(40)"),
+                Arguments.of("org.bouncycastle.tls.TlsFatalAlertReceived", "unknown_ca(48)"),
+                Arguments.of("org.bouncycastle.tls.crypto.TlsCryptoException", "bad_certificate(42)"));
+    }
+
+    /**
+     * Subclasses of known BC types must still match — the labeler walks the superclass chain.
+     */
+    @Test
+    void bouncyCastleSubclassWithAlertShouldNotBeLabeled() throws Exception {
+        Class<?> bcParent = new ByteBuddy()
+                .subclass(Exception.class)
+                .name("org.bouncycastle.tls.TlsFatalAlert")
+                .make()
+                .load(BackpressureErrorLabelerTest.class.getClassLoader())
+                .getLoaded();
+        Class<?> bcSubclass = new ByteBuddy()
+                .subclass(bcParent)
+                .name("com.example.CustomBcSubclass")
+                .make()
+                .load(bcParent.getClassLoader())
+                .getLoaded();
+        Throwable cause = (Throwable) bcSubclass.getConstructor(String.class).newInstance("handshake_failure(40)");
+        MongoSocketException e = new MongoSocketException("tls", ADDRESS, cause);
+        BackpressureErrorLabeler.applyLabelsIfEligible(e);
+        assertLacksBackpressureLabels(e);
+    }
+
+    /**
+     * BC type but the message has no recognised alert description — the alert-keyword filter
+     * rejects it, so the labeler falls through and applies backpressure labels.
+     */
+    @Test
+    void bouncyCastleTypeWithoutAlertKeywordShouldBeLabeled() throws Exception {
+        Throwable bcCause = newBouncyCastleStub("org.bouncycastle.tls.TlsFatalAlert", "something unrelated");
+        MongoSocketException e = new MongoSocketException("tls", ADDRESS, bcCause);
+        BackpressureErrorLabeler.applyLabelsIfEligible(e);
+        assertHasBackpressureLabels(e);
+    }
+
+    private static Throwable newBouncyCastleStub(final String fqcn, final String message) throws Exception {
+        Class<?> cls = new ByteBuddy()
+                .subclass(Exception.class)
+                .name(fqcn)
+                .make()
+                .load(BackpressureErrorLabelerTest.class.getClassLoader())
+                .getLoaded();
+        return (Throwable) cls.getConstructor(String.class).newInstance(message);
     }
 
     private static <T extends Throwable> Named<T> named(final T e) {
