@@ -132,11 +132,6 @@ if [ ! -z "$REQUIRE_API_VERSION" ]; then
   export API_VERSION="-Dorg.mongodb.test.api.version=1"
 fi
 
-# Log Windows version info for diagnostics
-if [ "Windows_NT" == "$OS" ]; then
-  echo "Windows build info:"
-  cmd /c ver
-fi
 
 echo "Running $AUTH tests over $SSL for $TOPOLOGY and connecting to $MONGODB_URI"
 
