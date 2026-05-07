@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.authentication.HttpHelper.getHttpContents;
 
 class BuiltInAwsCredentialSupplier implements Supplier<AwsCredential> {
@@ -39,8 +40,8 @@ class BuiltInAwsCredentialSupplier implements Supplier<AwsCredential> {
 
     private static AwsCredential obtainFromEnvironmentVariables() {
         return new AwsCredential(
-                EnvironmentProvider.getEnv("AWS_ACCESS_KEY_ID"),
-                EnvironmentProvider.getEnv("AWS_SECRET_ACCESS_KEY"),
+                notNull("accessKeyId", EnvironmentProvider.getEnv("AWS_ACCESS_KEY_ID")),
+                notNull("secretAccessKey", EnvironmentProvider.getEnv("AWS_SECRET_ACCESS_KEY")),
                 EnvironmentProvider.getEnv("AWS_SESSION_TOKEN"));
     }
 
