@@ -21,7 +21,6 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.function.LoopState.AttachmentKey;
 import com.mongodb.internal.operation.retry.AttachmentKeys;
-import com.mongodb.lang.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -93,7 +92,7 @@ final class RetryStateTest {
         assertAll(
                 () -> assertFalse(retryState.isFirstAttempt()),
                 () -> assertEquals(1, retryState.attempt()),
-                () -> assertAdvanceOrThrow(attemptException, retryState, attemptException)
+                () -> assertAdvanceOrThrowThrows(attemptException, retryState, attemptException)
         );
     }
 
@@ -104,7 +103,7 @@ final class RetryStateTest {
         assertAll(
                 () -> assertTrue(retryState.isFirstAttempt()),
                 () -> assertEquals(0, retryState.attempt()),
-                () -> assertAdvanceOrThrow(attemptException, retryState, attemptException),
+                () -> assertAdvanceOrThrowThrows(attemptException, retryState, attemptException),
                 // when there is only one attempt, it is both the first and the last one
                 () -> assertTrue(retryState.isFirstAttempt()),
                 () -> assertEquals(0, retryState.attempt())
@@ -117,7 +116,7 @@ final class RetryStateTest {
         RetryState retryState = new RetryState(timeoutContext);
         retryState.markAsLastAttempt();
         RuntimeException attemptException = new RuntimeException();
-        assertAdvanceOrThrow(attemptException, retryState, attemptException, (rs, e) -> fail());
+        assertAdvanceOrThrowThrows(attemptException, retryState, attemptException, (rs, e) -> fail());
     }
 
     @ParameterizedTest(name = "should advance with non-retryable error when marked as last attempt and : ''{0}''")
@@ -126,7 +125,7 @@ final class RetryStateTest {
         RetryState retryState = new RetryState(timeoutContext);
         retryState.markAsLastAttempt();
         Error attemptException = new Error();
-        assertAdvanceOrThrow(attemptException, retryState, attemptException, (rs, e) -> fail());
+        assertAdvanceOrThrowThrows(attemptException, retryState, attemptException, (rs, e) -> fail());
     }
 
     @ParameterizedTest
@@ -134,7 +133,7 @@ final class RetryStateTest {
     void breakAndThrowIfRetryAndFirstAttempt(final TimeoutContext timeoutContext) {
         RetryState retryState = new RetryState(timeoutContext);
         retryState.breakAndThrowIfRetryAnd(Assertions::fail);
-        assertAdvanceOrThrow(null, retryState, new RuntimeException());
+        assertAdvanceOrThrowDoesNotThrow(retryState, new RuntimeException());
     }
 
     @ParameterizedTest
@@ -143,7 +142,7 @@ final class RetryStateTest {
         RetryState retryState = new RetryState(timeoutContext);
         advance(retryState);
         retryState.breakAndThrowIfRetryAnd(() -> false);
-        assertAdvanceOrThrow(null, retryState, new RuntimeException());
+        assertAdvanceOrThrowDoesNotThrow(retryState, new RuntimeException());
     }
 
     @ParameterizedTest
@@ -153,7 +152,7 @@ final class RetryStateTest {
         advance(retryState);
         assertThrows(RuntimeException.class, () -> retryState.breakAndThrowIfRetryAnd(() -> true));
         RuntimeException attemptException = new RuntimeException();
-        assertAdvanceOrThrow(attemptException, retryState, attemptException);
+        assertAdvanceOrThrowThrows(attemptException, retryState, attemptException);
     }
 
     @Test
@@ -163,7 +162,7 @@ final class RetryStateTest {
         advance(retryState);
         assertThrows(RuntimeException.class, () -> retryState.breakAndThrowIfRetryAnd(() -> true));
         RuntimeException attemptException = new RuntimeException();
-        assertAdvanceOrThrow(attemptException, retryState, attemptException);
+        assertAdvanceOrThrowThrows(attemptException, retryState, attemptException);
     }
 
     @ParameterizedTest
@@ -177,7 +176,7 @@ final class RetryStateTest {
                 assertThrows(exception.getClass(), () -> retryState.breakAndThrowIfRetryAnd(() -> {
                     throw exception;
                 })));
-        assertAdvanceOrThrow(null, retryState, exception);
+        assertAdvanceOrThrowDoesNotThrow(retryState, exception);
     }
 
     @ParameterizedTest
@@ -187,7 +186,7 @@ final class RetryStateTest {
         SupplyingCallback<?> callback = new SupplyingCallback<>();
         assertFalse(retryState.breakAndCompleteIfRetryAnd(Assertions::fail, callback));
         assertFalse(callback.completed());
-        assertAdvanceOrThrow(null, retryState, new RuntimeException());
+        assertAdvanceOrThrowDoesNotThrow(retryState, new RuntimeException());
     }
 
     @ParameterizedTest
@@ -198,7 +197,7 @@ final class RetryStateTest {
         SupplyingCallback<?> callback = new SupplyingCallback<>();
         assertFalse(retryState.breakAndCompleteIfRetryAnd(() -> false, callback));
         assertFalse(callback.completed());
-        assertAdvanceOrThrow(null, retryState, new RuntimeException());
+        assertAdvanceOrThrowDoesNotThrow(retryState, new RuntimeException());
     }
 
     @ParameterizedTest
@@ -210,7 +209,7 @@ final class RetryStateTest {
         assertTrue(retryState.breakAndCompleteIfRetryAnd(() -> true, callback));
         assertThrows(RuntimeException.class, callback::get);
         RuntimeException attemptException = new RuntimeException();
-        assertAdvanceOrThrow(attemptException, retryState, attemptException);
+        assertAdvanceOrThrowThrows(attemptException, retryState, attemptException);
     }
 
     @ParameterizedTest
@@ -226,7 +225,7 @@ final class RetryStateTest {
         assertEquals(
                 exception,
                 assertThrows(exception.getClass(), callback::get));
-        assertAdvanceOrThrow(null, retryState, exception);
+        assertAdvanceOrThrowDoesNotThrow(retryState, exception);
     }
 
     @ParameterizedTest
@@ -234,7 +233,7 @@ final class RetryStateTest {
     void advanceOrThrowPredicateFalse(final TimeoutContext timeoutContext) {
         RetryState retryState = new RetryState(timeoutContext);
         RuntimeException attemptException = new RuntimeException();
-        assertAdvanceOrThrow(attemptException, retryState, attemptException, (rs, e) -> false);
+        assertAdvanceOrThrowThrows(attemptException, retryState, attemptException, (rs, e) -> false);
     }
 
     @ParameterizedTest
@@ -244,7 +243,7 @@ final class RetryStateTest {
         RetryState retryState = new RetryState(timeoutContext);
 
         MongoOperationTimeoutException expectedTimeoutException = TimeoutContext.createMongoTimeoutException("Server selection failed");
-        assertAdvanceOrThrow(expectedTimeoutException, retryState, expectedTimeoutException,
+        assertAdvanceOrThrowThrows(expectedTimeoutException, retryState, expectedTimeoutException,
                 (e1, e2) -> expectedTimeoutException,
                 (rs, e) -> false);
     }
@@ -284,7 +283,7 @@ final class RetryStateTest {
                 (e1, e2) -> previousAttemptException,
                 (rs, e) -> true);
 
-        assertAdvanceOrThrow(expectedTimeoutException, retryState, expectedTimeoutException,
+        assertAdvanceOrThrowThrows(expectedTimeoutException, retryState, expectedTimeoutException,
                 (e1, e2) -> expectedTimeoutException,
                 (rs, e) -> false);
     }
@@ -293,7 +292,7 @@ final class RetryStateTest {
     void advanceOrThrowPredicateTrueAndLastAttempt() {
         RetryState retryState = RetryState.withNonRetryableState();
         Error attemptException = new Error();
-        assertAdvanceOrThrow(attemptException, retryState, attemptException);
+        assertAdvanceOrThrowThrows(attemptException, retryState, attemptException);
     }
 
     @ParameterizedTest
@@ -302,7 +301,7 @@ final class RetryStateTest {
         RetryState retryState = new RetryState(timeoutContext);
         RuntimeException predicateException = new RuntimeException();
         RuntimeException attemptException = new RuntimeException();
-        assertAdvanceOrThrow(predicateException, retryState, attemptException,
+        assertAdvanceOrThrowThrows(predicateException, retryState, attemptException,
                 (e1, e2) -> e2,
                 (rs, e) -> {
                     assertTrue(rs.isFirstAttempt());
@@ -335,7 +334,7 @@ final class RetryStateTest {
         retryState.advanceOrThrow(firstAttemptException, (e1, e2) -> e2, (rs, e) -> true);
         RuntimeException secondAttemptException = new RuntimeException();
         RuntimeException predicateException = new RuntimeException();
-        assertAdvanceOrThrow(predicateException, retryState, secondAttemptException,
+        assertAdvanceOrThrowThrows(predicateException, retryState, secondAttemptException,
                 (e1, e2) -> e2,
                 (rs, e) -> {
                     assertEquals(1, rs.attempt());
@@ -349,7 +348,7 @@ final class RetryStateTest {
     void advanceOrThrowTransformerThrowsAfterFirstAttempt(final TimeoutContext timeoutContext) {
         RetryState retryState = new RetryState(timeoutContext);
         RuntimeException transformerException = new RuntimeException();
-        assertAdvanceOrThrow(transformerException, retryState, new AssertionError(),
+        assertAdvanceOrThrowThrows(transformerException, retryState, new AssertionError(),
                 (e1, e2) -> {
                     throw transformerException;
                 },
@@ -363,7 +362,7 @@ final class RetryStateTest {
         Error firstAttemptException = new Error();
         retryState.advanceOrThrow(firstAttemptException, (e1, e2) -> e2, (rs, e) -> true);
         RuntimeException transformerException = new RuntimeException();
-        assertAdvanceOrThrow(transformerException, retryState, new AssertionError(),
+        assertAdvanceOrThrowThrows(transformerException, retryState, new AssertionError(),
                 (e1, e2) -> {
                     throw transformerException;
                 },
@@ -376,7 +375,7 @@ final class RetryStateTest {
         RetryState retryState = new RetryState(timeoutContext);
         RuntimeException attemptException = new RuntimeException();
         RuntimeException transformerResult = new RuntimeException();
-        assertAdvanceOrThrow(transformerResult, retryState, attemptException,
+        assertAdvanceOrThrowThrows(transformerResult, retryState, attemptException,
                 (e1, e2) -> {
                     assertNull(e1);
                     assertEquals(attemptException, e2);
@@ -419,7 +418,7 @@ final class RetryStateTest {
         retryState.advanceOrThrow(firstAttemptException, (e1, e2) -> e2, (rs, e) -> true);
         RuntimeException secondAttemptException = new RuntimeException();
         RuntimeException transformerResult = new RuntimeException();
-        assertAdvanceOrThrow(transformerResult, retryState, secondAttemptException,
+        assertAdvanceOrThrowThrows(transformerResult, retryState, secondAttemptException,
                 (e1, e2) -> {
                     assertEquals(firstAttemptException, e1);
                     assertEquals(secondAttemptException, e2);
@@ -452,34 +451,41 @@ final class RetryStateTest {
         retryState.advanceOrThrow(new RuntimeException(), (e1, e2) -> e2, (rs, e) -> true);
     }
 
-    private static void assertAdvanceOrThrow(
-            @Nullable final Throwable expectedException,
+    private static void assertAdvanceOrThrowDoesNotThrow(
             final RetryState retryState,
             final Throwable attemptException) {
-        assertAdvanceOrThrow(expectedException, retryState, attemptException, (rs, e) -> true);
+        assertDoesNotThrow(() -> retryState.advanceOrThrow(attemptException, (e1, e2) -> e2, (rs, e) -> true));
     }
 
-    private static void assertAdvanceOrThrow(
-            @Nullable final Throwable expectedException,
+    private static void assertAdvanceOrThrowThrows(
+            final Throwable expectedException,
+            final RetryState retryState,
+            final Throwable attemptException) {
+        assertAdvanceOrThrowThrows(
+                com.mongodb.assertions.Assertions.assertNotNull(expectedException),
+                retryState, attemptException, (rs, e) -> true);
+    }
+
+    private static void assertAdvanceOrThrowThrows(
+            final Throwable expectedException,
             final RetryState retryState,
             final Throwable attemptException,
             final BiPredicate<RetryState, Throwable> retryPredicate) {
-        assertAdvanceOrThrow(expectedException, retryState, attemptException, (e1, e2) -> e2, retryPredicate);
+        assertAdvanceOrThrowThrows(
+                com.mongodb.assertions.Assertions.assertNotNull(expectedException),
+                retryState, attemptException, (e1, e2) -> e2, retryPredicate);
     }
 
-    private static void assertAdvanceOrThrow(
-            @Nullable final Throwable expectedException,
+    private static void assertAdvanceOrThrowThrows(
+            final Throwable expectedException,
             final RetryState retryState,
             final Throwable attemptException,
             final BinaryOperator<Throwable> onAttemptFailureOperator,
             final BiPredicate<RetryState, Throwable> retryPredicate) {
-        if (expectedException == null) {
-            assertDoesNotThrow(() -> retryState.advanceOrThrow(attemptException, onAttemptFailureOperator, retryPredicate));
-        } else {
-            assertEquals(
-                    expectedException,
-                    assertThrows(expectedException.getClass(), () ->
-                            retryState.advanceOrThrow(attemptException, onAttemptFailureOperator, retryPredicate)));
-        }
+        com.mongodb.assertions.Assertions.assertNotNull(expectedException);
+        assertEquals(
+                expectedException,
+                assertThrows(expectedException.getClass(), () ->
+                        retryState.advanceOrThrow(attemptException, onAttemptFailureOperator, retryPredicate)));
     }
 }
