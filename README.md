@@ -125,6 +125,18 @@ $ mongod --dbpath ./data/db --logpath ./data/mongod.log --port 27017 --logappend
 If you encounter `"Too many open files"` errors when running the tests then you will need to increase 
 the number of available file descriptors prior to starting mongod as described in [https://www.mongodb.com/docs/manual/reference/ulimit/](https://www.mongodb.com/docs/manual/reference/ulimit/)
 
+## AI Agent Configuration
+
+This repository uses [agentskills.io](https://agentskills.io) conventions for AI coding
+agent instructions. `AGENTS.md` is the canonical source of truth — tool-specific files
+like `CLAUDE.md` are generated references.
+
+### Adding a nested AGENTS.md
+
+1. Create an `AGENTS.md` in the target directory.
+2. Run `scripts/symlink-claude-md.sh` to generate the companion `CLAUDE.md`.
+3. Stage and commit both files.
+
 ## IntelliJ IDEA
 
 A couple of manual configuration steps are required to run the code in IntelliJ:
