@@ -76,7 +76,6 @@ internal data class DataClassCodec<T : Any>(
     @Suppress("TooGenericExceptionCaught")
     override fun decode(reader: BsonReader, decoderContext: DecoderContext): T {
         val args: MutableMap<KParameter, Any?> = mutableMapOf()
-        fieldNamePropertyModelMap.values.forEach { args[it.param] = null }
 
         reader.readStartDocument()
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
@@ -89,6 +88,7 @@ internal data class DataClassCodec<T : Any>(
                 }
             } else if (propertyModel.param.type.isMarkedNullable && reader.currentBsonType == BsonType.NULL) {
                 reader.readNull()
+                args[propertyModel.param] = null
             } else {
                 try {
                     args[propertyModel.param] = decoderContext.decodeWithChildContext(propertyModel.codec, reader)
@@ -99,6 +99,23 @@ internal data class DataClassCodec<T : Any>(
             }
         }
         reader.readEndDocument()
+
+        // For non-optional parameters missing from the document, fail with a clear message
+        // if non-nullable, or pass null explicitly if nullable.
+        // Optional parameters (with defaults) are left absent so callBy uses the default value.
+        fieldNamePropertyModelMap.values.forEach {
+            if (it.param !in args && !it.param.isOptional) {
+                // Only error for concrete types (KClass). Generic type parameters (KTypeParameter)
+                // may be nullable at runtime even though isMarkedNullable is false at the
+                // declaration site (e.g. Box<T>(val boxed: T) instantiated as Box<String?>).
+                if (!it.param.type.isMarkedNullable && it.param.type.classifier is KClass<*>) {
+                    throw CodecConfigurationException(
+                        "Required field '${it.fieldName}' is missing from the document for " +
+                            "${kClass.simpleName} data class")
+                }
+                args[it.param] = null
+            }
+        }
 
         try {
             return primaryConstructor.callBy(args)

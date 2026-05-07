@@ -48,6 +48,7 @@ import org.bson.codecs.kotlin.samples.DataClassWithBsonProperty
 import org.bson.codecs.kotlin.samples.DataClassWithCollections
 import org.bson.codecs.kotlin.samples.DataClassWithDataClassMapKey
 import org.bson.codecs.kotlin.samples.DataClassWithDefaults
+import org.bson.codecs.kotlin.samples.DataClassWithDefaultsAndNulls
 import org.bson.codecs.kotlin.samples.DataClassWithEmbedded
 import org.bson.codecs.kotlin.samples.DataClassWithEnum
 import org.bson.codecs.kotlin.samples.DataClassWithEnumMapKey
@@ -177,8 +178,24 @@ class DataClassCodecTest {
             |}"""
                 .trimMargin()
 
-        val defaultDataClass = DataClassWithDefaults()
-        assertRoundTrips(expectedDefault, defaultDataClass)
+        assertRoundTrips(expectedDefault, DataClassWithDefaults())
+
+        // Assert no data decodes as expected
+        assertDecodesTo(BsonDocument.parse(emptyDocument), DataClassWithDefaults())
+
+        // Assert some data
+        assertDecodesTo(BsonDocument.parse("""{"string": "Custom"}"""), DataClassWithDefaults(string = "Custom"))
+
+        // Assert all data
+        val expected =
+            """{
+            | "boolean": true,
+            | "string": "Custom",
+            | "listSimple": ["x"]
+            |}"""
+                .trimMargin()
+
+        assertRoundTrips(expected, DataClassWithDefaults(boolean = true, string = "Custom", listSimple = listOf("x")))
     }
 
     @Test
@@ -186,8 +203,46 @@ class DataClassCodecTest {
         val dataClass = DataClassWithNulls(null, null, null)
         assertRoundTrips(emptyDocument, dataClass)
 
-        val withStoredNulls = BsonDocument.parse("""{"boolean": null, "string": null, "listSimple": null}""")
-        assertDecodesTo(withStoredNulls, dataClass)
+        // Assert all null data decodes as expected
+        assertDecodesTo(BsonDocument.parse("""{"boolean": null, "string": null, "listSimple": null}"""), dataClass)
+
+        // Assert some data
+        assertDecodesTo(BsonDocument.parse("""{"string": "Custom"}"""), DataClassWithNulls(null, "Custom", null))
+
+        // Assert all data
+        val expected =
+            """{
+            | "boolean": true,
+            | "string": "Custom",
+            | "listSimple": ["x"]
+            |}"""
+                .trimMargin()
+        assertRoundTrips(expected, DataClassWithNulls(true, "Custom", listOf("x")))
+    }
+
+    @Test
+    fun testDataClassWithDefaultsAndNulls() {
+        // All fields provided
+        val expected = """{"required": "req", "optional": "opt", "nullable": "nul"}"""
+        assertRoundTrips(expected, DataClassWithDefaultsAndNulls("req", "opt", "nul"))
+
+        // Only required field — optional gets default, nullable gets default (null)
+        assertDecodesTo(BsonDocument.parse("""{"required": "req"}"""), DataClassWithDefaultsAndNulls("req"))
+
+        // Required + nullable explicit null in document
+        assertDecodesTo(
+            BsonDocument.parse("""{"required": "req", "nullable": null}"""), DataClassWithDefaultsAndNulls("req"))
+
+        // Required + optional overridden, nullable absent
+        assertDecodesTo(
+            BsonDocument.parse("""{"required": "req", "optional": "custom"}"""),
+            DataClassWithDefaultsAndNulls("req", "custom"))
+
+        // Missing required field throws
+        assertThrows<CodecConfigurationException> {
+            val codec = DataClassCodec.create(DataClassWithDefaultsAndNulls::class, registry())
+            codec?.decode(BsonDocumentReader(BsonDocument()), DecoderContext.builder().build())
+        }
     }
 
     @Test
