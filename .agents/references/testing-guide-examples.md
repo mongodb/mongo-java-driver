@@ -71,7 +71,7 @@ class FeatureUnderTestSpec extends BaseSpec with MockitoSugar {
 class FeatureUnderTestTest {
 
     companion object {
-        @Mock internal val wrapped: com.mongodb.client.MongoCollection<MyType> = mock()
+        internal val wrapped: com.mongodb.client.MongoCollection<MyType> = mock()
         lateinit var collection: MongoCollection<MyType>
 
         @JvmStatic

@@ -40,7 +40,7 @@ description: Detailed code style rules for Java, Kotlin, Scala, and Groovy in th
 - Use `@mongodb.server.release <version>` to indicate the minimum server version required
 - Scala modules use Scaladoc — follow Scaladoc conventions (`@param`, `@return`, `@since`, `@see`)
 - Internal packages (`com.mongodb.internal.*`, `org.bson.internal.*`) are excluded from doc generation
-- Run `./gradlew doc` to validate Javadoc/KDoc/Scaladoc builds cleanly
+- Run `./gradlew docs` to validate Javadoc/KDoc/Scaladoc builds cleanly
 
 ## Prohibited Patterns
 

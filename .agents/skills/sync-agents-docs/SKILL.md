@@ -5,6 +5,9 @@ disable-model-invocation: true
 ---
 # Sync Documentation After Build Changes
 
+This is a manual checklist — `disable-model-invocation: true` means agents cannot execute it autonomously.
+Human developers should walk through this after buildSrc changes.
+
 After modifying `buildSrc` or build conventions, check whether AGENTS.md files, skills, and references need updating.
 Review your changes against the checklist below and update only the affected files.
 

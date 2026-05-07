@@ -134,7 +134,9 @@ like `CLAUDE.md` are generated references.
 ### Adding a nested AGENTS.md
 
 1. Create an `AGENTS.md` in the target directory.
-2. Run `scripts/symlink-claude-md.sh` to generate the companion `CLAUDE.md`.
+2. Run `scripts/sync-claude-md.sh` to generate the companion `CLAUDE.md`.
+   This script should be run before staging — it creates/removes `CLAUDE.md` files
+   to match staged `AGENTS.md` changes and maintains the `.claude/skills` symlink.
 3. Stage and commit both files.
 
 ## IntelliJ IDEA

@@ -13,7 +13,7 @@ Gradle build infrastructure providing convention plugins and shared configuratio
 
 | Plugin | Purpose |
 | --- | --- |
-| `spotless` | Code formatting (Java: Palantir; Kotlin: ktfmt dropbox, max 120; Scala: scalafmt) |
+| `spotless` | Code formatting (Kotlin: ktfmt dropbox, max 120; Scala: scalafmt; KotlinGradle: ktfmt; XML/YML/MD: whitespace). Note: Java uses Palantir Java Format via Checkstyle, not Spotless |
 | `codenarc` | Groovy static analysis |
 | `detekt` | Kotlin static analysis |
 | `spotbugs` | Java bug detection |

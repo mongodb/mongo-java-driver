@@ -1,9 +1,18 @@
 #!/usr/bin/env bash
+# Sync CLAUDE.md companion files for staged AGENTS.md changes and maintain
+# the .claude/skills symlink. Run from the repository root before staging.
+#
 # 1. Ensure every staged AGENTS.md has a companion CLAUDE.md containing
 #    "@AGENTS.md" (a Claude Code import reference).
 # 2. Ensure .claude/skills is a symlink to .agents/skills.
 
 set -euo pipefail
+
+# Ensure we are running from the repository root
+if [ ! -f "settings.gradle.kts" ] || [ ! -d ".git" ]; then
+  echo "Error: must be run from the repository root (where settings.gradle.kts and .git/ exist)" >&2
+  exit 1
+fi
 
 claude_file_for_agents() {
   local agents_file="$1"

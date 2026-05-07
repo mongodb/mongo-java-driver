@@ -46,7 +46,7 @@ Do not use Kotlin language features or standard library APIs introduced after 1.
 
 ## Style
 
-`check` runs `spotlessCheck` to verify formatting — run `./gradlew spotlessApply` to auto-format when needed.
+`check` depends on `spotlessApply` to auto-fix formatting — run `./gradlew spotlessApply` independently when needed.
 Do not reformat outside your changes.
 See [`.agents/references/style-reference`](.agents/references/style-reference.md) for full rules.
 
@@ -100,5 +100,5 @@ See [`.agents/skills/evergreen`](.agents/skills/evergreen/SKILL.md) for CI valid
 ## Before Submitting
 
 ```bash
-./gradlew spotlessApply doc check scalaCheck   # formatting + Docs + static checks + all tests
+./gradlew spotlessApply docs check scalaCheck   # formatting + docs + static checks + all tests
 ```

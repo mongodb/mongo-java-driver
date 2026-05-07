@@ -61,3 +61,5 @@ bson
 - **Build plugins, formatting, test infra:** `buildSrc`
 
 Each module has its own `AGENTS.md` with module-specific packages, patterns, and notes.
+Modules marked "(not published)" (`driver-lambda`, `graalvm-native-image-app`, `driver-benchmarks`) are
+test/example apps — not normal development targets and intentionally have no `AGENTS.md`.
