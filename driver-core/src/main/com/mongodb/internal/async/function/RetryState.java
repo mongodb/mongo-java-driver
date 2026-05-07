@@ -132,7 +132,7 @@ public final class RetryState {
      * per attempt and only if all the following is true:
      * <ul>
      *     <li>{@code onAttemptFailureOperator} completed normally;</li>
-     *     <li>the most recent attempt is not the {@linkplain #isLastAttempt() last} one.</li>
+     *     <li>the most recent attempt is not known to be the {@linkplain #isLastAttempt(Throwable) last} one.</li>
      * </ul>
      * The {@code retryPredicate} accepts this {@link RetryState} and the exception from the most recent attempt,
      * and may mutate the exception. The {@linkplain RetryState} advances to represent the state of a new attempt
@@ -140,7 +140,7 @@ public final class RetryState {
      * @throws RuntimeException Iff any of the following is true:
      * <ul>
      *     <li>the {@code onAttemptFailureOperator} completed abruptly;</li>
-     *     <li>the most recent attempt is the {@linkplain #isLastAttempt() last} one;</li>
+     *     <li>the most recent attempt is known to be the {@linkplain #isLastAttempt(Throwable) last} one;</li>
      *     <li>the {@code retryPredicate} completed abruptly;</li>
      *     <li>the {@code retryPredicate} is {@code false}.</li>
      * </ul>
@@ -187,24 +187,10 @@ public final class RetryState {
         }
         assertTrue(!isFirstAttempt() || previouslyChosenException == null);
         Throwable newlyChosenException = callOnAttemptFailureOperator(previouslyChosenException, attemptException, onlyRuntimeExceptions, onAttemptFailureOperator);
-
-        /*
-         * A MongoOperationTimeoutException indicates that the operation timed out, either during command execution or server selection.
-         * The timeout for server selection is determined by the computedServerSelectionMS = min(serverSelectionTimeoutMS, timeoutMS).
-         *
-         * It is important to check if the exception is an instance of MongoOperationTimeoutException to detect a timeout.
-         */
-        if (isLastAttempt() || attemptException instanceof MongoOperationTimeoutException) {
+        if (isLastAttempt(attemptException)) {
             previouslyChosenException = newlyChosenException;
-            /*
-             * The function of isLastIteration() is to indicate if retrying has
-             * been explicitly halted. Such a stop is not interpreted as
-             * a timeout exception but as a deliberate cessation of retry attempts.
-             */
-            if (retryUntilTimeoutThrowsException && !loopState.isLastIteration()) {
-                previouslyChosenException = createMongoTimeoutException(
-                        "Retry attempt exceeded the timeout limit.",
-                        previouslyChosenException);
+            if (attemptException instanceof MongoOperationTimeoutException) {
+                previouslyChosenException = createMongoTimeoutException("Retry attempt exceeded the timeout limit.", previouslyChosenException);
             }
             throw previouslyChosenException;
         } else {
@@ -365,27 +351,22 @@ public final class RetryState {
      * An attempt is known to be the last one iff any of the following applies:
      * <ul>
      *   <li>{@link #breakAndThrowIfRetryAnd(Supplier)} / {@link #breakAndCompleteIfRetryAnd(Supplier, SingleResultCallback)} / {@link #markAsLastAttempt()} was called.</li>
-     *   <li>A timeout is set and has been reached.</li>
+     *   <li>A timeout is set and has been reached, as indicated by {@code attemptException}.</li>
      *   <li>No timeout is set, and the number of attempts is limited, and the current attempt is the last one.</li>
      * </ul>
      *
      * @see #attempt()
      */
-    public boolean isLastAttempt() {
-        if (loopState.isLastIteration()) {
-            return true;
-        }
-        if (retryUntilTimeoutThrowsException) {
-            return false;
-        }
-        return attempt() == attempts - 1;
+    private boolean isLastAttempt(final Throwable attemptException) {
+        boolean operationTimeout = retryUntilTimeoutThrowsException && attemptException instanceof MongoOperationTimeoutException;
+        boolean attemptLimit = attempt() == attempts - 1;
+        return loopState.isLastIteration() || operationTimeout || attemptLimit;
     }
 
     /**
      * A 0-based attempt number.
      *
      * @see #isFirstAttempt()
-     * @see #isLastAttempt()
      */
     public int attempt() {
         return loopState.iteration();
