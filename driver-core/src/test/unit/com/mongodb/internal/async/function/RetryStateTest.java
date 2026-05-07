@@ -38,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -171,7 +172,7 @@ final class RetryStateTest {
         RetryState retryState = new RetryState(timeoutContext);
         advance(retryState);
         RuntimeException exception = new RuntimeException();
-        assertEquals(
+        assertSame(
                 exception,
                 assertThrows(exception.getClass(), () -> retryState.breakAndThrowIfRetryAnd(() -> {
                     throw exception;
@@ -222,7 +223,7 @@ final class RetryStateTest {
         assertTrue(retryState.breakAndCompleteIfRetryAnd(() -> {
             throw exception;
         }, callback));
-        assertEquals(
+        assertSame(
                 exception,
                 assertThrows(exception.getClass(), callback::get));
         assertAdvanceOrThrowDoesNotThrow(retryState, exception);
@@ -266,7 +267,7 @@ final class RetryStateTest {
 
         assertNotEquals(latestAttemptException, actualTimeoutException);
         assertEquals(EXPECTED_TIMEOUT_MESSAGE, actualTimeoutException.getMessage());
-        assertEquals(previousAttemptException, actualTimeoutException.getCause(),
+        assertSame(previousAttemptException, actualTimeoutException.getCause(),
                 "Retry timeout exception should have a cause if transformer returned non-timeout exception.");
     }
 
@@ -305,7 +306,7 @@ final class RetryStateTest {
                 (e1, e2) -> e2,
                 (rs, e) -> {
                     assertTrue(rs.isFirstAttempt());
-                    assertEquals(attemptException, e);
+                    assertSame(attemptException, e);
                     throw predicateException;
                 });
     }
@@ -318,7 +319,7 @@ final class RetryStateTest {
         MongoOperationTimeoutException mongoOperationTimeoutException = assertThrows(MongoOperationTimeoutException.class,
                 () -> retryState.advanceOrThrow(attemptException, (e1, e2) -> e2, (rs, e) -> {
                     assertTrue(rs.isFirstAttempt());
-                    assertEquals(attemptException, e);
+                    assertSame(attemptException, e);
                     throw predicateException;
                 }));
 
@@ -338,7 +339,7 @@ final class RetryStateTest {
                 (e1, e2) -> e2,
                 (rs, e) -> {
                     assertEquals(1, rs.attempt());
-                    assertEquals(secondAttemptException, e);
+                    assertSame(secondAttemptException, e);
                     throw predicateException;
                 });
     }
@@ -378,11 +379,11 @@ final class RetryStateTest {
         assertAdvanceOrThrowThrows(transformerResult, retryState, attemptException,
                 (e1, e2) -> {
                     assertNull(e1);
-                    assertEquals(attemptException, e2);
+                    assertSame(attemptException, e2);
                     return transformerResult;
                 },
                 (rs, e) -> {
-                    assertEquals(attemptException, e);
+                    assertSame(attemptException, e);
                     return false;
                 });
     }
@@ -398,16 +399,16 @@ final class RetryStateTest {
                 assertThrows(MongoOperationTimeoutException.class, () -> retryState.advanceOrThrow(attemptException,
                         (e1, e2) -> {
                             assertNull(e1);
-                            assertEquals(attemptException, e2);
+                            assertSame(attemptException, e2);
                             return transformerResult;
                         },
                         (rs, e) -> {
-                            assertEquals(attemptException, e);
+                            assertSame(attemptException, e);
                             return false;
                         }));
 
         assertEquals(EXPECTED_TIMEOUT_MESSAGE, mongoOperationTimeoutException.getMessage());
-        assertEquals(transformerResult, mongoOperationTimeoutException.getCause());
+        assertSame(transformerResult, mongoOperationTimeoutException.getCause());
     }
 
     @ParameterizedTest
@@ -420,12 +421,12 @@ final class RetryStateTest {
         RuntimeException transformerResult = new RuntimeException();
         assertAdvanceOrThrowThrows(transformerResult, retryState, secondAttemptException,
                 (e1, e2) -> {
-                    assertEquals(firstAttemptException, e1);
-                    assertEquals(secondAttemptException, e2);
+                    assertSame(firstAttemptException, e1);
+                    assertSame(secondAttemptException, e2);
                     return transformerResult;
                 },
                 (rs, e) -> {
-                    assertEquals(secondAttemptException, e);
+                    assertSame(secondAttemptException, e);
                     return false;
                 });
     }
@@ -483,7 +484,7 @@ final class RetryStateTest {
             final BinaryOperator<Throwable> onAttemptFailureOperator,
             final BiPredicate<RetryState, Throwable> retryPredicate) {
         com.mongodb.assertions.Assertions.assertNotNull(expectedException);
-        assertEquals(
+        assertSame(
                 expectedException,
                 assertThrows(expectedException.getClass(), () ->
                         retryState.advanceOrThrow(attemptException, onAttemptFailureOperator, retryPredicate)));
