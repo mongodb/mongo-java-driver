@@ -18,6 +18,8 @@ package com.mongodb.client;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.internal.EnvironmentProvider;
+import com.mongodb.observability.micrometer.MongodbObservationContext;
+import com.mongodb.observability.micrometer.MongodbObservation;
 import com.mongodb.observability.ObservabilitySettings;
 import com.mongodb.client.observability.SpanTree;
 import com.mongodb.client.observability.SpanTree.SpanNode;
