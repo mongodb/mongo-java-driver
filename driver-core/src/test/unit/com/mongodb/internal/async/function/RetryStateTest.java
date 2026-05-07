@@ -253,18 +253,18 @@ final class RetryStateTest {
     void advanceThrowTimeoutExceptionWhenTransformerSwallowOriginalTimeoutException() {
         RetryState retryState = new RetryState(TIMEOUT_CONTEXT_INFINITE_GLOBAL_TIMEOUT);
         RuntimeException previousAttemptException = new RuntimeException();
-        MongoOperationTimeoutException unexpectedTimeoutException = TimeoutContext.createMongoTimeoutException("Server selection failed");
+        MongoOperationTimeoutException latestAttemptException = TimeoutContext.createMongoTimeoutException("Server selection failed");
 
         retryState.advanceOrThrow(previousAttemptException,
                 (e1, e2) -> previousAttemptException,
                 (rs, e) -> true);
 
         MongoOperationTimeoutException actualTimeoutException =
-                assertThrows(unexpectedTimeoutException.getClass(), () -> retryState.advanceOrThrow(unexpectedTimeoutException,
+                assertThrows(MongoOperationTimeoutException.class, () -> retryState.advanceOrThrow(latestAttemptException,
                         (e1, e2) -> previousAttemptException,
                         (rs, e) -> false));
 
-        assertNotEquals(unexpectedTimeoutException, actualTimeoutException);
+        assertNotEquals(latestAttemptException, actualTimeoutException);
         assertEquals(EXPECTED_TIMEOUT_MESSAGE, actualTimeoutException.getMessage());
         assertEquals(previousAttemptException, actualTimeoutException.getCause(),
                 "Retry timeout exception should have a cause if transformer returned non-timeout exception.");
