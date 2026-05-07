@@ -259,7 +259,7 @@ class DefaultServerSpecification extends Specification {
         ]
     }
 
-    def 'should invalidate the pool when the exception without system overloaded label'() {
+    def 'should invalidate the pool when the exception does not have the system overloaded label'() {
         given:
         def connectionPool = Mock(ConnectionPool)
         connectionPool.get(_) >> { throw exceptionToThrow }
