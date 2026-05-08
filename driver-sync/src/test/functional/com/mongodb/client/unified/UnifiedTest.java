@@ -800,6 +800,8 @@ public abstract class UnifiedTest {
             case "poolReadyEvent":
             case "connectionCreatedEvent":
             case "connectionReadyEvent":
+            case "connectionClosedEvent":
+            case "connectionCheckedInEvent":
                 context.getEventMatcher().waitForConnectionPoolEvents(clientId, event, count, entities.getConnectionPoolListener(clientId));
                 break;
             case "serverHeartbeatStartedEvent":
