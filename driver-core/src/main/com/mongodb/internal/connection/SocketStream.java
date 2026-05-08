@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadException;
+import com.mongodb.MongoSocksProxyException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.ProxySettings;
@@ -79,8 +80,17 @@ public class SocketStream implements Stream {
             socket = initializeSocket(operationContext);
             outputStream = socket.getOutputStream();
             inputStream = socket.getInputStream();
+        } catch (MongoSocksProxyException e) {
+            close();
+            throw e;
         } catch (IOException e) {
             close();
+            if (settings.getProxySettings().isProxyEnabled()) {
+                throw translateInterruptedException(e, "Interrupted while connecting")
+                        .orElseThrow(() -> new MongoSocksProxyException(
+                                "Exception connecting to SOCKS5 proxy", getAddress(), e,
+                                MongoSocksProxyException.HandshakePhase.PROXY_TCP_CONNECT));
+            }
             throw translateInterruptedException(e, "Interrupted while connecting")
                     .orElseThrow(() -> new MongoSocketOpenException("Exception opening socket", getAddress(), e));
         }
@@ -122,7 +132,6 @@ public class SocketStream implements Stream {
         configureSocket(socksProxy, operationContext, settings);
         InetSocketAddress inetSocketAddress = toSocketAddress(serverHost, serverPort);
         socksProxy.connect(inetSocketAddress, operationContext.getTimeoutContext().getConnectTimeoutMs());
-
         SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(socksProxy, serverHost, serverPort, true);
         //Even though Socks proxy connection is already established, TLS handshake has not been performed yet.
         //So it is possible to set SSL parameters before handshake is done.

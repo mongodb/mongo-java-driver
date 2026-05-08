@@ -17,7 +17,7 @@ package com.mongodb.client;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoSocketOpenException;
+import com.mongodb.MongoSocksProxyException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
@@ -151,7 +151,7 @@ class Socks5ProseTest {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         assumeFalse(errors.isEmpty());
-        errors.forEach(throwable -> Assertions.assertEquals(MongoSocketOpenException.class, throwable.getClass()));
+        errors.forEach(throwable -> Assertions.assertEquals(MongoSocksProxyException.class, throwable.getClass()));
     }
 
     private static void runHelloCommand(final MongoClient mongoClient) {
