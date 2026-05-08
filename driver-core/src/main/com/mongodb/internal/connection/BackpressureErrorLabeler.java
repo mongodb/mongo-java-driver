@@ -150,7 +150,7 @@ final class BackpressureErrorLabeler {
 
     /**
      * Walks the class hierarchy comparing fully qualified names so a subclass of a known BC type
-     * still matches without requiring the BC classes to be loadable at static-init time.
+     * still matches.
      */
     private static boolean isBouncyCastleTlsFatalType(final Class<?> exceptionClass) {
         Class<?> cls = exceptionClass;
