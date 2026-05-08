@@ -187,7 +187,6 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
 
     @Override
     public BulkWriteResult execute(final WriteBinding binding, final OperationContext operationContext) {
-        TimeoutContext timeoutContext = operationContext.getTimeoutContext();
         /* We cannot use the tracking of attempts built in the `RetryState` class because conceptually we have to maintain multiple attempt
          * counters while executing a single bulk write operation:
          * - a counter that limits attempts to select server and checkout a connection before we created a batch;
@@ -195,8 +194,8 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
          * Fortunately, these counters do not exist concurrently with each other. While maintaining the counters manually,
          * we must adhere to the contract of `RetryingSyncSupplier`. When the retry timeout is implemented, there will be no counters,
          * and the code related to the attempt tracking in `BulkWriteTracker` will be removed. */
-        RetryState retryState = new RetryState(timeoutContext);
-        BulkWriteTracker.attachNew(retryState, retryWrites, timeoutContext);
+        RetryState retryState = new RetryState();
+        BulkWriteTracker.attachNew(retryState, retryWrites, operationContext.getTimeoutContext());
         Supplier<BulkWriteResult> retryingBulkWrite = decorateWriteWithRetries(retryState, operationContext, () ->
             withSourceAndConnection(binding::getWriteConnectionSource, true, (source, connection, operationContextWithMinRTT) -> {
                 TimeoutContext timeoutContextWithMinRtt = operationContextWithMinRTT.getTimeoutContext();
@@ -226,10 +225,9 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
     }
 
     public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<BulkWriteResult> callback) {
-        TimeoutContext timeoutContext = operationContext.getTimeoutContext();
         // see the comment in `execute(WriteBinding)` explaining the manual tracking of attempts
-        RetryState retryState = new RetryState(timeoutContext);
-        BulkWriteTracker.attachNew(retryState, retryWrites, timeoutContext);
+        RetryState retryState = new RetryState();
+        BulkWriteTracker.attachNew(retryState, retryWrites, operationContext.getTimeoutContext());
         binding.retain();
         AsyncCallbackSupplier<BulkWriteResult> retryingBulkWrite = this.<BulkWriteResult>decorateWriteWithRetries(retryState,
                 operationContext,
@@ -493,7 +491,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
 
         private BulkWriteTracker(final boolean retry, @Nullable final BulkWriteBatch batch, final TimeoutContext timeoutContext) {
             attempt = 0;
-            attempts = retry ? RetryState.RETRIES + 1 : 1;
+            attempts = retry ? RetryState.MAX_RETRIES + 1 : 1;
             this.batch = batch;
             this.retryUntilTimeoutThrowsException = timeoutContext.hasTimeoutMS();
         }

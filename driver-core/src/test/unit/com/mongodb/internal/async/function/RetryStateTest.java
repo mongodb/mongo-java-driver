@@ -18,7 +18,6 @@ package com.mongodb.internal.async.function;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.client.syncadapter.SupplyingCallback;
 import com.mongodb.internal.TimeoutContext;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.function.LoopState.AttachmentKey;
 import com.mongodb.internal.operation.retry.AttachmentKeys;
 import org.junit.jupiter.api.Assertions;
@@ -44,42 +43,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Named.named;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
-import static org.mockito.Mockito.mock;
 
 final class RetryStateTest {
-    private static final TimeoutContext TIMEOUT_CONTEXT_NO_GLOBAL_TIMEOUT = new TimeoutContext(new TimeoutSettings(0L, 0L,
-            0L, null, 0L));
-
-    private static final TimeoutContext TIMEOUT_CONTEXT_EXPIRED_GLOBAL_TIMEOUT = new TimeoutContext(new TimeoutSettings(0L, 0L,
-            0L, 1L, 0L));
-
-    private static final TimeoutContext TIMEOUT_CONTEXT_INFINITE_GLOBAL_TIMEOUT = new TimeoutContext(new TimeoutSettings(0L, 0L,
-            0L, 0L, 0L));
     private static final String EXPECTED_TIMEOUT_MESSAGE = "Retry attempt exceeded the timeout limit.";
 
-    static Stream<Arguments> infiniteTimeout() {
+    private static Stream<Arguments> atMostTwoRetriesAndUnlimitedRetries() {
         return Stream.of(
-                arguments(named("Infinite timeoutMs", TIMEOUT_CONTEXT_INFINITE_GLOBAL_TIMEOUT))
-        );
+                arguments(named("at most two retries", new RetryState(2))),
+                arguments(named("unlimited retries", new RetryState())));
     }
 
-    static Stream<Arguments> expiredTimeout() {
+    private static Stream<Arguments> noRetries() {
         return Stream.of(
-                arguments(named("Expired timeoutMs", TIMEOUT_CONTEXT_EXPIRED_GLOBAL_TIMEOUT))
-        );
+                arguments(named("no retries", new RetryState(0))));
     }
 
-    static Stream<Arguments> noTimeout() {
-        return Stream.of(
-                arguments(named("No timeoutMs", TIMEOUT_CONTEXT_NO_GLOBAL_TIMEOUT))
-        );
-    }
-
-    @ParameterizedTest
-    @MethodSource({"infiniteTimeout", "noTimeout"})
-    void unlimitedAttemptsAndAdvance(final TimeoutContext timeoutContext) {
+    @Test
+    void unlimitedAttemptsAndAdvance() {
+        final RetryState retryState = new RetryState();
         RuntimeException attemptException = new RuntimeException();
-        RetryState retryState = new RetryState(timeoutContext);
         assertAll(
                 () -> assertTrue(retryState.isFirstAttempt()),
                 () -> assertEquals(0, retryState.attempt())
@@ -99,7 +81,7 @@ final class RetryStateTest {
 
     @Test
     void limitedAttemptsAndAdvance() {
-        RetryState retryState = RetryState.withNonRetryableState();
+        RetryState retryState = new RetryState(0);
         RuntimeException attemptException = new RuntimeException();
         assertAll(
                 () -> assertTrue(retryState.isFirstAttempt()),
@@ -112,54 +94,39 @@ final class RetryStateTest {
     }
 
     @ParameterizedTest
-    @MethodSource({"infiniteTimeout", "noTimeout"})
-    void markAsLastAttemptAdvanceWithRuntimeException(final TimeoutContext timeoutContext) {
-        RetryState retryState = new RetryState(timeoutContext);
+    @MethodSource({"atMostTwoRetriesAndUnlimitedRetries"})
+    void markAsLastAttemptAdvanceWithRuntimeException(final RetryState retryState) {
         retryState.markAsLastAttempt();
         RuntimeException attemptException = new RuntimeException();
         assertAdvanceOrThrowThrows(attemptException, retryState, attemptException, (rs, e) -> fail());
     }
 
     @ParameterizedTest(name = "should advance with non-retryable error when marked as last attempt and : ''{0}''")
-    @MethodSource({"infiniteTimeout", "expiredTimeout", "noTimeout"})
-    void markAsLastAttemptAdvanceWithError(final TimeoutContext timeoutContext) {
-        RetryState retryState = new RetryState(timeoutContext);
+    @MethodSource({"noRetries", "atMostTwoRetriesAndUnlimitedRetries"})
+    void markAsLastAttemptAdvanceWithError(final RetryState retryState) {
         retryState.markAsLastAttempt();
         Error attemptException = new Error();
         assertAdvanceOrThrowThrows(attemptException, retryState, attemptException, (rs, e) -> fail());
     }
 
     @ParameterizedTest
-    @MethodSource({"infiniteTimeout", "noTimeout"})
-    void breakAndThrowIfRetryAndFirstAttempt(final TimeoutContext timeoutContext) {
-        RetryState retryState = new RetryState(timeoutContext);
+    @MethodSource({"atMostTwoRetriesAndUnlimitedRetries"})
+    void breakAndThrowIfRetryAndFirstAttempt(final RetryState retryState) {
         retryState.breakAndThrowIfRetryAnd(Assertions::fail);
         assertAdvanceOrThrowDoesNotThrow(retryState, new RuntimeException());
     }
 
     @ParameterizedTest
-    @MethodSource({"infiniteTimeout", "noTimeout"})
-    void breakAndThrowIfRetryAndFalse(final TimeoutContext timeoutContext) {
-        RetryState retryState = new RetryState(timeoutContext);
+    @MethodSource({"atMostTwoRetriesAndUnlimitedRetries"})
+    void breakAndThrowIfRetryAndFalse(final RetryState retryState) {
         advance(retryState);
         retryState.breakAndThrowIfRetryAnd(() -> false);
         assertAdvanceOrThrowDoesNotThrow(retryState, new RuntimeException());
     }
 
     @ParameterizedTest
-    @MethodSource({"infiniteTimeout", "noTimeout"})
-    void breakAndThrowIfRetryAndTrue(final TimeoutContext timeoutContext) {
-        RetryState retryState = new RetryState(timeoutContext);
-        advance(retryState);
-        assertThrows(RuntimeException.class, () -> retryState.breakAndThrowIfRetryAnd(() -> true));
-        RuntimeException attemptException = new RuntimeException();
-        assertAdvanceOrThrowThrows(attemptException, retryState, attemptException);
-    }
-
-    @Test
-    void breakAndThrowIfRetryAndTrueWithExpiredTimeout() {
-        TimeoutContext tContextMock = mock(TimeoutContext.class);
-        RetryState retryState = new RetryState(tContextMock);
+    @MethodSource({"atMostTwoRetriesAndUnlimitedRetries"})
+    void breakAndThrowIfRetryAndTrue(final RetryState retryState) {
         advance(retryState);
         assertThrows(RuntimeException.class, () -> retryState.breakAndThrowIfRetryAnd(() -> true));
         RuntimeException attemptException = new RuntimeException();
@@ -167,9 +134,8 @@ final class RetryStateTest {
     }
 
     @ParameterizedTest
-    @MethodSource({"infiniteTimeout", "noTimeout"})
-    void breakAndThrowIfRetryIfPredicateThrows(final TimeoutContext timeoutContext) {
-        RetryState retryState = new RetryState(timeoutContext);
+    @MethodSource({"atMostTwoRetriesAndUnlimitedRetries"})
+    void breakAndThrowIfRetryIfPredicateThrows(final RetryState retryState) {
         advance(retryState);
         RuntimeException exception = new RuntimeException();
         assertSame(
@@ -181,9 +147,8 @@ final class RetryStateTest {
     }
 
     @ParameterizedTest
-    @MethodSource({"infiniteTimeout", "noTimeout"})
-    void breakAndCompleteIfRetryAndFirstAttempt(final TimeoutContext timeoutContext) {
-        RetryState retryState = new RetryState(timeoutContext);
+    @MethodSource({"atMostTwoRetriesAndUnlimitedRetries"})
+    void breakAndCompleteIfRetryAndFirstAttempt(final RetryState retryState) {
         SupplyingCallback<?> callback = new SupplyingCallback<>();
         assertFalse(retryState.breakAndCompleteIfRetryAnd(Assertions::fail, callback));
         assertFalse(callback.completed());
@@ -191,9 +156,8 @@ final class RetryStateTest {
     }
 
     @ParameterizedTest
-    @MethodSource({"infiniteTimeout", "noTimeout"})
-    void breakAndCompleteIfRetryAndFalse(final TimeoutContext timeoutContext) {
-        RetryState retryState = new RetryState(timeoutContext);
+    @MethodSource({"atMostTwoRetriesAndUnlimitedRetries"})
+    void breakAndCompleteIfRetryAndFalse(final RetryState retryState) {
         advance(retryState);
         SupplyingCallback<?> callback = new SupplyingCallback<>();
         assertFalse(retryState.breakAndCompleteIfRetryAnd(() -> false, callback));
@@ -202,9 +166,8 @@ final class RetryStateTest {
     }
 
     @ParameterizedTest
-    @MethodSource({"infiniteTimeout", "noTimeout"})
-    void breakAndCompleteIfRetryAndTrue(final TimeoutContext timeoutContext) {
-        RetryState retryState = new RetryState(timeoutContext);
+    @MethodSource({"atMostTwoRetriesAndUnlimitedRetries"})
+    void breakAndCompleteIfRetryAndTrue(final RetryState retryState) {
         advance(retryState);
         SupplyingCallback<?> callback = new SupplyingCallback<>();
         assertTrue(retryState.breakAndCompleteIfRetryAnd(() -> true, callback));
@@ -214,9 +177,8 @@ final class RetryStateTest {
     }
 
     @ParameterizedTest
-    @MethodSource({"infiniteTimeout", "noTimeout"})
-    void breakAndCompleteIfRetryAndPredicateThrows(final TimeoutContext timeoutContext) {
-        RetryState retryState = new RetryState(timeoutContext);
+    @MethodSource({"atMostTwoRetriesAndUnlimitedRetries"})
+    void breakAndCompleteIfRetryAndPredicateThrows(final RetryState retryState) {
         advance(retryState);
         Error exception = new Error();
         SupplyingCallback<?> callback = new SupplyingCallback<>();
@@ -230,19 +192,16 @@ final class RetryStateTest {
     }
 
     @ParameterizedTest
-    @MethodSource({"infiniteTimeout", "noTimeout"})
-    void advanceOrThrowPredicateFalse(final TimeoutContext timeoutContext) {
-        RetryState retryState = new RetryState(timeoutContext);
+    @MethodSource({"atMostTwoRetriesAndUnlimitedRetries"})
+    void advanceOrThrowPredicateFalse(final RetryState retryState) {
         RuntimeException attemptException = new RuntimeException();
         assertAdvanceOrThrowThrows(attemptException, retryState, attemptException, (rs, e) -> false);
     }
 
     @ParameterizedTest
-    @MethodSource({"infiniteTimeout"})
-    @DisplayName("should rethrow detected timeout exception even if timeout in retry state is not expired")
-    void advanceReThrowDetectedTimeoutExceptionEvenIfTimeoutInRetryStateIsNotExpired(final TimeoutContext timeoutContext) {
-        RetryState retryState = new RetryState(timeoutContext);
-
+    @MethodSource({"atMostTwoRetriesAndUnlimitedRetries"})
+    @DisplayName("should rethrow detected timeout exception")
+    void advanceReThrowDetectedTimeoutException(final RetryState retryState) {
         MongoOperationTimeoutException expectedTimeoutException = TimeoutContext.createMongoTimeoutException("Server selection failed");
         assertAdvanceOrThrowThrows(expectedTimeoutException, retryState, expectedTimeoutException,
                 (e1, e2) -> expectedTimeoutException,
@@ -252,7 +211,7 @@ final class RetryStateTest {
     @Test
     @DisplayName("should throw timeout exception from retry, when transformer swallows original timeout exception")
     void advanceThrowTimeoutExceptionWhenTransformerSwallowOriginalTimeoutException() {
-        RetryState retryState = new RetryState(TIMEOUT_CONTEXT_INFINITE_GLOBAL_TIMEOUT);
+        RetryState retryState = new RetryState();
         RuntimeException previousAttemptException = new RuntimeException();
         MongoOperationTimeoutException latestAttemptException = TimeoutContext.createMongoTimeoutException("Server selection failed");
 
@@ -275,7 +234,7 @@ final class RetryStateTest {
     @Test
     @DisplayName("should throw original timeout exception from retry, when transformer returns original timeout exception")
     void advanceThrowOriginalTimeoutExceptionWhenTransformerReturnsOriginalTimeoutException() {
-        RetryState retryState = new RetryState(TIMEOUT_CONTEXT_INFINITE_GLOBAL_TIMEOUT);
+        RetryState retryState = new RetryState();
         RuntimeException previousAttemptException = new RuntimeException();
         MongoOperationTimeoutException expectedTimeoutException = TimeoutContext
                 .createMongoTimeoutException("Server selection failed");
@@ -291,15 +250,14 @@ final class RetryStateTest {
 
     @Test
     void advanceOrThrowPredicateTrueAndLastAttempt() {
-        RetryState retryState = RetryState.withNonRetryableState();
+        RetryState retryState = new RetryState(0);
         Error attemptException = new Error();
         assertAdvanceOrThrowThrows(attemptException, retryState, attemptException);
     }
 
     @ParameterizedTest
-    @MethodSource({"infiniteTimeout", "noTimeout"})
-    void advanceOrThrowPredicateThrowsAfterFirstAttempt(final TimeoutContext timeoutContext) {
-        RetryState retryState = new RetryState(timeoutContext);
+    @MethodSource({"atMostTwoRetriesAndUnlimitedRetries"})
+    void advanceOrThrowPredicateThrowsAfterFirstAttempt(final RetryState retryState) {
         RuntimeException predicateException = new RuntimeException();
         RuntimeException attemptException = new RuntimeException();
         assertAdvanceOrThrowThrows(predicateException, retryState, attemptException,
@@ -313,7 +271,7 @@ final class RetryStateTest {
 
     @Test
     void advanceOrThrowPredicateThrowsTimeoutAfterFirstAttempt() {
-        RetryState retryState = new RetryState(TIMEOUT_CONTEXT_EXPIRED_GLOBAL_TIMEOUT);
+        RetryState retryState = new RetryState();
         RuntimeException predicateException = new RuntimeException();
         RuntimeException attemptException = new MongoOperationTimeoutException(EXPECTED_TIMEOUT_MESSAGE);
         MongoOperationTimeoutException mongoOperationTimeoutException = assertThrows(MongoOperationTimeoutException.class,
@@ -328,9 +286,8 @@ final class RetryStateTest {
     }
 
     @ParameterizedTest
-    @MethodSource({"infiniteTimeout", "noTimeout"})
-    void advanceOrThrowPredicateThrows(final TimeoutContext timeoutContext) {
-        RetryState retryState = new RetryState(timeoutContext);
+    @MethodSource({"atMostTwoRetriesAndUnlimitedRetries"})
+    void advanceOrThrowPredicateThrows(final RetryState retryState) {
         RuntimeException firstAttemptException = new RuntimeException();
         retryState.advanceOrThrow(firstAttemptException, (e1, e2) -> e2, (rs, e) -> true);
         RuntimeException secondAttemptException = new RuntimeException();
@@ -345,9 +302,8 @@ final class RetryStateTest {
     }
 
     @ParameterizedTest
-    @MethodSource({"infiniteTimeout", "noTimeout", "expiredTimeout"})
-    void advanceOrThrowTransformerThrowsAfterFirstAttempt(final TimeoutContext timeoutContext) {
-        RetryState retryState = new RetryState(timeoutContext);
+    @MethodSource({"noRetries", "atMostTwoRetriesAndUnlimitedRetries"})
+    void advanceOrThrowTransformerThrowsAfterFirstAttempt(final RetryState retryState) {
         RuntimeException transformerException = new RuntimeException();
         assertAdvanceOrThrowThrows(transformerException, retryState, new AssertionError(),
                 (e1, e2) -> {
@@ -357,9 +313,8 @@ final class RetryStateTest {
     }
 
     @ParameterizedTest
-    @MethodSource({"infiniteTimeout", "noTimeout"})
-    void advanceOrThrowTransformerThrows(final TimeoutContext timeoutContext) throws Throwable {
-        RetryState retryState = new RetryState(timeoutContext);
+    @MethodSource({"atMostTwoRetriesAndUnlimitedRetries"})
+    void advanceOrThrowTransformerThrows(final RetryState retryState) throws Throwable {
         Error firstAttemptException = new Error();
         retryState.advanceOrThrow(firstAttemptException, (e1, e2) -> e2, (rs, e) -> true);
         RuntimeException transformerException = new RuntimeException();
@@ -371,9 +326,8 @@ final class RetryStateTest {
     }
 
     @ParameterizedTest
-    @MethodSource({"infiniteTimeout", "noTimeout"})
-    void advanceOrThrowTransformAfterFirstAttempt(final TimeoutContext timeoutContext) {
-        RetryState retryState = new RetryState(timeoutContext);
+    @MethodSource({"atMostTwoRetriesAndUnlimitedRetries"})
+    void advanceOrThrowTransformAfterFirstAttempt(final RetryState retryState) {
         RuntimeException attemptException = new RuntimeException();
         RuntimeException transformerResult = new RuntimeException();
         assertAdvanceOrThrowThrows(transformerResult, retryState, attemptException,
@@ -390,7 +344,7 @@ final class RetryStateTest {
 
     @Test
     void advanceOrThrowTransformThrowsTimeoutExceptionAfterFirstAttempt() {
-        RetryState retryState = new RetryState(TIMEOUT_CONTEXT_EXPIRED_GLOBAL_TIMEOUT);
+        RetryState retryState = new RetryState();
 
         RuntimeException attemptException = new MongoOperationTimeoutException(EXPECTED_TIMEOUT_MESSAGE);
         RuntimeException transformerResult = new RuntimeException();
@@ -412,9 +366,8 @@ final class RetryStateTest {
     }
 
     @ParameterizedTest
-    @MethodSource({"infiniteTimeout", "noTimeout"})
-    void advanceOrThrowTransform(final TimeoutContext timeoutContext) {
-        RetryState retryState = new RetryState(timeoutContext);
+    @MethodSource({"atMostTwoRetriesAndUnlimitedRetries"})
+    void advanceOrThrowTransform(final RetryState retryState) {
         RuntimeException firstAttemptException = new RuntimeException();
         retryState.advanceOrThrow(firstAttemptException, (e1, e2) -> e2, (rs, e) -> true);
         RuntimeException secondAttemptException = new RuntimeException();
@@ -432,9 +385,8 @@ final class RetryStateTest {
     }
 
     @ParameterizedTest
-    @MethodSource({"infiniteTimeout", "noTimeout"})
-    void attachAndAttachment(final TimeoutContext timeoutContext) {
-        RetryState retryState = new RetryState(timeoutContext);
+    @MethodSource({"atMostTwoRetriesAndUnlimitedRetries"})
+    void attachAndAttachment(final RetryState retryState) {
         AttachmentKey<Integer> attachmentKey = AttachmentKeys.maxWireVersion();
         int attachmentValue = 1;
         assertFalse(retryState.attachment(attachmentKey).isPresent());
