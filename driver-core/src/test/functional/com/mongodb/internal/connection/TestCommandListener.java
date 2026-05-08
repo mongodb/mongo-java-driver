@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoTimeoutException;
+import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.TestListener;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
@@ -56,6 +57,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+@ThreadSafe
 public class TestCommandListener implements CommandListener {
     private final List<String> eventTypes;
     private final List<String> ignoredCommandMonitoringEvents;
