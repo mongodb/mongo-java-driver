@@ -109,10 +109,6 @@ public class TimeoutContext {
         this(false, timeoutSettings, startTimeout(timeoutSettings.getTimeoutMS()));
     }
 
-    private TimeoutContext(final TimeoutSettings timeoutSettings, @Nullable final Timeout timeout) {
-        this(false, timeoutSettings, timeout);
-    }
-
     private TimeoutContext(final boolean isMaintenanceContext,
                            final TimeoutSettings timeoutSettings,
                            @Nullable final Timeout timeout) {
@@ -176,6 +172,7 @@ public class TimeoutContext {
      * @param alternativeTimeoutMS the alternative timeout.
      * @return timeout to use.
      */
+    @VisibleForTesting(otherwise = PRIVATE)
     public long timeoutOrAlternative(final long alternativeTimeoutMS) {
         if (timeout == null) {
             return alternativeTimeoutMS;
@@ -378,11 +375,6 @@ public class TimeoutContext {
 
         long newReadTimeout = getReadTimeoutMS() + additionalReadTimeout;
         return new TimeoutContext(timeoutSettings.withReadTimeoutMS(newReadTimeout > 0 ? newReadTimeout : Long.MAX_VALUE));
-    }
-
-    // Creates a copy of the timeout context that can be reset without resetting the original.
-    public TimeoutContext copyTimeoutContext() {
-        return new TimeoutContext(getTimeoutSettings(), getTimeout());
     }
 
     @Override
