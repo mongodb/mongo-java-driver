@@ -22,32 +22,27 @@ import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
 import static com.mongodb.client.model.Filters.eq;
 
 /**
- * See
- * <a href="https://github.com/mongodb/specifications/tree/master/source/retryable-reads/tests">Retryable Reads Tests</a>.
+ * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-reads/tests/README.md#prose-tests">
+ * Prose Tests</a>.
  */
 final class RetryableReadsProseTest {
     /**
-     * See
-     * <a href="https://github.com/mongodb/specifications/tree/master/source/retryable-reads/tests#poolclearederror-retryability-test">
-     * PoolClearedError Retryability Test</a>.
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-reads/tests/README.md#1-poolclearederror-retryability-test">
+     * 1. PoolClearedError Retryability Test</a>.
      */
     @Test
-    void poolClearedExceptionMustBeRetryable() throws InterruptedException, ExecutionException, TimeoutException {
+    void poolClearedExceptionMustBeRetryable() throws Exception {
         RetryableWritesProseTest.poolClearedExceptionMustBeRetryable(
                 SyncMongoClient::new,
                 mongoCollection -> mongoCollection.find(eq(0)).iterator().hasNext(), "find", false);
     }
 
     /**
-     * See
-     * <a href="https://github.com/mongodb/specifications/tree/master/source/retryable-reads/tests#21-retryable-reads-are-retried-on-a-different-mongos-when-one-is-available">
-     * Retryable Reads Are Retried on a Different mongos When One is Available</a>.
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-reads/tests/README.md#21-retryable-reads-are-retried-on-a-different-mongos-when-one-is-available">
+     * 2.1 Retryable Reads Are Retried on a Different mongos When One is Available</a>.
      */
     @Test
     void retriesOnDifferentMongosWhenAvailable() {
@@ -61,9 +56,8 @@ final class RetryableReadsProseTest {
     }
 
     /**
-     * See
-     * <a href="https://github.com/mongodb/specifications/tree/master/source/retryable-reads/tests#22-retryable-reads-are-retried-on-the-same-mongos-when-no-others-are-available">
-     * Retryable Reads Are Retried on the Same mongos When No Others are Available</a>.
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/retryable-reads/tests/README.md#22-retryable-reads-are-retried-on-the-same-mongos-when-no-others-are-available">
+     * 2.2 Retryable Reads Are Retried on the Same mongos When No Others are Available</a>.
      */
     @Test
     void retriesOnSameMongosWhenAnotherNotAvailable() {
