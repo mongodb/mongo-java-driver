@@ -31,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class ConnectionStringUnitTest {
     private static final String DEFAULT_OPTIONS = "mongodb://localhost/?";
@@ -94,6 +95,77 @@ final class ConnectionStringUnitTest {
         );
     }
 
+
+    // ---- Atlas Stream Processing workspace detection ----
+
+    private static final String WORKSPACE_HOST =
+            "atlas-stream-68f93575a1b17c4d20fb60cb-y7ufzk.virginia-usa.a.query.mongodb-qa.net";
+    private static final String WORKSPACE_URI = "mongodb://user:pass@" + WORKSPACE_HOST + "/";
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "mongodb://user:pass@atlas-stream-68f93575a1b17c4d20fb60cb-y7ufzk.virginia-usa.a.query.mongodb-qa.net/",
+            "mongodb://user:pass@atlas-stream-aabbcc-xyz.us-east-1.a.query.mongodb.net/",
+            "mongodb://user:pass@atlas-stream-aabbcc-xyz.eu-west-1.a.query.mongodb-dev.net/",
+            "mongodb://user:pass@ATLAS-STREAM-AABBCC-XYZ.us-east-1.a.query.mongodb.net/"
+    })
+    void workspaceHostIsDetected(final String uri) {
+        ConnectionString cs = new ConnectionString(uri);
+        assertTrue(cs.isAtlasStreamProcessingWorkspace(), "Expected workspace detection for: " + uri);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "mongodb://localhost/",
+            "mongodb://cluster0.example.mongodb.net/",
+            "mongodb://user:pass@cluster0.abcde.mongodb.net/",
+            "mongodb+srv://user:pass@atlas-stream-aabbcc-xyz.us-east-1.a.query.mongodb.net/"
+    })
+    void nonWorkspaceHostIsNotDetected(final String uri) {
+        ConnectionString cs = new ConnectionString(uri);
+        assertFalse(cs.isAtlasStreamProcessingWorkspace(), "Did not expect workspace detection for: " + uri);
+    }
+
+    @Test
+    void workspaceAutoEnablesTls() {
+        ConnectionString cs = new ConnectionString(WORKSPACE_URI);
+        assertEquals(Boolean.TRUE, cs.getSslEnabled());
+    }
+
+    @Test
+    void workspaceExplicitTlsFalseIsPreserved() {
+        ConnectionString cs = new ConnectionString(WORKSPACE_URI + "?tls=false");
+        assertEquals(Boolean.FALSE, cs.getSslEnabled());
+    }
+
+    @Test
+    void workspaceAutoEnablesLoadBalanced() {
+        ConnectionString cs = new ConnectionString(WORKSPACE_URI);
+        assertEquals(Boolean.TRUE, cs.isLoadBalanced());
+    }
+
+    @Test
+    void workspaceDefaultsAuthSourceToAdmin() {
+        ConnectionString cs = new ConnectionString(WORKSPACE_URI);
+        MongoCredential credential = Assertions.assertNotNull(cs.getCredential());
+        assertEquals("admin", credential.getSource());
+    }
+
+    @Test
+    void workspaceExplicitAuthSourceIsPreserved() {
+        ConnectionString cs = new ConnectionString(WORKSPACE_URI + "?authSource=admin");
+        MongoCredential credential = Assertions.assertNotNull(cs.getCredential());
+        assertEquals("admin", credential.getSource());
+    }
+
+    @Test
+    void workspaceIsNotDetectedForSrvProtocol() {
+        // mongodb+srv:// with a workspace-like host must not be treated as a workspace
+        ConnectionString cs = new ConnectionString(
+                "mongodb+srv://user:pass@atlas-stream-aabbcc-xyz.us-east-1.a.query.mongodb.net/");
+        assertFalse(cs.isAtlasStreamProcessingWorkspace());
+        assertTrue(cs.isSrvProtocol());
+    }
 
     @ParameterizedTest
     @ValueSource(strings = {"mongodb://foo:bar/@hostname/java?", "mongodb://foo:bar?@hostname/java/",
