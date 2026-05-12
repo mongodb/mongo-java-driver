@@ -125,8 +125,6 @@ final class SyncOperationHelper {
     /**
      * Gets a {@link ConnectionSource} and a {@link Connection} from the {@code sourceSupplier} and executes the {@code function} with them.
      * Guarantees to {@linkplain ReferenceCounted#release() release} the source and the connection after completion of the {@code function}.
-     *
-     *
      */
     static <R> R withSourceAndConnection(final Function<OperationContext, ConnectionSource> sourceFunction,
                                          final boolean wrapConnectionSourceException,
@@ -323,7 +321,7 @@ final class SyncOperationHelper {
 
     static <R> Supplier<R> decorateWriteWithRetries(final RetryState retryState,
             final OperationContext operationContext, final Supplier<R> writeFunction) {
-        return new RetryingSyncSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext),
+        return new RetryingSyncSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext.getServerDeprioritization()),
                 CommandOperationHelper::loggingShouldAttemptToRetryWriteAndAddRetryableLabel, () -> {
             logRetryCommand(retryState, operationContext);
             return writeFunction.get();
@@ -332,7 +330,7 @@ final class SyncOperationHelper {
 
     static <R> Supplier<R> decorateReadWithRetries(final RetryState retryState, final OperationContext operationContext,
             final Supplier<R> readFunction) {
-        return new RetryingSyncSupplier<>(retryState, onRetryableReadAttemptFailure(operationContext),
+        return new RetryingSyncSupplier<>(retryState, onRetryableReadAttemptFailure(operationContext.getServerDeprioritization()),
                 CommandOperationHelper::loggingShouldAttemptToRetryRead, () -> {
             logRetryCommand(retryState, operationContext);
             return readFunction.get();

@@ -208,7 +208,8 @@ public final class RetryState {
      * @param readOnlyRetryState Must not be mutated by this method.
      * @param onlyRuntimeExceptions See {@link #doAdvanceOrThrow(Throwable, BinaryOperator, BiPredicate, boolean)}.
      */
-    private boolean shouldRetry(final RetryState readOnlyRetryState, final Throwable attemptException, final Throwable newlyChosenException,
+    private static boolean shouldRetry(final RetryState readOnlyRetryState, final Throwable attemptException,
+            final Throwable newlyChosenException,
             final boolean onlyRuntimeExceptions, final BiPredicate<RetryState, Throwable> retryPredicate) {
         try {
             return retryPredicate.test(readOnlyRetryState, attemptException);

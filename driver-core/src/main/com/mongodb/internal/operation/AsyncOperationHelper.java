@@ -331,7 +331,7 @@ final class AsyncOperationHelper {
 
     static <R> AsyncCallbackSupplier<R> decorateReadWithRetriesAsync(final RetryState retryState, final OperationContext operationContext,
             final AsyncCallbackSupplier<R> asyncReadFunction) {
-        return new RetryingAsyncCallbackSupplier<>(retryState, onRetryableReadAttemptFailure(operationContext),
+        return new RetryingAsyncCallbackSupplier<>(retryState, onRetryableReadAttemptFailure(operationContext.getServerDeprioritization()),
                 CommandOperationHelper::loggingShouldAttemptToRetryRead, callback -> {
             logRetryCommand(retryState, operationContext);
             asyncReadFunction.get(callback);
@@ -340,7 +340,7 @@ final class AsyncOperationHelper {
 
     static <R> AsyncCallbackSupplier<R> decorateWriteWithRetriesAsync(final RetryState retryState, final OperationContext operationContext,
             final AsyncCallbackSupplier<R> asyncWriteFunction) {
-        return new RetryingAsyncCallbackSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext),
+        return new RetryingAsyncCallbackSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext.getServerDeprioritization()),
                 CommandOperationHelper::loggingShouldAttemptToRetryWriteAndAddRetryableLabel, callback -> {
             logRetryCommand(retryState, operationContext);
             asyncWriteFunction.get(callback);
