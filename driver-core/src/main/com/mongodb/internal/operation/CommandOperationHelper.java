@@ -32,6 +32,7 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.connection.OperationContext.ServerDeprioritization;
 import com.mongodb.internal.operation.OperationHelper.ResourceSupplierInternalException;
 import com.mongodb.internal.operation.retry.AttachmentKeys;
 import com.mongodb.internal.session.SessionContext;
@@ -77,9 +78,9 @@ public final class CommandOperationHelper {
                 ConnectionDescription connectionDescription);
     }
 
-    static BinaryOperator<Throwable> onRetryableReadAttemptFailure(final OperationContext operationContext) {
+    static BinaryOperator<Throwable> onRetryableReadAttemptFailure(final ServerDeprioritization serverDeprioritization) {
         return (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) -> {
-            operationContext.getServerDeprioritization().onAttemptFailure(mostRecentAttemptException);
+            serverDeprioritization.onAttemptFailure(mostRecentAttemptException);
             return chooseRetryableReadException(previouslyChosenException, mostRecentAttemptException);
         };
     }
@@ -96,9 +97,9 @@ public final class CommandOperationHelper {
         }
     }
 
-    static BinaryOperator<Throwable> onRetryableWriteAttemptFailure(final OperationContext operationContext) {
+    static BinaryOperator<Throwable> onRetryableWriteAttemptFailure(final ServerDeprioritization serverDeprioritization) {
         return (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) -> {
-            operationContext.getServerDeprioritization().onAttemptFailure(mostRecentAttemptException);
+            serverDeprioritization.onAttemptFailure(mostRecentAttemptException);
             return chooseRetryableWriteException(previouslyChosenException, mostRecentAttemptException);
         };
     }

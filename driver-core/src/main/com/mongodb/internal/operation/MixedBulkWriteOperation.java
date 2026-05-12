@@ -147,8 +147,8 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
 
     private <R> Supplier<R> decorateWriteWithRetries(final RetryState retryState, final OperationContext operationContext,
             final Supplier<R> writeFunction) {
-        return new RetryingSyncSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext),
-                this::shouldAttemptToRetryWrite, () -> {
+        return new RetryingSyncSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext.getServerDeprioritization()),
+                MixedBulkWriteOperation::shouldAttemptToRetryWrite, () -> {
             logRetryCommand(retryState, operationContext);
             return writeFunction.get();
         });
@@ -156,14 +156,14 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
 
     private <R> AsyncCallbackSupplier<R> decorateWriteWithRetries(final RetryState retryState, final OperationContext operationContext,
             final AsyncCallbackSupplier<R> writeFunction) {
-        return new RetryingAsyncCallbackSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext),
-                this::shouldAttemptToRetryWrite, callback -> {
+        return new RetryingAsyncCallbackSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext.getServerDeprioritization()),
+                MixedBulkWriteOperation::shouldAttemptToRetryWrite, callback -> {
             logRetryCommand(retryState, operationContext);
             writeFunction.get(callback);
         });
     }
 
-    private boolean shouldAttemptToRetryWrite(final RetryState retryState, final Throwable attemptFailure) {
+    private static boolean shouldAttemptToRetryWrite(final RetryState retryState, final Throwable attemptFailure) {
         BulkWriteTracker bulkWriteTracker = retryState.attachment(AttachmentKeys.bulkWriteTracker()).orElseThrow(Assertions::fail);
         /* A retry predicate is called only if there is at least one more attempt left. Here we maintain attempt counters manually
          * and emulate the above contract by returning `false` at the very beginning of the retry predicate. */
