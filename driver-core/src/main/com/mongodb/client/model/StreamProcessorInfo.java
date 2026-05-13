@@ -37,6 +37,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public final class StreamProcessorInfo {
     private final String id;
+    @Nullable
+    private final String tenantId;
     private final String name;
     private final String state;
     private final List<BsonDocument> pipeline;
@@ -64,6 +66,7 @@ public final class StreamProcessorInfo {
 
     private StreamProcessorInfo(final Builder builder) {
         this.id = notNull("id", builder.id);
+        this.tenantId = builder.tenantId;
         this.name = notNull("name", builder.name);
         this.state = notNull("state", builder.state);
         this.pipeline = Collections.unmodifiableList(notNull("pipeline", builder.pipeline));
@@ -100,6 +103,16 @@ public final class StreamProcessorInfo {
      */
     public String getId() {
         return id;
+    }
+
+    /**
+     * Gets the tenant ID associated with this processor.
+     *
+     * @return the tenant ID, or {@code null} if not provided by the server
+     */
+    @Nullable
+    public String getTenantId() {
+        return tenantId;
     }
 
     /**
@@ -283,6 +296,7 @@ public final class StreamProcessorInfo {
     public String toString() {
         return "StreamProcessorInfo{"
                 + "id='" + id + '\''
+                + ", tenantId='" + tenantId + '\''
                 + ", name='" + name + '\''
                 + ", state='" + state + '\''
                 + ", pipelineVersion=" + pipelineVersion
@@ -305,6 +319,8 @@ public final class StreamProcessorInfo {
     public static final class Builder {
         @Nullable
         private String id;
+        @Nullable
+        private String tenantId;
         @Nullable
         private String name;
         @Nullable
@@ -348,6 +364,17 @@ public final class StreamProcessorInfo {
          */
         public Builder id(final String id) {
             this.id = id;
+            return this;
+        }
+
+        /**
+         * Sets the tenant ID.
+         *
+         * @param tenantId the tenant ID
+         * @return this
+         */
+        public Builder tenantId(@Nullable final String tenantId) {
+            this.tenantId = tenantId;
             return this;
         }
 

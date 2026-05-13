@@ -100,8 +100,6 @@ public final class GetStreamProcessorOperation implements ReadOperationSimple<St
             if (doc.containsKey("_id")) {
                 BsonValue rawId = doc.get("_id");
                 id = rawId.isString() ? rawId.asString().getValue() : rawId.asObjectId().getValue().toHexString();
-            } else if (doc.containsKey("tenantID")) {
-                id = doc.getString("tenantID").getValue();
             } else if (doc.containsKey("id")) {
                 id = doc.getString("id").getValue();
             } else {
@@ -119,6 +117,9 @@ public final class GetStreamProcessorOperation implements ReadOperationSimple<St
                     .hasStarted(doc.containsKey("hasStarted") && doc.getBoolean("hasStarted").getValue())
                     .errorRetryable(doc.containsKey("errorRetryable") && doc.getBoolean("errorRetryable").getValue());
 
+            if (doc.containsKey("tenantID") && !doc.isNull("tenantID")) {
+                builder.tenantId(doc.getString("tenantID").getValue());
+            }
             builder.activeRegion(doc.containsKey("activeRegion") && !doc.isNull("activeRegion")
                     ? doc.getString("activeRegion").getValue() : "");
             builder.workspaceDefaultRegion(doc.containsKey("workspaceDefaultRegion") && !doc.isNull("workspaceDefaultRegion")
