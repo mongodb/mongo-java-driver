@@ -33,7 +33,7 @@ import static com.mongodb.internal.connection.StreamFactoryHelper.getSyncStreamF
  * A factory for {@link StreamProcessingClient} instances.
  *
  * <p>The connection string must target an Atlas Stream Processing workspace — a host matching the pattern
- * {@code atlas-stream-*.*a.query.mongodb*.net}. TLS, {@code loadBalanced=true}, and
+ * {@code atlas-stream-*.*a.query.mongodb*.net}. TLS, {@code directConnection=true}, and
  * {@code authSource=admin} are applied automatically when the workspace host is detected.</p>
  *
  * @see StreamProcessingClient

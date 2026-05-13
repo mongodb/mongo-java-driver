@@ -139,9 +139,9 @@ final class ConnectionStringUnitTest {
     }
 
     @Test
-    void workspaceAutoEnablesLoadBalanced() {
+    void workspaceAutoEnablesDirectConnection() {
         ConnectionString cs = new ConnectionString(WORKSPACE_URI);
-        assertEquals(Boolean.TRUE, cs.isLoadBalanced());
+        assertEquals(Boolean.TRUE, cs.isDirectConnection());
     }
 
     @Test

@@ -485,8 +485,8 @@ public class ConnectionString {
             if (!combinedOptionsMaps.containsKey("authsource")) {
                 combinedOptionsMaps.put("authsource", singletonList("admin"));
             }
-            if (!combinedOptionsMaps.containsKey("loadbalanced")) {
-                combinedOptionsMaps.put("loadbalanced", singletonList("true"));
+            if (!combinedOptionsMaps.containsKey("directconnection")) {
+                combinedOptionsMaps.put("directconnection", singletonList("true"));
             }
         }
         translateOptions(combinedOptionsMaps);

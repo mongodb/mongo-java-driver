@@ -293,18 +293,12 @@ class StreamProcessorOperationsTest {
     }
 
     private static BsonDocument minimalProcessorInfoDocument() {
-        return new BsonDocument("id", new BsonString("proc-1"))
+        BsonDocument inner = new BsonDocument("tenantID", new BsonString("proc-1"))
                 .append("name", new BsonString(PROCESSOR_NAME))
                 .append("state", new BsonString("CREATED"))
                 .append("pipeline", new BsonArray())
-                .append("pipelineVersion", new BsonInt32(1))
-                .append("enableAutoScaling", BsonBoolean.FALSE)
-                .append("failoverEnabled", BsonBoolean.FALSE)
-                .append("activeRegion", new BsonString("US_EAST_1"))
-                .append("workspaceDefaultRegion", new BsonString("US_EAST_1"))
-                .append("modifiedBy", new BsonString("user@example.com"))
-                .append("hasStarted", BsonBoolean.FALSE)
-                .append("errorMsg", new BsonString(""))
-                .append("errorRetryable", BsonBoolean.FALSE);
+                .append("errorMsg", new BsonString(""));
+        return new BsonDocument("result", inner)
+                .append("ok", new BsonInt32(1));
     }
 }

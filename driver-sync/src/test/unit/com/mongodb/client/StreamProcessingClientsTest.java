@@ -18,7 +18,6 @@ package com.mongodb.client;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.connection.ClusterConnectionMode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -74,12 +73,10 @@ class StreamProcessingClientsTest {
     }
 
     @Test
-    @DisplayName("create(MongoClientSettings) with LOAD_BALANCED settings succeeds")
+    @DisplayName("create(MongoClientSettings) with SINGLE (directConnection) settings succeeds")
     void settingsBasedCreateSucceeds() {
         MongoClientSettings settings = MongoClientSettings.builder()
-                .applyToClusterSettings(b -> b
-                        .mode(ClusterConnectionMode.LOAD_BALANCED)
-                        .applyConnectionString(new ConnectionString(WORKSPACE_URI)))
+                .applyConnectionString(new ConnectionString(WORKSPACE_URI))
                 .build();
         assertDoesNotThrow(() -> {
             try (StreamProcessingClient client = StreamProcessingClients.create(settings)) {

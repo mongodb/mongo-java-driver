@@ -91,42 +91,65 @@ public final class GetStreamProcessorOperation implements ReadOperationSimple<St
                 new BsonDocument(COMMAND_NAME, new BsonString(processorName));
     }
 
-    private static StreamProcessorInfo toStreamProcessorInfo(final BsonDocument result) {
-        StreamProcessorInfo.Builder builder = StreamProcessorInfo.builder()
-                .id(result.getString("id").getValue())
-                .name(result.getString("name").getValue())
-                .state(result.getString("state").getValue())
-                .pipeline(toBsonDocumentList(result.getArray("pipeline", new BsonArray())))
-                .pipelineVersion(result.getInt32("pipelineVersion").getValue())
-                .enableAutoScaling(result.getBoolean("enableAutoScaling").getValue())
-                .failoverEnabled(result.getBoolean("failoverEnabled").getValue())
-                .activeRegion(result.getString("activeRegion").getValue())
-                .workspaceDefaultRegion(result.getString("workspaceDefaultRegion").getValue())
-                .modifiedBy(result.getString("modifiedBy").getValue())
-                .hasStarted(result.getBoolean("hasStarted").getValue())
-                .errorMsg(result.getString("errorMsg").getValue())
-                .errorRetryable(result.getBoolean("errorRetryable").getValue());
+    private static StreamProcessorInfo toStreamProcessorInfo(final BsonDocument response) {
+        try {
+            // The server wraps the processor data in a "result" subdocument
+            BsonDocument doc = response.containsKey("result") ? response.getDocument("result") : response;
 
-        if (result.containsKey("tier") && !result.isNull("tier")) {
-            builder.tier(result.getString("tier").getValue());
-        }
-        if (result.containsKey("dlq") && result.isDocument("dlq")) {
-            builder.dlq(result.getDocument("dlq"));
-        }
-        if (result.containsKey("streamMetaFieldName") && !result.isNull("streamMetaFieldName")) {
-            builder.streamMetaFieldName(result.getString("streamMetaFieldName").getValue());
-        }
-        if (result.containsKey("lastStateChange") && result.isDateTime("lastStateChange")) {
-            builder.lastStateChange(new Date(result.getDateTime("lastStateChange").getValue()));
-        }
-        if (result.containsKey("lastModifiedAt") && result.isDateTime("lastModifiedAt")) {
-            builder.lastModifiedAt(new Date(result.getDateTime("lastModifiedAt").getValue()));
-        }
-        if (result.containsKey("errorCode") && result.isInt32("errorCode")) {
-            builder.errorCode(result.getInt32("errorCode").getValue());
-        }
+            String id;
+            if (doc.containsKey("_id")) {
+                BsonValue rawId = doc.get("_id");
+                id = rawId.isString() ? rawId.asString().getValue() : rawId.asObjectId().getValue().toHexString();
+            } else if (doc.containsKey("tenantID")) {
+                id = doc.getString("tenantID").getValue();
+            } else if (doc.containsKey("id")) {
+                id = doc.getString("id").getValue();
+            } else {
+                id = "";
+            }
 
-        return builder.build();
+            StreamProcessorInfo.Builder builder = StreamProcessorInfo.builder()
+                    .id(id)
+                    .name(doc.getString("name").getValue())
+                    .state(doc.getString("state").getValue())
+                    .pipeline(toBsonDocumentList(doc.getArray("pipeline", new BsonArray())))
+                    .pipelineVersion(doc.containsKey("pipelineVersion") ? doc.getInt32("pipelineVersion").getValue() : 0)
+                    .enableAutoScaling(doc.containsKey("enableAutoScaling") && doc.getBoolean("enableAutoScaling").getValue())
+                    .failoverEnabled(doc.containsKey("failoverEnabled") && doc.getBoolean("failoverEnabled").getValue())
+                    .hasStarted(doc.containsKey("hasStarted") && doc.getBoolean("hasStarted").getValue())
+                    .errorRetryable(doc.containsKey("errorRetryable") && doc.getBoolean("errorRetryable").getValue());
+
+            builder.activeRegion(doc.containsKey("activeRegion") && !doc.isNull("activeRegion")
+                    ? doc.getString("activeRegion").getValue() : "");
+            builder.workspaceDefaultRegion(doc.containsKey("workspaceDefaultRegion") && !doc.isNull("workspaceDefaultRegion")
+                    ? doc.getString("workspaceDefaultRegion").getValue() : "");
+            builder.modifiedBy(doc.containsKey("modifiedBy") && !doc.isNull("modifiedBy")
+                    ? doc.getString("modifiedBy").getValue() : "");
+            builder.errorMsg(doc.containsKey("errorMsg") && !doc.isNull("errorMsg")
+                    ? doc.getString("errorMsg").getValue() : "");
+            if (doc.containsKey("tier") && !doc.isNull("tier")) {
+                builder.tier(doc.getString("tier").getValue());
+            }
+            if (doc.containsKey("dlq") && doc.isDocument("dlq")) {
+                builder.dlq(doc.getDocument("dlq"));
+            }
+            if (doc.containsKey("streamMetaFieldName") && !doc.isNull("streamMetaFieldName")) {
+                builder.streamMetaFieldName(doc.getString("streamMetaFieldName").getValue());
+            }
+            if (doc.containsKey("lastStateChange") && doc.isDateTime("lastStateChange")) {
+                builder.lastStateChange(new Date(doc.getDateTime("lastStateChange").getValue()));
+            }
+            if (doc.containsKey("lastModifiedAt") && doc.isDateTime("lastModifiedAt")) {
+                builder.lastModifiedAt(new Date(doc.getDateTime("lastModifiedAt").getValue()));
+            }
+            if (doc.containsKey("errorCode") && doc.isInt32("errorCode")) {
+                builder.errorCode(doc.getInt32("errorCode").getValue());
+            }
+
+            return builder.build();
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to parse getStreamProcessor response. Raw document: " + response.toJson(), e);
+        }
     }
 
     private static List<BsonDocument> toBsonDocumentList(final BsonArray array) {
