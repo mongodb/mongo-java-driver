@@ -23,7 +23,6 @@ import org.bson.conversions.Bson;
  * Options for creating a stream processor.
  *
  * @since 5.5
- * @see com.mongodb.client.StreamProcessors#create(String, java.util.List, CreateStreamProcessorOptions)
  */
 public class CreateStreamProcessorOptions {
     @Nullable

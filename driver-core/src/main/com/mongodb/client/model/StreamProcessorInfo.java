@@ -34,7 +34,6 @@ import static com.mongodb.assertions.Assertions.notNull;
  * {@code "FAILED"}, but additional states may be introduced in future server versions.</p>
  *
  * @since 5.5
- * @see com.mongodb.client.StreamProcessors#getInfo(String)
  */
 public final class StreamProcessorInfo {
     private final String id;

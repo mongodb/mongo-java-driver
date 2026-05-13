@@ -57,8 +57,9 @@ public final class StreamProcessorsImpl implements StreamProcessors {
         notNull("name", name);
         notNull("pipeline", pipeline);
         notNull("options", options);
-        BsonDocument dlqDoc = options.getDlq() != null
-                ? options.getDlq().toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry())
+        Bson dlq = options.getDlq();
+        BsonDocument dlqDoc = dlq != null
+                ? dlq.toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry())
                 : null;
         executor.execute(
                 new CreateStreamProcessorOperation(name, toBsonDocumentList(pipeline), dlqDoc,

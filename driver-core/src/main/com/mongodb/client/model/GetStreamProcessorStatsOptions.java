@@ -22,7 +22,6 @@ import com.mongodb.lang.Nullable;
  * Options for retrieving stream processor statistics.
  *
  * @since 5.5
- * @see com.mongodb.client.StreamProcessor#stats(GetStreamProcessorStatsOptions)
  */
 public class GetStreamProcessorStatsOptions {
     @Nullable

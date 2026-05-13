@@ -23,7 +23,6 @@ import org.bson.BsonTimestamp;
  * Options for starting a stream processor.
  *
  * @since 5.5
- * @see com.mongodb.client.StreamProcessor#start(StartStreamProcessorOptions)
  */
 public class StartStreamProcessorOptions {
     @Nullable

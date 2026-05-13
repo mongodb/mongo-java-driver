@@ -20,6 +20,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.StreamProcessor;
+import com.mongodb.client.model.FailoverOptions;
 import com.mongodb.client.model.GetStreamProcessorSamplesOptions;
 import com.mongodb.client.model.GetStreamProcessorSamplesResult;
 import com.mongodb.client.model.GetStreamProcessorStatsOptions;
@@ -64,9 +65,10 @@ public final class StreamProcessorImpl implements StreamProcessor {
     @Override
     public void start(final StartStreamProcessorOptions options) {
         notNull("options", options);
-        String failoverRegion = options.getFailover() != null ? options.getFailover().getRegion() : null;
-        String failoverMode = options.getFailover() != null ? options.getFailover().getMode() : null;
-        Boolean failoverDryRun = options.getFailover() != null ? options.getFailover().getDryRun() : null;
+        FailoverOptions failover = options.getFailover();
+        String failoverRegion = failover != null ? failover.getRegion() : null;
+        String failoverMode = failover != null ? failover.getMode() : null;
+        Boolean failoverDryRun = failover != null ? failover.getDryRun() : null;
         executor.execute(
                 new StartStreamProcessorOperation(name, options.getWorkers(), options.getClearCheckpoints(),
                         options.getStartAtOperationTime(), options.getTier(), options.getEnableAutoScaling(),

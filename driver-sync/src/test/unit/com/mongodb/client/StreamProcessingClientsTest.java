@@ -19,7 +19,6 @@ package com.mongodb.client;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.connection.ClusterConnectionMode;
-import com.mongodb.connection.ClusterSettings;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

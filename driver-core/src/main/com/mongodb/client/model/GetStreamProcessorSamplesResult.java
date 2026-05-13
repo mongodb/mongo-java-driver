@@ -24,13 +24,12 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * The result of a {@link com.mongodb.client.StreamProcessor#getStreamProcessorSamples} call.
+ * The result of a {@code StreamProcessor#getStreamProcessorSamples} call.
  *
  * <p>Callers MUST check {@link #getCursorId()}: a value of {@code 0} means the cursor is
  * exhausted and no further calls should be made.</p>
  *
  * @since 5.5
- * @see com.mongodb.client.StreamProcessor#getStreamProcessorSamples(GetStreamProcessorSamplesOptions)
  */
 public class GetStreamProcessorSamplesResult {
     private final long cursorId;

@@ -28,7 +28,6 @@ import com.mongodb.lang.Nullable;
  * are returned per call.</p>
  *
  * @since 5.5
- * @see com.mongodb.client.StreamProcessor#getStreamProcessorSamples(GetStreamProcessorSamplesOptions)
  */
 public class GetStreamProcessorSamplesOptions {
     @Nullable
@@ -58,7 +57,7 @@ public class GetStreamProcessorSamplesOptions {
     }
 
     /**
-     * Sets the cursor ID from a previous {@link com.mongodb.client.StreamProcessor#getStreamProcessorSamples} call.
+     * Sets the cursor ID from a previous {@code StreamProcessor#getStreamProcessorSamples} call.
      *
      * @param cursorId the cursor ID; {@code 0} or {@code null} opens a new cursor
      * @return this
