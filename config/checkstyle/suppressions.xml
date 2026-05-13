@@ -73,10 +73,6 @@
     <suppress checks="Javadoc*" files=".*tour.*"/>
     <suppress checks="Javadoc*" files=".*helpers.*"/>
 
-    <!-- Manual smoke test — console output is intentional -->
-    <suppress checks="Regexp" files="AspSmokeTest"/>
-    <suppress checks="HideUtilityClassConstructor" files="AspSmokeTest"/>
-
     <!--Do not check The GridFSTour -->
     <suppress checks="Regexp" files="GridFSTour"/>
     <suppress checks="MethodLength" files="GridFSTour"/>
