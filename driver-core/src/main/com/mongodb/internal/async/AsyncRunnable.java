@@ -233,9 +233,7 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
     default AsyncRunnable thenRunRetryingWhile(final AsyncRunnable runnable, final Predicate<Throwable> shouldRetry) {
         return thenRun(callback -> {
             new RetryingAsyncCallbackSupplier<Void>(
-                    new RetryControl(),
-                    (previouslyChosenFailure, lastAttemptFailure) -> lastAttemptFailure,
-                    (rs, lastAttemptFailure) -> shouldRetry.test(lastAttemptFailure),
+                    new RetryControl<>(new SimpleRetryPolicy(shouldRetry)),
                     // `finish` is required here instead of `unsafeFinish`
                     // because only `finish` meets the contract of
                     // `AsyncCallbackSupplier.get`, which we implement here

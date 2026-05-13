@@ -16,13 +16,12 @@
 package com.mongodb.internal.async.function;
 
 import com.mongodb.client.syncadapter.SupplyingCallback;
-import com.mongodb.internal.async.function.LoopControl.AttachmentKey;
-import com.mongodb.internal.operation.retry.AttachmentKeys;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -49,7 +48,7 @@ final class LoopControlTest {
     }
 
     @Test
-    void maskAsLastIteration() {
+    void markAsLastIteration() {
         LoopControl loopControl = new LoopControl();
         loopControl.markAsLastIteration();
         assertTrue(loopControl.isLastIteration());
@@ -76,27 +75,10 @@ final class LoopControlTest {
     void breakAndCompleteIfPredicateThrows() {
         LoopControl loopControl = new LoopControl();
         SupplyingCallback<?> callback = new SupplyingCallback<>();
-        RuntimeException e = new RuntimeException() {
-        };
+        RuntimeException e = new RuntimeException();
         assertTrue(loopControl.breakAndCompleteIf(() -> {
             throw e;
         }, callback));
-        assertThrows(e.getClass(), callback::get);
-    }
-
-    @Test
-    void attachAndAttachment() {
-        LoopControl loopControl = new LoopControl();
-        AttachmentKey<Integer> attachmentKey = AttachmentKeys.maxWireVersion();
-        int attachmentValue = 1;
-        assertFalse(loopControl.attachment(attachmentKey).isPresent());
-        loopControl.attach(attachmentKey, attachmentValue, false);
-        assertEquals(attachmentValue, loopControl.attachment(attachmentKey).get());
-        loopControl.advance();
-        assertEquals(attachmentValue, loopControl.attachment(attachmentKey).get());
-        loopControl.attach(attachmentKey, attachmentValue, true);
-        assertEquals(attachmentValue, loopControl.attachment(attachmentKey).get());
-        loopControl.advance();
-        assertFalse(loopControl.attachment(attachmentKey).isPresent());
+        assertSame(e, assertThrows(e.getClass(), callback::get));
     }
 }

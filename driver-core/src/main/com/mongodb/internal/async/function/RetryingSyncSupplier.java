@@ -17,9 +17,9 @@ package com.mongodb.internal.async.function;
 
 import com.mongodb.annotations.NotThreadSafe;
 
-import java.util.function.BiPredicate;
-import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
+
+import static com.mongodb.assertions.Assertions.assertNotNull;
 
 /**
  * A decorator that implements automatic retrying of failed executions of a {@link Supplier}.
@@ -33,28 +33,14 @@ import java.util.function.Supplier;
  */
 @NotThreadSafe
 public final class RetryingSyncSupplier<R> implements Supplier<R> {
-    private final RetryControl control;
-    private final BiPredicate<RetryControl, Throwable> retryPredicate;
-    private final BinaryOperator<Throwable> onAttemptFailureOperator;
+    private final RetryControl<?> control;
     private final Supplier<R> syncFunction;
 
     /**
-     * See {@link RetryingAsyncCallbackSupplier#RetryingAsyncCallbackSupplier(RetryControl, BinaryOperator, BiPredicate, AsyncCallbackSupplier)}
-     * for the documentation of the parameters.
-     *
-     * @param onAttemptFailureOperator Even though the {@code onAttemptFailureOperator} accepts {@link Throwable},
-     * only {@link RuntimeException}s are passed to it.
-     * @param retryPredicate Even though the {@code retryPredicate} accepts {@link Throwable},
-     * only {@link RuntimeException}s are passed to it.
+     * See {@link RetryingAsyncCallbackSupplier#RetryingAsyncCallbackSupplier(RetryControl, AsyncCallbackSupplier)}.
      */
-    public RetryingSyncSupplier(
-            final RetryControl control,
-            final BinaryOperator<Throwable> onAttemptFailureOperator,
-            final BiPredicate<RetryControl, Throwable> retryPredicate,
-            final Supplier<R> syncFunction) {
+    public RetryingSyncSupplier(final RetryControl<?> control, final Supplier<R> syncFunction) {
         this.control = control;
-        this.retryPredicate = retryPredicate;
-        this.onAttemptFailureOperator = onAttemptFailureOperator;
         this.syncFunction = syncFunction;
     }
 
@@ -63,11 +49,10 @@ public final class RetryingSyncSupplier<R> implements Supplier<R> {
         while (true) {
             try {
                 return syncFunction.get();
-            } catch (RuntimeException attemptException) {
-                control.advanceOrThrow(attemptException, onAttemptFailureOperator, retryPredicate);
-            } catch (Exception attemptException) {
-                // wrap potential sneaky / Kotlin exceptions
-                control.advanceOrThrow(new RuntimeException(attemptException), onAttemptFailureOperator, retryPredicate);
+            } catch (Error attemptFailedResult) {
+                throw attemptFailedResult;
+            } catch (Throwable attemptFailedResult) {
+                assertNotNull(control.advanceOrThrow(attemptFailedResult));
             }
         }
     }

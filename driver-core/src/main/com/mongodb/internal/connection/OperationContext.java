@@ -264,16 +264,16 @@ public class OperationContext {
             this.clusterType = clusterType;
         }
 
-        public void onAttemptFailure(final Throwable failure) {
-            if (candidate == null || failure instanceof MongoConnectionPoolClearedException) {
+        public void onAttemptFailure(final Throwable attemptFailedResult) {
+            if (candidate == null || attemptFailedResult instanceof MongoConnectionPoolClearedException) {
                 candidate = null;
                 return;
             }
 
             // As per spec: sharded clusters deprioritize on any error,
             // other topologies deprioritize on overload only when retargeting is enabled.
-            boolean isSystemOverloadedError = failure instanceof MongoException
-                    && ((MongoException) failure).hasErrorLabel(SYSTEM_OVERLOADED_ERROR_LABEL);
+            boolean isSystemOverloadedError = attemptFailedResult instanceof MongoException
+                    && ((MongoException) attemptFailedResult).hasErrorLabel(SYSTEM_OVERLOADED_ERROR_LABEL);
 
             if (clusterType == ClusterType.SHARDED || (isSystemOverloadedError && enableOverloadRetargeting)) {
                 deprioritized.add(candidate);

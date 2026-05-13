@@ -21,9 +21,11 @@ import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.client.cursor.TimeoutMode;
+import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.async.MutableValue;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackFunction;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
@@ -36,7 +38,7 @@ import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.OperationContext;
-import com.mongodb.internal.operation.retry.AttachmentKeys;
+import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -46,18 +48,21 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
-import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabel;
-import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
-import static com.mongodb.internal.operation.CommandOperationHelper.isRetryableWriteCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.logRetryCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.onRetryableReadAttemptFailure;
-import static com.mongodb.internal.operation.CommandOperationHelper.onRetryableWriteAttemptFailure;
+import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRetryControl;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
+import static com.mongodb.internal.operation.CommandOperationHelper.isWriteRetryRequirementsMet;
+import static com.mongodb.internal.operation.OperationHelper.isReadRetryRequirementsMet;
+import static com.mongodb.internal.operation.OperationHelper.isServerWriteRetryRequirementsMet;
+import static com.mongodb.internal.operation.SpecRetryPolicy.Descriptor.READ;
+import static com.mongodb.internal.operation.SpecRetryPolicy.Descriptor.WRITE;
 import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConcernError;
 
 final class AsyncOperationHelper {
@@ -174,10 +179,10 @@ final class AsyncOperationHelper {
             final CommandCreator commandCreator,
             final Decoder<D> decoder,
             final CommandReadTransformerAsync<D, T> transformer,
-            final boolean retryReads,
+            final boolean retryReadsSetting,
             final SingleResultCallback<T> callback) {
         executeRetryableReadAsync(binding, operationContext, binding::getReadConnectionSource, database, commandCreator,
-                                  decoder, transformer, retryReads, callback);
+                                  decoder, transformer, retryReadsSetting, callback);
     }
 
     static <D, T> void executeRetryableReadAsync(
@@ -188,18 +193,14 @@ final class AsyncOperationHelper {
             final CommandCreator commandCreator,
             final Decoder<D> decoder,
             final CommandReadTransformerAsync<D, T> transformer,
-            final boolean retryReads,
+            final boolean retryReadsSetting,
             final SingleResultCallback<T> callback) {
-        RetryControl retryControl = initialRetryState(retryReads, operationContext.getTimeoutContext());
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(EnumSet.of(READ), retryReadsSetting, isReadRetryRequirementsMet(retryReadsSetting, operationContext), operationContext);
         binding.retain();
-        AsyncCallbackSupplier<T> asyncRead = decorateReadWithRetriesAsync(retryControl, operationContext,
+        AsyncCallbackSupplier<T> asyncRead = decorateWithRetriesAsync(retryControl, operationContext,
                 (AsyncCallbackSupplier<T>) funcCallback ->
                         withAsyncSourceAndConnection(sourceAsyncFunction, false, operationContext, funcCallback,
                                 (source, connection, operationContextWithMinRtt, releasingCallback) -> {
-                                    if (retryControl.breakAndCompleteIfRetryAnd(
-                                            () -> !OperationHelper.canRetryRead(operationContextWithMinRtt), releasingCallback)) {
-                                        return;
-                                    }
                                     createReadCommandAndExecuteAsync(retryControl, operationContextWithMinRtt, source, database,
                                                                      commandCreator, decoder, transformer, connection, releasingCallback);
                                 })
@@ -240,12 +241,13 @@ final class AsyncOperationHelper {
             final CommandWriteTransformerAsync<BsonDocument, T> transformer,
             final SingleResultCallback<T> callback) {
         Assertions.notNull("binding", binding);
-        SingleResultCallback<T> addingRetryableLabelCallback = addingRetryableLabelCallback(callback,
-                connection.getDescription().getMaxWireVersion());
         connection.commandAsync(database, command, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(),
-                operationContext, transformingWriteCallback(transformer, connection, addingRetryableLabelCallback));
+                operationContext, transformingWriteCallback(transformer, connection, callback));
     }
 
+    /**
+     * @param effectiveRetryWritesSetting See {@link SpecRetryPolicy}.
+     */
     static <T, R> void executeRetryableWriteAsync(
             final AsyncWriteBinding binding,
             final OperationContext operationContext,
@@ -256,57 +258,51 @@ final class AsyncOperationHelper {
             final CommandCreator commandCreator,
             final CommandWriteTransformerAsync<T, R> transformer,
             final Function<BsonDocument, BsonDocument> retryCommandModifier,
+            final boolean effectiveRetryWritesSetting,
             final SingleResultCallback<R> callback) {
-
-        RetryControl retryControl = initialRetryState(true, operationContext.getTimeoutContext());
-        binding.retain();
-
-        AsyncCallbackSupplier<R> asyncWrite = decorateWriteWithRetriesAsync(retryControl, operationContext,
-                (AsyncCallbackSupplier<R>) funcCallback -> {
-            boolean firstAttempt = retryControl.isFirstAttempt();
-            if (!firstAttempt && operationContext.getSessionContext().hasActiveTransaction()) {
-                operationContext.getSessionContext().clearTransactionContext();
-            }
-            withAsyncSourceAndConnection(binding::getWriteConnectionSource, true, operationContext, funcCallback,
-                    (source, connection, operationContextWithMinRtt, releasingCallback) -> {
-                        int maxWireVersion = connection.getDescription().getMaxWireVersion();
-                        SingleResultCallback<R> addingRetryableLabelCallback = firstAttempt
-                                ? releasingCallback
-                                : addingRetryableLabelCallback(releasingCallback, maxWireVersion);
-                        if (retryControl.breakAndCompleteIfRetryAnd(() ->
-                                        !OperationHelper.canRetryWrite(connection.getDescription()), addingRetryableLabelCallback)) {
-                            return;
-                        }
-                        BsonDocument command;
-                        try {
-                            command = retryControl.attachment(AttachmentKeys.command())
-                                    .map(previousAttemptCommand -> {
-                                        Assertions.assertFalse(firstAttempt);
-                                        return retryCommandModifier.apply(previousAttemptCommand);
-                                    }).orElseGet(() -> commandCreator.create(
-                                            operationContextWithMinRtt,
-                                            source.getServerDescription(),
-                                            connection.getDescription()));
-                            // attach `maxWireVersion`, `retryableWriteCommandFlag` ASAP because they are used to check whether we should retry
-                            retryControl.attach(AttachmentKeys.maxWireVersion(), maxWireVersion, true)
-                                    .attach(AttachmentKeys.retryableWriteCommandFlag(), isRetryableWriteCommand(command), true)
-                                    .attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false)
-                                    .attach(AttachmentKeys.command(), command, false);
-                        } catch (Throwable t) {
-                            addingRetryableLabelCallback.onResult(null, t);
-                            return;
-                        }
-                        connection.commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder,
-                                operationContextWithMinRtt,
-                                transformingWriteCallback(transformer, connection, addingRetryableLabelCallback));
-                    });
-        }).whenComplete(binding::release);
-
-        asyncWrite.get(exceptionTransformingCallback(errorHandlingCallback(callback, OperationHelper.LOGGER)));
+        beginAsync().<R>thenSupply(c -> {
+            binding.retain();
+            MutableValue<BsonDocument> command = new MutableValue<>();
+            RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(EnumSet.of(WRITE), effectiveRetryWritesSetting, effectiveRetryWritesSetting, operationContext);
+            AsyncCallbackSupplier<R> retryingWrite = decorateWithRetriesAsync(retryControl, operationContext, supplierCallback -> {
+                beginAsync().<R>thenSupply(withSourceAndConnectionCallback -> {
+                    boolean firstAttempt = retryControl.isFirstAttempt();
+                    SessionContext sessionContext = operationContext.getSessionContext();
+                    if (!firstAttempt && sessionContext.hasActiveTransaction()) {
+                        sessionContext.clearTransactionContext();
+                    }
+                    withAsyncSourceAndConnection(binding::getWriteConnectionSource, true, operationContext, withSourceAndConnectionCallback,
+                            (source, connection, operationContextWithMinRtt, functionCallback) -> {
+                                beginAsync().<T>thenSupply(executeCommandCallback -> {
+                                    ConnectionDescription connectionDescription = connection.getDescription();
+                                    retryControl.breakAndThrowIfRetryAnd(() -> !isServerWriteRetryRequirementsMet(connectionDescription));
+                                    if (command.getNullable() == null) {
+                                        command.set(commandCreator.create(operationContextWithMinRtt, source.getServerDescription(), connectionDescription));
+                                    } else {
+                                        assertFalse(firstAttempt);
+                                        command.set(retryCommandModifier.apply(command.get()));
+                                    }
+                                    retryControl.getPolicy()
+                                            .onCommand(() -> command.get().getFirstKey())
+                                            .onWriteRetryRequirements(isWriteRetryRequirementsMet(command.get()), connectionDescription);
+                                    connection.commandAsync(database, command.get(), fieldNameValidator, readPreference,
+                                            commandResultDecoder, operationContextWithMinRtt, executeCommandCallback);
+                                }).<R>thenApply((result, transformResultCallback) -> {
+                                    transformResultCallback.complete(transformer.apply(assertNotNull(result), connection));
+                                }).finish(functionCallback);
+                            });
+                }).finish(supplierCallback);
+            });
+            beginAsync().<R>thenSupply(retryingWriteCallback -> {
+                retryingWrite.get(retryingWriteCallback);
+            }).onErrorIf(e -> e instanceof MongoException, (e, onErrorCallback) -> {
+                throw transformWriteException((MongoException) e);
+            }).finish(c);
+        }).thenAlwaysRunAndFinish(binding::release, callback);
     }
 
     static <D, T> void createReadCommandAndExecuteAsync(
-            final RetryControl retryControl,
+            final RetryControl<SpecRetryPolicy> retryControl,
             final OperationContext operationContext,
             final AsyncConnectionSource source,
             final String database,
@@ -318,7 +314,7 @@ final class AsyncOperationHelper {
         BsonDocument command;
         try {
             command = commandCreator.create(operationContext, source.getServerDescription(), connection.getDescription());
-            retryControl.attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false);
+            retryControl.getPolicy().onCommand(command::getFirstKey);
         } catch (IllegalArgumentException e) {
             callback.onResult(null, e);
             return;
@@ -327,21 +323,13 @@ final class AsyncOperationHelper {
                 operationContext, transformingReadCallback(transformer, source, connection, operationContext, callback));
     }
 
-    static <R> AsyncCallbackSupplier<R> decorateReadWithRetriesAsync(final RetryControl retryControl, final OperationContext operationContext,
-            final AsyncCallbackSupplier<R> asyncReadFunction) {
-        return new RetryingAsyncCallbackSupplier<>(retryControl, onRetryableReadAttemptFailure(operationContext.getServerDeprioritization()),
-                CommandOperationHelper::loggingShouldAttemptToRetryRead, callback -> {
-            logRetryCommand(retryControl, operationContext);
-            asyncReadFunction.get(callback);
-        });
-    }
-
-    static <R> AsyncCallbackSupplier<R> decorateWriteWithRetriesAsync(final RetryControl retryControl, final OperationContext operationContext,
-            final AsyncCallbackSupplier<R> asyncWriteFunction) {
-        return new RetryingAsyncCallbackSupplier<>(retryControl, onRetryableWriteAttemptFailure(operationContext.getServerDeprioritization()),
-                CommandOperationHelper::loggingShouldAttemptToRetryWriteAndAddRetryableLabel, callback -> {
-            logRetryCommand(retryControl, operationContext);
-            asyncWriteFunction.get(callback);
+    static <R> AsyncCallbackSupplier<R> decorateWithRetriesAsync(
+            final RetryControl<SpecRetryPolicy> retryControl,
+            final OperationContext operationContext,
+            final AsyncCallbackSupplier<R> supplier) {
+        return new RetryingAsyncCallbackSupplier<>(retryControl, callback -> {
+            retryControl.getPolicy().onAttemptStart(retryControl, operationContext);
+            supplier.get(callback);
         });
     }
 
@@ -375,20 +363,6 @@ final class AsyncOperationHelper {
 
     static <T> SingleResultCallback<T> releasingCallback(final SingleResultCallback<T> wrapped, final AsyncConnection connection) {
         return new ReferenceCountedReleasingWrappedCallback<>(wrapped, Collections.singletonList(connection));
-    }
-
-    static <R> SingleResultCallback<R> exceptionTransformingCallback(final SingleResultCallback<R> callback) {
-        return (result, t) -> {
-            if (t != null) {
-                if (t instanceof MongoException) {
-                    callback.onResult(null, transformWriteException((MongoException) t));
-                } else {
-                    callback.onResult(null, t);
-                }
-            } else {
-                callback.onResult(result, null);
-            }
-        };
     }
 
     private static <T, R> SingleResultCallback<T> transformingWriteCallback(final CommandWriteTransformerAsync<T, R> transformer,
@@ -481,20 +455,6 @@ final class AsyncOperationHelper {
             }
             wrapped.onResult(result, t);
         }
-    }
-
-    private static <R> SingleResultCallback<R> addingRetryableLabelCallback(final SingleResultCallback<R> callback,
-            final int maxWireVersion) {
-        return (result, t) -> {
-            if (t != null) {
-                if (t instanceof MongoException) {
-                    addRetryableWriteErrorLabel((MongoException) t, maxWireVersion);
-                }
-                callback.onResult(null, t);
-            } else {
-                callback.onResult(result, null);
-            }
-        };
     }
 
     private static <T, R> SingleResultCallback<T> transformingReadCallback(final CommandReadTransformerAsync<T, R> transformer,

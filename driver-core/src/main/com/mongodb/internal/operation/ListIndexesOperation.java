@@ -33,6 +33,7 @@ import org.bson.BsonValue;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 
+import java.util.EnumSet;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -40,23 +41,24 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.createReadCommandAndExecuteAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.cursorDocumentToAsyncBatchCursor;
-import static com.mongodb.internal.operation.AsyncOperationHelper.decorateReadWithRetriesAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWithRetriesAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
 import static com.mongodb.internal.operation.AsyncSingleBatchCursor.createEmptyAsyncSingleBatchCursor;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
-import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
+import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRetryControl;
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
 import static com.mongodb.internal.operation.CursorHelper.getCursorDocumentFromBatchSize;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.applyTimeoutModeToOperationContext;
-import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
+import static com.mongodb.internal.operation.OperationHelper.isReadRetryRequirementsMet;
 import static com.mongodb.internal.operation.SingleBatchCursor.createEmptySingleBatchCursor;
+import static com.mongodb.internal.operation.SpecRetryPolicy.Descriptor.READ;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.createReadCommandAndExecute;
 import static com.mongodb.internal.operation.SyncOperationHelper.cursorDocumentToBatchCursor;
-import static com.mongodb.internal.operation.SyncOperationHelper.decorateReadWithRetries;
+import static com.mongodb.internal.operation.SyncOperationHelper.decorateWithRetries;
 import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndConnection;
 
 /**
@@ -132,10 +134,9 @@ public class ListIndexesOperation<T> implements ReadOperationCursor<T> {
     public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
         OperationContext listIndexesOperationContext = applyTimeoutModeToOperationContext(timeoutMode, operationContext);
 
-        RetryControl retryControl = initialRetryState(retryReads, listIndexesOperationContext.getTimeoutContext());
-        Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryControl, listIndexesOperationContext, () ->
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(EnumSet.of(READ), retryReads, isReadRetryRequirementsMet(retryReads, listIndexesOperationContext), listIndexesOperationContext);
+        Supplier<BatchCursor<T>> read = decorateWithRetries(retryControl, listIndexesOperationContext, () ->
             withSourceAndConnection(binding::getReadConnectionSource, false, listIndexesOperationContext, (source, connection, operationContextWithMinRTT) -> {
-                retryControl.breakAndThrowIfRetryAnd(() -> !canRetryRead(operationContextWithMinRTT));
                 try {
                     return createReadCommandAndExecute(retryControl, operationContextWithMinRTT, source, namespace.getDatabaseName(),
                                                        getCommandCreator(), createCommandDecoder(), transformer(), connection);
@@ -152,15 +153,12 @@ public class ListIndexesOperation<T> implements ReadOperationCursor<T> {
     public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         OperationContext listIndexesOperationContext = applyTimeoutModeToOperationContext(timeoutMode, operationContext);
 
-        RetryControl retryControl = initialRetryState(retryReads, operationContext.getTimeoutContext());
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(EnumSet.of(READ), retryReads, isReadRetryRequirementsMet(retryReads, listIndexesOperationContext), listIndexesOperationContext);
         binding.retain();
-        AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = decorateReadWithRetriesAsync(
+        AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = decorateWithRetriesAsync(
                 retryControl, listIndexesOperationContext, (AsyncCallbackSupplier<AsyncBatchCursor<T>>) funcCallback ->
                     withAsyncSourceAndConnection(binding::getReadConnectionSource, false, listIndexesOperationContext, funcCallback,
                             (source, connection, operationContextWithMinRtt, releasingCallback) -> {
-                                if (retryControl.breakAndCompleteIfRetryAnd(() -> !canRetryRead(operationContextWithMinRtt), releasingCallback)) {
-                                    return;
-                                }
                                 createReadCommandAndExecuteAsync(retryControl, operationContextWithMinRtt, source,
                                         namespace.getDatabaseName(), getCommandCreator(), createCommandDecoder(),
                                         asyncTransformer(), connection,

@@ -103,8 +103,8 @@ class SyncOperationHelperSpecification extends Specification {
 
         when:
         executeRetryableWrite(writeBinding, operationContext, dbName, primary(),
-                NoOpFieldNameValidator.INSTANCE, decoder, commandCreator, FindAndModifyHelper.transformer())
-                { cmd -> cmd }
+                NoOpFieldNameValidator.INSTANCE, decoder, commandCreator, FindAndModifyHelper.transformer(),
+                { cmd -> cmd }, true)
 
         then:
         2 * connection.command(dbName, command, _, primary(), decoder, _) >> { results.poll() }

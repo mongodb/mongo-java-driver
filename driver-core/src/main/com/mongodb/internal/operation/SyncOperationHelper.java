@@ -19,8 +19,10 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.cursor.TimeoutMode;
+import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.internal.async.MutableValue;
 import com.mongodb.internal.async.function.RetryControl;
 import com.mongodb.internal.async.function.RetryingSyncSupplier;
 import com.mongodb.internal.binding.ConnectionSource;
@@ -29,7 +31,6 @@ import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.OperationContext;
-import com.mongodb.internal.operation.retry.AttachmentKeys;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
@@ -39,6 +40,7 @@ import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
+import java.util.EnumSet;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -48,13 +50,14 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
-import static com.mongodb.internal.operation.CommandOperationHelper.isRetryableWriteCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.logRetryCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.onRetryableReadAttemptFailure;
-import static com.mongodb.internal.operation.CommandOperationHelper.onRetryableWriteAttemptFailure;
+import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRetryControl;
+import static com.mongodb.internal.operation.CommandOperationHelper.isWriteRetryRequirementsMet;
+import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
 import static com.mongodb.internal.operation.OperationHelper.ResourceSupplierInternalException;
-import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
-import static com.mongodb.internal.operation.OperationHelper.canRetryWrite;
+import static com.mongodb.internal.operation.OperationHelper.isReadRetryRequirementsMet;
+import static com.mongodb.internal.operation.OperationHelper.isServerWriteRetryRequirementsMet;
+import static com.mongodb.internal.operation.SpecRetryPolicy.Descriptor.READ;
+import static com.mongodb.internal.operation.SpecRetryPolicy.Descriptor.WRITE;
 import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConcernError;
 
 final class SyncOperationHelper {
@@ -188,9 +191,9 @@ final class SyncOperationHelper {
             final CommandCreator commandCreator,
             final Decoder<D> decoder,
             final CommandReadTransformer<D, T> transformer,
-            final boolean retryReads) {
+            final boolean retryReadsSetting) {
         return executeRetryableRead(operationContext, binding::getReadConnectionSource, database, commandCreator,
-                                    decoder, transformer, retryReads);
+                                    decoder, transformer, retryReadsSetting);
     }
 
     static <D, T> T executeRetryableRead(
@@ -200,12 +203,11 @@ final class SyncOperationHelper {
             final CommandCreator commandCreator,
             final Decoder<D> decoder,
             final CommandReadTransformer<D, T> transformer,
-            final boolean retryReads) {
-        RetryControl retryControl = CommandOperationHelper.initialRetryState(retryReads, operationContext.getTimeoutContext());
+            final boolean retryReadsSetting) {
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(EnumSet.of(READ), retryReadsSetting, isReadRetryRequirementsMet(retryReadsSetting, operationContext), operationContext);
 
-        Supplier<T> read = decorateReadWithRetries(retryControl, operationContext, () ->
+        Supplier<T> read = decorateWithRetries(retryControl, operationContext, () ->
                 withSourceAndConnection(readConnectionSourceSupplier, false, operationContext, (source, connection, operationContextWithMinRtt) -> {
-                    retryControl.breakAndThrowIfRetryAnd(() -> !canRetryRead(operationContextWithMinRtt));
                     return createReadCommandAndExecute(retryControl, operationContextWithMinRtt, source, database,
                                                        commandCreator, decoder, transformer, connection);
                 })
@@ -249,6 +251,9 @@ final class SyncOperationHelper {
                 connection);
     }
 
+    /**
+     * @param effectiveRetryWritesSetting See {@link SpecRetryPolicy}.
+     */
     static <T, R> R executeRetryableWrite(
             final WriteBinding binding,
             final OperationContext operationContext,
@@ -258,50 +263,43 @@ final class SyncOperationHelper {
             final Decoder<T> commandResultDecoder,
             final CommandCreator commandCreator,
             final CommandWriteTransformer<T, R> transformer,
-            final com.mongodb.Function<BsonDocument, BsonDocument> retryCommandModifier) {
-        RetryControl retryControl = CommandOperationHelper.initialRetryState(true, operationContext.getTimeoutContext());
-        Supplier<R> retryingWrite = decorateWriteWithRetries(retryControl, operationContext, () -> {
+            final com.mongodb.Function<BsonDocument, BsonDocument> retryCommandModifier,
+            final boolean effectiveRetryWritesSetting) {
+        MutableValue<BsonDocument> command = new MutableValue<>();
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(EnumSet.of(WRITE), effectiveRetryWritesSetting, effectiveRetryWritesSetting, operationContext);
+        Supplier<R> retryingWrite = decorateWithRetries(retryControl, operationContext, () -> {
             boolean firstAttempt = retryControl.isFirstAttempt();
             SessionContext sessionContext = operationContext.getSessionContext();
             if (!firstAttempt && sessionContext.hasActiveTransaction()) {
                 sessionContext.clearTransactionContext();
             }
             return withSourceAndConnection(binding::getWriteConnectionSource, true, operationContext, (source, connection, operationContextWithMinRtt) -> {
-                int maxWireVersion = connection.getDescription().getMaxWireVersion();
-                try {
-                    retryControl.breakAndThrowIfRetryAnd(() -> !canRetryWrite(connection.getDescription()));
-                    BsonDocument command = retryControl.attachment(AttachmentKeys.command())
-                            .map(previousAttemptCommand -> {
-                                assertFalse(firstAttempt);
-                                return retryCommandModifier.apply(previousAttemptCommand);
-                            }).orElseGet(() -> commandCreator.create(operationContextWithMinRtt, source.getServerDescription(),
-                                    connection.getDescription()));
-                    // attach `maxWireVersion`, `retryableWriteCommandFlag` ASAP because they are used to check whether we should retry
-                    retryControl.attach(AttachmentKeys.maxWireVersion(), maxWireVersion, true)
-                            .attach(AttachmentKeys.retryableWriteCommandFlag(), isRetryableWriteCommand(command), true)
-                            .attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false)
-                            .attach(AttachmentKeys.command(), command, false);
-                    return transformer.apply(assertNotNull(connection.command(database, command, fieldNameValidator, readPreference,
-                                    commandResultDecoder, operationContextWithMinRtt)),
-                            connection);
-                } catch (MongoException e) {
-                    if (!firstAttempt) {
-                        CommandOperationHelper.addRetryableWriteErrorLabel(e, maxWireVersion);
+                    ConnectionDescription connectionDescription = connection.getDescription();
+                    retryControl.breakAndThrowIfRetryAnd(() -> !isServerWriteRetryRequirementsMet(connectionDescription));
+                    if (command.getNullable() == null) {
+                        command.set(commandCreator.create(operationContextWithMinRtt, source.getServerDescription(), connectionDescription));
+                    } else {
+                        assertFalse(firstAttempt);
+                        command.set(retryCommandModifier.apply(command.get()));
                     }
-                    throw e;
-                }
+                    retryControl.getPolicy()
+                            .onCommand(() -> command.get().getFirstKey())
+                            .onWriteRetryRequirements(isWriteRetryRequirementsMet(command.get()), connectionDescription);
+                    T result = connection.command(database, command.get(), fieldNameValidator, readPreference,
+                            commandResultDecoder, operationContextWithMinRtt);
+                    return transformer.apply(assertNotNull(result), connection);
             });
         });
         try {
             return retryingWrite.get();
         } catch (MongoException e) {
-            throw CommandOperationHelper.transformWriteException(e);
+            throw transformWriteException(e);
         }
     }
 
     @Nullable
     static <D, T> T createReadCommandAndExecute(
-            final RetryControl retryControl,
+            final RetryControl<SpecRetryPolicy> retryControl,
             final OperationContext operationContext,
             final ConnectionSource source,
             final String database,
@@ -311,7 +309,7 @@ final class SyncOperationHelper {
             final Connection connection) {
         BsonDocument command = commandCreator.create(operationContext, source.getServerDescription(),
                 connection.getDescription());
-        retryControl.attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false);
+        retryControl.getPolicy().onCommand(command::getFirstKey);
 
         D result = assertNotNull(connection.command(database, command, NoOpFieldNameValidator.INSTANCE,
                 source.getReadPreference(), decoder, operationContext));
@@ -319,22 +317,13 @@ final class SyncOperationHelper {
         return transformer.apply(result, source, connection, operationContext);
     }
 
-
-    static <R> Supplier<R> decorateWriteWithRetries(final RetryControl retryControl,
-            final OperationContext operationContext, final Supplier<R> writeFunction) {
-        return new RetryingSyncSupplier<>(retryControl, onRetryableWriteAttemptFailure(operationContext.getServerDeprioritization()),
-                CommandOperationHelper::loggingShouldAttemptToRetryWriteAndAddRetryableLabel, () -> {
-            logRetryCommand(retryControl, operationContext);
-            return writeFunction.get();
-        });
-    }
-
-    static <R> Supplier<R> decorateReadWithRetries(final RetryControl retryControl, final OperationContext operationContext,
-            final Supplier<R> readFunction) {
-        return new RetryingSyncSupplier<>(retryControl, onRetryableReadAttemptFailure(operationContext.getServerDeprioritization()),
-                CommandOperationHelper::loggingShouldAttemptToRetryRead, () -> {
-            logRetryCommand(retryControl, operationContext);
-            return readFunction.get();
+    static <R> Supplier<R> decorateWithRetries(
+            final RetryControl<SpecRetryPolicy> retryControl,
+            final OperationContext operationContext,
+            final Supplier<R> supplier) {
+        return new RetryingSyncSupplier<>(retryControl, () -> {
+            retryControl.getPolicy().onAttemptStart(retryControl, operationContext);
+            return supplier.get();
         });
     }
 

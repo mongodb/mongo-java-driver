@@ -21,6 +21,7 @@ import com.mongodb.ClientBulkWriteException;
 import com.mongodb.Function;
 import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.MongoWriteException;
@@ -36,7 +37,9 @@ import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.internal.connection.TestCommandListener;
+import com.mongodb.internal.event.ConfigureFailPointCommandListener;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
@@ -74,6 +77,7 @@ import static com.mongodb.client.Fixture.getPrimary;
 import static com.mongodb.client.model.bulk.ClientBulkWriteOptions.clientBulkWriteOptions;
 import static com.mongodb.client.model.bulk.ClientNamespacedWriteModel.insertOne;
 import static com.mongodb.client.model.bulk.ClientUpdateOneOptions.clientUpdateOneOptions;
+import static com.mongodb.internal.operation.CommandOperationHelper.RETRYABLE_WRITE_ERROR_LABEL;
 import static java.lang.String.join;
 import static java.util.Arrays.asList;
 import static java.util.Collections.nCopies;
@@ -278,36 +282,72 @@ public class CrudProseTest {
         assertBulkWriteHandlesCursorRequiringGetMore(true);
     }
 
+    /**
+     * This test is not from the specification.
+     */
+    @DisplayName("MongoClient.bulkWrite must not retry the bulkWrite command when the corresponding getMore command fails with an error"
+            + " eligible for retry under the write retry policy")
+    @Test
+    void testBulkWriteCommandNotRetriedWhenGetMoreFails() throws Exception {
+        assumeTrue(serverVersionAtLeast(8, 0));
+        TestCommandListener commandListener = new TestCommandListener();
+        BsonDocument configureFailPointFromListener = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: \"failCommand\",\n"
+                + "    mode: { times: 1 },\n"
+                + "    data: {\n"
+                + "        failCommands: ['getMore'],\n"
+                + "        errorCode: 6,\n"
+                + "        errorLabels: ['" + RETRYABLE_WRITE_ERROR_LABEL + "']\n"
+                + "    }\n"
+                + "}\n");
+        try (ConfigureFailPointCommandListener failGetMoreAfterBulkWrite =
+                     new ConfigureFailPointCommandListener(configureFailPointFromListener, getPrimary(), commandEvent ->
+                             (commandEvent instanceof CommandSucceededEvent) && commandEvent.getCommandName().equals("bulkWrite"));
+             MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
+                .retryWrites(true)
+                .addCommandListener(commandListener)
+                .addCommandListener(failGetMoreAfterBulkWrite))) {
+            assertThrows(MongoException.class, () -> clientBulkWriteWithGetMore(client, false));
+        } finally {
+            assertEquals(1, commandListener.getCommandStartedEvents("bulkWrite").size());
+            assertEquals(1, commandListener.getCommandStartedEvents("getMore").size());
+            assertEquals(1, commandListener.getCommandFailedEvents("getMore").size());
+        }
+    }
+
     private void assertBulkWriteHandlesCursorRequiringGetMore(final boolean transaction) {
         TestCommandListener commandListener = new TestCommandListener();
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
                 .retryWrites(false)
                 .addCommandListener(commandListener))) {
-            int maxBsonObjectSize = droppedDatabase(client).runCommand(new Document("hello", 1)).getInteger("maxBsonObjectSize");
-            try (ClientSession session = transaction ? client.startSession() : null) {
-                BiFunction<List<? extends ClientNamespacedWriteModel>, ClientBulkWriteOptions, ClientBulkWriteResult> bulkWrite =
-                        (models, options) -> session == null
-                                ? client.bulkWrite(models, options)
-                                : client.bulkWrite(session, models, options);
-                Supplier<ClientBulkWriteResult> action = () -> bulkWrite.apply(asList(
-                        ClientNamespacedWriteModel.updateOne(
-                                NAMESPACE,
-                                Filters.eq(join("", nCopies(maxBsonObjectSize / 2, "a"))),
-                                Updates.set("x", 1),
-                                clientUpdateOneOptions().upsert(true)),
-                        ClientNamespacedWriteModel.updateOne(
-                                NAMESPACE,
-                                Filters.eq(join("", nCopies(maxBsonObjectSize / 2, "b"))),
-                                Updates.set("x", 1),
-                                clientUpdateOneOptions().upsert(true))),
-                        clientBulkWriteOptions().verboseResults(true)
-                );
+            ClientBulkWriteResult result = clientBulkWriteWithGetMore(client, transaction);
+            assertEquals(2, result.getUpsertedCount());
+            assertEquals(2, result.getVerboseResults().orElseThrow(Assertions::fail).getUpdateResults().size());
+            assertEquals(1, commandListener.getCommandStartedEvents("getMore").size());
+        }
+    }
 
-                ClientBulkWriteResult result = transaction ? runInTransaction(session, action) : action.get();
-                assertEquals(2, result.getUpsertedCount());
-                assertEquals(2, result.getVerboseResults().orElseThrow(Assertions::fail).getUpdateResults().size());
-                assertEquals(1, commandListener.getCommandStartedEvents("bulkWrite").size());
-            }
+    private static ClientBulkWriteResult clientBulkWriteWithGetMore(final MongoClient client, final boolean transaction) {
+        int maxBsonObjectSize = droppedDatabase(client).runCommand(new Document("hello", 1)).getInteger("maxBsonObjectSize");
+        try (ClientSession session = transaction ? client.startSession() : null) {
+            BiFunction<List<? extends ClientNamespacedWriteModel>, ClientBulkWriteOptions, ClientBulkWriteResult> bulkWrite =
+                    (models, options) -> session == null
+                            ? client.bulkWrite(models, options)
+                            : runInTransaction(session, () -> client.bulkWrite(session, models, options));
+            return bulkWrite.apply(asList(
+                            ClientNamespacedWriteModel.updateOne(
+                                    NAMESPACE,
+                                    Filters.eq(join("", nCopies(maxBsonObjectSize / 2, "a"))),
+                                    Updates.set("x", 1),
+                                    clientUpdateOneOptions().upsert(true)),
+                            ClientNamespacedWriteModel.updateOne(
+                                    NAMESPACE,
+                                    Filters.eq(join("", nCopies(maxBsonObjectSize / 2, "b"))),
+                                    Updates.set("x", 1),
+                                    clientUpdateOneOptions().upsert(true))),
+                    clientBulkWriteOptions().verboseResults(true)
+            );
         }
     }
 

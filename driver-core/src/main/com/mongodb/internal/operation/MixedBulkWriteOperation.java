@@ -38,8 +38,6 @@ import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.MongoWriteConcernWithResponseException;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.ProtocolHelper;
-import com.mongodb.internal.operation.retry.AttachmentKeys;
-import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -47,6 +45,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -59,16 +58,16 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
-import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWriteWithRetriesAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWithRetriesAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
-import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabel;
-import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried;
-import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
+import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabelIfNeeded;
+import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRetryControl;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
 import static com.mongodb.internal.operation.CommandOperationHelper.validateAndGetEffectiveWriteConcern;
-import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
+import static com.mongodb.internal.operation.OperationHelper.isServerWriteRetryRequirementsMet;
 import static com.mongodb.internal.operation.OperationHelper.validateWriteRequests;
-import static com.mongodb.internal.operation.SyncOperationHelper.decorateWriteWithRetries;
+import static com.mongodb.internal.operation.SpecRetryPolicy.Descriptor.WRITE;
+import static com.mongodb.internal.operation.SyncOperationHelper.decorateWithRetries;
 import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndConnection;
 
 /**
@@ -241,9 +240,9 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final OperationContext operationContext) {
         MutableValue<BulkWriteBatch> batch = new MutableValue<>(maybeBatch);
         MutableValue<SourceAndConnection> sourceAndConnection = new MutableValue<>(maybeSourceAndConnection);
-        RetryControl retryControl = initialRetryState(
-                retryWrites, operationContext.getTimeoutContext());
-        Supplier<BatchWithSourceAndConnection<SourceAndConnection>> retryingBatchExecutor = decorateWriteWithRetries(
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
+                EnumSet.of(WRITE), retryWrites, retryWrites, operationContext);
+        Supplier<BatchWithSourceAndConnection<SourceAndConnection>> retryingBatchExecutor = decorateWithRetries(
                 retryControl,
                 operationContext,
                 () -> {
@@ -253,11 +252,10 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                     try {
                         sourceAndConnection.set(reusedOrNewSourceAndConnection);
                         ConnectionDescription connectionDescription = reusedOrNewSourceAndConnection.getConnection().getDescription();
-                        retryControl.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true);
                         batch.set(batch.getNullable() != null
                                 ? batch.get()
                                 : createFirstBatch(connectionDescription, reusedOrNewSourceAndConnection.getOperationContext(), effectiveWriteConcern));
-                        onBatch(batch.get(), retryControl);
+                        onBatch(batch.get(), retryControl, connectionDescription);
                         executeBatch(batch.get(), reusedOrNewSourceAndConnection, effectiveWriteConcern);
                         return new BatchWithSourceAndConnection<>(batch.get().getNextBatch(), reusedOrNewSourceAndConnection);
                     } catch (Throwable e) {
@@ -275,12 +273,6 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             if (e instanceof MongoWriteConcernWithResponseException) {
                 batch.get().addResult((BsonDocument) ((MongoWriteConcernWithResponseException) e).getResponse());
                 return new BatchWithSourceAndConnection<>(batch.get().getNextBatch(), null);
-            }
-            if (retryWrites && e instanceof MongoException) {
-                // Adding the `RetryableWriteError` label here is unnecessary at this point:
-                // applications cannot use it for implementing retries, and it is not even part of the public driver API.
-                // Unfortunately, certain unified tests incorrectly rely on this label to verify retries, resulting in this redundant code.
-                addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryControl, e);
             }
             throw e;
         }
@@ -300,9 +292,9 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
         beginAsync().<BatchWithSourceAndConnection<AsyncSourceAndConnection>>thenSupply(c -> {
             MutableValue<BulkWriteBatch> batch = new MutableValue<>(maybeBatch);
             MutableValue<AsyncSourceAndConnection> sourceAndConnection = new MutableValue<>(maybeSourceAndConnection);
-            RetryControl retryControl = initialRetryState(
-                    retryWrites, operationContext.getTimeoutContext());
-            AsyncCallbackSupplier<BatchWithSourceAndConnection<AsyncSourceAndConnection>> retryingBatchExecutor = decorateWriteWithRetriesAsync(
+            RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
+                    EnumSet.of(WRITE), retryWrites, retryWrites, operationContext);
+            AsyncCallbackSupplier<BatchWithSourceAndConnection<AsyncSourceAndConnection>> retryingBatchExecutor = decorateWithRetriesAsync(
                     retryControl,
                     operationContext,
                     supplierCallback -> {
@@ -314,11 +306,10 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                             beginAsync().thenRun(executeBatchCallback -> {
                                 sourceAndConnection.set(reusedOrNewSourceAndConnection);
                                 ConnectionDescription connectionDescription = reusedOrNewSourceAndConnection.getConnection().getDescription();
-                                retryControl.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true);
                                 batch.set(batch.getNullable() != null
                                         ? batch.get()
                                         : createFirstBatch(connectionDescription, reusedOrNewSourceAndConnection.getOperationContext(), effectiveWriteConcern));
-                                onBatch(batch.get(), retryControl);
+                                onBatch(batch.get(), retryControl, connectionDescription);
                                 executeBatchAsync(batch.get(), reusedOrNewSourceAndConnection, effectiveWriteConcern, executeBatchCallback);
                             }).<BatchWithSourceAndConnection<AsyncSourceAndConnection>>thenSupply(createNextBatchCallback -> {
                                 createNextBatchCallback.complete(new BatchWithSourceAndConnection<>(batch.get().getNextBatch(), reusedOrNewSourceAndConnection));
@@ -340,12 +331,6 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                     onErrorCallback.complete(new BatchWithSourceAndConnection<>(batch.get().getNextBatch(), null));
                     return;
                 }
-                if (retryWrites && e instanceof MongoException) {
-                    // Adding the `RetryableWriteError` label here is unnecessary at this point:
-                    // applications cannot use it for implementing retries, and it is not even part of the public driver API.
-                    // Unfortunately, certain unified tests incorrectly rely on this label to verify retries, resulting in this redundant code.
-                    addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryControl, e);
-                }
                 onErrorCallback.completeExceptionally(e);
             }).finish(c);
         }).finish(callback);
@@ -356,14 +341,11 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final WriteConcern effectiveWriteConcern,
             final WriteBinding binding,
             final OperationContext operationContext,
-            final RetryControl retryControl) {
+            final RetryControl<SpecRetryPolicy> retryControl) {
         if (sourceAndConnection == null || sourceAndConnection.isClosed()) {
             SourceAndConnection newSourceAndConnection = selectServerAndCheckoutConnection(binding, operationContext);
             try {
-                onNewConnection(
-                        newSourceAndConnection.getConnection().getDescription(),
-                        newSourceAndConnection.getOperationContext().getSessionContext(),
-                        effectiveWriteConcern, retryControl);
+                onNewConnection(newSourceAndConnection.getConnection().getDescription(), effectiveWriteConcern, retryControl);
             } catch (Throwable e) {
                 newSourceAndConnection.close();
                 throw e;
@@ -379,7 +361,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final WriteConcern effectiveWriteConcern,
             final AsyncWriteBinding binding,
             final OperationContext operationContext,
-            final RetryControl retryControl,
+            final RetryControl<SpecRetryPolicy> retryControl,
             final SingleResultCallback<AsyncSourceAndConnection> callback) {
         beginAsync().<AsyncSourceAndConnection>thenSupply(c -> {
             if (sourceAndConnection == null || sourceAndConnection.isClosed()) {
@@ -387,10 +369,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                     selectServerAndCheckoutConnectionAsync(binding, operationContext, selectServerAndCheckoutConnectionCallback);
                 }).<AsyncSourceAndConnection>thenApply((newSourceAndConnection, onNewConnectionCallback) -> {
                     try {
-                        onNewConnection(
-                                newSourceAndConnection.getConnection().getDescription(),
-                                newSourceAndConnection.getOperationContext().getSessionContext(),
-                                effectiveWriteConcern, retryControl);
+                        onNewConnection(newSourceAndConnection.getConnection().getDescription(), effectiveWriteConcern, retryControl);
                     } catch (Throwable e) {
                         newSourceAndConnection.close();
                         throw e;
@@ -431,12 +410,9 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
 
     private void onNewConnection(
             final ConnectionDescription connectionDescription,
-            final SessionContext sessionContext,
             final WriteConcern effectiveWriteConcern,
-            final RetryControl retryControl) {
-        boolean effectiveRetryWrites = isRetryableWrite(
-                retryWrites, effectiveWriteConcern, connectionDescription, sessionContext);
-        retryControl.breakAndThrowIfRetryAnd(() -> !effectiveRetryWrites);
+            final RetryControl<SpecRetryPolicy> retryControl) {
+        retryControl.breakAndThrowIfRetryAnd(() -> !isServerWriteRetryRequirementsMet(connectionDescription));
         validateWriteRequests(connectionDescription, bypassDocumentValidation, writeRequests, effectiveWriteConcern);
     }
 
@@ -450,11 +426,15 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                 writeRequests, operationContext, comment, variables);
     }
 
-    private void onBatch(final BulkWriteBatch batch, final RetryControl retryControl) {
+    private void onBatch(
+            final BulkWriteBatch batch,
+            final RetryControl<SpecRetryPolicy> retryControl,
+            final ConnectionDescription connectionDescription) {
         commandName = batch.getCommand().getFirstKey();
         String commandDescriptionToCapture = commandName;
-        retryControl.attach(AttachmentKeys.retryableWriteCommandFlag(), batch.getRetryWrites(), false)
-                .attach(AttachmentKeys.commandDescriptionSupplier(), () -> commandDescriptionToCapture, false);
+        retryControl.getPolicy()
+                .onCommand(() -> commandDescriptionToCapture)
+                .onWriteRetryRequirements(batch.isWriteRetryRequirementsMet(), connectionDescription);
     }
 
     private void executeBatch(
@@ -501,12 +481,12 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             @Nullable final BsonDocument result,
             final ConnectionDescription connectionDescription,
             final OperationContext operationContext) throws MongoWriteConcernWithResponseException {
-        if (batch.getRetryWrites()) {
+        if (batch.isWriteRetryRequirementsMet()) {
             MongoException writeConcernBasedError = ProtocolHelper.createSpecialException(
                     result, connectionDescription.getServerAddress(), "errMsg", operationContext.getTimeoutContext());
             if (writeConcernBasedError != null) {
                 assertNotNull(result);
-                addRetryableWriteErrorLabel(writeConcernBasedError, connectionDescription.getMaxWireVersion());
+                addRetryableWriteErrorLabelIfNeeded(writeConcernBasedError, connectionDescription.getMaxWireVersion());
                 addErrorLabelsToWriteConcern(result.getDocument("writeConcernError"), writeConcernBasedError.getErrorLabels());
                 throw new MongoWriteConcernWithResponseException(writeConcernBasedError, result);
             }
