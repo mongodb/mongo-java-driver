@@ -20,6 +20,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.StreamProcessingClient;
+import com.mongodb.client.StreamProcessors;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.internal.diagnostics.logging.Logger;
@@ -47,6 +48,11 @@ public final class StreamProcessingClientImpl implements StreamProcessingClient 
         this.cluster = notNull("cluster", cluster);
         this.streamFactoryFactory = notNull("streamFactoryFactory", streamFactoryFactory);
         LOGGER.info("StreamProcessingClient created with settings " + notNull("settings", settings));
+    }
+
+    @Override
+    public StreamProcessors streamProcessors() {
+        throw new UnsupportedOperationException("Not yet implemented");
     }
 
     @Override

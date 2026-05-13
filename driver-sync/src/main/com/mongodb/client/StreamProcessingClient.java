@@ -40,6 +40,13 @@ import java.io.Closeable;
 public interface StreamProcessingClient extends Closeable {
 
     /**
+     * Returns a handle for managing stream processors in this workspace.
+     *
+     * @return a {@link StreamProcessors} handle for this workspace
+     */
+    StreamProcessors streamProcessors();
+
+    /**
      * Closes this client, releasing all underlying resources.
      */
     @Override
