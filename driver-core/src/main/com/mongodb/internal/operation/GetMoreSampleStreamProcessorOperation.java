@@ -110,9 +110,9 @@ public final class GetMoreSampleStreamProcessorOperation implements WriteOperati
 
     private static GetStreamProcessorSamplesResult toResult(final BsonDocument result) {
         long responseCursorId = result.getInt64("cursorId").getValue();
-        BsonArray nextBatch = result.getArray("nextBatch", new BsonArray());
-        List<BsonDocument> documents = new ArrayList<>(nextBatch.size());
-        for (BsonValue value : nextBatch) {
+        BsonArray messages = result.getArray("messages", new BsonArray());
+        List<BsonDocument> documents = new ArrayList<>(messages.size());
+        for (BsonValue value : messages) {
             documents.add(value.asDocument());
         }
         return new GetStreamProcessorSamplesResult(responseCursorId, documents);

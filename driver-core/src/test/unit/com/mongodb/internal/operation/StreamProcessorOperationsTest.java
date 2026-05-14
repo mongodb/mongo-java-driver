@@ -229,7 +229,7 @@ class StreamProcessorOperationsTest {
 
     @Test
     void getMoreSampleCommandShape() {
-        doReturn(new BsonDocument("cursorId", new BsonInt64(0L)).append("nextBatch", new BsonArray()))
+        doReturn(new BsonDocument("cursorId", new BsonInt64(0L)).append("messages", new BsonArray()))
                 .when(writeConnection).command(anyString(), any(BsonDocument.class), any(), any(), any(), any());
         new GetMoreSampleStreamProcessorOperation(PROCESSOR_NAME, 42L, null).execute(writeBinding, OPERATION_CONTEXT);
         BsonDocument command = capturedWriteCommand();
@@ -240,7 +240,7 @@ class StreamProcessorOperationsTest {
 
     @Test
     void getMoreSampleCommandWithBatchSize() {
-        doReturn(new BsonDocument("cursorId", new BsonInt64(0L)).append("nextBatch", new BsonArray()))
+        doReturn(new BsonDocument("cursorId", new BsonInt64(0L)).append("messages", new BsonArray()))
                 .when(writeConnection).command(anyString(), any(BsonDocument.class), any(), any(), any(), any());
         new GetMoreSampleStreamProcessorOperation(PROCESSOR_NAME, 42L, 50).execute(writeBinding, OPERATION_CONTEXT);
         assertEquals(50, capturedWriteCommand().getInt32("batchSize").getValue());
