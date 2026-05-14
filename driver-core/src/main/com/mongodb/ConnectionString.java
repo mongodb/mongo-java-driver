@@ -1355,7 +1355,7 @@ public class ConnectionString {
      * Returns true if this connection string targets an Atlas Stream Processing workspace.
      *
      * <p>Workspace hosts match the pattern {@code atlas-stream-*.*a.query.mongodb*.net}.
-     * When true, TLS, {@code loadBalanced=true}, and {@code authSource=admin} are applied by default.</p>
+     * When true, TLS, {@code directConnection=true}, and {@code authSource=admin} are applied by default.</p>
      *
      * @return true if targeting a stream processing workspace
      * @since 5.5
