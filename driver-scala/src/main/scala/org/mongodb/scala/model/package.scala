@@ -992,6 +992,27 @@ package object model {
    */
   @Sealed
   type ApproximateQuantileMethod = com.mongodb.client.model.ApproximateQuantileMethod
+
+  /** @see [[com.mongodb.client.model.CreateStreamProcessorOptions]] */
+  type CreateStreamProcessorOptions = com.mongodb.client.model.CreateStreamProcessorOptions
+
+  /** @see [[com.mongodb.client.model.FailoverOptions]] */
+  type FailoverOptions = com.mongodb.client.model.FailoverOptions
+
+  /** @see [[com.mongodb.client.model.GetStreamProcessorSamplesOptions]] */
+  type GetStreamProcessorSamplesOptions = com.mongodb.client.model.GetStreamProcessorSamplesOptions
+
+  /** @see [[com.mongodb.client.model.GetStreamProcessorSamplesResult]] */
+  type GetStreamProcessorSamplesResult = com.mongodb.client.model.GetStreamProcessorSamplesResult
+
+  /** @see [[com.mongodb.client.model.GetStreamProcessorStatsOptions]] */
+  type GetStreamProcessorStatsOptions = com.mongodb.client.model.GetStreamProcessorStatsOptions
+
+  /** @see [[com.mongodb.client.model.StartStreamProcessorOptions]] */
+  type StartStreamProcessorOptions = com.mongodb.client.model.StartStreamProcessorOptions
+
+  /** @see [[com.mongodb.client.model.StreamProcessorInfo]] */
+  type StreamProcessorInfo = com.mongodb.client.model.StreamProcessorInfo
 }
 
 // scalastyle:on number.of.methods number.of.types
