@@ -86,11 +86,8 @@ public class MongoSocksProxyException extends MongoSocketOpenException {
      * @param handshakePhase the phase at which the failure occurred
      */
     public MongoSocksProxyException(final String message, final ServerAddress serverAddress, final HandshakePhase handshakePhase) {
-        super(message, serverAddress);
-        this.handshakePhase = handshakePhase;
-        this.proxyReplyCode = null;
+        this(message, serverAddress, handshakePhase, null);
     }
-
 
     /**
      * Construct an instance for failures that have no RFC 1928 reply code
@@ -108,8 +105,10 @@ public class MongoSocksProxyException extends MongoSocketOpenException {
     }
 
     /**
-     * Construct an instance for {@link HandshakePhase#CONNECT_RELAY} failures that
-     * carry an RFC 1928 reply code.
+     * Construct an instance with an optional RFC 1928 reply code.
+     * Use {@code null} for phases that do not carry a reply code
+     * ({@link HandshakePhase#PROXY_TCP_CONNECT}, {@link HandshakePhase#NEGOTIATION},
+     * {@link HandshakePhase#AUTHENTICATION}).
      *
      * @param message        the message
      * @param address        the server address
@@ -123,10 +122,11 @@ public class MongoSocksProxyException extends MongoSocketOpenException {
         this.proxyReplyCode = proxyReplyCode;
     }
 
-
     /**
-     * Construct an instance for {@link HandshakePhase#CONNECT_RELAY} failures that
-     * carry an RFC 1928 reply code.
+     * Construct an instance with an optional RFC 1928 reply code.
+     * Use {@code null} for phases that do not carry a reply code
+     * ({@link HandshakePhase#PROXY_TCP_CONNECT}, {@link HandshakePhase#NEGOTIATION},
+     * {@link HandshakePhase#AUTHENTICATION}).
      *
      * @param message        the message
      * @param address        the server address
