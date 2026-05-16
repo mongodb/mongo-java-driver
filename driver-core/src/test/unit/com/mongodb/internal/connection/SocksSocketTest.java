@@ -177,8 +177,14 @@ class SocksSocketTest {
 
     @Test
     void tcpConnectFailureNotMongoSocksProxyException() throws IOException {
-        // Nothing listening on port 1; SocksSocket throws plain ConnectException
-        try (SocksSocket s = new SocksSocket(buildProxySettings("127.0.0.1", 1, false))) {
+        // Bind an ephemeral port then release it, so we have a port that is reliably closed
+        // for the duration of this test. Using a hard-coded low port (e.g. 1) is unreliable
+        // because some systems have services listening there.
+        int closedPort;
+        try (ServerSocket probe = new ServerSocket(0)) {
+            closedPort = probe.getLocalPort();
+        }
+        try (SocksSocket s = new SocksSocket(buildProxySettings("127.0.0.1", closedPort, false))) {
             Throwable ex = assertThrows(Throwable.class, () -> s.connect(TARGET, 5000));
             assertFalse(ex instanceof MongoSocksProxyException, "TCP connect failure is tagged as PROXY_TCP_CONNECT at SocketStream, not here");
         }
