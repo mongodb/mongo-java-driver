@@ -37,7 +37,7 @@ class DocumentationTransactionsExampleSpec extends RequiresMongoDBISpec {
   // end implicit functions
 
   "The Scala driver" should "be able to commit a transaction" in withClient { client =>
-    assume(serverVersionAtLeast(List(4, 0, 0)) && !hasSingleHost)
+    assume(serverVersionAtLeast(List(4, 0, 0)) && !hasSingleHost())
     client.getDatabase("hr").drop().execute()
     client.getDatabase("hr").createCollection("employees").execute()
     client.getDatabase("hr").createCollection("events").execute()

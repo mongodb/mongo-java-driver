@@ -303,7 +303,7 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
         Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, findOperationContext, () ->
                 withSourceAndConnection(binding::getReadConnectionSource, false,
                         (source, connection, commandOperationContext) -> {
-                            retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), commandOperationContext));
+                            retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(commandOperationContext));
                 try {
                     return createReadCommandAndExecute(retryState, commandOperationContext, source, namespace.getDatabaseName(),
                                                        getCommandCreator(), CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
@@ -331,8 +331,7 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
                 retryState, operationContext, (AsyncCallbackSupplier<AsyncBatchCursor<T>>) funcCallback ->
                     withAsyncSourceAndConnection(binding::getReadConnectionSource, false, findOperationContext, funcCallback,
                             (source, connection,   operationContextWithMinRTT, releasingCallback) -> {
-                                if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(source.getServerDescription(),
-                                        findOperationContext), releasingCallback)) {
+                                if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(findOperationContext), releasingCallback)) {
                                     return;
                                 }
                                 SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = exceptionTransformingCallback(releasingCallback);

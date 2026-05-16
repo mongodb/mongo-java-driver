@@ -50,6 +50,7 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
     @Nullable
     private final Long nanos;
 
+    @VisibleForTesting(otherwise = PRIVATE)
     TimePoint(@Nullable final Long nanos) {
         this.nanos = nanos;
     }

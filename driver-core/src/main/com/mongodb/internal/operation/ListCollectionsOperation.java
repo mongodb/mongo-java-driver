@@ -178,7 +178,7 @@ public class ListCollectionsOperation<T> implements ReadOperationCursor<T> {
         RetryState retryState = initialRetryState(retryReads, listCollectionsOperationContext.getTimeoutContext());
         Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, listCollectionsOperationContext, () ->
             withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection, operationContextWithMinRTT) -> {
-                retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), operationContextWithMinRTT));
+                retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(operationContextWithMinRTT));
                 try {
                     return createReadCommandAndExecute(retryState, operationContextWithMinRTT, source, databaseName,
                                                        getCommandCreator(), createCommandDecoder(), transformer(), connection);
@@ -202,8 +202,7 @@ public class ListCollectionsOperation<T> implements ReadOperationCursor<T> {
                 retryState, listCollectionsOperationContext, (AsyncCallbackSupplier<AsyncBatchCursor<T>>) funcCallback ->
                     withAsyncSourceAndConnection(binding::getReadConnectionSource, false, listCollectionsOperationContext, funcCallback,
                             (source, connection, operationContextWithMinRtt, releasingCallback) -> {
-                                if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(source.getServerDescription(),
-                                        operationContextWithMinRtt), releasingCallback)) {
+                                if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(operationContextWithMinRtt), releasingCallback)) {
                                     return;
                                 }
                                 createReadCommandAndExecuteAsync(retryState, operationContextWithMinRtt, source, databaseName,

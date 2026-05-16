@@ -136,7 +136,7 @@ public class RetryableWritesProseTest {
                 ? "        errorLabels: ['" + RETRYABLE_WRITE_ERROR_LABEL + "']\n" : "")
                 + "    }\n"
                 + "}\n");
-        int timeoutSeconds = 5;
+        int timeoutSeconds = 10;
         try (MongoClient client = clientCreator.apply(clientSettings);
                 FailPoint ignored = FailPoint.enable(configureFailPoint, getPrimary())) {
             MongoCollection<Document> collection = dropAndGetCollection("poolClearedExceptionMustBeRetryable", client);

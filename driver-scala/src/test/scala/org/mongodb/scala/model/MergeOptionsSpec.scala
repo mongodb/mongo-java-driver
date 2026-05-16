@@ -31,16 +31,16 @@ class MergeOptionsSpec extends BaseSpec {
       .map(_.getName)
       .toSet
     val enums = classOf[JMergeOptions].getDeclaredFields.map(_.getName).toSet
-    val wrapped = (setters ++ enums) -- Set("hashCode", "toString", "equals")
+    val wrapped = (setters ++ enums) -- Set("hashCode", "toString", "equals") -- DEFAULT_EXCLUSIONS
 
     val exclusions = Default().getClass.getDeclaredMethods
       .filter(f => isPublic(f.getModifiers))
       .map(_.getName)
-      .toSet ++ Set("apply", "unapply")
+      .toSet + "fromProduct"
     val local = MergeOptions().getClass.getDeclaredMethods
       .filter(f => isPublic(f.getModifiers) && !f.getName.contains("$"))
       .map(_.getName)
-      .toSet -- exclusions
+      .toSet -- exclusions -- DEFAULT_EXCLUSIONS
 
     local should equal(wrapped)
   }

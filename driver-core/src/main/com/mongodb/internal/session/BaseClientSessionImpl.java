@@ -240,6 +240,13 @@ public class BaseClientSessionImpl implements ClientSession {
     }
 
     protected enum TransactionState {
-        NONE, IN, COMMITTED, ABORTED
+        NONE,
+        /**
+         * TODO-JAVA-6126 We miss the `STARTING` state, it is combined with the {@link #IN} state.
+         * See <a href="https://jira.mongodb.org/browse/JAVA-6126">JAVA-6126</a> for more details.
+         */
+        IN,
+        COMMITTED,
+        ABORTED
     }
 }

@@ -19,6 +19,7 @@ import com.mongodb.ClientSessionOptions
 import com.mongodb.ServerAddress
 import com.mongodb.TransactionOptions
 import com.mongodb.internal.TimeoutContext
+import com.mongodb.internal.observability.micrometer.TransactionSpan
 import com.mongodb.reactivestreams.client.ClientSession as reactiveClientSession
 import com.mongodb.session.ClientSession as jClientSession
 import com.mongodb.session.ServerSession
@@ -57,6 +58,9 @@ public class ClientSession(public val wrapped: reactiveClientSession) : jClientS
      * @param operation the operation
      */
     public fun notifyOperationInitiated(operation: Any): Unit = wrapped.notifyOperationInitiated(operation)
+
+    /** Get the transaction span (if started). */
+    public fun getTransactionSpan(): TransactionSpan? = wrapped.transactionSpan
 
     /**
      * Get the server address of the pinned mongos on this session. For internal use only.

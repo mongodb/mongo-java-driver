@@ -192,7 +192,7 @@ class SyncClientSession implements ClientSession {
     @Override
     @Nullable
     public TransactionSpan getTransactionSpan() {
-        return null;
+        return wrapped.getTransactionSpan();
     }
 
     private static void sleep(final long millis) {

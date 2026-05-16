@@ -1894,6 +1894,10 @@ axes:
         display_name: "Scala 2.13"
         variables:
           SCALA: "2.13"
+      - id: "3"
+        display_name: "Scala 3"
+        variables:
+          SCALA: "3"
 
   - id: "api-version"
     display_name: "API Version"
@@ -2505,7 +2509,7 @@ buildvariants:
 
   - matrix_name: "scala-tests"
     matrix_spec: { auth: "noauth", ssl: "nossl", jdk: [ "jdk8", "jdk17", "jdk21" ], version: [ "7.0" ], topology: "replicaset",
-                   scala: "*", os: "ubuntu" }
+                   scala: "*" , os: "ubuntu" }
     display_name: "${scala} ${jdk} ${version} ${topology} ${os}"
     tags: [ "test-scala-variant" ]
     tasks:

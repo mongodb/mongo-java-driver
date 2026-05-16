@@ -21,6 +21,7 @@ import org.mongodb.scala.bson.BsonValue
 import org.mongodb.scala.{ ListCollectionsObservable, TimeoutMode }
 
 import java.util.concurrent.TimeUnit
+import scala.concurrent.duration.Duration
 
 case class SyncListCollectionsIterable[T](wrapped: ListCollectionsObservable[T])
     extends SyncMongoIterable[T]
@@ -31,7 +32,7 @@ case class SyncListCollectionsIterable[T](wrapped: ListCollectionsObservable[T])
   }
 
   override def maxTime(maxTime: Long, timeUnit: TimeUnit): ListCollectionsIterable[T] = {
-    wrapped.maxTime(maxTime, timeUnit)
+    wrapped.maxTime(Duration(maxTime, timeUnit))
     this
   }
 

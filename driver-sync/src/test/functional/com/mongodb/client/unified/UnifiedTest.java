@@ -28,7 +28,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.test.CollectionHelper;
-import com.mongodb.observability.SpanTree;
+import com.mongodb.client.observability.SpanTree;
 import com.mongodb.client.unified.UnifiedTestModifications.TestDef;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.connection.ClusterDescription;
@@ -800,6 +800,8 @@ public abstract class UnifiedTest {
             case "poolReadyEvent":
             case "connectionCreatedEvent":
             case "connectionReadyEvent":
+            case "connectionClosedEvent":
+            case "connectionCheckedInEvent":
                 context.getEventMatcher().waitForConnectionPoolEvents(clientId, event, count, entities.getConnectionPoolListener(clientId));
                 break;
             case "serverHeartbeatStartedEvent":

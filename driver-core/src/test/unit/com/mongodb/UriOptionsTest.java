@@ -43,9 +43,9 @@ public class UriOptionsTest extends AbstractConnectionStringTest {
         assumeFalse(getDescription().contains("tlsDisableCertificateRevocationCheck"));
         // Skip because Java driver does not support the tlsDisableOCSPEndpointCheck option
         assumeFalse(getDescription().contains("tlsDisableOCSPEndpointCheck"));
-
         // No CANONICALIZE_HOST_NAME support https://jira.mongodb.org/browse/JAVA-4278
         assumeFalse(getDescription().equals("Valid auth options are parsed correctly (GSSAPI)"));
+        skipBackpressureTests(getDescription());
 
         if (getDefinition().getBoolean("valid", BsonBoolean.TRUE).getValue()) {
             testValidOptions();
@@ -57,5 +57,18 @@ public class UriOptionsTest extends AbstractConnectionStringTest {
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() {
         return JsonPoweredTestHelper.getTestData("uri-options");
+    }
+
+    /**
+     * <a href=https://jira.mongodb.org/browse/JAVA-5956>TODO-JAVA-6141</a>.
+     * <a href=https://jira.mongodb.org/browse/JAVA-6167>TODO-JAVA-6167</a>.
+     */
+    private void skipBackpressureTests(final String description) {
+        // TODO-JAVA-6141 https://jira.mongodb.org/browse/JAVA-6141 Remove skips for maxAdaptiveRetries
+        assumeFalse(description.equals("maxAdaptiveRetries is parsed correctly"));
+        assumeFalse(description.equals("maxAdaptiveRetries=0 is parsed correctly"));
+        // TODO-JAVA-6167 https://jira.mongodb.org/browse/JAVA-6167 Remove skips for enableOverloadRetargeting
+        assumeFalse(description.equals("enableOverloadRetargeting is parsed correctly"));
+        assumeFalse(description.equals("enableOverloadRetargeting=false is parsed correctly"));
     }
 }

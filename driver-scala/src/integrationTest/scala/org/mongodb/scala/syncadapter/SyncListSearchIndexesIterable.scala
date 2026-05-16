@@ -21,9 +21,10 @@ import com.mongodb.client.ListSearchIndexesIterable
 import com.mongodb.client.model.Collation
 import org.bson.{ BsonValue, Document }
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
-import org.mongodb.scala.{ ListSearchIndexesObservable, TimeoutMode }
+import org.mongodb.scala.{ ListSearchIndexesObservable, SingleObservableFuture, TimeoutMode }
 
 import java.util.concurrent.TimeUnit
+import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 
 case class SyncListSearchIndexesIterable[T](wrapped: ListSearchIndexesObservable[T])
@@ -51,7 +52,7 @@ case class SyncListSearchIndexesIterable[T](wrapped: ListSearchIndexesObservable
   }
 
   override def maxTime(maxTime: Long, timeUnit: TimeUnit): ListSearchIndexesIterable[T] = {
-    wrapped.maxTime(maxTime, timeUnit)
+    wrapped.maxTime(Duration(maxTime, timeUnit))
     this
   }
 
@@ -70,9 +71,9 @@ case class SyncListSearchIndexesIterable[T](wrapped: ListSearchIndexesObservable
     this
   }
 
-  override def explain(): Document = wrapped.explain().toFuture().get()
+  override def explain(): Document = wrapped.explain[Document]().toFuture().get()
 
-  override def explain(verbosity: ExplainVerbosity): Document = wrapped.explain(verbosity).toFuture().get()
+  override def explain(verbosity: ExplainVerbosity): Document = wrapped.explain[Document](verbosity).toFuture().get()
 
   override def explain[E](explainResultClass: Class[E]): E =
     wrapped

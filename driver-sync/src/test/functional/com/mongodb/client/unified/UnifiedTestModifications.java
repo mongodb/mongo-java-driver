@@ -47,6 +47,8 @@ public final class UnifiedTestModifications {
         def.skipNoncompliantReactive("event sensitive tests. We can't guarantee the amount of GetMore commands sent in the reactive driver")
                 .test("change-streams", "change-streams", "Test that comment is set on getMore")
                 .test("change-streams", "change-streams", "Test that comment is not set on getMore - pre 4.4");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-6181 temp disabling as failing on latest, while specs are updated")
+                .test("change-streams", "change-streams-nsType", "nsType is present when creating timeseries");
         def.modify(IGNORE_EXTRA_EVENTS)
                 .test("change-streams", "change-streams", "Test with document comment")
                 .test("change-streams", "change-streams", "Test with string comment");
@@ -198,20 +200,8 @@ public final class UnifiedTestModifications {
                         "timeoutMS can be set to 0 on a MongoClient - dropIndexes on collection");
 
         // OpenTelemetry
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5991")
-                .file("open-telemetry/tests", "operation find")
-                .file("open-telemetry/tests", "operation find_one_and_update")
-                .file("open-telemetry/tests", "operation update")
-                .file("open-telemetry/tests", "operation bulk_write")
-                .file("open-telemetry/tests", "operation drop collection")
-                .file("open-telemetry/tests", "transaction spans")
-                .file("open-telemetry/tests", "convenient transactions")
-                .file("open-telemetry/tests", "operation atlas_search")
-                .file("open-telemetry/tests", "operation insert")
-                .file("open-telemetry/tests", "operation map_reduce")
-                .file("open-telemetry/tests", "operation find without db.query.text")
-                .file("open-telemetry/tests", "operation find_retries");
-
+        def.skipNoncompliantReactive("withTransaction is not supported in the reactive driver unified test runner")
+                .file("open-telemetry/tests", "convenient transactions");
         def.skipAccordingToSpec("Micrometer tests expect the network transport to be tcp")
                 .when(ClusterFixture::isUnixSocket)
                 .directory("open-telemetry/tests");
@@ -439,15 +429,8 @@ public final class UnifiedTestModifications {
                 .file("server-discovery-and-monitoring", "pool-clear-on-error-checkout");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5664")
                 .file("server-discovery-and-monitoring", "pool-cleared-on-min-pool-size-population-error");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5949")
-                .file("server-discovery-and-monitoring", "backpressure-network-error-fail-single");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5949")
-                .file("server-discovery-and-monitoring", "backpressure-network-timeout-error-single");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5949")
-                .file("server-discovery-and-monitoring", "backpressure-network-error-fail-replicaset");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5949")
-                .file("server-discovery-and-monitoring", "backpressure-network-timeout-error-replicaset");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5949")
+        // TODO-BACKPRESSURE Nabil - This issue is unrelated to backpressure but consider fixing it before merging to main
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-6174")
                 .file("server-discovery-and-monitoring", "backpressure-server-description-unchanged-on-min-pool-size-population-error");
 
         // session tests
@@ -475,6 +458,14 @@ public final class UnifiedTestModifications {
         def.skipNoncompliant("`MongoCluster.getWriteConcern`/`MongoCollection.getWriteConcern` are silently ignored in a transaction")
                 .test("transactions", "client bulkWrite transactions",
                         "client bulkWrite with writeConcern in a transaction causes a transaction error");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
+                .file("transactions", "backpressure-retryable-writes");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
+                .file("transactions", "backpressure-retryable-reads");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
+                .file("transactions", "backpressure-retryable-commit");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
+                .file("transactions", "backpressure-retryable-abort");
 
         // valid-pass
 

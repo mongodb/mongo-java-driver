@@ -43,6 +43,7 @@ import org.mongodb.scala.model.search.SearchOptions.searchOptions
 import org.mongodb.scala.model.search.SearchPath.{ fieldPath, wildcardPath }
 import org.mongodb.scala.model.search.VectorSearchOptions.{ approximateVectorSearchOptions, exactVectorSearchOptions }
 import org.mongodb.scala.{ BaseSpec, MongoClient, MongoNamespace }
+import org.mongodb.scala.documentToUntypedDocument
 
 class AggregatesSpec extends BaseSpec {
   val registry = MongoClient.DEFAULT_CODEC_REGISTRY

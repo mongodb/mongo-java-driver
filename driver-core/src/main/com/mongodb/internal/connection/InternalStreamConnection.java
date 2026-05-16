@@ -53,6 +53,7 @@ import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
+import com.mongodb.observability.micrometer.MongodbObservationContext;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
 import org.bson.ByteBuf;
@@ -94,8 +95,6 @@ import static com.mongodb.internal.connection.ProtocolHelper.getRecoveryToken;
 import static com.mongodb.internal.connection.ProtocolHelper.getSnapshotTimestamp;
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
 import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.HighCardinalityKeyNames.QUERY_TEXT;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.LowCardinalityKeyNames.RESPONSE_STATUS_CODE;
 import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedException;
 import static java.util.Arrays.asList;
 
@@ -230,9 +229,11 @@ public class InternalStreamConnection implements InternalConnection {
         isTrue("Open already called", stream == null);
         stream = streamFactory.create(serverId.getAddress());
         OperationContext operationContext = originalOperationContext;
+        boolean beforeHandshake = true;
         try {
             stream.open(operationContext);
             InternalConnectionInitializationDescription initializationDescription = connectionInitializer.startHandshake(this, operationContext);
+            beforeHandshake = false;
 
             operationContext = operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout);
             initAfterHandshakeStart(initializationDescription);
@@ -241,6 +242,9 @@ public class InternalStreamConnection implements InternalConnection {
             initAfterHandshakeFinish(initializationDescription);
         } catch (Throwable t) {
             close();
+            if (beforeHandshake) {
+                BackpressureErrorLabeler.applyLabelsIfEligible(t);
+            }
             if (t instanceof MongoException) {
                 throw (MongoException) t;
             } else {
@@ -263,6 +267,7 @@ public class InternalStreamConnection implements InternalConnection {
                             (initialResult, initialException) -> {
                                     if (initialException != null) {
                                         close();
+                                        BackpressureErrorLabeler.applyLabelsIfEligible(initialException);
                                         callback.onResult(null, initialException);
                                     } else {
                                         assertNotNull(initialResult);
@@ -278,11 +283,13 @@ public class InternalStreamConnection implements InternalConnection {
                 @Override
                 public void failed(final Throwable t) {
                     close();
+                    BackpressureErrorLabeler.applyLabelsIfEligible(t);
                     callback.onResult(null, t);
                 }
             });
         } catch (Throwable t) {
             close();
+            BackpressureErrorLabeler.applyLabelsIfEligible(t);
             callback.onResult(null, t);
         }
     }
@@ -454,7 +461,6 @@ public class InternalStreamConnection implements InternalConnection {
                             () -> getDescription().getServerAddress(),
                             () -> getDescription().getConnectionId()
                     );
-
             boolean isLoggingCommandNeeded = isLoggingCommandNeeded();
             boolean isTracingCommandPayloadNeeded = tracingSpan != null && operationContext.getTracingManager().isCommandPayloadEnabled();
 
@@ -473,7 +479,10 @@ public class InternalStreamConnection implements InternalConnection {
                 commandEventSender = new NoOpCommandEventSender();
             }
             if (isTracingCommandPayloadNeeded) {
-                tracingSpan.tagHighCardinality(QUERY_TEXT.asString(), commandDocument);
+                tracingSpan.setQueryText(commandDocument);
+            }
+            if (tracingSpan != null) {
+                tracingSpan.openScope();
             }
 
             try {
@@ -481,6 +490,8 @@ public class InternalStreamConnection implements InternalConnection {
             } catch (Exception e) {
                 if (tracingSpan != null) {
                     tracingSpan.error(e);
+                    tracingSpan.closeScope();
+                    tracingSpan.end();
                 }
                 commandEventSender.sendFailedEvent(e);
                 throw e;
@@ -492,6 +503,7 @@ public class InternalStreamConnection implements InternalConnection {
         } else {
             commandEventSender.sendSucceededEventForOneWayCommand();
             if (tracingSpan != null) {
+                tracingSpan.closeScope();
                 tracingSpan.end();
             }
             return null;
@@ -585,13 +597,17 @@ public class InternalStreamConnection implements InternalConnection {
             }
             if (tracingSpan != null) {
                 if (e instanceof MongoCommandException) {
-                    tracingSpan.tagLowCardinality(RESPONSE_STATUS_CODE.withValue(String.valueOf(((MongoCommandException) e).getErrorCode())));
+                    MongodbObservationContext ctx = tracingSpan.getMongodbObservationContext();
+                    if (ctx != null) {
+                        ctx.setResponseStatusCode(String.valueOf(((MongoCommandException) e).getErrorCode()));
+                    }
                 }
                 tracingSpan.error(e);
             }
             throw e;
         } finally {
             if (tracingSpan != null) {
+                tracingSpan.closeScope();
                 tracingSpan.end();
             }
         }
@@ -607,12 +623,30 @@ public class InternalStreamConnection implements InternalConnection {
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this);
         ByteBufferBsonOutput compressedBsonOutput = new ByteBufferBsonOutput(this);
 
+        Span tracingSpan = null;
         try {
             message.encode(bsonOutput, operationContext);
 
+            tracingSpan = operationContext
+                    .getTracingManager()
+                    .createTracingSpan(message,
+                            operationContext,
+                            () -> message.getCommandDocument(bsonOutput),
+                            cmdName -> SECURITY_SENSITIVE_COMMANDS.contains(cmdName)
+                                    || SECURITY_SENSITIVE_HELLO_COMMANDS.contains(cmdName),
+                            () -> getDescription().getServerAddress(),
+                            () -> getDescription().getConnectionId()
+                    );
+
             CommandEventSender commandEventSender;
-            if (isLoggingCommandNeeded()) {
-                BsonDocument commandDocument = message.getCommandDocument(bsonOutput);
+            boolean isLoggingCommandNeeded = isLoggingCommandNeeded();
+            boolean isTracingCommandPayloadNeeded = tracingSpan != null && operationContext.getTracingManager().isCommandPayloadEnabled();
+
+            BsonDocument commandDocument = null;
+            if (isLoggingCommandNeeded || isTracingCommandPayloadNeeded) {
+                commandDocument = message.getCommandDocument(bsonOutput);
+            }
+            if (isLoggingCommandNeeded) {
                 commandEventSender = new LoggingCommandEventSender(
                         SECURITY_SENSITIVE_COMMANDS, SECURITY_SENSITIVE_HELLO_COMMANDS, description, commandListener,
                         operationContext, message, commandDocument,
@@ -620,11 +654,32 @@ public class InternalStreamConnection implements InternalConnection {
             } else {
                 commandEventSender = new NoOpCommandEventSender();
             }
+            if (isTracingCommandPayloadNeeded) {
+                tracingSpan.setQueryText(commandDocument);
+            }
+
+            final Span commandSpan = tracingSpan;
+            SingleResultCallback<T> tracingCallback = commandSpan == null ? callback : (result, t) -> {
+                try {
+                    if (t != null) {
+                        if (t instanceof MongoCommandException) {
+                            MongodbObservationContext ctx = commandSpan.getMongodbObservationContext();
+                            if (ctx != null) {
+                                ctx.setResponseStatusCode(String.valueOf(((MongoCommandException) t).getErrorCode()));
+                            }
+                        }
+                        commandSpan.error(t);
+                    }
+                } finally {
+                    commandSpan.end();
+                    callback.onResult(result, t);
+                }
+            };
 
             commandEventSender.sendStartedEvent();
             Compressor localSendCompressor = sendCompressor;
             if (localSendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
-                sendCommandMessageAsync(message.getId(), decoder, operationContext, callback, bsonOutput, commandEventSender,
+                sendCommandMessageAsync(message.getId(), decoder, operationContext, tracingCallback, bsonOutput, commandEventSender,
                         message.isResponseExpected());
             } else {
                 List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
@@ -636,12 +691,16 @@ public class InternalStreamConnection implements InternalConnection {
                     ResourceUtil.release(byteBuffers);
                     bsonOutput.close();
                 }
-                sendCommandMessageAsync(message.getId(), decoder, operationContext, callback, compressedBsonOutput, commandEventSender,
+                sendCommandMessageAsync(message.getId(), decoder, operationContext, tracingCallback, compressedBsonOutput, commandEventSender,
                         message.isResponseExpected());
             }
         } catch (Throwable t) {
             bsonOutput.close();
             compressedBsonOutput.close();
+            if (tracingSpan != null) {
+                tracingSpan.error(t);
+                tracingSpan.end();
+            }
             callback.onResult(null, t);
         }
     }

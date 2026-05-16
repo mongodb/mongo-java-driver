@@ -53,8 +53,8 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabel;
 import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
-import static com.mongodb.internal.operation.CommandOperationHelper.isRetryWritesEnabled;
-import static com.mongodb.internal.operation.CommandOperationHelper.logRetryExecute;
+import static com.mongodb.internal.operation.CommandOperationHelper.isRetryableWriteCommand;
+import static com.mongodb.internal.operation.CommandOperationHelper.logRetryCommand;
 import static com.mongodb.internal.operation.CommandOperationHelper.onRetryableReadAttemptFailure;
 import static com.mongodb.internal.operation.CommandOperationHelper.onRetryableWriteAttemptFailure;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
@@ -199,9 +199,7 @@ final class AsyncOperationHelper {
                         withAsyncSourceAndConnection(sourceAsyncFunction, false, operationContext, funcCallback,
                                 (source, connection, operationContextWithMinRtt, releasingCallback) -> {
                                     if (retryState.breakAndCompleteIfRetryAnd(
-                                            () -> !OperationHelper.canRetryRead(source.getServerDescription(),
-                                                    operationContextWithMinRtt),
-                                            releasingCallback)) {
+                                            () -> !OperationHelper.canRetryRead(operationContextWithMinRtt), releasingCallback)) {
                                         return;
                                     }
                                     createReadCommandAndExecuteAsync(retryState, operationContextWithMinRtt, source, database,
@@ -278,8 +276,7 @@ final class AsyncOperationHelper {
                                 ? releasingCallback
                                 : addingRetryableLabelCallback(releasingCallback, maxWireVersion);
                         if (retryState.breakAndCompleteIfRetryAnd(() ->
-                                        !OperationHelper.canRetryWrite(connection.getDescription(), operationContextWithMinRtt.getSessionContext()),
-                                addingRetryableLabelCallback)) {
+                                        !OperationHelper.canRetryWrite(connection.getDescription()), addingRetryableLabelCallback)) {
                             return;
                         }
                         BsonDocument command;
@@ -292,9 +289,9 @@ final class AsyncOperationHelper {
                                             operationContextWithMinRtt,
                                             source.getServerDescription(),
                                             connection.getDescription()));
-                            // attach `maxWireVersion`, `retryableCommandFlag` ASAP because they are used to check whether we should retry
+                            // attach `maxWireVersion`, `retryableWriteCommandFlag` ASAP because they are used to check whether we should retry
                             retryState.attach(AttachmentKeys.maxWireVersion(), maxWireVersion, true)
-                                    .attach(AttachmentKeys.retryableCommandFlag(), isRetryWritesEnabled(command), true)
+                                    .attach(AttachmentKeys.retryableWriteCommandFlag(), isRetryableWriteCommand(command), true)
                                     .attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false)
                                     .attach(AttachmentKeys.command(), command, false);
                         } catch (Throwable t) {
@@ -335,8 +332,8 @@ final class AsyncOperationHelper {
     static <R> AsyncCallbackSupplier<R> decorateReadWithRetriesAsync(final RetryState retryState, final OperationContext operationContext,
             final AsyncCallbackSupplier<R> asyncReadFunction) {
         return new RetryingAsyncCallbackSupplier<>(retryState, onRetryableReadAttemptFailure(operationContext),
-                CommandOperationHelper::shouldAttemptToRetryRead, callback -> {
-            logRetryExecute(retryState, operationContext);
+                CommandOperationHelper::loggingShouldAttemptToRetryRead, callback -> {
+            logRetryCommand(retryState, operationContext);
             asyncReadFunction.get(callback);
         });
     }
@@ -345,7 +342,7 @@ final class AsyncOperationHelper {
             final AsyncCallbackSupplier<R> asyncWriteFunction) {
         return new RetryingAsyncCallbackSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext),
                 CommandOperationHelper::loggingShouldAttemptToRetryWriteAndAddRetryableLabel, callback -> {
-            logRetryExecute(retryState, operationContext);
+            logRetryCommand(retryState, operationContext);
             asyncWriteFunction.get(callback);
         });
     }

@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.TransactionOptions;
+import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
@@ -31,10 +32,13 @@ import static com.mongodb.assertions.Assertions.isTrue;
 public class ClientSessionHelper {
     private final MongoClientImpl mongoClient;
     private final ServerSessionPool serverSessionPool;
+    private final TracingManager tracingManager;
 
-    public ClientSessionHelper(final MongoClientImpl mongoClient, final ServerSessionPool serverSessionPool) {
+    public ClientSessionHelper(final MongoClientImpl mongoClient, final ServerSessionPool serverSessionPool,
+            final TracingManager tracingManager) {
         this.mongoClient = mongoClient;
         this.serverSessionPool = serverSessionPool;
+        this.tracingManager = tracingManager;
     }
 
     Mono<ClientSession> withClientSession(@Nullable final ClientSession clientSessionFromOperation, final OperationExecutor executor) {
@@ -62,6 +66,6 @@ public class ClientSessionHelper {
                                             .readPreference(mongoClient.getSettings().getReadPreference())
                                             .build()))
                     .build();
-            return new ClientSessionPublisherImpl(serverSessionPool, mongoClient, mergedOptions, executor);
+            return new ClientSessionPublisherImpl(serverSessionPool, mongoClient, mergedOptions, executor, tracingManager);
     }
 }
