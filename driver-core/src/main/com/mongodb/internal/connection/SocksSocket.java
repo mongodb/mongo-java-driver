@@ -138,6 +138,8 @@ public final class SocksSocket extends Socket {
     }
 
     private void sendConnect(final Timeout timeout) throws IOException {
+        // remoteAddress is unresolved (asserted in connect()), so getHostName() returns the stored
+        // hostname string without triggering DNS. The SOCKS5 CONNECT request requires this string.
         final String host = remoteAddress.getHostName();
         final int port = remoteAddress.getPort();
         final byte[] bytesOfHost = host.getBytes(StandardCharsets.US_ASCII);
@@ -310,7 +312,10 @@ public final class SocksSocket extends Socket {
     }
 
     private ServerAddress targetServerAddress() {
-        return new ServerAddress(remoteAddress.getHostName(), remoteAddress.getPort());
+        // remoteAddress is asserted unresolved in connect(), so getHostName() would also be safe today.
+        // Using getHostString() defensively guarantees no reverse DNS in this exception-reporting path
+        // even if that invariant is ever weakened.
+        return new ServerAddress(remoteAddress.getHostString(), remoteAddress.getPort());
     }
 
     private SocksAuthenticationMethod[] getSocksAuthenticationMethods() {
