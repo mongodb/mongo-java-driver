@@ -54,7 +54,10 @@ class SocksSocketTest {
                     OutputStream out = client.getOutputStream();
                     out.write(serverBytes);
                     out.flush();
-                    Thread.sleep(300);
+                    // Block until the client closes the connection so the server does not
+                    // tear down the socket while the client is still reading the canned bytes.
+                    // Bounded by the client's natural close in the SocksSocket finally block.
+                    client.getInputStream().transferTo(OutputStream.nullOutputStream());
                 } catch (Exception ignored) {
                 }
             });
@@ -72,6 +75,7 @@ class SocksSocketTest {
                     socksSocket.close();
                 } catch (Exception ignored) {
                 }
+                t.join(5000);
             }
         }
     }
