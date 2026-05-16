@@ -103,6 +103,16 @@ public final class SocksSocket extends Socket {
             SocksAuthenticationMethod authenticationMethod = performNegotiation(timeout);
             authenticate(authenticationMethod, timeout);
             sendConnect(timeout);
+        } catch (MongoSocksProxyException e) {
+            // The underlying proxy TCP socket is already connected at this point.
+            // MongoSocksProxyException is a RuntimeException and is not caught below,
+            // so close the socket here to avoid leaking the FD on every SOCKS5 protocol failure.
+            try {
+                close();
+            } catch (Exception closeException) {
+                e.addSuppressed(closeException);
+            }
+            throw e;
         } catch (SocketException socketException) {
             /*
              * The 'close()' call here has two purposes:
