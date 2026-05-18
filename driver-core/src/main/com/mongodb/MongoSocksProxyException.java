@@ -18,6 +18,8 @@ package com.mongodb;
 
 import com.mongodb.lang.Nullable;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 /**
  * Thrown when an error occurs while establishing a connection to a SOCKS5 proxy.
  *
@@ -86,7 +88,7 @@ public class MongoSocksProxyException extends MongoSocketOpenException {
      * @param handshakePhase the phase at which the failure occurred
      */
     public MongoSocksProxyException(final String message, final ServerAddress serverAddress, final HandshakePhase handshakePhase) {
-        this(message, serverAddress, handshakePhase, null);
+        this(message, serverAddress, notNull("handshakePhase", handshakePhase), null);
     }
 
     /**
@@ -101,7 +103,7 @@ public class MongoSocksProxyException extends MongoSocketOpenException {
      */
     public MongoSocksProxyException(final String message, final ServerAddress address,
                                     final Throwable cause, final HandshakePhase handshakePhase) {
-        this(message, address, cause, handshakePhase, null);
+        this(message, address, cause, notNull("handshakePhase", handshakePhase), null);
     }
 
     /**
@@ -118,7 +120,7 @@ public class MongoSocksProxyException extends MongoSocketOpenException {
     public MongoSocksProxyException(final String message, final ServerAddress address, final HandshakePhase handshakePhase,
             @Nullable final Integer proxyReplyCode) {
         super(message, address);
-        this.handshakePhase = handshakePhase;
+        this.handshakePhase = notNull("handshakePhase", handshakePhase);
         this.proxyReplyCode = proxyReplyCode;
     }
 
@@ -138,7 +140,7 @@ public class MongoSocksProxyException extends MongoSocketOpenException {
                                     final Throwable cause, final HandshakePhase handshakePhase,
                                     @Nullable final Integer proxyReplyCode) {
         super(message, address, cause);
-        this.handshakePhase = handshakePhase;
+        this.handshakePhase = notNull("handshakePhase", handshakePhase);
         this.proxyReplyCode = proxyReplyCode;
     }
 

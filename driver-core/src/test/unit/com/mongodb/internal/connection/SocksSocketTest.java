@@ -239,4 +239,18 @@ class SocksSocketTest {
             assertFalse(ex instanceof MongoSocksProxyException, "TCP connect failure is tagged as PROXY_TCP_CONNECT at SocketStream, not here");
         }
     }
+
+    @Test
+    void constructorRejectsNullHandshakePhase() {
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> new MongoSocksProxyException("m", new com.mongodb.ServerAddress(), null));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> new MongoSocksProxyException("m", new com.mongodb.ServerAddress(),
+                        new RuntimeException("c"), null));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> new MongoSocksProxyException("m", new com.mongodb.ServerAddress(), null, 5));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> new MongoSocksProxyException("m", new com.mongodb.ServerAddress(),
+                        new RuntimeException("c"), null, 5));
+    }
 }
