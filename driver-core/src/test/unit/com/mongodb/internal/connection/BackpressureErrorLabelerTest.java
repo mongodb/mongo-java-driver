@@ -22,6 +22,7 @@ import com.mongodb.MongoSecurityException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadTimeoutException;
+import com.mongodb.MongoSocksProxyException;
 import com.mongodb.ServerAddress;
 import net.bytebuddy.ByteBuddy;
 import org.junit.jupiter.api.Named;
@@ -81,6 +82,38 @@ class BackpressureErrorLabelerTest {
     void dnsFailureShouldNotBeLabeled(final MongoSocketException e) {
         BackpressureErrorLabeler.applyLabelsIfEligible(e);
         assertLacksBackpressureLabels(e);
+    }
+
+    static Stream<Named<MongoSocketException>> socksProxyPostTcpPhaseShouldNotBeLabeled() {
+        // NEGOTIATION / AUTHENTICATION / CONNECT_RELAY are configuration/protocol-level errors
+        // surfaced after the TCP connection to the proxy succeeded. They are not overload signals.
+        return Stream.of(
+                named(new MongoSocksProxyException("negotiation failed", ADDRESS,
+                        MongoSocksProxyException.HandshakePhase.NEGOTIATION)),
+                named(new MongoSocksProxyException("auth failed", ADDRESS,
+                        MongoSocksProxyException.HandshakePhase.AUTHENTICATION)),
+                named(new MongoSocksProxyException("connect relay failed", ADDRESS,
+                        MongoSocksProxyException.HandshakePhase.CONNECT_RELAY, 5))
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void socksProxyPostTcpPhaseShouldNotBeLabeled(final MongoSocketException e) {
+        BackpressureErrorLabeler.applyLabelsIfEligible(e);
+        assertLacksBackpressureLabels(e);
+    }
+
+    @Test
+    void socksProxyTcpConnectPhaseShouldBeLabeled() {
+        // PROXY_TCP_CONNECT is a plain TCP-level failure reaching the proxy host — structurally
+        // identical to any other socket-open failure (proxy may be transiently unreachable or
+        // overloaded). It must still receive backpressure labels.
+        MongoSocksProxyException e = new MongoSocksProxyException(
+                "tcp connect to proxy failed", ADDRESS,
+                MongoSocksProxyException.HandshakePhase.PROXY_TCP_CONNECT);
+        BackpressureErrorLabeler.applyLabelsIfEligible(e);
+        assertHasBackpressureLabels(e);
     }
 
     static Stream<Named<Throwable>> localTlsConfigErrorShouldNotBeLabeled() {

@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoSocketException;
+import com.mongodb.MongoSocksProxyException;
 
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -76,17 +77,38 @@ final class BackpressureErrorLabeler {
             return;
         }
         MongoSocketException socketException = (MongoSocketException) t;
+        if (isExcludedSocksPostTcpPhase(socketException)) {
+            return;
+        }
         if (isDnsLookupFailure(socketException)) {
             return;
         }
         if (isTlsConfigurationError(socketException)) {
             return;
         }
-        // TODO-BACKPRESSURE Nabil - Add SOCKS5 check once JAVA-6194 is introduced
-        // async proxy error surfaces can be handled together — likely via a dedicated internal
-        // exception thrown from the proxy code path.
         socketException.addLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL);
         socketException.addLabel(MongoException.RETRYABLE_ERROR_LABEL);
+    }
+
+    /**
+     * Excludes SOCKS5 failures that surfaced AFTER the TCP connection to the proxy succeeded
+     * (negotiation / authentication / CONNECT-relay reply). Those are configuration/protocol
+     * errors, not overload signals, per the CMAP specification.
+     *
+     * <p>{@link MongoSocksProxyException.HandshakePhase#PROXY_TCP_CONNECT} is deliberately NOT
+     * excluded — a TCP-level failure reaching the proxy is structurally identical to any other
+     * socket-open failure (proxy host transiently unreachable / overloaded) and should still
+     * receive backpressure labels.
+     */
+    private static boolean isExcludedSocksPostTcpPhase(final MongoSocketException t) {
+        if (!(t instanceof MongoSocksProxyException)) {
+            return false;
+        }
+        MongoSocksProxyException.HandshakePhase phase = ((MongoSocksProxyException) t).getHandshakePhase();
+        // Defensive null check: getHandshakePhase() is documented as never returning null, but a
+        // null here would otherwise silently exclude the exception from labels, which is the wrong
+        // default. Treat null as non-exclusion so labels are still applied.
+        return phase != null && phase != MongoSocksProxyException.HandshakePhase.PROXY_TCP_CONNECT;
     }
 
     private static boolean isDnsLookupFailure(final MongoSocketException t) {
