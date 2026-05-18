@@ -179,6 +179,49 @@ class SocksSocketTest {
     }
 
     // -----------------------------------------------------------------------
+    // IOException-during-handshake → tagged with the proper phase, not PROXY_TCP_CONNECT
+    // -----------------------------------------------------------------------
+
+    @Test
+    void eofDuringNegotiationTaggedAsNegotiation() throws Exception {
+        // Server closes the socket immediately after accept without writing the SOCKS5 method-selection
+        // reply. The client's readSocksReply sees EOF and throws ConnectException("Malformed reply...").
+        // That must surface as MongoSocksProxyException with phase=NEGOTIATION, not PROXY_TCP_CONNECT.
+        byte[] noReply = new byte[0];
+        MongoSocksProxyException ex = assertProxy(connectWithMiniServer(noReply, false));
+        Assertions.assertNotNull(ex);
+        assertEquals(HandshakePhase.NEGOTIATION, ex.getHandshakePhase());
+        assertNull(ex.getProxyReplyCode());
+    }
+
+    @Test
+    void unknownReplyCodeDuringConnectRelayTaggedAsConnectRelay() throws Exception {
+        // Reply code 0x09 is not a known RFC 1928 code. ServerReply.of throws ConnectException
+        // before the line that produces MongoSocksProxyException for known reply codes.
+        // The fix must still tag this as CONNECT_RELAY (the phase we were in).
+        byte[] bytes = {
+                0x05, 0x00,                                 // negotiation OK
+                0x05, 0x09, 0x00, 0x01, 0, 0, 0, 0, 0, 0   // unknown reply code 0x09
+        };
+        MongoSocksProxyException ex = assertProxy(connectWithMiniServer(bytes, false));
+        Assertions.assertNotNull(ex);
+        assertEquals(HandshakePhase.CONNECT_RELAY, ex.getHandshakePhase());
+        assertNull(ex.getProxyReplyCode());
+    }
+
+    @Test
+    void eofDuringAuthenticationTaggedAsAuthentication() throws Exception {
+        // Negotiation succeeds with USERNAME_PASSWORD method; then the server hangs up before
+        // sending the 2-byte auth result. readSocksReply throws ConnectException("Malformed reply...")
+        // from inside authenticate(). Must be tagged AUTHENTICATION.
+        byte[] bytes = {0x05, 0x02};   // negotiation OK, picked username/password; then EOF
+        MongoSocksProxyException ex = assertProxy(connectWithMiniServer(bytes, true));
+        Assertions.assertNotNull(ex);
+        assertEquals(HandshakePhase.AUTHENTICATION, ex.getHandshakePhase());
+        assertNull(ex.getProxyReplyCode());
+    }
+
+    // -----------------------------------------------------------------------
     // PROXY_TCP_CONNECT — inferred at SocketStream boundary, not tagged here
     // -----------------------------------------------------------------------
 

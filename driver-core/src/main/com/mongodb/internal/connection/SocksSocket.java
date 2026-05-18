@@ -100,9 +100,36 @@ public final class SocksSocket extends Socket {
                     (ms) -> socketConnect(proxyAddress, Math.toIntExact(ms)),
                     () -> throwSocketConnectionTimeout());
 
-            SocksAuthenticationMethod authenticationMethod = performNegotiation(timeout);
-            authenticate(authenticationMethod, timeout);
-            sendConnect(timeout);
+            // Each call below is wrapped so any IOException raised inside that phase is converted to
+            // a MongoSocksProxyException with the actual phase. Otherwise IOExceptions (EOF, timeout,
+            // unknown reply codes) escape unwrapped and are mislabeled as PROXY_TCP_CONNECT upstream.
+            SocksAuthenticationMethod authenticationMethod;
+            try {
+                authenticationMethod = performNegotiation(timeout);
+            } catch (MongoSocksProxyException e) {
+                throw e;
+            } catch (IOException e) {
+                throw new MongoSocksProxyException("SOCKS5 negotiation failed: " + e.getMessage(),
+                        targetServerAddress(), e, HandshakePhase.NEGOTIATION);
+            }
+
+            try {
+                authenticate(authenticationMethod, timeout);
+            } catch (MongoSocksProxyException e) {
+                throw e;
+            } catch (IOException e) {
+                throw new MongoSocksProxyException("SOCKS5 authentication failed: " + e.getMessage(),
+                        targetServerAddress(), e, HandshakePhase.AUTHENTICATION);
+            }
+
+            try {
+                sendConnect(timeout);
+            } catch (MongoSocksProxyException e) {
+                throw e;
+            } catch (IOException e) {
+                throw new MongoSocksProxyException("SOCKS5 CONNECT relay failed: " + e.getMessage(),
+                        targetServerAddress(), e, HandshakePhase.CONNECT_RELAY);
+            }
         } catch (MongoSocksProxyException e) {
             // The underlying proxy TCP socket is already connected at this point.
             // MongoSocksProxyException is a RuntimeException and is not caught below,
