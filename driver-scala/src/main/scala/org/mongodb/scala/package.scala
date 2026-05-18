@@ -390,6 +390,13 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
   type MongoSocketWriteException = com.mongodb.MongoSocketWriteException
 
   /**
+   * This exception is thrown when an error occurs while establishing a connection to a SOCKS5 proxy.
+   *
+   * @since 5.8
+   */
+  type MongoSocksProxyException = com.mongodb.MongoSocksProxyException
+
+  /**
    * An exception indicating that the driver has timed out waiting for either a server or a connection to become available.
    */
   type MongoTimeoutException = com.mongodb.MongoTimeoutException
