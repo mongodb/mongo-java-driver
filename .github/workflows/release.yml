@@ -44,7 +44,11 @@ jobs:
         #   Example: 5.2.0 => 5.2.x
         #   Example: 5.2.0-beta1 => <current branch>
         run: |
-          echo CURRENT_TAG=$(git describe --tags --abbrev=0) >> $GITHUB_ENV
+          echo CURRENT_TAG=$(git \
+            -c versionsort.suffix=-alpha \
+            -c versionsort.suffix=-beta \
+            -c versionsort.suffix=-rc \
+            tag --list 'r*' --sort=-v:refname | head -n 1) >> $GITHUB_ENV
           echo RELEASE_VERSION=${{ inputs.version }} >> $GITHUB_ENV
           echo RELEASE_VERSION_WITHOUT_SUFFIX=$(echo ${{ inputs.version }} | awk -F- '{print $1}') >> $GITHUB_ENV
           if [[ "${{ inputs.version }}" =~ (alpha|beta|rc)[0-9]+$ ]]; then
