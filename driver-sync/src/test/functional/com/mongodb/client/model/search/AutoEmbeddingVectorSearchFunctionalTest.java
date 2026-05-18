@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.mongodb.client.vector;
+package com.mongodb.client.model.search;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 
-public class AutomatedEmbeddingVectorFunctionalTest extends AbstractAutomatedEmbeddingVectorSearchFunctionalTest {
+public class AutoEmbeddingVectorSearchFunctionalTest extends AbstractAutoEmbeddingVectorSearchFunctionalTest {
     @Override
     protected MongoClient getMongoClient(final MongoClientSettings settings) {
         return MongoClients.create(settings);

@@ -517,7 +517,6 @@ public final class MongoClientSettings {
          * @see #getObservabilitySettings()
          * @since 5.7
          */
-        @Alpha(Reason.CLIENT)
         public Builder observabilitySettings(final ObservabilitySettings observabilitySettings) {
             this.observabilitySettings = notNull("observabilitySettings", observabilitySettings);
             return this;
