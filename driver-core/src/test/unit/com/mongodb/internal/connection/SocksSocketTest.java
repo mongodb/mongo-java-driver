@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -54,10 +55,16 @@ class SocksSocketTest {
                     OutputStream out = client.getOutputStream();
                     out.write(serverBytes);
                     out.flush();
-                    // Block until the client closes the connection so the server does not
-                    // tear down the socket while the client is still reading the canned bytes.
+                    // Drain anything the client writes (negotiation/auth/CONNECT bytes) until the
+                    // client closes its end. This blocks the server thread so it does not tear
+                    // down the socket while the client is still reading the canned bytes.
                     // Bounded by the client's natural close in the SocksSocket finally block.
-                    client.getInputStream().transferTo(OutputStream.nullOutputStream());
+                    // Plain read-loop (no transferTo/nullOutputStream) for Java 8 source compatibility.
+                    InputStream in = client.getInputStream();
+                    byte[] discard = new byte[1024];
+                    while (in.read(discard) != -1) {
+                        // discard
+                    }
                 } catch (Exception ignored) {
                 }
             });
