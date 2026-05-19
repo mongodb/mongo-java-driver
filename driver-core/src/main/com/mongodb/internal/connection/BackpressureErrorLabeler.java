@@ -104,11 +104,7 @@ final class BackpressureErrorLabeler {
         if (!(t instanceof MongoSocksProxyException)) {
             return false;
         }
-        MongoSocksProxyException.HandshakePhase phase = ((MongoSocksProxyException) t).getHandshakePhase();
-        // Defensive null check: getHandshakePhase() is documented as never returning null, but a
-        // null here would otherwise silently exclude the exception from labels, which is the wrong
-        // default. Treat null as non-exclusion so labels are still applied.
-        return phase != null && phase != MongoSocksProxyException.HandshakePhase.PROXY_TCP_CONNECT;
+        return ((MongoSocksProxyException) t).getHandshakePhase() != MongoSocksProxyException.HandshakePhase.PROXY_TCP_CONNECT;
     }
 
     private static boolean isDnsLookupFailure(final MongoSocketException t) {
