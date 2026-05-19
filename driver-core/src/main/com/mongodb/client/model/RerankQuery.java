@@ -28,6 +28,8 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * Represents a query for the {@code $rerank} aggregation pipeline stage.
  * <p>
+ * The {@code $rerank} stage is available only in MongoDB Atlas.
+ * <p>
  * Use {@link #rerankQuery(String)} for a simple text query, or
  * {@link #rerankQuery(Bson)} to specify the full query document directly
  * (e.g., for future modalities like imageURL or videoURL).

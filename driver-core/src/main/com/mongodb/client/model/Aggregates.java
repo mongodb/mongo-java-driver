@@ -1046,7 +1046,8 @@ public final class Aggregates {
      * You may use the {@code $meta: "score"} expression to extract the relevance score
      * assigned to each reranked document.
      *
-     * @param query           The query to rerank against, created via {@link RerankQuery#rerankQuery(String)}.
+     * @param query           The query to rerank against, created via {@link RerankQuery#rerankQuery(String)}
+     *                        or {@link RerankQuery#rerankQuery(Bson)}.
      * @param path            The document field to send to the reranker.
      * @param numDocsToRerank The maximum number of documents to rerank (currently 1-1000).
      * @param model           The reranking model name. Currently accepted:
