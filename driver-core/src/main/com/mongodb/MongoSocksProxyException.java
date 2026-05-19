@@ -23,13 +23,20 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * Thrown when an error occurs while establishing a connection to a SOCKS5 proxy.
  *
- * <p>Per the CMAP specification, errors of this type are excluded from backpressure
- * error labels ({@link MongoException#SYSTEM_OVERLOADED_ERROR_LABEL},
- * {@link MongoException#RETRYABLE_ERROR_LABEL}).
+ * <p>Per the CMAP specification, post-TCP SOCKS5 failures
+ * ({@link HandshakePhase#NEGOTIATION}, {@link HandshakePhase#AUTHENTICATION},
+ * {@link HandshakePhase#CONNECT_RELAY}) are excluded from backpressure error labels
+ * ({@link MongoException#SYSTEM_OVERLOADED_ERROR_LABEL},
+ * {@link MongoException#RETRYABLE_ERROR_LABEL}). Failures in the
+ * {@link HandshakePhase#PROXY_TCP_CONNECT} phase are plain TCP-level reach failures
+ * to the proxy host and continue to receive these labels like any other
+ * socket-open failure.
  *
  * <p>The {@link #getHandshakePhase()} identifies which phase of the SOCKS5 handshake failed.
- * For {@link HandshakePhase#CONNECT_RELAY} failures, {@link #getProxyReplyCode()} returns
- * the RFC 1928 reply code sent by the proxy; for all other phases it returns {@code null}.
+ * {@link #getProxyReplyCode()} returns the RFC 1928 reply code sent by the proxy when a
+ * non-success CONNECT reply was successfully parsed; it returns {@code null} otherwise
+ * (including for {@link HandshakePhase#CONNECT_RELAY} failures caused by an I/O error or
+ * an unrecognised reply field).
  *
  * <p>RFC 1928 reply codes: 1=general failure, 2=connection not allowed by ruleset,
  * 3=network unreachable, 4=host unreachable, 5=connection refused, 6=TTL expired,
