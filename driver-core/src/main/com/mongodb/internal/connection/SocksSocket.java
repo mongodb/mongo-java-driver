@@ -140,19 +140,21 @@ public final class SocksSocket extends Socket {
                 e.addSuppressed(closeException);
             }
             throw e;
-        } catch (SocketException socketException) {
-            /*
-             * The 'close()' call here has two purposes:
-             *
-             * 1. Enforces self-closing under RFC 1928 if METHOD is X'FF'.
-             * 2. Handles all other errors during connection, distinct from external closures.
-             */
+        } catch (IOException ioException) {
+            // Reached when the initial proxy TCP connect (timeout.checkedRun above) fails before
+            // any SOCKS5 handshake byte goes on the wire. Possible types: SocketException (connect
+            // refused / network unreachable), SocketTimeoutException (OS or driver connect timeout),
+            // or any other IOException variant. Inner phase failures never land here — the per-phase
+            // try/catch blocks above convert them to MongoSocksProxyException, which is caught by
+            // the preceding block. Close the partially-initialised proxy socket so we do not leak
+            // an FD on any of these error paths; relying on the underlying JDK Socket to self-close
+            // on connect timeout is implementation-defined and not portable.
             try {
                 close();
             } catch (Exception closeException) {
-                socketException.addSuppressed(closeException);
+                ioException.addSuppressed(closeException);
             }
-            throw socketException;
+            throw ioException;
         }
     }
 
