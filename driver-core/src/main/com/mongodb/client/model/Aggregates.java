@@ -1048,8 +1048,8 @@ public final class Aggregates {
      *
      * @param query           The query to rerank against, created via {@link RerankQuery#rerankQuery(String)}.
      * @param path            The document field to send to the reranker.
-     * @param numDocsToRerank The maximum number of documents to rerank (1-1000).
-     * @param model           The reranking model name. Accepted values:
+     * @param numDocsToRerank The maximum number of documents to rerank (currently 1-1000).
+     * @param model           The reranking model name. Currently accepted:
      *                        {@code "rerank-2.5"}, {@code "rerank-2.5-lite"}, {@code "rerank-2"}, {@code "rerank-2-lite"}.
      * @return The {@code $rerank} pipeline stage.
      * @mongodb.server.release 8.3
