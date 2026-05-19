@@ -60,22 +60,27 @@ public class MongoSocksProxyException extends MongoSocketOpenException {
         PROXY_TCP_CONNECT,
 
         /**
-         * SOCKS5 method-selection exchange failed: the proxy version is incompatible,
-         * no common authentication method was found, or the proxy returned an
-         * unrecognised method. This is always a configuration error.
+         * The SOCKS5 method-selection exchange failed. Causes include: incompatible
+         * proxy version, no common authentication method, an unrecognised method, or
+         * an I/O failure (EOF, timeout, broken pipe) while sending the method-selection
+         * request or reading its reply.
          */
         NEGOTIATION,
 
         /**
-         * Credential verification with the proxy failed. This is always a
-         * configuration error (wrong username or password).
+         * Username/password sub-negotiation with the proxy failed. Causes include:
+         * the proxy rejecting the credentials (typically wrong username/password),
+         * or an I/O failure (EOF, timeout, broken pipe) while sending credentials
+         * or reading the auth result.
          */
         AUTHENTICATION,
 
         /**
-         * The proxy processed the CONNECT command for the target host and returned
-         * a non-success reply code. See {@link MongoSocksProxyException#getProxyReplyCode()}
-         * for the specific RFC 1928 reply code.
+         * A failure occurred while sending the CONNECT request to the proxy or
+         * reading/parsing its reply. Causes include: a parsed non-success RFC 1928
+         * reply (in which case {@link MongoSocksProxyException#getProxyReplyCode()}
+         * carries the code), an unrecognised reply field or address type, or an
+         * I/O failure (EOF, timeout, broken pipe) on the CONNECT exchange.
          */
         CONNECT_RELAY
     }
