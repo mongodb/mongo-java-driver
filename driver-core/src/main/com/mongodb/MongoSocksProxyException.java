@@ -172,9 +172,8 @@ public class MongoSocksProxyException extends MongoSocketOpenException {
     }
 
     /**
-     * Returns the RFC 1928 reply code sent by the SOCKS5 proxy in response to a CONNECT request,
-     * or {@code null} if the failure occurred before the proxy sent a CONNECT response
-     * (i.e. phase is not {@link HandshakePhase#CONNECT_RELAY}).
+     * Returns the RFC 1928 reply code sent by the SOCKS5 proxy when a non-success CONNECT
+     * reply was successfully parsed, or {@code null} otherwise.
      *
      * @return the RFC 1928 proxy reply code, or {@code null}
      */
