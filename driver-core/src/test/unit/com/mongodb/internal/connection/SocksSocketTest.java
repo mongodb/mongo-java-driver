@@ -183,10 +183,11 @@ class SocksSocketTest {
     // -----------------------------------------------------------------------
 
     @Test
-    void eofDuringNegotiationTaggedAsNegotiation() throws Exception {
-        // Server closes the socket immediately after accept without writing the SOCKS5 method-selection
-        // reply. The client's readSocksReply sees EOF and throws ConnectException("Malformed reply...").
-        // That must surface as MongoSocksProxyException with phase=NEGOTIATION, not PROXY_TCP_CONNECT.
+    void ioFailureDuringNegotiationTaggedAsNegotiation() throws Exception {
+        // The mini-server's drain loop keeps the connection open while writing no method-selection
+        // reply, so the client's readSocksReply blocks until the 5s socket timeout fires —
+        // surfacing as a SocketTimeoutException inside performNegotiation. That IOException must
+        // be wrapped as MongoSocksProxyException with phase=NEGOTIATION, not PROXY_TCP_CONNECT.
         byte[] noReply = new byte[0];
         MongoSocksProxyException ex = assertProxy(connectWithMiniServer(noReply, false));
         Assertions.assertNotNull(ex);
@@ -210,11 +211,11 @@ class SocksSocketTest {
     }
 
     @Test
-    void eofDuringAuthenticationTaggedAsAuthentication() throws Exception {
-        // Negotiation succeeds with USERNAME_PASSWORD method; then the server hangs up before
-        // sending the 2-byte auth result. readSocksReply throws ConnectException("Malformed reply...")
-        // from inside authenticate(). Must be tagged AUTHENTICATION.
-        byte[] bytes = {0x05, 0x02};   // negotiation OK, picked username/password; then EOF
+    void ioFailureDuringAuthenticationTaggedAsAuthentication() throws Exception {
+        // Negotiation succeeds picking USERNAME_PASSWORD; the mini-server then writes nothing
+        // further and the drain loop keeps the connection open, so the client's auth-read blocks
+        // until SocketTimeoutException. The wrapper must tag the IOException as AUTHENTICATION.
+        byte[] bytes = {0x05, 0x02};   // negotiation OK, picked username/password; then nothing
         MongoSocksProxyException ex = assertProxy(connectWithMiniServer(bytes, true));
         Assertions.assertNotNull(ex);
         assertEquals(HandshakePhase.AUTHENTICATION, ex.getHandshakePhase());
