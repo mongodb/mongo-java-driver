@@ -30,7 +30,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -236,8 +235,13 @@ class SocksSocketTest {
             closedPort = probe.getLocalPort();
         }
         try (SocksSocket s = new SocksSocket(buildProxySettings("127.0.0.1", closedPort, false))) {
-            Throwable ex = assertThrows(Throwable.class, () -> s.connect(TARGET, 5000));
-            assertFalse(ex instanceof MongoSocksProxyException, "TCP connect failure is tagged as PROXY_TCP_CONNECT at SocketStream, not here");
+            // Expecting a plain IOException (typically ConnectException) — TCP connect failures
+            // are NOT tagged as MongoSocksProxyException at the SocksSocket layer; SocketStream
+            // wraps them as PROXY_TCP_CONNECT upstream. Narrowing the assertion to IOException
+            // prevents regressions (e.g. an unexpected NullPointerException) from passing this
+            // test. MongoSocksProxyException is a RuntimeException, not an IOException, so
+            // assertThrows(IOException.class, ...) would already fail if one were thrown here.
+            assertThrows(IOException.class, () -> s.connect(TARGET, 5000));
         }
     }
 
