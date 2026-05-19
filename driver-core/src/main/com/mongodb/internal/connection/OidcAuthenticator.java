@@ -335,7 +335,6 @@ public final class OidcAuthenticator extends SaslAuthenticator {
             final SingleResultCallback<Void> callback) {
         fallbackState = FallbackState.INITIAL;
         beginAsync().thenRunRetryingWhile(
-                operationContext.getTimeoutContext(),
                 c -> super.authenticateAsync(connection, description, operationContext, c),
                 e -> triggersRetry(e) && shouldRetryHandler()
         ).finish(callback);

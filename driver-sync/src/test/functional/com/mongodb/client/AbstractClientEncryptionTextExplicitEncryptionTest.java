@@ -76,6 +76,8 @@ public abstract class AbstractClientEncryptionTextExplicitEncryptionTest {
         assumeTrue("Text explicit encryption tests disabled", hasEncryptionTestsEnabled());
         assumeTrue("Requires newer MongoCrypt version", getMongoCryptVersion().compareTo(REQUIRED_LIB_MONGOCRYPT_VERSION) >= 0);
         assumeTrue(serverVersionAtLeast(8, 2));
+        // TODO-JAVA-6168 update prose tests for post 9.0
+        assumeTrue(!serverVersionAtLeast(9, 0));
         assumeFalse(isStandalone());
 
         MongoNamespace dataKeysNamespace = new MongoNamespace("keyvault.datakeys");
@@ -156,7 +158,7 @@ public abstract class AbstractClientEncryptionTextExplicitEncryptionTest {
     @Test
     @DisplayName("Case 1: can find a document by prefix")
     public void test1CanFindADocumentByPrefix() {
-    EncryptOptions encryptOptions = new EncryptOptions("TextPreview")
+        EncryptOptions encryptOptions = new EncryptOptions("TextPreview")
             .keyId(key1Id)
             .contentionFactor(0L)
             .queryType("prefixPreview")

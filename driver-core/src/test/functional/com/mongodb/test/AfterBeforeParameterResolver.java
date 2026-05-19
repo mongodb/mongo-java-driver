@@ -71,11 +71,16 @@ public class AfterBeforeParameterResolver implements BeforeEachMethodAdapter, Pa
     public void invokeBeforeEachMethod(final ExtensionContext context, final ExtensionRegistry registry) {
         Optional<ParameterResolver> resolverOptional = registry.getExtensions(ParameterResolver.class)
                 .stream()
-                .filter(parameterResolver -> parameterResolver.getClass().getName().contains("ParameterizedTestParameterResolver"))
+                .filter(parameterResolver -> {
+                    String name = parameterResolver.getClass().getName();
+                    // JUnit 5.14+: ParameterizedInvocationParameterResolver, ParameterizedTestMethodParameterResolver
+                    return name.contains("ParameterizedInvocationParameterResolver")
+                            || name.contains("ParameterizedTestMethodParameterResolver");
+                })
                 .findFirst();
         if (!resolverOptional.isPresent()) {
-            throw new IllegalStateException("ParameterizedTestParameterResolver missed in the registry. "
-                    + "Probably it's not a Parameterized Test");
+            throw new IllegalStateException("ParameterResolver not found. Confirm the test is a Parameterized test. "
+                    + "See `com.mongodb.test.AfterBeforeParameterResolver` for more details.");
         } else {
             parameterisedTestParameterResolver = resolverOptional.get();
         }

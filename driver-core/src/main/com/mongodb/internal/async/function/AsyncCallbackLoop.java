@@ -16,6 +16,7 @@
 package com.mongodb.internal.async.function;
 
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.internal.async.AsyncTrampoline;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 
@@ -62,9 +63,11 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
     @NotThreadSafe
     private class LoopingCallback implements SingleResultCallback<Void> {
         private final SingleResultCallback<Void> wrapped;
+        private final Runnable nextIteration;
 
         LoopingCallback(final SingleResultCallback<Void> callback) {
             wrapped = callback;
+            nextIteration = () -> AsyncCallbackLoop.this.body.run(this);
         }
 
         @Override
@@ -80,7 +83,7 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
                     return;
                 }
                 if (continueLooping) {
-                    body.run(this);
+                    AsyncTrampoline.run(nextIteration);
                 } else {
                     wrapped.onResult(result, null);
                 }

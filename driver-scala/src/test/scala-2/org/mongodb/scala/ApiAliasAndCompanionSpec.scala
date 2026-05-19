@@ -96,7 +96,10 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "BaseClientUpdateOptions",
       "BaseClientDeleteOptions",
       "MongoBaseInterfaceAssertions",
+      "DefaultMongodbObservationConvention",
       "MicrometerObservabilitySettings",
+      "MongodbObservation",
+      "MongodbObservationContext",
       "ObservabilitySettings"
     )
     val scalaExclusions = Set(

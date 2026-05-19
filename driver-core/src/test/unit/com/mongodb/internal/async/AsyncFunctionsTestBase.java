@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static java.lang.String.format;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -272,14 +273,16 @@ public abstract class AsyncFunctionsTestBase {
         }
 
         assertTrue(wasCalledFuture.isDone(), "callback should have been called");
-        assertEquals(expectedEvents, listener.getEventStrings(), "steps should have matched");
-        assertEquals(expectedValue, actualValue.get());
         assertEquals(expectedException == null, actualException.get() == null,
-                "both or neither should have produced an exception");
+                format("both or neither should have produced an exception. Expected exception: %s, actual exception: %s",
+                        expectedException,
+                        actualException.get()));
         if (expectedException != null) {
             assertEquals(expectedException.getMessage(), actualException.get().getMessage());
             assertEquals(expectedException.getClass(), actualException.get().getClass());
         }
+        assertEquals(expectedEvents, listener.getEventStrings(), "steps should have matched");
+        assertEquals(expectedValue, actualValue.get());
 
         listener.clear();
     }
