@@ -16,8 +16,6 @@
 package com.mongodb.internal.async;
 
 import com.mongodb.MongoException;
-import com.mongodb.internal.TimeoutContext;
-import com.mongodb.internal.TimeoutSettings;
 import org.junit.jupiter.api.Test;
 
 import java.util.function.BiConsumer;
@@ -29,8 +27,6 @@ import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
-    private static final TimeoutContext TIMEOUT_CONTEXT = new TimeoutContext(new TimeoutSettings(0, 0, 0, 0L, 0));
-
     @Test
     void test1Method() {
         // the number of expected variations is often: 1 + N methods invoked
@@ -856,7 +852,6 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                 },
                 (callback) -> {
                     beginAsync().thenRunRetryingWhile(
-                            TIMEOUT_CONTEXT,
                             c -> async(plainTest(0) ? 1 : 2, c),
                             e -> e.getMessage().equals("exception-1")
                     ).finish(callback);
