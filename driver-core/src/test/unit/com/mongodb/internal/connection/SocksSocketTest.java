@@ -46,6 +46,12 @@ class SocksSocketTest {
 
     private Exception connectWithMiniServer(final byte[] serverBytes, final boolean withCredentials)
             throws Exception {
+        return connectWithMiniServer(serverBytes, withCredentials, false);
+    }
+
+    private Exception connectWithMiniServer(final byte[] serverBytes, final boolean withCredentials,
+                                            final boolean eofAfterWrite)
+            throws Exception {
         try (ServerSocket server = new ServerSocket(0)) {
             int port = server.getLocalPort();
 
@@ -54,6 +60,13 @@ class SocksSocketTest {
                     OutputStream out = client.getOutputStream();
                     out.write(serverBytes);
                     out.flush();
+                    if (eofAfterWrite) {
+                        // Half-close: send TCP FIN so the client sees EOF (in.read() == -1) on its
+                        // next read. The drain loop below stays active so client bytes already in
+                        // (or arriving in) the receive buffer are consumed, which prevents the OS
+                        // from sending RST when the socket is finally closed.
+                        client.shutdownOutput();
+                    }
                     // Drain anything the client writes (negotiation/auth/CONNECT bytes) until the
                     // client closes its end. This blocks the server thread so it does not tear
                     // down the socket while the client is still reading the canned bytes.
@@ -183,12 +196,12 @@ class SocksSocketTest {
 
     @Test
     void ioFailureDuringNegotiationTaggedAsNegotiation() throws Exception {
-        // The mini-server's drain loop keeps the connection open while writing no method-selection
-        // reply, so the client's readSocksReply blocks until the 5s socket timeout fires —
-        // surfacing as a SocketTimeoutException inside performNegotiation. That IOException must
-        // be wrapped as MongoSocksProxyException with phase=NEGOTIATION, not PROXY_TCP_CONNECT.
+        // Mini-server half-closes immediately after writing zero bytes of method-selection reply.
+        // Client's readSocksReply sees EOF (in.read() == -1) and throws ConnectException("Malformed
+        // reply..."). That IOException must be wrapped as MongoSocksProxyException with
+        // phase=NEGOTIATION, not PROXY_TCP_CONNECT.
         byte[] noReply = new byte[0];
-        MongoSocksProxyException ex = assertProxy(connectWithMiniServer(noReply, false));
+        MongoSocksProxyException ex = assertProxy(connectWithMiniServer(noReply, false, true));
         Assertions.assertNotNull(ex);
         assertEquals(HandshakePhase.NEGOTIATION, ex.getHandshakePhase());
         assertNull(ex.getProxyReplyCode());
@@ -211,11 +224,12 @@ class SocksSocketTest {
 
     @Test
     void ioFailureDuringAuthenticationTaggedAsAuthentication() throws Exception {
-        // Negotiation succeeds picking USERNAME_PASSWORD; the mini-server then writes nothing
-        // further and the drain loop keeps the connection open, so the client's auth-read blocks
-        // until SocketTimeoutException. The wrapper must tag the IOException as AUTHENTICATION.
-        byte[] bytes = {0x05, 0x02};   // negotiation OK, picked username/password; then nothing
-        MongoSocksProxyException ex = assertProxy(connectWithMiniServer(bytes, true));
+        // Negotiation succeeds picking USERNAME_PASSWORD; mini-server then half-closes immediately,
+        // so the client reads the 2 negotiation bytes successfully and then sees EOF on the
+        // subsequent auth-result read. readSocksReply throws ConnectException("Malformed reply...")
+        // from inside authenticate(). The wrapper must tag the IOException as AUTHENTICATION.
+        byte[] bytes = {0x05, 0x02};   // negotiation OK, picked username/password; then EOF
+        MongoSocksProxyException ex = assertProxy(connectWithMiniServer(bytes, true, true));
         Assertions.assertNotNull(ex);
         assertEquals(HandshakePhase.AUTHENTICATION, ex.getHandshakePhase());
         assertNull(ex.getProxyReplyCode());
