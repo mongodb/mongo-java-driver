@@ -98,16 +98,16 @@ public final class SocksSocket extends Socket {
             timeout.checkedRun(MILLISECONDS,
                     () -> socketConnect(proxyAddress, 0),
                     (ms) -> socketConnect(proxyAddress, Math.toIntExact(ms)),
-                    () -> throwSocketConnectionTimeout());
+                    SocksSocket::throwSocketConnectionTimeout);
 
             // Each call below is wrapped so any IOException raised inside that phase is converted to
             // a MongoSocksProxyException with the actual phase. Otherwise IOExceptions (EOF, timeout,
             // unknown reply codes) escape unwrapped and are mislabeled as PROXY_TCP_CONNECT upstream.
+            // A MongoSocksProxyException thrown directly by a phase method is a RuntimeException and
+            // propagates past the IOException catch to the outer block at line 133.
             SocksAuthenticationMethod authenticationMethod;
             try {
                 authenticationMethod = performNegotiation(timeout);
-            } catch (MongoSocksProxyException e) {
-                throw e;
             } catch (IOException e) {
                 throw new MongoSocksProxyException("SOCKS5 negotiation failed: " + e.getMessage(),
                         targetServerAddress(), e, HandshakePhase.NEGOTIATION);
@@ -115,8 +115,6 @@ public final class SocksSocket extends Socket {
 
             try {
                 authenticate(authenticationMethod, timeout);
-            } catch (MongoSocksProxyException e) {
-                throw e;
             } catch (IOException e) {
                 throw new MongoSocksProxyException("SOCKS5 authentication failed: " + e.getMessage(),
                         targetServerAddress(), e, HandshakePhase.AUTHENTICATION);
@@ -124,8 +122,6 @@ public final class SocksSocket extends Socket {
 
             try {
                 sendConnect(timeout);
-            } catch (MongoSocksProxyException e) {
-                throw e;
             } catch (IOException e) {
                 throw new MongoSocksProxyException("SOCKS5 CONNECT relay failed: " + e.getMessage(),
                         targetServerAddress(), e, HandshakePhase.CONNECT_RELAY);
