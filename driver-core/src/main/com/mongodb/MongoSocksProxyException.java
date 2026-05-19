@@ -91,9 +91,11 @@ public class MongoSocksProxyException extends MongoSocketOpenException {
     private final Integer proxyReplyCode;
 
     /**
-     * Construct an instance for failures that have no RFC 1928 reply code and no cause
-     * ({@link HandshakePhase#PROXY_TCP_CONNECT}, {@link HandshakePhase#NEGOTIATION},
-     * {@link HandshakePhase#AUTHENTICATION}).
+     * Construct an instance with no RFC 1928 reply code and no cause. Suitable for any phase
+     * whose failure does not carry a parsed reply code: {@link HandshakePhase#PROXY_TCP_CONNECT},
+     * {@link HandshakePhase#NEGOTIATION}, {@link HandshakePhase#AUTHENTICATION}, and the
+     * {@link HandshakePhase#CONNECT_RELAY} sub-cases driven by an I/O failure or an unrecognised
+     * reply field.
      *
      * @param message        the message
      * @param serverAddress  the server address
@@ -104,9 +106,11 @@ public class MongoSocksProxyException extends MongoSocketOpenException {
     }
 
     /**
-     * Construct an instance for failures that have no RFC 1928 reply code
-     * ({@link HandshakePhase#PROXY_TCP_CONNECT}, {@link HandshakePhase#NEGOTIATION},
-     * {@link HandshakePhase#AUTHENTICATION}).
+     * Construct an instance with no RFC 1928 reply code. Suitable for any phase whose failure
+     * does not carry a parsed reply code: {@link HandshakePhase#PROXY_TCP_CONNECT},
+     * {@link HandshakePhase#NEGOTIATION}, {@link HandshakePhase#AUTHENTICATION}, and the
+     * {@link HandshakePhase#CONNECT_RELAY} sub-cases driven by an I/O failure or an unrecognised
+     * reply field.
      *
      * @param message        the message
      * @param address        the server address
@@ -119,10 +123,11 @@ public class MongoSocksProxyException extends MongoSocketOpenException {
     }
 
     /**
-     * Construct an instance with an optional RFC 1928 reply code.
-     * Use {@code null} for phases that do not carry a reply code
-     * ({@link HandshakePhase#PROXY_TCP_CONNECT}, {@link HandshakePhase#NEGOTIATION},
-     * {@link HandshakePhase#AUTHENTICATION}).
+     * Construct an instance with an optional RFC 1928 reply code. A non-{@code null}
+     * {@code proxyReplyCode} should only accompany {@link HandshakePhase#CONNECT_RELAY} and
+     * indicates a successfully parsed non-success reply from the proxy. Use {@code null} in
+     * all other cases — including {@link HandshakePhase#CONNECT_RELAY} failures caused by an
+     * I/O error or an unrecognised reply field.
      *
      * @param message        the message
      * @param address        the server address
@@ -137,10 +142,11 @@ public class MongoSocksProxyException extends MongoSocketOpenException {
     }
 
     /**
-     * Construct an instance with an optional RFC 1928 reply code.
-     * Use {@code null} for phases that do not carry a reply code
-     * ({@link HandshakePhase#PROXY_TCP_CONNECT}, {@link HandshakePhase#NEGOTIATION},
-     * {@link HandshakePhase#AUTHENTICATION}).
+     * Construct an instance with an optional RFC 1928 reply code. A non-{@code null}
+     * {@code proxyReplyCode} should only accompany {@link HandshakePhase#CONNECT_RELAY} and
+     * indicates a successfully parsed non-success reply from the proxy. Use {@code null} in
+     * all other cases — including {@link HandshakePhase#CONNECT_RELAY} failures caused by an
+     * I/O error or an unrecognised reply field.
      *
      * @param message        the message
      * @param address        the server address
