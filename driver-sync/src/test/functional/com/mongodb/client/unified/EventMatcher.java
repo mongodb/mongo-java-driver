@@ -513,8 +513,13 @@ final class EventMatcher {
         if (expectedEventContents.size() > 1) {
             throw new UnsupportedOperationException("Matching for the following event is not implemented " + expectedEventContents.toJson());
         }
-        // TODO JAVA-6174: 'awaited' matching is only supported for ServerHeartbeat* events; a non-empty
-        // 'serverDescriptionChangedEvent' with an 'awaited' field will fail in getAwaitedFromServerMonitorEvent.
+        if (event instanceof ServerDescriptionChangedEvent) {
+            boolean matches = serverDescriptionChangedEventMatches(expectedEventContents, (ServerDescriptionChangedEvent) event);
+            if (context != null) {
+                assertTrue(context.getMessage("Expected serverDescriptionChangedEvent contents to match"), matches);
+            }
+            return matches;
+        }
         if (expectedEventContents.containsKey("awaited")) {
             boolean expectedAwaited = expectedEventContents.getBoolean("awaited").getValue();
             boolean actualAwaited = getAwaitedFromServerMonitorEvent(event);
