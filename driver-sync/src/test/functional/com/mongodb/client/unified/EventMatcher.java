@@ -513,6 +513,8 @@ final class EventMatcher {
         if (expectedEventContents.size() > 1) {
             throw new UnsupportedOperationException("Matching for the following event is not implemented " + expectedEventContents.toJson());
         }
+        // TODO JAVA-6174: 'awaited' matching is only supported for ServerHeartbeat* events; a non-empty
+        // 'serverDescriptionChangedEvent' with an 'awaited' field will fail in getAwaitedFromServerMonitorEvent.
         if (expectedEventContents.containsKey("awaited")) {
             boolean expectedAwaited = expectedEventContents.getBoolean("awaited").getValue();
             boolean actualAwaited = getAwaitedFromServerMonitorEvent(event);
@@ -545,7 +547,7 @@ final class EventMatcher {
             return eventClassName.replace("ConnectionPool", "pool");
         } else if (eventClassName.startsWith("Connection")) {
             return eventClassName.replace("Connection", "connection");
-        } else if (eventClassName.startsWith("ServerHeartbeat")) {
+        } else if (eventClassName.startsWith("Server")) {
             StringBuilder eventTypeBuilder = new StringBuilder(eventClassName);
             eventTypeBuilder.setCharAt(0, Character.toLowerCase(eventTypeBuilder.charAt(0)));
             return eventTypeBuilder.toString();
