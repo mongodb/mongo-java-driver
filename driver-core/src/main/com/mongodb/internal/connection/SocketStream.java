@@ -182,11 +182,8 @@ public class SocketStream implements Stream {
                     operationContext.getTimeoutContext().getConnectTimeoutMs());
             return socksProxy;
         } catch (IOException | RuntimeException e) {
-            // SocksSocket.connect() now closes itself on failure, but createdSocket may not yet
-            // be owned by a SocksSocket (e.g. configureSocket threw). Close defensively; on success
-            // path SocksSocket holds the reference and this catch is not entered.
-            // Note: when SocksSocket.connect() has already closed the inner socket, this is a
-            // no-op (java.net.Socket.close() is idempotent per the JDK contract).
+            // SocksSocket.connect() closes itself on failure, but createdSocket may not yet
+            // be owned by a SocksSocket (e.g. configureSocket threw). Close defensively;
             try {
                 createdSocket.close();
             } catch (IOException closeException) {

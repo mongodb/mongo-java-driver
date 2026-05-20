@@ -104,7 +104,7 @@ public final class SocksSocket extends Socket {
             // a MongoSocksProxyException with the actual phase. Otherwise IOExceptions (EOF, timeout,
             // unknown reply codes) escape unwrapped and are mislabeled as PROXY_TCP_CONNECT upstream.
             // A MongoSocksProxyException thrown directly by a phase method is a RuntimeException and
-            // propagates past the IOException catch to the outer block at line 133.
+            // propagates past the IOException catch to the outer block.
             SocksAuthenticationMethod authenticationMethod;
             try {
                 authenticationMethod = performNegotiation(timeout);
@@ -138,11 +138,10 @@ public final class SocksSocket extends Socket {
             }
             throw e;
         } catch (IOException ioException) {
-            // Reached only when the initial proxy TCP connect (timeout.checkedRun above) fails
+            // Reached only when the initial proxy TCP connect fails
             // before any SOCKS5 handshake byte goes on the wire. Inner-phase IOExceptions are
             // converted to MongoSocksProxyException by the per-phase wrappers and caught above.
-            // Close the partially-initialised proxy socket so we don't leak an FD; relying on the
-            // underlying JDK Socket to self-close on connect timeout is implementation-defined.
+            // Close the partially-initialised proxy socket so we don't leak a FD.
             try {
                 close();
             } catch (Exception closeException) {

@@ -62,9 +62,7 @@ class SocksSocketTest {
                     out.flush();
                     if (eofAfterWrite) {
                         // Half-close: send TCP FIN so the client sees EOF (in.read() == -1) on its
-                        // next read. The drain loop below stays active so client bytes already in
-                        // (or arriving in) the receive buffer are consumed, which prevents the OS
-                        // from sending RST when the socket is finally closed.
+                        // next read.
                         client.shutdownOutput();
                     }
                     // Drain anything the client writes (negotiation/auth/CONNECT bytes) until the
@@ -74,6 +72,7 @@ class SocksSocketTest {
                     // Plain read-loop (no transferTo/nullOutputStream) for Java 8 source compatibility.
                     InputStream in = client.getInputStream();
                     byte[] discard = new byte[1024];
+                    //noinspection StatementWithEmptyBody
                     while (in.read(discard) != -1) {
                         // discard
                     }
@@ -83,20 +82,19 @@ class SocksSocketTest {
             t.setDaemon(true);
             t.start();
 
-            SocksSocket socksSocket = new SocksSocket(buildProxySettings("127.0.0.1", port, withCredentials));
-            try {
-                socksSocket.connect(TARGET, 5000);
-                return null;
-            } catch (MongoSocksProxyException | IOException e) {
-                return e;
-            } finally {
+            try (SocksSocket socksSocket = new SocksSocket(buildProxySettings("127.0.0.1", port, withCredentials))) {
                 try {
-                    socksSocket.close();
-                } catch (Exception ignored) {
+                    socksSocket.connect(TARGET, 5000);
+                    return null;
+                } catch (MongoSocksProxyException | IOException e) {
+                    return e;
                 }
+            } catch (Exception ignored) {
+            } finally {
                 t.join(5000);
             }
         }
+        return null;
     }
 
     private static ProxySettings buildProxySettings(final String host, final int port, final boolean withCredentials) {
@@ -125,7 +123,7 @@ class SocksSocketTest {
         MongoSocksProxyException ex = assertProxy(connectWithMiniServer(bytes, false));
         Assertions.assertNotNull(ex);
         assertEquals(HandshakePhase.CONNECT_RELAY, ex.getHandshakePhase());
-        assertEquals(4, ex.getProxyReplyCode());
+        assertEquals(SocksSocket.ServerReply.HOST_UNREACHABLE.getReplyNumber(), ex.getProxyReplyCode());
     }
 
     @Test
@@ -137,7 +135,7 @@ class SocksSocketTest {
         MongoSocksProxyException ex = assertProxy(connectWithMiniServer(bytes, false));
         Assertions.assertNotNull(ex);
         assertEquals(HandshakePhase.CONNECT_RELAY, ex.getHandshakePhase());
-        assertEquals(5, ex.getProxyReplyCode());
+        assertEquals(SocksSocket.ServerReply.CONN_REFUSED.getReplyNumber(), ex.getProxyReplyCode());
     }
 
     @Test
@@ -149,7 +147,7 @@ class SocksSocketTest {
         MongoSocksProxyException ex = assertProxy(connectWithMiniServer(bytes, false));
         Assertions.assertNotNull(ex);
         assertEquals(HandshakePhase.CONNECT_RELAY, ex.getHandshakePhase());
-        assertEquals(2, ex.getProxyReplyCode());
+        assertEquals(SocksSocket.ServerReply.NOT_ALLOWED.getReplyNumber(), ex.getProxyReplyCode());
     }
 
     // -----------------------------------------------------------------------
@@ -203,15 +201,14 @@ class SocksSocketTest {
         byte[] noReply = new byte[0];
         MongoSocksProxyException ex = assertProxy(connectWithMiniServer(noReply, false, true));
         Assertions.assertNotNull(ex);
+        Assertions.assertTrue(ex.getMessage().contains("Malformed reply from SOCKS proxy server"));
         assertEquals(HandshakePhase.NEGOTIATION, ex.getHandshakePhase());
         assertNull(ex.getProxyReplyCode());
     }
 
     @Test
     void unknownReplyCodeDuringConnectRelayTaggedAsConnectRelay() throws Exception {
-        // Reply code 0x09 is not a known RFC 1928 code. ServerReply.of throws ConnectException
-        // before the line that produces MongoSocksProxyException for known reply codes.
-        // The fix must still tag this as CONNECT_RELAY (the phase we were in).
+        // Reply code 0x09 is not a known RFC 1928 code.
         byte[] bytes = {
                 0x05, 0x00,                                 // negotiation OK
                 0x05, 0x09, 0x00, 0x01, 0, 0, 0, 0, 0, 0   // unknown reply code 0x09
@@ -231,6 +228,7 @@ class SocksSocketTest {
         byte[] bytes = {0x05, 0x02};   // negotiation OK, picked username/password; then EOF
         MongoSocksProxyException ex = assertProxy(connectWithMiniServer(bytes, true, true));
         Assertions.assertNotNull(ex);
+        Assertions.assertTrue(ex.getMessage().contains("Malformed reply from SOCKS proxy server"));
         assertEquals(HandshakePhase.AUTHENTICATION, ex.getHandshakePhase());
         assertNull(ex.getProxyReplyCode());
     }
@@ -249,16 +247,13 @@ class SocksSocketTest {
             closedPort = probe.getLocalPort();
         }
         try (SocksSocket s = new SocksSocket(buildProxySettings("127.0.0.1", closedPort, false))) {
-            // Expecting a plain IOException (typically ConnectException) — TCP connect failures
-            // are NOT tagged as MongoSocksProxyException at the SocksSocket layer; SocketStream
-            // wraps them as PROXY_TCP_CONNECT upstream. Narrowing the assertion to IOException
-            // prevents regressions (e.g. an unexpected NullPointerException) from passing this
-            // test. MongoSocksProxyException is a RuntimeException, not an IOException, so
-            // assertThrows(IOException.class, ...) would already fail if one were thrown here.
+            // Expecting a plain IOException TCP connect failures
+            // are NOT tagged as MongoSocksProxyException at the SocksSocket layer.
             assertThrows(IOException.class, () -> s.connect(TARGET, 5000));
         }
     }
 
+    @SuppressWarnings({"ThrowableNotThrown", "DataFlowIssue"})
     @Test
     void constructorRejectsNullHandshakePhase() {
         Assertions.assertThrows(IllegalArgumentException.class,

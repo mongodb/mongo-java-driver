@@ -23,28 +23,11 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * Thrown when an error occurs while establishing a connection to a SOCKS5 proxy.
  *
- * <p>Backpressure error labels ({@link MongoException#SYSTEM_OVERLOADED_ERROR_LABEL},
- * {@link MongoException#RETRYABLE_ERROR_LABEL}) signal that the <em>target mongod</em> is
- * overloaded. A SOCKS5 failure receives these labels only when it is attributable to mongod:
- * <ul>
- *   <li><strong>Labeled</strong> — {@link HandshakePhase#CONNECT_RELAY} with an RFC 1928 reply
- *       code of {@code 3} (network unreachable), {@code 4} (host unreachable), or {@code 5}
- *       (connection refused). The proxy reports a transport-level failure while reaching
- *       mongod on the caller's behalf — the SOCKS5 analog of a direct-connection
- *       {@code NoRouteToHostException} / {@code ConnectException}.</li>
- *   <li><strong>Not labeled</strong> — every other case:
- *       {@link HandshakePhase#PROXY_TCP_CONNECT} (proxy itself unreachable, mongod never
- *       reached), {@link HandshakePhase#NEGOTIATION} / {@link HandshakePhase#AUTHENTICATION}
- *       (proxy-side protocol/credential errors), {@link HandshakePhase#CONNECT_RELAY} with
- *       any other reply code (1, 2, 6, 7, 8) or with {@code null} reply code (I/O failure
- *       or unrecognised reply field).</li>
- * </ul>
- *
  * <p>The {@link #getHandshakePhase()} identifies which phase of the SOCKS5 handshake failed.
  * {@link #getProxyReplyCode()} returns the RFC 1928 reply code sent by the proxy when a
  * non-success CONNECT reply was successfully parsed; it returns {@code null} otherwise
  * (including for {@link HandshakePhase#CONNECT_RELAY} failures caused by an I/O error or
- * an unrecognised reply field).
+ * an unrecognized reply field).
  *
  * <p>RFC 1928 reply codes: 1=general failure, 2=connection not allowed by ruleset,
  * 3=network unreachable, 4=host unreachable, 5=connection refused, 6=TTL expired,
@@ -69,7 +52,7 @@ public class MongoSocksProxyException extends MongoSocketOpenException {
 
         /**
          * The SOCKS5 method-selection exchange failed. Causes include: incompatible
-         * proxy version, no common authentication method, an unrecognised method, or
+         * proxy version, no common authentication method, an unrecognized method, or
          * an I/O failure (EOF, timeout, broken pipe) while sending the method-selection
          * request or reading its reply.
          */
@@ -87,7 +70,7 @@ public class MongoSocksProxyException extends MongoSocketOpenException {
          * A failure occurred while sending the CONNECT request to the proxy or
          * reading/parsing its reply. Causes include: a parsed non-success RFC 1928
          * reply (in which case {@link MongoSocksProxyException#getProxyReplyCode()}
-         * carries the code), an unrecognised reply field or address type, or an
+         * carries the code), an unrecognized reply field or address type, or an
          * I/O failure (EOF, timeout, broken pipe) on the CONNECT exchange.
          */
         CONNECT_RELAY
@@ -102,7 +85,7 @@ public class MongoSocksProxyException extends MongoSocketOpenException {
      * Construct an instance with no RFC 1928 reply code and no cause. Suitable for any phase
      * whose failure does not carry a parsed reply code: {@link HandshakePhase#PROXY_TCP_CONNECT},
      * {@link HandshakePhase#NEGOTIATION}, {@link HandshakePhase#AUTHENTICATION}, and the
-     * {@link HandshakePhase#CONNECT_RELAY} sub-cases driven by an I/O failure or an unrecognised
+     * {@link HandshakePhase#CONNECT_RELAY} sub-cases driven by an I/O failure or an unrecognized
      * reply field.
      *
      * @param message        the message
@@ -117,7 +100,7 @@ public class MongoSocksProxyException extends MongoSocketOpenException {
      * Construct an instance with no RFC 1928 reply code. Suitable for any phase whose failure
      * does not carry a parsed reply code: {@link HandshakePhase#PROXY_TCP_CONNECT},
      * {@link HandshakePhase#NEGOTIATION}, {@link HandshakePhase#AUTHENTICATION}, and the
-     * {@link HandshakePhase#CONNECT_RELAY} sub-cases driven by an I/O failure or an unrecognised
+     * {@link HandshakePhase#CONNECT_RELAY} sub-cases driven by an I/O failure or an unrecognized
      * reply field.
      *
      * @param message        the message
@@ -135,7 +118,7 @@ public class MongoSocksProxyException extends MongoSocketOpenException {
      * {@code proxyReplyCode} should only accompany {@link HandshakePhase#CONNECT_RELAY} and
      * indicates a successfully parsed non-success reply from the proxy. Use {@code null} in
      * all other cases — including {@link HandshakePhase#CONNECT_RELAY} failures caused by an
-     * I/O error or an unrecognised reply field.
+     * I/O error or an unrecognized reply field.
      *
      * @param message        the message
      * @param address        the server address
@@ -154,7 +137,7 @@ public class MongoSocksProxyException extends MongoSocketOpenException {
      * {@code proxyReplyCode} should only accompany {@link HandshakePhase#CONNECT_RELAY} and
      * indicates a successfully parsed non-success reply from the proxy. Use {@code null} in
      * all other cases — including {@link HandshakePhase#CONNECT_RELAY} failures caused by an
-     * I/O error or an unrecognised reply field.
+     * I/O error or an unrecognized reply field.
      *
      * @param message        the message
      * @param address        the server address

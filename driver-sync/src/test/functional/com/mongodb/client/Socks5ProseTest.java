@@ -151,7 +151,11 @@ class Socks5ProseTest {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         assumeFalse(errors.isEmpty());
-        errors.forEach(throwable -> Assertions.assertEquals(MongoSocksProxyException.class, throwable.getClass()));
+        errors.forEach(throwable -> {
+            MongoSocksProxyException mongoSocksProxyException = Assertions.assertInstanceOf(MongoSocksProxyException.class, throwable);
+            Assertions.assertEquals(MongoSocksProxyException.HandshakePhase.AUTHENTICATION, mongoSocksProxyException.getHandshakePhase());
+            Assertions.assertEquals(MongoSocksProxyException.class, throwable.getClass());
+        });
     }
 
     private static void runHelloCommand(final MongoClient mongoClient) {

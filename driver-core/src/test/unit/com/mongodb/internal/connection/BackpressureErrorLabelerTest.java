@@ -84,11 +84,7 @@ class BackpressureErrorLabelerTest {
         assertLacksBackpressureLabels(e);
     }
 
-    static Stream<Named<MongoSocketException>> socksProxyNonMongodAttributableShouldNotBeLabeled() {
-        // Backpressure labels denote "the target mongod is overloaded — back off". SOCKS5 failures
-        // that did NOT involve mongod (TCP reach to the proxy, proxy-side protocol/config errors,
-        // and CONNECT-relay outcomes that don't indicate a mongod transport problem) are not
-        // mongod-attributable and must not receive backpressure labels.
+    static Stream<Named<MongoSocketException>> socks5ProxyExceptionsShouldNotBeLabeled() {
         return Stream.of(
                 // PROXY_TCP_CONNECT happens before any byte is exchanged with mongod — the proxy
                 // itself is unreachable. Not a mongod overload signal.
@@ -99,7 +95,7 @@ class BackpressureErrorLabelerTest {
                         MongoSocksProxyException.HandshakePhase.NEGOTIATION)),
                 named(new MongoSocksProxyException("auth failed", ADDRESS,
                         MongoSocksProxyException.HandshakePhase.AUTHENTICATION)),
-                // CONNECT_RELAY with null replyCode = I/O failure or unrecognised reply field;
+                // CONNECT_RELAY with null replyCode = I/O failure or unrecognized reply field;
                 // no definitive mongod-side signal.
                 named(new MongoSocksProxyException("connect relay io failure", ADDRESS,
                         MongoSocksProxyException.HandshakePhase.CONNECT_RELAY, null)),
@@ -124,17 +120,15 @@ class BackpressureErrorLabelerTest {
 
     @ParameterizedTest
     @MethodSource
-    void socksProxyNonMongodAttributableShouldNotBeLabeled(final MongoSocketException e) {
+    void socks5ProxyExceptionsShouldNotBeLabeled(final MongoSocketException e) {
         BackpressureErrorLabeler.applyLabelsIfEligible(e);
         assertLacksBackpressureLabels(e);
     }
 
-    static Stream<Named<MongoSocketException>> socksProxyMongodAttributableShouldBeLabeled() {
+    static Stream<Named<MongoSocketException>> socks5ProxyExceptionsShouldBeLabeled() {
         // CONNECT_RELAY with reply codes 3 / 4 / 5 means the proxy tried to reach mongod on our
         // behalf and got a transport-level failure that mirrors a direct-connection socket-open
-        // outcome. These are the SOCKS5 analogs of NoRouteToHostException / ConnectException and
-        // carry the same mongod-overload signal as the direct-path equivalents — they must receive
-        // backpressure labels so the driver applies the same back-off behavior.
+        // outcome.
         return Stream.of(
                 // 0x03 NET_UNREACHABLE — proxy → mongod network path is down (≈ NoRouteToHostException)
                 named(new MongoSocksProxyException("network unreachable", ADDRESS,
@@ -150,7 +144,7 @@ class BackpressureErrorLabelerTest {
 
     @ParameterizedTest
     @MethodSource
-    void socksProxyMongodAttributableShouldBeLabeled(final MongoSocketException e) {
+    void socks5ProxyExceptionsShouldBeLabeled(final MongoSocketException e) {
         BackpressureErrorLabeler.applyLabelsIfEligible(e);
         assertHasBackpressureLabels(e);
     }
