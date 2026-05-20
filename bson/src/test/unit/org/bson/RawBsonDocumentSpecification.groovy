@@ -113,6 +113,23 @@ class RawBsonDocumentSpecification extends Specification {
         rawDocument << createRawDocumentVariants()
     }
 
+
+    def 'getBackingArray, getByteOffset and getByteLength should expose the document range'() {
+        expect:
+        rawDocument.getByteOffset() == expectedOffset
+        rawDocument.getByteLength() == expectedLength
+        Arrays.copyOfRange(
+                rawDocument.getBackingArray(),
+                rawDocument.getByteOffset(),
+                rawDocument.getByteOffset() + rawDocument.getByteLength()) == getBytesFromDocument()
+
+        where:
+        rawDocument                                 | expectedOffset | expectedLength
+        createRawDocumenFromDocument()              | 0              | 66
+        createRawDocumentFromByteArray()            | 0              | 66
+        createRawDocumentFromByteArrayOffsetLength()| 1              | 66
+    }
+
     def 'parse should through if parameter is invalid'() {
         when:
         RawBsonDocument.parse(null)

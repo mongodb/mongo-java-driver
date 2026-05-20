@@ -334,8 +334,17 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
         pipeDocument(reader, null);
     }
 
-    @Override
+    /**
+     * Pipes a raw BSON document from the given byte array to this writer, writing the bytes directly to the
+     * output without intermediate object allocation.
+     *
+     * @param bytes the byte array containing the BSON document
+     * @param offset the offset into the byte array
+     * @param length the length of the BSON document
+     * @since 5.8
+     */
     public void pipe(final byte[] bytes, final int offset, final int length) {
+        checkMinDocumentSize(length);
         if (getState() == State.VALUE) {
             bsonOutput.writeByte(BsonType.DOCUMENT.getValue());
             writeCurrentName();
@@ -361,9 +370,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
             }
             BsonInput bsonInput = binaryReader.getBsonInput();
             int size = bsonInput.readInt32();
-            if (size < 5) {
-                throw new BsonSerializationException("Document size must be at least 5");
-            }
+            checkMinDocumentSize(size);
             int pipedDocumentStartPosition = bsonOutput.getPosition();
             bsonOutput.writeInt32(size);
             bsonInput.pipe(bsonOutput, size - 4);
@@ -436,6 +443,12 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
 
         mark.reset();
         mark = null;
+    }
+
+    private static void checkMinDocumentSize(final int size) {
+        if (size < 5) {
+            throw new BsonSerializationException("Document size must be at least 5");
+        }
     }
 
     private void writeCurrentName() {

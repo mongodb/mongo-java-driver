@@ -132,7 +132,7 @@ public interface BsonInput extends Closeable {
      *
      * @param output the output to pipe to
      * @param numBytes the number of bytes to pipe
-     * @since 5.7
+     * @since 5.8
      */
     void pipe(BsonOutput output, int numBytes);
 
