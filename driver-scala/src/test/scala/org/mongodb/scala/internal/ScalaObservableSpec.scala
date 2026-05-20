@@ -374,7 +374,7 @@ class ScalaObservableSpec extends BaseSpec {
     latch = new CountDownLatch(1)
     val unhappyFuture = observable(fail = true).toFuture()
     unhappyFuture.onComplete({
-      case Success(res) => results ++= res
+      case Success(res)       => results ++= res
       case Failure(throwable) =>
         errorSeen = Some(throwable)
         latch.countDown()
@@ -581,8 +581,9 @@ class ScalaObservableSpec extends BaseSpec {
     }
 
     var requested = 0
-    val subscription = new Subscription {
+    class CustomSubscription extends Subscription {
       var cancelled = false
+
       def isCancelled: Boolean = cancelled
 
       override def request(n: Long): Unit = requested += 1
@@ -590,6 +591,7 @@ class ScalaObservableSpec extends BaseSpec {
       override def cancel(): Unit = cancelled = true
     }
 
+    val subscription = new CustomSubscription()
     observer.onSubscribe(subscription)
     subscription.isCancelled should equal(false)
     requested should equal(1)

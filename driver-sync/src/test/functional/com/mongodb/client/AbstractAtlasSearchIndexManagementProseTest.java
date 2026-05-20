@@ -31,8 +31,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 import java.util.Map;
@@ -79,6 +82,8 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
                       "{"
                     + "  mappings: { dynamic: true }"
                     + "}");
+    private static final String AUTO_EMBED_FIELD_PATH = "plot";
+    private static final String AUTO_EMBED_INDEX_NAME = "voyage_4";
     private static final Document VECTOR_SEARCH_DEFINITION = Document.parse(
                       "{"
                     + "  fields: ["
@@ -279,6 +284,218 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
         assertThrows(MongoCommandException.class, () -> collection.createSearchIndex(
                 indexName,
                 VECTOR_SEARCH_DEFINITION));
+    }
+
+    @Test
+    @DisplayName("should fail when invalid model name was used for auto embedding index")
+    void shouldFailWhenInvalidModelNameWasUsed() {
+        //TODO-JAVA-6059 remove this assumption when auto embedding is generally available
+        Assumptions.assumeTrue(false);
+
+        assertThrows(
+                MongoCommandException.class,
+                () -> createAutoEmbeddingIndex("test"),
+                "Valid voyage model name was not used"
+        );
+    }
+
+    @Test
+    @DisplayName("should fail to create auto embedding index without model")
+    void shouldFailToCreateAutoEmbeddingIndexWithoutModel() {
+        //TODO-JAVA-6059 remove this assumption when auto embedding is generally available
+        Assumptions.assumeTrue(false);
+
+        SearchIndexModel indexModel = new SearchIndexModel(
+                AUTO_EMBED_INDEX_NAME,
+                new Document(
+                        "fields",
+                        singletonList(
+                                new Document("type", "autoEmbed")
+                                        .append("modality", "text")
+                                        .append("path", AUTO_EMBED_FIELD_PATH)
+                        )),
+                SearchIndexType.vectorSearch()
+        );
+        assertThrows(
+                MongoCommandException.class,
+                () -> collection.createSearchIndexes(singletonList(indexModel)),
+                "Expected index creation to fail because model is not specified"
+        );
+    }
+
+    @ParameterizedTest(name = "should create auto embedding index with {0} quantization")
+    @ValueSource(strings = {"float", "scalar", "binary", "binaryNoRescore"})
+    void shouldCreateAutoEmbeddingIndexWithQuantization(final String quantization) {
+        //TODO-JAVA-6059 remove this assumption when auto embedding is generally available
+        Assumptions.assumeTrue(false);
+
+        final String indexName = AUTO_EMBED_INDEX_NAME + "_" + quantization;
+        SearchIndexModel indexModel = new SearchIndexModel(
+                indexName,
+                new Document(
+                        "fields",
+                        singletonList(
+                                new Document("type", "autoEmbed")
+                                        .append("modality", "text")
+                                        .append("path", AUTO_EMBED_FIELD_PATH)
+                                        .append("model", "voyage-4-large")
+                                        .append("quantization", quantization)
+                        )),
+                SearchIndexType.vectorSearch()
+        );
+        List<String> result = collection.createSearchIndexes(singletonList(indexModel));
+        Assertions.assertFalse(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("should create auto embedding index with custom numDimensions")
+    @Disabled("Currently numDimensions can't be used, it fails with server error:"
+            + " 'Invalid numDimensions value for autoEmbed field. Expected an integer.'")
+    void shouldCreateAutoEmbeddingIndexWithCustomNumDimensions() {
+        //TODO-JAVA-6059 remove this assumption when auto embedding is generally available
+        Assumptions.assumeTrue(false);
+
+        SearchIndexModel indexModel = new SearchIndexModel(
+                AUTO_EMBED_INDEX_NAME,
+                new Document(
+                        "fields",
+                        singletonList(
+                                new Document("type", "autoEmbed")
+                                        .append("modality", "text")
+                                        .append("path", AUTO_EMBED_FIELD_PATH)
+                                        .append("model", "voyage-4-large")
+                                        .append("numDimensions", 512)
+                        )),
+                SearchIndexType.vectorSearch()
+        );
+        List<String> result = collection.createSearchIndexes(singletonList(indexModel));
+        Assertions.assertFalse(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("should create auto embedding index with filter field")
+    void shouldCreateAutoEmbeddingIndexWithFilterField() {
+        //TODO-JAVA-6059 remove this assumption when auto embedding is generally available
+        Assumptions.assumeTrue(false);
+
+        SearchIndexModel indexModel = new SearchIndexModel(
+                AUTO_EMBED_INDEX_NAME,
+                new Document(
+                        "fields",
+                        asList(
+                                new Document("type", "autoEmbed")
+                                        .append("modality", "text")
+                                        .append("path", AUTO_EMBED_FIELD_PATH)
+                                        .append("model", "voyage-4-large"),
+                                new Document("type", "filter")
+                                        .append("path", "director")
+                        )),
+                SearchIndexType.vectorSearch()
+        );
+        List<String> result = collection.createSearchIndexes(singletonList(indexModel));
+        Assertions.assertFalse(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("should fail when mixing vector and autoEmbed types in the same index")
+    void shouldFailWhenMixingVectorAndAutoEmbedTypes() {
+        //TODO-JAVA-6059 remove this assumption when auto embedding is generally available
+        Assumptions.assumeTrue(false);
+
+        SearchIndexModel indexModel = new SearchIndexModel(
+                AUTO_EMBED_INDEX_NAME,
+                new Document(
+                        "fields",
+                        asList(
+                                new Document("type", "autoEmbed")
+                                        .append("modality", "text")
+                                        .append("path", AUTO_EMBED_FIELD_PATH)
+                                        .append("model", "voyage-4-large"),
+                                new Document("type", "vector")
+                                        .append("path", "plot_embedding")
+                                        .append("numDimensions", 1024)
+                                        .append("similarity", "cosine")
+                        )),
+                SearchIndexType.vectorSearch()
+        );
+        assertThrows(
+                MongoCommandException.class,
+                () -> collection.createSearchIndexes(singletonList(indexModel)),
+                "Expected index creation to fail because vector and autoEmbed types cannot be mixed"
+        );
+    }
+
+    @Test
+    @DisplayName("should fail when duplicate paths are used in auto embedding index")
+    void shouldFailWhenDuplicatePathsAreUsed() {
+        //TODO-JAVA-6059 remove this assumption when auto embedding is generally available
+        Assumptions.assumeTrue(false);
+
+        SearchIndexModel indexModel = new SearchIndexModel(
+                AUTO_EMBED_INDEX_NAME,
+                new Document(
+                        "fields",
+                        asList(
+                                new Document("type", "autoEmbed")
+                                        .append("modality", "text")
+                                        .append("path", AUTO_EMBED_FIELD_PATH)
+                                        .append("model", "voyage-4-large"),
+                                new Document("type", "autoEmbed")
+                                        .append("modality", "text")
+                                        .append("path", AUTO_EMBED_FIELD_PATH)
+                                        .append("model", "voyage-4-large")
+                        )),
+                SearchIndexType.vectorSearch()
+        );
+        assertThrows(
+                MongoCommandException.class,
+                () -> collection.createSearchIndexes(singletonList(indexModel)),
+                "Expected index creation to fail because of duplicate paths"
+        );
+    }
+
+    @Test
+    @DisplayName("should fail when autoEmbed field is used as filter field")
+    void shouldFailWhenAutoEmbedFieldUsedAsFilterField() {
+        //TODO-JAVA-6059 remove this assumption when auto embedding is generally available
+        Assumptions.assumeTrue(false);
+
+        SearchIndexModel indexModel = new SearchIndexModel(
+                AUTO_EMBED_INDEX_NAME,
+                new Document(
+                        "fields",
+                        asList(
+                                new Document("type", "autoEmbed")
+                                        .append("modality", "text")
+                                        .append("path", AUTO_EMBED_FIELD_PATH)
+                                        .append("model", "voyage-4-large"),
+                                new Document("type", "filter")
+                                        .append("path", AUTO_EMBED_FIELD_PATH)
+                        )),
+                SearchIndexType.vectorSearch()
+        );
+        assertThrows(
+                MongoCommandException.class,
+                () -> collection.createSearchIndexes(singletonList(indexModel)),
+                "Expected index creation to fail because autoEmbed field cannot be used as a filter field"
+        );
+    }
+
+    private void createAutoEmbeddingIndex(final String modelName) {
+        SearchIndexModel indexModel = new SearchIndexModel(
+                AUTO_EMBED_INDEX_NAME,
+                new Document(
+                        "fields",
+                        singletonList(
+                                new Document("type", "autoEmbed")
+                                        .append("modality", "text")
+                                        .append("model", modelName)
+                                        .append("path", AUTO_EMBED_FIELD_PATH)
+                        )),
+                SearchIndexType.vectorSearch()
+        );
+        List<String> result = collection.createSearchIndexes(singletonList(indexModel));
+        Assertions.assertFalse(result.isEmpty());
     }
 
     private void assertIndexDeleted() throws InterruptedException {

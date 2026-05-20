@@ -16,14 +16,14 @@
 
 package org.mongodb.scala.syncadapter
 
-import com.mongodb.{ ClientSessionOptions, MongoInterruptedException, ServerAddress, TransactionOptions }
 import com.mongodb.client.{ ClientSession => JClientSession, TransactionBody }
 import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.observability.micrometer.TransactionSpan
+import com.mongodb.reactivestreams.client.syncadapter.{ SyncMongoClient => JSyncMongoClient }
 import com.mongodb.session.ServerSession
+import com.mongodb.{ ClientSessionOptions, MongoInterruptedException, ServerAddress, TransactionOptions }
 import org.bson.{ BsonDocument, BsonTimestamp }
 import org.mongodb.scala._
-import com.mongodb.reactivestreams.client.syncadapter.{ SyncMongoClient => JSyncMongoClient }
 
 case class SyncClientSession(wrapped: ClientSession, originator: Object) extends JClientSession {
 

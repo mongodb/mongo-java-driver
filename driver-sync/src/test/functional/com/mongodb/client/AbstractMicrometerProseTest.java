@@ -17,11 +17,16 @@
 package com.mongodb.client;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.observability.micrometer.MongodbObservationContext;
+import com.mongodb.observability.micrometer.MongodbObservation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.observability.ObservabilitySettings;
 import com.mongodb.client.observability.SpanTree;
 import com.mongodb.client.observability.SpanTree.SpanNode;
 import com.mongodb.observability.micrometer.MicrometerObservabilitySettings;
+import io.micrometer.common.KeyValues;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.tracing.exporter.FinishedSpan;
 import io.micrometer.tracing.test.reporter.inmemory.InMemoryOtelSetup;
@@ -48,10 +53,11 @@ import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
-import static com.mongodb.internal.observability.micrometer.MongodbObservation.HighCardinalityKeyNames.QUERY_TEXT;
+import static com.mongodb.observability.micrometer.MongodbObservation.HighCardinalityKeyNames.QUERY_TEXT;
 import static com.mongodb.internal.observability.micrometer.TracingManager.ENV_OBSERVABILITY_ENABLED;
 import static com.mongodb.internal.observability.micrometer.TracingManager.ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -314,6 +320,112 @@ public abstract class AbstractMicrometerProseTest {
 
             assertEquals(nbrConcurrentOps, observedCollections.size(),
                     "All " + nbrConcurrentOps + " concurrent operations should be represented in distinct traces.");
+        }
+    }
+
+    /**
+     * Verifies that a user-provided {@link ObservationConvention} via
+     * {@link MicrometerObservabilitySettings.Builder#observationConvention(ObservationConvention)} fully controls
+     * the tag output. The custom convention:
+     * <ul>
+     *   <li>Adds a new tag ({@code custom.tag})</li>
+     *   <li>Renames an existing tag ({@code db.command.name} → {@code mongodb.command}),
+     *       reading the value from {@link MongodbObservationContext} domain fields</li>
+     *   <li>Carries over unmodified tags ({@code db.namespace}, {@code db.system.name})</li>
+     * </ul>
+     *
+     * <p>This test is not from the specification.</p>
+     */
+    @SuppressWarnings("NullableProblems")
+    @Test
+    void testCustomObservationConvention() throws Exception {
+        setEnv(ENV_OBSERVABILITY_ENABLED, null);
+        ObservationConvention<MongodbObservationContext> customConvention = new ObservationConvention<MongodbObservationContext>() {
+            @Override
+            public boolean supportsContext(final Observation.Context context) {
+                return context instanceof MongodbObservationContext;
+            }
+
+            @Override
+            public KeyValues getLowCardinalityKeyValues(final MongodbObservationContext context) {
+                String commandName = context.getCommandName() != null ? context.getCommandName() : "";
+                String databaseName = context.getDatabaseName() != null ? context.getDatabaseName() : "";
+
+                KeyValues kv = KeyValues.of(
+                        "db.system.name", "mongodb",
+                        "db.namespace", databaseName,
+                        "custom.tag", "custom-value");
+
+                if (context.getObservationType() == MongodbObservation.MONGODB_COMMAND) {
+                    // Rename: emit command name under "mongodb.command" instead of "db.command.name"
+                    kv = kv.and("mongodb.command", commandName);
+                }
+                if (context.getObservationType() == MongodbObservation.MONGODB_OPERATION) {
+                    kv = kv.and("db.operation.name", commandName);
+                }
+                return kv;
+            }
+        };
+
+        MongoClientSettings clientSettings = getMongoClientSettingsBuilder()
+                .observabilitySettings(ObservabilitySettings.micrometerBuilder()
+                        .observationRegistry(observationRegistry)
+                        .observationConvention(customConvention)
+                        .build())
+                .build();
+
+        try (MongoClient client = createMongoClient(clientSettings)) {
+            MongoDatabase database = client.getDatabase(getDefaultDatabaseName());
+            MongoCollection<Document> collection = database.getCollection("test");
+            collection.find().first();
+
+            List<FinishedSpan> spans = inMemoryOtel.getFinishedSpans();
+            assertEquals(2, spans.size(), "Expected 2 spans (operation + command).");
+
+            // Find the command span
+            FinishedSpan commandSpan = spans.stream()
+                    .filter(s -> "find".equals(s.getName()))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("Command span 'find' not found."));
+
+            Map<String, String> tags = commandSpan.getTags();
+
+            // Custom tag is present
+            assertEquals("custom-value", tags.get("custom.tag"),
+                    "Custom convention should add 'custom.tag'.");
+
+            // Renamed tag: "mongodb.command" instead of "db.command.name"
+            assertEquals("find", tags.get("mongodb.command"),
+                    "Custom convention should emit command name under 'mongodb.command'.");
+            assertFalse(tags.containsKey("db.command.name"), "Custom convention should NOT emit the default 'db.command.name' tag.");
+
+            // Unmodified tags carried over
+            assertEquals(getDefaultDatabaseName(), tags.get("db.namespace"),
+                    "Custom convention should carry over 'db.namespace'.");
+            assertEquals("mongodb", tags.get("db.system.name"),
+                    "Custom convention should carry over 'db.system.name'.");
+
+            // Find the operation span
+            FinishedSpan operationSpan = spans.stream()
+                    .filter(s -> s.getName().contains(getDefaultDatabaseName()))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("Operation span not found."));
+
+            Map<String, String> opTags = operationSpan.getTags();
+
+            // Custom tag is present on operation span too
+            assertEquals("custom-value", opTags.get("custom.tag"),
+                    "Custom convention should add 'custom.tag' to operation span.");
+
+            // Operation span has db.operation.name
+            assertEquals("find", opTags.get("db.operation.name"),
+                    "Custom convention should emit 'db.operation.name' on operation span.");
+
+            // Unmodified tags on operation span
+            assertEquals(getDefaultDatabaseName(), opTags.get("db.namespace"),
+                    "Custom convention should carry over 'db.namespace' on operation span.");
+            assertEquals("mongodb", opTags.get("db.system.name"),
+                    "Custom convention should carry over 'db.system.name' on operation span.");
         }
     }
 

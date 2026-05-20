@@ -28,6 +28,7 @@ import java.util.function.LongConsumer;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.time.Timeout.ZeroSemantics.ZERO_DURATION_MEANS_INFINITE;
@@ -41,6 +42,9 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class TimeoutContext {
     private static final int NO_ROUND_TRIP_TIME_MS = 0;
     private final TimeoutSettings timeoutSettings;
+    /**
+     * Is {@code null} iff {@link #timeoutSettings}{@code .}{@link TimeoutSettings#getTimeoutMS() getTimeoutMS()} is {@code null}.
+     */
     @Nullable
     private final Timeout timeout;
     @Nullable
@@ -139,6 +143,7 @@ public class TimeoutContext {
                            final TimeoutSettings timeoutSettings,
                            @Nullable final MaxTimeSupplier maxTimeSupplier,
                            @Nullable final Timeout timeout) {
+        assertTrue((timeoutSettings.getTimeoutMS() == null) == (timeout == null));
         this.isMaintenanceContext = isMaintenanceContext;
         this.timeoutSettings = timeoutSettings;
         this.minRoundTripTimeMS = minRoundTripTimeMS;
@@ -149,7 +154,8 @@ public class TimeoutContext {
     /**
      * Allows for the differentiation between users explicitly setting a global operation timeout via {@code timeoutMS}.
      *
-     * @return true if a timeout has been set.
+     * @return true iff {@link #getTimeoutSettings()}{@code .}{@link TimeoutSettings#getTimeoutMS() getTimeoutMS()} is not {@code null}.
+     * @see #getTimeout()
      */
     public boolean hasTimeoutMS() {
         return timeoutSettings.getTimeoutMS() != null;
@@ -170,7 +176,6 @@ public class TimeoutContext {
 
     /**
      * Returns the remaining {@code timeoutMS} if set or the {@code alternativeTimeoutMS}.
-     *
      * zero means infinite timeout.
      *
      * @param alternativeTimeoutMS the alternative timeout.
@@ -191,6 +196,10 @@ public class TimeoutContext {
         return timeoutSettings;
     }
 
+    /**
+     * @return {@code null} iff {@link #hasTimeoutMS()} is {@code false}.
+     * @see #hasTimeoutMS()
+     */
     @Nullable
     public Timeout getTimeout() {
         return timeout;

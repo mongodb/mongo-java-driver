@@ -69,7 +69,7 @@ case class IterableCodec(registry: CodecRegistry, bsonTypeClassMap: BsonTypeClas
   private def writeValue[T](writer: BsonWriter, encoderContext: EncoderContext, value: T): Unit = {
     value match {
       case isNull if value == null => writer.writeNull() // scalastyle:ignore
-      case map: Map[_, _] =>
+      case map: Map[_, _]          =>
         writeMap(writer, map.asInstanceOf[Map[String, Any]], encoderContext.getChildContext)
       case list: Iterable[_] =>
         writeIterable(writer, list, encoderContext.getChildContext)

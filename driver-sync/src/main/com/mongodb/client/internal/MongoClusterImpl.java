@@ -424,12 +424,13 @@ final class MongoClusterImpl implements MongoCluster {
             boolean implicitSession = isImplicitSession(session);
             OperationContext operationContext = getOperationContext(actualClientSession, readConcern, operation.getCommandName())
                     .withSessionContext(new ClientSessionBinding.SyncClientSessionContext(actualClientSession, readConcern, implicitSession));
+            ReadBinding binding = getReadBinding(readPreference, actualClientSession, implicitSession);
             Span span = operationContext.getTracingManager().createOperationSpan(
                     actualClientSession.getTransactionSpan(), operationContext, operation.getCommandName(), operation.getNamespace());
-            ReadBinding binding = getReadBinding(readPreference, actualClientSession, implicitSession);
-
-
             try {
+                if (span != null) {
+                    span.openScope();
+                }
                 if (actualClientSession.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
                     throw new MongoClientException("Read preference in a transaction must be primary");
                 }
@@ -445,6 +446,7 @@ final class MongoClusterImpl implements MongoCluster {
             } finally {
                 binding.release();
                 if (span != null) {
+                    span.closeScope();
                     span.end();
                 }
             }
@@ -460,11 +462,13 @@ final class MongoClusterImpl implements MongoCluster {
             ClientSession actualClientSession = getClientSession(session);
             OperationContext operationContext = getOperationContext(actualClientSession, readConcern, operation.getCommandName())
                     .withSessionContext(new ClientSessionBinding.SyncClientSessionContext(actualClientSession, readConcern, isImplicitSession(session)));
+            WriteBinding binding = getWriteBinding(actualClientSession, isImplicitSession(session));
             Span span = operationContext.getTracingManager().createOperationSpan(
                     actualClientSession.getTransactionSpan(), operationContext, operation.getCommandName(), operation.getNamespace());
-            WriteBinding binding = getWriteBinding(actualClientSession, isImplicitSession(session));
-
             try {
+                if (span != null) {
+                    span.openScope();
+                }
                 return operation.execute(binding, operationContext);
             } catch (MongoException e) {
                 MongoException exceptionToHandle = OperationHelper.unwrap(e);
@@ -477,6 +481,7 @@ final class MongoClusterImpl implements MongoCluster {
             } finally {
                 binding.release();
                 if (span != null) {
+                    span.closeScope();
                     span.end();
                 }
             }
