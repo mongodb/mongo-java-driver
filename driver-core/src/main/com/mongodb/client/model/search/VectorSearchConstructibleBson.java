@@ -46,7 +46,7 @@ final class VectorSearchConstructibleBson extends AbstractConstructibleBson<Vect
 
     @Override
     public VectorSearchOptions filter(final Bson filter) {
-        return newAppended("filter", notNull("name", filter));
+        return newAppended("filter", notNull("filter", filter));
     }
 
     @Override
