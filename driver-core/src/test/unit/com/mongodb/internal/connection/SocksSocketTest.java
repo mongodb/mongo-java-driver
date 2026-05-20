@@ -89,12 +89,16 @@ class SocksSocketTest {
                 } catch (MongoSocksProxyException | IOException e) {
                     return e;
                 }
-            } catch (Exception ignored) {
             } finally {
-                t.join(5000);
+                try {
+                    t.join(5000);
+                } catch (InterruptedException ie) {
+                    // Don't mask the primary exception (if any) with the join interruption;
+                    // just preserve the thread's interrupt status and continue.
+                    Thread.currentThread().interrupt();
+                }
             }
         }
-        return null;
     }
 
     private static ProxySettings buildProxySettings(final String host, final int port, final boolean withCredentials) {
