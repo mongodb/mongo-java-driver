@@ -84,34 +84,73 @@ class BackpressureErrorLabelerTest {
         assertLacksBackpressureLabels(e);
     }
 
-    static Stream<Named<MongoSocketException>> socksProxyPostTcpPhaseShouldNotBeLabeled() {
-        // NEGOTIATION / AUTHENTICATION / CONNECT_RELAY are configuration/protocol-level errors
-        // surfaced after the TCP connection to the proxy succeeded. They are not overload signals.
+    static Stream<Named<MongoSocketException>> socksProxyNonMongodAttributableShouldNotBeLabeled() {
+        // Backpressure labels denote "the target mongod is overloaded — back off". SOCKS5 failures
+        // that did NOT involve mongod (TCP reach to the proxy, proxy-side protocol/config errors,
+        // and CONNECT-relay outcomes that don't indicate a mongod transport problem) are not
+        // mongod-attributable and must not receive backpressure labels.
         return Stream.of(
+                // PROXY_TCP_CONNECT happens before any byte is exchanged with mongod — the proxy
+                // itself is unreachable. Not a mongod overload signal.
+                named(new MongoSocksProxyException("tcp connect to proxy failed", ADDRESS,
+                        MongoSocksProxyException.HandshakePhase.PROXY_TCP_CONNECT)),
+                // NEGOTIATION + AUTHENTICATION are proxy-side protocol / credential errors.
                 named(new MongoSocksProxyException("negotiation failed", ADDRESS,
                         MongoSocksProxyException.HandshakePhase.NEGOTIATION)),
                 named(new MongoSocksProxyException("auth failed", ADDRESS,
                         MongoSocksProxyException.HandshakePhase.AUTHENTICATION)),
-                named(new MongoSocksProxyException("connect relay failed", ADDRESS,
+                // CONNECT_RELAY with null replyCode = I/O failure or unrecognised reply field;
+                // no definitive mongod-side signal.
+                named(new MongoSocksProxyException("connect relay io failure", ADDRESS,
+                        MongoSocksProxyException.HandshakePhase.CONNECT_RELAY, null)),
+                // CONNECT_RELAY with proxy-side / ambiguous reply codes — not mongod-attributable:
+                //   0x01 GENERAL_FAILURE          (too generic to attribute)
+                //   0x02 NOT_ALLOWED              (proxy ACL)
+                //   0x06 TTL_EXPIRED              (transient routing, ambiguous)
+                //   0x07 COMMAND_NOT_SUPPORTED    (proxy capability)
+                //   0x08 ADDRESS_TYPE_NOT_SUPPORTED (proxy capability)
+                named(new MongoSocksProxyException("general failure", ADDRESS,
+                        MongoSocksProxyException.HandshakePhase.CONNECT_RELAY, 1)),
+                named(new MongoSocksProxyException("not allowed", ADDRESS,
+                        MongoSocksProxyException.HandshakePhase.CONNECT_RELAY, 2)),
+                named(new MongoSocksProxyException("ttl expired", ADDRESS,
+                        MongoSocksProxyException.HandshakePhase.CONNECT_RELAY, 6)),
+                named(new MongoSocksProxyException("command not supported", ADDRESS,
+                        MongoSocksProxyException.HandshakePhase.CONNECT_RELAY, 7)),
+                named(new MongoSocksProxyException("address type not supported", ADDRESS,
+                        MongoSocksProxyException.HandshakePhase.CONNECT_RELAY, 8))
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void socksProxyNonMongodAttributableShouldNotBeLabeled(final MongoSocketException e) {
+        BackpressureErrorLabeler.applyLabelsIfEligible(e);
+        assertLacksBackpressureLabels(e);
+    }
+
+    static Stream<Named<MongoSocketException>> socksProxyMongodAttributableShouldBeLabeled() {
+        // CONNECT_RELAY with reply codes 3 / 4 / 5 means the proxy tried to reach mongod on our
+        // behalf and got a transport-level failure that mirrors a direct-connection socket-open
+        // outcome. These are the SOCKS5 analogs of NoRouteToHostException / ConnectException and
+        // carry the same mongod-overload signal as the direct-path equivalents — they must receive
+        // backpressure labels so the driver applies the same back-off behavior.
+        return Stream.of(
+                // 0x03 NET_UNREACHABLE — proxy → mongod network path is down (≈ NoRouteToHostException)
+                named(new MongoSocksProxyException("network unreachable", ADDRESS,
+                        MongoSocksProxyException.HandshakePhase.CONNECT_RELAY, 3)),
+                // 0x04 HOST_UNREACHABLE — proxy can't reach mongod host (≈ NoRouteToHostException)
+                named(new MongoSocksProxyException("host unreachable", ADDRESS,
+                        MongoSocksProxyException.HandshakePhase.CONNECT_RELAY, 4)),
+                // 0x05 CONN_REFUSED — mongod actively refused (≈ ConnectException)
+                named(new MongoSocksProxyException("connection refused", ADDRESS,
                         MongoSocksProxyException.HandshakePhase.CONNECT_RELAY, 5))
         );
     }
 
     @ParameterizedTest
     @MethodSource
-    void socksProxyPostTcpPhaseShouldNotBeLabeled(final MongoSocketException e) {
-        BackpressureErrorLabeler.applyLabelsIfEligible(e);
-        assertLacksBackpressureLabels(e);
-    }
-
-    @Test
-    void socksProxyTcpConnectPhaseShouldBeLabeled() {
-        // PROXY_TCP_CONNECT is a plain TCP-level failure reaching the proxy host — structurally
-        // identical to any other socket-open failure (proxy may be transiently unreachable or
-        // overloaded). It must still receive backpressure labels.
-        MongoSocksProxyException e = new MongoSocksProxyException(
-                "tcp connect to proxy failed", ADDRESS,
-                MongoSocksProxyException.HandshakePhase.PROXY_TCP_CONNECT);
+    void socksProxyMongodAttributableShouldBeLabeled(final MongoSocketException e) {
         BackpressureErrorLabeler.applyLabelsIfEligible(e);
         assertHasBackpressureLabels(e);
     }

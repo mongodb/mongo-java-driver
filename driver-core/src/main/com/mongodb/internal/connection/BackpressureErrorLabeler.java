@@ -77,7 +77,7 @@ final class BackpressureErrorLabeler {
             return;
         }
         MongoSocketException socketException = (MongoSocketException) t;
-        if (isExcludedSocksPostTcpPhase(socketException)) {
+        if (isNonMongodAttributableSocksFailure(socketException)) {
             return;
         }
         if (isDnsLookupFailure(socketException)) {
@@ -91,20 +91,45 @@ final class BackpressureErrorLabeler {
     }
 
     /**
-     * Excludes SOCKS5 failures that surfaced AFTER the TCP connection to the proxy succeeded
-     * (negotiation / authentication / CONNECT-relay reply). Those are configuration/protocol
-     * errors, not overload signals, per the CMAP specification.
+     * Excludes SOCKS5 failures that are not attributable to the target mongod. Backpressure
+     * labels signal that the target mongod is overloaded and the driver should back off; a
+     * SOCKS5 failure that did not involve mongod (or that involved mongod only in a way that
+     * does not indicate load) does not carry that signal and must not receive the labels.
      *
-     * <p>{@link MongoSocksProxyException.HandshakePhase#PROXY_TCP_CONNECT} is deliberately NOT
-     * excluded — a TCP-level failure reaching the proxy is structurally identical to any other
-     * socket-open failure (proxy host transiently unreachable / overloaded) and should still
-     * receive backpressure labels.
+     * <p>Attribution rules:
+     * <ul>
+     *   <li>{@link MongoSocksProxyException.HandshakePhase#PROXY_TCP_CONNECT}: failure happens
+     *       before any byte is exchanged with mongod — the proxy itself is unreachable.
+     *       <strong>Not mongod-attributable.</strong></li>
+     *   <li>{@link MongoSocksProxyException.HandshakePhase#NEGOTIATION} /
+     *       {@link MongoSocksProxyException.HandshakePhase#AUTHENTICATION}: proxy-side protocol
+     *       or credential errors. <strong>Not mongod-attributable.</strong></li>
+     *   <li>{@link MongoSocksProxyException.HandshakePhase#CONNECT_RELAY} with a parsed RFC 1928
+     *       reply code of {@code 3} (NETWORK_UNREACHABLE), {@code 4} (HOST_UNREACHABLE), or
+     *       {@code 5} (CONNECTION_REFUSED): the proxy reports a transport-level failure while
+     *       reaching mongod on the caller's behalf. These mirror direct-connection
+     *       {@code NoRouteToHostException} / {@code ConnectException} and carry the same
+     *       mongod-overload signal. <strong>Mongod-attributable; labels apply.</strong></li>
+     *   <li>{@link MongoSocksProxyException.HandshakePhase#CONNECT_RELAY} with any other parsed
+     *       reply code (1 general failure, 2 not allowed, 6 TTL expired, 7 command not
+     *       supported, 8 address type not supported) or a {@code null} reply code (I/O failure
+     *       or unrecognised reply field): no definitive mongod-side signal.
+     *       <strong>Not mongod-attributable.</strong></li>
+     * </ul>
      */
-    private static boolean isExcludedSocksPostTcpPhase(final MongoSocketException t) {
+    private static boolean isNonMongodAttributableSocksFailure(final MongoSocketException t) {
         if (!(t instanceof MongoSocksProxyException)) {
             return false;
         }
-        return ((MongoSocksProxyException) t).getHandshakePhase() != MongoSocksProxyException.HandshakePhase.PROXY_TCP_CONNECT;
+        MongoSocksProxyException socksException = (MongoSocksProxyException) t;
+        if (socksException.getHandshakePhase() != MongoSocksProxyException.HandshakePhase.CONNECT_RELAY) {
+            return true;
+        }
+        Integer replyCode = socksException.getProxyReplyCode();
+        if (replyCode == null) {
+            return true;
+        }
+        return replyCode != 3 && replyCode != 4 && replyCode != 5;
     }
 
     private static boolean isDnsLookupFailure(final MongoSocketException t) {

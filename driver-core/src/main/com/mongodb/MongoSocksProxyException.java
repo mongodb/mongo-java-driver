@@ -23,14 +23,22 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * Thrown when an error occurs while establishing a connection to a SOCKS5 proxy.
  *
- * <p>Per the CMAP specification, post-TCP SOCKS5 failures
- * ({@link HandshakePhase#NEGOTIATION}, {@link HandshakePhase#AUTHENTICATION},
- * {@link HandshakePhase#CONNECT_RELAY}) are excluded from backpressure error labels
- * ({@link MongoException#SYSTEM_OVERLOADED_ERROR_LABEL},
- * {@link MongoException#RETRYABLE_ERROR_LABEL}). Failures in the
- * {@link HandshakePhase#PROXY_TCP_CONNECT} phase are plain TCP-level reach failures
- * to the proxy host and continue to receive these labels like any other
- * socket-open failure.
+ * <p>Backpressure error labels ({@link MongoException#SYSTEM_OVERLOADED_ERROR_LABEL},
+ * {@link MongoException#RETRYABLE_ERROR_LABEL}) signal that the <em>target mongod</em> is
+ * overloaded. A SOCKS5 failure receives these labels only when it is attributable to mongod:
+ * <ul>
+ *   <li><strong>Labeled</strong> — {@link HandshakePhase#CONNECT_RELAY} with an RFC 1928 reply
+ *       code of {@code 3} (network unreachable), {@code 4} (host unreachable), or {@code 5}
+ *       (connection refused). The proxy reports a transport-level failure while reaching
+ *       mongod on the caller's behalf — the SOCKS5 analog of a direct-connection
+ *       {@code NoRouteToHostException} / {@code ConnectException}.</li>
+ *   <li><strong>Not labeled</strong> — every other case:
+ *       {@link HandshakePhase#PROXY_TCP_CONNECT} (proxy itself unreachable, mongod never
+ *       reached), {@link HandshakePhase#NEGOTIATION} / {@link HandshakePhase#AUTHENTICATION}
+ *       (proxy-side protocol/credential errors), {@link HandshakePhase#CONNECT_RELAY} with
+ *       any other reply code (1, 2, 6, 7, 8) or with {@code null} reply code (I/O failure
+ *       or unrecognised reply field).</li>
+ * </ul>
  *
  * <p>The {@link #getHandshakePhase()} identifies which phase of the SOCKS5 handshake failed.
  * {@link #getProxyReplyCode()} returns the RFC 1928 reply code sent by the proxy when a
