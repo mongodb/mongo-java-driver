@@ -22,6 +22,7 @@ import com.mongodb.client.model.search.FieldSearchPath
 
 import scala.collection.JavaConverters._
 import com.mongodb.client.model.{ Aggregates => JAggregates }
+import com.mongodb.client.model.RerankQuery
 import org.mongodb.scala.MongoNamespace
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.densify.{ DensifyOptions, DensifyRange }
@@ -745,6 +746,50 @@ object Aggregates {
       options: VectorSearchOptions
   ): Bson =
     JAggregates.vectorSearch(path, queryVector.asJava, index, limit, options)
+
+  /**
+   * Creates a `\$rerank` pipeline stage supported by MongoDB Atlas.
+   * You may use the `\$meta: "score"` expression to extract the relevance score
+   * assigned to each reranked document.
+   *
+   * @param query           The query to rerank against.
+   * @param path            The document field to send to the reranker.
+   * @param numDocsToRerank The maximum number of documents to rerank (1-1000).
+   * @param model           The reranking model name.
+   * @return The `\$rerank` pipeline stage.
+   * @note Requires MongoDB on Atlas 8.3 or greater
+   * @since 5.8
+   */
+  @Beta(Array(Reason.SERVER))
+  def rerank(
+      query: RerankQuery,
+      path: String,
+      numDocsToRerank: Int,
+      model: String
+  ): Bson =
+    JAggregates.rerank(query, path, numDocsToRerank, model)
+
+  /**
+   * Creates a `\$rerank` pipeline stage supported by MongoDB Atlas.
+   * You may use the `\$meta: "score"` expression to extract the relevance score
+   * assigned to each reranked document.
+   *
+   * @param query           The query to rerank against.
+   * @param paths           The document field(s) to send to the reranker.
+   * @param numDocsToRerank The maximum number of documents to rerank (1-1000).
+   * @param model           The reranking model name.
+   * @return The `\$rerank` pipeline stage.
+   * @note Requires MongoDB on Atlas 8.3 or greater
+   * @since 5.8
+   */
+  @Beta(Array(Reason.SERVER))
+  def rerank(
+      query: RerankQuery,
+      paths: Seq[String],
+      numDocsToRerank: Int,
+      model: String
+  ): Bson =
+    JAggregates.rerank(query, paths.toList.asJava, numDocsToRerank, model)
 
   /**
    * Creates an `\$unset` pipeline stage that removes/excludes fields from documents
