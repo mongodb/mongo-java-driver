@@ -33,6 +33,9 @@ import static com.mongodb.assertions.Assertions.notNull;
  * 3=network unreachable, 4=host unreachable, 5=connection refused, 6=TTL expired,
  * 7=command not supported, 8=address type not supported.
  *
+ * <p>Constructor parameter ordering follows the parent class first (message, address,
+ * optional cause), then SOCKS-specific arguments (handshakePhase, optional proxyReplyCode).
+ *
  * @since 5.8
  */
 public class MongoSocksProxyException extends MongoSocketOpenException {
