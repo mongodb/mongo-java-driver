@@ -36,12 +36,11 @@ import static com.mongodb.assertions.Assertions.fail;
  * @see AttachmentKey
  */
 public final class AttachmentKeys {
-    private static final AttachmentKey<Integer> MAX_WIRE_VERSION = new DefaultAttachmentKey<>("maxWireVersion");
-    private static final AttachmentKey<BsonDocument> COMMAND = new DefaultAttachmentKey<>("command");
-    private static final AttachmentKey<Boolean> RETRYABLE_WRITE_COMMAND_FLAG = new DefaultAttachmentKey<>("retryableWriteCommandFlag");
-    private static final AttachmentKey<Supplier<String>> COMMAND_DESCRIPTION_SUPPLIER = new DefaultAttachmentKey<>(
-            "commandDescriptionSupplier");
-    private static final AttachmentKey<BulkWriteTracker> BULK_WRITE_TRACKER = new DefaultAttachmentKey<>("bulkWriteTracker");
+    private static final AttachmentKey<Integer> MAX_WIRE_VERSION = DefaultAttachmentKey.of("maxWireVersion");
+    private static final AttachmentKey<BsonDocument> COMMAND = DefaultAttachmentKey.of("command");
+    private static final AttachmentKey<Boolean> RETRYABLE_WRITE_COMMAND_FLAG = DefaultAttachmentKey.of("retryableWriteCommandFlag");
+    private static final AttachmentKey<Supplier<String>> COMMAND_DESCRIPTION_SUPPLIER = DefaultAttachmentKey.of("commandDescriptionSupplier");
+    private static final AttachmentKey<BulkWriteTracker> BULK_WRITE_TRACKER = DefaultAttachmentKey.of("bulkWriteTracker");
 
     public static AttachmentKey<Integer> maxWireVersion() {
         return MAX_WIRE_VERSION;
@@ -72,6 +71,9 @@ public final class AttachmentKeys {
         fail();
     }
 
+    /**
+     * A <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/doc-files/ValueBased.html">value-based</a> class.
+     */
     @Immutable
     private static final class DefaultAttachmentKey<V> implements AttachmentKey<V> {
         private static final Set<String> AVOID_KEY_DUPLICATION = new HashSet<>();
@@ -81,6 +83,10 @@ public final class AttachmentKeys {
         private DefaultAttachmentKey(final String key) {
             assertTrue(AVOID_KEY_DUPLICATION.add(key));
             this.key = key;
+        }
+
+        static <V> DefaultAttachmentKey<V> of(final String key) {
+            return new DefaultAttachmentKey<>(key);
         }
 
         @Override
