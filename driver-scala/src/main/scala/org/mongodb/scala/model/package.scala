@@ -482,6 +482,99 @@ package object model {
   type SearchIndexModel = com.mongodb.client.model.SearchIndexModel
 
   /**
+   * A definition for an Atlas Search index.
+   * @since 5.8
+   */
+  type SearchIndexDefinition = com.mongodb.client.model.SearchIndexDefinition
+
+  /**
+   * Companion object providing Scala-friendly factories for [[SearchIndexDefinition]].
+   * @since 5.8
+   */
+  object SearchIndexDefinition {
+
+    /**
+     * Creates a vector search index definition with the specified fields.
+     *
+     * @param field  the first field for the vector search index.
+     * @param fields additional fields for the vector search index.
+     * @return a new [[VectorSearchIndexDefinition]]
+     */
+    def vectorSearch(field: Bson, fields: Bson*): VectorSearchIndexDefinition =
+      com.mongodb.client.model.SearchIndexDefinition.vectorSearch(field +: fields: _*)
+
+    /**
+     * Creates a vector search index definition with the specified fields.
+     *
+     * @param fields the fields for the vector search index.
+     * @return a new [[VectorSearchIndexDefinition]]
+     */
+    def vectorSearch(fields: Seq[_ <: Bson]): VectorSearchIndexDefinition = {
+      com.mongodb.client.model.SearchIndexDefinition.vectorSearch(fields.asJava)
+    }
+  }
+
+  /**
+   * A vector search index definition.
+   * @since 5.8
+   */
+  type VectorSearchIndexDefinition = com.mongodb.client.model.VectorSearchIndexDefinition
+
+  /**
+   * A factory for defining fields within a vector search index definition.
+   * @since 5.8
+   */
+  type VectorSearchIndexFields = com.mongodb.client.model.VectorSearchIndexFields
+
+  /**
+   * Companion object providing Scala-friendly factories for [[VectorSearchIndexFields]].
+   * @since 5.8
+   */
+  object VectorSearchIndexFields {
+
+    /**
+     * Creates a vector field definition for a vector search index.
+     *
+     * @param path the field path in the document
+     * @return a new [[com.mongodb.client.model.VectorSearchIndexFields.VectorField]]
+     */
+    def vectorField(path: String): com.mongodb.client.model.VectorSearchIndexFields.VectorField =
+      com.mongodb.client.model.VectorSearchIndexFields.vectorField(path)
+
+    /**
+     * Creates a filter field definition for a vector search index.
+     *
+     * @param path the field path in the document
+     * @return a new [[com.mongodb.client.model.VectorSearchIndexFields.FilterField]]
+     */
+    def filterField(path: String): com.mongodb.client.model.VectorSearchIndexFields.FilterField =
+      com.mongodb.client.model.VectorSearchIndexFields.filterField(path)
+
+    /**
+     * Creates an auto-embed field definition for a vector search index.
+     *
+     * @param path the field path in the document containing the content to embed
+     * @return a new [[com.mongodb.client.model.VectorSearchIndexFields.AutoEmbedField]]
+     */
+    def autoEmbedField(path: String): com.mongodb.client.model.VectorSearchIndexFields.AutoEmbedField =
+      com.mongodb.client.model.VectorSearchIndexFields.autoEmbedField(path)
+  }
+
+  /**
+   * Options for the HNSW indexing method in a vector search index.
+   * @since 5.8
+   */
+  type HnswSearchIndexOptions = com.mongodb.client.model.HnswSearchIndexOptions
+
+  /**
+   * Companion object providing a Scala-friendly factory for [[HnswSearchIndexOptions]].
+   * @since 5.8
+   */
+  object HnswSearchIndexOptions {
+    def apply(): HnswSearchIndexOptions = new com.mongodb.client.model.HnswSearchIndexOptions()
+  }
+
+  /**
    * Represents an Atlas Search Index type, which is utilized for creating specific types of indexes.
    */
   type SearchIndexType = com.mongodb.client.model.SearchIndexType
@@ -511,6 +604,19 @@ package object model {
      * @return the SearchIndexModel
      */
     def apply(indexName: String, definition: Bson): SearchIndexModel =
+      new com.mongodb.client.model.SearchIndexModel(indexName, definition)
+
+    /**
+     * Construct a vector search index instance with the given name and definition.
+     *
+     * The index type is automatically set to `vectorSearch`.
+     *
+     * @param indexName  the name of the search index to create.
+     * @param definition the vector search index definition.
+     * @return the SearchIndexModel
+     * @since 5.8
+     */
+    def apply(indexName: String, definition: VectorSearchIndexDefinition): SearchIndexModel =
       new com.mongodb.client.model.SearchIndexModel(indexName, definition)
 
     /**
