@@ -263,7 +263,9 @@ public final class SocksSocket extends Socket {
             }
             return;
         }
-        throw new MongoSocksProxyException(reply.message, targetServerAddress(), HandshakePhase.CONNECT_RELAY, reply.replyNumber);
+        throw new MongoSocksProxyException(
+                "SOCKS5 CONNECT reply: " + reply.message + " (code " + reply.replyNumber + ")",
+                targetServerAddress(), HandshakePhase.CONNECT_RELAY, reply.replyNumber);
     }
 
     private void authenticate(final SocksAuthenticationMethod authenticationMethod, final Timeout timeout) throws IOException {
