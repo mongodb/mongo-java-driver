@@ -91,13 +91,6 @@ public class SocketStream implements Stream {
             if (interrupted.isPresent()) {
                 throw interrupted.get();
             }
-            ProxySettings proxySettings = settings.getProxySettings();
-            if (proxySettings.isProxyEnabled()) {
-                throw new MongoSocksProxyException(
-                        "Exception connecting to SOCKS5 proxy (" + proxySettings.getHost() + ":" + proxySettings.getPort() + ")",
-                        getAddress(), e,
-                        MongoSocksProxyException.HandshakePhase.PROXY_TCP_CONNECT);
-            }
             throw new MongoSocketOpenException("Exception opening socket", getAddress(), e);
         }
     }
@@ -142,7 +135,11 @@ public class SocketStream implements Stream {
         try {
             configureSocket(socksProxy, operationContext, settings);
             InetSocketAddress inetSocketAddress = toSocketAddress(serverHost, serverPort);
-            socksProxy.connect(inetSocketAddress, operationContext.getTimeoutContext().getConnectTimeoutMs());
+            try {
+                socksProxy.connect(inetSocketAddress, operationContext.getTimeoutContext().getConnectTimeoutMs());
+            } catch (IOException e) {
+                throw wrapAsProxyTcpConnect(e);
+            }
             SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(socksProxy, serverHost, serverPort, true);
             toClose = sslSocket;
             //Even though Socks proxy connection is already established, TLS handshake has not been performed yet.
@@ -168,6 +165,14 @@ public class SocketStream implements Stream {
         return InetSocketAddress.createUnresolved(serverHost, serverPort);
     }
 
+    private MongoSocksProxyException wrapAsProxyTcpConnect(final IOException cause) {
+        ProxySettings proxySettings = settings.getProxySettings();
+        return new MongoSocksProxyException(
+                "Exception connecting to SOCKS5 proxy (" + proxySettings.getHost() + ":" + proxySettings.getPort() + ")",
+                getAddress(), cause,
+                MongoSocksProxyException.HandshakePhase.PROXY_TCP_CONNECT);
+    }
+
     private Socket initializeSocketOverSocksProxy(final OperationContext operationContext) throws IOException {
         Socket createdSocket = socketFactory.createSocket();
         try {
@@ -178,8 +183,12 @@ public class SocketStream implements Stream {
               to configure itself.
              */
             SocksSocket socksProxy = new SocksSocket(createdSocket, settings.getProxySettings());
-            socksProxy.connect(toSocketAddress(address.getHost(), address.getPort()),
-                    operationContext.getTimeoutContext().getConnectTimeoutMs());
+            try {
+                socksProxy.connect(toSocketAddress(address.getHost(), address.getPort()),
+                        operationContext.getTimeoutContext().getConnectTimeoutMs());
+            } catch (IOException e) {
+                throw wrapAsProxyTcpConnect(e);
+            }
             return socksProxy;
         } catch (IOException | RuntimeException e) {
             // SocksSocket.connect() closes itself on failure, but createdSocket may not yet
