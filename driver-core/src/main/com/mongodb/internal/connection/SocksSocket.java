@@ -127,9 +127,10 @@ public final class SocksSocket extends Socket {
                         targetServerAddress(), e, HandshakePhase.CONNECT_RELAY);
             }
         } catch (MongoSocksProxyException e) {
-            // The underlying proxy TCP socket is already connected at this point.
-            // MongoSocksProxyException is a RuntimeException and is not caught below,
-            // so close the socket here to avoid leaking the FD on every SOCKS5 protocol failure.
+            // Reached for any SOCKS5 protocol failure (negotiation / authentication / CONNECT-relay,
+            // including RFC 1928 X'FF' "no acceptable method" self-close). The proxy TCP socket is
+            // already connected at this point. MongoSocksProxyException is a RuntimeException and is
+            // not caught below, so close the socket here to avoid leaking the FD.
             try {
                 close();
             } catch (Exception closeException) {
@@ -137,14 +138,11 @@ public final class SocksSocket extends Socket {
             }
             throw e;
         } catch (IOException ioException) {
-            // Reached when the initial proxy TCP connect (timeout.checkedRun above) fails before
-            // any SOCKS5 handshake byte goes on the wire. Possible types: SocketException (connect
-            // refused / network unreachable), SocketTimeoutException (OS or driver connect timeout),
-            // or any other IOException variant. Inner phase failures never land here — the per-phase
-            // try/catch blocks above convert them to MongoSocksProxyException, which is caught by
-            // the preceding block. Close the partially-initialised proxy socket so we do not leak
-            // an FD on any of these error paths; relying on the underlying JDK Socket to self-close
-            // on connect timeout is implementation-defined and not portable.
+            // Reached only when the initial proxy TCP connect (timeout.checkedRun above) fails
+            // before any SOCKS5 handshake byte goes on the wire. Inner-phase IOExceptions are
+            // converted to MongoSocksProxyException by the per-phase wrappers and caught above.
+            // Close the partially-initialised proxy socket so we don't leak an FD; relying on the
+            // underlying JDK Socket to self-close on connect timeout is implementation-defined.
             try {
                 close();
             } catch (Exception closeException) {
@@ -163,8 +161,6 @@ public final class SocksSocket extends Socket {
     }
 
     private void sendConnect(final Timeout timeout) throws IOException {
-        // remoteAddress is unresolved (asserted in connect()), so getHostName() returns the stored
-        // hostname string without triggering DNS. The SOCKS5 CONNECT request requires this string.
         final String host = remoteAddress.getHostName();
         final int port = remoteAddress.getPort();
         final byte[] bytesOfHost = host.getBytes(StandardCharsets.US_ASCII);
@@ -339,9 +335,6 @@ public final class SocksSocket extends Socket {
     }
 
     private ServerAddress targetServerAddress() {
-        // remoteAddress is asserted unresolved in connect(), so getHostName() would also be safe today.
-        // Using getHostString() defensively guarantees no reverse DNS in this exception-reporting path
-        // even if that invariant is ever weakened.
         return new ServerAddress(remoteAddress.getHostString(), remoteAddress.getPort());
     }
 
@@ -489,6 +482,10 @@ public final class SocksSocket extends Socket {
 
         public String getMessage() {
             return message;
+        }
+
+        public int getReplyNumber() {
+            return replyNumber;
         }
     }
 
