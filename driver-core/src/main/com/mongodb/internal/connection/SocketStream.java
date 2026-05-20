@@ -91,9 +91,11 @@ public class SocketStream implements Stream {
             if (interrupted.isPresent()) {
                 throw interrupted.get();
             }
-            if (settings.getProxySettings().isProxyEnabled()) {
+            ProxySettings proxySettings = settings.getProxySettings();
+            if (proxySettings.isProxyEnabled()) {
                 throw new MongoSocksProxyException(
-                        "Exception connecting to SOCKS5 proxy", getAddress(), e,
+                        "Exception connecting to SOCKS5 proxy (" + proxySettings.getHost() + ":" + proxySettings.getPort() + ")",
+                        getAddress(), e,
                         MongoSocksProxyException.HandshakePhase.PROXY_TCP_CONNECT);
             }
             throw new MongoSocketOpenException("Exception opening socket", getAddress(), e);
