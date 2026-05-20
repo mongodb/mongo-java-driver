@@ -1086,14 +1086,18 @@ final class SearchOperatorTest {
                                         .append("queryVector", new BsonArray(asList(
                                                 new BsonDouble(1.0), new BsonDouble(2.0))))
                                         .append("limit", new BsonInt32(10))
-                                        .append("numCandidates", new BsonInt32(50))
-                                        .append("exact", BsonBoolean.FALSE)),
-                        SearchOperator.vectorSearch(
+                                        .append("exact", BsonBoolean.TRUE)
+                                        .append("filter", new BsonDocument("text",
+                                                new BsonDocument("query", new BsonString("hello"))
+                                                        .append("path", new BsonString("title"))))
+                                        .append("score", new BsonDocument("boost",
+                                                new BsonDocument("value", new BsonDouble(2.0))))),
+                        SearchOperator.vectorSearchExact(
                                 fieldPath("embedding"),
                                 asList(1.0, 2.0),
-                                10,
-                                50
-                        ).exact(false)
+                                10
+                        ).filter(SearchOperator.text(fieldPath("title"), "hello"))
+                                .score(boost(2f))
                                 .toBsonDocument()
                 )
         );

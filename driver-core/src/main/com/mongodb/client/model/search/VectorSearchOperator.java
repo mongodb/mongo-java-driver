@@ -30,14 +30,6 @@ import com.mongodb.annotations.Sealed;
 public interface VectorSearchOperator extends SearchOperator {
 
     /**
-     * Creates a new {@link VectorSearchOperator} with the exact search option.
-     *
-     * @param exact Whether to use exact (ENN) search. If {@code true}, runs exact nearest neighbor search.
-     * @return A new {@link VectorSearchOperator}.
-     */
-    VectorSearchOperator exact(boolean exact);
-
-    /**
      * Creates a new {@link VectorSearchOperator} with the filter specified.
      *
      * @param filter A search operator to filter documents.

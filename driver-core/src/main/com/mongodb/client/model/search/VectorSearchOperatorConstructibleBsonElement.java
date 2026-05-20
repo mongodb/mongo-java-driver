@@ -38,11 +38,6 @@ final class VectorSearchOperatorConstructibleBsonElement
     }
 
     @Override
-    public VectorSearchOperator exact(final boolean exact) {
-        return newWithAppendedValue("exact", exact);
-    }
-
-    @Override
     public VectorSearchOperator filter(final SearchOperator filter) {
         return newWithAppendedValue("filter", notNull("filter", filter));
     }
