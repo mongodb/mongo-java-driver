@@ -37,6 +37,7 @@ import org.mongodb.scala.model.geojson.{ Point, Position }
 import org.mongodb.scala.model.search.SearchCount.total
 import org.mongodb.scala.model.search.SearchFacet.stringFacet
 import org.mongodb.scala.model.search.SearchHighlight.paths
+import com.mongodb.client.model.RerankQuery
 import org.mongodb.scala.model.search.SearchCollector
 import org.mongodb.scala.model.search.SearchOperator.exists
 import org.mongodb.scala.model.search.SearchOptions.searchOptions
@@ -810,6 +811,50 @@ class AggregatesSpec extends BaseSpec {
             "exact": true,
             "limit": {"$numberLong": "1"},
             "filter": {"fieldName": {"$ne": "fieldValue"}}
+        }
+      }"""
+      )
+    )
+  }
+
+  it should "render $rerank with single path" in {
+    toBson(
+      Aggregates.rerank(
+        RerankQuery.rerankQuery("machine learning"),
+        "content",
+        25,
+        "rerank-2.5"
+      )
+    ) should equal(
+      Document(
+        """{
+        "$rerank": {
+            "query": {"text": "machine learning"},
+            "path": "content",
+            "numDocsToRerank": 25,
+            "model": "rerank-2.5"
+        }
+      }"""
+      )
+    )
+  }
+
+  it should "render $rerank with multiple paths" in {
+    toBson(
+      Aggregates.rerank(
+        RerankQuery.rerankQuery("machine learning"),
+        List("content", "title"),
+        50,
+        "rerank-2.5-lite"
+      )
+    ) should equal(
+      Document(
+        """{
+        "$rerank": {
+            "query": {"text": "machine learning"},
+            "path": ["content", "title"],
+            "numDocsToRerank": 50,
+            "model": "rerank-2.5-lite"
         }
       }"""
       )
