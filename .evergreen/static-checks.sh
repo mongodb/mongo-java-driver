@@ -13,3 +13,6 @@ echo "Compiling JVM drivers"
 
 ./gradlew -version
 ./gradlew -PxmlReports.enabled=true --info -x test -x integrationTest -x spotlessApply clean check scalaCheck jar testClasses docs
+
+echo "Running OSGi bundle resolution tests"
+./gradlew :testing:osgi-test:check
