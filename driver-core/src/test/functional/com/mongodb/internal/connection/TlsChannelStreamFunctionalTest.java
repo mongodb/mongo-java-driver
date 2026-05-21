@@ -79,7 +79,9 @@ class TlsChannelStreamFunctionalTest {
     void shouldNotOpenSocketChannelIfNameResolutionFails() {
         //given
         MongoSocketException resolverException = new MongoSocketException("Temporary failure in name resolution", new ServerAddress());
-        InetAddressResolver inetAddressResolver = host -> { throw resolverException; };
+        InetAddressResolver inetAddressResolver = host -> {
+            throw resolverException;
+        };
 
         try (StreamFactoryFactory streamFactoryFactory = new TlsChannelStreamFactoryFactory(inetAddressResolver);
              MockedStatic<SocketChannel> socketChannelMockedStatic = Mockito.mockStatic(SocketChannel.class)) {
