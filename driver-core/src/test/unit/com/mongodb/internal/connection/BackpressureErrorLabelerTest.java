@@ -86,35 +86,25 @@ class BackpressureErrorLabelerTest {
 
     static Stream<Named<MongoSocketException>> socks5ProxyExceptionsShouldNotBeLabeled() {
         return Stream.of(
-                // PROXY_TCP_CONNECT happens before any byte is exchanged with mongod — the proxy
-                // itself is unreachable. Not a mongod overload signal.
-                named(new MongoSocksProxyException("tcp connect to proxy failed", ADDRESS,
-                        MongoSocksProxyException.HandshakePhase.PROXY_TCP_CONNECT)),
-                // NEGOTIATION + AUTHENTICATION are proxy-side protocol / credential errors.
-                named(new MongoSocksProxyException("negotiation failed", ADDRESS,
-                        MongoSocksProxyException.HandshakePhase.NEGOTIATION)),
-                named(new MongoSocksProxyException("auth failed", ADDRESS,
-                        MongoSocksProxyException.HandshakePhase.AUTHENTICATION)),
-                // CONNECT_RELAY with null replyCode = I/O failure or unrecognized reply field;
-                // no definitive mongod-side signal.
-                named(new MongoSocksProxyException("connect relay io failure", ADDRESS,
-                        MongoSocksProxyException.HandshakePhase.CONNECT_RELAY, null)),
-                // CONNECT_RELAY with proxy-side / ambiguous reply codes — not mongod-attributable:
+                // Proxy-TCP-connect / negotiation / authentication / mid-CONNECT I/O failures all
+                // surface with replyCode == null — no parsed CONNECT reply, so not a definitive
+                // mongod overload signal.
+                named(new MongoSocksProxyException("tcp connect to proxy failed", ADDRESS)),
+                named(new MongoSocksProxyException("negotiation failed", ADDRESS)),
+                named(new MongoSocksProxyException("auth failed", ADDRESS)),
+                named(new MongoSocksProxyException("connect relay io failure", ADDRESS, (Integer) null)),
+                // CONNECT reply parsed with proxy-side / ambiguous reply codes — not
+                // mongod-attributable:
                 //   0x01 GENERAL_FAILURE          (too generic to attribute)
                 //   0x02 NOT_ALLOWED              (proxy ACL)
                 //   0x06 TTL_EXPIRED              (transient routing, ambiguous)
                 //   0x07 COMMAND_NOT_SUPPORTED    (proxy capability)
                 //   0x08 ADDRESS_TYPE_NOT_SUPPORTED (proxy capability)
-                named(new MongoSocksProxyException("general failure", ADDRESS,
-                        MongoSocksProxyException.HandshakePhase.CONNECT_RELAY, 1)),
-                named(new MongoSocksProxyException("not allowed", ADDRESS,
-                        MongoSocksProxyException.HandshakePhase.CONNECT_RELAY, 2)),
-                named(new MongoSocksProxyException("ttl expired", ADDRESS,
-                        MongoSocksProxyException.HandshakePhase.CONNECT_RELAY, 6)),
-                named(new MongoSocksProxyException("command not supported", ADDRESS,
-                        MongoSocksProxyException.HandshakePhase.CONNECT_RELAY, 7)),
-                named(new MongoSocksProxyException("address type not supported", ADDRESS,
-                        MongoSocksProxyException.HandshakePhase.CONNECT_RELAY, 8))
+                named(new MongoSocksProxyException("general failure", ADDRESS, 1)),
+                named(new MongoSocksProxyException("not allowed", ADDRESS, 2)),
+                named(new MongoSocksProxyException("ttl expired", ADDRESS, 6)),
+                named(new MongoSocksProxyException("command not supported", ADDRESS, 7)),
+                named(new MongoSocksProxyException("address type not supported", ADDRESS, 8))
         );
     }
 
@@ -126,19 +116,15 @@ class BackpressureErrorLabelerTest {
     }
 
     static Stream<Named<MongoSocketException>> socks5ProxyExceptionsShouldBeLabeled() {
-        // CONNECT_RELAY with reply codes 3 / 4 / 5 means the proxy tried to reach mongod on our
-        // behalf and got a transport-level failure that mirrors a direct-connection socket-open
-        // outcome.
+        // Parsed CONNECT reply codes 3 / 4 / 5 mean the proxy tried to reach mongod on our behalf
+        // and got a transport-level failure that mirrors a direct-connection socket-open outcome.
         return Stream.of(
                 // 0x03 NET_UNREACHABLE — proxy → mongod network path is down (≈ NoRouteToHostException)
-                named(new MongoSocksProxyException("network unreachable", ADDRESS,
-                        MongoSocksProxyException.HandshakePhase.CONNECT_RELAY, 3)),
+                named(new MongoSocksProxyException("network unreachable", ADDRESS, 3)),
                 // 0x04 HOST_UNREACHABLE — proxy can't reach mongod host (≈ NoRouteToHostException)
-                named(new MongoSocksProxyException("host unreachable", ADDRESS,
-                        MongoSocksProxyException.HandshakePhase.CONNECT_RELAY, 4)),
+                named(new MongoSocksProxyException("host unreachable", ADDRESS, 4)),
                 // 0x05 CONN_REFUSED — mongod actively refused (≈ ConnectException)
-                named(new MongoSocksProxyException("connection refused", ADDRESS,
-                        MongoSocksProxyException.HandshakePhase.CONNECT_RELAY, 5))
+                named(new MongoSocksProxyException("connection refused", ADDRESS, 5))
         );
     }
 

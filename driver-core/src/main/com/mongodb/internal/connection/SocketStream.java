@@ -169,8 +169,7 @@ public class SocketStream implements Stream {
         ProxySettings proxySettings = settings.getProxySettings();
         return new MongoSocksProxyException(
                 "Exception connecting to SOCKS5 proxy (" + proxySettings.getHost() + ":" + proxySettings.getPort() + ")",
-                getAddress(), cause,
-                MongoSocksProxyException.HandshakePhase.PROXY_TCP_CONNECT);
+                getAddress(), cause);
     }
 
     private Socket initializeSocketOverSocksProxy(final OperationContext operationContext) throws IOException {

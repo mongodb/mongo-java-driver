@@ -17,7 +17,6 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoSocksProxyException;
-import com.mongodb.MongoSocksProxyException.HandshakePhase;
 import com.mongodb.connection.ProxySettings;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -35,9 +34,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * Verifies that SocksSocket tags each SOCKS5 protocol failure with the correct HandshakePhase
- * and, for CONNECT_RELAY failures, the correct RFC 1928 reply code.
- * Uses a local mini-server; no real SOCKS5 proxy required.
+ * Verifies that SocksSocket surfaces each SOCKS5 protocol failure as a MongoSocksProxyException
+ * and, for parsed non-success CONNECT replies, exposes the correct RFC 1928 reply code via
+ * {@link MongoSocksProxyException#getProxyReplyCode()}. Uses a local mini-server; no real SOCKS5
+ * proxy required.
  */
 class SocksSocketTest {
 
@@ -126,7 +126,6 @@ class SocksSocketTest {
         };
         MongoSocksProxyException ex = assertProxy(connectWithMiniServer(bytes, false));
         Assertions.assertNotNull(ex);
-        assertEquals(HandshakePhase.CONNECT_RELAY, ex.getHandshakePhase());
         assertEquals(SocksSocket.ServerReply.HOST_UNREACHABLE.getReplyNumber(), ex.getProxyReplyCode());
     }
 
@@ -138,7 +137,6 @@ class SocksSocketTest {
         };
         MongoSocksProxyException ex = assertProxy(connectWithMiniServer(bytes, false));
         Assertions.assertNotNull(ex);
-        assertEquals(HandshakePhase.CONNECT_RELAY, ex.getHandshakePhase());
         assertEquals(SocksSocket.ServerReply.CONN_REFUSED.getReplyNumber(), ex.getProxyReplyCode());
     }
 
@@ -150,7 +148,6 @@ class SocksSocketTest {
         };
         MongoSocksProxyException ex = assertProxy(connectWithMiniServer(bytes, false));
         Assertions.assertNotNull(ex);
-        assertEquals(HandshakePhase.CONNECT_RELAY, ex.getHandshakePhase());
         assertEquals(SocksSocket.ServerReply.NOT_ALLOWED.getReplyNumber(), ex.getProxyReplyCode());
     }
 
@@ -166,7 +163,6 @@ class SocksSocketTest {
         };
         MongoSocksProxyException ex = assertProxy(connectWithMiniServer(bytes, true));
         Assertions.assertNotNull(ex);
-        assertEquals(HandshakePhase.AUTHENTICATION, ex.getHandshakePhase());
         assertNull(ex.getProxyReplyCode());
     }
 
@@ -175,70 +171,67 @@ class SocksSocketTest {
     // -----------------------------------------------------------------------
 
     @Test
-    void noAcceptableMethodPhaseNegotiationNoReplyCode() throws Exception {
+    void noAcceptableMethodNoReplyCode() throws Exception {
         byte[] bytes = {0x05, (byte) 0xFF};
         MongoSocksProxyException ex = assertProxy(connectWithMiniServer(bytes, false));
         Assertions.assertNotNull(ex);
-        assertEquals(HandshakePhase.NEGOTIATION, ex.getHandshakePhase());
         assertNull(ex.getProxyReplyCode());
     }
 
     @Test
-    void wrongSocksVersionPhaseNegotiationNoReplyCode() throws Exception {
+    void wrongSocksVersionNoReplyCode() throws Exception {
         byte[] bytes = {0x04, 0x00};
         MongoSocksProxyException ex = assertProxy(connectWithMiniServer(bytes, false));
         Assertions.assertNotNull(ex);
-        assertEquals(HandshakePhase.NEGOTIATION, ex.getHandshakePhase());
         assertNull(ex.getProxyReplyCode());
     }
 
     // -----------------------------------------------------------------------
-    // IOException-during-handshake → tagged with the proper phase, not PROXY_TCP_CONNECT
+    // IOException-during-handshake → surfaces as MongoSocksProxyException with null replyCode
     // -----------------------------------------------------------------------
 
     @Test
-    void ioFailureDuringNegotiationTaggedAsNegotiation() throws Exception {
+    void ioFailureDuringNegotiationNoReplyCode() throws Exception {
         // Mini-server half-closes immediately after writing zero bytes of method-selection reply.
         // Client's readSocksReply sees EOF (in.read() == -1) and throws ConnectException("Malformed
-        // reply..."). That IOException must be wrapped as MongoSocksProxyException with
-        // phase=NEGOTIATION, not PROXY_TCP_CONNECT.
+        // reply..."). That IOException must be wrapped as MongoSocksProxyException with no reply
+        // code (failure happened before any CONNECT reply was parsed).
         byte[] noReply = new byte[0];
         MongoSocksProxyException ex = assertProxy(connectWithMiniServer(noReply, false, true));
         Assertions.assertNotNull(ex);
         Assertions.assertTrue(ex.getMessage().contains("Malformed reply from SOCKS proxy server"));
-        assertEquals(HandshakePhase.NEGOTIATION, ex.getHandshakePhase());
         assertNull(ex.getProxyReplyCode());
     }
 
     @Test
-    void unknownReplyCodeDuringConnectRelayTaggedAsConnectRelay() throws Exception {
-        // Reply code 0x09 is not a known RFC 1928 code.
+    void unknownReplyCodeDuringConnectRelayNoReplyCode() throws Exception {
+        // Reply code 0x09 is not a known RFC 1928 code — the parser rejects it before it can be
+        // exposed via getProxyReplyCode().
         byte[] bytes = {
                 0x05, 0x00,                                 // negotiation OK
                 0x05, 0x09, 0x00, 0x01, 0, 0, 0, 0, 0, 0   // unknown reply code 0x09
         };
         MongoSocksProxyException ex = assertProxy(connectWithMiniServer(bytes, false));
         Assertions.assertNotNull(ex);
-        assertEquals(HandshakePhase.CONNECT_RELAY, ex.getHandshakePhase());
         assertNull(ex.getProxyReplyCode());
     }
 
     @Test
-    void ioFailureDuringAuthenticationTaggedAsAuthentication() throws Exception {
+    void ioFailureDuringAuthenticationNoReplyCode() throws Exception {
         // Negotiation succeeds picking USERNAME_PASSWORD; mini-server then half-closes immediately,
         // so the client reads the 2 negotiation bytes successfully and then sees EOF on the
         // subsequent auth-result read. readSocksReply throws ConnectException("Malformed reply...")
-        // from inside authenticate(). The wrapper must tag the IOException as AUTHENTICATION.
+        // from inside authenticate(). The wrapper must surface this as MongoSocksProxyException
+        // with no reply code.
         byte[] bytes = {0x05, 0x02};   // negotiation OK, picked username/password; then EOF
         MongoSocksProxyException ex = assertProxy(connectWithMiniServer(bytes, true, true));
         Assertions.assertNotNull(ex);
         Assertions.assertTrue(ex.getMessage().contains("Malformed reply from SOCKS proxy server"));
-        assertEquals(HandshakePhase.AUTHENTICATION, ex.getHandshakePhase());
         assertNull(ex.getProxyReplyCode());
     }
 
     // -----------------------------------------------------------------------
-    // PROXY_TCP_CONNECT — inferred at SocketStream boundary, not tagged here
+    // PROXY_TCP_CONNECT — surfaced at SocketStream boundary, not at SocksSocket layer
     // -----------------------------------------------------------------------
 
     @Test
@@ -251,24 +244,9 @@ class SocksSocketTest {
             closedPort = probe.getLocalPort();
         }
         try (SocksSocket s = new SocksSocket(buildProxySettings("127.0.0.1", closedPort, false))) {
-            // Expecting a plain IOException TCP connect failures
-            // are NOT tagged as MongoSocksProxyException at the SocksSocket layer.
+            // Expecting a plain IOException — TCP connect failures are NOT tagged as
+            // MongoSocksProxyException at the SocksSocket layer.
             assertThrows(IOException.class, () -> s.connect(TARGET, 5000));
         }
-    }
-
-    @SuppressWarnings({"ThrowableNotThrown", "DataFlowIssue"})
-    @Test
-    void constructorRejectsNullHandshakePhase() {
-        Assertions.assertThrows(IllegalArgumentException.class,
-                () -> new MongoSocksProxyException("m", new com.mongodb.ServerAddress(), null));
-        Assertions.assertThrows(IllegalArgumentException.class,
-                () -> new MongoSocksProxyException("m", new com.mongodb.ServerAddress(),
-                        new RuntimeException("c"), null));
-        Assertions.assertThrows(IllegalArgumentException.class,
-                () -> new MongoSocksProxyException("m", new com.mongodb.ServerAddress(), null, 5));
-        Assertions.assertThrows(IllegalArgumentException.class,
-                () -> new MongoSocksProxyException("m", new com.mongodb.ServerAddress(),
-                        new RuntimeException("c"), null, 5));
     }
 }

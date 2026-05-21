@@ -94,11 +94,7 @@ final class BackpressureErrorLabeler {
         if (!(t instanceof MongoSocksProxyException)) {
             return false;
         }
-        MongoSocksProxyException socksException = (MongoSocksProxyException) t;
-        if (socksException.getHandshakePhase() != MongoSocksProxyException.HandshakePhase.CONNECT_RELAY) {
-            return true;
-        }
-        Integer replyCode = socksException.getProxyReplyCode();
+        Integer replyCode = ((MongoSocksProxyException) t).getProxyReplyCode();
         if (replyCode == null) {
             return true;
         }

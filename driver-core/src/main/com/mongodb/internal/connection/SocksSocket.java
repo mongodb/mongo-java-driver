@@ -16,7 +16,6 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoSocksProxyException;
-import com.mongodb.MongoSocksProxyException.HandshakePhase;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ProxySettings;
 import com.mongodb.internal.time.Timeout;
@@ -110,21 +109,21 @@ public final class SocksSocket extends Socket {
                 authenticationMethod = performNegotiation(timeout);
             } catch (IOException e) {
                 throw new MongoSocksProxyException("SOCKS5 negotiation failed: " + e.getMessage(),
-                        targetServerAddress(), e, HandshakePhase.NEGOTIATION);
+                        targetServerAddress(), e);
             }
 
             try {
                 authenticate(authenticationMethod, timeout);
             } catch (IOException e) {
                 throw new MongoSocksProxyException("SOCKS5 authentication failed: " + e.getMessage(),
-                        targetServerAddress(), e, HandshakePhase.AUTHENTICATION);
+                        targetServerAddress(), e);
             }
 
             try {
                 sendConnect(timeout);
             } catch (IOException e) {
                 throw new MongoSocksProxyException("SOCKS5 CONNECT relay failed: " + e.getMessage(),
-                        targetServerAddress(), e, HandshakePhase.CONNECT_RELAY);
+                        targetServerAddress(), e);
             }
         } catch (MongoSocksProxyException e) {
             // Reached for any SOCKS5 protocol failure (negotiation / authentication / CONNECT-relay,
@@ -260,7 +259,7 @@ public final class SocksSocket extends Socket {
         }
         throw new MongoSocksProxyException(
                 "SOCKS5 CONNECT reply: " + reply.message + " (code " + reply.replyNumber + ")",
-                targetServerAddress(), HandshakePhase.CONNECT_RELAY, reply.replyNumber);
+                targetServerAddress(), reply.replyNumber);
     }
 
     private void authenticate(final SocksAuthenticationMethod authenticationMethod, final Timeout timeout) throws IOException {
@@ -288,7 +287,7 @@ public final class SocksSocket extends Socket {
             if (authStatus != AUTHENTICATION_SUCCEEDED_STATUS) {
                 throw new MongoSocksProxyException(
                         "Authentication failed. Proxy server returned status: " + authStatus,
-                        targetServerAddress(), HandshakePhase.AUTHENTICATION);
+                        targetServerAddress());
             }
         }
     }
@@ -314,14 +313,14 @@ public final class SocksSocket extends Socket {
         if (handshakeReply[0] != SOCKS_VERSION) {
             throw new MongoSocksProxyException("Remote server doesn't support socks version 5"
                     + " Received version: " + handshakeReply[0],
-                    targetServerAddress(), HandshakePhase.NEGOTIATION);
+                    targetServerAddress());
         }
         byte authMethodNumber = handshakeReply[1];
         if (authMethodNumber == (byte) 0xFF) {
             throw new MongoSocksProxyException(
                     "None of the authentication methods listed are acceptable. Attempted methods: "
                     + Arrays.toString(authenticationMethods),
-                    targetServerAddress(), HandshakePhase.NEGOTIATION);
+                    targetServerAddress());
         }
         if (authMethodNumber == SocksAuthenticationMethod.NO_AUTH.getMethodNumber()) {
             return SocksAuthenticationMethod.NO_AUTH;
@@ -330,7 +329,7 @@ public final class SocksSocket extends Socket {
         }
 
         throw new MongoSocksProxyException("Proxy returned unsupported authentication method: " + authMethodNumber,
-                targetServerAddress(), HandshakePhase.NEGOTIATION);
+                targetServerAddress());
     }
 
     private ServerAddress targetServerAddress() {
