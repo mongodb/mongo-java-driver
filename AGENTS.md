@@ -52,6 +52,7 @@ See [`.agents/references/style-reference`](.agents/references/style-reference.md
 
 - No `System.out.println` / `System.err.println` — use SLF4J
 - No `e.printStackTrace()` — use proper error handling
+- Prefer lambdas over SAM (Single Abstract Method) anonymous class instantiation
 - Copyright header required: `Copyright 2008-present MongoDB, Inc.`
 - Every public package must have a `package-info.java`
 
