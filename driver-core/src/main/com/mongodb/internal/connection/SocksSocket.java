@@ -97,7 +97,7 @@ public final class SocksSocket extends Socket {
             timeout.checkedRun(MILLISECONDS,
                     () -> socketConnect(proxyAddress, 0),
                     (ms) -> socketConnect(proxyAddress, Math.toIntExact(ms)),
-                    SocksSocket::throwSocketConnectionTimeout);
+                    () -> throwSocketConnectionTimeout());
 
             // Each call below is wrapped so any IOException raised inside that phase is converted to
             // a MongoSocksProxyException with the actual phase. Otherwise IOExceptions (EOF, timeout,
@@ -108,21 +108,21 @@ public final class SocksSocket extends Socket {
             try {
                 authenticationMethod = performNegotiation(timeout);
             } catch (IOException e) {
-                throw new MongoSocksProxyException("SOCKS5 negotiation failed: " + e.getMessage(),
+                throw new MongoSocksProxyException("Negotiation failed: " + e.getMessage(),
                         targetServerAddress(), e);
             }
 
             try {
                 authenticate(authenticationMethod, timeout);
             } catch (IOException e) {
-                throw new MongoSocksProxyException("SOCKS5 authentication failed: " + e.getMessage(),
+                throw new MongoSocksProxyException("Authentication failed: " + e.getMessage(),
                         targetServerAddress(), e);
             }
 
             try {
                 sendConnect(timeout);
             } catch (IOException e) {
-                throw new MongoSocksProxyException("SOCKS5 CONNECT relay failed: " + e.getMessage(),
+                throw new MongoSocksProxyException("CONNECT relay failed: " + e.getMessage(),
                         targetServerAddress(), e);
             }
         } catch (MongoSocksProxyException e) {
@@ -258,7 +258,7 @@ public final class SocksSocket extends Socket {
             return;
         }
         throw new MongoSocksProxyException(
-                "SOCKS5 CONNECT reply: " + reply.message + " (code " + reply.replyNumber + ")",
+                "CONNECT reply: " + reply.message + " (code " + reply.replyNumber + ")",
                 targetServerAddress(), reply.replyNumber);
     }
 

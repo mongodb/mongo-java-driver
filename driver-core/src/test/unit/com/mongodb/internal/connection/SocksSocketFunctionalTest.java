@@ -39,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * {@link MongoSocksProxyException#getProxyReplyCode()}. Uses a local mini-server; no real SOCKS5
  * proxy required.
  */
-class SocksSocketTest {
+class SocksSocketFunctionalTest {
 
     private static final InetSocketAddress TARGET =
             InetSocketAddress.createUnresolved("mongo.example.com", 27017);
