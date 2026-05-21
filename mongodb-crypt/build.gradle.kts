@@ -130,7 +130,14 @@ abstract class VerifyLibmongocryptTask : DefaultTask() {
     @get:InputFiles abstract val signatures: ConfigurableFileCollection
     @get:InputFile abstract val publicKey: RegularFileProperty
     @get:Input abstract val skipVerify: Property<Boolean>
-    @get:OutputDirectory abstract val gnupgHome: DirectoryProperty
+
+    /*
+     * Scratch keyring directory. Marked @Internal (not @OutputDirectory) because GnuPG leaves a
+     * `S.gpg-agent` Unix domain socket inside it, which Gradle's output snapshotter cannot fingerprint
+     * (`IOException: not a regular file`). The directory is genuinely ephemeral - nothing downstream
+     * consumes it, and re-running gpg from scratch every time is cheap.
+     */
+    @get:Internal abstract val gnupgHome: DirectoryProperty
 
     @TaskAction
     fun verify() {
@@ -170,14 +177,31 @@ abstract class VerifyLibmongocryptTask : DefaultTask() {
 
         execOps.exec { commandLine("gpg", "--homedir", home.path, "--batch", "--import", publicKey.get().asFile.path) }
 
-        val tarballList = tarballs.files.toList()
-        val signatureList = signatures.files.toList()
-        check(tarballList.size == signatureList.size) {
-            "Expected each tarball to have a matching signature: ${tarballList.size} tarballs vs ${signatureList.size} signatures."
-        }
-        tarballList.zip(signatureList).forEach { (tarball, signature) ->
-            execOps.exec {
-                commandLine("gpg", "--homedir", home.path, "--batch", "--verify", signature.path, tarball.path)
+        try {
+            // Pair each tarball with its signature explicitly by basename. ConfigurableFileCollection
+            // exposes files as a Set with no guaranteed iteration order, so zipping the two collections
+            // would risk verifying mismatched pairs.
+            val signaturesByName = signatures.files.associateBy { it.name }
+            tarballs.files.forEach { tarball ->
+                val signatureName = tarball.name.removeSuffix(".tar.gz") + ".asc"
+                val signature =
+                    signaturesByName[signatureName]
+                        ?: throw GradleException(
+                            "Missing signature $signatureName for ${tarball.name}; expected it next to the tarball.")
+                execOps.exec {
+                    commandLine("gpg", "--homedir", home.path, "--batch", "--verify", signature.path, tarball.path)
+                }
+            }
+        } finally {
+            // Shut down gpg-agent so its leftover Unix domain socket does not accumulate or confuse
+            // a subsequent run that reuses the homedir.
+            try {
+                execOps.exec {
+                    commandLine("gpgconf", "--homedir", home.path, "--kill", "gpg-agent")
+                    isIgnoreExitValue = true
+                }
+            } catch (_: Exception) {
+                // Best-effort cleanup; not a build failure.
             }
         }
     }
@@ -243,8 +267,13 @@ tasks.withType<AbstractPublishToMaven> {
         | System properties:
         | =================
         |
-        | jnaLibsPath    : Custom local JNA library path for inclusion into the build (rather than downloading from the libmongocrypt GitHub release)
-        | gitRevision    : Optional Git Revision to download the built resources for from the libmongocrypt GitHub release.
+        | jnaLibsPath     : Custom local JNA library path for inclusion into the build (rather than downloading the libmongocrypt GitHub release).
+        |
+        | Project properties:
+        | ===================
+        |
+        | skipCryptVerify : Pass -PskipCryptVerify=true to skip GPG verification of downloaded libmongocrypt tarballs.
+        |                   Intended for offline development; do not use for release builds.
     """.trimMargin()
 }
 
