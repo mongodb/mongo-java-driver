@@ -16,9 +16,9 @@
 import ProjectExtensions.configureJarManifest
 import ProjectExtensions.configureMavenPublication
 import de.undercouch.gradle.tasks.download.Download
-import org.gradle.api.GradleException
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
+import org.gradle.api.GradleException
 import org.gradle.process.ExecOperations
 
 plugins {
@@ -156,10 +156,9 @@ abstract class VerifyLibmongocryptTask : DefaultTask() {
         } catch (e: Exception) {
             throw GradleException(
                 "gpg is required to verify libmongocrypt tarballs since 1.18.0 but was not found on PATH. " +
-                        "Install gpg (e.g. `apt-get install gnupg`, `brew install gnupg`, Gpg4win on Windows), " +
-                        "or pass -PskipCryptVerify=true for offline development builds.",
-                e
-            )
+                    "Install gpg (e.g. `apt-get install gnupg`, `brew install gnupg`, Gpg4win on Windows), " +
+                    "or pass -PskipCryptVerify=true for offline development builds.",
+                e)
         }
 
         val home =
@@ -178,8 +177,10 @@ abstract class VerifyLibmongocryptTask : DefaultTask() {
         execOps.exec { commandLine("gpg", "--homedir", home.path, "--batch", "--import", publicKey.get().asFile.path) }
 
         try {
-            // Pair each tarball with its signature explicitly by basename. ConfigurableFileCollection
-            // exposes files as a Set with no guaranteed iteration order, so zipping the two collections
+            // Pair each tarball with its signature explicitly by basename.
+            // ConfigurableFileCollection
+            // exposes files as a Set with no guaranteed iteration order, so zipping the two
+            // collections
             // would risk verifying mismatched pairs.
             val signaturesByName = signatures.files.associateBy { it.name }
             tarballs.files.forEach { tarball ->
