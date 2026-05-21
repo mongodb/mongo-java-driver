@@ -26,7 +26,6 @@ import com.mongodb.spi.dns.InetAddressResolver;
 import com.mongodb.spi.dns.InetAddressResolverProvider;
 
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.stream.Collectors;
@@ -71,7 +70,7 @@ public final class ServerAddressHelper {
             return resolver.lookupByName(serverAddress.getHost())
                     .stream()
                     .map(inetAddress -> new InetSocketAddress(inetAddress, serverAddress.getPort())).collect(Collectors.toList());
-        } catch (UnknownHostException e) {
+        } catch (Exception e) {
             throw new MongoSocketException(e.getMessage(), serverAddress, e);
         }
     }

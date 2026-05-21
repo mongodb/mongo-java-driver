@@ -17,18 +17,22 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.ClusterFixture;
+import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.ServerAddress;
+import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.spi.dns.InetAddressResolver;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -67,6 +71,30 @@ class TlsChannelStreamFunctionalTest {
     private static final SslSettings SSL_SETTINGS = SslSettings.builder().enabled(true).build();
     private static final String UNREACHABLE_PRIVATE_IP_ADDRESS = "10.255.255.1";
     private static final int UNREACHABLE_PORT = 65333;
+
+    @Test
+    void shouldWrapResolverRuntimeExceptionInMongoSocketException() {
+        //given
+        InetAddressResolver inetAddressResolver = host -> { throw new RuntimeException("DNS service unavailable"); };
+
+        try (StreamFactoryFactory streamFactoryFactory = new TlsChannelStreamFactoryFactory(inetAddressResolver)) {
+            StreamFactory streamFactory = streamFactoryFactory.create(SocketSettings.builder()
+                    .connectTimeout(100, TimeUnit.MILLISECONDS)
+                    .build(), SSL_SETTINGS);
+            Stream stream = streamFactory.create(new ServerAddress());
+            @SuppressWarnings("unchecked")
+            AsyncCompletionHandler<Void> handler = Mockito.mock(AsyncCompletionHandler.class);
+
+            //when
+            stream.openAsync(createOperationContext(100), handler);
+
+            //then
+            ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
+            verify(handler).failed(captor.capture());
+            MongoSocketException actual = assertInstanceOf(MongoSocketException.class, captor.getValue());
+            assertInstanceOf(RuntimeException.class, actual.getCause());
+        }
+    }
 
     @ParameterizedTest
     @ValueSource(ints = {500, 1000, 2000})
