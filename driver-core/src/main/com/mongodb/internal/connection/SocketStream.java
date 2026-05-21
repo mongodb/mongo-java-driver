@@ -135,11 +135,7 @@ public class SocketStream implements Stream {
         try {
             configureSocket(socksProxy, operationContext, settings);
             InetSocketAddress inetSocketAddress = toSocketAddress(serverHost, serverPort);
-            try {
-                socksProxy.connect(inetSocketAddress, operationContext.getTimeoutContext().getConnectTimeoutMs());
-            } catch (IOException e) {
-                throw wrapAsProxyTcpConnect(e);
-            }
+            socksProxy.connect(inetSocketAddress, operationContext.getTimeoutContext().getConnectTimeoutMs());
             SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(socksProxy, serverHost, serverPort, true);
             toClose = sslSocket;
             //Even though Socks proxy connection is already established, TLS handshake has not been performed yet.
@@ -165,13 +161,6 @@ public class SocketStream implements Stream {
         return InetSocketAddress.createUnresolved(serverHost, serverPort);
     }
 
-    private MongoSocksProxyException wrapAsProxyTcpConnect(final IOException cause) {
-        ProxySettings proxySettings = settings.getProxySettings();
-        return new MongoSocksProxyException(
-                "Exception connecting to SOCKS5 proxy (" + proxySettings.getHost() + ":" + proxySettings.getPort() + ")",
-                getAddress(), cause);
-    }
-
     private Socket initializeSocketOverSocksProxy(final OperationContext operationContext) throws IOException {
         Socket createdSocket = socketFactory.createSocket();
         try {
@@ -182,12 +171,8 @@ public class SocketStream implements Stream {
               to configure itself.
              */
             SocksSocket socksProxy = new SocksSocket(createdSocket, settings.getProxySettings());
-            try {
-                socksProxy.connect(toSocketAddress(address.getHost(), address.getPort()),
-                        operationContext.getTimeoutContext().getConnectTimeoutMs());
-            } catch (IOException e) {
-                throw wrapAsProxyTcpConnect(e);
-            }
+            socksProxy.connect(toSocketAddress(address.getHost(), address.getPort()),
+                    operationContext.getTimeoutContext().getConnectTimeoutMs());
             return socksProxy;
         } catch (IOException | RuntimeException e) {
             // SocksSocket.connect() closes itself on failure, but createdSocket may not yet

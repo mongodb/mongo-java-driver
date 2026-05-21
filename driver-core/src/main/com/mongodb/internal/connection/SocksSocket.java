@@ -83,7 +83,7 @@ public final class SocksSocket extends Socket {
     }
 
     @Override
-    public void connect(final SocketAddress endpoint, final int connectTimeoutMs) throws IOException {
+    public void connect(final SocketAddress endpoint, final int connectTimeoutMs) {
         // `Socket` requires `IllegalArgumentException`
         isTrueArgument("connectTimeoutMs", connectTimeoutMs >= 0);
         try {
@@ -146,7 +146,8 @@ public final class SocksSocket extends Socket {
             } catch (Exception closeException) {
                 ioException.addSuppressed(closeException);
             }
-            throw ioException;
+                throw new MongoSocksProxyException(ioException.getMessage(),
+                    targetServerAddress(), ioException);
         }
     }
 

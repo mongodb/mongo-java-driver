@@ -21,7 +21,6 @@ import com.mongodb.connection.ProxySettings;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
@@ -31,7 +30,6 @@ import java.net.Socket;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Verifies that SocksSocket surfaces each SOCKS5 protocol failure as a MongoSocksProxyException
@@ -86,7 +84,7 @@ class SocksSocketFunctionalTest {
                 try {
                     socksSocket.connect(TARGET, 5000);
                     return null;
-                } catch (MongoSocksProxyException | IOException e) {
+                } catch (MongoSocksProxyException e) {
                     return e;
                 }
             } finally {
@@ -228,25 +226,5 @@ class SocksSocketFunctionalTest {
         Assertions.assertNotNull(ex);
         Assertions.assertTrue(ex.getMessage().contains("Malformed reply from SOCKS proxy server"));
         assertNull(ex.getProxyReplyCode());
-    }
-
-    // -----------------------------------------------------------------------
-    // PROXY_TCP_CONNECT — surfaced at SocketStream boundary, not at SocksSocket layer
-    // -----------------------------------------------------------------------
-
-    @Test
-    void tcpConnectFailureNotMongoSocksProxyException() throws IOException {
-        // Bind an ephemeral port then release it, so we have a port that is reliably closed
-        // for the duration of this test. Using a hard-coded low port (e.g. 1) is unreliable
-        // because some systems have services listening there.
-        int closedPort;
-        try (ServerSocket probe = new ServerSocket(0)) {
-            closedPort = probe.getLocalPort();
-        }
-        try (SocksSocket s = new SocksSocket(buildProxySettings("127.0.0.1", closedPort, false))) {
-            // Expecting a plain IOException — TCP connect failures are NOT tagged as
-            // MongoSocksProxyException at the SocksSocket layer.
-            assertThrows(IOException.class, () -> s.connect(TARGET, 5000));
-        }
     }
 }
