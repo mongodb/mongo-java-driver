@@ -17,18 +17,22 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.ClusterFixture;
+import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.ServerAddress;
+import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.spi.dns.InetAddressResolver;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -37,6 +41,7 @@ import org.mockito.stubbing.Answer;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.nio.ByteBuffer;
 import java.nio.channels.InterruptedByTimeoutException;
@@ -52,10 +57,12 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeast;
@@ -67,6 +74,62 @@ class TlsChannelStreamFunctionalTest {
     private static final SslSettings SSL_SETTINGS = SslSettings.builder().enabled(true).build();
     private static final String UNREACHABLE_PRIVATE_IP_ADDRESS = "10.255.255.1";
     private static final int UNREACHABLE_PORT = 65333;
+
+    @Test
+    void shouldNotOpenSocketChannelIfNameResolutionFails() {
+        //given
+        MongoSocketException resolverException = new MongoSocketException("Temporary failure in name resolution", new ServerAddress());
+        InetAddressResolver inetAddressResolver = host -> { throw resolverException; };
+
+        try (StreamFactoryFactory streamFactoryFactory = new TlsChannelStreamFactoryFactory(inetAddressResolver);
+             MockedStatic<SocketChannel> socketChannelMockedStatic = Mockito.mockStatic(SocketChannel.class)) {
+            StreamFactory streamFactory = streamFactoryFactory.create(SocketSettings.builder()
+                    .connectTimeout(100, TimeUnit.MILLISECONDS)
+                    .build(), SSL_SETTINGS);
+            Stream stream = streamFactory.create(new ServerAddress());
+            @SuppressWarnings("unchecked")
+            AsyncCompletionHandler<Void> handler = Mockito.mock(AsyncCompletionHandler.class);
+
+            //when
+            stream.openAsync(createOperationContext(100), handler);
+
+            //then
+            verify(handler).failed(resolverException);
+            verify(handler, times(0)).completed(null);
+            socketChannelMockedStatic.verify(SocketChannel::open, times(0));
+        }
+    }
+
+    @Test
+    void shouldCloseSocketChannelIfConnectFailsBeforeRegistration() throws IOException {
+        //given
+        IOException connectException = new IOException("connect failed");
+        InetAddressResolver inetAddressResolver = host -> Collections.singletonList(InetAddress.getLoopbackAddress());
+
+        try (SocketChannel socketChannel = Mockito.spy(SocketChannel.open());
+             StreamFactoryFactory streamFactoryFactory = new TlsChannelStreamFactoryFactory(inetAddressResolver);
+             MockedStatic<SocketChannel> socketChannelMockedStatic = Mockito.mockStatic(SocketChannel.class)) {
+            socketChannelMockedStatic.when(SocketChannel::open).thenReturn(socketChannel);
+            Mockito.doThrow(connectException).when(socketChannel).connect(any());
+            StreamFactory streamFactory = streamFactoryFactory.create(SocketSettings.builder()
+                    .connectTimeout(100, TimeUnit.MILLISECONDS)
+                    .build(), SSL_SETTINGS);
+            Stream stream = streamFactory.create(new ServerAddress());
+            @SuppressWarnings("unchecked")
+            AsyncCompletionHandler<Void> handler = Mockito.mock(AsyncCompletionHandler.class);
+            ArgumentCaptor<Throwable> failureCaptor = ArgumentCaptor.forClass(Throwable.class);
+
+            //when
+            stream.openAsync(createOperationContext(100), handler);
+
+            //then
+            verify(handler).failed(failureCaptor.capture());
+            MongoSocketOpenException actual = assertInstanceOf(MongoSocketOpenException.class, failureCaptor.getValue());
+            assertSame(connectException, actual.getCause());
+            verify(handler, times(0)).completed(null);
+            verify(socketChannel).close();
+        }
+    }
 
     @ParameterizedTest
     @ValueSource(ints = {500, 1000, 2000})
