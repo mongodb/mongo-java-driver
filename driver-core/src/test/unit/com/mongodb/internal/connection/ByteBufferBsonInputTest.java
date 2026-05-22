@@ -22,6 +22,7 @@ import io.netty.buffer.PooledByteBufAllocator;
 import org.bson.BsonSerializationException;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
+import org.bson.io.BasicOutputBuffer;
 import org.bson.io.ByteBufferBsonInput;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -45,6 +46,7 @@ import static java.util.Collections.nCopies;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
 import static java.util.stream.IntStream.rangeClosed;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -709,6 +711,58 @@ class ByteBufferBsonInputTest {
         }
     }
 
+
+    @ParameterizedTest(name = "should pipe bytes to output. BufferProvider={0}")
+    @MethodSource("bufferProviders")
+    void shouldPipeBytesToOutput(final BufferProvider bufferProvider) {
+        // given
+        byte[] input = {0x4a, 0x61, 0x76, 0x61, 0x21};
+        ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, input);
+
+        try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer);
+             BasicOutputBuffer bufferOutput = new BasicOutputBuffer()) {
+            // when
+            bufferInput.pipe(bufferOutput, input.length);
+
+            // then
+            assertEquals(input.length, bufferInput.getPosition());
+            assertEquals(input.length, bufferOutput.getPosition());
+            assertArrayEquals(input, bufferOutput.toByteArray());
+        }
+    }
+
+    @ParameterizedTest(name = "should pipe partial bytes to output. BufferProvider={0}")
+    @MethodSource("bufferProviders")
+    void shouldPipePartialBytesToOutput(final BufferProvider bufferProvider) {
+        // given
+        byte[] input = {0x4a, 0x61, 0x76, 0x61, 0x21};
+        ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, input);
+
+        try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer);
+             BasicOutputBuffer output = new BasicOutputBuffer()) {
+            // when
+            bufferInput.pipe(output, 3);
+
+            // then
+            assertEquals(3, bufferInput.getPosition());
+            assertEquals(3, output.getPosition());
+            assertArrayEquals(new byte[]{0x4a, 0x61, 0x76}, output.toByteArray());
+        }
+    }
+
+    @ParameterizedTest(name = "should throw when piping more bytes than available. BufferProvider={0}")
+    @MethodSource("bufferProviders")
+    void shouldThrowWhenPipingMoreBytesThanAvailable(final BufferProvider bufferProvider) {
+        // given
+        byte[] input = {0x4a, 0x61, 0x76};
+        ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, input);
+
+        try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer);
+             BasicOutputBuffer output = new BasicOutputBuffer()) {
+            // when & then
+            assertThrows(BsonSerializationException.class, () -> bufferInput.pipe(output, 10));
+        }
+    }
 
     private static ByteBuf allocateAndWriteToBuffer(final BufferProvider bufferProvider, final byte[] input) {
         ByteBuf buffer = bufferProvider.getBuffer(input.length);
