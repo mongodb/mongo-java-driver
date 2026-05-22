@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoClientException;
+import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
@@ -47,6 +48,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -215,7 +217,11 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
             try {
                 // getConnectTimeoutMs MUST be called before connection attempt, as it might throw MongoOperationTimeoutException.
                 int connectTimeoutMs = operationContext.getTimeoutContext().getConnectTimeoutMs();
-                InetSocketAddress socketAddress = getSocketAddresses(getServerAddress(), inetAddressResolver).get(0);
+                List<InetSocketAddress> socketAddresses = getSocketAddresses(getServerAddress(), inetAddressResolver);
+                if (socketAddresses.isEmpty()) {
+                    throw new MongoSocketException("No addresses resolved for " + getServerAddress(), getServerAddress());
+                }
+                InetSocketAddress socketAddress = socketAddresses.get(0);
                 SocketChannel openedSocketChannel = SocketChannel.open();
                 socketChannel = openedSocketChannel;
                 openedSocketChannel.configureBlocking(false);

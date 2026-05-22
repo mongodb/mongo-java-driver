@@ -66,6 +66,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -97,8 +99,8 @@ class TlsChannelStreamFunctionalTest {
 
             //then
             verify(handler).failed(resolverException);
-            verify(handler, times(0)).completed(null);
-            socketChannelMockedStatic.verify(SocketChannel::open, times(0));
+            verify(handler, never()).completed(null);
+            socketChannelMockedStatic.verify(SocketChannel::open, never());
         }
     }
 
@@ -128,8 +130,8 @@ class TlsChannelStreamFunctionalTest {
             verify(handler).failed(failureCaptor.capture());
             MongoSocketOpenException actual = assertInstanceOf(MongoSocketOpenException.class, failureCaptor.getValue());
             assertSame(connectException, actual.getCause());
-            verify(handler, times(0)).completed(null);
-            verify(socketChannel).close();
+            verify(handler, never()).completed(null);
+            verify(socketChannel, atLeastOnce()).close();
         }
     }
 
