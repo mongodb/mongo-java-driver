@@ -134,7 +134,11 @@ public interface BsonInput extends Closeable {
      * @param numBytes the number of bytes to pipe
      * @since 5.8
      */
-    void pipe(BsonOutput output, int numBytes);
+    default void pipe(BsonOutput output, int numBytes) {
+        byte[] bytes = new byte[numBytes];
+        readBytes(bytes);
+        output.writeBytes(bytes);
+    }
 
     @Override
     void close();
