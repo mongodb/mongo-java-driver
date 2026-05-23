@@ -523,4 +523,106 @@ class MultiServerClusterSpecification extends Specification {
     def sendNotification(ServerAddress serverAddress, ServerType serverType) {
         factory.sendNotification(serverAddress, serverType, [firstServer, secondServer, thirdServer])
     }
+
+    // ---- onlyConnectOriginalUrl tests ----
+
+    def 'should not add new hosts when onlyConnectOriginalUrl is true and primary reports additional members'() {
+        given:
+        def cluster = new MultiServerCluster(CLUSTER_ID,
+                ClusterSettings.builder()
+                        .mode(MULTIPLE)
+                        .hosts([firstServer])
+                        .onlyConnectOriginalUrl(true)
+                        .build(),
+                factory, CLIENT_METADATA)
+
+        when:
+        // Primary reports firstServer, secondServer, thirdServer in its host list
+        factory.sendNotification(firstServer, REPLICA_SET_PRIMARY, [firstServer, secondServer, thirdServer])
+
+        then:
+        // Only firstServer should remain — no new hosts added
+        getAll(cluster.getCurrentDescription()) == factory.getDescriptions(firstServer)
+    }
+
+    def 'should not remove hosts when onlyConnectOriginalUrl is true and primary reports reduced member list'() {
+        given:
+        def cluster = new MultiServerCluster(CLUSTER_ID,
+                ClusterSettings.builder()
+                        .mode(MULTIPLE)
+                        .hosts([firstServer, secondServer, thirdServer])
+                        .onlyConnectOriginalUrl(true)
+                        .build(),
+                factory, CLIENT_METADATA)
+        factory.sendNotification(firstServer, REPLICA_SET_PRIMARY, [firstServer, secondServer, thirdServer])
+        factory.sendNotification(secondServer, REPLICA_SET_SECONDARY, [firstServer, secondServer, thirdServer])
+        factory.sendNotification(thirdServer, REPLICA_SET_SECONDARY, [firstServer, secondServer, thirdServer])
+
+        when:
+        // Primary now only reports firstServer and secondServer — thirdServer should NOT be removed
+        factory.sendNotification(firstServer, REPLICA_SET_PRIMARY, [firstServer, secondServer])
+
+        then:
+        getAll(cluster.getCurrentDescription()) == factory.getDescriptions(firstServer, secondServer, thirdServer)
+        !factory.getServer(thirdServer).isClosed()
+    }
+
+    def 'should still remove a server of wrong type when onlyConnectOriginalUrl is true'() {
+        given:
+        def cluster = new MultiServerCluster(CLUSTER_ID,
+                ClusterSettings.builder()
+                        .requiredClusterType(REPLICA_SET)
+                        .hosts([firstServer, secondServer])
+                        .onlyConnectOriginalUrl(true)
+                        .build(),
+                factory, CLIENT_METADATA)
+
+        when:
+        // secondServer is a shard router — must still be removed (wrong type check happens before the guard)
+        sendNotificationOnlyConnectOriginalUrl(secondServer, SHARD_ROUTER)
+
+        then:
+        cluster.getCurrentDescription().type == REPLICA_SET
+        getAll(cluster.getCurrentDescription()) == factory.getDescriptions(firstServer)
+    }
+
+    def 'should still reject a member from the wrong replica set when onlyConnectOriginalUrl is true'() {
+        given:
+        def cluster = new MultiServerCluster(CLUSTER_ID,
+                ClusterSettings.builder()
+                        .mode(MULTIPLE)
+                        .hosts([firstServer])
+                        .requiredReplicaSetName('test1')
+                        .onlyConnectOriginalUrl(true)
+                        .build(),
+                factory, CLIENT_METADATA)
+
+        when:
+        factory.sendNotification(firstServer, REPLICA_SET_PRIMARY, [firstServer, secondServer, thirdServer], 'test2')
+
+        then:
+        // wrong setName — firstServer must be removed regardless of onlyConnectOriginalUrl
+        getAll(cluster.getCurrentDescription()) == [] as Set
+    }
+
+    def 'should add hosts normally when onlyConnectOriginalUrl is false'() {
+        given:
+        def cluster = new MultiServerCluster(CLUSTER_ID,
+                ClusterSettings.builder()
+                        .mode(MULTIPLE)
+                        .hosts([firstServer])
+                        .onlyConnectOriginalUrl(false)
+                        .build(),
+                factory, CLIENT_METADATA)
+
+        when:
+        factory.sendNotification(firstServer, REPLICA_SET_PRIMARY, [firstServer, secondServer, thirdServer])
+
+        then:
+        getAll(cluster.getCurrentDescription()) == factory.getDescriptions(firstServer, secondServer, thirdServer)
+    }
+
+    def sendNotificationOnlyConnectOriginalUrl(ServerAddress serverAddress, ServerType serverType) {
+        factory.sendNotification(serverAddress, serverType, [firstServer, secondServer])
+    }
 }
