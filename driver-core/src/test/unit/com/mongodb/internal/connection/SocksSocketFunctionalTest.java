@@ -112,41 +112,28 @@ class SocksSocketFunctionalTest {
                 "Expected MongoSocksProxyException but got: " + (ex == null ? "null" : ex.getClass().getName()));
     }
 
-    // -----------------------------------------------------------------------
-    // CONNECT_RELAY — RFC 1928 server reply codes
-    // -----------------------------------------------------------------------
-
-    @Test
-    void hostUnreachableCode4() throws Exception {
-        byte[] bytes = {
-                0x05, 0x00,                                 // negotiation OK, no auth
-                0x05, 0x04, 0x00, 0x01, 0, 0, 0, 0, 0, 0   // HOST_UNREACHABLE
-        };
-        MongoSocksProxyException ex = assertProxy(connectWithMiniServer(bytes, false));
-        Assertions.assertNotNull(ex);
-        assertEquals(SocksSocket.ServerReply.HOST_UNREACHABLE.getReplyNumber(), ex.getProxyReplyCode());
+    static Stream<SocksSocket.ServerReply> connectRelayReplyCodes() {
+        return Stream.of(
+                SocksSocket.ServerReply.GENERAL_FAILURE,
+                SocksSocket.ServerReply.NOT_ALLOWED,
+                SocksSocket.ServerReply.NET_UNREACHABLE,
+                SocksSocket.ServerReply.HOST_UNREACHABLE,
+                SocksSocket.ServerReply.CONN_REFUSED,
+                SocksSocket.ServerReply.TTL_EXPIRED,
+                SocksSocket.ServerReply.CMD_NOT_SUPPORTED,
+                SocksSocket.ServerReply.ADDR_TYPE_NOT_SUP
+        );
     }
 
-    @Test
-    void connRefusedPhaseConnectRelayCode5() throws Exception {
+    @ParameterizedTest
+    @MethodSource
+    void connectRelayReplyCodes(final SocksSocket.ServerReply reply) throws Exception {
         byte[] bytes = {
-                0x05, 0x00,
-                0x05, 0x05, 0x00, 0x01, 0, 0, 0, 0, 0, 0   // CONN_REFUSED
+                0x05, 0x00,  // negotiation OK, no auth
+                0x05, (byte) reply.getReplyNumber(), 0x00, 0x01, 0, 0, 0, 0, 0, 0
         };
         MongoSocksProxyException ex = assertProxy(connectWithMiniServer(bytes, false));
-        Assertions.assertNotNull(ex);
-        assertEquals(SocksSocket.ServerReply.CONN_REFUSED.getReplyNumber(), ex.getProxyReplyCode());
-    }
-
-    @Test
-    void notAllowedPhaseConnectRelayCode2() throws Exception {
-        byte[] bytes = {
-                0x05, 0x00,
-                0x05, 0x02, 0x00, 0x01, 0, 0, 0, 0, 0, 0   // NOT_ALLOWED
-        };
-        MongoSocksProxyException ex = assertProxy(connectWithMiniServer(bytes, false));
-        Assertions.assertNotNull(ex);
-        assertEquals(SocksSocket.ServerReply.NOT_ALLOWED.getReplyNumber(), ex.getProxyReplyCode());
+        assertEquals(reply.getReplyNumber(), ex.getProxyReplyCode());
     }
 
     // -----------------------------------------------------------------------
