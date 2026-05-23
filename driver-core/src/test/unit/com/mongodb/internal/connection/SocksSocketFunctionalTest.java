@@ -154,7 +154,7 @@ class SocksSocketFunctionalTest {
     // -----------------------------------------------------------------------
 
     @Test
-    void authRejectedPhaseAuthenticationNoReplyCode() throws Exception {
+    void authRejectedNoReplyCode() throws Exception {
         byte[] bytes = {
                 0x05, 0x02,   // negotiation OK, needs username/password
                 0x01, 0x01    // auth rejected
