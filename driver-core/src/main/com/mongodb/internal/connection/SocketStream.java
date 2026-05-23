@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
@@ -26,6 +27,7 @@ import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.ProxySettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
+import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
 import org.bson.ByteBuf;
 
@@ -84,15 +86,22 @@ public class SocketStream implements Stream {
             inputStream = socket.getInputStream();
         } catch (MongoSocksProxyException e) {
             close();
-            throw e;
+            throw translateOr(e.getCause(), e);
         } catch (IOException e) {
             close();
-            Optional<MongoInterruptedException> interrupted = translateInterruptedException(e, "Interrupted while connecting");
-            if (interrupted.isPresent()) {
-                throw interrupted.get();
-            }
-            throw new MongoSocketOpenException("Exception opening socket", getAddress(), e);
+            throw translateOr(e, new MongoSocketOpenException("Exception opening socket", getAddress(), e));
         }
+    }
+
+    /**
+     * If {@code interruptCandidate} represents a thread interruption, returns the corresponding
+     * {@link MongoInterruptedException}; otherwise returns {@code fallback}.
+     */
+    private static MongoException translateOr(@Nullable final Throwable interruptCandidate,
+                                              final MongoException fallback) {
+        Optional<MongoInterruptedException> translated =
+                translateInterruptedException(interruptCandidate, "Interrupted while connecting");
+        return translated.isPresent() ? translated.get() : fallback;
     }
 
     protected Socket initializeSocket(final OperationContext operationContext) throws IOException {
