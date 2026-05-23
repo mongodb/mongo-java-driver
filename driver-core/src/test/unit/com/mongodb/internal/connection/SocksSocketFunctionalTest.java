@@ -117,7 +117,7 @@ class SocksSocketFunctionalTest {
     // -----------------------------------------------------------------------
 
     @Test
-    void hostUnreachablePhaseConnectRelayCode4() throws Exception {
+    void hostUnreachableCode4() throws Exception {
         byte[] bytes = {
                 0x05, 0x00,                                 // negotiation OK, no auth
                 0x05, 0x04, 0x00, 0x01, 0, 0, 0, 0, 0, 0   // HOST_UNREACHABLE
