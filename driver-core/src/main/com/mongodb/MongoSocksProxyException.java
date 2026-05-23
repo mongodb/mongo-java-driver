@@ -19,12 +19,14 @@ package com.mongodb;
 import com.mongodb.lang.Nullable;
 
 /**
- * Thrown when an error occurs while establishing a connection to a SOCKS5 proxy.
+ * Thrown when an error occurs while connecting via a SOCKS5 proxy.
  *
  * <p>{@link #getProxyReplyCode()} returns the RFC 1928 reply code sent by the proxy when a
  * non-success CONNECT reply was successfully parsed; it returns {@code null} otherwise
  * (including for any failure that did not produce a parsed CONNECT reply, e.g. proxy TCP
- * connect failure, negotiation failure, authentication failure, or an I/O error mid-CONNECT).
+ * connect failure, negotiation failure, authentication failure, failure connecting through
+ * the proxy to the target server that did not yield a parsed reply, or an I/O error
+ * mid-CONNECT).
  *
  * <p>RFC 1928 reply codes: 1=general failure, 2=connection not allowed by ruleset,
  * 3=network unreachable, 4=host unreachable, 5=connection refused, 6=TTL expired,
