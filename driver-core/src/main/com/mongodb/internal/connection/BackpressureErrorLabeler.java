@@ -77,7 +77,7 @@ final class BackpressureErrorLabeler {
             return;
         }
         MongoSocketException socketException = (MongoSocketException) t;
-        if (isSocksFailure(socketException)) {
+        if (isSocksFailureNotEligibleForLabeling(socketException)) {
             return;
         }
         if (isDnsLookupFailure(socketException)) {
@@ -90,7 +90,7 @@ final class BackpressureErrorLabeler {
         socketException.addLabel(MongoException.RETRYABLE_ERROR_LABEL);
     }
 
-    private static boolean isSocksFailure(final MongoSocketException t) {
+    private static boolean isSocksFailureNotEligibleForLabeling(final MongoSocketException t) {
         if (!(t instanceof MongoSocksProxyException)) {
             return false;
         }
