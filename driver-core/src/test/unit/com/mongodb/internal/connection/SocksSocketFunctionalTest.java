@@ -190,11 +190,9 @@ class SocksSocketFunctionalTest {
 
     @Test
     void unknownReplyCodeDuringConnectRelayNoReplyCode() throws Exception {
-        // Reply code 0x09 is not a known RFC 1928 code — the parser rejects it before it can be
-        // exposed via getProxyReplyCode().
         byte[] bytes = {
                 0x05, 0x00,                                 // negotiation OK
-                0x05, 0x09, 0x00, 0x01, 0, 0, 0, 0, 0, 0   // unknown reply code 0x09
+                0x05, 0x09, 0x00, 0x01, 0, 0, 0, 0, 0, 0   // reply code 0x09  is not a known RFC 1928 code.
         };
         MongoSocksProxyException ex = assertProxy(connectWithMiniServer(bytes, false));
         Assertions.assertNotNull(ex);
