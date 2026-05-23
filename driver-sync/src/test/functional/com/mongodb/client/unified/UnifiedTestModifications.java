@@ -429,9 +429,6 @@ public final class UnifiedTestModifications {
                 .file("server-discovery-and-monitoring", "pool-clear-on-error-checkout");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5664")
                 .file("server-discovery-and-monitoring", "pool-cleared-on-min-pool-size-population-error");
-        // TODO-BACKPRESSURE Nabil - This issue is unrelated to backpressure but consider fixing it before merging to main
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-6174")
-                .file("server-discovery-and-monitoring", "backpressure-server-description-unchanged-on-min-pool-size-population-error");
 
         // session tests
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5968")
