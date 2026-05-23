@@ -99,11 +99,6 @@ public final class SocksSocket extends Socket {
                     (ms) -> socketConnect(proxyAddress, Math.toIntExact(ms)),
                     () -> throwSocketConnectionTimeout());
 
-            // Each call below is wrapped so any IOException raised inside that phase is converted to
-            // a MongoSocksProxyException with the actual phase. Otherwise IOExceptions (EOF, timeout,
-            // unknown reply codes) escape unwrapped and are mislabeled as PROXY_TCP_CONNECT upstream.
-            // A MongoSocksProxyException thrown directly by a phase method is a RuntimeException and
-            // propagates past the IOException catch to the outer block.
             SocksAuthenticationMethod authenticationMethod;
             try {
                 authenticationMethod = performNegotiation(timeout);
@@ -146,7 +141,10 @@ public final class SocksSocket extends Socket {
             } catch (Exception closeException) {
                 ioException.addSuppressed(closeException);
             }
-                throw new MongoSocksProxyException(ioException.getMessage(),
+            throw new MongoSocksProxyException(
+                    "Exception connecting to SOCKS5 proxy ("
+                            + proxySettings.getHost() + ":" + proxySettings.getPort() + "): "
+                            + ioException.getMessage(),
                     targetServerAddress(), ioException);
         }
     }
