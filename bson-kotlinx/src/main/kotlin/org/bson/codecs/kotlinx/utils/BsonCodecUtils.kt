@@ -125,25 +125,25 @@ internal object BsonCodecUtils {
 
     internal fun cacheElementNamesByDescriptor(descriptor: SerialDescriptor, configuration: BsonConfiguration) {
         val convertedNameMap =
-            when (configuration.bsonNamingStrategy) {
-                BsonNamingStrategy.SNAKE_CASE -> {
-                    val snakeCasedNames = descriptor.elementNames.associateWith { name -> convertCamelCase(name, '_') }
+            if (configuration.bsonNamingStrategy != null) {
+                val transformedNames =
+                    descriptor.elementNames.associateWith(configuration.bsonNamingStrategy::transformName)
 
-                    snakeCasedNames.entries
-                        .groupBy { entry -> entry.value }
-                        .filter { group -> group.value.size > 1 }
-                        .entries
-                        .fold(StringBuilder("")) { acc, group ->
-                            val keys = group.value.joinToString(", ") { entry -> entry.key }
-                            acc.append("$keys in ${descriptor.serialName} generate same name: ${group.key}.\n")
-                        }
-                        .toString()
-                        .takeIf { it.trim().isNotEmpty() }
-                        ?.let { errorMessage: String -> throw SerializationException(errorMessage) }
+                transformedNames.entries
+                    .groupBy { entry -> entry.value }
+                    .filter { group -> group.value.size > 1 }
+                    .entries
+                    .fold(StringBuilder("")) { acc, group ->
+                        val keys = group.value.joinToString(", ") { entry -> entry.key }
+                        acc.append("$keys in ${descriptor.serialName} generate same name: ${group.key}.\n")
+                    }
+                    .toString()
+                    .takeIf { it.trim().isNotEmpty() }
+                    ?.let { errorMessage: String -> throw SerializationException(errorMessage) }
 
-                    snakeCasedNames.entries.associate { it.value to it.key }
-                }
-                else -> emptyMap()
+                transformedNames.entries.associate { it.value to it.key }
+            } else {
+                emptyMap()
             }
 
         cachedElementNamesByDescriptor[descriptor.serialName] = convertedNameMap
@@ -185,10 +185,9 @@ internal object BsonCodecUtils {
             }
         }
 
-    internal fun BsonNamingStrategy?.toJsonNamingStrategy(): JsonNamingStrategy? {
-        return when (this) {
-            BsonNamingStrategy.SNAKE_CASE -> JsonNamingStrategy.SnakeCase
-            else -> null
-        }
+    internal fun BsonNamingStrategy?.asJsonNamingStrategy(): JsonNamingStrategy? {
+        this ?: return null
+
+        return JsonNamingStrategy { descriptor, index, serialName -> this.transformName(serialName) }
     }
 }
