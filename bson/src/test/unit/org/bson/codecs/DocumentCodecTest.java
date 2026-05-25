@@ -21,6 +21,7 @@ import org.bson.BsonBinarySubType;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonInt32;
 import org.bson.BsonObjectId;
+import org.bson.BsonRegularExpression;
 import org.bson.ByteBufNIO;
 import org.bson.Document;
 import org.bson.BinaryVector;
@@ -44,6 +45,7 @@ import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -84,14 +86,20 @@ public class DocumentCodecTest {
         doc.put("vectorFloat", BinaryVector.floatVector(new float[]{1.1f, 2.2f, 3.3f}));
         doc.put("vectorInt8", BinaryVector.int8Vector(new byte[]{10, 20, 30, 40}));
         doc.put("vectorPackedBit", BinaryVector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3));
-        //        doc.put("pattern", Pattern.compile("^hello"));  // TODO: Pattern doesn't override equals method!
+
+        Pattern pattern = Pattern.compile("^hello");
+        doc.put("pattern", pattern);
         doc.put("null", null);
 
         documentCodec.encode(writer, doc, EncoderContext.builder().build());
 
         BsonInput bsonInput = createInputBuffer();
         Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInput), DecoderContext.builder().build());
+
+        BsonRegularExpression decodedPattern = (BsonRegularExpression) decodedDocument.remove("pattern");
+        doc.remove("pattern");
         assertEquals(doc, decodedDocument);
+        assertEquals(pattern.pattern(), decodedPattern.getPattern());
     }
 
     @Test
