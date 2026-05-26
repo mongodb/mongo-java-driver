@@ -77,6 +77,20 @@ class SearchIndexDefinitionSpec extends BaseSpec {
     )
   }
 
+  it should "create a vectorSearch definition with storedSource" in {
+    toBson(
+      vectorSearch(
+        vectorField("embedding").numDimensions(1536).similarity("cosine")
+      ).storedSource(Document("include" -> List("plot", "title")))
+    ) should equal(
+      Document(
+        """{"fields": [
+          |{"type": "vector", "path": "embedding", "numDimensions": 1536, "similarity": "cosine"}
+          |], "storedSource": {"include": ["plot", "title"]}}""".stripMargin.replaceAll("\n", " ")
+      )
+    )
+  }
+
   it should "create a SearchIndexModel with VectorSearchIndexDefinition" in {
     val definition = vectorSearch(
       vectorField("embedding").numDimensions(1536).similarity("cosine")
