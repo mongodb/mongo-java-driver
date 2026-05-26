@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.fail;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -33,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -44,6 +46,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
+import org.osgi.framework.FrameworkEvent;
 import org.osgi.framework.launch.Framework;
 
 class OsgiBundleResolutionTest {
@@ -52,10 +55,33 @@ class OsgiBundleResolutionTest {
 
     private static final String[] BUNDLE_MODULES = {
         "bson",
+        "bson-record-codec",
+        "mongodb-crypt",
         "driver-core",
+        "bson-scala",
         "driver-sync",
-        "driver-reactive-streams"
+        "driver-reactive-streams",
+        "driver-scala",
+        "driver-kotlin-sync",
+        "driver-kotlin-coroutine",
+        "driver-kotlin-extensions"
     };
+
+    // JARs on the test classpath whose packages are exported from the Felix system bundle,
+    // satisfying non-optional imports from the bundles under test.
+    private static final String[] SYSTEM_PACKAGE_JAR_PREFIXES = {
+        "reactive-streams",
+        "reactor-core",
+        "kotlin-stdlib",
+        "kotlin-reflect",
+        "kotlinx-coroutines-core",
+        "kotlinx-coroutines-reactive",
+        "jsr305",
+        "jna"
+    };
+
+    // Eagerly computed — the classpath is fixed for the lifetime of the test JVM.
+    private static final String SYSTEM_PACKAGES = buildSystemPackagesFromClasspath();
 
     @TempDir
     private Path cacheDir;
@@ -63,19 +89,13 @@ class OsgiBundleResolutionTest {
     private Framework framework;
 
     @BeforeEach
-    void startFramework() throws BundleException, IOException {
-
+    void startFramework() throws BundleException {
         Map<String, String> config = new HashMap<>();
         config.put("org.osgi.framework.storage", cacheDir.toString());
         config.put("org.osgi.framework.storage.clean", "onFirstInit");
         config.put("felix.log.level", "1");
-        // Export required (non-optional) third-party packages from the system bundle.
-        // In a real OSGi container these would be provided by separately installed bundles.
-        // We scan the test classpath for reactive-streams and reactor-core JARs and export
-        // their packages so versions stay in sync with the version catalog automatically.
-        String extraPackages = buildSystemPackagesFromClasspath();
-        if (!extraPackages.isEmpty()) {
-            config.put("org.osgi.framework.system.packages.extra", extraPackages);
+        if (!SYSTEM_PACKAGES.isEmpty()) {
+            config.put("org.osgi.framework.system.packages.extra", SYSTEM_PACKAGES);
         }
 
         framework = new FrameworkFactory().newFramework(config);
@@ -86,27 +106,26 @@ class OsgiBundleResolutionTest {
     void stopFramework() throws BundleException, InterruptedException {
         if (framework != null) {
             framework.stop();
-            framework.waitForStop(10_000);
+            FrameworkEvent event = framework.waitForStop(10_000);
+            if (event.getType() == FrameworkEvent.WAIT_TIMEDOUT) {
+                throw new IllegalStateException("OSGi framework did not stop within 10 seconds");
+            }
         }
     }
 
     @Test
     void bundlesResolveWithoutOptionalDependencies() throws Exception {
-        BundleContext ctx = framework.getBundleContext();
-        List<Bundle> installed = new ArrayList<>();
-
-        for (String module : BUNDLE_MODULES) {
-            File jar = findBundleJar(module);
-            try (InputStream is = Files.newInputStream(jar.toPath())) {
-                Bundle bundle = ctx.installBundle("file:" + jar.getAbsolutePath(), is);
-                installed.add(bundle);
-            }
-        }
+        List<Bundle> installed = installAllBundles(framework.getBundleContext());
 
         for (Bundle bundle : installed) {
             try {
                 bundle.start();
             } catch (BundleException e) {
+                // Fail immediately on the first resolution error. Bundles are wired by
+                // Import-Package, so an unresolved bundle (e.g. driver-core missing a
+                // required import) leaves its exported packages unsatisfied for all
+                // downstream bundles. Collecting further failures would only add
+                // cascading noise — the first message identifies the root cause.
                 fail(formatBundleFailure(bundle, e));
             }
         }
@@ -114,24 +133,39 @@ class OsgiBundleResolutionTest {
 
     @Test
     void bundlesReportCorrectSymbolicNames() throws Exception {
-        BundleContext ctx = framework.getBundleContext();
-        List<String> symbolicNames = new ArrayList<>();
+        List<Bundle> installed = installAllBundles(framework.getBundleContext());
 
+        List<String> symbolicNames = installed.stream()
+                .map(Bundle::getSymbolicName)
+                .collect(Collectors.toList());
+
+        assertThat(symbolicNames).containsExactly(
+                "org.mongodb.bson",
+                "org.mongodb.bson-record-codec",
+                "com.mongodb.crypt.capi",
+                "org.mongodb.driver-core",
+                "org.mongodb.scala.mongo-scala-bson",
+                "org.mongodb.driver-sync",
+                "org.mongodb.driver-reactivestreams",
+                "org.mongodb.scala.mongo-scala-driver",
+                "org.mongodb.mongodb-driver-kotlin-sync",
+                "org.mongodb.mongodb-driver-kotlin-coroutine",
+                "org.mongodb.mongodb-driver-kotlin-extensions");
+    }
+
+    private List<Bundle> installAllBundles(final BundleContext ctx) throws Exception {
+        List<Bundle> installed = new ArrayList<>();
         for (String module : BUNDLE_MODULES) {
             File jar = findBundleJar(module);
             try (InputStream is = Files.newInputStream(jar.toPath())) {
                 Bundle bundle = ctx.installBundle("file:" + jar.getAbsolutePath(), is);
-                symbolicNames.add(bundle.getSymbolicName());
+                installed.add(bundle);
             }
         }
-
-        assertThat(symbolicNames).containsExactly(
-                "org.mongodb.bson",
-                "org.mongodb.driver-core",
-                "org.mongodb.driver-sync",
-                "org.mongodb.driver-reactivestreams");
+        return installed;
     }
 
+    // Parses Felix's error message format to extract the missing package name.
     private static String formatBundleFailure(final Bundle bundle, final BundleException e) {
         String msg = e.getMessage();
         StringBuilder sb = new StringBuilder();
@@ -156,26 +190,25 @@ class OsgiBundleResolutionTest {
         return sb.toString();
     }
 
-    private static String systemPackagesCache;
-
     private static String buildSystemPackagesFromClasspath() {
-        if (systemPackagesCache != null) {
-            return systemPackagesCache;
-        }
         Set<String> packages = new LinkedHashSet<>();
         String classpath = System.getProperty("java.class.path", "");
 
         for (String entry : classpath.split(File.pathSeparator)) {
             File file = new File(entry);
             String name = file.getName();
-            if (!name.startsWith("reactive-streams") && !name.startsWith("reactor-core")) {
+            if (!matchesAnyPrefix(name)) {
                 continue;
             }
             if (!file.isFile() || !name.endsWith(".jar")) {
                 continue;
             }
             try (JarFile jar = new JarFile(file)) {
-                String version = jar.getManifest().getMainAttributes().getValue("Bundle-Version");
+                Manifest manifest = jar.getManifest();
+                if (manifest == null) {
+                    continue;
+                }
+                String version = manifest.getMainAttributes().getValue("Bundle-Version");
                 if (version == null) {
                     version = "0.0.0";
                 }
@@ -189,12 +222,20 @@ class OsgiBundleResolutionTest {
                     }
                 }
             } catch (IOException e) {
-                // Skip JARs that can't be read
+                throw new UncheckedIOException("Failed to read classpath JAR: " + file, e);
             }
         }
 
-        systemPackagesCache = String.join(",", packages);
-        return systemPackagesCache;
+        return String.join(",", packages);
+    }
+
+    private static boolean matchesAnyPrefix(final String fileName) {
+        for (String prefix : SYSTEM_PACKAGE_JAR_PREFIXES) {
+            if (fileName.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static File findBundleJar(final String module) {

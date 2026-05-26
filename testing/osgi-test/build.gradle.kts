@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 plugins {
-    id("java-library")
     id("project.base")
     id("checkstyle")
     id("conventions.testing-base")
@@ -28,14 +27,39 @@ dependencies {
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.junit.jupiter.platform.launcher)
+    // AssertJ used here for infrastructure assertions (isDirectory, hasSize, containsExactly)
+    // which are significantly more readable than JUnit 5 equivalents for this test.
     testImplementation(libs.assertj)
     testImplementation(libs.felix.framework)
+
+    // These JARs are scanned by buildSystemPackagesFromClasspath() to export packages
+    // from the Felix system bundle, satisfying non-optional imports from bundles under test.
     testImplementation(libs.reactive.streams)
     testImplementation(platform(libs.project.reactor.bom))
     testImplementation(libs.project.reactor.core)
+    testImplementation(platform(libs.kotlin.bom))
+    testImplementation(libs.kotlin.stdlib.jdk8)
+    testImplementation(libs.kotlin.reflect)
+    testImplementation(platform(libs.kotlinx.coroutines.bom))
+    testImplementation(libs.kotlinx.coroutines.core)
+    testImplementation(libs.kotlinx.coroutines.reactive)
+    testImplementation(libs.findbugs.jsr)
+    testImplementation(libs.jna)
 }
 
 tasks.test {
-    dependsOn(":bson:jar", ":driver-core:jar", ":driver-sync:jar", ":driver-reactive-streams:jar")
+    dependsOn(
+        ":bson:jar",
+        ":bson-record-codec:jar",
+        ":mongodb-crypt:jar",
+        ":driver-core:jar",
+        ":bson-scala:jar",
+        ":driver-sync:jar",
+        ":driver-reactive-streams:jar",
+        ":driver-scala:jar",
+        ":driver-kotlin-sync:jar",
+        ":driver-kotlin-coroutine:jar",
+        ":driver-kotlin-extensions:jar"
+    )
     systemProperty("projectRoot", rootProject.projectDir.absolutePath)
 }

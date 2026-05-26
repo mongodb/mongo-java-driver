@@ -103,7 +103,7 @@ micrometer-observation = { module = "io.micrometer:micrometer-observation" }
 graal-sdk = { module = "org.graalvm.sdk:graal-sdk", version.ref = "graal-sdk" }
 graal-sdk-nativeimage = { module = "org.graalvm.sdk:nativeimage", version.ref = "graal-sdk" }
 
-kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom" }
+kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom", version.ref = "kotlin" }
 kotlin-stdlib-jdk8 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
 kotlinx-coroutines-bom = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-bom", version.ref = "kotlinx-coroutines-bom" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core" }
