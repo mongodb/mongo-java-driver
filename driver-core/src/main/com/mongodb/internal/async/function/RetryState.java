@@ -297,16 +297,6 @@ public final class RetryState {
     }
 
     /**
-     * This method is similar to
-     * {@link RetryState#breakAndThrowIfRetryAnd(Supplier)} / {@link RetryState#breakAndCompleteIfRetryAnd(Supplier, SingleResultCallback)}.
-     * The difference is that it allows the current attempt to continue, yet no more attempts will happen. Also, unlike the aforementioned
-     * methods, this method has effect even if called during the {@linkplain #isFirstAttempt() first attempt}.
-     */
-    public void markAsLastAttempt() {
-        loopState.markAsLastIteration();
-    }
-
-    /**
      * Returns {@code true} iff the current attempt is the first one, i.e., no retry attempts have been made.
      *
      * @see #attempt()
@@ -319,7 +309,7 @@ public final class RetryState {
      * Returns {@code true} iff the current attempt is known to be the last one, i.e., it is known that no more attempts will be made.
      * An attempt is known to be the last one iff any of the following applies:
      * <ul>
-     *   <li>{@link #breakAndThrowIfRetryAnd(Supplier)} / {@link #breakAndCompleteIfRetryAnd(Supplier, SingleResultCallback)} / {@link #markAsLastAttempt()} was called.</li>
+     *   <li>{@link #breakAndThrowIfRetryAnd(Supplier)} / {@link #breakAndCompleteIfRetryAnd(Supplier, SingleResultCallback)} was called.</li>
      *   <li>{@code attemptException} is a {@link MongoOperationTimeoutException}.</li>
      *   <li>The number of attempts is limited, and the current attempt is the last one.</li>
      * </ul>
