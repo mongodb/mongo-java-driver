@@ -18,6 +18,7 @@ package com.mongodb.client;
 
 import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.event.ConnectionCheckOutFailedEvent;
 import com.mongodb.event.ConnectionPoolClearedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolReadyEvent;
@@ -26,6 +27,7 @@ import com.mongodb.event.ServerHeartbeatFailedEvent;
 import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
+import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.time.TimePointTest;
@@ -47,6 +49,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static com.mongodb.ClusterFixture.configureFailPoint;
@@ -266,6 +270,72 @@ public class ServerDiscoveryAndMonitoringProseTests {
     public void shouldEmitHeartbeatStartedBeforeSocketIsConnected() {
         // The implementation of this test is in DefaultServerMonitorTest.shouldEmitHeartbeatStartedBeforeSocketIsConnected
         // As it requires mocking and package access to `com.mongodb.internal.connection`
+    }
+
+    /**
+     * See
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-tests.md#connection-pool-backpressure">Connection Pool Backpressure</a>.
+     */
+    @Test
+    public void testConnectionPoolBackpressure() throws InterruptedException {
+        assumeTrue(serverVersionAtLeast(7, 0));
+
+        TestConnectionPoolListener connectionPoolListener = new TestConnectionPoolListener();
+
+        MongoClientSettings clientSettings = getMongoClientSettingsBuilder()
+                .applyToConnectionPoolSettings(builder -> builder
+                        .maxConnecting(100)
+                        .addConnectionPoolListener(connectionPoolListener))
+                .build();
+
+        try (MongoClient adminClient = MongoClients.create(getMongoClientSettingsBuilder().build());
+             MongoClient client = MongoClients.create(clientSettings)) {
+
+            MongoDatabase adminDatabase = adminClient.getDatabase("admin");
+            MongoDatabase database = client.getDatabase(getDefaultDatabaseName());
+            MongoCollection<Document> collection = database.getCollection("testCollection");
+
+            try {
+                adminDatabase.runCommand(new Document("setParameter", 1)
+                        .append("ingressConnectionEstablishmentRateLimiterEnabled", true));
+                adminDatabase.runCommand(new Document("setParameter", 1)
+                        .append("ingressConnectionEstablishmentRatePerSec", 20));
+                adminDatabase.runCommand(new Document("setParameter", 1)
+                        .append("ingressConnectionEstablishmentBurstCapacitySecs", 1));
+                adminDatabase.runCommand(new Document("setParameter", 1)
+                        .append("ingressConnectionEstablishmentMaxQueueDepth", 1));
+
+                collection.insertOne(Document.parse("{}"));
+
+                ExecutorService executor = Executors.newFixedThreadPool(100);
+                try {
+                    for (int i = 0; i < 100; i++) {
+                        executor.submit(() ->
+                                collection.find(new Document("$where", "function() { sleep(2000); return true; }")).first());
+                    }
+                    executor.shutdown();
+                    assertTrue("Executor did not terminate within timeout",
+                            executor.awaitTermination(20, SECONDS));
+                } finally {
+                    if (!executor.isTerminated()) {
+                        executor.shutdownNow();
+                    }
+                }
+
+                int failedCheckOutCount = connectionPoolListener.countEvents(ConnectionCheckOutFailedEvent.class);
+                assertTrue("Expected at least 10 ConnectionCheckOutFailedEvents, but got " + failedCheckOutCount,
+                        failedCheckOutCount >= 10);
+                assertEquals(0, connectionPoolListener.countEvents(ConnectionPoolClearedEvent.class));
+            } finally {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                adminDatabase.runCommand(new Document("setParameter", 1)
+                        .append("ingressConnectionEstablishmentRateLimiterEnabled", false));
+            }
+        }
     }
 
     private static void assertPoll(final BlockingQueue<?> queue, @Nullable final Class<?> allowed, final Set<Class<?>> required)

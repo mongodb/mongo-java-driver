@@ -46,6 +46,8 @@ class MongoClientOptionsSpecification extends Specification {
         options.getWriteConcern() == WriteConcern.ACKNOWLEDGED
         options.getRetryWrites()
         options.getRetryReads()
+        options.getMaxAdaptiveRetries() == null
+        !options.getEnableOverloadRetargeting()
         options.getCodecRegistry() == MongoClientSettings.defaultCodecRegistry
         options.getUuidRepresentation() == UuidRepresentation.UNSPECIFIED
         options.getMinConnectionsPerHost() == 0
@@ -85,6 +87,11 @@ class MongoClientOptionsSpecification extends Specification {
         def builder = new MongoClientOptions.Builder()
 
         when:
+        builder.maxAdaptiveRetries(-1)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
         builder.dbDecoderFactory(null)
         then:
         thrown(IllegalArgumentException)
@@ -116,6 +123,8 @@ class MongoClientOptionsSpecification extends Specification {
                                         .readPreference(ReadPreference.secondary())
                                         .retryWrites(true)
                                         .retryReads(false)
+                                        .maxAdaptiveRetries(42)
+                                        .enableOverloadRetargeting(true)
                                         .writeConcern(WriteConcern.JOURNALED)
                                         .readConcern(ReadConcern.MAJORITY)
                                         .minConnectionsPerHost(30)
@@ -162,6 +171,8 @@ class MongoClientOptionsSpecification extends Specification {
         options.getServerSelector() == serverSelector
         options.getRetryWrites()
         !options.getRetryReads()
+        options.getMaxAdaptiveRetries() == 42
+        options.getEnableOverloadRetargeting()
         options.getServerSelectionTimeout() == 150
         options.getTimeout() == 10_000
         options.getMaxWaitTime() == 200
@@ -207,6 +218,7 @@ class MongoClientOptionsSpecification extends Specification {
         settings.writeConcern == WriteConcern.JOURNALED
         settings.retryWrites
         !settings.retryReads
+        settings.getMaxAdaptiveRetries() == 42
         settings.autoEncryptionSettings == autoEncryptionSettings
         settings.codecRegistry == codecRegistry
         settings.commandListeners == [commandListener]
@@ -227,6 +239,7 @@ class MongoClientOptionsSpecification extends Specification {
         optionsFromSettings.getServerSelector() == serverSelector
         optionsFromSettings.getRetryWrites()
         !optionsFromSettings.getRetryReads()
+        optionsFromSettings.getMaxAdaptiveRetries() == 42
         optionsFromSettings.getServerSelectionTimeout() == 150
         optionsFromSettings.getServerSelectionTimeout() == 150
         optionsFromSettings.getMaxWaitTime() == 200
@@ -318,6 +331,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .applicationName('appName')
                 .readPreference(ReadPreference.secondary())
                 .retryReads(true)
+                .enableOverloadRetargeting(true)
                 .uuidRepresentation(UuidRepresentation.STANDARD)
                 .writeConcern(WriteConcern.JOURNALED)
                 .minConnectionsPerHost(30)
@@ -619,6 +633,8 @@ class MongoClientOptionsSpecification extends Specification {
                 .writeConcern(WriteConcern.JOURNALED)
                 .retryWrites(true)
                 .retryReads(true)
+                .maxAdaptiveRetries(42)
+                .enableOverloadRetargeting(true)
                 .uuidRepresentation(UuidRepresentation.STANDARD)
                 .minConnectionsPerHost(30)
                 .connectionsPerHost(500)
@@ -661,6 +677,18 @@ class MongoClientOptionsSpecification extends Specification {
     def 'should allow 0 (infinite) connectionsPerHost'() {
         expect:
         MongoClientOptions.builder().connectionsPerHost(0).build().getConnectionsPerHost() == 0
+    }
+
+    def 'should allow null, 0 maxAdaptiveRetries'() {
+        when:
+        def options = MongoClientOptions.builder().maxAdaptiveRetries(null).build()
+        then:
+        options.getMaxAdaptiveRetries() == null
+
+        when:
+        options = MongoClientOptions.builder().maxAdaptiveRetries(0).build()
+        then:
+        options.getMaxAdaptiveRetries() == 0
     }
 
     private static class MyDBEncoderFactory implements DBEncoderFactory {

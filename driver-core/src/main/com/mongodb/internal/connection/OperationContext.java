@@ -17,6 +17,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.Function;
 import com.mongodb.MongoConnectionPoolClearedException;
+import com.mongodb.MongoException;
 import com.mongodb.ReadConcern;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
@@ -27,7 +28,6 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.session.SessionContext;
@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.mongodb.MongoException.SYSTEM_OVERLOADED_ERROR_LABEL;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -76,7 +77,19 @@ public class OperationContext {
                 null);
     }
 
-    public static OperationContext simpleOperationContext(
+    public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
+            final TracingManager tracingManager,
+            @Nullable final ServerApi serverApi,
+            @Nullable final String operationName,
+            final ServerDeprioritization serverDeprioritization) {
+        this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, serverDeprioritization,
+                tracingManager,
+                serverApi,
+                operationName,
+                null);
+    }
+
+    static OperationContext simpleOperationContext(
             final TimeoutSettings timeoutSettings, @Nullable final ServerApi serverApi) {
         return new OperationContext(
                 IgnorableRequestContext.INSTANCE,
@@ -110,6 +123,16 @@ public class OperationContext {
 
     public OperationContext withOperationName(final String operationName) {
         return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, tracingManager, serverApi,
+                operationName, tracingSpan);
+    }
+
+    /**
+     * TODO-JAVA-6058: This method enables overriding the ServerDeprioritization state.
+     * It is a temporary solution to handle cases where deprioritization state persists across operations.
+     */
+    public OperationContext withNewServerDeprioritization() {
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext,
+                new ServerDeprioritization(serverDeprioritization.enableOverloadRetargeting), tracingManager, serverApi,
                 operationName, tracingSpan);
     }
 
@@ -152,8 +175,7 @@ public class OperationContext {
         this.tracingSpan = tracingSpan;
     }
 
-    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
-    public OperationContext(final long id,
+    private OperationContext(final long id,
             final RequestContext requestContext,
             final SessionContext sessionContext,
             final TimeoutContext timeoutContext,
@@ -173,26 +195,6 @@ public class OperationContext {
         this.operationName = operationName;
         this.tracingSpan = tracingSpan;
     }
-
-    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
-    public OperationContext(final long id,
-            final RequestContext requestContext,
-            final SessionContext sessionContext,
-            final TimeoutContext timeoutContext,
-            final TracingManager tracingManager,
-            @Nullable final ServerApi serverApi,
-            @Nullable final String operationName) {
-        this.id = id;
-        this.serverDeprioritization = new ServerDeprioritization();
-        this.requestContext = requestContext;
-        this.sessionContext = sessionContext;
-        this.timeoutContext = timeoutContext;
-        this.tracingManager = tracingManager;
-        this.serverApi = serverApi;
-        this.operationName = operationName;
-        this.tracingSpan = null;
-    }
-
 
     /**
      * @return The same {@link ServerDeprioritization} if called on the same {@link OperationContext}.
@@ -217,7 +219,8 @@ public class OperationContext {
     }
 
     public OperationContext withMinRoundTripTime(final ServerDescription serverDescription) {
-        return withTimeoutContext(timeoutContext.withMinRoundTripTime(TimeUnit.NANOSECONDS.toMillis(serverDescription.getMinRoundTripTimeNanos())));
+        return withTimeoutContext(
+                timeoutContext.withMinRoundTripTime(TimeUnit.NANOSECONDS.toMillis(serverDescription.getMinRoundTripTimeNanos())));
     }
 
     public OperationContext withOverride(final TimeoutContextOverride timeoutContextOverrideFunction) {
@@ -227,26 +230,38 @@ public class OperationContext {
     public static final class ServerDeprioritization {
         @Nullable
         private ServerAddress candidate;
+        @Nullable
+        private ClusterType clusterType;
         private final Set<ServerAddress> deprioritized;
-        private final DeprioritizingSelector selector;
+        private final boolean enableOverloadRetargeting;
 
-        private ServerDeprioritization() {
-            candidate = null;
-            deprioritized = new HashSet<>();
-            selector = new DeprioritizingSelector();
+        public ServerDeprioritization() {
+            this(false);
+        }
+
+        public ServerDeprioritization(final boolean enableOverloadRetargeting) {
+            this.enableOverloadRetargeting = enableOverloadRetargeting;
+            this.candidate = null;
+            this.deprioritized = new HashSet<>();
+            this.clusterType = null;
         }
 
         /**
-         * The returned {@link ServerSelector} tries to {@linkplain ServerSelector#select(ClusterDescription) select}
-         * only the {@link ServerDescription}s that do not have deprioritized {@link ServerAddress}es.
-         * If no such {@link ServerDescription} can be selected, then it selects {@link ClusterDescription#getServerDescriptions()}.
+         * The returned {@link ServerSelector} wraps the provided selector and attempts
+         * {@linkplain ServerSelector#select(ClusterDescription) server selection} in two passes:
+         * <ol>
+         *   <li>First pass: selects using the wrapped selector with only non-deprioritized {@link ServerDescription}s.</li>
+         *   <li>Second pass: if the first pass selects no {@link ServerDescription}s,
+         *   selects using the wrapped selector again with all {@link ServerDescription}s, including deprioritized ones.</li>
+         * </ol>
          */
-        ServerSelector getServerSelector() {
-            return selector;
+        ServerSelector apply(final ServerSelector wrappedSelector) {
+            return new DeprioritizingSelector(wrappedSelector);
         }
 
-        void updateCandidate(final ServerAddress serverAddress) {
-            candidate = serverAddress;
+        void updateCandidate(final ServerAddress serverAddress, final ClusterType clusterType) {
+            this.candidate = serverAddress;
+            this.clusterType = clusterType;
         }
 
         public void onAttemptFailure(final Throwable failure) {
@@ -254,7 +269,15 @@ public class OperationContext {
                 candidate = null;
                 return;
             }
-            deprioritized.add(candidate);
+
+            // As per spec: sharded clusters deprioritize on any error,
+            // other topologies deprioritize on overload only when retargeting is enabled.
+            boolean isSystemOverloadedError = failure instanceof MongoException
+                    && ((MongoException) failure).hasErrorLabel(SYSTEM_OVERLOADED_ERROR_LABEL);
+
+            if (clusterType == ClusterType.SHARDED || (isSystemOverloadedError && enableOverloadRetargeting)) {
+                deprioritized.add(candidate);
+            }
         }
 
         /**
@@ -263,28 +286,46 @@ public class OperationContext {
          * which indeed may be used concurrently. {@link DeprioritizingSelector} does not need to be thread-safe.
          */
         private final class DeprioritizingSelector implements ServerSelector {
-            private DeprioritizingSelector() {
+            private final ServerSelector wrappedSelector;
+
+            private DeprioritizingSelector(final ServerSelector wrappedSelector) {
+                this.wrappedSelector = wrappedSelector;
             }
 
             @Override
             public List<ServerDescription> select(final ClusterDescription clusterDescription) {
                 List<ServerDescription> serverDescriptions = clusterDescription.getServerDescriptions();
-                if (!isEnabled(clusterDescription.getType())) {
-                    return serverDescriptions;
+
+                // TODO-JAVA-5908: Evaluate whether using the early-return optimization has a meaningful performance impact on server selection.
+                if (serverDescriptions.size() == 1 || deprioritized.isEmpty()) {
+                    return wrappedSelector.select(clusterDescription);
                 }
+
+                // TODO-JAVA-5908: Evaluate whether using a loop instead of Stream has a meaningful performance impact on server selection.
                 List<ServerDescription> nonDeprioritizedServerDescriptions = serverDescriptions
                         .stream()
                         .filter(serverDescription -> !deprioritized.contains(serverDescription.getAddress()))
                         .collect(toList());
-                return nonDeprioritizedServerDescriptions.isEmpty() ? serverDescriptions : nonDeprioritizedServerDescriptions;
-            }
 
-            private boolean isEnabled(final ClusterType clusterType) {
-                return clusterType == ClusterType.SHARDED;
+                // TODO-JAVA-5908: Evaluate whether using the early-return optimization has a meaningful performance impact on server selection.
+                if (nonDeprioritizedServerDescriptions.isEmpty()) {
+                    return wrappedSelector.select(clusterDescription);
+                }
+
+                List<ServerDescription> selected = wrappedSelector.select(
+                        new ClusterDescription(
+                                clusterDescription.getConnectionMode(),
+                                clusterDescription.getType(),
+                                clusterDescription.getSrvResolutionException(),
+                                nonDeprioritizedServerDescriptions,
+                                clusterDescription.getClusterSettings(),
+                                clusterDescription.getServerSettings()));
+                return selected.isEmpty() ? wrappedSelector.select(clusterDescription) : selected;
             }
         }
     }
 
-    public interface TimeoutContextOverride extends Function<TimeoutContext, TimeoutContext> {}
+    public interface TimeoutContextOverride extends Function<TimeoutContext, TimeoutContext> {
+    }
 }
 
