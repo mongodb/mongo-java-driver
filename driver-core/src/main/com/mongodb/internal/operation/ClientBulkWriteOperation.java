@@ -89,7 +89,6 @@ import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.internal.validator.ReplacingDocumentFieldNameValidator;
 import com.mongodb.internal.validator.UpdateFieldNameValidator;
 import com.mongodb.lang.Nullable;
-import org.bson.BsonArray;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -180,12 +179,11 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
 
     @Override
     public String getCommandName() {
-        return "bulkWrite";
+        return BULK_WRITE_COMMAND_NAME;
     }
 
     @Override
     public MongoNamespace getNamespace() {
-        // The bulkWrite command is executed on the "admin" database.
         return ADMIN_DB_COMMAND_NAMESPACE;
     }
 
@@ -318,11 +316,13 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             resultAccumulator.onBulkWriteCommandErrorResponse(bulkWriteCommandException);
             throw bulkWriteCommandException;
         } catch (MongoException mongoException) {
-            // The server does not have a chance to add "RetryableWriteError" label to `e`,
-            // and if it is the last attempt failure, `RetryingSyncSupplier` also may not have a chance
-            // to add the label. So we do that explicitly.
-            getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel(retryState, mongoException);
             resultAccumulator.onBulkWriteCommandErrorWithoutResponse(mongoException);
+            if (retryWritesSetting) {
+                // Adding the `RetryableError` label here is unnecessary at this point:
+                // applications cannot use it for implementing retries, and it is not even part of the public driver API.
+                // Unfortunately, certain unified tests incorrectly rely on this label to verify retries, resulting in this redundant code.
+                getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel(retryState, mongoException);
+            }
             throw mongoException;
         }
     }
@@ -383,11 +383,13 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 c.completeExceptionally(t);
             } else if (t instanceof MongoException) {
                 MongoException mongoException = (MongoException) t;
-                // The server does not have a chance to add "RetryableWriteError" label to `e`,
-                // and if it is the last attempt failure, `RetryingSyncSupplier` also may not have a chance
-                // to add the label. So we do that explicitly.
-                getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel(retryState, mongoException);
                 resultAccumulator.onBulkWriteCommandErrorWithoutResponse(mongoException);
+                if (retryWritesSetting) {
+                    // Adding the `RetryableError` label here is unnecessary at this point:
+                    // applications cannot use it for implementing retries, and it is not even part of the public driver API.
+                    // Unfortunately, certain unified tests incorrectly rely on this label to verify retries, resulting in this redundant code.
+                    getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel(retryState, mongoException);
+                }
                 c.completeExceptionally(mongoException);
             } else {
                 c.completeExceptionally(t);
@@ -471,14 +473,18 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         }).finish(callback);
     }
 
+    /**
+     * @see #executeBulkWriteCommandAndExhaustOkResponse(RetryState, ConnectionSource, Connection, ClientBulkWriteCommand, WriteConcern, OperationContext)
+     */
     private static ExhaustiveClientBulkWriteCommandOkResponse createExhaustiveClientBulkWriteCommandOkResponse(
             final ClientBulkWriteCommandOkResponse response,
             final List<List<BsonDocument>> cursorExhaustBatches,
-            final ConnectionDescription connectionDescription) {
+            final ConnectionDescription connectionDescription) throws MongoWriteConcernWithResponseException {
         ExhaustiveClientBulkWriteCommandOkResponse exhaustiveResponse = new ExhaustiveClientBulkWriteCommandOkResponse(
                 response, cursorExhaustBatches);
 
-        // `Connection.command` does not throw `MongoWriteConcernException`, so we have to construct it ourselves
+        // Given that the response is OK, `Connection.command` does not throw an exception when the write concern is violated,
+        // so we have to construct such an exception ourselves.
         MongoWriteConcernException writeConcernException = Exceptions.createWriteConcernException(
                 response, connectionDescription.getServerAddress());
         if (writeConcernException != null) {
@@ -647,12 +653,9 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             if (!responseDocument.containsKey(writeConcernErrorFieldName)) {
                 return null;
             }
-            BsonDocument writeConcernErrorDocument = responseDocument.getDocument(writeConcernErrorFieldName);
-            WriteConcernError writeConcernError = WriteConcernHelper.createWriteConcernError(writeConcernErrorDocument);
-            Set<String> errorLabels = responseDocument.getArray("errorLabels", new BsonArray()).stream()
-                    .map(i -> i.asString().getValue())
-                    .collect(toSet());
-            return new MongoWriteConcernException(writeConcernError, null, serverAddress, errorLabels);
+            // We do not use `MongoWriteConcernException.getWriteResult`,
+            // so we do not care what result `WriteConcernHelper.createWriteConcernException` puts there.
+            return WriteConcernHelper.createWriteConcernException(responseDocument, serverAddress);
         }
     }
 
