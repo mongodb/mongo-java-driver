@@ -33,7 +33,7 @@ import org.bson.json.JsonWriterSettings;
 import java.io.StringWriter;
 
 import static com.mongodb.internal.observability.micrometer.TracingManager.ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH;
-import static java.lang.System.getenv;
+import static com.mongodb.internal.EnvironmentProvider.getEnv;
 import static java.util.Optional.ofNullable;
 
 
@@ -64,7 +64,7 @@ public class MicrometerTracer implements Tracer {
             final int textMaxLength, @Nullable final ObservationConvention<MongodbObservationContext> customConvention) {
         this.allowCommandPayload = allowCommandPayload;
         this.observationRegistry = observationRegistry;
-        this.textMaxLength = ofNullable(getenv(ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH))
+        this.textMaxLength = ofNullable(getEnv(ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH))
                 .map(Integer::parseInt)
                 .orElse(textMaxLength);
         this.convention = customConvention != null ? customConvention : new DefaultMongodbObservationConvention();

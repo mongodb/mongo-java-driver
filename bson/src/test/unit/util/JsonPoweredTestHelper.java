@@ -86,7 +86,8 @@ public final class JsonPoweredTestHelper {
                     public FileVisitResult visitFile(final Path filePath, final BasicFileAttributes attrs) throws IOException {
                         if (filePath.toString().endsWith(".json")) {
                             if (fileSystem == null) {
-                                files.add(getTestDocumentWithMetaData(filePath.toString().substring(filePath.toString().lastIndexOf(resourcePath))));
+                                String filePathStr = filePath.toString().replace('\\', '/');
+                                files.add(getTestDocumentWithMetaData(filePathStr.substring(filePathStr.lastIndexOf(resourcePath))));
                             } else {
                                 files.add(getTestDocumentWithMetaData(filePath.toString()));
                             }
