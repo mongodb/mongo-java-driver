@@ -16,7 +16,6 @@
 
 package com.mongodb.client;
 
-import com.mongodb.Function;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ServerAddress;
@@ -31,7 +30,8 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.Document;
-import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -46,24 +46,25 @@ import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static com.mongodb.internal.operation.CommandOperationHelper.NO_WRITES_PERFORMED_ERROR_LABEL;
 import static com.mongodb.internal.operation.CommandOperationHelper.RETRYABLE_WRITE_ERROR_LABEL;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Tests in this class check that the internal {@link MongoWriteConcernWithResponseException} does not leak from our API.
  */
-public final class MongoWriteConcernWithResponseExceptionTest {
+public class MongoWriteConcernWithResponseExceptionTest {
+    protected MongoClient createClient(final MongoClientSettings clientSettings) {
+        return MongoClients.create(clientSettings);
+    }
+
     /**
      * This test is similar to {@link RetryableWritesProseTest#originalErrorMustBePropagatedIfNoWritesPerformed()}.
      * The difference is in the assertions, it also verifies situations when `writeConcernError` happens on the first attempt
      * and on the last attempt.
      */
-    @Test
-    public void doesNotLeak() throws InterruptedException {
-        doesNotLeak(MongoClients::create);
-    }
-
-    public static void doesNotLeak(final Function<MongoClientSettings, MongoClient> clientCreator) throws InterruptedException {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    protected void doesNotLeak(final boolean writeConcernErrorOnFirstAttempt) throws InterruptedException {
         BsonDocument writeConcernErrorFpDoc = new BsonDocument()
                 .append("configureFailPoint", new BsonString("failCommand"))
                 .append("mode", new BsonDocument()
@@ -85,13 +86,15 @@ public final class MongoWriteConcernWithResponseExceptionTest {
                         .append("errorCode", new BsonInt32(10107))
                         .append("errorLabels", new BsonArray(Stream.of(RETRYABLE_WRITE_ERROR_LABEL, NO_WRITES_PERFORMED_ERROR_LABEL)
                                 .map(BsonString::new).collect(Collectors.toList()))));
-        doesNotLeak(clientCreator, writeConcernErrorFpDoc, true, noWritesPerformedFpDoc);
-        doesNotLeak(clientCreator, noWritesPerformedFpDoc, false, writeConcernErrorFpDoc);
+        if (writeConcernErrorOnFirstAttempt) {
+            doesNotLeak(writeConcernErrorFpDoc, true, noWritesPerformedFpDoc);
+        } else {
+            doesNotLeak(noWritesPerformedFpDoc, false, writeConcernErrorFpDoc);
+        }
     }
 
     @SuppressWarnings("try")
-    private static void doesNotLeak(
-            final Function<MongoClientSettings, MongoClient> clientCreator,
+    private void doesNotLeak(
             final BsonDocument firstAttemptFpDoc,
             final boolean firstAttemptCommandSucceededEvent,
             final BsonDocument lastAttemptFpDoc) throws InterruptedException {
@@ -121,7 +124,7 @@ public final class MongoWriteConcernWithResponseExceptionTest {
                 }
             }
         };
-        try (MongoClient client = clientCreator.apply(getMongoClientSettingsBuilder()
+        try (MongoClient client = createClient(getMongoClientSettingsBuilder()
                 .retryWrites(true)
                 .addCommandListener(commandListener)
                 .applyToServerSettings(builder -> builder.heartbeatFrequency(50, TimeUnit.MILLISECONDS))
