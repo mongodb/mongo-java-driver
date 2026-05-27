@@ -323,7 +323,7 @@ tasks.withType<AbstractPublishToMaven> {
         | System properties:
         | =================
         |
-        | jnaLibsPath     : Custom local JNA library path for inclusion into the build (rather than downloading the libmongocrypt GitHub release).
+        | jnaLibsPath     : Custom local JNA library path to use at runtime (bypasses downloading/verifying/extracting libmongocrypt release artifacts).
         |
         | Project properties:
         | ===================
