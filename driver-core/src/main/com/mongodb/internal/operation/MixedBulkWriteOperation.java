@@ -19,12 +19,12 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.assertions.Assertions;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.MutableValue;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackFunction;
+import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.async.function.AsyncCallbackTriFunction;
 import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.binding.AsyncConnectionSource;
@@ -57,6 +57,9 @@ import java.util.stream.Collectors;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWriteWithRetriesAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
 import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabel;
 import static com.mongodb.internal.operation.CommandOperationHelper.getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel;
 import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
@@ -159,7 +162,14 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final AsyncWriteBinding binding,
             final OperationContext operationContext,
             final SingleResultCallback<BulkWriteResult> callback) {
-        callback.completeExceptionally(Assertions.fail("VAKOTODO implement"));
+        beginAsync().<BulkWriteResult>thenSupply(c -> {
+            WriteConcern effectiveWriteConcern = validateAndGetEffectiveWriteConcern(writeConcern, operationContext.getSessionContext());
+            beginAsync().<BulkWriteResult>thenSupply(executeAllBatchesCallback -> {
+                executeAllBatchesAsync(effectiveWriteConcern, binding, operationContext, executeAllBatchesCallback);
+            }).onErrorIf(e -> e instanceof MongoException, (e, onErrorCallback) -> {
+                throw transformWriteException((MongoException) e);
+            }).finish(c);
+        }).finish(callback);
     }
 
     private BulkWriteResult executeAllBatches(
@@ -190,7 +200,31 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final AsyncWriteBinding binding,
             final OperationContext operationContext,
             final SingleResultCallback<BulkWriteResult> callback) {
-        callback.completeExceptionally(Assertions.fail("VAKOTODO implement"));
+        beginAsync().<BulkWriteResult>thenSupply(c -> {
+            MutableValue<AsyncSourceAndConnection> sourceAndConnection = new MutableValue<>();
+            beginAsync().<BulkWriteResult>thenSupply(loopCallback -> {
+                MutableValue<BulkWriteBatch> nextBatch = new MutableValue<>();
+                beginAsync().thenRunDoWhileLoop(iterationCallback -> {
+                    beginAsync().<BatchWithSourceAndConnection<AsyncSourceAndConnection>>thenSupply(executeBatchCallback -> {
+                        executeBatchReusingConnectionAsync(
+                                nextBatch.getNullable(), sourceAndConnection.getNullable(), effectiveWriteConcern, binding, operationContext, executeBatchCallback);
+                    }).thenConsume((nextBatchWithSourceAndConnection, consumeExecutionResultCallback) -> {
+                        try (BatchWithSourceAndConnection<AsyncSourceAndConnection> ignoredAndAutoClosed = nextBatchWithSourceAndConnection) {
+                            nextBatch.set(nextBatchWithSourceAndConnection.getBatch());
+                            sourceAndConnection.set(nextBatchWithSourceAndConnection.intoSourceAndConnection());
+                        }
+                        consumeExecutionResultCallback.complete(consumeExecutionResultCallback);
+                    }).finish(iterationCallback);
+                }, () -> nextBatch.get().shouldProcessBatch())
+                .<BulkWriteResult>thenSupply(resultCallback -> {
+                    resultCallback.complete(nextBatch.get().getResult());
+                }).finish(loopCallback);
+            }).thenAlwaysRunAndFinish(() -> {
+                if (sourceAndConnection.getNullable() != null) {
+                    sourceAndConnection.get().close();
+                }
+            }, c);
+        }).finish(callback);
     }
 
     /**
@@ -261,7 +295,58 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final AsyncWriteBinding binding,
             final OperationContext operationContextForSelectServerAndCheckoutConnection,
             final SingleResultCallback<BatchWithSourceAndConnection<AsyncSourceAndConnection>> callback) {
-        callback.completeExceptionally(Assertions.fail("VAKOTODO implement"));
+        beginAsync().<BatchWithSourceAndConnection<AsyncSourceAndConnection>>thenSupply(c -> {
+            MutableValue<BulkWriteBatch> batch = new MutableValue<>(maybeBatch);
+            MutableValue<AsyncSourceAndConnection> sourceAndConnection = new MutableValue<>(maybeSourceAndConnection);
+            RetryState retryState = initialRetryState(
+                    retryWrites, operationContextForSelectServerAndCheckoutConnection.getTimeoutContext());
+            AsyncCallbackSupplier<BatchWithSourceAndConnection<AsyncSourceAndConnection>> retryingBatchExecutor = decorateWriteWithRetriesAsync(
+                    retryState,
+                    operationContextForSelectServerAndCheckoutConnection,
+                    supplierCallback -> {
+                        beginAsync().<AsyncSourceAndConnection>thenSupply(reuseOrSelectServerAndCheckoutConnectionCallback -> {
+                            reuseOrSelectServerAndCheckoutConnectionIfClosedAsync(
+                                    sourceAndConnection.getNullable(), effectiveWriteConcern, binding,
+                                    operationContextForSelectServerAndCheckoutConnection, retryState, reuseOrSelectServerAndCheckoutConnectionCallback);
+                        }).<BatchWithSourceAndConnection<AsyncSourceAndConnection>>thenApply((reusedOrNewSourceAndConnection, setSourceAndConnectionCallback) -> {
+                            beginAsync().thenRun(executeBatchCallback -> {
+                                sourceAndConnection.set(reusedOrNewSourceAndConnection);
+                                ConnectionDescription connectionDescription = reusedOrNewSourceAndConnection.getConnection().getDescription();
+                                retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true);
+                                batch.set(batch.getNullable() != null
+                                        ? batch.get()
+                                        : createFirstBatch(connectionDescription, reusedOrNewSourceAndConnection.getOperationContext(), effectiveWriteConcern));
+                                onBatch(batch.get(), retryState);
+                                executeBatchAsync(batch.get(), reusedOrNewSourceAndConnection, effectiveWriteConcern, executeBatchCallback);
+                            }).<BatchWithSourceAndConnection<AsyncSourceAndConnection>>thenSupply(createNextBatchCallback -> {
+                                createNextBatchCallback.complete(new BatchWithSourceAndConnection<>(batch.get().getNextBatch(), reusedOrNewSourceAndConnection));
+                            }).onErrorIf(e -> true, (e, onErrorCallback) -> {
+                                reusedOrNewSourceAndConnection.close();
+                                onErrorCallback.completeExceptionally(e);
+                            }).finish(setSourceAndConnectionCallback);
+                        }).finish(supplierCallback);
+                    }
+            );
+            beginAsync().<BatchWithSourceAndConnection<AsyncSourceAndConnection>>thenSupply(executorCallback -> {
+                retryingBatchExecutor.get(executorCallback);
+            }).onErrorIf(e -> true, (e, onErrorCallback) -> {
+                if (sourceAndConnection.getNullable() != null) {
+                    sourceAndConnection.get().close();
+                }
+                if (e instanceof MongoWriteConcernWithResponseException) {
+                    batch.get().addResult((BsonDocument) ((MongoWriteConcernWithResponseException) e).getResponse());
+                    onErrorCallback.complete(new BatchWithSourceAndConnection<>(batch.get().getNextBatch(), null));
+                    return;
+                }
+                if (retryWrites && e instanceof MongoException) {
+                    // Adding the `RetryableError` label here is unnecessary at this point:
+                    // applications cannot use it for implementing retries, and it is not even part of the public driver API.
+                    // Unfortunately, certain unified tests incorrectly rely on this label to verify retries, resulting in this redundant code.
+                    getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel(retryState, e);
+                }
+                onErrorCallback.completeExceptionally(e);
+            }).finish(c);
+        }).finish(callback);
     }
 
     private SourceAndConnection reuseOrSelectServerAndCheckoutConnectionIfClosed(
@@ -294,7 +379,26 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final OperationContext operationContext,
             final RetryState retryState,
             final SingleResultCallback<AsyncSourceAndConnection> callback) {
-        callback.completeExceptionally(Assertions.fail("VAKOTODO implement"));
+        beginAsync().<AsyncSourceAndConnection>thenSupply(c -> {
+            if (sourceAndConnection == null || sourceAndConnection.isClosed()) {
+                beginAsync().<AsyncSourceAndConnection>thenSupply(selectServerAndCheckoutConnectionCallback -> {
+                    selectServerAndCheckoutConnectionAsync(binding, operationContext, selectServerAndCheckoutConnectionCallback);
+                }).<AsyncSourceAndConnection>thenApply((newSourceAndConnection, onNewConnectionCallback) -> {
+                    try {
+                        onNewConnection(
+                                newSourceAndConnection.getConnection().getDescription(),
+                                newSourceAndConnection.getOperationContext().getSessionContext(),
+                                effectiveWriteConcern, retryState);
+                    } catch (Throwable e) {
+                        newSourceAndConnection.close();
+                        throw e;
+                    }
+                    onNewConnectionCallback.complete(newSourceAndConnection);
+                }).finish(c);
+            } else {
+                c.complete(sourceAndConnection);
+            }
+        }).finish(callback);
     }
 
     private static SourceAndConnection selectServerAndCheckoutConnection(
@@ -312,7 +416,15 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final AsyncWriteBinding binding,
             final OperationContext operationContext,
             final SingleResultCallback<AsyncSourceAndConnection> callback) {
-        callback.completeExceptionally(Assertions.fail("VAKOTODO implement"));
+        beginAsync().<AsyncSourceAndConnection>thenSupply(c -> {
+            withAsyncSourceAndConnection(
+                    binding::getWriteConnectionSource,
+                    true,
+                    operationContext,
+                    c,
+                    (source, connection, operationContextWithMinRTT, functionCallback) ->
+                            functionCallback.complete(new AsyncSourceAndConnection(source, connection, operationContextWithMinRTT)));
+        }).finish(callback);
     }
 
     private void onNewConnection(
@@ -374,7 +486,30 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final AsyncSourceAndConnection sourceAndConnection,
             final WriteConcern effectiveWriteConcern,
             final SingleResultCallback<Void> callback) {
-        callback.completeExceptionally(Assertions.fail("VAKOTODO implement"));
+        beginAsync().thenRun(c -> {
+            AsyncConnection connection = sourceAndConnection.getConnection();
+            OperationContext operationContext = sourceAndConnection.getOperationContext();
+            beginAsync().<BsonDocument>thenSupply(commandCallback -> {
+                connection.commandAsync(
+                        namespace.getDatabaseName(), batch.getCommand(),
+                        NoOpFieldNameValidator.INSTANCE, null,
+                        batch.getDecoder(), operationContext.withOperationName(commandName),
+                        shouldExpectResponse(batch, effectiveWriteConcern), batch.getPayload(), commandCallback);
+            }).thenConsume((result, consumeCommandResultCallback) -> {
+                if (batch.getRetryWrites()) {
+                    ConnectionDescription connectionDescription = connection.getDescription();
+                    MongoException writeConcernBasedError = ProtocolHelper.createSpecialException(
+                            result, connectionDescription.getServerAddress(), "errMsg", operationContext.getTimeoutContext());
+                    if (writeConcernBasedError != null) {
+                        addRetryableWriteErrorLabel(writeConcernBasedError, connectionDescription.getMaxWireVersion());
+                        addErrorLabelsToWriteConcern(result.getDocument("writeConcernError"), writeConcernBasedError.getErrorLabels());
+                        throw new MongoWriteConcernWithResponseException(writeConcernBasedError, result);
+                    }
+                }
+                batch.addResult(result);
+                consumeCommandResultCallback.complete(consumeCommandResultCallback);
+            }).finish(c);
+        }).finish(callback);
     }
 
     private boolean shouldExpectResponse(final BulkWriteBatch batch, final WriteConcern effectiveWriteConcern) {
