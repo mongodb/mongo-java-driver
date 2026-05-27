@@ -102,6 +102,7 @@ configureJarManifest {
                 "org.bson.codecs.record.*;resolution:=optional", // Depends on JDK version
                 "org.bson.codecs.kotlin.*;resolution:=optional",
                 "org.bson.codecs.kotlinx.*;resolution:=optional",
+                "io.micrometer.*;resolution:=optional",
                 "*" // import all that is not excluded or modified before
                 )
             .joinToString(",")
