@@ -335,12 +335,11 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     }
 
     /**
-     * Pipes a raw BSON document from the given byte array to this writer, writing the bytes directly to the
-     * output without intermediate object allocation.
+     * Pipes an encoded BSON document from the given byte array to this writer.
      *
-     * @param bytes the byte array containing the BSON document
+     * @param bytes the byte array containing the encoded BSON document
      * @param offset the offset into the byte array
-     * @param length the length of the BSON document
+     * @param length the length of the encoded BSON document
      * @since 5.8
      */
     public void pipe(final byte[] bytes, final int offset, final int length) {

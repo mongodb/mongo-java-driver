@@ -145,10 +145,14 @@ public final class RawBsonDocument extends BsonDocument {
     }
 
     /**
-     * Returns the byte array backing this document. Changes to the returned array will be reflected in this document.
+     * Returns the byte array backing this document. The returned array may be larger than the BSON document itself;
+     * only the range from {@link #getByteOffset()} to {@code getByteOffset() + }{@link #getByteLength()} contains
+     * valid document bytes. Changes to the returned array will be reflected in this document.
      *
      * @return the backing byte array
      * @since 5.8
+     * @see #getByteOffset()
+     * @see #getByteLength()
      */
     public byte[] getBackingArray() {
         return bytes;
