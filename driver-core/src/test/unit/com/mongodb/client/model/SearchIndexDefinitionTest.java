@@ -141,4 +141,36 @@ final class SearchIndexDefinitionTest {
     void vectorSearchRejectsEmptyList() {
         assertThrows(IllegalArgumentException.class, () -> SearchIndexDefinition.vectorSearch(emptyList()));
     }
+
+    @Test
+    void vectorSearchWithStoredSource() {
+        VectorSearchIndexDefinition definition = SearchIndexDefinition.vectorSearch(
+                vectorField("embedding")
+                        .numDimensions(1536)
+                        .similarity("cosine")
+        ).storedSource(new Document("include", asList("plot", "title")));
+
+        assertEquals(
+                new BsonDocument("fields", new BsonArray(asList(
+                        new BsonDocument("type", new BsonString("vector"))
+                                .append("path", new BsonString("embedding"))
+                                .append("numDimensions", new BsonInt32(1536))
+                                .append("similarity", new BsonString("cosine"))
+                ))).append("storedSource", new BsonDocument("include", new BsonArray(asList(
+                        new BsonString("plot"),
+                        new BsonString("title")
+                )))),
+                definition.toBsonDocument()
+        );
+    }
+
+    @Test
+    void vectorSearchStoredSourceRejectsNull() {
+        VectorSearchIndexDefinition definition = SearchIndexDefinition.vectorSearch(
+                vectorField("embedding")
+                        .numDimensions(1536)
+                        .similarity("cosine")
+        );
+        assertThrows(IllegalArgumentException.class, () -> definition.storedSource(null));
+    }
 }
