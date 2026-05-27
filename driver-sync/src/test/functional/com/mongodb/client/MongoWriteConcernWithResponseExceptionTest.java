@@ -19,12 +19,11 @@ package com.mongodb.client;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ServerAddress;
-import com.mongodb.assertions.Assertions;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
-import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.internal.connection.MongoWriteConcernWithResponseException;
+import com.mongodb.internal.event.ConfigureFailPointCommandListener;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -33,9 +32,8 @@ import org.bson.Document;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -64,7 +62,7 @@ public class MongoWriteConcernWithResponseExceptionTest {
      */
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
-    protected void doesNotLeak(final boolean writeConcernErrorOnFirstAttempt) throws InterruptedException {
+    protected void doesNotLeak(final boolean writeConcernErrorOnFirstAttempt) throws Exception {
         BsonDocument writeConcernErrorFpDoc = new BsonDocument()
                 .append("configureFailPoint", new BsonString("failCommand"))
                 .append("mode", new BsonDocument()
@@ -96,39 +94,25 @@ public class MongoWriteConcernWithResponseExceptionTest {
     @SuppressWarnings("try")
     private void doesNotLeak(
             final BsonDocument firstAttemptFpDoc,
-            final boolean firstAttemptCommandSucceededEvent,
-            final BsonDocument lastAttemptFpDoc) throws InterruptedException {
+            final boolean firstAttemptSucceeds,
+            final BsonDocument lastAttemptFpDoc) throws Exception {
         assumeTrue(serverVersionAtLeast(6, 0) && isDiscoverableReplicaSet());
         ServerAddress primaryServerAddress = Fixture.getPrimary();
-        CompletableFuture<FailPoint> futureFailPointFromListener = new CompletableFuture<>();
-        CommandListener commandListener = new CommandListener() {
-            private final AtomicBoolean configureFailPoint = new AtomicBoolean(true);
-
-            @Override
-            public void commandSucceeded(final CommandSucceededEvent event) {
-                if (firstAttemptCommandSucceededEvent) {
-                    enableLastAttemptFp(event);
-                }
+        Predicate<CommandEvent> configureFailPointEventMatcher = event -> {
+            if (event.getCommandName().equals("insert")) {
+                return firstAttemptSucceeds
+                        ? event instanceof CommandSucceededEvent
+                        : event instanceof CommandFailedEvent;
             }
-
-            @Override
-            public void commandFailed(final CommandFailedEvent event) {
-                if (!firstAttemptCommandSucceededEvent) {
-                    enableLastAttemptFp(event);
-                }
-            }
-
-            private void enableLastAttemptFp(final CommandEvent event) {
-                if (event.getCommandName().equals("insert") && configureFailPoint.compareAndSet(true, false)) {
-                    Assertions.assertTrue(futureFailPointFromListener.complete(FailPoint.enable(lastAttemptFpDoc, primaryServerAddress)));
-                }
-            }
+            return false;
         };
-        try (MongoClient client = createClient(getMongoClientSettingsBuilder()
-                .retryWrites(true)
-                .addCommandListener(commandListener)
-                .applyToServerSettings(builder -> builder.heartbeatFrequency(50, TimeUnit.MILLISECONDS))
-                .build());
+        try (ConfigureFailPointCommandListener commandListener = new ConfigureFailPointCommandListener(
+                lastAttemptFpDoc, primaryServerAddress, configureFailPointEventMatcher);
+             MongoClient client = createClient(getMongoClientSettingsBuilder()
+                     .retryWrites(true)
+                     .addCommandListener(commandListener)
+                     .applyToServerSettings(builder -> builder.heartbeatFrequency(50, TimeUnit.MILLISECONDS))
+                     .build());
              FailPoint ignored = FailPoint.enable(firstAttemptFpDoc, primaryServerAddress)) {
             MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
                     .getCollection("originalErrorMustBePropagatedIfNoWritesPerformed");
@@ -142,8 +126,6 @@ public class MongoWriteConcernWithResponseExceptionTest {
                     throw new AssertionError("The internal exception leaked.", e);
                 }
             });
-        } finally {
-            futureFailPointFromListener.thenAccept(FailPoint::close);
         }
     }
 }
