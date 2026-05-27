@@ -44,7 +44,7 @@ import static org.bson.assertions.Assertions.isTrueArgument;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
- * An immutable BSON document that is represented using only the raw bytes.
+ * A BSON document that is represented using only the raw bytes.
  *
  * @since 3.0
  */
