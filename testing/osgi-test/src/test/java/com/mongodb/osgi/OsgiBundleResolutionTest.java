@@ -53,6 +53,8 @@ class OsgiBundleResolutionTest {
 
     private static final Path PROJECT_ROOT = Paths.get(System.getProperty("projectRoot", "../.."));
 
+    // Listed in dependency order (leaves last) so that the first bundle.start() failure
+    // identifies the root cause rather than a cascading downstream resolution error.
     private static final String[] BUNDLE_MODULES = {
         "bson",
         "bson-record-codec",
