@@ -52,16 +52,20 @@ configureJarManifest {
  */
 val jnaDownloadsDir = rootProject.file("build/jnaLibs/downloads/").path
 val jnaResourcesDir = rootProject.file("build/jnaLibs/resources/").path
+
+tasks.clean { delete(rootProject.file("build/jnaLibs")) }
+
 val jnaLibPlatform: String =
     if (com.sun.jna.Platform.RESOURCE_PREFIX.startsWith("darwin")) "darwin" else com.sun.jna.Platform.RESOURCE_PREFIX
 // When -DjnaLibsPath is set, the user wants to use a pre-existing local copy of the libmongocrypt
 // binaries instead of fetching them from the libmongocrypt GitHub release, so we skip the whole
 // download / verify / extract chain.
 val userSuppliedJnaLibsPath: String? = System.getProperty("jnaLibsPath")
-val jnaLibsPath: String = userSuppliedJnaLibsPath ?: "${jnaResourcesDir}${jnaLibPlatform}"
+val jnaLibsPath: String = userSuppliedJnaLibsPath ?: "${jnaResourcesDir}/${jnaLibPlatform}"
 val jnaResources: String = System.getProperty("jna.library.path", jnaLibsPath)
 
 // Download the libmongocrypt per-platform tarballs (and their signatures) to jnaDownloadsDir.
+// To upgrade: change downloadRevision, run `./gradlew clean downloadJnaLibs`, and verify the build.
 val downloadRevision = "1.18.1"
 val downloadUrlBase = "https://github.com/mongodb/libmongocrypt/releases/download/$downloadRevision"
 
@@ -114,10 +118,18 @@ tasks.register<Download>("downloadCryptLibs") {
     dest(jnaDownloadsDir)
     /* Reuse already-downloaded files. Useful for offline builds and reduces network churn. */
     overwrite(false)
-    onlyIfModified(true)
+    quiet(true)
 
     /* Bypass entirely when the caller has supplied a local libmongocrypt directory. */
     onlyIf { userSuppliedJnaLibsPath == null }
+
+    doFirst {
+        val missing = cryptBinaries.filter { !file("$jnaDownloadsDir/${it.tarball}").exists() }
+        if (missing.isNotEmpty()) {
+            logger.lifecycle("Downloading libmongocrypt $downloadRevision binaries:")
+            missing.forEach { logger.lifecycle("  ${it.tarball}") }
+        }
+    }
 }
 
 /*
@@ -137,13 +149,11 @@ abstract class VerifyLibmongocryptTask : DefaultTask() {
     @get:InputFiles abstract val signatures: ConfigurableFileCollection
     @get:InputFile abstract val publicKey: RegularFileProperty
     @get:Input abstract val skipVerify: Property<Boolean>
+    @get:Input abstract val expectedFingerprint: Property<String>
+    @get:OutputFile abstract val verificationStamp: RegularFileProperty
 
-    /*
-     * Scratch keyring directory. Marked @Internal (not @OutputDirectory) because GnuPG leaves a
-     * `S.gpg-agent` Unix domain socket inside it, which Gradle's output snapshotter cannot fingerprint
-     * (`IOException: not a regular file`). The directory is genuinely ephemeral - nothing downstream
-     * consumes it, and re-running gpg from scratch every time is cheap.
-     */
+    /* Scratch keyring directory. Marked @Internal (not @OutputDirectory) because the directory is
+     * genuinely ephemeral - nothing downstream consumes it. */
     @get:Internal abstract val gnupgHome: DirectoryProperty
 
     @TaskAction
@@ -152,6 +162,7 @@ abstract class VerifyLibmongocryptTask : DefaultTask() {
             logger.warn(
                 "SKIPPING libmongocrypt signature verification because -PskipCryptVerify=true was set. " +
                     "Do not use this for release builds.")
+            verificationStamp.get().asFile.writeText("Skipped verification at ${System.currentTimeMillis()}")
             return
         }
 
@@ -182,19 +193,51 @@ abstract class VerifyLibmongocryptTask : DefaultTask() {
             }
 
         execOps.exec {
-            commandLine("gpg", "--homedir", home.path, "--batch", "--quiet", "--import", publicKey.get().asFile.path)
+            commandLine(
+                "gpg",
+                "--homedir",
+                home.path,
+                "--batch",
+                "--quiet",
+                "--no-autostart",
+                "--import",
+                publicKey.get().asFile.path)
+            standardOutput = ByteArrayOutputStream()
+            errorOutput = ByteArrayOutputStream()
         }
 
-        try {
-            // Pair tarballs with signatures by basename; ConfigurableFileCollection.files is an
-            // unordered Set, so zipping the two collections could mismatch pairs.
-            val signaturesByName = signatures.files.associateBy { it.name }
-            tarballs.files.forEach { tarball ->
-                val signatureName = tarball.name.removeSuffix(".tar.gz") + ".asc"
-                val signature =
-                    signaturesByName[signatureName]
-                        ?: throw GradleException(
-                            "Missing signature $signatureName for ${tarball.name}; expected it next to the tarball.")
+        val fingerprintOutput = ByteArrayOutputStream()
+        execOps.exec {
+            commandLine(
+                "gpg",
+                "--homedir",
+                home.path,
+                "--batch",
+                "--no-autostart",
+                "--with-colons",
+                "--fingerprint",
+                expectedFingerprint.get())
+            standardOutput = fingerprintOutput
+            errorOutput = ByteArrayOutputStream()
+        }
+        val expected = expectedFingerprint.get()
+        if (!fingerprintOutput.toString().contains("fpr:::::::::$expected:")) {
+            throw GradleException(
+                "Imported libmongocrypt signing key fingerprint does not match expected value $expected. " +
+                    "The downloaded public key may have been rotated.")
+        }
+
+        // Pair tarballs with signatures by basename; ConfigurableFileCollection.files is an
+        // unordered Set, so zipping the two collections could mismatch pairs.
+        val signaturesByName = signatures.files.associateBy { it.name }
+        tarballs.files.forEach { tarball ->
+            val signatureName = tarball.name.removeSuffix(".tar.gz") + ".asc"
+            val signature =
+                signaturesByName[signatureName]
+                    ?: throw GradleException(
+                        "Missing signature $signatureName for ${tarball.name}; expected it next to the tarball.")
+            val verifyErr = ByteArrayOutputStream()
+            try {
                 execOps.exec {
                     commandLine(
                         "gpg",
@@ -202,25 +245,26 @@ abstract class VerifyLibmongocryptTask : DefaultTask() {
                         home.path,
                         "--batch",
                         "--quiet",
+                        "--no-autostart",
                         "--trust-model",
                         "always",
                         "--verify",
                         signature.path,
                         tarball.path)
+                    standardOutput = ByteArrayOutputStream()
+                    errorOutput = verifyErr
                 }
-            }
-        } finally {
-            // Shut down gpg-agent so its leftover Unix domain socket does not accumulate or confuse
-            // a subsequent run that reuses the homedir.
-            try {
-                execOps.exec {
-                    commandLine("gpgconf", "--homedir", home.path, "--kill", "gpg-agent")
-                    isIgnoreExitValue = true
-                }
-            } catch (_: Exception) {
-                // Best-effort cleanup; not a build failure.
+            } catch (e: Exception) {
+                throw GradleException(
+                    "GPG signature verification failed for ${tarball.name}:\n${verifyErr.toString().trim()}", e)
             }
         }
+
+        verificationStamp
+            .get()
+            .asFile
+            .writeText(
+                "verified=${System.currentTimeMillis()}\n" + "tarballs=${tarballs.files.joinToString { it.name }}\n")
     }
 }
 
@@ -230,24 +274,15 @@ tasks.register<VerifyLibmongocryptTask>("verifyCryptLibs") {
     signatures.from(cryptBinaries.map { "$jnaDownloadsDir/${it.signature}" })
     publicKey.set(file("$jnaDownloadsDir/$libmongocryptPublicKeyFile"))
     skipVerify.set(skipCryptVerify)
+    expectedFingerprint.set("F2F5BF4ABF517E039AFCADAA81F1404DEBACA586")
     gnupgHome.set(layout.buildDirectory.dir("jnaLibs/gnupg"))
+    verificationStamp.set(layout.buildDirectory.file("jnaLibs/verified.stamp"))
 
     /* Bypass entirely when the caller has supplied a local libmongocrypt directory. */
     onlyIf { userSuppliedJnaLibsPath == null }
-
-    /* Always re-verify: gpg is cheap and never trusting a cached "signature was good" decision is safer. */
-    outputs.upToDateWhen { false }
 }
 
-tasks.register<Copy>("extractCryptLibs") {
-    /*
-       Clean up the directory first if the task is not UP-TO-DATE.
-       This can happen if the download revision has been changed and the archives are downloaded again.
-    */
-    doFirst {
-        println("Clearing $jnaResourcesDir before extraction")
-        delete(jnaResourcesDir)
-    }
+tasks.register<Sync>("extractCryptLibs") {
     cryptBinaries.forEach { spec ->
         from(tarTree(resources.gzip("$jnaDownloadsDir/${spec.tarball}"))) {
             include(spec.libPathInTarball)
@@ -260,18 +295,11 @@ tasks.register<Copy>("extractCryptLibs") {
 
     /* Bypass entirely when the caller has supplied a local libmongocrypt directory. */
     onlyIf { userSuppliedJnaLibsPath == null }
-
-    doLast {
-        println("Extracted libmongocrypt $downloadRevision binaries to $jnaResourcesDir:")
-        fileTree(jnaResourcesDir).files.sortedBy { it.path }.forEach { println("  $it") }
-    }
 }
 
 // The `processResources` task (defined by the `java-library` plug-in) consumes files in the main
-// source set.
-// Add a dependency on `extractCryptLibs`, which adds libmongocrypt libraries to the main source
-// set.
-tasks.processResources { mustRunAfter(tasks.named("extractCryptLibs")) }
+// source set. Extraction must complete first so the native libraries are present.
+tasks.processResources { dependsOn("extractCryptLibs") }
 
 tasks.register("downloadJnaLibs") { dependsOn("downloadCryptLibs", "verifyCryptLibs", "extractCryptLibs") }
 
@@ -282,8 +310,9 @@ tasks.test {
     testLogging { events("passed", "skipped", "failed") }
 
     doFirst {
-        println("jna.library.path contents:")
-        println(fileTree(jnaResources) { this.setIncludes(listOf("*.*")) }.files.joinToString(",\n  ", "  "))
+        logger.lifecycle("jna.library.path contents:")
+        logger.lifecycle(
+            fileTree(jnaResources) { this.setIncludes(listOf("**/*.*")) }.files.joinToString(",\n  ", "  "))
     }
     dependsOn("downloadJnaLibs")
 }
