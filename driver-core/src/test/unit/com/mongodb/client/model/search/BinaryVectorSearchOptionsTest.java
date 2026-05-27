@@ -111,6 +111,30 @@ final class BinaryVectorSearchOptionsTest {
     }
 
     @Test
+    void returnStoredSourceApproximate() {
+        assertEquals(
+                new BsonDocument()
+                        .append("returnStoredSource", new BsonBoolean(true))
+                        .append("numCandidates", new BsonInt64(1)),
+                VectorSearchOptions.approximateVectorSearchOptions(1)
+                        .returnStoredSource(true)
+                        .toBsonDocument()
+        );
+    }
+
+    @Test
+    void returnStoredSourceExact() {
+        assertEquals(
+                new BsonDocument()
+                        .append("returnStoredSource", new BsonBoolean(true))
+                        .append("exact", new BsonBoolean(true)),
+                VectorSearchOptions.exactVectorSearchOptions()
+                        .returnStoredSource(true)
+                        .toBsonDocument()
+        );
+    }
+
+    @Test
     void approximateVectorSearchOptionsIsUnmodifiable() {
         String expected = VectorSearchOptions.approximateVectorSearchOptions(1).toBsonDocument().toJson();
         VectorSearchOptions.approximateVectorSearchOptions(1).option("name", "value");

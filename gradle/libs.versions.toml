@@ -39,6 +39,7 @@ scala-v2-v11 = "2.11.12"
 
 # Test
 assertj = "3.24.2"
+felix-framework = "7.0.5"
 aws-lambda-core = "1.2.2"
 aws-lambda-events = "3.11.1"
 cglib = "2.2.2"
@@ -102,7 +103,7 @@ micrometer-observation = { module = "io.micrometer:micrometer-observation" }
 graal-sdk = { module = "org.graalvm.sdk:graal-sdk", version.ref = "graal-sdk" }
 graal-sdk-nativeimage = { module = "org.graalvm.sdk:nativeimage", version.ref = "graal-sdk" }
 
-kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom" }
+kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom", version.ref = "kotlin" }
 kotlin-stdlib-jdk8 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
 kotlinx-coroutines-bom = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-bom", version.ref = "kotlinx-coroutines-bom" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core" }
@@ -174,6 +175,7 @@ aws-lambda-core = { module = " com.amazonaws:aws-lambda-java-core", version.ref 
 aws-lambda-events = { module = " com.amazonaws:aws-lambda-java-events", version.ref = "aws-lambda-events" }
 cglib = { module = "cglib:cglib-nodep", version.ref = "cglib" }
 classgraph = { module = "io.github.classgraph:classgraph", version.ref = "classgraph" }
+felix-framework = { module = "org.apache.felix:org.apache.felix.framework", version.ref = "felix-framework" }
 findbugs-jsr = { module = "com.google.code.findbugs:jsr305", version.ref = "findbugs-jsr" }
 groovy = { module = "org.codehaus.groovy:groovy-all", version.ref = "groovy" }
 hamcrest-all = { module = "org.hamcrest:hamcrest-all", version.ref = "hamcrest" }

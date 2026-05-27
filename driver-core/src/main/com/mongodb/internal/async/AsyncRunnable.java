@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.async;
 
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.function.AsyncCallbackLoop;
 import com.mongodb.internal.async.function.LoopState;
 import com.mongodb.internal.async.function.RetryState;
@@ -39,7 +38,7 @@ import java.util.function.Supplier;
  * following "sync" method:
  *
  * <pre>
- * public T myMethod()
+ * public T myMethod() {
  *     method1();
  *     method2();
  * }</pre>
@@ -47,7 +46,7 @@ import java.util.function.Supplier;
  * <p>The async counterpart would be:
  *
  * <pre>
- * public void myMethodAsync(SingleResultCallback&lt;T> callback)
+ * public void myMethodAsync(SingleResultCallback&lt;T> callback) {
  *     beginAsync().thenRun(c -> {
  *         method1Async(c);
  *     }).thenRun(c -> {
@@ -229,11 +228,11 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
      * @return the composition of this, and the looping branch
      * @see RetryingAsyncCallbackSupplier
      */
-    default AsyncRunnable thenRunRetryingWhile(
-            final TimeoutContext timeoutContext, final AsyncRunnable runnable, final Predicate<Throwable> shouldRetry) {
+    default AsyncRunnable thenRunRetryingWhile(final AsyncRunnable runnable, final Predicate<Throwable> shouldRetry) {
         return thenRun(callback -> {
             new RetryingAsyncCallbackSupplier<Void>(
-                    new RetryState(timeoutContext),
+                    new RetryState(),
+                    (previouslyChosenFailure, lastAttemptFailure) -> lastAttemptFailure,
                     (rs, lastAttemptFailure) -> shouldRetry.test(lastAttemptFailure),
                     // `finish` is required here instead of `unsafeFinish`
                     // because only `finish` meets the contract of
