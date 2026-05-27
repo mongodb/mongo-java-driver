@@ -22,6 +22,7 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoQueryException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
@@ -540,6 +541,7 @@ final class MongoClusterImpl implements MongoCluster {
 
         private void labelException(final ClientSession session, final MongoException e) {
             if (session.hasActiveTransaction() && (e instanceof MongoSocketException || e instanceof MongoTimeoutException
+                    || e instanceof MongoOperationTimeoutException
                     || e instanceof MongoQueryException && e.getCode() == 91)
                     && !e.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
                 e.addLabel(TRANSIENT_TRANSACTION_ERROR_LABEL);
