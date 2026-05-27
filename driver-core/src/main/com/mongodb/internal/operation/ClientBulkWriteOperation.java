@@ -129,7 +129,7 @@ import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWriteW
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
 import static com.mongodb.internal.operation.BulkWriteBatch.logWriteModelDoesNotSupportRetries;
 import static com.mongodb.internal.operation.CommandOperationHelper.commandWriteConcern;
-import static com.mongodb.internal.operation.CommandOperationHelper.getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel;
+import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried;
 import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
@@ -325,7 +325,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 // Adding the `RetryableError` label here is unnecessary at this point:
                 // applications cannot use it for implementing retries, and it is not even part of the public driver API.
                 // Unfortunately, certain unified tests incorrectly rely on this label to verify retries, resulting in this redundant code.
-                getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel(retryState, mongoException);
+                addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryState, mongoException);
             }
             throw mongoException;
         }
@@ -395,7 +395,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                         // Adding the `RetryableError` label here is unnecessary at this point:
                         // applications cannot use it for implementing retries, and it is not even part of the public driver API.
                         // Unfortunately, certain unified tests incorrectly rely on this label to verify retries, resulting in this redundant code.
-                        getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel(retryState, mongoException);
+                        addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryState, mongoException);
                     }
                     throw mongoException;
                 } else {
