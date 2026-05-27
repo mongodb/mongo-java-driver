@@ -61,7 +61,7 @@ import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWriteWithRetriesAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
 import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabel;
-import static com.mongodb.internal.operation.CommandOperationHelper.getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel;
+import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried;
 import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
 import static com.mongodb.internal.operation.CommandOperationHelper.validateAndGetEffectiveWriteConcern;
@@ -278,7 +278,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                 // Adding the `RetryableError` label here is unnecessary at this point:
                 // applications cannot use it for implementing retries, and it is not even part of the public driver API.
                 // Unfortunately, certain unified tests incorrectly rely on this label to verify retries, resulting in this redundant code.
-                getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel(retryState, e);
+                addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryState, e);
             }
             throw e;
         }
@@ -342,7 +342,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                     // Adding the `RetryableError` label here is unnecessary at this point:
                     // applications cannot use it for implementing retries, and it is not even part of the public driver API.
                     // Unfortunately, certain unified tests incorrectly rely on this label to verify retries, resulting in this redundant code.
-                    getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel(retryState, e);
+                    addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryState, e);
                 }
                 onErrorCallback.completeExceptionally(e);
             }).finish(c);
