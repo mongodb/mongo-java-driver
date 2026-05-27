@@ -716,7 +716,7 @@ class ByteBufferBsonInputTest {
     @MethodSource("bufferProviders")
     void shouldPipeBytesToOutput(final BufferProvider bufferProvider) {
         // given
-        byte[] input = {0x4a, 0x61, 0x76, 0x61, 0x21};
+        byte[] input = "Java!".getBytes(StandardCharsets.UTF_8);
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, input);
 
         try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer);
@@ -735,7 +735,7 @@ class ByteBufferBsonInputTest {
     @MethodSource("bufferProviders")
     void shouldPipePartialBytesToOutput(final BufferProvider bufferProvider) {
         // given
-        byte[] input = {0x4a, 0x61, 0x76, 0x61, 0x21};
+        byte[] input = "Java!".getBytes(StandardCharsets.UTF_8);
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, input);
 
         try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer);
@@ -746,7 +746,7 @@ class ByteBufferBsonInputTest {
             // then
             assertEquals(3, bufferInput.getPosition());
             assertEquals(3, output.getPosition());
-            assertArrayEquals(new byte[]{0x4a, 0x61, 0x76}, output.toByteArray());
+            assertArrayEquals("Jav".getBytes(StandardCharsets.UTF_8), output.toByteArray());
         }
     }
 
@@ -754,7 +754,7 @@ class ByteBufferBsonInputTest {
     @MethodSource("bufferProviders")
     void shouldThrowWhenPipingMoreBytesThanAvailable(final BufferProvider bufferProvider) {
         // given
-        byte[] input = {0x4a, 0x61, 0x76};
+        byte[] input = "Jav".getBytes(StandardCharsets.UTF_8);
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, input);
 
         try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer);

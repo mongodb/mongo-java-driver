@@ -21,6 +21,7 @@ import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,7 +31,7 @@ class BsonInputTest {
     @Test
     void defaultPipeShouldCopyBytesFromInputToOutput() {
         // given
-        byte[] inputBytes = {0x4a, 0x61, 0x76, 0x61, 0x21};
+        byte[] inputBytes = "Java!".getBytes(StandardCharsets.UTF_8);
 
         try (BsonInput bsonInput = new ForwardingBsonInput(
                      new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(inputBytes))));
@@ -48,7 +49,7 @@ class BsonInputTest {
     @Test
     void defaultPipeShouldCopyPartialBytesFromInputToOutput() {
         // given
-        byte[] inputBytes = {0x4a, 0x61, 0x76, 0x61, 0x21};
+        byte[] inputBytes = "Java!".getBytes(StandardCharsets.UTF_8);
 
         try (BsonInput bsonInput = new ForwardingBsonInput(
                      new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(inputBytes))));
@@ -59,7 +60,7 @@ class BsonInputTest {
             // then
             assertEquals(3, bsonInput.getPosition());
             assertEquals(3, output.getPosition());
-            assertArrayEquals(new byte[]{0x4a, 0x61, 0x76}, output.toByteArray());
+            assertArrayEquals("Jav".getBytes(StandardCharsets.UTF_8), output.toByteArray());
         }
     }
 
@@ -75,48 +76,78 @@ class BsonInputTest {
         }
 
         @Override
-        public int getPosition() { return delegate.getPosition(); }
+        public int getPosition() {
+            return delegate.getPosition();
+        }
 
         @Override
-        public byte readByte() { return delegate.readByte(); }
+        public byte readByte() {
+            return delegate.readByte();
+        }
 
         @Override
-        public void readBytes(final byte[] bytes) { delegate.readBytes(bytes); }
+        public void readBytes(final byte[] bytes) {
+            delegate.readBytes(bytes);
+        }
 
         @Override
-        public void readBytes(final byte[] bytes, final int offset, final int length) { delegate.readBytes(bytes, offset, length); }
+        public void readBytes(final byte[] bytes, final int offset, final int length) {
+            delegate.readBytes(bytes, offset, length);
+        }
 
         @Override
-        public long readInt64() { return delegate.readInt64(); }
+        public long readInt64() {
+            return delegate.readInt64();
+        }
 
         @Override
-        public double readDouble() { return delegate.readDouble(); }
+        public double readDouble() {
+            return delegate.readDouble();
+        }
 
         @Override
-        public int readInt32() { return delegate.readInt32(); }
+        public int readInt32() {
+            return delegate.readInt32();
+        }
 
         @Override
-        public String readString() { return delegate.readString(); }
+        public String readString() {
+            return delegate.readString();
+        }
 
         @Override
-        public ObjectId readObjectId() { return delegate.readObjectId(); }
+        public ObjectId readObjectId() {
+            return delegate.readObjectId();
+        }
 
         @Override
-        public String readCString() { return delegate.readCString(); }
+        public String readCString() {
+            return delegate.readCString();
+        }
 
         @Override
-        public void skipCString() { delegate.skipCString(); }
+        public void skipCString() {
+            delegate.skipCString();
+        }
 
         @Override
-        public void skip(final int numBytes) { delegate.skip(numBytes); }
+        public void skip(final int numBytes) {
+            delegate.skip(numBytes);
+        }
 
         @Override
-        public BsonInputMark getMark(final int readLimit) { return delegate.getMark(readLimit); }
+        public BsonInputMark getMark(final int readLimit) {
+            return delegate.getMark(readLimit);
+        }
 
         @Override
-        public boolean hasRemaining() { return delegate.hasRemaining(); }
+        public boolean hasRemaining() {
+            return delegate.hasRemaining();
+        }
 
         @Override
-        public void close() { delegate.close(); }
+        public void close() {
+            delegate.close();
+        }
     }
 }
