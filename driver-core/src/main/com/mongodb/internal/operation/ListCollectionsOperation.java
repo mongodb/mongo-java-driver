@@ -177,7 +177,7 @@ public class ListCollectionsOperation<T> implements ReadOperationCursor<T> {
 
         RetryState retryState = initialRetryState(retryReads, listCollectionsOperationContext.getTimeoutContext());
         Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, listCollectionsOperationContext, () ->
-            withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection, operationContextWithMinRTT) -> {
+            withSourceAndConnection(binding::getReadConnectionSource, false, listCollectionsOperationContext, (source, connection, operationContextWithMinRTT) -> {
                 retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(operationContextWithMinRTT));
                 try {
                     return createReadCommandAndExecute(retryState, operationContextWithMinRTT, source, databaseName,
@@ -186,7 +186,7 @@ public class ListCollectionsOperation<T> implements ReadOperationCursor<T> {
                     return rethrowIfNotNamespaceError(e,
                             createEmptySingleBatchCursor(source.getServerDescription().getAddress(), batchSize));
                 }
-            }, listCollectionsOperationContext)
+            })
         );
         return read.get();
     }

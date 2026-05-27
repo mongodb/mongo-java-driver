@@ -407,9 +407,9 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
         return withSourceAndConnection(
                 binding::getWriteConnectionSource,
                 true,
+                operationContext,
                 (source, connection, operationContextWithMinRTT) ->
-                        new SourceAndConnection(source, connection, operationContextWithMinRTT),
-                operationContext);
+                        new SourceAndConnection(source, connection, operationContextWithMinRTT));
     }
 
     private static void selectServerAndCheckoutConnectionAsync(
@@ -575,9 +575,9 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
      * An {@link AutoCloseable} container for the arguments of
      * {@link SyncOperationHelper.ExecutionFunction#apply(ConnectionSource, Connection, OperationContext)}
      * provided by
-     * {@link SyncOperationHelper#withSourceAndConnection(Function, boolean, SyncOperationHelper.ExecutionFunction, OperationContext)}.
+     * {@link SyncOperationHelper#withSourceAndConnection(Function, boolean, OperationContext, SyncOperationHelper.ExecutionFunction)}.
      * This type allows those resources to be returned from
-     * {@link SyncOperationHelper#withSourceAndConnection(Function, boolean, SyncOperationHelper.ExecutionFunction, OperationContext)}
+     * {@link SyncOperationHelper#withSourceAndConnection(Function, boolean, OperationContext, SyncOperationHelper.ExecutionFunction)}
      * and used after method completion.
      */
     private static final class SourceAndConnection extends AbstractSourceAndConnection<ConnectionSource, Connection> {

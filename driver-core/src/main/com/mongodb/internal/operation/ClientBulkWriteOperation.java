@@ -292,7 +292,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 // and it is allowed by https://jira.mongodb.org/browse/DRIVERS-2502.
                 // If connection pinning is required, `binding` handles that,
                 // and `ClientSession`, `TransactionContext` are aware of that.
-                () -> withSourceAndConnection(binding::getWriteConnectionSource, true,
+                () -> withSourceAndConnection(binding::getWriteConnectionSource, true, operationContext,
                         (connectionSource, connection, operationContextWithMinRtt) -> {
                             ConnectionDescription connectionDescription = connection.getDescription();
                             boolean effectiveRetryWrites = isRetryableWrite(
@@ -306,7 +306,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                     () -> retryState.attach(AttachmentKeys.retryableWriteCommandFlag(), true, true));
                             return executeBulkWriteCommandAndExhaustOkResponse(
                                     retryState, connectionSource, connection, bulkWriteCommand, effectiveWriteConcern, operationContextWithMinRtt);
-                        }, operationContext)
+                        })
         );
 
         try {

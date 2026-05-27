@@ -110,8 +110,7 @@ final class AsyncOperationHelper {
             final boolean wrapConnectionSourceException,
             final OperationContext operationContext,
             final SingleResultCallback<R> callback,
-            final AsyncCallbackTriFunction<AsyncConnectionSource, AsyncConnection, OperationContext, R> asyncFunction)
-            throws OperationHelper.ResourceSupplierInternalException {
+            final AsyncCallbackTriFunction<AsyncConnectionSource, AsyncConnection, OperationContext, R> asyncFunction) {
         SingleResultCallback<R> errorHandlingCallback = errorHandlingCallback(callback, OperationHelper.LOGGER);
 
         OperationContext serverSelectionOperationContext =
@@ -140,8 +139,7 @@ final class AsyncOperationHelper {
                                                                           final boolean wrapSourceConnectionException,
                                                                           final OperationContext operationContext,
                                                                           final SingleResultCallback<R> callback,
-                                                                          final AsyncCallbackFunction<T, R> function)
-            throws OperationHelper.ResourceSupplierInternalException {
+                                                                          final AsyncCallbackFunction<T, R> function) {
         SingleResultCallback<R> errorHandlingCallback = errorHandlingCallback(callback, OperationHelper.LOGGER);
         resourceSupplier.apply(operationContext, (resource, supplierException) -> {
             if (supplierException != null) {
