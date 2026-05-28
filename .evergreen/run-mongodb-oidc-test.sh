@@ -41,6 +41,11 @@ if ! which java ; then
     echo "Installed java."
 fi
 
+if ! which gpg ; then
+    echo "Installing gpg..."
+    sudo apt install gnupg -y
+fi
+
 which java
 export OIDC_TESTS_ENABLED=true
 
