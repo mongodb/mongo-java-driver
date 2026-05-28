@@ -767,7 +767,7 @@ object Aggregates {
    * @return The `\$vectorSearch` pipeline stage.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
    * @note Requires MongoDB 6.0.10 or greater
-   * @since 5.3
+   * @since 5.8
    */
   def vectorSearch(
       path: FieldSearchPath,
@@ -795,7 +795,7 @@ object Aggregates {
    * @return The `\$vectorSearch` pipeline stage.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
    * @note Requires MongoDB 6.0.10 or greater
-   * @since 5.7
+   * @since 5.8
    */
   @Beta(Array(Reason.SERVER))
   def vectorSearch(
