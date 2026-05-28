@@ -206,25 +206,25 @@ abstract class VerifyLibmongocryptTask : DefaultTask() {
             errorOutput = ByteArrayOutputStream()
         }
 
-        val fingerprintOutput = ByteArrayOutputStream()
-        execOps.exec {
-            commandLine(
-                "gpg",
-                "--homedir",
-                home.path,
-                "--batch",
-                "--no-autostart",
-                "--with-colons",
-                "--fingerprint",
-                expectedFingerprint.get())
-            standardOutput = fingerprintOutput
-            errorOutput = ByteArrayOutputStream()
-        }
-        val expected = expectedFingerprint.get()
-        if (!fingerprintOutput.toString().contains("fpr:::::::::$expected:")) {
+        try {
+            execOps.exec {
+                commandLine(
+                    "gpg",
+                    "--homedir",
+                    home.path,
+                    "--batch",
+                    "--no-autostart",
+                    "--with-colons",
+                    "--fingerprint",
+                    expectedFingerprint.get())
+                standardOutput = ByteArrayOutputStream()
+                errorOutput = ByteArrayOutputStream()
+            }
+        } catch (e: Exception) {
             throw GradleException(
-                "Imported libmongocrypt signing key fingerprint does not match expected value $expected. " +
-                    "The downloaded public key may have been rotated.")
+                "Imported libmongocrypt signing key fingerprint does not match expected value " +
+                    "${expectedFingerprint.get()}. The downloaded public key may have been rotated.",
+                e)
         }
 
         // Pair tarballs with signatures by basename; ConfigurableFileCollection.files is an
