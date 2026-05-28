@@ -343,6 +343,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
      * @since 5.8
      */
     public void pipe(final byte[] bytes, final int offset, final int length) {
+        notNull("bytes", bytes);
         checkMinDocumentSize(length);
         if (getState() == State.VALUE) {
             bsonOutput.writeByte(BsonType.DOCUMENT.getValue());
