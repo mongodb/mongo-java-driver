@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoClientException;
+import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
@@ -37,6 +38,7 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.CompletionHandler;
@@ -46,6 +48,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -209,32 +212,61 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
         @Override
         public void openAsync(final OperationContext operationContext, final AsyncCompletionHandler<Void> handler) {
             isTrue("unopened", getChannel() == null);
+            SocketChannel socketChannel = null;
+            SelectorMonitor.SocketRegistration socketRegistration = null;
             try {
-                SocketChannel socketChannel = SocketChannel.open();
-                socketChannel.configureBlocking(false);
+                // getConnectTimeoutMs MUST be called before connection attempt, as it might throw MongoOperationTimeoutException.
+                int connectTimeoutMs = operationContext.getTimeoutContext().getConnectTimeoutMs();
+                List<InetSocketAddress> socketAddresses = getSocketAddresses(getServerAddress(), inetAddressResolver);
+                if (socketAddresses.isEmpty()) {
+                    throw new MongoSocketException("No addresses resolved for " + getServerAddress(), getServerAddress());
+                }
+                InetSocketAddress socketAddress = socketAddresses.get(0);
+                SocketChannel openedSocketChannel = SocketChannel.open();
+                socketChannel = openedSocketChannel;
+                openedSocketChannel.configureBlocking(false);
 
-                socketChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
-                socketChannel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
+                openedSocketChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
+                openedSocketChannel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
                 if (getSettings().getReceiveBufferSize() > 0) {
-                    socketChannel.setOption(StandardSocketOptions.SO_RCVBUF, getSettings().getReceiveBufferSize());
+                    openedSocketChannel.setOption(StandardSocketOptions.SO_RCVBUF, getSettings().getReceiveBufferSize());
                 }
                 if (getSettings().getSendBufferSize() > 0) {
-                    socketChannel.setOption(StandardSocketOptions.SO_SNDBUF, getSettings().getSendBufferSize());
+                    openedSocketChannel.setOption(StandardSocketOptions.SO_SNDBUF, getSettings().getSendBufferSize());
                 }
-                //getConnectTimeoutMs MUST be called before connection attempt, as it might throw MongoOperationTimeout exception.
-                int connectTimeoutMs = operationContext.getTimeoutContext().getConnectTimeoutMs();
-                socketChannel.connect(getSocketAddresses(getServerAddress(), inetAddressResolver).get(0));
-                SelectorMonitor.SocketRegistration socketRegistration = new SelectorMonitor.SocketRegistration(
-                        socketChannel, () -> initializeTslChannel(handler, socketChannel));
+                openedSocketChannel.connect(socketAddress);
+                socketRegistration = new SelectorMonitor.SocketRegistration(
+                        openedSocketChannel, () -> initializeTslChannel(handler, openedSocketChannel));
 
                 if (connectTimeoutMs > 0) {
                     scheduleTimeoutInterruption(handler, socketRegistration, connectTimeoutMs);
                 }
                 selectorMonitor.register(socketRegistration);
             } catch (IOException e) {
+                closeSocketChannel(socketChannel, socketRegistration, e);
                 handler.failed(new MongoSocketOpenException("Exception opening socket", getServerAddress(), e));
             } catch (Throwable t) {
+                closeSocketChannel(socketChannel, socketRegistration, t);
                 handler.failed(t);
+            }
+        }
+
+        private void closeSocketChannel(@Nullable final SocketChannel socketChannel,
+                                        @Nullable final SelectorMonitor.SocketRegistration socketRegistration,
+                                        final Throwable failure) {
+            if (socketRegistration != null) {
+                try {
+                    socketRegistration.tryCancelPendingConnection();
+                } catch (Throwable t) {
+                    failure.addSuppressed(t);
+                }
+            }
+            if (socketChannel != null) {
+                try {
+                    socketChannel.close();
+                } catch (Throwable e) {
+                    failure.addSuppressed(e);
+                }
             }
         }
 
