@@ -583,6 +583,12 @@ public class InternalStreamConnection implements InternalConnection {
             }
 
             return commandResult;
+        } catch (MongoInternalException e) {
+            if (!commandSuccessful) {
+                commandEventSender.sendFailedEvent(e);
+            }
+            close();
+            throw e;
         } catch (Exception e) {
             if (!commandSuccessful) {
                 commandEventSender.sendFailedEvent(e);
@@ -746,6 +752,10 @@ public class InternalStreamConnection implements InternalConnection {
                         commandEventSender.sendSucceededEvent(responseBuffers);
 
                         commandResult = getCommandResult(decoder, responseBuffers, messageId, operationContext.getTimeoutContext());
+                    } catch (MongoInternalException localThrowable) {
+                        close();
+                        callback.onResult(null, localThrowable);
+                        return;
                     } catch (Throwable localThrowable) {
                         callback.onResult(null, localThrowable);
                         return;
