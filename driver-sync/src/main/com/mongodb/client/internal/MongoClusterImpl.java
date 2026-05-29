@@ -54,10 +54,12 @@ import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.observability.micrometer.TracingManager;
+import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.OperationHelper;
 import com.mongodb.internal.operation.Operations;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
+import com.mongodb.internal.operation.WriteThenReadOperationCursor;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -482,6 +484,38 @@ final class MongoClusterImpl implements MongoCluster {
                 binding.release();
                 if (span != null) {
                     span.closeScope();
+                    span.end();
+                }
+            }
+        }
+
+        @Override
+        public <T> BatchCursor<T> execute(final WriteThenReadOperationCursor<T> operation, final ReadConcern readConcern,
+                @Nullable final ClientSession session) {
+            if (session != null) {
+                session.notifyOperationInitiated(operation);
+            }
+
+            ClientSession actualClientSession = getClientSession(session);
+            OperationContext operationContext = getOperationContext(actualClientSession, readConcern, operation.getCommandName())
+                    .withSessionContext(new ClientSessionBinding.SyncClientSessionContext(actualClientSession, readConcern, isImplicitSession(session)));
+            Span span = operationContext.getTracingManager().createOperationSpan(
+                    actualClientSession.getTransactionSpan(), operationContext, operation.getCommandName(), operation.getNamespace());
+            ReadWriteBinding binding = getReadWriteBinding(primary(), actualClientSession, isImplicitSession(session));
+
+            try {
+                return operation.execute(binding, operationContext);
+            } catch (MongoException e) {
+                MongoException exceptionToHandle = OperationHelper.unwrap(e);
+                labelException(actualClientSession, exceptionToHandle);
+                clearTransactionContextOnTransientTransactionError(session, exceptionToHandle);
+                if (span != null) {
+                    span.error(e);
+                }
+                throw e;
+            } finally {
+                binding.release();
+                if (span != null) {
                     span.end();
                 }
             }
