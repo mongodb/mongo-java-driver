@@ -25,6 +25,15 @@ import java.nio.ByteBuffer;
 public interface MongoKeyDecryptor {
 
     /**
+     * Initial read size after re-sending a KMS request. Matches libmongocrypt's DEFAULT_MAX_KMS_BYTE_REQUEST
+     * and is used when {@link #bytesNeeded()} still returns 0 because libmongocrypt's should_retry flag has
+     * not yet been cleared by {@link #feedAndRetry}.
+     *
+     * @since 5.8
+     */
+    int DEFAULT_KMS_READ_SIZE = 1024;
+
+    /**
      * Gets the name of the KMS provider, e.g. "aws" or "kmip"
      *
      * @return the KMS provider name
@@ -73,4 +82,29 @@ public interface MongoKeyDecryptor {
      * @param bytes the received bytes
      */
     void feed(ByteBuffer bytes);
+
+    /**
+     * Gets the number of microseconds to sleep before sending the next KMS request.
+     *
+     * @return the number of microseconds to sleep, or 0 if no delay is needed
+     * @since 5.8
+     */
+    long sleepMicroseconds();
+
+    /**
+     * Feed the received bytes to the decryptor, with retry support.
+     *
+     * @param bytes the received bytes
+     * @return true if the KMS request should be retried
+     * @since 5.8
+     */
+    boolean feedAndRetry(ByteBuffer bytes);
+
+    /**
+     * Signal to libmongocrypt that a network error occurred on this KMS request.
+     *
+     * @return true if the request should be retried, false if retries are exhausted
+     * @since 5.8
+     */
+    boolean fail();
 }

@@ -236,10 +236,13 @@ public class TlsChannelImpl implements ByteChannel {
           case NOT_HANDSHAKING:
           case FINISHED:
             UnwrapResult res = readAndUnwrap(Optional.of(dest));
-            if (res.wasClosed) {
-              return -1;
-            }
             bytesToReturn = res.bytesProduced;
+            if (res.wasClosed) {
+              // JAVA-5391: return any bytes produced alongside close_notify; the next read
+              // sees shutdownReceived and returns -1. Fixed in upstream marianobarrios/tls-channel;
+              // this is the minimal patch until the vendored snapshot is refreshed.
+              return bytesToReturn > 0 ? bytesToReturn : -1;
+            }
             handshakeStatus = res.lastHandshakeStatus;
             break;
           case NEED_TASK:

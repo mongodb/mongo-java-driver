@@ -24,8 +24,11 @@ import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
 import com.mongodb.crypt.capi.MongoCryptException;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.capi.MongoCryptHelper;
 import com.mongodb.internal.crypt.capi.MongoCrypt;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.crypt.capi.MongoCryptContext;
 import com.mongodb.internal.crypt.capi.MongoDataKeyOptions;
 import com.mongodb.internal.crypt.capi.MongoKeyDecryptor;
@@ -38,11 +41,13 @@ import org.bson.BsonValue;
 import org.bson.RawBsonDocument;
 
 import java.io.Closeable;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
@@ -56,6 +61,8 @@ import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedE
  */
 public class Crypt implements Closeable {
 
+    private static final Logger LOGGER = Loggers.getLogger("client");
+    private static final String TIMEOUT_ERROR_MESSAGE = "KMS key decryption exceeded the timeout limit.";
     private static final RawBsonDocument EMPTY_RAW_BSON_DOCUMENT = RawBsonDocument.parse("{}");
     private final MongoCrypt mongoCrypt;
     private final Map<String, Map<String, Object>> kmsProviders;
@@ -361,19 +368,83 @@ public class Crypt implements Closeable {
         }
     }
 
-    private void decryptKey(final MongoKeyDecryptor keyDecryptor, @Nullable final Timeout operationTimeout) throws IOException {
-        try (InputStream inputStream = keyManagementService.stream(keyDecryptor.getKmsProvider(), keyDecryptor.getHostName(),
-                keyDecryptor.getMessage(), operationTimeout)) {
-            int bytesNeeded = keyDecryptor.bytesNeeded();
+    private void decryptKey(final MongoKeyDecryptor keyDecryptor, @Nullable final Timeout operationTimeout)
+            throws IOException, InterruptedException {
+        while (true) {
+            long sleepMicros = keyDecryptor.sleepMicroseconds();
+            if (sleepMicros > 0) {
+                if (operationTimeout != null) {
+                    operationTimeout.run(TimeUnit.MICROSECONDS,
+                            () -> { },
+                            remainingMicros -> {
+                                if (remainingMicros < sleepMicros) {
+                                    throw TimeoutContext.createMongoTimeoutException(
+                                            TIMEOUT_ERROR_MESSAGE);
+                                }
+                            },
+                            () -> {
+                                throw TimeoutContext.createMongoTimeoutException(
+                                        TIMEOUT_ERROR_MESSAGE);
+                            });
+                }
+                TimeUnit.MICROSECONDS.sleep(sleepMicros);
+            }
+            boolean shouldRetry;
+            try {
+                shouldRetry = attemptDecryptKey(keyDecryptor, operationTimeout);
+            } catch (IOException e) {
+                if (!keyDecryptor.fail()) {
+                    throw e;
+                }
+                LOGGER.debug("Retrying KMS request after transient error", e);
+                continue;
+            }
+            if (!shouldRetry) {
+                return;
+            }
+        }
+    }
 
-            while (bytesNeeded > 0) {
-                byte[] bytes = new byte[bytesNeeded];
+    private boolean attemptDecryptKey(final MongoKeyDecryptor keyDecryptor, @Nullable final Timeout operationTimeout)
+            throws IOException {
+        Timeout.onExistsAndExpired(operationTimeout, () -> {
+            throw TimeoutContext.createMongoTimeoutException(TIMEOUT_ERROR_MESSAGE);
+        });
+        // After a fail()-triggered retry, bytesNeeded() may return 0 until feedAndRetry() clears
+        // the flag, so the do-while guarantees at least one read using DEFAULT_KMS_READ_SIZE.
+        InputStream inputStream = keyManagementService.stream(keyDecryptor.getKmsProvider(), keyDecryptor.getHostName(),
+                keyDecryptor.getMessage(), operationTimeout);
+        Throwable primary = null;
+        try {
+            int bytesNeeded = keyDecryptor.bytesNeeded();
+            int readSize = bytesNeeded > 0 ? bytesNeeded : MongoKeyDecryptor.DEFAULT_KMS_READ_SIZE;
+            do {
+                byte[] bytes = new byte[readSize];
                 int bytesRead = inputStream.read(bytes, 0, bytes.length);
                 if (bytesRead == -1) {
-                    throw new MongoException("Unexpected end of stream from KMS provider " + keyDecryptor.getKmsProvider());
+                    throw new EOFException("Unexpected end of stream from KMS provider " + keyDecryptor.getKmsProvider());
                 }
-                keyDecryptor.feed(ByteBuffer.wrap(bytes, 0, bytesRead));
-                bytesNeeded = keyDecryptor.bytesNeeded();
+                if (keyDecryptor.feedAndRetry(ByteBuffer.wrap(bytes, 0, bytesRead))) {
+                    return true;
+                }
+                readSize = keyDecryptor.bytesNeeded();
+            } while (readSize > 0);
+            return false;
+        } catch (Throwable t) {
+            primary = t;
+            throw t;
+        } finally {
+            // If the feed loop succeeded, suppress close() failures so they do not trigger a retry
+            // of an already-complete KMS exchange. If the feed loop threw, preserve the primary
+            // exception and attach any close() failure as suppressed — matching try-with-resources.
+            try {
+                inputStream.close();
+            } catch (IOException closeException) {
+                if (primary != null) {
+                    primary.addSuppressed(closeException);
+                } else {
+                    LOGGER.debug("Ignoring close() failure after successful KMS exchange", closeException);
+                }
             }
         }
     }
