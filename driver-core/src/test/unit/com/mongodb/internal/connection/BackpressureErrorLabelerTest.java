@@ -22,6 +22,7 @@ import com.mongodb.MongoSecurityException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadTimeoutException;
+import com.mongodb.MongoSocksProxyException;
 import com.mongodb.ServerAddress;
 import net.bytebuddy.ByteBuddy;
 import org.junit.jupiter.api.Named;
@@ -81,6 +82,57 @@ class BackpressureErrorLabelerTest {
     void dnsFailureShouldNotBeLabeled(final MongoSocketException e) {
         BackpressureErrorLabeler.applyLabelsIfEligible(e);
         assertLacksBackpressureLabels(e);
+    }
+
+    static Stream<Named<MongoSocketException>> socks5ProxyExceptionsShouldNotBeLabeled() {
+        return Stream.of(
+                // Proxy-TCP-connect / negotiation / authentication / mid-CONNECT I/O failures all
+                // surface with replyCode == null — no parsed CONNECT reply, so not a definitive
+                // mongod overload signal.
+                named(new MongoSocksProxyException("tcp connect to proxy failed", ADDRESS)),
+                named(new MongoSocksProxyException("negotiation failed", ADDRESS)),
+                named(new MongoSocksProxyException("auth failed", ADDRESS)),
+                named(new MongoSocksProxyException("connect relay io failure", ADDRESS, (Integer) null)),
+                // CONNECT reply parsed with proxy-side / ambiguous reply codes — not
+                // mongod-attributable:
+                //   0x01 GENERAL_FAILURE          (too generic to attribute)
+                //   0x02 NOT_ALLOWED              (proxy ACL)
+                //   0x06 TTL_EXPIRED              (transient routing, ambiguous)
+                //   0x07 COMMAND_NOT_SUPPORTED    (proxy capability)
+                //   0x08 ADDRESS_TYPE_NOT_SUPPORTED (proxy capability)
+                named(new MongoSocksProxyException("general failure", ADDRESS, 1)),
+                named(new MongoSocksProxyException("not allowed", ADDRESS, 2)),
+                named(new MongoSocksProxyException("ttl expired", ADDRESS, 6)),
+                named(new MongoSocksProxyException("command not supported", ADDRESS, 7)),
+                named(new MongoSocksProxyException("address type not supported", ADDRESS, 8))
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void socks5ProxyExceptionsShouldNotBeLabeled(final MongoSocketException e) {
+        BackpressureErrorLabeler.applyLabelsIfEligible(e);
+        assertLacksBackpressureLabels(e);
+    }
+
+    static Stream<Named<MongoSocketException>> socks5ProxyExceptionsShouldBeLabeled() {
+        // Parsed CONNECT reply codes 3 / 4 / 5 mean the proxy tried to reach mongod on our behalf
+        // and got a transport-level failure that mirrors a direct-connection socket-open outcome.
+        return Stream.of(
+                // 0x03 NET_UNREACHABLE — proxy → mongod network path is down (≈ NoRouteToHostException)
+                named(new MongoSocksProxyException("network unreachable", ADDRESS, 3)),
+                // 0x04 HOST_UNREACHABLE — proxy can't reach mongod host (≈ NoRouteToHostException)
+                named(new MongoSocksProxyException("host unreachable", ADDRESS, 4)),
+                // 0x05 CONN_REFUSED — mongod actively refused (≈ ConnectException)
+                named(new MongoSocksProxyException("connection refused", ADDRESS, 5))
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void socks5ProxyExceptionsShouldBeLabeled(final MongoSocketException e) {
+        BackpressureErrorLabeler.applyLabelsIfEligible(e);
+        assertHasBackpressureLabels(e);
     }
 
     static Stream<Named<Throwable>> localTlsConfigErrorShouldNotBeLabeled() {
