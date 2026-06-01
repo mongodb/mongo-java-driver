@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoSocketException;
+import com.mongodb.MongoSocksProxyException;
 
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -76,17 +77,30 @@ final class BackpressureErrorLabeler {
             return;
         }
         MongoSocketException socketException = (MongoSocketException) t;
+        if (isSocksFailureNotEligibleForLabeling(socketException)) {
+            return;
+        }
         if (isDnsLookupFailure(socketException)) {
             return;
         }
         if (isTlsConfigurationError(socketException)) {
             return;
         }
-        // TODO-BACKPRESSURE Nabil - Add SOCKS5 check once JAVA-6194 is introduced
-        // async proxy error surfaces can be handled together — likely via a dedicated internal
-        // exception thrown from the proxy code path.
         socketException.addLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL);
         socketException.addLabel(MongoException.RETRYABLE_ERROR_LABEL);
+    }
+
+    private static boolean isSocksFailureNotEligibleForLabeling(final MongoSocketException t) {
+        if (!(t instanceof MongoSocksProxyException)) {
+            return false;
+        }
+        Integer replyCode = ((MongoSocksProxyException) t).getProxyReplyCode();
+        if (replyCode == null) {
+            return true;
+        }
+        return replyCode != SocksSocket.ServerReply.NET_UNREACHABLE.getReplyNumber()
+                && replyCode != SocksSocket.ServerReply.HOST_UNREACHABLE.getReplyNumber()
+                && replyCode != SocksSocket.ServerReply.CONN_REFUSED.getReplyNumber();
     }
 
     private static boolean isDnsLookupFailure(final MongoSocketException t) {
