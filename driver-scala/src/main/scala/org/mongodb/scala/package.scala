@@ -394,7 +394,7 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
    * covers both failures connecting to the proxy itself and failures where the proxy is
    * reachable but cannot connect to the target server on our behalf.
    *
-   * @since 5.8
+   * @since 5.9
    */
   type MongoSocksProxyException = com.mongodb.MongoSocksProxyException
 
