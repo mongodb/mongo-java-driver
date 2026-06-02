@@ -416,9 +416,9 @@ public class BsonBinaryReader extends AbstractBsonReader {
         }
         bsonInput.skip(codeSize);
         int scopeSize = readContainerSize(5);
-        long expectedSize = 4L + 4 + codeSize + scopeSize;
-        if (expectedSize != size) {
-            throw new BsonSerializationException(format("Expected size to be %d, not %d.", size, expectedSize));
+        long actualSize = 4L + 4 + codeSize + scopeSize;
+        if (actualSize != size) {
+            throw new BsonSerializationException(format("Expected size to be %d, not %d.", size, actualSize));
         }
         return scopeSize - 4;
     }
