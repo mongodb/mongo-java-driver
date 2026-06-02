@@ -267,6 +267,11 @@ public abstract class UnifiedTest {
 
             boolean skip = testDef.wasAssignedModifier(Modifier.SKIP);
             assumeFalse(skip, "Skipping test");
+
+            if (testDef.hasTransformations()) {
+                this.entitiesArray = entitiesArray.clone();
+                testDef.applyTransformations(this.entitiesArray, definition);
+            }
         }
         skips(fileDescription, testDescription);
 
@@ -289,7 +294,7 @@ public abstract class UnifiedTest {
 
         startingClusterTime = addInitialDataAndGetClusterTime();
 
-        entities.init(entitiesArray, startingClusterTime,
+        entities.init(this.entitiesArray, startingClusterTime,
                 fileDescription != null && PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS.contains(fileDescription),
                 this::createMongoClient,
                 this::createGridFSBucket,

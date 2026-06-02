@@ -17,10 +17,18 @@
 package com.mongodb.client.unified;
 
 import com.mongodb.ClusterFixture;
+import com.mongodb.lang.Nullable;
+import org.bson.BsonArray;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonValue;
+import org.bson.diagnostics.Logger;
+import org.bson.diagnostics.Loggers;
 import org.opentest4j.AssertionFailedError;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -39,6 +47,8 @@ import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.WAIT_
 import static java.lang.String.format;
 
 public final class UnifiedTestModifications {
+    private static final Logger LOGGER = Loggers.getLogger("UnifiedTestModifications");
+
     public static void applyCustomizations(final TestDef def) {
 
         // change-streams
@@ -316,6 +326,15 @@ public final class UnifiedTestModifications {
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5689")
                 .file("gridfs", "gridfs-deleteByName")
                 .file("gridfs", "gridfs-renameByName");
+        def.transform("JAVA-5839: Bump blocking/timeout to avoid CI latency failures",
+                (entitiesArray, definition) -> {
+                    findAndSetInt(entitiesArray, "client.uriOptions.timeoutMS", 250);
+                    findAndSetInt(definition.getArray("operations"),
+                            "arguments.failPoint.data.blockTimeMS", 200);
+                })
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for GridFS download operations",
+                        "timeoutMS applied to entire download, not individual parts");
 
         // Skip all rawData based tests
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5830 rawData support only added to Go and Node")
@@ -501,6 +520,44 @@ public final class UnifiedTestModifications {
                 .file("unified-test-format/tests/valid-fail", "operator-matchAsDocument");
     }
 
+    /**
+     * Searches each document in {@code array} for a nested int field specified
+     * by a dot-separated {@code path}, and replaces it with {@code newValue}.
+     * Logs each replacement. Silently skips documents where the path does not
+     * exist or the intermediate keys are absent.
+     *
+     * <p>Example: {@code findAndSetInt(entitiesArray, "client.uriOptions.timeoutMS", 250)}
+     * walks each element looking for {@code element.client.uriOptions.timeoutMS}.</p>
+     *
+     * @param array    the array to search
+     * @param path     dot-separated path to an int field
+     * @param newValue the replacement value
+     */
+    static void findAndSetInt(final BsonArray array, final String path, final int newValue) {
+        String[] segments = path.split("\\.");
+        for (BsonValue element : array) {
+            if (!element.isDocument()) {
+                continue;
+            }
+            BsonDocument current = element.asDocument();
+            boolean found = true;
+            for (int i = 0; i < segments.length - 1; i++) {
+                if (current.containsKey(segments[i]) && current.get(segments[i]).isDocument()) {
+                    current = current.getDocument(segments[i]);
+                } else {
+                    found = false;
+                    break;
+                }
+            }
+            String leafKey = segments[segments.length - 1];
+            if (found && current.containsKey(leafKey) && current.get(leafKey).isInt32()) {
+                int oldValue = current.getInt32(leafKey).getValue();
+                LOGGER.info(format("  %s: %d -> %d", leafKey, oldValue, newValue));
+                current.put(leafKey, new BsonInt32(newValue));
+            }
+        }
+    }
+
     private UnifiedTestModifications() {
     }
 
@@ -518,6 +575,7 @@ public final class UnifiedTestModifications {
         private final UnifiedTest.Language language;
 
         private final List<Modifier> modifiers = new ArrayList<>();
+        private final List<TestTransformer> transformers = new ArrayList<>();
         private Function<Throwable, Boolean> matchesThrowable;
 
         private TestDef(final String directory, final String fileDescription, final String testDescription,
@@ -610,6 +668,34 @@ public final class UnifiedTestModifications {
                     .when(this::isReactive);
         }
 
+        /**
+         * Registers a transformation that mutates the test's entity and
+         * definition data before execution. The reason is logged when the
+         * transformation is registered for a matching test.
+         *
+         * @param reason      why the transformation is needed
+         * @param transformer the transformation to apply
+         */
+        public TestApplicator transform(final String reason, final TestTransformer transformer) {
+            return new TestApplicator(this, reason, transformer);
+        }
+
+        /**
+         * Applies all registered transformations to the test data.
+         */
+        public void applyTransformations(final BsonArray entitiesArray, final BsonDocument definition) {
+            for (TestTransformer transformer : transformers) {
+                transformer.transform(entitiesArray, definition);
+            }
+        }
+
+        /**
+         * Returns true if any transformations have been registered.
+         */
+        public boolean hasTransformations() {
+            return !transformers.isEmpty();
+        }
+
         public TestApplicator modify(final Modifier... modifiers) {
             return new TestApplicator(this, null, modifiers);
         }
@@ -644,16 +730,32 @@ public final class UnifiedTestModifications {
 
         private final List<Modifier> modifiersToApply;
         private Function<Throwable, Boolean> matchesThrowable;
+        @Nullable
+        private final TestTransformer transformer;
+        @Nullable
+        private final String reason;
+
+        private TestApplicator(
+                final TestDef testDef,
+                @Nullable final String reason,
+                final Modifier... modifiersToApply) {
+            this.testDef = testDef;
+            this.reason = reason;
+            this.modifiersToApply = Arrays.asList(modifiersToApply);
+            this.transformer = null;
+            if (this.modifiersToApply.contains(SKIP) || this.modifiersToApply.contains(RETRY)) {
+                assertNotNull(reason);
+            }
+        }
 
         private TestApplicator(
                 final TestDef testDef,
                 final String reason,
-                final Modifier... modifiersToApply) {
+                final TestTransformer transformer) {
             this.testDef = testDef;
-            this.modifiersToApply = Arrays.asList(modifiersToApply);
-            if (this.modifiersToApply.contains(SKIP) || this.modifiersToApply.contains(RETRY)) {
-                assertNotNull(reason);
-            }
+            this.reason = assertNotNull(reason);
+            this.modifiersToApply = Collections.emptyList();
+            this.transformer = assertNotNull(transformer);
         }
 
         private TestApplicator onMatch(final boolean match) {
@@ -664,6 +766,11 @@ public final class UnifiedTestModifications {
             if (match) {
                 this.testDef.modifiers.addAll(this.modifiersToApply);
                 this.testDef.matchesThrowable = this.matchesThrowable;
+                if (this.transformer != null) {
+                    LOGGER.info("Registered transformation for test ["
+                            + testDef.testDescription + "]: " + reason);
+                    this.testDef.transformers.add(this.transformer);
+                }
             }
             return this;
         }
@@ -782,6 +889,16 @@ public final class UnifiedTestModifications {
             return this;
         }
 
+    }
+
+    /**
+     * A transformation that mutates the test's entity array and/or definition
+     * before execution. Used to adjust spec test values (e.g., timeouts) that
+     * are too tight for CI environments.
+     */
+    @FunctionalInterface
+    public interface TestTransformer {
+        void transform(BsonArray entitiesArray, BsonDocument definition);
     }
 
     public enum Modifier {
