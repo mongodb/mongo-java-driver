@@ -504,27 +504,27 @@ public final class UnifiedTestModifications {
     private UnifiedTestModifications() {
     }
 
-    public static TestDef testDef(final String dir, final String file, final String test, final boolean reactive,
-                                  final UnifiedTest.Language language) {
-        return new TestDef(dir, file, test, reactive, language);
+    public static TestDef testDef(final String directory, final String fileDescription, final String testDescription,
+                                  final boolean reactive, final UnifiedTest.Language language) {
+        return new TestDef(directory, fileDescription, testDescription, reactive, language);
     }
 
     public static final class TestDef {
 
-        private final String dir;
-        private final String file;
-        private final String test;
+        private final String directory;
+        private final String fileDescription;
+        private final String testDescription;
         private final boolean reactive;
         private final UnifiedTest.Language language;
 
         private final List<Modifier> modifiers = new ArrayList<>();
         private Function<Throwable, Boolean> matchesThrowable;
 
-        private TestDef(final String dir, final String file, final String test, final boolean reactive,
-                        final UnifiedTest.Language language) {
-            this.dir = assertNotNull(dir);
-            this.file = assertNotNull(file);
-            this.test = assertNotNull(test);
+        private TestDef(final String directory, final String fileDescription, final String testDescription,
+                        final boolean reactive, final UnifiedTest.Language language) {
+            this.directory = assertNotNull(directory);
+            this.fileDescription = assertNotNull(fileDescription);
+            this.testDescription = assertNotNull(testDescription);
             this.reactive = reactive;
             this.language = assertNotNull(language);
         }
@@ -534,9 +534,9 @@ public final class UnifiedTestModifications {
             return "TestDef{"
                     + "modifiers=" + modifiers
                     + ", reactive=" + reactive
-                    + ", test='" + test + '\''
-                    + ", file='" + file + '\''
-                    + ", dir='" + dir + '\''
+                    + ", testDescription='" + testDescription + '\''
+                    + ", fileDescription='" + fileDescription + '\''
+                    + ", directory='" + directory + '\''
                     + '}';
         }
 
@@ -671,59 +671,59 @@ public final class UnifiedTestModifications {
         /**
          * Applies to all tests in directory.
          *
-         * @param dir the directory name
+         * @param directory the directory name
          * @return this
          */
-        public TestApplicator directory(final String dir) {
-            boolean match = (dir).equals(testDef.dir);
+        public TestApplicator directory(final String directory) {
+            boolean match = (directory).equals(testDef.directory);
             return onMatch(match);
         }
 
         /**
          * Applies to all tests in file under the directory.
          *
-         * @param dir  the directory name
-         * @param file the test file's "description" field
+         * @param directory       the directory name
+         * @param fileDescription the test file's "description" field
          * @return this
          */
-        public TestApplicator file(final String dir, final String file) {
-            boolean match = (dir).equals(testDef.dir)
-                    && file.equals(testDef.file);
+        public TestApplicator file(final String directory, final String fileDescription) {
+            boolean match = (directory).equals(testDef.directory)
+                    && fileDescription.equals(testDef.fileDescription);
             return onMatch(match);
         }
 
         /**
-         * Applies to the test where dir, file, and test match.
+         * Applies to the test where directory, fileDescription, and testDescription match.
          *
-         * @param dir  the directory name
-         * @param file the test file's "description" field
-         * @param test the individual test's "description" field
+         * @param directory       the directory name
+         * @param fileDescription the test file's "description" field
+         * @param testDescription the individual test's "description" field
          * @return this
          */
-        public TestApplicator test(final String dir, final String file, final String test) {
-            boolean match = testDef.dir.equals(dir)
-                    && testDef.file.equals(file)
-                    && testDef.test.equals(test);
+        public TestApplicator test(final String directory, final String fileDescription, final String testDescription) {
+            boolean match = testDef.directory.equals(directory)
+                    && testDef.fileDescription.equals(fileDescription)
+                    && testDef.testDescription.equals(testDescription);
             return onMatch(match);
         }
 
         /**
          * Utility method: emit replacement to standard out.
          *
-         * @param dir      the directory name
-         * @param fragment the substring to check in the test "description" field
+         * @param directory the directory name
+         * @param fragment  the substring to check in the test "description" field
          * @return this
          */
-        public TestApplicator testContains(final String dir, final String fragment) {
-            boolean match = (dir).equals(testDef.dir)
-                    && testDef.test.contains(fragment);
+        public TestApplicator testContains(final String directory, final String fragment) {
+            boolean match = (directory).equals(testDef.directory)
+                    && testDef.testDescription.contains(fragment);
             if (match) {
                 System.out.printf(
                         "!!! REPLACE %s WITH: .test(\"%s\", \"%s\", \"%s\")%n",
                         fragment,
-                        testDef.dir,
-                        testDef.file,
-                        testDef.test);
+                        testDef.directory,
+                        testDef.fileDescription,
+                        testDef.testDescription);
             }
             return this;
         }
@@ -731,16 +731,16 @@ public final class UnifiedTestModifications {
         /**
          * Utility method: emit file info to standard out
          *
-         * @param dir  the directory name
-         * @param test the individual test's "description" field
+         * @param directory       the directory name
+         * @param testDescription the individual test's "description" field
          * @return this
          */
-        public TestApplicator debug(final String dir, final String test) {
-            boolean match = testDef.test.equals(test);
+        public TestApplicator debug(final String directory, final String testDescription) {
+            boolean match = testDef.testDescription.equals(testDescription);
             if (match) {
                 System.out.printf(
                         "!!! ADD: \"%s\", \"%s\", \"%s\"%n",
-                        testDef.dir, testDef.file, test);
+                        testDef.directory, testDef.fileDescription, testDescription);
             }
             return this;
         }
