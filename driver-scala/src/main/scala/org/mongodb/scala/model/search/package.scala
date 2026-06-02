@@ -235,6 +235,16 @@ package object search {
   type QueryStringSearchOperator = com.mongodb.client.model.search.QueryStringSearchOperator
 
   /**
+   * A `SearchOperator` that performs vector search within the `\$search` pipeline stage.
+   *
+   * @see `SearchOperator.vectorSearch`
+   * @since 5.8
+   */
+  @Sealed
+  @Beta(Array(Reason.CLIENT))
+  type VectorSearchOperator = com.mongodb.client.model.search.VectorSearchOperator
+
+  /**
    * Fuzzy search options that may be used with some [[SearchOperator]]s.
    *
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/autocomplete/ autocomplete operator]]
