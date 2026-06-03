@@ -275,7 +275,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                 return new BatchWithSourceAndConnection<>(batch.get().getNextBatch(), null);
             }
             if (retryWrites && e instanceof MongoException) {
-                // Adding the `RetryableError` label here is unnecessary at this point:
+                // Adding the `RetryableWriteError` label here is unnecessary at this point:
                 // applications cannot use it for implementing retries, and it is not even part of the public driver API.
                 // Unfortunately, certain unified tests incorrectly rely on this label to verify retries, resulting in this redundant code.
                 addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryState, e);
@@ -339,7 +339,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                     return;
                 }
                 if (retryWrites && e instanceof MongoException) {
-                    // Adding the `RetryableError` label here is unnecessary at this point:
+                    // Adding the `RetryableWriteError` label here is unnecessary at this point:
                     // applications cannot use it for implementing retries, and it is not even part of the public driver API.
                     // Unfortunately, certain unified tests incorrectly rely on this label to verify retries, resulting in this redundant code.
                     addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryState, e);
@@ -443,9 +443,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final OperationContext operationContext,
             final WriteConcern effectiveWriteConcern) {
         return BulkWriteBatch.createBulkWriteBatch(
-                // This same `connectionDescription` will be used by all batches, which is likely incorrect,
-                // given that different batches may be executed via different connections.
-                // However, the code behaved this way since the introduction of retryable writes, so I am not changing it now.
+                // TODO-JAVA-6223 this same `connectionDescription` is used by all batches, which is incorrect
                 namespace, connectionDescription, ordered, effectiveWriteConcern, bypassDocumentValidation, retryWrites,
                 writeRequests, operationContext, comment, variables);
     }

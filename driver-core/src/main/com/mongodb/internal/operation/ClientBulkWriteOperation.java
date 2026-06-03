@@ -322,7 +322,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         } catch (MongoException mongoException) {
             resultAccumulator.onBulkWriteCommandErrorWithoutResponse(mongoException);
             if (retryWritesSetting) {
-                // Adding the `RetryableError` label here is unnecessary at this point:
+                // Adding the `RetryableWriteError` label here is unnecessary at this point:
                 // applications cannot use it for implementing retries, and it is not even part of the public driver API.
                 // Unfortunately, certain unified tests incorrectly rely on this label to verify retries, resulting in this redundant code.
                 addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryState, mongoException);
@@ -392,7 +392,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                     MongoException mongoException = (MongoException) t;
                     resultAccumulator.onBulkWriteCommandErrorWithoutResponse(mongoException);
                     if (retryWritesSetting) {
-                        // Adding the `RetryableError` label here is unnecessary at this point:
+                        // Adding the `RetryableWriteError` label here is unnecessary at this point:
                         // applications cannot use it for implementing retries, and it is not even part of the public driver API.
                         // Unfortunately, certain unified tests incorrectly rely on this label to verify retries, resulting in this redundant code.
                         addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryState, mongoException);
