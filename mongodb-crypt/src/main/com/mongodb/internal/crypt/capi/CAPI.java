@@ -53,16 +53,16 @@ public class CAPI {
     /**
      * Indicates success or contains error information.
      * <p>
-     * Functions like @ref mongocrypt_ctx_encrypt_init follow a pattern to expose a
+     * Functions like {@link #mongocrypt_ctx_encrypt_init} follow a pattern to expose a
      * status. A boolean is returned. True indicates success, and false indicates
      * failure. On failure a status on the handle is set, and is accessible with a
-     * corresponding status function. E.g. @ref mongocrypt_ctx_status.
+     * corresponding (handle)_status function. E.g. {@link #mongocrypt_ctx_status}.
      */
     public static class mongocrypt_status_t extends PointerType {
     }
 
     /**
-     * Contains all options passed on initialization of a @ref mongocrypt_ctx_t.
+     * Contains all options passed on initialization of a {@link mongocrypt_ctx_t}.
      */
     public static class mongocrypt_opts_t extends PointerType {
     }
@@ -70,8 +70,19 @@ public class CAPI {
     /**
      * A non-owning view of a byte buffer.
      * <p>
-     * Functions returning a mongocrypt_binary_t* expect it to be destroyed with
-     * mongocrypt_binary_destroy.
+     * When constructing a {@link mongocrypt_binary_t} it is the responsibility of the
+     * caller to maintain the lifetime of the viewed data. However, all public
+     * functions that take a {@link mongocrypt_binary_t} as an argument will make a copy of
+     * the viewed data.
+     * <p>
+     * Functions with a {@link mongocrypt_binary_t}* out guarantee the lifetime of the
+     * viewed data to live as long as the parent object. For example,
+     * {@link #mongocrypt_ctx_mongo_op} guarantees that the viewed data of
+     * {@link mongocrypt_binary_t} is valid until the parent ctx is destroyed with
+     * {@link #mongocrypt_ctx_destroy}.
+     * <p>
+     * The {@code mongocrypt_binary_t} struct definition is public.
+     * Consumers may rely on the struct layout.
      */
     public static class mongocrypt_binary_t extends PointerType {
         // The `mongocrypt_binary_t` struct layout is part of libmongocrypt's ABI:
@@ -84,9 +95,11 @@ public class CAPI {
         public mongocrypt_binary_t() {
             super();
         }
+
         public Pointer data() {
             return this.getPointer().getPointer(0);
         }
+
         public int len() {
             int len = this.getPointer().getInt(Native.POINTER_SIZE);
             // mongocrypt_binary_t represents length as an unsigned `uint32_t`.
@@ -108,7 +121,7 @@ public class CAPI {
      * encryption, decryption, registering log callbacks, etc.
      * <p>
      * Functions on a mongocrypt_t are thread safe, though functions on derived
-     * handle (e.g. mongocrypt_encryptor_t) are not and must be owned by a single
+     * handles (e.g. mongocrypt_ctx_t) are not and must be owned by a single
      * thread. See each handle's documentation for thread-safety considerations.
      * <p>
      * Multiple mongocrypt_t handles may be created.
@@ -153,7 +166,7 @@ public class CAPI {
      * Create a new non-owning view of a buffer (data + length).
      *
      * @param data A pointer to an array of bytes. This is not copied. data must outlive the binary object.
-     * @param len  The length of the @p data byte array.
+     * @param len  The length of the {@code data} byte array.
      * @return A new mongocrypt_binary_t.
      */
     public static native mongocrypt_binary_t
@@ -161,31 +174,29 @@ public class CAPI {
 
 
     /**
-     * Get a pointer to the referenced data.
+     * Get a pointer to the viewed data.
      *
-     * @param binary The @ref mongocrypt_binary_t.
-     * @return A pointer to the referenced data.
+     * @param binary The {@link mongocrypt_binary_t}.
+     * @return A pointer to the viewed data.
      */
     public static native Pointer
     mongocrypt_binary_data(mongocrypt_binary_t binary);
 
 
     /**
-     * Get the length of the referenced data.
+     * Get the length of the viewed data.
      *
-     * @param binary The @ref mongocrypt_binary_t.
-     * @return The length of the referenced data.
+     * @param binary The {@link mongocrypt_binary_t}.
+     * @return The length of the viewed data.
      */
     public static native int
     mongocrypt_binary_len(mongocrypt_binary_t binary);
 
 
     /**
-     * Free the @ref mongocrypt_binary_t.
+     * Free the {@link mongocrypt_binary_t}.
      * <p>
-     * This does not free the referenced data. Refer to individual function
-     * documentation to determine the lifetime guarantees of the underlying
-     * data.
+     * This does not free the viewed data.
      *
      * @param binary The mongocrypt_binary_t destroy.
      */
@@ -201,8 +212,8 @@ public class CAPI {
      * Create a new status object.
      * <p>
      * Use a new status object to retrieve the status from a handle by passing
-     * this as an out-parameter to functions like @ref mongocrypt_ctx_status.
-     * When done, destroy it with @ref mongocrypt_status_destroy.
+     * this as an out-parameter to functions like {@link #mongocrypt_ctx_status}.
+     * When done, destroy it with {@link #mongocrypt_status_destroy}.
      *
      * @return A new status object.
      */
@@ -218,20 +229,23 @@ public class CAPI {
      * @param type        The status type.
      * @param code        The status code.
      * @param message     The message.
-     * @param message_len The length of @p message. Pass -1 to determine the * string length with strlen (must * be NULL terminated).
+     * @param message_len Due to historical behavior, pass 1 + the string length
+     *                    of {@code message} (which differs from other functions accepting string
+     *                    arguments). Alternatively, if message is NULL terminated this may be -1 to
+     *                    tell mongocrypt to determine the string's length with strlen.
      */
     public static native void
     mongocrypt_status_set(mongocrypt_status_t status,
-                          int type,
-                          int code,
-                          cstring message,
-                          int message_len);
+            int type,
+            int code,
+            cstring message,
+            int message_len);
 
     /**
      * Indicates success or the type of error.
      *
      * @param status The status object.
-     * @return A @ref mongocrypt_status_type_t.
+     * @return A mongocrypt_status_type_t.
      */
 
     public static native int
@@ -249,11 +263,12 @@ public class CAPI {
 
 
     /**
-     * Get the error message associated with a status, or an empty string.
+     * Get the error message associated with a status or NULL.
      *
      * @param status The status object.
-     * @param len an optional length of the returned string. May be NULL.
-     * @return An error message or an empty string.
+     * @param len    An optional length of the returned string (excluding the
+     *               trailing NULL byte). May be NULL.
+     * @return A NULL terminated error message or NULL.
      */
     public static native cstring
     mongocrypt_status_message(mongocrypt_status_t status, Pointer len);
@@ -311,12 +326,12 @@ public class CAPI {
     }
 
     /**
-     * Allocate a new @ref mongocrypt_t object.
+     * Allocate a new {@link mongocrypt_t} object.
      * <p>
-     * Initialize with @ref mongocrypt_init. When done, free with @ref
-     * mongocrypt_destroy.
+     * Set options using mongocrypt_setopt_* functions, then initialize with {@link #mongocrypt_init}.
+     * When done with the {@link mongocrypt_t}, free with {@link #mongocrypt_destroy}.
      *
-     * @return A new @ref mongocrypt_t object.
+     * @return A new {@link mongocrypt_t} object.
      */
     public static native mongocrypt_t
     mongocrypt_new();
@@ -324,7 +339,7 @@ public class CAPI {
     /**
      * Set a handler to get called on every log message.
      *
-     * @param crypt   The @ref mongocrypt_t object.
+     * @param crypt   The {@link mongocrypt_t} object.
      * @param log_fn  The log callback.
      * @param log_ctx A context passed as an argument to the log callback every
      *                invokation.
@@ -349,19 +364,18 @@ public class CAPI {
     /**
      * Set a crypto hook for the AES256-CTR operations.
      *
-     * @param crypt The @ref mongocrypt_t object.
+     * @param crypt               The {@link mongocrypt_t} object.
      * @param aes_256_ctr_encrypt The crypto callback function for encrypt
-     * operation.
+     *                            operation.
      * @param aes_256_ctr_decrypt The crypto callback function for decrypt
-     * operation.
-     * @param ctx A context passed as an argument to the crypto callback
-     * every invocation.
-     * @return A boolean indicating success. If false, an error status is set.
-     * Retrieve it with @ref mongocrypt_status
+     *                            operation.
+     * @param ctx                 A context passed as an argument to the crypto callback
+     *                            every invocation.
+     * @return A boolean indicating success. If false, an error status is set. Retrieve it with {@link #mongocrypt_status}
      *
      */
     public static native boolean
-    mongocrypt_setopt_aes_256_ctr (mongocrypt_t crypt,
+    mongocrypt_setopt_aes_256_ctr(mongocrypt_t crypt,
             mongocrypt_crypto_fn aes_256_ctr_encrypt,
             mongocrypt_crypto_fn aes_256_ctr_decrypt,
             Pointer ctx);
@@ -374,12 +388,11 @@ public class CAPI {
      * <p>Note: this function has the wrong name. It should be:
      * mongocrypt_setopt_crypto_hook_sign_rsassa_pkcs1_v1_5</p>
      *
-     * @param crypt The @ref mongocrypt_t object.
+     * @param crypt                 The {@link mongocrypt_t} object.
      * @param sign_rsaes_pkcs1_v1_5 The crypto callback function.
-     * @param sign_ctx A context passed as an argument to the crypto callback
-     * every invocation.
-     * @return A boolean indicating success. If false, an error status is set.
-     * Retrieve it with @ref mongocrypt_status
+     * @param sign_ctx              A context passed as an argument to the crypto callback
+     *                              every invocation.
+     * @return A boolean indicating success. If false, an error status is set. Retrieve it with {@link #mongocrypt_status}
      */
     public static native boolean
     mongocrypt_setopt_crypto_hook_sign_rsaes_pkcs1_v1_5(
@@ -388,20 +401,22 @@ public class CAPI {
             Pointer sign_ctx);
 
     /**
-     * Set a handler to get called on every log message.
+     * Configure an AWS KMS provider on the {@link mongocrypt_t} object.
      *
-     * @param crypt                 The @ref mongocrypt_t object.
-     * @param aws_access_key_id     The AWS access key ID used to generate KMS
-     *                              messages.
-     * @param aws_access_key_id_len The string length (in bytes) of @p
-     *  * aws_access_key_id. Pass -1 to determine the string length with strlen (must
-     *  * be NULL terminated).
-     * @param aws_secret_access_key The AWS secret access key used to generate
-     *                              KMS messages.
-     * @param aws_secret_access_key_len The string length (in bytes) of @p
-     * aws_secret_access_key. Pass -1 to determine the string length with strlen
-     * (must be NULL terminated).
-     * @return A boolean indicating success.
+     * <p>This has been superseded by the more flexible:
+     * {@link #mongocrypt_setopt_kms_providers}.
+     *
+     * @param crypt                     The {@link mongocrypt_t} object.
+     * @param aws_access_key_id         The AWS access key ID used to generate KMS
+     *                                  messages.
+     * @param aws_access_key_id_len     The string length (in bytes) of {@code aws_access_key_id}.
+     *                                  Pass -1 to determine the string length with strlen (must be NULL terminated).
+     * @param aws_secret_access_key     The AWS secret access key used to generate
+     *                                  KMS messages.
+     * @param aws_secret_access_key_len The string length (in bytes) of {@code aws_secret_access_key}.
+     *                                  Pass -1 to determine the string length
+     *                                  with strlen (must be NULL terminated).
+     * @return A boolean indicating success. If false, an error status is set. Retrieve it with {@link #mongocrypt_ctx_status}
      */
     public static native boolean
     mongocrypt_setopt_kms_provider_aws(mongocrypt_t crypt,
@@ -411,11 +426,16 @@ public class CAPI {
                                        int aws_secret_access_key_len);
 
     /**
-     * Configure a local KMS provider on the @ref mongocrypt_t object.
+     * Configure a local KMS provider on the {@link mongocrypt_t} object.
      *
-     * @param crypt The @ref mongocrypt_t object.
-     * @param key A 64 byte master key used to encrypt and decrypt key vault keys.
-     * @return A boolean indicating success.
+     * <p>This has been superseded by the more flexible:
+     * {@link #mongocrypt_setopt_kms_providers}.
+     *
+     * @param crypt The {@link mongocrypt_t} object.
+     * @param key   A 96 byte master key used to encrypt and decrypt key vault
+     *              keys. The viewed data is copied. It is valid to destroy {@code key} with
+     *              {@link #mongocrypt_binary_destroy} immediately after.
+     * @return A boolean indicating success. If false, an error status is set. Retrieve it with {@link #mongocrypt_ctx_status}
      */
     public static native boolean
     mongocrypt_setopt_kms_provider_local(mongocrypt_t crypt,
@@ -424,10 +444,9 @@ public class CAPI {
     /**
      * Configure KMS providers with a BSON document.
      *
-     * @param crypt The @ref mongocrypt_t object.
+     * @param crypt         The {@link mongocrypt_t} object.
      * @param kms_providers A BSON document mapping the KMS provider names to credentials.
      * @return A boolean indicating success. If false, an error status is set.
-     * @since 1.1
      */
     public static native boolean
     mongocrypt_setopt_kms_providers(mongocrypt_t crypt,
@@ -436,41 +455,44 @@ public class CAPI {
     /**
      * Set a local schema map for encryption.
      *
-     * @param crypt The @ref mongocrypt_t object.
+     * @param crypt      The {@link mongocrypt_t} object.
      * @param schema_map A BSON document representing the schema map supplied by
-     * the user. The keys are collection namespaces and values are JSON schemas.
-     * @return A boolean indicating success. If false, an error status is set.
-     * Retrieve it with @ref mongocrypt_status
+     *                   the user. The keys are collection namespaces and values are JSON schemas.
+     * @return A boolean indicating success. If false, an error status is set. Retrieve it with {@link #mongocrypt_status}
      */
     public static native boolean
-    mongocrypt_setopt_schema_map (mongocrypt_t crypt, mongocrypt_binary_t schema_map);
+    mongocrypt_setopt_schema_map(mongocrypt_t crypt, mongocrypt_binary_t schema_map);
 
     /**
-     * Opt-into setting KMS providers before each KMS request.
+     * Opt-into handling the {@link #MONGOCRYPT_CTX_NEED_KMS_CREDENTIALS} state.
      *
-     * If set, before entering the MONGOCRYPT_CTX_NEED_KMS state,
-     * contexts will enter the MONGOCRYPT_CTX_NEED_KMS_CREDENTIALS state
-     * and then wait for credentials to be supplied through @ref mongocrypt_ctx_provide_kms_providers.
+     * <p>If set, before entering the {@link #MONGOCRYPT_CTX_NEED_KMS} state,
+     * contexts may enter the {@link #MONGOCRYPT_CTX_NEED_KMS_CREDENTIALS} state
+     * and then wait for credentials to be supplied through
+     * {@link #mongocrypt_ctx_provide_kms_providers}.
      *
-     * @param crypt The @ref mongocrypt_t object to update
+     * <p>A context will only enter {@link #MONGOCRYPT_CTX_NEED_KMS_CREDENTIALS}
+     * if an empty document was set for a KMS provider in
+     * {@link #mongocrypt_setopt_kms_providers}.
+     *
+     * @param crypt The {@link mongocrypt_t} object to update
      */
     public static native void
-    mongocrypt_setopt_use_need_kms_credentials_state (mongocrypt_t crypt);
+    mongocrypt_setopt_use_need_kms_credentials_state(mongocrypt_t crypt);
 
 
     /**
      * Set a local EncryptedFieldConfigMap for encryption.
      *
-     * @param crypt The @ref mongocrypt_t object.
+     * @param crypt                   The {@link mongocrypt_t} object.
      * @param encryptedFieldConfigMap A BSON document representing the EncryptedFieldConfigMap
-     * supplied by the user. The keys are collection namespaces and values are
-     * EncryptedFieldConfigMap documents. The viewed data copied. It is valid to
-     * destroy @p efc_map with @ref mongocrypt_binary_destroy immediately after.
-     * @return A boolean indicating success. If false, an error status is set.
-     * Retrieve it with @ref mongocrypt_status
+     *                                supplied by the user. The keys are collection namespaces and values are
+     *                                EncryptedFieldConfigMap documents. The viewed data copied. It is valid to
+     *                                destroy {@code efc_map} with {@link #mongocrypt_binary_destroy} immediately after.
+     * @return A boolean indicating success. If false, an error status is set. Retrieve it with {@link #mongocrypt_status}
      */
     public static native boolean
-    mongocrypt_setopt_encrypted_field_config_map (mongocrypt_t crypt, mongocrypt_binary_t encryptedFieldConfigMap);
+    mongocrypt_setopt_encrypted_field_config_map(mongocrypt_t crypt, mongocrypt_binary_t encryptedFieldConfigMap);
 
     /**
      * Opt-into skipping query analysis.
@@ -478,26 +500,22 @@ public class CAPI {
      * <p>If opted in:
      * <ul>
      *     <li>The crypt_shared shared library will not attempt to be loaded.</li>
-     *     <li>A mongocrypt_ctx_t will never enter the MONGOCRYPT_CTX_NEED_MARKINGS state.</li>
+     *     <li>A mongocrypt_ctx_t will never enter the {@link #MONGOCRYPT_CTX_NEED_MONGO_MARKINGS} state.</li>
      * </ul>
      *
-     * @param crypt The @ref mongocrypt_t object to update
-     * @since 1.5
+     * @param crypt The {@link mongocrypt_t} object to update
      */
     public static native void
-    mongocrypt_setopt_bypass_query_analysis (mongocrypt_t crypt);
+    mongocrypt_setopt_bypass_query_analysis(mongocrypt_t crypt);
 
     /**
-     * Opt-into handling the MONGOCRYPT_CTX_NEED_KMS state with retry logic.
+     * Enable or disable KMS retry behavior.
      *
-     * <p>If opted in, KMS requests will include retry information accessible via
-     * {@link #mongocrypt_kms_ctx_usleep}, {@link #mongocrypt_kms_ctx_feed_with_retry},
-     * and {@link #mongocrypt_kms_ctx_fail}.
+     * <p>Requires that {@link #mongocrypt_init} has not been called on crypt.
      *
-     * @param crypt  The @ref mongocrypt_t object to update
-     * @param enable Whether to enable KMS retry
-     * @return A boolean indicating success. If false, an error status is set.
-     * @since 5.8
+     * @param crypt  The {@link mongocrypt_t} object.
+     * @param enable A boolean indicating whether to retry operations.
+     * @return A boolean indicating success. If false, an error status is set. Retrieve it with {@link #mongocrypt_ctx_status}
      */
     public static native boolean
     mongocrypt_setopt_retry_kms(mongocrypt_t crypt, boolean enable);
@@ -505,101 +523,95 @@ public class CAPI {
     /**
      * Set the expiration time for the data encryption key cache. Defaults to 60 seconds if not set.
      *
-     * @param crypt The @ref mongocrypt_t object to update
+     * @param crypt               The {@link mongocrypt_t} object to update
      * @param cache_expiration_ms if 0 the cache never expires
      * @return A boolean indicating success. If false, an error status is set.
-     * @since 5.4
      */
     public static native boolean
-    mongocrypt_setopt_key_expiration (mongocrypt_t crypt, long cache_expiration_ms);
+    mongocrypt_setopt_key_expiration(mongocrypt_t crypt, long cache_expiration_ms);
 
     /**
      * Opt-into enabling sending multiple collection info documents.
      *
-     * @param crypt The @ref mongocrypt_t object to update
+     * @param crypt The {@link mongocrypt_t} object to update
      */
     public static native void
-    mongocrypt_setopt_enable_multiple_collinfo (mongocrypt_t crypt);
+    mongocrypt_setopt_enable_multiple_collinfo(mongocrypt_t crypt);
 
     /**
      * Set the contention factor used for explicit encryption.
      * The contention factor is only used for indexed Queryable Encryption.
      *
-     * @param ctx The @ref mongocrypt_ctx_t object.
+     * @param ctx               The {@link mongocrypt_ctx_t} object.
      * @param contention_factor the contention factor
-     * @return A boolean indicating success. If false, an error status is set.
-     * Retrieve it with @ref mongocrypt_ctx_status.
-     * @since 1.5
+     * @return A boolean indicating success. If false, an error status is set. Retrieve it with {@link #mongocrypt_ctx_status}.
      */
     public static native boolean
-    mongocrypt_ctx_setopt_contention_factor (mongocrypt_ctx_t ctx, long contention_factor);
+    mongocrypt_ctx_setopt_contention_factor(mongocrypt_ctx_t ctx, long contention_factor);
 
     /**
      * Set the index key id to use for Queryable Encryption explicit encryption.
+     * <p>
+     * If the index key id not set, the key id from {@link #mongocrypt_ctx_setopt_key_id} is used.
      *
-     * If the index key id not set, the key id from @ref mongocrypt_ctx_setopt_key_id is used.
-     *
-     * @param ctx The @ref mongocrypt_ctx_t object.
+     * @param ctx    The {@link mongocrypt_ctx_t} object.
      * @param key_id The binary corresponding to the _id (a UUID) of the data key to use from
      *               the key vault collection. Note, the UUID must be encoded with RFC-4122 byte order.
-     *               The viewed data is copied. It is valid to destroy key_id with @ref mongocrypt_binary_destroy immediately after.
-     * @return A boolean indicating success. If false, an error status is set.
-     * Retrieve it with @ref mongocrypt_ctx_status
-     * @since 1.5
+     *               The viewed data is copied. It is valid to destroy key_id with {@link #mongocrypt_binary_destroy} immediately after.
+     * @return A boolean indicating success. If false, an error status is set. Retrieve it with {@link #mongocrypt_ctx_status}
      */
     public static native boolean
-    mongocrypt_ctx_setopt_index_key_id (mongocrypt_ctx_t ctx, mongocrypt_binary_t key_id);
+    mongocrypt_ctx_setopt_index_key_id(mongocrypt_ctx_t ctx, mongocrypt_binary_t key_id);
 
     /**
      * Append an additional search directory to the search path for loading
      * the crypt_shared dynamic library.
      *
-     * @param crypt The @ref mongocrypt_t object to update
-     * @param path A null-terminated sequence of bytes for the search path. On
-     * some filesystems, this may be arbitrary bytes. On other filesystems, this may
-     * be required to be a valid UTF-8 code unit sequence. If the leading element of
-     * the path is the literal string "$ORIGIN", that substring will be replaced
-     * with the directory path containing the executable libmongocrypt module. If
-     * the path string is literal "$SYSTEM", then libmongocrypt will defer to the
-     * system's library resolution mechanism to find the crypt_shared library.
+     * @param crypt The {@link mongocrypt_t} object to update
+     * @param path  A null-terminated sequence of bytes for the search path. On
+     *              some filesystems, this may be arbitrary bytes. On other filesystems, this may
+     *              be required to be a valid UTF-8 code unit sequence. If the leading element of
+     *              the path is the literal string "$ORIGIN", that substring will be replaced
+     *              with the directory path containing the executable libmongocrypt module. If
+     *              the path string is literal "$SYSTEM", then libmongocrypt will defer to the
+     *              system's library resolution mechanism to find the crypt_shared library.
      *
-     * <p>If no crypt_shared dynamic library is found in any of the directories
-     * specified by the search paths loaded here, @ref mongocrypt_init() will still
-     * succeed and continue to operate without crypt_shared.</p>
+     *              <p>If no crypt_shared dynamic library is found in any of the directories
+     *              specified by the search paths loaded here, {@link #mongocrypt_init}() will still
+     *              succeed and continue to operate without crypt_shared.</p>
      *
-     * <p>The search paths are searched in the order that they are appended. This
-     * allows one to provide a precedence in how the library will be discovered. For
-     * example, appending known directories before appending "$SYSTEM" will allow
-     * one to supersede the system's installed library, but still fall-back to it if
-     * the library wasn't found otherwise. If one does not ever append "$SYSTEM",
-     * then the system's library-search mechanism will never be consulted.</p>
+     *              <p>The search paths are searched in the order that they are appended. This
+     *              allows one to provide a precedence in how the library will be discovered. For
+     *              example, appending known directories before appending "$SYSTEM" will allow
+     *              one to supersede the system's installed library, but still fall-back to it if
+     *              the library wasn't found otherwise. If one does not ever append "$SYSTEM",
+     *              then the system's library-search mechanism will never be consulted.</p>
      *
-     * <p>If an absolute path to the library is specified using @ref mongocrypt_setopt_set_crypt_shared_lib_path_override,
-     * then paths appended here will have no effect.</p>
-     * @since 1.5
+     *              <p>If an absolute path to the library is specified using {@link #mongocrypt_setopt_set_crypt_shared_lib_path_override},
+     *              then paths appended here will have no effect.</p>
      */
     public static native void
-    mongocrypt_setopt_append_crypt_shared_lib_search_path (mongocrypt_t crypt, cstring path);
+    mongocrypt_setopt_append_crypt_shared_lib_search_path(mongocrypt_t crypt, cstring path);
 
     /**
      * Set a single override path for loading the crypt_shared dynamic library.
-     * @param crypt The @ref mongocrypt_t object to update
-     * @param path A null-terminated sequence of bytes for a path to the crypt_shared
-     * dynamic library. On some filesystems, this may be arbitrary bytes. On other
-     * filesystems, this may be required to be a valid UTF-8 code unit sequence. If
-     * the leading element of the path is the literal string `$ORIGIN`, that
-     * substring will be replaced with the directory path containing the executable
-     * libmongocrypt module.
      *
-     * <p>This function will do no IO nor path validation. All validation will
-     * occur during the call to @ref mongocrypt_init.</p>
-     * <p>If a crypt_shared library path override is specified here, then no paths given
-     * to @ref mongocrypt_setopt_append_crypt_shared_lib_search_path will be consulted when
-     * opening the crypt_shared library.</p>
-     * <p>If a path is provided via this API and @ref mongocrypt_init fails to
-     * initialize a valid crypt_shared library instance for the path specified, then
-     * the initialization of mongocrypt_t will fail with an error.</p>
-     * @since 1.5
+     * @param crypt The {@link mongocrypt_t} object to update
+     * @param path  A null-terminated sequence of bytes for a path to the crypt_shared
+     *              dynamic library. On some filesystems, this may be arbitrary bytes. On other
+     *              filesystems, this may be required to be a valid UTF-8 code unit sequence. If
+     *              the leading element of the path is the literal string `$ORIGIN`, that
+     *              substring will be replaced with the directory path containing the executable
+     *              libmongocrypt module.
+     *
+     *              <p>This function will do no IO nor path validation. All validation will
+     *              occur during the call to {@link #mongocrypt_init}.</p>
+     *              <p>If a crypt_shared library path override is specified here, then no paths given
+     *              to {@link #mongocrypt_setopt_append_crypt_shared_lib_search_path} will be consulted when
+     *              opening the crypt_shared library.</p>
+     *              <p>If a path is provided via this API and {@link #mongocrypt_init} fails to
+     *              initialize a valid crypt_shared library instance for the path specified, then
+     *              the initialization of mongocrypt_t will fail with an error.</p>
      */
     public static native void
     mongocrypt_setopt_set_crypt_shared_lib_path_override(mongocrypt_t crypt, cstring path);
@@ -608,80 +620,76 @@ public class CAPI {
      * Set the query type to use for Queryable Encryption explicit encryption.
      * The query type is only used for indexed Queryable Encryption.
      *
-     * @param ctx The @ref mongocrypt_ctx_t object.
+     * @param ctx        The {@link mongocrypt_ctx_t} object.
      * @param query_type the query type
-     * @param len the length
-     * @return A boolean indicating success. If false, an error status is set.
-     * Retrieve it with @ref mongocrypt_ctx_status
+     * @param len        the length
+     * @return A boolean indicating success. If false, an error status is set. Retrieve it with {@link #mongocrypt_ctx_status}
      */
     public static native boolean
-    mongocrypt_ctx_setopt_query_type (mongocrypt_ctx_t ctx, cstring query_type, int len);
+    mongocrypt_ctx_setopt_query_type(mongocrypt_ctx_t ctx, cstring query_type, int len);
 
     /**
      * Set options for explicit encryption with the "range" algorithm.
-     * NOTE: "range" is currently unstable API and subject to backwards breaking changes.
-     *
+     * <p>
      * opts is a BSON document of the form:
      * {
-     *    "min": Optional&#60;BSON value&#62;,
-     *    "max": Optional&#60;BSON value&#62;,
-     *    "sparsity": Int64,
-     *    "precision": Optional&#60;Int32&#62;
-     *    "trimFactor": Optional&#60;Int32&#62;
+     * "min": Optional&#60;BSON value&#62;,
+     * "max": Optional&#60;BSON value&#62;,
+     * "sparsity": Optional&#60;Int64&#62;,
+     * "precision": Optional&#60;Int32&#62;
+     * "trimFactor": Optional&#60;Int32&#62;
      * }
      *
-     * @param ctx The @ref mongocrypt_ctx_t object.
+     * @param ctx  The {@link mongocrypt_ctx_t} object.
      * @param opts BSON.
      * @return A boolean indicating success. If false, an error status is set.
-     * @since 1.7
      */
     public static native boolean
-    mongocrypt_ctx_setopt_algorithm_range (mongocrypt_ctx_t ctx, mongocrypt_binary_t opts);
+    mongocrypt_ctx_setopt_algorithm_range(mongocrypt_ctx_t ctx, mongocrypt_binary_t opts);
 
 
     /**
      * Set options for explicit encryption with the "textPreview" algorithm. "prefix" and "suffix" can both be set.
      * NOTE: "textPreview" is experimental only and may be removed in a future non-major release.
      * opts is a BSON document of the form:
-     *
+     * <p>
      * {
-     *   "caseSensitive": bool,
-     *   "diacriticSensitive": bool,
-     *   "prefix": Optional{
-     *     "strMaxQueryLength": Int32,
-     *     "strMinQueryLength": Int32,
-     *   },
-     *   "suffix": Optional{
-     *     "strMaxQueryLength": Int32,
-     *     "strMinQueryLength": Int32,
-     *   },
-     *   "substring": Optional{
-     *     "strMaxLength": Int32,
-     *     "strMaxQueryLength": Int32,
-     *     "strMinQueryLength": Int32,
-     *   },
+     * "caseSensitive": bool,
+     * "diacriticSensitive": bool,
+     * "prefix": Optional{
+     * "strMaxQueryLength": Int32,
+     * "strMinQueryLength": Int32,
+     * },
+     * "suffix": Optional{
+     * "strMaxQueryLength": Int32,
+     * "strMinQueryLength": Int32,
+     * },
+     * "substring": Optional{
+     * "strMaxLength": Int32,
+     * "strMaxQueryLength": Int32,
+     * "strMinQueryLength": Int32,
+     * },
      * }
      *
-     * @param ctx The @ref mongocrypt_ctx_t object.
+     * @param ctx  The {@link mongocrypt_ctx_t} object.
      * @param opts BSON.
      * @return A boolean indicating success. If false, an error status is set.
-     * @since 5.6
      */
     public static native boolean mongocrypt_ctx_setopt_algorithm_text(mongocrypt_ctx_t ctx, mongocrypt_binary_t opts);
 
     /**
-     * Initialize new @ref mongocrypt_t object.
+     * Initialize new {@link mongocrypt_t} object.
      *
-     * @param crypt The @ref mongocrypt_t object.
+     * @param crypt The {@link mongocrypt_t} object.
      * @return A boolean indicating success. Failure may occur if previously set options are invalid.
      */
     public static native boolean
     mongocrypt_init(mongocrypt_t crypt);
 
     /**
-     * Get the status associated with a @ref mongocrypt_t object.
+     * Get the status associated with a {@link mongocrypt_t} object.
      *
-     * @param crypt  The @ref mongocrypt_t object.
+     * @param crypt  The {@link mongocrypt_t} object.
      * @param status Receives the status.
      * @return A boolean indicating success.
      */
@@ -701,9 +709,9 @@ public class CAPI {
     mongocrypt_is_crypto_available();
 
     /**
-     * Destroy the @ref mongocrypt_t object.
+     * Destroy the {@link mongocrypt_t} object.
      *
-     * @param crypt The @ref mongocrypt_t object to destroy.
+     * @param crypt The {@link mongocrypt_t} object to destroy.
      */
     public static native void
     mongocrypt_destroy(mongocrypt_t crypt);
@@ -711,45 +719,42 @@ public class CAPI {
     /**
      * Obtain a nul-terminated version string of the loaded crypt_shared dynamic library,
      * if available.
-     *
+     * <p>
      * If no crypt_shared was successfully loaded, this function returns NULL.
      *
-     * @param crypt The mongocrypt_t object after a successful call to mongocrypt_init.
-     * @param len an optional length of the returned string. May be NULL.
-     *
+     * @param crypt The {@link mongocrypt_t} object after a successful call to {@link #mongocrypt_init}.
+     * @param len   an optional length of the returned string. May be NULL.
      * @return A nul-terminated string of the dynamically loaded crypt_shared library.
-     * @since 1.5
      */
     public static native cstring
-    mongocrypt_crypt_shared_lib_version_string (mongocrypt_t crypt, Pointer len);
+    mongocrypt_crypt_shared_lib_version_string(mongocrypt_t crypt, Pointer len);
 
     /**
-     * Call in response to the MONGOCRYPT_CTX_NEED_KMS_CREDENTIALS state
+     * Call in response to the {@link #MONGOCRYPT_CTX_NEED_KMS_CREDENTIALS} state
      * to set per-context KMS provider settings. These follow the same format
-     * as @ref mongocrypt_setopt_kms_providers. If no keys are present in the
-     * BSON input, the KMS provider settings configured for the @ref mongocrypt_t
+     * as {@link #mongocrypt_setopt_kms_providers}. If no keys are present in the
+     * BSON input, the KMS provider settings configured for the {@link mongocrypt_t}
      * at initialization are used.
      *
-     * @param ctx The @ref mongocrypt_ctx_t object.
+     * @param ctx           The {@link mongocrypt_ctx_t} object.
      * @param kms_providers A BSON document mapping the KMS provider names
-     * to credentials.
-     * @return A boolean indicating success. If false, an error status is set.
-     * Retrieve it with @ref mongocrypt_ctx_status.
+     *                      to credentials.
+     * @return A boolean indicating success. If false, an error status is set. Retrieve it with {@link #mongocrypt_ctx_status}.
      */
     public static native boolean
-    mongocrypt_ctx_provide_kms_providers (mongocrypt_ctx_t ctx,
-                                          mongocrypt_binary_t kms_providers);
+    mongocrypt_ctx_provide_kms_providers(mongocrypt_ctx_t ctx,
+            mongocrypt_binary_t kms_providers);
 
     /**
      * Set the key id to use for explicit encryption.
      *
-     * @param ctx The @ref mongocrypt_ctx_t object.
+     * @param ctx    The {@link mongocrypt_ctx_t} object.
      * @param key_id The key_id to use.
      * @return A boolean indicating success.
      */
     public static native boolean
-    mongocrypt_ctx_setopt_key_id (mongocrypt_ctx_t ctx,
-                                  mongocrypt_binary_t key_id);
+    mongocrypt_ctx_setopt_key_id(mongocrypt_ctx_t ctx,
+            mongocrypt_binary_t key_id);
 
     /**
      * Set the keyAltName to use for explicit encryption.
@@ -758,14 +763,13 @@ public class CAPI {
      *
      * <p>It is an error to set both this and the key id.</p>
      *
-     * @param ctx The @ref mongocrypt_ctx_t object.
+     * @param ctx          The {@link mongocrypt_ctx_t} object.
      * @param key_alt_name The name to use.
-     * @return A boolean indicating success. If false, an error status is set.
-     * Retrieve it with @ref mongocrypt_ctx_status
+     * @return A boolean indicating success. If false, an error status is set. Retrieve it with {@link #mongocrypt_ctx_status}
      */
     public static native boolean
-    mongocrypt_ctx_setopt_key_alt_name (mongocrypt_ctx_t ctx,
-                                        mongocrypt_binary_t key_alt_name);
+    mongocrypt_ctx_setopt_key_alt_name(mongocrypt_ctx_t ctx,
+            mongocrypt_binary_t key_alt_name);
 
     /**
      * Set the keyMaterial to use for encrypting data.
@@ -775,32 +779,30 @@ public class CAPI {
      * <code>{ "keyMaterial" : (BSON BINARY value) }</code>
      * </p>
      *
-     * @param ctx The @ref mongocrypt_ctx_t object.
+     * @param ctx          The {@link mongocrypt_ctx_t} object.
      * @param key_material The data encryption key to use. The viewed data is
-     * copied. It is valid to destroy @p key_material with @ref
-     * mongocrypt_binary_destroy immediately after.
-     * @return A boolean indicating success. If false, an error status is set.
-     * Retrieve it with @ref mongocrypt_ctx_status
+     *                     copied. It is valid to destroy {@code key_material} with {@link #mongocrypt_binary_destroy} immediately after.
+     * @return A boolean indicating success. If false, an error status is set. Retrieve it with {@link #mongocrypt_ctx_status}
      */
     public static native boolean
-    mongocrypt_ctx_setopt_key_material (mongocrypt_ctx_t ctx, mongocrypt_binary_t key_material);
+    mongocrypt_ctx_setopt_key_material(mongocrypt_ctx_t ctx, mongocrypt_binary_t key_material);
 
     /**
      * Set the algorithm used for encryption to either
      * deterministic or random encryption. This value
      * should only be set when using explicit encryption.
-     *
+     * <p>
      * If -1 is passed in for "len", then "algorithm" is
      * assumed to be a null-terminated string.
-     *
+     * <p>
      * Valid values for algorithm are:
-     *   "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
-     *   "AEAD_AES_256_CBC_HMAC_SHA_512-Randomized"
+     * "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
+     * "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
      *
-     * @param ctx The @ref mongocrypt_ctx_t object.
+     * @param ctx       The {@link mongocrypt_ctx_t} object.
      * @param algorithm A string specifying the algorithm to
-     * use for encryption.
-     * @param len The length of the algorithm string.
+     *                  use for encryption.
+     * @param len       The length of the algorithm string.
      * @return A boolean indicating success.
      */
     public static native boolean
@@ -810,12 +812,12 @@ public class CAPI {
 
 
     /**
-     * Create a new uninitialized @ref mongocrypt_ctx_t.
+     * Create a new uninitialized {@link mongocrypt_ctx_t}.
      * <p>
-     * Initialize the context with functions like @ref mongocrypt_ctx_encrypt_init.
-     * When done, destroy it with @ref mongocrypt_ctx_destroy.
+     * Initialize the context with functions like {@link #mongocrypt_ctx_encrypt_init}.
+     * When done, destroy it with {@link #mongocrypt_ctx_destroy}.
      *
-     * @param crypt The @ref mongocrypt_t object.
+     * @param crypt The {@link mongocrypt_t} object.
      * @return A new context.
      */
     public static native mongocrypt_ctx_t
@@ -823,9 +825,9 @@ public class CAPI {
 
 
     /**
-     * Get the status associated with a @ref mongocrypt_ctx_t object.
+     * Get the status associated with a {@link mongocrypt_ctx_t} object.
      *
-     * @param ctx    The @ref mongocrypt_ctx_t object.
+     * @param ctx    The {@link mongocrypt_ctx_t} object.
      * @param status Receives the status.
      * @return A boolean indicating success.
      */
@@ -837,14 +839,14 @@ public class CAPI {
     /**
      * Identify the AWS KMS master key to use for creating a data key.
      *
-     * @param ctx The @ref mongocrypt_ctx_t object.
-     * @param region The AWS region.
-     * @param region_len The string length of @p region. Pass -1 to determine
-     * the string length with strlen (must be NULL terminated).
-     * @param cmk The Amazon Resource Name (ARN) of the customer master key
-     * (CMK).
-     * @param cmk_len The string length of @p cmk_len. Pass -1 to determine the
-     * string length with strlen (must be NULL terminated).
+     * @param ctx        The {@link mongocrypt_ctx_t} object.
+     * @param region     The AWS region.
+     * @param region_len The string length of {@code region}. Pass -1 to determine
+     *                   the string length with strlen (must be NULL terminated).
+     * @param cmk        The Amazon Resource Name (ARN) of the customer master key
+     *                   (CMK).
+     * @param cmk_len    The string length of {@code cmk_len}. Pass -1 to determine the
+     *                   string length with strlen (must be NULL terminated).
      * @return A boolean indicating success.
      */
     public static native boolean
@@ -861,12 +863,11 @@ public class CAPI {
      * is persisted in the new data key, and will be returned via
      * mongocrypt_kms_ctx_endpoint.
      *
-     * @param ctx The @ref mongocrypt_ctx_t object.
-     * @param endpoint The endpoint.
-     * @param endpoint_len The string length of @p endpoint. Pass -1 to
-     * determine the string length with strlen (must be NULL terminated).
-     * @return A boolean indicating success. If false, an error status is set.
-     * Retrieve it with @ref mongocrypt_ctx_status
+     * @param ctx          The {@link mongocrypt_ctx_t} object.
+     * @param endpoint     The endpoint.
+     * @param endpoint_len The string length of {@code endpoint}. Pass -1 to
+     *                     determine the string length with strlen (must be NULL terminated).
+     * @return A boolean indicating success. If false, an error status is set. Retrieve it with {@link #mongocrypt_ctx_status}
      */
     public static native boolean
     mongocrypt_ctx_setopt_masterkey_aws_endpoint (mongocrypt_ctx_t ctx,
@@ -877,52 +878,47 @@ public class CAPI {
     /**
      * Set the master key to "local" for creating a data key.
      *
-     * @param ctx The @ref mongocrypt_ctx_t object.
+     * @param ctx The {@link mongocrypt_ctx_t} object.
      * @return A boolean indicating success.
      */
     public static native boolean
-    mongocrypt_ctx_setopt_masterkey_local (mongocrypt_ctx_t ctx);
+    mongocrypt_ctx_setopt_masterkey_local(mongocrypt_ctx_t ctx);
 
     /**
      * Set key encryption key document for creating a data key.
      *
-     * @param ctx The @ref mongocrypt_ctx_t object.
+     * @param ctx         The {@link mongocrypt_ctx_t} object.
      * @param keyDocument BSON representing the key encryption key document.
      * @return A boolean indicating success. If false, and error status is set.
-     * @since 1.1
      */
     public static native boolean
     mongocrypt_ctx_setopt_key_encryption_key(mongocrypt_ctx_t ctx,
-                                             mongocrypt_binary_t keyDocument);
+            mongocrypt_binary_t keyDocument);
 
     /**
      * Initialize a context to create a data key.
-     *
-     * Set options before using @ref mongocrypt_ctx_setopt_masterkey_aws and
+     * <p>
+     * Set options before using {@link #mongocrypt_ctx_setopt_masterkey_aws} and
      * mongocrypt_ctx_setopt_masterkey_local.
      *
-     * @param ctx The @ref mongocrypt_ctx_t object.
+     * @param ctx The {@link mongocrypt_ctx_t} object.
      * @return A boolean indicating success.
-     *
+     * <p>
      * Assumes a master key option has been set, and an associated KMS provider
-     * has been set on the parent @ref mongocrypt_t.
+     * has been set on the parent {@link mongocrypt_t}.
      */
     public static native boolean
-    mongocrypt_ctx_datakey_init (mongocrypt_ctx_t ctx);
+    mongocrypt_ctx_datakey_init(mongocrypt_ctx_t ctx);
 
     /**
      * Initialize a context for encryption.
      *
-     * Associated options:
-     * - @ref mongocrypt_ctx_setopt_cache_noblock
-     * - @ref mongocrypt_ctx_setopt_schema
-     *
-     * @param ctx The @ref mongocrypt_ctx_t object.
-     * @param db The database name.
-     * @param db_len The byte length of @p db. Pass -1 to determine the string length with strlen (must be NULL terminated).
-     * @param cmd The BSON command to be encrypted.
-     * @return A boolean indicating success. If false, an error status is set.
-     * Retrieve it with @ref mongocrypt_ctx_status
+     * @param ctx    The {@link mongocrypt_ctx_t} object.
+     * @param db     The database name.
+     * @param db_len The byte length of {@code db}. Pass -1 to determine the string length with strlen (must be NULL terminated).
+     * @param cmd    The BSON command to be encrypted. The viewed data is copied.
+     *               It is valid to destroy {@code cmd} with {@link #mongocrypt_binary_destroy} immediately after.
+     * @return A boolean indicating success. If false, an error status is set. Retrieve it with {@link #mongocrypt_ctx_status}
      */
     public static native boolean
     mongocrypt_ctx_encrypt_init(mongocrypt_ctx_t ctx,
@@ -933,65 +929,67 @@ public class CAPI {
     /**
      * Explicit helper method to encrypt a single BSON object. Contexts
      * created for explicit encryption will not go through mongocryptd.
-     *
+     * <p>
      * To specify a key_id, algorithm, or iv to use, please use the
      * corresponding mongocrypt_setopt methods before calling this.
-     *
+     * <p>
      * This method expects the passed-in BSON to be of the form:
      * { "v" : BSON value to encrypt }
      *
-     * @param ctx A @ref mongocrypt_ctx_t.
-     * @param msg A @ref mongocrypt_binary_t the plaintext BSON value.
+     * @param ctx A {@link mongocrypt_ctx_t}.
+     * @param msg A {@link mongocrypt_binary_t} the plaintext BSON value.
      * @return A boolean indicating success.
      */
     public static native boolean
-    mongocrypt_ctx_explicit_encrypt_init (mongocrypt_ctx_t ctx,
-                                          mongocrypt_binary_t msg);
+    mongocrypt_ctx_explicit_encrypt_init(mongocrypt_ctx_t ctx,
+                                         mongocrypt_binary_t msg);
 
     /**
      * Explicit helper method to encrypt a Match Expression or Aggregate Expression.
      * Contexts created for explicit encryption will not go through mongocryptd.
      * Requires query_type to be "range".
-     * NOTE: "range" is currently unstable API and subject to backwards breaking changes.
-     *
+     * <p>
      * This method expects the passed-in BSON to be of the form:
-     * { "v" : FLE2RangeFindDriverSpec }
+     * {@code { "v" : FLE2RangeFindDriverSpec } }
      *
      * FLE2RangeFindDriverSpec is a BSON document with one of these forms:
      *
+     * <pre>
+     * <code>
      * 1. A Match Expression of this form:
-     *    {$and: [{&#60;field&#62;: {&#60;op&#62;: &#60;value1&#62;, {&#60;field&#62;: {&#60;op&#62;: &#60;value2&#62; }}]}
+     *    {$and: [{<field>: {<op>: <value1>, {<field>: {<op>: <value2> }}]}
      * 2. An Aggregate Expression of this form:
-     *    {$and: [{&#60;op&#62;: [&#60;fieldpath&#62;, &#60;value1&#62;]}, {&#60;op&#62;: [&#60;fieldpath&#62;, &#60;value2&#62;]}]
+     *    {$and: [{<op>: [<fieldpath>, <value1>]}, {<op>: [<fieldpath>, <value2>]}]
      *
      * may be $lt, $lte, $gt, or $gte.
+     * </code>
+     * </pre>
      *
      * The value of "v" is expected to be the BSON value passed to a driver
      * ClientEncryption.encryptExpression helper.
      *
+     * <p>
      * Associated options for FLE 1:
-     * - @ref mongocrypt_ctx_setopt_key_id
-     * - @ref mongocrypt_ctx_setopt_key_alt_name
-     * - @ref mongocrypt_ctx_setopt_algorithm
-     *
+     * - {@link #mongocrypt_ctx_setopt_key_id}
+     * - {@link #mongocrypt_ctx_setopt_key_alt_name}
+     * - {@link #mongocrypt_ctx_setopt_algorithm}
+     * <p>
      * Associated options for Queryable Encryption:
-     * - @ref mongocrypt_ctx_setopt_key_id
-     * - @ref mongocrypt_ctx_setopt_index_key_id
-     * - @ref mongocrypt_ctx_setopt_contention_factor
-     * - @ref mongocrypt_ctx_setopt_query_type
-     * - @ref mongocrypt_ctx_setopt_algorithm_range
-     *
+     * - {@link #mongocrypt_ctx_setopt_key_id}
+     * - {@link #mongocrypt_ctx_setopt_index_key_id}
+     * - {@link #mongocrypt_ctx_setopt_contention_factor}
+     * - {@link #mongocrypt_ctx_setopt_query_type}
+     * - {@link #mongocrypt_ctx_setopt_algorithm_range}
+     * <p>
      * An error is returned if FLE 1 and Queryable Encryption incompatible options
      * are set.
      *
-     * @param ctx A @ref mongocrypt_ctx_t.
-     * @param msg A @ref mongocrypt_binary_t the plaintext BSON value.
+     * @param ctx A {@link mongocrypt_ctx_t}.
+     * @param msg A {@link mongocrypt_binary_t} the plaintext BSON value.
      * @return A boolean indicating success.
-     * @since 1.7
      */
     public static native boolean
-    mongocrypt_ctx_explicit_encrypt_expression_init (mongocrypt_ctx_t ctx,
-                                                     mongocrypt_binary_t msg);
+    mongocrypt_ctx_explicit_encrypt_expression_init(mongocrypt_ctx_t ctx, mongocrypt_binary_t msg);
 
     /**
      * Initialize a context for decryption.
@@ -1007,26 +1005,24 @@ public class CAPI {
     /**
      * Explicit helper method to decrypt a single BSON object.
      *
-     * @param ctx A @ref mongocrypt_ctx_t.
-     * @param msg A @ref mongocrypt_binary_t the encrypted BSON.
+     * @param ctx A {@link mongocrypt_ctx_t}.
+     * @param msg A {@link mongocrypt_binary_t} the encrypted BSON.
      * @return A boolean indicating success.
      */
     public static native boolean
-    mongocrypt_ctx_explicit_decrypt_init (mongocrypt_ctx_t ctx,
-                                          mongocrypt_binary_t msg);
+    mongocrypt_ctx_explicit_decrypt_init(mongocrypt_ctx_t ctx, mongocrypt_binary_t msg);
 
     /**
      * Initialize a context to rewrap datakeys.
-     *
+     * <p>
      * Associated options {@link #mongocrypt_ctx_setopt_key_encryption_key(mongocrypt_ctx_t, mongocrypt_binary_t)}
      *
-     * @param ctx The @ref mongocrypt_ctx_t object.
+     * @param ctx    The {@link mongocrypt_ctx_t} object.
      * @param filter The filter to use for the find command on the key vault collection to retrieve datakeys to rewrap.
      * @return A boolean indicating success. If false, and error status is set.
-     * @since 1.5
      */
     public static native boolean
-    mongocrypt_ctx_rewrap_many_datakey_init (mongocrypt_ctx_t ctx, mongocrypt_binary_t filter);
+    mongocrypt_ctx_rewrap_many_datakey_init(mongocrypt_ctx_t ctx, mongocrypt_binary_t filter);
 
 
     public static final int MONGOCRYPT_CTX_ERROR = 0;
@@ -1045,8 +1041,8 @@ public class CAPI {
     /**
      * Get the current state of a context.
      *
-     * @param ctx The @ref mongocrypt_ctx_t object.
-     * @return A @ref mongocrypt_ctx_state_t.
+     * @param ctx The {@link mongocrypt_ctx_t} object.
+     * @return A mongocrypt_ctx_state_t.
      */
     public static native int
     mongocrypt_ctx_state(mongocrypt_ctx_t ctx);
@@ -1057,15 +1053,20 @@ public class CAPI {
      * is in MONGOCRYPT_CTX_NEED_MONGO_* states.
      *
      * <p>
-     * op_bson is a BSON document to be used for the operation.
-     * - For MONGOCRYPT_CTX_NEED_MONGO_COLLINFO it is a listCollections filter.
-     * - For MONGOCRYPT_CTX_NEED_MONGO_KEYS it is a find filter.
-     * - For MONGOCRYPT_CTX_NEED_MONGO_MARKINGS it is a JSON schema to append.
+     * {@code op_bson} is a BSON document to be used for the operation.
+     * - For {@link #MONGOCRYPT_CTX_NEED_MONGO_COLLINFO}(_WITH_DB) it is a listCollections filter.
+     * - For {@link #MONGOCRYPT_CTX_NEED_MONGO_KEYS} it is a find filter.
+     * - For {@link #MONGOCRYPT_CTX_NEED_MONGO_MARKINGS} it is a command to send to mongocryptd.
      * </p>
      *
-     * @param ctx     The @ref mongocrypt_ctx_t object.
-     * @param op_bson A BSON document for the MongoDB operation.
-     * @return A boolean indicating success.
+     * <p>The lifetime of {@code op_bson} is tied to the lifetime of {@code ctx}. It is valid
+     * until {@link #mongocrypt_ctx_destroy} is called.
+     *
+     * @param ctx     The {@link mongocrypt_ctx_t} object.
+     * @param op_bson A BSON document for the MongoDB operation. The data
+     *                viewed by {@code op_bson} is guaranteed to be valid until {@code ctx} is destroyed with
+     *                {@link #mongocrypt_ctx_destroy}.
+     * @return A boolean indicating success. If false, an error status is set. Retrieve it with {@link #mongocrypt_ctx_status}
      */
     public static native boolean
     mongocrypt_ctx_mongo_op(mongocrypt_ctx_t ctx, mongocrypt_binary_t op_bson);
@@ -1077,12 +1078,12 @@ public class CAPI {
      * depending on the operation.
      * <p>
      * op_bson is a BSON document to be used for the operation.
-     * - For MONGOCRYPT_CTX_NEED_MONGO_COLLINFO it is a doc from a listCollections
+     * - For {@link #MONGOCRYPT_CTX_NEED_MONGO_COLLINFO} it is a doc from a listCollections
      * cursor.
-     * - For MONGOCRYPT_CTX_NEED_MONGO_KEYS it is a doc from a find cursor.
-     * - For MONGOCRYPT_CTX_NEED_MONGO_MARKINGS it is a reply from mongocryptd.
+     * - For {@link #MONGOCRYPT_CTX_NEED_MONGO_KEYS} it is a doc from a find cursor.
+     * - For {@link #MONGOCRYPT_CTX_NEED_MONGO_MARKINGS} it is a reply from mongocryptd.
      *
-     * @param ctx   The @ref mongocrypt_ctx_t object.
+     * @param ctx   The {@link mongocrypt_ctx_t} object.
      * @param reply A BSON document for the MongoDB operation.
      * @return A boolean indicating success.
      */
@@ -1093,7 +1094,7 @@ public class CAPI {
     /**
      * Call when done feeding the reply (or replies) back to the context.
      *
-     * @param ctx The @ref mongocrypt_ctx_t object.
+     * @param ctx The {@link mongocrypt_ctx_t} object.
      * @return A boolean indicating success.
      */
 
@@ -1107,35 +1108,36 @@ public class CAPI {
      * out multiple concurrent KMS HTTP requests. Feeding multiple KMS requests
      * is thread-safe.
      * <p>
-     * Is KMS handles are being handled synchronously, the driver can reuse the same
+     * If KMS handles are being handled synchronously, the driver can reuse the same
      * TLS socket to send HTTP requests and receive responses.
+     * <p>
+     * The returned KMS handle does not outlive {@code ctx}.
      *
-     * @param ctx A @ref mongocrypt_ctx_t.
-     * @return a new @ref mongocrypt_kms_ctx_t or NULL.
+     * @param ctx A {@link mongocrypt_ctx_t}.
+     * @return a new {@link mongocrypt_kms_ctx_t} or NULL.
      */
     public static native mongocrypt_kms_ctx_t
     mongocrypt_ctx_next_kms_ctx(mongocrypt_ctx_t ctx);
 
     /**
      * Get the KMS provider identifier associated with this KMS request.
-     *
+     * <p>
      * This is used to conditionally configure TLS connections based on the KMS
      * request. It is useful for KMIP, which authenticates with a client
      * certificate.
      *
      * @param kms The mongocrypt_kms_ctx_t object.
      * @param len Receives the length of the returned string.
-     *
      * @return The name of the KMS provider
      */
     public static native cstring
     mongocrypt_kms_ctx_get_kms_provider(mongocrypt_kms_ctx_t kms,
-                                        Pointer len);
+            Pointer len);
 
     /**
      * Get the HTTP request message for a KMS handle.
      *
-     * @param kms A @ref mongocrypt_kms_ctx_t.
+     * @param kms A {@link mongocrypt_kms_ctx_t}.
      * @param msg The HTTP request to send to KMS.
      * @return A boolean indicating success.
      */
@@ -1146,11 +1148,11 @@ public class CAPI {
     /**
      * Get the hostname from which to connect over TLS.
      * <p>
-     * The storage for @p endpoint is not owned by the caller, but
-     * is valid until calling @ref mongocrypt_ctx_kms_done on the
-     * parent @ref mongocrypt_ctx_t.
+     * The storage for {@code endpoint} is not owned by the caller, but
+     * is valid until calling {@link #mongocrypt_ctx_kms_done} on the
+     * parent {@link mongocrypt_ctx_t}.
      *
-     * @param kms      A @ref mongocrypt_kms_ctx_t.
+     * @param kms      A {@link mongocrypt_kms_ctx_t}.
      * @param endpoint The output hostname.
      * @return A boolean indicating success.
      */
@@ -1158,9 +1160,9 @@ public class CAPI {
     mongocrypt_kms_ctx_endpoint(mongocrypt_kms_ctx_t kms, PointerByReference endpoint);
 
     /**
-     * Indicates how many bytes to feed into @ref mongocrypt_kms_ctx_feed.
+     * Indicates how many bytes to feed into {@link #mongocrypt_kms_ctx_feed}.
      *
-     * @param kms The @ref mongocrypt_kms_ctx_t.
+     * @param kms The {@link mongocrypt_kms_ctx_t}.
      * @return The number of requested bytes.
      */
     public static native int
@@ -1170,39 +1172,42 @@ public class CAPI {
     /**
      * Feed bytes from the HTTP response.
      * <p>
-     * Feeding more bytes than what has been returned in @ref
-     * mongocrypt_kms_ctx_bytes_needed is an error.
+     * Feeding more bytes than what has been returned in
+     * {@link #mongocrypt_kms_ctx_bytes_needed} is an error.
      *
-     * @param kms   The @ref mongocrypt_kms_ctx_t.
-     * @param bytes The bytes to feed.
-     * @return A boolean indicating success.
+     * @param kms   The {@link mongocrypt_kms_ctx_t}.
+     * @param bytes The bytes to feed. The viewed data is copied. It is valid to
+     *              destroy bytes with {@link #mongocrypt_binary_destroy} immediately after.
+     * @return A boolean indicating success. If false, an error status is set. Retrieve it with {@link #mongocrypt_kms_ctx_status}
      */
     public static native boolean
     mongocrypt_kms_ctx_feed(mongocrypt_kms_ctx_t kms, mongocrypt_binary_t bytes);
 
     /**
-     * Get the number of microseconds to sleep before sending the next KMS request.
+     * Indicates how long to sleep before sending this request.
      *
      * <p>Requires {@link #mongocrypt_setopt_retry_kms} to be enabled.
-     * A return value of 0 indicates no delay is needed.
      *
-     * @param kms The @ref mongocrypt_kms_ctx_t.
-     * @return The number of microseconds to sleep, or 0.
-     * @since 5.8
+     * @param kms The {@link mongocrypt_kms_ctx_t}.
+     * @return How long to sleep in microseconds.
      */
     public static native long
     mongocrypt_kms_ctx_usleep(mongocrypt_kms_ctx_t kms);
 
     /**
-     * Feed bytes from the HTTP response, with retry support.
+     * Feed bytes from the KMS response.
+     *
+     * <p>Feeding more bytes than what has been returned in
+     * {@link #mongocrypt_kms_ctx_bytes_needed} is an error.
      *
      * <p>Requires {@link #mongocrypt_setopt_retry_kms} to be enabled.
      *
-     * @param kms          The @ref mongocrypt_kms_ctx_t.
-     * @param bytes        The bytes to feed.
-     * @param should_retry Receives whether the driver should retry the KMS request.
-     * @return A boolean indicating success.
-     * @since 5.8
+     * @param kms          The {@link mongocrypt_kms_ctx_t}.
+     * @param bytes        The bytes to feed. The viewed data is copied. It is valid to
+     *                     destroy bytes with {@link #mongocrypt_binary_destroy} immediately after.
+     * @param should_retry Receives whether the KMS request should be retried. Retry in-place
+     *                     without calling {@link #mongocrypt_kms_ctx_fail}.
+     * @return A boolean indicating success. If false, an error status is set. Retrieve it with {@link #mongocrypt_kms_ctx_status}
      */
     public static native boolean
     mongocrypt_kms_ctx_feed_with_retry(mongocrypt_kms_ctx_t kms,
@@ -1210,35 +1215,35 @@ public class CAPI {
                                        ByteByReference should_retry);
 
     /**
-     * Signal to libmongocrypt that a network error occurred on this KMS request.
+     * Indicate a network error. Discards all data fed to this KMS context with
+     * {@link #mongocrypt_kms_ctx_feed}. The {@link mongocrypt_kms_ctx_t} may be reused.
      *
      * <p>Requires {@link #mongocrypt_setopt_retry_kms} to be enabled.
      *
-     * @param kms The @ref mongocrypt_kms_ctx_t.
-     * @return True if the request should be retried, false if retries are exhausted.
-     * @since 5.8
+     * @param kms The {@link mongocrypt_kms_ctx_t}.
+     * @return A boolean indicating whether the failed request may be retried.
      */
     public static native boolean
     mongocrypt_kms_ctx_fail(mongocrypt_kms_ctx_t kms);
 
 
     /**
-     * Get the status associated with a @ref mongocrypt_kms_ctx_t object.
+     * Get the status associated with a {@link mongocrypt_kms_ctx_t} object.
      *
-     * @param kms    The @ref mongocrypt_kms_ctx_t object.
+     * @param kms    The {@link mongocrypt_kms_ctx_t} object.
      * @param status Receives the status.
      * @return A boolean indicating success.
      */
     public static native boolean
     mongocrypt_kms_ctx_status(mongocrypt_kms_ctx_t kms,
-                              mongocrypt_status_t status);
+            mongocrypt_status_t status);
 
 
     /**
      * Call when done handling all KMS contexts.
      *
-     * @param ctx The @ref mongocrypt_ctx_t object.
-     * @return A boolean indicating success.
+     * @param ctx The {@link mongocrypt_ctx_t} object.
+     * @return A boolean indicating success. If false, an error status is set. Retrieve it with {@link #mongocrypt_ctx_status}
      */
     public static native boolean
     mongocrypt_ctx_kms_done(mongocrypt_ctx_t ctx);
@@ -1247,7 +1252,7 @@ public class CAPI {
     /**
      * Perform the final encryption or decryption.
      *
-     * @param ctx A @ref mongocrypt_ctx_t.
+     * @param ctx A {@link mongocrypt_ctx_t}.
      * @param out The final BSON to send to the server.
      * @return a boolean indicating success.
      */
@@ -1256,9 +1261,9 @@ public class CAPI {
 
 
     /**
-     * Destroy and free all memory associated with a @ref mongocrypt_ctx_t.
+     * Destroy and free all memory associated with a {@link mongocrypt_ctx_t}.
      *
-     * @param ctx A @ref mongocrypt_ctx_t.
+     * @param ctx A {@link mongocrypt_ctx_t}.
      */
     public static native void
     mongocrypt_ctx_destroy(mongocrypt_ctx_t ctx);

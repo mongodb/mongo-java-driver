@@ -15,6 +15,17 @@ Client-side field-level encryption (CSFLE) support via JNA bindings to libmongoc
   review**
 - `com.mongodb.internal.crypt.capi` — Internal encryption state management
 
+## CAPI.java — JNA Binding Declarations
+
+`CAPI.java` declares the JNA native method signatures for libmongocrypt. Javadoc on each method
+must match the documentation in [mongocrypt.h](https://github.com/mongodb/libmongocrypt/blob/master/src/mongocrypt.h).
+
+When adding or updating bindings:
+- Copy the doc comment from `mongocrypt.h` verbatim
+- Replace Doxygen `@ref type_name` with Javadoc `{@link type_name}` (for types) or
+  `{@link #function_name}` (for functions in the same class)
+- Replace `@p param_name` with `{@code param_name}`
+
 ## Build & Test
 
 ```bash
