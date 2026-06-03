@@ -29,7 +29,8 @@ plugins {
 }
 
 tasks.withType<Test> {
-    maxHeapSize = "4g"
+    // Override with -PtestMaxHeapSize=<size> (e.g. "1g", "512m"). Defaults to 4g.
+    maxHeapSize = findProperty("testMaxHeapSize")?.toString() ?: "4g"
     maxParallelForks = 1
 
     useJUnitPlatform()

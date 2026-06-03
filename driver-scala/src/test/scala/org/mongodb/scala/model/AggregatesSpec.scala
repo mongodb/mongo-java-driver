@@ -37,7 +37,10 @@ import org.mongodb.scala.model.geojson.{ Point, Position }
 import org.mongodb.scala.model.search.SearchCount.total
 import org.mongodb.scala.model.search.SearchFacet.stringFacet
 import org.mongodb.scala.model.search.SearchHighlight.paths
+import com.mongodb.client.model.{ Aggregates => JAggregates }
 import com.mongodb.client.model.RerankQuery
+import com.mongodb.client.model.search.VectorSearchQuery
+import org.bson.BinaryVector
 import org.mongodb.scala.model.search.SearchCollector
 import org.mongodb.scala.model.search.SearchOperator.exists
 import org.mongodb.scala.model.search.SearchOptions.searchOptions
@@ -813,6 +816,50 @@ class AggregatesSpec extends BaseSpec {
             "filter": {"fieldName": {"$ne": "fieldValue"}}
         }
       }"""
+      )
+    )
+  }
+
+  it should "render $vectorSearch with BinaryVector" in {
+    toBson(
+      Aggregates.vectorSearch(
+        fieldPath("fieldName"),
+        BinaryVector.int8Vector(Array[Byte](0, 1, 2, 3, 4)),
+        "indexName",
+        1,
+        approximateVectorSearchOptions(2)
+      )
+    ) should equal(
+      toBson(
+        JAggregates.vectorSearch(
+          fieldPath("fieldName"),
+          BinaryVector.int8Vector(Array[Byte](0, 1, 2, 3, 4)),
+          "indexName",
+          1,
+          approximateVectorSearchOptions(2)
+        )
+      )
+    )
+  }
+
+  it should "render $vectorSearch with VectorSearchQuery" in {
+    toBson(
+      Aggregates.vectorSearch(
+        fieldPath("fieldName"),
+        VectorSearchQuery.textQuery("sample text"),
+        "indexName",
+        1,
+        approximateVectorSearchOptions(2)
+      )
+    ) should equal(
+      toBson(
+        JAggregates.vectorSearch(
+          fieldPath("fieldName"),
+          VectorSearchQuery.textQuery("sample text"),
+          "indexName",
+          1,
+          approximateVectorSearchOptions(2)
+        )
       )
     )
   }

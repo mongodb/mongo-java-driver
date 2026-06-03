@@ -50,6 +50,9 @@ description: Testing frameworks, conventions, and commands for the MongoDB Java 
 
 # Scala tests (all versions)
 ./gradlew scalaCheck
+
+# Custom test JVM heap size (default: 4g)
+./gradlew :driver-core:test -PtestMaxHeapSize=1g
 ```
 
 ## Module-Specific Notes
