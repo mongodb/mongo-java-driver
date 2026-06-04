@@ -25,6 +25,8 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.MongoNamespaceHelper;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
+import com.mongodb.internal.observability.micrometer.OtelTracePropagationTestToggle;
+import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -80,6 +82,12 @@ public final class CommandMessage extends RequestMessage {
      * Specifies that the `OP_MSG` section payload is a sequence of BSON documents.
      */
     private static final byte PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE = 1;
+    /**
+     * Specifies that the `OP_MSG` section payload is a W3C traceparent C-string (OpenTelemetry trace context).
+     *
+     * <p>Mirrors the server's {@code kOtelTelemetryContext = 3} section kind (see DRIVERS-3454).</p>
+     */
+    private static final byte PAYLOAD_TYPE_3_OTEL_TRACE_CONTEXT = 3;
 
     private static final int UNINITIALIZED_POSITION = -1;
 
@@ -156,15 +164,20 @@ public final class CommandMessage extends RequestMessage {
                 byteBuf.position(firstDocumentPosition);
                 ByteBufBsonDocument byteBufBsonDocument = createOne(byteBuf);
 
-                // If true, it means there is at least one `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE` section in the OP_MSG
+                // If true, there are more sections after the `PAYLOAD_TYPE_0_DOCUMENT` section: either one or more
+                // `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE` sections, and/or a trailing `PAYLOAD_TYPE_3_OTEL_TRACE_CONTEXT` section.
                 if (byteBuf.hasRemaining()) {
                     BsonDocument commandBsonDocument = byteBufBsonDocument.toBaseBsonDocument();
 
                     // Each loop iteration processes one Document Sequence
                     // When there are no more bytes remaining, there are no more Document Sequences
                     while (byteBuf.hasRemaining()) {
-                        // skip reading the payload type, we know it is `PAYLOAD_TYPE_1`
-                        byteBuf.position(byteBuf.position() + 1);
+                        byte payloadType = byteBuf.get();
+                        // Document-sequence sections always precede any trailing non-sequence section (e.g.
+                        // PAYLOAD_TYPE_3_OTEL_TRACE_CONTEXT), and such sections carry no command-document fields, so stop here.
+                        if (payloadType != PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE) {
+                            break;
+                        }
                         int sequenceStart = byteBuf.position();
                         int sequenceSizeInBytes = byteBuf.getInt();
                         int sectionEnd = sequenceStart + sequenceSizeInBytes;
@@ -277,9 +290,27 @@ public final class CommandMessage extends RequestMessage {
             fail(sequences.toString());
         }
 
+        writeOtelTraceContextSection(bsonOutput, operationContext);
+
         // Write the flag bits
         bsonOutput.writeInt32(flagPosition, getOpMsgFlagBits());
         return commandStartPosition;
+    }
+
+    private void writeOtelTraceContextSection(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext) {
+        if (!getSettings().isTracingSupported() && !OtelTracePropagationTestToggle.FORCE_PROPAGATION) {
+            return;
+        }
+        Span tracingSpan = operationContext.getTracingSpan();
+        if (tracingSpan == null) {
+            return;
+        }
+        String traceParent = tracingSpan.context().traceParent();
+        if (traceParent == null) {
+            return;
+        }
+        bsonOutput.writeByte(PAYLOAD_TYPE_3_OTEL_TRACE_CONTEXT);
+        bsonOutput.writeCString(traceParent);
     }
 
     private int writeOpQuery(final ByteBufferBsonOutput bsonOutput) {

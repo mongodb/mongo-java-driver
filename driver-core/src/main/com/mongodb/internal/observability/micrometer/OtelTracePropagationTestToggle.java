@@ -16,22 +16,17 @@
 
 package com.mongodb.internal.observability.micrometer;
 
-import com.mongodb.lang.Nullable;
+/**
+ * TEST-ONLY switch (DRIVERS-3454): when {@code true}, the driver writes the OP_MSG OpenTelemetry
+ * trace-context section even if the server did not advertise {@code tracingSupport} in its
+ * {@code hello} response. The sampled-{@code traceparent} requirement still applies.
+ *
+ * <p>This exists only to exercise end-to-end propagation against a server that does not yet advertise
+ * the capability. Remove before any production use.</p>
+ */
+public final class OtelTracePropagationTestToggle {
+    public static volatile boolean FORCE_PROPAGATION = false;
 
-@SuppressWarnings("InterfaceIsType")
-public interface TraceContext {
-    TraceContext EMPTY = new TraceContext() {
-        @Override
-        public String traceParent() {
-            return null;
-        }
-    };
-
-    /**
-     * The W3C {@code traceparent} string for this context
-     * ({@code 00-<32hex traceId>-<16hex spanId>-<2hex flags>}),
-     * or {@code null} if unavailable or the span is not sampled.
-     */
-    @Nullable
-    String traceParent();
+    private OtelTracePropagationTestToggle() {
+    }
 }

@@ -235,6 +235,7 @@ public final class ProtocolHelper {
                 .maxWireVersion(connectionDescription.getMaxWireVersion())
                 .serverType(connectionDescription.getServerType())
                 .sessionSupported(connectionDescription.getLogicalSessionTimeoutMinutes() != null)
+                .tracingSupported(connectionDescription.isTracingSupported())
                 .cryptd(serverDescription.isCryptd())
                 .build();
     }
