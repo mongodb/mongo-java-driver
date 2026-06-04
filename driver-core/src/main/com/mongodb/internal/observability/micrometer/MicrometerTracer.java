@@ -24,6 +24,7 @@ import com.mongodb.observability.micrometer.MongodbObservationContext;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.tracing.handler.TracingObservationHandler;
 import org.bson.BsonDocument;
 import org.bson.BsonReader;
 import org.bson.json.JsonMode;
@@ -115,6 +116,29 @@ public class MicrometerTracer implements Tracer {
          */
         MicrometerTraceContext(@Nullable final Observation observation) {
             this.observation = observation;
+        }
+
+        @Override
+        @Nullable
+        public String traceParent() {
+            if (observation == null) {
+                return null;
+            }
+            TracingObservationHandler.TracingContext tracingContext =
+                    observation.getContextView().get(TracingObservationHandler.TracingContext.class);
+            if (tracingContext == null || tracingContext.getSpan() == null) {
+                return null;
+            }
+            // Fully qualified to avoid a name clash with this package's own TraceContext interface.
+            io.micrometer.tracing.TraceContext ctx = tracingContext.getSpan().context();
+            if (ctx == null || ctx.traceId() == null || ctx.spanId() == null) {
+                return null;
+            }
+            Boolean sampled = ctx.sampled();
+            if (sampled == null || !sampled) {
+                return null;
+            }
+            return "00-" + ctx.traceId() + "-" + ctx.spanId() + "-01";
         }
     }
 

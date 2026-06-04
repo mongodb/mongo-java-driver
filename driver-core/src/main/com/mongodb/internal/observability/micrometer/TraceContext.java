@@ -16,8 +16,22 @@
 
 package com.mongodb.internal.observability.micrometer;
 
+import com.mongodb.lang.Nullable;
+
 @SuppressWarnings("InterfaceIsType")
 public interface TraceContext {
     TraceContext EMPTY = new TraceContext() {
+        @Override
+        public String traceParent() {
+            return null;
+        }
     };
+
+    /**
+     * The W3C {@code traceparent} string for this context
+     * ({@code 00-<32hex traceId>-<16hex spanId>-<2hex flags>}),
+     * or {@code null} if unavailable or the span is not sampled.
+     */
+    @Nullable
+    String traceParent();
 }
