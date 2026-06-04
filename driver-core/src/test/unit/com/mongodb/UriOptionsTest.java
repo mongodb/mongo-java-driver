@@ -67,8 +67,5 @@ public class UriOptionsTest extends AbstractConnectionStringTest {
         // TODO-JAVA-6141 https://jira.mongodb.org/browse/JAVA-6141 Remove skips for maxAdaptiveRetries
         assumeFalse(description.equals("maxAdaptiveRetries is parsed correctly"));
         assumeFalse(description.equals("maxAdaptiveRetries=0 is parsed correctly"));
-        // TODO-JAVA-6167 https://jira.mongodb.org/browse/JAVA-6167 Remove skips for enableOverloadRetargeting
-        assumeFalse(description.equals("enableOverloadRetargeting is parsed correctly"));
-        assumeFalse(description.equals("enableOverloadRetargeting=false is parsed correctly"));
     }
 }
