@@ -275,7 +275,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         MongoException lastError = null;
 
         try {
-            outer:
+            transactionAttempts:
             while (true) {
                 if (transactionAttempt > 0) {
                     backoff(transactionAttempt, withTransactionTimeout, assertNotNull(lastError), timeoutMsConfigured);
@@ -326,7 +326,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                                     transactionSpan.spanFinalizing(true);
                                 }
                                 lastError = mongoException;
-                                continue outer;
+                                continue transactionAttempts;
                             }
                             throw mongoException;
                         }
