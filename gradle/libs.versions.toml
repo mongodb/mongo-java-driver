@@ -186,6 +186,7 @@ project-reactor-test = { module = "io.projectreactor:reactor-test" }
 reactive-streams-tck = { module = " org.reactivestreams:reactive-streams-tck", version.ref = "reactive-streams" }
 reflections = { module = "org.reflections:reflections", version.ref = "reflections" }
 
+micrometer-tracing = { module = "io.micrometer:micrometer-tracing", version.ref = "micrometer-tracing" }
 micrometer-tracing-integration-test-bom = { module = " io.micrometer:micrometer-tracing-bom", version.ref = "micrometer-tracing" }
 micrometer-tracing-integration-test = { module = " io.micrometer:micrometer-tracing-integration-test" }
 

@@ -69,6 +69,7 @@ public final class DescriptionHelper {
                 getMaxWireVersion(helloResult), getServerType(helloResult), getMaxWriteBatchSize(helloResult),
                 getMaxBsonObjectSize(helloResult), getMaxMessageSizeBytes(helloResult), getCompressors(helloResult),
                 helloResult.getArray("saslSupportedMechs", null), getLogicalSessionTimeoutMinutes(helloResult));
+        connectionDescription = connectionDescription.withTracingSupport(getTracingSupport(helloResult));
         if (helloResult.containsKey("connectionId")) {
             ConnectionId newConnectionId =
                     connectionDescription.getConnectionId().withServerValue(helloResult.getNumber("connectionId").longValue());
@@ -168,6 +169,10 @@ public final class DescriptionHelper {
     private static Integer getLogicalSessionTimeoutMinutes(final BsonDocument helloResult) {
         return helloResult.isNumber("logicalSessionTimeoutMinutes")
                        ? helloResult.getNumber("logicalSessionTimeoutMinutes").intValue() : null;
+    }
+
+    private static boolean getTracingSupport(final BsonDocument helloResult) {
+        return helloResult.getBoolean("tracingSupport", BsonBoolean.FALSE).getValue();
     }
 
     @Nullable
