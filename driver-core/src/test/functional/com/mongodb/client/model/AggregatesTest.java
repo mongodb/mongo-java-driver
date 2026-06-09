@@ -33,7 +33,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.math.RoundingMode;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
@@ -43,8 +42,10 @@ import static com.mongodb.client.model.Accumulators.median;
 import static com.mongodb.client.model.Accumulators.percentile;
 import static com.mongodb.client.model.Aggregates.geoNear;
 import static com.mongodb.client.model.Aggregates.group;
+import static com.mongodb.client.model.Aggregates.rerank;
 import static com.mongodb.client.model.Aggregates.unset;
 import static com.mongodb.client.model.Aggregates.vectorSearch;
+import static com.mongodb.client.model.RerankQuery.rerankQuery;
 import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
 import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Windows.Bound.UNBOUNDED;
@@ -260,7 +261,7 @@ public class AggregatesTest extends OperationTest {
                 "{$documents: [{a: 1, b: {$add: [1, 1]}}, {a: 3, b: 4}]}",
                 stage);
 
-        List<Bson> pipeline = Arrays.asList(stage);
+        List<Bson> pipeline = asList(stage);
         getCollectionHelper().aggregateDb(pipeline);
 
         assertEquals(
@@ -268,9 +269,9 @@ public class AggregatesTest extends OperationTest {
                 getCollectionHelper().aggregateDb(pipeline));
 
         // accepts lists of Documents and BsonDocuments
-        List<BsonDocument> documents = Arrays.asList(BsonDocument.parse("{a: 1, b: 2}"));
+        List<BsonDocument> documents = asList(BsonDocument.parse("{a: 1, b: 2}"));
         assertPipeline("{$documents: [{a: 1, b: 2}]}", Aggregates.documents(documents));
-        List<BsonDocument> bsonDocuments = Arrays.asList(BsonDocument.parse("{a: 1, b: 2}"));
+        List<BsonDocument> bsonDocuments = asList(BsonDocument.parse("{a: 1, b: 2}"));
         assertPipeline("{$documents: [{a: 1, b: 2}]}", Aggregates.documents(bsonDocuments));
     }
 
@@ -281,13 +282,13 @@ public class AggregatesTest extends OperationTest {
         getCollectionHelper().insertDocuments("[{_id: 1, a: 8}, {_id: 2, a: 9}]");
         Bson documentsStage = Aggregates.documents(asList(Document.parse("{a: 5}")));
 
-        Bson lookupStage = Aggregates.lookup(null, Arrays.asList(documentsStage), "added");
+        Bson lookupStage = Aggregates.lookup(null, asList(documentsStage), "added");
         assertPipeline(
                 "{'$lookup': {'pipeline': [{'$documents': [{'a': 5}]}], 'as': 'added'}}",
                 lookupStage);
         assertEquals(
                 parseToList("[{_id:1, a:8, added: [{a: 5}]}, {_id:2, a:9, added: [{a: 5}]}]"),
-                getCollectionHelper().aggregate(Arrays.asList(lookupStage)));
+                getCollectionHelper().aggregate(asList(lookupStage)));
     }
 
     @Test
@@ -372,6 +373,84 @@ public class AggregatesTest extends OperationTest {
                         "test_index",
                         5L,
                         exactVectorSearchOptions()
+                ));
+    }
+
+    @Test
+    public void testRerankWithSinglePath() {
+        assertPipeline(
+                "{"
+                        + "  '$rerank': {"
+                        + "    'query': {'text': 'machine learning tutorials'},"
+                        + "    'path': 'content',"
+                        + "    'numDocsToRerank': 25,"
+                        + "    'model': 'rerank-2.5'"
+                        + "  }"
+                        + "}",
+                rerank(
+                        rerankQuery("machine learning tutorials"),
+                        "content",
+                        25,
+                        "rerank-2.5"
+                ));
+    }
+
+    @Test
+    public void testRerankWithMultiplePaths() {
+        assertPipeline(
+                "{"
+                        + "  '$rerank': {"
+                        + "    'query': {'text': 'machine learning tutorials'},"
+                        + "    'path': ['content', 'title'],"
+                        + "    'numDocsToRerank': 50,"
+                        + "    'model': 'rerank-2.5-lite'"
+                        + "  }"
+                        + "}",
+                rerank(
+                        rerankQuery("machine learning tutorials"),
+                        asList("content", "title"),
+                        50,
+                        "rerank-2.5-lite"
+                ));
+    }
+
+    @Test
+    public void testRerankWithBsonQuery() {
+        assertPipeline(
+                "{"
+                        + "  '$rerank': {"
+                        + "    'query': {'text': 'machine learning tutorials', 'imageURL': 'https://example.com/img.png'},"
+                        + "    'path': 'content',"
+                        + "    'numDocsToRerank': 25,"
+                        + "    'model': 'rerank-2.5'"
+                        + "  }"
+                        + "}",
+                rerank(
+                        rerankQuery(new Document("text", "machine learning tutorials")
+                                .append("imageURL", "https://example.com/img.png")),
+                        "content",
+                        25,
+                        "rerank-2.5"
+                ));
+    }
+
+    @Test
+    public void testRerankWithMultiplePathsAndBsonQuery() {
+        assertPipeline(
+                "{"
+                        + "  '$rerank': {"
+                        + "    'query': {'text': 'machine learning tutorials', 'imageURL': 'https://example.com/img.png'},"
+                        + "    'path': ['content', 'title'],"
+                        + "    'numDocsToRerank': 100,"
+                        + "    'model': 'rerank-2'"
+                        + "  }"
+                        + "}",
+                rerank(
+                        rerankQuery(new Document("text", "machine learning tutorials")
+                                .append("imageURL", "https://example.com/img.png")),
+                        asList("content", "title"),
+                        100,
+                        "rerank-2"
                 ));
     }
 }

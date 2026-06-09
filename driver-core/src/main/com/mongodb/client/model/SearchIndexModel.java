@@ -24,6 +24,14 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * A model describing the creation of a single Atlas Search index.
  *
+ * <p>The {@code definition} parameter accepts any {@link org.bson.conversions.Bson} instance.
+ * For vector search indexes, use the builders provided by {@link SearchIndexDefinition#vectorSearch(Bson...)}
+ * and {@link VectorSearchIndexFields} to construct the definition, and pass it to the
+ * {@linkplain #SearchIndexModel(String, VectorSearchIndexDefinition) vector search constructor}
+ * which automatically sets the index type to {@link SearchIndexType#vectorSearch()}.</p>
+ *
+ * @see SearchIndexDefinition
+ * @see VectorSearchIndexFields
  * @since 4.11
  * @mongodb.server.release 6.0
  */
@@ -42,6 +50,7 @@ public final class SearchIndexModel {
      * will be used to create the search index.</p>
      *
      * @param definition the search index mapping definition.
+     * @see SearchIndexDefinition#vectorSearch(Bson...)
      */
     public SearchIndexModel(final Bson definition) {
         this(null, definition, null);
@@ -52,9 +61,24 @@ public final class SearchIndexModel {
      *
      * @param name       the search index name.
      * @param definition the search index mapping definition.
+     * @see SearchIndexDefinition#vectorSearch(Bson...)
      */
     public SearchIndexModel(final String name, final Bson definition) {
         this(name, definition, null);
+    }
+
+    /**
+     * Construct a vector search index instance with the given name and definition.
+     *
+     * <p>The index type is automatically set to {@link SearchIndexType#vectorSearch()}.</p>
+     *
+     * @param name       the search index name.
+     * @param definition the vector search index definition.
+     * @see SearchIndexDefinition#vectorSearch(Bson...)
+     * @since 5.8
+     */
+    public SearchIndexModel(final String name, final VectorSearchIndexDefinition definition) {
+        this(name, definition, SearchIndexType.vectorSearch());
     }
 
     /**
@@ -63,6 +87,7 @@ public final class SearchIndexModel {
      * @param name       the search index name.
      * @param definition the search index mapping definition.
      * @param type       the search index type.
+     * @see SearchIndexDefinition#vectorSearch(Bson...)
      * @since 5.2
      */
     public SearchIndexModel(@Nullable final String name, final Bson definition, @Nullable final SearchIndexType type) {
