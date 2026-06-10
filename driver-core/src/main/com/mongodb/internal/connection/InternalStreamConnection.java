@@ -571,8 +571,8 @@ public class InternalStreamConnection implements InternalConnection {
                         new BsonDocumentCodec()), description.getServerAddress(), operationContext.getTimeoutContext());
             }
 
-            commandSuccessful = true;
             commandEventSender.sendSucceededEvent(responseBuffers);
+            commandSuccessful = true;
 
             T commandResult = getCommandResult(decoder, responseBuffers, responseTo, operationContext.getTimeoutContext());
             hasMoreToCome = responseBuffers.getReplyHeader().hasMoreToCome();
@@ -584,6 +584,13 @@ public class InternalStreamConnection implements InternalConnection {
 
             return commandResult;
         } catch (Exception e) {
+            if (e instanceof MongoInternalException) {
+                // a MongoInternalException (e.g. responseTo mismatch) means the stream is desynchronized.
+                // The connection must be closed before anything else can throw, to prevent reuse. Other
+                // failures (e.g. MongoCommandException) leave the stream intact, as the response was fully read,
+                // so the connection remains usable
+                close();
+            }
             if (!commandSuccessful) {
                 commandEventSender.sendFailedEvent(e);
             }
@@ -730,27 +737,41 @@ public class InternalStreamConnection implements InternalConnection {
                         return;
                     }
                     assertNotNull(responseBuffers);
-                    T commandResult;
+                    T commandResult = null;
+                    boolean commandSuccessful = false;
+                    Throwable failure = null;
                     try {
                         updateSessionContext(operationContext.getSessionContext(), responseBuffers);
                         boolean commandOk =
                                 isCommandOk(new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer())));
                         responseBuffers.reset();
                         if (!commandOk) {
-                            MongoException commandFailureException = getCommandFailureException(
+                            throw getCommandFailureException(
                                     responseBuffers.getResponseDocument(messageId, new BsonDocumentCodec()),
                                     description.getServerAddress(), operationContext.getTimeoutContext());
-                            commandEventSender.sendFailedEvent(commandFailureException);
-                            throw commandFailureException;
                         }
                         commandEventSender.sendSucceededEvent(responseBuffers);
+                        commandSuccessful = true;
 
                         commandResult = getCommandResult(decoder, responseBuffers, messageId, operationContext.getTimeoutContext());
                     } catch (Throwable localThrowable) {
-                        callback.onResult(null, localThrowable);
-                        return;
+                        failure = localThrowable;
                     } finally {
                         responseBuffers.close();
+                    }
+                    if (failure != null) {
+                        if (failure instanceof MongoInternalException) {
+                            // a MongoInternalException (e.g. responseTo mismatch) means the stream is desynchronized.
+                            // The connection must be closed before anything else can throw, to prevent reuse. Other
+                            // failures (e.g. MongoCommandException) leave the stream intact, as the response was fully read,
+                            // so the connection remains usable
+                            close();
+                        }
+                        if (!commandSuccessful) {
+                            commandEventSender.sendFailedEvent(failure);
+                        }
+                        callback.onResult(null, failure);
+                        return;
                     }
                     callback.onResult(commandResult, null);
                 }));
