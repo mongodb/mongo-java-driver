@@ -804,7 +804,7 @@ public class InternalStreamConnection implements InternalConnection {
         }
         try {
             stream.write(byteBuffers, operationContext);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             close();
             throwTranslatedWriteException(e, operationContext);
         }
@@ -824,7 +824,7 @@ public class InternalStreamConnection implements InternalConnection {
             c.complete(c);
         }).thenRunTryCatchAsyncBlocks(c -> {
             stream.writeAsync(byteBuffers, operationContext, c.asHandler());
-        }, Exception.class, (e, c) -> {
+        }, Throwable.class, (e, c) -> {
             try {
                 close();
                 throwTranslatedWriteException(e, operationContext);
@@ -883,7 +883,7 @@ public class InternalStreamConnection implements InternalConnection {
                     callback.onResult(null, translateReadException(t, operationContext));
                 }
             });
-        } catch (Exception e) {
+        } catch (Throwable e) {
             close();
             callback.onResult(null, translateReadException(e, operationContext));
         }
@@ -1023,21 +1023,29 @@ public class InternalStreamConnection implements InternalConnection {
         @Override
         public void onResult(@Nullable final ByteBuf result, @Nullable final Throwable t) {
             if (t != null) {
+                close();
                 callback.onResult(null, t);
                 return;
             }
+            MessageHeader messageHeader = null;
+            Throwable headerParsingFailure = null;
             try {
                 assertNotNull(result);
-                MessageHeader messageHeader = new MessageHeader(result, description.getMaxMessageSize());
-                readAsync(messageHeader.getMessageLength() - MESSAGE_HEADER_LENGTH, operationContext,
-                        new MessageCallback(messageHeader));
+                messageHeader = new MessageHeader(result, description.getMaxMessageSize());
             } catch (Throwable localThrowable) {
-                callback.onResult(null, localThrowable);
+                headerParsingFailure = localThrowable;
             } finally {
                 if (result != null) {
                     result.release();
                 }
             }
+            if (headerParsingFailure != null) {
+                close();
+                callback.onResult(null, headerParsingFailure);
+                return;
+            }
+            readAsync(messageHeader.getMessageLength() - MESSAGE_HEADER_LENGTH, operationContext,
+                    new MessageCallback(messageHeader));
         }
 
         private class MessageCallback implements SingleResultCallback<ByteBuf> {
@@ -1050,11 +1058,14 @@ public class InternalStreamConnection implements InternalConnection {
             @Override
             public void onResult(@Nullable final ByteBuf result, @Nullable final Throwable t) {
                 if (t != null) {
+                    close();
                     callback.onResult(null, t);
                     return;
                 }
                 boolean releaseResult = true;
                 assertNotNull(result);
+                ResponseBuffers responseBuffers = null;
+                Throwable bodyParsingFailure = null;
                 try {
                     ReplyHeader replyHeader;
                     ByteBuf responseBuffer;
@@ -1077,14 +1088,20 @@ public class InternalStreamConnection implements InternalConnection {
                         responseBuffer = result;
                         releaseResult = false;
                     }
-                    callback.onResult(new ResponseBuffers(replyHeader, responseBuffer), null);
+                    responseBuffers = new ResponseBuffers(replyHeader, responseBuffer);
                 } catch (Throwable localThrowable) {
-                    callback.onResult(null, localThrowable);
+                    bodyParsingFailure = localThrowable;
                 } finally {
                     if (releaseResult) {
                         result.release();
                     }
                 }
+                if (bodyParsingFailure != null) {
+                    close();
+                    callback.onResult(null, bodyParsingFailure);
+                    return;
+                }
+                callback.onResult(responseBuffers, null);
             }
         }
     }

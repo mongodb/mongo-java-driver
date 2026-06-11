@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.MongoSocketReadException;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.FutureResultCallback;
 import com.mongodb.connection.AsyncCompletionHandler;
@@ -50,6 +51,7 @@ import org.bson.io.BasicOutputBuffer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -77,6 +79,314 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class InternalStreamConnectionTest {
 
     private static final ServerId SERVER_ID = new ServerId(new ClusterId(), new ServerAddress());
+
+    /**
+     * Verifies that when {@code stream.readAsync()} throws an {@link OutOfMemoryError}
+     * during body buffer allocation (after header read succeeds), the connection is closed.
+     */
+    @Test
+    @DisplayName("Async: connection closed when readAsync throws Error during body read")
+    void asyncClosesConnectionWhenReadAsyncThrowsError() {
+        // Track whether readAsync is called for the body (second call)
+        AtomicInteger readAsyncCallCount = new AtomicInteger();
+
+        // A stream that succeeds on header read but throws OOM on body read
+        TestStream stream = new TestStream() {
+            @Override
+            public void readAsync(final int numBytes, final OperationContext operationContext,
+                    final AsyncCompletionHandler<ByteBuf> handler) {
+                if (readAsyncCallCount.incrementAndGet() == 1) {
+                    // First read: 16-byte header - complete successfully with a valid header
+                    handler.completed(createValidResponseHeader(getCommandMessageId()));
+                } else {
+                    // Second read: body - throw OutOfMemoryError (simulates heap exhaustion
+                    // during buffer allocation in AsynchronousChannelStream.readAsync)
+                    throw new OutOfMemoryError("Java heap space");
+                }
+            }
+        };
+
+        InternalStreamConnection connection = createOpenConnection(stream);
+
+        // Send a command asynchronously - the write will succeed, then readAsync for the body will throw OOM
+        FutureResultCallback<BsonDocument> callback = new FutureResultCallback<>();
+        CommandMessage commandMessage = createPingCommand();
+        stream.setCommandMessageId(commandMessage.getId());
+
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), createOperationContext(), callback);
+
+        // The callback should receive an error
+        assertThrows(MongoInternalException.class, () -> callback.get(5, TimeUnit.SECONDS));
+        assertFalse(callback.wasInvokedMultipleTimes());
+
+        assertTrue(connection.isClosed(),
+                "Connection should be closed after Error in readAsync to prevent pool reuse with stale data");
+        assertTrue(stream.wasClosed(),
+                "Underlying stream should be closed to release socket resources");
+    }
+
+    /**
+     * Verifies that when {@code stream.readAsync()} throws a {@link RuntimeException},
+     * the connection is closed, just as for an {@link Error}.
+     */
+    @Test
+    @DisplayName("Async: connection closed when readAsync throws Exception during body read")
+    void asyncClosesConnectionWhenReadAsyncThrowsException() {
+        AtomicInteger readAsyncCallCount = new AtomicInteger();
+
+        TestStream stream = new TestStream() {
+            @Override
+            public void readAsync(final int numBytes, final OperationContext operationContext,
+                    final AsyncCompletionHandler<ByteBuf> handler) {
+                if (readAsyncCallCount.incrementAndGet() == 1) {
+                    handler.completed(createValidResponseHeader(getCommandMessageId()));
+                } else {
+                    // a RuntimeException must close the connection, just like an Error
+                    throw new RuntimeException("Simulated allocation failure");
+                }
+            }
+        };
+
+        InternalStreamConnection connection = createOpenConnection(stream);
+
+        FutureResultCallback<BsonDocument> callback = new FutureResultCallback<>();
+        CommandMessage commandMessage = createPingCommand();
+        stream.setCommandMessageId(commandMessage.getId());
+
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), createOperationContext(), callback);
+
+        assertThrows(MongoInternalException.class, () -> callback.get(5, TimeUnit.SECONDS));
+        assertFalse(callback.wasInvokedMultipleTimes());
+
+        assertTrue(connection.isClosed(),
+                "Connection should be closed when readAsync throws a regular Exception");
+    }
+
+    /**
+     * Verifies that when header parsing throws (e.g., invalid message size), the connection
+     * is closed. The header bytes have already been consumed, so the body remains unread.
+     */
+    @Test
+    @DisplayName("Async: connection closed when header parsing throws in MessageHeaderCallback")
+    void asyncClosesConnectionWhenHeaderParsingThrows() {
+        AtomicInteger readAsyncCallCount = new AtomicInteger();
+        List<String> order = new ArrayList<>();
+
+        TestStream stream = new TestStream() {
+            @Override
+            public void readAsync(final int numBytes, final OperationContext operationContext,
+                    final AsyncCompletionHandler<ByteBuf> handler) {
+                if (readAsyncCallCount.incrementAndGet() == 1) {
+                    // Return a header whose messageLength exceeds the maximum message size to
+                    // trigger a MongoInternalException in the MessageHeader constructor
+                    ByteBuffer buffer = ByteBuffer.allocate(MESSAGE_HEADER_LENGTH);
+                    buffer.order(ByteOrder.LITTLE_ENDIAN);
+                    buffer.putInt(getDefaultMaxMessageSize() + 1); // invalid messageLength
+                    buffer.putInt(1);   // requestId
+                    buffer.putInt(getCommandMessageId()); // responseTo
+                    buffer.putInt(1);   // opCode = OP_REPLY
+                    ((Buffer) buffer).flip();
+                    handler.completed(recordingRelease(buffer, order, "headerRelease"));
+                } else {
+                    recordUnexpectedCall();
+                    throw new UnsupportedOperationException("no second read expected after header parsing failure");
+                }
+            }
+
+            @Override
+            public void close() {
+                order.add("close");
+                super.close();
+            }
+        };
+
+        InternalStreamConnection connection = createOpenConnection(stream);
+
+        FutureResultCallback<BsonDocument> callback = new FutureResultCallback<>();
+        CommandMessage commandMessage = createPingCommand();
+        stream.setCommandMessageId(commandMessage.getId());
+
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), createOperationContext(), callback);
+
+        assertThrows(MongoInternalException.class, () -> callback.get(5, TimeUnit.SECONDS));
+        assertFalse(callback.wasInvokedMultipleTimes());
+
+        assertTrue(connection.isClosed(),
+                "Connection should be closed when header parsing fails to prevent reuse with unread body data");
+        assertEquals(asList("headerRelease", "close"), order,
+                "Header buffer must be released before the stream is closed");
+        assertFalse(stream.hadUnexpectedCall(),
+                "No second read should be attempted after header parsing failure");
+    }
+
+    /**
+     * Verifies that when {@code stream.writeAsync()} throws an {@link Error},
+     * the connection is closed.
+     */
+    @Test
+    @DisplayName("Async: connection closed when writeAsync throws Error")
+    void asyncClosesConnectionWhenWriteAsyncThrowsError() {
+        TestStream stream = new TestStream() {
+            @Override
+            public void readAsync(final int numBytes, final OperationContext operationContext,
+                    final AsyncCompletionHandler<ByteBuf> handler) {
+                recordUnexpectedCall();
+                throw new UnsupportedOperationException("no read expected after write failure");
+            }
+
+            @Override
+            public void writeAsync(final List<ByteBuf> buffers, final OperationContext operationContext,
+                    final AsyncCompletionHandler<Void> handler) {
+                throw new OutOfMemoryError("Java heap space");
+            }
+        };
+
+        InternalStreamConnection connection = createOpenConnection(stream);
+
+        FutureResultCallback<BsonDocument> callback = new FutureResultCallback<>();
+        CommandMessage commandMessage = createPingCommand();
+
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), createOperationContext(), callback);
+
+        assertThrows(MongoInternalException.class, () -> callback.get(5, TimeUnit.SECONDS));
+        assertFalse(callback.wasInvokedMultipleTimes());
+
+        assertTrue(connection.isClosed(),
+                "Connection should be closed after Error in writeAsync");
+        assertFalse(stream.hadUnexpectedCall(),
+                "No read should be attempted after write failure");
+    }
+
+    /**
+     * Verifies that when the body read fails (handler receives an error), the connection is closed.
+     * This exercises the {@code t != null} path in {@code MessageCallback.onResult}.
+     */
+    @Test
+    @DisplayName("Async: connection closed when body read fails via callback error")
+    void asyncClosesConnectionWhenBodyReadFailsViaCallback() {
+        AtomicInteger readAsyncCallCount = new AtomicInteger();
+
+        TestStream stream = new TestStream() {
+            @Override
+            public void readAsync(final int numBytes, final OperationContext operationContext,
+                    final AsyncCompletionHandler<ByteBuf> handler) {
+                if (readAsyncCallCount.incrementAndGet() == 1) {
+                    handler.completed(createValidResponseHeader(getCommandMessageId()));
+                } else {
+                    handler.failed(new IOException("Connection reset by peer"));
+                }
+            }
+        };
+
+        InternalStreamConnection connection = createOpenConnection(stream);
+
+        FutureResultCallback<BsonDocument> callback = new FutureResultCallback<>();
+        CommandMessage commandMessage = createPingCommand();
+        stream.setCommandMessageId(commandMessage.getId());
+
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), createOperationContext(), callback);
+
+        assertThrows(MongoSocketReadException.class, () -> callback.get(5, TimeUnit.SECONDS));
+        assertFalse(callback.wasInvokedMultipleTimes());
+
+        assertTrue(connection.isClosed(),
+                "Connection should be closed when body read fails via callback error");
+    }
+
+    /**
+     * Verifies that when body parsing throws (e.g., corrupt body data), the connection is closed.
+     * This exercises the {@code catch (Throwable)} path in {@code MessageCallback.onResult}.
+     */
+    @Test
+    @DisplayName("Async: connection closed when body parsing throws in MessageCallback")
+    void asyncClosesConnectionWhenBodyParsingThrows() {
+        AtomicInteger readAsyncCallCount = new AtomicInteger();
+        List<String> order = new ArrayList<>();
+
+        TestStream stream = new TestStream() {
+            @Override
+            public void readAsync(final int numBytes, final OperationContext operationContext,
+                    final AsyncCompletionHandler<ByteBuf> handler) {
+                if (readAsyncCallCount.incrementAndGet() == 1) {
+                    handler.completed(createValidResponseHeader(getCommandMessageId()));
+                } else {
+                    // Return a reply header with an invalid numberReturned (2) to trigger
+                    // a MongoInternalException during ReplyHeader construction
+                    ByteBuffer buffer = ByteBuffer.allocate(20);
+                    buffer.order(ByteOrder.LITTLE_ENDIAN);
+                    buffer.putInt(0);     // responseFlags
+                    buffer.putLong(0);    // cursorId
+                    buffer.putInt(0);     // startingFrom
+                    buffer.putInt(2);     // numberReturned (invalid: must be 1)
+                    ((Buffer) buffer).flip();
+                    handler.completed(recordingRelease(buffer, order, "bodyRelease"));
+                }
+            }
+
+            @Override
+            public void close() {
+                order.add("close");
+                super.close();
+            }
+        };
+
+        InternalStreamConnection connection = createOpenConnection(stream);
+
+        FutureResultCallback<BsonDocument> callback = new FutureResultCallback<>();
+        CommandMessage commandMessage = createPingCommand();
+        stream.setCommandMessageId(commandMessage.getId());
+
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), createOperationContext(), callback);
+
+        assertThrows(MongoInternalException.class, () -> callback.get(5, TimeUnit.SECONDS));
+        assertFalse(callback.wasInvokedMultipleTimes());
+
+        assertTrue(connection.isClosed(),
+                "Connection should be closed when body parsing fails in MessageCallback");
+        assertEquals(asList("bodyRelease", "close"), order,
+                "Body buffer must be released before the stream is closed");
+    }
+
+    /**
+     * Verifies that when {@code stream.write()} throws an {@link Error} in the synchronous path,
+     * the connection is closed (mirrors the asynchronous writeAsync behavior).
+     */
+    @Test
+    @DisplayName("Sync: connection closed when write throws Error")
+    void syncClosesConnectionWhenWriteThrowsError() {
+        TestStream stream = new TestStream() {
+            @Override
+            public void write(final List<ByteBuf> buffers, final OperationContext operationContext) {
+                throw new OutOfMemoryError("Java heap space");
+            }
+
+            @Override
+            public ByteBuf read(final int numBytes, final OperationContext operationContext) {
+                recordUnexpectedCall();
+                throw new UnsupportedOperationException("no read expected after write failure");
+            }
+
+            @Override
+            public void readAsync(final int numBytes, final OperationContext operationContext,
+                    final AsyncCompletionHandler<ByteBuf> handler) {
+                recordUnexpectedCall();
+                throw new UnsupportedOperationException("readAsync should not be called in the sync path");
+            }
+        };
+
+        InternalStreamConnection connection = createOpenConnection(stream);
+        CommandMessage commandMessage = createPingCommand();
+
+        MongoInternalException thrown = assertThrows(MongoInternalException.class,
+                () -> connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), createOperationContext()));
+        assertInstanceOf(OutOfMemoryError.class, thrown.getCause());
+        assertTrue(connection.isClosed(),
+                "Connection should be closed after Error in write to prevent pool reuse with a half-written message");
+        assertTrue(stream.wasClosed(),
+                "Underlying stream should be closed to release socket resources");
+        assertFalse(stream.hadUnexpectedCall(),
+                "No read should be attempted after write failure");
+    }
 
     /**
      * Verifies that a responseTo mismatch in the synchronous path closes the connection.
