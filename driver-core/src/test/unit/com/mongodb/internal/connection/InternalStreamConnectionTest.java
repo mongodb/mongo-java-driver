@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoCommandException;
+import com.mongodb.MongoCompressor;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.ServerAddress;
@@ -51,6 +52,7 @@ import org.bson.io.BasicOutputBuffer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
@@ -61,6 +63,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.DeflaterOutputStream;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
@@ -833,11 +836,119 @@ class InternalStreamConnectionTest {
                 "Response body buffer must be released before the stream is closed");
     }
 
+    /**
+     * Verifies that in the synchronous path, the uncompressed buffer allocated for an OP_COMPRESSED
+     * response is released when reply header parsing fails after decompression.
+     */
+    @Test
+    @DisplayName("Sync: uncompressed buffer released when reply header parsing fails for compressed response")
+    void syncReleasesUncompressedBufferWhenReplyHeaderParsingFails() {
+        AtomicInteger readCallCount = new AtomicInteger();
+        List<ByteBuf> allocatedBuffers = new ArrayList<>();
+        ByteBuf compressedBody = createCompressedResponseBodyWithInvalidReplyHeader();
+        int compressedBodyLength = compressedBody.remaining();
+
+        TestStream stream = new TestStream() {
+            @Override
+            public ByteBuf getBuffer(final int size) {
+                ByteBuf buffer = super.getBuffer(size);
+                allocatedBuffers.add(buffer);
+                return buffer;
+            }
+
+            @Override
+            public ByteBuf read(final int numBytes, final OperationContext operationContext) {
+                if (readCallCount.incrementAndGet() == 1) {
+                    return createCompressedResponseHeader(getCommandMessageId(), compressedBodyLength);
+                } else {
+                    return compressedBody;
+                }
+            }
+
+            @Override
+            public void readAsync(final int numBytes, final OperationContext operationContext,
+                    final AsyncCompletionHandler<ByteBuf> handler) {
+                recordUnexpectedCall();
+                throw new UnsupportedOperationException("readAsync should not be called in the sync path");
+            }
+        };
+
+        InternalStreamConnection connection = createOpenConnection(stream, null,
+                Collections.singletonList(MongoCompressor.createZlibCompressor()));
+        CommandMessage commandMessage = createPingCommand();
+        stream.setCommandMessageId(commandMessage.getId());
+
+        MongoInternalException thrown = assertThrows(MongoInternalException.class,
+                () -> connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), createOperationContext()));
+        assertTrue(thrown.getMessage().contains("number of returned documents"));
+        assertTrue(connection.isClosed(),
+                "Connection should be closed after reply header parsing failure");
+        for (ByteBuf buffer : allocatedBuffers) {
+            assertEquals(0, buffer.getReferenceCount(),
+                    "Every buffer handed out by the stream must be released after the failure");
+        }
+        assertFalse(stream.hadUnexpectedCall());
+    }
+
+    /**
+     * Verifies that in the asynchronous path, the uncompressed buffer allocated for an OP_COMPRESSED
+     * response is released when reply header parsing fails after decompression.
+     */
+    @Test
+    @DisplayName("Async: uncompressed buffer released when reply header parsing fails for compressed response")
+    void asyncReleasesUncompressedBufferWhenReplyHeaderParsingFails() {
+        AtomicInteger readAsyncCallCount = new AtomicInteger();
+        List<ByteBuf> allocatedBuffers = new ArrayList<>();
+        ByteBuf compressedBody = createCompressedResponseBodyWithInvalidReplyHeader();
+        int compressedBodyLength = compressedBody.remaining();
+
+        TestStream stream = new TestStream() {
+            @Override
+            public ByteBuf getBuffer(final int size) {
+                ByteBuf buffer = super.getBuffer(size);
+                allocatedBuffers.add(buffer);
+                return buffer;
+            }
+
+            @Override
+            public void readAsync(final int numBytes, final OperationContext operationContext,
+                    final AsyncCompletionHandler<ByteBuf> handler) {
+                if (readAsyncCallCount.incrementAndGet() == 1) {
+                    handler.completed(createCompressedResponseHeader(getCommandMessageId(), compressedBodyLength));
+                } else {
+                    handler.completed(compressedBody);
+                }
+            }
+        };
+
+        InternalStreamConnection connection = createOpenConnection(stream, null,
+                Collections.singletonList(MongoCompressor.createZlibCompressor()));
+        CommandMessage commandMessage = createPingCommand();
+        stream.setCommandMessageId(commandMessage.getId());
+
+        FutureResultCallback<BsonDocument> callback = new FutureResultCallback<>();
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), createOperationContext(), callback);
+
+        MongoInternalException thrown = assertThrows(MongoInternalException.class, () -> callback.get(5, TimeUnit.SECONDS));
+        assertTrue(thrown.getMessage().contains("number of returned documents"));
+        assertTrue(connection.isClosed(),
+                "Connection should be closed after reply header parsing failure");
+        for (ByteBuf buffer : allocatedBuffers) {
+            assertEquals(0, buffer.getReferenceCount(),
+                    "Every buffer handed out by the stream must be released after the failure");
+        }
+    }
+
     private InternalStreamConnection createOpenConnection(final TestStream stream) {
         return createOpenConnection(stream, null);
     }
 
     private InternalStreamConnection createOpenConnection(final TestStream stream, @Nullable final CommandListener commandListener) {
+        return createOpenConnection(stream, commandListener, Collections.emptyList());
+    }
+
+    private InternalStreamConnection createOpenConnection(final TestStream stream, @Nullable final CommandListener commandListener,
+            final List<MongoCompressor> compressorList) {
         StreamFactory streamFactory = serverAddress -> stream;
         ConnectionDescription connectionDescription = new ConnectionDescription(
                 new ConnectionId(SERVER_ID, 1, 1L), LATEST_WIRE_VERSION,
@@ -881,7 +992,7 @@ class InternalStreamConnectionTest {
 
         InternalStreamConnection connection = new InternalStreamConnection(
                 SINGLE, SERVER_ID, new TestConnectionGenerationSupplier(),
-                streamFactory, Collections.emptyList(), commandListener, initializer);
+                streamFactory, compressorList, commandListener, initializer);
         connection.open(createOperationContext());
         return connection;
     }
@@ -995,6 +1106,60 @@ class InternalStreamConnectionTest {
         ((Buffer) buffer).flip();
 
         return new ByteBufNIO(buffer);
+    }
+
+    /**
+     * Creates a valid 16-byte wire protocol header (OP_COMPRESSED) for the given responseTo and
+     * compressed body length.
+     */
+    private static ByteBuf createCompressedResponseHeader(final int responseTo, final int compressedBodyLength) {
+        ByteBuffer buffer = ByteBuffer.allocate(MESSAGE_HEADER_LENGTH);
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+        buffer.putInt(MESSAGE_HEADER_LENGTH + compressedBodyLength); // messageLength
+        buffer.putInt(1);            // requestId (server's response message ID)
+        buffer.putInt(responseTo);   // responseTo (echoes client's requestId)
+        buffer.putInt(OpCode.OP_COMPRESSED.getValue());
+        ((Buffer) buffer).flip();
+
+        return new ByteBufNIO(buffer);
+    }
+
+    private static final int UNCOMPRESSED_REPLY_HEADER_LENGTH = 20;
+
+    /**
+     * Creates an OP_COMPRESSED response body whose zlib-compressed payload uncompresses to an
+     * invalid OP_REPLY header: numberReturned is 2 where 1 is required, so reply header parsing
+     * fails after the uncompressed buffer was allocated.
+     */
+    private static ByteBuf createCompressedResponseBodyWithInvalidReplyHeader() {
+        ByteBuffer uncompressed = ByteBuffer.allocate(UNCOMPRESSED_REPLY_HEADER_LENGTH);
+        uncompressed.order(ByteOrder.LITTLE_ENDIAN);
+        uncompressed.putInt(0);     // responseFlags
+        uncompressed.putLong(0);    // cursorId
+        uncompressed.putInt(0);     // startingFrom
+        uncompressed.putInt(2);     // numberReturned (invalid: must be 1)
+
+        byte[] compressed = zlibCompress(uncompressed.array());
+
+        ByteBuffer buffer = ByteBuffer.allocate(CompressedHeader.COMPRESSED_HEADER_LENGTH + compressed.length);
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+        buffer.putInt(1);           // originalOpcode = OP_REPLY
+        buffer.putInt(UNCOMPRESSED_REPLY_HEADER_LENGTH); // uncompressedSize
+        buffer.put((byte) 2);       // compressorId = zlib
+        buffer.put(compressed);
+        ((Buffer) buffer).flip();
+
+        return new ByteBufNIO(buffer);
+    }
+
+    private static byte[] zlibCompress(final byte[] bytes) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (DeflaterOutputStream deflater = new DeflaterOutputStream(out)) {
+            deflater.write(bytes);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return out.toByteArray();
     }
 
     /**

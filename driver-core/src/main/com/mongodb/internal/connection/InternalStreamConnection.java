@@ -977,10 +977,15 @@ public class InternalStreamConnection implements InternalConnection {
                     Compressor compressor = getCompressor(compressedHeader);
 
                     ByteBuf buffer = getBuffer(compressedHeader.getUncompressedSize());
-                    compressor.uncompress(messageBuffer, buffer);
+                    try {
+                        compressor.uncompress(messageBuffer, buffer);
 
-                    buffer.flip();
-                    return new ResponseBuffers(new ReplyHeader(buffer, compressedHeader), buffer);
+                        buffer.flip();
+                        return new ResponseBuffers(new ReplyHeader(buffer, compressedHeader), buffer);
+                    } catch (Throwable localThrowable) {
+                        buffer.release();
+                        throw localThrowable;
+                    }
                 } else {
                     ResponseBuffers responseBuffers = new ResponseBuffers(new ReplyHeader(messageBuffer, messageHeader), messageBuffer);
                     releaseMessageBuffer = false;
@@ -1074,10 +1079,15 @@ public class InternalStreamConnection implements InternalConnection {
                             CompressedHeader compressedHeader = new CompressedHeader(result, messageHeader);
                             Compressor compressor = getCompressor(compressedHeader);
                             ByteBuf buffer = getBuffer(compressedHeader.getUncompressedSize());
-                            compressor.uncompress(result, buffer);
+                            try {
+                                compressor.uncompress(result, buffer);
 
-                            buffer.flip();
-                            replyHeader = new ReplyHeader(buffer, compressedHeader);
+                                buffer.flip();
+                                replyHeader = new ReplyHeader(buffer, compressedHeader);
+                            } catch (Throwable localThrowable) {
+                                buffer.release();
+                                throw localThrowable;
+                            }
                             responseBuffer = buffer;
                         } finally {
                             releaseResult = false;
