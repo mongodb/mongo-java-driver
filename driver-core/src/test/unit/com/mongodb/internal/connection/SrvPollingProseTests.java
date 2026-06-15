@@ -193,10 +193,10 @@ public class SrvPollingProseTests {
 
     private void initCluster(final TestDnsResolver dnsResolver, @Nullable final Integer srvMaxHosts) {
         DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = mock(DnsSrvRecordMonitorFactory.class);
-        when(dnsSrvRecordMonitorFactory.create(eq(srvHost), eq(srvServiceName), any())).thenAnswer(
+        when(dnsSrvRecordMonitorFactory.create(eq(srvHost), eq(srvServiceName), any(), any())).thenAnswer(
                 invocation -> {
-                    dnsSrvRecordMonitor = new DefaultDnsSrvRecordMonitor(srvHost, srvServiceName, 10, 10,
-                            invocation.getArgument(2), clusterId, dnsResolver);
+                    dnsSrvRecordMonitor = new DefaultDnsSrvRecordMonitor(srvHost, srvServiceName, null, 10, 10,
+                            invocation.getArgument(3), clusterId, dnsResolver);
                     return dnsSrvRecordMonitor;
                 });
         cluster = new DnsMultiServerCluster(clusterId, settingsBuilder.srvMaxHosts(srvMaxHosts).build(), serverFactory, CLIENT_METADATA,
@@ -223,7 +223,8 @@ public class SrvPollingProseTests {
         }
 
         @Override
-        public List<String> resolveHostFromSrvRecords(final String srvHost, final String srvServiceName) {
+        public List<String> resolveHostFromSrvRecords(final String srvHost, final String srvServiceName,
+                @Nullable final String srvAllowedHostsSuffix) {
             List<String> retVal;
             if (curPos >= responses.size() && lastResponseException != null) {
                 throw lastResponseException;

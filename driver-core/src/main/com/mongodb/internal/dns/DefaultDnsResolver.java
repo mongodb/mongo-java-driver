@@ -66,18 +66,22 @@ public final class DefaultDnsResolver implements DnsResolver {
       ':' in between, as expected by ServerAddress.
     */
     @Override
-    public List<String> resolveHostFromSrvRecords(final String srvHost, final String srvServiceName) {
-        List<String> srvHostParts = asList(srvHost.split("\\."));
+    public List<String> resolveHostFromSrvRecords(final String srvHost, final String srvServiceName,
+            @Nullable final String srvAllowedHostsSuffix) {
+        // srvAllowedHostsSuffix, when set, is already normalized (it begins with '.') by the configuration layer and
+        // overrides the inferred domain. The leading '.' makes the comparison match on a full domain label boundary
+        // and not a partial label.
 
-        String srvHostDomain;
-        boolean srvHasLessThanThreeParts = srvHostParts.size() < 3;
-        if (srvHasLessThanThreeParts) {
-            srvHostDomain = srvHost;
-        } else {
-            srvHostDomain = srvHost.substring(srvHost.indexOf('.') + 1);
+        // The inferred-domain checks below are only used when no suffix is configured.
+        boolean srvHasLessThanThreeParts = false;
+        List<String> srvHostDomainParts = null;
+        if (srvAllowedHostsSuffix == null) {
+            List<String> srvHostParts = asList(srvHost.split("\\."));
+            srvHasLessThanThreeParts = srvHostParts.size() < 3;
+            String srvHostDomain = srvHasLessThanThreeParts ? srvHost : srvHost.substring(srvHost.indexOf('.') + 1);
+            srvHostDomainParts = asList(srvHostDomain.split("\\."));
         }
 
-        List<String> srvHostDomainParts = asList(srvHostDomain.split("\\."));
         List<String> hosts = new ArrayList<>();
         String resourceName = "_" + srvServiceName + "._tcp." + srvHost;
         try {
@@ -89,25 +93,42 @@ public final class DefaultDnsResolver implements DnsResolver {
             for (String srvRecord : srvAttributeValues) {
                 String[] split = srvRecord.split(" ");
                 String resolvedHost = split[3].endsWith(".") ? split[3].substring(0, split[3].length() - 1) : split[3];
-                String resolvedHostDomain = resolvedHost.substring(resolvedHost.indexOf('.') + 1);
-                List<String> resolvedHostDomainParts = asList(resolvedHostDomain.split("\\."));
-                if (!sameDomain(srvHostDomainParts, resolvedHostDomainParts)) {
-                    throw new MongoConfigurationException(
-                            format("The SRV host name '%s' resolved to a host '%s' that does not share domain name",
-                                    srvHost, resolvedHost));
-                }
-                if (srvHasLessThanThreeParts && resolvedHostDomainParts.size() <= srvHostDomainParts.size()) {
-                    throw new MongoConfigurationException(
-                            format("The SRV host name '%s' resolved to a host '%s' that does not have at least one more domain level",
-                                    srvHost, resolvedHost));
+                if (srvAllowedHostsSuffix != null) {
+                    // DNS host names are case-insensitive, so the suffix comparison must be too.
+                    if (!endsWithIgnoreCase(resolvedHost, srvAllowedHostsSuffix)) {
+                        throw new MongoConfigurationException(
+                                format("The SRV host name '%s' resolved to a host '%s' that does not end with the "
+                                        + "configured srvAllowedHostsSuffix '%s'", srvHost, resolvedHost, srvAllowedHostsSuffix));
+                    }
+                } else {
+                    String resolvedHostDomain = resolvedHost.substring(resolvedHost.indexOf('.') + 1);
+                    List<String> resolvedHostDomainParts = asList(resolvedHostDomain.split("\\."));
+                    if (!sameDomain(srvHostDomainParts, resolvedHostDomainParts)) {
+                        throw new MongoConfigurationException(
+                                format("The SRV host name '%s' resolved to a host '%s' that does not share domain name",
+                                        srvHost, resolvedHost));
+                    }
+                    if (srvHasLessThanThreeParts && resolvedHostDomainParts.size() <= srvHostDomainParts.size()) {
+                        throw new MongoConfigurationException(
+                                format("The SRV host name '%s' resolved to a host '%s' that does not have at least one more "
+                                        + "domain level", srvHost, resolvedHost));
+                    }
                 }
                 hosts.add(resolvedHost + ":" + split[2]);
             }
 
+        } catch (MongoConfigurationException e) {
+            // Preserve the specific validation message rather than re-wrapping it.
+            throw e;
         } catch (Exception e) {
             throw new MongoConfigurationException(format("Failed looking up SRV record for '%s'.", resourceName), e);
         }
         return hosts;
+    }
+
+    private static boolean endsWithIgnoreCase(final String value, final String suffix) {
+        return value.length() >= suffix.length()
+                && value.regionMatches(true, value.length() - suffix.length(), suffix, 0, suffix.length());
     }
 
     private static boolean sameDomain(final List<String> srvHostDomainParts, final List<String> resolvedHostDomainParts) {
