@@ -51,7 +51,6 @@ import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static com.mongodb.fixture.EncryptionFixture.getKmsProviders;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static util.JsonPoweredTestHelper.getTestDocument;
@@ -73,6 +72,7 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
 
         MongoNamespace dataKeysNamespace = new MongoNamespace("keyvault.datakeys");
         BsonDocument encryptedFields = bsonDocumentFromPath("encryptedFields.json");
+        BsonDocument encryptedFieldsC10 = bsonDocumentFromPath("encryptedFields-c10.json");
         BsonDocument key1Document = bsonDocumentFromPath("keys/key1-document.json");
 
         MongoDatabase explicitEncryptionDatabase = getDefaultDatabase();
@@ -80,6 +80,11 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
                 .drop(new DropCollectionOptions().encryptedFields(encryptedFields));
         explicitEncryptionDatabase.createCollection("explicit_encryption",
                 new CreateCollectionOptions().encryptedFields(encryptedFields));
+
+        explicitEncryptionDatabase.getCollection("explicit_encryption_c10")
+                .drop(new DropCollectionOptions().encryptedFields(encryptedFieldsC10));
+        explicitEncryptionDatabase.createCollection("explicit_encryption_c10",
+                new CreateCollectionOptions().encryptedFields(encryptedFieldsC10));
 
         MongoCollection<BsonDocument> dataKeysCollection = getMongoClient()
                 .getDatabase(dataKeysNamespace.getDatabaseName())
@@ -140,26 +145,18 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
     public void canInsertEncryptedIndexedAndFindWithNonZeroContention() {
         EncryptOptions encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).contentionFactor(10L);
         MongoCollection<BsonDocument> coll = encryptedClient.getDatabase(getDefaultDatabaseName())
-                .getCollection("explicit_encryption", BsonDocument.class);
+                .getCollection("explicit_encryption_c10", BsonDocument.class);
 
         for (int i = 0; i < 10; i++) {
             BsonBinary insertPayload = clientEncryption.encrypt(ENCRYPTED_INDEXED_VALUE, encryptOptions);
             coll.insertOne(new BsonDocument("encryptedIndexed", insertPayload));
         }
 
-        encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).queryType("equality").contentionFactor(0L);
+        // Find with matching contentionFactor returns all 10 documents.
+        encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).contentionFactor(10L).queryType("equality");
         BsonBinary findPayload = clientEncryption.encrypt(ENCRYPTED_INDEXED_VALUE, encryptOptions);
 
         List<BsonDocument> values = coll.find(new BsonDocument("encryptedIndexed", findPayload)).into(new ArrayList<>());
-        assertTrue(values.size() < 10);
-        values.forEach(v ->
-            assertEquals(ENCRYPTED_INDEXED_VALUE, v.get("encryptedIndexed"))
-        );
-
-        encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).contentionFactor(10L).queryType("equality");
-        BsonBinary findPayload2 = clientEncryption.encrypt(ENCRYPTED_INDEXED_VALUE, encryptOptions);
-
-        values = coll.find(new BsonDocument("encryptedIndexed", findPayload2)).into(new ArrayList<>());
 
         assertEquals(10, values.size());
         values.forEach(v ->
