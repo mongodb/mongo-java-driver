@@ -270,7 +270,8 @@ public abstract class UnifiedTest {
 
             if (testDef.hasTransformations()) {
                 this.entitiesArray = entitiesArray.clone();
-                testDef.applyTransformations(this.entitiesArray, definition);
+                this.definition = definition.clone();
+                testDef.applyTransformations(this.entitiesArray, this.definition);
             }
         }
         skips(fileDescription, testDescription);
@@ -350,7 +351,7 @@ public abstract class UnifiedTest {
             @Nullable final BsonArray runOnRequirements,
             final BsonArray entitiesArray,
             final BsonArray initialData,
-            final BsonDocument definition) {
+            final BsonDocument oriDefinition) {
         boolean forceFlaky = testDef.wasAssignedModifier(Modifier.FORCE_FLAKY);
         if (!forceFlaky) {
             boolean ignoreThisTest = ATTEMPTED_TESTS_TO_HENCEFORTH_IGNORE.contains(testName);
@@ -361,6 +362,9 @@ public abstract class UnifiedTest {
             ATTEMPTED_TESTS_TO_HENCEFORTH_IGNORE.add(testName);
         }
         try {
+            // Read from the field, not oriDefinition: setUp() may have replaced it with a
+            // transformed clone, whereas the parameter is the original, untransformed definition.
+            BsonDocument definition = this.definition;
             BsonArray operations = definition.getArray("operations");
             for (int i = 0; i < operations.size(); i++) {
                 BsonValue cur = operations.get(i);
