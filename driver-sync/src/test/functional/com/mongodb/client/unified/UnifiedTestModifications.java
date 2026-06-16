@@ -473,6 +473,14 @@ public final class UnifiedTestModifications {
                 .file("transactions", "backpressure-retryable-commit");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
                 .file("transactions", "backpressure-retryable-abort");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-6179")
+                .test("transactions", "retryable-writes", "increment txnNumber")
+                .test("transactions", "commit", "reset session state commit")
+                .test("transactions", "commit", "reset session state abort")
+                .test("transactions-convenient-api", "callback-commits",
+                        "withTransaction still succeeds if callback commits and runs extra op")
+                .test("transactions-convenient-api", "callback-aborts",
+                        "withTransaction still succeeds if callback aborts and runs extra op");
 
         // valid-pass
 
