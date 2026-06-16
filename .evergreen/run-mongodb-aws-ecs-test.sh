@@ -36,6 +36,11 @@ if ! which git ; then
     apt install git -y
 fi
 
+if ! which gpg ; then
+    echo "Installing gpg..."
+    sudo apt install gnupg -y
+fi
+
 cd src
 
 RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"

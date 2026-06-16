@@ -59,6 +59,7 @@ import static com.mongodb.client.model.search.SearchOptions.searchOptions;
 import static com.mongodb.internal.Iterables.concat;
 import static com.mongodb.internal.client.model.Util.sizeAtLeast;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 /**
  * Builders for aggregation pipeline stages.
@@ -1038,6 +1039,58 @@ public final class Aggregates {
         notNull("index", index);
         notNull("options", options);
         return new VectorSearchBson(path, queryVector, index, limit, options);
+    }
+
+    /**
+     * Creates a {@code $rerank} pipeline stage supported by MongoDB Atlas.
+     * You may use the {@code $meta: "score"} expression to extract the relevance score
+     * assigned to each reranked document.
+     *
+     * @param query           The query to rerank against, created via {@link RerankQuery#rerankQuery(String)}
+     *                        or {@link RerankQuery#rerankQuery(Bson)}.
+     * @param path            The document field to send to the reranker.
+     * @param numDocsToRerank The maximum number of documents to rerank (currently 1-1000).
+     * @param model           The reranking model name. Currently accepted:
+     *                        {@code "rerank-2.5"}, {@code "rerank-2.5-lite"}, {@code "rerank-2"}, {@code "rerank-2-lite"}.
+     * @return The {@code $rerank} pipeline stage.
+     * @mongodb.server.release 8.3
+     * @since 5.8
+     */
+    @Beta(Reason.SERVER)
+    public static Bson rerank(
+            final RerankQuery query,
+            final String path,
+            final int numDocsToRerank,
+            final String model) {
+        notNull("path", path);
+        return rerank(query, singletonList(path), numDocsToRerank, model);
+    }
+
+    /**
+     * Creates a {@code $rerank} pipeline stage supported by MongoDB Atlas.
+     * You may use the {@code $meta: "score"} expression to extract the relevance score
+     * assigned to each reranked document.
+     *
+     * @param query           The query to rerank against, created via {@link RerankQuery#rerankQuery(String)}.
+     * @param paths           The document field(s) to send to the reranker.
+     * @param numDocsToRerank The maximum number of documents to rerank (1-1000).
+     * @param model           The reranking model name. Accepted values:
+     *                        {@code "rerank-2.5"}, {@code "rerank-2.5-lite"}, {@code "rerank-2"}, {@code "rerank-2-lite"}.
+     * @return The {@code $rerank} pipeline stage.
+     * @mongodb.server.release 8.3
+     * @since 5.8
+     */
+    @Beta(Reason.SERVER)
+    public static Bson rerank(
+            final RerankQuery query,
+            final List<String> paths,
+            final int numDocsToRerank,
+            final String model) {
+        notNull("query", query);
+        notNull("paths", paths);
+        isTrueArgument("paths must not be empty", !paths.isEmpty());
+        notNull("model", model);
+        return new RerankBson(query, paths, numDocsToRerank, model);
     }
 
     /**
@@ -2287,6 +2340,40 @@ public final class Aggregates {
                     + ", index=" + index
                     + ", limit=" + limit
                     + ", options=" + options
+                    + '}';
+        }
+    }
+
+    private static class RerankBson implements Bson {
+        private final RerankQuery query;
+        private final List<String> paths;
+        private final int numDocsToRerank;
+        private final String model;
+
+        RerankBson(final RerankQuery query, final List<String> paths, final int numDocsToRerank,
+                   final String model) {
+            this.query = query;
+            this.paths = paths;
+            this.numDocsToRerank = numDocsToRerank;
+            this.model = model;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+            Document specificationDoc = new Document("query", query)
+                    .append("path", paths.size() == 1 ? paths.get(0) : paths)
+                    .append("numDocsToRerank", numDocsToRerank)
+                    .append("model", model);
+            return new Document("$rerank", specificationDoc).toBsonDocument(documentClass, codecRegistry);
+        }
+
+        @Override
+        public String toString() {
+            return "Stage{name=$rerank"
+                    + ", query=" + query
+                    + ", paths=" + paths
+                    + ", numDocsToRerank=" + numDocsToRerank
+                    + ", model=" + model
                     + '}';
         }
     }
