@@ -352,6 +352,12 @@ public final class UnifiedTestModifications {
                 .file("crud", "updateOne-rawData")
                 .file("index-management", "index management-rawData");
 
+        // mongodb-handshake
+
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-6088")
+                .test("mongodb-handshake/tests/unified", "op_msg not supported",
+                        "server closing connection during initial hello produces an error");
+
         // retryable-reads
 
         def.modify(WAIT_FOR_BATCH_CURSOR_CREATION, IGNORE_EXTRA_EVENTS)
