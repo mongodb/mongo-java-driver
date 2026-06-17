@@ -21,6 +21,7 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoCompressor;
 import com.mongodb.MongoException;
+import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoOperationTimeoutException;
@@ -610,9 +611,11 @@ public class InternalStreamConnection implements InternalConnection {
      * the wire, so the stream remains synchronized and the connection can be returned to the pool:
      * <ul>
      *     <li>{@link MongoCommandException} — an {@code ok: 0} error response (and subclasses)</li>
+     *     <li>{@link MongoExecutionTimeoutException} — a server-side {@code MaxTimeMSExpired} ({@code ok: 0})
+     *         error response; derived from the fully-read response body</li>
      *     <li>{@link MongoWriteConcernWithResponseException} — a write concern error carrying the response</li>
      *     <li>{@link MongoOperationTimeoutException} — a write concern timeout, or a server-side
-     *         {@code MaxTimeMSExpired} ({@code ok: 0}) timeout; both are derived from the response body</li>
+     *         {@code MaxTimeMSExpired} ({@code ok: 0}) timeout wrapped for CSOT; both are derived from the response body</li>
      *     <li>{@link BsonSerializationException} — a corrupt BSON body whose exact byte count was still consumed</li>
      * </ul>
      * Any other failure (e.g. a responseTo mismatch or an unexpected error) may have left the stream
@@ -620,6 +623,7 @@ public class InternalStreamConnection implements InternalConnection {
      */
     private static boolean connectionIsReusable(final Throwable failure) {
         return failure instanceof MongoCommandException
+                || failure instanceof MongoExecutionTimeoutException
                 || failure instanceof MongoWriteConcernWithResponseException
                 || failure instanceof MongoOperationTimeoutException
                 || failure instanceof BsonSerializationException;

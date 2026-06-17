@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoCompressor;
+import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.ServerAddress;
@@ -550,6 +551,89 @@ class InternalStreamConnectionTest {
     }
 
     /**
+     * Verifies that a MaxTimeMSExpired (errorCode 50) server response in the synchronous path does NOT close
+     * the connection. Without CSOT the exception is {@link MongoExecutionTimeoutException}, which extends
+     * {@link com.mongodb.MongoException} but NOT {@link MongoCommandException}. Before the fix, it was
+     * incorrectly excluded from the reusable-connection list and triggered a spurious {@code close()}.
+     */
+    @Test
+    @DisplayName("Sync: connection NOT closed on MaxTimeMSExpired (errorCode 50) without CSOT")
+    void syncDoesNotCloseConnectionOnMaxTimeMSExpired() {
+        AtomicInteger readCallCount = new AtomicInteger();
+        BsonDocument errorResponse = createMaxTimeMSExpiredDocument();
+
+        TestStream stream = new TestStream() {
+            @Override
+            public ByteBuf read(final int numBytes, final OperationContext operationContext) {
+                if (readCallCount.incrementAndGet() == 1) {
+                    return createValidResponseHeader(getCommandMessageId(), errorResponse);
+                } else {
+                    return createResponseBody(errorResponse);
+                }
+            }
+        };
+
+        InternalStreamConnection connection = createOpenConnection(stream);
+        CommandMessage commandMessage = createPingCommand();
+        stream.setCommandMessageId(commandMessage.getId());
+
+        MongoExecutionTimeoutException thrown = assertThrows(MongoExecutionTimeoutException.class,
+                () -> connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), createOperationContext()));
+        assertEquals(50, thrown.getCode());
+        assertFalse(connection.isClosed(),
+                "Connection should NOT be closed on MaxTimeMSExpired (the response was fully read)");
+        assertFalse(stream.wasClosed(),
+                "Underlying stream should NOT be closed on MaxTimeMSExpired");
+        assertFalse(stream.hadUnexpectedCall());
+
+        connection.close();
+    }
+
+    /**
+     * Verifies that a MaxTimeMSExpired (errorCode 50) server response in the asynchronous path does NOT close
+     * the connection. Without CSOT the exception is {@link MongoExecutionTimeoutException}, which extends
+     * {@link com.mongodb.MongoException} but NOT {@link MongoCommandException}. Before the fix, it was
+     * incorrectly excluded from the reusable-connection list and triggered a spurious {@code close()}.
+     */
+    @Test
+    @DisplayName("Async: connection NOT closed on MaxTimeMSExpired (errorCode 50) without CSOT")
+    void asyncDoesNotCloseConnectionOnMaxTimeMSExpired() {
+        AtomicInteger readAsyncCallCount = new AtomicInteger();
+        BsonDocument errorResponse = createMaxTimeMSExpiredDocument();
+
+        TestStream stream = new TestStream() {
+            @Override
+            public void readAsync(final int numBytes, final OperationContext operationContext,
+                    final AsyncCompletionHandler<ByteBuf> handler) {
+                if (readAsyncCallCount.incrementAndGet() == 1) {
+                    handler.completed(createValidResponseHeader(getCommandMessageId(), errorResponse));
+                } else {
+                    handler.completed(createResponseBody(errorResponse));
+                }
+            }
+        };
+
+        InternalStreamConnection connection = createOpenConnection(stream);
+        CommandMessage commandMessage = createPingCommand();
+        stream.setCommandMessageId(commandMessage.getId());
+
+        FutureResultCallback<BsonDocument> callback = new FutureResultCallback<>();
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), createOperationContext(), callback);
+
+        MongoExecutionTimeoutException thrown = assertThrows(MongoExecutionTimeoutException.class,
+                () -> callback.get(5, TimeUnit.SECONDS));
+        assertEquals(50, thrown.getCode());
+        assertFalse(callback.wasInvokedMultipleTimes());
+
+        assertFalse(connection.isClosed(),
+                "Connection should NOT be closed on MaxTimeMSExpired (the response was fully read)");
+        assertFalse(stream.wasClosed(),
+                "Underlying stream should NOT be closed on MaxTimeMSExpired");
+
+        connection.close();
+    }
+
+    /**
      * Verifies that when a command error response (ok: 0) carries a mismatched responseTo in the
      * synchronous path, command monitoring receives exactly one started and one failed event.
      */
@@ -1035,6 +1119,13 @@ class InternalStreamConnectionTest {
                 .append("errmsg", new BsonString("WriteConflict error"))
                 .append("code", new BsonInt32(112))
                 .append("codeName", new BsonString("WriteConflict"));
+    }
+
+    private static BsonDocument createMaxTimeMSExpiredDocument() {
+        return new BsonDocument("ok", new BsonInt32(0))
+                .append("errmsg", new BsonString("operation exceeded time limit"))
+                .append("code", new BsonInt32(50))
+                .append("codeName", new BsonString("MaxTimeMSExpired"));
     }
 
     /**
