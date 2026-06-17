@@ -18,6 +18,7 @@
 package com.mongodb.internal.crypt.capi;
 
 import com.sun.jna.Callback;
+import com.sun.jna.FromNativeContext;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
@@ -44,8 +45,22 @@ public class CAPI {
             setPointer(m);
         }
 
+        // By default JNA returns a null cstring reference when a native function returns a NULL
+        // pointer (e.g. mongocrypt_status_message for a status with no message). Override fromNative
+        // to return a cstring with a null pointer instead, so callers never receive a null reference
+        // and toString below can normalize it to an empty string.
+        @Override
+        public Object fromNative(final Object nativeValue, final FromNativeContext context) {
+            cstring result = new cstring();
+            if (nativeValue != null) {
+                result.setPointer((Pointer) nativeValue);
+            }
+            return result;
+        }
+
         public String toString() {
-            return getPointer().getString(0);
+            Pointer pointer = getPointer();
+            return pointer == null ? "" : pointer.getString(0);
         }
     }
 

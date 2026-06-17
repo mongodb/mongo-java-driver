@@ -27,6 +27,7 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.connection.AsynchronousChannelStream;
 import com.mongodb.internal.connection.DefaultInetAddressResolver;
 import com.mongodb.internal.connection.OperationContext;
@@ -37,10 +38,10 @@ import com.mongodb.internal.crypt.capi.MongoKeyDecryptor;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.time.Timeout;
+import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
-import com.mongodb.lang.NonNull;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
@@ -53,6 +54,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.capi.MongoCryptHelper.KMS_TIMEOUT_ERROR_MESSAGE;
 import static com.mongodb.internal.capi.MongoCryptHelper.checkKmsRetryBackoff;
 import static java.util.Collections.singletonList;
@@ -69,6 +71,7 @@ class KeyManagementService implements Closeable {
         this(kmsProviderSslContextMap, timeoutMillis, new TlsChannelStreamFactoryFactory(new DefaultInetAddressResolver()));
     }
 
+    @VisibleForTesting(otherwise = PRIVATE)
     KeyManagementService(final Map<String, SSLContext> kmsProviderSslContextMap, final int timeoutMillis,
                          final TlsChannelStreamFactoryFactory tlsChannelStreamFactoryFactory) {
         assertTrue("timeoutMillis > 0", timeoutMillis > 0);
@@ -264,8 +267,9 @@ class KeyManagementService implements Closeable {
     }
 
     private Throwable unWrapException(final Throwable t) {
-        // Unwrap the IOException the async stream layer wraps in a MongoSocketException, to match the sync path.
-        // Socket timeout subclasses are meaningful MongoClientExceptions, so preserve them rather than unwrapping.
+        // openAsync wraps IOException in MongoSocketOpenException; unwrap it to match the sync path, which throws IOException directly.
+        // Timeout subclasses (MongoSocketReadTimeoutException, MongoSocketWriteTimeoutException) carry meaningful type identity
+        // used by isTimeoutException(), so preserve them rather than unwrapping.
         if (t instanceof MongoSocketReadTimeoutException || t instanceof MongoSocketWriteTimeoutException) {
             return t;
         }
