@@ -24,10 +24,12 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoConfigurationException;
 import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.authentication.AwsCredentialHelper;
 import com.mongodb.internal.authentication.AzureCredentialHelper;
 import com.mongodb.internal.authentication.GcpCredentialHelper;
 import com.mongodb.internal.crypt.capi.MongoCryptOptions;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
@@ -51,6 +53,32 @@ import static java.util.Collections.singletonList;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class MongoCryptHelper {
+
+    public static final String KMS_TIMEOUT_ERROR_MESSAGE = "KMS key decryption exceeded the timeout limit.";
+
+    /**
+     * Throws a {@code MongoOperationTimeoutException} if the operation timeout has expired or the
+     * KMS retry backoff would exceed the remaining operation time.
+     *
+     * @param operationTimeout the operation timeout, or null if none
+     * @param backoffMicros the backoff to sleep before the next KMS attempt, in microseconds
+     */
+    public static void checkKmsRetryBackoff(@Nullable final Timeout operationTimeout, final long backoffMicros) {
+        if (operationTimeout == null) {
+            return;
+        }
+        operationTimeout.run(TimeUnit.MICROSECONDS,
+                // infinite timeout: no CSOT budget to enforce; libmongocrypt's retry count is the only limit
+                () -> { },
+                remainingMicros -> {
+                    if (remainingMicros < backoffMicros) {
+                        throw TimeoutContext.createMongoTimeoutException(KMS_TIMEOUT_ERROR_MESSAGE);
+                    }
+                },
+                () -> {
+                    throw TimeoutContext.createMongoTimeoutException(KMS_TIMEOUT_ERROR_MESSAGE);
+                });
+    }
 
     public static MongoCryptOptions createMongoCryptOptions(final ClientEncryptionSettings settings) {
         return createMongoCryptOptions(settings.getKmsProviders(), false, emptyList(), emptyMap(), null, null,
