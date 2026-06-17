@@ -22,6 +22,7 @@ import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.PointerType;
+import com.sun.jna.ptr.ByteByReference;
 import com.sun.jna.ptr.PointerByReference;
 
 //CHECKSTYLE:OFF
@@ -524,6 +525,18 @@ public class CAPI {
      */
     public static native void
     mongocrypt_setopt_bypass_query_analysis(mongocrypt_t crypt);
+
+    /**
+     * Enable or disable KMS retry behavior.
+     *
+     * <p>Requires that {@link #mongocrypt_init} has not been called on {@code crypt}.
+     *
+     * @param crypt  The {@link mongocrypt_t} object.
+     * @param enable A boolean indicating whether to retry operations.
+     * @return A boolean indicating success. If false, an error status is set. Retrieve it with {@link #mongocrypt_ctx_status}
+     */
+    public static native boolean
+    mongocrypt_setopt_retry_kms(mongocrypt_t crypt, boolean enable);
 
     /**
      * Set the expiration time for the data encryption key cache. Defaults to 60 seconds if not set.
@@ -1204,6 +1217,43 @@ public class CAPI {
      */
     public static native boolean
     mongocrypt_kms_ctx_feed(mongocrypt_kms_ctx_t kms, mongocrypt_binary_t bytes);
+
+    /**
+     * Indicates how long to sleep before sending this request.
+     *
+     * @param kms The {@link mongocrypt_kms_ctx_t}.
+     * @return How long to sleep in microseconds.
+     */
+    public static native long
+    mongocrypt_kms_ctx_usleep(mongocrypt_kms_ctx_t kms);
+
+    /**
+     * Feed bytes from the KMS response.
+     *
+     * <p>Feeding more bytes than what has been returned in
+     * {@link #mongocrypt_kms_ctx_bytes_needed} is an error.
+     *
+     * @param kms          The {@link mongocrypt_kms_ctx_t}.
+     * @param bytes        The bytes to feed. The viewed data is copied. It is valid to
+     *                     destroy {@code bytes} with {@link #mongocrypt_binary_destroy} immediately after.
+     * @param should_retry Whether the KMS request should be retried. Retry in-place
+     *                     without calling {@link #mongocrypt_kms_ctx_fail}.
+     * @return A boolean indicating success. If false, an error status is set. Retrieve it with {@link #mongocrypt_kms_ctx_status}
+     */
+    public static native boolean
+    mongocrypt_kms_ctx_feed_with_retry(mongocrypt_kms_ctx_t kms,
+                                       mongocrypt_binary_t bytes,
+                                       ByteByReference should_retry);
+
+    /**
+     * Indicate a network error. Discards all data fed to this KMS context with
+     * {@link #mongocrypt_kms_ctx_feed}. The {@link mongocrypt_kms_ctx_t} may be reused.
+     *
+     * @param kms The {@link mongocrypt_kms_ctx_t}.
+     * @return A boolean indicating whether the failed request may be retried.
+     */
+    public static native boolean
+    mongocrypt_kms_ctx_fail(mongocrypt_kms_ctx_t kms);
 
 
     /**

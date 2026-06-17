@@ -49,10 +49,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 @SuppressWarnings("SameParameterValue")
@@ -311,6 +313,87 @@ public class MongoCryptTest {
         encryptor.close();
 
         mongoCrypt.close();
+    }
+
+    @Test
+    public void testKmsRetryOnHttpErrorAndNetworkError() {
+        MongoCrypt mongoCrypt = createMongoCrypt();
+        assertNotNull(mongoCrypt);
+
+        MongoCryptContext decryptor = mongoCrypt.createDecryptionContext(getResourceAsDocument("encrypted-command-reply.json"));
+        MongoKeyDecryptor keyDecryptor = feedKeysAndGetKeyDecryptor(decryptor);
+
+        // No backoff is requested before the first attempt
+        assertEquals(0, keyDecryptor.sleepMicroseconds());
+
+        // A complete HTTP 429 response marks the request as retryable. The backoff is jittered,
+        // so it may legitimately be zero; only that the call succeeds can be asserted.
+        assertTrue(keyDecryptor.feedWithRetry(getHttpResourceAsByteBuffer("kms-reply-429.txt")));
+        keyDecryptor.sleepMicroseconds();
+
+        // The context stays in NEED_KMS and the key decryptor is re-presented for the retry
+        keyDecryptor = reenterNeedKms(decryptor);
+        assertTrue(keyDecryptor.bytesNeeded() > 0);
+        assertTrue(keyDecryptor.getMessage().remaining() > 0);
+
+        // A network error is retryable while budget remains
+        assertTrue(keyDecryptor.fail());
+        keyDecryptor = reenterNeedKms(decryptor);
+
+        // A successful response completes the key decryption
+        assertFalse(keyDecryptor.feedWithRetry(getHttpResourceAsByteBuffer("kms-reply.txt")));
+        assertEquals(0, keyDecryptor.bytesNeeded());
+
+        assertNull(decryptor.nextKeyDecryptor());
+        decryptor.completeKeyDecryptors();
+        assertEquals(State.READY, decryptor.getState());
+
+        RawBsonDocument decryptedDocument = decryptor.finish();
+        assertEquals(State.DONE, decryptor.getState());
+        assertEquals(getResourceAsDocument("command-reply.json"), decryptedDocument);
+
+        decryptor.close();
+        mongoCrypt.close();
+    }
+
+    @Test
+    public void testKmsRetryExhaustsBudget() {
+        MongoCrypt mongoCrypt = createMongoCrypt();
+        assertNotNull(mongoCrypt);
+
+        MongoCryptContext decryptor = mongoCrypt.createDecryptionContext(getResourceAsDocument("encrypted-command-reply.json"));
+        MongoKeyDecryptor keyDecryptor = feedKeysAndGetKeyDecryptor(decryptor);
+
+        int retriesAllowed = 0;
+        while (retriesAllowed < 100 && keyDecryptor.fail()) {
+            retriesAllowed++;
+        }
+        assertTrue(retriesAllowed > 0, "expected at least one retry to be allowed");
+        assertTrue(retriesAllowed < 100, "expected the retry budget to be exhausted");
+
+        decryptor.close();
+        mongoCrypt.close();
+    }
+
+    private MongoKeyDecryptor reenterNeedKms(final MongoCryptContext context) {
+        assertEquals(State.NEED_KMS, context.getState());
+        MongoKeyDecryptor keyDecryptor = context.nextKeyDecryptor();
+        assertNotNull(keyDecryptor);
+        return keyDecryptor;
+    }
+
+    private MongoKeyDecryptor feedKeysAndGetKeyDecryptor(final MongoCryptContext context) {
+        assertEquals(State.NEED_MONGO_KEYS, context.getState());
+        BsonDocument keyFilter = context.getMongoOperation();
+        assertEquals(getResourceAsDocument("key-filter.json"), keyFilter);
+        context.addMongoOperationResult(getResourceAsDocument("key-document.json"));
+        context.completeMongoOperation();
+        assertEquals(State.NEED_KMS, context.getState());
+
+        MongoKeyDecryptor keyDecryptor = context.nextKeyDecryptor();
+        assertNotNull(keyDecryptor);
+        assertEquals("aws", keyDecryptor.getKmsProvider());
+        return keyDecryptor;
     }
 
     private void testKeyDecryptor(final MongoCryptContext context) {
