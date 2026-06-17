@@ -1,3 +1,4 @@
 [submodule "specifications"]
 	path = testing/resources/specifications
-	url = https://github.com/mongodb/specifications
+	# TODO DRIVERS-3547: revert to https://github.com/mongodb/specifications once PR #1952 is merged
+	url = https://github.com/rozza/specifications
