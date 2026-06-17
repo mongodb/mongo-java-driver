@@ -51,6 +51,8 @@ import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -76,6 +78,7 @@ import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -84,16 +87,31 @@ class InternalStreamConnectionTest {
     private static final ServerId SERVER_ID = new ServerId(new ClusterId(), new ServerAddress());
 
     /**
-     * Verifies that when {@code stream.readAsync()} throws an {@link OutOfMemoryError}
-     * during body buffer allocation (after header read succeeds), the connection is closed.
+     * Unchecked failures that {@code stream.readAsync()} may raise during body buffer allocation:
+     * an {@link Error} (e.g. heap exhaustion) and a {@link RuntimeException}.
      */
-    @Test
-    @DisplayName("Async: connection closed when readAsync throws Error during body read")
-    void asyncClosesConnectionWhenReadAsyncThrowsError() {
+    // Fully-qualified java.util.stream.Stream: an import would shadow the same-package
+    // com.mongodb.internal.connection.Stream that TestStream implements.
+    private static java.util.stream.Stream<Throwable> readAsyncBodyFailures() {
+        return java.util.stream.Stream.of(
+                new OutOfMemoryError("Java heap space"),
+                new RuntimeException("Simulated allocation failure"));
+    }
+
+    /**
+     * Verifies that when {@code stream.readAsync()} throws during body buffer allocation (after the
+     * header read succeeds), the connection is closed and the original throwable is preserved as the
+     * cause. Covers both an {@link Error} and a {@link RuntimeException}.
+     */
+    @ParameterizedTest
+    @MethodSource("readAsyncBodyFailures")
+    @DisplayName("Async: connection closed when readAsync throws during body read")
+    void asyncClosesConnectionWhenReadAsyncThrowsDuringBodyRead(final Throwable bodyReadFailure) {
         // Track whether readAsync is called for the body (second call)
         AtomicInteger readAsyncCallCount = new AtomicInteger();
 
-        // A stream that succeeds on header read but throws OOM on body read
+        // A stream that succeeds on header read but throws on body read (simulates heap exhaustion
+        // or an unexpected failure during buffer allocation in AsynchronousChannelStream.readAsync)
         TestStream stream = new TestStream() {
             @Override
             public void readAsync(final int numBytes, final OperationContext operationContext,
@@ -101,68 +119,33 @@ class InternalStreamConnectionTest {
                 if (readAsyncCallCount.incrementAndGet() == 1) {
                     // First read: 16-byte header - complete successfully with a valid header
                     handler.completed(createValidResponseHeader(getCommandMessageId()));
+                } else if (bodyReadFailure instanceof Error) {
+                    throw (Error) bodyReadFailure;
                 } else {
-                    // Second read: body - throw OutOfMemoryError (simulates heap exhaustion
-                    // during buffer allocation in AsynchronousChannelStream.readAsync)
-                    throw new OutOfMemoryError("Java heap space");
+                    throw (RuntimeException) bodyReadFailure;
                 }
             }
         };
 
         InternalStreamConnection connection = createOpenConnection(stream);
 
-        // Send a command asynchronously - the write will succeed, then readAsync for the body will throw OOM
+        // Send a command asynchronously - the write will succeed, then readAsync for the body will throw
         FutureResultCallback<BsonDocument> callback = new FutureResultCallback<>();
         CommandMessage commandMessage = createPingCommand();
         stream.setCommandMessageId(commandMessage.getId());
 
         connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), createOperationContext(), callback);
 
-        // The callback should receive an error
-        assertThrows(MongoInternalException.class, () -> callback.get(5, TimeUnit.SECONDS));
+        // The callback should receive an error wrapping the original throwable
+        MongoInternalException thrown = assertThrows(MongoInternalException.class, () -> callback.get(5, TimeUnit.SECONDS));
+        assertSame(bodyReadFailure, thrown.getCause(),
+                "The original throwable should be preserved as the cause");
         assertFalse(callback.wasInvokedMultipleTimes());
 
         assertTrue(connection.isClosed(),
-                "Connection should be closed after Error in readAsync to prevent pool reuse with stale data");
+                "Connection should be closed after a failure in readAsync to prevent pool reuse with stale data");
         assertTrue(stream.wasClosed(),
                 "Underlying stream should be closed to release socket resources");
-    }
-
-    /**
-     * Verifies that when {@code stream.readAsync()} throws a {@link RuntimeException},
-     * the connection is closed, just as for an {@link Error}.
-     */
-    @Test
-    @DisplayName("Async: connection closed when readAsync throws Exception during body read")
-    void asyncClosesConnectionWhenReadAsyncThrowsException() {
-        AtomicInteger readAsyncCallCount = new AtomicInteger();
-
-        TestStream stream = new TestStream() {
-            @Override
-            public void readAsync(final int numBytes, final OperationContext operationContext,
-                    final AsyncCompletionHandler<ByteBuf> handler) {
-                if (readAsyncCallCount.incrementAndGet() == 1) {
-                    handler.completed(createValidResponseHeader(getCommandMessageId()));
-                } else {
-                    // a RuntimeException must close the connection, just like an Error
-                    throw new RuntimeException("Simulated allocation failure");
-                }
-            }
-        };
-
-        InternalStreamConnection connection = createOpenConnection(stream);
-
-        FutureResultCallback<BsonDocument> callback = new FutureResultCallback<>();
-        CommandMessage commandMessage = createPingCommand();
-        stream.setCommandMessageId(commandMessage.getId());
-
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), createOperationContext(), callback);
-
-        assertThrows(MongoInternalException.class, () -> callback.get(5, TimeUnit.SECONDS));
-        assertFalse(callback.wasInvokedMultipleTimes());
-
-        assertTrue(connection.isClosed(),
-                "Connection should be closed when readAsync throws a regular Exception");
     }
 
     /**
@@ -367,15 +350,7 @@ class InternalStreamConnectionTest {
             public ByteBuf read(final int numBytes, final OperationContext operationContext) {
                 recordUnexpectedCall();
                 throw new UnsupportedOperationException("no read expected after write failure");
-            }
-
-            @Override
-            public void readAsync(final int numBytes, final OperationContext operationContext,
-                    final AsyncCompletionHandler<ByteBuf> handler) {
-                recordUnexpectedCall();
-                throw new UnsupportedOperationException("readAsync should not be called in the sync path");
-            }
-        };
+            }        };
 
         InternalStreamConnection connection = createOpenConnection(stream);
         CommandMessage commandMessage = createPingCommand();
@@ -408,15 +383,7 @@ class InternalStreamConnectionTest {
                 } else {
                     return createResponseBody();
                 }
-            }
-
-            @Override
-            public void readAsync(final int numBytes, final OperationContext operationContext,
-                    final AsyncCompletionHandler<ByteBuf> handler) {
-                recordUnexpectedCall();
-                throw new UnsupportedOperationException("readAsync should not be called in the sync path");
-            }
-        };
+            }        };
 
         InternalStreamConnection connection = createOpenConnection(stream);
         CommandMessage commandMessage = createPingCommand();
@@ -484,15 +451,7 @@ class InternalStreamConnectionTest {
                 } else {
                     return createResponseBody(errorResponse);
                 }
-            }
-
-            @Override
-            public void readAsync(final int numBytes, final OperationContext operationContext,
-                    final AsyncCompletionHandler<ByteBuf> handler) {
-                recordUnexpectedCall();
-                throw new UnsupportedOperationException("readAsync should not be called in the sync path");
-            }
-        };
+            }        };
 
         InternalStreamConnection connection = createOpenConnection(stream);
         CommandMessage commandMessage = createPingCommand();
@@ -570,15 +529,7 @@ class InternalStreamConnectionTest {
                 } else {
                     return createResponseBody(errorResponse);
                 }
-            }
-
-            @Override
-            public void readAsync(final int numBytes, final OperationContext operationContext,
-                    final AsyncCompletionHandler<ByteBuf> handler) {
-                recordUnexpectedCall();
-                throw new UnsupportedOperationException("readAsync should not be called in the sync path");
-            }
-        };
+            }        };
 
         TestCommandListener listener = new TestCommandListener();
         InternalStreamConnection connection = createOpenConnection(stream, listener);
@@ -650,15 +601,7 @@ class InternalStreamConnectionTest {
                 } else {
                     return createResponseBody();
                 }
-            }
-
-            @Override
-            public void readAsync(final int numBytes, final OperationContext operationContext,
-                    final AsyncCompletionHandler<ByteBuf> handler) {
-                recordUnexpectedCall();
-                throw new UnsupportedOperationException("readAsync should not be called in the sync path");
-            }
-        };
+            }        };
 
         TestCommandListener listener = new TestCommandListener();
         InternalStreamConnection connection = createOpenConnection(stream, listener);
@@ -729,15 +672,7 @@ class InternalStreamConnectionTest {
                 } else {
                     return createCorruptResponseBody();
                 }
-            }
-
-            @Override
-            public void readAsync(final int numBytes, final OperationContext operationContext,
-                    final AsyncCompletionHandler<ByteBuf> handler) {
-                recordUnexpectedCall();
-                throw new UnsupportedOperationException("readAsync should not be called in the sync path");
-            }
-        };
+            }        };
 
         TestCommandListener listener = new TestCommandListener();
         InternalStreamConnection connection = createOpenConnection(stream, listener);
@@ -829,11 +764,56 @@ class InternalStreamConnectionTest {
         FutureResultCallback<BsonDocument> callback = new FutureResultCallback<>();
         connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), createOperationContext(), callback);
 
-        assertThrows(MongoInternalException.class, () -> callback.get(5, TimeUnit.SECONDS));
+        MongoInternalException thrown = assertThrows(MongoInternalException.class, () -> callback.get(5, TimeUnit.SECONDS));
+        assertTrue(thrown.getMessage().contains("does not match the requestId"));
+        assertFalse(callback.wasInvokedMultipleTimes());
         assertTrue(connection.isClosed(),
                 "Connection should be closed after responseTo mismatch");
         assertEquals(asList("bodyRelease", "close"), order,
                 "Response body buffer must be released before the stream is closed");
+    }
+
+    /**
+     * Verifies that on a responseTo mismatch in the synchronous path, the response body buffer is
+     * released BEFORE the stream is closed. The try-with-resources in receiveCommandMessageResponse
+     * closes the ResponseBuffers (releasing the body buffer) before the catch block closes the
+     * connection; NettyStream.close() requires all buffers it handed out to be released first.
+     */
+    @Test
+    @DisplayName("Sync: response buffer released before connection close on responseTo mismatch")
+    void syncReleasesResponseBufferBeforeCloseOnResponseToMismatch() {
+        AtomicInteger readCallCount = new AtomicInteger();
+        List<String> order = new ArrayList<>();
+
+        TestStream stream = new TestStream() {
+            @Override
+            public ByteBuf read(final int numBytes, final OperationContext operationContext) {
+                if (readCallCount.incrementAndGet() == 1) {
+                    // Header: responseTo deliberately mismatches (commandId + 1)
+                    return createValidResponseHeader(getCommandMessageId() + 1);
+                } else {
+                    return recordingRelease(createResponseBodyBuffer(), order, "bodyRelease");
+                }
+            }
+            @Override
+            public void close() {
+                order.add("close");
+                super.close();
+            }
+        };
+
+        InternalStreamConnection connection = createOpenConnection(stream);
+        CommandMessage commandMessage = createPingCommand();
+        stream.setCommandMessageId(commandMessage.getId());
+
+        MongoInternalException thrown = assertThrows(MongoInternalException.class,
+                () -> connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), createOperationContext()));
+        assertTrue(thrown.getMessage().contains("does not match the requestId"));
+        assertTrue(connection.isClosed(),
+                "Connection should be closed after responseTo mismatch");
+        assertEquals(asList("bodyRelease", "close"), order,
+                "Response body buffer must be released before the stream is closed");
+        assertFalse(stream.hadUnexpectedCall());
     }
 
     /**
@@ -863,15 +843,7 @@ class InternalStreamConnectionTest {
                 } else {
                     return compressedBody;
                 }
-            }
-
-            @Override
-            public void readAsync(final int numBytes, final OperationContext operationContext,
-                    final AsyncCompletionHandler<ByteBuf> handler) {
-                recordUnexpectedCall();
-                throw new UnsupportedOperationException("readAsync should not be called in the sync path");
-            }
-        };
+            }        };
 
         InternalStreamConnection connection = createOpenConnection(stream, null,
                 Collections.singletonList(MongoCompressor.createZlibCompressor()));
@@ -1245,9 +1217,20 @@ class InternalStreamConnectionTest {
             handler.completed(null);
         }
 
+        // Both read methods default to recording an unexpected call and throwing: a test that uses the
+        // sync path overrides read() (and inherits this readAsync), and vice versa. Recording (rather
+        // than calling fail()) is required because the production code catches Throwable.
         @Override
         public ByteBuf read(final int numBytes, final OperationContext operationContext) {
-            throw new UnsupportedOperationException();
+            recordUnexpectedCall();
+            throw new UnsupportedOperationException("read should not be called in this test");
+        }
+
+        @Override
+        public void readAsync(final int numBytes, final OperationContext operationContext,
+                final AsyncCompletionHandler<ByteBuf> handler) {
+            recordUnexpectedCall();
+            throw new UnsupportedOperationException("readAsync should not be called in this test");
         }
 
         @Override

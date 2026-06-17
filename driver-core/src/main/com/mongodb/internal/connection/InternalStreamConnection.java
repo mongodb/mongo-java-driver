@@ -56,6 +56,7 @@ import com.mongodb.lang.Nullable;
 import com.mongodb.observability.micrometer.MongodbObservationContext;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
+import org.bson.BsonSerializationException;
 import org.bson.ByteBuf;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
@@ -583,33 +584,49 @@ public class InternalStreamConnection implements InternalConnection {
             }
 
             return commandResult;
-        } catch (Exception e) {
-            if (e instanceof MongoInternalException) {
-                // a MongoInternalException (e.g. responseTo mismatch) means the stream is desynchronized.
-                // The connection must be closed before anything else can throw, to prevent reuse. Other
-                // failures (e.g. MongoCommandException) leave the stream intact, as the response was fully read,
-                // so the connection remains usable
+        } catch (Throwable t) {
+            if (!connectionIsReusable(t)) {
                 close();
             }
             if (!commandSuccessful) {
-                commandEventSender.sendFailedEvent(e);
+                commandEventSender.sendFailedEvent(t);
             }
             if (tracingSpan != null) {
-                if (e instanceof MongoCommandException) {
+                if (t instanceof MongoCommandException) {
                     MongodbObservationContext ctx = tracingSpan.getMongodbObservationContext();
                     if (ctx != null) {
-                        ctx.setResponseStatusCode(String.valueOf(((MongoCommandException) e).getErrorCode()));
+                        ctx.setResponseStatusCode(String.valueOf(((MongoCommandException) t).getErrorCode()));
                     }
                 }
-                tracingSpan.error(e);
+                tracingSpan.error(t);
             }
-            throw e;
+            throw t;
         } finally {
             if (tracingSpan != null) {
                 tracingSpan.closeScope();
                 tracingSpan.end();
             }
         }
+    }
+
+    /**
+     * Determines whether a failure raised while processing a command response leaves the connection
+     * reusable. These exception types are only raised after the full framed response has been read off
+     * the wire, so the stream remains synchronized and the connection can be returned to the pool:
+     * <ul>
+     *     <li>{@link MongoCommandException} — an {@code ok: 0} error response (and subclasses)</li>
+     *     <li>{@link MongoWriteConcernWithResponseException} — a write concern error carrying the response</li>
+     *     <li>{@link MongoOperationTimeoutException} — a write concern timeout</li>
+     *     <li>{@link BsonSerializationException} — a corrupt BSON body whose exact byte count was still consumed</li>
+     * </ul>
+     * Any other failure (e.g. a responseTo mismatch or an unexpected error) may have left the stream
+     * desynchronized, so the connection must be closed to prevent pool reuse.
+     */
+    private static boolean connectionIsReusable(final Throwable failure) {
+        return failure instanceof MongoCommandException
+                || failure instanceof MongoWriteConcernWithResponseException
+                || failure instanceof MongoOperationTimeoutException
+                || failure instanceof BsonSerializationException;
     }
 
     private <T> void sendAndReceiveAsyncInternal(final CommandMessage message, final Decoder<T> decoder,
@@ -760,11 +777,7 @@ public class InternalStreamConnection implements InternalConnection {
                         responseBuffers.close();
                     }
                     if (failure != null) {
-                        if (failure instanceof MongoInternalException) {
-                            // a MongoInternalException (e.g. responseTo mismatch) means the stream is desynchronized.
-                            // The connection must be closed before anything else can throw, to prevent reuse. Other
-                            // failures (e.g. MongoCommandException) leave the stream intact, as the response was fully read,
-                            // so the connection remains usable
+                        if (!connectionIsReusable(failure)) {
                             close();
                         }
                         if (!commandSuccessful) {
@@ -804,9 +817,9 @@ public class InternalStreamConnection implements InternalConnection {
         }
         try {
             stream.write(byteBuffers, operationContext);
-        } catch (Throwable e) {
+        } catch (Throwable t) {
             close();
-            throwTranslatedWriteException(e, operationContext);
+            throwTranslatedWriteException(t, operationContext);
         }
     }
 
@@ -824,10 +837,10 @@ public class InternalStreamConnection implements InternalConnection {
             c.complete(c);
         }).thenRunTryCatchAsyncBlocks(c -> {
             stream.writeAsync(byteBuffers, operationContext, c.asHandler());
-        }, Throwable.class, (e, c) -> {
+        }, Throwable.class, (t, c) -> {
             try {
                 close();
-                throwTranslatedWriteException(e, operationContext);
+                throwTranslatedWriteException(t, operationContext);
             } catch (Throwable translatedException) {
                 c.completeExceptionally(translatedException);
             }
@@ -883,9 +896,9 @@ public class InternalStreamConnection implements InternalConnection {
                     callback.onResult(null, translateReadException(t, operationContext));
                 }
             });
-        } catch (Throwable e) {
+        } catch (Throwable t) {
             close();
-            callback.onResult(null, translateReadException(e, operationContext));
+            callback.onResult(null, translateReadException(t, operationContext));
         }
     }
 
@@ -959,6 +972,9 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     private ResponseBuffers receiveResponseBuffers(final OperationContext operationContext) {
+        // The uncompressed buffer is allocated by us (not handed to ResponseBuffers until the last
+        // statement of the compressed branch), so it must be released if anything fails beforehand.
+        ByteBuf uncompressedBuffer = null;
         try {
             ByteBuf messageHeaderBuffer = stream.read(MESSAGE_HEADER_LENGTH, operationContext);
             MessageHeader messageHeader;
@@ -976,16 +992,11 @@ public class InternalStreamConnection implements InternalConnection {
 
                     Compressor compressor = getCompressor(compressedHeader);
 
-                    ByteBuf buffer = getBuffer(compressedHeader.getUncompressedSize());
-                    try {
-                        compressor.uncompress(messageBuffer, buffer);
+                    uncompressedBuffer = getBuffer(compressedHeader.getUncompressedSize());
+                    compressor.uncompress(messageBuffer, uncompressedBuffer);
 
-                        buffer.flip();
-                        return new ResponseBuffers(new ReplyHeader(buffer, compressedHeader), buffer);
-                    } catch (Throwable localThrowable) {
-                        buffer.release();
-                        throw localThrowable;
-                    }
+                    uncompressedBuffer.flip();
+                    return new ResponseBuffers(new ReplyHeader(uncompressedBuffer, compressedHeader), uncompressedBuffer);
                 } else {
                     ResponseBuffers responseBuffers = new ResponseBuffers(new ReplyHeader(messageBuffer, messageHeader), messageBuffer);
                     releaseMessageBuffer = false;
@@ -997,6 +1008,9 @@ public class InternalStreamConnection implements InternalConnection {
                 }
             }
         } catch (Throwable t) {
+            if (uncompressedBuffer != null) {
+                uncompressedBuffer.release();
+            }
             close();
             throw translateReadException(t, operationContext);
         }
@@ -1028,7 +1042,6 @@ public class InternalStreamConnection implements InternalConnection {
         @Override
         public void onResult(@Nullable final ByteBuf result, @Nullable final Throwable t) {
             if (t != null) {
-                close();
                 callback.onResult(null, t);
                 return;
             }
@@ -1063,7 +1076,6 @@ public class InternalStreamConnection implements InternalConnection {
             @Override
             public void onResult(@Nullable final ByteBuf result, @Nullable final Throwable t) {
                 if (t != null) {
-                    close();
                     callback.onResult(null, t);
                     return;
                 }
@@ -1071,6 +1083,9 @@ public class InternalStreamConnection implements InternalConnection {
                 assertNotNull(result);
                 ResponseBuffers responseBuffers = null;
                 Throwable bodyParsingFailure = null;
+                // The uncompressed buffer is allocated by us and is not handed to ResponseBuffers until the
+                // last statement of the try, so it must be released if anything fails beforehand.
+                ByteBuf uncompressedBuffer = null;
                 try {
                     ReplyHeader replyHeader;
                     ByteBuf responseBuffer;
@@ -1078,17 +1093,12 @@ public class InternalStreamConnection implements InternalConnection {
                         try {
                             CompressedHeader compressedHeader = new CompressedHeader(result, messageHeader);
                             Compressor compressor = getCompressor(compressedHeader);
-                            ByteBuf buffer = getBuffer(compressedHeader.getUncompressedSize());
-                            try {
-                                compressor.uncompress(result, buffer);
+                            uncompressedBuffer = getBuffer(compressedHeader.getUncompressedSize());
+                            compressor.uncompress(result, uncompressedBuffer);
 
-                                buffer.flip();
-                                replyHeader = new ReplyHeader(buffer, compressedHeader);
-                            } catch (Throwable localThrowable) {
-                                buffer.release();
-                                throw localThrowable;
-                            }
-                            responseBuffer = buffer;
+                            uncompressedBuffer.flip();
+                            replyHeader = new ReplyHeader(uncompressedBuffer, compressedHeader);
+                            responseBuffer = uncompressedBuffer;
                         } finally {
                             releaseResult = false;
                             result.release();
@@ -1098,8 +1108,13 @@ public class InternalStreamConnection implements InternalConnection {
                         responseBuffer = result;
                         releaseResult = false;
                     }
+                    // Must be the last statement in the try: ResponseBuffers now owns responseBuffer, so
+                    // nothing that could throw may follow it, or the buffer would leak (it is not released below).
                     responseBuffers = new ResponseBuffers(replyHeader, responseBuffer);
                 } catch (Throwable localThrowable) {
+                    if (uncompressedBuffer != null) {
+                        uncompressedBuffer.release();
+                    }
                     bodyParsingFailure = localThrowable;
                 } finally {
                     if (releaseResult) {
