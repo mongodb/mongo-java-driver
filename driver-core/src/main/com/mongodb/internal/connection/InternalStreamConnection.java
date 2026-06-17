@@ -567,6 +567,7 @@ public class InternalStreamConnection implements InternalConnection {
             final OperationContext operationContext, @Nullable final Span tracingSpan) {
         boolean commandSuccessful = false;
         try (ResponseBuffers responseBuffers = receiveResponseBuffers(operationContext)) {
+            assertResponseToMatches(responseBuffers, responseTo);
             updateSessionContext(operationContext.getSessionContext(), responseBuffers);
             if (!isCommandOk(responseBuffers)) {
                 throw getCommandFailureException(responseBuffers.getResponseDocument(responseTo,
@@ -773,6 +774,7 @@ public class InternalStreamConnection implements InternalConnection {
                     boolean commandSuccessful = false;
                     Throwable failure = null;
                     try {
+                        assertResponseToMatches(responseBuffers, messageId);
                         updateSessionContext(operationContext.getSessionContext(), responseBuffers);
                         boolean commandOk =
                                 isCommandOk(new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer())));
@@ -800,6 +802,22 @@ public class InternalStreamConnection implements InternalConnection {
                 }));
             }
         });
+    }
+
+    /**
+     * Verifies that the {@code responseTo} in the reply header matches the {@code requestId} of the request just sent.
+     * A mismatch means the stream is desynchronized — the reply belongs to a different request — so this check is made
+     * as soon as the framed response has been read, before the body is processed. In particular it runs before
+     * {@link #updateSessionContext} could advance session state (operation/cluster time, snapshot timestamp, recovery
+     * token) from a reply that does not belong to this operation. The failure is raised on the same path that
+     * {@linkplain #onCommandFailure handles command failures}, which closes the connection to keep the desynchronized
+     * stream out of the pool.
+     */
+    private void assertResponseToMatches(final ResponseBuffers responseBuffers, final int requestId) {
+        int actualResponseTo = responseBuffers.getReplyHeader().getResponseTo();
+        if (requestId != actualResponseTo) {
+            throw new MongoInternalException(ReplyMessage.responseToMismatchMessage(actualResponseTo, requestId));
+        }
     }
 
     private <T> T getCommandResult(final Decoder<T> decoder,

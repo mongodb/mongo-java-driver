@@ -45,6 +45,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonSerializationException;
 import org.bson.BsonString;
+import org.bson.BsonTimestamp;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
 import org.bson.codecs.BsonDocumentCodec;
@@ -54,6 +55,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -79,6 +81,7 @@ import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -780,6 +783,108 @@ class InternalStreamConnectionTest {
     }
 
     /**
+     * Verifies that on a responseTo mismatch, session state (operation time, cluster time, snapshot
+     * timestamp) is NOT advanced from the mismatched reply on either path. The reply belongs to a
+     * different request, so advancing the session from its body would corrupt session state; the
+     * mismatch must be detected before the body is processed.
+     */
+    @ParameterizedTest(name = "async={0}")
+    @ValueSource(booleans = {false, true})
+    void doesNotAdvanceSessionStateOnResponseToMismatch(final boolean async) {
+        TestStream stream = okResponseStream(MISMATCHED_RESPONSE_TO, createOkResponseWithSessionState());
+        InternalStreamConnection connection = createOpenConnection(stream);
+        CommandMessage commandMessage = createPingCommand();
+        stream.setCommandMessageId(commandMessage.getId());
+
+        RecordingSessionContext sessionContext = new RecordingSessionContext();
+        MongoInternalException thrown = assertThrows(MongoInternalException.class,
+                () -> sendAndReceive(connection, commandMessage, sessionContext, async));
+        assertTrue(thrown.getMessage().contains("does not match the requestId"));
+        assertFalse(sessionContext.sessionStateAdvanced(),
+                "Session state must not be advanced from a reply that does not match the request");
+        assertTrue(connection.isClosed(),
+                "Connection should be closed after responseTo mismatch");
+        assertFalse(stream.hadUnexpectedCall());
+    }
+
+    /**
+     * Control for {@link #doesNotAdvanceSessionStateOnResponseToMismatch}: when the responseTo matches,
+     * session state IS advanced from the reply body, and to the values the body carried. This proves the
+     * recording session context observes {@code updateSessionContext} on both paths, so the "not advanced"
+     * assertions on a mismatch are meaningful rather than vacuously true.
+     */
+    @ParameterizedTest(name = "async={0}")
+    @ValueSource(booleans = {false, true})
+    void advancesSessionStateWhenResponseToMatches(final boolean async) {
+        TestStream stream = okResponseStream(MATCHING_RESPONSE_TO, createOkResponseWithSessionState());
+        InternalStreamConnection connection = createOpenConnection(stream);
+        CommandMessage commandMessage = createPingCommand();
+        stream.setCommandMessageId(commandMessage.getId());
+
+        RecordingSessionContext sessionContext = new RecordingSessionContext();
+        sendAndReceive(connection, commandMessage, sessionContext, async);
+        assertEquals(SESSION_STATE_TIMESTAMP, sessionContext.advancedOperationTime(),
+                "Operation time must be advanced from the matching reply body");
+        assertEquals(new BsonDocument("clusterTime", SESSION_STATE_TIMESTAMP), sessionContext.advancedClusterTime(),
+                "Cluster time must be advanced from the matching reply body");
+        assertEquals(SESSION_STATE_TIMESTAMP, sessionContext.advancedSnapshotTimestamp(),
+                "Snapshot timestamp must be advanced from the matching reply body");
+        assertFalse(connection.isClosed(),
+                "Connection should stay open after a matching reply");
+        assertFalse(stream.hadUnexpectedCall());
+
+        connection.close();
+    }
+
+    /**
+     * Verifies that on a responseTo mismatch with an active transaction, the recovery token is NOT advanced
+     * from the mismatched reply. {@code updateSessionContext} only gossips the recovery token while a
+     * transaction is active, so this exercises the branch the other session-state tests cannot reach.
+     */
+    @ParameterizedTest(name = "async={0}")
+    @ValueSource(booleans = {false, true})
+    void doesNotAdvanceRecoveryTokenOnResponseToMismatch(final boolean async) {
+        TestStream stream = okResponseStream(MISMATCHED_RESPONSE_TO, createOkResponseWithRecoveryToken());
+        InternalStreamConnection connection = createOpenConnection(stream);
+        CommandMessage commandMessage = createPingCommand();
+        stream.setCommandMessageId(commandMessage.getId());
+
+        RecordingSessionContext sessionContext = new RecordingSessionContext(true);
+        MongoInternalException thrown = assertThrows(MongoInternalException.class,
+                () -> sendAndReceive(connection, commandMessage, sessionContext, async));
+        assertTrue(thrown.getMessage().contains("does not match the requestId"));
+        assertNull(sessionContext.advancedRecoveryToken(),
+                "Recovery token must not be advanced from a reply that does not match the request");
+        assertTrue(connection.isClosed(),
+                "Connection should be closed after responseTo mismatch");
+        assertFalse(stream.hadUnexpectedCall());
+    }
+
+    /**
+     * Control for {@link #doesNotAdvanceRecoveryTokenOnResponseToMismatch}: when the responseTo matches,
+     * the recovery token IS advanced from the reply, to the value the body carried, proving the recording
+     * session context observes the recovery-token branch and the "not advanced" assertion above is meaningful.
+     */
+    @ParameterizedTest(name = "async={0}")
+    @ValueSource(booleans = {false, true})
+    void advancesRecoveryTokenWhenResponseToMatches(final boolean async) {
+        TestStream stream = okResponseStream(MATCHING_RESPONSE_TO, createOkResponseWithRecoveryToken());
+        InternalStreamConnection connection = createOpenConnection(stream);
+        CommandMessage commandMessage = createPingCommand();
+        stream.setCommandMessageId(commandMessage.getId());
+
+        RecordingSessionContext sessionContext = new RecordingSessionContext(true);
+        sendAndReceive(connection, commandMessage, sessionContext, async);
+        assertEquals(RECOVERY_TOKEN, sessionContext.advancedRecoveryToken(),
+                "Recovery token must be advanced from the matching reply body");
+        assertFalse(connection.isClosed(),
+                "Connection should stay open after a matching reply");
+        assertFalse(stream.hadUnexpectedCall());
+
+        connection.close();
+    }
+
+    /**
      * Verifies that when the response document is corrupt (but fully read) in the synchronous
      * path, command monitoring receives a failed event and the connection stays open: the wire
      * framing is intact, so the stream is not desynchronized.
@@ -1038,6 +1143,58 @@ class InternalStreamConnectionTest {
         }
     }
 
+    private static final int MATCHING_RESPONSE_TO = 0;
+    private static final int MISMATCHED_RESPONSE_TO = 1;
+    private static final BsonTimestamp SESSION_STATE_TIMESTAMP = new BsonTimestamp(42, 1);
+    private static final BsonDocument RECOVERY_TOKEN = new BsonDocument("id", new BsonInt32(1));
+
+    /**
+     * Builds a {@link TestStream} that serves a single OP_REPLY framed response (16-byte header + body) for
+     * {@code body}, on either the sync or async read path. The reply header's responseTo is the connection's
+     * request id plus {@code responseToOffset}: {@link #MATCHING_RESPONSE_TO} yields a matching reply, while
+     * {@link #MISMATCHED_RESPONSE_TO} yields a desynchronized (mismatched) reply.
+     */
+    private static TestStream okResponseStream(final int responseToOffset, final BsonDocument body) {
+        return new TestStream() {
+            private final AtomicInteger readCallCount = new AtomicInteger();
+
+            @Override
+            public ByteBuf read(final int numBytes, final OperationContext operationContext) {
+                return nextChunk();
+            }
+
+            @Override
+            public void readAsync(final int numBytes, final OperationContext operationContext,
+                    final AsyncCompletionHandler<ByteBuf> handler) {
+                handler.completed(nextChunk());
+            }
+
+            private ByteBuf nextChunk() {
+                if (readCallCount.incrementAndGet() == 1) {
+                    return createValidResponseHeader(getCommandMessageId() + responseToOffset, body);
+                }
+                return createResponseBody(body);
+            }
+        };
+    }
+
+    /**
+     * Sends {@code commandMessage} and waits for the response on the sync or async path, using {@code sessionContext}
+     * for the operation. Any failure (including a responseTo mismatch) is rethrown on both paths so callers can assert
+     * on it uniformly.
+     */
+    private void sendAndReceive(final InternalStreamConnection connection, final CommandMessage commandMessage,
+            final RecordingSessionContext sessionContext, final boolean async) {
+        OperationContext operationContext = createOperationContext().withSessionContext(sessionContext);
+        if (async) {
+            FutureResultCallback<BsonDocument> callback = new FutureResultCallback<>();
+            connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), operationContext, callback);
+            callback.get(5, TimeUnit.SECONDS);
+        } else {
+            connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), operationContext);
+        }
+    }
+
     private InternalStreamConnection createOpenConnection(final TestStream stream) {
         return createOpenConnection(stream, null);
     }
@@ -1126,6 +1283,26 @@ class InternalStreamConnectionTest {
                 .append("errmsg", new BsonString("operation exceeded time limit"))
                 .append("code", new BsonInt32(50))
                 .append("codeName", new BsonString("MaxTimeMSExpired"));
+    }
+
+    /**
+     * Creates a successful (ok: 1) response document that also carries session state the driver would
+     * gossip into the session context: operationTime, $clusterTime and an atClusterTime snapshot timestamp.
+     */
+    private static BsonDocument createOkResponseWithSessionState() {
+        return new BsonDocument("ok", new BsonInt32(1))
+                .append("operationTime", SESSION_STATE_TIMESTAMP)
+                .append("$clusterTime", new BsonDocument("clusterTime", SESSION_STATE_TIMESTAMP))
+                .append("atClusterTime", SESSION_STATE_TIMESTAMP);
+    }
+
+    /**
+     * Creates a successful (ok: 1) response document carrying a transaction recovery token, which the driver
+     * gossips into the session context only while a transaction is active.
+     */
+    private static BsonDocument createOkResponseWithRecoveryToken() {
+        return new BsonDocument("ok", new BsonInt32(1))
+                .append("recoveryToken", RECOVERY_TOKEN);
     }
 
     /**
@@ -1298,6 +1475,86 @@ class InternalStreamConnectionTest {
                 "Monitoring must receive exactly one started and one failed event but received: " + events);
         assertInstanceOf(CommandStartedEvent.class, events.get(0));
         assertInstanceOf(CommandFailedEvent.class, events.get(1));
+    }
+
+    /**
+     * A {@link SessionContext} that records whether the driver advanced any session state
+     * (operation time, cluster time, snapshot timestamp or, inside a transaction, the recovery token)
+     * from a response. Used to assert that a mismatched reply never contaminates the session.
+     *
+     * <p>When constructed with {@code activeTransaction = true} it reports an active transaction so the
+     * recovery-token branch of {@code updateSessionContext} is exercised; {@code getTransactionNumber} then
+     * returns a fixed value purely so command encoding succeeds.
+     */
+    private static final class RecordingSessionContext extends NoOpSessionContext {
+        private final boolean activeTransaction;
+        private volatile BsonTimestamp advancedOperationTime;
+        private volatile BsonDocument advancedClusterTime;
+        private volatile BsonTimestamp advancedSnapshotTimestamp;
+        private volatile BsonDocument advancedRecoveryToken;
+
+        RecordingSessionContext() {
+            this(false);
+        }
+
+        RecordingSessionContext(final boolean activeTransaction) {
+            this.activeTransaction = activeTransaction;
+        }
+
+        @Override
+        public void advanceOperationTime(@Nullable final BsonTimestamp operationTime) {
+            this.advancedOperationTime = operationTime;
+        }
+
+        @Override
+        public void advanceClusterTime(@Nullable final BsonDocument clusterTime) {
+            this.advancedClusterTime = clusterTime;
+        }
+
+        @Override
+        public void setSnapshotTimestamp(@Nullable final BsonTimestamp snapshotTimestamp) {
+            this.advancedSnapshotTimestamp = snapshotTimestamp;
+        }
+
+        @Override
+        public boolean hasActiveTransaction() {
+            return activeTransaction;
+        }
+
+        @Override
+        public long getTransactionNumber() {
+            return 1;
+        }
+
+        @Override
+        public void setRecoveryToken(final BsonDocument recoveryToken) {
+            this.advancedRecoveryToken = recoveryToken;
+        }
+
+        /** True if any of operation time, cluster time or snapshot timestamp was advanced from a response. */
+        boolean sessionStateAdvanced() {
+            return advancedOperationTime != null || advancedClusterTime != null || advancedSnapshotTimestamp != null;
+        }
+
+        @Nullable
+        BsonTimestamp advancedOperationTime() {
+            return advancedOperationTime;
+        }
+
+        @Nullable
+        BsonDocument advancedClusterTime() {
+            return advancedClusterTime;
+        }
+
+        @Nullable
+        BsonTimestamp advancedSnapshotTimestamp() {
+            return advancedSnapshotTimestamp;
+        }
+
+        @Nullable
+        BsonDocument advancedRecoveryToken() {
+            return advancedRecoveryToken;
+        }
     }
 
     /**
