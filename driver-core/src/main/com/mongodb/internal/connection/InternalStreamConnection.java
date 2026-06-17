@@ -585,12 +585,7 @@ public class InternalStreamConnection implements InternalConnection {
 
             return commandResult;
         } catch (Throwable t) {
-            if (!connectionIsReusable(t)) {
-                close();
-            }
-            if (!commandSuccessful) {
-                commandEventSender.sendFailedEvent(t);
-            }
+            onCommandFailure(t, commandSuccessful, commandEventSender);
             if (tracingSpan != null) {
                 if (t instanceof MongoCommandException) {
                     MongodbObservationContext ctx = tracingSpan.getMongodbObservationContext();
@@ -616,7 +611,8 @@ public class InternalStreamConnection implements InternalConnection {
      * <ul>
      *     <li>{@link MongoCommandException} — an {@code ok: 0} error response (and subclasses)</li>
      *     <li>{@link MongoWriteConcernWithResponseException} — a write concern error carrying the response</li>
-     *     <li>{@link MongoOperationTimeoutException} — a write concern timeout</li>
+     *     <li>{@link MongoOperationTimeoutException} — a write concern timeout, or a server-side
+     *         {@code MaxTimeMSExpired} ({@code ok: 0}) timeout; both are derived from the response body</li>
      *     <li>{@link BsonSerializationException} — a corrupt BSON body whose exact byte count was still consumed</li>
      * </ul>
      * Any other failure (e.g. a responseTo mismatch or an unexpected error) may have left the stream
@@ -627,6 +623,21 @@ public class InternalStreamConnection implements InternalConnection {
                 || failure instanceof MongoWriteConcernWithResponseException
                 || failure instanceof MongoOperationTimeoutException
                 || failure instanceof BsonSerializationException;
+    }
+
+    /**
+     * Handles a failure raised while sending or processing a command, identically on the sync and async paths:
+     * closes the connection unless the failure leaves it {@linkplain #connectionIsReusable reusable}, and emits a
+     * command-failed event unless a succeeded event has already been sent.
+     */
+    private void onCommandFailure(final Throwable failure, final boolean commandSuccessful,
+            final CommandEventSender commandEventSender) {
+        if (!connectionIsReusable(failure)) {
+            close();
+        }
+        if (!commandSuccessful) {
+            commandEventSender.sendFailedEvent(failure);
+        }
     }
 
     private <T> void sendAndReceiveAsyncInternal(final CommandMessage message, final Decoder<T> decoder,
@@ -777,12 +788,7 @@ public class InternalStreamConnection implements InternalConnection {
                         responseBuffers.close();
                     }
                     if (failure != null) {
-                        if (!connectionIsReusable(failure)) {
-                            close();
-                        }
-                        if (!commandSuccessful) {
-                            commandEventSender.sendFailedEvent(failure);
-                        }
+                        onCommandFailure(failure, commandSuccessful, commandEventSender);
                         callback.onResult(null, failure);
                         return;
                     }

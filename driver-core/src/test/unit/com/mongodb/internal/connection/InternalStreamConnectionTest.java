@@ -90,10 +90,8 @@ class InternalStreamConnectionTest {
      * Unchecked failures that {@code stream.readAsync()} may raise during body buffer allocation:
      * an {@link Error} (e.g. heap exhaustion) and a {@link RuntimeException}.
      */
-    // Fully-qualified java.util.stream.Stream: an import would shadow the same-package
-    // com.mongodb.internal.connection.Stream that TestStream implements.
-    private static java.util.stream.Stream<Throwable> readAsyncBodyFailures() {
-        return java.util.stream.Stream.of(
+    private static List<Throwable> readAsyncBodyFailures() {
+        return asList(
                 new OutOfMemoryError("Java heap space"),
                 new RuntimeException("Simulated allocation failure"));
     }
@@ -350,7 +348,8 @@ class InternalStreamConnectionTest {
             public ByteBuf read(final int numBytes, final OperationContext operationContext) {
                 recordUnexpectedCall();
                 throw new UnsupportedOperationException("no read expected after write failure");
-            }        };
+            }
+        };
 
         InternalStreamConnection connection = createOpenConnection(stream);
         CommandMessage commandMessage = createPingCommand();
@@ -383,7 +382,8 @@ class InternalStreamConnectionTest {
                 } else {
                     return createResponseBody();
                 }
-            }        };
+            }
+        };
 
         InternalStreamConnection connection = createOpenConnection(stream);
         CommandMessage commandMessage = createPingCommand();
@@ -451,7 +451,8 @@ class InternalStreamConnectionTest {
                 } else {
                     return createResponseBody(errorResponse);
                 }
-            }        };
+            }
+        };
 
         InternalStreamConnection connection = createOpenConnection(stream);
         CommandMessage commandMessage = createPingCommand();
@@ -529,7 +530,8 @@ class InternalStreamConnectionTest {
                 } else {
                     return createResponseBody(errorResponse);
                 }
-            }        };
+            }
+        };
 
         TestCommandListener listener = new TestCommandListener();
         InternalStreamConnection connection = createOpenConnection(stream, listener);
@@ -601,7 +603,8 @@ class InternalStreamConnectionTest {
                 } else {
                     return createResponseBody();
                 }
-            }        };
+            }
+        };
 
         TestCommandListener listener = new TestCommandListener();
         InternalStreamConnection connection = createOpenConnection(stream, listener);
@@ -672,7 +675,8 @@ class InternalStreamConnectionTest {
                 } else {
                     return createCorruptResponseBody();
                 }
-            }        };
+            }
+        };
 
         TestCommandListener listener = new TestCommandListener();
         InternalStreamConnection connection = createOpenConnection(stream, listener);
@@ -843,7 +847,8 @@ class InternalStreamConnectionTest {
                 } else {
                     return compressedBody;
                 }
-            }        };
+            }
+        };
 
         InternalStreamConnection connection = createOpenConnection(stream, null,
                 Collections.singletonList(MongoCompressor.createZlibCompressor()));
