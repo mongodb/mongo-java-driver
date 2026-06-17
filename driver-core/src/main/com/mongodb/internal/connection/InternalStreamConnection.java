@@ -899,12 +899,12 @@ public class InternalStreamConnection implements InternalConnection {
                 @Override
                 public void failed(final Throwable t) {
                     close();
-                    callback.onResult(null, translateReadException(t, operationContext));
+                    callback.onResult(null, translateReadFailure(t, operationContext));
                 }
             });
         } catch (Throwable t) {
             close();
-            callback.onResult(null, translateReadException(t, operationContext));
+            callback.onResult(null, translateReadFailure(t, operationContext));
         }
     }
 
@@ -928,7 +928,19 @@ public class InternalStreamConnection implements InternalConnection {
         }
     }
 
+    /**
+     * Rethrows a fatal JVM {@link Error} (e.g. {@link OutOfMemoryError}) unchanged, so it is never downgraded to a
+     * catchable {@link MongoException}. Used by the paths that propagate a failure by throwing; the async read path
+     * delivers the failure as a callback value instead and uses {@link #translateReadFailure} for the same purpose.
+     */
+    private static void rethrowIfError(final Throwable t) {
+        if (t instanceof Error) {
+            throw (Error) t;
+        }
+    }
+
     private void throwTranslatedWriteException(final Throwable e, final OperationContext operationContext) {
+        rethrowIfError(e);
         if (e instanceof MongoSocketWriteTimeoutException && operationContext.getTimeoutContext().hasTimeoutMS()) {
             throw createMongoTimeoutException(e);
         }
@@ -944,6 +956,18 @@ public class InternalStreamConnection implements InternalConnection {
         } else {
             throw new MongoInternalException("Unexpected exception", e);
         }
+    }
+
+    /**
+     * Translates a read failure for delivery to an async callback. {@link Error}s are passed through unchanged
+     * rather than wrapped in a {@link MongoException}, so a fatal JVM error (e.g. {@link OutOfMemoryError}) is not
+     * downgraded to a catchable exception. The sync read path uses {@link #rethrowIfError} for the same purpose.
+     */
+    private Throwable translateReadFailure(final Throwable e, final OperationContext operationContext) {
+        if (e instanceof Error) {
+            return e;
+        }
+        return translateReadException(e, operationContext);
     }
 
     private MongoException translateReadException(final Throwable e, final OperationContext operationContext) {
@@ -1018,6 +1042,7 @@ public class InternalStreamConnection implements InternalConnection {
                 uncompressedBuffer.release();
             }
             close();
+            rethrowIfError(t);
             throw translateReadException(t, operationContext);
         }
     }

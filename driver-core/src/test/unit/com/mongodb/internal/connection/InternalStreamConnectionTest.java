@@ -98,8 +98,9 @@ class InternalStreamConnectionTest {
 
     /**
      * Verifies that when {@code stream.readAsync()} throws during body buffer allocation (after the
-     * header read succeeds), the connection is closed and the original throwable is preserved as the
-     * cause. Covers both an {@link Error} and a {@link RuntimeException}.
+     * header read succeeds), the connection is closed. A fatal {@link Error} is delivered to the callback
+     * unchanged, while a {@link RuntimeException} is wrapped in a {@link MongoInternalException} that
+     * preserves the original as its cause.
      */
     @ParameterizedTest
     @MethodSource("readAsyncBodyFailures")
@@ -134,10 +135,17 @@ class InternalStreamConnectionTest {
 
         connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), createOperationContext(), callback);
 
-        // The callback should receive an error wrapping the original throwable
-        MongoInternalException thrown = assertThrows(MongoInternalException.class, () -> callback.get(5, TimeUnit.SECONDS));
-        assertSame(bodyReadFailure, thrown.getCause(),
-                "The original throwable should be preserved as the cause");
+        // A fatal Error is delivered unchanged; a RuntimeException is wrapped in a MongoInternalException
+        // with the original preserved as the cause.
+        Throwable thrown = assertThrows(Throwable.class, () -> callback.get(5, TimeUnit.SECONDS));
+        if (bodyReadFailure instanceof Error) {
+            assertSame(bodyReadFailure, thrown,
+                    "A fatal Error should be delivered unchanged, not downgraded to a MongoException");
+        } else {
+            assertInstanceOf(MongoInternalException.class, thrown);
+            assertSame(bodyReadFailure, thrown.getCause(),
+                    "The original throwable should be preserved as the cause");
+        }
         assertFalse(callback.wasInvokedMultipleTimes());
 
         assertTrue(connection.isClosed(),
@@ -232,7 +240,9 @@ class InternalStreamConnectionTest {
 
         connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), createOperationContext(), callback);
 
-        assertThrows(MongoInternalException.class, () -> callback.get(5, TimeUnit.SECONDS));
+        OutOfMemoryError thrown = assertThrows(OutOfMemoryError.class, () -> callback.get(5, TimeUnit.SECONDS));
+        assertEquals("Java heap space", thrown.getMessage(),
+                "A fatal Error should be delivered unchanged, not downgraded to a MongoException");
         assertFalse(callback.wasInvokedMultipleTimes());
 
         assertTrue(connection.isClosed(),
@@ -354,15 +364,43 @@ class InternalStreamConnectionTest {
         InternalStreamConnection connection = createOpenConnection(stream);
         CommandMessage commandMessage = createPingCommand();
 
-        MongoInternalException thrown = assertThrows(MongoInternalException.class,
+        OutOfMemoryError thrown = assertThrows(OutOfMemoryError.class,
                 () -> connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), createOperationContext()));
-        assertInstanceOf(OutOfMemoryError.class, thrown.getCause());
+        assertEquals("Java heap space", thrown.getMessage(),
+                "A fatal Error should be propagated unchanged, not downgraded to a MongoException");
         assertTrue(connection.isClosed(),
                 "Connection should be closed after Error in write to prevent pool reuse with a half-written message");
         assertTrue(stream.wasClosed(),
                 "Underlying stream should be closed to release socket resources");
         assertFalse(stream.hadUnexpectedCall(),
                 "No read should be attempted after write failure");
+    }
+
+    /**
+     * Verifies that when {@code stream.read()} throws an {@link Error} in the synchronous path, the
+     * connection is closed and the fatal Error is propagated unchanged (mirrors the async read behavior).
+     */
+    @Test
+    @DisplayName("Sync: connection closed when read throws Error")
+    void syncClosesConnectionWhenReadThrowsError() {
+        TestStream stream = new TestStream() {
+            @Override
+            public ByteBuf read(final int numBytes, final OperationContext operationContext) {
+                throw new OutOfMemoryError("Java heap space");
+            }
+        };
+
+        InternalStreamConnection connection = createOpenConnection(stream);
+        CommandMessage commandMessage = createPingCommand();
+
+        OutOfMemoryError thrown = assertThrows(OutOfMemoryError.class,
+                () -> connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), createOperationContext()));
+        assertEquals("Java heap space", thrown.getMessage(),
+                "A fatal Error should be propagated unchanged, not downgraded to a MongoException");
+        assertTrue(connection.isClosed(),
+                "Connection should be closed after Error in read to prevent pool reuse with stale data");
+        assertTrue(stream.wasClosed(),
+                "Underlying stream should be closed to release socket resources");
     }
 
     /**
