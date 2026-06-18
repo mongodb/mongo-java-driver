@@ -32,10 +32,10 @@ import static org.bson.internal.BsonUtil.mutableDeepCopy;
 /**
  * A {@link Bson} that allows constructing new instances via {@link #newAppended(String, Object)} instead of mutating {@code this}.
  * See {@link #AbstractConstructibleBson(Bson, Document)} for the note on mutability.
+ * <p>
+ * This class is not part of the public API and may be removed or changed at any time.
  *
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
- *
- * @param <S> A type introduced by the concrete class that extends this abstract class.
+ * @param <S> Self. The type introduced by a subclass of {@link AbstractConstructibleBson}.
  * @see AbstractConstructibleBsonElement
  */
 public abstract class AbstractConstructibleBson<S extends AbstractConstructibleBson<S>> implements Bson, ToMap {

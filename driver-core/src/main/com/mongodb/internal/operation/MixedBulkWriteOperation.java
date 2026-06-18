@@ -164,13 +164,14 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final OperationContext operationContext,
             final SingleResultCallback<BulkWriteResult> callback) {
         beginAsync().<BulkWriteResult>thenSupply(c -> {
+            binding.retain();
             WriteConcern effectiveWriteConcern = validateAndGetEffectiveWriteConcern(writeConcern, operationContext.getSessionContext());
             beginAsync().<BulkWriteResult>thenSupply(executeAllBatchesCallback -> {
                 executeAllBatchesAsync(effectiveWriteConcern, binding, operationContext, executeAllBatchesCallback);
             }).onErrorIf(e -> e instanceof MongoException, (e, onErrorCallback) -> {
                 throw transformWriteException((MongoException) e);
             }).finish(c);
-        }).finish(callback);
+        }).thenAlwaysRunAndFinish(binding::release, callback);
     }
 
     private BulkWriteResult executeAllBatches(

@@ -134,7 +134,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                     () ->
                           // we can get here if server selection timeout was set to infinite.
                           ChronoUnit.FOREVER.getDuration(),
-                    (renamingMs) -> Duration.ofMillis(renamingMs),
+                    (remainingMs) -> Duration.ofMillis(remainingMs),
                     () -> throwMongoTimeoutException());
 
         }

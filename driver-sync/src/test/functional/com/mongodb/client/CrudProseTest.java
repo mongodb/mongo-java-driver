@@ -117,12 +117,14 @@ public class CrudProseTest {
              FailPoint ignored = FailPoint.enable(failPointDocument, getPrimary())) {
             MongoWriteConcernException actual = assertThrows(MongoWriteConcernException.class, () ->
                     droppedCollection(client, Document.class).insertOne(Document.parse("{ x: 1 }")));
-            assertEquals(actual.getWriteConcernError().getCode(), 100);
+            assertEquals(100, actual.getWriteConcernError().getCode());
             assertEquals("UnsatisfiableWriteConcern", actual.getWriteConcernError().getCodeName());
-            assertEquals(actual.getWriteConcernError().getDetails(), new BsonDocument("writeConcern",
-                    new BsonDocument("w", new BsonInt32(2))
-                            .append("wtimeout", new BsonInt32(0))
-                            .append("provenance", new BsonString("clientSupplied"))));
+            assertEquals(
+                    new BsonDocument("writeConcern",
+                            new BsonDocument("w", new BsonInt32(2))
+                                    .append("wtimeout", new BsonInt32(0))
+                                    .append("provenance", new BsonString("clientSupplied"))),
+                    actual.getWriteConcernError().getDetails());
         }
     }
 
@@ -211,7 +213,7 @@ public class CrudProseTest {
     @DisplayName("5. MongoClient.bulkWrite collects WriteConcernErrors across batches")
     @Test
     @SuppressWarnings("try")
-    protected void testBulkWriteCollectsWriteConcernErrorsAcrossBatches() throws InterruptedException {
+    void testBulkWriteCollectsWriteConcernErrorsAcrossBatches() throws InterruptedException {
         assumeTrue(serverVersionAtLeast(8, 0));
         TestCommandListener commandListener = new TestCommandListener();
         BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
@@ -240,7 +242,7 @@ public class CrudProseTest {
     @DisplayName("6. MongoClient.bulkWrite handles individual WriteErrors across batches")
     @ParameterizedTest(name = "6. MongoClient.bulkWrite handles individual WriteErrors across batches--ordered:{0}")
     @ValueSource(booleans = {false, true})
-    protected void testBulkWriteHandlesWriteErrorsAcrossBatches(final boolean ordered) {
+    void testBulkWriteHandlesWriteErrorsAcrossBatches(final boolean ordered) {
         assumeTrue(serverVersionAtLeast(8, 0));
         TestCommandListener commandListener = new TestCommandListener();
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
@@ -270,7 +272,7 @@ public class CrudProseTest {
 
     @DisplayName("8. MongoClient.bulkWrite handles a cursor requiring getMore within a transaction")
     @Test
-    protected void testBulkWriteHandlesCursorRequiringGetMoreWithinTransaction() {
+    void testBulkWriteHandlesCursorRequiringGetMoreWithinTransaction() {
         assumeTrue(serverVersionAtLeast(8, 0));
         assumeFalse(isStandalone());
         assertBulkWriteHandlesCursorRequiringGetMore(true);
@@ -311,7 +313,7 @@ public class CrudProseTest {
 
     @DisplayName("11. MongoClient.bulkWrite batch splits when the addition of a new namespace exceeds the maximum message size")
     @Test
-    protected void testBulkWriteSplitsWhenExceedingMaxMessageSizeBytesDueToNsInfo() {
+    void testBulkWriteSplitsWhenExceedingMaxMessageSizeBytesDueToNsInfo() {
         assumeTrue(serverVersionAtLeast(8, 0));
         assertAll(
                 () -> {
@@ -382,7 +384,7 @@ public class CrudProseTest {
     @DisplayName("12. MongoClient.bulkWrite returns an error if no operations can be added to ops")
     @ParameterizedTest(name = "12. MongoClient.bulkWrite returns an error if no operations can be added to ops--tooLarge:{0}")
     @ValueSource(strings = {"document", "namespace"})
-    protected void testBulkWriteSplitsErrorsForTooLargeOpsOrNsInfo(final String tooLarge) {
+    void testBulkWriteSplitsErrorsForTooLargeOpsOrNsInfo(final String tooLarge) {
         assumeTrue(serverVersionAtLeast(8, 0));
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder())) {
             int maxMessageSizeBytes = droppedDatabase(client).runCommand(new Document("hello", 1)).getInteger("maxMessageSizeBytes");
@@ -410,7 +412,7 @@ public class CrudProseTest {
 
     @DisplayName("13. MongoClient.bulkWrite returns an error if auto-encryption is configured")
     @Test
-    protected void testBulkWriteErrorsForAutoEncryption() {
+    void testBulkWriteErrorsForAutoEncryption() {
         assumeTrue(serverVersionAtLeast(8, 0));
         HashMap<String, Object> awsKmsProviderProperties = new HashMap<>();
         awsKmsProviderProperties.put("accessKeyId", "foo");
@@ -431,7 +433,7 @@ public class CrudProseTest {
 
     @DisplayName("15. MongoClient.bulkWrite with unacknowledged write concern uses w:0 for all batches")
     @Test
-    protected void testWriteConcernOfAllBatchesWhenUnacknowledgedRequested() {
+    void testWriteConcernOfAllBatchesWhenUnacknowledgedRequested() {
         assumeTrue(serverVersionAtLeast(8, 0));
         TestCommandListener commandListener = new TestCommandListener();
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder().addCommandListener(commandListener)
@@ -468,7 +470,7 @@ public class CrudProseTest {
     @DisplayName("insertMustGenerateIdAtMostOnce")
     @ParameterizedTest(name = "insertMustGenerateIdAtMostOnce--documentClass:{0}, expectIdGenerated:{1}")
     @MethodSource("insertMustGenerateIdAtMostOnceArgs")
-    protected <TDocument> void insertMustGenerateIdAtMostOnce(
+    <TDocument> void insertMustGenerateIdAtMostOnce(
             final Class<TDocument> documentClass,
             final boolean expectIdGenerated,
             final Supplier<TDocument> documentSupplier) {
@@ -564,11 +566,11 @@ public class CrudProseTest {
         return MongoClients.create(mongoClientSettingsBuilder.build());
     }
 
-    private <TDocument> MongoCollection<TDocument> droppedCollection(final MongoClient client, final Class<TDocument> documentClass) {
+    private static <TDocument> MongoCollection<TDocument> droppedCollection(final MongoClient client, final Class<TDocument> documentClass) {
         return droppedDatabase(client).getCollection(NAMESPACE.getCollectionName(), documentClass);
     }
 
-    private MongoDatabase droppedDatabase(final MongoClient client) {
+    private static MongoDatabase droppedDatabase(final MongoClient client) {
         MongoDatabase database = client.getDatabase(NAMESPACE.getDatabaseName());
         database.drop();
         return database;

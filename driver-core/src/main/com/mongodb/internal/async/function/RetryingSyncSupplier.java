@@ -25,11 +25,9 @@ import java.util.function.Supplier;
  * A decorator that implements automatic retrying of failed executions of a {@link Supplier}.
  * {@link RetryingSyncSupplier} may execute the original retryable function multiple times sequentially.
  * <p>
- * The original function may additionally observe or control retrying via {@link RetryState}.
- * For example, the {@link RetryState#breakAndThrowIfRetryAnd(Supplier)} method may be used to
- * break retrying if the original function decides so.
- *
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ * The original function may additionally observe or control the retry loop via {@link RetryState}.
+ * <p>
+ * This class is not part of the public API and may be removed or changed at any time.
  *
  * @see RetryingAsyncCallbackSupplier
  */

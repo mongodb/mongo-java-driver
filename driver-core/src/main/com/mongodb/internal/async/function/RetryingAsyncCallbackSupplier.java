@@ -22,18 +22,15 @@ import com.mongodb.lang.Nullable;
 
 import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
-import java.util.function.Supplier;
 
 /**
  * A decorator that implements automatic retrying of failed executions of an {@link AsyncCallbackSupplier}.
  * {@link RetryingAsyncCallbackSupplier} may execute the original retryable asynchronous function multiple times sequentially,
  * while guaranteeing that the callback passed to {@link #get(SingleResultCallback)} is completed at most once.
  * <p>
- * The original function may additionally observe or control retrying via {@link RetryState}.
- * For example, the {@link RetryState#breakAndCompleteIfRetryAnd(Supplier, SingleResultCallback)} method may be used to
- * break retrying if the original function decides so.
- *
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ * The original function may additionally observe or control the retry loop via {@link RetryState}.
+ * <p>
+ * This class is not part of the public API and may be removed or changed at any time.
  *
  * @see RetryingSyncSupplier
  */
@@ -45,7 +42,7 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
     private final AsyncCallbackSupplier<R> asyncFunction;
 
     /**
-     * @param state The {@link RetryState} to be deemed as initial for the purpose of the new {@link RetryingAsyncCallbackSupplier}.
+     * @param state The {@link RetryState} to control the new {@link RetryingAsyncCallbackSupplier}.
      * @param onAttemptFailureOperator The action that is called once per failed attempt before (in the happens-before order) the
      * {@code retryPredicate}, regardless of whether the {@code retryPredicate} is called.
      * This action is allowed to have side effects.
@@ -89,8 +86,8 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
 
     @Override
     public void get(final SingleResultCallback<R> callback) {
-        /* `asyncFunction` and `callback` are the only externally provided pieces of code for which we do not need to care about
-         * them throwing exceptions. If they do, that violates their contract and there is nothing we should do about it. */
+        // `asyncFunction` and `callback` are the only externally provided pieces of code for which we do not need to care about
+        // them throwing exceptions. If they do, that violates their contract and there is nothing we should do about it.
         asyncFunction.get(new RetryingCallback(callback));
     }
 

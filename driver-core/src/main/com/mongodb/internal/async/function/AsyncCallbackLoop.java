@@ -29,14 +29,14 @@ import java.util.function.Supplier;
  * This class emulates the <a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.12">{@code while(true)}</a>
  * statement.
  * <p>
- * The original function may additionally observe or control looping via {@link LoopState}.
- * Looping continues until either of the following happens:
+ * The original function may additionally observe or control the loop via {@link LoopState}.
+ * The loop continues until either of the following happens:
  * <ul>
  *     <li>the original function fails as specified by {@link AsyncCallbackFunction};</li>
  *     <li>the original function calls {@link LoopState#breakAndCompleteIf(Supplier, SingleResultCallback)}.</li>
  * </ul>
- *
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ * <p>
+ * This class is not part of the public API and may be removed or changed at any time.
  */
 @NotThreadSafe
 public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
@@ -44,7 +44,7 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
     private final AsyncCallbackRunnable body;
 
     /**
-     * @param state The {@link LoopState} to be deemed as initial for the purpose of the new {@link AsyncCallbackLoop}.
+     * @param state The {@link LoopState} to control the new {@link AsyncCallbackLoop}.
      * @param body The body of the loop.
      */
     public AsyncCallbackLoop(final LoopState state, final AsyncCallbackRunnable body) {
