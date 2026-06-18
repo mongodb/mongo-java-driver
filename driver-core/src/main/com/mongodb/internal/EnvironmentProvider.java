@@ -16,6 +16,7 @@
 
 package com.mongodb.internal;
 
+import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.lang.Nullable;
 
 import java.util.HashMap;
@@ -44,12 +45,17 @@ public final class EnvironmentProvider {
         return new EnvironmentOverride();
     }
 
+    /**
+     * Not safe for concurrent use — only one instance may be active at a time,
+     * as it replaces a shared static lookup on {@link EnvironmentProvider}.
+     */
+    @NotThreadSafe
     public static final class EnvironmentOverride implements AutoCloseable {
         private final Map<String, String> overrides = new HashMap<>();
         private final UnaryOperator<String> original;
 
         private EnvironmentOverride() {
-            original = envLookup;
+            original = EnvironmentProvider.envLookup;
             envLookup = key -> overrides.containsKey(key)
                     ? overrides.get(key)
                     : original.apply(key);

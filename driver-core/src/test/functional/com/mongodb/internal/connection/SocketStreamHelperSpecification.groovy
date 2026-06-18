@@ -43,6 +43,7 @@ import static java.util.concurrent.TimeUnit.SECONDS
 
 class SocketStreamHelperSpecification extends Specification {
 
+    // TCP_KEEPCOUNT is Linux-specific and not available on Windows
     @IgnoreIf({ System.getProperty('os.name').toLowerCase().contains('windows') })
     def 'should configure socket with settings()'() {
         given:
