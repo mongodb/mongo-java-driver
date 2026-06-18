@@ -55,6 +55,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
@@ -458,7 +459,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
     private void executeBatch(
             final BulkWriteBatch batch,
             final SourceAndConnection sourceAndConnection,
-            final WriteConcern effectiveWriteConcern) {
+            final WriteConcern effectiveWriteConcern) throws MongoWriteConcernWithResponseException {
         Connection connection = sourceAndConnection.getConnection();
         OperationContext operationContext = sourceAndConnection.getOperationContext();
         BsonDocument result = connection.command(
@@ -466,17 +467,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                 NoOpFieldNameValidator.INSTANCE, null,
                 batch.getDecoder(), operationContext.withOperationName(commandName),
                 shouldExpectResponse(batch, effectiveWriteConcern), batch.getPayload());
-        if (batch.getRetryWrites()) {
-            ConnectionDescription connectionDescription = connection.getDescription();
-            MongoException writeConcernBasedError = ProtocolHelper.createSpecialException(
-                    result, connectionDescription.getServerAddress(), "errMsg", operationContext.getTimeoutContext());
-            if (writeConcernBasedError != null) {
-                addRetryableWriteErrorLabel(writeConcernBasedError, connectionDescription.getMaxWireVersion());
-                addErrorLabelsToWriteConcern(result.getDocument("writeConcernError"), writeConcernBasedError.getErrorLabels());
-                throw new MongoWriteConcernWithResponseException(writeConcernBasedError, result);
-            }
-        }
-        batch.addResult(result);
+        addResultOrThrowWriteConcernWithResponseException(batch, result, connection.getDescription(), operationContext);
     }
 
     private void executeBatchAsync(
@@ -494,17 +485,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                         batch.getDecoder(), operationContext.withOperationName(commandName),
                         shouldExpectResponse(batch, effectiveWriteConcern), batch.getPayload(), commandCallback);
             }).thenConsume((result, consumeCommandResultCallback) -> {
-                if (batch.getRetryWrites()) {
-                    ConnectionDescription connectionDescription = connection.getDescription();
-                    MongoException writeConcernBasedError = ProtocolHelper.createSpecialException(
-                            result, connectionDescription.getServerAddress(), "errMsg", operationContext.getTimeoutContext());
-                    if (writeConcernBasedError != null) {
-                        addRetryableWriteErrorLabel(writeConcernBasedError, connectionDescription.getMaxWireVersion());
-                        addErrorLabelsToWriteConcern(result.getDocument("writeConcernError"), writeConcernBasedError.getErrorLabels());
-                        throw new MongoWriteConcernWithResponseException(writeConcernBasedError, result);
-                    }
-                }
-                batch.addResult(result);
+                addResultOrThrowWriteConcernWithResponseException(batch, result, connection.getDescription(), operationContext);
                 consumeCommandResultCallback.complete(consumeCommandResultCallback);
             }).finish(c);
         }).finish(callback);
@@ -512,6 +493,24 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
 
     private boolean shouldExpectResponse(final BulkWriteBatch batch, final WriteConcern effectiveWriteConcern) {
         return effectiveWriteConcern.isAcknowledged() || (ordered && batch.hasAnotherBatch());
+    }
+
+    private static void addResultOrThrowWriteConcernWithResponseException(
+            final BulkWriteBatch batch,
+            @Nullable final BsonDocument result,
+            final ConnectionDescription connectionDescription,
+            final OperationContext operationContext) throws MongoWriteConcernWithResponseException {
+        if (batch.getRetryWrites()) {
+            MongoException writeConcernBasedError = ProtocolHelper.createSpecialException(
+                    result, connectionDescription.getServerAddress(), "errMsg", operationContext.getTimeoutContext());
+            if (writeConcernBasedError != null) {
+                assertNotNull(result);
+                addRetryableWriteErrorLabel(writeConcernBasedError, connectionDescription.getMaxWireVersion());
+                addErrorLabelsToWriteConcern(result.getDocument("writeConcernError"), writeConcernBasedError.getErrorLabels());
+                throw new MongoWriteConcernWithResponseException(writeConcernBasedError, result);
+            }
+        }
+        batch.addResult(result);
     }
 
     private static void addErrorLabelsToWriteConcern(final BsonDocument result, final Set<String> errorLabels) {
