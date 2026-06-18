@@ -328,9 +328,9 @@ public final class UnifiedTestModifications {
                 .file("gridfs", "gridfs-renameByName");
         def.transform("JAVA-5839: Bump blocking/timeout to avoid CI latency failures",
                 (entitiesArray, definition) -> {
-                    findAndSetInt(entitiesArray, "client.uriOptions.timeoutMS", 250);
+                    findAndSetInt(entitiesArray, "client.uriOptions.timeoutMS", 75, 250);
                     findAndSetInt(definition.getArray("operations"),
-                            "arguments.failPoint.data.blockTimeMS", 200);
+                            "arguments.failPoint.data.blockTimeMS", 50, 200);
                 })
                 .test("client-side-operations-timeout",
                         "timeoutMS behaves correctly for GridFS download operations",
@@ -522,22 +522,25 @@ public final class UnifiedTestModifications {
 
     /**
      * Searches each document in {@code array} for a nested numeric field specified
-     * by a dot-separated {@code path}, and replaces it with {@code newValue}.
-     * Logs each replacement. Skips documents where the path does not
-     * exist or the intermediate keys are absent. Fails the test if no replacement is made,
-     * so that spec changes or path typos are surfaced immediately.
+     * by a dot-separated {@code path}, asserts its current value equals {@code expectedValue},
+     * and replaces it with {@code newValue}. Logs each replacement.
+     * Skips documents where the path does not exist or intermediate keys are absent.
+     * Fails if no replacement is made (path typo or spec change) or if any matched
+     * value differs from {@code expectedValue} (spec value changed).
      *
      * <p>This method searches only top-level array elements, not recursively into nested
      * arrays (e.g. {@code loop} operations).</p>
      *
-     * <p>Example: {@code findAndSetInt(entitiesArray, "client.uriOptions.timeoutMS", 250)}
+     * <p>Example: {@code findAndSetInt(entitiesArray, "client.uriOptions.timeoutMS", 75, 250)}
      * walks each element looking for {@code element.client.uriOptions.timeoutMS}.</p>
      *
-     * @param array    the array to search
-     * @param path     dot-separated path to a numeric field
-     * @param newValue the replacement value
+     * @param array         the array to search
+     * @param path          dot-separated path to a numeric field
+     * @param expectedValue the value expected to be found (assertion guard against spec changes)
+     * @param newValue      the replacement value
      */
-    static void findAndSetInt(final BsonArray array, final String path, final int newValue) {
+    static void findAndSetInt(final BsonArray array, final String path,
+            final int expectedValue, final int newValue) {
         String[] segments = path.split("\\.");
         int replacements = 0;
         for (BsonValue element : array) {
@@ -557,6 +560,12 @@ public final class UnifiedTestModifications {
             String leafKey = segments[segments.length - 1];
             if (found && current.containsKey(leafKey) && current.get(leafKey).isNumber()) {
                 int oldValue = current.get(leafKey).asNumber().intValue();
+                if (oldValue != expectedValue) {
+                    throw new AssertionFailedError(format(
+                            "findAndSetInt: expected '%s' to be %d but was %d."
+                                    + " Spec may have changed; update the transformation.",
+                            path, expectedValue, oldValue));
+                }
                 LOGGER.info(format("  %s: %d -> %d", leafKey, oldValue, newValue));
                 current.put(leafKey, new BsonInt32(newValue));
                 replacements++;
@@ -782,7 +791,15 @@ public final class UnifiedTestModifications {
                 if (this.transformer != null) {
                     LOGGER.info("Registered transformation for test ["
                             + testDef.testDescription + "]: " + reason);
-                    this.testDef.transformers.add(this.transformer);
+                    final String transformerReason = reason;
+                    final TestTransformer t = this.transformer;
+                    this.testDef.transformers.add((ea, def) -> {
+                        try {
+                            t.transform(ea, def);
+                        } catch (AssertionError | RuntimeException e) {
+                            throw new AssertionFailedError(transformerReason + ": " + e.getMessage(), e);
+                        }
+                    });
                 }
             }
             return this;

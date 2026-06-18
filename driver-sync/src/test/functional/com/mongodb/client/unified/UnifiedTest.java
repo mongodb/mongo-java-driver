@@ -246,13 +246,13 @@ public abstract class UnifiedTest {
             @Nullable final BsonArray runOnRequirements,
             final BsonArray entitiesArray,
             final BsonArray initialData,
-            final BsonDocument definition) {
+            final BsonDocument oriDefinition) {
         this.fileDescription = fileDescription;
         this.schemaVersion = schemaVersion;
         this.runOnRequirements = runOnRequirements;
         this.entitiesArray = entitiesArray;
         this.initialData = initialData;
-        this.definition = definition;
+        this.definition = oriDefinition;
         entities = new Entities();
         crudHelper = new UnifiedCrudHelper(entities, definition.getString("description").getValue());
         gridFSHelper = new UnifiedGridFSHelper(entities);
@@ -270,7 +270,7 @@ public abstract class UnifiedTest {
 
             if (testDef.hasTransformations()) {
                 this.entitiesArray = entitiesArray.clone();
-                this.definition = definition.clone();
+                this.definition = oriDefinition.clone();
                 testDef.applyTransformations(this.entitiesArray, this.definition);
             }
         }
@@ -340,6 +340,7 @@ public abstract class UnifiedTest {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("data")
+    @SuppressWarnings("unused")
     public void shouldPassAllOutcomes(
             final String testName,
             @Nullable final String fileDescription,
