@@ -244,13 +244,13 @@ public abstract class UnifiedTest {
             final int totalAttempts,
             final String schemaVersion,
             @Nullable final BsonArray runOnRequirements,
-            final BsonArray entitiesArray,
+            final BsonArray oriEntitiesArray,
             final BsonArray initialData,
             final BsonDocument oriDefinition) {
         this.fileDescription = fileDescription;
         this.schemaVersion = schemaVersion;
         this.runOnRequirements = runOnRequirements;
-        this.entitiesArray = entitiesArray;
+        this.entitiesArray = oriEntitiesArray;
         this.initialData = initialData;
         this.definition = oriDefinition;
         entities = new Entities();
@@ -259,7 +259,6 @@ public abstract class UnifiedTest {
         clientEncryptionHelper = new UnifiedClientEncryptionHelper(entities);
         failPoints = new ArrayList<>();
         rootContext = new UnifiedTestContext();
-        rootContext.getAssertionContext().push(ContextElement.ofTest(definition));
         ignoreExtraEvents = false;
         if (directoryName != null && fileDescription != null && testDescription != null) {
             testDef = testDef(directoryName, fileDescription, testDescription, isReactive(), getLanguage());
@@ -270,10 +269,11 @@ public abstract class UnifiedTest {
 
             if (testDef.hasTransformations()) {
                 this.entitiesArray = entitiesArray.clone();
-                this.definition = oriDefinition.clone();
-                testDef.applyTransformations(this.entitiesArray, this.definition);
+                this.definition = definition.clone();
+                testDef.applyTransformations(entitiesArray, definition);
             }
         }
+        rootContext.getAssertionContext().push(ContextElement.ofTest(definition));
         skips(fileDescription, testDescription);
 
         assumeTrue(isSupportedSchemaVersion(schemaVersion), format("Unsupported schema version %s", schemaVersion));
@@ -295,7 +295,7 @@ public abstract class UnifiedTest {
 
         startingClusterTime = addInitialDataAndGetClusterTime();
 
-        entities.init(this.entitiesArray, startingClusterTime,
+        entities.init(entitiesArray, startingClusterTime,
                 fileDescription != null && PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS.contains(fileDescription),
                 this::createMongoClient,
                 this::createGridFSBucket,

@@ -27,7 +27,6 @@ import org.bson.diagnostics.Loggers;
 import org.opentest4j.AssertionFailedError;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
@@ -45,6 +44,7 @@ import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.SLEEP
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.SLEEP_AFTER_CURSOR_OPEN;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.WAIT_FOR_BATCH_CURSOR_CREATION;
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 
 public final class UnifiedTestModifications {
     private static final Logger LOGGER = Loggers.getLogger("UnifiedTestModifications");
@@ -566,7 +566,7 @@ public final class UnifiedTestModifications {
                                     + " Spec may have changed; update the transformation.",
                             path, expectedValue, oldValue));
                 }
-                LOGGER.info(format("  %s: %d -> %d", leafKey, oldValue, newValue));
+                LOGGER.info(format("  %s: %d -> %d", path, oldValue, newValue));
                 current.put(leafKey, new BsonInt32(newValue));
                 replacements++;
             }
@@ -758,12 +758,12 @@ public final class UnifiedTestModifications {
         private TestApplicator(
                 final TestDef testDef,
                 @Nullable final String reason,
-                final Modifier... modifiersToApply) {
+                final Modifier... oriModifiersToApply) {
             this.testDef = testDef;
             this.reason = reason;
-            this.modifiersToApply = Arrays.asList(modifiersToApply);
+            this.modifiersToApply = asList(oriModifiersToApply);
             this.transformer = null;
-            if (this.modifiersToApply.contains(SKIP) || this.modifiersToApply.contains(RETRY)) {
+            if (modifiersToApply.contains(SKIP) || modifiersToApply.contains(RETRY)) {
                 assertNotNull(reason);
             }
         }
@@ -784,20 +784,18 @@ public final class UnifiedTestModifications {
                 return this;
             }
             if (match) {
-                this.testDef.modifiers.addAll(this.modifiersToApply);
-                if (this.matchesThrowable != null) {
-                    this.testDef.matchesThrowable = this.matchesThrowable;
+                testDef.modifiers.addAll(modifiersToApply);
+                if (matchesThrowable != null) {
+                    testDef.matchesThrowable = matchesThrowable;
                 }
-                if (this.transformer != null) {
+                if (transformer != null) {
                     LOGGER.info("Registered transformation for test ["
                             + testDef.testDescription + "]: " + reason);
-                    final String transformerReason = reason;
-                    final TestTransformer t = this.transformer;
-                    this.testDef.transformers.add((ea, def) -> {
+                    testDef.transformers.add((entitiesArray, definition) -> {
                         try {
-                            t.transform(ea, def);
+                            transformer.transform(entitiesArray, definition);
                         } catch (AssertionError | RuntimeException e) {
-                            throw new AssertionFailedError(transformerReason + ": " + e.getMessage(), e);
+                            throw new AssertionFailedError(reason + ": " + e.getMessage(), e);
                         }
                     });
                 }
