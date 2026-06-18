@@ -868,11 +868,10 @@ public final class UnifiedTestModifications {
         /**
          * Utility method: emit file info to standard out
          *
-         * @param directory       the directory name
          * @param testDescription the individual test's "description" field
          * @return this
          */
-        public TestApplicator debug(final String directory, final String testDescription) {
+        public TestApplicator debug(final String testDescription) {
             boolean match = testDef.testDescription.equals(testDescription);
             if (match) {
                 System.out.printf(
