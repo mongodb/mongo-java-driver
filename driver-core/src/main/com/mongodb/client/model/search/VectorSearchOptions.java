@@ -42,6 +42,16 @@ public interface VectorSearchOptions extends Bson {
     VectorSearchOptions filter(Bson filter);
 
     /**
+     * Creates a new {@link VectorSearchOptions} that instructs to return only stored source fields.
+     *
+     * @param returnStoredSource The option to return only stored source fields.
+     * @return A new {@link VectorSearchOptions}.
+     * @mongodb.atlas.manual atlas-vector-search/vector-search-stage/ $vectorSearch
+     * @since 5.8
+     */
+    VectorSearchOptions returnStoredSource(boolean returnStoredSource);
+
+    /**
      * Creates a new {@link VectorSearchOptions} with the specified option in situations when there is no builder method
      * that better satisfies your needs.
      * This method cannot be used to validate the syntax.

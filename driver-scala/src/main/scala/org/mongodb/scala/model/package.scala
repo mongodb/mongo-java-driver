@@ -536,7 +536,7 @@ package object model {
      * Creates a vector field definition for a vector search index.
      *
      * @param path the field path in the document
-     * @return a new [[com.mongodb.client.model.VectorSearchIndexFields.VectorField]]
+     * @return a new `VectorSearchIndexFields.VectorField`
      */
     def vectorField(path: String): com.mongodb.client.model.VectorSearchIndexFields.VectorField =
       com.mongodb.client.model.VectorSearchIndexFields.vectorField(path)
@@ -545,7 +545,7 @@ package object model {
      * Creates a filter field definition for a vector search index.
      *
      * @param path the field path in the document
-     * @return a new [[com.mongodb.client.model.VectorSearchIndexFields.FilterField]]
+     * @return a new `VectorSearchIndexFields.FilterField`
      */
     def filterField(path: String): com.mongodb.client.model.VectorSearchIndexFields.FilterField =
       com.mongodb.client.model.VectorSearchIndexFields.filterField(path)
@@ -554,7 +554,7 @@ package object model {
      * Creates an auto-embed field definition for a vector search index.
      *
      * @param path the field path in the document containing the content to embed
-     * @return a new [[com.mongodb.client.model.VectorSearchIndexFields.AutoEmbedField]]
+     * @return a new `VectorSearchIndexFields.AutoEmbedField`
      */
     def autoEmbedField(path: String): com.mongodb.client.model.VectorSearchIndexFields.AutoEmbedField =
       com.mongodb.client.model.VectorSearchIndexFields.autoEmbedField(path)

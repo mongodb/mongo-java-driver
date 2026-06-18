@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -38,10 +39,32 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public final class VectorSearchIndexDefinition implements SearchIndexDefinition {
     private final List<? extends Bson> fields;
+    @Nullable
+    private final Bson storedSource;
 
     VectorSearchIndexDefinition(final List<? extends Bson> fields) {
+        this(fields, null);
+    }
+
+    VectorSearchIndexDefinition(final List<? extends Bson> fields, @Nullable final Bson storedSource) {
         doesNotContainNull("fields", notNull("fields", fields));
         this.fields = new ArrayList<>(fields);
+        this.storedSource = storedSource;
+    }
+
+    /**
+     * Creates a new {@link VectorSearchIndexDefinition} with the specified stored source configuration.
+     *
+     * <p>The stored source configuration controls which fields are stored in the index
+     * and can be returned without reading the full document from the collection.</p>
+     *
+     * @param storedSource a document specifying the stored source configuration,
+     *                     e.g., {@code {"include": ["field1", "field2"]}} or {@code {"exclude": ["field3"]}}
+     * @return a new {@link VectorSearchIndexDefinition} with the stored source configuration
+     * @since 5.8
+     */
+    public VectorSearchIndexDefinition storedSource(final Bson storedSource) {
+        return new VectorSearchIndexDefinition(this.fields, notNull("storedSource", storedSource));
     }
 
     @Override
@@ -50,13 +73,18 @@ public final class VectorSearchIndexDefinition implements SearchIndexDefinition 
         for (Bson field : fields) {
             fieldArray.add(field.toBsonDocument(documentClass, codecRegistry));
         }
-        return new BsonDocument("fields", fieldArray);
+        BsonDocument document = new BsonDocument("fields", fieldArray);
+        if (storedSource != null) {
+            document.append("storedSource", storedSource.toBsonDocument(documentClass, codecRegistry));
+        }
+        return document;
     }
 
     @Override
     public String toString() {
         return "VectorSearchIndexDefinition{"
                 + "fields=" + fields
+                + ", storedSource=" + storedSource
                 + '}';
     }
 }
