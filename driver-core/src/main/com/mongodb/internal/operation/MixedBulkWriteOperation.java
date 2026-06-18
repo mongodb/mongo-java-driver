@@ -236,18 +236,18 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             @Nullable final SourceAndConnection maybeSourceAndConnection,
             final WriteConcern effectiveWriteConcern,
             final WriteBinding binding,
-            final OperationContext operationContextForSelectServerAndCheckoutConnection) {
+            final OperationContext operationContext) {
         MutableValue<BulkWriteBatch> batch = new MutableValue<>(maybeBatch);
         MutableValue<SourceAndConnection> sourceAndConnection = new MutableValue<>(maybeSourceAndConnection);
         RetryState retryState = initialRetryState(
-                retryWrites, operationContextForSelectServerAndCheckoutConnection.getTimeoutContext());
+                retryWrites, operationContext.getTimeoutContext());
         Supplier<BatchWithSourceAndConnection<SourceAndConnection>> retryingBatchExecutor = decorateWriteWithRetries(
                 retryState,
-                operationContextForSelectServerAndCheckoutConnection,
+                operationContext,
                 () -> {
                     SourceAndConnection reusedOrNewSourceAndConnection = reuseOrSelectServerAndCheckoutConnectionIfClosed(
                             sourceAndConnection.getNullable(), effectiveWriteConcern, binding,
-                            operationContextForSelectServerAndCheckoutConnection, retryState);
+                            operationContext, retryState);
                     try {
                         sourceAndConnection.set(reusedOrNewSourceAndConnection);
                         ConnectionDescription connectionDescription = reusedOrNewSourceAndConnection.getConnection().getDescription();
@@ -293,21 +293,21 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             @Nullable final AsyncSourceAndConnection maybeSourceAndConnection,
             final WriteConcern effectiveWriteConcern,
             final AsyncWriteBinding binding,
-            final OperationContext operationContextForSelectServerAndCheckoutConnection,
+            final OperationContext operationContext,
             final SingleResultCallback<BatchWithSourceAndConnection<AsyncSourceAndConnection>> callback) {
         beginAsync().<BatchWithSourceAndConnection<AsyncSourceAndConnection>>thenSupply(c -> {
             MutableValue<BulkWriteBatch> batch = new MutableValue<>(maybeBatch);
             MutableValue<AsyncSourceAndConnection> sourceAndConnection = new MutableValue<>(maybeSourceAndConnection);
             RetryState retryState = initialRetryState(
-                    retryWrites, operationContextForSelectServerAndCheckoutConnection.getTimeoutContext());
+                    retryWrites, operationContext.getTimeoutContext());
             AsyncCallbackSupplier<BatchWithSourceAndConnection<AsyncSourceAndConnection>> retryingBatchExecutor = decorateWriteWithRetriesAsync(
                     retryState,
-                    operationContextForSelectServerAndCheckoutConnection,
+                    operationContext,
                     supplierCallback -> {
                         beginAsync().<AsyncSourceAndConnection>thenSupply(reuseOrSelectServerAndCheckoutConnectionCallback -> {
                             reuseOrSelectServerAndCheckoutConnectionIfClosedAsync(
                                     sourceAndConnection.getNullable(), effectiveWriteConcern, binding,
-                                    operationContextForSelectServerAndCheckoutConnection, retryState, reuseOrSelectServerAndCheckoutConnectionCallback);
+                                    operationContext, retryState, reuseOrSelectServerAndCheckoutConnectionCallback);
                         }).<BatchWithSourceAndConnection<AsyncSourceAndConnection>>thenApply((reusedOrNewSourceAndConnection, setSourceAndConnectionCallback) -> {
                             beginAsync().thenRun(executeBatchCallback -> {
                                 sourceAndConnection.set(reusedOrNewSourceAndConnection);
