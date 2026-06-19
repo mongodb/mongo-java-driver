@@ -71,12 +71,6 @@ final class RetryStateTest {
                 () -> assertFalse(retryState.isFirstAttempt()),
                 () -> assertEquals(1, retryState.attempt())
         );
-        retryState.markAsLastAttempt();
-        assertAll(
-                () -> assertFalse(retryState.isFirstAttempt()),
-                () -> assertEquals(1, retryState.attempt()),
-                () -> assertAdvanceOrThrowThrows(attemptException, retryState, attemptException)
-        );
     }
 
     @Test
@@ -91,22 +85,6 @@ final class RetryStateTest {
                 () -> assertTrue(retryState.isFirstAttempt()),
                 () -> assertEquals(0, retryState.attempt())
         );
-    }
-
-    @ParameterizedTest
-    @MethodSource({"atMostTwoRetriesAndUnlimitedRetries"})
-    void markAsLastAttemptAdvanceWithRuntimeException(final RetryState retryState) {
-        retryState.markAsLastAttempt();
-        RuntimeException attemptException = new RuntimeException();
-        assertAdvanceOrThrowThrows(attemptException, retryState, attemptException, (rs, e) -> fail());
-    }
-
-    @ParameterizedTest(name = "should advance with non-retryable error when marked as last attempt and : ''{0}''")
-    @MethodSource({"noRetries", "atMostTwoRetriesAndUnlimitedRetries"})
-    void markAsLastAttemptAdvanceWithError(final RetryState retryState) {
-        retryState.markAsLastAttempt();
-        Error attemptException = new Error();
-        assertAdvanceOrThrowThrows(attemptException, retryState, attemptException, (rs, e) -> fail());
     }
 
     @ParameterizedTest

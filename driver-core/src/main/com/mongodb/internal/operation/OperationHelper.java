@@ -137,18 +137,6 @@ public final class OperationHelper {
         validateWriteRequestHints(connectionDescription, requests, writeConcern);
     }
 
-    static <R> boolean validateWriteRequestsAndCompleteIfInvalid(final ConnectionDescription connectionDescription,
-            final Boolean bypassDocumentValidation, final List<? extends WriteRequest> requests, final WriteConcern writeConcern,
-            final SingleResultCallback<R> callback) {
-        try {
-            validateWriteRequests(connectionDescription, bypassDocumentValidation, requests, writeConcern);
-            return false;
-        } catch (Throwable validationT) {
-            callback.onResult(null, validationT);
-            return true;
-        }
-    }
-
     private static void checkBypassDocumentValidationIsSupported(@Nullable final Boolean bypassDocumentValidation,
             final WriteConcern writeConcern) {
         if (bypassDocumentValidation != null && !writeConcern.isAcknowledged()) {

@@ -32,6 +32,7 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.connection.OperationContext.ServerDeprioritization;
 import com.mongodb.internal.operation.OperationHelper.ResourceSupplierInternalException;
 import com.mongodb.internal.operation.retry.AttachmentKeys;
 import com.mongodb.internal.session.SessionContext;
@@ -77,9 +78,9 @@ public final class CommandOperationHelper {
                 ConnectionDescription connectionDescription);
     }
 
-    static BinaryOperator<Throwable> onRetryableReadAttemptFailure(final OperationContext operationContext) {
+    static BinaryOperator<Throwable> onRetryableReadAttemptFailure(final ServerDeprioritization serverDeprioritization) {
         return (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) -> {
-            operationContext.getServerDeprioritization().onAttemptFailure(mostRecentAttemptException);
+            serverDeprioritization.onAttemptFailure(mostRecentAttemptException);
             return chooseRetryableReadException(previouslyChosenException, mostRecentAttemptException);
         };
     }
@@ -96,9 +97,9 @@ public final class CommandOperationHelper {
         }
     }
 
-    static BinaryOperator<Throwable> onRetryableWriteAttemptFailure(final OperationContext operationContext) {
+    static BinaryOperator<Throwable> onRetryableWriteAttemptFailure(final ServerDeprioritization serverDeprioritization) {
         return (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) -> {
-            operationContext.getServerDeprioritization().onAttemptFailure(mostRecentAttemptException);
+            serverDeprioritization.onAttemptFailure(mostRecentAttemptException);
             return chooseRetryableWriteException(previouslyChosenException, mostRecentAttemptException);
         };
     }
@@ -176,7 +177,7 @@ public final class CommandOperationHelper {
     }
 
     static boolean loggingShouldAttemptToRetryWriteAndAddRetryableLabel(final RetryState retryState, final Throwable attemptFailure) {
-        Throwable attemptFailureNotToBeRetried = getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel(retryState, attemptFailure);
+        Throwable attemptFailureNotToBeRetried = addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryState, attemptFailure);
         boolean decision = attemptFailureNotToBeRetried == null;
         if (!decision && retryState.attachment(AttachmentKeys.retryableWriteCommandFlag()).orElse(false)) {
             logUnableToRetryCommand(retryState, assertNotNull(attemptFailureNotToBeRetried));
@@ -185,10 +186,12 @@ public final class CommandOperationHelper {
     }
 
     /**
-     * @return {@code null} if the decision is {@code true}. Otherwise, returns the {@link Throwable} that must not be retried.
+     * Returns {@code null} if the failed attempt should be retried;
+     * in this case, also adds the {@value #RETRYABLE_WRITE_ERROR_LABEL} label if needed.
+     * Otherwise, returns a {@link Throwable} that must not be retried.
      */
     @Nullable
-    static Throwable getWriteAttemptFailureNotToBeRetriedOrAddRetryableLabel(final RetryState retryState, final Throwable attemptFailure) {
+    static Throwable addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(final RetryState retryState, final Throwable attemptFailure) {
         Throwable failure = attemptFailure instanceof ResourceSupplierInternalException ? attemptFailure.getCause() : attemptFailure;
         boolean decision = false;
         MongoException exceptionRetryableRegardlessOfCommand = null;
