@@ -111,9 +111,11 @@ import java.util.function.Supplier;
  *   <li>Is every c.complete followed by a return, to end execution?</li>
  *   <li>Have all sync method calls been converted to async, where needed?</li>
  * </ol>
- *
- * <p>This class is not part of the public API and may be removed or changed
- * at any time
+ * <p>
+ * If, when writing a lambda expression, you need to have an effectively {@code final} variable
+ * whose value may be mutated, use {@link MutableValue}.
+ * <p>
+ * This class is not part of the public API and may be removed or changed at any time.
  */
 @FunctionalInterface
 public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> {

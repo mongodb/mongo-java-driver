@@ -117,23 +117,22 @@ final class SyncOperationHelper {
         return withSourceAndConnection(
                 binding::getWriteConnectionSource,
                 false,
+                operationContext,
                 (source, connection, operationContextWithMinRtt) ->
-                        callable.call(connection, operationContextWithMinRtt),
-                operationContext);
+                        callable.call(connection, operationContextWithMinRtt));
     }
 
     /**
      * Gets a {@link ConnectionSource} and a {@link Connection} from the {@code sourceSupplier} and executes the {@code function} with them.
      * Guarantees to {@linkplain ReferenceCounted#release() release} the source and the connection after completion of the {@code function}.
-     *
-     *
      */
-    static <R> R withSourceAndConnection(final Function<OperationContext, ConnectionSource> sourceFunction,
-                                         final boolean wrapConnectionSourceException,
-                                         final ExecutionFunction<R> function,
-                                         final OperationContext originalOperationContext) throws ResourceSupplierInternalException {
+    static <R> R withSourceAndConnection(
+            final Function<OperationContext, ConnectionSource> sourceFunction,
+            final boolean wrapConnectionSourceException,
+            final OperationContext operationContext,
+            final ExecutionFunction<R> function) throws ResourceSupplierInternalException {
         OperationContext serverSelectionOperationContext =
-                originalOperationContext.withOverride(TimeoutContext::withComputedServerSelectionTimeout);
+                operationContext.withOverride(TimeoutContext::withComputedServerSelectionTimeout);
 
         return withSuppliedResource(
                 sourceFunction,
@@ -146,7 +145,7 @@ final class SyncOperationHelper {
                         connection -> function.apply(
                                 source,
                                 connection,
-                                originalOperationContext.withMinRoundTripTime(source.getServerDescription())))
+                                operationContext.withMinRoundTripTime(source.getServerDescription())))
         );
     }
 
@@ -205,11 +204,11 @@ final class SyncOperationHelper {
         RetryState retryState = CommandOperationHelper.initialRetryState(retryReads, operationContext.getTimeoutContext());
 
         Supplier<T> read = decorateReadWithRetries(retryState, operationContext, () ->
-                withSourceAndConnection(readConnectionSourceSupplier, false, (source, connection, operationContextWithMinRtt) -> {
+                withSourceAndConnection(readConnectionSourceSupplier, false, operationContext, (source, connection, operationContextWithMinRtt) -> {
                     retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(operationContextWithMinRtt));
                     return createReadCommandAndExecute(retryState, operationContextWithMinRtt, source, database,
                                                        commandCreator, decoder, transformer, connection);
-                }, operationContext)
+                })
         );
         return read.get();
     }
@@ -218,25 +217,25 @@ final class SyncOperationHelper {
     static <T> T executeCommand(final WriteBinding binding, final OperationContext operationContext, final String database,
                                 final CommandCreator commandCreator,
             final CommandWriteTransformer<BsonDocument, T> transformer) {
-        return withSourceAndConnection(binding::getWriteConnectionSource, false, (source, connection, operationContextWithMinRtt) ->
+        return withSourceAndConnection(binding::getWriteConnectionSource, false, operationContext, (source, connection, operationContextWithMinRtt) ->
                 transformer.apply(assertNotNull(
                         connection.command(database,
                                 commandCreator.create(operationContextWithMinRtt,
                                         source.getServerDescription(),
                                         connection.getDescription()),
                                 NoOpFieldNameValidator.INSTANCE, primary(), BSON_DOCUMENT_CODEC, operationContextWithMinRtt)),
-                        connection), operationContext);
+                        connection));
     }
 
     @VisibleForTesting(otherwise = PRIVATE)
     static <D, T> T executeCommand(final WriteBinding binding, final OperationContext operationContext, final String database,
                                    final BsonDocument command,
                                    final Decoder<D> decoder, final CommandWriteTransformer<D, T> transformer) {
-        return withSourceAndConnection(binding::getWriteConnectionSource, false, (source, connection, operationContextWithMinRtt) ->
+        return withSourceAndConnection(binding::getWriteConnectionSource, false, operationContext, (source, connection, operationContextWithMinRtt) ->
                 transformer.apply(assertNotNull(
                         connection.command(database, command, NoOpFieldNameValidator.INSTANCE, primary(), decoder,
-                                operationContextWithMinRtt)), connection),
-                operationContext);
+                                operationContextWithMinRtt)), connection)
+        );
     }
 
     @Nullable
@@ -267,7 +266,7 @@ final class SyncOperationHelper {
             if (!firstAttempt && sessionContext.hasActiveTransaction()) {
                 sessionContext.clearTransactionContext();
             }
-            return withSourceAndConnection(binding::getWriteConnectionSource, true, (source, connection, operationContextWithMinRtt) -> {
+            return withSourceAndConnection(binding::getWriteConnectionSource, true, operationContext, (source, connection, operationContextWithMinRtt) -> {
                 int maxWireVersion = connection.getDescription().getMaxWireVersion();
                 try {
                     retryState.breakAndThrowIfRetryAnd(() -> !canRetryWrite(connection.getDescription()));
@@ -291,7 +290,7 @@ final class SyncOperationHelper {
                     }
                     throw e;
                 }
-            }, operationContext);
+            });
         });
         try {
             return retryingWrite.get();
@@ -323,7 +322,7 @@ final class SyncOperationHelper {
 
     static <R> Supplier<R> decorateWriteWithRetries(final RetryState retryState,
             final OperationContext operationContext, final Supplier<R> writeFunction) {
-        return new RetryingSyncSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext),
+        return new RetryingSyncSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext.getServerDeprioritization()),
                 CommandOperationHelper::loggingShouldAttemptToRetryWriteAndAddRetryableLabel, () -> {
             logRetryCommand(retryState, operationContext);
             return writeFunction.get();
@@ -332,7 +331,7 @@ final class SyncOperationHelper {
 
     static <R> Supplier<R> decorateReadWithRetries(final RetryState retryState, final OperationContext operationContext,
             final Supplier<R> readFunction) {
-        return new RetryingSyncSupplier<>(retryState, onRetryableReadAttemptFailure(operationContext),
+        return new RetryingSyncSupplier<>(retryState, onRetryableReadAttemptFailure(operationContext.getServerDeprioritization()),
                 CommandOperationHelper::loggingShouldAttemptToRetryRead, () -> {
             logRetryCommand(retryState, operationContext);
             return readFunction.get();
