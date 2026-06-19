@@ -134,7 +134,7 @@ public class ListIndexesOperation<T> implements ReadOperationCursor<T> {
 
         RetryState retryState = initialRetryState(retryReads, listIndexesOperationContext.getTimeoutContext());
         Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, listIndexesOperationContext, () ->
-            withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection, operationContextWithMinRTT) -> {
+            withSourceAndConnection(binding::getReadConnectionSource, false, listIndexesOperationContext, (source, connection, operationContextWithMinRTT) -> {
                 retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(operationContextWithMinRTT));
                 try {
                     return createReadCommandAndExecute(retryState, operationContextWithMinRTT, source, namespace.getDatabaseName(),
@@ -143,7 +143,7 @@ public class ListIndexesOperation<T> implements ReadOperationCursor<T> {
                     return rethrowIfNotNamespaceError(e,
                             createEmptySingleBatchCursor(source.getServerDescription().getAddress(), batchSize));
                 }
-            }, listIndexesOperationContext)
+            })
         );
         return read.get();
     }
