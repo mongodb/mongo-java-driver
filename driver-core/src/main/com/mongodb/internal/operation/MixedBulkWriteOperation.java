@@ -19,19 +19,18 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.assertions.Assertions;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.async.MutableValue;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.async.function.AsyncCallbackLoop;
-import com.mongodb.internal.async.function.AsyncCallbackRunnable;
+import com.mongodb.internal.async.function.AsyncCallbackFunction;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
-import com.mongodb.internal.async.function.LoopState;
+import com.mongodb.internal.async.function.AsyncCallbackTriFunction;
 import com.mongodb.internal.async.function.RetryState;
-import com.mongodb.internal.async.function.RetryingAsyncCallbackSupplier;
-import com.mongodb.internal.async.function.RetryingSyncSupplier;
+import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncWriteBinding;
+import com.mongodb.internal.binding.ConnectionSource;
+import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.connection.AsyncConnection;
@@ -50,27 +49,26 @@ import org.bson.BsonValue;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.assertions.Assertions.assertFalse;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.AsyncOperationHelper.exceptionTransformingCallback;
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWriteWithRetriesAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
 import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabel;
-import static com.mongodb.internal.operation.CommandOperationHelper.logRetryCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.loggingShouldAttemptToRetryWriteAndAddRetryableLabel;
-import static com.mongodb.internal.operation.CommandOperationHelper.onRetryableWriteAttemptFailure;
+import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried;
+import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
 import static com.mongodb.internal.operation.CommandOperationHelper.validateAndGetEffectiveWriteConcern;
-import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.internal.operation.OperationHelper.validateWriteRequests;
-import static com.mongodb.internal.operation.OperationHelper.validateWriteRequestsAndCompleteIfInvalid;
+import static com.mongodb.internal.operation.SyncOperationHelper.decorateWriteWithRetries;
 import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndConnection;
 
 /**
@@ -145,41 +143,6 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
         return retryWrites;
     }
 
-    private <R> Supplier<R> decorateWriteWithRetries(final RetryState retryState, final OperationContext operationContext,
-            final Supplier<R> writeFunction) {
-        return new RetryingSyncSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext),
-                this::shouldAttemptToRetryWrite, () -> {
-            logRetryCommand(retryState, operationContext);
-            return writeFunction.get();
-        });
-    }
-
-    private <R> AsyncCallbackSupplier<R> decorateWriteWithRetries(final RetryState retryState, final OperationContext operationContext,
-            final AsyncCallbackSupplier<R> writeFunction) {
-        return new RetryingAsyncCallbackSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext),
-                this::shouldAttemptToRetryWrite, callback -> {
-            logRetryCommand(retryState, operationContext);
-            writeFunction.get(callback);
-        });
-    }
-
-    private boolean shouldAttemptToRetryWrite(final RetryState retryState, final Throwable attemptFailure) {
-        BulkWriteTracker bulkWriteTracker = retryState.attachment(AttachmentKeys.bulkWriteTracker()).orElseThrow(Assertions::fail);
-        /* A retry predicate is called only if there is at least one more attempt left. Here we maintain attempt counters manually
-         * and emulate the above contract by returning `false` at the very beginning of the retry predicate. */
-        if (bulkWriteTracker.lastAttempt()) {
-            return false;
-        }
-        boolean decision = loggingShouldAttemptToRetryWriteAndAddRetryableLabel(retryState, attemptFailure);
-        if (decision) {
-            /* The attempt counter maintained by `RetryState` is updated after (in the happens-before order) testing a retry predicate,
-             * and only if the predicate completes normally. Here we maintain attempt counters manually, and we emulate the
-             * "after completion" part by updating the counter at the very end of the retry predicate. */
-            bulkWriteTracker.advance();
-        }
-        return decision;
-    }
-
     @Override
     public String getCommandName() {
         return commandName;
@@ -187,329 +150,504 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
 
     @Override
     public BulkWriteResult execute(final WriteBinding binding, final OperationContext operationContext) {
-        /* We cannot use the tracking of attempts built in the `RetryState` class because conceptually we have to maintain multiple attempt
-         * counters while executing a single bulk write operation:
-         * - a counter that limits attempts to select server and checkout a connection before we created a batch;
-         * - a counter per each batch that limits attempts to execute the specific batch.
-         * Fortunately, these counters do not exist concurrently with each other. While maintaining the counters manually,
-         * we must adhere to the contract of `RetryingSyncSupplier`. When the retry timeout is implemented, there will be no counters,
-         * and the code related to the attempt tracking in `BulkWriteTracker` will be removed. */
-        RetryState retryState = new RetryState();
-        BulkWriteTracker.attachNew(retryState, retryWrites, operationContext.getTimeoutContext());
-        Supplier<BulkWriteResult> retryingBulkWrite = decorateWriteWithRetries(retryState, operationContext, () ->
-            withSourceAndConnection(binding::getWriteConnectionSource, true, (source, connection, operationContextWithMinRTT) -> {
-                TimeoutContext timeoutContextWithMinRtt = operationContextWithMinRTT.getTimeoutContext();
-                ConnectionDescription connectionDescription = connection.getDescription();
-                // attach `maxWireVersion` ASAP because it is used to check whether we can retry
-                retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true);
-                SessionContext sessionContext = operationContext.getSessionContext();
-                WriteConcern writeConcern = validateAndGetEffectiveWriteConcern(this.writeConcern, sessionContext);
-                if (!isRetryableWrite(retryWrites, writeConcern, connectionDescription, sessionContext)) {
-                    handleMongoWriteConcernWithResponseException(retryState, true, timeoutContextWithMinRtt);
-                }
-                validateWriteRequests(connectionDescription, bypassDocumentValidation, writeRequests, writeConcern);
-                if (!retryState.attachment(AttachmentKeys.bulkWriteTracker()).orElseThrow(Assertions::fail).batch().isPresent()) {
-                    BulkWriteTracker.attachNew(retryState, BulkWriteBatch.createBulkWriteBatch(namespace,
-                            connectionDescription, ordered, writeConcern,
-                                    bypassDocumentValidation, retryWrites, writeRequests, operationContextWithMinRTT, comment, variables),
-                            timeoutContextWithMinRtt);
-                }
-                return executeBulkWriteBatch(retryState, writeConcern, operationContextWithMinRTT, connection);
-            }, operationContext)
-        );
+        WriteConcern effectiveWriteConcern = validateAndGetEffectiveWriteConcern(writeConcern, operationContext.getSessionContext());
         try {
-            return retryingBulkWrite.get();
+            return executeAllBatches(effectiveWriteConcern, binding, operationContext);
         } catch (MongoException e) {
             throw transformWriteException(e);
         }
     }
 
-    public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<BulkWriteResult> callback) {
-        // see the comment in `execute(WriteBinding)` explaining the manual tracking of attempts
-        RetryState retryState = new RetryState();
-        BulkWriteTracker.attachNew(retryState, retryWrites, operationContext.getTimeoutContext());
-        binding.retain();
-        AsyncCallbackSupplier<BulkWriteResult> retryingBulkWrite = this.<BulkWriteResult>decorateWriteWithRetries(retryState,
-                operationContext,
-                funcCallback ->
-            withAsyncSourceAndConnection(binding::getWriteConnectionSource, true, operationContext, funcCallback,
-                    (source, connection, operationContextWithMinRtt, releasingCallback) -> {
-                TimeoutContext timeoutContextWithMinRtt = operationContextWithMinRtt.getTimeoutContext();
-                ConnectionDescription connectionDescription = connection.getDescription();
-
-                // attach `maxWireVersion` ASAP because it is used to check whether we can retry
-                retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true);
-                SessionContext sessionContext = operationContextWithMinRtt.getSessionContext();
-                WriteConcern writeConcern = validateAndGetEffectiveWriteConcern(this.writeConcern, sessionContext);
-                        if (!isRetryableWrite(retryWrites, writeConcern, connectionDescription, sessionContext)
-                        && handleMongoWriteConcernWithResponseExceptionAsync(retryState, releasingCallback, timeoutContextWithMinRtt)) {
-                    return;
-                }
-                if (validateWriteRequestsAndCompleteIfInvalid(connectionDescription, bypassDocumentValidation, writeRequests,
-                        writeConcern, releasingCallback)) {
-                    return;
-                }
-                try {
-                    if (!retryState.attachment(AttachmentKeys.bulkWriteTracker()).orElseThrow(Assertions::fail).batch().isPresent()) {
-                        BulkWriteTracker.attachNew(retryState, BulkWriteBatch.createBulkWriteBatch(namespace,
-                                connectionDescription, ordered, writeConcern,
-                                bypassDocumentValidation, retryWrites, writeRequests, operationContextWithMinRtt, comment, variables), timeoutContextWithMinRtt);
-                    }
-                } catch (Throwable t) {
-                    releasingCallback.onResult(null, t);
-                    return;
-                }
-                executeBulkWriteBatchAsync(retryState, writeConcern, operationContextWithMinRtt, connection, releasingCallback);
-            })
-        ).whenComplete(binding::release);
-        retryingBulkWrite.get(exceptionTransformingCallback(errorHandlingCallback(callback, LOGGER)));
+    @Override
+    public void executeAsync(
+            final AsyncWriteBinding binding,
+            final OperationContext operationContext,
+            final SingleResultCallback<BulkWriteResult> callback) {
+        beginAsync().<BulkWriteResult>thenSupply(c -> {
+            WriteConcern effectiveWriteConcern = validateAndGetEffectiveWriteConcern(writeConcern, operationContext.getSessionContext());
+            beginAsync().<BulkWriteResult>thenSupply(executeAllBatchesCallback -> {
+                executeAllBatchesAsync(effectiveWriteConcern, binding, operationContext, executeAllBatchesCallback);
+            }).onErrorIf(e -> e instanceof MongoException, (e, onErrorCallback) -> {
+                throw transformWriteException((MongoException) e);
+            }).finish(c);
+        }).finish(callback);
     }
 
-    private BulkWriteResult executeBulkWriteBatch(
-            final RetryState retryState,
+    private BulkWriteResult executeAllBatches(
             final WriteConcern effectiveWriteConcern,
-            final OperationContext operationContext,
-            final Connection connection) {
-        BulkWriteTracker currentBulkWriteTracker = retryState.attachment(AttachmentKeys.bulkWriteTracker())
-                .orElseThrow(Assertions::fail);
-        BulkWriteBatch currentBatch = currentBulkWriteTracker.batch().orElseThrow(Assertions::fail);
-        int maxWireVersion = connection.getDescription().getMaxWireVersion();
-        TimeoutContext timeoutContext = operationContext.getTimeoutContext();
-
-        while (currentBatch.shouldProcessBatch()) {
-            try {
-                BsonDocument result = executeCommand(effectiveWriteConcern, operationContext, connection, currentBatch);
-                if (currentBatch.getRetryWrites() && !operationContext.getSessionContext().hasActiveTransaction()) {
-                    MongoException writeConcernBasedError = ProtocolHelper.createSpecialException(result,
-                            connection.getDescription().getServerAddress(), "errMsg", timeoutContext);
-                    if (writeConcernBasedError != null) {
-                        if (currentBulkWriteTracker.lastAttempt()) {
-                            addRetryableWriteErrorLabel(writeConcernBasedError, maxWireVersion);
-                            addErrorLabelsToWriteConcern(result.getDocument("writeConcernError"), writeConcernBasedError.getErrorLabels());
-                        } else if (loggingShouldAttemptToRetryWriteAndAddRetryableLabel(retryState, writeConcernBasedError)) {
-                            throw new MongoWriteConcernWithResponseException(writeConcernBasedError, result);
-                        }
-                    }
+            final WriteBinding binding,
+            final OperationContext operationContext) {
+        SourceAndConnection sourceAndConnection = null;
+        try {
+            BulkWriteBatch nextBatch = null;
+            do {
+                BatchWithSourceAndConnection<SourceAndConnection> nextBatchWithSourceAndConnection = executeBatchReusingConnection(
+                        nextBatch, sourceAndConnection, effectiveWriteConcern, binding, operationContext);
+                try (BatchWithSourceAndConnection<SourceAndConnection> ignoredAndAutoClosed = nextBatchWithSourceAndConnection) {
+                    nextBatch = nextBatchWithSourceAndConnection.getBatch();
+                    sourceAndConnection = nextBatchWithSourceAndConnection.intoSourceAndConnection();
                 }
-                currentBatch.addResult(result);
-                currentBulkWriteTracker = BulkWriteTracker.attachNext(retryState, currentBatch, timeoutContext);
-                currentBatch = currentBulkWriteTracker.batch().orElseThrow(Assertions::fail);
-            } catch (MongoException exception) {
-                if (!retryState.isFirstAttempt() && !(exception instanceof MongoWriteConcernWithResponseException)) {
-                    addRetryableWriteErrorLabel(exception, maxWireVersion);
-                }
-                handleMongoWriteConcernWithResponseException(retryState, false, timeoutContext);
-                throw exception;
+            } while (nextBatch.shouldProcessBatch());
+            return nextBatch.getResult();
+        } finally {
+            if (sourceAndConnection != null) {
+                sourceAndConnection.close();
             }
         }
+    }
+
+    private void executeAllBatchesAsync(
+            final WriteConcern effectiveWriteConcern,
+            final AsyncWriteBinding binding,
+            final OperationContext operationContext,
+            final SingleResultCallback<BulkWriteResult> callback) {
+        beginAsync().<BulkWriteResult>thenSupply(c -> {
+            MutableValue<AsyncSourceAndConnection> sourceAndConnection = new MutableValue<>();
+            beginAsync().<BulkWriteResult>thenSupply(loopCallback -> {
+                MutableValue<BulkWriteBatch> nextBatch = new MutableValue<>();
+                beginAsync().thenRunDoWhileLoop(iterationCallback -> {
+                    beginAsync().<BatchWithSourceAndConnection<AsyncSourceAndConnection>>thenSupply(executeBatchCallback -> {
+                        executeBatchReusingConnectionAsync(
+                                nextBatch.getNullable(), sourceAndConnection.getNullable(), effectiveWriteConcern, binding, operationContext, executeBatchCallback);
+                    }).thenConsume((nextBatchWithSourceAndConnection, consumeExecutionResultCallback) -> {
+                        try (BatchWithSourceAndConnection<AsyncSourceAndConnection> ignoredAndAutoClosed = nextBatchWithSourceAndConnection) {
+                            nextBatch.set(nextBatchWithSourceAndConnection.getBatch());
+                            sourceAndConnection.set(nextBatchWithSourceAndConnection.intoSourceAndConnection());
+                        }
+                        consumeExecutionResultCallback.complete(consumeExecutionResultCallback);
+                    }).finish(iterationCallback);
+                }, () -> nextBatch.get().shouldProcessBatch())
+                .<BulkWriteResult>thenSupply(resultCallback -> {
+                    resultCallback.complete(nextBatch.get().getResult());
+                }).finish(loopCallback);
+            }).thenAlwaysRunAndFinish(() -> {
+                if (sourceAndConnection.getNullable() != null) {
+                    sourceAndConnection.get().close();
+                }
+            }, c);
+        }).finish(callback);
+    }
+
+    /**
+     * @param maybeSourceAndConnection Is guaranteed to be {@linkplain SourceAndConnection#close() closed}
+     * if this method creates a new {@link SourceAndConnection}.
+     */
+    private BatchWithSourceAndConnection<SourceAndConnection> executeBatchReusingConnection(
+            @Nullable final BulkWriteBatch maybeBatch,
+            @Nullable final SourceAndConnection maybeSourceAndConnection,
+            final WriteConcern effectiveWriteConcern,
+            final WriteBinding binding,
+            final OperationContext operationContext) {
+        MutableValue<BulkWriteBatch> batch = new MutableValue<>(maybeBatch);
+        MutableValue<SourceAndConnection> sourceAndConnection = new MutableValue<>(maybeSourceAndConnection);
+        RetryState retryState = initialRetryState(
+                retryWrites, operationContext.getTimeoutContext());
+        Supplier<BatchWithSourceAndConnection<SourceAndConnection>> retryingBatchExecutor = decorateWriteWithRetries(
+                retryState,
+                operationContext,
+                () -> {
+                    SourceAndConnection reusedOrNewSourceAndConnection = reuseOrSelectServerAndCheckoutConnectionIfClosed(
+                            sourceAndConnection.getNullable(), effectiveWriteConcern, binding,
+                            operationContext, retryState);
+                    try {
+                        sourceAndConnection.set(reusedOrNewSourceAndConnection);
+                        ConnectionDescription connectionDescription = reusedOrNewSourceAndConnection.getConnection().getDescription();
+                        retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true);
+                        batch.set(batch.getNullable() != null
+                                ? batch.get()
+                                : createFirstBatch(connectionDescription, reusedOrNewSourceAndConnection.getOperationContext(), effectiveWriteConcern));
+                        onBatch(batch.get(), retryState);
+                        executeBatch(batch.get(), reusedOrNewSourceAndConnection, effectiveWriteConcern);
+                        return new BatchWithSourceAndConnection<>(batch.get().getNextBatch(), reusedOrNewSourceAndConnection);
+                    } catch (Throwable e) {
+                        reusedOrNewSourceAndConnection.close();
+                        throw e;
+                    }
+                }
+        );
         try {
-            return currentBatch.getResult();
-        } catch (MongoException e) {
-            /* if we get here, some of the batches failed on the server side,
-             * so we need to mark the last attempt to avoid retrying. */
-            retryState.markAsLastAttempt();
+            return retryingBatchExecutor.get();
+        } catch (Throwable e) {
+            if (sourceAndConnection.getNullable() != null) {
+                sourceAndConnection.get().close();
+            }
+            if (e instanceof MongoWriteConcernWithResponseException) {
+                batch.get().addResult((BsonDocument) ((MongoWriteConcernWithResponseException) e).getResponse());
+                return new BatchWithSourceAndConnection<>(batch.get().getNextBatch(), null);
+            }
+            if (retryWrites && e instanceof MongoException) {
+                // Adding the `RetryableWriteError` label here is unnecessary at this point:
+                // applications cannot use it for implementing retries, and it is not even part of the public driver API.
+                // Unfortunately, certain unified tests incorrectly rely on this label to verify retries, resulting in this redundant code.
+                addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryState, e);
+            }
             throw e;
         }
     }
 
-    private void executeBulkWriteBatchAsync(
-            final RetryState retryState,
+    /**
+     * @param maybeSourceAndConnection Is guaranteed to be {@linkplain AsyncSourceAndConnection#close() closed}
+     * if this method creates a new {@link AsyncSourceAndConnection}.
+     */
+    private void executeBatchReusingConnectionAsync(
+            @Nullable final BulkWriteBatch maybeBatch,
+            @Nullable final AsyncSourceAndConnection maybeSourceAndConnection,
             final WriteConcern effectiveWriteConcern,
+            final AsyncWriteBinding binding,
             final OperationContext operationContext,
-            final AsyncConnection connection,
-            final SingleResultCallback<BulkWriteResult> callback) {
-        LoopState loopState = new LoopState();
-        AsyncCallbackRunnable loop = new AsyncCallbackLoop(loopState, iterationCallback -> {
-            BulkWriteTracker currentBulkWriteTracker = retryState.attachment(AttachmentKeys.bulkWriteTracker())
-                    .orElseThrow(Assertions::fail);
-            loopState.attach(AttachmentKeys.bulkWriteTracker(), currentBulkWriteTracker, true);
-            BulkWriteBatch currentBatch = currentBulkWriteTracker.batch().orElseThrow(Assertions::fail);
-            int maxWireVersion = connection.getDescription().getMaxWireVersion();
-            if (loopState.breakAndCompleteIf(() -> !currentBatch.shouldProcessBatch(), iterationCallback)) {
-                return;
-            }
-
-            TimeoutContext timeoutContext = operationContext.getTimeoutContext();
-            executeCommandAsync(effectiveWriteConcern, operationContext, connection, currentBatch, (result, t) -> {
-                if (t == null) {
-                    if (currentBatch.getRetryWrites() && !operationContext.getSessionContext().hasActiveTransaction()) {
-                        MongoException writeConcernBasedError = ProtocolHelper.createSpecialException(result,
-                                connection.getDescription().getServerAddress(), "errMsg", operationContext.getTimeoutContext());
-                        if (writeConcernBasedError != null) {
-                            if (currentBulkWriteTracker.lastAttempt()) {
-                                addRetryableWriteErrorLabel(writeConcernBasedError, maxWireVersion);
-                                addErrorLabelsToWriteConcern(result.getDocument("writeConcernError"),
-                                        writeConcernBasedError.getErrorLabels());
-                            } else if (loggingShouldAttemptToRetryWriteAndAddRetryableLabel(retryState, writeConcernBasedError)) {
-                                iterationCallback.onResult(null,
-                                        new MongoWriteConcernWithResponseException(writeConcernBasedError, result));
-                                return;
-                            }
-                        }
+            final SingleResultCallback<BatchWithSourceAndConnection<AsyncSourceAndConnection>> callback) {
+        beginAsync().<BatchWithSourceAndConnection<AsyncSourceAndConnection>>thenSupply(c -> {
+            MutableValue<BulkWriteBatch> batch = new MutableValue<>(maybeBatch);
+            MutableValue<AsyncSourceAndConnection> sourceAndConnection = new MutableValue<>(maybeSourceAndConnection);
+            RetryState retryState = initialRetryState(
+                    retryWrites, operationContext.getTimeoutContext());
+            AsyncCallbackSupplier<BatchWithSourceAndConnection<AsyncSourceAndConnection>> retryingBatchExecutor = decorateWriteWithRetriesAsync(
+                    retryState,
+                    operationContext,
+                    supplierCallback -> {
+                        beginAsync().<AsyncSourceAndConnection>thenSupply(reuseOrSelectServerAndCheckoutConnectionCallback -> {
+                            reuseOrSelectServerAndCheckoutConnectionIfClosedAsync(
+                                    sourceAndConnection.getNullable(), effectiveWriteConcern, binding,
+                                    operationContext, retryState, reuseOrSelectServerAndCheckoutConnectionCallback);
+                        }).<BatchWithSourceAndConnection<AsyncSourceAndConnection>>thenApply((reusedOrNewSourceAndConnection, setSourceAndConnectionCallback) -> {
+                            beginAsync().thenRun(executeBatchCallback -> {
+                                sourceAndConnection.set(reusedOrNewSourceAndConnection);
+                                ConnectionDescription connectionDescription = reusedOrNewSourceAndConnection.getConnection().getDescription();
+                                retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true);
+                                batch.set(batch.getNullable() != null
+                                        ? batch.get()
+                                        : createFirstBatch(connectionDescription, reusedOrNewSourceAndConnection.getOperationContext(), effectiveWriteConcern));
+                                onBatch(batch.get(), retryState);
+                                executeBatchAsync(batch.get(), reusedOrNewSourceAndConnection, effectiveWriteConcern, executeBatchCallback);
+                            }).<BatchWithSourceAndConnection<AsyncSourceAndConnection>>thenSupply(createNextBatchCallback -> {
+                                createNextBatchCallback.complete(new BatchWithSourceAndConnection<>(batch.get().getNextBatch(), reusedOrNewSourceAndConnection));
+                            }).onErrorIf(e -> true, (e, onErrorCallback) -> {
+                                reusedOrNewSourceAndConnection.close();
+                                onErrorCallback.completeExceptionally(e);
+                            }).finish(setSourceAndConnectionCallback);
+                        }).finish(supplierCallback);
                     }
-                    currentBatch.addResult(result);
-                    BulkWriteTracker.attachNext(retryState, currentBatch, timeoutContext);
-                    iterationCallback.onResult(null, null);
-                } else {
-                    if (t instanceof MongoException) {
-                        MongoException exception = (MongoException) t;
-                        if (!retryState.isFirstAttempt() && !(exception instanceof MongoWriteConcernWithResponseException)) {
-                            addRetryableWriteErrorLabel(exception, maxWireVersion);
-                        }
-                        if (handleMongoWriteConcernWithResponseExceptionAsync(retryState, null, timeoutContext)) {
-                            return;
-                        }
-                    }
-                    iterationCallback.onResult(null, t);
+            );
+            beginAsync().<BatchWithSourceAndConnection<AsyncSourceAndConnection>>thenSupply(executorCallback -> {
+                retryingBatchExecutor.get(executorCallback);
+            }).onErrorIf(e -> true, (e, onErrorCallback) -> {
+                if (sourceAndConnection.getNullable() != null) {
+                    sourceAndConnection.get().close();
                 }
-            });
-        });
-        loop.run((voidResult, t) -> {
-            if (t != null) {
-                callback.onResult(null, t);
-            } else {
-                BulkWriteResult result;
-                try {
-                    result = loopState.attachment(AttachmentKeys.bulkWriteTracker())
-                            .flatMap(BulkWriteTracker::batch).orElseThrow(Assertions::fail).getResult();
-                } catch (Throwable loopResultT) {
-                    if (loopResultT instanceof MongoException) {
-                        /* if we get here, some of the batches failed on the server side,
-                         * so we need to mark the last attempt to avoid retrying. */
-                        retryState.markAsLastAttempt();
-                    }
-                    callback.onResult(null, loopResultT);
+                if (e instanceof MongoWriteConcernWithResponseException) {
+                    batch.get().addResult((BsonDocument) ((MongoWriteConcernWithResponseException) e).getResponse());
+                    onErrorCallback.complete(new BatchWithSourceAndConnection<>(batch.get().getNextBatch(), null));
                     return;
                 }
-                callback.onResult(result, null);
-            }
-        });
+                if (retryWrites && e instanceof MongoException) {
+                    // Adding the `RetryableWriteError` label here is unnecessary at this point:
+                    // applications cannot use it for implementing retries, and it is not even part of the public driver API.
+                    // Unfortunately, certain unified tests incorrectly rely on this label to verify retries, resulting in this redundant code.
+                    addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryState, e);
+                }
+                onErrorCallback.completeExceptionally(e);
+            }).finish(c);
+        }).finish(callback);
     }
 
-    private void handleMongoWriteConcernWithResponseException(final RetryState retryState,
-                                                              final boolean breakAndThrowIfDifferent,
-                                                              final TimeoutContext timeoutContext) {
-        if (!retryState.isFirstAttempt()) {
-            RuntimeException prospectiveFailedResult = (RuntimeException) retryState.exception().orElse(null);
-            boolean prospectiveResultIsWriteConcernException = prospectiveFailedResult instanceof MongoWriteConcernWithResponseException;
-            retryState.breakAndThrowIfRetryAnd(() -> breakAndThrowIfDifferent && !prospectiveResultIsWriteConcernException);
-            if (prospectiveResultIsWriteConcernException) {
-                retryState.attachment(AttachmentKeys.bulkWriteTracker()).orElseThrow(Assertions::fail)
-                        .batch().ifPresent(bulkWriteBatch -> {
-                            bulkWriteBatch.addResult(
-                                    (BsonDocument) ((MongoWriteConcernWithResponseException) prospectiveFailedResult).getResponse());
-                            BulkWriteTracker.attachNext(retryState, bulkWriteBatch, timeoutContext);
-                });
-            }
-        }
-    }
-
-    private boolean handleMongoWriteConcernWithResponseExceptionAsync(final RetryState retryState,
-                                                                      @Nullable final SingleResultCallback<BulkWriteResult> callback,
-                                                                      final TimeoutContext timeoutContext) {
-        if (!retryState.isFirstAttempt()) {
-            RuntimeException prospectiveFailedResult = (RuntimeException) retryState.exception().orElse(null);
-            boolean prospectiveResultIsWriteConcernException = prospectiveFailedResult instanceof MongoWriteConcernWithResponseException;
-            if (callback != null && retryState.breakAndCompleteIfRetryAnd(() -> !prospectiveResultIsWriteConcernException, callback)) {
-                return true;
-            }
-            if (prospectiveResultIsWriteConcernException) {
-                retryState.attachment(AttachmentKeys.bulkWriteTracker()).orElseThrow(Assertions::fail)
-                        .batch().ifPresent(bulkWriteBatch -> {
-                            bulkWriteBatch.addResult(
-                                    (BsonDocument) ((MongoWriteConcernWithResponseException) prospectiveFailedResult).getResponse());
-                            BulkWriteTracker.attachNext(retryState, bulkWriteBatch, timeoutContext);
-                });
-            }
-        }
-        return false;
-    }
-
-    @Nullable
-    private BsonDocument executeCommand(
+    private SourceAndConnection reuseOrSelectServerAndCheckoutConnectionIfClosed(
+            @Nullable final SourceAndConnection sourceAndConnection,
             final WriteConcern effectiveWriteConcern,
+            final WriteBinding binding,
             final OperationContext operationContext,
-            final Connection connection,
-            final BulkWriteBatch batch) {
+            final RetryState retryState) {
+        if (sourceAndConnection == null || sourceAndConnection.isClosed()) {
+            SourceAndConnection newSourceAndConnection = selectServerAndCheckoutConnection(binding, operationContext);
+            try {
+                onNewConnection(
+                        newSourceAndConnection.getConnection().getDescription(),
+                        newSourceAndConnection.getOperationContext().getSessionContext(),
+                        effectiveWriteConcern, retryState);
+            } catch (Throwable e) {
+                newSourceAndConnection.close();
+                throw e;
+            }
+            return newSourceAndConnection;
+        } else {
+            return sourceAndConnection;
+        }
+    }
+
+    private void reuseOrSelectServerAndCheckoutConnectionIfClosedAsync(
+            @Nullable final AsyncSourceAndConnection sourceAndConnection,
+            final WriteConcern effectiveWriteConcern,
+            final AsyncWriteBinding binding,
+            final OperationContext operationContext,
+            final RetryState retryState,
+            final SingleResultCallback<AsyncSourceAndConnection> callback) {
+        beginAsync().<AsyncSourceAndConnection>thenSupply(c -> {
+            if (sourceAndConnection == null || sourceAndConnection.isClosed()) {
+                beginAsync().<AsyncSourceAndConnection>thenSupply(selectServerAndCheckoutConnectionCallback -> {
+                    selectServerAndCheckoutConnectionAsync(binding, operationContext, selectServerAndCheckoutConnectionCallback);
+                }).<AsyncSourceAndConnection>thenApply((newSourceAndConnection, onNewConnectionCallback) -> {
+                    try {
+                        onNewConnection(
+                                newSourceAndConnection.getConnection().getDescription(),
+                                newSourceAndConnection.getOperationContext().getSessionContext(),
+                                effectiveWriteConcern, retryState);
+                    } catch (Throwable e) {
+                        newSourceAndConnection.close();
+                        throw e;
+                    }
+                    onNewConnectionCallback.complete(newSourceAndConnection);
+                }).finish(c);
+            } else {
+                c.complete(sourceAndConnection);
+            }
+        }).finish(callback);
+    }
+
+    private static SourceAndConnection selectServerAndCheckoutConnection(
+            final WriteBinding binding,
+            final OperationContext operationContext) {
+        return withSourceAndConnection(
+                binding::getWriteConnectionSource,
+                true,
+                operationContext,
+                (source, connection, operationContextWithMinRTT) ->
+                        new SourceAndConnection(source, connection, operationContextWithMinRTT));
+    }
+
+    private static void selectServerAndCheckoutConnectionAsync(
+            final AsyncWriteBinding binding,
+            final OperationContext operationContext,
+            final SingleResultCallback<AsyncSourceAndConnection> callback) {
+        beginAsync().<AsyncSourceAndConnection>thenSupply(c -> {
+            withAsyncSourceAndConnection(
+                    binding::getWriteConnectionSource,
+                    true,
+                    operationContext,
+                    c,
+                    (source, connection, operationContextWithMinRTT, functionCallback) ->
+                            functionCallback.complete(new AsyncSourceAndConnection(source, connection, operationContextWithMinRTT)));
+        }).finish(callback);
+    }
+
+    private void onNewConnection(
+            final ConnectionDescription connectionDescription,
+            final SessionContext sessionContext,
+            final WriteConcern effectiveWriteConcern,
+            final RetryState retryState) {
+        boolean effectiveRetryWrites = isRetryableWrite(
+                retryWrites, effectiveWriteConcern, connectionDescription, sessionContext);
+        retryState.breakAndThrowIfRetryAnd(() -> !effectiveRetryWrites);
+        validateWriteRequests(connectionDescription, bypassDocumentValidation, writeRequests, effectiveWriteConcern);
+    }
+
+    private BulkWriteBatch createFirstBatch(
+            final ConnectionDescription connectionDescription,
+            final OperationContext operationContext,
+            final WriteConcern effectiveWriteConcern) {
+        return BulkWriteBatch.createBulkWriteBatch(
+                // TODO-JAVA-6223 this same `connectionDescription` is used by all batches, which is incorrect
+                namespace, connectionDescription, ordered, effectiveWriteConcern, bypassDocumentValidation, retryWrites,
+                writeRequests, operationContext, comment, variables);
+    }
+
+    private void onBatch(final BulkWriteBatch batch, final RetryState retryState) {
         commandName = batch.getCommand().getFirstKey();
-        return connection.command(namespace.getDatabaseName(), batch.getCommand(), NoOpFieldNameValidator.INSTANCE, null, batch.getDecoder(),
-                operationContext.withOperationName(commandName), shouldExpectResponse(batch, effectiveWriteConcern), batch.getPayload());
+        String commandDescriptionToCapture = commandName;
+        retryState.attach(AttachmentKeys.retryableWriteCommandFlag(), batch.getRetryWrites(), false)
+                .attach(AttachmentKeys.commandDescriptionSupplier(), () -> commandDescriptionToCapture, false);
     }
 
-    private void executeCommandAsync(
-            final WriteConcern effectiveWriteConcern,
-            final OperationContext operationContext,
-            final AsyncConnection connection,
+    private void executeBatch(
             final BulkWriteBatch batch,
-            final SingleResultCallback<BsonDocument> callback) {
-        commandName = batch.getCommand().getFirstKey();
-        connection.commandAsync(namespace.getDatabaseName(), batch.getCommand(), NoOpFieldNameValidator.INSTANCE, null, batch.getDecoder(),
-                operationContext.withOperationName(commandName), shouldExpectResponse(batch, effectiveWriteConcern),
-                batch.getPayload(), callback);
+            final SourceAndConnection sourceAndConnection,
+            final WriteConcern effectiveWriteConcern) throws MongoWriteConcernWithResponseException {
+        Connection connection = sourceAndConnection.getConnection();
+        OperationContext operationContext = sourceAndConnection.getOperationContext();
+        BsonDocument result = connection.command(
+                namespace.getDatabaseName(), batch.getCommand(),
+                NoOpFieldNameValidator.INSTANCE, null,
+                batch.getDecoder(), operationContext.withOperationName(commandName),
+                shouldExpectResponse(batch, effectiveWriteConcern), batch.getPayload());
+        addResultOrThrowWriteConcernWithResponseException(batch, result, connection.getDescription(), operationContext);
+    }
+
+    private void executeBatchAsync(
+            final BulkWriteBatch batch,
+            final AsyncSourceAndConnection sourceAndConnection,
+            final WriteConcern effectiveWriteConcern,
+            final SingleResultCallback<Void> callback) {
+        beginAsync().thenRun(c -> {
+            AsyncConnection connection = sourceAndConnection.getConnection();
+            OperationContext operationContext = sourceAndConnection.getOperationContext();
+            beginAsync().<BsonDocument>thenSupply(commandCallback -> {
+                connection.commandAsync(
+                        namespace.getDatabaseName(), batch.getCommand(),
+                        NoOpFieldNameValidator.INSTANCE, null,
+                        batch.getDecoder(), operationContext.withOperationName(commandName),
+                        shouldExpectResponse(batch, effectiveWriteConcern), batch.getPayload(), commandCallback);
+            }).thenConsume((result, consumeCommandResultCallback) -> {
+                addResultOrThrowWriteConcernWithResponseException(batch, result, connection.getDescription(), operationContext);
+                consumeCommandResultCallback.complete(consumeCommandResultCallback);
+            }).finish(c);
+        }).finish(callback);
     }
 
     private boolean shouldExpectResponse(final BulkWriteBatch batch, final WriteConcern effectiveWriteConcern) {
         return effectiveWriteConcern.isAcknowledged() || (ordered && batch.hasAnotherBatch());
     }
 
-    private void addErrorLabelsToWriteConcern(final BsonDocument result, final Set<String> errorLabels) {
+    private static void addResultOrThrowWriteConcernWithResponseException(
+            final BulkWriteBatch batch,
+            @Nullable final BsonDocument result,
+            final ConnectionDescription connectionDescription,
+            final OperationContext operationContext) throws MongoWriteConcernWithResponseException {
+        if (batch.getRetryWrites()) {
+            MongoException writeConcernBasedError = ProtocolHelper.createSpecialException(
+                    result, connectionDescription.getServerAddress(), "errMsg", operationContext.getTimeoutContext());
+            if (writeConcernBasedError != null) {
+                assertNotNull(result);
+                addRetryableWriteErrorLabel(writeConcernBasedError, connectionDescription.getMaxWireVersion());
+                addErrorLabelsToWriteConcern(result.getDocument("writeConcernError"), writeConcernBasedError.getErrorLabels());
+                throw new MongoWriteConcernWithResponseException(writeConcernBasedError, result);
+            }
+        }
+        batch.addResult(result);
+    }
+
+    private static void addErrorLabelsToWriteConcern(final BsonDocument result, final Set<String> errorLabels) {
         if (!result.containsKey("errorLabels")) {
             result.put("errorLabels", new BsonArray(errorLabels.stream().map(BsonString::new).collect(Collectors.toList())));
         }
     }
 
-    public static final class BulkWriteTracker {
-        private int attempt;
-        private final int attempts;
-        private final boolean retryUntilTimeoutThrowsException;
-        @Nullable
+    private static final class BatchWithSourceAndConnection<SC extends AbstractSourceAndConnection<?, ?>> implements AutoCloseable {
         private final BulkWriteBatch batch;
+        @Nullable
+        private final SC sourceAndConnection;
+        private boolean consumed;
 
-        static void attachNew(final RetryState retryState, final boolean retry, final TimeoutContext timeoutContext) {
-            retryState.attach(AttachmentKeys.bulkWriteTracker(), new BulkWriteTracker(retry, null, timeoutContext), false);
-        }
-
-        static void attachNew(final RetryState retryState, final BulkWriteBatch batch, final TimeoutContext timeoutContext) {
-            attach(retryState, new BulkWriteTracker(batch.getRetryWrites(), batch, timeoutContext));
-        }
-
-        static BulkWriteTracker attachNext(final RetryState retryState, final BulkWriteBatch batch, final TimeoutContext timeoutContext) {
-            BulkWriteBatch nextBatch = batch.getNextBatch();
-            BulkWriteTracker nextTracker = new BulkWriteTracker(nextBatch.getRetryWrites(), nextBatch, timeoutContext);
-            attach(retryState, nextTracker);
-            return nextTracker;
-        }
-
-        private static void attach(final RetryState retryState, final BulkWriteTracker tracker) {
-            retryState.attach(AttachmentKeys.bulkWriteTracker(), tracker, false);
-            BulkWriteBatch batch = tracker.batch;
-            if (batch != null) {
-                retryState.attach(AttachmentKeys.retryableWriteCommandFlag(), batch.getRetryWrites(), false)
-                        .attach(AttachmentKeys.commandDescriptionSupplier(), () -> batch.getPayload().getPayloadType().toString(), false);
-            }
-        }
-
-        private BulkWriteTracker(final boolean retry, @Nullable final BulkWriteBatch batch, final TimeoutContext timeoutContext) {
-            attempt = 0;
-            attempts = retry ? RetryState.MAX_RETRIES + 1 : 1;
+        BatchWithSourceAndConnection(final BulkWriteBatch batch, @Nullable final SC sourceAndConnection) {
             this.batch = batch;
-            this.retryUntilTimeoutThrowsException = timeoutContext.hasTimeoutMS();
+            this.sourceAndConnection = sourceAndConnection;
+            consumed = false;
         }
 
-        boolean lastAttempt() {
-            if (retryUntilTimeoutThrowsException){
-                return false;
+        /**
+         * Must not be invoked if {@link #intoSourceAndConnection()} or {@link #close()} was invoked.
+         */
+        BulkWriteBatch getBatch() {
+            assertFalse(consumed);
+            return batch;
+        }
+
+        /**
+         * May be invoked at most once.
+         * Must not be invoked if {@link #close()} was invoked.
+         */
+        @Nullable
+        SC intoSourceAndConnection() {
+            assertFalse(consumed);
+            SC sourceAndConnection = this.sourceAndConnection;
+            consumed = true;
+            return sourceAndConnection;
+        }
+
+        /**
+         * {@linkplain AbstractSourceAndConnection#close() Closes} {@link AbstractSourceAndConnection}
+         * unless {@link #intoSourceAndConnection()} was invoked.
+         * <p>
+         * Idempotent.
+         */
+        @Override
+        public void close() {
+            if (!consumed) {
+                consumed = true;
+                if (sourceAndConnection != null) {
+                    sourceAndConnection.close();
+                }
             }
-            return attempt == attempts - 1;
+        }
+    }
+
+    /**
+     * An {@link AutoCloseable} container for the arguments of
+     * {@link SyncOperationHelper.ExecutionFunction#apply(ConnectionSource, Connection, OperationContext)}
+     * provided by
+     * {@link SyncOperationHelper#withSourceAndConnection(Function, boolean, OperationContext, SyncOperationHelper.ExecutionFunction)}.
+     * This type allows those resources to be returned from
+     * {@link SyncOperationHelper#withSourceAndConnection(Function, boolean, OperationContext, SyncOperationHelper.ExecutionFunction)}
+     * and used after method completion.
+     */
+    private static final class SourceAndConnection extends AbstractSourceAndConnection<ConnectionSource, Connection> {
+        SourceAndConnection(
+                final ConnectionSource connectionSource,
+                final Connection connection,
+                final OperationContext operationContext) {
+            super(connectionSource, connection, operationContext);
+        }
+    }
+
+    /**
+     * An {@link AutoCloseable} container for the arguments of {@link AsyncCallbackTriFunction}
+     * provided by
+     * {@link AsyncOperationHelper#withAsyncSourceAndConnection(AsyncCallbackFunction, boolean, OperationContext, SingleResultCallback, AsyncCallbackTriFunction)}.
+     * This type allows those resources to be produced by
+     * {@link AsyncOperationHelper#withAsyncSourceAndConnection(AsyncCallbackFunction, boolean, OperationContext, SingleResultCallback, AsyncCallbackTriFunction)}
+     * and passed to the callback of the method.
+     */
+    private static final class AsyncSourceAndConnection extends AbstractSourceAndConnection<AsyncConnectionSource, AsyncConnection> {
+        AsyncSourceAndConnection(
+                final AsyncConnectionSource connectionSource,
+                final AsyncConnection connection,
+                final OperationContext operationContext) {
+            super(connectionSource, connection, operationContext);
+        }
+    }
+
+    private abstract static class AbstractSourceAndConnection<S extends ReferenceCounted, C extends ReferenceCounted> implements AutoCloseable {
+        private final S connectionSource;
+        private final C connection;
+        private final OperationContext operationContext;
+        private boolean closed;
+
+        AbstractSourceAndConnection(
+                final S connectionSource,
+                final C connection,
+                final OperationContext operationContext) {
+            connectionSource.retain();
+            this.connectionSource = connectionSource;
+            connection.retain();
+            this.connection = connection;
+            this.operationContext = operationContext;
+            closed = false;
         }
 
-        void advance() {
-            assertTrue(!lastAttempt());
-            attempt++;
+        C getConnection() {
+            assertFalse(closed);
+            return connection;
         }
 
-        Optional<BulkWriteBatch> batch() {
-            return Optional.ofNullable(batch);
+        OperationContext getOperationContext() {
+            assertFalse(closed);
+            return operationContext;
+        }
+
+        boolean isClosed() {
+            return closed;
+        }
+
+        /**
+         * Idempotent.
+         */
+        @Override
+        public void close() {
+            if (!closed) {
+                closed = true;
+                try {
+                    connection.release();
+                } finally {
+                    connectionSource.release();
+                }
+            }
         }
     }
 }

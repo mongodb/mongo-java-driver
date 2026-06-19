@@ -301,7 +301,7 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
         OperationContext findOperationContext = getFindOperationContext(operationContext);
         RetryState retryState = initialRetryState(retryReads, findOperationContext.getTimeoutContext());
         Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, findOperationContext, () ->
-                withSourceAndConnection(binding::getReadConnectionSource, false,
+                withSourceAndConnection(binding::getReadConnectionSource, false, findOperationContext,
                         (source, connection, commandOperationContext) -> {
                             retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(commandOperationContext));
                 try {
@@ -311,7 +311,7 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
                 } catch (MongoCommandException e) {
                     throw new MongoQueryException(e.getResponse(), e.getServerAddress());
                 }
-          }, findOperationContext)
+          })
         );
         return read.get();
     }
