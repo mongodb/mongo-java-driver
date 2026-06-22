@@ -18,7 +18,7 @@ package com.mongodb.internal.async.function;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.client.syncadapter.SupplyingCallback;
 import com.mongodb.internal.TimeoutContext;
-import com.mongodb.internal.async.function.LoopState.AttachmentKey;
+import com.mongodb.internal.async.function.LoopControl.AttachmentKey;
 import com.mongodb.internal.operation.retry.AttachmentKeys;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;

@@ -17,7 +17,7 @@ package com.mongodb.internal.operation.retry;
 
 import com.mongodb.MongoConnectionPoolClearedException;
 import com.mongodb.annotations.Immutable;
-import com.mongodb.internal.async.function.LoopState.AttachmentKey;
+import com.mongodb.internal.async.function.LoopControl.AttachmentKey;
 import org.bson.BsonDocument;
 
 import java.util.HashSet;

@@ -39,18 +39,18 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
  * @see AsyncCallbackLoop
  */
 @NotThreadSafe
-public final class LoopState {
+public final class LoopControl {
     private int iteration;
     private boolean lastIteration;
     @Nullable
     private Map<AttachmentKey<?>, AttachmentValueContainer> attachments;
 
-    public LoopState() {
+    public LoopControl() {
         iteration = 0;
     }
 
     /**
-     * Advances this {@link LoopState} such that it represents the state of a new iteration.
+     * Advances this {@link LoopControl} such that it represents the state of a new iteration.
      * Must not be called before the {@linkplain #isFirstIteration() first iteration}, must be called before each subsequent iteration.
      *
      * @return {@code true} if the next iteration must be executed; {@code false} iff the loop was {@link #isLastIteration() broken}.
@@ -90,7 +90,7 @@ public final class LoopState {
 
     /**
      * This method emulates executing the <a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.15">
-     * {@code break}</a> statement. Must not be called more than once per {@link LoopState}.
+     * {@code break}</a> statement. Must not be called more than once per {@link LoopControl}.
      *
      * @param predicate {@code true} iff the associated loop needs to be broken.
      * @return {@code true} iff the {@code callback} was completed, which happens iff any of the following is true:
@@ -137,7 +137,7 @@ public final class LoopState {
      * @return {@code this}.
      * @see #attachment(AttachmentKey)
      */
-    public <V> LoopState attach(final AttachmentKey<V> key, final V value, final boolean autoRemove) {
+    public <V> LoopControl attach(final AttachmentKey<V> key, final V value, final boolean autoRemove) {
         attachments().put(assertNotNull(key), new AttachmentValueContainer(assertNotNull(value), autoRemove));
         return this;
     }
@@ -167,7 +167,7 @@ public final class LoopState {
 
     @Override
     public String toString() {
-        return "LoopState{"
+        return "LoopControl{"
                 + "iteration=" + iteration
                 + ", attachments=" + attachments
                 + '}';

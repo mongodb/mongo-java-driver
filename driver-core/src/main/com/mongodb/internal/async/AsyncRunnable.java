@@ -17,7 +17,7 @@
 package com.mongodb.internal.async;
 
 import com.mongodb.internal.async.function.AsyncCallbackLoop;
-import com.mongodb.internal.async.function.LoopState;
+import com.mongodb.internal.async.function.LoopControl;
 import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.async.function.RetryingAsyncCallbackSupplier;
 
@@ -255,10 +255,10 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
      */
     default AsyncRunnable thenRunWhileLoop(final BooleanSupplier whileCheck, final AsyncRunnable loopBodyRunnable) {
         return thenRun(finalCallback -> {
-            LoopState loopState = new LoopState();
-            new AsyncCallbackLoop(loopState, iterationCallback -> {
+            LoopControl loopControl = new LoopControl();
+            new AsyncCallbackLoop(loopControl, iterationCallback -> {
 
-                if (loopState.breakAndCompleteIf(() -> !whileCheck.getAsBoolean(), iterationCallback)) {
+                if (loopControl.breakAndCompleteIf(() -> !whileCheck.getAsBoolean(), iterationCallback)) {
                     return;
                 }
                 loopBodyRunnable.finish((result, t) -> {
@@ -284,15 +284,15 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
      */
     default AsyncRunnable thenRunDoWhileLoop(final AsyncRunnable loopBodyRunnable, final BooleanSupplier whileCheck) {
         return thenRun(finalCallback -> {
-            LoopState loopState = new LoopState();
-            new AsyncCallbackLoop(loopState, iterationCallback -> {
+            LoopControl loopControl = new LoopControl();
+            new AsyncCallbackLoop(loopControl, iterationCallback -> {
 
                 loopBodyRunnable.finish((result, t) -> {
                     if (t != null) {
                         iterationCallback.completeExceptionally(t);
                         return;
                     }
-                    if (loopState.breakAndCompleteIf(() -> !whileCheck.getAsBoolean(), iterationCallback)) {
+                    if (loopControl.breakAndCompleteIf(() -> !whileCheck.getAsBoolean(), iterationCallback)) {
                         return;
                     }
                     iterationCallback.complete(iterationCallback);

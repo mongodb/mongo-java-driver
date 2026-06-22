@@ -18,7 +18,7 @@ package com.mongodb.internal.async.function;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.async.function.LoopState.AttachmentKey;
+import com.mongodb.internal.async.function.LoopControl.AttachmentKey;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 
@@ -48,7 +48,7 @@ public final class RetryState {
     public static final int MAX_RETRIES = 1;
     private static final int INFINITE_RETRIES = Integer.MAX_VALUE;
 
-    private final LoopState loopState;
+    private final LoopControl loopControl;
     private final int attempts;
     @Nullable
     private Throwable previouslyChosenException;
@@ -68,7 +68,7 @@ public final class RetryState {
      */
     public RetryState(final int retries) {
         assertTrue(retries >= 0);
-        loopState = new LoopState();
+        loopControl = new LoopControl();
         attempts = retries == INFINITE_RETRIES ? INFINITE_RETRIES : retries + 1;
     }
 
@@ -162,11 +162,11 @@ public final class RetryState {
             }
             throw previouslyChosenException;
         } else {
-            // note that we must not update the state, e.g, `previouslyChosenException`, `loopState`, before calling `retryPredicate`
+            // note that we must not update the state, e.g, `previouslyChosenException`, `loopControl`, before calling `retryPredicate`
             boolean retry = shouldRetry(this, attemptException, newlyChosenException, onlyRuntimeExceptions, retryPredicate);
             previouslyChosenException = newlyChosenException;
             if (retry) {
-                assertTrue(loopState.advance());
+                assertTrue(loopControl.advance());
             } else {
                 throw previouslyChosenException;
             }
@@ -254,20 +254,20 @@ public final class RetryState {
      * @see #breakAndCompleteIfRetryAnd(Supplier, SingleResultCallback)
      */
     public void breakAndThrowIfRetryAnd(final Supplier<Boolean> predicate) throws RuntimeException {
-        assertFalse(loopState.isLastIteration());
+        assertFalse(loopControl.isLastIteration());
         if (!isFirstAttempt()) {
             assertNotNull(previouslyChosenException);
             assertTrue(previouslyChosenException instanceof RuntimeException);
             RuntimeException localException = (RuntimeException) previouslyChosenException;
             try {
                 if (predicate.get()) {
-                    loopState.markAsLastIteration();
+                    loopControl.markAsLastIteration();
                 }
             } catch (Exception predicateException) {
                 predicateException.addSuppressed(localException);
                 throw predicateException;
             }
-            if (loopState.isLastIteration()) {
+            if (loopControl.isLastIteration()) {
                 throw localException;
             }
         }
@@ -302,7 +302,7 @@ public final class RetryState {
      * @see #attempt()
      */
     public boolean isFirstAttempt() {
-        return loopState.isFirstIteration();
+        return loopControl.isFirstIteration();
     }
 
     /**
@@ -319,7 +319,7 @@ public final class RetryState {
     private boolean isLastAttempt(final Throwable attemptException) {
         boolean operationTimeout = attemptException instanceof MongoOperationTimeoutException;
         boolean attemptLimit = attempt() == attempts - 1;
-        return loopState.isLastIteration() || operationTimeout || attemptLimit;
+        return loopControl.isLastIteration() || operationTimeout || attemptLimit;
     }
 
     /**
@@ -328,7 +328,7 @@ public final class RetryState {
      * @see #isFirstAttempt()
      */
     public int attempt() {
-        return loopState.iteration();
+        return loopControl.iteration();
     }
 
     /**
@@ -344,24 +344,24 @@ public final class RetryState {
     }
 
     /**
-     * @see LoopState#attach(AttachmentKey, Object, boolean)
+     * @see LoopControl#attach(AttachmentKey, Object, boolean)
      */
     public <V> RetryState attach(final AttachmentKey<V> key, final V value, final boolean autoRemove) {
-        loopState.attach(key, value, autoRemove);
+        loopControl.attach(key, value, autoRemove);
         return this;
     }
 
     /**
-     * @see LoopState#attachment(AttachmentKey)
+     * @see LoopControl#attachment(AttachmentKey)
      */
     public <V> Optional<V> attachment(final AttachmentKey<V> key) {
-        return loopState.attachment(key);
+        return loopControl.attachment(key);
     }
 
     @Override
     public String toString() {
         return "RetryState{"
-                + "loopState=" + loopState
+                + "loopControl=" + loopControl
                 + ", attempts=" + (attempts == INFINITE_RETRIES ? "infinite" : attempts)
                 + ", exception=" + previouslyChosenException
                 + '}';

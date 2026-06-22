@@ -29,26 +29,26 @@ import java.util.function.Supplier;
  * This class emulates the <a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.12">{@code while(true)}</a>
  * statement.
  * <p>
- * The original function may additionally observe or control the loop via {@link LoopState}.
+ * The original function may additionally observe or control the loop via {@link LoopControl}.
  * The loop continues until either of the following happens:
  * <ul>
  *     <li>the original function fails as specified by {@link AsyncCallbackFunction};</li>
- *     <li>the original function calls {@link LoopState#breakAndCompleteIf(Supplier, SingleResultCallback)}.</li>
+ *     <li>the original function calls {@link LoopControl#breakAndCompleteIf(Supplier, SingleResultCallback)}.</li>
  * </ul>
  * <p>
  * This class is not part of the public API and may be removed or changed at any time.
  */
 @NotThreadSafe
 public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
-    private final LoopState state;
+    private final LoopControl control;
     private final AsyncCallbackRunnable body;
 
     /**
-     * @param state The {@link LoopState} to control the new {@link AsyncCallbackLoop}.
+     * @param control The {@link LoopControl} to control the new {@link AsyncCallbackLoop}.
      * @param body The body of the loop.
      */
-    public AsyncCallbackLoop(final LoopState state, final AsyncCallbackRunnable body) {
-        this.state = state;
+    public AsyncCallbackLoop(final LoopControl control, final AsyncCallbackRunnable body) {
+        this.control = control;
         this.body = body;
     }
 
@@ -77,7 +77,7 @@ public final class AsyncCallbackLoop implements AsyncCallbackRunnable {
             } else {
                 boolean continueLooping;
                 try {
-                    continueLooping = state.advance();
+                    continueLooping = control.advance();
                 } catch (Throwable e) {
                     wrapped.onResult(null, e);
                     return;
