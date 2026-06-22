@@ -27,7 +27,7 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
-import com.mongodb.internal.async.function.RetryState;
+import com.mongodb.internal.async.function.RetryControl;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.OperationContext;
@@ -299,13 +299,13 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
         }
 
         OperationContext findOperationContext = getFindOperationContext(operationContext);
-        RetryState retryState = initialRetryState(retryReads, findOperationContext.getTimeoutContext());
-        Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, findOperationContext, () ->
+        RetryControl retryControl = initialRetryState(retryReads, findOperationContext.getTimeoutContext());
+        Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryControl, findOperationContext, () ->
                 withSourceAndConnection(binding::getReadConnectionSource, false, findOperationContext,
                         (source, connection, commandOperationContext) -> {
-                            retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(commandOperationContext));
+                            retryControl.breakAndThrowIfRetryAnd(() -> !canRetryRead(commandOperationContext));
                 try {
-                    return createReadCommandAndExecute(retryState, commandOperationContext, source, namespace.getDatabaseName(),
+                    return createReadCommandAndExecute(retryControl, commandOperationContext, source, namespace.getDatabaseName(),
                                                        getCommandCreator(), CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
                                                        transformer(), connection);
                 } catch (MongoCommandException e) {
@@ -325,17 +325,17 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
         }
 
         OperationContext findOperationContext = getFindOperationContext(operationContext);
-        RetryState retryState = initialRetryState(retryReads, findOperationContext.getTimeoutContext());
+        RetryControl retryControl = initialRetryState(retryReads, findOperationContext.getTimeoutContext());
         binding.retain();
         AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = decorateReadWithRetriesAsync(
-                retryState, operationContext, (AsyncCallbackSupplier<AsyncBatchCursor<T>>) funcCallback ->
+                retryControl, operationContext, (AsyncCallbackSupplier<AsyncBatchCursor<T>>) funcCallback ->
                     withAsyncSourceAndConnection(binding::getReadConnectionSource, false, findOperationContext, funcCallback,
                             (source, connection,   operationContextWithMinRTT, releasingCallback) -> {
-                                if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(findOperationContext), releasingCallback)) {
+                                if (retryControl.breakAndCompleteIfRetryAnd(() -> !canRetryRead(findOperationContext), releasingCallback)) {
                                     return;
                                 }
                                 SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = exceptionTransformingCallback(releasingCallback);
-                                createReadCommandAndExecuteAsync(retryState, operationContextWithMinRTT, source,
+                                createReadCommandAndExecuteAsync(retryControl, operationContextWithMinRTT, source,
                                         namespace.getDatabaseName(), getCommandCreator(),
                                         CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
                                         asyncTransformer(), connection, wrappedCallback);

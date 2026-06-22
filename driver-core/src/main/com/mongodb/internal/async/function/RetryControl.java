@@ -44,7 +44,7 @@ import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
  * @see RetryingAsyncCallbackSupplier
  */
 @NotThreadSafe
-public final class RetryState {
+public final class RetryControl {
     public static final int MAX_RETRIES = 1;
     private static final int INFINITE_RETRIES = Integer.MAX_VALUE;
 
@@ -54,26 +54,26 @@ public final class RetryState {
     private Throwable previouslyChosenException;
 
     /**
-     * Creates a {@link RetryState} that does not explicitly limit the number of attempts.
+     * Creates a {@link RetryControl} that does not explicitly limit the number of attempts.
      * Retrying still may be stopped because, for example,
      * the failed result from the most recent attempt is {@link MongoOperationTimeoutException}.
      */
-    public RetryState() {
+    public RetryControl() {
         this(INFINITE_RETRIES);
     }
 
     /**
      * @param retries A non-negative number of allowed retry attempts.
-     * {@value #INFINITE_RETRIES} is interpreted as {@linkplain #RetryState() absence of explicit limit}.
+     * {@value #INFINITE_RETRIES} is interpreted as {@linkplain #RetryControl() absence of explicit limit}.
      */
-    public RetryState(final int retries) {
+    public RetryControl(final int retries) {
         assertTrue(retries >= 0);
         loopControl = new LoopControl();
         attempts = retries == INFINITE_RETRIES ? INFINITE_RETRIES : retries + 1;
     }
 
     /**
-     * Advances this {@link RetryState} such that it represents the state of a new attempt.
+     * Advances this {@link RetryControl} such that it represents the state of a new attempt.
      * If there is at least one more attempt left, it is consumed by this method.
      * Must not be called before the {@linkplain #isFirstAttempt() first attempt}, must be called before each subsequent attempt.
      * <p>
@@ -102,8 +102,8 @@ public final class RetryState {
      *     <li>{@code onAttemptFailureOperator} completed normally;</li>
      *     <li>the most recent attempt is not known to be the {@linkplain #isLastAttempt(Throwable) last} one.</li>
      * </ul>
-     * The {@code retryPredicate} accepts this {@link RetryState} and the exception from the most recent attempt,
-     * and may mutate the exception. The {@linkplain RetryState} advances to represent the state of a new attempt
+     * The {@code retryPredicate} accepts this {@link RetryControl} and the exception from the most recent attempt,
+     * and may mutate the exception. The {@linkplain RetryControl} advances to represent the state of a new attempt
      * after (in the happens-before order) testing the {@code retryPredicate}, and only if the predicate completes normally.
      * @throws RuntimeException Iff any of the following is true:
      * <ul>
@@ -117,7 +117,7 @@ public final class RetryState {
      * @see #advanceOrThrow(Throwable, BinaryOperator, BiPredicate)
      */
     void advanceOrThrow(final RuntimeException attemptException, final BinaryOperator<Throwable> onAttemptFailureOperator,
-            final BiPredicate<RetryState, Throwable> retryPredicate) throws RuntimeException {
+            final BiPredicate<RetryControl, Throwable> retryPredicate) throws RuntimeException {
         try {
             doAdvanceOrThrow(attemptException, onAttemptFailureOperator, retryPredicate, true);
         } catch (RuntimeException | Error unchecked) {
@@ -134,19 +134,19 @@ public final class RetryState {
      * @see #advanceOrThrow(RuntimeException, BinaryOperator, BiPredicate)
      */
     void advanceOrThrow(final Throwable attemptException, final BinaryOperator<Throwable> onAttemptFailureOperator,
-            final BiPredicate<RetryState, Throwable> retryPredicate) throws Throwable {
+            final BiPredicate<RetryControl, Throwable> retryPredicate) throws Throwable {
         doAdvanceOrThrow(attemptException, onAttemptFailureOperator, retryPredicate, false);
     }
 
     /**
      * @param onlyRuntimeExceptions {@code true} iff the method must expect {@link #previouslyChosenException} and {@code attemptException} to be
      * {@link RuntimeException}s and must not explicitly handle other {@link Throwable} types, of which only {@link Error} is possible
-     * as {@link RetryState} does not have any source of {@link Exception}s.
+     * as {@link RetryControl} does not have any source of {@link Exception}s.
      * @param onAttemptFailureOperator See {@link #advanceOrThrow(RuntimeException, BinaryOperator, BiPredicate)}.
      */
     private void doAdvanceOrThrow(final Throwable attemptException,
             final BinaryOperator<Throwable> onAttemptFailureOperator,
-            final BiPredicate<RetryState, Throwable> retryPredicate,
+            final BiPredicate<RetryControl, Throwable> retryPredicate,
             final boolean onlyRuntimeExceptions) throws Throwable {
         assertTrue(attempt() < attempts);
         assertNotNull(attemptException);
@@ -205,14 +205,14 @@ public final class RetryState {
     }
 
     /**
-     * @param readOnlyRetryState Must not be mutated by this method.
+     * @param readOnlyRetryControl Must not be mutated by this method.
      * @param onlyRuntimeExceptions See {@link #doAdvanceOrThrow(Throwable, BinaryOperator, BiPredicate, boolean)}.
      */
-    private static boolean shouldRetry(final RetryState readOnlyRetryState, final Throwable attemptException,
-            final Throwable newlyChosenException,
-            final boolean onlyRuntimeExceptions, final BiPredicate<RetryState, Throwable> retryPredicate) {
+    private static boolean shouldRetry(final RetryControl readOnlyRetryControl, final Throwable attemptException,
+                                       final Throwable newlyChosenException,
+                                       final boolean onlyRuntimeExceptions, final BiPredicate<RetryControl, Throwable> retryPredicate) {
         try {
-            return retryPredicate.test(readOnlyRetryState, attemptException);
+            return retryPredicate.test(readOnlyRetryControl, attemptException);
         } catch (Throwable retryPredicateException) {
             if (onlyRuntimeExceptions && !isRuntime(retryPredicateException)) {
                 throw retryPredicateException;
@@ -232,7 +232,7 @@ public final class RetryState {
      * that breaking results in throwing an exception because the retry loop has more than one iteration only if the first iteration fails.
      * Does nothing and completes normally if called during the {@linkplain #isFirstAttempt() first attempt}.
      * This method is useful when the associated retryable activity detects that a retry attempt should not happen
-     * despite having been started. Must not be called more than once per {@link RetryState}.
+     * despite having been started. Must not be called more than once per {@link RetryControl}.
      * <p>
      * If the {@code predicate} completes abruptly, this method also completes abruptly with the same exception but does not break retrying;
      * if the {@code predicate} is {@code true}, then the method breaks retrying and completes abruptly by throwing the exception that is
@@ -240,7 +240,7 @@ public final class RetryState {
      * by the caller to complete the ongoing attempt.
      * <p>
      * If this method is called from
-     * {@linkplain RetryingSyncSupplier#RetryingSyncSupplier(RetryState, BinaryOperator, BiPredicate, Supplier)
+     * {@linkplain RetryingSyncSupplier#RetryingSyncSupplier(RetryControl, BinaryOperator, BiPredicate, Supplier)
      * retry predicate / failed result transformer}, the behavior is unspecified.
      *
      * @param predicate {@code true} iff retrying needs to be broken.
@@ -278,7 +278,7 @@ public final class RetryState {
      * but instead of throwing an exception, it relays it to the {@code callback}.
      * <p>
      * If this method is called from
-     * {@linkplain RetryingAsyncCallbackSupplier#RetryingAsyncCallbackSupplier(RetryState, BinaryOperator, BiPredicate, AsyncCallbackSupplier)
+     * {@linkplain RetryingAsyncCallbackSupplier#RetryingAsyncCallbackSupplier(RetryControl, BinaryOperator, BiPredicate, AsyncCallbackSupplier)
      * retry predicate / failed result transformer}, the behavior is unspecified.
      *
      * @return {@code true} iff the {@code callback} was completed, which happens in the same situations in which
@@ -346,7 +346,7 @@ public final class RetryState {
     /**
      * @see LoopControl#attach(AttachmentKey, Object, boolean)
      */
-    public <V> RetryState attach(final AttachmentKey<V> key, final V value, final boolean autoRemove) {
+    public <V> RetryControl attach(final AttachmentKey<V> key, final V value, final boolean autoRemove) {
         loopControl.attach(key, value, autoRemove);
         return this;
     }
@@ -360,7 +360,7 @@ public final class RetryState {
 
     @Override
     public String toString() {
-        return "RetryState{"
+        return "RetryControl{"
                 + "loopControl=" + loopControl
                 + ", attempts=" + (attempts == INFINITE_RETRIES ? "infinite" : attempts)
                 + ", exception=" + previouslyChosenException

@@ -28,7 +28,7 @@ import java.util.function.BinaryOperator;
  * {@link RetryingAsyncCallbackSupplier} may execute the original retryable asynchronous function multiple times sequentially,
  * while guaranteeing that the callback passed to {@link #get(SingleResultCallback)} is completed at most once.
  * <p>
- * The original function may additionally observe or control the retry loop via {@link RetryState}.
+ * The original function may additionally observe or control the retry loop via {@link RetryControl}.
  * <p>
  * This class is not part of the public API and may be removed or changed at any time.
  *
@@ -36,13 +36,13 @@ import java.util.function.BinaryOperator;
  */
 @NotThreadSafe
 public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupplier<R> {
-    private final RetryState state;
-    private final BiPredicate<RetryState, Throwable> retryPredicate;
+    private final RetryControl control;
+    private final BiPredicate<RetryControl, Throwable> retryPredicate;
     private final BinaryOperator<Throwable> onAttemptFailureOperator;
     private final AsyncCallbackSupplier<R> asyncFunction;
 
     /**
-     * @param state The {@link RetryState} to control the new {@link RetryingAsyncCallbackSupplier}.
+     * @param control The {@link RetryControl} to control the new {@link RetryingAsyncCallbackSupplier}.
      * @param onAttemptFailureOperator The action that is called once per failed attempt before (in the happens-before order) the
      * {@code retryPredicate}, regardless of whether the {@code retryPredicate} is called.
      * This action is allowed to have side effects.
@@ -68,17 +68,17 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
      *     <li>{@code onAttemptFailureOperator} completed normally;</li>
      *     <li>the most recent attempt is not known to be the last one.</li>
      * </ul>
-     * The {@code retryPredicate} accepts this {@link RetryState} and the exception from the most recent attempt,
-     * and may mutate the exception. The {@linkplain RetryState} advances to represent the state of a new attempt
+     * The {@code retryPredicate} accepts this {@link RetryControl} and the exception from the most recent attempt,
+     * and may mutate the exception. The {@linkplain RetryControl} advances to represent the state of a new attempt
      * after (in the happens-before order) testing the {@code retryPredicate}, and only if the predicate completes normally.
      * @param asyncFunction The retryable {@link AsyncCallbackSupplier} to be decorated.
      */
     public RetryingAsyncCallbackSupplier(
-            final RetryState state,
+            final RetryControl control,
             final BinaryOperator<Throwable> onAttemptFailureOperator,
-            final BiPredicate<RetryState, Throwable> retryPredicate,
+            final BiPredicate<RetryControl, Throwable> retryPredicate,
             final AsyncCallbackSupplier<R> asyncFunction) {
-        this.state = state;
+        this.control = control;
         this.retryPredicate = retryPredicate;
         this.onAttemptFailureOperator = onAttemptFailureOperator;
         this.asyncFunction = asyncFunction;
@@ -106,7 +106,7 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
         public void onResult(@Nullable final R result, @Nullable final Throwable t) {
             if (t != null) {
                 try {
-                    state.advanceOrThrow(t, onAttemptFailureOperator, retryPredicate);
+                    control.advanceOrThrow(t, onAttemptFailureOperator, retryPredicate);
                 } catch (Throwable failedResult) {
                     wrapped.onResult(null, failedResult);
                     return;

@@ -45,7 +45,7 @@ import com.mongodb.internal.async.AsyncSupplier;
 import com.mongodb.internal.async.MutableValue;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
-import com.mongodb.internal.async.function.RetryState;
+import com.mongodb.internal.async.function.RetryControl;
 import com.mongodb.internal.async.function.RetryingSyncSupplier;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncWriteBinding;
@@ -284,11 +284,11 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         assertFalse(unexecutedModels.isEmpty());
         SessionContext sessionContext = operationContext.getSessionContext();
         TimeoutContext timeoutContext = operationContext.getTimeoutContext();
-        RetryState retryState = initialRetryState(retryWritesSetting, timeoutContext);
+        RetryControl retryControl = initialRetryState(retryWritesSetting, timeoutContext);
         BatchEncoder batchEncoder = new BatchEncoder();
 
         Supplier<ExhaustiveClientBulkWriteCommandOkResponse> retryingBatchExecutor = decorateWriteWithRetries(
-                retryState, operationContext,
+                retryControl, operationContext,
                 // Each batch re-selects a server and re-checks out a connection because this is simpler,
                 // and it is allowed by https://jira.mongodb.org/browse/DRIVERS-2502.
                 // If connection pinning is required, `binding` handles that,
@@ -298,15 +298,15 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                             ConnectionDescription connectionDescription = connection.getDescription();
                             boolean effectiveRetryWrites = isRetryableWrite(
                                     retryWritesSetting, effectiveWriteConcern, connectionDescription, sessionContext);
-                            retryState.breakAndThrowIfRetryAnd(() -> !effectiveRetryWrites);
+                            retryControl.breakAndThrowIfRetryAnd(() -> !effectiveRetryWrites);
                             resultAccumulator.onNewServerAddress(connectionDescription.getServerAddress());
-                            retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true)
+                            retryControl.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true)
                                     .attach(AttachmentKeys.commandDescriptionSupplier(), () -> BULK_WRITE_COMMAND_NAME, false);
                             ClientBulkWriteCommand bulkWriteCommand = createBulkWriteCommand(
-                                    retryState, effectiveRetryWrites, effectiveWriteConcern, sessionContext, unexecutedModels, batchEncoder,
-                                    () -> retryState.attach(AttachmentKeys.retryableWriteCommandFlag(), true, true));
+                                    retryControl, effectiveRetryWrites, effectiveWriteConcern, sessionContext, unexecutedModels, batchEncoder,
+                                    () -> retryControl.attach(AttachmentKeys.retryableWriteCommandFlag(), true, true));
                             return executeBulkWriteCommandAndExhaustOkResponse(
-                                    retryState, connectionSource, connection, bulkWriteCommand, effectiveWriteConcern, operationContextWithMinRtt);
+                                    retryControl, connectionSource, connection, bulkWriteCommand, effectiveWriteConcern, operationContextWithMinRtt);
                         })
         );
 
@@ -326,7 +326,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 // Adding the `RetryableWriteError` label here is unnecessary at this point:
                 // applications cannot use it for implementing retries, and it is not even part of the public driver API.
                 // Unfortunately, certain unified tests incorrectly rely on this label to verify retries, resulting in this redundant code.
-                addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryState, mongoException);
+                addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryControl, mongoException);
             }
             throw mongoException;
         }
@@ -347,11 +347,11 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             assertFalse(unexecutedModels.isEmpty());
             SessionContext sessionContext = operationContext.getSessionContext();
             TimeoutContext timeoutContext = operationContext.getTimeoutContext();
-            RetryState retryState = initialRetryState(retryWritesSetting, timeoutContext);
+            RetryControl retryControl = initialRetryState(retryWritesSetting, timeoutContext);
             BatchEncoder batchEncoder = new BatchEncoder();
 
             AsyncCallbackSupplier<ExhaustiveClientBulkWriteCommandOkResponse> retryingBatchExecutor = decorateWriteWithRetriesAsync(
-                    retryState, operationContext,
+                    retryControl, operationContext,
                     // Each batch re-selects a server and re-checks out a connection because this is simpler,
                     // and it is allowed by https://jira.mongodb.org/browse/DRIVERS-2502.
                     // If connection pinning is required, `binding` handles that,
@@ -362,15 +362,15 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                     ConnectionDescription connectionDescription = connection.getDescription();
                                     boolean effectiveRetryWrites = isRetryableWrite(
                                             retryWritesSetting, effectiveWriteConcern, connectionDescription, sessionContext);
-                                    retryState.breakAndThrowIfRetryAnd(() -> !effectiveRetryWrites);
+                                    retryControl.breakAndThrowIfRetryAnd(() -> !effectiveRetryWrites);
                                     resultAccumulator.onNewServerAddress(connectionDescription.getServerAddress());
-                                    retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true)
+                                    retryControl.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true)
                                             .attach(AttachmentKeys.commandDescriptionSupplier(), () -> BULK_WRITE_COMMAND_NAME, false);
                                     ClientBulkWriteCommand bulkWriteCommand = createBulkWriteCommand(
-                                            retryState, effectiveRetryWrites, effectiveWriteConcern, sessionContext, unexecutedModels, batchEncoder,
-                                            () -> retryState.attach(AttachmentKeys.retryableWriteCommandFlag(), true, true));
+                                            retryControl, effectiveRetryWrites, effectiveWriteConcern, sessionContext, unexecutedModels, batchEncoder,
+                                            () -> retryControl.attach(AttachmentKeys.retryableWriteCommandFlag(), true, true));
                                     executeBulkWriteCommandAndExhaustOkResponseAsync(
-                                            retryState, connectionSource, connection, bulkWriteCommand, effectiveWriteConcern, operationContextWithMinRtt, executeAndExhaustCallback);
+                                            retryControl, connectionSource, connection, bulkWriteCommand, effectiveWriteConcern, operationContextWithMinRtt, executeAndExhaustCallback);
                                 }).finish(functionCallback);
                             })
             );
@@ -396,7 +396,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                         // Adding the `RetryableWriteError` label here is unnecessary at this point:
                         // applications cannot use it for implementing retries, and it is not even part of the public driver API.
                         // Unfortunately, certain unified tests incorrectly rely on this label to verify retries, resulting in this redundant code.
-                        addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryState, mongoException);
+                        addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryControl, mongoException);
                     }
                     throw mongoException;
                 } else {
@@ -415,7 +415,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
      */
     @Nullable
     private ExhaustiveClientBulkWriteCommandOkResponse executeBulkWriteCommandAndExhaustOkResponse(
-            final RetryState retryState,
+            final RetryControl retryControl,
             final ConnectionSource connectionSource,
             final Connection connection,
             final ClientBulkWriteCommand bulkWriteCommand,
@@ -434,7 +434,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             return null;
         }
         ClientBulkWriteCommandOkResponse response = new ClientBulkWriteCommandOkResponse(okResponseDocument);
-        List<List<BsonDocument>> cursorExhaustBatches = doWithRetriesDisabled(retryState, () ->
+        List<List<BsonDocument>> cursorExhaustBatches = doWithRetriesDisabled(retryControl, () ->
                 exhaustBulkWriteCommandOkResponseCursor(connectionSource, operationContext, connection, response));
         return createExhaustiveClientBulkWriteCommandOkResponse(
                 response,
@@ -443,10 +443,10 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     }
 
     /**
-     * @see #executeBulkWriteCommandAndExhaustOkResponse(RetryState, ConnectionSource, Connection, ClientBulkWriteCommand, WriteConcern, OperationContext)
+     * @see #executeBulkWriteCommandAndExhaustOkResponse(RetryControl, ConnectionSource, Connection, ClientBulkWriteCommand, WriteConcern, OperationContext)
      */
     private void executeBulkWriteCommandAndExhaustOkResponseAsync(
-            final RetryState retryState,
+            final RetryControl retryControl,
             final AsyncConnectionSource connectionSource,
             final AsyncConnection connection,
             final ClientBulkWriteCommand bulkWriteCommand,
@@ -470,7 +470,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             }
             ClientBulkWriteCommandOkResponse response = new ClientBulkWriteCommandOkResponse(okResponseDocument);
             beginAsync().<List<List<BsonDocument>>>thenSupply(exhaustCallback -> {
-                doWithRetriesDisabledAsync(retryState, (actionCallback) -> {
+                doWithRetriesDisabledAsync(retryControl, (actionCallback) -> {
                     exhaustBulkWriteCommandOkResponseCursorAsync(connectionSource, connection, response, operationContext, actionCallback);
                 }, exhaustCallback);
             }).<ExhaustiveClientBulkWriteCommandOkResponse>thenApply((cursorExhaustBatches, transformExhaustionResultCallback) -> {
@@ -483,7 +483,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     }
 
     /**
-     * @see #executeBulkWriteCommandAndExhaustOkResponse(RetryState, ConnectionSource, Connection, ClientBulkWriteCommand, WriteConcern, OperationContext)
+     * @see #executeBulkWriteCommandAndExhaustOkResponse(RetryControl, ConnectionSource, Connection, ClientBulkWriteCommand, WriteConcern, OperationContext)
      */
     private static ExhaustiveClientBulkWriteCommandOkResponse createExhaustiveClientBulkWriteCommandOkResponse(
             final ClientBulkWriteCommandOkResponse response,
@@ -503,40 +503,40 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     }
 
     /**
-     * This method disables retries on {@code outerRetryState} while executing the {@code action}.
+     * This method disables retries on {@code outerRetryControl} while executing the {@code action}.
      * This way, if the {@code action} completes abruptly, the outer {@link RetryingSyncSupplier} the execution is part of
      * does not make another attempt based on that exception.
      */
     private <R> R doWithRetriesDisabled(
-            final RetryState outerRetryState,
+            final RetryControl outerRetryControl,
             final Supplier<R> action) {
         // TODO-JAVA-5956 The current implementation incorrectly uses `retryableWriteCommandFlag` to achieve the behavior needed.
-        Optional<Boolean> originalRetryableWriteCommandFlag = outerRetryState.attachment(AttachmentKeys.retryableWriteCommandFlag());
+        Optional<Boolean> originalRetryableWriteCommandFlag = outerRetryControl.attachment(AttachmentKeys.retryableWriteCommandFlag());
 
         try {
-            outerRetryState.attach(AttachmentKeys.retryableWriteCommandFlag(), false, true);
+            outerRetryControl.attach(AttachmentKeys.retryableWriteCommandFlag(), false, true);
             return action.get();
         } finally {
-            originalRetryableWriteCommandFlag.ifPresent(value -> outerRetryState.attach(AttachmentKeys.retryableWriteCommandFlag(), value, true));
+            originalRetryableWriteCommandFlag.ifPresent(value -> outerRetryControl.attach(AttachmentKeys.retryableWriteCommandFlag(), value, true));
         }
     }
 
     /**
-     * @see #doWithRetriesDisabled(RetryState, Supplier)
+     * @see #doWithRetriesDisabled(RetryControl, Supplier)
      */
     private <R> void doWithRetriesDisabledAsync(
-            final RetryState retryState,
+            final RetryControl retryControl,
             final AsyncSupplier<R> action,
             final SingleResultCallback<R> callback) {
         beginAsync().<R>thenSupply(c -> {
             // TODO-JAVA-5956 The current implementation incorrectly uses `retryableWriteCommandFlag` to achieve the behavior needed.
-            Optional<Boolean> originalRetryableWriteCommandFlag = retryState.attachment(AttachmentKeys.retryableWriteCommandFlag());
+            Optional<Boolean> originalRetryableWriteCommandFlag = retryControl.attachment(AttachmentKeys.retryableWriteCommandFlag());
 
             beginAsync().<R>thenSupply(actionCallback -> {
-                retryState.attach(AttachmentKeys.retryableWriteCommandFlag(), false, true);
+                retryControl.attach(AttachmentKeys.retryableWriteCommandFlag(), false, true);
                 action.finish(actionCallback);
             }).thenAlwaysRunAndFinish(() -> {
-                originalRetryableWriteCommandFlag.ifPresent(value -> retryState.attach(AttachmentKeys.retryableWriteCommandFlag(), value, true));
+                originalRetryableWriteCommandFlag.ifPresent(value -> retryControl.attach(AttachmentKeys.retryableWriteCommandFlag(), value, true));
             }, c);
         }).finish(callback);
     }
@@ -586,7 +586,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     }
 
     private ClientBulkWriteCommand createBulkWriteCommand(
-            final RetryState retryState,
+            final RetryControl retryControl,
             final boolean effectiveRetryWrites,
             final WriteConcern effectiveWriteConcern,
             final SessionContext sessionContext,
@@ -612,7 +612,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                         options,
                         () -> {
                             retriesEnabler.run();
-                            return retryState.isFirstAttempt()
+                            return retryControl.isFirstAttempt()
                                     ? sessionContext.advanceTransactionNumber()
                                     : sessionContext.getTransactionNumber();
                         }));

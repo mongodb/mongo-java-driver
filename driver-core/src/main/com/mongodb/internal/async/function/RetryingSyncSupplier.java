@@ -25,7 +25,7 @@ import java.util.function.Supplier;
  * A decorator that implements automatic retrying of failed executions of a {@link Supplier}.
  * {@link RetryingSyncSupplier} may execute the original retryable function multiple times sequentially.
  * <p>
- * The original function may additionally observe or control the retry loop via {@link RetryState}.
+ * The original function may additionally observe or control the retry loop via {@link RetryControl}.
  * <p>
  * This class is not part of the public API and may be removed or changed at any time.
  *
@@ -33,13 +33,13 @@ import java.util.function.Supplier;
  */
 @NotThreadSafe
 public final class RetryingSyncSupplier<R> implements Supplier<R> {
-    private final RetryState state;
-    private final BiPredicate<RetryState, Throwable> retryPredicate;
+    private final RetryControl control;
+    private final BiPredicate<RetryControl, Throwable> retryPredicate;
     private final BinaryOperator<Throwable> onAttemptFailureOperator;
     private final Supplier<R> syncFunction;
 
     /**
-     * See {@link RetryingAsyncCallbackSupplier#RetryingAsyncCallbackSupplier(RetryState, BinaryOperator, BiPredicate, AsyncCallbackSupplier)}
+     * See {@link RetryingAsyncCallbackSupplier#RetryingAsyncCallbackSupplier(RetryControl, BinaryOperator, BiPredicate, AsyncCallbackSupplier)}
      * for the documentation of the parameters.
      *
      * @param onAttemptFailureOperator Even though the {@code onAttemptFailureOperator} accepts {@link Throwable},
@@ -48,11 +48,11 @@ public final class RetryingSyncSupplier<R> implements Supplier<R> {
      * only {@link RuntimeException}s are passed to it.
      */
     public RetryingSyncSupplier(
-            final RetryState state,
+            final RetryControl control,
             final BinaryOperator<Throwable> onAttemptFailureOperator,
-            final BiPredicate<RetryState, Throwable> retryPredicate,
+            final BiPredicate<RetryControl, Throwable> retryPredicate,
             final Supplier<R> syncFunction) {
-        this.state = state;
+        this.control = control;
         this.retryPredicate = retryPredicate;
         this.onAttemptFailureOperator = onAttemptFailureOperator;
         this.syncFunction = syncFunction;
@@ -64,10 +64,10 @@ public final class RetryingSyncSupplier<R> implements Supplier<R> {
             try {
                 return syncFunction.get();
             } catch (RuntimeException attemptException) {
-                state.advanceOrThrow(attemptException, onAttemptFailureOperator, retryPredicate);
+                control.advanceOrThrow(attemptException, onAttemptFailureOperator, retryPredicate);
             } catch (Exception attemptException) {
                 // wrap potential sneaky / Kotlin exceptions
-                state.advanceOrThrow(new RuntimeException(attemptException), onAttemptFailureOperator, retryPredicate);
+                control.advanceOrThrow(new RuntimeException(attemptException), onAttemptFailureOperator, retryPredicate);
             }
         }
     }

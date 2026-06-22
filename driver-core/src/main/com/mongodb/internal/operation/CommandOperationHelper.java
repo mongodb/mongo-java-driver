@@ -30,7 +30,7 @@ import com.mongodb.assertions.Assertions;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.TimeoutContext;
-import com.mongodb.internal.async.function.RetryState;
+import com.mongodb.internal.async.function.RetryControl;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.OperationContext.ServerDeprioritization;
 import com.mongodb.internal.operation.OperationHelper.ResourceSupplierInternalException;
@@ -46,7 +46,7 @@ import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
-import static com.mongodb.internal.async.function.RetryState.MAX_RETRIES;
+import static com.mongodb.internal.async.function.RetryControl.MAX_RETRIES;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -122,11 +122,11 @@ public final class CommandOperationHelper {
 
     /* Read Binding Helpers */
 
-    static RetryState initialRetryState(final boolean retry, final TimeoutContext timeoutContext) {
+    static RetryControl initialRetryState(final boolean retry, final TimeoutContext timeoutContext) {
         if (retry) {
-            return timeoutContext.hasTimeoutMS() ? new RetryState() : new RetryState(MAX_RETRIES);
+            return timeoutContext.hasTimeoutMS() ? new RetryControl() : new RetryControl(MAX_RETRIES);
         }
-        return new RetryState(0);
+        return new RetryControl(0);
     }
 
     private static final List<Integer> RETRYABLE_ERROR_CODES = asList(6, 7, 89, 91, 134, 189, 262, 9001, 13436, 13435, 11602, 11600, 10107);
@@ -165,22 +165,22 @@ public final class CommandOperationHelper {
         }
     }
 
-    static boolean loggingShouldAttemptToRetryRead(final RetryState retryState, final Throwable attemptFailure) {
+    static boolean loggingShouldAttemptToRetryRead(final RetryControl retryControl, final Throwable attemptFailure) {
         assertFalse(attemptFailure instanceof ResourceSupplierInternalException);
         boolean decision = isRetryableException(attemptFailure)
                 || (attemptFailure instanceof MongoSecurityException
                 && attemptFailure.getCause() != null && isRetryableException(attemptFailure.getCause()));
         if (!decision) {
-            logUnableToRetryCommand(retryState, attemptFailure);
+            logUnableToRetryCommand(retryControl, attemptFailure);
         }
         return decision;
     }
 
-    static boolean loggingShouldAttemptToRetryWriteAndAddRetryableLabel(final RetryState retryState, final Throwable attemptFailure) {
-        Throwable attemptFailureNotToBeRetried = addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryState, attemptFailure);
+    static boolean loggingShouldAttemptToRetryWriteAndAddRetryableLabel(final RetryControl retryControl, final Throwable attemptFailure) {
+        Throwable attemptFailureNotToBeRetried = addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryControl, attemptFailure);
         boolean decision = attemptFailureNotToBeRetried == null;
-        if (!decision && retryState.attachment(AttachmentKeys.retryableWriteCommandFlag()).orElse(false)) {
-            logUnableToRetryCommand(retryState, assertNotNull(attemptFailureNotToBeRetried));
+        if (!decision && retryControl.attachment(AttachmentKeys.retryableWriteCommandFlag()).orElse(false)) {
+            logUnableToRetryCommand(retryControl, assertNotNull(attemptFailureNotToBeRetried));
         }
         return decision;
     }
@@ -191,7 +191,7 @@ public final class CommandOperationHelper {
      * Otherwise, returns a {@link Throwable} that must not be retried.
      */
     @Nullable
-    static Throwable addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(final RetryState retryState, final Throwable attemptFailure) {
+    static Throwable addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(final RetryControl retryControl, final Throwable attemptFailure) {
         Throwable failure = attemptFailure instanceof ResourceSupplierInternalException ? attemptFailure.getCause() : attemptFailure;
         boolean decision = false;
         MongoException exceptionRetryableRegardlessOfCommand = null;
@@ -200,12 +200,12 @@ public final class CommandOperationHelper {
             decision = true;
             exceptionRetryableRegardlessOfCommand = (MongoException) failure;
         }
-        if (retryState.attachment(AttachmentKeys.retryableWriteCommandFlag()).orElse(false)) {
+        if (retryControl.attachment(AttachmentKeys.retryableWriteCommandFlag()).orElse(false)) {
             if (exceptionRetryableRegardlessOfCommand != null) {
                 /* We are going to retry even if `retryableWriteCommandFlag` is false,
                  * but we add the retryable label only if `retryableWriteCommandFlag` is true. */
                 exceptionRetryableRegardlessOfCommand.addLabel(RETRYABLE_WRITE_ERROR_LABEL);
-            } else if (decideRetryableAndAddRetryableWriteErrorLabel(failure, retryState.attachment(AttachmentKeys.maxWireVersion())
+            } else if (decideRetryableAndAddRetryableWriteErrorLabel(failure, retryControl.attachment(AttachmentKeys.maxWireVersion())
                     .orElse(null))) {
                 decision = true;
             }
@@ -251,11 +251,11 @@ public final class CommandOperationHelper {
         }
     }
 
-    static void logRetryCommand(final RetryState retryState, final OperationContext operationContext) {
-        if (LOGGER.isDebugEnabled() && !retryState.isFirstAttempt()) {
-            String commandDescription = retryState.attachment(AttachmentKeys.commandDescriptionSupplier()).map(Supplier::get).orElse(null);
-            Throwable exception = retryState.exception().orElseThrow(Assertions::fail);
-            int oneBasedAttempt = retryState.attempt() + 1;
+    static void logRetryCommand(final RetryControl retryControl, final OperationContext operationContext) {
+        if (LOGGER.isDebugEnabled() && !retryControl.isFirstAttempt()) {
+            String commandDescription = retryControl.attachment(AttachmentKeys.commandDescriptionSupplier()).map(Supplier::get).orElse(null);
+            Throwable exception = retryControl.exception().orElseThrow(Assertions::fail);
+            int oneBasedAttempt = retryControl.attempt() + 1;
             long operationId = operationContext.getId();
             LOGGER.debug(commandDescription == null
                     ? format("Retrying a command within the operation with operation ID %s due to the error \"%s\". Attempt number: #%d",
@@ -265,9 +265,9 @@ public final class CommandOperationHelper {
         }
     }
 
-    private static void logUnableToRetryCommand(final RetryState retryState, final Throwable originalError) {
+    private static void logUnableToRetryCommand(final RetryControl retryControl, final Throwable originalError) {
         if (LOGGER.isDebugEnabled()) {
-            String commandDescription = retryState.attachment(AttachmentKeys.commandDescriptionSupplier()).map(Supplier::get).orElse(null);
+            String commandDescription = retryControl.attachment(AttachmentKeys.commandDescriptionSupplier()).map(Supplier::get).orElse(null);
             LOGGER.debug(commandDescription == null
                     ? format("Unable to retry a command due to the error \"%s\"", originalError)
                     : format("Unable to retry the command '%s' due to the error \"%s\"", commandDescription, originalError));

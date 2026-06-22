@@ -23,7 +23,7 @@ import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
-import com.mongodb.internal.async.function.RetryState;
+import com.mongodb.internal.async.function.RetryControl;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.OperationContext;
@@ -175,12 +175,12 @@ public class ListCollectionsOperation<T> implements ReadOperationCursor<T> {
     public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
         OperationContext listCollectionsOperationContext = applyTimeoutModeToOperationContext(timeoutMode, operationContext);
 
-        RetryState retryState = initialRetryState(retryReads, listCollectionsOperationContext.getTimeoutContext());
-        Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, listCollectionsOperationContext, () ->
+        RetryControl retryControl = initialRetryState(retryReads, listCollectionsOperationContext.getTimeoutContext());
+        Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryControl, listCollectionsOperationContext, () ->
             withSourceAndConnection(binding::getReadConnectionSource, false, listCollectionsOperationContext, (source, connection, operationContextWithMinRTT) -> {
-                retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(operationContextWithMinRTT));
+                retryControl.breakAndThrowIfRetryAnd(() -> !canRetryRead(operationContextWithMinRTT));
                 try {
-                    return createReadCommandAndExecute(retryState, operationContextWithMinRTT, source, databaseName,
+                    return createReadCommandAndExecute(retryControl, operationContextWithMinRTT, source, databaseName,
                                                        getCommandCreator(), createCommandDecoder(), transformer(), connection);
                 } catch (MongoCommandException e) {
                     return rethrowIfNotNamespaceError(e,
@@ -196,16 +196,16 @@ public class ListCollectionsOperation<T> implements ReadOperationCursor<T> {
                              final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         OperationContext listCollectionsOperationContext = applyTimeoutModeToOperationContext(timeoutMode, operationContext);
 
-        RetryState retryState = initialRetryState(retryReads, listCollectionsOperationContext.getTimeoutContext());
+        RetryControl retryControl = initialRetryState(retryReads, listCollectionsOperationContext.getTimeoutContext());
         binding.retain();
         AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = decorateReadWithRetriesAsync(
-                retryState, listCollectionsOperationContext, (AsyncCallbackSupplier<AsyncBatchCursor<T>>) funcCallback ->
+                retryControl, listCollectionsOperationContext, (AsyncCallbackSupplier<AsyncBatchCursor<T>>) funcCallback ->
                     withAsyncSourceAndConnection(binding::getReadConnectionSource, false, listCollectionsOperationContext, funcCallback,
                             (source, connection, operationContextWithMinRtt, releasingCallback) -> {
-                                if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(operationContextWithMinRtt), releasingCallback)) {
+                                if (retryControl.breakAndCompleteIfRetryAnd(() -> !canRetryRead(operationContextWithMinRtt), releasingCallback)) {
                                     return;
                                 }
-                                createReadCommandAndExecuteAsync(retryState, operationContextWithMinRtt, source, databaseName,
+                                createReadCommandAndExecuteAsync(retryControl, operationContextWithMinRtt, source, databaseName,
                                                                  getCommandCreator(), createCommandDecoder(), asyncTransformer(), connection,
                                         (result, t) -> {
                                             if (t != null && !isNamespaceError(t)) {

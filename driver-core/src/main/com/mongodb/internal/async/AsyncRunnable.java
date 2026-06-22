@@ -18,7 +18,7 @@ package com.mongodb.internal.async;
 
 import com.mongodb.internal.async.function.AsyncCallbackLoop;
 import com.mongodb.internal.async.function.LoopControl;
-import com.mongodb.internal.async.function.RetryState;
+import com.mongodb.internal.async.function.RetryControl;
 import com.mongodb.internal.async.function.RetryingAsyncCallbackSupplier;
 
 import java.util.function.BooleanSupplier;
@@ -233,7 +233,7 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
     default AsyncRunnable thenRunRetryingWhile(final AsyncRunnable runnable, final Predicate<Throwable> shouldRetry) {
         return thenRun(callback -> {
             new RetryingAsyncCallbackSupplier<Void>(
-                    new RetryState(),
+                    new RetryControl(),
                     (previouslyChosenFailure, lastAttemptFailure) -> lastAttemptFailure,
                     (rs, lastAttemptFailure) -> shouldRetry.test(lastAttemptFailure),
                     // `finish` is required here instead of `unsafeFinish`

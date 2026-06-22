@@ -26,7 +26,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackFunction;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.async.function.AsyncCallbackTriFunction;
-import com.mongodb.internal.async.function.RetryState;
+import com.mongodb.internal.async.function.RetryControl;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.ConnectionSource;
@@ -241,23 +241,23 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final OperationContext operationContext) {
         MutableValue<BulkWriteBatch> batch = new MutableValue<>(maybeBatch);
         MutableValue<SourceAndConnection> sourceAndConnection = new MutableValue<>(maybeSourceAndConnection);
-        RetryState retryState = initialRetryState(
+        RetryControl retryControl = initialRetryState(
                 retryWrites, operationContext.getTimeoutContext());
         Supplier<BatchWithSourceAndConnection<SourceAndConnection>> retryingBatchExecutor = decorateWriteWithRetries(
-                retryState,
+                retryControl,
                 operationContext,
                 () -> {
                     SourceAndConnection reusedOrNewSourceAndConnection = reuseOrSelectServerAndCheckoutConnectionIfClosed(
                             sourceAndConnection.getNullable(), effectiveWriteConcern, binding,
-                            operationContext, retryState);
+                            operationContext, retryControl);
                     try {
                         sourceAndConnection.set(reusedOrNewSourceAndConnection);
                         ConnectionDescription connectionDescription = reusedOrNewSourceAndConnection.getConnection().getDescription();
-                        retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true);
+                        retryControl.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true);
                         batch.set(batch.getNullable() != null
                                 ? batch.get()
                                 : createFirstBatch(connectionDescription, reusedOrNewSourceAndConnection.getOperationContext(), effectiveWriteConcern));
-                        onBatch(batch.get(), retryState);
+                        onBatch(batch.get(), retryControl);
                         executeBatch(batch.get(), reusedOrNewSourceAndConnection, effectiveWriteConcern);
                         return new BatchWithSourceAndConnection<>(batch.get().getNextBatch(), reusedOrNewSourceAndConnection);
                     } catch (Throwable e) {
@@ -280,7 +280,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                 // Adding the `RetryableWriteError` label here is unnecessary at this point:
                 // applications cannot use it for implementing retries, and it is not even part of the public driver API.
                 // Unfortunately, certain unified tests incorrectly rely on this label to verify retries, resulting in this redundant code.
-                addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryState, e);
+                addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryControl, e);
             }
             throw e;
         }
@@ -300,25 +300,25 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
         beginAsync().<BatchWithSourceAndConnection<AsyncSourceAndConnection>>thenSupply(c -> {
             MutableValue<BulkWriteBatch> batch = new MutableValue<>(maybeBatch);
             MutableValue<AsyncSourceAndConnection> sourceAndConnection = new MutableValue<>(maybeSourceAndConnection);
-            RetryState retryState = initialRetryState(
+            RetryControl retryControl = initialRetryState(
                     retryWrites, operationContext.getTimeoutContext());
             AsyncCallbackSupplier<BatchWithSourceAndConnection<AsyncSourceAndConnection>> retryingBatchExecutor = decorateWriteWithRetriesAsync(
-                    retryState,
+                    retryControl,
                     operationContext,
                     supplierCallback -> {
                         beginAsync().<AsyncSourceAndConnection>thenSupply(reuseOrSelectServerAndCheckoutConnectionCallback -> {
                             reuseOrSelectServerAndCheckoutConnectionIfClosedAsync(
                                     sourceAndConnection.getNullable(), effectiveWriteConcern, binding,
-                                    operationContext, retryState, reuseOrSelectServerAndCheckoutConnectionCallback);
+                                    operationContext, retryControl, reuseOrSelectServerAndCheckoutConnectionCallback);
                         }).<BatchWithSourceAndConnection<AsyncSourceAndConnection>>thenApply((reusedOrNewSourceAndConnection, setSourceAndConnectionCallback) -> {
                             beginAsync().thenRun(executeBatchCallback -> {
                                 sourceAndConnection.set(reusedOrNewSourceAndConnection);
                                 ConnectionDescription connectionDescription = reusedOrNewSourceAndConnection.getConnection().getDescription();
-                                retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true);
+                                retryControl.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true);
                                 batch.set(batch.getNullable() != null
                                         ? batch.get()
                                         : createFirstBatch(connectionDescription, reusedOrNewSourceAndConnection.getOperationContext(), effectiveWriteConcern));
-                                onBatch(batch.get(), retryState);
+                                onBatch(batch.get(), retryControl);
                                 executeBatchAsync(batch.get(), reusedOrNewSourceAndConnection, effectiveWriteConcern, executeBatchCallback);
                             }).<BatchWithSourceAndConnection<AsyncSourceAndConnection>>thenSupply(createNextBatchCallback -> {
                                 createNextBatchCallback.complete(new BatchWithSourceAndConnection<>(batch.get().getNextBatch(), reusedOrNewSourceAndConnection));
@@ -344,7 +344,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                     // Adding the `RetryableWriteError` label here is unnecessary at this point:
                     // applications cannot use it for implementing retries, and it is not even part of the public driver API.
                     // Unfortunately, certain unified tests incorrectly rely on this label to verify retries, resulting in this redundant code.
-                    addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryState, e);
+                    addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryControl, e);
                 }
                 onErrorCallback.completeExceptionally(e);
             }).finish(c);
@@ -356,14 +356,14 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final WriteConcern effectiveWriteConcern,
             final WriteBinding binding,
             final OperationContext operationContext,
-            final RetryState retryState) {
+            final RetryControl retryControl) {
         if (sourceAndConnection == null || sourceAndConnection.isClosed()) {
             SourceAndConnection newSourceAndConnection = selectServerAndCheckoutConnection(binding, operationContext);
             try {
                 onNewConnection(
                         newSourceAndConnection.getConnection().getDescription(),
                         newSourceAndConnection.getOperationContext().getSessionContext(),
-                        effectiveWriteConcern, retryState);
+                        effectiveWriteConcern, retryControl);
             } catch (Throwable e) {
                 newSourceAndConnection.close();
                 throw e;
@@ -379,7 +379,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final WriteConcern effectiveWriteConcern,
             final AsyncWriteBinding binding,
             final OperationContext operationContext,
-            final RetryState retryState,
+            final RetryControl retryControl,
             final SingleResultCallback<AsyncSourceAndConnection> callback) {
         beginAsync().<AsyncSourceAndConnection>thenSupply(c -> {
             if (sourceAndConnection == null || sourceAndConnection.isClosed()) {
@@ -390,7 +390,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                         onNewConnection(
                                 newSourceAndConnection.getConnection().getDescription(),
                                 newSourceAndConnection.getOperationContext().getSessionContext(),
-                                effectiveWriteConcern, retryState);
+                                effectiveWriteConcern, retryControl);
                     } catch (Throwable e) {
                         newSourceAndConnection.close();
                         throw e;
@@ -433,10 +433,10 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final ConnectionDescription connectionDescription,
             final SessionContext sessionContext,
             final WriteConcern effectiveWriteConcern,
-            final RetryState retryState) {
+            final RetryControl retryControl) {
         boolean effectiveRetryWrites = isRetryableWrite(
                 retryWrites, effectiveWriteConcern, connectionDescription, sessionContext);
-        retryState.breakAndThrowIfRetryAnd(() -> !effectiveRetryWrites);
+        retryControl.breakAndThrowIfRetryAnd(() -> !effectiveRetryWrites);
         validateWriteRequests(connectionDescription, bypassDocumentValidation, writeRequests, effectiveWriteConcern);
     }
 
@@ -450,10 +450,10 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                 writeRequests, operationContext, comment, variables);
     }
 
-    private void onBatch(final BulkWriteBatch batch, final RetryState retryState) {
+    private void onBatch(final BulkWriteBatch batch, final RetryControl retryControl) {
         commandName = batch.getCommand().getFirstKey();
         String commandDescriptionToCapture = commandName;
-        retryState.attach(AttachmentKeys.retryableWriteCommandFlag(), batch.getRetryWrites(), false)
+        retryControl.attach(AttachmentKeys.retryableWriteCommandFlag(), batch.getRetryWrites(), false)
                 .attach(AttachmentKeys.commandDescriptionSupplier(), () -> commandDescriptionToCapture, false);
     }
 
