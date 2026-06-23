@@ -88,7 +88,6 @@ public final class JsonPoweredTestHelper {
                             if (fileSystem == null) {
                                 // On Windows, Path.toString() uses '\', but classpath resource names always use '/' (per Class.getResource contract)
                                 String filePathStr = filePath.toString().replace('\\', '/');
-                                
                                 files.add(getTestDocumentWithMetaData(filePathStr.substring(filePathStr.lastIndexOf(resourcePath))));
                             } else {
                                 files.add(getTestDocumentWithMetaData(filePath.toString()));
