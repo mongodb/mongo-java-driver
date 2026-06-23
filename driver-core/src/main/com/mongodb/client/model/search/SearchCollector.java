@@ -55,6 +55,23 @@ public interface SearchCollector extends Bson {
     }
 
     /**
+     * Returns a {@link SearchCollector} that groups results by values or ranges in the specified faceted fields and returns the count
+     * for each of those groups, faceting over the entire collection.
+     * <p>
+     * Unlike {@link #facet(SearchOperator, Iterable)}, this method omits the search operator, so the facets are computed
+     * across all documents in the collection.</p>
+     *
+     * @param facets The non-empty facet definitions.
+     * @return The requested {@link SearchCollector}.
+     * @mongodb.atlas.manual atlas-search/facet/ facet collector
+     */
+    @Beta({Reason.CLIENT, Reason.SERVER})
+    static FacetSearchCollector facet(final Iterable<? extends SearchFacet> facets) {
+        notNull("facets", facets);
+        return new SearchConstructibleBsonElement("facet", new Document("facets", combineToBson(facets)));
+    }
+
+    /**
      * Creates a {@link SearchCollector} from a {@link Bson} in situations when there is no builder method that better satisfies your needs.
      * This method cannot be used to validate the syntax.
      * <p>
