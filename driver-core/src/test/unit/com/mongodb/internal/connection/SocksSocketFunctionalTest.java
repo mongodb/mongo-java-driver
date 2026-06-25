@@ -87,7 +87,7 @@ class SocksSocketFunctionalTest {
                     t.join(CONNECT_TIMEOUT_MS);
                 } catch (InterruptedException ie) {
                     // Don't mask the primary exception (if any) with the join interruption;
-                    // just preserve the thread's interrupt status and continue.
+                    // just preserve the thread's interrupted status and continue.
                     Thread.currentThread().interrupt();
                 }
             }

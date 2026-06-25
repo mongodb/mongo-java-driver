@@ -24,6 +24,7 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.TransportSettings;
 import com.mongodb.internal.connection.netty.NettyStreamFactoryFactory;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
 
@@ -45,6 +46,11 @@ public final class StreamFactoryHelper {
                 @Override
                 public StreamFactory create(final SocketSettings socketSettings, final SslSettings sslSettings) {
                     return new SocketStreamFactory(inetAddressResolver, socketSettings, sslSettings);
+                }
+
+                @Override
+                public AsyncClientExecutor getClientExecutor() {
+                    return AsyncClientExecutor.unimplemented();
                 }
 
                 @Override

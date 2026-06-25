@@ -16,12 +16,21 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.connection.AsyncTransportSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
+import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.thread.AsyncClientExecutor;
+import com.mongodb.internal.thread.DaemonThreadFactory;
+import com.mongodb.internal.thread.MongoThreadPoolExecutor;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
 
 import java.nio.channels.AsynchronousChannelGroup;
+import java.time.Duration;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * A {@code StreamFactoryFactory} implementation for AsynchronousSocketChannel-based streams.
@@ -32,6 +41,8 @@ public final class AsynchronousSocketChannelStreamFactoryFactory implements Stre
     private final InetAddressResolver inetAddressResolver;
     @Nullable
     private final AsynchronousChannelGroup group;
+    private final MongoThreadPoolExecutor ownedExecutorBackingClientExecutor;
+    private final AsyncClientExecutor clientExecutor;
 
     public AsynchronousSocketChannelStreamFactoryFactory(final InetAddressResolver inetAddressResolver) {
         this(inetAddressResolver, null);
@@ -42,6 +53,12 @@ public final class AsynchronousSocketChannelStreamFactoryFactory implements Stre
             @Nullable final AsynchronousChannelGroup group) {
         this.inetAddressResolver = inetAddressResolver;
         this.group = group;
+        int availableProcessors = Runtime.getRuntime().availableProcessors();
+        ownedExecutorBackingClientExecutor = new MongoThreadPoolExecutor(
+                availableProcessors, availableProcessors, Duration.ofMinutes(5),
+                new LinkedBlockingQueue<>(), new DaemonThreadFactory("ClientExecutor"), Loggers.getLogger("client"));
+        ownedExecutorBackingClientExecutor.allowCoreThreadTimeOut(true);
+        clientExecutor = AsyncClientExecutor.backedBy(ownedExecutorBackingClientExecutor);
     }
 
     @Override
@@ -50,10 +67,32 @@ public final class AsynchronousSocketChannelStreamFactoryFactory implements Stre
                 inetAddressResolver, socketSettings, sslSettings, group);
     }
 
+    /**
+     * VAKOTODO create ticket, leave a TODO
+     * To make things right, this should be
+     * the {@linkplain AsyncClientExecutor} {@linkplain AsyncClientExecutor#backedBy(Executor) backed by} same {@link ExecutorService} that
+     * the {@link AsynchronousChannelGroup} in {@link AsynchronousSocketChannelStreamFactory} uses
+     * (see {@link #create(SocketSettings, SslSettings)}).
+     * That {@link ExecutorService} may be provided by an application via {@link AsyncTransportSettings#getExecutorService()}.
+     * But currently it is a separate {@link MongoThreadPoolExecutor}.
+     */
+    @Override
+    public AsyncClientExecutor getClientExecutor() {
+        return clientExecutor;
+    }
+
     @Override
     public void close() {
-        if (group != null) {
-            group.shutdown();
+        try {
+            clientExecutor.close();
+        } finally {
+            try {
+                if (group != null) {
+                    group.shutdown();
+                }
+            } finally {
+                ownedExecutorBackingClientExecutor.shutdown();
+            }
         }
     }
 }

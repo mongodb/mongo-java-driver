@@ -22,6 +22,7 @@ import com.mongodb.connection.SslSettings;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.connection.StreamFactory;
 import com.mongodb.internal.connection.StreamFactoryFactory;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
 import io.netty.buffer.ByteBufAllocator;
@@ -36,6 +37,7 @@ import io.netty.handler.ssl.SslProvider;
 
 import java.security.Security;
 import java.util.Objects;
+import java.util.concurrent.Executor;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -48,6 +50,7 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
 
     private final EventLoopGroup eventLoopGroup;
     private final boolean ownsEventLoopGroup;
+    private final AsyncClientExecutor clientExecutor;
     private final Class<? extends SocketChannel> socketChannelClass;
     private final ByteBufAllocator allocator;
     @Nullable
@@ -151,7 +154,7 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
         /**
          * Sets a {@linkplain SslContextBuilder#forClient() client-side} {@link SslContext io.netty.handler.ssl.SslContext},
          * which overrides the standard {@link SslSettings#getContext()}.
-         * By default it is {@code null} and {@link SslSettings#getContext()} is at play.
+         * By default, it is {@code null} and {@link SslSettings#getContext()} is at play.
          * <p>
          * This option may be used as a convenient way to utilize
          * <a href="https://www.openssl.org/">OpenSSL</a> as an alternative to the TLS/SSL protocol implementation in a JDK.
@@ -203,13 +206,27 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
                 sslContext);
     }
 
+    /**
+     * The {@linkplain AsyncClientExecutor} {@linkplain AsyncClientExecutor#backedBy(Executor) backed by} the same {@link EventLoopGroup}
+     * used by {@link #create(SocketSettings, SslSettings)} for a {@link StreamFactory}.
+     * That {@link EventLoopGroup} may be provided by an application via {@link NettyTransportSettings#getEventLoopGroup()}.
+     */
+    @Override
+    public AsyncClientExecutor getClientExecutor() {
+        return clientExecutor;
+    }
+
     @Override
     public void close() {
-         if (ownsEventLoopGroup) {
-             // ignore the returned Future.  This is in line with MongoClient behavior to not block waiting for connections to be returned
-             // to the pool
-             eventLoopGroup.shutdownGracefully();
-         }
+        try {
+            clientExecutor.close();
+        } finally {
+            if (ownsEventLoopGroup) {
+                // ignore the returned Future.  This is in line with MongoClient behavior to not block waiting for connections to be returned
+                // to the pool
+                eventLoopGroup.shutdownGracefully();
+            }
+        }
     }
 
     @Override
@@ -236,6 +253,7 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
         socketChannelClass = builder.socketChannelClass == null ? NioSocketChannel.class : builder.socketChannelClass;
         eventLoopGroup = builder.eventLoopGroup == null ? new NioEventLoopGroup() : builder.eventLoopGroup;
         ownsEventLoopGroup = builder.eventLoopGroup == null;
+        clientExecutor = AsyncClientExecutor.backedBy(eventLoopGroup);
         sslContext = builder.sslContext;
         inetAddressResolver = builder.inetAddressResolver;
     }

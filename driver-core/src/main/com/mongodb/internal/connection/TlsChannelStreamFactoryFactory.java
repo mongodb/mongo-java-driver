@@ -20,6 +20,7 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
+import com.mongodb.connection.AsyncTransportSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.internal.connection.tlschannel.BufferAllocator;
@@ -29,6 +30,7 @@ import com.mongodb.internal.connection.tlschannel.async.AsynchronousTlsChannel;
 import com.mongodb.internal.connection.tlschannel.async.AsynchronousTlsChannelGroup;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
 
@@ -47,6 +49,7 @@ import java.nio.channels.SocketChannel;
 import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -68,6 +71,7 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
 
     private final SelectorMonitor selectorMonitor;
     private final AsynchronousTlsChannelGroup group;
+    private final AsyncClientExecutor clientExecutor;
     private final PowerOfTwoBufferPool bufferPool = PowerOfTwoBufferPool.DEFAULT;
     private final InetAddressResolver inetAddressResolver;
 
@@ -78,6 +82,7 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
             @Nullable final ExecutorService executorService) {
         this.inetAddressResolver = inetAddressResolver;
         this.group = new AsynchronousTlsChannelGroup(executorService);
+        clientExecutor = AsyncClientExecutor.backedBy(group);
         selectorMonitor = new SelectorMonitor();
         selectorMonitor.start();
     }
@@ -93,10 +98,27 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
                 selectorMonitor);
     }
 
+    /**
+     * The {@linkplain AsyncClientExecutor} {@linkplain AsyncClientExecutor#backedBy(Executor) backed by} the same {@link ExecutorService}
+     * used by {@link #create(SocketSettings, SslSettings)} for a {@link StreamFactory}.
+     * That {@link ExecutorService} may be provided by an application via {@link AsyncTransportSettings#getExecutorService()}.
+     */
+    @Override
+    public AsyncClientExecutor getClientExecutor() {
+        return clientExecutor;
+    }
+
     @Override
     public void close() {
-        selectorMonitor.close();
-        group.shutdown();
+        try {
+            clientExecutor.close();
+        } finally {
+            try {
+                selectorMonitor.close();
+            } finally {
+                group.shutdown();
+            }
+        }
     }
 
     /**
