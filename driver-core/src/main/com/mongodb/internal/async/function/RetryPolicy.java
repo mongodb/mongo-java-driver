@@ -18,9 +18,11 @@ package com.mongodb.internal.async.function;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.lang.Nullable;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 
 /**
@@ -87,12 +89,25 @@ public interface RetryPolicy {
          * The information needed to start a retry attempt.
          */
         public static final class RetryAttemptInfo {
-            public RetryAttemptInfo() {
+            private final Duration backoff;
+
+            public RetryAttemptInfo(final Duration backoff) {
+                assertFalse(backoff.isNegative());
+                this.backoff = backoff;
+            }
+
+            /**
+             * A non-{@linkplain Duration#isNegative() negative} backoff.
+             */
+            public Duration getBackoff() {
+                return backoff;
             }
 
             @Override
             public String toString() {
-                return "RetryAttemptInfo{}";
+                return "RetryAttemptInfo{"
+                        + "backoff=" + backoff
+                        + '}';
             }
         }
     }

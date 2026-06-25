@@ -16,11 +16,14 @@
 package com.mongodb.internal.async.function;
 
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.internal.async.MutableValue;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.async.function.RetryPolicy.Decision.RetryAttemptInfo;
 import com.mongodb.internal.thread.AsyncClientExecutor;
-import com.mongodb.lang.Nullable;
 
-import static com.mongodb.assertions.Assertions.assertNotNull;
+import java.time.Duration;
+
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 
 /**
  * A decorator that implements automatic retrying of failed executions of an {@link AsyncCallbackSupplier}.
@@ -40,7 +43,8 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
     private final AsyncCallbackSupplier<R> asyncFunction;
 
     /**
-     * @param clientExecutor VAKOTODO document
+     * @param clientExecutor For {@linkplain AsyncClientExecutor#sleepAsync(Duration, SingleResultCallback) delaying} attempts
+     * according to {@link RetryAttemptInfo#getBackoff()}.
      * @param control The {@link RetryControl} to control the new {@link RetryingAsyncCallbackSupplier}.
      * @param asyncFunction The retryable {@link AsyncCallbackSupplier} to be decorated.
      */
@@ -55,39 +59,24 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
 
     @Override
     public void get(final SingleResultCallback<R> callback) {
-        // `asyncFunction` and `callback` are the only externally provided pieces of code for which we do not need to care about
-        // them throwing exceptions. If they do, that violates their contract and there is nothing we should do about it.
-        asyncFunction.get(new RetryingCallback(callback));
-    }
-
-    /**
-     * This callback is allowed to be completed more than once.
-     */
-    @NotThreadSafe
-    private class RetryingCallback implements SingleResultCallback<R> {
-        private final SingleResultCallback<R> wrapped;
-
-        RetryingCallback(final SingleResultCallback<R> callback) {
-            wrapped = callback;
-        }
-
-        @Override
-        public void onResult(@Nullable final R attemptSuccessfulResult, @Nullable final Throwable attemptFailedResult) {
-            if (attemptFailedResult != null) {
+        MutableValue<MutableValue<R>> asyncFunctionSuccessfulResult = new MutableValue<>();
+        beginAsync().thenRunWhileLoop(() -> asyncFunctionSuccessfulResult.getNullable() == null, iterationCallback -> {
+            beginAsync().<R>thenSupply(asyncFunctionCallback -> {
+                asyncFunction.get(asyncFunctionCallback);
+            }).thenConsume((attemptSuccessfulResult, onAttemptSuccessCallback) -> {
+                // `attemptSuccessfulResult` may be `null`, so we have to wrap it in `MutableValue` for the while check to notice it
+                asyncFunctionSuccessfulResult.set(new MutableValue<>(attemptSuccessfulResult));
+                onAttemptSuccessCallback.complete(onAttemptSuccessCallback);
+            }).onErrorIf(e -> true, (attemptFailedResult, onAttemptFailureCallback) -> {
                 if (attemptFailedResult instanceof Error) {
-                    wrapped.onResult(null, attemptFailedResult);
-                    return;
+                    onAttemptFailureCallback.completeExceptionally(attemptFailedResult);
+                } else {
+                    RetryAttemptInfo retryAttemptInfo = control.advanceOrThrow(attemptFailedResult);
+                    clientExecutor.sleepAsync(retryAttemptInfo.getBackoff(), onAttemptFailureCallback);
                 }
-                try {
-                    assertNotNull(control.advanceOrThrow(attemptFailedResult));
-                } catch (Throwable retryingSupplierFailedResult) {
-                    wrapped.onResult(null, retryingSupplierFailedResult);
-                    return;
-                }
-                asyncFunction.get(this);
-            } else {
-                wrapped.onResult(attemptSuccessfulResult, null);
-            }
-        }
+            }).finish(iterationCallback);
+        }).<R>thenSupply(c -> {
+            c.complete(asyncFunctionSuccessfulResult.get().getNullable());
+        }).finish(callback);
     }
 }

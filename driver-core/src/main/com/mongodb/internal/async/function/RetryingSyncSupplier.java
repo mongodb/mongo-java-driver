@@ -16,11 +16,16 @@
 package com.mongodb.internal.async.function;
 
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.internal.async.MutableValue;
+import com.mongodb.internal.async.function.RetryPolicy.Decision.RetryAttemptInfo;
 import com.mongodb.internal.thread.AsyncClientExecutor;
+import com.mongodb.lang.Nullable;
 
+import java.time.Duration;
 import java.util.function.Supplier;
 
-import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * A decorator that implements automatic retrying of failed executions of a {@link Supplier}.
@@ -46,15 +51,29 @@ public final class RetryingSyncSupplier<R> implements Supplier<R> {
     }
 
     @Override
+    @Nullable
     public R get() {
-        while (true) {
+        MutableValue<MutableValue<R>> asyncFunctionSuccessfulResult = new MutableValue<>();
+        while (asyncFunctionSuccessfulResult.getNullable() == null) {
             try {
-                return syncFunction.get();
+                R attemptSuccessfulResult = syncFunction.get();
+                // `attemptSuccessfulResult` may be `null`, so we have to wrap it in `MutableValue` for the while check to notice it
+                asyncFunctionSuccessfulResult.set(new MutableValue<>(attemptSuccessfulResult));
             } catch (Error attemptFailedResult) {
                 throw attemptFailedResult;
             } catch (Throwable attemptFailedResult) {
-                assertNotNull(control.advanceOrThrow(attemptFailedResult));
+                RetryAttemptInfo retryAttemptInfo = control.advanceOrThrow(attemptFailedResult);
+                sleep(retryAttemptInfo.getBackoff());
             }
+        }
+        return asyncFunctionSuccessfulResult.get().getNullable();
+    }
+
+    private void sleep(final Duration duration) {
+        try {
+            NANOSECONDS.sleep(duration.toNanos());
+        } catch (InterruptedException e) {
+            throw interruptAndCreateMongoInterruptedException(null, e);
         }
     }
 }

@@ -22,6 +22,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.time.Duration;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -40,7 +41,7 @@ final class RetryControlTest {
     @Test
     void isFirstAttempt() {
         RetryControl<RetryPolicy> retryControl = new RetryControl<>((retryContext, attemptFailedResult) ->
-                new Decision(attemptFailedResult, new RetryAttemptInfo()));
+                new Decision(attemptFailedResult, createRetryAttemptInfo()));
         assertTrue(retryControl.isFirstAttempt());
         retryControl.advanceOrThrow(new RuntimeException());
         assertFalse(retryControl.isFirstAttempt());
@@ -49,7 +50,7 @@ final class RetryControlTest {
     @Test
     void attempt() {
         RetryControl<RetryPolicy> retryControl = new RetryControl<>((retryContext, attemptFailedResult) ->
-                new Decision(attemptFailedResult, new RetryAttemptInfo()));
+                new Decision(attemptFailedResult, createRetryAttemptInfo()));
         assertEquals(0, retryControl.attempt());
         retryControl.advanceOrThrow(new RuntimeException());
         assertEquals(1, retryControl.attempt());
@@ -59,7 +60,7 @@ final class RetryControlTest {
 
     @Test
     void getPolicy() {
-        RetryPolicy retryPolicy = (retryContext, attemptFailedResult) -> new Decision(attemptFailedResult, new RetryAttemptInfo());
+        RetryPolicy retryPolicy = (retryContext, attemptFailedResult) -> new Decision(attemptFailedResult, createRetryAttemptInfo());
         RetryControl<RetryPolicy> retryControl = new RetryControl<>(retryPolicy);
         assertSame(retryPolicy, retryControl.getPolicy());
     }
@@ -67,7 +68,7 @@ final class RetryControlTest {
     @Test
     void advanceOrThrowPassesCorrectArgumentsToAttemptFailure() {
         RetryPolicy retryPolicy = MongoMockito.mock(RetryPolicy.class, retryPolicyMock -> {
-            when(retryPolicyMock.onAttemptFailure(any(), any())).thenReturn(new Decision(new RuntimeException(), new RetryAttemptInfo()));
+            when(retryPolicyMock.onAttemptFailure(any(), any())).thenReturn(new Decision(new RuntimeException(), createRetryAttemptInfo()));
         });
         RetryControl<RetryPolicy> retryControl = new RetryControl<>(retryPolicy);
         RuntimeException attemptFailedResult = new RuntimeException();
@@ -84,7 +85,7 @@ final class RetryControlTest {
 
     @Test
     void advanceOrThrowReturnsIfAnotherAttempt() {
-        RetryAttemptInfo immediateNextAttemptInfo = new RetryAttemptInfo();
+        RetryAttemptInfo immediateNextAttemptInfo = createRetryAttemptInfo();
         RetryPolicy retryPolicy = (retryContext, attemptFailedResult) -> new Decision(attemptFailedResult, immediateNextAttemptInfo);
         RetryControl<RetryPolicy> retryControl = new RetryControl<>(retryPolicy);
         RetryAttemptInfo actualImmediateNextAttemptInfo = retryControl.advanceOrThrow(new RuntimeException());
@@ -103,7 +104,7 @@ final class RetryControlTest {
     @Test
     void advanceOrThrowThrowsIfLastAttempt() {
         RuntimeException prospectiveFailedResult = new RuntimeException();
-        RetryPolicy retryPolicy = (retryContext, attemptFailedResult) -> new Decision(prospectiveFailedResult, new RetryAttemptInfo());
+        RetryPolicy retryPolicy = (retryContext, attemptFailedResult) -> new Decision(prospectiveFailedResult, createRetryAttemptInfo());
         RetryControl<RetryPolicy> retryControl = new RetryControl<>(retryPolicy);
         retryControl.advanceOrThrow(new RuntimeException());
         assertThrows(prospectiveFailedResult.getClass(), () -> retryControl.breakAndThrowIfRetryAnd(() -> true));
@@ -114,7 +115,7 @@ final class RetryControlTest {
     @Test
     void advanceOrThrowStoresProspectiveFailedResult() {
         RuntimeException prospectiveFailedResult = new RuntimeException();
-        RetryPolicy retryPolicy = (retryContext, attemptFailedResult) -> new Decision(prospectiveFailedResult, new RetryAttemptInfo());
+        RetryPolicy retryPolicy = (retryContext, attemptFailedResult) -> new Decision(prospectiveFailedResult, createRetryAttemptInfo());
         RetryControl<RetryPolicy> retryControl = new RetryControl<>(retryPolicy);
         retryControl.advanceOrThrow(new RuntimeException());
         Optional<Throwable> actualProspectiveFailedResult = retryControl.getProspectiveFailedResult();
@@ -127,7 +128,7 @@ final class RetryControlTest {
 
     @Test
     void advanceOrThrowOverwritesProspectiveFailedResult() {
-        RetryPolicy retryPolicy = (retryContext, attemptFailedResult) -> new Decision(attemptFailedResult, new RetryAttemptInfo());
+        RetryPolicy retryPolicy = (retryContext, attemptFailedResult) -> new Decision(attemptFailedResult, createRetryAttemptInfo());
         RetryControl<RetryPolicy> retryControl = new RetryControl<>(retryPolicy);
         retryControl.advanceOrThrow(new RuntimeException());
         RuntimeException prospectiveFailedResult = new RuntimeException();
@@ -144,7 +145,7 @@ final class RetryControlTest {
     @DisplayName("breakAndThrowIfRetryAnd does nothing if first attempt")
     void breakAndThrowIfRetryAndDoesNothingIfFirstAttempt() {
         RetryControl<RetryPolicy> retryControl = new RetryControl<>((retryContext, attemptFailedResult) ->
-                new Decision(attemptFailedResult, new RetryAttemptInfo()));
+                new Decision(attemptFailedResult, createRetryAttemptInfo()));
         assertDoesNotThrow(() -> retryControl.breakAndThrowIfRetryAnd(() -> true));
     }
 
@@ -152,7 +153,7 @@ final class RetryControlTest {
     @DisplayName("breakAndThrowIfRetryAnd throws if not first attempt")
     void breakAndThrowIfRetryAndThrowsIfNotFirstAttempt() {
         RuntimeException prospectiveFailedResult = new RuntimeException();
-        RetryPolicy retryPolicy = (retryContext, attemptFailedResult) -> new Decision(prospectiveFailedResult, new RetryAttemptInfo());
+        RetryPolicy retryPolicy = (retryContext, attemptFailedResult) -> new Decision(prospectiveFailedResult, createRetryAttemptInfo());
         RetryControl<RetryPolicy> retryControl = new RetryControl<>(retryPolicy);
         retryControl.advanceOrThrow(new RuntimeException());
         assertSame(prospectiveFailedResult,
@@ -163,7 +164,7 @@ final class RetryControlTest {
     @DisplayName("breakAndThrowIfRetryAnd propagates if predicate throws")
     void breakAndThrowIfRetryAndPropagatesIfPredicateThrows() {
         RetryControl<RetryPolicy> retryControl = new RetryControl<>((retryContext, attemptFailedResult) ->
-                new Decision(attemptFailedResult, new RetryAttemptInfo()));
+                new Decision(attemptFailedResult, createRetryAttemptInfo()));
         retryControl.advanceOrThrow(new RuntimeException());
         RuntimeException predicateException = new RuntimeException();
         assertSame(predicateException,
@@ -178,7 +179,7 @@ final class RetryControlTest {
     void breakAndThrowIfRetryAndAddsSuppressedProspectiveFailedResultIfPredicateThrows() {
         RuntimeException prospectiveFailedResult = new RuntimeException();
         RetryControl<RetryPolicy> retryControl = new RetryControl<>((retryContext, attemptFailedResult) ->
-                new Decision(prospectiveFailedResult, new RetryAttemptInfo()));
+                new Decision(prospectiveFailedResult, createRetryAttemptInfo()));
         retryControl.advanceOrThrow(new RuntimeException());
         RuntimeException predicateException = new RuntimeException();
         Throwable[] suppressed = assertThrows(predicateException.getClass(),
@@ -189,5 +190,9 @@ final class RetryControlTest {
                 () -> assertEquals(1, suppressed.length),
                 () -> assertSame(suppressed[0], prospectiveFailedResult)
         );
+    }
+
+    private static RetryAttemptInfo createRetryAttemptInfo() {
+        return new RetryAttemptInfo(Duration.ZERO);
     }
 }

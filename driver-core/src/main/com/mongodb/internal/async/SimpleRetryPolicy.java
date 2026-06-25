@@ -19,8 +19,12 @@ import com.mongodb.internal.async.function.RetryContext;
 import com.mongodb.internal.async.function.RetryPolicy;
 import com.mongodb.internal.async.function.RetryPolicy.Decision.RetryAttemptInfo;
 
+import java.time.Duration;
 import java.util.function.Predicate;
 
+/**
+ * {@link RetryAttemptInfo#getBackoff()} is always {@link Duration#isZero() zero}.
+ */
 final class SimpleRetryPolicy implements RetryPolicy {
     private final Predicate<Throwable> shouldRetry;
 
@@ -30,6 +34,6 @@ final class SimpleRetryPolicy implements RetryPolicy {
 
     @Override
     public Decision onAttemptFailure(final RetryContext retryContext, final Throwable attemptFailedResult) {
-        return new Decision(attemptFailedResult, shouldRetry.test(attemptFailedResult) ? new RetryAttemptInfo() : null);
+        return new Decision(attemptFailedResult, shouldRetry.test(attemptFailedResult) ? new RetryAttemptInfo(Duration.ZERO) : null);
     }
 }
