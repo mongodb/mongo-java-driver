@@ -25,7 +25,9 @@ import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
 import com.mongodb.internal.connection.ClientMetadata;
 import com.mongodb.internal.connection.Cluster;
+import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.internal.mockito.MongoMockito;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -63,7 +65,7 @@ class MongoClientTest {
     }
 
     @Test
-    void shouldCloseExternalResources() throws Exception {
+    void shouldCloseStreamFactoryFactory() {
 
         //given
         MongoDriverInformation mongoDriverInformation = MongoDriverInformation.builder().build();
@@ -74,11 +76,12 @@ class MongoClientTest {
                     when(mockedCluster.getClientMetadata())
                             .thenReturn(new ClientMetadata("test", mongoDriverInformation));
                 });
-        AutoCloseable externalResource = MongoMockito.mock(
-                AutoCloseable.class,
-                mockedExternalResource -> {
+        StreamFactoryFactory streamFactoryFactory = MongoMockito.mock(
+                StreamFactoryFactory.class,
+                mock -> {
+                    when(mock.getClientExecutor()).thenReturn(AsyncClientExecutor.unimplemented());
                     try {
-                        doNothing().when(mockedExternalResource).close();
+                        doNothing().when(mock).close();
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
@@ -88,13 +91,13 @@ class MongoClientTest {
                 cluster,
                 MongoClientSettings.builder().build(),
                 mongoDriverInformation,
-                externalResource);
+                streamFactoryFactory);
 
         //when
         mongoClient.close();
 
         //then
-        Mockito.verify(externalResource).close();
+        Mockito.verify(streamFactoryFactory).close();
         Mockito.verify(cluster).close();
     }
 }

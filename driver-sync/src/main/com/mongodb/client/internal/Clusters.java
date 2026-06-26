@@ -47,7 +47,7 @@ public final class Clusters {
         return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
                 settings.getConnectionPoolSettings(), InternalConnectionPoolSettings.builder().build(),
                 TimeoutSettings.create(settings), streamFactory,
-                TimeoutSettings.createHeartbeatSettings(settings), heartbeatStreamFactory,
+                TimeoutSettings.createHeartbeatSettings(settings), heartbeatStreamFactory, streamFactoryFactory.getClientExecutor(),
                 settings.getCredential(), settings.getLoggerSettings(), getCommandListener(settings.getCommandListeners()),
                 settings.getApplicationName(), mongoDriverInformation, settings.getCompressorList(), settings.getServerApi(),
                 settings.getDnsClient());

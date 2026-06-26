@@ -41,6 +41,7 @@ import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
@@ -860,7 +861,7 @@ public class MongoClient implements Closeable {
             ServerCursorAndNamespace cur;
             while ((cur = orphanedCursors.poll()) != null) {
                 OperationContext operationContext = new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
-                        new TimeoutContext(getTimeoutSettings()), options.getServerApi());
+                        new TimeoutContext(getTimeoutSettings()), delegate.getClientExecutor(), TracingManager.NO_OP, options.getServerApi(), null);
 
                 ReadWriteBinding binding = new SingleServerBinding(delegate.getCluster(), cur.serverCursor.getAddress());
                 try {

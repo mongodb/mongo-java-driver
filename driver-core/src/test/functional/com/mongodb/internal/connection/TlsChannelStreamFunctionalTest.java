@@ -21,7 +21,6 @@ import com.mongodb.MongoSocketOpenException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
@@ -162,7 +161,7 @@ class TlsChannelStreamFunctionalTest {
     }
 
     private static OperationContext createOperationContext(final int connectTimeoutMs) {
-        return simpleOperationContext(new TimeoutContext(TimeoutSettings.DEFAULT.withConnectTimeoutMS(connectTimeoutMs)));
+        return simpleOperationContext(TimeoutSettings.DEFAULT.withConnectTimeoutMS(connectTimeoutMs));
     }
 
     @Test

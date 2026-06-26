@@ -29,6 +29,7 @@ import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
 import com.mongodb.internal.connection.Cluster
 import com.mongodb.internal.session.ServerSessionPool
 import com.mongodb.internal.observability.micrometer.TracingManager
+import com.mongodb.internal.thread.AsyncClientExecutor
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.codecs.UuidCodec
@@ -260,6 +261,6 @@ class MongoClusterSpecification extends Specification {
         new MongoClusterImpl(null, cluster, settings.codecRegistry, null, null,
                 originator, operationExecutor, settings.readConcern, settings.readPreference, settings.retryReads, settings.retryWrites,
                 settings.enableOverloadRetargeting, null, serverSessionPool, TimeoutSettings.create(settings), settings.uuidRepresentation,
-                settings.writeConcern, TracingManager.NO_OP)
+                settings.writeConcern, AsyncClientExecutor.unimplemented(), TracingManager.NO_OP)
     }
 }

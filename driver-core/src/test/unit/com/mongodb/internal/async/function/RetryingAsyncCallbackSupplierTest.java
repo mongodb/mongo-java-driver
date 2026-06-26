@@ -16,7 +16,13 @@
 package com.mongodb.internal.async.function;
 
 import com.mongodb.internal.async.function.RetryingSyncSupplierTest.AssertingUnusedRetryPolicy;
+import com.mongodb.internal.thread.AsyncClientExecutor;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,11 +30,28 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class RetryingAsyncCallbackSupplierTest {
+    private ExecutorService executorService;
+    private AsyncClientExecutor clientExecutor;
+
+    @BeforeEach
+    void beforeEach() {
+        executorService = Executors.newSingleThreadScheduledExecutor();
+        clientExecutor = AsyncClientExecutor.backedBy(executorService);
+    }
+
+    @AfterEach
+    void afterEach() {
+        if (executorService != null) {
+            executorService.shutdownNow();
+        }
+    }
+
     @Test
     void doWhileDisabledThrowsAtFirstAttempt() {
         RetryControl<?> retryControl = new RetryControl<>(new AssertingUnusedRetryPolicy(false));
         RuntimeException exception = new RuntimeException();
         RetryingAsyncCallbackSupplier<Void> retryingSupplier = new RetryingAsyncCallbackSupplier<>(
+                clientExecutor,
                 retryControl,
                 callback -> {
                     retryControl.doWhileDisabledAsync(actionCallback -> {
@@ -44,6 +67,7 @@ final class RetryingAsyncCallbackSupplierTest {
         RetryControl<?> retryControl = new RetryControl<>(new AssertingUnusedRetryPolicy(true));
         RuntimeException exception = new RuntimeException();
         RetryingAsyncCallbackSupplier<Void> retryingSupplier = new RetryingAsyncCallbackSupplier<>(
+                clientExecutor,
                 retryControl,
                 callback -> {
                     if (retryControl.isFirstAttempt()) {
@@ -63,6 +87,7 @@ final class RetryingAsyncCallbackSupplierTest {
         RetryControl<?> retryControl = new RetryControl<>(new AssertingUnusedRetryPolicy(true));
         Object result = new Object();
         RetryingAsyncCallbackSupplier<Object> retryingSupplier = new RetryingAsyncCallbackSupplier<>(
+                clientExecutor,
                 retryControl,
                 callback -> {
                     beginAsync().thenSupply(c -> {
@@ -84,6 +109,7 @@ final class RetryingAsyncCallbackSupplierTest {
         RetryControl<?> retryControl = new RetryControl<>(new AssertingUnusedRetryPolicy(false));
         RuntimeException exception = new RuntimeException();
         RetryingAsyncCallbackSupplier<Void> retryingSupplier = new RetryingAsyncCallbackSupplier<>(
+                clientExecutor,
                 retryControl,
                 callback -> {
                     retryControl.doWhileDisabledAsync(actionCallback -> {

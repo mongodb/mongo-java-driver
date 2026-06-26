@@ -29,12 +29,15 @@ import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.connection.ClientMetadata;
 import com.mongodb.internal.connection.Cluster;
+import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.session.ServerSessionPool;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
@@ -56,6 +59,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static java.lang.String.format;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
 
@@ -69,29 +73,30 @@ public final class MongoClientImpl implements MongoClient {
 
     private static final Logger LOGGER = Loggers.getLogger("client");
     private final MongoClientSettings settings;
-    private final AutoCloseable externalResourceCloser;
+    private final StreamFactoryFactory streamFactoryFactory;
 
     private final MongoClusterImpl delegate;
     private final AtomicBoolean closed;
 
     public MongoClientImpl(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation, final Cluster cluster,
-            @Nullable final AutoCloseable externalResourceCloser) {
-        this(settings, mongoDriverInformation, cluster, null, externalResourceCloser);
+            final StreamFactoryFactory streamFactoryFactory) {
+        this(settings, mongoDriverInformation, cluster, null, streamFactoryFactory);
     }
 
-    public MongoClientImpl(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation, final Cluster cluster,
-            @Nullable final OperationExecutor executor) {
-        this(settings, mongoDriverInformation, cluster, executor, null);
+    @VisibleForTesting(otherwise = PRIVATE)
+    MongoClientImpl(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation, final Cluster cluster,
+            final StreamFactoryFactory streamFactoryFactory, @Nullable final OperationExecutor executor) {
+        this(settings, mongoDriverInformation, cluster, executor, streamFactoryFactory);
     }
 
     private MongoClientImpl(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation, final Cluster cluster,
-                            @Nullable final OperationExecutor executor, @Nullable final AutoCloseable externalResourceCloser) {
+                            @Nullable final OperationExecutor executor, final StreamFactoryFactory streamFactoryFactory) {
         notNull("settings", settings);
         notNull("cluster", cluster);
 
         TracingManager tracingManager = new TracingManager(settings.getObservabilitySettings());
         TimeoutSettings timeoutSettings = TimeoutSettings.create(settings);
-        ServerSessionPool serverSessionPool = new ServerSessionPool(cluster, timeoutSettings, settings.getServerApi());
+        ServerSessionPool serverSessionPool = new ServerSessionPool(cluster, streamFactoryFactory.getClientExecutor(), timeoutSettings, settings.getServerApi());
         ClientSessionHelper clientSessionHelper = new ClientSessionHelper(this, serverSessionPool, tracingManager);
 
         AutoEncryptionSettings autoEncryptSettings = settings.getAutoEncryptionSettings();
@@ -117,7 +122,7 @@ public final class MongoClientImpl implements MongoClient {
 
         this.delegate = new MongoClusterImpl(cluster, crypt, operationExecutor, serverSessionPool, clientSessionHelper,
                 mongoOperationPublisher);
-        this.externalResourceCloser = externalResourceCloser;
+        this.streamFactoryFactory = streamFactoryFactory;
         this.settings = settings;
         this.closed = new AtomicBoolean();
 
@@ -155,12 +160,10 @@ public final class MongoClientImpl implements MongoClient {
             }
             getServerSessionPool().close();
             getCluster().close();
-            if (externalResourceCloser != null) {
-                try {
-                    externalResourceCloser.close();
-                } catch (Exception e) {
-                    LOGGER.warn("Exception closing resource", e);
-                }
+            try {
+                streamFactoryFactory.close();
+            } catch (Exception e) {
+                LOGGER.warn("Exception closing resource", e);
             }
         }
     }
@@ -336,5 +339,12 @@ public final class MongoClientImpl implements MongoClient {
         ClientMetadata clientMetadata = getCluster().getClientMetadata();
         clientMetadata.append(mongoDriverInformation);
         LOGGER.info(format("MongoClient metadata has been updated to %s", clientMetadata.getBsonDocument()));
+    }
+
+    /**
+     * @see StreamFactoryFactory#getClientExecutor()
+     */
+    public AsyncClientExecutor getClientExecutor() {
+        return streamFactoryFactory.getClientExecutor();
     }
 }

@@ -24,9 +24,11 @@ import com.mongodb.TransactionOptions;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.connection.ClientMetadata;
 import com.mongodb.internal.connection.Cluster;
+import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.internal.mockito.MongoMockito;
 import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.session.ServerSessionPool;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.ListDatabasesPublisher;
@@ -204,11 +206,14 @@ public class MongoClientImplTest extends TestHelper {
 
     private MongoClientImpl createMongoClient() {
         MongoDriverInformation mongoDriverInformation = MongoDriverInformation.builder().driverName("reactive-streams").build();
-        Cluster mock = MongoMockito.mock(Cluster.class, cluster -> {
-            when(cluster.getClientMetadata())
+        Cluster cluster = MongoMockito.mock(Cluster.class, mock -> {
+            when(mock.getClientMetadata())
                     .thenReturn(new ClientMetadata("test", mongoDriverInformation));
         });
+        StreamFactoryFactory streamFactoryFactory = MongoMockito.mock(StreamFactoryFactory.class, mock -> {
+            when(mock.getClientExecutor()).thenReturn(AsyncClientExecutor.unimplemented());
+        });
         return new MongoClientImpl(MongoClientSettings.builder().build(),
-                mongoDriverInformation, mock, OPERATION_EXECUTOR);
+                mongoDriverInformation, cluster, streamFactoryFactory, OPERATION_EXECUTOR);
     }
 }

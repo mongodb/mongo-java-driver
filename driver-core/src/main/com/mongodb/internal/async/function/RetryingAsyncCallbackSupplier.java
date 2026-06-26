@@ -17,6 +17,7 @@ package com.mongodb.internal.async.function;
 
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.lang.Nullable;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
@@ -34,14 +35,20 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
  */
 @NotThreadSafe
 public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupplier<R> {
+    private final AsyncClientExecutor clientExecutor;
     private final RetryControl<?> control;
     private final AsyncCallbackSupplier<R> asyncFunction;
 
     /**
+     * @param clientExecutor VAKOTODO document
      * @param control The {@link RetryControl} to control the new {@link RetryingAsyncCallbackSupplier}.
      * @param asyncFunction The retryable {@link AsyncCallbackSupplier} to be decorated.
      */
-    public RetryingAsyncCallbackSupplier(final RetryControl<?> control, final AsyncCallbackSupplier<R> asyncFunction) {
+    public RetryingAsyncCallbackSupplier(
+            final AsyncClientExecutor clientExecutor,
+            final RetryControl<?> control,
+            final AsyncCallbackSupplier<R> asyncFunction) {
+        this.clientExecutor = clientExecutor;
         this.control = control;
         this.asyncFunction = asyncFunction;
     }
