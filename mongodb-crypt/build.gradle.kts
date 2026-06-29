@@ -67,7 +67,7 @@ val jnaResources: String = System.getProperty("jna.library.path", jnaLibsPath)
 
 // Download the libmongocrypt per-platform tarballs (and their signatures) to jnaDownloadsDir.
 // To upgrade: change downloadRevision, run `./gradlew clean downloadJnaLibs`, and verify the build.
-val downloadRevision = "1.18.1"
+val downloadRevision = "1.19.1"
 val downloadUrlBase = "https://github.com/mongodb/libmongocrypt/releases/download/$downloadRevision"
 
 /**
