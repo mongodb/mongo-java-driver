@@ -17,6 +17,7 @@ import ProjectExtensions.configureJarManifest
 import ProjectExtensions.configureMavenPublication
 import de.undercouch.gradle.tasks.download.Download
 import java.io.ByteArrayOutputStream
+import java.io.File
 import javax.inject.Inject
 import org.gradle.api.GradleException
 import org.gradle.process.ExecOperations
@@ -275,7 +276,16 @@ tasks.register<VerifyLibmongocryptTask>("verifyCryptLibs") {
     publicKey.set(file("$jnaDownloadsDir/$libmongocryptPublicKeyFile"))
     skipVerify.set(skipCryptVerify)
     expectedFingerprint.set("F2F5BF4ABF517E039AFCADAA81F1404DEBACA586")
-    gnupgHome.set(layout.buildDirectory.dir("jnaLibs/gnupg"))
+    // Keep the scratch GPG keyring under the system temp dir, not the module build dir. gpg derives
+    // its agent socket path from the homedir, and macOS caps AF_UNIX socket paths (sun_path) at 104
+    // bytes. A deeply-nested checkout pushes "<module>/build/jnaLibs/gnupg/S.gpg-agent" past that
+    // limit, so on a fresh keyring gpg fails ("can't connect to the gpg-agent: File name too long")
+    // and exits non-zero even though the import/verify would otherwise succeed. A short,
+    // checkout-independent homedir avoids this; the hash suffix isolates builds of different
+    // checkouts. verify() recreates this directory on every run, so a stable name is safe.
+    val cryptGpgHomeName =
+        "crypt-gpg-" + layout.buildDirectory.get().asFile.absolutePath.hashCode().toUInt().toString(16)
+    gnupgHome.set(layout.dir(providers.provider { File(System.getProperty("java.io.tmpdir"), cryptGpgHomeName) }))
     verificationStamp.set(layout.buildDirectory.file("jnaLibs/verified.stamp"))
 
     /* Bypass entirely when the caller has supplied a local libmongocrypt directory. */
