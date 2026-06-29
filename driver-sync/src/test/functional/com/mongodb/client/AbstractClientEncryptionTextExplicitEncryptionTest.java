@@ -52,6 +52,7 @@ import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static com.mongodb.fixture.EncryptionFixture.getKmsProviders;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -287,6 +288,18 @@ public abstract class AbstractClientEncryptionTextExplicitEncryptionTest {
         assertEncryptedTextEquals("FooBarBaz", result);
     }
 
+    @Test
+    @DisplayName("Case 11: can find an auto-encrypted diacritic-insensitively indexed document by substring")
+    public void test11AutoEncryptedDiacriticInsensitiveSubstring() {
+        autoEncryptedDatabase.getCollection("substring-ci-di")
+                .insertOne(new Document("encryptedText", "foocafébaz"));
+
+        BsonBinary substring = encryptForSubstring("cafe", false, false);
+        Document result = explicitEncryptedDatabase.getCollection("substring-ci-di")
+                .find(encStrContains(substring)).first();
+        assertEncryptedTextEquals("foocafébaz", result);
+    }
+
     @AfterEach
     @SuppressWarnings("try")
     public void cleanUp() {
@@ -364,6 +377,7 @@ public abstract class AbstractClientEncryptionTextExplicitEncryptionTest {
     }
 
     private static void assertEncryptedTextEquals(final String expectedText, final Document actualDocument) {
+        assertNotNull(actualDocument);
         assertEquals(expectedText, actualDocument.getString("encryptedText"));
     }
 
