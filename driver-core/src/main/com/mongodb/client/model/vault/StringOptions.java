@@ -22,18 +22,17 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 /**
- * Text options for a Queryable Encryption field that supports text queries.
+ * String options for a Queryable Encryption field that supports string queries (prefix, suffix, and substring).
  *
- * <p>Note: TextOptions is in Alpha and subject to backwards breaking changes.
+ * <p>Note: StringOptions is in Alpha and subject to backwards breaking changes. The {@code substring} query support
+ * is experimental (preview) and may change in a future non-major release.
  *
  * @since 5.6
  * @mongodb.server.release 8.2
  * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
- * @deprecated Use {@link StringOptions} instead.
  */
-@Deprecated
 @Alpha(Reason.SERVER)
-public class TextOptions {
+public class StringOptions {
     private Boolean caseSensitive;
     private Boolean diacriticSensitive;
     @Nullable
@@ -46,11 +45,11 @@ public class TextOptions {
     /**
      * Construct a new instance
      */
-    public TextOptions() {
+    public StringOptions() {
     }
 
     /**
-     * @return true if text indexes for this field are case sensitive.
+     * @return true if string indexes for this field are case sensitive.
      */
     public boolean getCaseSensitive() {
         return caseSensitive;
@@ -59,16 +58,16 @@ public class TextOptions {
     /**
      * Set case sensitivity
      *
-     * @param caseSensitive true if text indexes are case sensitive
+     * @param caseSensitive true if string indexes are case sensitive
      * @return this
      */
-    public TextOptions caseSensitive(final boolean caseSensitive) {
+    public StringOptions caseSensitive(final boolean caseSensitive) {
         this.caseSensitive = caseSensitive;
         return this;
     }
 
     /**
-     * @return true if text indexes are diacritic sensitive
+     * @return true if string indexes are diacritic sensitive
      */
     public boolean getDiacriticSensitive() {
         return diacriticSensitive;
@@ -77,10 +76,10 @@ public class TextOptions {
     /**
      * Set diacritic sensitivity
      *
-     * @param diacriticSensitive true if text indexes are diacritic sensitive
+     * @param diacriticSensitive true if string indexes are diacritic sensitive
      * @return this
      */
-    public TextOptions diacriticSensitive(final boolean diacriticSensitive) {
+    public StringOptions diacriticSensitive(final boolean diacriticSensitive) {
         this.diacriticSensitive = diacriticSensitive;
         return this;
     }
@@ -104,7 +103,7 @@ public class TextOptions {
      * @param prefixOptions the prefix options or null
      * @return this
      */
-    public TextOptions prefixOptions(@Nullable final BsonDocument prefixOptions) {
+    public StringOptions prefixOptions(@Nullable final BsonDocument prefixOptions) {
         this.prefixOptions = prefixOptions;
         return this;
     }
@@ -137,7 +136,7 @@ public class TextOptions {
      * @param suffixOptions the suffix options or null
      * @return this
      */
-    public TextOptions suffixOptions(@Nullable final BsonDocument suffixOptions) {
+    public StringOptions suffixOptions(@Nullable final BsonDocument suffixOptions) {
         this.suffixOptions = suffixOptions;
         return this;
     }
@@ -153,6 +152,8 @@ public class TextOptions {
 
     /**
      * Set the substring options.
+     *
+     * <p>Note: substring string queries are experimental (preview) and may change in a future non-major release.</p>
      *
      * <p>Expected to be a {@link BsonDocument} in the format of:</p>
      *
@@ -172,7 +173,7 @@ public class TextOptions {
      * @param substringOptions the substring options or null
      * @return this
      */
-    public TextOptions substringOptions(@Nullable final BsonDocument substringOptions) {
+    public StringOptions substringOptions(@Nullable final BsonDocument substringOptions) {
         this.substringOptions = substringOptions;
         return this;
     }
@@ -185,5 +186,4 @@ public class TextOptions {
     public BsonDocument getSubstringOptions() {
         return substringOptions;
     }
-
 }
