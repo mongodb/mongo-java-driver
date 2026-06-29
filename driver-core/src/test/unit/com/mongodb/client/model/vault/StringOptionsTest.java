@@ -19,6 +19,7 @@ package com.mongodb.client.model.vault;
 import org.bson.BsonDocument;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -51,5 +52,12 @@ class StringOptionsTest {
         assertNull(options.getPrefixOptions());
         assertNull(options.getSuffixOptions());
         assertNull(options.getSubstringOptions());
+    }
+
+    @Test
+    void shouldDefaultBooleanFlagsToFalse() {
+        StringOptions options = new StringOptions();
+        assertFalse(options.getCaseSensitive());
+        assertFalse(options.getDiacriticSensitive());
     }
 }

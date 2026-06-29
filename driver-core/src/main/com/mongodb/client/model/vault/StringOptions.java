@@ -33,8 +33,8 @@ import org.bson.BsonDocument;
  */
 @Alpha(Reason.SERVER)
 public class StringOptions {
-    private Boolean caseSensitive;
-    private Boolean diacriticSensitive;
+    private Boolean caseSensitive = false;
+    private Boolean diacriticSensitive = false;
     @Nullable
     private BsonDocument prefixOptions;
     @Nullable
