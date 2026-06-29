@@ -87,7 +87,7 @@ public final class MongoExplicitEncryptOptions {
         /**
          * The contention factor.
          *
-         * <p>Only applies when algorithm is "Indexed", "Range", or "TextPreview".</p>
+         * <p>Only applies when algorithm is "Indexed", "Range", or "String".</p>
          * @param contentionFactor the contention factor
          * @return this
          * @since 1.5
@@ -100,7 +100,7 @@ public final class MongoExplicitEncryptOptions {
         /**
          * The QueryType.
          *
-         * <p>Only applies when algorithm is "Indexed", "Range", or "TextPreview".</p>
+         * <p>Only applies when algorithm is "Indexed", "Range", or "String".</p>
          *
          * @param queryType the query type
          * @return this
@@ -128,7 +128,7 @@ public final class MongoExplicitEncryptOptions {
         /**
          * The Text Options.
          *
-         * <p>Only applies when algorithm is "TextPreview".</p>
+         * <p>Only applies when algorithm is "String".</p>
          *
          * @param textOptions the text options
          * @return this
