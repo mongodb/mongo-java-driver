@@ -34,6 +34,7 @@ public class EncryptOptions {
     private String queryType;
     private RangeOptions rangeOptions;
     private TextOptions textOptions;
+    private StringOptions stringOptions;
 
     /**
      * Construct an instance with the given algorithm.
@@ -54,12 +55,13 @@ public class EncryptOptions {
      *     <li>Indexed</li>
      *     <li>Unindexed</li>
      *     <li>Range</li>
-     *     <li>TextPreview</li>
+     *     <li>String</li>
      * </ul>
      *
-     * <p>The "TextPreview" algorithm is in preview and should be used for experimental workloads only.
-     *   These features are unstable and their security is not guaranteed until released as Generally Available (GA).
-     *   The GA version of these features may not be backwards compatible with the preview version.</p>
+     * <p>The "String" algorithm supports Queryable Encryption prefix and suffix string queries, and (in preview)
+     *   substring queries. Use the "String" algorithm with query types "prefix"/"suffix" (server 9.0+) or the
+     *   deprecated aliases "prefixPreview"/"suffixPreview" (server 8.2 to pre-9.0), and "substringPreview"
+     *   (experimental).</p>
      *
      * @return the encryption algorithm
      */
@@ -149,8 +151,12 @@ public class EncryptOptions {
     /**
      * The QueryType.
      *
-     * <p>Currently, we support only "equality", "range", "prefixPreview", "suffixPreview" or "substringPreview" queryType.</p>
-     * <p>It is an error to set queryType when the algorithm is not "Indexed", "Range" or "TextPreview".</p>
+     * <p>Currently, we support only "equality", "range", "prefix", "suffix", "prefixPreview", "suffixPreview" or
+     * "substringPreview" queryType.</p>
+     * <p>The "prefix", "suffix", "prefixPreview", "suffixPreview" and "substringPreview" query types are only valid
+     * with the "String" algorithm. "prefixPreview"/"suffixPreview" are deprecated aliases supported for servers 8.2
+     * to pre-9.0; use "prefix"/"suffix" on server 9.0+.</p>
+     * <p>It is an error to set queryType when the algorithm is not "Indexed", "Range" or "String".</p>
      * @param queryType the query type
      * @return this
      * @since 4.7
@@ -211,7 +217,9 @@ public class EncryptOptions {
      * @since 5.6
      * @mongodb.server.release 8.2
      * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
+     * @deprecated Use {@link #stringOptions(StringOptions)} instead.
      */
+    @Deprecated
     @Alpha(Reason.SERVER)
     public EncryptOptions textOptions(@Nullable final TextOptions textOptions) {
         this.textOptions = textOptions;
@@ -225,11 +233,43 @@ public class EncryptOptions {
      * @since 5.6
      * @mongodb.server.release 8.2
      * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
+     * @deprecated Use {@link #getStringOptions()} instead.
      */
+    @Deprecated
     @Alpha(Reason.SERVER)
     @Nullable
     public TextOptions getTextOptions() {
         return textOptions;
+    }
+
+    /**
+     * The StringOptions
+     *
+     * <p>It is an error to set StringOptions when the algorithm is not "String".
+     * @param stringOptions the string options
+     * @return this
+     * @since 5.6
+     * @mongodb.server.release 8.2
+     * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
+     */
+    @Alpha(Reason.SERVER)
+    public EncryptOptions stringOptions(@Nullable final StringOptions stringOptions) {
+        this.stringOptions = stringOptions;
+        return this;
+    }
+
+    /**
+     * Gets the StringOptions
+     * @see #stringOptions(StringOptions)
+     * @return the string options or null if not set
+     * @since 5.6
+     * @mongodb.server.release 8.2
+     * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
+     */
+    @Alpha(Reason.SERVER)
+    @Nullable
+    public StringOptions getStringOptions() {
+        return stringOptions;
     }
 
     @Override
