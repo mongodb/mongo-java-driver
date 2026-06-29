@@ -27,7 +27,7 @@ import org.bson.BsonDocument;
  * <p>Note: StringOptions is in Alpha and subject to backwards breaking changes. The {@code substring} query support
  * is experimental (preview) and may change in a future non-major release.
  *
- * @since 5.6
+ * @since 5.9
  * @mongodb.server.release 8.2
  * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
  */

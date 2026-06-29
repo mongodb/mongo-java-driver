@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class EncryptOptionsTest {
 
@@ -38,5 +39,11 @@ class EncryptOptionsTest {
         EncryptOptions options = new EncryptOptions("String").textOptions(textOptions);
         assertSame(textOptions, options.getTextOptions());
         assertNull(options.getStringOptions());
+    }
+
+    @Test
+    void toStringShouldIncludeStringOptions() {
+        EncryptOptions options = new EncryptOptions("String").stringOptions(new StringOptions());
+        assertTrue(options.toString().contains("stringOptions="));
     }
 }

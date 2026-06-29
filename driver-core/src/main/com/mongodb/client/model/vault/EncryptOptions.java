@@ -211,7 +211,7 @@ public class EncryptOptions {
     /**
      * The TextOptions
      *
-     * <p>It is an error to set TextOptions when the algorithm is not "TextPreview".
+     * <p>It is an error to set TextOptions when the algorithm is not "String".
      * @param textOptions the text options
      * @return this
      * @since 5.6
@@ -248,7 +248,7 @@ public class EncryptOptions {
      * <p>It is an error to set StringOptions when the algorithm is not "String".
      * @param stringOptions the string options
      * @return this
-     * @since 5.6
+     * @since 5.9
      * @mongodb.server.release 8.2
      * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
      */
@@ -262,7 +262,7 @@ public class EncryptOptions {
      * Gets the StringOptions
      * @see #stringOptions(StringOptions)
      * @return the string options or null if not set
-     * @since 5.6
+     * @since 5.9
      * @mongodb.server.release 8.2
      * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
      */
@@ -281,6 +281,8 @@ public class EncryptOptions {
                 + ", contentionFactor=" + contentionFactor
                 + ", queryType='" + queryType + '\''
                 + ", rangeOptions=" + rangeOptions
+                + ", textOptions=" + textOptions
+                + ", stringOptions=" + stringOptions
                 + '}';
     }
 }
