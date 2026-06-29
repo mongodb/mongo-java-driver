@@ -123,4 +123,3 @@ public final class EncryptOptionsHelper {
     private EncryptOptionsHelper() {
     }
 }
-
