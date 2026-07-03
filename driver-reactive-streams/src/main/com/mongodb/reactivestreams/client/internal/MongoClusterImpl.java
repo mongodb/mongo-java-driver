@@ -91,9 +91,10 @@ final class MongoClusterImpl implements MongoCluster {
     }
 
     @Override
+    @Nullable
     public Long getTimeout(final TimeUnit timeUnit) {
         Long timeoutMS = mongoOperationPublisher.getTimeoutMS();
-        return timeoutMS != null ? MILLISECONDS.convert(timeoutMS, timeUnit) : null;
+        return timeoutMS == null ? null : timeUnit.convert(timeoutMS, MILLISECONDS);
     }
 
     @Override
