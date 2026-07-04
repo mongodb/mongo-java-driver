@@ -63,7 +63,10 @@ import static util.JsonPoweredTestHelper.getTestDocument;
 public abstract class AbstractClientEncryptionTextExplicitEncryptionTest {
 
     private static final ServerVersion REQUIRED_LIB_MONGOCRYPT_VERSION = new ServerVersion(asList(1, 19, 1));
+    // GA "substring" (server 9.0+) needs libmongocrypt 1.20+; prefix/suffix GA and the preview paths need only 1.19/1.18.
+    private static final ServerVersion SUBSTRING_GA_LIB_MONGOCRYPT_VERSION = new ServerVersion(asList(1, 20, 0));
     private boolean gaSupported;
+    private boolean substringGaSupported;
     private MongoClient explicitEncryptedClient;
     private MongoClient autoEncryptedClient;
     private MongoDatabase explicitEncryptedDatabase;
@@ -82,6 +85,7 @@ public abstract class AbstractClientEncryptionTextExplicitEncryptionTest {
         assumeFalse(isStandalone());
 
         gaSupported = serverVersionAtLeast(9, 0);
+        substringGaSupported = gaSupported && getMongoCryptVersion().compareTo(SUBSTRING_GA_LIB_MONGOCRYPT_VERSION) >= 0;
 
         MongoNamespace dataKeysNamespace = new MongoNamespace("keyvault.datakeys");
         BsonDocument key1Document = bsonDocumentFromPath("keys/key1-document.json");
@@ -91,11 +95,13 @@ public abstract class AbstractClientEncryptionTextExplicitEncryptionTest {
         if (gaSupported) {
             createEncryptedCollection("prefix-suffix", "encryptedFields-prefix-suffix.json");
             createEncryptedCollection("prefix-suffix-ci-di", "encryptedFields-prefix-suffix-ci-di.json");
-            createEncryptedCollection("substring", "encryptedFields-substring.json");
-            createEncryptedCollection("substring-ci-di", "encryptedFields-substring-ci-di.json");
         } else {
             createEncryptedCollection("prefix-suffix-preview", "encryptedFields-prefix-suffix-preview.json");
             createEncryptedCollection("substring-preview", "encryptedFields-substring-preview.json");
+        }
+        if (substringGaSupported) {
+            createEncryptedCollection("substring", "encryptedFields-substring.json");
+            createEncryptedCollection("substring-ci-di", "encryptedFields-substring-ci-di.json");
         }
 
         MongoCollection<BsonDocument> dataKeysCollection = getMongoClient()
@@ -149,18 +155,21 @@ public abstract class AbstractClientEncryptionTextExplicitEncryptionTest {
                     .insertOne(new Document("_id", 0).append("encryptedText", prefixSuffixSeed));
         }
 
-        // Seed the substring collection (GA on 9.0+, preview on pre-9.0) with an encrypted "foobarbaz" document.
-        BsonBinary substringSeed = clientEncryption.encrypt(new BsonString("foobarbaz"),
-                new EncryptOptions("String")
-                        .keyId(key1Id)
-                        .contentionFactor(0L)
-                        .stringOptions(new StringOptions()
-                                .caseSensitive(true)
-                                .diacriticSensitive(true)
-                                .substringOptions(BsonDocument.parse(
-                                        "{strMaxLength: 10, strMaxQueryLength: 6, strMinQueryLength: 2}"))));
-        explicitEncryptedDatabase.getCollection(gaSupported ? "substring" : "substring-preview")
-                .insertOne(new Document("_id", 0).append("encryptedText", substringSeed));
+        // Seed the substring collection: GA "substring" on 9.0+/libmongocrypt 1.20+, preview on pre-9.0.
+        // Skipped on 9.0+ with libmongocrypt < 1.20, where neither path is available.
+        if (substringGaSupported || !gaSupported) {
+            BsonBinary substringSeed = clientEncryption.encrypt(new BsonString("foobarbaz"),
+                    new EncryptOptions("String")
+                            .keyId(key1Id)
+                            .contentionFactor(0L)
+                            .stringOptions(new StringOptions()
+                                    .caseSensitive(true)
+                                    .diacriticSensitive(true)
+                                    .substringOptions(BsonDocument.parse(
+                                            "{strMaxLength: 10, strMaxQueryLength: 6, strMinQueryLength: 2}"))));
+            explicitEncryptedDatabase.getCollection(gaSupported ? "substring" : "substring-preview")
+                    .insertOne(new Document("_id", 0).append("encryptedText", substringSeed));
+        }
     }
 
     @Test
@@ -210,6 +219,8 @@ public abstract class AbstractClientEncryptionTextExplicitEncryptionTest {
     @Test
     @DisplayName("Case 5: can find a document by substring")
     public void test5CanFindADocumentBySubstring() {
+        // On 9.0+, GA substring needs libmongocrypt 1.20+; on pre-9.0 the preview path applies.
+        assumeTrue(substringGaSupported || !gaSupported);
         String queryType = gaSupported ? "substring" : "substringPreview";
         String collection = gaSupported ? "substring" : "substring-preview";
         BsonBinary encrypted = encryptForSubstring("bar", queryType, true, true);
@@ -221,6 +232,8 @@ public abstract class AbstractClientEncryptionTextExplicitEncryptionTest {
     @Test
     @DisplayName("Case 6: assert no document found by substring")
     public void test6AssertNoDocumentFoundBySubstring() {
+        // On 9.0+, GA substring needs libmongocrypt 1.20+; on pre-9.0 the preview path applies.
+        assumeTrue(substringGaSupported || !gaSupported);
         String queryType = gaSupported ? "substring" : "substringPreview";
         String collection = gaSupported ? "substring" : "substring-preview";
         BsonBinary encrypted = encryptForSubstring("qux", queryType, true, true);
@@ -285,10 +298,10 @@ public abstract class AbstractClientEncryptionTextExplicitEncryptionTest {
     @DisplayName("Case 10: can find an auto-encrypted case-insensitively indexed document by substring")
     public void test10AutoEncryptedCaseInsensitiveSubstring() {
         // GA substring auto-encryption requires server 9.0+ and libmongocrypt 1.20+, like the prefix/suffix ci-di
-        // cases 8/9. The substring-ci-di collection is created only on 9.0+, so this case runs there.
+        // cases 8/9. The substring-ci-di collection is created only under those conditions, so this case runs there.
         // TODO-JAVA-6244: the spec's "skip on 9.0.0+" for this case contradicts its own substring-ci-di 9.0+ setup
         // requirement; running on 9.0+ pending upstream spec clarification (DRIVERS-3540).
-        assumeTrue(gaSupported);
+        assumeTrue(substringGaSupported);
         autoEncryptedDatabase.getCollection("substring-ci-di")
                 .insertOne(new Document("encryptedText", "FooBarBaz"));
 
@@ -301,8 +314,8 @@ public abstract class AbstractClientEncryptionTextExplicitEncryptionTest {
     @Test
     @DisplayName("Case 11: can find an auto-encrypted diacritic-insensitively indexed document by substring")
     public void test11AutoEncryptedDiacriticInsensitiveSubstring() {
-        // Runs on server 9.0+ with GA substring, like Case 10 (see its note).
-        assumeTrue(gaSupported);
+        // Runs on server 9.0+ with GA substring (libmongocrypt 1.20+), like Case 10 (see its note).
+        assumeTrue(substringGaSupported);
         autoEncryptedDatabase.getCollection("substring-ci-di")
                 .insertOne(new Document("encryptedText", "foocafébaz"));
 
