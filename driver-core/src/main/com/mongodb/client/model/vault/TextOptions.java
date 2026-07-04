@@ -34,8 +34,8 @@ import org.bson.BsonDocument;
 @Deprecated
 @Alpha(Reason.SERVER)
 public class TextOptions {
-    private Boolean caseSensitive = false;
-    private Boolean diacriticSensitive = false;
+    private boolean caseSensitive;
+    private boolean diacriticSensitive;
     @Nullable
     private BsonDocument prefixOptions;
     @Nullable
