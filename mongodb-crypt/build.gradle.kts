@@ -76,7 +76,7 @@ val downloadUrlBase = "https://github.com/mongodb/libmongocrypt/releases/downloa
  * layout differ per platform, so both must be tracked explicitly.
  *
  * libmongocrypt's signature assets replace the `.tar.gz` suffix with `.asc` (e.g.
- * `libmongocrypt-linux-x86_64-glibc_2_7-nocrypto-1.18.1.asc`).
+ * `libmongocrypt-linux-x86_64-glibc_2_7-nocrypto-<version>.asc`).
  */
 data class CryptBinary(val jnaPlatform: String, val tarball: String, val libPathInTarball: String) {
     val signature: String = tarball.removeSuffix(".tar.gz") + ".asc"
