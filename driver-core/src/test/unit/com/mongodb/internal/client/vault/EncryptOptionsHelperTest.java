@@ -63,4 +63,26 @@ class EncryptOptionsHelperTest {
                 new EncryptOptions("Indexed"));
         assertNull(result.getTextOptions());
     }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void shouldPreferStringOptionsOverDeprecatedTextOptionsWhenBothSet() {
+        EncryptOptions options = new EncryptOptions("String")
+                .stringOptions(new StringOptions()
+                        .caseSensitive(true)
+                        .diacriticSensitive(true)
+                        .prefixOptions(BsonDocument.parse("{strMaxQueryLength: 10, strMinQueryLength: 2}")))
+                .textOptions(new TextOptions()
+                        .caseSensitive(false)
+                        .diacriticSensitive(false)
+                        .suffixOptions(BsonDocument.parse("{strMaxQueryLength: 5, strMinQueryLength: 1}")));
+
+        MongoExplicitEncryptOptions result = EncryptOptionsHelper.asMongoExplicitEncryptOptions(options);
+
+        // stringOptions wins: prefix present (from stringOptions), no suffix (from the ignored textOptions),
+        // and caseSensitive/diacriticSensitive reflect stringOptions (true), not textOptions (false).
+        assertEquals(BsonDocument.parse("{caseSensitive: true, diacriticSensitive: true, "
+                        + "prefix: {strMaxQueryLength: 10, strMinQueryLength: 2}}"),
+                result.getTextOptions());
+    }
 }

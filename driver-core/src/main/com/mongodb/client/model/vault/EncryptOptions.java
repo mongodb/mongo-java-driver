@@ -58,10 +58,9 @@ public class EncryptOptions {
      *     <li>String</li>
      * </ul>
      *
-     * <p>The "String" algorithm supports Queryable Encryption prefix and suffix string queries, and (in preview)
-     *   substring queries. Use the "String" algorithm with query types "prefix"/"suffix" (server 9.0+) or the
-     *   deprecated aliases "prefixPreview"/"suffixPreview" (server 8.2 to pre-9.0), and "substringPreview"
-     *   (experimental).</p>
+     * <p>The "String" algorithm supports Queryable Encryption prefix, suffix, and substring string queries.
+     *   Use the "String" algorithm with query types "prefix"/"suffix"/"substring" (server 9.0+) or the deprecated
+     *   aliases "prefixPreview"/"suffixPreview"/"substringPreview" (server 8.2 to pre-9.0).</p>
      *
      * @return the encryption algorithm
      */
@@ -151,11 +150,11 @@ public class EncryptOptions {
     /**
      * The QueryType.
      *
-     * <p>Currently, we support only "equality", "range", "prefix", "suffix", "prefixPreview", "suffixPreview" or
-     * "substringPreview" queryType.</p>
-     * <p>The "prefix", "suffix", "prefixPreview", "suffixPreview" and "substringPreview" query types are only valid
-     * with the "String" algorithm. "prefixPreview"/"suffixPreview" are deprecated aliases supported for servers 8.2
-     * to pre-9.0; use "prefix"/"suffix" on server 9.0+.</p>
+     * <p>Currently, we support only "equality", "range", "prefix", "suffix", "substring", "prefixPreview",
+     * "suffixPreview" or "substringPreview" queryType.</p>
+     * <p>The "prefix", "suffix", "substring", "prefixPreview", "suffixPreview" and "substringPreview" query types are
+     * only valid with the "String" algorithm. "prefixPreview"/"suffixPreview"/"substringPreview" are deprecated
+     * aliases supported for servers 8.2 to pre-9.0; use "prefix"/"suffix"/"substring" on server 9.0+.</p>
      * <p>It is an error to set queryType when the algorithm is not "Indexed", "Range" or "String".</p>
      * @param queryType the query type
      * @return this

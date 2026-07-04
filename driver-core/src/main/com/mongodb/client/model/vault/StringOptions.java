@@ -24,8 +24,7 @@ import org.bson.BsonDocument;
 /**
  * String options for a Queryable Encryption field that supports string queries (prefix, suffix, and substring).
  *
- * <p>Note: StringOptions is in Alpha and subject to backwards breaking changes. The {@code substring} query support
- * is experimental (preview) and may change in a future non-major release.
+ * <p>Note: StringOptions is in Alpha and subject to backwards breaking changes.
  *
  * @since 5.9
  * @mongodb.server.release 8.2
@@ -152,8 +151,6 @@ public class StringOptions {
 
     /**
      * Set the substring options.
-     *
-     * <p>Note: substring string queries are experimental (preview) and may change in a future non-major release.</p>
      *
      * <p>Expected to be a {@link BsonDocument} in the format of:</p>
      *
