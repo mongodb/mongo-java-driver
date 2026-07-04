@@ -63,7 +63,8 @@ import static util.JsonPoweredTestHelper.getTestDocument;
 public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
 
     private static final ServerVersion REQUIRED_LIB_MONGOCRYPT_VERSION = new ServerVersion(asList(1, 19, 1));
-    // GA "substring" (server 9.0+) needs libmongocrypt 1.20+; prefix/suffix GA and the preview paths need only 1.19/1.18.
+    // GA "substring" (server 9.0+) additionally needs libmongocrypt 1.20+; the class-level 1.19.1 minimum below
+    // already covers prefix/suffix GA and the pre-9.0 preview query types.
     private static final ServerVersion SUBSTRING_GA_LIB_MONGOCRYPT_VERSION = new ServerVersion(asList(1, 20, 0));
     private boolean gaSupported;
     private boolean substringGaSupported;

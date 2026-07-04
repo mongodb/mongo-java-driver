@@ -131,7 +131,7 @@ public final class MongoExplicitEncryptOptions {
          * <p>Only applies when algorithm is "String". The method name mirrors the libmongocrypt {@code textOptions}
          * BSON field, which is unchanged.</p>
          *
-         * @param textOptions the string options
+         * @param textOptions the string options, as a BSON document
          * @return this
          * @since 5.6
          */

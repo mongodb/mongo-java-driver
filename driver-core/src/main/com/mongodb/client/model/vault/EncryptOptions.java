@@ -169,7 +169,7 @@ public class EncryptOptions {
     /**
      * Gets the QueryType.
      *
-     * <p>Currently, we support only "equality" or "range" queryType.</p>
+     * <p>See {@link #queryType(String)} for the supported query types.</p>
      * @see #queryType(String)
      * @return the queryType or null
      * @since 4.7
