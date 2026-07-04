@@ -60,7 +60,7 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static util.JsonPoweredTestHelper.getTestDocument;
 
-public abstract class AbstractClientEncryptionTextExplicitEncryptionTest {
+public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
 
     private static final ServerVersion REQUIRED_LIB_MONGOCRYPT_VERSION = new ServerVersion(asList(1, 19, 1));
     // GA "substring" (server 9.0+) needs libmongocrypt 1.20+; prefix/suffix GA and the preview paths need only 1.19/1.18.
@@ -299,7 +299,7 @@ public abstract class AbstractClientEncryptionTextExplicitEncryptionTest {
     public void test10AutoEncryptedCaseInsensitiveSubstring() {
         // GA substring auto-encryption requires server 9.0+ and libmongocrypt 1.20+, like the prefix/suffix ci-di
         // cases 8/9. The substring-ci-di collection is created only under those conditions, so this case runs there.
-        // TODO-JAVA-6244: the spec's "skip on 9.0.0+" for this case contradicts its own substring-ci-di 9.0+ setup
+        // TODO JAVA-6244 the spec's "skip on 9.0.0+" for this case contradicts its own substring-ci-di 9.0+ setup
         // requirement; running on 9.0+ pending upstream spec clarification (DRIVERS-3540).
         assumeTrue(substringGaSupported);
         autoEncryptedDatabase.getCollection("substring-ci-di")
