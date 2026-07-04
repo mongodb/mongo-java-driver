@@ -138,8 +138,9 @@ tasks.register<Download>("downloadCryptLibs") {
  * Per DRIVERS-3441, drivers that bundle libmongocrypt must verify GPG signatures of
  * release tarballs against the official MongoDB libmongocrypt signing key.
  *
- * The keyring is kept under `build/` so this task does not touch the developer's
- * system GPG keyring and so `./gradlew clean` resets the trust state.
+ * The task uses a scratch keyring (not the developer's system GPG keyring), which {@code verify()}
+ * recreates on every run so the trust state is always reset. It lives under the system temp dir
+ * rather than {@code build/} — see the {@code gnupgHome} assignment in {@code verifyCryptLibs} for why.
  */
 val skipCryptVerify = providers.gradleProperty("skipCryptVerify").map { it.toBoolean() }.orElse(false)
 
