@@ -251,7 +251,6 @@ public class EncryptOptions {
      * @mongodb.server.release 8.2
      * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
      */
-    @Alpha(Reason.SERVER)
     public EncryptOptions stringOptions(@Nullable final StringOptions stringOptions) {
         this.stringOptions = stringOptions;
         return this;
@@ -265,7 +264,6 @@ public class EncryptOptions {
      * @mongodb.server.release 8.2
      * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
      */
-    @Alpha(Reason.SERVER)
     @Nullable
     public StringOptions getStringOptions() {
         return stringOptions;

@@ -16,21 +16,16 @@
 
 package com.mongodb.client.model.vault;
 
-import com.mongodb.annotations.Alpha;
-import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 /**
  * String options for a Queryable Encryption field that supports string queries (prefix, suffix, and substring).
  *
- * <p>Note: StringOptions is in Alpha and subject to backwards breaking changes.
- *
  * @since 5.9
  * @mongodb.server.release 8.2
  * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
  */
-@Alpha(Reason.SERVER)
 public class StringOptions {
     private boolean caseSensitive;
     private boolean diacriticSensitive;
