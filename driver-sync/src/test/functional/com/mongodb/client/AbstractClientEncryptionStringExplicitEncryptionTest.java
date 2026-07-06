@@ -284,10 +284,6 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
     @Test
     @DisplayName("Case 10: can find an auto-encrypted case-insensitively indexed document by substring")
     public void test10AutoEncryptedCaseInsensitiveSubstring() {
-        // GA substring auto-encryption requires server 9.0+ (and libmongocrypt 1.20+, which the driver bundles),
-        // like the prefix/suffix ci-di cases 8/9; the substring-ci-di collection is created only on 9.0+.
-        // TODO JAVA-6244 the spec's "skip on 9.0.0+" for this case contradicts its own substring-ci-di 9.0+ setup
-        // requirement; running on 9.0+ pending upstream spec clarification (DRIVERS-3540).
         assumeTrue(gaSupported);
         autoEncryptedDatabase.getCollection("substring-ci-di")
                 .insertOne(new Document("encryptedText", "FooBarBaz"));
@@ -301,7 +297,6 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
     @Test
     @DisplayName("Case 11: can find an auto-encrypted diacritic-insensitively indexed document by substring")
     public void test11AutoEncryptedDiacriticInsensitiveSubstring() {
-        // Runs on server 9.0+ with GA substring, like Case 10 (see its note).
         assumeTrue(gaSupported);
         autoEncryptedDatabase.getCollection("substring-ci-di")
                 .insertOne(new Document("encryptedText", "foocafébaz"));
