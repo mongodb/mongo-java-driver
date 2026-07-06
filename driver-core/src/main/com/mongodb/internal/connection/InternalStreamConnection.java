@@ -566,52 +566,63 @@ public class InternalStreamConnection implements InternalConnection {
     private <T> T receiveCommandMessageResponse(final Decoder<T> decoder, final CommandEventSender commandEventSender,
             final OperationContext operationContext, @Nullable final Span tracingSpan) {
         try {
-            ResponseBuffers responseBuffersRead;
-            try {
-                responseBuffersRead = receiveResponseBuffers(operationContext);
-            } catch (Throwable t) {
-                // A read-path failure. receiveResponseBuffers has already closed the connection if the stream
-                // may be desynchronized, so here we only emit the failed event and propagate. Read failures
-                // never reach onCommandFailure, so connectionIsReusable is only ever applied to post-read
-                // failures — those for which its contract literally holds. This mirrors the async path, where
-                // read failures are delivered through the MessageHeaderCallback error branch.
-                commandEventSender.sendFailedEvent(t);
-                recordTracingError(tracingSpan, t);
-                throw t;
-            }
-            boolean commandSuccessful = false;
-            // try-with-resources so the response body buffer is released before the catch block runs, i.e.
-            // before onCommandFailure may close the connection (NettyStream requires release-before-close).
-            try (ResponseBuffers responseBuffers = responseBuffersRead) {
-                assertResponseToMatches(responseBuffers, responseTo);
-                updateSessionContext(operationContext.getSessionContext(), responseBuffers);
-                if (!isCommandOk(responseBuffers)) {
-                    throw getCommandFailureException(responseBuffers.getResponseDocument(responseTo,
-                            new BsonDocumentCodec()), description.getServerAddress(), operationContext.getTimeoutContext());
-                }
-
-                commandEventSender.sendSucceededEvent(responseBuffers);
-                commandSuccessful = true;
-
-                T commandResult = getCommandResult(decoder, responseBuffers, responseTo, operationContext.getTimeoutContext());
-                hasMoreToCome = responseBuffers.getReplyHeader().hasMoreToCome();
-                if (hasMoreToCome) {
-                    responseTo = responseBuffers.getReplyHeader().getRequestId();
-                } else {
-                    responseTo = 0;
-                }
-
-                return commandResult;
-            } catch (Throwable t) {
-                onCommandFailure(t, commandSuccessful, commandEventSender);
-                recordTracingError(tracingSpan, t);
-                throw t;
-            }
+            ResponseBuffers responseBuffers = receiveCommandResponseBuffers(commandEventSender, operationContext, tracingSpan);
+            return processCommandResponse(decoder, responseBuffers, commandEventSender, operationContext, tracingSpan);
         } finally {
             if (tracingSpan != null) {
                 tracingSpan.closeScope();
                 tracingSpan.end();
             }
+        }
+    }
+
+    /**
+     * Reads the framed command response off the wire. A read-path failure closes the connection itself (see
+     * {@link #receiveResponseBuffers}) if the stream may be desynchronized, so here we only emit the failed
+     * event and propagate. Read failures never reach {@link #onCommandFailure}, so {@link #connectionIsReusable}
+     * is only ever applied to post-read failures — those for which its contract literally holds. This mirrors
+     * the async path, where read failures are delivered through the {@code MessageHeaderCallback} error branch.
+     */
+    private ResponseBuffers receiveCommandResponseBuffers(final CommandEventSender commandEventSender,
+            final OperationContext operationContext, @Nullable final Span tracingSpan) {
+        try {
+            return receiveResponseBuffers(operationContext);
+        } catch (Throwable t) {
+            commandEventSender.sendFailedEvent(t);
+            recordTracingError(tracingSpan, t);
+            throw t;
+        }
+    }
+
+    private <T> T processCommandResponse(final Decoder<T> decoder, final ResponseBuffers responseBuffersRead,
+            final CommandEventSender commandEventSender, final OperationContext operationContext, @Nullable final Span tracingSpan) {
+        boolean commandSuccessful = false;
+        // try-with-resources so the response body buffer is released before the catch block runs, i.e.
+        // before onCommandFailure may close the connection (NettyStream requires release-before-close).
+        try (ResponseBuffers responseBuffers = responseBuffersRead) {
+            assertResponseToMatches(responseBuffers, responseTo);
+            updateSessionContext(operationContext.getSessionContext(), responseBuffers);
+            if (!isCommandOk(responseBuffers)) {
+                throw getCommandFailureException(responseBuffers.getResponseDocument(responseTo,
+                        new BsonDocumentCodec()), description.getServerAddress(), operationContext.getTimeoutContext());
+            }
+
+            commandEventSender.sendSucceededEvent(responseBuffers);
+            commandSuccessful = true;
+
+            T commandResult = getCommandResult(decoder, responseBuffers, responseTo, operationContext.getTimeoutContext());
+            hasMoreToCome = responseBuffers.getReplyHeader().hasMoreToCome();
+            if (hasMoreToCome) {
+                responseTo = responseBuffers.getReplyHeader().getRequestId();
+            } else {
+                responseTo = 0;
+            }
+
+            return commandResult;
+        } catch (Throwable t) {
+            onCommandFailure(t, commandSuccessful, commandEventSender);
+            recordTracingError(tracingSpan, t);
+            throw t;
         }
     }
 
