@@ -565,39 +565,48 @@ public class InternalStreamConnection implements InternalConnection {
 
     private <T> T receiveCommandMessageResponse(final Decoder<T> decoder, final CommandEventSender commandEventSender,
             final OperationContext operationContext, @Nullable final Span tracingSpan) {
-        boolean commandSuccessful = false;
-        try (ResponseBuffers responseBuffers = receiveResponseBuffers(operationContext)) {
-            assertResponseToMatches(responseBuffers, responseTo);
-            updateSessionContext(operationContext.getSessionContext(), responseBuffers);
-            if (!isCommandOk(responseBuffers)) {
-                throw getCommandFailureException(responseBuffers.getResponseDocument(responseTo,
-                        new BsonDocumentCodec()), description.getServerAddress(), operationContext.getTimeoutContext());
+        try {
+            ResponseBuffers responseBuffersRead;
+            try {
+                responseBuffersRead = receiveResponseBuffers(operationContext);
+            } catch (Throwable t) {
+                // A read-path failure. receiveResponseBuffers has already closed the connection if the stream
+                // may be desynchronized, so here we only emit the failed event and propagate. Read failures
+                // never reach onCommandFailure, so connectionIsReusable is only ever applied to post-read
+                // failures — those for which its contract literally holds. This mirrors the async path, where
+                // read failures are delivered through the MessageHeaderCallback error branch.
+                commandEventSender.sendFailedEvent(t);
+                recordTracingError(tracingSpan, t);
+                throw t;
             }
-
-            commandEventSender.sendSucceededEvent(responseBuffers);
-            commandSuccessful = true;
-
-            T commandResult = getCommandResult(decoder, responseBuffers, responseTo, operationContext.getTimeoutContext());
-            hasMoreToCome = responseBuffers.getReplyHeader().hasMoreToCome();
-            if (hasMoreToCome) {
-                responseTo = responseBuffers.getReplyHeader().getRequestId();
-            } else {
-                responseTo = 0;
-            }
-
-            return commandResult;
-        } catch (Throwable t) {
-            onCommandFailure(t, commandSuccessful, commandEventSender);
-            if (tracingSpan != null) {
-                if (t instanceof MongoCommandException) {
-                    MongodbObservationContext ctx = tracingSpan.getMongodbObservationContext();
-                    if (ctx != null) {
-                        ctx.setResponseStatusCode(String.valueOf(((MongoCommandException) t).getErrorCode()));
-                    }
+            boolean commandSuccessful = false;
+            // try-with-resources so the response body buffer is released before the catch block runs, i.e.
+            // before onCommandFailure may close the connection (NettyStream requires release-before-close).
+            try (ResponseBuffers responseBuffers = responseBuffersRead) {
+                assertResponseToMatches(responseBuffers, responseTo);
+                updateSessionContext(operationContext.getSessionContext(), responseBuffers);
+                if (!isCommandOk(responseBuffers)) {
+                    throw getCommandFailureException(responseBuffers.getResponseDocument(responseTo,
+                            new BsonDocumentCodec()), description.getServerAddress(), operationContext.getTimeoutContext());
                 }
-                tracingSpan.error(t);
+
+                commandEventSender.sendSucceededEvent(responseBuffers);
+                commandSuccessful = true;
+
+                T commandResult = getCommandResult(decoder, responseBuffers, responseTo, operationContext.getTimeoutContext());
+                hasMoreToCome = responseBuffers.getReplyHeader().hasMoreToCome();
+                if (hasMoreToCome) {
+                    responseTo = responseBuffers.getReplyHeader().getRequestId();
+                } else {
+                    responseTo = 0;
+                }
+
+                return commandResult;
+            } catch (Throwable t) {
+                onCommandFailure(t, commandSuccessful, commandEventSender);
+                recordTracingError(tracingSpan, t);
+                throw t;
             }
-            throw t;
         } finally {
             if (tracingSpan != null) {
                 tracingSpan.closeScope();
@@ -606,10 +615,26 @@ public class InternalStreamConnection implements InternalConnection {
         }
     }
 
+    private void recordTracingError(@Nullable final Span tracingSpan, final Throwable t) {
+        if (tracingSpan != null) {
+            if (t instanceof MongoCommandException) {
+                MongodbObservationContext ctx = tracingSpan.getMongodbObservationContext();
+                if (ctx != null) {
+                    ctx.setResponseStatusCode(String.valueOf(((MongoCommandException) t).getErrorCode()));
+                }
+            }
+            tracingSpan.error(t);
+        }
+    }
+
     /**
      * Determines whether a failure raised while processing a command response leaves the connection
-     * reusable. These exception types are only raised after the full framed response has been read off
-     * the wire, so the stream remains synchronized and the connection can be returned to the pool:
+     * reusable. This predicate is only ever applied to <em>post-read</em> failures — those raised after
+     * {@link #receiveResponseBuffers} (sync) or the {@code MessageHeaderCallback} (async) has fully read
+     * the framed response off the wire. Read-path failures (including a CSOT read-timeout translated to
+     * {@link MongoOperationTimeoutException}) are handled separately: the read path closes the connection
+     * itself and never routes through this predicate, so no verdict here can leave a desynchronized stream
+     * in the pool. The types below are reusable because the stream remains synchronized:
      * <ul>
      *     <li>{@link MongoCommandException} — an {@code ok: 0} error response (and subclasses)</li>
      *     <li>{@link MongoExecutionTimeoutException} — a server-side {@code MaxTimeMSExpired} ({@code ok: 0})
@@ -638,7 +663,11 @@ public class InternalStreamConnection implements InternalConnection {
     private void onCommandFailure(final Throwable failure, final boolean commandSuccessful,
             final CommandEventSender commandEventSender) {
         if (!connectionIsReusable(failure)) {
-            close();
+            try {
+                close();
+            } catch (RuntimeException e) {
+                failure.addSuppressed(e);
+            }
         }
         if (!commandSuccessful) {
             commandEventSender.sendFailedEvent(failure);
