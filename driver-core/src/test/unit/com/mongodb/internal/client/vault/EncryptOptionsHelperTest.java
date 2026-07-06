@@ -79,8 +79,6 @@ class EncryptOptionsHelperTest {
 
         MongoExplicitEncryptOptions result = EncryptOptionsHelper.asMongoExplicitEncryptOptions(options);
 
-        // stringOptions wins: prefix present (from stringOptions), no suffix (from the ignored textOptions),
-        // and caseSensitive/diacriticSensitive reflect stringOptions (true), not textOptions (false).
         assertEquals(BsonDocument.parse("{caseSensitive: true, diacriticSensitive: true, "
                         + "prefix: {strMaxQueryLength: 10, strMinQueryLength: 2}}"),
                 result.getTextOptions());
