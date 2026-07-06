@@ -35,6 +35,7 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -43,7 +44,6 @@ import java.util.Map;
 
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.client.Fixture.getDefaultDatabase;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClient;
@@ -56,6 +56,10 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static util.JsonPoweredTestHelper.getTestDocument;
 
+/**
+ * @see <a href="https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/tests/README.md#12-explicit-encryption">
+ *     Client Side Encryption spec explicit encryption prose tests</a>
+ */
 public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
     private static final BsonString ENCRYPTED_INDEXED_VALUE = new BsonString("encrypted indexed value");
     private static final BsonString ENCRYPTED_UNINDEXED_VALUE = new BsonString("encrypted unindexed value");
@@ -126,6 +130,7 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
     }
 
     @Test
+    @DisplayName("Case 1: can insert encrypted indexed and find")
     public void canInsertEncryptedIndexedAndFind() {
         EncryptOptions encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).contentionFactor(0L);
         BsonBinary insertPayload = clientEncryption.encrypt(ENCRYPTED_INDEXED_VALUE, encryptOptions);
@@ -143,11 +148,8 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
     }
 
     @Test
+    @DisplayName("Case 2: can insert encrypted indexed and find with non-zero contention")
     public void canInsertEncryptedIndexedAndFindWithNonZeroContention() {
-        // JAVA-6237: this test inserts with contentionFactor 10 but encryptedFields.json configures the
-        // encryptedIndexed field with contention 0. Servers >= 9.0 reject this mismatch (SERVER-91887);
-        // skip until the spec prose test is corrected (DRIVERS-3547).
-        assumeTrue(serverVersionLessThan(9, 0));
         EncryptOptions encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).contentionFactor(10L);
         MongoCollection<BsonDocument> coll = encryptedClient.getDatabase(getDefaultDatabaseName())
                 .getCollection("explicit_encryption_c10", BsonDocument.class);
@@ -170,6 +172,7 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
     }
 
     @Test
+    @DisplayName("Case 3: can insert encrypted unindexed")
     public void canInsertEncryptedUnindexed() {
         EncryptOptions encryptOptions = new EncryptOptions("Unindexed").keyId(key1Id);
         MongoCollection<BsonDocument> coll = encryptedClient.getDatabase(getDefaultDatabaseName())
@@ -185,6 +188,7 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
     }
 
     @Test
+    @DisplayName("Case 4: can roundtrip encrypted indexed")
     public void canRoundtripEncryptedIndexed() {
         EncryptOptions encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).contentionFactor(0L);
 
@@ -195,6 +199,7 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
     }
 
     @Test
+    @DisplayName("Case 5: can roundtrip encrypted unindexed")
     public void canRoundtripEncryptedUnindexed() {
         EncryptOptions encryptOptions = new EncryptOptions("Unindexed").keyId(key1Id);
 
