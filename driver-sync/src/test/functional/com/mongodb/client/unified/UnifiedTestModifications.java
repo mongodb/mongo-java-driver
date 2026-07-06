@@ -73,8 +73,18 @@ public final class UnifiedTestModifications {
         // Client side encryption (QE)
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5675 Support QE with Client.bulkWrite")
                 .file("client-side-encryption/tests/unified", "client bulkWrite with queryable encryption");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-6244 QE GA \"substring\" query type is not yet "
+                        + "implemented (DRIVERS-3540)")
+                .file("client-side-encryption/tests/unified", "QE-Text-substring");
 
         // client-side-operation-timeout (CSOT)
+        // The expected change stream timeout-refresh behaviour is unspecified on server 9.0+ (DRIVERS-3006), so the
+        // CSOT suite fails there (most visibly on sharded clusters, where extra mongos round-trips exceed the tight
+        // timeoutMS). Skip the suite on 9.0+ until the spec is clarified.
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-6078 change stream timeout-refresh behaviour is "
+                        + "unspecified on server 9.0+ (DRIVERS-3006)")
+                .when(() -> !serverVersionLessThan(9, 0))
+                .directory("client-side-operations-timeout");
         def.retry("Unified CSOT tests do not account for RTT which varies in TLS vs non-TLS runs")
                 .whenFailureContains("timeout")
                 .test("client-side-operations-timeout",
@@ -488,6 +498,14 @@ public final class UnifiedTestModifications {
                 .file("transactions", "backpressure-retryable-commit");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
                 .file("transactions", "backpressure-retryable-abort");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-6179")
+                .test("transactions", "retryable-writes", "increment txnNumber")
+                .test("transactions", "commit", "reset session state commit")
+                .test("transactions", "commit", "reset session state abort")
+                .test("transactions-convenient-api", "callback-commits",
+                        "withTransaction still succeeds if callback commits and runs extra op")
+                .test("transactions-convenient-api", "callback-aborts",
+                        "withTransaction still succeeds if callback aborts and runs extra op");
 
         // valid-pass
 
