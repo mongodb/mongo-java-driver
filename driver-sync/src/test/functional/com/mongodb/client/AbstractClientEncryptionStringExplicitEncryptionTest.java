@@ -62,7 +62,7 @@ import static util.JsonPoweredTestHelper.getTestDocument;
 
 public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
 
-    private static final ServerVersion REQUIRED_LIB_MONGOCRYPT_VERSION = new ServerVersion(asList(1, 19, 1));
+    private static final ServerVersion MIN_SUPPORTED_LIB_MONGOCRYPT_VERSION = new ServerVersion(asList(1, 20, 0));
     private boolean gaSupported;
     private MongoClient explicitEncryptedClient;
     private MongoClient autoEncryptedClient;
@@ -77,7 +77,7 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
     @BeforeEach
     public void setUp() {
         assumeTrue(hasEncryptionTestsEnabled(), "String explicit encryption tests disabled");
-        assumeTrue(getMongoCryptVersion().compareTo(REQUIRED_LIB_MONGOCRYPT_VERSION) >= 0, "Requires newer MongoCrypt version");
+        assumeTrue(getMongoCryptVersion().compareTo(MIN_SUPPORTED_LIB_MONGOCRYPT_VERSION) >= 0, "Requires newer MongoCrypt version");
         assumeTrue(serverVersionAtLeast(8, 2));
         assumeFalse(isStandalone());
 

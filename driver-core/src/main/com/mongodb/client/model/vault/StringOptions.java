@@ -178,4 +178,15 @@ public class StringOptions {
     public BsonDocument getSubstringOptions() {
         return substringOptions;
     }
+
+    @Override
+    public String toString() {
+        return "StringOptions{"
+                + "caseSensitive=" + caseSensitive
+                + ", diacriticSensitive=" + diacriticSensitive
+                + ", prefixOptions=" + prefixOptions
+                + ", suffixOptions=" + suffixOptions
+                + ", substringOptions=" + substringOptions
+                + '}';
+    }
 }

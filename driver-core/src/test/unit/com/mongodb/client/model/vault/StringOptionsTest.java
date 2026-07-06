@@ -60,4 +60,17 @@ class StringOptionsTest {
         assertFalse(options.getCaseSensitive());
         assertFalse(options.getDiacriticSensitive());
     }
+
+    @Test
+    void shouldIncludeAllFieldsInToString() {
+        String result = new StringOptions()
+                .caseSensitive(true)
+                .diacriticSensitive(false)
+                .prefixOptions(BsonDocument.parse("{strMaxQueryLength: 10, strMinQueryLength: 2}"))
+                .toString();
+
+        assertEquals("StringOptions{caseSensitive=true, diacriticSensitive=false, "
+                + "prefixOptions={\"strMaxQueryLength\": 10, \"strMinQueryLength\": 2}, "
+                + "suffixOptions=null, substringOptions=null}", result);
+    }
 }

@@ -186,4 +186,14 @@ public class TextOptions {
         return substringOptions;
     }
 
+    @Override
+    public String toString() {
+        return "TextOptions{"
+                + "caseSensitive=" + caseSensitive
+                + ", diacriticSensitive=" + diacriticSensitive
+                + ", prefixOptions=" + prefixOptions
+                + ", suffixOptions=" + suffixOptions
+                + ", substringOptions=" + substringOptions
+                + '}';
+    }
 }
