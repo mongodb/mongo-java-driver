@@ -68,3 +68,4 @@ driver-benchmarks/.factorypath
 # bin build directories
 **/bin
 
+docs/superpowers/
