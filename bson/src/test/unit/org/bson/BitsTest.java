@@ -22,7 +22,9 @@ package org.bson;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -102,6 +104,36 @@ public class BitsTest {
         assertThrows(ArrayIndexOutOfBoundsException.class, () ->
                 Bits.readLong(Arrays.copyOfRange(BYTES, 24, 30), 0)
         );
+    }
+
+    @Test
+    public void testReadFullyGrowsToDeclaredSize() throws IOException {
+        int size = 10_000; // larger than the initial buffer capacity, forcing growth
+        byte[] prefix = new byte[]{(byte) (size & 0xFF), (byte) ((size >> 8) & 0xFF), 0, 0};
+        byte[] body = new byte[size - 4];
+        InputStream in = new ByteArrayInputStream(body);
+
+        byte[] result = Bits.readFully(in, prefix, size);
+
+        assertEquals(size, result.length);
+        assertEquals(prefix[0], result[0]);
+        assertEquals(prefix[1], result[1]);
+    }
+
+    @Test
+    public void testReadFullyThrowsOnShortStream() {
+        byte[] prefix = new byte[]{-1, -1, -1, 0x7F}; // declared size Integer.MAX_VALUE
+        InputStream in = new ByteArrayInputStream(new byte[0]);
+
+        assertThrows(EOFException.class, () -> Bits.readFully(in, prefix, Integer.MAX_VALUE));
+    }
+
+    @Test
+    public void testReadFullyRejectsUndersizedDeclaration() {
+        byte[] prefix = new byte[]{4, 0, 0, 0}; // below the minimum BSON document size of 5
+        InputStream in = new ByteArrayInputStream(new byte[0]);
+
+        assertThrows(BsonSerializationException.class, () -> Bits.readFully(in, prefix, 4));
     }
 
 }

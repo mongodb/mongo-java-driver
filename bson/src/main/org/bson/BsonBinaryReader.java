@@ -142,6 +142,12 @@ public class BsonBinaryReader extends AbstractBsonReader {
             }
             numBytes -= 4;
         }
+        int remaining = bsonInput.getRemaining();
+        if (numBytes < 0 || numBytes > remaining) {
+            throw new BsonSerializationException(format(
+                    "While decoding a BSON binary found a size of %d bytes, but only %d bytes remain",
+                    numBytes, remaining));
+        }
         byte[] bytes = new byte[numBytes];
         bsonInput.readBytes(bytes);
         return new BsonBinary(type, bytes);

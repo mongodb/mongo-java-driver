@@ -335,6 +335,71 @@ public class BsonBinaryReaderTest {
         });
     }
 
+    @Test
+    public void testReadBinaryDataRejectsDeclaredLengthExceedingInput() {
+        // {"b": <binary subtype 0x00 with declared size=Integer.MAX_VALUE but no data available>}
+        // Malformed BSON with an impossible declared length must fail with a controlled BSON parse
+        // exception before allocating an array of the declared size (see GitHub issue #2007).
+        byte[] bytes = new byte[]{
+                13, 0, 0, 0,        // document size
+                typeByte(BsonType.BINARY),
+                0x62, 0x00,         // name: "b\0"
+                -1, -1, -1, 0x7F,   // binary size: Integer.MAX_VALUE
+                0x00,               // subtype: generic
+                0x00                // document terminator
+        };
+        try (BsonBinaryReader reader = createReaderForBytes(bytes)) {
+            reader.readStartDocument();
+            reader.readBsonType();
+            reader.readName();
+            assertThrows(BsonSerializationException.class, reader::readBinaryData);
+        }
+    }
+
+    @Test
+    public void testReadBinaryDataRejectsBinaryLargerThanRemaining() {
+        // {"b": <binary subtype 0x00 declaring 100 bytes, but far fewer remain in the buffer>}
+        byte[] bytes = new byte[]{
+                13, 0, 0, 0,        // document size
+                typeByte(BsonType.BINARY),
+                0x62, 0x00,         // name: "b\0"
+                100, 0, 0, 0,       // binary size: 100 (only a couple of bytes remain)
+                0x00,               // subtype: generic
+                0x00                // document terminator
+        };
+        try (BsonBinaryReader reader = createReaderForBytes(bytes)) {
+            reader.readStartDocument();
+            reader.readBsonType();
+            reader.readName();
+            assertThrows(BsonSerializationException.class, reader::readBinaryData);
+        }
+    }
+
+    @Test
+    public void testReadBinaryDataRejectsNegativeOldBinaryLength() {
+        // {"b": <binary subtype 0x02 (OLD_BINARY) with outer size=0 and a repeated inner size of -4>}
+        // For OLD_BINARY, doReadBinaryData() requires repeatedNumBytes == numBytes - 4, then does
+        // numBytes -= 4. With numBytes=0 and repeatedNumBytes=-4, that check passes (-4 == 0 - 4) and
+        // numBytes becomes -4, a negative length that must be rejected with a controlled
+        // BsonSerializationException rather than reaching `new byte[numBytes]` and throwing
+        // NegativeArraySizeException.
+        byte[] bytes = new byte[]{
+                17, 0, 0, 0,            // document size: 17
+                typeByte(BsonType.BINARY),
+                0x62, 0x00,             // name: "b\0"
+                0, 0, 0, 0,             // outer binary size: 0
+                0x02,                   // subtype: OLD_BINARY
+                -4, -1, -1, -1,         // repeated inner size: -4 (int32 LE two's complement of -4)
+                0x00                    // document terminator
+        };
+        try (BsonBinaryReader reader = createReaderForBytes(bytes)) {
+            reader.readStartDocument();
+            reader.readBsonType();
+            reader.readName();
+            assertThrows(BsonSerializationException.class, reader::readBinaryData);
+        }
+    }
+
     /**
      * Wraps the given bytes in a BSON reader, advances past the document start, type, and field name,
      * and asserts that {@code skipValue()} throws {@link BsonSerializationException}.

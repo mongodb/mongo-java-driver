@@ -66,4 +66,19 @@ public class LazyBSONDecoderTest {
         assertThrows(BSONException.class, () -> bsonDecoder.readObject(bytes));
     }
 
+    @Test
+    public void testDecodingRejectsDeclaredSizeExceedingInput() {
+        // A four-byte stream declaring a document size of Integer.MAX_VALUE with no body available must fail with a
+        // controlled EOFException before allocating an array of the declared size (see GitHub issue #2007).
+        InputStream is = new ByteArrayInputStream(new byte[]{-1, -1, -1, 0x7F}); // size: Integer.MAX_VALUE
+        assertThrows(IOException.class, () -> bsonDecoder.readObject(is));
+    }
+
+    @Test
+    public void testDecodingRejectsDeclaredSizeLargerThanStream() {
+        // declares 1000 bytes but the stream provides only a handful
+        InputStream is = new ByteArrayInputStream(new byte[]{-24, 3, 0, 0, 1, 2, 3, 4}); // size 1000, 4 body bytes
+        assertThrows(IOException.class, () -> bsonDecoder.readObject(is));
+    }
+
 }

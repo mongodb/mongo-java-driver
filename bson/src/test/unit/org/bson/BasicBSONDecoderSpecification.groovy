@@ -179,6 +179,30 @@ class BasicBSONDecoderSpecification extends Specification {
     }
 
 
+    def 'should reject stream with declared size exceeding available input'() {
+        // A four-byte stream declaring a document size of Integer.MAX_VALUE with no body available must fail with a
+        // controlled EOFException before allocating an array of the declared size (see GitHub issue #2007).
+        given:
+        InputStream is = new ByteArrayInputStream((byte[]) [-1, -1, -1, 0x7F]) // size: Integer.MAX_VALUE
+
+        when:
+        bsonDecoder.readObject(is)
+
+        then:
+        thrown(IOException)
+    }
+
+    def 'should reject stream whose declared size exceeds the available body'() {
+        given:
+        InputStream is = new ByteArrayInputStream((byte[]) [-24, 3, 0, 0, 1, 2, 3, 4]) // size 1000, 4 body bytes
+
+        when:
+        bsonDecoder.readObject(is)
+
+        then:
+        thrown(IOException)
+    }
+
     def 'default value of defaultUuidRepresentation is JAVA_LEGACY'() {
         expect:
         getDefaultUuidRepresentation() == JAVA_LEGACY
