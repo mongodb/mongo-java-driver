@@ -38,7 +38,7 @@ import java.util.function.Supplier;
 import static com.mongodb.observability.micrometer.MongodbObservation.MONGODB_COMMAND;
 import static com.mongodb.observability.micrometer.MongodbObservation.MONGODB_OPERATION;
 import static com.mongodb.observability.micrometer.MongodbObservation.MONGODB_TRANSACTION;
-import static java.lang.System.getenv;
+import static com.mongodb.internal.EnvironmentProvider.getEnv;
 
 /**
  * Manages tracing spans for MongoDB driver activities.
@@ -82,7 +82,7 @@ public class TracingManager {
                 throw new IllegalArgumentException("Only Micrometer based observability is currently supported");
             }
 
-            String envOtelInstrumentationEnabled = getenv(ENV_OBSERVABILITY_ENABLED);
+            String envOtelInstrumentationEnabled = getEnv(ENV_OBSERVABILITY_ENABLED);
             boolean enableTracing = true;
             if (envOtelInstrumentationEnabled != null) {
                 enableTracing = Boolean.parseBoolean(envOtelInstrumentationEnabled);
