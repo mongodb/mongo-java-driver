@@ -73,9 +73,6 @@ public final class UnifiedTestModifications {
         // Client side encryption (QE)
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5675 Support QE with Client.bulkWrite")
                 .file("client-side-encryption/tests/unified", "client bulkWrite with queryable encryption");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-6244 QE GA \"substring\" query type is not yet "
-                        + "implemented (DRIVERS-3540)")
-                .file("client-side-encryption/tests/unified", "QE-Text-substring");
 
         // client-side-operation-timeout (CSOT)
         // The expected change stream timeout-refresh behaviour is unspecified on server 9.0+ (DRIVERS-3006), so the
