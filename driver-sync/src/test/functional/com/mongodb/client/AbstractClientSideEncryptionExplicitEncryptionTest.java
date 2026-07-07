@@ -43,6 +43,7 @@ import java.util.Map;
 
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.client.Fixture.getDefaultDatabase;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClient;
@@ -138,6 +139,10 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
 
     @Test
     public void canInsertEncryptedIndexedAndFindWithNonZeroContention() {
+        // JAVA-6237: this test inserts with contentionFactor 10 but encryptedFields.json configures the
+        // encryptedIndexed field with contention 0. Servers >= 9.0 reject this mismatch (SERVER-91887);
+        // skip until the spec prose test is corrected (DRIVERS-3547).
+        assumeTrue(serverVersionLessThan(9, 0));
         EncryptOptions encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).contentionFactor(10L);
         MongoCollection<BsonDocument> coll = encryptedClient.getDatabase(getDefaultDatabaseName())
                 .getCollection("explicit_encryption", BsonDocument.class);
