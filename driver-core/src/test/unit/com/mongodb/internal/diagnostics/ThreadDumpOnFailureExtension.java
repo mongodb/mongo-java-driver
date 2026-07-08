@@ -30,13 +30,23 @@ import org.junit.jupiter.api.extension.TestWatcher;
 
 /**
  * A JUnit 5 extension that prints a thread dump to the log when a test fails.
+ *
+ * <p>The extension is auto-detected on every test run, but is inert unless explicitly enabled via the
+ * {@value #ENABLED_PROPERTY} system property. This keeps local runs quiet while allowing Evergreen (which sets the
+ * property) — or a developer who opts in with {@code -Dorg.mongodb.test.diagnostics.thread.dump.enabled=true} — to
+ * capture thread dumps for failing tests.
  */
 public final class ThreadDumpOnFailureExtension implements TestWatcher {
+
+    static final String ENABLED_PROPERTY = "org.mongodb.test.diagnostics.thread.dump.enabled";
 
     private static final Logger LOGGER = Loggers.getLogger(ThreadDumpOnFailureExtension.class.getSimpleName());
 
     @Override
     public void testFailed(final ExtensionContext context, final Throwable cause) {
+        if (!Boolean.getBoolean(ENABLED_PROPERTY)) {
+            return;
+        }
         String testName = context.getDisplayName();
         String threadDump = getAllThreadsDump();
         LOGGER.error("Test failed: " + testName + "\nThread dump:\n" + threadDump);
