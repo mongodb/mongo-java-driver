@@ -17,6 +17,7 @@ import ProjectExtensions.configureJarManifest
 import ProjectExtensions.configureMavenPublication
 import de.undercouch.gradle.tasks.download.Download
 import java.io.ByteArrayOutputStream
+import java.io.File
 import javax.inject.Inject
 import org.gradle.api.GradleException
 import org.gradle.process.ExecOperations
@@ -66,7 +67,7 @@ val jnaResources: String = System.getProperty("jna.library.path", jnaLibsPath)
 
 // Download the libmongocrypt per-platform tarballs (and their signatures) to jnaDownloadsDir.
 // To upgrade: change downloadRevision, run `./gradlew clean downloadJnaLibs`, and verify the build.
-val downloadRevision = "1.18.1"
+val downloadRevision = "1.20.0"
 val downloadUrlBase = "https://github.com/mongodb/libmongocrypt/releases/download/$downloadRevision"
 
 /**
@@ -75,7 +76,7 @@ val downloadUrlBase = "https://github.com/mongodb/libmongocrypt/releases/downloa
  * layout differ per platform, so both must be tracked explicitly.
  *
  * libmongocrypt's signature assets replace the `.tar.gz` suffix with `.asc` (e.g.
- * `libmongocrypt-linux-x86_64-glibc_2_7-nocrypto-1.18.1.asc`).
+ * `libmongocrypt-linux-x86_64-glibc_2_7-nocrypto-<version>.asc`).
  */
 data class CryptBinary(val jnaPlatform: String, val tarball: String, val libPathInTarball: String) {
     val signature: String = tarball.removeSuffix(".tar.gz") + ".asc"
@@ -137,8 +138,9 @@ tasks.register<Download>("downloadCryptLibs") {
  * Per DRIVERS-3441, drivers that bundle libmongocrypt must verify GPG signatures of
  * release tarballs against the official MongoDB libmongocrypt signing key.
  *
- * The keyring is kept under `build/` so this task does not touch the developer's
- * system GPG keyring and so `./gradlew clean` resets the trust state.
+ * The task uses a scratch keyring (not the developer's system GPG keyring), which {@code verify()}
+ * recreates on every run so the trust state is always reset. It lives under the system temp dir
+ * rather than {@code build/} — see the {@code gnupgHome} assignment in {@code verifyCryptLibs} for why.
  */
 val skipCryptVerify = providers.gradleProperty("skipCryptVerify").map { it.toBoolean() }.orElse(false)
 
@@ -275,7 +277,16 @@ tasks.register<VerifyLibmongocryptTask>("verifyCryptLibs") {
     publicKey.set(file("$jnaDownloadsDir/$libmongocryptPublicKeyFile"))
     skipVerify.set(skipCryptVerify)
     expectedFingerprint.set("F2F5BF4ABF517E039AFCADAA81F1404DEBACA586")
-    gnupgHome.set(layout.buildDirectory.dir("jnaLibs/gnupg"))
+    // Keep the scratch GPG keyring under the system temp dir, not the module build dir. gpg derives
+    // its agent socket path from the homedir, and macOS caps AF_UNIX socket paths (sun_path) at 104
+    // bytes. A deeply-nested checkout pushes "<module>/build/jnaLibs/gnupg/S.gpg-agent" past that
+    // limit, so on a fresh keyring gpg fails ("can't connect to the gpg-agent: File name too long")
+    // and exits non-zero even though the import/verify would otherwise succeed. A short,
+    // checkout-independent homedir avoids this; the hash suffix isolates builds of different
+    // checkouts. verify() recreates this directory on every run, so a stable name is safe.
+    val cryptGpgHomeName =
+        "crypt-gpg-" + layout.buildDirectory.get().asFile.absolutePath.hashCode().toUInt().toString(16)
+    gnupgHome.set(layout.dir(providers.provider { File(System.getProperty("java.io.tmpdir"), cryptGpgHomeName) }))
     verificationStamp.set(layout.buildDirectory.file("jnaLibs/verified.stamp"))
 
     /* Bypass entirely when the caller has supplied a local libmongocrypt directory. */

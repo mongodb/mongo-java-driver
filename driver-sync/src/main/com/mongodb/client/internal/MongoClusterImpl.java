@@ -78,6 +78,7 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.TimeoutContext.createTimeoutContext;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 final class MongoClusterImpl implements MongoCluster {
     @Nullable
@@ -163,8 +164,9 @@ final class MongoClusterImpl implements MongoCluster {
     @Override
     @Nullable
     public Long getTimeout(final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
         Long timeoutMS = timeoutSettings.getTimeoutMS();
-        return timeoutMS == null ? null : timeUnit.convert(timeoutMS, TimeUnit.MILLISECONDS);
+        return timeoutMS == null ? null : timeUnit.convert(timeoutMS, MILLISECONDS);
     }
 
     @Override

@@ -14,21 +14,25 @@
  * limitations under the License.
  */
 
-package com.mongodb.client;
+package com.mongodb.reactivestreams.client;
 
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.client.AbstractClientEncryptionStringExplicitEncryptionTest;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.vault.ClientEncryption;
-import com.mongodb.client.vault.ClientEncryptions;
+import com.mongodb.reactivestreams.client.syncadapter.SyncClientEncryption;
+import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
+import com.mongodb.reactivestreams.client.vault.ClientEncryptions;
 
-public class ClientEncryptionTextExplicitEncryptionTest extends AbstractClientEncryptionTextExplicitEncryptionTest {
+public class ClientEncryptionStringExplicitEncryptionTest extends AbstractClientEncryptionStringExplicitEncryptionTest {
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return MongoClients.create(settings);
+        return new SyncMongoClient(settings);
     }
 
     @Override
     protected ClientEncryption createClientEncryption(final ClientEncryptionSettings settings) {
-        return ClientEncryptions.create(settings);
+        return new SyncClientEncryption(ClientEncryptions.create(settings));
     }
 }
