@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 
-package com.mongodb.client.vector;
+package com.mongodb.client.model.search;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoCommandException;
 import com.mongodb.client.Fixture;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.OperationTest;
 import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.client.model.SearchIndexType;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.bson.conversions.Bson;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,78 +44,45 @@ import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 import static com.mongodb.client.model.Aggregates.vectorSearch;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.VectorSearchOptions.approximateVectorSearchOptions;
+import static com.mongodb.client.model.search.VectorSearchOptions.exactVectorSearchOptions;
 import static com.mongodb.client.model.search.VectorSearchQuery.textQuery;
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 /**
- * The test cases were borrowed from
- * <a href="https://github.com/mongodb-labs/ai-ml-pipeline-testing/blob/main/.evergreen/mongodb-community-search/self_test.py"> this repository</a>.
+ * Tests for auto-embedding vector search queries.
+ * Index creation and validation tests are in {@link com.mongodb.client.AbstractAtlasSearchIndexManagementProseTest}.
  */
-public abstract class AbstractAutomatedEmbeddingVectorSearchFunctionalTest extends OperationTest {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+public abstract class AbstractAutoEmbeddingVectorSearchFunctionalTest {
 
     private static final String FIELD_SEARCH_PATH = "plot";
-    // as of 2025-01-13 only voyage 4 is supported for automated embedding
-    // it might change in the future so for now we are only testing with voyage-4-large model
     private static final String INDEX_NAME = "voyage_4";
-
     private static final String MOVIE_NAME = "Breathe";
+    private static final String COLLECTION_NAME = "test";
     private static final CodecRegistry CODEC_REGISTRY = fromRegistries(getDefaultCodecRegistry(),
             fromProviders(PojoCodecProvider
                     .builder()
                     .automatic(true).build()));
-    private MongoCollection<Document> documentCollection;
 
     private MongoClient mongoClient;
+    private MongoCollection<Document> documentCollection;
 
-    @BeforeEach
-    public void setUp() {
-        //TODO-JAVA-6059 remove this line when Atlas Vector Search with automated embedding is generally available
-        // right now atlas search with automated embedding is in private preview and
-        // only available via a custom docker image
+    @BeforeAll
+    void setUpOnce() throws InterruptedException {
+        //TODO-JAVA-6059 remove this assumption when Atlas Vector Search with automated embedding is generally available
         Assumptions.assumeTrue(false);
 
-        super.beforeEach();
         mongoClient = getMongoClient(getMongoClientSettingsBuilder()
                 .codecRegistry(CODEC_REGISTRY)
                 .build());
         documentCollection = mongoClient
                 .getDatabase(getDatabaseName())
-                .getCollection(getCollectionName());
-    }
+                .getCollection(COLLECTION_NAME);
+        documentCollection.drop();
 
-    @AfterEach
-    @SuppressWarnings("try")
-    public void afterEach() {
-        try (MongoClient ignore = mongoClient) {
-            super.afterEach();
-        }
-    }
-
-    private static MongoClientSettings.Builder getMongoClientSettingsBuilder() {
-        return Fixture.getMongoClientSettingsBuilder();
-    }
-
-    protected abstract MongoClient getMongoClient(MongoClientSettings settings);
-
-    /**
-     * Happy path for automated embedding with Voyage-4 model.
-     *
-     * <p>Steps:
-     * <ol>
-     *   <li>Create empty collection</li>
-     *   <li>Create auto-embedding search index with voyage-4-large model</li>
-     *   <li>Insert movie documents</li>
-     *   <li>Run vector search query using query text</li>
-     * </ol>
-     *
-     * <p>Expected: Query returns "Breathe" as the top match for "movies about love"
-     */
-    @Test
-    @DisplayName("should create auto embedding index and run vector search query using query text")
-    void shouldCreateAutoEmbeddingIndexAndRunVectorSearchQuery() throws InterruptedException {
-        mongoClient.getDatabase(getDatabaseName()).createCollection(getCollectionName());
+        mongoClient.getDatabase(getDatabaseName()).createCollection(COLLECTION_NAME);
         createAutoEmbeddingIndex("voyage-4-large");
         // TODO-JAVA-6063
         // community search with automated embedding doesn't support queryable field yet
@@ -124,27 +91,84 @@ public abstract class AbstractAutomatedEmbeddingVectorSearchFunctionalTest exten
         //waitForIndex(documentCollection, INDEX_NAME);
         insertDocumentsForEmbedding();
         // TODO-JAVA-6063 wait for embeddings to be generated
-        // once there is an official way to check the index status, we should use it instead of sleep
-        // there is a workaround to pass a feature flag `internalListAllIndexesForTesting` but it's not official yet
         TimeUnit.SECONDS.sleep(2L);
-        runEmbeddingQuery();
     }
 
+    @AfterAll
+    @SuppressWarnings("try")
+    void tearDownOnce() {
+        try (MongoClient ignore = mongoClient) {
+            if (documentCollection != null) {
+                documentCollection.drop();
+            }
+        }
+    }
+
+    private static String getDatabaseName() {
+        return ClusterFixture.getDefaultDatabaseName();
+    }
+
+    private static MongoClientSettings.Builder getMongoClientSettingsBuilder() {
+        return Fixture.getMongoClientSettingsBuilder();
+    }
+
+    protected abstract MongoClient getMongoClient(MongoClientSettings settings);
+
     @Test
-    @DisplayName("should fail when invalid model name was used")
-    void shouldFailWhenInvalidModelNameWasUsed() {
-        mongoClient.getDatabase(getDatabaseName()).createCollection(getCollectionName());
-        Assertions.assertThrows(
-                MongoCommandException.class,
-                () -> createAutoEmbeddingIndex("test"),
-                "Valid voyage model name was not used"
+    @DisplayName("should execute vector search query using query text")
+    void shouldExecuteVectorSearchQuery() {
+        List<Bson> pipeline = asList(
+                vectorSearch(
+                        fieldPath(FIELD_SEARCH_PATH),
+                        textQuery("movies about love"),
+                        INDEX_NAME,
+                        5L,
+                        approximateVectorSearchOptions(5L)
+                )
         );
+        List<Document> documents = documentCollection.aggregate(pipeline).into(new ArrayList<>());
+
+        Assertions.assertFalse(documents.isEmpty(), "Expected to get some results from vector search query");
+        Assertions.assertEquals(MOVIE_NAME, documents.get(0).getString("title"));
     }
 
     @Test
-    @DisplayName("should fail to create auto embedding index without model")
-    void shouldFailToCreateAutoEmbeddingIndexWithoutModel() {
-        mongoClient.getDatabase(getDatabaseName()).createCollection(getCollectionName());
+    @DisplayName("should execute vector search query with model override")
+    void shouldExecuteVectorSearchWithModelOverride() {
+        List<Bson> pipeline = asList(
+                vectorSearch(
+                        fieldPath(FIELD_SEARCH_PATH),
+                        textQuery("movies about love").model("voyage-4"),
+                        INDEX_NAME,
+                        5L,
+                        approximateVectorSearchOptions(5L)
+                )
+        );
+        List<Document> documents = documentCollection.aggregate(pipeline).into(new ArrayList<>());
+
+        Assertions.assertFalse(documents.isEmpty(), "Expected to get some results from vector search query");
+        Assertions.assertEquals(MOVIE_NAME, documents.get(0).getString("title"));
+    }
+
+    @Test
+    @DisplayName("should execute exact vector search query")
+    void shouldExecuteExactVectorSearchQuery() {
+        List<Bson> pipeline = asList(
+                vectorSearch(
+                        fieldPath(FIELD_SEARCH_PATH),
+                        textQuery("movies about love"),
+                        INDEX_NAME,
+                        5L,
+                        exactVectorSearchOptions()
+                )
+        );
+        List<Document> documents = documentCollection.aggregate(pipeline).into(new ArrayList<>());
+
+        Assertions.assertFalse(documents.isEmpty(), "Expected to get some results from exact vector search query");
+        Assertions.assertEquals(MOVIE_NAME, documents.get(0).getString("title"));
+    }
+
+    private void createAutoEmbeddingIndex(final String modelName) {
         SearchIndexModel indexModel = new SearchIndexModel(
                 INDEX_NAME,
                 new Document(
@@ -152,35 +176,17 @@ public abstract class AbstractAutomatedEmbeddingVectorSearchFunctionalTest exten
                         Collections.singletonList(
                                 new Document("type", "autoEmbed")
                                         .append("modality", "text")
+                                        .append("model", modelName)
                                         .append("path", FIELD_SEARCH_PATH)
                         )),
                 SearchIndexType.vectorSearch()
         );
-        Assertions.assertThrows(
-                MongoCommandException.class,
-                () -> documentCollection.createSearchIndexes(Collections.singletonList(indexModel)),
-                "Expected index creation to fail because model is not specified"
-        );
-    }
-
-    private void runEmbeddingQuery() {
-        List<Bson> pipeline = asList(
-                vectorSearch(
-                        fieldPath(FIELD_SEARCH_PATH),
-                        textQuery("movies about love"),
-                        INDEX_NAME,
-                        5L, // limit
-                        approximateVectorSearchOptions(5L) // numCandidates
-                )
-        );
-        final List<Document> documents = documentCollection.aggregate(pipeline).into(new ArrayList<>());
-
-        Assertions.assertFalse(documents.isEmpty(), "Expected to get some results from vector search query");
-        Assertions.assertEquals(MOVIE_NAME, documents.get(0).getString("title"));
+        List<String> result = documentCollection.createSearchIndexes(Collections.singletonList(indexModel));
+        Assertions.assertFalse(result.isEmpty());
     }
 
     /**
-     * All the documents were borrowed from
+     * Documents borrowed from
      * <a href="https://github.com/mongodb-labs/ai-ml-pipeline-testing/blob/1d0213eb918ff502e774f70dd9f10f843c72dcdf/.evergreen/mongodb-community-search/self_test.py#L33">here</a>
      */
     private void insertDocumentsForEmbedding() {
@@ -208,23 +214,5 @@ public abstract class AbstractAutomatedEmbeddingVectorSearchFunctionalTest exten
                         .append("title", MOVIE_NAME)
                         .append("year", 2017)
         ));
-    }
-
-    private void createAutoEmbeddingIndex(final String modelName) {
-        SearchIndexModel indexModel = new SearchIndexModel(
-                INDEX_NAME,
-                new Document(
-                        "fields",
-                        Collections.singletonList(
-                                new Document("type", "autoEmbed") // type autoEmbed accepts a text
-                                        .append("modality", "text")
-                                        .append("model", modelName)
-                                        .append("path", FIELD_SEARCH_PATH)
-                        )),
-                SearchIndexType.vectorSearch()
-        );
-        List<String> result = documentCollection.createSearchIndexes(Collections.singletonList(indexModel));
-
-        Assertions.assertFalse(result.isEmpty());
     }
 }

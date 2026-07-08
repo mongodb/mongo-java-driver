@@ -14,21 +14,15 @@
  * limitations under the License.
  */
 
-package com.mongodb.client;
+package com.mongodb.client.model.search;
 
-import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.client.vault.ClientEncryption;
-import com.mongodb.client.vault.ClientEncryptions;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 
-public class ClientEncryptionTextExplicitEncryptionTest extends AbstractClientEncryptionTextExplicitEncryptionTest {
+public class AutoEmbeddingVectorSearchFunctionalTest extends AbstractAutoEmbeddingVectorSearchFunctionalTest {
     @Override
-    protected MongoClient createMongoClient(final MongoClientSettings settings) {
+    protected MongoClient getMongoClient(final MongoClientSettings settings) {
         return MongoClients.create(settings);
-    }
-
-    @Override
-    protected ClientEncryption createClientEncryption(final ClientEncryptionSettings settings) {
-        return ClientEncryptions.create(settings);
     }
 }

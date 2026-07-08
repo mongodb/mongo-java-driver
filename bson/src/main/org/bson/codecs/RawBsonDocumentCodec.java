@@ -40,8 +40,17 @@ public class RawBsonDocumentCodec implements Codec<RawBsonDocument> {
 
     @Override
     public void encode(final BsonWriter writer, final RawBsonDocument value, final EncoderContext encoderContext) {
-        try (BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(value.getByteBuffer()))) {
-            writer.pipe(reader);
+        if (writer instanceof BsonBinaryWriter) {
+            // Fast path. The pipe method should ideally exist on BsonWriter, but adding it as
+            // abstract would be a breaking change, and adding it as a default method would force
+            // BsonWriter to depend on BsonBinaryReader/ByteBufferBsonInput, violating the
+            // interface's abstraction.
+            // TODO JAVA-6211 move pipe(byte[], int, int) to BsonWriter to remove this instanceof.
+            ((BsonBinaryWriter) writer).pipe(value.getBackingArray(), value.getByteOffset(), value.getByteLength());
+        } else {
+            try (BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(value.getByteBuffer()))) {
+                writer.pipe(reader);
+            }
         }
     }
 

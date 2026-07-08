@@ -16,6 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
 import org.bson.BsonArray;
@@ -999,6 +1000,129 @@ final class SearchOperatorTest {
                                                 "term2"))
                                 .toBsonDocument()
                 )
+        );
+    }
+
+    @Test
+    void vectorSearch() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // path must not be null
+                        SearchOperator.vectorSearch(null, asList(1.0), 10, 50)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // queryVector must not be null
+                        SearchOperator.vectorSearch(fieldPath("embedding"), null, 10, 50)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // numCandidates must be >= limit
+                        SearchOperator.vectorSearch(fieldPath("embedding"), asList(1.0), 100, 50)
+                ),
+                () -> assertEquals(
+                        new BsonDocument("vectorSearch",
+                                new BsonDocument("path", new BsonString("embedding"))
+                                        .append("queryVector", new BsonArray(asList(
+                                                new BsonDouble(1.0), new BsonDouble(2.0), new BsonDouble(3.0))))
+                                        .append("limit", new BsonInt32(10))
+                                        .append("numCandidates", new BsonInt32(100))),
+                        SearchOperator.vectorSearch(
+                                fieldPath("embedding"),
+                                asList(1.0, 2.0, 3.0),
+                                10,
+                                100
+                        ).toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("vectorSearch",
+                                new BsonDocument("path", new BsonString("embedding"))
+                                        .append("queryVector", new BsonArray(asList(
+                                                new BsonDouble(1.0), new BsonDouble(2.0))))
+                                        .append("limit", new BsonInt32(10))
+                                        .append("numCandidates", new BsonInt32(50))
+                                        .append("filter", new BsonDocument("text",
+                                                new BsonDocument("query", new BsonString("hello"))
+                                                        .append("path", new BsonString("title"))))
+                                        .append("score", new BsonDocument("boost",
+                                                new BsonDocument("value", new BsonDouble(2.0))))),
+                        SearchOperator.vectorSearch(
+                                fieldPath("embedding"),
+                                asList(1.0, 2.0),
+                                10,
+                                50
+                        ).filter(SearchOperator.text(fieldPath("title"), "hello"))
+                                .score(boost(2f))
+                                .toBsonDocument()
+                )
+        );
+    }
+
+    @Test
+    void vectorSearchExact() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // path must not be null
+                        SearchOperator.vectorSearchExact(null, asList(1.0), 10)
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // queryVector must not be null
+                        SearchOperator.vectorSearchExact(fieldPath("embedding"), null, 10)
+                ),
+                () -> assertEquals(
+                        new BsonDocument("vectorSearch",
+                                new BsonDocument("path", new BsonString("embedding"))
+                                        .append("queryVector", new BsonArray(asList(
+                                                new BsonDouble(1.0), new BsonDouble(2.0), new BsonDouble(3.0))))
+                                        .append("limit", new BsonInt32(5))
+                                        .append("exact", BsonBoolean.TRUE)),
+                        SearchOperator.vectorSearchExact(
+                                fieldPath("embedding"),
+                                asList(1.0, 2.0, 3.0),
+                                5
+                        ).toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("vectorSearch",
+                                new BsonDocument("path", new BsonString("embedding"))
+                                        .append("queryVector", new BsonArray(asList(
+                                                new BsonDouble(1.0), new BsonDouble(2.0))))
+                                        .append("limit", new BsonInt32(10))
+                                        .append("exact", BsonBoolean.TRUE)
+                                        .append("filter", new BsonDocument("text",
+                                                new BsonDocument("query", new BsonString("hello"))
+                                                        .append("path", new BsonString("title"))))
+                                        .append("score", new BsonDocument("boost",
+                                                new BsonDocument("value", new BsonDouble(2.0))))),
+                        SearchOperator.vectorSearchExact(
+                                fieldPath("embedding"),
+                                asList(1.0, 2.0),
+                                10
+                        ).filter(SearchOperator.text(fieldPath("title"), "hello"))
+                                .score(boost(2f))
+                                .toBsonDocument()
+                )
+        );
+    }
+
+    @Test
+    void vectorSearchInsideSearchStage() {
+        assertEquals(
+                new BsonDocument("$search",
+                        new BsonDocument("index", new BsonString("myIndex"))
+                                .append("vectorSearch",
+                                        new BsonDocument("path", new BsonString("embedding"))
+                                                .append("queryVector", new BsonArray(asList(
+                                                        new BsonDouble(1.0), new BsonDouble(2.0), new BsonDouble(3.0))))
+                                                .append("limit", new BsonInt32(10))
+                                                .append("numCandidates", new BsonInt32(100)))),
+                Aggregates.search(
+                        SearchOperator.vectorSearch(
+                                fieldPath("embedding"),
+                                asList(1.0, 2.0, 3.0),
+                                10,
+                                100
+                        ),
+                        SearchOptions.searchOptions().index("myIndex")
+                ).toBsonDocument()
         );
     }
 

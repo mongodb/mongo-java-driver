@@ -15,8 +15,8 @@
  */
 package com.mongodb.internal.operation.retry;
 
+import com.mongodb.MongoConnectionPoolClearedException;
 import com.mongodb.annotations.Immutable;
-import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.internal.async.function.LoopState.AttachmentKey;
 import com.mongodb.internal.operation.MixedBulkWriteOperation.BulkWriteTracker;
 import org.bson.BsonDocument;
@@ -36,13 +36,11 @@ import static com.mongodb.assertions.Assertions.fail;
  * @see AttachmentKey
  */
 public final class AttachmentKeys {
-    private static final AttachmentKey<Integer> MAX_WIRE_VERSION = new DefaultAttachmentKey<>("maxWireVersion");
-    private static final AttachmentKey<BsonDocument> COMMAND = new DefaultAttachmentKey<>("command");
-    private static final AttachmentKey<Boolean> RETRYABLE_COMMAND_FLAG = new DefaultAttachmentKey<>("retryableCommandFlag");
-    private static final AttachmentKey<Supplier<String>> COMMAND_DESCRIPTION_SUPPLIER = new DefaultAttachmentKey<>(
-            "commandDescriptionSupplier");
-    private static final AttachmentKey<BulkWriteTracker> BULK_WRITE_TRACKER = new DefaultAttachmentKey<>("bulkWriteTracker");
-    private static final AttachmentKey<BulkWriteResult> BULK_WRITE_RESULT = new DefaultAttachmentKey<>("bulkWriteResult");
+    private static final AttachmentKey<Integer> MAX_WIRE_VERSION = DefaultAttachmentKey.of("maxWireVersion");
+    private static final AttachmentKey<BsonDocument> COMMAND = DefaultAttachmentKey.of("command");
+    private static final AttachmentKey<Boolean> RETRYABLE_WRITE_COMMAND_FLAG = DefaultAttachmentKey.of("retryableWriteCommandFlag");
+    private static final AttachmentKey<Supplier<String>> COMMAND_DESCRIPTION_SUPPLIER = DefaultAttachmentKey.of("commandDescriptionSupplier");
+    private static final AttachmentKey<BulkWriteTracker> BULK_WRITE_TRACKER = DefaultAttachmentKey.of("bulkWriteTracker");
 
     public static AttachmentKey<Integer> maxWireVersion() {
         return MAX_WIRE_VERSION;
@@ -52,8 +50,13 @@ public final class AttachmentKeys {
         return COMMAND;
     }
 
-    public static AttachmentKey<Boolean> retryableCommandFlag() {
-        return RETRYABLE_COMMAND_FLAG;
+    /**
+     * Setting this flag to {@code false}, or leaving it unset, does not completely disable retrying,
+     * but does change which failed results may be eligible for retry.
+     * For example, {@link MongoConnectionPoolClearedException} may be eligible for retry regardless of this flag.
+     */
+    public static AttachmentKey<Boolean> retryableWriteCommandFlag() {
+        return RETRYABLE_WRITE_COMMAND_FLAG;
     }
 
     public static AttachmentKey<Supplier<String>> commandDescriptionSupplier() {
@@ -64,14 +67,13 @@ public final class AttachmentKeys {
         return BULK_WRITE_TRACKER;
     }
 
-    public static AttachmentKey<BulkWriteResult> bulkWriteResult() {
-        return BULK_WRITE_RESULT;
-    }
-
     private AttachmentKeys() {
         fail();
     }
 
+    /**
+     * A <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/doc-files/ValueBased.html">value-based</a> class.
+     */
     @Immutable
     private static final class DefaultAttachmentKey<V> implements AttachmentKey<V> {
         private static final Set<String> AVOID_KEY_DUPLICATION = new HashSet<>();
@@ -81,6 +83,10 @@ public final class AttachmentKeys {
         private DefaultAttachmentKey(final String key) {
             assertTrue(AVOID_KEY_DUPLICATION.add(key));
             this.key = key;
+        }
+
+        static <V> DefaultAttachmentKey<V> of(final String key) {
+            return new DefaultAttachmentKey<>(key);
         }
 
         @Override
