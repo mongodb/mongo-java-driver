@@ -17,7 +17,9 @@
 package com.mongodb.internal.time;
 
 import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.internal.async.function.RetryControl;
 
+import java.time.Duration;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.DoubleSupplier;
 
@@ -29,10 +31,8 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
  */
 public final class ExponentialBackoff {
 
-    private static final double TRANSACTION_BASE_MS = 5.0;
     @VisibleForTesting(otherwise = PRIVATE)
     static final double TRANSACTION_MAX_MS = 500.0;
-    private static final double TRANSACTION_GROWTH = 1.5;
 
     // TODO-JAVA-6079
     private static DoubleSupplier testJitterSupplier = null;
@@ -43,17 +43,38 @@ public final class ExponentialBackoff {
     /**
      * Calculate the backoff in milliseconds for transaction retries.
      *
+     * @param attemptNumber A positive 0-based attempt number. That is, the attempt must be a retry attempt.
+     * @return The calculated backoff in milliseconds.
+     *
+     * @see RetryControl#attempt()
+     */
+    public static long calculateTransactionBackoffMs(final int attemptNumber) {
+        return calculateBackoffMs(5.0, TRANSACTION_MAX_MS, 1.5, attemptNumber);
+    }
+
+    /**
+     * Calculate the backoff for command retries caused by
+     * {@linkplain com.mongodb.MongoException#SYSTEM_OVERLOADED_ERROR_LABEL overload}.
+     * See {@link #calculateTransactionBackoffMs(int)} for more details.
+     */
+    public static Duration calculateOverloadBackoff(final int attemptNumber) {
+        return Duration.ofMillis(calculateBackoffMs(100, 10000, 2, attemptNumber));
+    }
+
+    /**
+     * Calculate the backoff in milliseconds for transaction retries.
+     *
      * @param attemptNumber attempt number > 0
      * @return The calculated backoff in milliseconds.
      */
-    public static long calculateTransactionBackoffMs(final int attemptNumber) {
-        assertTrue(attemptNumber > 0, "Attempt number must be at least 1 (1-based) in the context of transaction backoff calculation");
+    public static long calculateBackoffMs(final double baseMs, final double maxMs, final double growth, final int attemptNumber) {
+        assertTrue(attemptNumber > 0, String.valueOf(attemptNumber));
         double jitter = testJitterSupplier != null
                 ? testJitterSupplier.getAsDouble()
                 : ThreadLocalRandom.current().nextDouble();
         return Math.round(jitter * Math.min(
-                TRANSACTION_BASE_MS * Math.pow(TRANSACTION_GROWTH, attemptNumber - 1),
-                TRANSACTION_MAX_MS));
+                baseMs * Math.pow(growth, attemptNumber - 1),
+                maxMs));
     }
 
     /**
