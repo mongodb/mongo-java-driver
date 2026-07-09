@@ -244,22 +244,21 @@ public abstract class UnifiedTest {
             final int totalAttempts,
             final String schemaVersion,
             @Nullable final BsonArray runOnRequirements,
-            final BsonArray entitiesArray,
+            final BsonArray oriEntitiesArray,
             final BsonArray initialData,
-            final BsonDocument definition) {
+            final BsonDocument oriDefinition) {
         this.fileDescription = fileDescription;
         this.schemaVersion = schemaVersion;
         this.runOnRequirements = runOnRequirements;
-        this.entitiesArray = entitiesArray;
+        this.entitiesArray = oriEntitiesArray;
         this.initialData = initialData;
-        this.definition = definition;
+        this.definition = oriDefinition;
         entities = new Entities();
         crudHelper = new UnifiedCrudHelper(entities, definition.getString("description").getValue());
         gridFSHelper = new UnifiedGridFSHelper(entities);
         clientEncryptionHelper = new UnifiedClientEncryptionHelper(entities);
         failPoints = new ArrayList<>();
         rootContext = new UnifiedTestContext();
-        rootContext.getAssertionContext().push(ContextElement.ofTest(definition));
         ignoreExtraEvents = false;
         if (directoryName != null && fileDescription != null && testDescription != null) {
             testDef = testDef(directoryName, fileDescription, testDescription, isReactive(), getLanguage());
@@ -267,7 +266,14 @@ public abstract class UnifiedTest {
 
             boolean skip = testDef.wasAssignedModifier(Modifier.SKIP);
             assumeFalse(skip, "Skipping test");
+
+            if (testDef.hasTransformations()) {
+                this.entitiesArray = entitiesArray.clone();
+                this.definition = definition.clone();
+                testDef.applyTransformations(entitiesArray, definition);
+            }
         }
+        rootContext.getAssertionContext().push(ContextElement.ofTest(definition));
         skips(fileDescription, testDescription);
 
         assumeTrue(isSupportedSchemaVersion(schemaVersion), format("Unsupported schema version %s", schemaVersion));
@@ -334,6 +340,7 @@ public abstract class UnifiedTest {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("data")
+    @SuppressWarnings("unused")
     public void shouldPassAllOutcomes(
             final String testName,
             @Nullable final String fileDescription,
@@ -345,7 +352,7 @@ public abstract class UnifiedTest {
             @Nullable final BsonArray runOnRequirements,
             final BsonArray entitiesArray,
             final BsonArray initialData,
-            final BsonDocument definition) {
+            final BsonDocument oriDefinition) {
         boolean forceFlaky = testDef.wasAssignedModifier(Modifier.FORCE_FLAKY);
         if (!forceFlaky) {
             boolean ignoreThisTest = ATTEMPTED_TESTS_TO_HENCEFORTH_IGNORE.contains(testName);
@@ -356,6 +363,9 @@ public abstract class UnifiedTest {
             ATTEMPTED_TESTS_TO_HENCEFORTH_IGNORE.add(testName);
         }
         try {
+            // Read from the field, not oriDefinition: setUp() may have replaced it with a
+            // transformed clone, whereas the parameter is the original, untransformed definition.
+            BsonDocument definition = this.definition;
             BsonArray operations = definition.getArray("operations");
             for (int i = 0; i < operations.size(); i++) {
                 BsonValue cur = operations.get(i);
