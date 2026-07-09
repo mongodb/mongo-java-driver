@@ -54,7 +54,11 @@ public final class Fixture {
                     return;
                 }
                 if (defaultDatabase != null) {
-                    defaultDatabase.drop();
+                    try {
+                        defaultDatabase.drop();
+                    } catch (Exception e) {
+                        // ignore
+                    }
                 }
                 mongoClient.close();
                 mongoClient = null;
