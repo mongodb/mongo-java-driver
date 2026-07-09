@@ -168,10 +168,51 @@ abstract class VerifyLibmongocryptTask : DefaultTask() {
             return
         }
 
+        // The gpg shipped on the Evergreen Windows hosts is a Cygwin build that only understands
+        // POSIX paths.
+        // Handed a native Windows path ("C:\dir") it treats the backslash path as relative,
+        // prepends its working
+        // directory, and fails with "no writable keyring found". Translate drive-letter paths to
+        // the Cygwin form
+        // ("C:\dir" -> "/cygdrive/c/dir") on Windows so every path argument (homedir, key,
+        // signatures, tarballs)
+        // is parsed correctly; other platforms pass paths through unchanged.
+        val isWindows = System.getProperty("os.name").startsWith("Windows", ignoreCase = true)
+        fun toGpgPath(path: String): String {
+            if (!isWindows) {
+                return path
+            }
+            val driveLetter = Regex("^([A-Za-z]):[\\\\/](.*)$").matchEntire(path) ?: return path.replace('\\', '/')
+            val (drive, rest) = driveLetter.destructured
+            return "/cygdrive/${drive.lowercase()}/${rest.replace('\\', '/')}"
+        }
+
+        // Run gpg capturing both streams; on non-zero exit throw with the captured output appended
+        // so the
+        // underlying gpg diagnostic is visible instead of Gradle's opaque "finished with non-zero
+        // exit value N".
+        fun runGpg(vararg args: String, onFailure: (String) -> String) {
+            val out = ByteArrayOutputStream()
+            val err = ByteArrayOutputStream()
+            val result =
+                execOps.exec {
+                    commandLine(listOf("gpg") + args)
+                    standardOutput = out
+                    errorOutput = err
+                    isIgnoreExitValue = true
+                }
+            val combined = (out.toString().trim() + "\n" + err.toString().trim()).trim()
+            logger.info("gpg ${args.joinToString(" ")} -> exit ${result.exitValue}\n$combined")
+            if (result.exitValue != 0) {
+                throw GradleException("${onFailure(combined)}\ngpg command: gpg ${args.joinToString(" ")}")
+            }
+        }
+
+        val versionOut = ByteArrayOutputStream()
         try {
             execOps.exec {
                 commandLine("gpg", "--version")
-                standardOutput = ByteArrayOutputStream()
+                standardOutput = versionOut
             }
         } catch (e: Exception) {
             throw GradleException(
@@ -180,6 +221,7 @@ abstract class VerifyLibmongocryptTask : DefaultTask() {
                     "or pass -PskipCryptVerify=true for offline development builds.",
                 e)
         }
+        logger.lifecycle("Using gpg:\n${versionOut.toString().trim().lineSequence().firstOrNull() ?: ""}")
 
         val home =
             gnupgHome.get().asFile.apply {
@@ -193,40 +235,27 @@ abstract class VerifyLibmongocryptTask : DefaultTask() {
                 setExecutable(false, false)
                 setExecutable(true, true)
             }
+        val homedir = toGpgPath(home.path)
+        logger.lifecycle(
+            "libmongocrypt verify: gnupgHome=${home.path} -> $homedir (exists=${home.exists()}, " +
+                "writable=${home.canWrite()}), publicKey=${publicKey.get().asFile.path} " +
+                "(exists=${publicKey.get().asFile.exists()})")
 
-        execOps.exec {
-            commandLine(
-                "gpg",
-                "--homedir",
-                home.path,
-                "--batch",
-                "--quiet",
-                "--no-autostart",
-                "--import",
-                publicKey.get().asFile.path)
-            standardOutput = ByteArrayOutputStream()
-            errorOutput = ByteArrayOutputStream()
+        runGpg("--homedir", homedir, "--batch", "--no-autostart", "--import", toGpgPath(publicKey.get().asFile.path)) {
+            output ->
+            "Failed to import libmongocrypt signing key into scratch keyring at ${home.path}.\n$output"
         }
 
-        try {
-            execOps.exec {
-                commandLine(
-                    "gpg",
-                    "--homedir",
-                    home.path,
-                    "--batch",
-                    "--no-autostart",
-                    "--with-colons",
-                    "--fingerprint",
-                    expectedFingerprint.get())
-                standardOutput = ByteArrayOutputStream()
-                errorOutput = ByteArrayOutputStream()
-            }
-        } catch (e: Exception) {
-            throw GradleException(
-                "Imported libmongocrypt signing key fingerprint does not match expected value " +
-                    "${expectedFingerprint.get()}. The downloaded public key may have been rotated.",
-                e)
+        runGpg(
+            "--homedir",
+            homedir,
+            "--batch",
+            "--no-autostart",
+            "--with-colons",
+            "--fingerprint",
+            expectedFingerprint.get()) { output ->
+            "Imported libmongocrypt signing key fingerprint does not match expected value " +
+                "${expectedFingerprint.get()}. The downloaded public key may have been rotated.\n$output"
         }
 
         // Pair tarballs with signatures by basename; ConfigurableFileCollection.files is an
@@ -238,28 +267,16 @@ abstract class VerifyLibmongocryptTask : DefaultTask() {
                 signaturesByName[signatureName]
                     ?: throw GradleException(
                         "Missing signature $signatureName for ${tarball.name}; expected it next to the tarball.")
-            val verifyErr = ByteArrayOutputStream()
-            try {
-                execOps.exec {
-                    commandLine(
-                        "gpg",
-                        "--homedir",
-                        home.path,
-                        "--batch",
-                        "--quiet",
-                        "--no-autostart",
-                        "--trust-model",
-                        "always",
-                        "--verify",
-                        signature.path,
-                        tarball.path)
-                    standardOutput = ByteArrayOutputStream()
-                    errorOutput = verifyErr
-                }
-            } catch (e: Exception) {
-                throw GradleException(
-                    "GPG signature verification failed for ${tarball.name}:\n${verifyErr.toString().trim()}", e)
-            }
+            runGpg(
+                "--homedir",
+                homedir,
+                "--batch",
+                "--no-autostart",
+                "--trust-model",
+                "always",
+                "--verify",
+                toGpgPath(signature.path),
+                toGpgPath(tarball.path)) { output -> "GPG signature verification failed for ${tarball.name}:\n$output" }
         }
 
         verificationStamp
