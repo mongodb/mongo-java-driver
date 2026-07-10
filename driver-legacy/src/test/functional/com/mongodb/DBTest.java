@@ -343,7 +343,7 @@ public class DBTest extends DatabaseTestCase {
     }
 
     BsonDocument getCollectionInfo(final String collectionName) {
-        return new ListCollectionsOperation<>(getDefaultDatabaseName(), new BsonDocumentCodec())
+        return new ListCollectionsOperation<>(getDefaultDatabaseName(), new BsonDocumentCodec(), null)
                 .filter(new BsonDocument("name", new BsonString(collectionName))).execute(getBinding(), ClusterFixture.createOperationContext()).next().get(0);
     }
 

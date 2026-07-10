@@ -139,6 +139,8 @@ public class DBCollection {
     private final OperationExecutor executor;
     private final boolean retryWrites;
     private final boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
     private volatile ReadConcern readConcern;
@@ -161,8 +163,10 @@ public class DBCollection {
         this.executor = executor;
         this.objectFactory = new DBCollectionObjectFactory();
         this.objectCodec = new CompoundDBObjectCodec(getDefaultDBObjectCodec());
-        this.retryWrites = database.getMongoClient().getMongoClientOptions().getRetryWrites();
-        this.retryReads = database.getMongoClient().getMongoClientOptions().getRetryReads();
+        MongoClientOptions options = database.getMongoClient().getMongoClientOptions();
+        this.retryWrites = options.getRetryWrites();
+        this.retryReads = options.getRetryReads();
+        this.maxAdaptiveRetriesSetting = options.getMaxAdaptiveRetries();
     }
 
     /**
@@ -348,7 +352,7 @@ public class DBCollection {
     private WriteResult insert(final List<InsertRequest> insertRequestList, final WriteConcern writeConcern,
                                final boolean continueOnError, @Nullable final Boolean bypassDocumentValidation) {
         return executeWriteOperation(createBulkWriteOperationForInsert(getNamespace(),
-                !continueOnError, writeConcern, retryWrites, insertRequestList).bypassDocumentValidation(bypassDocumentValidation));
+                !continueOnError, writeConcern, retryWrites, maxAdaptiveRetriesSetting, insertRequestList).bypassDocumentValidation(bypassDocumentValidation));
     }
 
     WriteResult executeWriteOperation(final LegacyMixedBulkWriteOperation operation) {
@@ -432,7 +436,7 @@ public class DBCollection {
                                                          Type.REPLACE).upsert(true);
 
         return executeWriteOperation(createBulkWriteOperationForReplace(getNamespace(), false,
-                writeConcern, retryWrites, singletonList(replaceRequest)));
+                writeConcern, retryWrites, maxAdaptiveRetriesSetting, singletonList(replaceRequest)));
     }
 
     /**
@@ -584,9 +588,9 @@ public class DBCollection {
                                               .collation(options.getCollation())
                                               .arrayFilters(wrapAllowNull(options.getArrayFilters(), options.getEncoder()));
         LegacyMixedBulkWriteOperation operation = (updateType == UPDATE
-                ? createBulkWriteOperationForUpdate(getNamespace(), true, writeConcern, retryWrites,
+                ? createBulkWriteOperationForUpdate(getNamespace(), true, writeConcern, retryWrites, maxAdaptiveRetriesSetting,
                 singletonList(updateRequest))
-                : createBulkWriteOperationForReplace(getNamespace(), true, writeConcern, retryWrites,
+                : createBulkWriteOperationForReplace(getNamespace(), true, writeConcern, retryWrites, maxAdaptiveRetriesSetting,
                 singletonList(updateRequest)))
                 .bypassDocumentValidation(options.getBypassDocumentValidation());
         return executeWriteOperation(operation);
@@ -660,7 +664,7 @@ public class DBCollection {
         WriteConcern writeConcern = optionsWriteConcern != null ? optionsWriteConcern : getWriteConcern();
         DeleteRequest deleteRequest = new DeleteRequest(wrap(query, options.getEncoder())).collation(options.getCollation());
         return executeWriteOperation(createBulkWriteOperationForDelete(getNamespace(), false,
-                writeConcern, retryWrites, singletonList(deleteRequest)));
+                writeConcern, retryWrites, maxAdaptiveRetriesSetting, singletonList(deleteRequest)));
     }
 
     /**
@@ -672,7 +676,12 @@ public class DBCollection {
      * @mongodb.driver.manual tutorial/query-documents/ Querying
      */
     public DBCursor find(final DBObject query) {
-        return new DBCursor(this, query, null, getReadPreference());
+        return new DBCursor(
+                this,
+                query,
+                new DBCollectionFindOptions().readPreference(getReadPreference()),
+                retryReads,
+                maxAdaptiveRetriesSetting);
     }
 
     /**
@@ -685,7 +694,12 @@ public class DBCollection {
      * @mongodb.driver.manual tutorial/query-documents/ Querying
      */
     public DBCursor find(final DBObject query, final DBObject projection) {
-        return new DBCursor(this, query, projection, getReadPreference());
+        return new DBCursor(
+                this,
+                query,
+                new DBCollectionFindOptions().projection(projection).readPreference(getReadPreference()),
+                retryReads,
+                maxAdaptiveRetriesSetting);
     }
 
     /**
@@ -709,7 +723,7 @@ public class DBCollection {
      * @since 3.4
      */
     public DBCursor find(@Nullable final DBObject query, final DBCollectionFindOptions options) {
-        return new DBCursor(this, query, options);
+        return new DBCursor(this, query, options, retryReads, maxAdaptiveRetriesSetting);
     }
 
     /**
@@ -918,7 +932,8 @@ public class DBCollection {
     public long getCount(@Nullable final DBObject query, final DBCollectionCountOptions options) {
         notNull("countOptions", options);
         CountOperation operation = new CountOperation(
-                getNamespace())
+                getNamespace(),
+                maxAdaptiveRetriesSetting)
                 .skip(options.getSkip())
                 .limit(options.getLimit())
                 .collation(options.getCollation())
@@ -1039,7 +1054,7 @@ public class DBCollection {
                                                 retryReads, DBCollection.this.getTimeoutSettings()) {
             @Override
             public ReadOperationCursor<BsonValue> asReadOperation() {
-                return new DistinctOperation<>(getNamespace(), fieldName, new BsonValueCodec())
+                return new DistinctOperation<>(getNamespace(), fieldName, new BsonValueCodec(), maxAdaptiveRetriesSetting)
                                .filter(wrapAllowNull(options.getFilter()))
                                .collation(options.getCollation())
                                .retryReads(retryReads);
@@ -1244,14 +1259,16 @@ public class DBCollection {
                getExecutor(createTimeoutSettings(getTimeoutSettings(), options))
                         .execute(operation, getReadPreference(), getReadConcern(), null);
                 result = new DBCursor(database.getCollection(outCollection.asString().getValue()), new BasicDBObject(),
-                        new DBCollectionFindOptions().readPreference(primary()).collation(options.getCollation()));
+                        new DBCollectionFindOptions().readPreference(primary()).collation(options.getCollation()),
+                        retryReads, maxAdaptiveRetriesSetting);
             } catch (MongoWriteConcernException e) {
                 throw createWriteConcernException(e);
             }
         } else {
             AggregateOperation<DBObject> operation = new AggregateOperation<>(
                     getNamespace(), stages,
-                    getDefaultDBObjectCodec())
+                    getDefaultDBObjectCodec(),
+                    maxAdaptiveRetriesSetting)
                     .allowDiskUse(options.getAllowDiskUse())
                     .batchSize(options.getBatchSize())
                     .collation(options.getCollation())
@@ -1277,7 +1294,8 @@ public class DBCollection {
     public CommandResult explainAggregate(final List<? extends DBObject> pipeline, final AggregationOptions options) {
         AggregateOperation<BsonDocument> operation = new AggregateOperation<>(
                 getNamespace(),
-                preparePipeline(pipeline), new BsonDocumentCodec())
+                preparePipeline(pipeline), new BsonDocumentCodec(),
+                maxAdaptiveRetriesSetting)
                 .allowDiskUse(options.getAllowDiskUse())
                 .collation(options.getCollation())
                 .retryReads(retryReads);
@@ -1666,7 +1684,7 @@ public class DBCollection {
         WriteConcern writeConcern = optionsWriteConcern != null ? optionsWriteConcern : getWriteConcern();
         WriteOperation<DBObject> operation;
         if (options.isRemove()) {
-            operation = new FindAndDeleteOperation<>(getNamespace(), writeConcern, retryWrites, objectCodec)
+            operation = new FindAndDeleteOperation<>(getNamespace(), writeConcern, retryWrites, maxAdaptiveRetriesSetting, objectCodec)
                         .filter(wrapAllowNull(query))
                         .projection(wrapAllowNull(options.getProjection()))
                         .sort(wrapAllowNull(options.getSort()))
@@ -1677,7 +1695,7 @@ public class DBCollection {
                 throw new IllegalArgumentException("update can not be null unless it's a remove");
             }
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
-                operation = new FindAndUpdateOperation<>(getNamespace(), writeConcern, retryWrites,
+                operation = new FindAndUpdateOperation<>(getNamespace(), writeConcern, retryWrites, maxAdaptiveRetriesSetting,
                         objectCodec, wrap(update))
                         .filter(wrap(query))
                         .projection(wrapAllowNull(options.getProjection()))
@@ -1688,7 +1706,7 @@ public class DBCollection {
                         .collation(options.getCollation())
                         .arrayFilters(wrapAllowNull(options.getArrayFilters(), (Encoder<DBObject>) null));
             } else {
-                operation = new FindAndReplaceOperation<>(getNamespace(), writeConcern, retryWrites,
+                operation = new FindAndReplaceOperation<>(getNamespace(), writeConcern, retryWrites, maxAdaptiveRetriesSetting,
                         objectCodec, wrap(update))
                         .filter(wrap(query))
                         .projection(wrapAllowNull(options.getProjection()))
@@ -1874,7 +1892,8 @@ public class DBCollection {
                 DBCollection.this.getTimeoutSettings()) {
             @Override
             public ReadOperationCursor<DBObject> asReadOperation() {
-                return new ListIndexesOperation<>(getNamespace(), getDefaultDBObjectCodec())
+                return new ListIndexesOperation<>(getNamespace(), getDefaultDBObjectCodec(),
+                        maxAdaptiveRetriesSetting)
                         .retryReads(retryReads);
             }
 
@@ -2027,7 +2046,7 @@ public class DBCollection {
                                               final WriteConcern writeConcern) {
         try {
             return translateBulkWriteResult(executor.execute(new MixedBulkWriteOperation(
-                    getNamespace(), translateWriteRequestsToNew(writeRequests), ordered, writeConcern, false)
+                    getNamespace(), translateWriteRequestsToNew(writeRequests), ordered, writeConcern, false, maxAdaptiveRetriesSetting)
                     .bypassDocumentValidation(bypassDocumentValidation), getReadConcern()), getObjectCodec());
         } catch (MongoBulkWriteException e) {
             throw BulkWriteHelper.translateBulkWriteException(e, MongoClient.getDefaultCodecRegistry().get(DBObject.class));

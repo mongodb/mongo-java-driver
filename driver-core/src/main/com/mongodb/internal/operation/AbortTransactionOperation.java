@@ -36,8 +36,8 @@ public class AbortTransactionOperation extends TransactionOperation {
     private static final String COMMAND_NAME = "abortTransaction";
     private BsonDocument recoveryToken;
 
-    public AbortTransactionOperation(final WriteConcern writeConcern) {
-        super(writeConcern);
+    public AbortTransactionOperation(final WriteConcern writeConcern, @Nullable final Integer maxAdaptiveRetriesSetting) {
+        super(writeConcern, maxAdaptiveRetriesSetting);
     }
 
     public AbortTransactionOperation recoveryToken(@Nullable final BsonDocument recoveryToken) {

@@ -187,9 +187,10 @@ final class SyncOperationHelper {
             final CommandCreator commandCreator,
             final Decoder<D> decoder,
             final CommandReadTransformer<D, T> transformer,
-            final boolean retryReadsSetting) {
+            final boolean retryReadsSetting,
+            @Nullable final Integer maxAdaptiveRetriesSetting) {
         return executeRetryableRead(operationContext, binding::getReadConnectionSource, database, commandCreator,
-                                    decoder, transformer, retryReadsSetting);
+                                    decoder, transformer, retryReadsSetting, maxAdaptiveRetriesSetting);
     }
 
     static <D, T> T executeRetryableRead(
@@ -199,9 +200,12 @@ final class SyncOperationHelper {
             final CommandCreator commandCreator,
             final Decoder<D> decoder,
             final CommandReadTransformer<D, T> transformer,
-            final boolean retryReadsSetting) {
+            final boolean retryReadsSetting,
+            @Nullable
+            final Integer maxAdaptiveRetriesSetting) {
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
                 new SpecRetryPolicy.IndividualPolicies(retryReadsSetting).includeRead(operationContext),
+                maxAdaptiveRetriesSetting,
                 operationContext);
 
         Supplier<T> read = decorateWithRetries(retryControl, operationContext, () ->
@@ -262,10 +266,12 @@ final class SyncOperationHelper {
             final CommandCreator commandCreator,
             final CommandWriteTransformer<T, R> transformer,
             final com.mongodb.Function<BsonDocument, BsonDocument> retryCommandModifier,
-            final boolean effectiveRetryWritesSetting) {
+            final boolean effectiveRetryWritesSetting,
+            @Nullable final Integer maxAdaptiveRetriesSetting) {
         MutableValue<BsonDocument> command = new MutableValue<>();
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
                 new SpecRetryPolicy.IndividualPolicies(effectiveRetryWritesSetting).includeWrite(),
+                maxAdaptiveRetriesSetting,
                 operationContext);
         Supplier<R> retryingWrite = decorateWithRetries(retryControl, operationContext, () -> {
             boolean firstAttempt = retryControl.isFirstAttempt();

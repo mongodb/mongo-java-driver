@@ -73,6 +73,8 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private BsonDocument filter;
     private int batchSize;
     private int limit;
@@ -93,9 +95,13 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
     private Boolean allowDiskUse;
     private TimeoutMode timeoutMode;
 
-    public FindOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
+    public FindOperation(
+            final MongoNamespace namespace,
+            final Decoder<T> decoder,
+            @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.namespace = notNull("namespace", namespace);
         this.decoder = notNull("decoder", decoder);
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     @Override
@@ -300,6 +306,7 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
         OperationContext findOperationContext = getFindOperationContext(operationContext);
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
                 new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(findOperationContext),
+                maxAdaptiveRetriesSetting,
                 findOperationContext);
         Supplier<BatchCursor<T>> read = decorateWithRetries(retryControl, findOperationContext, () ->
                 withSourceAndConnection(binding::getReadConnectionSource, false, findOperationContext,
@@ -328,6 +335,7 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
         OperationContext findOperationContext = getFindOperationContext(operationContext);
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
                 new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(findOperationContext),
+                maxAdaptiveRetriesSetting,
                 findOperationContext);
         binding.retain();
         AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = decorateWithRetriesAsync(

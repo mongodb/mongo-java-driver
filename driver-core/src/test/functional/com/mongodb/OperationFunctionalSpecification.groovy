@@ -108,13 +108,13 @@ class OperationFunctionalSpecification extends Specification {
 
     void acknowledgeWrite(final SingleConnectionBinding binding) {
         new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(new BsonDocument())], true,
-                ACKNOWLEDGED, false).execute(binding, createOperationContext())
+                ACKNOWLEDGED, false, null).execute(binding, createOperationContext())
         binding.release()
     }
 
     void acknowledgeWrite(final AsyncSingleConnectionBinding binding) {
         executeAsync(new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(new BsonDocument())],
-                true, ACKNOWLEDGED, false), binding)
+                true, ACKNOWLEDGED, false, null), binding)
         binding.release()
     }
 

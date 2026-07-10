@@ -71,12 +71,14 @@ public final class CommandOperationHelper {
 
     static RetryControl<SpecRetryPolicy> createSpecRetryControl(
             final SpecRetryPolicy.IndividualPolicies policies,
+            @Nullable final Integer maxAdaptiveRetriesSetting,
             final OperationContext operationContext) {
         ExplicitMaxRetries explicitMaxRetries = operationContext.getTimeoutContext().hasTimeoutMS()
                 ? NO_RETRIES_LIMIT
                 : RETRIES_LIMITED_BY_INDIVIDUAL_POLICIES;
         return new RetryControl<>(new SpecRetryPolicy(
                 policies,
+                maxAdaptiveRetriesSetting,
                 explicitMaxRetries,
                 operationContext.getServerDeprioritization()));
     }

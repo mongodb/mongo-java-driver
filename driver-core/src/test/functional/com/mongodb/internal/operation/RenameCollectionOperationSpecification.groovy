@@ -100,7 +100,7 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
 
     def collectionNameExists(String collectionName) {
         def binding = getBinding()
-        def cursor = new ListCollectionsOperation(databaseName, new DocumentCodec()).execute(binding,
+        def cursor = new ListCollectionsOperation(databaseName, new DocumentCodec(), null).execute(binding,
                 createOperationContext(binding.getReadPreference()))
         if (!cursor.hasNext()) {
             return false

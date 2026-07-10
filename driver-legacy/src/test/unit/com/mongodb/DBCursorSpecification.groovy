@@ -123,7 +123,8 @@ class DBCursorSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(),
-                collection.getObjectCodec())
+                collection.getObjectCodec(),
+                null)
                 .filter(new BsonDocument())
                 .projection(new BsonDocument())
                 .retryReads(true))
@@ -142,7 +143,7 @@ class DBCursorSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(
-                new FindOperation(collection.getNamespace(), collection.getObjectCodec())
+                new FindOperation(collection.getNamespace(), collection.getObjectCodec(), null)
                         .limit(-1)
                         .filter(new BsonDocument())
                         .projection(new BsonDocument())
@@ -163,7 +164,7 @@ class DBCursorSpecification extends Specification {
         def readConcern = ReadConcern.LOCAL
         def readPreference = ReadPreference.nearest()
         def findOptions = new DBCollectionFindOptions()
-        def cursor = new DBCursor(collection, filter, findOptions)
+        def cursor = new DBCursor(collection, filter, findOptions, true, null)
                 .setReadConcern(readConcern)
                 .setReadPreference(readPreference)
                 .setCollation(collation)
@@ -181,7 +182,7 @@ class DBCursorSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(
-                new FindOperation(collection.getNamespace(), collection.getObjectCodec())
+                new FindOperation(collection.getNamespace(), collection.getObjectCodec(), null)
                 .batchSize(1)
                 .collation(collation)
                 .cursorType(cursorType)
@@ -240,13 +241,13 @@ class DBCursorSpecification extends Specification {
                 .returnKey(true)
                 .showRecordId(true)
 
-        def cursor = new DBCursor(collection, filter, findOptions)
+        def cursor = new DBCursor(collection, filter, findOptions, true, null)
 
         when:
         cursor.toArray()
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec(), null)
                 .batchSize(1)
                 .collation(collation)
                 .cursorType(cursorType)
@@ -280,7 +281,7 @@ class DBCursorSpecification extends Specification {
 
         then:
         result == 42
-        expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
+        expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace(), null)
                                                                 .filter(new BsonDocument()).retryReads(true))
         executor.getReadConcern() == ReadConcern.MAJORITY
     }
@@ -296,7 +297,7 @@ class DBCursorSpecification extends Specification {
 
         then:
         result == 42
-        expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
+        expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace(), null)
                                                                 .filter(new BsonDocument()).retryReads(true))
         executor.getReadConcern() == ReadConcern.MAJORITY
     }

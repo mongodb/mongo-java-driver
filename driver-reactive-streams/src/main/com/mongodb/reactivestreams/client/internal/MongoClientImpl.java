@@ -119,7 +119,7 @@ public final class MongoClientImpl implements MongoClient {
                         settings.getUuidRepresentation()),
                 settings.getReadPreference(),
                 settings.getReadConcern(), settings.getWriteConcern(),
-                settings.getRetryWrites(), settings.getRetryReads(),
+                settings.getRetryWrites(), settings.getRetryReads(), settings.getMaxAdaptiveRetries(),
                 settings.getUuidRepresentation(),
                 settings.getAutoEncryptionSettings(),
                 timeoutSettings,

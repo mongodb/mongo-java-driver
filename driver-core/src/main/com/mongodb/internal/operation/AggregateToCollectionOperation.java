@@ -178,7 +178,8 @@ public class AggregateToCollectionOperation implements ReadOperationSimple<Void>
                 getCommandCreator(),
                 new BsonDocumentCodec(),
                 transformer(),
-                false);
+                false,
+                null);
     }
 
     @Override
@@ -194,6 +195,7 @@ public class AggregateToCollectionOperation implements ReadOperationSimple<Void>
                 new BsonDocumentCodec(),
                 asyncTransformer(),
                 false,
+                null,
                 callback);
     }
 

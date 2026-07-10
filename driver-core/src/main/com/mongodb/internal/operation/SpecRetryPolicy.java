@@ -70,6 +70,8 @@ final class SpecRetryPolicy implements RetryPolicy {
      */
     SpecRetryPolicy(
             final IndividualPolicies policies,
+            // VAKOTODO move to `includeOverload`
+            @Nullable final Integer maxAdaptiveRetriesSetting,
             final ExplicitMaxRetries explicitMaxRetries,
             final ServerDeprioritization serverDeprioritization) {
         this.policies = policies.assertValid();

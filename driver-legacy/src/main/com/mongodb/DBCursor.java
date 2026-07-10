@@ -73,6 +73,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     private final DBCollectionFindOptions findOptions;
     private final OperationExecutor executor;
     private final boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private DBDecoderFactory decoderFactory;
     private Decoder<DBObject> decoder;
     private IteratorOrArray iteratorOrArray;
@@ -107,22 +109,18 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      */
     public DBCursor(final DBCollection collection, final DBObject query, @Nullable final DBObject fields,
                     @Nullable final ReadPreference readPreference, final boolean retryReads) {
-        this(collection, query, new DBCollectionFindOptions().projection(fields).readPreference(readPreference), retryReads);
-    }
-
-    DBCursor(final DBCollection collection, @Nullable final DBObject filter, final DBCollectionFindOptions findOptions) {
-        this(collection, filter, findOptions, true);
+        this(collection, query, new DBCollectionFindOptions().projection(fields).readPreference(readPreference), retryReads, null);
     }
 
     DBCursor(final DBCollection collection, @Nullable final DBObject filter, final DBCollectionFindOptions findOptions,
-             final boolean retryReads) {
+             final boolean retryReads, @Nullable final Integer maxAdaptiveRetriesSetting) {
         this(collection, filter, findOptions, collection.getExecutor(), collection.getDBDecoderFactory(),
-                collection.getObjectCodec(), retryReads);
+                collection.getObjectCodec(), retryReads, maxAdaptiveRetriesSetting);
     }
 
     private DBCursor(final DBCollection collection, @Nullable final DBObject filter, final DBCollectionFindOptions findOptions,
                      final OperationExecutor executor, final DBDecoderFactory decoderFactory, final Decoder<DBObject> decoder,
-                     final boolean retryReads) {
+                     final boolean retryReads, @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.collection = notNull("collection", collection);
         this.filter = filter;
         this.executor = notNull("executor", executor);
@@ -130,6 +128,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         this.decoderFactory = decoderFactory;
         this.decoder = notNull("decoder", decoder);
         this.retryReads = retryReads;
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     /**
@@ -138,7 +137,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the new cursor
      */
     public DBCursor copy() {
-        return new DBCursor(collection, filter, findOptions, executor, decoderFactory, decoder, retryReads);
+        return new DBCursor(collection, filter, findOptions, executor, decoderFactory, decoder, retryReads, maxAdaptiveRetriesSetting);
     }
 
     /**
@@ -415,7 +414,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
     private FindOperation<DBObject> getQueryOperation(final Decoder<DBObject> decoder) {
         return new FindOperation<>(
-                collection.getNamespace(), decoder)
+                collection.getNamespace(), decoder,
+                maxAdaptiveRetriesSetting)
                 .filter(collection.wrapAllowNull(filter))
                 .batchSize(findOptions.getBatchSize())
                 .skip(findOptions.getSkip())

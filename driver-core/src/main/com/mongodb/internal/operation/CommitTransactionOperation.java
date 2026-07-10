@@ -53,12 +53,8 @@ public class CommitTransactionOperation extends TransactionOperation {
     private final boolean alreadyCommitted;
     private BsonDocument recoveryToken;
 
-    public CommitTransactionOperation(final WriteConcern writeConcern) {
-        this(writeConcern, false);
-    }
-
-    public CommitTransactionOperation(final WriteConcern writeConcern, final boolean alreadyCommitted) {
-        super(writeConcern);
+    public CommitTransactionOperation(final WriteConcern writeConcern, @Nullable final Integer maxAdaptiveRetriesSetting, final boolean alreadyCommitted) {
+        super(writeConcern, maxAdaptiveRetriesSetting);
         this.alreadyCommitted = alreadyCommitted;
     }
 

@@ -103,7 +103,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
     }
 
     def collectionNameExists(String collectionName) {
-        def cursor = new ListCollectionsOperation(databaseName, new DocumentCodec())
+        def cursor = new ListCollectionsOperation(databaseName, new DocumentCodec(), null)
                 .execute(binding, ClusterFixture.createOperationContext(binding.getReadPreference()))
         if (!cursor.hasNext()) {
             return false

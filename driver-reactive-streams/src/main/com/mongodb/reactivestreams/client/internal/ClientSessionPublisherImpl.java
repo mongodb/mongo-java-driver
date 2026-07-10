@@ -48,9 +48,10 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements ClientSession {
 
-    private final MongoClientImpl mongoClient;
     private final OperationExecutor executor;
     private final TracingManager tracingManager;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private TransactionState transactionState = TransactionState.NONE;
     private boolean messageSentInCurrentTransaction;
     private boolean commitInProgress;
@@ -63,8 +64,8 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
             final ClientSessionOptions options, final OperationExecutor executor, final TracingManager tracingManager) {
         super(serverSessionPool, mongoClient, options);
         this.executor = executor;
-        this.mongoClient = mongoClient;
         this.tracingManager = tracingManager;
+        maxAdaptiveRetriesSetting = mongoClient.getSettings().getMaxAdaptiveRetries();
     }
 
     @Override
@@ -178,7 +179,7 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
                 WriteConcern writeConcern = assertNotNull(getWriteConcern(timeoutContext));
                 return executor
                         .execute(
-                                new CommitTransactionOperation(writeConcern, alreadyCommitted)
+                                new CommitTransactionOperation(writeConcern, maxAdaptiveRetriesSetting, alreadyCommitted)
                                         .recoveryToken(getRecoveryToken()), readConcern, this)
                         .doOnTerminate(() -> {
                             commitInProgress = false;
@@ -228,7 +229,7 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
                 TimeoutContext timeoutContext = getTimeoutContext();
                 WriteConcern writeConcern = assertNotNull(getWriteConcern(timeoutContext));
                 return executor
-                        .execute(new AbortTransactionOperation(writeConcern)
+                        .execute(new AbortTransactionOperation(writeConcern, maxAdaptiveRetriesSetting)
                                 .recoveryToken(getRecoveryToken()), readConcern, this)
                         .onErrorResume(Throwable.class, (e) -> Mono.empty())
                         .doOnTerminate(() -> {

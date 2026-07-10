@@ -112,7 +112,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
                 .append('firstBatch', new BsonArrayWrapper([])))
 
         def operation = new ChangeStreamOperation<Document>(namespace, FullDocument.DEFAULT,
-                FullDocumentBeforeChange.DEFAULT, pipeline, new DocumentCodec(), changeStreamLevel as ChangeStreamLevel)
+                FullDocumentBeforeChange.DEFAULT, pipeline, new DocumentCodec(), changeStreamLevel as ChangeStreamLevel, null)
                 .batchSize(5)
                 .collation(defaultCollation)
                 .startAtOperationTime(new BsonTimestamp())
@@ -359,7 +359,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP,
                 FullDocumentBeforeChange.DEFAULT, pipeline,
                 createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())),
-                ChangeStreamLevel.DATABASE)
+                ChangeStreamLevel.DATABASE, null)
         helper.insertDocuments(BsonDocument.parse('{ _id : 2, x : 2, y : 3 }'))
 
         when:
