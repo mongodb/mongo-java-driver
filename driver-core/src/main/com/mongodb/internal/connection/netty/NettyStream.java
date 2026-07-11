@@ -530,7 +530,11 @@ final class NettyStream implements Stream {
                         channelFuture.channel().close();
                     } else {
                         channel = channelFuture.channel();
-                        channel.closeFuture().addListener((ChannelFutureListener) future1 -> handleReadResponse(null, new IOException("The connection to the server was closed")));
+                        // capture only the enclosing stream in the close listener: capturing OpenChannelFutureListener.this
+                        // would pin the open handler (and everything it references) for the lifetime of the pooled channel
+                        NettyStream stream = NettyStream.this;
+                        channel.closeFuture().addListener((ChannelFutureListener) future1 ->
+                                stream.handleReadResponse(null, new IOException("The connection to the server was closed")));
                     }
                     handler.completed(null);
                 } else {
