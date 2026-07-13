@@ -34,6 +34,7 @@ import org.bson.codecs.pojo.entities.ForwardingDeepModel;
 import org.bson.codecs.pojo.entities.ForwardingInterfaceModel;
 import org.bson.codecs.pojo.entities.ForwardingModel;
 import org.bson.codecs.pojo.entities.ForwardingNestedModel;
+import org.bson.codecs.pojo.entities.ForwardingWildcardModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.GenericTreeModel;
 import org.bson.codecs.pojo.entities.InterfaceBasedModel;
@@ -549,6 +550,13 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 new ForwardingNestedModel(asList("a", "b", "c")),
                 getPojoCodecProviderBuilder(ForwardingNestedModel.class),
                 "{'value': ['a', 'b', 'c']}"));
+        data.add(new TestData("Forwarding nested wildcard chain resolves to List<? extends ShapeModelAbstract>",
+                new ForwardingWildcardModel(asList(getShapeModelCircle(), getShapeModelRectangle())),
+                getPojoCodecProviderBuilder(ForwardingWildcardModel.class, ShapeModelAbstract.class,
+                        ShapeModelCircle.class, ShapeModelRectangle.class),
+                "{'value': [{'_t': 'org.bson.codecs.pojo.entities.ShapeModelCircle', 'color': 'orange', 'radius': 4.2}, "
+                        + "{'_t': 'org.bson.codecs.pojo.entities.ShapeModelRectangle', 'color': 'green', 'width': 22.1, "
+                        + "'height': 105.0}]}"));
 
         return data;
     }

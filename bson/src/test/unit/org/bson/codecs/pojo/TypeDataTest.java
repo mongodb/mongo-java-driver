@@ -181,10 +181,26 @@ public final class TypeDataTest {
         assertEquals(expected, actual);
     }
 
+    @Test
+    public void newInstanceResolvesBoundedWildcardToUpperBound() throws NoSuchFieldException {
+        Field boundedWildcardField = Holder.class.getDeclaredField("boundedWildcard");
+        Type boundedWildcardGenericType = boundedWildcardField.getGenericType();
+
+        List<TypeVariable<?>> typeParams = asList(Holder.class.getTypeParameters());
+        TypeData<Holder> currentResolved = TypeData.builder(Holder.class)
+                .addTypeParameter(TypeData.builder(String.class).build()).build();
+
+        TypeData<List> expected = TypeData.builder(List.class)
+                .addTypeParameter(TypeData.builder(Number.class).build()).build();
+        TypeData<List> actual = TypeData.newInstance(boundedWildcardGenericType, List.class, typeParams, currentResolved);
+        assertEquals(expected, actual);
+    }
+
     private static class Holder<T> {
         private List<T> list;
         private List<String> concrete;
         private Map<String, T> nestedMap;
+        private List<? extends Number> boundedWildcard;
     }
 
     private static class NonGeneric {

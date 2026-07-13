@@ -110,10 +110,15 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
             return TypeData.builder(Object.class).build();
         } else if (type instanceof Class) {
             return TypeData.builder((Class) type).build();
+        } else if (type instanceof WildcardType) {
+            // A wildcard cannot be the top-level type argument of an extends/implements clause (JLS §8.1.4,
+            // §8.1.5), but it can appear nested inside one (e.g. extends Base<List<? extends Number>>).
+            // Resolve it to its upper bound, mirroring getNestedTypeData, so any type variable inside the
+            // bound is still substituted against the current context.
+            return resolveTypeArgument(((WildcardType) type).getUpperBounds()[0], currentClassTypeParameters,
+                    currentClassTypeData);
         } else {
-            // WildcardType is intentionally not handled: wildcards cannot appear as type arguments
-            // in superclass or interface declarations (JLS §8.1.4, §8.1.5), so this method is
-            // never called with a WildcardType from getClassHierarchy. Falls through to Object below.
+            // Any other Type (e.g. GenericArrayType) is erased to Object.
             return TypeData.builder(Object.class).build();
         }
     }
